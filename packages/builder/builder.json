@@ -1,0 +1,21 @@
+{
+	"default" : {
+		"Branch" : "pre-ylomakin",
+		"GitRoot" : "https://github.com/democratic-coin/dcoin-go",
+		"TempPath" : "c:\\tmp",
+		"GoPath" : "c:\\go-projects",
+		"BinData" : "c:\\go-projects\\bin\\go-bindata.exe",
+		"BinDebug" : "false",
+		"OutFile" :  "c:\\setups\\win64\\dcoin.exe",
+		"Skip" : "dzsb",
+		"RunAfter": [[ "go.exe", "version"]]
+	},
+	"dev" : {
+		"Branch" : "dev",
+		"BinDebug" : "true",
+		"OutFile" :  "c:\\setups\\dcoin32.exe",
+		"Skip" : "dzsb",
+		"RunAfter": []
+
+	}
+}

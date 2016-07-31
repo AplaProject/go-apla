@@ -1,0 +1,19 @@
+{
+    "name": "Democratic coin",
+    "description": "Dcoin goal is to replace national currencies with their decentralized analogue.",
+    "app": {
+        "background": {
+            "scripts": [ "background.js" ]
+        }
+    },
+    "permissions": [
+        "webview",
+        "storage"
+    ],
+    "manifest_version": 2,
+    "short_name": "Dcoin",
+    "version": "0.1",
+    "icons": {
+        "128": "icon.png"
+    }
+}

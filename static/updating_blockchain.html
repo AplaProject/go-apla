@@ -1,0 +1,352 @@
+<style>
+	header {
+		display:none;
+	}
+	#dc_content{
+		display:flex;
+		left:0px;
+		width:auto;
+		min-height:100%;
+		flex-flow:row wrap;
+		align-items:center;
+		align-content:center;
+		padding-top:15px;
+		padding-bottom:15px;
+		margin:auto;
+	}
+/*------------------------------------------*/
+
+	.meter1 {
+		height:20px;
+		overflow:hidden;
+		position: relative;
+		margin: 20px 0 20px 0;
+		background: #f0f0f0;
+		-moz-border-radius: 25px;
+		-webkit-border-radius: 25px;
+		border-radius: 25px;
+		padding: 0px;
+		-webkit-box-shadow: inset 0 -1px 1px rgba(255,255,255,0.3);
+		-moz-box-shadow   : inset 0 -1px 1px rgba(255,255,255,0.3);
+		box-shadow        : inset 0 -1px 1px rgba(255,255,255,0.3);
+	}
+	.meter1 > span {
+		display: block;
+		text-align:center;
+		-webkit-border-top-right-radius: 8px;
+		-webkit-border-bottom-right-radius: 8px;
+		-moz-border-radius-topright: 8px;
+		-moz-border-radius-bottomright: 8px;
+		border-top-right-radius: 8px;
+		border-bottom-right-radius: 8px;
+		-webkit-border-top-left-radius: 20px;
+		-webkit-border-bottom-left-radius: 20px;
+		-moz-border-radius-topleft: 20px;
+		-moz-border-radius-bottomleft: 20px;
+		border-top-left-radius: 20px;
+		border-bottom-left-radius: 20px;
+		background-color: rgb(43,194,83);
+		background-image: -webkit-gradient(
+			linear,
+			left bottom,
+			left top,
+			color-stop(0, rgb(43,194,83)),
+			color-stop(1, rgb(84,240,84))
+		);
+		background-image: -moz-linear-gradient(
+			center bottom,
+			rgb(43,194,83) 37%,
+			rgb(84,240,84) 69%
+		);
+		-webkit-box-shadow:
+		inset 0 2px 9px  rgba(255,255,255,0.3),
+		inset 0 -2px 6px rgba(0,0,0,0.4);
+		-moz-box-shadow:
+		inset 0 2px 9px  rgba(255,255,255,0.3),
+		inset 0 -2px 6px rgba(0,0,0,0.4);
+		box-shadow:
+		inset 0 2px 9px  rgba(255,255,255,0.3),
+		inset 0 -2px 6px rgba(0,0,0,0.4);
+		position: relative;
+		overflow: hidden;
+	}
+	.meter1 > span:after, .animate > span > span {
+		content: "";
+		position: absolute;
+		top: 0; left: 0; bottom: 0; right: 0;
+		background-image:
+		-webkit-gradient(linear, 0 0, 100% 100%,
+		color-stop(.25, rgba(255, 255, 255, .2)),
+		color-stop(.25, transparent), color-stop(.5, transparent),
+		color-stop(.5, rgba(255, 255, 255, .2)),
+		color-stop(.75, rgba(255, 255, 255, .2)),
+		color-stop(.75, transparent), to(transparent)
+		);
+		background-image:
+		-moz-linear-gradient(
+			-45deg,
+			rgba(255, 255, 255, .2) 25%,
+			transparent 25%,
+			transparent 50%,
+			rgba(255, 255, 255, .2) 50%,
+			rgba(255, 255, 255, .2) 75%,
+			transparent 75%,
+			transparent
+		);
+		z-index: 1;
+		-webkit-background-size: 50px 50px;
+		-moz-background-size: 50px 50px;
+		background-size: 50px 50px;
+		-webkit-animation: move 2s linear infinite;
+		-moz-animation: move 2s linear infinite;
+		-webkit-border-top-right-radius: 8px;
+		-webkit-border-bottom-right-radius: 8px;
+		-moz-border-radius-topright: 8px;
+		-moz-border-radius-bottomright: 8px;
+		border-top-right-radius: 8px;
+		border-bottom-right-radius: 8px;
+		-webkit-border-top-left-radius: 20px;
+		-webkit-border-bottom-left-radius: 20px;
+		-moz-border-radius-topleft: 20px;
+		-moz-border-radius-bottomleft: 20px;
+		border-top-left-radius: 20px;
+		border-bottom-left-radius: 20px;
+		overflow: hidden;
+	}
+
+	.animate > span:after {
+		display: none;
+	}
+
+	@-webkit-keyframes move {
+		0% {
+			background-position: 0 0;
+		}
+		100% {
+			background-position: 50px 50px;
+		}
+	}
+
+	@-moz-keyframes move {
+		0% {
+			background-position: 0 0;
+		}
+		100% {
+			background-position: 50px 50px;
+		}
+	}
+
+	.nostripes > span > span, .nostripes > span:after {
+		-webkit-animation: none;
+		-moz-animation: none;
+		background-image: none;
+	}
+</style>
+
+<script>
+	$('#start_daemons').bind('click', function () {
+		$.post( 'ajax?controllerName=start_daemons', { } ,
+			function () {
+				$.post( 'ajax?controllerName=clear_daemons_time', { } ,
+					function () {
+						$('#start_daemons_div').html('Please restart dcoin');
+					});
+			});
+	});
+</script>
+
+<script>
+	var curblock = 0;  // Текущий блок
+	
+	$(document).ready(function() 	{
+		var refreshId = setInterval( function() {
+			$.post( 'ajax?controllerName=synchronizationBlockchain', {}, function (data) {
+					//console.log(data.block_time);
+					//console.log(data.block_id);
+					if (data.block_id>1) {
+						reload_status = $("#reload_db").css("display");
+						if (data.need_reload == "1" && reload_status == "none") {
+							// Блоки не обновляются. Нужно показывать Reload Error
+							$("#reload_db").show();
+						} {{if not .RestartDb}}	else if (curblock != data.block_id) {
+							// вдруг у нас пошла скачка блоков после timeout
+							curblock = data.block_id;
+							if (reload_status != "none") {
+								$("#reload_db").hide();
+							}
+						} {{end}}
+						$('#blockchain_loading').css('display', 'none');
+						$('#blocks_counter').css('display', 'block');
+						var time = Number(data.block_time + '000');
+						console.log(time);
+						var d = new Date(time);
+						$('#block_time').text(d);
+						$('#cur_block_id').text(data.block_id);
+						$('#confirmed_block_id').text(data.confirmed_block_id);
+						if (data.current_load_blockchain=="nodes") {
+							if (data.connections == "0") {
+								$('#current_load_blockchain').html("Connections: "+data.connections + " <span class='loader'></span>");
+							} else {
+								$('#current_load_blockchain').html("Connections: "+data.connections);
+							}
+						} else {
+							$('#current_load_blockchain').html("Loading from "+data.current_load_blockchain);
+						}
+						console.log(d);
+						var pct = Math.round(data.block_id/{{.LastBlock}}*100) - 1;
+						$('#meter').height(pct+'%');
+					} else if (data.block_id==-1) {
+						window.clearInterval(refreshId);
+						window.location.href = "/";
+					} else if (data.download > 0) {
+						console.log(data.download);
+						$('#meter0').width(data.download+'%');
+						$('#meter0').text(data.download+'%');
+					} else if (data.error > 0) {
+						console.log(data.error);
+						$('#error').text(data.error);
+						alert(data.error);
+					}
+				}, 'JSON'
+			);
+		}, {{.SleepTime}});
+	});
+</script>
+<div id="blockchain_loading" class="synchronization" style="display:{{if .WaitText}} block {{else}} none {{end}}">
+	<div class="blockchain_loader" >Loading...</div>
+	<p>{{.WaitText}}</p>
+	<div class="meter1">
+		<span style="width:0%; height:20px; color:#fff" id="meter0">{{.BlockMeter}}%</span>
+	</div>
+</div>
+<div id="blocks_counter" class="synchronization" style="display:{{if .WaitText}} none {{else}} block {{end}}">
+	<h2>{{.Lang.synchronization_blockchain}}</h2>
+	<p id="current_load_blockchain" class="connections">Connections: 0</p>
+	<div id="cur_block_id" class="block_id">{{.BlockId}}</div>
+	<div class="loader">
+		<div id="confirmed_block_id" class="block_id">0</div>
+		<div class="logo">
+			<div class="null"></div>
+			<div id="meter" class="ok" style="height:{{.BlockMeter}}%;"></div>
+		</div>
+		<div id="AlertMessage" class="alerts">
+			<div class="alert alert-danger alert-dismissable">
+				<p></p>
+			</div>
+		</div>
+		{{if .NewVersion}}
+		<div id="UpdateMessage" class="UpdateMessage">
+			<div class="alert alert-info alert-dismissable">{{noescape .NewVersion}}</div>
+		</div>
+		{{end}}
+		<div id="reload_db" class="alerts">
+			<div class="alert alert-danger" style="display:{{if .RestartDb}}block{{else}}none{{end}};">
+				<strong>Error!</strong>
+				<button id="reloadBlockchain" class="btn btn-danger">Reload blockchain</button>
+			</div>
+		</div>
+	</div>
+	<textarea class="form-control debug" readonly></textarea>
+	{{if not .Mobile}}
+	<p id="check_time" class="time">{{.AlertTime}} {{noescape .CheckTime}}</p>
+	{{else}}
+	<p id="check_time" class="time">{{.AlertTime}}</p>
+	{{end}}
+	<p class="help"><a href="mailto:darwin@dcoin.club" onclick='THRUST.remote.send("mailto: darwin@dcoin.club")'>Help</a></p>
+</div>
+
+<div style="max-width: 600px; margin: auto; text-align: center; display:none !important;">
+	<div id="blockchain_loading" style="display: {{if .WaitText}} block {{else}} none {{end}}"><div class="blockchain_loader" >Loading...</div>
+	<br>
+	{{.WaitText}}
+		<div class="meter1">
+			<span style="width: 0%; height: 20px; color: #fff" id="meter0">{{.BlockMeter}}%</span>
+		</div>
+	</div>
+	<div id="blocks_counter" style="display: {{if .WaitText}} none {{else}} block {{end}}">
+		<h3 style="margin-bottom: 20px">{{.Lang.synchronization_blockchain}}</h3>
+		<div style="display: none" class="alert alert-danger alert-dismissable" id="AlertMessage"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p></p></div>
+		<p id="current_load_blockchain">Connections: 0</p>
+		<div style="text-align:center; position:relative; width:225px; margin:auto; margin-bottom: 10px">
+			<div class="example example-hole">
+				<div class="ui-spinner">
+                <span class="side side-left">
+                    <span class="fill"></span>
+                </span>
+                <span class="side side-right">
+                    <span class="fill"></span>
+                </span>
+				</div>
+			</div>
+			<div style="top:100px; left:50%; margin-left:-50px;position:absolute;text-align:center; width:100px; font-size: 20px" id="cur_block_id">{{.BlockId}}</div>
+			<div style="top:130px; left:50%; margin-left:-50px;position:absolute;text-align:center; width:100px; font-size: 10px" id="confirmed_block_id">0</div>
+			</div>
+		<div class="meter1">
+			<span style="width: {{.BlockMeter}}%; height: 20px; color: #fff" id="meter">{{.BlockMeter}}%</span>
+		</div>
+		<div class="meter_wait" style="padding-bottom:20px;">{{.Lang.meter_wait}}</div>
+	</div>
+	{{if .NewVersion}}
+	<div id="UpdateMessage" class="UpdateMessage">
+		<div class="alert alert-info alert-dismissable"><p>{{noescape .NewVersion}}</p></div>
+	</div>
+	{{end}}
+
+	<div id="reload_db" class="alert alert-danger" style="display:{{if .RestartDb}}block{{else}}none{{end}};">
+		<strong>Error!</strong> <button id="reloadBlockchain" class="btn btn-danger">Reload blockchain</button>
+	</div>
+	<a hrep="#" id="debug">Debug</a>
+	<div id="debugDiv"></div>
+
+	{{if not .Mobile}}
+	<div id="check_time" style="margin-top: 50px">{{.AlertTime}} {{noescape .CheckTime}}</div>
+	{{else}}
+	<div id="check_time" style="margin-top: 50px">{{.AlertTime}}</div>
+	{{end}}
+
+	<div id="help" style="margin-top: 10px"><a href="mailto:darwin@dcoin.club" onclick='THRUST.remote.send("mailto: darwin@dcoin.club")'>help</a></div>
+
+</div>
+<script>
+	$('#reloadBlockchain').bind('click', function () {
+		$('#reloadBlockchain').html('<img src="/static/img/squares.gif" style="width:20px; margin:0px">');
+		$('#reloadBlockchain').prop('disabled', true);
+		$.get('ajax?controllerName=' + {{if .StandardInstall}}'ReloadDb'{{else}}'RestartDb'{{end}}, function (data) {
+			$('#loader').spin( false );
+			window.location.href = "/";
+		});
+	});
+	$('#debug').bind('click', function () {
+		$.get('ajax?controllerName=DebugInfo', function (data) {
+			console.log(data);
+			$('#debugDiv').html("<textarea>"+data+"</textarea>")
+		});
+	});
+	
+	$( document ).ready(function() {
+		$.get('ajax?controllerName=AlertFromAdmin', function (data) {
+			if (typeof data.success !== 'undefined') {
+				$('#AlertMessage').css("display", "block");
+				$('#AlertMessage p').html(data.success);
+			}
+		}, 'JSON');
+	});
+	
+	$(document).keydown(function(e){
+		'use strict';
+		if (e.shiftKey === true && e.keyCode === 68) {
+			var debug = $(".synchronization .debug");
+			var blocks = $(".synchronization .loader .block_id");
+			if (debug.is(":hidden")) {
+				$.get('ajax?controllerName=DebugInfo', function (data) {
+					debug.val(data).show();
+					blocks.css({"visibility":"visible"});
+				});
+			} else {
+				debug.blur().hide();
+				blocks.css({"visibility":"hidden"});
+			}
+		}
+	});
+</script>
+<script src="static/js/unixtime.js"></script>

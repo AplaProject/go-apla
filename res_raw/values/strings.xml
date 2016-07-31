@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2012 The Chromium Authors. All rights reserved.
+
+     Use of this source code is governed by a BSD-style license that can be
+     found in the LICENSE file.
+-->
+
+<!-- DO NOT ADD STRINGS HERE.
+
+    Android content strings now live in
+    content/public/android/java/strings/android_content_strings.grd
+
+    See http://www.chromium.org/developers/design-documents/ui-localization
+-->
+<resources>
+    <string name="app_name">CrosswalkEmbedded</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="uploads_disabled">uploads_disabled</string>
+    <string name="choose_upload">choose_upload</string>       
+    <string name="empty_directory">Empty Directory</string>
+    <string name="storage_removed">Storage was removed or unmounted.</string>
+    <string name="choose_file">Select a file</string>
+    <string name="error_selecting_file">Error selecting File</string>
+    <string name="internal_storage">Internal storage</string>
+</resources>

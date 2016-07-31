@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Dcoin
+Version=1.0.1a1
+Exec=dcoin
+Comment=Dcoin
+Icon=/usr/share/dcoin/bitmaps/dcoin.png
+Type=Application
+Terminal=false
+StartupNotify=true
+Encoding=UTF-8
+Categories=Internet;Utilities;Development;
+MimeType=text/dcoin;
+Comment[en]=Dcoin
+Comment[ru]=Dcoin

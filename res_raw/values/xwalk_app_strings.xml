@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<string name="crosswalk_install_title">"Crosswalk Project Install"</string>
+<string name="decompression_progress_message">"Decompressing the Crosswalk Project runtime..."</string>
+<string name="download_progress_message">"Downloading the Crosswalk Project runtime from remote host..."</string>
+<string name="download_failed_message">"Download failed. A network error occurred."</string>
+<string name="download_failed_device_not_found">"Download failed. Storage device not found."</string>
+<string name="download_failed_insufficient_space">"Download failed. Insufficient disk space."</string>
+<string name="download_failed_time_out">"Download failed. The network connection timed out."</string>
+<string name="market_open_failed_message">"Failed to open the app store. You need an app store to download the Crosswalk Project runtime."</string>
+<string name="startup_not_found_title">"Crosswalk Project Runtime Not Found"</string>
+<string name="startup_not_found_message">"APP_NAME requires the Crosswalk Project runtime to work. Please install it from the application store, then restart APP_NAME."</string>
+<string name="startup_architecture_mismatch_title">"Mismatch of CPU Architecture for the Crosswalk Project Runtime"</string>
+<string name="startup_architecture_mismatch_message">"The Crosswalk Project runtime must be updated to match the CPU architecture of the device. Please install it from the application store, then restart APP_NAME."</string>
+<string name="startup_signature_check_error_title">"The Crosswalk Project Signature Verification Failed"</string>
+<string name="startup_signature_check_error_message">"The integrity of the Crosswalk Project runtime cannot be verified. Please uninstall it and restart APP_NAME."</string>
+<string name="startup_older_version_title">"New Crosswalk Project Runtime Required"</string>
+<string name="startup_older_version_message">"The version of the Crosswalk Project runtime on this system must be updated. Please install it from the application store, then restart APP_NAME."</string>
+<string name="startup_newer_version_title">"Incompatible Crosswalk Project Runtime"</string>
+<string name="startup_newer_version_message">"APP_NAME is not compatible with the installed version of the Crosswalk Project runtime."</string>
+<string name="xwalk_cancel">"Cancel"</string>
+<string name="xwalk_continue">"Continue"</string>
+<string name="xwalk_close">"Close"</string>
+<string name="xwalk_retry">"Retry"</string>
+</resources>

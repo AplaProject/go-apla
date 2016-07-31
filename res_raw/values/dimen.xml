@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="activity_vertical_margin">1px</dimen>
+    <dimen name="activity_horizontal_margin">1px</dimen>
+</resources>

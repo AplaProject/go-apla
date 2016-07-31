@@ -1,0 +1,111 @@
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0" />
+<meta name="description" content="">
+<meta name="author" content="">
+
+<title>Democratic Coin</title>
+
+<!-- Bootstrap Core CSS -->
+<link href="css/bootstrap.min.css" rel="stylesheet">
+
+<!-- MetisMenu CSS -->
+<link href="css/plugins/metisMenu/metisMenu.min.css" rel="stylesheet">
+
+<!-- Custom CSS -->
+<link href="css/sb-admin.css" rel="stylesheet">
+
+<!-- Custom Fonts -->
+<link href="css/font-awesome.css" rel="stylesheet">
+
+<!-- All styles -->
+<link href="css/style.css" media="screen, projection" rel="stylesheet" type="text/css" />
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.static/js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+	<script language="JavaScript" type="text/javascript" src="js/md5.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/jsbn.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/jsbn2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/rsa.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/rsa2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/sha1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/sha256.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/base64.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/rsapem-1.1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/rsasign-1.2.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/asn1hex-1.1.min.js"></script>
+
+
+	<!--script src="js/sha256.js"></script-->
+
+	<script type="text/javascript" src="js/rijndael.js"></script>
+	<script type="text/javascript" src="js/mcrypt.js"></script>
+
+
+<script src="js/index.js"></script>
+
+	<script src="js/jquery-1.11.0.js"></script>
+	<script src="js/js.js"></script>
+
+	<script src="js/aes.js"></script>
+	<script src="js/enc-base64-min.js"></script>
+
+	<script src="js/crypto-js-aes.js"></script>
+	<script src="js/crypto-js-mode-ecb.js"></script>
+	<script src="js/crypto-js-pad-iso10126.js"></script>
+</head>
+<body>
+	<p style="text-align: center;padding: 30px 50px 0px;">If you are already a registered user of Dcoin, please enter your private key below.</p>
+	<!--input type="file" name="upload" id="change_pkey_upload_hidden"><br>
+	<textarea rows="3" id="change_pkey_private_key" class="form-control" stylex="display:none"></textarea><br-->
+	<div id="confirm_key" style="display: block; max-width: 600px; margin: auto">
+	<fieldset>
+		<div id="change_pkey_alert"></div>
+		<span id="change_pkey_key_selector" style="float:right"><a href="#" onclickx="change_pkey_show_text_key();return false;">Text</a></span>
+		<div class="clearfix"></div>
+		<input multiple type="file" name="upload" id="change_pkey_upload_hidden" style="position: absolute; display: block; overflow: hidden; width: 0; height: 0; border: 0; padding: 0;" />
+		<div style="width:100%;  border:2px dashed black; height: 100px; padding: 15px 0px 15px 0px" id="change_pkey_key_div">
+			<div style="margin:auto; text-align:center; line-height:22px">
+				<p style="margin-bottom:0px"  id="change_pkey_key_file_name" onclickx="document.getElementById('change_pkey_upload_hidden').click();"></p>
+				<button id="key_btn" style="margin-top:0px;color:#fff;"  class="btn btn-outline btn-primary" onclickx="document.getElementById('change_pkey_upload_hidden').click();">Select key</button>
+				<p>or drag and drop key</p>
+			</div>
+		</div>
+			<textarea rows="3" id="change_pkey_private_key" class="form-control" style="display:none"></textarea><br>
+		<label>Password</label>
+		<input type="password" id="change_pkey_password" class="form-control">
+		<div style="margin-top: 15px; text-align:center;">
+		<button class="btn btn-lg btn-primary" id="send_btn" type="submit" onclickx="send_key()">Send</button>
+		<a href="#" style="margin-left: 40px;" id="next_btn" class="btn btn-lg btn-primary" onclickx='return js_next()'>Skip</a>
+		</div>
+	</fieldset>
+	</div>
+	<input type="hidden" id="public_key_1">
+	
+
+	
+	<div style="display: none;">
+		<input id="incorrect_key_or_password" value="Incorrect key or password" type="hidden">
+		<div id="key">key</div>
+		<div id="password">password</div>
+		<div id="setup_password">setup_password</div>
+		<div id="save_key">save_key</div>
+		<img  id="image_key">
+		<canvas  id="canvas_key"></canvas>
+	</div>
+	<script src="js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/spin.js"></script>
+	<script language="JavaScript" type="text/javascript" src="js/chrome.js"></script>
+
+
+</body></html>

@@ -1,0 +1,4 @@
+#! /bin/bash -e
+
+#rm -f "/usr/bin/dcoin" 
+#rm -rf "/usr/share/dcoin"

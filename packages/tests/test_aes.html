@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <title></title>
+    <meta content="">
+    <style></style>
+  
+	<script src="http://crypto-js.googlecode.com/svn/tags/3.1/build/rollups/aes.js"></script>
+	<script src="http://crypto-js.googlecode.com/svn/tags/3.1/build/components/mode-ecb.js"></script>
+	<script src="http://crypto-js.googlecode.com/svn/tags/3.1/build/components/pad-iso10126.js"></script>
+	<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="http://pool.dcoin.club/static/js/md5.js"></script>
+	
+  </head>
+  <body>
+       <script>
+       
+function hex2a(hex) {
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2)
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
+}
+	      function decr() {
+		   // try{
+			key =  $('#key').val()
+			pass =  $('#pass').val()
+			ivAndText = atob(key)
+			iv = ivAndText.substr(0, 16)
+			encText = ivAndText.substr(16)			
+			cipherParams = CryptoJS.lib.CipherParams.create({
+			    ciphertext: CryptoJS.enc.Base64.parse(btoa(encText))
+			});
+			key = CryptoJS.enc.Latin1.parse(hex_md5(pass))
+			var decrypted = CryptoJS.AES.decrypt(cipherParams, key, {mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Utf8.parse(iv), padding: CryptoJS.pad.Iso10126 });
+			var decrypt_PEM = hex2a(decrypted.toString());
+			$('#decrypted').text(decrypt_PEM)	    
+    
+	      }
+      </script>
+      <textarea id="key" style="width:500px; height:200px"></textarea><br>
+      <input type="button" id="next" value="next" onclick="decr()">
+      <input type="text" id="pass">
+      <div id="decrypted" style="width:500px; height:500px;"></div>
+  </body>
+</html>

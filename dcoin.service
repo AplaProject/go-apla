@@ -1,0 +1,14 @@
+[Unit]
+Description=Dcoin Service
+Requires=network.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/dcoin
+Restart=always
+PIDFile=/root/dcoin/dcoin_service.pid
+WorkingDirectory=/root/dcoin/
+
+[Install]
+WantedBy=multi-user.target

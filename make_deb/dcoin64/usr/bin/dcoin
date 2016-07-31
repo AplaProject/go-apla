@@ -1,0 +1,3 @@
+#! /bin/bash -e
+
+/usr/share/dcoin/dcoin -dir=/usr/share/dcoin
