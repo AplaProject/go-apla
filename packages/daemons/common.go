@@ -183,9 +183,9 @@ func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) 
 
 func StartDaemons() {
 	utils.DaemonsChans = nil
-	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){ "FirstChangePkey": FirstChangePkey, "TestblockIsReady": TestblockIsReady, "TestblockGenerator": TestblockGenerator, "TestblockDisseminator": TestblockDisseminator, "ReductionGenerator": ReductionGenerator, "QueueParserTx": QueueParserTx, "QueueParserTestblock": QueueParserTestblock, "QueueParserBlocks": QueueParserBlocks,  "Notifications": Notifications, "Disseminator": Disseminator, "Confirmations": Confirmations, "Connector": Connector, "Clear": Clear, "CleaningDb": CleaningDb, "BlocksCollection": BlocksCollection, "Exchange": Exchange, "AutoUpdate": AutoUpdate, "Stats": Stats}
+	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"TestblockIsReady": TestblockIsReady, "TestblockGenerator": TestblockGenerator, "TestblockDisseminator": TestblockDisseminator, "ReductionGenerator": ReductionGenerator, "QueueParserTx": QueueParserTx, "QueueParserTestblock": QueueParserTestblock, "QueueParserBlocks": QueueParserBlocks,  "Notifications": Notifications, "Disseminator": Disseminator, "Confirmations": Confirmations, "Connector": Connector, "Clear": Clear, "CleaningDb": CleaningDb, "BlocksCollection": BlocksCollection, "Exchange": Exchange, "AutoUpdate": AutoUpdate, "Stats": Stats}
 	if utils.Mobile() {
-		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"FirstChangePkey": FirstChangePkey, "QueueParserTx": QueueParserTx, "Notifications": Notifications, "Disseminator": Disseminator, "Confirmations": Confirmations, "Connector": Connector, "Clear": Clear, "CleaningDb": CleaningDb, "BlocksCollection": BlocksCollection}
+		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"QueueParserTx": QueueParserTx, "Notifications": Notifications, "Disseminator": Disseminator, "Confirmations": Confirmations, "Connector": Connector, "Clear": Clear, "CleaningDb": CleaningDb, "BlocksCollection": BlocksCollection}
 	}
 	if *utils.TestRollBack == 1 {
 		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"BlocksCollection": BlocksCollection, "Connector": Connector, "Confirmations": Confirmations}

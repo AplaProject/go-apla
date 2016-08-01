@@ -2,7 +2,7 @@ package dcparser
 
 import (
 	"fmt"
-	"github.com/democratic-coin/dcoin-go/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) NewForexOrderInit() error {

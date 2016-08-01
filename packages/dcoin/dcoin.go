@@ -30,6 +30,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"encoding/base64"
 )
 
 var (
@@ -61,6 +62,36 @@ func Stop() {
 	IosLog("DCOIN Stop")
 }
 
+func firstBlock() {
+	if *utils.GenerateFirstBlock == 1 {
+
+		block := utils.DecToBin(0, 1)
+
+		PublicKey, _ := ioutil.ReadFile(*utils.Dir + "/PublicKey")
+		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
+
+		NodePublicKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePublicKey")
+		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
+
+		Host, _ := ioutil.ReadFile(*utils.Dir + "/Host")
+
+		tx := utils.DecToBin(1, 1)
+		tx = append(tx, utils.DecToBin(utils.Time(), 4)...)
+		tx = append(tx, utils.EncodeLengthPlusData(PublicKeyBytes)...)
+		tx = append(tx, utils.EncodeLengthPlusData(NodePublicKeyBytes)...)
+		tx = append(tx, utils.EncodeLengthPlusData(Host)...)
+
+		block = append(block, utils.DecToBin(1, 4)...)
+		block = append(block, utils.DecToBin(utils.Time(), 4)...)
+		block = append(block, utils.DecToBin(1, 8)...)
+		block = append(block, utils.DecToBin(0, 1)...)
+		block = append(block, utils.EncodeLengthPlusData(tx)...)
+
+		ioutil.WriteFile("static/1block", block, 0644)
+	}
+	os.Exit(0)
+}
+
 func Start(dir string, thrustWindowLoder *window.Window) {
 
 	var err error
@@ -84,6 +115,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		fmt.Println("dir", dir)
 		*utils.Dir = dir
 	}
+
+	firstBlock()
+
 	IosLog("dir:" + dir)
 	fmt.Println("utils.Dir", *utils.Dir)
 
