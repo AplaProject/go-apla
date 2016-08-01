@@ -156,16 +156,6 @@ func (c *Controller) Home() (string, error) {
 
 	query := `SELECT count(v.id) FROM votes_miners as v `
 	where := `WHERE votes_end  =  0 AND v.type  =  'user_voting' `
-	country, race := getMyCountryRace(c)
-	if race > 0 || country > 0 {
-		query += `left join faces as f on f.user_id=v.user_id `
-		if race > 0 {
-			where += fmt.Sprintf( `AND f.race=%d `, race )
-		}
-		if country > 0 {
-			where += fmt.Sprintf( `AND f.country=%d `, country )
-		}
-	}
 	if err := getCount( query + where, `miner` ); err !=nil {
 		return "", err
 	}

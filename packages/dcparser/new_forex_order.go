@@ -2,7 +2,7 @@ package dcparser
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/democratic-coin/dcoin-go/packages/utils"
 )
 
 func (p *Parser) NewForexOrderInit() error {
@@ -118,16 +118,16 @@ func (p *Parser) NewForexOrder() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		err = p.updateSenderWallet(p.TxUserID, p.TxMaps.Int64["sell_currency_id"], p.TxMaps.Money["commission"], 0, "from_user", p.TxUserID, p.BlockData.UserId, "node_commission", "decrypted")
+		err = p.updateSenderWallet(p.TxUserID, p.TxMaps.Int64["sell_currency_id"], p.TxMaps.Money["commission"], 0, "from_user", p.TxUserID, p.BlockData.WalletId, "node_commission", "decrypted")
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// возможно нужно обновить таблицу points_status
-		err = p.pointsUpdateMain(p.BlockData.UserId)
+		err = p.pointsUpdateMain(p.BlockData.WalletId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		err = p.updateRecipientWallet(p.BlockData.UserId, p.TxMaps.Int64["sell_currency_id"], p.TxMaps.Money["commission"], "node_commission", p.BlockData.BlockId, "", "encrypted", true)
+		err = p.updateRecipientWallet(p.BlockData.WalletId, p.TxMaps.Int64["sell_currency_id"], p.TxMaps.Money["commission"], "node_commission", p.BlockData.BlockId, "", "encrypted", true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -376,18 +376,18 @@ func (p *Parser) NewForexOrderRollback() error {
 	if p.TxMaps.Money["commission"] >= 0.01 {
 
 		// возможно нужно обновить таблицу points_status
-		err = p.pointsUpdateRollbackMain(p.BlockData.UserId)
+		err = p.pointsUpdateRollbackMain(p.BlockData.WalletId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 
-		err = p.generalRollback("wallets", p.BlockData.UserId, "AND currency_id ="+utils.Int64ToStr(p.TxMaps.Int64["sell_currency_id"]), false)
+		err = p.generalRollback("wallets", p.BlockData.WalletId, "AND currency_id ="+utils.Int64ToStr(p.TxMaps.Int64["sell_currency_id"]), false)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 
 		// возможно были списания по кредиту
-		err = p.loanPaymentsRollback(p.BlockData.UserId, p.TxMaps.Int64["sell_currency_id"])
+		err = p.loanPaymentsRollback(p.BlockData.WalletId, p.TxMaps.Int64["sell_currency_id"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}

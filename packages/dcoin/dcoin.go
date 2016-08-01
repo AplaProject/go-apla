@@ -353,8 +353,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 		http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
-		http.HandleFunc(HandleHttpHost+"/cf/", controllers.IndexCf)
-		http.HandleFunc(HandleHttpHost+"/cf/content", controllers.ContentCf)
 		http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
 		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
 
@@ -435,28 +433,6 @@ func exhangeHttpListener(HandleHttpHost string) {
 		http.HandleFunc(config["getpool_host"]+"/", controllers.IndexGetPool)
 	}
 
-	if eConfig["enable"] == "1" {
-		if len(eConfig["domain"]) > 0 {
-			fmt.Println("E host", eConfig["domain"])
-			http.HandleFunc(eConfig["domain"]+"/", controllers.IndexE)
-			http.HandleFunc(eConfig["domain"]+"/content", controllers.ContentE)
-			http.HandleFunc(eConfig["domain"]+"/ajax", controllers.AjaxE)
-			http.Handle(eConfig["domain"]+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
-			if len(eConfig["static_file_path"]) > 0 {
-				http.HandleFunc(eConfig["domain"]+"/"+eConfig["static_file_path"], controllers.EStaticFile)
-			}
-		} else {
-			eConfig["catalog"] = strings.Replace(eConfig["catalog"], "/", "", -1)
-			fmt.Println("E host", HandleHttpHost+"/"+eConfig["catalog"]+"/")
-			http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/", controllers.IndexE)
-			http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/content", controllers.ContentE)
-			http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/ajax", controllers.AjaxE)
-			if len(eConfig["static_file_path"]) > 0 {
-				http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/"+eConfig["static_file_path"], controllers.EStaticFile)
-			}
-		}
-	}
-
 }
 
 // http://grokbase.com/t/gg/golang-nuts/12a9yhgr64/go-nuts-disable-directory-listing-with-http-fileserver#201210093cnylxyosmdfuf3wh5xqnwiut4
@@ -500,15 +476,7 @@ func GetHttpHost() (string, string, string) {
 		log.Error("%v", utils.ErrInfo(err))
 		return BrowserHttpHost, HandleHttpHost, ListenHttpHost
 	}
-	//myPrefix := ""
-	//if len(community) > 0 {
-	//myUserId, err := db.GetPoolAdminUserId()
-	//	if err!=nil {
-	//		log.Error("%v", ErrInfo(err))
-	//		return BrowserHttpHost, HandleHttpHost, ListenHttpHost
-	//	}
-	//myPrefix = Int64ToStr(myUserId)+"_"
-	//}
+
 	httpHost, err := utils.DB.Single("SELECT http_host FROM config").String()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))

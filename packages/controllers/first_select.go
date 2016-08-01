@@ -10,7 +10,7 @@ type firstSelectPage struct {
 
 func (c *Controller) FirstSelect() (string, error) {
 
-	TemplateStr, err := makeTemplate("first_select", "firstSelect", &delCreditPage{
+	TemplateStr, err := makeTemplate("first_select", "firstSelect", &firstSelectPage{
 		Lang: c.Lang})
 	if err != nil {
 		return "", utils.ErrInfo(err)

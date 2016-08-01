@@ -54,8 +54,8 @@ import (
 type BlockData struct {
 	BlockId       int64
 	Time          int64
-	UserId        int64
-	Level         int64
+	WalletId      int64
+	CBID          int64
 	CurrentUserId int64
 	Sign          []byte
 	Hash          []byte
@@ -286,15 +286,14 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 		TYPE (0-блок, 1-тр-я)        1
 		BLOCK_ID   				       4
 		TIME       					       4
-		USER_ID                         5
-		LEVEL                              1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
+		WALLET_ID                         8
+		CB_ID                              1
+		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
 		Далее - тело блока (Тр-ии)
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
-	result.UserId = BinToDecBytesShift(binaryBlock, 5)
-	result.Level = BinToDecBytesShift(binaryBlock, 1)
+	result.WalletId = BinToDecBytesShift(binaryBlock, 5)
 	signSize := DecodeLength(binaryBlock)
 	result.Sign = BytesShift(binaryBlock, signSize)
 	log.Debug("result: %v", result)
