@@ -8,6 +8,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/tcpserver"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/DayLightProject/go-daylight/packages/system"
+	_ "github.com/mattn/go-sqlite3"
 	"net"
 	"net/http"
 	//"os"

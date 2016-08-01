@@ -433,6 +433,7 @@ func exhangeHttpListener(HandleHttpHost string) {
 		http.HandleFunc(config["getpool_host"]+"/", controllers.IndexGetPool)
 	}
 
+
 }
 
 // http://grokbase.com/t/gg/golang-nuts/12a9yhgr64/go-nuts-disable-directory-listing-with-http-fileserver#201210093cnylxyosmdfuf3wh5xqnwiut4
@@ -476,7 +477,15 @@ func GetHttpHost() (string, string, string) {
 		log.Error("%v", utils.ErrInfo(err))
 		return BrowserHttpHost, HandleHttpHost, ListenHttpHost
 	}
-
+	//myPrefix := ""
+	//if len(community) > 0 {
+	//myUserId, err := db.GetPoolAdminUserId()
+	//	if err!=nil {
+	//		log.Error("%v", ErrInfo(err))
+	//		return BrowserHttpHost, HandleHttpHost, ListenHttpHost
+	//	}
+	//myPrefix = Int64ToStr(myUserId)+"_"
+	//}
 	httpHost, err := utils.DB.Single("SELECT http_host FROM config").String()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
