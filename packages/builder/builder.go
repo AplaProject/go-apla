@@ -18,6 +18,7 @@ import (
 )
 
 const (
+//	GITPATH = `github.com/democratic-coin/dcoin-go`
 	GITPATH = `github.com/DayLightProject/go-daylight`
 )
 
@@ -27,7 +28,7 @@ var (
 
 type Settings struct {
 	Branch    string   // Branch name 
-	GitRoot   string   // https://github.com/DayLightProject/go-daylight
+	GitRoot   string   // https://github.com/democratic-coin/dcoin-go
 	TempPath  string   // Temporary path
 	OutFile   string   // Output dcoin executable file
 	GoPath    string   // GOPATH
@@ -35,6 +36,7 @@ type Settings struct {
 	BinDebug  string   // Specify "true" for debug option
 	RunAfter  [][]string   
 	Arch      string   // Custom GOARCH
+	Replace   string   // Replace string
 	Skip      string   // d - download, z - unzip, s - static.go, b - build, a - make package
 }
 
@@ -125,7 +127,7 @@ func main() {
 	if err != nil {
 		exit(err)
 	}
-	params, err := ioutil.ReadFile(filepath.Join(dir, `builder.json`))
+	params, err := ioutil.ReadFile(filepath.Join(dir, `builder_day.json`))
 	if err != nil {
 		exit(err)
 	}
@@ -196,6 +198,22 @@ func main() {
 			exit( err )
 		}
 	}
+	
+	fmt.Println( options )
+	if len( options.Replace) > 0 {
+		fmt.Println(`Replace`, options.Replace )
+		static := filepath.Join( srcPath, "packages", "static","static.go")
+		in,err := ioutil.ReadFile( static )
+		if err != nil {
+			fmt.Println("Error in", err.Error())
+		}
+		out := strings.Replace(string(in), `"`+options.Replace+`static`, `"static`, -1 )
+		err = ioutil.WriteFile( static, []byte(out), 0644 )
+		if err != nil {
+			fmt.Println("Error out", err.Error())
+		}
+	}
+	
 	if strings.IndexRune( options.Skip, 'b' ) < 0 {
 		fmt.Println(`Compiling dcoin.go`)
 		if err = os.MkdirAll( filepath.Dir(options.OutFile), 0755); err != nil {
@@ -214,13 +232,13 @@ func main() {
 			exit( err )
 		}
 	}
-	zipfile := `dcoin.zip`
+	zipfile := `daylight.zip`
 	switch runtime.GOOS {
 		case `windows`:
 			if runtime.GOARCH == `386` {
-				zipfile = `dcoin_win32.zip` 
+				zipfile = `daylight_win32.zip` 
 			} else {
-				zipfile = `dcoin_win64.zip` 
+				zipfile = `daylight_win64.zip` 
 			}
 	}
 	zipname := filepath.Join(filepath.Dir( filepath.Dir( options.OutFile )), zipfile )
