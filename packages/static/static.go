@@ -15,6 +15,7 @@
 // static/dashboard_citizen.html
 // static/dashboard_company.html
 // static/dashboard_gov.html
+// static/data/anonym_history.json
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/bg1.jpg
@@ -549,6 +550,24 @@ func staticDashboard_companyHtml() (*asset, error) {
 func staticDashboard_govHtml() (*asset, error) {
 	path := "static/dashboard_gov.html"
 	name := "static/dashboard_gov.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataAnonym_historyJson reads file data from disk. It returns an error on failure.
+func staticDataAnonym_historyJson() (*asset, error) {
+	path := "static/data/anonym_history.json"
+	name := "static/data/anonym_history.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5166,6 +5185,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/dashboard_citizen.html": staticDashboard_citizenHtml,
 	"static/dashboard_company.html": staticDashboard_companyHtml,
 	"static/dashboard_gov.html": staticDashboard_govHtml,
+	"static/data/anonym_history.json": staticDataAnonym_historyJson,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
@@ -5478,6 +5498,9 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"dashboard_citizen.html": &bintree{staticDashboard_citizenHtml, map[string]*bintree{}},
 		"dashboard_company.html": &bintree{staticDashboard_companyHtml, map[string]*bintree{}},
 		"dashboard_gov.html": &bintree{staticDashboard_govHtml, map[string]*bintree{}},
+		"data": &bintree{nil, map[string]*bintree{
+			"anonym_history.json": &bintree{staticDataAnonym_historyJson, map[string]*bintree{}},
+		}},
 		"i18n": &bintree{nil, map[string]*bintree{
 			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{}},
 			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{}},
