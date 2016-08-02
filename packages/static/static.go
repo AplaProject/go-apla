@@ -10,6 +10,7 @@
 // static/css/theme-f.css
 // static/css/theme-g.css
 // static/css/theme-h.css
+// static/dashboard_cb.html
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/bg1.jpg
@@ -60,7 +61,9 @@
 // static/js/demo/demo-vector-map.js
 // static/js/demo/demo-wizard.js
 // static/js/demo/demo-xeditable.js
+// static/js/index.js
 // static/login.html
+// static/menu.html
 // static/modal.html
 // static/test.html
 // static/updating_blockchain.html
@@ -452,6 +455,24 @@ func staticCssThemeGCss() (*asset, error) {
 func staticCssThemeHCss() (*asset, error) {
 	path := "static/css/theme-h.css"
 	name := "static/css/theme-h.css"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDashboard_cbHtml reads file data from disk. It returns an error on failure.
+func staticDashboard_cbHtml() (*asset, error) {
+	path := "static/dashboard_cb.html"
+	name := "static/dashboard_cb.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1366,10 +1387,46 @@ func staticJsDemoDemoXeditableJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsIndexJs reads file data from disk. It returns an error on failure.
+func staticJsIndexJs() (*asset, error) {
+	path := "static/js/index.js"
+	name := "static/js/index.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticLoginHtml reads file data from disk. It returns an error on failure.
 func staticLoginHtml() (*asset, error) {
 	path := "static/login.html"
 	name := "static/login.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticMenuHtml reads file data from disk. It returns an error on failure.
+func staticMenuHtml() (*asset, error) {
+	path := "static/menu.html"
+	name := "static/menu.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5028,6 +5085,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/css/theme-f.css": staticCssThemeFCss,
 	"static/css/theme-g.css": staticCssThemeGCss,
 	"static/css/theme-h.css": staticCssThemeHCss,
+	"static/dashboard_cb.html": staticDashboard_cbHtml,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
@@ -5078,7 +5136,9 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-vector-map.js": staticJsDemoDemoVectorMapJs,
 	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
+	"static/js/index.js": staticJsIndexJs,
 	"static/login.html": staticLoginHtml,
+	"static/menu.html": staticMenuHtml,
 	"static/modal.html": staticModalHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
@@ -5333,6 +5393,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"theme-g.css": &bintree{staticCssThemeGCss, map[string]*bintree{}},
 			"theme-h.css": &bintree{staticCssThemeHCss, map[string]*bintree{}},
 		}},
+		"dashboard_cb.html": &bintree{staticDashboard_cbHtml, map[string]*bintree{}},
 		"i18n": &bintree{nil, map[string]*bintree{
 			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{}},
 			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{}},
@@ -5392,8 +5453,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
 				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
+			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
 		}},
 		"login.html": &bintree{staticLoginHtml, map[string]*bintree{}},
+		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
 		"modal.html": &bintree{staticModalHtml, map[string]*bintree{}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
