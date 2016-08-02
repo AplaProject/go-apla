@@ -7942,3 +7942,23 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
   color: #23b7e5;
   background-color: #ffffff;
 }
+@media only screen and (max-width: 767px) {
+	#user-block-toggle {
+		position:absolute;
+		right:45px;
+		top:5px;
+		z-index:3001;
+	}
+	#user-block-toggle .icon-user {
+		color:#ffffff;
+	}
+	#bell {
+		position:absolute;
+		right:90px;
+		top:5px;
+		z-index:3001;
+	}
+	#bell .icon-bell {
+		color:#ffffff;
+	}
+}
