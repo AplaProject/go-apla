@@ -30,6 +30,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"encoding/base64"
 )
 
 var (
@@ -61,6 +62,37 @@ func Stop() {
 	IosLog("DCOIN Stop")
 }
 
+func firstBlock() {
+	if *utils.GenerateFirstBlock == 1 {
+
+		block := utils.DecToBin(0, 1)
+
+		PublicKey, _ := ioutil.ReadFile(*utils.Dir + "/PublicKey")
+		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
+
+		NodePublicKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePublicKey")
+		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
+
+		Host, _ := ioutil.ReadFile(*utils.Dir + "/Host")
+
+		tx := utils.DecToBin(1, 1)
+		tx = append(tx, utils.DecToBin(utils.Time(), 4)...)
+		tx = append(tx, utils.EncodeLengthPlusData(PublicKeyBytes)...)
+		tx = append(tx, utils.EncodeLengthPlusData(NodePublicKeyBytes)...)
+		tx = append(tx, utils.EncodeLengthPlusData(Host)...)
+
+		block = append(block, utils.DecToBin(1, 4)...)
+		block = append(block, utils.DecToBin(utils.Time(), 4)...)
+		block = append(block, utils.DecToBin(1, 8)...)
+		block = append(block, utils.DecToBin(0, 1)...)
+		block = append(block, utils.EncodeLengthPlusData(tx)...)
+
+		ioutil.WriteFile("static/1block", block, 0644)
+		os.Exit(0)
+	}
+
+}
+
 func Start(dir string, thrustWindowLoder *window.Window) {
 
 	var err error
@@ -84,6 +116,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		fmt.Println("dir", dir)
 		*utils.Dir = dir
 	}
+
+	firstBlock()
+
 	IosLog("dir:" + dir)
 	fmt.Println("utils.Dir", *utils.Dir)
 
@@ -353,8 +388,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 		http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
-		http.HandleFunc(HandleHttpHost+"/cf/", controllers.IndexCf)
-		http.HandleFunc(HandleHttpHost+"/cf/content", controllers.ContentCf)
 		http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
 		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
 
@@ -435,27 +468,6 @@ func exhangeHttpListener(HandleHttpHost string) {
 		http.HandleFunc(config["getpool_host"]+"/", controllers.IndexGetPool)
 	}
 
-	if eConfig["enable"] == "1" {
-		if len(eConfig["domain"]) > 0 {
-			fmt.Println("E host", eConfig["domain"])
-			http.HandleFunc(eConfig["domain"]+"/", controllers.IndexE)
-			http.HandleFunc(eConfig["domain"]+"/content", controllers.ContentE)
-			http.HandleFunc(eConfig["domain"]+"/ajax", controllers.AjaxE)
-			http.Handle(eConfig["domain"]+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
-			if len(eConfig["static_file_path"]) > 0 {
-				http.HandleFunc(eConfig["domain"]+"/"+eConfig["static_file_path"], controllers.EStaticFile)
-			}
-		} else {
-			eConfig["catalog"] = strings.Replace(eConfig["catalog"], "/", "", -1)
-			fmt.Println("E host", HandleHttpHost+"/"+eConfig["catalog"]+"/")
-			http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/", controllers.IndexE)
-			http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/content", controllers.ContentE)
-			http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/ajax", controllers.AjaxE)
-			if len(eConfig["static_file_path"]) > 0 {
-				http.HandleFunc(HandleHttpHost+"/"+eConfig["catalog"]+"/"+eConfig["static_file_path"], controllers.EStaticFile)
-			}
-		}
-	}
 
 }
 

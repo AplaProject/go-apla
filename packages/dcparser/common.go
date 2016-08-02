@@ -80,6 +80,16 @@ type Parser struct {
 	newPublicKeysHex [3][]byte
 }
 
+type MinerData struct {
+	adminUserId     int64
+	myMinersIds      map[int]int
+	minersIds        map[int]int
+	votes0           int64
+	votes1           int64
+	minMinersKeepers int64
+}
+
+
 func ClearTmp(blocks map[int64]string) {
 	for _, tmpFileName := range blocks {
 		os.Remove(tmpFileName)
@@ -89,8 +99,8 @@ func ClearTmp(blocks map[int64]string) {
 /*
  * $get_block_script_name, $add_node_host используется только при работе в защищенном режиме и только из blocks_collection.php
  * */
-func (p *Parser) GetOldBlocks(userId, blockId int64, host string, hostUserId int64, goroutineName string, dataTypeBlockBody int64, nodeHost string) error {
-	log.Debug("userId", userId, "blockId", blockId)
+func (p *Parser) GetOldBlocks(walletId,CBID, blockId int64, host string, hostUserId int64, goroutineName string, dataTypeBlockBody int64, nodeHost string) error {
+	log.Debug("walletId", walletId,"CBID", CBID, "blockId", blockId)
 	err := p.GetBlocks(blockId, host, hostUserId, "rollback_blocks_2", goroutineName, dataTypeBlockBody, nodeHost)
 	if err != nil {
 		log.Error("v", err)
@@ -200,10 +210,13 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 		}
 
 		// публичный ключ того, кто этот блок сгенерил
-		nodePublicKey, err := p.GetNodePublicKey(blockData.UserId)
+		nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.CBID)
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
 
-		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.UserId, blockData.Level, mrklRoot)
+		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.CBID, mrklRoot)
 		log.Debug("forSign", forSign)
 
 		// проверяем подпись
@@ -320,7 +333,6 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 				parser.PrevBlock.Hash = prevBlock[intBlockId-1].Hash
 				parser.PrevBlock.HeadHash = prevBlock[intBlockId-1].HeadHash
 				parser.PrevBlock.Time = prevBlock[intBlockId-1].Time
-				parser.PrevBlock.Level = prevBlock[intBlockId-1].Level
 				parser.PrevBlock.BlockId = prevBlock[intBlockId-1].BlockId
 			}
 
@@ -401,9 +413,8 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 							head_hash = [hex],
 							block_id = ?,
 							time = ?,
-							level = ?,
 							sent = 0
-					`, utils.BinToHex(lastMyBlock["hash"]), utils.BinToHex(lastMyBlock["head_hash"]), lastMyBlockData.BlockId, lastMyBlockData.Time, lastMyBlockData.Level)
+					`, utils.BinToHex(lastMyBlock["hash"]), utils.BinToHex(lastMyBlock["head_hash"]), lastMyBlockData.BlockId, lastMyBlockData.Time)
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
@@ -444,7 +455,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 		blockHex := utils.BinToHex(block)
 
 		// пишем в цепочку блоков
-		err = p.ExecSql("UPDATE info_block SET hash = [hex], head_hash = [hex], block_id= ?, time= ?, level= ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].HeadHash, prevBlock[blockId].BlockId, prevBlock[blockId].Time, prevBlock[blockId].Level)
+		err = p.ExecSql("UPDATE info_block SET hash = [hex], head_hash = [hex], block_id= ?, time= ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].HeadHash, prevBlock[blockId].BlockId, prevBlock[blockId].Time)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -484,7 +495,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 }
 
 func (p *Parser) GetBlockInfo() *utils.BlockData {
-	return &utils.BlockData{Hash: p.BlockData.Hash, HeadHash: p.BlockData.HeadHash, Time: p.BlockData.Time, Level: p.BlockData.Level, BlockId: p.BlockData.BlockId}
+	return &utils.BlockData{Hash: p.BlockData.Hash, HeadHash: p.BlockData.HeadHash, Time: p.BlockData.Time, BlockId: p.BlockData.BlockId}
 }
 
 func (p *Parser) RollbackTransactionsTestblock(truncate bool) error {
@@ -674,9 +685,9 @@ func (p *Parser) ParseBlock() error {
 		TYPE (0-блок, 1-тр-я)     1
 		BLOCK_ID   				       4
 		TIME       					       4
-		USER_ID                         5
-		LEVEL                              1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
+		WALLET_ID                         5
+		CB_ID                         5
+		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
 		Далее - тело блока (Тр-ии)
 	*/
 	p.BlockData = utils.ParseBlockHeader(&p.BinaryData)
@@ -729,34 +740,12 @@ func (p *Parser) CheckBlockHeader() error {
 		log.Debug("p.BlockData.Time", p.BlockData.Time)
 		return utils.ErrInfo(fmt.Errorf("incorrect time"))
 	}
-	// проверим уровень
-	if !utils.CheckInputData(p.BlockData.Level, "level") {
-		return utils.ErrInfo(fmt.Errorf("incorrect level"))
-	}
 
-	// получим значения для сна
-	sleepData, err := p.GetSleepData()
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-
-	// узнаем время, которые было затрачено в ожидании is_ready предыдущим блоком
-	isReadySleep := p.GetIsReadySleep(p.PrevBlock.Level, sleepData["is_ready"])
-	log.Debug("isReadySleep", isReadySleep)
-
-	// сколько сек должен ждать нод, перед тем, как начать генерить блок, если нашел себя в одном из уровней.
-	generatorSleep := utils.GetGeneratorSleep(p.BlockData.Level, sleepData["generator"])
-	log.Debug("generatorSleep", generatorSleep)
-
-	// сумма is_ready всех предыдущих уровней, которые не успели сгенерить блок
-	log.Debug("p.BlockData %v", p.BlockData)
-	isReadySleep2 := utils.GetIsReadySleepSum(p.BlockData.Level, sleepData["is_ready"])
-	log.Debug("isReadySleep2", isReadySleep2)
 
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	if !first {
-		if p.PrevBlock.Time+isReadySleep+generatorSleep+isReadySleep2-p.BlockData.Time > p.Variables.Int64["error_time"] {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d + %d+ %d - %d > %d", p.PrevBlock.Time, isReadySleep, generatorSleep, isReadySleep2, p.BlockData.Time, p.Variables.Int64["error_time"]))
+		if p.PrevBlock.Time+consts.GAPS_BETWEEN_BLOCKS+p.BlockData.Time > p.Variables.Int64["error_time"] {
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, consts.GAPS_BETWEEN_BLOCKS,  p.BlockData.Time, p.Variables.Int64["error_time"]))
 		}
 	}
 
@@ -778,7 +767,7 @@ func (p *Parser) CheckBlockHeader() error {
 	}
 
 	// проверим, есть ли такой майнер и заодно получим public_key
-	nodePublicKey, err := p.GetNodePublicKey(p.BlockData.UserId)
+	nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(p.BlockData.WalletId, p.BlockData.CBID)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -788,7 +777,7 @@ func (p *Parser) CheckBlockHeader() error {
 			return utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", p.BlockData.BlockId, p.PrevBlock.Hash, p.BlockData.Time, p.BlockData.UserId, p.BlockData.Level, p.MrklRoot)
+		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", p.BlockData.BlockId, p.PrevBlock.Hash, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.CBID, p.MrklRoot)
 		log.Debug(forSign)
 		// проверим подпись
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, p.BlockData.Sign, true)
@@ -824,11 +813,11 @@ func (p *Parser) GetInfoBlock() error {
 	p.PrevBlock = new(utils.BlockData)
 	var q string
 	if p.ConfigIni["db_type"] == "mysql" || p.ConfigIni["db_type"] == "sqlite" {
-		q = "SELECT LOWER(HEX(hash)) as hash, LOWER(HEX(head_hash)) as head_hash, block_id, level, time FROM info_block"
+		q = "SELECT LOWER(HEX(hash)) as hash, LOWER(HEX(head_hash)) as head_hash, block_id, time FROM info_block"
 	} else if p.ConfigIni["db_type"] == "postgresql" {
-		q = "SELECT encode(hash, 'HEX')  as hash, encode(head_hash, 'HEX') as head_hash, block_id, level, time FROM info_block"
+		q = "SELECT encode(hash, 'HEX')  as hash, encode(head_hash, 'HEX') as head_hash, block_id, time FROM info_block"
 	}
-	err := p.QueryRow(q).Scan(&p.PrevBlock.Hash, &p.PrevBlock.HeadHash, &p.PrevBlock.BlockId, &p.PrevBlock.Level, &p.PrevBlock.Time)
+	err := p.QueryRow(q).Scan(&p.PrevBlock.Hash, &p.PrevBlock.HeadHash, &p.PrevBlock.BlockId, &p.PrevBlock.Time)
 
 	if err != nil && err != sql.ErrNoRows {
 		return p.ErrInfo(err)
@@ -1389,18 +1378,18 @@ func (p *Parser) UpdBlockInfo() {
 			blockId = *utils.StartBlockId
 		}
 	}
-	headHashData := fmt.Sprintf("%d,%d,%s", p.BlockData.UserId, blockId, p.PrevBlock.HeadHash)
+	headHashData := fmt.Sprintf("%d,%d,%d,%s", p.BlockData.WalletId, p.BlockData.CBID, blockId, p.PrevBlock.HeadHash)
 	p.BlockData.HeadHash = utils.DSha256(headHashData)
-	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.UserId, p.BlockData.Level)
+	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.CBID)
 	log.Debug("forSha", forSha)
 	p.BlockData.Hash = utils.DSha256(forSha)
 
 	if p.BlockData.BlockId == 1 {
-		p.ExecSql("INSERT INTO info_block (hash, head_hash, block_id, time, level, current_version) VALUES ([hex], [hex], ?, ?, ?, ?)",
-			p.BlockData.Hash, p.BlockData.HeadHash, blockId, p.BlockData.Time, p.BlockData.Level, p.CurrentVersion)
+		p.ExecSql("INSERT INTO info_block (hash, head_hash, block_id, time, current_version) VALUES ([hex], [hex], ?, ?, ?, ?)",
+			p.BlockData.Hash, p.BlockData.HeadHash, blockId, p.BlockData.Time, p.CurrentVersion)
 	} else {
-		p.ExecSql("UPDATE info_block SET hash = [hex], head_hash = [hex], block_id = ?, time = ?, level = ?, sent = 0",
-			p.BlockData.Hash, p.BlockData.HeadHash, blockId, p.BlockData.Time, p.BlockData.Level)
+		p.ExecSql("UPDATE info_block SET hash = [hex], head_hash = [hex], block_id = ?, time = ?, sent = 0",
+			p.BlockData.Hash, p.BlockData.HeadHash, blockId, p.BlockData.Time)
 		p.ExecSql("UPDATE config SET my_block_id = ? WHERE my_block_id < ?", blockId, blockId)
 	}
 }
@@ -2817,75 +2806,7 @@ func (p *Parser) calcNodeCommission(amount float64, nodeCommission [3]float64) f
 }
 
 func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (float64, error) {
-	var nodeCommission float64
-	if currencyId >= 1000 {
-		currencyId = 1000
-	}
-	// если это тр-ия без блока, то комиссию нода берем у себя
-	if p.BlockData == nil {
-		_, _, _, myUserIds, err := p.GetMyUserId(userId)
-		if err != nil {
-			return 0, p.ErrInfo(err)
-		}
-
-		var commissionJson []byte
-		// один элемент в  my_user_ids - это сингл мод
-		if len(myUserIds) == 1 {
-			commissionJson, err = p.Single("SELECT commission FROM commission WHERE user_id  =  ?", myUserIds[0]).Bytes()
-			if err != nil {
-				return 0, p.ErrInfo(err)
-			}
-		} else {
-			// если работаем в режиме пула, тогда комиссию берем из config, т.к. майнеры в пуле, у кого комиссиия больше не смогут генерить блоки
-			commissionJson, err = p.Single("SELECT commission FROM config").Bytes()
-			if err != nil {
-				return 0, p.ErrInfo(err)
-			}
-		}
-		commissionMap := make(map[string][3]float64)
-		if len(commissionJson) > 0 {
-			err = json.Unmarshal(commissionJson, &commissionMap)
-			if err != nil {
-				return 0, p.ErrInfo(fmt.Sprintf("commissionJson: %v , %v", commissionJson, err))
-			}
-		}
-		var tmpNodeCommission float64
-		currencyIdStr := utils.Int64ToStr(currencyId)
-		if len(commissionMap[currencyIdStr]) > 0 {
-			if len(commissionMap[currencyIdStr]) != 3 {
-				return 0, p.ErrInfo(err)
-			}
-			tmpNodeCommission = p.calcNodeCommission(amount, commissionMap[currencyIdStr])
-		} else {
-			tmpNodeCommission = 0
-		}
-		if tmpNodeCommission > nodeCommission {
-			nodeCommission = tmpNodeCommission
-		}
-	} else { // если же тр-ия уже в блоке, то берем комиссию у юзера, который сгенерил этот блок
-		commissionJson, err := p.Single("SELECT commission FROM commission WHERE user_id  =  ?", p.BlockData.UserId).Bytes()
-		if err != nil {
-			return 0, p.ErrInfo(err)
-		}
-		if len(commissionJson) == 0 {
-			nodeCommission = 0
-		} else {
-			commissionMap := make(map[string][3]float64)
-			err = json.Unmarshal(commissionJson, &commissionMap)
-			if err != nil {
-				return 0, p.ErrInfo(err)
-			}
-			currencyIdStr := utils.Int64ToStr(currencyId)
-			if len(commissionMap[currencyIdStr]) > 0 {
-				log.Debug("commissionMap[currencyIdStr]", commissionMap[currencyIdStr])
-				nodeCommission = p.calcNodeCommission(amount, commissionMap[currencyIdStr])
-				log.Debug("nodeCommission", nodeCommission)
-			} else {
-				nodeCommission = 0
-			}
-		}
-	}
-	return nodeCommission, nil
+	return consts.COMMISSION, nil
 
 }
 

@@ -393,3 +393,7 @@ var DCTarget = map[int64]int64{
 	58:16000000000000,
 	23:3000000000000,
 }
+
+// DL
+const GAPS_BETWEEN_BLOCKS = 1
+const COMMISSION = 0.001
