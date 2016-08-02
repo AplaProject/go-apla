@@ -88,8 +88,9 @@ func firstBlock() {
 		block = append(block, utils.EncodeLengthPlusData(tx)...)
 
 		ioutil.WriteFile("static/1block", block, 0644)
+		os.Exit(0)
 	}
-	os.Exit(0)
+
 }
 
 func Start(dir string, thrustWindowLoder *window.Window) {
