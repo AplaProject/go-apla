@@ -62,6 +62,7 @@
 // static/js/demo/demo-xeditable.js
 // static/login.html
 // static/modal.html
+// static/test.html
 // static/updating_blockchain.html
 // static/vendor/Chart.js/Chart.js
 // static/vendor/Flot/jquery.flot.categories.js
@@ -266,9 +267,9 @@ package static
 import (
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // bindataRead reads the given file from disk. It returns an error on failure.
@@ -287,7 +288,7 @@ type asset struct {
 
 // staticCssAppCss reads file data from disk. It returns an error on failure.
 func staticCssAppCss() (*asset, error) {
-	path := "/dl/static/css/app.css"
+	path := "static/css/app.css"
 	name := "static/css/app.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -305,7 +306,7 @@ func staticCssAppCss() (*asset, error) {
 
 // staticCssBootstrapCss reads file data from disk. It returns an error on failure.
 func staticCssBootstrapCss() (*asset, error) {
-	path := "/dl/static/css/bootstrap.css"
+	path := "static/css/bootstrap.css"
 	name := "static/css/bootstrap.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -323,7 +324,7 @@ func staticCssBootstrapCss() (*asset, error) {
 
 // staticCssThemeACss reads file data from disk. It returns an error on failure.
 func staticCssThemeACss() (*asset, error) {
-	path := "/dl/static/css/theme-a.css"
+	path := "static/css/theme-a.css"
 	name := "static/css/theme-a.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -341,7 +342,7 @@ func staticCssThemeACss() (*asset, error) {
 
 // staticCssThemeBCss reads file data from disk. It returns an error on failure.
 func staticCssThemeBCss() (*asset, error) {
-	path := "/dl/static/css/theme-b.css"
+	path := "static/css/theme-b.css"
 	name := "static/css/theme-b.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -359,7 +360,7 @@ func staticCssThemeBCss() (*asset, error) {
 
 // staticCssThemeCCss reads file data from disk. It returns an error on failure.
 func staticCssThemeCCss() (*asset, error) {
-	path := "/dl/static/css/theme-c.css"
+	path := "static/css/theme-c.css"
 	name := "static/css/theme-c.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -377,7 +378,7 @@ func staticCssThemeCCss() (*asset, error) {
 
 // staticCssThemeDCss reads file data from disk. It returns an error on failure.
 func staticCssThemeDCss() (*asset, error) {
-	path := "/dl/static/css/theme-d.css"
+	path := "static/css/theme-d.css"
 	name := "static/css/theme-d.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -395,7 +396,7 @@ func staticCssThemeDCss() (*asset, error) {
 
 // staticCssThemeECss reads file data from disk. It returns an error on failure.
 func staticCssThemeECss() (*asset, error) {
-	path := "/dl/static/css/theme-e.css"
+	path := "static/css/theme-e.css"
 	name := "static/css/theme-e.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -413,7 +414,7 @@ func staticCssThemeECss() (*asset, error) {
 
 // staticCssThemeFCss reads file data from disk. It returns an error on failure.
 func staticCssThemeFCss() (*asset, error) {
-	path := "/dl/static/css/theme-f.css"
+	path := "static/css/theme-f.css"
 	name := "static/css/theme-f.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -431,7 +432,7 @@ func staticCssThemeFCss() (*asset, error) {
 
 // staticCssThemeGCss reads file data from disk. It returns an error on failure.
 func staticCssThemeGCss() (*asset, error) {
-	path := "/dl/static/css/theme-g.css"
+	path := "static/css/theme-g.css"
 	name := "static/css/theme-g.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -449,7 +450,7 @@ func staticCssThemeGCss() (*asset, error) {
 
 // staticCssThemeHCss reads file data from disk. It returns an error on failure.
 func staticCssThemeHCss() (*asset, error) {
-	path := "/dl/static/css/theme-h.css"
+	path := "static/css/theme-h.css"
 	name := "static/css/theme-h.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -467,7 +468,7 @@ func staticCssThemeHCss() (*asset, error) {
 
 // staticI18nSiteEnJson reads file data from disk. It returns an error on failure.
 func staticI18nSiteEnJson() (*asset, error) {
-	path := "/dl/static/i18n/site-en.json"
+	path := "static/i18n/site-en.json"
 	name := "static/i18n/site-en.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -485,7 +486,7 @@ func staticI18nSiteEnJson() (*asset, error) {
 
 // staticI18nSiteEsJson reads file data from disk. It returns an error on failure.
 func staticI18nSiteEsJson() (*asset, error) {
-	path := "/dl/static/i18n/site-es.json"
+	path := "static/i18n/site-es.json"
 	name := "static/i18n/site-es.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -503,7 +504,7 @@ func staticI18nSiteEsJson() (*asset, error) {
 
 // staticImgBg1Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg1Jpg() (*asset, error) {
-	path := "/dl/static/img/bg1.jpg"
+	path := "static/img/bg1.jpg"
 	name := "static/img/bg1.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -521,7 +522,7 @@ func staticImgBg1Jpg() (*asset, error) {
 
 // staticImgBg10Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg10Jpg() (*asset, error) {
-	path := "/dl/static/img/bg10.jpg"
+	path := "static/img/bg10.jpg"
 	name := "static/img/bg10.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -539,7 +540,7 @@ func staticImgBg10Jpg() (*asset, error) {
 
 // staticImgBg2Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg2Jpg() (*asset, error) {
-	path := "/dl/static/img/bg2.jpg"
+	path := "static/img/bg2.jpg"
 	name := "static/img/bg2.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -557,7 +558,7 @@ func staticImgBg2Jpg() (*asset, error) {
 
 // staticImgBg3Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg3Jpg() (*asset, error) {
-	path := "/dl/static/img/bg3.jpg"
+	path := "static/img/bg3.jpg"
 	name := "static/img/bg3.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -575,7 +576,7 @@ func staticImgBg3Jpg() (*asset, error) {
 
 // staticImgBg4Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg4Jpg() (*asset, error) {
-	path := "/dl/static/img/bg4.jpg"
+	path := "static/img/bg4.jpg"
 	name := "static/img/bg4.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -593,7 +594,7 @@ func staticImgBg4Jpg() (*asset, error) {
 
 // staticImgBg5Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg5Jpg() (*asset, error) {
-	path := "/dl/static/img/bg5.jpg"
+	path := "static/img/bg5.jpg"
 	name := "static/img/bg5.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -611,7 +612,7 @@ func staticImgBg5Jpg() (*asset, error) {
 
 // staticImgBg6Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg6Jpg() (*asset, error) {
-	path := "/dl/static/img/bg6.jpg"
+	path := "static/img/bg6.jpg"
 	name := "static/img/bg6.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -629,7 +630,7 @@ func staticImgBg6Jpg() (*asset, error) {
 
 // staticImgBg7Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg7Jpg() (*asset, error) {
-	path := "/dl/static/img/bg7.jpg"
+	path := "static/img/bg7.jpg"
 	name := "static/img/bg7.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -647,7 +648,7 @@ func staticImgBg7Jpg() (*asset, error) {
 
 // staticImgBg8Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg8Jpg() (*asset, error) {
-	path := "/dl/static/img/bg8.jpg"
+	path := "static/img/bg8.jpg"
 	name := "static/img/bg8.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -665,7 +666,7 @@ func staticImgBg8Jpg() (*asset, error) {
 
 // staticImgBg9Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg9Jpg() (*asset, error) {
-	path := "/dl/static/img/bg9.jpg"
+	path := "static/img/bg9.jpg"
 	name := "static/img/bg9.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -683,7 +684,7 @@ func staticImgBg9Jpg() (*asset, error) {
 
 // staticImgDummyPng reads file data from disk. It returns an error on failure.
 func staticImgDummyPng() (*asset, error) {
-	path := "/dl/static/img/dummy.png"
+	path := "static/img/dummy.png"
 	name := "static/img/dummy.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -701,7 +702,7 @@ func staticImgDummyPng() (*asset, error) {
 
 // staticImgLockBgJpg reads file data from disk. It returns an error on failure.
 func staticImgLockBgJpg() (*asset, error) {
-	path := "/dl/static/img/lock-bg.jpg"
+	path := "static/img/lock-bg.jpg"
 	name := "static/img/lock-bg.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -719,7 +720,7 @@ func staticImgLockBgJpg() (*asset, error) {
 
 // staticImgLogoSinglePng reads file data from disk. It returns an error on failure.
 func staticImgLogoSinglePng() (*asset, error) {
-	path := "/dl/static/img/logo-single.png"
+	path := "static/img/logo-single.png"
 	name := "static/img/logo-single.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -737,7 +738,7 @@ func staticImgLogoSinglePng() (*asset, error) {
 
 // staticImgLogoPng reads file data from disk. It returns an error on failure.
 func staticImgLogoPng() (*asset, error) {
-	path := "/dl/static/img/logo.png"
+	path := "static/img/logo.png"
 	name := "static/img/logo.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -755,7 +756,7 @@ func staticImgLogoPng() (*asset, error) {
 
 // staticImgMbSampleJpg reads file data from disk. It returns an error on failure.
 func staticImgMbSampleJpg() (*asset, error) {
-	path := "/dl/static/img/mb-sample.jpg"
+	path := "static/img/mb-sample.jpg"
 	name := "static/img/mb-sample.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -773,7 +774,7 @@ func staticImgMbSampleJpg() (*asset, error) {
 
 // staticImgMockupPng reads file data from disk. It returns an error on failure.
 func staticImgMockupPng() (*asset, error) {
-	path := "/dl/static/img/mockup.png"
+	path := "static/img/mockup.png"
 	name := "static/img/mockup.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -791,7 +792,7 @@ func staticImgMockupPng() (*asset, error) {
 
 // staticImgProfileBgJpg reads file data from disk. It returns an error on failure.
 func staticImgProfileBgJpg() (*asset, error) {
-	path := "/dl/static/img/profile-bg.jpg"
+	path := "static/img/profile-bg.jpg"
 	name := "static/img/profile-bg.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -809,7 +810,7 @@ func staticImgProfileBgJpg() (*asset, error) {
 
 // staticImgUser01Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser01Jpg() (*asset, error) {
-	path := "/dl/static/img/user/01.jpg"
+	path := "static/img/user/01.jpg"
 	name := "static/img/user/01.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -827,7 +828,7 @@ func staticImgUser01Jpg() (*asset, error) {
 
 // staticImgUser02Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser02Jpg() (*asset, error) {
-	path := "/dl/static/img/user/02.jpg"
+	path := "static/img/user/02.jpg"
 	name := "static/img/user/02.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -845,7 +846,7 @@ func staticImgUser02Jpg() (*asset, error) {
 
 // staticImgUser03Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser03Jpg() (*asset, error) {
-	path := "/dl/static/img/user/03.jpg"
+	path := "static/img/user/03.jpg"
 	name := "static/img/user/03.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -863,7 +864,7 @@ func staticImgUser03Jpg() (*asset, error) {
 
 // staticImgUser04Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser04Jpg() (*asset, error) {
-	path := "/dl/static/img/user/04.jpg"
+	path := "static/img/user/04.jpg"
 	name := "static/img/user/04.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -881,7 +882,7 @@ func staticImgUser04Jpg() (*asset, error) {
 
 // staticImgUser05Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser05Jpg() (*asset, error) {
-	path := "/dl/static/img/user/05.jpg"
+	path := "static/img/user/05.jpg"
 	name := "static/img/user/05.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -899,7 +900,7 @@ func staticImgUser05Jpg() (*asset, error) {
 
 // staticImgUser06Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser06Jpg() (*asset, error) {
-	path := "/dl/static/img/user/06.jpg"
+	path := "static/img/user/06.jpg"
 	name := "static/img/user/06.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -917,7 +918,7 @@ func staticImgUser06Jpg() (*asset, error) {
 
 // staticImgUser07Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser07Jpg() (*asset, error) {
-	path := "/dl/static/img/user/07.jpg"
+	path := "static/img/user/07.jpg"
 	name := "static/img/user/07.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -935,7 +936,7 @@ func staticImgUser07Jpg() (*asset, error) {
 
 // staticImgUser08Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser08Jpg() (*asset, error) {
-	path := "/dl/static/img/user/08.jpg"
+	path := "static/img/user/08.jpg"
 	name := "static/img/user/08.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -953,7 +954,7 @@ func staticImgUser08Jpg() (*asset, error) {
 
 // staticImgUser09Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser09Jpg() (*asset, error) {
-	path := "/dl/static/img/user/09.jpg"
+	path := "static/img/user/09.jpg"
 	name := "static/img/user/09.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -971,7 +972,7 @@ func staticImgUser09Jpg() (*asset, error) {
 
 // staticImgUser10Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser10Jpg() (*asset, error) {
-	path := "/dl/static/img/user/10.jpg"
+	path := "static/img/user/10.jpg"
 	name := "static/img/user/10.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -989,7 +990,7 @@ func staticImgUser10Jpg() (*asset, error) {
 
 // staticImgUser11Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser11Jpg() (*asset, error) {
-	path := "/dl/static/img/user/11.jpg"
+	path := "static/img/user/11.jpg"
 	name := "static/img/user/11.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1007,7 +1008,7 @@ func staticImgUser11Jpg() (*asset, error) {
 
 // staticImgUser12Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser12Jpg() (*asset, error) {
-	path := "/dl/static/img/user/12.jpg"
+	path := "static/img/user/12.jpg"
 	name := "static/img/user/12.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1025,7 +1026,7 @@ func staticImgUser12Jpg() (*asset, error) {
 
 // staticImgUser13Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser13Jpg() (*asset, error) {
-	path := "/dl/static/img/user/13.jpg"
+	path := "static/img/user/13.jpg"
 	name := "static/img/user/13.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1043,7 +1044,7 @@ func staticImgUser13Jpg() (*asset, error) {
 
 // staticIndexHtml reads file data from disk. It returns an error on failure.
 func staticIndexHtml() (*asset, error) {
-	path := "/dl/static/index.html"
+	path := "static/index.html"
 	name := "static/index.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1061,7 +1062,7 @@ func staticIndexHtml() (*asset, error) {
 
 // staticInstall_step_0Html reads file data from disk. It returns an error on failure.
 func staticInstall_step_0Html() (*asset, error) {
-	path := "/dl/static/install_step_0.html"
+	path := "static/install_step_0.html"
 	name := "static/install_step_0.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1079,7 +1080,7 @@ func staticInstall_step_0Html() (*asset, error) {
 
 // staticInstall_step_1Html reads file data from disk. It returns an error on failure.
 func staticInstall_step_1Html() (*asset, error) {
-	path := "/dl/static/install_step_1.html"
+	path := "static/install_step_1.html"
 	name := "static/install_step_1.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1097,7 +1098,7 @@ func staticInstall_step_1Html() (*asset, error) {
 
 // staticJsAppJs reads file data from disk. It returns an error on failure.
 func staticJsAppJs() (*asset, error) {
-	path := "/dl/static/js/app.js"
+	path := "static/js/app.js"
 	name := "static/js/app.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1115,7 +1116,7 @@ func staticJsAppJs() (*asset, error) {
 
 // staticJsDemoDemoDatatableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoDatatableJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-datatable.js"
+	path := "static/js/demo/demo-datatable.js"
 	name := "static/js/demo/demo-datatable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1133,7 +1134,7 @@ func staticJsDemoDemoDatatableJs() (*asset, error) {
 
 // staticJsDemoDemoFlotJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoFlotJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-flot.js"
+	path := "static/js/demo/demo-flot.js"
 	name := "static/js/demo/demo-flot.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1151,7 +1152,7 @@ func staticJsDemoDemoFlotJs() (*asset, error) {
 
 // staticJsDemoDemoFormsJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoFormsJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-forms.js"
+	path := "static/js/demo/demo-forms.js"
 	name := "static/js/demo/demo-forms.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1169,7 +1170,7 @@ func staticJsDemoDemoFormsJs() (*asset, error) {
 
 // staticJsDemoDemoJqcloudJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoJqcloudJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-jqcloud.js"
+	path := "static/js/demo/demo-jqcloud.js"
 	name := "static/js/demo/demo-jqcloud.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1187,7 +1188,7 @@ func staticJsDemoDemoJqcloudJs() (*asset, error) {
 
 // staticJsDemoDemoJqgridJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoJqgridJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-jqgrid.js"
+	path := "static/js/demo/demo-jqgrid.js"
 	name := "static/js/demo/demo-jqgrid.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1205,7 +1206,7 @@ func staticJsDemoDemoJqgridJs() (*asset, error) {
 
 // staticJsDemoDemoNestableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoNestableJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-nestable.js"
+	path := "static/js/demo/demo-nestable.js"
 	name := "static/js/demo/demo-nestable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1223,7 +1224,7 @@ func staticJsDemoDemoNestableJs() (*asset, error) {
 
 // staticJsDemoDemoPanelsJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoPanelsJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-panels.js"
+	path := "static/js/demo/demo-panels.js"
 	name := "static/js/demo/demo-panels.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1241,7 +1242,7 @@ func staticJsDemoDemoPanelsJs() (*asset, error) {
 
 // staticJsDemoDemoRtlJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoRtlJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-rtl.js"
+	path := "static/js/demo/demo-rtl.js"
 	name := "static/js/demo/demo-rtl.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1259,7 +1260,7 @@ func staticJsDemoDemoRtlJs() (*asset, error) {
 
 // staticJsDemoDemoSearchJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoSearchJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-search.js"
+	path := "static/js/demo/demo-search.js"
 	name := "static/js/demo/demo-search.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1277,7 +1278,7 @@ func staticJsDemoDemoSearchJs() (*asset, error) {
 
 // staticJsDemoDemoSortableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoSortableJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-sortable.js"
+	path := "static/js/demo/demo-sortable.js"
 	name := "static/js/demo/demo-sortable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1295,7 +1296,7 @@ func staticJsDemoDemoSortableJs() (*asset, error) {
 
 // staticJsDemoDemoUploadJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoUploadJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-upload.js"
+	path := "static/js/demo/demo-upload.js"
 	name := "static/js/demo/demo-upload.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1313,7 +1314,7 @@ func staticJsDemoDemoUploadJs() (*asset, error) {
 
 // staticJsDemoDemoVectorMapJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoVectorMapJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-vector-map.js"
+	path := "static/js/demo/demo-vector-map.js"
 	name := "static/js/demo/demo-vector-map.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1331,7 +1332,7 @@ func staticJsDemoDemoVectorMapJs() (*asset, error) {
 
 // staticJsDemoDemoWizardJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoWizardJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-wizard.js"
+	path := "static/js/demo/demo-wizard.js"
 	name := "static/js/demo/demo-wizard.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1349,7 +1350,7 @@ func staticJsDemoDemoWizardJs() (*asset, error) {
 
 // staticJsDemoDemoXeditableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoXeditableJs() (*asset, error) {
-	path := "/dl/static/js/demo/demo-xeditable.js"
+	path := "static/js/demo/demo-xeditable.js"
 	name := "static/js/demo/demo-xeditable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1367,7 +1368,7 @@ func staticJsDemoDemoXeditableJs() (*asset, error) {
 
 // staticLoginHtml reads file data from disk. It returns an error on failure.
 func staticLoginHtml() (*asset, error) {
-	path := "/dl/static/login.html"
+	path := "static/login.html"
 	name := "static/login.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1385,8 +1386,26 @@ func staticLoginHtml() (*asset, error) {
 
 // staticModalHtml reads file data from disk. It returns an error on failure.
 func staticModalHtml() (*asset, error) {
-	path := "/dl/static/modal.html"
+	path := "static/modal.html"
 	name := "static/modal.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticTestHtml reads file data from disk. It returns an error on failure.
+func staticTestHtml() (*asset, error) {
+	path := "static/test.html"
+	name := "static/test.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1403,7 +1422,7 @@ func staticModalHtml() (*asset, error) {
 
 // staticUpdating_blockchainHtml reads file data from disk. It returns an error on failure.
 func staticUpdating_blockchainHtml() (*asset, error) {
-	path := "/dl/static/updating_blockchain.html"
+	path := "static/updating_blockchain.html"
 	name := "static/updating_blockchain.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1421,7 +1440,7 @@ func staticUpdating_blockchainHtml() (*asset, error) {
 
 // staticVendorChartJsChartJs reads file data from disk. It returns an error on failure.
 func staticVendorChartJsChartJs() (*asset, error) {
-	path := "/dl/static/vendor/Chart.js/Chart.js"
+	path := "static/vendor/Chart.js/Chart.js"
 	name := "static/vendor/Chart.js/Chart.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1439,7 +1458,7 @@ func staticVendorChartJsChartJs() (*asset, error) {
 
 // staticVendorFlotJqueryFlotCategoriesJs reads file data from disk. It returns an error on failure.
 func staticVendorFlotJqueryFlotCategoriesJs() (*asset, error) {
-	path := "/dl/static/vendor/Flot/jquery.flot.categories.js"
+	path := "static/vendor/Flot/jquery.flot.categories.js"
 	name := "static/vendor/Flot/jquery.flot.categories.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1457,7 +1476,7 @@ func staticVendorFlotJqueryFlotCategoriesJs() (*asset, error) {
 
 // staticVendorFlotJqueryFlotJs reads file data from disk. It returns an error on failure.
 func staticVendorFlotJqueryFlotJs() (*asset, error) {
-	path := "/dl/static/vendor/Flot/jquery.flot.js"
+	path := "static/vendor/Flot/jquery.flot.js"
 	name := "static/vendor/Flot/jquery.flot.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1475,7 +1494,7 @@ func staticVendorFlotJqueryFlotJs() (*asset, error) {
 
 // staticVendorFlotJqueryFlotPieJs reads file data from disk. It returns an error on failure.
 func staticVendorFlotJqueryFlotPieJs() (*asset, error) {
-	path := "/dl/static/vendor/Flot/jquery.flot.pie.js"
+	path := "static/vendor/Flot/jquery.flot.pie.js"
 	name := "static/vendor/Flot/jquery.flot.pie.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1493,7 +1512,7 @@ func staticVendorFlotJqueryFlotPieJs() (*asset, error) {
 
 // staticVendorFlotJqueryFlotResizeJs reads file data from disk. It returns an error on failure.
 func staticVendorFlotJqueryFlotResizeJs() (*asset, error) {
-	path := "/dl/static/vendor/Flot/jquery.flot.resize.js"
+	path := "static/vendor/Flot/jquery.flot.resize.js"
 	name := "static/vendor/Flot/jquery.flot.resize.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1511,7 +1530,7 @@ func staticVendorFlotJqueryFlotResizeJs() (*asset, error) {
 
 // staticVendorFlotJqueryFlotTimeJs reads file data from disk. It returns an error on failure.
 func staticVendorFlotJqueryFlotTimeJs() (*asset, error) {
-	path := "/dl/static/vendor/Flot/jquery.flot.time.js"
+	path := "static/vendor/Flot/jquery.flot.time.js"
 	name := "static/vendor/Flot/jquery.flot.time.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1529,7 +1548,7 @@ func staticVendorFlotJqueryFlotTimeJs() (*asset, error) {
 
 // staticVendorAnimateCssAnimateMinCss reads file data from disk. It returns an error on failure.
 func staticVendorAnimateCssAnimateMinCss() (*asset, error) {
-	path := "/dl/static/vendor/animate.css/animate.min.css"
+	path := "static/vendor/animate.css/animate.min.css"
 	name := "static/vendor/animate.css/animate.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1547,7 +1566,7 @@ func staticVendorAnimateCssAnimateMinCss() (*asset, error) {
 
 // staticVendorAnimoJsAnimoJs reads file data from disk. It returns an error on failure.
 func staticVendorAnimoJsAnimoJs() (*asset, error) {
-	path := "/dl/static/vendor/animo.js/animo.js"
+	path := "static/vendor/animo.js/animo.js"
 	name := "static/vendor/animo.js/animo.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1565,7 +1584,7 @@ func staticVendorAnimoJsAnimoJs() (*asset, error) {
 
 // staticVendorBlueimpCanvasToBlobJsCanvasToBlobJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpCanvasToBlobJsCanvasToBlobJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-canvas-to-blob/js/canvas-to-blob.js"
+	path := "static/vendor/blueimp-canvas-to-blob/js/canvas-to-blob.js"
 	name := "static/vendor/blueimp-canvas-to-blob/js/canvas-to-blob.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1583,7 +1602,7 @@ func staticVendorBlueimpCanvasToBlobJsCanvasToBlobJs() (*asset, error) {
 
 // staticVendorBlueimpFileUploadCssJqueryFileuploadCss reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadCssJqueryFileuploadCss() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/css/jquery.fileupload.css"
+	path := "static/vendor/blueimp-file-upload/css/jquery.fileupload.css"
 	name := "static/vendor/blueimp-file-upload/css/jquery.fileupload.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1601,7 +1620,7 @@ func staticVendorBlueimpFileUploadCssJqueryFileuploadCss() (*asset, error) {
 
 // staticVendorBlueimpFileUploadImgLoadingGif reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadImgLoadingGif() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/img/loading.gif"
+	path := "static/vendor/blueimp-file-upload/img/loading.gif"
 	name := "static/vendor/blueimp-file-upload/img/loading.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1619,7 +1638,7 @@ func staticVendorBlueimpFileUploadImgLoadingGif() (*asset, error) {
 
 // staticVendorBlueimpFileUploadImgProgressbarGif reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadImgProgressbarGif() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/img/progressbar.gif"
+	path := "static/vendor/blueimp-file-upload/img/progressbar.gif"
 	name := "static/vendor/blueimp-file-upload/img/progressbar.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1637,7 +1656,7 @@ func staticVendorBlueimpFileUploadImgProgressbarGif() (*asset, error) {
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadAngularJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadAngularJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-angular.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-angular.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-angular.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1655,7 +1674,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadAngularJs() (*asset, error) 
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadAudioJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadAudioJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-audio.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-audio.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-audio.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1673,7 +1692,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadAudioJs() (*asset, error) {
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadImageJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadImageJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-image.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-image.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-image.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1691,7 +1710,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadImageJs() (*asset, error) {
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadJqueryUiJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadJqueryUiJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-jquery-ui.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-jquery-ui.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-jquery-ui.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1709,7 +1728,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadJqueryUiJs() (*asset, error)
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadProcessJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadProcessJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-process.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-process.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-process.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1727,7 +1746,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadProcessJs() (*asset, error) 
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadUiJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadUiJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-ui.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-ui.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-ui.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1745,7 +1764,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadUiJs() (*asset, error) {
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadValidateJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadValidateJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-validate.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-validate.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-validate.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1763,7 +1782,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadValidateJs() (*asset, error)
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadVideoJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadVideoJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload-video.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload-video.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload-video.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1781,7 +1800,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadVideoJs() (*asset, error) {
 
 // staticVendorBlueimpFileUploadJsJqueryFileuploadJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryFileuploadJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.fileupload.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.fileupload.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.fileupload.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1799,7 +1818,7 @@ func staticVendorBlueimpFileUploadJsJqueryFileuploadJs() (*asset, error) {
 
 // staticVendorBlueimpFileUploadJsJqueryIframeTransportJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpFileUploadJsJqueryIframeTransportJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-file-upload/js/jquery.iframe-transport.js"
+	path := "static/vendor/blueimp-file-upload/js/jquery.iframe-transport.js"
 	name := "static/vendor/blueimp-file-upload/js/jquery.iframe-transport.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1817,7 +1836,7 @@ func staticVendorBlueimpFileUploadJsJqueryIframeTransportJs() (*asset, error) {
 
 // staticVendorBlueimpLoadImageJsLoadImageAllMinJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpLoadImageJsLoadImageAllMinJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-load-image/js/load-image.all.min.js"
+	path := "static/vendor/blueimp-load-image/js/load-image.all.min.js"
 	name := "static/vendor/blueimp-load-image/js/load-image.all.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1835,7 +1854,7 @@ func staticVendorBlueimpLoadImageJsLoadImageAllMinJs() (*asset, error) {
 
 // staticVendorBlueimpTmplJsTmplJs reads file data from disk. It returns an error on failure.
 func staticVendorBlueimpTmplJsTmplJs() (*asset, error) {
-	path := "/dl/static/vendor/blueimp-tmpl/js/tmpl.js"
+	path := "static/vendor/blueimp-tmpl/js/tmpl.js"
 	name := "static/vendor/blueimp-tmpl/js/tmpl.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1853,7 +1872,7 @@ func staticVendorBlueimpTmplJsTmplJs() (*asset, error) {
 
 // staticVendorBootstrapDistCssBootstrapCss reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapDistCssBootstrapCss() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap/dist/css/bootstrap.css"
+	path := "static/vendor/bootstrap/dist/css/bootstrap.css"
 	name := "static/vendor/bootstrap/dist/css/bootstrap.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1871,7 +1890,7 @@ func staticVendorBootstrapDistCssBootstrapCss() (*asset, error) {
 
 // staticVendorBootstrapDistJsBootstrapJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapDistJsBootstrapJs() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap/dist/js/bootstrap.js"
+	path := "static/vendor/bootstrap/dist/js/bootstrap.js"
 	name := "static/vendor/bootstrap/dist/js/bootstrap.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1889,7 +1908,7 @@ func staticVendorBootstrapDistJsBootstrapJs() (*asset, error) {
 
 // staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
+	path := "static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
 	name := "static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1907,7 +1926,7 @@ func staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs() (*asset, error) {
 
 // staticVendorBootstrapTagsinputDistBootstrapTagsinputCss reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapTagsinputDistBootstrapTagsinputCss() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap-tagsinput/dist/bootstrap-tagsinput.css"
+	path := "static/vendor/bootstrap-tagsinput/dist/bootstrap-tagsinput.css"
 	name := "static/vendor/bootstrap-tagsinput/dist/bootstrap-tagsinput.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1925,7 +1944,7 @@ func staticVendorBootstrapTagsinputDistBootstrapTagsinputCss() (*asset, error) {
 
 // staticVendorBootstrapTagsinputDistBootstrapTagsinputMinJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapTagsinputDistBootstrapTagsinputMinJs() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js"
+	path := "static/vendor/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js"
 	name := "static/vendor/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1943,7 +1962,7 @@ func staticVendorBootstrapTagsinputDistBootstrapTagsinputMinJs() (*asset, error)
 
 // staticVendorBootstrapTourBuildCssBootstrapTourStandaloneCss reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapTourBuildCssBootstrapTourStandaloneCss() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap-tour/build/css/bootstrap-tour-standalone.css"
+	path := "static/vendor/bootstrap-tour/build/css/bootstrap-tour-standalone.css"
 	name := "static/vendor/bootstrap-tour/build/css/bootstrap-tour-standalone.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1961,7 +1980,7 @@ func staticVendorBootstrapTourBuildCssBootstrapTourStandaloneCss() (*asset, erro
 
 // staticVendorBootstrapTourBuildJsBootstrapTourStandaloneJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapTourBuildJsBootstrapTourStandaloneJs() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap-tour/build/js/bootstrap-tour-standalone.js"
+	path := "static/vendor/bootstrap-tour/build/js/bootstrap-tour-standalone.js"
 	name := "static/vendor/bootstrap-tour/build/js/bootstrap-tour-standalone.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1979,7 +1998,7 @@ func staticVendorBootstrapTourBuildJsBootstrapTourStandaloneJs() (*asset, error)
 
 // staticVendorBootstrapWysiwygBootstrapWysiwygJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapWysiwygBootstrapWysiwygJs() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap-wysiwyg/bootstrap-wysiwyg.js"
+	path := "static/vendor/bootstrap-wysiwyg/bootstrap-wysiwyg.js"
 	name := "static/vendor/bootstrap-wysiwyg/bootstrap-wysiwyg.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1997,7 +2016,7 @@ func staticVendorBootstrapWysiwygBootstrapWysiwygJs() (*asset, error) {
 
 // staticVendorBootstrapWysiwygExternalJqueryHotkeysJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapWysiwygExternalJqueryHotkeysJs() (*asset, error) {
-	path := "/dl/static/vendor/bootstrap-wysiwyg/external/jquery.hotkeys.js"
+	path := "static/vendor/bootstrap-wysiwyg/external/jquery.hotkeys.js"
 	name := "static/vendor/bootstrap-wysiwyg/external/jquery.hotkeys.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2015,7 +2034,7 @@ func staticVendorBootstrapWysiwygExternalJqueryHotkeysJs() (*asset, error) {
 
 // staticVendorChartistDistChartistJs reads file data from disk. It returns an error on failure.
 func staticVendorChartistDistChartistJs() (*asset, error) {
-	path := "/dl/static/vendor/chartist/dist/chartist.js"
+	path := "static/vendor/chartist/dist/chartist.js"
 	name := "static/vendor/chartist/dist/chartist.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2033,7 +2052,7 @@ func staticVendorChartistDistChartistJs() (*asset, error) {
 
 // staticVendorChartistDistChartistMinCss reads file data from disk. It returns an error on failure.
 func staticVendorChartistDistChartistMinCss() (*asset, error) {
-	path := "/dl/static/vendor/chartist/dist/chartist.min.css"
+	path := "static/vendor/chartist/dist/chartist.min.css"
 	name := "static/vendor/chartist/dist/chartist.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2051,7 +2070,7 @@ func staticVendorChartistDistChartistMinCss() (*asset, error) {
 
 // staticVendorChosen_v120ChosenSpritePng reads file data from disk. It returns an error on failure.
 func staticVendorChosen_v120ChosenSpritePng() (*asset, error) {
-	path := "/dl/static/vendor/chosen_v1.2.0/chosen-sprite.png"
+	path := "static/vendor/chosen_v1.2.0/chosen-sprite.png"
 	name := "static/vendor/chosen_v1.2.0/chosen-sprite.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2069,7 +2088,7 @@ func staticVendorChosen_v120ChosenSpritePng() (*asset, error) {
 
 // staticVendorChosen_v120ChosenSprite2xPng reads file data from disk. It returns an error on failure.
 func staticVendorChosen_v120ChosenSprite2xPng() (*asset, error) {
-	path := "/dl/static/vendor/chosen_v1.2.0/chosen-sprite@2x.png"
+	path := "static/vendor/chosen_v1.2.0/chosen-sprite@2x.png"
 	name := "static/vendor/chosen_v1.2.0/chosen-sprite@2x.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2087,7 +2106,7 @@ func staticVendorChosen_v120ChosenSprite2xPng() (*asset, error) {
 
 // staticVendorChosen_v120ChosenJqueryMinJs reads file data from disk. It returns an error on failure.
 func staticVendorChosen_v120ChosenJqueryMinJs() (*asset, error) {
-	path := "/dl/static/vendor/chosen_v1.2.0/chosen.jquery.min.js"
+	path := "static/vendor/chosen_v1.2.0/chosen.jquery.min.js"
 	name := "static/vendor/chosen_v1.2.0/chosen.jquery.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2105,7 +2124,7 @@ func staticVendorChosen_v120ChosenJqueryMinJs() (*asset, error) {
 
 // staticVendorChosen_v120ChosenMinCss reads file data from disk. It returns an error on failure.
 func staticVendorChosen_v120ChosenMinCss() (*asset, error) {
-	path := "/dl/static/vendor/chosen_v1.2.0/chosen.min.css"
+	path := "static/vendor/chosen_v1.2.0/chosen.min.css"
 	name := "static/vendor/chosen_v1.2.0/chosen.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2123,7 +2142,7 @@ func staticVendorChosen_v120ChosenMinCss() (*asset, error) {
 
 // staticVendorCropperDistCropperCss reads file data from disk. It returns an error on failure.
 func staticVendorCropperDistCropperCss() (*asset, error) {
-	path := "/dl/static/vendor/cropper/dist/cropper.css"
+	path := "static/vendor/cropper/dist/cropper.css"
 	name := "static/vendor/cropper/dist/cropper.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2141,7 +2160,7 @@ func staticVendorCropperDistCropperCss() (*asset, error) {
 
 // staticVendorCropperDistCropperJs reads file data from disk. It returns an error on failure.
 func staticVendorCropperDistCropperJs() (*asset, error) {
-	path := "/dl/static/vendor/cropper/dist/cropper.js"
+	path := "static/vendor/cropper/dist/cropper.js"
 	name := "static/vendor/cropper/dist/cropper.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2159,7 +2178,7 @@ func staticVendorCropperDistCropperJs() (*asset, error) {
 
 // staticVendorD3D3MinJs reads file data from disk. It returns an error on failure.
 func staticVendorD3D3MinJs() (*asset, error) {
-	path := "/dl/static/vendor/d3/d3.min.js"
+	path := "static/vendor/d3/d3.min.js"
 	name := "static/vendor/d3/d3.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2177,7 +2196,7 @@ func staticVendorD3D3MinJs() (*asset, error) {
 
 // staticVendorDatatablesFontawesomeIndexCss reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesFontawesomeIndexCss() (*asset, error) {
-	path := "/dl/static/vendor/dataTables.fontAwesome/index.css"
+	path := "static/vendor/dataTables.fontAwesome/index.css"
 	name := "static/vendor/dataTables.fontAwesome/index.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2195,7 +2214,7 @@ func staticVendorDatatablesFontawesomeIndexCss() (*asset, error) {
 
 // staticVendorDatatablesMediaCssDatatablesBootstrapCss reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaCssDatatablesBootstrapCss() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/css/dataTables.bootstrap.css"
+	path := "static/vendor/datatables/media/css/dataTables.bootstrap.css"
 	name := "static/vendor/datatables/media/css/dataTables.bootstrap.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2213,7 +2232,7 @@ func staticVendorDatatablesMediaCssDatatablesBootstrapCss() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSortingIconsPsd reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSortingIconsPsd() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/images/Sorting icons.psd"
+	path := "static/vendor/datatables/media/images/Sorting icons.psd"
 	name := "static/vendor/datatables/media/images/Sorting icons.psd"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2231,7 +2250,7 @@ func staticVendorDatatablesMediaImagesSortingIconsPsd() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesFaviconIco reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesFaviconIco() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/images/favicon.ico"
+	path := "static/vendor/datatables/media/images/favicon.ico"
 	name := "static/vendor/datatables/media/images/favicon.ico"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2249,7 +2268,7 @@ func staticVendorDatatablesMediaImagesFaviconIco() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_ascPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_ascPng() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/images/sort_asc.png"
+	path := "static/vendor/datatables/media/images/sort_asc.png"
 	name := "static/vendor/datatables/media/images/sort_asc.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2267,7 +2286,7 @@ func staticVendorDatatablesMediaImagesSort_ascPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_asc_disabledPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_asc_disabledPng() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/images/sort_asc_disabled.png"
+	path := "static/vendor/datatables/media/images/sort_asc_disabled.png"
 	name := "static/vendor/datatables/media/images/sort_asc_disabled.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2285,7 +2304,7 @@ func staticVendorDatatablesMediaImagesSort_asc_disabledPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_bothPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_bothPng() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/images/sort_both.png"
+	path := "static/vendor/datatables/media/images/sort_both.png"
 	name := "static/vendor/datatables/media/images/sort_both.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2303,7 +2322,7 @@ func staticVendorDatatablesMediaImagesSort_bothPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_descPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_descPng() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/images/sort_desc.png"
+	path := "static/vendor/datatables/media/images/sort_desc.png"
 	name := "static/vendor/datatables/media/images/sort_desc.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2321,7 +2340,7 @@ func staticVendorDatatablesMediaImagesSort_descPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_desc_disabledPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_desc_disabledPng() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/images/sort_desc_disabled.png"
+	path := "static/vendor/datatables/media/images/sort_desc_disabled.png"
 	name := "static/vendor/datatables/media/images/sort_desc_disabled.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2339,7 +2358,7 @@ func staticVendorDatatablesMediaImagesSort_desc_disabledPng() (*asset, error) {
 
 // staticVendorDatatablesMediaJsDatatablesBootstrapJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsDatatablesBootstrapJs() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/js/dataTables.bootstrap.js"
+	path := "static/vendor/datatables/media/js/dataTables.bootstrap.js"
 	name := "static/vendor/datatables/media/js/dataTables.bootstrap.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2357,7 +2376,7 @@ func staticVendorDatatablesMediaJsDatatablesBootstrapJs() (*asset, error) {
 
 // staticVendorDatatablesMediaJsJqueryDatatablesMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsJqueryDatatablesMinJs() (*asset, error) {
-	path := "/dl/static/vendor/datatables/media/js/jquery.dataTables.min.js"
+	path := "static/vendor/datatables/media/js/jquery.dataTables.min.js"
 	name := "static/vendor/datatables/media/js/jquery.dataTables.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2375,7 +2394,7 @@ func staticVendorDatatablesMediaJsJqueryDatatablesMinJs() (*asset, error) {
 
 // staticVendorDatatablesColvisCssDatatablesColvisCss reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesColvisCssDatatablesColvisCss() (*asset, error) {
-	path := "/dl/static/vendor/datatables-colvis/css/dataTables.colVis.css"
+	path := "static/vendor/datatables-colvis/css/dataTables.colVis.css"
 	name := "static/vendor/datatables-colvis/css/dataTables.colVis.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2393,7 +2412,7 @@ func staticVendorDatatablesColvisCssDatatablesColvisCss() (*asset, error) {
 
 // staticVendorDatatablesColvisJsDatatablesColvisJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesColvisJsDatatablesColvisJs() (*asset, error) {
-	path := "/dl/static/vendor/datatables-colvis/js/dataTables.colVis.js"
+	path := "static/vendor/datatables-colvis/js/dataTables.colVis.js"
 	name := "static/vendor/datatables-colvis/js/dataTables.colVis.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2411,7 +2430,7 @@ func staticVendorDatatablesColvisJsDatatablesColvisJs() (*asset, error) {
 
 // staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss reads file data from disk. It returns an error on failure.
 func staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss() (*asset, error) {
-	path := "/dl/static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
+	path := "static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
 	name := "static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2429,7 +2448,7 @@ func staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerM
 
 // staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs reads file data from disk. It returns an error on failure.
 func staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs() (*asset, error) {
-	path := "/dl/static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
+	path := "static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
 	name := "static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2447,7 +2466,7 @@ func staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMi
 
 // staticVendorFastclickLibFastclickJs reads file data from disk. It returns an error on failure.
 func staticVendorFastclickLibFastclickJs() (*asset, error) {
-	path := "/dl/static/vendor/fastclick/lib/fastclick.js"
+	path := "static/vendor/fastclick/lib/fastclick.js"
 	name := "static/vendor/fastclick/lib/fastclick.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2465,7 +2484,7 @@ func staticVendorFastclickLibFastclickJs() (*asset, error) {
 
 // staticVendorFlatdocFlatdocJs reads file data from disk. It returns an error on failure.
 func staticVendorFlatdocFlatdocJs() (*asset, error) {
-	path := "/dl/static/vendor/flatdoc/flatdoc.js"
+	path := "static/vendor/flatdoc/flatdoc.js"
 	name := "static/vendor/flatdoc/flatdoc.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2483,7 +2502,7 @@ func staticVendorFlatdocFlatdocJs() (*asset, error) {
 
 // staticVendorFlotSplineJsJqueryFlotSplineMinJs reads file data from disk. It returns an error on failure.
 func staticVendorFlotSplineJsJqueryFlotSplineMinJs() (*asset, error) {
-	path := "/dl/static/vendor/flot-spline/js/jquery.flot.spline.min.js"
+	path := "static/vendor/flot-spline/js/jquery.flot.spline.min.js"
 	name := "static/vendor/flot-spline/js/jquery.flot.spline.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2501,7 +2520,7 @@ func staticVendorFlotSplineJsJqueryFlotSplineMinJs() (*asset, error) {
 
 // staticVendorFlotTooltipJsJqueryFlotTooltipMinJs reads file data from disk. It returns an error on failure.
 func staticVendorFlotTooltipJsJqueryFlotTooltipMinJs() (*asset, error) {
-	path := "/dl/static/vendor/flot.tooltip/js/jquery.flot.tooltip.min.js"
+	path := "static/vendor/flot.tooltip/js/jquery.flot.tooltip.min.js"
 	name := "static/vendor/flot.tooltip/js/jquery.flot.tooltip.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2519,7 +2538,7 @@ func staticVendorFlotTooltipJsJqueryFlotTooltipMinJs() (*asset, error) {
 
 // staticVendorFontawesomeCssFontAwesomeMinCss reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeCssFontAwesomeMinCss() (*asset, error) {
-	path := "/dl/static/vendor/fontawesome/css/font-awesome.min.css"
+	path := "static/vendor/fontawesome/css/font-awesome.min.css"
 	name := "static/vendor/fontawesome/css/font-awesome.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2537,7 +2556,7 @@ func staticVendorFontawesomeCssFontAwesomeMinCss() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeOtf reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeOtf() (*asset, error) {
-	path := "/dl/static/vendor/fontawesome/fonts/FontAwesome.otf"
+	path := "static/vendor/fontawesome/fonts/FontAwesome.otf"
 	name := "static/vendor/fontawesome/fonts/FontAwesome.otf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2555,7 +2574,7 @@ func staticVendorFontawesomeFontsFontawesomeOtf() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontEot reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontEot() (*asset, error) {
-	path := "/dl/static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2573,7 +2592,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontEot() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontSvg reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontSvg() (*asset, error) {
-	path := "/dl/static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2591,7 +2610,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontSvg() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontTtf reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontTtf() (*asset, error) {
-	path := "/dl/static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2609,7 +2628,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontTtf() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontWoff reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontWoff() (*asset, error) {
-	path := "/dl/static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2627,7 +2646,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontWoff() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontWoff2 reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontWoff2() (*asset, error) {
-	path := "/dl/static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2645,7 +2664,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontWoff2() (*asset, error) {
 
 // staticVendorFullcalendarDistFullcalendarCss reads file data from disk. It returns an error on failure.
 func staticVendorFullcalendarDistFullcalendarCss() (*asset, error) {
-	path := "/dl/static/vendor/fullcalendar/dist/fullcalendar.css"
+	path := "static/vendor/fullcalendar/dist/fullcalendar.css"
 	name := "static/vendor/fullcalendar/dist/fullcalendar.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2663,7 +2682,7 @@ func staticVendorFullcalendarDistFullcalendarCss() (*asset, error) {
 
 // staticVendorFullcalendarDistFullcalendarMinJs reads file data from disk. It returns an error on failure.
 func staticVendorFullcalendarDistFullcalendarMinJs() (*asset, error) {
-	path := "/dl/static/vendor/fullcalendar/dist/fullcalendar.min.js"
+	path := "static/vendor/fullcalendar/dist/fullcalendar.min.js"
 	name := "static/vendor/fullcalendar/dist/fullcalendar.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2681,7 +2700,7 @@ func staticVendorFullcalendarDistFullcalendarMinJs() (*asset, error) {
 
 // staticVendorFullcalendarDistGcalJs reads file data from disk. It returns an error on failure.
 func staticVendorFullcalendarDistGcalJs() (*asset, error) {
-	path := "/dl/static/vendor/fullcalendar/dist/gcal.js"
+	path := "static/vendor/fullcalendar/dist/gcal.js"
 	name := "static/vendor/fullcalendar/dist/gcal.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2699,7 +2718,7 @@ func staticVendorFullcalendarDistGcalJs() (*asset, error) {
 
 // staticVendorHtmlSortableDistHtmlSortableJs reads file data from disk. It returns an error on failure.
 func staticVendorHtmlSortableDistHtmlSortableJs() (*asset, error) {
-	path := "/dl/static/vendor/html.sortable/dist/html.sortable.js"
+	path := "static/vendor/html.sortable/dist/html.sortable.js"
 	name := "static/vendor/html.sortable/dist/html.sortable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2717,7 +2736,7 @@ func staticVendorHtmlSortableDistHtmlSortableJs() (*asset, error) {
 
 // staticVendorIkaJvectormapJqueryJvectormap122Css reads file data from disk. It returns an error on failure.
 func staticVendorIkaJvectormapJqueryJvectormap122Css() (*asset, error) {
-	path := "/dl/static/vendor/ika.jvectormap/jquery-jvectormap-1.2.2.css"
+	path := "static/vendor/ika.jvectormap/jquery-jvectormap-1.2.2.css"
 	name := "static/vendor/ika.jvectormap/jquery-jvectormap-1.2.2.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2735,7 +2754,7 @@ func staticVendorIkaJvectormapJqueryJvectormap122Css() (*asset, error) {
 
 // staticVendorIkaJvectormapJqueryJvectormap122MinJs reads file data from disk. It returns an error on failure.
 func staticVendorIkaJvectormapJqueryJvectormap122MinJs() (*asset, error) {
-	path := "/dl/static/vendor/ika.jvectormap/jquery-jvectormap-1.2.2.min.js"
+	path := "static/vendor/ika.jvectormap/jquery-jvectormap-1.2.2.min.js"
 	name := "static/vendor/ika.jvectormap/jquery-jvectormap-1.2.2.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2753,7 +2772,7 @@ func staticVendorIkaJvectormapJqueryJvectormap122MinJs() (*asset, error) {
 
 // staticVendorIkaJvectormapJqueryJvectormapUsMillEnJs reads file data from disk. It returns an error on failure.
 func staticVendorIkaJvectormapJqueryJvectormapUsMillEnJs() (*asset, error) {
-	path := "/dl/static/vendor/ika.jvectormap/jquery-jvectormap-us-mill-en.js"
+	path := "static/vendor/ika.jvectormap/jquery-jvectormap-us-mill-en.js"
 	name := "static/vendor/ika.jvectormap/jquery-jvectormap-us-mill-en.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2771,7 +2790,7 @@ func staticVendorIkaJvectormapJqueryJvectormapUsMillEnJs() (*asset, error) {
 
 // staticVendorIkaJvectormapJqueryJvectormapWorldMillEnJs reads file data from disk. It returns an error on failure.
 func staticVendorIkaJvectormapJqueryJvectormapWorldMillEnJs() (*asset, error) {
-	path := "/dl/static/vendor/ika.jvectormap/jquery-jvectormap-world-mill-en.js"
+	path := "static/vendor/ika.jvectormap/jquery-jvectormap-world-mill-en.js"
 	name := "static/vendor/ika.jvectormap/jquery-jvectormap-world-mill-en.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2789,7 +2808,7 @@ func staticVendorIkaJvectormapJqueryJvectormapWorldMillEnJs() (*asset, error) {
 
 // staticVendorJqueryStorageApiJqueryStorageapiJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryStorageApiJqueryStorageapiJs() (*asset, error) {
-	path := "/dl/static/vendor/jQuery-Storage-API/jquery.storageapi.js"
+	path := "static/vendor/jQuery-Storage-API/jquery.storageapi.js"
 	name := "static/vendor/jQuery-Storage-API/jquery.storageapi.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2807,7 +2826,7 @@ func staticVendorJqueryStorageApiJqueryStorageapiJs() (*asset, error) {
 
 // staticVendorJqueryGmapJqueryGmapMinJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryGmapJqueryGmapMinJs() (*asset, error) {
-	path := "/dl/static/vendor/jQuery-gMap/jquery.gmap.min.js"
+	path := "static/vendor/jQuery-gMap/jquery.gmap.min.js"
 	name := "static/vendor/jQuery-gMap/jquery.gmap.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2825,7 +2844,7 @@ func staticVendorJqueryGmapJqueryGmapMinJs() (*asset, error) {
 
 // staticVendorJqcloud2DistJqcloudCss reads file data from disk. It returns an error on failure.
 func staticVendorJqcloud2DistJqcloudCss() (*asset, error) {
-	path := "/dl/static/vendor/jqcloud2/dist/jqcloud.css"
+	path := "static/vendor/jqcloud2/dist/jqcloud.css"
 	name := "static/vendor/jqcloud2/dist/jqcloud.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2843,7 +2862,7 @@ func staticVendorJqcloud2DistJqcloudCss() (*asset, error) {
 
 // staticVendorJqcloud2DistJqcloudJs reads file data from disk. It returns an error on failure.
 func staticVendorJqcloud2DistJqcloudJs() (*asset, error) {
-	path := "/dl/static/vendor/jqcloud2/dist/jqcloud.js"
+	path := "static/vendor/jqcloud2/dist/jqcloud.js"
 	name := "static/vendor/jqcloud2/dist/jqcloud.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2861,7 +2880,7 @@ func staticVendorJqcloud2DistJqcloudJs() (*asset, error) {
 
 // staticVendorJqgridCssUiJqgridCss reads file data from disk. It returns an error on failure.
 func staticVendorJqgridCssUiJqgridCss() (*asset, error) {
-	path := "/dl/static/vendor/jqgrid/css/ui.jqgrid.css"
+	path := "static/vendor/jqgrid/css/ui.jqgrid.css"
 	name := "static/vendor/jqgrid/css/ui.jqgrid.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2879,7 +2898,7 @@ func staticVendorJqgridCssUiJqgridCss() (*asset, error) {
 
 // staticVendorJqgridJsI18nGridLocaleEnJs reads file data from disk. It returns an error on failure.
 func staticVendorJqgridJsI18nGridLocaleEnJs() (*asset, error) {
-	path := "/dl/static/vendor/jqgrid/js/i18n/grid.locale-en.js"
+	path := "static/vendor/jqgrid/js/i18n/grid.locale-en.js"
 	name := "static/vendor/jqgrid/js/i18n/grid.locale-en.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2897,7 +2916,7 @@ func staticVendorJqgridJsI18nGridLocaleEnJs() (*asset, error) {
 
 // staticVendorJqgridJsJqueryJqgridJs reads file data from disk. It returns an error on failure.
 func staticVendorJqgridJsJqueryJqgridJs() (*asset, error) {
-	path := "/dl/static/vendor/jqgrid/js/jquery.jqGrid.js"
+	path := "static/vendor/jqgrid/js/jquery.jqGrid.js"
 	name := "static/vendor/jqgrid/js/jquery.jqGrid.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2915,7 +2934,7 @@ func staticVendorJqgridJsJqueryJqgridJs() (*asset, error) {
 
 // staticVendorJqueryDistJqueryJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryDistJqueryJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery/dist/jquery.js"
+	path := "static/vendor/jquery/dist/jquery.js"
 	name := "static/vendor/jquery/dist/jquery.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2933,7 +2952,7 @@ func staticVendorJqueryDistJqueryJs() (*asset, error) {
 
 // staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"
+	path := "static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"
 	name := "static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2951,7 +2970,7 @@ func staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs() (*asset, error) {
 
 // staticVendorJqueryKnobJsJqueryKnobJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryKnobJsJqueryKnobJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-knob/js/jquery.knob.js"
+	path := "static/vendor/jquery-knob/js/jquery.knob.js"
 	name := "static/vendor/jquery-knob/js/jquery.knob.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2969,7 +2988,7 @@ func staticVendorJqueryKnobJsJqueryKnobJs() (*asset, error) {
 
 // staticVendorJqueryLocalizeI18nDistJqueryLocalizeJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryLocalizeI18nDistJqueryLocalizeJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-localize-i18n/dist/jquery.localize.js"
+	path := "static/vendor/jquery-localize-i18n/dist/jquery.localize.js"
 	name := "static/vendor/jquery-localize-i18n/dist/jquery.localize.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2987,7 +3006,7 @@ func staticVendorJqueryLocalizeI18nDistJqueryLocalizeJs() (*asset, error) {
 
 // staticVendorJqueryUiThemesSmoothnessImagesAnimatedOverlayGif reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesAnimatedOverlayGif() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/animated-overlay.gif"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/animated-overlay.gif"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/animated-overlay.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3005,7 +3024,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesAnimatedOverlayGif() (*asset, err
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_0_aaaaaa_40x100Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_0_aaaaaa_40x100Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_flat_0_aaaaaa_40x100.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_flat_0_aaaaaa_40x100.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_flat_0_aaaaaa_40x100.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3023,7 +3042,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_0_aaaaaa_40x100Png() (*
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_75_ffffff_40x100Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_75_ffffff_40x100Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_flat_75_ffffff_40x100.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_flat_75_ffffff_40x100.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_flat_75_ffffff_40x100.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3041,7 +3060,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_75_ffffff_40x100Png() (
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_55_fbf9ee_1x400Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_55_fbf9ee_1x400Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_55_fbf9ee_1x400.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_55_fbf9ee_1x400.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_55_fbf9ee_1x400.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3059,7 +3078,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_55_fbf9ee_1x400Png() (
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_65_ffffff_1x400Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_65_ffffff_1x400Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_65_ffffff_1x400.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_65_ffffff_1x400.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_65_ffffff_1x400.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3077,7 +3096,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_65_ffffff_1x400Png() (
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_dadada_1x400Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_dadada_1x400Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_75_dadada_1x400.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_75_dadada_1x400.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_75_dadada_1x400.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3095,7 +3114,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_dadada_1x400Png() (
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_e6e6e6_1x400Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_e6e6e6_1x400Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_75_e6e6e6_1x400.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_75_e6e6e6_1x400.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_75_e6e6e6_1x400.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3113,7 +3132,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_e6e6e6_1x400Png() (
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_95_fef1ec_1x400Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_95_fef1ec_1x400Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_95_fef1ec_1x400.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_95_fef1ec_1x400.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_glass_95_fef1ec_1x400.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3131,7 +3150,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_95_fef1ec_1x400Png() (
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiBg_highlightSoft_75_cccccc_1x100Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiBg_highlightSoft_75_cccccc_1x100Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-bg_highlight-soft_75_cccccc_1x100.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_highlight-soft_75_cccccc_1x100.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-bg_highlight-soft_75_cccccc_1x100.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3149,7 +3168,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiBg_highlightSoft_75_cccccc_1x10
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiIcons_222222_256x240Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_222222_256x240Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-icons_222222_256x240.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_222222_256x240.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_222222_256x240.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3167,7 +3186,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_222222_256x240Png() (*ass
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiIcons_2e83ff_256x240Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_2e83ff_256x240Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-icons_2e83ff_256x240.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_2e83ff_256x240.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_2e83ff_256x240.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3185,7 +3204,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_2e83ff_256x240Png() (*ass
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiIcons_454545_256x240Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_454545_256x240Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-icons_454545_256x240.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_454545_256x240.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_454545_256x240.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3203,7 +3222,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_454545_256x240Png() (*ass
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiIcons_888888_256x240Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_888888_256x240Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-icons_888888_256x240.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_888888_256x240.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_888888_256x240.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3221,7 +3240,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_888888_256x240Png() (*ass
 
 // staticVendorJqueryUiThemesSmoothnessImagesUiIcons_cd0a0a_256x240Png reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_cd0a0a_256x240Png() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/images/ui-icons_cd0a0a_256x240.png"
+	path := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_cd0a0a_256x240.png"
 	name := "static/vendor/jquery-ui/themes/smoothness/images/ui-icons_cd0a0a_256x240.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3239,7 +3258,7 @@ func staticVendorJqueryUiThemesSmoothnessImagesUiIcons_cd0a0a_256x240Png() (*ass
 
 // staticVendorJqueryUiThemesSmoothnessJqueryUiCss reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessJqueryUiCss() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/jquery-ui.css"
+	path := "static/vendor/jquery-ui/themes/smoothness/jquery-ui.css"
 	name := "static/vendor/jquery-ui/themes/smoothness/jquery-ui.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3257,7 +3276,7 @@ func staticVendorJqueryUiThemesSmoothnessJqueryUiCss() (*asset, error) {
 
 // staticVendorJqueryUiThemesSmoothnessJqueryUiMinCss reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessJqueryUiMinCss() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/jquery-ui.min.css"
+	path := "static/vendor/jquery-ui/themes/smoothness/jquery-ui.min.css"
 	name := "static/vendor/jquery-ui/themes/smoothness/jquery-ui.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3275,7 +3294,7 @@ func staticVendorJqueryUiThemesSmoothnessJqueryUiMinCss() (*asset, error) {
 
 // staticVendorJqueryUiThemesSmoothnessThemeCss reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiThemesSmoothnessThemeCss() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/themes/smoothness/theme.css"
+	path := "static/vendor/jquery-ui/themes/smoothness/theme.css"
 	name := "static/vendor/jquery-ui/themes/smoothness/theme.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3293,7 +3312,7 @@ func staticVendorJqueryUiThemesSmoothnessThemeCss() (*asset, error) {
 
 // staticVendorJqueryUiUiAccordionJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiAccordionJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/accordion.js"
+	path := "static/vendor/jquery-ui/ui/accordion.js"
 	name := "static/vendor/jquery-ui/ui/accordion.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3311,7 +3330,7 @@ func staticVendorJqueryUiUiAccordionJs() (*asset, error) {
 
 // staticVendorJqueryUiUiAutocompleteJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiAutocompleteJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/autocomplete.js"
+	path := "static/vendor/jquery-ui/ui/autocomplete.js"
 	name := "static/vendor/jquery-ui/ui/autocomplete.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3329,7 +3348,7 @@ func staticVendorJqueryUiUiAutocompleteJs() (*asset, error) {
 
 // staticVendorJqueryUiUiButtonJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiButtonJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/button.js"
+	path := "static/vendor/jquery-ui/ui/button.js"
 	name := "static/vendor/jquery-ui/ui/button.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3347,7 +3366,7 @@ func staticVendorJqueryUiUiButtonJs() (*asset, error) {
 
 // staticVendorJqueryUiUiCoreJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiCoreJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/core.js"
+	path := "static/vendor/jquery-ui/ui/core.js"
 	name := "static/vendor/jquery-ui/ui/core.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3365,7 +3384,7 @@ func staticVendorJqueryUiUiCoreJs() (*asset, error) {
 
 // staticVendorJqueryUiUiDatepickerJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiDatepickerJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/datepicker.js"
+	path := "static/vendor/jquery-ui/ui/datepicker.js"
 	name := "static/vendor/jquery-ui/ui/datepicker.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3383,7 +3402,7 @@ func staticVendorJqueryUiUiDatepickerJs() (*asset, error) {
 
 // staticVendorJqueryUiUiDialogJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiDialogJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/dialog.js"
+	path := "static/vendor/jquery-ui/ui/dialog.js"
 	name := "static/vendor/jquery-ui/ui/dialog.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3401,7 +3420,7 @@ func staticVendorJqueryUiUiDialogJs() (*asset, error) {
 
 // staticVendorJqueryUiUiDraggableJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiDraggableJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/draggable.js"
+	path := "static/vendor/jquery-ui/ui/draggable.js"
 	name := "static/vendor/jquery-ui/ui/draggable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3419,7 +3438,7 @@ func staticVendorJqueryUiUiDraggableJs() (*asset, error) {
 
 // staticVendorJqueryUiUiDroppableJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiDroppableJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/droppable.js"
+	path := "static/vendor/jquery-ui/ui/droppable.js"
 	name := "static/vendor/jquery-ui/ui/droppable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3437,7 +3456,7 @@ func staticVendorJqueryUiUiDroppableJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectBlindJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectBlindJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-blind.js"
+	path := "static/vendor/jquery-ui/ui/effect-blind.js"
 	name := "static/vendor/jquery-ui/ui/effect-blind.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3455,7 +3474,7 @@ func staticVendorJqueryUiUiEffectBlindJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectBounceJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectBounceJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-bounce.js"
+	path := "static/vendor/jquery-ui/ui/effect-bounce.js"
 	name := "static/vendor/jquery-ui/ui/effect-bounce.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3473,7 +3492,7 @@ func staticVendorJqueryUiUiEffectBounceJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectClipJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectClipJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-clip.js"
+	path := "static/vendor/jquery-ui/ui/effect-clip.js"
 	name := "static/vendor/jquery-ui/ui/effect-clip.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3491,7 +3510,7 @@ func staticVendorJqueryUiUiEffectClipJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectDropJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectDropJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-drop.js"
+	path := "static/vendor/jquery-ui/ui/effect-drop.js"
 	name := "static/vendor/jquery-ui/ui/effect-drop.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3509,7 +3528,7 @@ func staticVendorJqueryUiUiEffectDropJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectExplodeJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectExplodeJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-explode.js"
+	path := "static/vendor/jquery-ui/ui/effect-explode.js"
 	name := "static/vendor/jquery-ui/ui/effect-explode.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3527,7 +3546,7 @@ func staticVendorJqueryUiUiEffectExplodeJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectFadeJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectFadeJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-fade.js"
+	path := "static/vendor/jquery-ui/ui/effect-fade.js"
 	name := "static/vendor/jquery-ui/ui/effect-fade.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3545,7 +3564,7 @@ func staticVendorJqueryUiUiEffectFadeJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectFoldJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectFoldJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-fold.js"
+	path := "static/vendor/jquery-ui/ui/effect-fold.js"
 	name := "static/vendor/jquery-ui/ui/effect-fold.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3563,7 +3582,7 @@ func staticVendorJqueryUiUiEffectFoldJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectHighlightJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectHighlightJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-highlight.js"
+	path := "static/vendor/jquery-ui/ui/effect-highlight.js"
 	name := "static/vendor/jquery-ui/ui/effect-highlight.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3581,7 +3600,7 @@ func staticVendorJqueryUiUiEffectHighlightJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectPuffJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectPuffJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-puff.js"
+	path := "static/vendor/jquery-ui/ui/effect-puff.js"
 	name := "static/vendor/jquery-ui/ui/effect-puff.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3599,7 +3618,7 @@ func staticVendorJqueryUiUiEffectPuffJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectPulsateJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectPulsateJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-pulsate.js"
+	path := "static/vendor/jquery-ui/ui/effect-pulsate.js"
 	name := "static/vendor/jquery-ui/ui/effect-pulsate.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3617,7 +3636,7 @@ func staticVendorJqueryUiUiEffectPulsateJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectScaleJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectScaleJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-scale.js"
+	path := "static/vendor/jquery-ui/ui/effect-scale.js"
 	name := "static/vendor/jquery-ui/ui/effect-scale.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3635,7 +3654,7 @@ func staticVendorJqueryUiUiEffectScaleJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectShakeJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectShakeJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-shake.js"
+	path := "static/vendor/jquery-ui/ui/effect-shake.js"
 	name := "static/vendor/jquery-ui/ui/effect-shake.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3653,7 +3672,7 @@ func staticVendorJqueryUiUiEffectShakeJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectSizeJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectSizeJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-size.js"
+	path := "static/vendor/jquery-ui/ui/effect-size.js"
 	name := "static/vendor/jquery-ui/ui/effect-size.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3671,7 +3690,7 @@ func staticVendorJqueryUiUiEffectSizeJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectSlideJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectSlideJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-slide.js"
+	path := "static/vendor/jquery-ui/ui/effect-slide.js"
 	name := "static/vendor/jquery-ui/ui/effect-slide.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3689,7 +3708,7 @@ func staticVendorJqueryUiUiEffectSlideJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectTransferJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectTransferJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect-transfer.js"
+	path := "static/vendor/jquery-ui/ui/effect-transfer.js"
 	name := "static/vendor/jquery-ui/ui/effect-transfer.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3707,7 +3726,7 @@ func staticVendorJqueryUiUiEffectTransferJs() (*asset, error) {
 
 // staticVendorJqueryUiUiEffectJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiEffectJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/effect.js"
+	path := "static/vendor/jquery-ui/ui/effect.js"
 	name := "static/vendor/jquery-ui/ui/effect.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3725,7 +3744,7 @@ func staticVendorJqueryUiUiEffectJs() (*asset, error) {
 
 // staticVendorJqueryUiUiMenuJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiMenuJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/menu.js"
+	path := "static/vendor/jquery-ui/ui/menu.js"
 	name := "static/vendor/jquery-ui/ui/menu.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3743,7 +3762,7 @@ func staticVendorJqueryUiUiMenuJs() (*asset, error) {
 
 // staticVendorJqueryUiUiMouseJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiMouseJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/mouse.js"
+	path := "static/vendor/jquery-ui/ui/mouse.js"
 	name := "static/vendor/jquery-ui/ui/mouse.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3761,7 +3780,7 @@ func staticVendorJqueryUiUiMouseJs() (*asset, error) {
 
 // staticVendorJqueryUiUiPositionJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiPositionJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/position.js"
+	path := "static/vendor/jquery-ui/ui/position.js"
 	name := "static/vendor/jquery-ui/ui/position.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3779,7 +3798,7 @@ func staticVendorJqueryUiUiPositionJs() (*asset, error) {
 
 // staticVendorJqueryUiUiProgressbarJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiProgressbarJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/progressbar.js"
+	path := "static/vendor/jquery-ui/ui/progressbar.js"
 	name := "static/vendor/jquery-ui/ui/progressbar.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3797,7 +3816,7 @@ func staticVendorJqueryUiUiProgressbarJs() (*asset, error) {
 
 // staticVendorJqueryUiUiResizableJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiResizableJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/resizable.js"
+	path := "static/vendor/jquery-ui/ui/resizable.js"
 	name := "static/vendor/jquery-ui/ui/resizable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3815,7 +3834,7 @@ func staticVendorJqueryUiUiResizableJs() (*asset, error) {
 
 // staticVendorJqueryUiUiSelectableJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiSelectableJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/selectable.js"
+	path := "static/vendor/jquery-ui/ui/selectable.js"
 	name := "static/vendor/jquery-ui/ui/selectable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3833,7 +3852,7 @@ func staticVendorJqueryUiUiSelectableJs() (*asset, error) {
 
 // staticVendorJqueryUiUiSelectmenuJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiSelectmenuJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/selectmenu.js"
+	path := "static/vendor/jquery-ui/ui/selectmenu.js"
 	name := "static/vendor/jquery-ui/ui/selectmenu.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3851,7 +3870,7 @@ func staticVendorJqueryUiUiSelectmenuJs() (*asset, error) {
 
 // staticVendorJqueryUiUiSliderJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiSliderJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/slider.js"
+	path := "static/vendor/jquery-ui/ui/slider.js"
 	name := "static/vendor/jquery-ui/ui/slider.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3869,7 +3888,7 @@ func staticVendorJqueryUiUiSliderJs() (*asset, error) {
 
 // staticVendorJqueryUiUiSortableJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiSortableJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/sortable.js"
+	path := "static/vendor/jquery-ui/ui/sortable.js"
 	name := "static/vendor/jquery-ui/ui/sortable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3887,7 +3906,7 @@ func staticVendorJqueryUiUiSortableJs() (*asset, error) {
 
 // staticVendorJqueryUiUiSpinnerJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiSpinnerJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/spinner.js"
+	path := "static/vendor/jquery-ui/ui/spinner.js"
 	name := "static/vendor/jquery-ui/ui/spinner.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3905,7 +3924,7 @@ func staticVendorJqueryUiUiSpinnerJs() (*asset, error) {
 
 // staticVendorJqueryUiUiTabsJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiTabsJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/tabs.js"
+	path := "static/vendor/jquery-ui/ui/tabs.js"
 	name := "static/vendor/jquery-ui/ui/tabs.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3923,7 +3942,7 @@ func staticVendorJqueryUiUiTabsJs() (*asset, error) {
 
 // staticVendorJqueryUiUiTooltipJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiTooltipJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/tooltip.js"
+	path := "static/vendor/jquery-ui/ui/tooltip.js"
 	name := "static/vendor/jquery-ui/ui/tooltip.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3941,7 +3960,7 @@ func staticVendorJqueryUiUiTooltipJs() (*asset, error) {
 
 // staticVendorJqueryUiUiWidgetJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryUiUiWidgetJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-ui/ui/widget.js"
+	path := "static/vendor/jquery-ui/ui/widget.js"
 	name := "static/vendor/jquery-ui/ui/widget.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3959,7 +3978,7 @@ func staticVendorJqueryUiUiWidgetJs() (*asset, error) {
 
 // staticVendorJqueryValidationDistJqueryValidateJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryValidationDistJqueryValidateJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery-validation/dist/jquery.validate.js"
+	path := "static/vendor/jquery-validation/dist/jquery.validate.js"
 	name := "static/vendor/jquery-validation/dist/jquery.validate.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3977,7 +3996,7 @@ func staticVendorJqueryValidationDistJqueryValidateJs() (*asset, error) {
 
 // staticVendorJqueryEasingJsJqueryEasingJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryEasingJsJqueryEasingJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery.easing/js/jquery.easing.js"
+	path := "static/vendor/jquery.easing/js/jquery.easing.js"
 	name := "static/vendor/jquery.easing/js/jquery.easing.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3995,7 +4014,7 @@ func staticVendorJqueryEasingJsJqueryEasingJs() (*asset, error) {
 
 // staticVendorJqueryEasyPieChartDistJqueryEasypiechartJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryEasyPieChartDistJqueryEasypiechartJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery.easy-pie-chart/dist/jquery.easypiechart.js"
+	path := "static/vendor/jquery.easy-pie-chart/dist/jquery.easypiechart.js"
 	name := "static/vendor/jquery.easy-pie-chart/dist/jquery.easypiechart.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4013,7 +4032,7 @@ func staticVendorJqueryEasyPieChartDistJqueryEasypiechartJs() (*asset, error) {
 
 // staticVendorJqueryInputmaskDistJqueryInputmaskBundleJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryInputmaskDistJqueryInputmaskBundleJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery.inputmask/dist/jquery.inputmask.bundle.js"
+	path := "static/vendor/jquery.inputmask/dist/jquery.inputmask.bundle.js"
 	name := "static/vendor/jquery.inputmask/dist/jquery.inputmask.bundle.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4031,7 +4050,7 @@ func staticVendorJqueryInputmaskDistJqueryInputmaskBundleJs() (*asset, error) {
 
 // staticVendorJqueryStepsBuildJqueryStepsJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryStepsBuildJqueryStepsJs() (*asset, error) {
-	path := "/dl/static/vendor/jquery.steps/build/jquery.steps.js"
+	path := "static/vendor/jquery.steps/build/jquery.steps.js"
 	name := "static/vendor/jquery.steps/build/jquery.steps.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4049,7 +4068,7 @@ func staticVendorJqueryStepsBuildJqueryStepsJs() (*asset, error) {
 
 // staticVendorJqueryuiTouchPunchJqueryUiTouchPunchMinJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryuiTouchPunchJqueryUiTouchPunchMinJs() (*asset, error) {
-	path := "/dl/static/vendor/jqueryui-touch-punch/jquery.ui.touch-punch.min.js"
+	path := "static/vendor/jqueryui-touch-punch/jquery.ui.touch-punch.min.js"
 	name := "static/vendor/jqueryui-touch-punch/jquery.ui.touch-punch.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4067,7 +4086,7 @@ func staticVendorJqueryuiTouchPunchJqueryUiTouchPunchMinJs() (*asset, error) {
 
 // staticVendorLoadersCssLoadersCss reads file data from disk. It returns an error on failure.
 func staticVendorLoadersCssLoadersCss() (*asset, error) {
-	path := "/dl/static/vendor/loaders.css/loaders.css"
+	path := "static/vendor/loaders.css/loaders.css"
 	name := "static/vendor/loaders.css/loaders.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4085,7 +4104,7 @@ func staticVendorLoadersCssLoadersCss() (*asset, error) {
 
 // staticVendorMatchmediaMatchmediaJs reads file data from disk. It returns an error on failure.
 func staticVendorMatchmediaMatchmediaJs() (*asset, error) {
-	path := "/dl/static/vendor/matchMedia/matchMedia.js"
+	path := "static/vendor/matchMedia/matchMedia.js"
 	name := "static/vendor/matchMedia/matchMedia.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4103,7 +4122,7 @@ func staticVendorMatchmediaMatchmediaJs() (*asset, error) {
 
 // staticVendorMjolnicBootstrapColorpickerDistCssBootstrapColorpickerCss reads file data from disk. It returns an error on failure.
 func staticVendorMjolnicBootstrapColorpickerDistCssBootstrapColorpickerCss() (*asset, error) {
-	path := "/dl/static/vendor/mjolnic-bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css"
+	path := "static/vendor/mjolnic-bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css"
 	name := "static/vendor/mjolnic-bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4121,7 +4140,7 @@ func staticVendorMjolnicBootstrapColorpickerDistCssBootstrapColorpickerCss() (*a
 
 // staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaHorizontalPng reads file data from disk. It returns an error on failure.
 func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaHorizontalPng() (*asset, error) {
-	path := "/dl/static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/alpha-horizontal.png"
+	path := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/alpha-horizontal.png"
 	name := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/alpha-horizontal.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4139,7 +4158,7 @@ func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaHori
 
 // staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaPng reads file data from disk. It returns an error on failure.
 func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaPng() (*asset, error) {
-	path := "/dl/static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/alpha.png"
+	path := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/alpha.png"
 	name := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/alpha.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4157,7 +4176,7 @@ func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaPng(
 
 // staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHueHorizontalPng reads file data from disk. It returns an error on failure.
 func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHueHorizontalPng() (*asset, error) {
-	path := "/dl/static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/hue-horizontal.png"
+	path := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/hue-horizontal.png"
 	name := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/hue-horizontal.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4175,7 +4194,7 @@ func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHueHorizo
 
 // staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHuePng reads file data from disk. It returns an error on failure.
 func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHuePng() (*asset, error) {
-	path := "/dl/static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/hue.png"
+	path := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/hue.png"
 	name := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/hue.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4193,7 +4212,7 @@ func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHuePng() 
 
 // staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerSaturationPng reads file data from disk. It returns an error on failure.
 func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerSaturationPng() (*asset, error) {
-	path := "/dl/static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/saturation.png"
+	path := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/saturation.png"
 	name := "static/vendor/mjolnic-bootstrap-colorpicker/dist/img/bootstrap-colorpicker/saturation.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4211,7 +4230,7 @@ func staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerSaturatio
 
 // staticVendorMjolnicBootstrapColorpickerDistJsBootstrapColorpickerJs reads file data from disk. It returns an error on failure.
 func staticVendorMjolnicBootstrapColorpickerDistJsBootstrapColorpickerJs() (*asset, error) {
-	path := "/dl/static/vendor/mjolnic-bootstrap-colorpicker/dist/js/bootstrap-colorpicker.js"
+	path := "static/vendor/mjolnic-bootstrap-colorpicker/dist/js/bootstrap-colorpicker.js"
 	name := "static/vendor/mjolnic-bootstrap-colorpicker/dist/js/bootstrap-colorpicker.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4229,7 +4248,7 @@ func staticVendorMjolnicBootstrapColorpickerDistJsBootstrapColorpickerJs() (*ass
 
 // staticVendorModernizrModernizrCustomJs reads file data from disk. It returns an error on failure.
 func staticVendorModernizrModernizrCustomJs() (*asset, error) {
-	path := "/dl/static/vendor/modernizr/modernizr.custom.js"
+	path := "static/vendor/modernizr/modernizr.custom.js"
 	name := "static/vendor/modernizr/modernizr.custom.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4247,7 +4266,7 @@ func staticVendorModernizrModernizrCustomJs() (*asset, error) {
 
 // staticVendorMomentMinMomentWithLocalesMinJs reads file data from disk. It returns an error on failure.
 func staticVendorMomentMinMomentWithLocalesMinJs() (*asset, error) {
-	path := "/dl/static/vendor/moment/min/moment-with-locales.min.js"
+	path := "static/vendor/moment/min/moment-with-locales.min.js"
 	name := "static/vendor/moment/min/moment-with-locales.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4265,7 +4284,7 @@ func staticVendorMomentMinMomentWithLocalesMinJs() (*asset, error) {
 
 // staticVendorMorrisJsMorrisCss reads file data from disk. It returns an error on failure.
 func staticVendorMorrisJsMorrisCss() (*asset, error) {
-	path := "/dl/static/vendor/morris.js/morris.css"
+	path := "static/vendor/morris.js/morris.css"
 	name := "static/vendor/morris.js/morris.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4283,7 +4302,7 @@ func staticVendorMorrisJsMorrisCss() (*asset, error) {
 
 // staticVendorMorrisJsMorrisJs reads file data from disk. It returns an error on failure.
 func staticVendorMorrisJsMorrisJs() (*asset, error) {
-	path := "/dl/static/vendor/morris.js/morris.js"
+	path := "static/vendor/morris.js/morris.js"
 	name := "static/vendor/morris.js/morris.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4301,7 +4320,7 @@ func staticVendorMorrisJsMorrisJs() (*asset, error) {
 
 // staticVendorNestableJqueryNestableJs reads file data from disk. It returns an error on failure.
 func staticVendorNestableJqueryNestableJs() (*asset, error) {
-	path := "/dl/static/vendor/nestable/jquery.nestable.js"
+	path := "static/vendor/nestable/jquery.nestable.js"
 	name := "static/vendor/nestable/jquery.nestable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4319,7 +4338,7 @@ func staticVendorNestableJqueryNestableJs() (*asset, error) {
 
 // staticVendorParsleyjsDistParsleyMinJs reads file data from disk. It returns an error on failure.
 func staticVendorParsleyjsDistParsleyMinJs() (*asset, error) {
-	path := "/dl/static/vendor/parsleyjs/dist/parsley.min.js"
+	path := "static/vendor/parsleyjs/dist/parsley.min.js"
 	name := "static/vendor/parsleyjs/dist/parsley.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4337,7 +4356,7 @@ func staticVendorParsleyjsDistParsleyMinJs() (*asset, error) {
 
 // staticVendorRaphaelRaphaelJs reads file data from disk. It returns an error on failure.
 func staticVendorRaphaelRaphaelJs() (*asset, error) {
-	path := "/dl/static/vendor/raphael/raphael.js"
+	path := "static/vendor/raphael/raphael.js"
 	name := "static/vendor/raphael/raphael.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4355,7 +4374,7 @@ func staticVendorRaphaelRaphaelJs() (*asset, error) {
 
 // staticVendorRickshawRickshawJs reads file data from disk. It returns an error on failure.
 func staticVendorRickshawRickshawJs() (*asset, error) {
-	path := "/dl/static/vendor/rickshaw/rickshaw.js"
+	path := "static/vendor/rickshaw/rickshaw.js"
 	name := "static/vendor/rickshaw/rickshaw.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4373,7 +4392,7 @@ func staticVendorRickshawRickshawJs() (*asset, error) {
 
 // staticVendorRickshawRickshawMinCss reads file data from disk. It returns an error on failure.
 func staticVendorRickshawRickshawMinCss() (*asset, error) {
-	path := "/dl/static/vendor/rickshaw/rickshaw.min.css"
+	path := "static/vendor/rickshaw/rickshaw.min.css"
 	name := "static/vendor/rickshaw/rickshaw.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4391,7 +4410,7 @@ func staticVendorRickshawRickshawMinCss() (*asset, error) {
 
 // staticVendorScreenfullDistScreenfullJs reads file data from disk. It returns an error on failure.
 func staticVendorScreenfullDistScreenfullJs() (*asset, error) {
-	path := "/dl/static/vendor/screenfull/dist/screenfull.js"
+	path := "static/vendor/screenfull/dist/screenfull.js"
 	name := "static/vendor/screenfull/dist/screenfull.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4409,7 +4428,7 @@ func staticVendorScreenfullDistScreenfullJs() (*asset, error) {
 
 // staticVendorSeiyriaBootstrapSliderDistBootstrapSliderMinJs reads file data from disk. It returns an error on failure.
 func staticVendorSeiyriaBootstrapSliderDistBootstrapSliderMinJs() (*asset, error) {
-	path := "/dl/static/vendor/seiyria-bootstrap-slider/dist/bootstrap-slider.min.js"
+	path := "static/vendor/seiyria-bootstrap-slider/dist/bootstrap-slider.min.js"
 	name := "static/vendor/seiyria-bootstrap-slider/dist/bootstrap-slider.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4427,7 +4446,7 @@ func staticVendorSeiyriaBootstrapSliderDistBootstrapSliderMinJs() (*asset, error
 
 // staticVendorSeiyriaBootstrapSliderDistCssBootstrapSliderMinCss reads file data from disk. It returns an error on failure.
 func staticVendorSeiyriaBootstrapSliderDistCssBootstrapSliderMinCss() (*asset, error) {
-	path := "/dl/static/vendor/seiyria-bootstrap-slider/dist/css/bootstrap-slider.min.css"
+	path := "static/vendor/seiyria-bootstrap-slider/dist/css/bootstrap-slider.min.css"
 	name := "static/vendor/seiyria-bootstrap-slider/dist/css/bootstrap-slider.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4445,7 +4464,7 @@ func staticVendorSeiyriaBootstrapSliderDistCssBootstrapSliderMinCss() (*asset, e
 
 // staticVendorSelect2DistCssSelect2Css reads file data from disk. It returns an error on failure.
 func staticVendorSelect2DistCssSelect2Css() (*asset, error) {
-	path := "/dl/static/vendor/select2/dist/css/select2.css"
+	path := "static/vendor/select2/dist/css/select2.css"
 	name := "static/vendor/select2/dist/css/select2.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4463,7 +4482,7 @@ func staticVendorSelect2DistCssSelect2Css() (*asset, error) {
 
 // staticVendorSelect2DistJsSelect2Js reads file data from disk. It returns an error on failure.
 func staticVendorSelect2DistJsSelect2Js() (*asset, error) {
-	path := "/dl/static/vendor/select2/dist/js/select2.js"
+	path := "static/vendor/select2/dist/js/select2.js"
 	name := "static/vendor/select2/dist/js/select2.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4481,7 +4500,7 @@ func staticVendorSelect2DistJsSelect2Js() (*asset, error) {
 
 // staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss reads file data from disk. It returns an error on failure.
 func staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss() (*asset, error) {
-	path := "/dl/static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
+	path := "static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
 	name := "static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4499,7 +4518,7 @@ func staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss() (*asset, error) 
 
 // staticVendorSimpleLineIconsCssSimpleLineIconsCss reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsCssSimpleLineIconsCss() (*asset, error) {
-	path := "/dl/static/vendor/simple-line-icons/css/simple-line-icons.css"
+	path := "static/vendor/simple-line-icons/css/simple-line-icons.css"
 	name := "static/vendor/simple-line-icons/css/simple-line-icons.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4517,7 +4536,7 @@ func staticVendorSimpleLineIconsCssSimpleLineIconsCss() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsEot reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsEot() (*asset, error) {
-	path := "/dl/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4535,7 +4554,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsEot() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsSvg reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsSvg() (*asset, error) {
-	path := "/dl/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4553,7 +4572,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsSvg() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsTtf reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsTtf() (*asset, error) {
-	path := "/dl/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4571,7 +4590,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsTtf() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsWoff reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff() (*asset, error) {
-	path := "/dl/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4589,7 +4608,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2 reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2() (*asset, error) {
-	path := "/dl/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4607,7 +4626,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2() (*asset, error) {
 
 // staticVendorSkyconsSkyconsJs reads file data from disk. It returns an error on failure.
 func staticVendorSkyconsSkyconsJs() (*asset, error) {
-	path := "/dl/static/vendor/skycons/skycons.js"
+	path := "static/vendor/skycons/skycons.js"
 	name := "static/vendor/skycons/skycons.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4625,7 +4644,7 @@ func staticVendorSkyconsSkyconsJs() (*asset, error) {
 
 // staticVendorSlimscrollJquerySlimscrollMinJs reads file data from disk. It returns an error on failure.
 func staticVendorSlimscrollJquerySlimscrollMinJs() (*asset, error) {
-	path := "/dl/static/vendor/slimScroll/jquery.slimscroll.min.js"
+	path := "static/vendor/slimScroll/jquery.slimscroll.min.js"
 	name := "static/vendor/slimScroll/jquery.slimscroll.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4643,7 +4662,7 @@ func staticVendorSlimscrollJquerySlimscrollMinJs() (*asset, error) {
 
 // staticVendorSparklineIndexJs reads file data from disk. It returns an error on failure.
 func staticVendorSparklineIndexJs() (*asset, error) {
-	path := "/dl/static/vendor/sparkline/index.js"
+	path := "static/vendor/sparkline/index.js"
 	name := "static/vendor/sparkline/index.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4661,7 +4680,7 @@ func staticVendorSparklineIndexJs() (*asset, error) {
 
 // staticVendorSpinkitCssSpinkitCss reads file data from disk. It returns an error on failure.
 func staticVendorSpinkitCssSpinkitCss() (*asset, error) {
-	path := "/dl/static/vendor/spinkit/css/spinkit.css"
+	path := "static/vendor/spinkit/css/spinkit.css"
 	name := "static/vendor/spinkit/css/spinkit.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4679,7 +4698,7 @@ func staticVendorSpinkitCssSpinkitCss() (*asset, error) {
 
 // staticVendorSweetalertDistSweetalertCss reads file data from disk. It returns an error on failure.
 func staticVendorSweetalertDistSweetalertCss() (*asset, error) {
-	path := "/dl/static/vendor/sweetalert/dist/sweetalert.css"
+	path := "static/vendor/sweetalert/dist/sweetalert.css"
 	name := "static/vendor/sweetalert/dist/sweetalert.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4697,7 +4716,7 @@ func staticVendorSweetalertDistSweetalertCss() (*asset, error) {
 
 // staticVendorSweetalertDistSweetalertMinJs reads file data from disk. It returns an error on failure.
 func staticVendorSweetalertDistSweetalertMinJs() (*asset, error) {
-	path := "/dl/static/vendor/sweetalert/dist/sweetalert.min.js"
+	path := "static/vendor/sweetalert/dist/sweetalert.min.js"
 	name := "static/vendor/sweetalert/dist/sweetalert.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4715,7 +4734,7 @@ func staticVendorSweetalertDistSweetalertMinJs() (*asset, error) {
 
 // staticVendorWeatherIconsCssWeatherIconsWindMinCss reads file data from disk. It returns an error on failure.
 func staticVendorWeatherIconsCssWeatherIconsWindMinCss() (*asset, error) {
-	path := "/dl/static/vendor/weather-icons/css/weather-icons-wind.min.css"
+	path := "static/vendor/weather-icons/css/weather-icons-wind.min.css"
 	name := "static/vendor/weather-icons/css/weather-icons-wind.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4733,7 +4752,7 @@ func staticVendorWeatherIconsCssWeatherIconsWindMinCss() (*asset, error) {
 
 // staticVendorWeatherIconsCssWeatherIconsMinCss reads file data from disk. It returns an error on failure.
 func staticVendorWeatherIconsCssWeatherIconsMinCss() (*asset, error) {
-	path := "/dl/static/vendor/weather-icons/css/weather-icons.min.css"
+	path := "static/vendor/weather-icons/css/weather-icons.min.css"
 	name := "static/vendor/weather-icons/css/weather-icons.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4751,7 +4770,7 @@ func staticVendorWeatherIconsCssWeatherIconsMinCss() (*asset, error) {
 
 // staticVendorWeatherIconsFontWeathericonsRegularWebfontEot reads file data from disk. It returns an error on failure.
 func staticVendorWeatherIconsFontWeathericonsRegularWebfontEot() (*asset, error) {
-	path := "/dl/static/vendor/weather-icons/font/weathericons-regular-webfont.eot"
+	path := "static/vendor/weather-icons/font/weathericons-regular-webfont.eot"
 	name := "static/vendor/weather-icons/font/weathericons-regular-webfont.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4769,7 +4788,7 @@ func staticVendorWeatherIconsFontWeathericonsRegularWebfontEot() (*asset, error)
 
 // staticVendorWeatherIconsFontWeathericonsRegularWebfontSvg reads file data from disk. It returns an error on failure.
 func staticVendorWeatherIconsFontWeathericonsRegularWebfontSvg() (*asset, error) {
-	path := "/dl/static/vendor/weather-icons/font/weathericons-regular-webfont.svg"
+	path := "static/vendor/weather-icons/font/weathericons-regular-webfont.svg"
 	name := "static/vendor/weather-icons/font/weathericons-regular-webfont.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4787,7 +4806,7 @@ func staticVendorWeatherIconsFontWeathericonsRegularWebfontSvg() (*asset, error)
 
 // staticVendorWeatherIconsFontWeathericonsRegularWebfontTtf reads file data from disk. It returns an error on failure.
 func staticVendorWeatherIconsFontWeathericonsRegularWebfontTtf() (*asset, error) {
-	path := "/dl/static/vendor/weather-icons/font/weathericons-regular-webfont.ttf"
+	path := "static/vendor/weather-icons/font/weathericons-regular-webfont.ttf"
 	name := "static/vendor/weather-icons/font/weathericons-regular-webfont.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4805,7 +4824,7 @@ func staticVendorWeatherIconsFontWeathericonsRegularWebfontTtf() (*asset, error)
 
 // staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff reads file data from disk. It returns an error on failure.
 func staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff() (*asset, error) {
-	path := "/dl/static/vendor/weather-icons/font/weathericons-regular-webfont.woff"
+	path := "static/vendor/weather-icons/font/weathericons-regular-webfont.woff"
 	name := "static/vendor/weather-icons/font/weathericons-regular-webfont.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4823,7 +4842,7 @@ func staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff() (*asset, error
 
 // staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff2 reads file data from disk. It returns an error on failure.
 func staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff2() (*asset, error) {
-	path := "/dl/static/vendor/weather-icons/font/weathericons-regular-webfont.woff2"
+	path := "static/vendor/weather-icons/font/weathericons-regular-webfont.woff2"
 	name := "static/vendor/weather-icons/font/weathericons-regular-webfont.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4841,7 +4860,7 @@ func staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff2() (*asset, erro
 
 // staticVendorWhirlDistWhirlCss reads file data from disk. It returns an error on failure.
 func staticVendorWhirlDistWhirlCss() (*asset, error) {
-	path := "/dl/static/vendor/whirl/dist/whirl.css"
+	path := "static/vendor/whirl/dist/whirl.css"
 	name := "static/vendor/whirl/dist/whirl.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4859,7 +4878,7 @@ func staticVendorWhirlDistWhirlCss() (*asset, error) {
 
 // staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss() (*asset, error) {
-	path := "/dl/static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4877,7 +4896,7 @@ func staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss() (*asse
 
 // staticVendorXEditableDistBootstrap3EditableImgClearPng reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableImgClearPng() (*asset, error) {
-	path := "/dl/static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4895,7 +4914,7 @@ func staticVendorXEditableDistBootstrap3EditableImgClearPng() (*asset, error) {
 
 // staticVendorXEditableDistBootstrap3EditableImgLoadingGif reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableImgLoadingGif() (*asset, error) {
-	path := "/dl/static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4913,7 +4932,7 @@ func staticVendorXEditableDistBootstrap3EditableImgLoadingGif() (*asset, error) 
 
 // staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableJs reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableJs() (*asset, error) {
-	path := "/dl/static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.js"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.js"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4931,7 +4950,7 @@ func staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableJs() (*asset,
 
 // staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs() (*asset, error) {
-	path := "/dl/static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -4966,7 +4985,7 @@ func Asset(name string) ([]byte, error) {
 // It simplifies safe initialization of global variables.
 func MustAsset(name string) []byte {
 	a, err := Asset(name)
-	if (err != nil) {
+	if err != nil {
 		panic("asset: Asset(" + name + "): " + err.Error())
 	}
 
@@ -5061,6 +5080,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
 	"static/login.html": staticLoginHtml,
 	"static/modal.html": staticModalHtml,
+	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/Chart.js/Chart.js": staticVendorChartJsChartJs,
 	"static/vendor/Flot/jquery.flot.categories.js": staticVendorFlotJqueryFlotCategoriesJs,
@@ -5296,824 +5316,566 @@ func AssetDir(name string) ([]string, error) {
 }
 
 type bintree struct {
-	Func func() (*asset, error)
+	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
 var _bintree = &bintree{nil, map[string]*bintree{
 	"static": &bintree{nil, map[string]*bintree{
 		"css": &bintree{nil, map[string]*bintree{
-			"app.css": &bintree{staticCssAppCss, map[string]*bintree{
-			}},
-			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{
-			}},
-			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{
-			}},
-			"theme-b.css": &bintree{staticCssThemeBCss, map[string]*bintree{
-			}},
-			"theme-c.css": &bintree{staticCssThemeCCss, map[string]*bintree{
-			}},
-			"theme-d.css": &bintree{staticCssThemeDCss, map[string]*bintree{
-			}},
-			"theme-e.css": &bintree{staticCssThemeECss, map[string]*bintree{
-			}},
-			"theme-f.css": &bintree{staticCssThemeFCss, map[string]*bintree{
-			}},
-			"theme-g.css": &bintree{staticCssThemeGCss, map[string]*bintree{
-			}},
-			"theme-h.css": &bintree{staticCssThemeHCss, map[string]*bintree{
-			}},
+			"app.css": &bintree{staticCssAppCss, map[string]*bintree{}},
+			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{}},
+			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{}},
+			"theme-b.css": &bintree{staticCssThemeBCss, map[string]*bintree{}},
+			"theme-c.css": &bintree{staticCssThemeCCss, map[string]*bintree{}},
+			"theme-d.css": &bintree{staticCssThemeDCss, map[string]*bintree{}},
+			"theme-e.css": &bintree{staticCssThemeECss, map[string]*bintree{}},
+			"theme-f.css": &bintree{staticCssThemeFCss, map[string]*bintree{}},
+			"theme-g.css": &bintree{staticCssThemeGCss, map[string]*bintree{}},
+			"theme-h.css": &bintree{staticCssThemeHCss, map[string]*bintree{}},
 		}},
 		"i18n": &bintree{nil, map[string]*bintree{
-			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{
-			}},
-			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{
-			}},
+			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{}},
+			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{}},
 		}},
 		"img": &bintree{nil, map[string]*bintree{
-			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{
-			}},
-			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{
-			}},
-			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{
-			}},
-			"bg3.jpg": &bintree{staticImgBg3Jpg, map[string]*bintree{
-			}},
-			"bg4.jpg": &bintree{staticImgBg4Jpg, map[string]*bintree{
-			}},
-			"bg5.jpg": &bintree{staticImgBg5Jpg, map[string]*bintree{
-			}},
-			"bg6.jpg": &bintree{staticImgBg6Jpg, map[string]*bintree{
-			}},
-			"bg7.jpg": &bintree{staticImgBg7Jpg, map[string]*bintree{
-			}},
-			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{
-			}},
-			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{
-			}},
-			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{
-			}},
-			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{
-			}},
-			"logo-single.png": &bintree{staticImgLogoSinglePng, map[string]*bintree{
-			}},
-			"logo.png": &bintree{staticImgLogoPng, map[string]*bintree{
-			}},
-			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{
-			}},
-			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{
-			}},
-			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{
-			}},
+			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
+			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{}},
+			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{}},
+			"bg3.jpg": &bintree{staticImgBg3Jpg, map[string]*bintree{}},
+			"bg4.jpg": &bintree{staticImgBg4Jpg, map[string]*bintree{}},
+			"bg5.jpg": &bintree{staticImgBg5Jpg, map[string]*bintree{}},
+			"bg6.jpg": &bintree{staticImgBg6Jpg, map[string]*bintree{}},
+			"bg7.jpg": &bintree{staticImgBg7Jpg, map[string]*bintree{}},
+			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{}},
+			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{}},
+			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{}},
+			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{}},
+			"logo-single.png": &bintree{staticImgLogoSinglePng, map[string]*bintree{}},
+			"logo.png": &bintree{staticImgLogoPng, map[string]*bintree{}},
+			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{}},
+			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
+			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{}},
 			"user": &bintree{nil, map[string]*bintree{
-				"01.jpg": &bintree{staticImgUser01Jpg, map[string]*bintree{
-				}},
-				"02.jpg": &bintree{staticImgUser02Jpg, map[string]*bintree{
-				}},
-				"03.jpg": &bintree{staticImgUser03Jpg, map[string]*bintree{
-				}},
-				"04.jpg": &bintree{staticImgUser04Jpg, map[string]*bintree{
-				}},
-				"05.jpg": &bintree{staticImgUser05Jpg, map[string]*bintree{
-				}},
-				"06.jpg": &bintree{staticImgUser06Jpg, map[string]*bintree{
-				}},
-				"07.jpg": &bintree{staticImgUser07Jpg, map[string]*bintree{
-				}},
-				"08.jpg": &bintree{staticImgUser08Jpg, map[string]*bintree{
-				}},
-				"09.jpg": &bintree{staticImgUser09Jpg, map[string]*bintree{
-				}},
-				"10.jpg": &bintree{staticImgUser10Jpg, map[string]*bintree{
-				}},
-				"11.jpg": &bintree{staticImgUser11Jpg, map[string]*bintree{
-				}},
-				"12.jpg": &bintree{staticImgUser12Jpg, map[string]*bintree{
-				}},
-				"13.jpg": &bintree{staticImgUser13Jpg, map[string]*bintree{
-				}},
+				"01.jpg": &bintree{staticImgUser01Jpg, map[string]*bintree{}},
+				"02.jpg": &bintree{staticImgUser02Jpg, map[string]*bintree{}},
+				"03.jpg": &bintree{staticImgUser03Jpg, map[string]*bintree{}},
+				"04.jpg": &bintree{staticImgUser04Jpg, map[string]*bintree{}},
+				"05.jpg": &bintree{staticImgUser05Jpg, map[string]*bintree{}},
+				"06.jpg": &bintree{staticImgUser06Jpg, map[string]*bintree{}},
+				"07.jpg": &bintree{staticImgUser07Jpg, map[string]*bintree{}},
+				"08.jpg": &bintree{staticImgUser08Jpg, map[string]*bintree{}},
+				"09.jpg": &bintree{staticImgUser09Jpg, map[string]*bintree{}},
+				"10.jpg": &bintree{staticImgUser10Jpg, map[string]*bintree{}},
+				"11.jpg": &bintree{staticImgUser11Jpg, map[string]*bintree{}},
+				"12.jpg": &bintree{staticImgUser12Jpg, map[string]*bintree{}},
+				"13.jpg": &bintree{staticImgUser13Jpg, map[string]*bintree{}},
 			}},
 		}},
-		"index.html": &bintree{staticIndexHtml, map[string]*bintree{
-		}},
-		"install_step_0.html": &bintree{staticInstall_step_0Html, map[string]*bintree{
-		}},
-		"install_step_1.html": &bintree{staticInstall_step_1Html, map[string]*bintree{
-		}},
+		"index.html": &bintree{staticIndexHtml, map[string]*bintree{}},
+		"install_step_0.html": &bintree{staticInstall_step_0Html, map[string]*bintree{}},
+		"install_step_1.html": &bintree{staticInstall_step_1Html, map[string]*bintree{}},
 		"js": &bintree{nil, map[string]*bintree{
-			"app.js": &bintree{staticJsAppJs, map[string]*bintree{
-			}},
+			"app.js": &bintree{staticJsAppJs, map[string]*bintree{}},
 			"demo": &bintree{nil, map[string]*bintree{
-				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{
-				}},
-				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{
-				}},
-				"demo-forms.js": &bintree{staticJsDemoDemoFormsJs, map[string]*bintree{
-				}},
-				"demo-jqcloud.js": &bintree{staticJsDemoDemoJqcloudJs, map[string]*bintree{
-				}},
-				"demo-jqgrid.js": &bintree{staticJsDemoDemoJqgridJs, map[string]*bintree{
-				}},
-				"demo-nestable.js": &bintree{staticJsDemoDemoNestableJs, map[string]*bintree{
-				}},
-				"demo-panels.js": &bintree{staticJsDemoDemoPanelsJs, map[string]*bintree{
-				}},
-				"demo-rtl.js": &bintree{staticJsDemoDemoRtlJs, map[string]*bintree{
-				}},
-				"demo-search.js": &bintree{staticJsDemoDemoSearchJs, map[string]*bintree{
-				}},
-				"demo-sortable.js": &bintree{staticJsDemoDemoSortableJs, map[string]*bintree{
-				}},
-				"demo-upload.js": &bintree{staticJsDemoDemoUploadJs, map[string]*bintree{
-				}},
-				"demo-vector-map.js": &bintree{staticJsDemoDemoVectorMapJs, map[string]*bintree{
-				}},
-				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{
-				}},
-				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{
-				}},
+				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{}},
+				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{}},
+				"demo-forms.js": &bintree{staticJsDemoDemoFormsJs, map[string]*bintree{}},
+				"demo-jqcloud.js": &bintree{staticJsDemoDemoJqcloudJs, map[string]*bintree{}},
+				"demo-jqgrid.js": &bintree{staticJsDemoDemoJqgridJs, map[string]*bintree{}},
+				"demo-nestable.js": &bintree{staticJsDemoDemoNestableJs, map[string]*bintree{}},
+				"demo-panels.js": &bintree{staticJsDemoDemoPanelsJs, map[string]*bintree{}},
+				"demo-rtl.js": &bintree{staticJsDemoDemoRtlJs, map[string]*bintree{}},
+				"demo-search.js": &bintree{staticJsDemoDemoSearchJs, map[string]*bintree{}},
+				"demo-sortable.js": &bintree{staticJsDemoDemoSortableJs, map[string]*bintree{}},
+				"demo-upload.js": &bintree{staticJsDemoDemoUploadJs, map[string]*bintree{}},
+				"demo-vector-map.js": &bintree{staticJsDemoDemoVectorMapJs, map[string]*bintree{}},
+				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
+				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
 		}},
-		"login.html": &bintree{staticLoginHtml, map[string]*bintree{
-		}},
-		"modal.html": &bintree{staticModalHtml, map[string]*bintree{
-		}},
-		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{
-		}},
+		"login.html": &bintree{staticLoginHtml, map[string]*bintree{}},
+		"modal.html": &bintree{staticModalHtml, map[string]*bintree{}},
+		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
+		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"vendor": &bintree{nil, map[string]*bintree{
 			"Chart.js": &bintree{nil, map[string]*bintree{
-				"Chart.js": &bintree{staticVendorChartJsChartJs, map[string]*bintree{
-				}},
+				"Chart.js": &bintree{staticVendorChartJsChartJs, map[string]*bintree{}},
 			}},
 			"Flot": &bintree{nil, map[string]*bintree{
-				"jquery.flot.categories.js": &bintree{staticVendorFlotJqueryFlotCategoriesJs, map[string]*bintree{
-				}},
-				"jquery.flot.js": &bintree{staticVendorFlotJqueryFlotJs, map[string]*bintree{
-				}},
-				"jquery.flot.pie.js": &bintree{staticVendorFlotJqueryFlotPieJs, map[string]*bintree{
-				}},
-				"jquery.flot.resize.js": &bintree{staticVendorFlotJqueryFlotResizeJs, map[string]*bintree{
-				}},
-				"jquery.flot.time.js": &bintree{staticVendorFlotJqueryFlotTimeJs, map[string]*bintree{
-				}},
+				"jquery.flot.categories.js": &bintree{staticVendorFlotJqueryFlotCategoriesJs, map[string]*bintree{}},
+				"jquery.flot.js": &bintree{staticVendorFlotJqueryFlotJs, map[string]*bintree{}},
+				"jquery.flot.pie.js": &bintree{staticVendorFlotJqueryFlotPieJs, map[string]*bintree{}},
+				"jquery.flot.resize.js": &bintree{staticVendorFlotJqueryFlotResizeJs, map[string]*bintree{}},
+				"jquery.flot.time.js": &bintree{staticVendorFlotJqueryFlotTimeJs, map[string]*bintree{}},
 			}},
 			"animate.css": &bintree{nil, map[string]*bintree{
-				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{
-				}},
+				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{}},
 			}},
 			"animo.js": &bintree{nil, map[string]*bintree{
-				"animo.js": &bintree{staticVendorAnimoJsAnimoJs, map[string]*bintree{
-				}},
+				"animo.js": &bintree{staticVendorAnimoJsAnimoJs, map[string]*bintree{}},
 			}},
 			"blueimp-canvas-to-blob": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"canvas-to-blob.js": &bintree{staticVendorBlueimpCanvasToBlobJsCanvasToBlobJs, map[string]*bintree{
-					}},
+					"canvas-to-blob.js": &bintree{staticVendorBlueimpCanvasToBlobJsCanvasToBlobJs, map[string]*bintree{}},
 				}},
 			}},
 			"blueimp-file-upload": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"jquery.fileupload.css": &bintree{staticVendorBlueimpFileUploadCssJqueryFileuploadCss, map[string]*bintree{
-					}},
+					"jquery.fileupload.css": &bintree{staticVendorBlueimpFileUploadCssJqueryFileuploadCss, map[string]*bintree{}},
 				}},
 				"img": &bintree{nil, map[string]*bintree{
-					"loading.gif": &bintree{staticVendorBlueimpFileUploadImgLoadingGif, map[string]*bintree{
-					}},
-					"progressbar.gif": &bintree{staticVendorBlueimpFileUploadImgProgressbarGif, map[string]*bintree{
-					}},
+					"loading.gif": &bintree{staticVendorBlueimpFileUploadImgLoadingGif, map[string]*bintree{}},
+					"progressbar.gif": &bintree{staticVendorBlueimpFileUploadImgProgressbarGif, map[string]*bintree{}},
 				}},
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.fileupload-angular.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAngularJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-audio.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAudioJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-image.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadImageJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-jquery-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJqueryUiJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-process.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadProcessJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadUiJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-validate.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadValidateJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-video.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadVideoJs, map[string]*bintree{
-					}},
-					"jquery.fileupload.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJs, map[string]*bintree{
-					}},
-					"jquery.iframe-transport.js": &bintree{staticVendorBlueimpFileUploadJsJqueryIframeTransportJs, map[string]*bintree{
-					}},
+					"jquery.fileupload-angular.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAngularJs, map[string]*bintree{}},
+					"jquery.fileupload-audio.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAudioJs, map[string]*bintree{}},
+					"jquery.fileupload-image.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadImageJs, map[string]*bintree{}},
+					"jquery.fileupload-jquery-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJqueryUiJs, map[string]*bintree{}},
+					"jquery.fileupload-process.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadProcessJs, map[string]*bintree{}},
+					"jquery.fileupload-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadUiJs, map[string]*bintree{}},
+					"jquery.fileupload-validate.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadValidateJs, map[string]*bintree{}},
+					"jquery.fileupload-video.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadVideoJs, map[string]*bintree{}},
+					"jquery.fileupload.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJs, map[string]*bintree{}},
+					"jquery.iframe-transport.js": &bintree{staticVendorBlueimpFileUploadJsJqueryIframeTransportJs, map[string]*bintree{}},
 				}},
 			}},
 			"blueimp-load-image": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"load-image.all.min.js": &bintree{staticVendorBlueimpLoadImageJsLoadImageAllMinJs, map[string]*bintree{
-					}},
+					"load-image.all.min.js": &bintree{staticVendorBlueimpLoadImageJsLoadImageAllMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"blueimp-tmpl": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"tmpl.js": &bintree{staticVendorBlueimpTmplJsTmplJs, map[string]*bintree{
-					}},
+					"tmpl.js": &bintree{staticVendorBlueimpTmplJsTmplJs, map[string]*bintree{}},
 				}},
 			}},
 			"bootstrap": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap.css": &bintree{staticVendorBootstrapDistCssBootstrapCss, map[string]*bintree{
-						}},
+						"bootstrap.css": &bintree{staticVendorBootstrapDistCssBootstrapCss, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap.js": &bintree{staticVendorBootstrapDistJsBootstrapJs, map[string]*bintree{
-						}},
+						"bootstrap.js": &bintree{staticVendorBootstrapDistJsBootstrapJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"bootstrap-filestyle": &bintree{nil, map[string]*bintree{
 				"src": &bintree{nil, map[string]*bintree{
-					"bootstrap-filestyle.js": &bintree{staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs, map[string]*bintree{
-					}},
+					"bootstrap-filestyle.js": &bintree{staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs, map[string]*bintree{}},
 				}},
 			}},
 			"bootstrap-tagsinput": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"bootstrap-tagsinput.css": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputCss, map[string]*bintree{
-					}},
-					"bootstrap-tagsinput.min.js": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputMinJs, map[string]*bintree{
-					}},
+					"bootstrap-tagsinput.css": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputCss, map[string]*bintree{}},
+					"bootstrap-tagsinput.min.js": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"bootstrap-tour": &bintree{nil, map[string]*bintree{
 				"build": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-tour-standalone.css": &bintree{staticVendorBootstrapTourBuildCssBootstrapTourStandaloneCss, map[string]*bintree{
-						}},
+						"bootstrap-tour-standalone.css": &bintree{staticVendorBootstrapTourBuildCssBootstrapTourStandaloneCss, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-tour-standalone.js": &bintree{staticVendorBootstrapTourBuildJsBootstrapTourStandaloneJs, map[string]*bintree{
-						}},
+						"bootstrap-tour-standalone.js": &bintree{staticVendorBootstrapTourBuildJsBootstrapTourStandaloneJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"bootstrap-wysiwyg": &bintree{nil, map[string]*bintree{
-				"bootstrap-wysiwyg.js": &bintree{staticVendorBootstrapWysiwygBootstrapWysiwygJs, map[string]*bintree{
-				}},
+				"bootstrap-wysiwyg.js": &bintree{staticVendorBootstrapWysiwygBootstrapWysiwygJs, map[string]*bintree{}},
 				"external": &bintree{nil, map[string]*bintree{
-					"jquery.hotkeys.js": &bintree{staticVendorBootstrapWysiwygExternalJqueryHotkeysJs, map[string]*bintree{
-					}},
+					"jquery.hotkeys.js": &bintree{staticVendorBootstrapWysiwygExternalJqueryHotkeysJs, map[string]*bintree{}},
 				}},
 			}},
 			"chartist": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"chartist.js": &bintree{staticVendorChartistDistChartistJs, map[string]*bintree{
-					}},
-					"chartist.min.css": &bintree{staticVendorChartistDistChartistMinCss, map[string]*bintree{
-					}},
+					"chartist.js": &bintree{staticVendorChartistDistChartistJs, map[string]*bintree{}},
+					"chartist.min.css": &bintree{staticVendorChartistDistChartistMinCss, map[string]*bintree{}},
 				}},
 			}},
 			"chosen_v1.2.0": &bintree{nil, map[string]*bintree{
-				"chosen-sprite.png": &bintree{staticVendorChosen_v120ChosenSpritePng, map[string]*bintree{
-				}},
-				"chosen-sprite@2x.png": &bintree{staticVendorChosen_v120ChosenSprite2xPng, map[string]*bintree{
-				}},
-				"chosen.jquery.min.js": &bintree{staticVendorChosen_v120ChosenJqueryMinJs, map[string]*bintree{
-				}},
-				"chosen.min.css": &bintree{staticVendorChosen_v120ChosenMinCss, map[string]*bintree{
-				}},
+				"chosen-sprite.png": &bintree{staticVendorChosen_v120ChosenSpritePng, map[string]*bintree{}},
+				"chosen-sprite@2x.png": &bintree{staticVendorChosen_v120ChosenSprite2xPng, map[string]*bintree{}},
+				"chosen.jquery.min.js": &bintree{staticVendorChosen_v120ChosenJqueryMinJs, map[string]*bintree{}},
+				"chosen.min.css": &bintree{staticVendorChosen_v120ChosenMinCss, map[string]*bintree{}},
 			}},
 			"cropper": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"cropper.css": &bintree{staticVendorCropperDistCropperCss, map[string]*bintree{
-					}},
-					"cropper.js": &bintree{staticVendorCropperDistCropperJs, map[string]*bintree{
-					}},
+					"cropper.css": &bintree{staticVendorCropperDistCropperCss, map[string]*bintree{}},
+					"cropper.js": &bintree{staticVendorCropperDistCropperJs, map[string]*bintree{}},
 				}},
 			}},
 			"d3": &bintree{nil, map[string]*bintree{
-				"d3.min.js": &bintree{staticVendorD3D3MinJs, map[string]*bintree{
-				}},
+				"d3.min.js": &bintree{staticVendorD3D3MinJs, map[string]*bintree{}},
 			}},
 			"dataTables.fontAwesome": &bintree{nil, map[string]*bintree{
-				"index.css": &bintree{staticVendorDatatablesFontawesomeIndexCss, map[string]*bintree{
-				}},
+				"index.css": &bintree{staticVendorDatatablesFontawesomeIndexCss, map[string]*bintree{}},
 			}},
 			"datatables": &bintree{nil, map[string]*bintree{
 				"media": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.css": &bintree{staticVendorDatatablesMediaCssDatatablesBootstrapCss, map[string]*bintree{
-						}},
+						"dataTables.bootstrap.css": &bintree{staticVendorDatatablesMediaCssDatatablesBootstrapCss, map[string]*bintree{}},
 					}},
 					"images": &bintree{nil, map[string]*bintree{
-						"Sorting icons.psd": &bintree{staticVendorDatatablesMediaImagesSortingIconsPsd, map[string]*bintree{
-						}},
-						"favicon.ico": &bintree{staticVendorDatatablesMediaImagesFaviconIco, map[string]*bintree{
-						}},
-						"sort_asc.png": &bintree{staticVendorDatatablesMediaImagesSort_ascPng, map[string]*bintree{
-						}},
-						"sort_asc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_asc_disabledPng, map[string]*bintree{
-						}},
-						"sort_both.png": &bintree{staticVendorDatatablesMediaImagesSort_bothPng, map[string]*bintree{
-						}},
-						"sort_desc.png": &bintree{staticVendorDatatablesMediaImagesSort_descPng, map[string]*bintree{
-						}},
-						"sort_desc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_desc_disabledPng, map[string]*bintree{
-						}},
+						"Sorting icons.psd": &bintree{staticVendorDatatablesMediaImagesSortingIconsPsd, map[string]*bintree{}},
+						"favicon.ico": &bintree{staticVendorDatatablesMediaImagesFaviconIco, map[string]*bintree{}},
+						"sort_asc.png": &bintree{staticVendorDatatablesMediaImagesSort_ascPng, map[string]*bintree{}},
+						"sort_asc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_asc_disabledPng, map[string]*bintree{}},
+						"sort_both.png": &bintree{staticVendorDatatablesMediaImagesSort_bothPng, map[string]*bintree{}},
+						"sort_desc.png": &bintree{staticVendorDatatablesMediaImagesSort_descPng, map[string]*bintree{}},
+						"sort_desc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_desc_disabledPng, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{
-						}},
-						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{
-						}},
+						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{}},
+						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"datatables-colvis": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.css": &bintree{staticVendorDatatablesColvisCssDatatablesColvisCss, map[string]*bintree{
-					}},
+					"dataTables.colVis.css": &bintree{staticVendorDatatablesColvisCssDatatablesColvisCss, map[string]*bintree{}},
 				}},
 				"js": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.js": &bintree{staticVendorDatatablesColvisJsDatatablesColvisJs, map[string]*bintree{
-					}},
+					"dataTables.colVis.js": &bintree{staticVendorDatatablesColvisJsDatatablesColvisJs, map[string]*bintree{}},
 				}},
 			}},
 			"eonasdan-bootstrap-datetimepicker": &bintree{nil, map[string]*bintree{
 				"build": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.css": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss, map[string]*bintree{
-						}},
+						"bootstrap-datetimepicker.min.css": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.js": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs, map[string]*bintree{
-						}},
+						"bootstrap-datetimepicker.min.js": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"fastclick": &bintree{nil, map[string]*bintree{
 				"lib": &bintree{nil, map[string]*bintree{
-					"fastclick.js": &bintree{staticVendorFastclickLibFastclickJs, map[string]*bintree{
-					}},
+					"fastclick.js": &bintree{staticVendorFastclickLibFastclickJs, map[string]*bintree{}},
 				}},
 			}},
 			"flatdoc": &bintree{nil, map[string]*bintree{
-				"flatdoc.js": &bintree{staticVendorFlatdocFlatdocJs, map[string]*bintree{
-				}},
+				"flatdoc.js": &bintree{staticVendorFlatdocFlatdocJs, map[string]*bintree{}},
 			}},
 			"flot-spline": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.flot.spline.min.js": &bintree{staticVendorFlotSplineJsJqueryFlotSplineMinJs, map[string]*bintree{
-					}},
+					"jquery.flot.spline.min.js": &bintree{staticVendorFlotSplineJsJqueryFlotSplineMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"flot.tooltip": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.flot.tooltip.min.js": &bintree{staticVendorFlotTooltipJsJqueryFlotTooltipMinJs, map[string]*bintree{
-					}},
+					"jquery.flot.tooltip.min.js": &bintree{staticVendorFlotTooltipJsJqueryFlotTooltipMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"fontawesome": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"font-awesome.min.css": &bintree{staticVendorFontawesomeCssFontAwesomeMinCss, map[string]*bintree{
-					}},
+					"font-awesome.min.css": &bintree{staticVendorFontawesomeCssFontAwesomeMinCss, map[string]*bintree{}},
 				}},
 				"fonts": &bintree{nil, map[string]*bintree{
-					"FontAwesome.otf": &bintree{staticVendorFontawesomeFontsFontawesomeOtf, map[string]*bintree{
-					}},
-					"fontawesome-webfont.eot": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontEot, map[string]*bintree{
-					}},
-					"fontawesome-webfont.svg": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontSvg, map[string]*bintree{
-					}},
-					"fontawesome-webfont.ttf": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontTtf, map[string]*bintree{
-					}},
-					"fontawesome-webfont.woff": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff, map[string]*bintree{
-					}},
-					"fontawesome-webfont.woff2": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff2, map[string]*bintree{
-					}},
+					"FontAwesome.otf": &bintree{staticVendorFontawesomeFontsFontawesomeOtf, map[string]*bintree{}},
+					"fontawesome-webfont.eot": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontEot, map[string]*bintree{}},
+					"fontawesome-webfont.svg": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontSvg, map[string]*bintree{}},
+					"fontawesome-webfont.ttf": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontTtf, map[string]*bintree{}},
+					"fontawesome-webfont.woff": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff, map[string]*bintree{}},
+					"fontawesome-webfont.woff2": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff2, map[string]*bintree{}},
 				}},
 			}},
 			"fullcalendar": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"fullcalendar.css": &bintree{staticVendorFullcalendarDistFullcalendarCss, map[string]*bintree{
-					}},
-					"fullcalendar.min.js": &bintree{staticVendorFullcalendarDistFullcalendarMinJs, map[string]*bintree{
-					}},
-					"gcal.js": &bintree{staticVendorFullcalendarDistGcalJs, map[string]*bintree{
-					}},
+					"fullcalendar.css": &bintree{staticVendorFullcalendarDistFullcalendarCss, map[string]*bintree{}},
+					"fullcalendar.min.js": &bintree{staticVendorFullcalendarDistFullcalendarMinJs, map[string]*bintree{}},
+					"gcal.js": &bintree{staticVendorFullcalendarDistGcalJs, map[string]*bintree{}},
 				}},
 			}},
 			"html.sortable": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"html.sortable.js": &bintree{staticVendorHtmlSortableDistHtmlSortableJs, map[string]*bintree{
-					}},
+					"html.sortable.js": &bintree{staticVendorHtmlSortableDistHtmlSortableJs, map[string]*bintree{}},
 				}},
 			}},
 			"ika.jvectormap": &bintree{nil, map[string]*bintree{
-				"jquery-jvectormap-1.2.2.css": &bintree{staticVendorIkaJvectormapJqueryJvectormap122Css, map[string]*bintree{
-				}},
-				"jquery-jvectormap-1.2.2.min.js": &bintree{staticVendorIkaJvectormapJqueryJvectormap122MinJs, map[string]*bintree{
-				}},
-				"jquery-jvectormap-us-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapUsMillEnJs, map[string]*bintree{
-				}},
-				"jquery-jvectormap-world-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapWorldMillEnJs, map[string]*bintree{
-				}},
+				"jquery-jvectormap-1.2.2.css": &bintree{staticVendorIkaJvectormapJqueryJvectormap122Css, map[string]*bintree{}},
+				"jquery-jvectormap-1.2.2.min.js": &bintree{staticVendorIkaJvectormapJqueryJvectormap122MinJs, map[string]*bintree{}},
+				"jquery-jvectormap-us-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapUsMillEnJs, map[string]*bintree{}},
+				"jquery-jvectormap-world-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapWorldMillEnJs, map[string]*bintree{}},
 			}},
 			"jQuery-Storage-API": &bintree{nil, map[string]*bintree{
-				"jquery.storageapi.js": &bintree{staticVendorJqueryStorageApiJqueryStorageapiJs, map[string]*bintree{
-				}},
+				"jquery.storageapi.js": &bintree{staticVendorJqueryStorageApiJqueryStorageapiJs, map[string]*bintree{}},
 			}},
 			"jQuery-gMap": &bintree{nil, map[string]*bintree{
-				"jquery.gmap.min.js": &bintree{staticVendorJqueryGmapJqueryGmapMinJs, map[string]*bintree{
-				}},
+				"jquery.gmap.min.js": &bintree{staticVendorJqueryGmapJqueryGmapMinJs, map[string]*bintree{}},
 			}},
 			"jqcloud2": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jqcloud.css": &bintree{staticVendorJqcloud2DistJqcloudCss, map[string]*bintree{
-					}},
-					"jqcloud.js": &bintree{staticVendorJqcloud2DistJqcloudJs, map[string]*bintree{
-					}},
+					"jqcloud.css": &bintree{staticVendorJqcloud2DistJqcloudCss, map[string]*bintree{}},
+					"jqcloud.js": &bintree{staticVendorJqcloud2DistJqcloudJs, map[string]*bintree{}},
 				}},
 			}},
 			"jqgrid": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"ui.jqgrid.css": &bintree{staticVendorJqgridCssUiJqgridCss, map[string]*bintree{
-					}},
+					"ui.jqgrid.css": &bintree{staticVendorJqgridCssUiJqgridCss, map[string]*bintree{}},
 				}},
 				"js": &bintree{nil, map[string]*bintree{
 					"i18n": &bintree{nil, map[string]*bintree{
-						"grid.locale-en.js": &bintree{staticVendorJqgridJsI18nGridLocaleEnJs, map[string]*bintree{
-						}},
+						"grid.locale-en.js": &bintree{staticVendorJqgridJsI18nGridLocaleEnJs, map[string]*bintree{}},
 					}},
-					"jquery.jqGrid.js": &bintree{staticVendorJqgridJsJqueryJqgridJs, map[string]*bintree{
-					}},
+					"jquery.jqGrid.js": &bintree{staticVendorJqgridJsJqueryJqgridJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{
-					}},
+					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-classyloader": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.classyloader.min.js": &bintree{staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs, map[string]*bintree{
-					}},
+					"jquery.classyloader.min.js": &bintree{staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-knob": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.knob.js": &bintree{staticVendorJqueryKnobJsJqueryKnobJs, map[string]*bintree{
-					}},
+					"jquery.knob.js": &bintree{staticVendorJqueryKnobJsJqueryKnobJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-localize-i18n": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.localize.js": &bintree{staticVendorJqueryLocalizeI18nDistJqueryLocalizeJs, map[string]*bintree{
-					}},
+					"jquery.localize.js": &bintree{staticVendorJqueryLocalizeI18nDistJqueryLocalizeJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-ui": &bintree{nil, map[string]*bintree{
 				"themes": &bintree{nil, map[string]*bintree{
 					"smoothness": &bintree{nil, map[string]*bintree{
 						"images": &bintree{nil, map[string]*bintree{
-							"animated-overlay.gif": &bintree{staticVendorJqueryUiThemesSmoothnessImagesAnimatedOverlayGif, map[string]*bintree{
-							}},
-							"ui-bg_flat_0_aaaaaa_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_0_aaaaaa_40x100Png, map[string]*bintree{
-							}},
-							"ui-bg_flat_75_ffffff_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_75_ffffff_40x100Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_55_fbf9ee_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_55_fbf9ee_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_65_ffffff_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_65_ffffff_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_75_dadada_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_dadada_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_75_e6e6e6_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_e6e6e6_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_95_fef1ec_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_95_fef1ec_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_highlight-soft_75_cccccc_1x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_highlightSoft_75_cccccc_1x100Png, map[string]*bintree{
-							}},
-							"ui-icons_222222_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_222222_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_2e83ff_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_2e83ff_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_454545_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_454545_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_888888_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_888888_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_cd0a0a_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_cd0a0a_256x240Png, map[string]*bintree{
-							}},
+							"animated-overlay.gif": &bintree{staticVendorJqueryUiThemesSmoothnessImagesAnimatedOverlayGif, map[string]*bintree{}},
+							"ui-bg_flat_0_aaaaaa_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_0_aaaaaa_40x100Png, map[string]*bintree{}},
+							"ui-bg_flat_75_ffffff_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_75_ffffff_40x100Png, map[string]*bintree{}},
+							"ui-bg_glass_55_fbf9ee_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_55_fbf9ee_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_65_ffffff_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_65_ffffff_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_75_dadada_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_dadada_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_75_e6e6e6_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_e6e6e6_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_95_fef1ec_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_95_fef1ec_1x400Png, map[string]*bintree{}},
+							"ui-bg_highlight-soft_75_cccccc_1x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_highlightSoft_75_cccccc_1x100Png, map[string]*bintree{}},
+							"ui-icons_222222_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_222222_256x240Png, map[string]*bintree{}},
+							"ui-icons_2e83ff_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_2e83ff_256x240Png, map[string]*bintree{}},
+							"ui-icons_454545_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_454545_256x240Png, map[string]*bintree{}},
+							"ui-icons_888888_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_888888_256x240Png, map[string]*bintree{}},
+							"ui-icons_cd0a0a_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_cd0a0a_256x240Png, map[string]*bintree{}},
 						}},
-						"jquery-ui.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiCss, map[string]*bintree{
-						}},
-						"jquery-ui.min.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiMinCss, map[string]*bintree{
-						}},
-						"theme.css": &bintree{staticVendorJqueryUiThemesSmoothnessThemeCss, map[string]*bintree{
-						}},
+						"jquery-ui.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiCss, map[string]*bintree{}},
+						"jquery-ui.min.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiMinCss, map[string]*bintree{}},
+						"theme.css": &bintree{staticVendorJqueryUiThemesSmoothnessThemeCss, map[string]*bintree{}},
 					}},
 				}},
 				"ui": &bintree{nil, map[string]*bintree{
-					"accordion.js": &bintree{staticVendorJqueryUiUiAccordionJs, map[string]*bintree{
-					}},
-					"autocomplete.js": &bintree{staticVendorJqueryUiUiAutocompleteJs, map[string]*bintree{
-					}},
-					"button.js": &bintree{staticVendorJqueryUiUiButtonJs, map[string]*bintree{
-					}},
-					"core.js": &bintree{staticVendorJqueryUiUiCoreJs, map[string]*bintree{
-					}},
-					"datepicker.js": &bintree{staticVendorJqueryUiUiDatepickerJs, map[string]*bintree{
-					}},
-					"dialog.js": &bintree{staticVendorJqueryUiUiDialogJs, map[string]*bintree{
-					}},
-					"draggable.js": &bintree{staticVendorJqueryUiUiDraggableJs, map[string]*bintree{
-					}},
-					"droppable.js": &bintree{staticVendorJqueryUiUiDroppableJs, map[string]*bintree{
-					}},
-					"effect-blind.js": &bintree{staticVendorJqueryUiUiEffectBlindJs, map[string]*bintree{
-					}},
-					"effect-bounce.js": &bintree{staticVendorJqueryUiUiEffectBounceJs, map[string]*bintree{
-					}},
-					"effect-clip.js": &bintree{staticVendorJqueryUiUiEffectClipJs, map[string]*bintree{
-					}},
-					"effect-drop.js": &bintree{staticVendorJqueryUiUiEffectDropJs, map[string]*bintree{
-					}},
-					"effect-explode.js": &bintree{staticVendorJqueryUiUiEffectExplodeJs, map[string]*bintree{
-					}},
-					"effect-fade.js": &bintree{staticVendorJqueryUiUiEffectFadeJs, map[string]*bintree{
-					}},
-					"effect-fold.js": &bintree{staticVendorJqueryUiUiEffectFoldJs, map[string]*bintree{
-					}},
-					"effect-highlight.js": &bintree{staticVendorJqueryUiUiEffectHighlightJs, map[string]*bintree{
-					}},
-					"effect-puff.js": &bintree{staticVendorJqueryUiUiEffectPuffJs, map[string]*bintree{
-					}},
-					"effect-pulsate.js": &bintree{staticVendorJqueryUiUiEffectPulsateJs, map[string]*bintree{
-					}},
-					"effect-scale.js": &bintree{staticVendorJqueryUiUiEffectScaleJs, map[string]*bintree{
-					}},
-					"effect-shake.js": &bintree{staticVendorJqueryUiUiEffectShakeJs, map[string]*bintree{
-					}},
-					"effect-size.js": &bintree{staticVendorJqueryUiUiEffectSizeJs, map[string]*bintree{
-					}},
-					"effect-slide.js": &bintree{staticVendorJqueryUiUiEffectSlideJs, map[string]*bintree{
-					}},
-					"effect-transfer.js": &bintree{staticVendorJqueryUiUiEffectTransferJs, map[string]*bintree{
-					}},
-					"effect.js": &bintree{staticVendorJqueryUiUiEffectJs, map[string]*bintree{
-					}},
-					"menu.js": &bintree{staticVendorJqueryUiUiMenuJs, map[string]*bintree{
-					}},
-					"mouse.js": &bintree{staticVendorJqueryUiUiMouseJs, map[string]*bintree{
-					}},
-					"position.js": &bintree{staticVendorJqueryUiUiPositionJs, map[string]*bintree{
-					}},
-					"progressbar.js": &bintree{staticVendorJqueryUiUiProgressbarJs, map[string]*bintree{
-					}},
-					"resizable.js": &bintree{staticVendorJqueryUiUiResizableJs, map[string]*bintree{
-					}},
-					"selectable.js": &bintree{staticVendorJqueryUiUiSelectableJs, map[string]*bintree{
-					}},
-					"selectmenu.js": &bintree{staticVendorJqueryUiUiSelectmenuJs, map[string]*bintree{
-					}},
-					"slider.js": &bintree{staticVendorJqueryUiUiSliderJs, map[string]*bintree{
-					}},
-					"sortable.js": &bintree{staticVendorJqueryUiUiSortableJs, map[string]*bintree{
-					}},
-					"spinner.js": &bintree{staticVendorJqueryUiUiSpinnerJs, map[string]*bintree{
-					}},
-					"tabs.js": &bintree{staticVendorJqueryUiUiTabsJs, map[string]*bintree{
-					}},
-					"tooltip.js": &bintree{staticVendorJqueryUiUiTooltipJs, map[string]*bintree{
-					}},
-					"widget.js": &bintree{staticVendorJqueryUiUiWidgetJs, map[string]*bintree{
-					}},
+					"accordion.js": &bintree{staticVendorJqueryUiUiAccordionJs, map[string]*bintree{}},
+					"autocomplete.js": &bintree{staticVendorJqueryUiUiAutocompleteJs, map[string]*bintree{}},
+					"button.js": &bintree{staticVendorJqueryUiUiButtonJs, map[string]*bintree{}},
+					"core.js": &bintree{staticVendorJqueryUiUiCoreJs, map[string]*bintree{}},
+					"datepicker.js": &bintree{staticVendorJqueryUiUiDatepickerJs, map[string]*bintree{}},
+					"dialog.js": &bintree{staticVendorJqueryUiUiDialogJs, map[string]*bintree{}},
+					"draggable.js": &bintree{staticVendorJqueryUiUiDraggableJs, map[string]*bintree{}},
+					"droppable.js": &bintree{staticVendorJqueryUiUiDroppableJs, map[string]*bintree{}},
+					"effect-blind.js": &bintree{staticVendorJqueryUiUiEffectBlindJs, map[string]*bintree{}},
+					"effect-bounce.js": &bintree{staticVendorJqueryUiUiEffectBounceJs, map[string]*bintree{}},
+					"effect-clip.js": &bintree{staticVendorJqueryUiUiEffectClipJs, map[string]*bintree{}},
+					"effect-drop.js": &bintree{staticVendorJqueryUiUiEffectDropJs, map[string]*bintree{}},
+					"effect-explode.js": &bintree{staticVendorJqueryUiUiEffectExplodeJs, map[string]*bintree{}},
+					"effect-fade.js": &bintree{staticVendorJqueryUiUiEffectFadeJs, map[string]*bintree{}},
+					"effect-fold.js": &bintree{staticVendorJqueryUiUiEffectFoldJs, map[string]*bintree{}},
+					"effect-highlight.js": &bintree{staticVendorJqueryUiUiEffectHighlightJs, map[string]*bintree{}},
+					"effect-puff.js": &bintree{staticVendorJqueryUiUiEffectPuffJs, map[string]*bintree{}},
+					"effect-pulsate.js": &bintree{staticVendorJqueryUiUiEffectPulsateJs, map[string]*bintree{}},
+					"effect-scale.js": &bintree{staticVendorJqueryUiUiEffectScaleJs, map[string]*bintree{}},
+					"effect-shake.js": &bintree{staticVendorJqueryUiUiEffectShakeJs, map[string]*bintree{}},
+					"effect-size.js": &bintree{staticVendorJqueryUiUiEffectSizeJs, map[string]*bintree{}},
+					"effect-slide.js": &bintree{staticVendorJqueryUiUiEffectSlideJs, map[string]*bintree{}},
+					"effect-transfer.js": &bintree{staticVendorJqueryUiUiEffectTransferJs, map[string]*bintree{}},
+					"effect.js": &bintree{staticVendorJqueryUiUiEffectJs, map[string]*bintree{}},
+					"menu.js": &bintree{staticVendorJqueryUiUiMenuJs, map[string]*bintree{}},
+					"mouse.js": &bintree{staticVendorJqueryUiUiMouseJs, map[string]*bintree{}},
+					"position.js": &bintree{staticVendorJqueryUiUiPositionJs, map[string]*bintree{}},
+					"progressbar.js": &bintree{staticVendorJqueryUiUiProgressbarJs, map[string]*bintree{}},
+					"resizable.js": &bintree{staticVendorJqueryUiUiResizableJs, map[string]*bintree{}},
+					"selectable.js": &bintree{staticVendorJqueryUiUiSelectableJs, map[string]*bintree{}},
+					"selectmenu.js": &bintree{staticVendorJqueryUiUiSelectmenuJs, map[string]*bintree{}},
+					"slider.js": &bintree{staticVendorJqueryUiUiSliderJs, map[string]*bintree{}},
+					"sortable.js": &bintree{staticVendorJqueryUiUiSortableJs, map[string]*bintree{}},
+					"spinner.js": &bintree{staticVendorJqueryUiUiSpinnerJs, map[string]*bintree{}},
+					"tabs.js": &bintree{staticVendorJqueryUiUiTabsJs, map[string]*bintree{}},
+					"tooltip.js": &bintree{staticVendorJqueryUiUiTooltipJs, map[string]*bintree{}},
+					"widget.js": &bintree{staticVendorJqueryUiUiWidgetJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-validation": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.validate.js": &bintree{staticVendorJqueryValidationDistJqueryValidateJs, map[string]*bintree{
-					}},
+					"jquery.validate.js": &bintree{staticVendorJqueryValidationDistJqueryValidateJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.easing": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.easing.js": &bintree{staticVendorJqueryEasingJsJqueryEasingJs, map[string]*bintree{
-					}},
+					"jquery.easing.js": &bintree{staticVendorJqueryEasingJsJqueryEasingJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.easy-pie-chart": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.easypiechart.js": &bintree{staticVendorJqueryEasyPieChartDistJqueryEasypiechartJs, map[string]*bintree{
-					}},
+					"jquery.easypiechart.js": &bintree{staticVendorJqueryEasyPieChartDistJqueryEasypiechartJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.inputmask": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.inputmask.bundle.js": &bintree{staticVendorJqueryInputmaskDistJqueryInputmaskBundleJs, map[string]*bintree{
-					}},
+					"jquery.inputmask.bundle.js": &bintree{staticVendorJqueryInputmaskDistJqueryInputmaskBundleJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.steps": &bintree{nil, map[string]*bintree{
 				"build": &bintree{nil, map[string]*bintree{
-					"jquery.steps.js": &bintree{staticVendorJqueryStepsBuildJqueryStepsJs, map[string]*bintree{
-					}},
+					"jquery.steps.js": &bintree{staticVendorJqueryStepsBuildJqueryStepsJs, map[string]*bintree{}},
 				}},
 			}},
 			"jqueryui-touch-punch": &bintree{nil, map[string]*bintree{
-				"jquery.ui.touch-punch.min.js": &bintree{staticVendorJqueryuiTouchPunchJqueryUiTouchPunchMinJs, map[string]*bintree{
-				}},
+				"jquery.ui.touch-punch.min.js": &bintree{staticVendorJqueryuiTouchPunchJqueryUiTouchPunchMinJs, map[string]*bintree{}},
 			}},
 			"loaders.css": &bintree{nil, map[string]*bintree{
-				"loaders.css": &bintree{staticVendorLoadersCssLoadersCss, map[string]*bintree{
-				}},
+				"loaders.css": &bintree{staticVendorLoadersCssLoadersCss, map[string]*bintree{}},
 			}},
 			"matchMedia": &bintree{nil, map[string]*bintree{
-				"matchMedia.js": &bintree{staticVendorMatchmediaMatchmediaJs, map[string]*bintree{
-				}},
+				"matchMedia.js": &bintree{staticVendorMatchmediaMatchmediaJs, map[string]*bintree{}},
 			}},
 			"mjolnic-bootstrap-colorpicker": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-colorpicker.css": &bintree{staticVendorMjolnicBootstrapColorpickerDistCssBootstrapColorpickerCss, map[string]*bintree{
-						}},
+						"bootstrap-colorpicker.css": &bintree{staticVendorMjolnicBootstrapColorpickerDistCssBootstrapColorpickerCss, map[string]*bintree{}},
 					}},
 					"img": &bintree{nil, map[string]*bintree{
 						"bootstrap-colorpicker": &bintree{nil, map[string]*bintree{
-							"alpha-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaHorizontalPng, map[string]*bintree{
-							}},
-							"alpha.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaPng, map[string]*bintree{
-							}},
-							"hue-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHueHorizontalPng, map[string]*bintree{
-							}},
-							"hue.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHuePng, map[string]*bintree{
-							}},
-							"saturation.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerSaturationPng, map[string]*bintree{
-							}},
+							"alpha-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaHorizontalPng, map[string]*bintree{}},
+							"alpha.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaPng, map[string]*bintree{}},
+							"hue-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHueHorizontalPng, map[string]*bintree{}},
+							"hue.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHuePng, map[string]*bintree{}},
+							"saturation.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerSaturationPng, map[string]*bintree{}},
 						}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-colorpicker.js": &bintree{staticVendorMjolnicBootstrapColorpickerDistJsBootstrapColorpickerJs, map[string]*bintree{
-						}},
+						"bootstrap-colorpicker.js": &bintree{staticVendorMjolnicBootstrapColorpickerDistJsBootstrapColorpickerJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"modernizr": &bintree{nil, map[string]*bintree{
-				"modernizr.custom.js": &bintree{staticVendorModernizrModernizrCustomJs, map[string]*bintree{
-				}},
+				"modernizr.custom.js": &bintree{staticVendorModernizrModernizrCustomJs, map[string]*bintree{}},
 			}},
 			"moment": &bintree{nil, map[string]*bintree{
 				"min": &bintree{nil, map[string]*bintree{
-					"moment-with-locales.min.js": &bintree{staticVendorMomentMinMomentWithLocalesMinJs, map[string]*bintree{
-					}},
+					"moment-with-locales.min.js": &bintree{staticVendorMomentMinMomentWithLocalesMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"morris.js": &bintree{nil, map[string]*bintree{
-				"morris.css": &bintree{staticVendorMorrisJsMorrisCss, map[string]*bintree{
-				}},
-				"morris.js": &bintree{staticVendorMorrisJsMorrisJs, map[string]*bintree{
-				}},
+				"morris.css": &bintree{staticVendorMorrisJsMorrisCss, map[string]*bintree{}},
+				"morris.js": &bintree{staticVendorMorrisJsMorrisJs, map[string]*bintree{}},
 			}},
 			"nestable": &bintree{nil, map[string]*bintree{
-				"jquery.nestable.js": &bintree{staticVendorNestableJqueryNestableJs, map[string]*bintree{
-				}},
+				"jquery.nestable.js": &bintree{staticVendorNestableJqueryNestableJs, map[string]*bintree{}},
 			}},
 			"parsleyjs": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"parsley.min.js": &bintree{staticVendorParsleyjsDistParsleyMinJs, map[string]*bintree{
-					}},
+					"parsley.min.js": &bintree{staticVendorParsleyjsDistParsleyMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"raphael": &bintree{nil, map[string]*bintree{
-				"raphael.js": &bintree{staticVendorRaphaelRaphaelJs, map[string]*bintree{
-				}},
+				"raphael.js": &bintree{staticVendorRaphaelRaphaelJs, map[string]*bintree{}},
 			}},
 			"rickshaw": &bintree{nil, map[string]*bintree{
-				"rickshaw.js": &bintree{staticVendorRickshawRickshawJs, map[string]*bintree{
-				}},
-				"rickshaw.min.css": &bintree{staticVendorRickshawRickshawMinCss, map[string]*bintree{
-				}},
+				"rickshaw.js": &bintree{staticVendorRickshawRickshawJs, map[string]*bintree{}},
+				"rickshaw.min.css": &bintree{staticVendorRickshawRickshawMinCss, map[string]*bintree{}},
 			}},
 			"screenfull": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"screenfull.js": &bintree{staticVendorScreenfullDistScreenfullJs, map[string]*bintree{
-					}},
+					"screenfull.js": &bintree{staticVendorScreenfullDistScreenfullJs, map[string]*bintree{}},
 				}},
 			}},
 			"seiyria-bootstrap-slider": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"bootstrap-slider.min.js": &bintree{staticVendorSeiyriaBootstrapSliderDistBootstrapSliderMinJs, map[string]*bintree{
-					}},
+					"bootstrap-slider.min.js": &bintree{staticVendorSeiyriaBootstrapSliderDistBootstrapSliderMinJs, map[string]*bintree{}},
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-slider.min.css": &bintree{staticVendorSeiyriaBootstrapSliderDistCssBootstrapSliderMinCss, map[string]*bintree{
-						}},
+						"bootstrap-slider.min.css": &bintree{staticVendorSeiyriaBootstrapSliderDistCssBootstrapSliderMinCss, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"select2": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"select2.css": &bintree{staticVendorSelect2DistCssSelect2Css, map[string]*bintree{
-						}},
+						"select2.css": &bintree{staticVendorSelect2DistCssSelect2Css, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"select2.js": &bintree{staticVendorSelect2DistJsSelect2Js, map[string]*bintree{
-						}},
+						"select2.js": &bintree{staticVendorSelect2DistJsSelect2Js, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"select2-bootstrap-theme": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"select2-bootstrap.css": &bintree{staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss, map[string]*bintree{
-					}},
+					"select2-bootstrap.css": &bintree{staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss, map[string]*bintree{}},
 				}},
 			}},
 			"simple-line-icons": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"simple-line-icons.css": &bintree{staticVendorSimpleLineIconsCssSimpleLineIconsCss, map[string]*bintree{
-					}},
+					"simple-line-icons.css": &bintree{staticVendorSimpleLineIconsCssSimpleLineIconsCss, map[string]*bintree{}},
 				}},
 				"fonts": &bintree{nil, map[string]*bintree{
-					"Simple-Line-Icons.eot": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsEot, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.svg": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsSvg, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.ttf": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsTtf, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{
-					}},
+					"Simple-Line-Icons.eot": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsEot, map[string]*bintree{}},
+					"Simple-Line-Icons.svg": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsSvg, map[string]*bintree{}},
+					"Simple-Line-Icons.ttf": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsTtf, map[string]*bintree{}},
+					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{}},
+					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{}},
 				}},
 			}},
 			"skycons": &bintree{nil, map[string]*bintree{
-				"skycons.js": &bintree{staticVendorSkyconsSkyconsJs, map[string]*bintree{
-				}},
+				"skycons.js": &bintree{staticVendorSkyconsSkyconsJs, map[string]*bintree{}},
 			}},
 			"slimScroll": &bintree{nil, map[string]*bintree{
-				"jquery.slimscroll.min.js": &bintree{staticVendorSlimscrollJquerySlimscrollMinJs, map[string]*bintree{
-				}},
+				"jquery.slimscroll.min.js": &bintree{staticVendorSlimscrollJquerySlimscrollMinJs, map[string]*bintree{}},
 			}},
 			"sparkline": &bintree{nil, map[string]*bintree{
-				"index.js": &bintree{staticVendorSparklineIndexJs, map[string]*bintree{
-				}},
+				"index.js": &bintree{staticVendorSparklineIndexJs, map[string]*bintree{}},
 			}},
 			"spinkit": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"spinkit.css": &bintree{staticVendorSpinkitCssSpinkitCss, map[string]*bintree{
-					}},
+					"spinkit.css": &bintree{staticVendorSpinkitCssSpinkitCss, map[string]*bintree{}},
 				}},
 			}},
 			"sweetalert": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"sweetalert.css": &bintree{staticVendorSweetalertDistSweetalertCss, map[string]*bintree{
-					}},
-					"sweetalert.min.js": &bintree{staticVendorSweetalertDistSweetalertMinJs, map[string]*bintree{
-					}},
+					"sweetalert.css": &bintree{staticVendorSweetalertDistSweetalertCss, map[string]*bintree{}},
+					"sweetalert.min.js": &bintree{staticVendorSweetalertDistSweetalertMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"weather-icons": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"weather-icons-wind.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsWindMinCss, map[string]*bintree{
-					}},
-					"weather-icons.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsMinCss, map[string]*bintree{
-					}},
+					"weather-icons-wind.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsWindMinCss, map[string]*bintree{}},
+					"weather-icons.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsMinCss, map[string]*bintree{}},
 				}},
 				"font": &bintree{nil, map[string]*bintree{
-					"weathericons-regular-webfont.eot": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontEot, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.svg": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontSvg, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.ttf": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontTtf, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.woff": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.woff2": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff2, map[string]*bintree{
-					}},
+					"weathericons-regular-webfont.eot": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontEot, map[string]*bintree{}},
+					"weathericons-regular-webfont.svg": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontSvg, map[string]*bintree{}},
+					"weathericons-regular-webfont.ttf": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontTtf, map[string]*bintree{}},
+					"weathericons-regular-webfont.woff": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff, map[string]*bintree{}},
+					"weathericons-regular-webfont.woff2": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff2, map[string]*bintree{}},
 				}},
 			}},
 			"whirl": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"whirl.css": &bintree{staticVendorWhirlDistWhirlCss, map[string]*bintree{
-					}},
+					"whirl.css": &bintree{staticVendorWhirlDistWhirlCss, map[string]*bintree{}},
 				}},
 			}},
 			"x-editable": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"bootstrap3-editable": &bintree{nil, map[string]*bintree{
 						"css": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.css": &bintree{staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss, map[string]*bintree{
-							}},
+							"bootstrap-editable.css": &bintree{staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss, map[string]*bintree{}},
 						}},
 						"img": &bintree{nil, map[string]*bintree{
-							"clear.png": &bintree{staticVendorXEditableDistBootstrap3EditableImgClearPng, map[string]*bintree{
-							}},
-							"loading.gif": &bintree{staticVendorXEditableDistBootstrap3EditableImgLoadingGif, map[string]*bintree{
-							}},
+							"clear.png": &bintree{staticVendorXEditableDistBootstrap3EditableImgClearPng, map[string]*bintree{}},
+							"loading.gif": &bintree{staticVendorXEditableDistBootstrap3EditableImgLoadingGif, map[string]*bintree{}},
 						}},
 						"js": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableJs, map[string]*bintree{
-							}},
-							"bootstrap-editable.min.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs, map[string]*bintree{
-							}},
+							"bootstrap-editable.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableJs, map[string]*bintree{}},
+							"bootstrap-editable.min.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs, map[string]*bintree{}},
 						}},
 					}},
 				}},
@@ -6124,48 +5886,48 @@ var _bintree = &bintree{nil, map[string]*bintree{
 
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
-        data, err := Asset(name)
-        if err != nil {
-                return err
-        }
-        info, err := AssetInfo(name)
-        if err != nil {
-                return err
-        }
-        err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
-        if err != nil {
-                return err
-        }
-        err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
-        if err != nil {
-                return err
-        }
-        err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
-        if err != nil {
-                return err
-        }
-        return nil
+	data, err := Asset(name)
+	if err != nil {
+		return err
+	}
+	info, err := AssetInfo(name)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
+	if err != nil {
+		return err
+	}
+	err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // RestoreAssets restores an asset under the given directory recursively
 func RestoreAssets(dir, name string) error {
-        children, err := AssetDir(name)
-        // File
-        if err != nil {
-                return RestoreAsset(dir, name)
-        }
-        // Dir
-        for _, child := range children {
-                err = RestoreAssets(dir, filepath.Join(name, child))
-                if err != nil {
-                        return err
-                }
-        }
-        return nil
+	children, err := AssetDir(name)
+	// File
+	if err != nil {
+		return RestoreAsset(dir, name)
+	}
+	// Dir
+	for _, child := range children {
+		err = RestoreAssets(dir, filepath.Join(name, child))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func _filePath(dir, name string) string {
-        cannonicalName := strings.Replace(name, "\\", "/", -1)
-        return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
+	cannonicalName := strings.Replace(name, "\\", "/", -1)
+	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
 
