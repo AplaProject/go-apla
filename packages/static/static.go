@@ -10,7 +10,11 @@
 // static/css/theme-f.css
 // static/css/theme-g.css
 // static/css/theme-h.css
+// static/dashboard_anonym.html
 // static/dashboard_cb.html
+// static/dashboard_citizen.html
+// static/dashboard_company.html
+// static/dashboard_gov.html
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/bg1.jpg
@@ -469,10 +473,82 @@ func staticCssThemeHCss() (*asset, error) {
 	return a, err
 }
 
+// staticDashboard_anonymHtml reads file data from disk. It returns an error on failure.
+func staticDashboard_anonymHtml() (*asset, error) {
+	path := "static/dashboard_anonym.html"
+	name := "static/dashboard_anonym.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticDashboard_cbHtml reads file data from disk. It returns an error on failure.
 func staticDashboard_cbHtml() (*asset, error) {
 	path := "static/dashboard_cb.html"
 	name := "static/dashboard_cb.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDashboard_citizenHtml reads file data from disk. It returns an error on failure.
+func staticDashboard_citizenHtml() (*asset, error) {
+	path := "static/dashboard_citizen.html"
+	name := "static/dashboard_citizen.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDashboard_companyHtml reads file data from disk. It returns an error on failure.
+func staticDashboard_companyHtml() (*asset, error) {
+	path := "static/dashboard_company.html"
+	name := "static/dashboard_company.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDashboard_govHtml reads file data from disk. It returns an error on failure.
+func staticDashboard_govHtml() (*asset, error) {
+	path := "static/dashboard_gov.html"
+	name := "static/dashboard_gov.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5085,7 +5161,11 @@ var _bindata = map[string]func() (*asset, error){
 	"static/css/theme-f.css": staticCssThemeFCss,
 	"static/css/theme-g.css": staticCssThemeGCss,
 	"static/css/theme-h.css": staticCssThemeHCss,
+	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
 	"static/dashboard_cb.html": staticDashboard_cbHtml,
+	"static/dashboard_citizen.html": staticDashboard_citizenHtml,
+	"static/dashboard_company.html": staticDashboard_companyHtml,
+	"static/dashboard_gov.html": staticDashboard_govHtml,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
@@ -5393,7 +5473,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"theme-g.css": &bintree{staticCssThemeGCss, map[string]*bintree{}},
 			"theme-h.css": &bintree{staticCssThemeHCss, map[string]*bintree{}},
 		}},
+		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{}},
 		"dashboard_cb.html": &bintree{staticDashboard_cbHtml, map[string]*bintree{}},
+		"dashboard_citizen.html": &bintree{staticDashboard_citizenHtml, map[string]*bintree{}},
+		"dashboard_company.html": &bintree{staticDashboard_companyHtml, map[string]*bintree{}},
+		"dashboard_gov.html": &bintree{staticDashboard_govHtml, map[string]*bintree{}},
 		"i18n": &bintree{nil, map[string]*bintree{
 			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{}},
 			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{}},
