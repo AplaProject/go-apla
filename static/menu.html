@@ -1,0 +1,193 @@
+<!-- top navbar-->
+<header class="topnavbar-wrapper">
+ <!-- START Top Navbar-->
+ <nav role="navigation" class="navbar topnavbar">
+	<!-- START navbar header-->
+	<div class="navbar-header">
+	   <a href="#/" class="navbar-brand">
+		  <div class="brand-logo">
+			 <img src="static/img/logo.png" alt="App Logo" class="img-responsive">
+		  </div>
+		  <div class="brand-logo-collapsed">
+			 <img src="static/img/logo-single.png" alt="App Logo" class="img-responsive">
+		  </div>
+	   </a>
+	</div>
+	<!-- END navbar header-->
+	<!-- START Nav wrapper-->
+	<div class="nav-wrapper">
+	   <!-- START Right Navbar-->
+	   <ul class="nav navbar-nav navbar-right">
+		  <!-- Search icon-->
+		  <!-- START Alert menu-->
+		  <li class="dropdown dropdown-list">
+			 <a href="#" data-toggle="dropdown">
+				<em class="icon-bell"></em>
+				<div class="label label-danger">11</div>
+			 </a>
+			 <!-- START Dropdown menu-->
+			 <ul class="dropdown-menu animated flipInX">
+				<li>
+				   <!-- START list group-->
+				   <div class="list-group">
+					  <!-- list item-->
+					  <a href="#" class="list-group-item">
+						 <div class="media-box">
+							<div class="pull-left">
+							   <em class="fa fa-twitter fa-2x text-info"></em>
+							</div>
+							<div class="media-box-body clearfix">
+							   <p class="m0">New followers</p>
+							   <p class="m0 text-muted">
+								  <small>1 new follower</small>
+							   </p>
+							</div>
+						 </div>
+					  </a>
+					  <!-- list item-->
+					  <a href="#" class="list-group-item">
+						 <div class="media-box">
+							<div class="pull-left">
+							   <em class="fa fa-envelope fa-2x text-warning"></em>
+							</div>
+							<div class="media-box-body clearfix">
+							   <p class="m0">New e-mails</p>
+							   <p class="m0 text-muted">
+								  <small>You have 10 new emails</small>
+							   </p>
+							</div>
+						 </div>
+					  </a>
+					  <!-- list item-->
+					  <a href="#" class="list-group-item">
+						 <div class="media-box">
+							<div class="pull-left">
+							   <em class="fa fa-tasks fa-2x text-success"></em>
+							</div>
+							<div class="media-box-body clearfix">
+							   <p class="m0">Pending Tasks</p>
+							   <p class="m0 text-muted">
+								  <small>11 pending task</small>
+							   </p>
+							</div>
+						 </div>
+					  </a>
+					  <!-- last list item-->
+					  <a href="#" class="list-group-item">
+						 <small>More notifications</small>
+						 <span class="label label-danger pull-right">14</span>
+					  </a>
+				   </div>
+				   <!-- END list group-->
+				</li>
+			 </ul>
+			 <!-- END Dropdown menu-->
+		  </li>
+		  <!-- END Alert menu-->
+		  <!-- START User avatar toggle-->
+		  <li>
+			 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+			 <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
+				<em class="icon-user"></em>
+			 </a>
+		  </li>
+		  <!-- END User avatar toggle-->
+		  <li>
+			 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+			 <a href="#" data-trigger-resize="" data-toggle-state="aside-collapsed" class="hidden-xs">
+				<em class="fa fa-navicon"></em>
+			 </a>
+			 <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
+			 <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle">
+				<em class="fa fa-navicon"></em>
+			 </a>
+		  </li>
+	   </ul>
+	   <!-- END Right Navbar-->
+	</div>
+	<!-- END Nav wrapper-->
+	<!-- START Search form-->
+	<form role="search" action="search.html" class="navbar-form">
+	   <div class="form-group has-feedback">
+		  <input type="text" placeholder="Type and hit enter ..." class="form-control">
+		  <div data-search-dismiss="" class="fa fa-times form-control-feedback"></div>
+	   </div>
+	   <button type="submit" class="hidden btn btn-default">Submit</button>
+	</form>
+	<!-- END Search form-->
+ </nav>
+ <!-- END Top Navbar-->
+</header>
+<!-- sidebar-->
+<aside class="aside">
+ <!-- START Sidebar (left)-->
+ <div class="aside-inner">
+	<nav data-sidebar-anyclick-close="" class="sidebar">
+	   <!-- START sidebar nav-->
+	   <ul class="nav">
+		  <!-- START user info-->
+		  <li class="has-user-block">
+			 <div id="user-block" class="collapse">
+				<div class="item user-block">
+				   <!-- User picture-->
+				   <div class="user-block-picture">
+					  <div class="user-block-status">
+
+						 <img src="static/img/user/02.jpg" alt="Avatar" width="60" height="60" class="img-thumbnail img-circle">
+						 <div class="circle circle-success circle-lg"></div>
+					  </div>
+				   </div>
+				   <!-- Name and Job-->
+				   <div class="user-block-info">
+					  <span class="user-block-name">Hello, Mike</span>
+					  <span class="user-block-role">Designer</span>
+				   </div>
+				</div>
+			 </div>
+		  </li>
+		  <!-- END user info-->
+		  <!-- Iterates over all sidebar items-->
+		  <li class="nav-heading ">
+			 <span data-localize="sidebar.heading.HEADER">Main Navigation</span>
+		  </li>
+		  <li class=" ">
+			 <a href="#dashboard" title="Dashboard" data-toggle="collapse">
+				<div class="pull-right label label-info">5</div>
+				<em class="icon-speedometer"></em>
+				<span data-localize="sidebar.nav.DASHBOARD">Dashboard</span>
+			 </a>
+			 <ul id="dashboard" class="nav sidebar-subnav collapse in">
+				<li class="sidebar-subnav-header">Dashboard</li>
+				<li>
+				   <a href="#dashboard_anonym">
+					  <span>Аноним</span>
+				   </a>
+				</li>
+				<li>
+				   <a href="#dashboard_citizen">
+					  <span>Гражданин</span>
+				   </a>
+				</li>
+				<li>
+				   <a href="#dashboard_company">
+					  <span>Компания</span>
+				   </a>
+				</li>
+				<li>
+				   <a href="#dashboard_cb">
+					  <span>ЦБ</span>
+				   </a>
+				</li>
+				<li>
+				   <a href="#dashboard_gov">
+					  <span>Государство</span>
+				   </a>
+				</li>
+			 </ul>
+		  </li>
+	   </ul>
+	   <!-- END sidebar nav-->
+	</nav>
+ </div>
+ <!-- END Sidebar (left)-->
+</aside>
