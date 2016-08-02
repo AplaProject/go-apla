@@ -180,11 +180,12 @@ BEGIN:
 				err = d.ExecSql(`
 				UPDATE testblock
 				SET  time = ?,
-						user_id = ?,
+						wallet_id = ?,
+						cb_id = ?,
 						header_hash = [hex],
 						signature = [hex],
 						mrkl_root = [hex]
-				`, p.BlockData.Time, p.BlockData.UserId, newHeaderHash, utils.BinToHex(p.BlockData.Sign), p.MrklRoot)
+				`, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.CBID, newHeaderHash, utils.BinToHex(p.BlockData.Sign), p.MrklRoot)
 				if err != nil {
 					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN

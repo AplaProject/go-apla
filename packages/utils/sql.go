@@ -2115,6 +2115,23 @@ func (db *DCDB) GetNodePublicKey(userId int64) ([]byte, error) {
 	}
 	return result, nil
 }
+func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, cb_id int64) ([]byte, error) {
+	var result []byte
+	var err error
+	if wallet_id > 0 {
+		result, err = db.Single("SELECT node_public_key FROM wallets WHERE wallet_id = ?", wallet_id).Bytes()
+		if err != nil {
+			return []byte(""), err
+		}
+	} else {
+		result, err = db.Single("SELECT node_public_key FROM central_banks WHERE cb_id = ?", cb_id).Bytes()
+		if err != nil {
+			return []byte(""), err
+		}
+	}
+	return result, nil
+}
+
 func (db *DCDB) GetCountCurrencies() (int64, error) {
 	result, err := db.Single("SELECT count(id) FROM currency").Int64()
 	if err != nil {

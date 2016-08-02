@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/stat"
 	"math"
 	"strings"
 	"time"
@@ -55,7 +54,6 @@ type homePage struct {
 	Miner                 bool
 	ChatEnabled           string
 	TopExMap              map[int64]*topEx
-	ListBalance           *stat.ListBalance
 	StatDays              int
 	MyDcTransactions     []map[string]string	
 	Names                map[string]string	
@@ -156,16 +154,6 @@ func (c *Controller) Home() (string, error) {
 
 	query := `SELECT count(v.id) FROM votes_miners as v `
 	where := `WHERE votes_end  =  0 AND v.type  =  'user_voting' `
-	country, race := getMyCountryRace(c)
-	if race > 0 || country > 0 {
-		query += `left join faces as f on f.user_id=v.user_id `
-		if race > 0 {
-			where += fmt.Sprintf( `AND f.race=%d `, race )
-		}
-		if country > 0 {
-			where += fmt.Sprintf( `AND f.country=%d `, country )
-		}
-	}
 	if err := getCount( query + where, `miner` ); err !=nil {
 		return "", err
 	}
@@ -398,11 +386,7 @@ func (c *Controller) Home() (string, error) {
 		charts = append( charts, ChartCur{ currencyList[icur][1:], strings.Join( promised, `,` ), strings.Join( dc, `,` )})
 	}
 	DCTarget := consts.DCTarget[72]
-	listBalance,_ := stat.TodayBalance( c.SessUserId )
-	var statDays int
-	if len(*listBalance) > 0 {
-		statDays,_ = stat.GetHistoryBalance(listBalance, c.SessUserId)
-	}
+
 	//fmt.Println(`Stat`, statDays, err )
 	var myDcTransactions []map[string]string
 	if c.SessRestricted == 0 {
@@ -468,14 +452,12 @@ func (c *Controller) Home() (string, error) {
 		IOS:                   utils.IOS(),
 		Mobile:                utils.Mobile(),
 		TopExMap:              topExMap,
-		RefPhotos:                  refPhotos,
+		RefPhotos:             refPhotos,
 
 		ChatEnabled:           c.NodeConfig["chat_enabled"],
 		Miner:                 miner,
 		Token:                 token,
 		ExchangeUrl:           exchangeUrl,
-		ListBalance:           listBalance,
-		StatDays:              statDays,
 		MyDcTransactions:      myDcTransactions,
 		Names:                 names })
 	if err != nil {

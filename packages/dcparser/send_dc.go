@@ -232,7 +232,7 @@ func (p *Parser) SendDc() error {
 	}
 
 	// 1 возможно нужно обновить таблицу points_status
-	err = p.pointsUpdateMain(p.BlockData.UserId)
+	err = p.pointsUpdateMain(p.BlockData.WalletId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -283,7 +283,7 @@ func (p *Parser) SendDc() error {
 
 	// 6 теперь начисляем комиссию майнеру, который этот блок сгенерил
 	if p.TxMaps.Float64["commission"] >= 0.01 {
-		err = p.updateRecipientWallet(p.BlockData.UserId, p.TxMaps.Int64["currency_id"], p.TxMaps.Float64["commission"], "node_commission", p.BlockData.BlockId, "", "encrypted", true)
+		err = p.updateRecipientWallet(p.BlockData.WalletId, p.TxMaps.Int64["currency_id"], p.TxMaps.Float64["commission"], "node_commission", p.BlockData.BlockId, "", "encrypted", true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -338,12 +338,12 @@ func (p *Parser) SendDcRollback() error {
 
 	// 6 комиссия нода-генератора блока
 	if p.TxMaps.Float64["commission"] >= 0.01 {
-		err = p.generalRollback("wallets", p.BlockData.UserId, "AND currency_id = "+utils.Int64ToStr(p.TxMaps.Int64["currency_id"]), false)
+		err = p.generalRollback("wallets", p.BlockData.WalletId, "AND currency_id = "+utils.Int64ToStr(p.TxMaps.Int64["currency_id"]), false)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// возможно были списания по кредиту нода-генератора
-		err = p.loanPaymentsRollback(p.BlockData.UserId, p.TxMaps.Int64["currency_id"])
+		err = p.loanPaymentsRollback(p.BlockData.WalletId, p.TxMaps.Int64["currency_id"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -378,7 +378,7 @@ func (p *Parser) SendDcRollback() error {
 		return p.ErrInfo(err)
 	}
 	// 1
-	err = p.pointsUpdateRollbackMain(p.BlockData.UserId)
+	err = p.pointsUpdateRollbackMain(p.BlockData.WalletId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
