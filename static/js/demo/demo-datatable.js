@@ -97,7 +97,7 @@
         'paging':   true,  // Table pagination
         'ordering': true,  // Column ordering 
         'info':     true,  // Bottom left status text
-        sAjaxSource: 'static/data/anonym_history.json',
+        sAjaxSource: '/static/data/anonym_history.json',
         aoColumns: [
           { mData: 'engine' },
           { mData: 'browser' },
