@@ -26,7 +26,14 @@
 </head>
 
 <body>
-   <div id="dl_menu" class="wrapper"></div>
+   <div class="wrapper">
+      <!-- Main section-->
+	  <div id="dl_menu"></div>
+      <section>
+         <!-- Page content-->
+         <div id="dl_content" class="content-wrapper"></div>
+      </section>
+   </div>
    <div id="loader"></div>
    <!-- =============== VENDOR SCRIPTS ===============-->
    <!-- MODERNIZR-->
@@ -68,16 +75,154 @@
    <script src="static/vendor/moment/min/moment-with-locales.min.js"></script>
    <!-- DEMO-->
    <script src="static/js/demo/demo-flot.js"></script>
-   <!-- =============== APP SCRIPTS ===============-->
-   <script src="static/js/app.js"></script>
-   <script src="static/js/index.js"></script>
    
 	<script>
 		$( document ).ready(function() {
 			$( "#dl_menu" ).load( "content?controllerName=menu", { }, function() {
-				$( "#dl_content" ).load( "content?controllerName=dashboard_cb", { }, function() {});
+				$( "#dl_content" ).load( "content?controllerName=dashboard_anonym", { }, function() {});
 			});
 		});
+	</script>
+	
+   <!-- =============== APP SCRIPTS ===============-->
+   <script src="static/js/app.js"></script>
+   <script src="static/js/index.js"></script>
+   
+	<script type="text/javascript" >
+		var lastLinkEvent;
+		function dlNavHash(e) {
+			if (lastLinkEvent!=location.hash) {
+				dlNav({'target': {'hash': location.hash}});
+			}
+		}
+	
+		function dlNav(e){
+			if (e.buttons==3 || e.buttons==2 || e.buttons==4) {
+				return
+			}
+			if (typeof e.target.hash=='undefined') {
+				window.addEventListener("hashchange", dlNavHash);
+				return false;
+			}
+	
+			lastLinkEvent = e.target.hash;
+	
+			var str = e.target.hash;
+			var page_match = str.match(/#(\w+)/i);
+			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3'  && page_match[1]!='myModal'  ) {
+				var page = page_match[1];
+				var param_match = str.match(/\/\w+=\w+/gi);
+				var param_obj = {};
+				if (param_match) {
+					for (var i = 0; i < param_match.length; i++) {
+						var param = param_match[i].match(/(\w+)=(\w+)/i);
+						param_obj[param[1]] = param[2];
+					}
+				}
+				
+				dl_navigate(page, param_obj);
+			}
+		}
+	
+		void function whichClickClosure( $ ){
+			var events     = {
+						1 : 'leftclick',
+						2 : 'middleclick',
+						3 : 'rightclick'
+					},
+			// List of interruption events for symbolic linking between custom and native events
+					interrupts = [
+						'preventDefault',
+						'stopPropagation',
+						'stopImmediatePropagation'
+					],
+			// A dummy empty event, used in custom interruption
+					emptyEvent = $.Event();
+	
+			function makeInterrupts( customEvent, ensuingEvent ){
+				var output = {};
+	
+				$.each( interrupts, function makeCustomInterrupt( index, method ){
+					output[ method ] = function customInterrupt(){
+						emptyEvent[ method ].call( this );
+	
+						$( customEvent.target ).one( ensuingEvent, function defferedInterrupt( ensuingEvent ){
+							ensuingEvent[ method ]();
+						} );
+					};
+				} );
+	
+				return output;
+			}
+	
+			// We need to capture all mousedowns
+			$( document ).on( 'mousedown', function mousedownFilter( mousedown ){
+				// Determine which event we're listening for
+				var eventType = events[ mousedown.which ];
+	
+				// Discard anything we can't map
+				if( !eventType ){
+					return;
+				}
+	
+				$( document ).one( 'mouseup', function mouseupFilter( mouseup ){
+					// The custom click event we'll fire
+					var eventObject  = {},
+					// The ensuing native event the event symbolizes
+							ensuingEvent = '';
+	
+					// Only capture events on the same element
+					if( mousedown.target !== mouseup.target ){
+						return;
+					}
+	
+					// Middleclicks only trigger on links
+					if( eventType === 'middleclick' && $( mouseup.target ).is( 'a' ) ){
+						return;
+					}
+	
+					if( eventType === 'middleclick' || eventType === 'leftclick' ){
+						ensuingEvent = 'click';
+					}
+	
+					// Rightclicks also fire off contextmenu
+					if( eventType === 'rightclick' ){
+						ensuingEvent = 'contextmenu';
+					}
+	
+					// Extend the eventObject
+					$.extend(
+							// Including all the deeper stuff
+							true,
+							// ...
+							eventObject,
+							// Take all the properties of mouseup...
+							mouseup,
+							// With our type and timestamp...
+							$.Event( eventType )
+					);
+	
+					// Add custom interrupts
+					$.extend(
+							true,
+							eventObject,
+							makeInterrupts( eventObject, ensuingEvent )
+					);
+	
+					$( mouseup.target )
+						// Fire this event on the target
+							.trigger( eventObject )
+						// Also fire an 'anyclick' event (with all the same internals) for convenience
+							.trigger( $.extend( eventObject, { type : 'anyclick' } ) );
+				} );
+			} );
+		}( jQuery );
+	
+		$( document ).on( 'leftclick', function( e ){
+			dlNav(e);
+		} );
+	
+		window.addEventListener("hashchange", dlNavHash);
 	</script>
 </body>
 
