@@ -122,6 +122,62 @@ BEGIN:
 			continue
 		}
 
+		myCBID, err := d.GetMyCBID();
+		if err != nil {
+			d.dbUnlock()
+			logger.Error("%v", err)
+			if d.dSleep(d.sleepTime) {
+				break BEGIN
+			}
+			continue
+		}
+		// Если мы - ЦБ и у нас указан delegate, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
+		if myCBID > 0 {
+			delegate, err:= d.OneRow("SELECT delegate_wallet_id, delegate_cb_id FROM central_banks WHERE cb_id = ?", myCBID).Int64()
+			if err != nil {
+				d.dbUnlock()
+				logger.Error("%v", err)
+				if d.dSleep(d.sleepTime) {
+					break BEGIN
+				}
+				continue
+			}
+			if delegate["delegate_wallet_id"] > 0 || delegate["delegate_cb_id"] > 0  {
+				d.dbUnlock()
+				logger.Debug("delegate > 0")
+				if d.dSleep(d.sleepTime) {
+					break BEGIN
+				}
+				continue
+			}
+		}
+
+		// Если мы ЦБ и наш ID указан у одного из ЦБ
+		/*if myCBID > 0 {
+			delegate, err:= d.OneRow("SELECT delegate_wallet_id, delegate_cb_id FROM central_banks WHERE cb_id = ?", myCBID).Int64()
+			if err != nil {
+				d.dbUnlock()
+				logger.Error("%v", err)
+				if d.dSleep(d.sleepTime) {
+					break BEGIN
+				}
+				continue
+			}
+			logger.Debug(delegate)
+		}*/
+
+
+		// Есть ли мы в full_nodes
+		/*myCBID, err := d.GetMyCBID("");
+		if err != nil {
+			d.dbUnlock()
+			logger.Error("%v", err)
+			if d.dSleep(d.sleepTime) {
+				break BEGIN
+			}
+			continue
+		}
+*/
 		prevBlock, myUserId, myMinerId, currentUserId, level, levelsRange, err := d.Candidate_block()
 		if err != nil {
 			d.dbUnlock()
