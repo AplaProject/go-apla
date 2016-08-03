@@ -90,7 +90,7 @@
 // static/login.html
 // static/menu.html
 // static/modal.html
-// static/modal_wallet_address.html
+// static/modal_anonym.html
 // static/pass.html
 // static/sass/_colors.scss
 // static/sass/_mixins.scss
@@ -1939,10 +1939,10 @@ func staticModalHtml() (*asset, error) {
 	return a, err
 }
 
-// staticModal_wallet_addressHtml reads file data from disk. It returns an error on failure.
-func staticModal_wallet_addressHtml() (*asset, error) {
-	path := "static/modal_wallet_address.html"
-	name := "static/modal_wallet_address.html"
+// staticModal_anonymHtml reads file data from disk. It returns an error on failure.
+func staticModal_anonymHtml() (*asset, error) {
+	path := "static/modal_anonym.html"
+	name := "static/modal_anonym.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5735,7 +5735,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal.html": staticModalHtml,
-	"static/modal_wallet_address.html": staticModal_wallet_addressHtml,
+	"static/modal_anonym.html": staticModal_anonymHtml,
 	"static/pass.html": staticPassHtml,
 	"static/sass/_colors.scss": staticSass_colorsScss,
 	"static/sass/_mixins.scss": staticSass_mixinsScss,
@@ -6091,7 +6091,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"login.html": &bintree{staticLoginHtml, map[string]*bintree{}},
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
 		"modal.html": &bintree{staticModalHtml, map[string]*bintree{}},
-		"modal_wallet_address.html": &bintree{staticModal_wallet_addressHtml, map[string]*bintree{}},
+		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
 		"sass": &bintree{nil, map[string]*bintree{
 			"_colors.scss": &bintree{staticSass_colorsScss, map[string]*bintree{}},
