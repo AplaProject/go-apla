@@ -640,14 +640,14 @@ BEGIN:
 					}
 				}
 
-				err = parser.RollbackTransactionsTestblock(true)
+				err = parser.RollbackTransactionsCandidateBlock(true)
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
 					continue BEGIN
 				}
-				err = d.ExecSql("DELETE FROM testblock")
+				err = d.ExecSql("DELETE FROM candidateBlock")
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
