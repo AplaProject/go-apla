@@ -370,7 +370,7 @@ body {
 .wrapper.ng-leave {
   display: none;
 }
-.wrapper > .aside {
+.wrapper .aside {
   position: absolute;
   width: 220px;
   top: 0;
@@ -382,13 +382,13 @@ body {
   backface-visibility: hidden;
   background-color: #ffffff;
 }
-.wrapper > .aside .aside-inner {
+.wrapper .aside .aside-inner {
   padding-top: 110px;
   height: 100%;
   width: 220px;
   overflow: hidden;
 }
-.wrapper > .aside > .nav-floating {
+.wrapper .aside > .nav-floating {
   left: inherit;
   margin-left: 220px;
   z-index: 1110;
@@ -482,7 +482,7 @@ body {
   body {
     min-height: 100%;
   }
-  .wrapper > .aside .aside-inner {
+  .wrapper .aside .aside-inner {
     padding-top: 55px;
   }
   .wrapper > section,
@@ -497,14 +497,14 @@ body {
   }
 }
 @media only screen and (max-width: 767px) {
-  .wrapper > .aside {
+  .wrapper .aside {
     margin-left: -220px;
   }
   .aside-toggled .wrapper > section,
   .aside-toggled .wrapper > footer {
     margin-left: 220px;
   }
-  .aside-toggled .wrapper > .aside {
+  .aside-toggled .wrapper .aside {
     margin-left: 0;
   }
   .csstransforms3d .wrapper {
@@ -522,7 +522,7 @@ body {
     -o-transition: -o-transform 0.3s ease;
     transition: transform 0.3s ease;
   }
-  .csstransforms3d .wrapper > .aside {
+  .csstransforms3d .wrapper .aside {
     margin-left: 0;
     -webkit-transform: translate3d(-220px, 0, 0);
     transform: translate3d(-220px, 0, 0);
@@ -536,20 +536,20 @@ body {
     -webkit-transform: translate3d(220px, 0, 0);
     transform: translate3d(220px, 0, 0);
   }
-  .csstransforms3d .aside-toggled .wrapper > .aside {
+  .csstransforms3d .aside-toggled .wrapper .aside {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
   }
 }
 @media only screen and (max-width: 767px) {
-  .aside-collapsed .wrapper > .aside {
+  .aside-collapsed .wrapper .aside {
     margin-left: -70px;
   }
   .aside-collapsed.aside-toggled .wrapper > section,
   .aside-collapsed.aside-toggled .wrapper > footer {
     margin-left: 70px;
   }
-  .aside-collapsed.aside-toggled .wrapper > .aside {
+  .aside-collapsed.aside-toggled .wrapper .aside {
     margin-left: 0;
   }
   .csstransforms3d .aside-collapsed .wrapper {
@@ -567,7 +567,7 @@ body {
     -o-transition: -o-transform 0.3s ease;
     transition: transform 0.3s ease;
   }
-  .csstransforms3d .aside-collapsed .wrapper > .aside {
+  .csstransforms3d .aside-collapsed .wrapper .aside {
     margin-left: 0;
     -webkit-transform: translate3d(-70px, 0, 0);
     transform: translate3d(-70px, 0, 0);
@@ -581,7 +581,7 @@ body {
     -webkit-transform: translate3d(70px, 0, 0);
     transform: translate3d(70px, 0, 0);
   }
-  .csstransforms3d .aside-collapsed.aside-toggled .wrapper > .aside {
+  .csstransforms3d .aside-collapsed.aside-toggled .wrapper .aside {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
   }
@@ -589,11 +589,11 @@ body {
 .aside-collapsed {
   overflow-y: auto;
 }
-.aside-collapsed .wrapper > .aside,
-.aside-collapsed .wrapper > .aside > .aside-inner {
+.aside-collapsed .wrapper .aside,
+.aside-collapsed .wrapper .aside > .aside-inner {
   width: 70px;
 }
-.aside-collapsed .wrapper > .aside > .nav-floating {
+.aside-collapsed .wrapper .aside > .nav-floating {
   margin-left: 70px;
 }
 @media only screen and (min-width: 768px) {
@@ -603,14 +603,14 @@ body {
   }
 }
 @media only screen and (max-width: 767px) {
-  .aside-collapsed-text .wrapper > .aside {
+  .aside-collapsed-text .wrapper .aside {
     margin-left: -90px;
   }
   .aside-collapsed-text.aside-toggled .wrapper > section,
   .aside-collapsed-text.aside-toggled .wrapper > footer {
     margin-left: 90px;
   }
-  .aside-collapsed-text.aside-toggled .wrapper > .aside {
+  .aside-collapsed-text.aside-toggled .wrapper .aside {
     margin-left: 0;
   }
   .csstransforms3d .aside-collapsed-text .wrapper {
@@ -628,7 +628,7 @@ body {
     -o-transition: -o-transform 0.3s ease;
     transition: transform 0.3s ease;
   }
-  .csstransforms3d .aside-collapsed-text .wrapper > .aside {
+  .csstransforms3d .aside-collapsed-text .wrapper .aside {
     margin-left: 0;
     -webkit-transform: translate3d(-90px, 0, 0);
     transform: translate3d(-90px, 0, 0);
@@ -642,7 +642,7 @@ body {
     -webkit-transform: translate3d(90px, 0, 0);
     transform: translate3d(90px, 0, 0);
   }
-  .csstransforms3d .aside-collapsed-text.aside-toggled .wrapper > .aside {
+  .csstransforms3d .aside-collapsed-text.aside-toggled .wrapper .aside {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
   }
@@ -650,11 +650,11 @@ body {
 .aside-collapsed-text {
   overflow-y: auto;
 }
-.aside-collapsed-text .wrapper > .aside,
-.aside-collapsed-text .wrapper > .aside > .aside-inner {
+.aside-collapsed-text .wrapper .aside,
+.aside-collapsed-text .wrapper .aside > .aside-inner {
   width: 90px;
 }
-.aside-collapsed-text .wrapper > .aside > .nav-floating {
+.aside-collapsed-text .wrapper .aside > .nav-floating {
   margin-left: 90px;
 }
 @media only screen and (min-width: 768px) {
@@ -681,13 +681,13 @@ body {
 .layout-fixed .wrapper > aside {
   position: fixed;
 }
-.layout-fixed .wrapper > .aside {
+.layout-fixed .wrapper .aside {
   /* safari fix */
   height: 1px;
   min-height: 100%;
   /* ios blanks space fix */
 }
-.layout-fixed .wrapper > .aside > .aside-inner {
+.layout-fixed .wrapper .aside > .aside-inner {
   position: fixed;
   top: 0;
   bottom: 0;
@@ -702,7 +702,7 @@ body {
 }
 /* IE10+ hack: safari fix breaks ie so we need to target ie only to restore */
 _:-ms-lang(x),
-.layout-fixed .wrapper > .aside > .aside-inner {
+.layout-fixed .wrapper .aside > .aside-inner {
   position: static !important;
 }
 @media only screen and (min-width: 992px) {
@@ -717,14 +717,14 @@ _:-ms-lang(x),
   .layout-boxed .wrapper .offsidebar {
     position: absolute !important;
   }
-  .layout-boxed .wrapper > .aside {
+  .layout-boxed .wrapper .aside {
     left: inherit;
   }
   .layout-boxed .wrapper,
   .layout-boxed .wrapper .topnavbar-wrapper {
     width: 970px;
   }
-  .layout-boxed.layout-fixed .wrapper > .aside > .aside-inner {
+  .layout-boxed.layout-fixed .wrapper .aside > .aside-inner {
     left: inherit;
   }
 }
@@ -870,20 +870,20 @@ _:-ms-lang(x),
 .aside-float .wrapper > footer {
   border: 0;
 }
-.aside-float .wrapper > .aside {
+.aside-float .wrapper .aside {
   padding: 15px 0;
   background: transparent;
 }
-.aside-float .wrapper > .aside > .aside-inner {
+.aside-float .wrapper .aside > .aside-inner {
   height: 100%;
   top: 15px;
   bottom: 15px;
   left: inherit;
 }
-.aside-float .wrapper > .aside .sidebar {
+.aside-float .wrapper .aside .sidebar {
   border: 1px solid #e4eaec;
 }
-.aside-float .wrapper > .aside .sidebar:after {
+.aside-float .wrapper .aside .sidebar:after {
   display: none;
 }
 @media only screen and (min-width: 768px) {
@@ -906,11 +906,11 @@ _:-ms-lang(x),
 .aside-float .wrapper .content-wrapper > .unwrap {
   margin: 0 !important;
 }
-.aside-float.aside-toggled .wrapper > .aside {
+.aside-float.aside-toggled .wrapper .aside {
   -webkit-transition-delay: 0.05s;
   transition-delay: 0.05s;
 }
-.aside-float.aside-toggled .wrapper > .aside > .aside-inner {
+.aside-float.aside-toggled .wrapper .aside > .aside-inner {
   margin-left: 15px;
 }
 .aside-float.aside-toggled .wrapper > section {
@@ -929,12 +929,12 @@ _:-ms-lang(x),
   .aside-float.layout-fs .wrapper > section > .content-wrapper {
     padding: 0 0 0 20px;
   }
-  .aside-float .wrapper > .aside > .aside-inner {
+  .aside-float .wrapper .aside > .aside-inner {
     margin-left: 15px;
   }
 }
 @media only screen and (min-width: 992px) {
-  .aside-float.layout-boxed .wrapper > .aside > .aside-inner {
+  .aside-float.layout-boxed .wrapper .aside > .aside-inner {
     margin-left: 0;
   }
   .aside-float.layout-boxed .wrapper > section {
@@ -947,7 +947,7 @@ _:-ms-lang(x),
 /* ========================================================================
    Component: layout-animation.less
  ========================================================================== */
-.wrapper > .aside {
+.wrapper .aside {
   -webkit-transition: width .2s cubic-bezier(0.35, 0, 0.25, 1), translate .2s cubic-bezier(0.35, 0, 0.25, 1);
   -o-transition: width .2s cubic-bezier(0.35, 0, 0.25, 1), translate .2s cubic-bezier(0.35, 0, 0.25, 1);
   transition: width .2s cubic-bezier(0.35, 0, 0.25, 1), translate .2s cubic-bezier(0.35, 0, 0.25, 1);
@@ -7941,4 +7941,24 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 .flatdoc-wrapper .button .badge {
   color: #23b7e5;
   background-color: #ffffff;
+}
+@media only screen and (max-width: 767px) {
+	#user-block-toggle {
+		position:absolute;
+		right:45px;
+		top:5px;
+		z-index:3001;
+	}
+	#user-block-toggle .icon-user {
+		color:#ffffff;
+	}
+	#bell {
+		position:absolute;
+		right:90px;
+		top:5px;
+		z-index:3001;
+	}
+	#bell .icon-bell {
+		color:#ffffff;
+	}
 }

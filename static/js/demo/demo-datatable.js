@@ -93,11 +93,11 @@
     // AJAX
     // 
 
-    $('#datatable4').dataTable({
+    $('#anonym_history').dataTable({
         'paging':   true,  // Table pagination
         'ordering': true,  // Column ordering 
         'info':     true,  // Bottom left status text
-        sAjaxSource: '../server/datatable.json',
+        sAjaxSource: '/static/data/anonym_history.json',
         aoColumns: [
           { mData: 'engine' },
           { mData: 'browser' },

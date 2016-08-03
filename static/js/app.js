@@ -1538,7 +1538,7 @@
 (function(window, document, $, undefined){
 
   var preferredLang = 'en';
-  var pathPrefix    = 'i18n'; // folder of json files
+  var pathPrefix    = 'static/i18n'; // folder of json files
   var packName      = 'site';
   var storageKey    = 'jq-appLang';
 
