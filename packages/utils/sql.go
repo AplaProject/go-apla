@@ -1469,7 +1469,7 @@ func (db *DCDB) GetNodeConfig() (map[string]string, error) {
 	return db.OneRow("SELECT * FROM config").String()
 }
 
-func (db *DCDB) TestBlock() (*prevBlockType, int64, int64, int64, int64, [][][]int64, error) {
+func (db *DCDB) Candidate_block() (*prevBlockType, int64, int64, int64, int64, [][][]int64, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -1886,7 +1886,7 @@ func (db *DCDB) GetMyUsersIds(checkCommission, checkNodeKey bool) ([]int64, erro
 			}
 		}
 		// нельзя чтобы блок сгенерировал майнер, чьего нодовского приватного ключа нет у нас,
-		// т.к. это приведет к ступору в testBlockIsReady в проверке подписи
+		// т.к. это приведет к ступору в candidateBlockIsReady в проверке подписи
 		if checkNodeKey {
 
 			rows, err := db.Query("SELECT user_id, node_public_key FROM miners_data WHERE user_id IN (" + strings.Join(SliceInt64ToString(usersIds), ",") + ")")
@@ -2064,8 +2064,8 @@ func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetTestBlockId() (int64, error) {
-	rows, err := db.Query("SELECT block_id FROM testblock")
+func (db *DCDB) GetcandidateBlockId() (int64, error) {
+	rows, err := db.Query("SELECT block_id FROM candidateBlock")
 	if err != nil {
 		return 0, err
 	}
@@ -2466,7 +2466,7 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, wait
 				                         used = 0
 							UNION
 							SELECT hash
-							FROM transactions_testblock
+							FROM transactions_candidateBlock
 							WHERE type = ?
 										  `+addSql+`
 					)  AS x
@@ -2524,7 +2524,7 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 				                         used = 0
 							UNION
 							SELECT hash
-							FROM transactions_testblock
+							FROM transactions_candidateBlock
 							WHERE type IN (`+whereType+`)
 										 `+addSql+` `+addSql1+` AND
 										 user_id = ?

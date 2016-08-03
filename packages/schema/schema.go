@@ -366,43 +366,7 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-	s = make(Recmap)
-	s1 = make(Recmap)
-	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "log_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('log_users_log_id_seq')", "comment": ""}
-	s2[1] = map[string]string{"name": "name", "mysql": "varchar(30) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[2] = map[string]string{"name": "avatar", "mysql": "varchar(50) NOT NULL DEFAULT ''", "sqlite": "varchar(50) NOT NULL DEFAULT ''", "postgresql": "varchar(50) NOT NULL DEFAULT ''", "comment": ""}
-	s2[3] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
-	s2[4] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
-	s2[5] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
-	s2[6] = map[string]string{"name": "ca1", "mysql": "varchar(30) NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[7] = map[string]string{"name": "ca2", "mysql": "varchar(30) NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[8] = map[string]string{"name": "ca3", "mysql": "varchar(30) NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[9] = map[string]string{"name": "referral", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[10] = map[string]string{"name": "credit_part", "mysql": "decimal(5,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(5,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(5,2) NOT NULL DEFAULT '0'", "comment": ""}
-	s2[11] = map[string]string{"name": "change_key", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[12] = map[string]string{"name": "change_key_time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[13] = map[string]string{"name": "change_key_close", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[14] = map[string]string{"name": "seller_hold_back_pct", "mysql": "decimal(5,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(5,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(5,2) NOT NULL DEFAULT '0'", "comment": ""}
-	s2[15] = map[string]string{"name": "arbitration_days_refund", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[16] = map[string]string{"name": "url", "mysql": "varchar(50) NOT NULL DEFAULT ''", "sqlite": "varchar(50) NOT NULL DEFAULT ''", "postgresql": "varchar(50) NOT NULL DEFAULT ''", "comment": ""}
-	s2[17] = map[string]string{"name": "chat_ban", "mysql": "tinyint(4) NOT NULL DEFAULT '0'", "sqlite": "tinyint(4) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[18] = map[string]string{"name": "sn_type", "mysql": "varchar(100) NOT NULL DEFAULT ''", "sqlite": "varchar(100) NOT NULL DEFAULT ''", "postgresql": "varchar(100) NOT NULL DEFAULT ''", "comment": ""}
-	s2[19] = map[string]string{"name": "sn_url_id", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-	s2[20] = map[string]string{"name": "votes_start_time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[21] = map[string]string{"name": "votes_0", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[22] = map[string]string{"name": "votes_1", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[23] = map[string]string{"name": "status", "mysql": "enum('user','sn_user', 'rejected_sn_user') NOT NULL DEFAULT 'user'", "sqlite": "varchar(100)  NOT NULL DEFAULT 'user'", "postgresql": "enum('user','sn_user', 'rejected_sn_user') NOT NULL DEFAULT 'user'", "comment": ""}
-	s2[24] = map[string]string{"name": "sn_attempts", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[25] = map[string]string{"name": "block_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "В каком блоке было занесено. Нужно для удаления старых данных"}
-	s2[26] = map[string]string{"name": "prev_log_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
-	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"log_id"}
-	s1["AI"] = "log_id"
-	s1["comment"] = ""
-	s["log_users"] = s1
-	schema.S = s
-	schema.PrintSchema()
+
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -421,14 +385,14 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "miner_id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('miners_miner_id_seq')", "comment": "Если есть забаненные, то на их место становятся новички, т.о. все miner_id будут заняты без пробелов"}
-	s2[1] = map[string]string{"name": "active", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": "1 - активен, 0 - забанен"}
-	s2[2] = map[string]string{"name": "log_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Без log_id нельзя определить, был ли апдейт в табле miners или же инсерт, т.к. по AUTO_INCREMENT не понять, т.к. обновление может быть в самой последней строке"}
+	s2[0] = map[string]string{"name": "full_node_id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('full_nodes_full_node_id_seq')", "comment": ""}
+	s2[9] = map[string]string{"name": "wallet_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
+	s2[9] = map[string]string{"name": "cb_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"miner_id"}
-	s1["AI"] = "miner_id"
+	s1["PRIMARY"] = []string{"full_node_id"}
+	s1["AI"] = "full_node_id"
 	s1["comment"] = ""
-	s["miners"] = s1
+	s["full_nodes"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -495,7 +459,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"head_hash"}
 	s1["comment"] = "Очередь на фронтальную проверку соревнующихся блоков"
-	s["queue_testblock"] = s1
+	s["queue_candidateBlock"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -523,14 +487,14 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[4] = map[string]string{"name": "header_hash", "mysql": "binary(32) NOT NULL DEFAULT ''", "sqlite": "binary(32) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Хэш шапки, им меряемся, у кого меньше - тот круче. Хэш генерим у себя, при получении данных блока"}
 	s2[5] = map[string]string{"name": "signature", "mysql": "blob NOT NULL DEFAULT ''", "sqlite": "blob NOT NULL DEFAULT ''", "postgresql": "bytea NOT NULL DEFAULT ''", "comment": "Подпись блока юзером, чей минимальный хэш шапки мы приняли"}
 	s2[6] = map[string]string{"name": "mrkl_root", "mysql": "binary(32) NOT NULL DEFAULT ''", "sqlite": "binary(32) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Хэш тр-ий. Чтобы каждый раз не проверять теже самые данные, просто сравниваем хэши"}
-	s2[7] = map[string]string{"name": "status", "mysql": "enum('active','pending') NOT NULL DEFAULT 'active'", "sqlite": "varchar(100)  NOT NULL DEFAULT 'active'", "postgresql": "enum('active','pending') NOT NULL DEFAULT 'active'", "comment": "Указание демону testblock_disseminator"}
+	s2[7] = map[string]string{"name": "status", "mysql": "enum('active','pending') NOT NULL DEFAULT 'active'", "sqlite": "varchar(100)  NOT NULL DEFAULT 'active'", "postgresql": "enum('active','pending') NOT NULL DEFAULT 'active'", "comment": "Указание демону candidateBlock_disseminator"}
 	s2[8] = map[string]string{"name": "uniq", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
 	s2[9] = map[string]string{"name": "sent", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"block_id"}
 	s1["UNIQ"] = []string{"uniq"}
 	s1["comment"] = "Нужно на этапе соревнования, у кого меньше хэш"
-	s["testblock"] = s1
+	s["candidateBlock"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -543,7 +507,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["fields"] = s2
 	s1["UNIQ"] = []string{"uniq"}
 	s1["comment"] = ""
-	s["testblock_lock"] = s1
+	s["candidateBlock_lock"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -571,7 +535,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('transactions_testblock_id_seq')", "comment": "Порядок следования очень важен"}
+	s2[0] = map[string]string{"name": "id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('transactions_candidateBlock_id_seq')", "comment": "Порядок следования очень важен"}
 	s2[1] = map[string]string{"name": "hash", "mysql": "binary(16) NOT NULL DEFAULT ''", "sqlite": "binary(16) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "md5 для обмена только недостающими тр-ми"}
 	s2[2] = map[string]string{"name": "data", "mysql": "longblob NOT NULL DEFAULT ''", "sqlite": "longblob NOT NULL DEFAULT ''", "postgresql": "bytea NOT NULL DEFAULT ''", "comment": ""}
 	s2[3] = map[string]string{"name": "type", "mysql": "tinyint(4) NOT NULL DEFAULT '0'", "sqlite": "tinyint(4) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": "Тип тр-ии. Нужно для недопущения попадения в блок 2-х тр-ий одного типа от одного юзера"}
@@ -581,48 +545,54 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"id"}
 	s1["UNIQ"] = []string{"hash"}
 	s1["AI"] = "id"
-	s1["comment"] = "Тр-ии, которые используются в текущем testblock"
-	s["transactions_testblock"] = s1
+	s1["comment"] = "Тр-ии, которые используются в текущем candidateBlock"
+	s["transactions_candidateBlock"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "user_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('users_user_id_seq')", "comment": "На него будут слаться деньги"}
-	s2[1] = map[string]string{"name": "name", "mysql": "varchar(30) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[2] = map[string]string{"name": "avatar", "mysql": "varchar(100) NOT NULL DEFAULT ''", "sqlite": "varchar(100) NOT NULL DEFAULT ''", "postgresql": "varchar(100) NOT NULL DEFAULT ''", "comment": ""}
-	s2[3] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Открытый ключ которым проверяются все транзакции от юзера"}
-	s2[4] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "2-й ключ, если есть"}
-	s2[5] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3-й ключ, если есть"}
-	s2[6] = map[string]string{"name": "ca1", "mysql": "varchar(30) NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[7] = map[string]string{"name": "ca2", "mysql": "varchar(30) NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[8] = map[string]string{"name": "ca3", "mysql": "varchar(30) NOT NULL DEFAULT ''", "sqlite": "varchar(30) NOT NULL DEFAULT ''", "postgresql": "varchar(30) NOT NULL DEFAULT ''", "comment": ""}
-	s2[9] = map[string]string{"name": "referral", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": "Тот, кто зарегал данного юзера и теперь получает с него рефские"}
-	s2[10] = map[string]string{"name": "credit_part", "mysql": "decimal(5,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(5,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(5,2) NOT NULL DEFAULT '0'", "comment": "% от поступлений, которые юзер осталяет себе. Если есть активные кредиты, то можно только уменьшать"}
-	s2[11] = map[string]string{"name": "change_key", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[12] = map[string]string{"name": "change_key_time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[13] = map[string]string{"name": "change_key_close", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[14] = map[string]string{"name": "seller_hold_back_pct", "mysql": "decimal(5,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(5,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(5,2) NOT NULL DEFAULT '0'", "comment": "% холдбека для новых сделок"}
-	s2[15] = map[string]string{"name": "arbitration_days_refund", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Продавец тут указывает кол-во дней для новых сделок, в течение которых он готов сделать манибек. Если стоит 0, значит продавец больше не работает с манибеком"}
-	s2[16] = map[string]string{"name": "url", "mysql": "varchar(50) NOT NULL DEFAULT ''", "sqlite": "varchar(50) NOT NULL DEFAULT ''", "postgresql": "varchar(50) NOT NULL DEFAULT ''", "comment": ""}
-	s2[17] = map[string]string{"name": "chat_ban", "mysql": "tinyint(4) NOT NULL DEFAULT '0'", "sqlite": "tinyint(4) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[18] = map[string]string{"name": "sn_type", "mysql": "varchar(100) NOT NULL DEFAULT ''", "sqlite": "varchar(100) NOT NULL DEFAULT ''", "postgresql": "varchar(100) NOT NULL DEFAULT ''", "comment": ""}
-	s2[19] = map[string]string{"name": "sn_url_id", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-	s2[20] = map[string]string{"name": "votes_start_time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[21] = map[string]string{"name": "votes_0", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[22] = map[string]string{"name": "votes_1", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[23] = map[string]string{"name": "status", "mysql": "enum('user','sn_user', 'rejected_sn_user') NOT NULL DEFAULT 'user'", "sqlite": "varchar(100)  NOT NULL DEFAULT 'user'", "postgresql": "enum('user','sn_user', 'rejected_sn_user') NOT NULL DEFAULT 'user'", "comment": ""}
-	s2[24] = map[string]string{"name": "sn_attempts", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[25] = map[string]string{"name": "log_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[0] = map[string]string{"name": "wallet_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('wallets_wallet_id_seq')", "comment": ""}
+	s2[1] = map[string]string{"name": "hash", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
+	s2[2] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Открытый ключ которым проверяются все транзакции от юзера"}
+	s2[3] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "2-й ключ, если есть"}
+	s2[4] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3-й ключ, если есть"}
+	s2[5] = map[string]string{"name": "node_public_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
+	s2[6] = map[string]string{"name": "amount", "mysql": "decimal(30) NOT NULL DEFAULT '0'", "sqlite": "decimal(30) NOT NULL DEFAULT '0'", "postgresql": "decimal(30) NOT NULL DEFAULT '0'", "comment": ""}
+	s2[7] = map[string]string{"name": "host", "mysql": "varchar(50) NOT NULL DEFAULT ''", "sqlite": "varchar(50) NOT NULL DEFAULT ''", "postgresql": "varchar(50) NOT NULL DEFAULT ''", "comment": ""}
+	s2[8] = map[string]string{"name": "vote", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[9] = map[string]string{"name": "log_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"user_id"}
-	s1["AI"] = "user_id"
+	s1["PRIMARY"] = []string{"wallet_id"}
+	s1["AI"] = "wallet_id"
 	s1["comment"] = ""
-	s["users"] = s1
+	s["wallets"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
+
+	s = make(Recmap)
+	s1 = make(Recmap)
+	s2 = make(Recmapi)
+	s2[0] = map[string]string{"name": "rb_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('rb_wallets_rb_id_seq')", "comment": ""}
+	s2[1] = map[string]string{"name": "hash", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
+	s2[2] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Открытый ключ которым проверяются все транзакции от юзера"}
+	s2[3] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "2-й ключ, если есть"}
+	s2[4] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3-й ключ, если есть"}
+	s2[5] = map[string]string{"name": "node_public_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
+	s2[6] = map[string]string{"name": "amount", "mysql": "decimal(30) NOT NULL DEFAULT '0'", "sqlite": "decimal(30) NOT NULL DEFAULT '0'", "postgresql": "decimal(30) NOT NULL DEFAULT '0'", "comment": ""}
+	s2[7] = map[string]string{"name": "host", "mysql": "varchar(50) NOT NULL DEFAULT ''", "sqlite": "varchar(50) NOT NULL DEFAULT ''", "postgresql": "varchar(50) NOT NULL DEFAULT ''", "comment": ""}
+	s2[8] = map[string]string{"name": "vote", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[9] = map[string]string{"name": "block_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "В каком блоке было занесено. Нужно для удаления старых данных"}
+	s2[10] = map[string]string{"name": "prev_rb_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
+	s1["fields"] = s2
+	s1["PRIMARY"] = []string{"rb_id"}
+	s1["AI"] = "rb_id"
+	s1["comment"] = ""
+	s["rb_wallets"] = s1
+	schema.S = s
+	schema.PrintSchema()
 
 
 

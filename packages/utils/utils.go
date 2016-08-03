@@ -2914,10 +2914,10 @@ func DecryptCFB(iv, encrypted, key []byte) ([]byte, error) {
 	return decrypted, nil
 }
 
-func EncryptData(data, publicKey []byte, randTestblockHash string) ([]byte, []byte, []byte, error) {
+func EncryptData(data, publicKey []byte, randcandidateBlockHash string) ([]byte, []byte, []byte, error) {
 
 	// генерим ключ
-	key := Md5(DSha256([]byte(RandSeq(32) + randTestblockHash)))
+	key := Md5(DSha256([]byte(RandSeq(32) + randcandidateBlockHash)))
 
 	// шифруем ключ публичным ключем получателя
 	pub, err := BinToRsaPubKey(publicKey)
