@@ -833,8 +833,8 @@ func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, Gor
 }
 
 func (db *DCDB) GetTcpHost() string {
-	// Слушать TCP нужно только майнерам
-	for {
+	// Слушать TCP нужно только полным нодам
+	/*for {
 		community, err := db.GetCommunityUsers()
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
@@ -877,7 +877,7 @@ func (db *DCDB) GetTcpHost() string {
 			Sleep(5)
 		}
 	}
-	log.Debug("tcpHost null")
+	log.Debug("tcpHost null")*/
 	return ""
 }
 

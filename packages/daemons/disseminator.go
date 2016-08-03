@@ -58,9 +58,8 @@ BEGIN:
 		if len(nodeConfig["local_gate_ip"]) == 0 {
 			// обычный режим
 			hosts, err = d.GetAll(`
-					SELECT miners_data.user_id, miners_data.tcp_host as host, node_public_key
+					SELECT *
 					FROM nodes_connection
-					LEFT JOIN miners_data ON nodes_connection.user_id = miners_data.user_id
 					`, -1)
 			if err != nil {
 				if d.dPrintSleep(err, d.sleepTime) {
