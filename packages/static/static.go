@@ -88,6 +88,7 @@
 // static/js/demo/demo-wizard.js
 // static/js/demo/demo-xeditable.js
 // static/js/index.js
+// static/js/spin.js
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
@@ -1896,6 +1897,24 @@ func staticJsDemoDemoXeditableJs() (*asset, error) {
 func staticJsIndexJs() (*asset, error) {
 	path := "static/js/index.js"
 	name := "static/js/index.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsSpinJs reads file data from disk. It returns an error on failure.
+func staticJsSpinJs() (*asset, error) {
+	path := "static/js/spin.js"
+	name := "static/js/spin.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5866,6 +5885,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
 	"static/js/index.js": staticJsIndexJs,
+	"static/js/spin.js": staticJsSpinJs,
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
@@ -6228,6 +6248,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
+			"spin.js": &bintree{staticJsSpinJs, map[string]*bintree{}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
 			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
