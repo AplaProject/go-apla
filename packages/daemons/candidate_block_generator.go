@@ -153,7 +153,7 @@ BEGIN:
 		}
 
 		// Если мы ЦБ и наш ID указан у одного из ЦБ
-		/*if myCBID > 0 {
+		if myCBID > 0 {
 			delegate, err:= d.OneRow("SELECT delegate_wallet_id, delegate_cb_id FROM central_banks WHERE cb_id = ?", myCBID).Int64()
 			if err != nil {
 				d.dbUnlock()
@@ -163,9 +163,10 @@ BEGIN:
 				}
 				continue
 			}
-			logger.Debug(delegate)
-		}*/
+			fmt.Println(delegate)
+		}
 
+		// получим список нодов, которые могут либо сами генерить блоки, либо делегировали кому-то эти полномочия
 
 		// Есть ли мы в full_nodes
 		/*myCBID, err := d.GetMyCBID("");
