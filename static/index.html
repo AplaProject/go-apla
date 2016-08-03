@@ -23,6 +23,11 @@
    <link rel="stylesheet" href="static/vendor/dataTables.fontAwesome/index.css">
    <!-- WEATHER ICONS-->
    <link rel="stylesheet" href="static/vendor/weather-icons/css/weather-icons.min.css">
+   <!-- DATETIMEPICKER-->
+   <link rel="stylesheet" href="static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css">
+   <!-- SELECT2-->
+   <link rel="stylesheet" href="static/vendor/select2/dist/css/select2.css">
+   <link rel="stylesheet" href="static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css">
    <!-- =============== BOOTSTRAP STYLES ===============-->
    <link rel="stylesheet" href="static/css/bootstrap.css" id="bscss">
    <!-- =============== APP STYLES ===============-->
@@ -83,12 +88,72 @@
    <script src="static/vendor/datatables/media/js/jquery.dataTables.min.js"></script>
    <script src="static/vendor/datatables-colvis/js/dataTables.colVis.js"></script>
    <script src="static/vendor/datatables/media/js/dataTables.bootstrap.js"></script>
+   <!-- DATETIMEPICKER-->
+   <script type="text/javascript" src="static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
+   <!-- FILESTYLE-->
+   <script src="static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"></script>
+   <!-- SELECT2-->
+   <script src="static/vendor/select2/dist/js/select2.js"></script>
    
+   <script src="static/js/spin.js"></script>
 	<script>
+		(function ($) {
+			$.fn.spin = function (opts, color) {
+				var presets = {
+					"tiny": {
+						lines: 8,
+						length: 2,
+						width: 2,
+						radius: 3
+					},
+					"small": {
+						lines: 8,
+						length: 4,
+						width: 3,
+						radius: 5
+					},
+					"large": {
+						lines: 10,
+						length: 8,
+						width: 4,
+						radius: 8
+					}
+				};
+				if (Spinner) {
+					return this.each(function () {
+						var $this = $(this),
+								data = $this.data();
+	
+						if (data.spinner) {
+							data.spinner.stop();
+							delete data.spinner;
+						}
+						if (opts !== false) {
+							if (typeof opts === "string") {
+								if (opts in presets) {
+									opts = presets[opts];
+								} else {
+									opts = {};
+								}
+								if (color) {
+									opts.color = color;
+								}
+							}
+							data.spinner = new Spinner($.extend({
+								color: $this.css('color')
+							}, opts)).spin(this);
+						}
+					});
+				} else {
+					throw "Spinner class not available.";
+				}
+			};
+		})(jQuery);
+		
 		$( document ).ready(function() {
 			//$( "#dl_content" ).load( "content?controllerName=updating_blockchain", { }, function() {});
-			$( "#dl_menu" ).load( "content?controllerName=menu", { }, function() {
-				$( "#dl_content" ).load( "content?controllerName=dashboard_anonym", { }, function() {});
+			$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
+				$( "#dl_content" ).load( "content?controllerHTML=dashboard_anonym", { }, function() {});
 			});
 		});
 	</script>

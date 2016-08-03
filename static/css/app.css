@@ -6210,9 +6210,9 @@ body .chosen-container-single .chosen-single div {
 body .chosen-container-multi .chosen-choices li.search-field input[type=text] {
   color: #b7bac9;
 }
-body .bootstrap-filestyle {
+/*body .bootstrap-filestyle {
   max-width: 380px;
-}
+}*/
 body [data-classyloader] {
   max-width: 100%;
 }

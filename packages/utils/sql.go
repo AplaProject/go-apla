@@ -1819,6 +1819,14 @@ func (db *DCDB) GetMyUserId(myPrefix string) (int64, error) {
 	return userId, nil
 }
 
+
+func (db *DCDB) GetMyWalletId() (int64, error) {
+	return db.Single("SELECT wallet_id FROM my_table").Int64()
+}
+func (db *DCDB) GetMyCBID() (int64, error) {
+	return db.Single("SELECT cb_id FROM my_table").Int64()
+}
+
 func (db *DCDB) GetMyUsersIds(checkCommission, checkNodeKey bool) ([]int64, error) {
 	var usersIds []int64
 	usersIds, err := db.GetCommunityUsers()
