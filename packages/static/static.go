@@ -2,6 +2,7 @@
 // sources:
 // static/css/app.css
 // static/css/bootstrap.css
+// static/css/style.css
 // static/css/theme-a.css
 // static/css/theme-b.css
 // static/css/theme-c.css
@@ -70,6 +71,9 @@
 // static/login.html
 // static/menu.html
 // static/modal.html
+// static/sass/_colors.scss
+// static/sass/_mixins.scss
+// static/sass/style.scss
 // static/test.html
 // static/updating_blockchain.html
 // static/vendor/Chart.js/Chart.js
@@ -316,6 +320,24 @@ func staticCssAppCss() (*asset, error) {
 func staticCssBootstrapCss() (*asset, error) {
 	path := "static/css/bootstrap.css"
 	name := "static/css/bootstrap.css"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCssStyleCss reads file data from disk. It returns an error on failure.
+func staticCssStyleCss() (*asset, error) {
+	path := "static/css/style.css"
+	name := "static/css/style.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1540,6 +1562,60 @@ func staticMenuHtml() (*asset, error) {
 func staticModalHtml() (*asset, error) {
 	path := "static/modal.html"
 	name := "static/modal.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticSass_colorsScss reads file data from disk. It returns an error on failure.
+func staticSass_colorsScss() (*asset, error) {
+	path := "static/sass/_colors.scss"
+	name := "static/sass/_colors.scss"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticSass_mixinsScss reads file data from disk. It returns an error on failure.
+func staticSass_mixinsScss() (*asset, error) {
+	path := "static/sass/_mixins.scss"
+	name := "static/sass/_mixins.scss"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticSassStyleScss reads file data from disk. It returns an error on failure.
+func staticSassStyleScss() (*asset, error) {
+	path := "static/sass/style.scss"
+	name := "static/sass/style.scss"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5172,6 +5248,7 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"static/css/app.css": staticCssAppCss,
 	"static/css/bootstrap.css": staticCssBootstrapCss,
+	"static/css/style.css": staticCssStyleCss,
 	"static/css/theme-a.css": staticCssThemeACss,
 	"static/css/theme-b.css": staticCssThemeBCss,
 	"static/css/theme-c.css": staticCssThemeCCss,
@@ -5240,6 +5317,9 @@ var _bindata = map[string]func() (*asset, error){
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal.html": staticModalHtml,
+	"static/sass/_colors.scss": staticSass_colorsScss,
+	"static/sass/_mixins.scss": staticSass_mixinsScss,
+	"static/sass/style.scss": staticSassStyleScss,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/Chart.js/Chart.js": staticVendorChartJsChartJs,
@@ -5484,6 +5564,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"css": &bintree{nil, map[string]*bintree{
 			"app.css": &bintree{staticCssAppCss, map[string]*bintree{}},
 			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{}},
+			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
 			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{}},
 			"theme-b.css": &bintree{staticCssThemeBCss, map[string]*bintree{}},
 			"theme-c.css": &bintree{staticCssThemeCCss, map[string]*bintree{}},
@@ -5565,6 +5646,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"login.html": &bintree{staticLoginHtml, map[string]*bintree{}},
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
 		"modal.html": &bintree{staticModalHtml, map[string]*bintree{}},
+		"sass": &bintree{nil, map[string]*bintree{
+			"_colors.scss": &bintree{staticSass_colorsScss, map[string]*bintree{}},
+			"_mixins.scss": &bintree{staticSass_mixinsScss, map[string]*bintree{}},
+			"style.scss": &bintree{staticSassStyleScss, map[string]*bintree{}},
+		}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"vendor": &bintree{nil, map[string]*bintree{
