@@ -139,8 +139,8 @@ func (c *Controller) InstallStep1() (string, error) {
 		err = c.DCDB.ExecSql("INSERT INTO my_table (user_id, key_password) VALUES (?, ?)", userId, keyPassword)
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
-			panic(err)
-			os.Exit(1)
+//			panic(err)
+			//os.Exit(1)
 		}
 		//}
 		log.Debug("setupPassword: (%s) / (%s)", setupPassword, utils.DSha256(setupPassword))

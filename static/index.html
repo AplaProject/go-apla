@@ -161,9 +161,9 @@
 		
 		$( document ).ready(function() {
 			//$( "#dl_content" ).load( "content?controllerName=updating_blockchain", { }, function() {});
-			$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
+/*			$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
 				$( "#dl_content" ).load( "content?controllerHTML=dashboard_anonym", { }, function() {});
-			});
+			});*/
 		});
 	</script>
 	
@@ -208,7 +208,8 @@
 				load_menu({{if .SetLang}}{{.SetLang}}{{end}});
 			{{else}}
 				$("#loader").spin();
-				$("#dl_content").load( "content", function() {$("#loader").spin(false);});
+				$("#dl_content").load( "content", function() {
+				$("#loader").spin(false);});
 				load_menu();
 			{{end}}
 		});
