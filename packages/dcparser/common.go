@@ -278,10 +278,10 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 		}
 	}
 
-	// теперь откатим и transactions_testblock
-	p.RollbackTransactionsTestblock(true)
+	// теперь откатим и transactions_candidateBlock
+	p.RollbackTransactionsCandidateBlock(true)
 
-	err = p.ExecSql("DELETE FROM testblock")
+	err = p.ExecSql("DELETE FROM candidateBlock")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -498,12 +498,12 @@ func (p *Parser) GetBlockInfo() *utils.BlockData {
 	return &utils.BlockData{Hash: p.BlockData.Hash, HeadHash: p.BlockData.HeadHash, Time: p.BlockData.Time, BlockId: p.BlockData.BlockId}
 }
 
-func (p *Parser) RollbackTransactionsTestblock(truncate bool) error {
-	log.Debug("RollbackTransactionsTestblock")
+func (p *Parser) RollbackTransactionsCandidateBlock(truncate bool) error {
+	log.Debug("RollbackTransactionsCandidateBlock")
 	// прежде чем удалять, нужно откатить
 	// получим наши транзакции в 1 бинарнике, просто для удобства
 	var blockBody []byte
-	rows, err := p.Query("SELECT data, hash FROM transactions_testblock ORDER BY id ASC")
+	rows, err := p.Query("SELECT data, hash FROM transactions_candidateBlock ORDER BY id ASC")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -543,7 +543,7 @@ func (p *Parser) RollbackTransactionsTestblock(truncate bool) error {
 	}
 
 	if truncate {
-		err = p.ExecSql("DELETE FROM transactions_testblock")
+		err = p.ExecSql("DELETE FROM transactions_candidateBlock")
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -828,7 +828,7 @@ func (p *Parser) GetInfoBlock() error {
 /**
  * Откат таблиц log_time_, которые были изменены транзакциями
  */
-func (p *Parser) ParseDataRollbackFront(txTestblock bool) error {
+func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 
 	// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
 	binForSize := p.BinaryData
@@ -868,7 +868,7 @@ func (p *Parser) ParseDataRollbackFront(txTestblock bool) error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if txTestblock {
+		if txcandidateBlock {
 			utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE hex(hash) = " + string(p.TxHash))
 			affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE hex(hash) = ?", p.TxHash)
 			if err != nil {
@@ -1014,11 +1014,11 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.RollbackTransactionsTestblock(true)
+	err = p.RollbackTransactionsCandidateBlock(true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql("DELETE FROM testblock")
+	err = p.ExecSql("DELETE FROM candidateBlock")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -1117,12 +1117,12 @@ func (p *Parser) RollbackTransactions() error {
 	return nil
 }
 
-func (p *Parser) rollbackTransactionsTestblock(truncate bool) error {
+func (p *Parser) rollbackTransactionsCandidateBlock(truncate bool) error {
 
 	// прежде чем удалять, нужно откатить
 	// получим наши транзакции в 1 бинарнике, просто для удобства
 	var blockBody []byte
-	rows, err := p.Query("SELECT data, hash FROM transactions_testblock ORDER BY id ASC")
+	rows, err := p.Query("SELECT data, hash FROM transactions_candidateBlock ORDER BY id ASC")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -1161,7 +1161,7 @@ func (p *Parser) rollbackTransactionsTestblock(truncate bool) error {
 	}
 
 	if truncate {
-		err = p.ExecSql("DELETE FROM transactions_testblock")
+		err = p.ExecSql("DELETE FROM transactions_candidateBlock")
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -1369,7 +1369,7 @@ func (p *Parser) InsertIntoBlockchain() error {
 func (p *Parser) UpdBlockInfo() {
 
 	// для отладки
-	_, _, _, p.BlockData.CurrentUserId, _, _, _ = p.TestBlock()
+	_, _, _, p.BlockData.CurrentUserId, _, _, _ = p.Candidate_block()
 
 	blockId := p.BlockData.BlockId
 	// для локальных тестов
@@ -3184,7 +3184,7 @@ func (p *Parser) RollbackIncompatibleTx(typesArr []string) error {
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 		/*
 			 * создает проблемы для tesblock_is_ready
-			err = p.ExecSql("DELETE FROM transactions_testblock WHERE hex(hash) = ?", md5)
+			err = p.ExecSql("DELETE FROM transactions_candidateBlock WHERE hex(hash) = ?", md5)
 			if err != nil {
 				p.PrintSleep(err, 60)
 				continue BEGIN
@@ -3265,7 +3265,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                         )
 							UNION
 							SELECT user_id
-							FROM transactions_testblock
+							FROM transactions_candidateBlock
 							WHERE (
 											 third_var = ?
 										) OR (
@@ -3296,7 +3296,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                         used = 0
 							UNION
 							SELECT data
-							FROM transactions_testblock
+							FROM transactions_candidateBlock
 							WHERE type IN (?, ?) AND
 										 user_id = ?
 						)  AS x
@@ -3318,7 +3318,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
 					 * создает проблемы для tesblock_is_ready
-					err = p.ExecSql("DELETE FROM transactions_testblock WHERE hex(hash) = ?md5(?tx_data)?")
+					err = p.ExecSql("DELETE FROM transactions_candidateBlock WHERE hex(hash) = ?md5(?tx_data)?")
 					if err != nil {
 						p.PrintSleep(err, 60)
 						continue BEGIN
@@ -3462,7 +3462,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 						                     used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_testblock
+								FROM transactions_candidateBlock
 								WHERE  (
 						                        type = ? AND third_var IN (`+promisedAmountIds+`)
 						                      )
@@ -3556,7 +3556,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                          used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_testblock
+								FROM transactions_candidateBlock
 								WHERE type IN (?, ?, ?, ?) AND
 					                          third_var = ?
 							)  AS x
@@ -3583,7 +3583,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                         used = 0
 							UNION
 							SELECT data
-							FROM transactions_testblock
+							FROM transactions_candidateBlock
 							WHERE type IN (?, ?) AND
 										 user_id = ?
 						)  AS x
@@ -3608,7 +3608,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
 					 * создает проблемы для tesblock_is_ready
-					err = p.ExecSql("DELETE FROM transactions_testblock WHERE hex(hash) = ?", Md5(txData))
+					err = p.ExecSql("DELETE FROM transactions_candidateBlock WHERE hex(hash) = ?", Md5(txData))
 					if err != nil {
 						p.PrintSleep(err, 60)
 						continue BEGIN
@@ -3629,7 +3629,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                         used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_testblock
+								FROM transactions_candidateBlock
 								WHERE user_id = ?
 							)  AS x
 							`, userId, userId).Int64()
@@ -3653,7 +3653,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                         used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_testblock
+								FROM transactions_candidateBlock
 								WHERE user_id = ?
 							)  AS x
 							`, thirdVar, thirdVar).Int64()
@@ -3679,7 +3679,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                         used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_testblock
+								FROM transactions_candidateBlock
 								WHERE  (
 						                            (type = ? AND user_id = ?)
 						                            OR
@@ -3715,7 +3715,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                      used = 0
 							UNION
 							SELECT user_id
-							FROM transactions_testblock
+							FROM transactions_candidateBlock
 							WHERE user_id = ?
 					)  AS x
 					`, userId, userId).Int64()

@@ -89,7 +89,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	//go daemons.Testblock_is_ready()
+	//go daemons.candidateBlock_is_ready()
 
 	//parser.Db.HashTableData("holidays", "", "")
 	//HashTableData(parser.Db.DB,"holidays", "", "")

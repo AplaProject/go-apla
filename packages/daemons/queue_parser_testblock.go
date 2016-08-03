@@ -8,10 +8,10 @@ import (
 )
 
 /*
- * Парсим и разносим данные из queue_testblock
+ * Парсим и разносим данные из queue_candidateBlock
  * */
 
-func QueueParserTestblock(chBreaker chan bool, chAnswer chan string) {
+func QueueParsercandidateBlock(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Error("daemon Recovered", r)
@@ -19,7 +19,7 @@ func QueueParserTestblock(chBreaker chan bool, chAnswer chan string) {
 		}
 	}()
 
-	const GoroutineName = "QueueParserTestblock"
+	const GoroutineName = "QueueParsercandidateBlock"
 	d := new(daemon)
 	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
 	if d.DCDB == nil {
@@ -68,7 +68,7 @@ BEGIN:
 			continue BEGIN
 		}
 
-		data, err := d.OneRow("SELECT * FROM queue_testblock ORDER BY head_hash ASC").String()
+		data, err := d.OneRow("SELECT * FROM queue_candidateBlock ORDER BY head_hash ASC").String()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
@@ -87,7 +87,7 @@ BEGIN:
 		tx := utils.DeleteHeader(newBlock)
 
 		// сразу можно удалять данные из таблы-очереди
-		err = d.ExecSql("DELETE FROM queue_testblock WHERE hex(head_hash) = ?", newHeaderHash)
+		err = d.ExecSql("DELETE FROM queue_candidateBlock WHERE hex(head_hash) = ?", newHeaderHash)
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(errors.New("len(data) == 0")), d.sleepTime) {
 				break BEGIN
@@ -125,7 +125,7 @@ BEGIN:
 			}
 		}
 		// откатим тр-ии тестблока, но не удаляя их, т.к. далее еще можем их вернуть
-		p.RollbackTransactionsTestblock(false)
+		p.RollbackTransactionsCandidateBlock(false)
 
 		// проверим блок, который получился с данными, которые прислал другой нод
 		p.BinaryData = newBlock
@@ -134,23 +134,23 @@ BEGIN:
 
 			logger.Error("%v", err)
 
-			// т.к. мы откатили наши тр-ии из transactions_testblock, то теперь нужно обработать их по новой
+			// т.к. мы откатили наши тр-ии из transactions_candidateBlock, то теперь нужно обработать их по новой
 			// получим наши транзакции в 1 бинарнике, просто для удобства
 
-			var myTestBlockBody []byte
-			transactionsTestblock, err := d.GetAll("SELECT data FROM transactions_testblock ORDER BY id ASC", -1)
+			var mycandidateBlockBody []byte
+			transactionscandidateBlock, err := d.GetAll("SELECT data FROM transactions_candidateBlock ORDER BY id ASC", -1)
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
 				continue BEGIN
 			}
-			for _, data := range transactionsTestblock {
-				myTestBlockBody = append(myTestBlockBody, utils.EncodeLengthPlusData([]byte(data["data"]))...)
+			for _, data := range transactionscandidateBlock {
+				mycandidateBlockBody = append(mycandidateBlockBody, utils.EncodeLengthPlusData([]byte(data["data"]))...)
 			}
 
-			if len(myTestBlockBody) > 0 {
-				p.BinaryData = append(utils.DecToBin(0, 1), myTestBlockBody...)
+			if len(mycandidateBlockBody) > 0 {
+				p.BinaryData = append(utils.DecToBin(0, 1), mycandidateBlockBody...)
 				err = p.ParseDataGate(true)
 				if err != nil {
 					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -161,14 +161,14 @@ BEGIN:
 			}
 		} else {
 			// наши тр-ии уже не актуальны, т.к. мы их откатили
-			err = d.ExecSql("DELETE FROM transactions_testblock")
+			err = d.ExecSql("DELETE FROM transactions_candidateBlock")
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
 				continue BEGIN
 			}
-			exists, err := d.Single(`SELECT block_id FROM testblock`).Int64()
+			exists, err := d.Single(`SELECT block_id FROM candidateBlock`).Int64()
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -176,9 +176,9 @@ BEGIN:
 				return
 			}
 			if exists > 0 {
-				// если всё нормально, то пишем в таблу testblock новые тр-ии и новые данные по юзеру их сгенерившему
+				// если всё нормально, то пишем в таблу candidateBlock новые тр-ии и новые данные по юзеру их сгенерившему
 				err = d.ExecSql(`
-				UPDATE testblock
+				UPDATE candidateBlock
 				SET  time = ?,
 						wallet_id = ?,
 						cb_id = ?,
@@ -205,7 +205,7 @@ BEGIN:
 					md5 := utils.Md5(txBinaryData)
 					dataHex := utils.BinToHex(txBinaryData)
 
-					err = d.ExecSql("DELETE FROM transactions_testblock")
+					err = d.ExecSql("DELETE FROM transactions_candidateBlock")
 					if err != nil {
 						if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 							break BEGIN
@@ -213,7 +213,7 @@ BEGIN:
 						continue BEGIN
 					}
 
-					err = d.ExecSql("INSERT INTO transactions_testblock (hash, data, type, user_id, third_var) VALUES ([hex], [hex], ?, ?, ?)", md5, dataHex, txType, userId, toUserId)
+					err = d.ExecSql("INSERT INTO transactions_candidateBlock (hash, data, type, user_id, third_var) VALUES ([hex], [hex], ?, ?, ?)", md5, dataHex, txType, userId, toUserId)
 					if err != nil {
 						if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 							break BEGIN
@@ -228,7 +228,7 @@ BEGIN:
 			}
 
 			// удаляем всё, где хэш больше нашего
-			err = d.ExecSql("DELETE FROM queue_testblock WHERE hex(head_hash) > ?", newHeaderHash)
+			err = d.ExecSql("DELETE FROM queue_candidateBlock WHERE hex(head_hash) > ?", newHeaderHash)
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -238,10 +238,10 @@ BEGIN:
 
 			// возможно нужно откатить и тр-ии с verified=1 и used=0 из transactions
 			// т.к. в transactions может быть тр-ия на удаление банкноты
-			// и в transactions_testblock только что была залита такая же тр-ия
+			// и в transactions_candidateBlock только что была залита такая же тр-ия
 			// выходит, что блок, который будет сгенерен на основе transactions будет ошибочным
 			// или при откате transactions будет сделан вычет из log_time_....
-			// и выйдет что попавшая в блок тр-я из transactions_testblock попала минуя запись  log_time_....
+			// и выйдет что попавшая в блок тр-я из transactions_candidateBlock попала минуя запись  log_time_....
 			err = p.RollbackTransactions()
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {

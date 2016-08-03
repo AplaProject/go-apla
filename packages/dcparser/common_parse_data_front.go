@@ -8,7 +8,7 @@ import (
 
 /**
  * Занесение данных из блока в БД
- * используется только в testblock_is_ready
+ * используется только в candidateBlock_is_ready
  */
 func (p *Parser) ParseDataFront() error {
 

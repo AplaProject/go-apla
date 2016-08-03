@@ -293,13 +293,13 @@ BEGIN:
 						}
 						defer conn.Close()
 
-						randTestblockHash, err := d.Single("SELECT head_hash FROM queue_testblock").String()
+						randcandidateBlockHash, err := d.Single("SELECT head_hash FROM queue_candidateBlock").String()
 						if err != nil {
 							logger.Error("%v", utils.ErrInfo(err))
 							return
 						}
 						// получаем IV + ключ + зашифрованный текст
-						encryptedData, _, _, err := utils.EncryptData(toBeSent, []byte(node_public_key), randTestblockHash)
+						encryptedData, _, _, err := utils.EncryptData(toBeSent, []byte(node_public_key), randcandidateBlockHash)
 						if err != nil {
 							logger.Error("%v", utils.ErrInfo(err))
 							return
@@ -373,13 +373,13 @@ func (d *daemon) DisseminatorType1(host string, userId int64, node_public_key st
 	}
 	defer conn.Close()
 
-	randTestblockHash, err := d.Single("SELECT head_hash FROM queue_testblock").String()
+	randcandidateBlockHash, err := d.Single("SELECT head_hash FROM queue_candidateBlock").String()
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return
 	}
 	// получаем IV + ключ + зашифрованный текст
-	dataToBeSent, key, iv, err := utils.EncryptData(toBeSent, []byte(node_public_key), randTestblockHash)
+	dataToBeSent, key, iv, err := utils.EncryptData(toBeSent, []byte(node_public_key), randcandidateBlockHash)
 	logger.Debug("key: %s", key)
 	logger.Debug("iv: %s", iv)
 	if err != nil {

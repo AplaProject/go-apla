@@ -13,13 +13,13 @@ type DbInfoPage struct {
 	MainLock                       []map[string]string
 	Variables                      map[string]string
 	QueueTx                        int64
-	TransactionsTestblock          int64
+	TransactionsCandidateBlock          int64
 	Transactions                   int64
 	Lang                           map[string]string
 	AllTransactions                []map[string]string
 	AllQueueTx                     []map[string]string
 	TxTypes                        map[int]string
-	Testblock                      []map[string]string
+	candidateBlock                      []map[string]string
 	BlockGeneratorIsReadySleepTime int64
 	BlockGeneratorSleepTime        int64
 	Version                        string
@@ -56,7 +56,7 @@ func (c *Controller) DbInfo() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	transactionsTestblock, err := c.Single("SELECT count(*) FROM transactions_testblock").Int64()
+	transactionscandidateBlock, err := c.Single("SELECT count(*) FROM transactions_candidateBlock").Int64()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -83,13 +83,13 @@ func (c *Controller) DbInfo() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	// testblock
-	testblock, err := c.GetAll("SELECT hex(header_hash) as header_hash_hex, hex(mrkl_root) as mrkl_root_hex, block_id, time, level, user_id, status, uniq, sent FROM testblock", 100)
+	// candidateBlock
+	candidateBlock, err := c.GetAll("SELECT hex(header_hash) as header_hash_hex, hex(mrkl_root) as mrkl_root_hex, block_id, time, level, user_id, status, uniq, sent FROM candidateBlock", 100)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	prevBlock, myUserId, myMinerId, currentUserId, level, levelsRange, err := c.TestBlock()
+	prevBlock, myUserId, myMinerId, currentUserId, level, levelsRange, err := c.Candidate_block()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -110,7 +110,7 @@ func (c *Controller) DbInfo() (string, error) {
 		blockGeneratorSleepTime = sleep
 
 		// is_ready
-		prevBlock, myUserId, myMinerId, currentUserId, level, levelsRange, err := c.TestBlock()
+		prevBlock, myUserId, myMinerId, currentUserId, level, levelsRange, err := c.Candidate_block()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -134,12 +134,12 @@ func (c *Controller) DbInfo() (string, error) {
 		MainLock:                       mainLock,
 		Variables:                      variables,
 		QueueTx:                        queueTx,
-		TransactionsTestblock:          transactionsTestblock,
+		TransactionsCandidateBlock:          transactionscandidateBlock,
 		AllTransactions:                allTransactions,
 		AllQueueTx:                     allQueueTx,
 		TxTypes:                        consts.TxTypes,
 		Transactions:                   transactions,
-		Testblock:                      testblock,
+		candidateBlock:                      candidateBlock,
 		TimeNowInt:                     utils.Time(),
 		BlockGeneratorIsReadySleepTime: blockGeneratorIsReadySleepTime,
 		Version:                 consts.VERSION,

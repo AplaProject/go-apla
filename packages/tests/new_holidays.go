@@ -113,7 +113,7 @@ func main() {
 			if err!=nil {
 				fmt.Println(err)
 			}
-			_, err = stmt.Exec(11111, "testblock_generator")
+			_, err = stmt.Exec(11111, "candidateBlock_generator")
 			if err!=nil {
 				fmt.Println(err)
 			}
@@ -122,11 +122,11 @@ func main() {
 		//stmt, _ := parser.DCDB.Prepare(`INSERT INTO main_lock(lock_time,script_name) VALUES($1,$2)`)
 		//fmt.Println(err)
 		//defer stmt.Close()
-		//_, _ = stmt.Exec(11111, "testblock_generator")
+		//_, _ = stmt.Exec(11111, "candidateBlock_generator")
 		//fmt.Println(err)
-		//_, _ = parser.DCDB.Query("INSERT INTO main_lock(lock_time,script_name) VALUES($1,$2)", 11111, "testblock_generator")
+		//_, _ = parser.DCDB.Query("INSERT INTO main_lock(lock_time,script_name) VALUES($1,$2)", 11111, "candidateBlock_generator")
 		x2 := func() {
-			row, err := parser.DCDB.Query("DELETE FROM main_lock WHERE script_name='testblock_generator'")
+			row, err := parser.DCDB.Query("DELETE FROM main_lock WHERE script_name='candidateBlock_generator'")
 			defer row.Close()
 			if err!=nil {
 				fmt.Println(err)
@@ -144,7 +144,7 @@ func main() {
 	if err != nil {
 		fmt.Println("err", err)
 	}
-	//go daemons.Testblock_is_ready()
+	//go daemons.candidateBlock_is_ready()
 
 	//parser.Db.HashTableData("holidays", "", "")
 	//HashTableData(parser.Db.DB,"holidays", "", "")
