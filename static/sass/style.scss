@@ -195,6 +195,9 @@ $desktop: 1516px;
 	.extended_form {
 		text-align:left;
 		margin-top:-15px;
+		fieldset {
+			padding-bottom:0px;
+		}
 		.form-group {
 			.control-label {
 				padding-left:0px;
