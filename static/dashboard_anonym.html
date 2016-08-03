@@ -1,6 +1,8 @@
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".dashboard, .dashboard_anonym").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerName=modal_anonym", { }, function() {});
 </script>
 
 <div class="content-heading">
@@ -21,7 +23,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_wallet_address">
 			<span class="pull-left">Wallet address</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
@@ -44,7 +46,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_money_transfer">
 			<span class="pull-left">Money transfer</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
