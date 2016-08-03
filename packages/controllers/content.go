@@ -2,16 +2,16 @@ package controllers
 
 import (
 	"bytes"
-/*	"encoding/json"
+	"encoding/json"
 	"github.com/astaxie/beego/config"
-	"github.com/DayLightProject/go-daylight/packages/utils"*/
+	"github.com/DayLightProject/go-daylight/packages/utils"
 	"net/http"
-//	"os"
-//	"regexp"
+	"os"
+	"regexp"
 	"fmt"
-	"runtime/debug"
-	"github.com/DayLightProject/go-daylight/packages/static"
 	"html/template"
+	"github.com/DayLightProject/go-daylight/packages/static"
+	"runtime/debug"
 )
 
 func Content(w http.ResponseWriter, r *http.Request) {
@@ -24,32 +24,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	w.Header().Set("Content-type", "text/html")
-	r.ParseForm()
-	tplName := r.FormValue("controllerName")
-	
-	fmt.Println(`Controller`, tplName )
-	funcMap := template.FuncMap{
-		"noescape": func(s string) template.HTML {
-			return template.HTML(s)
-		},
-	}
-	
-	data, err := static.Asset("static/"+tplName+".html")
-	t := template.New("template").Funcs(funcMap)
-	t, err = t.Parse(string(data))
-	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-	}
-	
-	b := new(bytes.Buffer)
-	err = t.Execute(b, nil)
-	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-	}
-	w.Write(b.Bytes())
 
 	// чтобы в чат не вставлялись старые сообщения после новых
-/*	utils.ChatMinSignTime = 0
+	utils.ChatMinSignTime = 0
 
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
@@ -346,6 +323,29 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("tplName::", tplName, sessUserId, installProgress)
 
+	controller := r.FormValue("controllerHTML")
+	if len(controller) > 0 {
+		funcMap := template.FuncMap{
+			"noescape": func(s string) template.HTML {
+				return template.HTML(s)
+			},
+		}
+		data, err := static.Asset("static/"+controller+".html")
+		t := template.New("template").Funcs(funcMap)
+		t, err = t.Parse(string(data))
+		if err != nil {
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		}
+		
+		b := new(bytes.Buffer)
+		err = t.Execute(b, c)
+		if err != nil {
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		}
+		w.Write(b.Bytes())
+		return
+	}
+
 	if ok, _ := regexp.MatchString(`^(?i)Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|setupPassword|waitingAcceptNewKey|SetPassword|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
 		w.Write([]byte("Access denied 0"))
 	} else if len(tplName) > 0 && sessUserId > 0 && installProgress == "complete" {
@@ -364,7 +364,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("%v", err)
 		}
-		if (string(utils.BinToHex(userPublicKey)) != sessPublicKey && len(myPrivateKey) == 0) || ( len(myPrivateKey) > 0 && !bytes.Equal(myPublicKey, []byte(userPublicKey))) {
+		/* !!! Зачем эта проверка нужна?
+			Если sessUserId > 0 && installProgress == "complete", то в users точно должно что-то быть
+		countUsers, err := c.Single(`SELECT count(*) FROM users`).Int64()
+		if err != nil {
+			log.Error("%v", err)
+		}*/
+		if (string(utils.BinToHex(userPublicKey)) != sessPublicKey && len(myPrivateKey) == 0) || (/*countUsers > 0 &&*/ len(myPrivateKey) > 0 && !bytes.Equal(myPublicKey, []byte(userPublicKey))) {
 			log.Debug("userPublicKey!=sessPublicKey %s!=%s / userId: %d", utils.BinToHex(userPublicKey), sessPublicKey, userId)
 			log.Debug("len(myPrivateKey) = %d  && %x!=%x", len(myPrivateKey), string(myPublicKey), userPublicKey)
 			c.Logout()
@@ -378,6 +384,15 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			tplName = "home"
 		}
 
+/*		if tplName == "home" && c.Parameters["first_select"] != "1" {
+			data, err := c.OneRow(`SELECT first_select, miner_id from ` + c.MyPrefix + `my_table`).Int64()
+			if err != nil {
+				log.Error("%v", err)
+			}
+			if data["first_select"] == 0 && data["miner_id"] == 0 && c.SessRestricted == 0 {
+				tplName = "firstSelect"
+			}
+		} */
 		c.TplName = tplName
 
 		log.Debug("communityUsers:", communityUsers)
@@ -505,5 +520,5 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(html))
 	}
 	//sess.Set("username", 11111)
-	*/
+
 }

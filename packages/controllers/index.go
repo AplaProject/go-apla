@@ -2,18 +2,18 @@ package controllers
 
 import (
 	"bytes"
-/*	"encoding/json"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"regexp"
-	"strings"*/
+	"encoding/json"
 	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 	"html/template"
 	"net/http"
+	"regexp"
+	"strings"
 )
 
 type index struct {
-/*	Lang              map[string]string
 	DbOk              bool
+	Lang              map[string]string
 	Key               string
 	SetLang           string
 	IOS               bool
@@ -24,19 +24,14 @@ type index struct {
 	ShowIOSMenu       bool
 	ChatEnabled       string
 	AnalyticsDisabled string
-	MyModalIdName     string	
-	Desktop bool
-	SetupPassword  bool
-	Community      bool*/
+//	MyModalIdName     string	
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
 
-//	parameters := make(map[string]string)
-//	lang := GetLang(w, r, parameters)
-/*	r.ParseForm()
-	parameters_ := make(map[string]interface{})
+	r.ParseForm()
 
+	parameters_ := make(map[string]interface{})
 	err := json.Unmarshal([]byte(r.PostFormValue("parameters")), &parameters_)
 	if err != nil {
 		log.Error("%v", err)
@@ -47,6 +42,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		parameters[k] = utils.InterfaceToStr(v)
 	}
 
+	lang := GetLang(w, r, parameters)
 
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
@@ -166,7 +162,12 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	key = strings.Replace(key, "\n", "\\\n", -1)
 
 	setLang := r.FormValue("lang")
-*/
+
+/*	modal, err := static.Asset("static/templates/modal.html")
+	if err != nil {
+		log.Error("%v", err)
+	}
+	*/
 	funcMap := template.FuncMap{
 		"noescape": func(s string) template.HTML {
 			return template.HTML(s)
@@ -179,23 +180,29 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("%v", err)
 	}
+/*	t, err = t.Parse(string(modal))
+	if err != nil {
+		log.Error("%v", err)
+	}*/
 	
 	b := new(bytes.Buffer)
 	err = t.Execute(b, &index{
-/*		Upgrade3:    upgrade3,
+		Upgrade3:    upgrade3,
 		Upgrade4:    upgrade4,
 		DbOk:        true,
 		Lang:        globalLangReadOnly[lang],
 		Key:         key,
 		SetLang:     setLang,
 		ShowIOSMenu: showIOSMenu,
+		/*IOS: true,
+		Android: false,
+		Mobile: true})*/
 		IOS:               ios,
 		Android:           android,
 		ChatEnabled:       chatEnabled,
 		AnalyticsDisabled: analyticsDisabled,
 		Mobile:            mobile,
-		Desktop: utils.Desktop(),
-		MyModalIdName: "myModal"*/})
+/*		MyModalIdName: "myModal"*/})
 	if err != nil {
 		log.Error("%v", err)
 	}
