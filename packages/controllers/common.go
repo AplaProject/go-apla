@@ -332,15 +332,15 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		}
 	}()
 
-	data, err := static.Asset("static/templates/" + html + ".html")
+	data, err := static.Asset("static/" + html + ".html")
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	signatures, err := static.Asset("static/templates/signatures.html")
+	signatures, err := static.Asset("static/signatures.html")
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	alert_success, err := static.Asset("static/templates/alert_success.html")
+	alert_success, err := static.Asset("static/alert_success.html")
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
