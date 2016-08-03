@@ -1,0 +1,17 @@
+@mixin min($width) {
+	@media (min-width: $width) {
+		@content;
+	}
+}
+@mixin max($width) {
+	@media screen and (max-width: $width - 1) {
+		@content;
+	}
+}
+@mixin text($family, $size, $color, $lheight, $transform) {
+	font-family:$family;
+	font-size:$size;
+	color:$color;
+	line-height:$lheight;
+	text-transform:$transform;
+}

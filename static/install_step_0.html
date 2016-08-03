@@ -1,28 +1,3 @@
-{{ define "installStep0" }}
-	<style>
-		header {
-			display:none;
-		}
-		#dc_content{
-			display:flex;
-			left:0px;
-			width:auto;
-			min-height:100%;
-			flex-flow:row wrap;
-			align-items:center;
-			align-content:center;
-			padding-top:15px;
-			padding-bottom:15px;
-			margin:auto;
-		}
-		h1 {
-			position:relative !important;
-			width:100%;
-			height:auto !important;
-			font-size:2.2rem;
-			color:#2d3940 !important;
-		}
-	</style>
 	<script>
 	
 		$('.db_settings').hide();
@@ -102,11 +77,6 @@
 	</script>
 	
 	<div class="start_type">
-	
-		<!--<ul class="nav nav-tabs" style="margin-bottom: 20px">
-			<li class="active"><a href="#installStep0">Step 0</a></li>
-			<li><a href="#installStep1">Step 1</a></li>
-		</ul>-->
 		<h1>Settings</h1>
 		<label id="standard" class="settings"><input id="settings_standard" type="radio" name="settings" value="standard" checked> Standard</label><br />
 		<label id="extended" class="settings"><input id="settings_extended" type="radio" name="settings" id="extended" value="extended"> Extended</label>
@@ -183,26 +153,6 @@
 					</div>
 				</fieldset>
 			</form>
-			<!--<table class="table">
-	
-				<tr class="setup_password"><td>Setup password</td><td><input class="form-control" type="password" id="setup_password"></td></tr>
-	
-				<tr class="user_id"><td>Your user_id</td><td><input class="form-control" type="text" id="user_id"></td></tr>
-	
-				<tr><td>First load</td><td><select class="form-control" id="first_load"><option value="file">Url</option><option value="nodes">Nodes</option></select><br>
-					<input class="form-control" type="text" id="url" value="http://dcoin.club/blockchain"></td></tr>
-				<tr><td>DB type</td><td><select class="form-control" id="db_type"><option value="sqlite">Sqlite</option><option value="postgresql">Postgresql</option><option value="mysql">Mysql</option></select></td></tr>
-	
-				<tr class="db_settings"><td>host</td><td><input class="form-control" type="text" id="host"></td></tr>
-				<tr class="db_settings"><td>port</td><td><input class="form-control" type="text" id="port"></td></tr>
-				<tr class="db_settings"><td>db_name</td><td><input class="form-control" type="text" id="db_name"></td></tr>
-				<tr class="db_settings"><td>username</td><td><input class="form-control" type="text" id="username"></td></tr>
-				<tr class="db_settings"><td>password</td><td><input class="form-control" type="password" id="password"></td></tr>
-	
-				<tr class="sqlite_settings"><td>db url</td><td><input class="form-control" type="text" id="sqlite_db_url" value="http://dcoin.club/mlitedb.db"></td></tr>
-	
-			</table>-->
 		</div>
 		<button class="btn btn-outline btn-primary btn-block" id="next">{{.Lang.next}}</button>
 	</div>
-{{end}}
