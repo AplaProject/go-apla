@@ -130,14 +130,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	var newVersion string
 	
 	if c.dbInit {
-		community, err := c.GetCommunityUsers()
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}
-		if len(community) > 0 {
-			sleepTime = 5000
-		} 
-		if len(community) == 0 || c.NodeAdmin {
+		if c.NodeAdmin {
 			if ver, _, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL); err == nil {
 				if len(ver) > 0 {
 					newVersion = strings.Replace(c.Lang["new_version"], "[ver]", ver, -1)

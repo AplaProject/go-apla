@@ -103,12 +103,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-		// валюты
-		currencyListCf, err := c.GetCurrencyList(true)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		c.CurrencyListCf = currencyListCf
 		currencyList, err := c.GetCurrencyList(false)
 		if err != nil {
 			log.Error("%v", err)
@@ -121,16 +115,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		c.ConfirmedBlockId = confirmedBlockId
 
-		c.MinerId, err = c.GetMinerId(c.SessUserId)
-		if err != nil {
-			log.Error("%v", err)
-		}
 
-		paymentSystems, err := c.GetPaymentSystems()
-		if err != nil {
-			log.Error("%v", err)
-		}
-		c.PaymentSystems = paymentSystems
 	}
 	r.ParseForm()
 	tplName := r.FormValue("tpl_name")
@@ -325,6 +310,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	controller := r.FormValue("controllerHTML")
 	if len(controller) > 0 {
+
+		log.Debug("controller:", controller)
+
 		funcMap := template.FuncMap{
 			"noescape": func(s string) template.HTML {
 				return template.HTML(s)
