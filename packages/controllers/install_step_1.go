@@ -133,12 +133,6 @@ func (c *Controller) InstallStep1() (string, error) {
 			schema_.PrefixUserId = 0
 			schema_.GetSchema()
 
-			err = c.DCDB.ExecSql(`INSERT INTO admin (user_id) VALUES (1)`)
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-				panic(err)
-				os.Exit(1)
-			}
 		}
 
 		//if len(userId)>0 {
@@ -154,108 +148,6 @@ func (c *Controller) InstallStep1() (string, error) {
 			setupPassword = string(utils.DSha256(setupPassword))
 		}
 		err = c.DCDB.ExecSql("INSERT INTO config (sqlite_db_url, first_load_blockchain, first_load_blockchain_url, setup_password, auto_reload, chat_enabled) VALUES (?, ?, ?, ?, ?, ?)", sqliteDbUrl, firstLoad, url, setupPassword, 259200, 1)
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			panic(err)
-			os.Exit(1)
-		}
-
-		count, err := c.Single(`SELECT count(*) FROM payment_systems`).Int64()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			panic(err)
-			os.Exit(1)
-		}
-		if count == 0 {
-			err = c.DCDB.ExecSql("INSERT INTO payment_systems (name)VALUES ('Adyen'),('Alipay'),('Amazon Payments'),('AsiaPay'),('Atos'),('Authorize.Net'),('BIPS'),('BPAY'),('Braintree'),('CentUp'),('Chargify'),('Citibank'),('ClickandBuy'),('Creditcall'),('CyberSource'),('DataCash'),('DigiCash'),('Digital River'),('Dwolla'),('ecoPayz'),('Edy'),('Elavon'),('Euronet Worldwide'),('eWAY'),('Flooz'),('Fortumo'),('Google'),('GoCardless'),('Heartland Payment Systems'),('HSBC'),('iKobo'),('iZettle'),('IP Payments'),('Klarna'),('Live Gamer'),('Mobilpenge'),('ModusLink'),('MPP Global Solutions'),('Neteller'),('Nochex'),('Ogone'),('Paymate'),('PayPal'),('Payoneer'),('PayPoint'),('Paysafecard'),('PayXpert'),('Payza'),('Peppercoin'),('Playspan'),('Popmoney'),('Realex Payments'),('Recurly'),('RBK Money'),('Sage Group'),('Serve'),('Skrill (Moneybookers)'),('Stripe'),('Square, Inc.'),('TFI Markets'),('TIMWE'),('Use My Services (UMS)'),('Ukash'),('V.me by Visa'),('VeriFone'),('Vindicia'),('WebMoney'),('WePay'),('Wirecard'),('Western Union'),('WorldPay'),('Yandex money'),('Qiwi'),('OK Pay'),('Bitcoin'),('Perfect Money')")
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-				panic(err)
-				os.Exit(1)
-			}
-		}
-		count, err = c.Single(`SELECT count(*) FROM my_notifications`).Int64()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			panic(err)
-			os.Exit(1)
-		}
-		if count == 0 {
-			err = c.DCDB.ExecSql(`INSERT INTO my_notifications (name, email, sms, mobile) VALUES ('admin_messages',1,1,1),('change_in_status',1,0,0),('dc_came_from',1,0,1),('dc_sent',1,0,0),('incoming_cash_requests',1,1,1),('node_time',0,0,0),('system_error',1,1,0),('update_email',1,0,0),('update_primary_key',1,0,0),('update_sms_request',1,0,0),('voting_results',0,0,0),('voting_time',1,0,0)`)
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-				panic(err)
-				os.Exit(1)
-			}
-		}
-
-		err = c.DCDB.ExecSql(`INSERT INTO cf_lang (id, name) VALUES
-		(1, 'English (US)'),
-		(2, 'Afrikaans'),
-		(3, 'Kiswahili'),
-		(4, 'Türkçe'),
-		(5, '‏עברית‏'),
-		(6, '‏العربية‏'),
-		(7, 'Español'),
-		(8, 'Français (Canada)'),
-		(9, 'Guarani'),
-		(10, 'Português (Brasil)'),
-		(11, 'Azərbaycan dili'),
-		(12, 'Bahasa Indonesia'),
-		(13, 'Bahasa Melayu'),
-		(14, 'Basa Jawa'),
-		(15, 'Bisaya'),
-		(16, 'Filipino'),
-		(17, 'Tiếng Việt'),
-		(18, 'Հայերեն'),
-		(19, '‏اردو‏'),
-		(20, 'हिन्दी'),
-		(21, 'বাংলা'),
-		(22, 'ਪੰਜਾਬੀ'),
-		(23, 'தமிழ்'),
-		(24, 'తెలుగు'),
-		(25, 'ಕನ್ನಡ'),
-		(26, 'മലയാളം'),
-		(27, 'සිංහල'),
-		(28, 'ภาษาไทย'),
-		(29, '한국어'),
-		(30, '中文(台灣)'),
-		(31, '中文(简体)'),
-		(32, '中文(香港)'),
-		(33, '日本語'),
-		(35, 'Čeština'),
-		(36, 'Magyar'),
-		(37, 'Polski'),
-		(38, 'Română'),
-		(39, 'Slovenčina'),
-		(40, 'Slovenščina'),
-		(41, 'Български'),
-		(42, 'Русский'),
-		(43, 'Українська'),
-		(45, 'Bosanski'),
-		(46, 'Català'),
-		(47, 'Cymraeg'),
-		(48, 'Dansk'),
-		(49, 'Deutsch'),
-		(50, 'Eesti'),
-		(51, 'English (UK)'),
-		(52, 'Español (España)'),
-		(53, 'Euskara'),
-		(54, 'Français (France)'),
-		(55, 'Galego'),
-		(56, 'Hrvatski'),
-		(57, 'Italiano'),
-		(58, 'Latviešu'),
-		(59, 'Lietuvių'),
-		(60, 'Nederlands'),
-		(61, 'Norsk (bokmål)'),
-		(62, 'Português (Portugal)'),
-		(63, 'Shqip'),
-		(64, 'Suomi'),
-		(65, 'Svenska'),
-		(66, 'Ελληνικά'),
-		(67, 'Македонски'),
-		(68, 'Српски');`)
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			panic(err)
