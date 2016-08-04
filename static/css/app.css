@@ -1376,7 +1376,7 @@ _:-ms-lang(x),
 @media only screen and (min-width: 1025px) {
   .sidebar:not(.show-scrollbar) {
     margin-right: -17px;
-    overflow-y: scroll;
+    /*overflow-y: scroll;*/
   }
 }
 .sidebar-subnav {
