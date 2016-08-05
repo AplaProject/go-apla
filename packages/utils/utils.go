@@ -283,18 +283,18 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
 	// распарсим заголовок блока
 	/*
-		Заголовок (от 143 до 527 байт )
+		Заголовок
 		TYPE (0-блок, 1-тр-я)        1
 		BLOCK_ID   				       4
 		TIME       					       4
-		WALLET_ID                         8
+		WALLET_ID                         1-8
 		CB_ID                              1
 		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
 		Далее - тело блока (Тр-ии)
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId = BinToDecBytesShift(binaryBlock, 8)
+	result.WalletId = BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	result.CBID = BinToDecBytesShift(binaryBlock, 1)
 	if result.BlockId > 1 {
 		signSize := DecodeLength(binaryBlock)
@@ -2484,7 +2484,7 @@ func GetMrklroot(binaryData []byte, variables *Variables, first bool) ([]byte, e
 		for {
 			// чтобы исключить атаку на переполнение памяти
 			if !first {
-				if txSize > variables.Int64["max_tx_size"] {
+				if txSize > consts.MAX_TX_SIZE {
 					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
 				}
 			}

@@ -134,11 +134,11 @@ BEGIN:
 
 			logger.Error("%v", err)
 
-			// т.к. мы откатили наши тр-ии из transactions_candidateBlock, то теперь нужно обработать их по новой
+			// т.к. мы откатили наши тр-ии из transactions_candidate_block, то теперь нужно обработать их по новой
 			// получим наши транзакции в 1 бинарнике, просто для удобства
 
 			var mycandidateBlockBody []byte
-			transactionscandidateBlock, err := d.GetAll("SELECT data FROM transactions_candidateBlock ORDER BY id ASC", -1)
+			transactionscandidateBlock, err := d.GetAll("SELECT data FROM transactions_candidate_block ORDER BY id ASC", -1)
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -161,7 +161,7 @@ BEGIN:
 			}
 		} else {
 			// наши тр-ии уже не актуальны, т.к. мы их откатили
-			err = d.ExecSql("DELETE FROM transactions_candidateBlock")
+			err = d.ExecSql("DELETE FROM transactions_candidate_block")
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -205,7 +205,7 @@ BEGIN:
 					md5 := utils.Md5(txBinaryData)
 					dataHex := utils.BinToHex(txBinaryData)
 
-					err = d.ExecSql("DELETE FROM transactions_candidateBlock")
+					err = d.ExecSql("DELETE FROM transactions_candidate_block")
 					if err != nil {
 						if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 							break BEGIN
@@ -213,7 +213,7 @@ BEGIN:
 						continue BEGIN
 					}
 
-					err = d.ExecSql("INSERT INTO transactions_candidateBlock (hash, data, type, user_id, third_var) VALUES ([hex], [hex], ?, ?, ?)", md5, dataHex, txType, userId, toUserId)
+					err = d.ExecSql("INSERT INTO transactions_candidate_block (hash, data, type, user_id, third_var) VALUES ([hex], [hex], ?, ?, ?)", md5, dataHex, txType, userId, toUserId)
 					if err != nil {
 						if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 							break BEGIN
@@ -238,10 +238,10 @@ BEGIN:
 
 			// возможно нужно откатить и тр-ии с verified=1 и used=0 из transactions
 			// т.к. в transactions может быть тр-ия на удаление банкноты
-			// и в transactions_candidateBlock только что была залита такая же тр-ия
+			// и в transactions_candidate_block только что была залита такая же тр-ия
 			// выходит, что блок, который будет сгенерен на основе transactions будет ошибочным
 			// или при откате transactions будет сделан вычет из log_time_....
-			// и выйдет что попавшая в блок тр-я из transactions_candidateBlock попала минуя запись  log_time_....
+			// и выйдет что попавшая в блок тр-я из transactions_candidate_block попала минуя запись  log_time_....
 			err = p.RollbackTransactions()
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {

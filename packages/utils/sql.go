@@ -1411,9 +1411,9 @@ func (db *DCDB) GetMyPrivateKey(myPrefix string) (string, error) {
 	return key, nil
 }
 
-func (db *DCDB) GetNodePrivateKey(myPrefix string) (string, error) {
+func (db *DCDB) GetNodePrivateKey() (string, error) {
 	var key string
-	key, err := db.Single("SELECT private_key FROM " + myPrefix + "my_node_keys WHERE block_id = (SELECT max(block_id) FROM " + myPrefix + "my_node_keys)").String()
+	key, err := db.Single("SELECT private_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
 	if err != nil {
 		return "", ErrInfo(err)
 	}
@@ -2474,7 +2474,7 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, wait
 				                         used = 0
 							UNION
 							SELECT hash
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE type = ?
 										  `+addSql+`
 					)  AS x
@@ -2532,7 +2532,7 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 				                         used = 0
 							UNION
 							SELECT hash
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE type IN (`+whereType+`)
 										 `+addSql+` `+addSql1+` AND
 										 user_id = ?
@@ -2588,7 +2588,6 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, ErrInfo("len(*binaryTx) == 0")
 	}
 
-	myPrefix := ""
 	collective, err := db.GetCommunityUsers()
 	if err != nil {
 		return nil, nil, nil, err
@@ -2597,10 +2596,9 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		if !InSliceInt64(myUserId, collective) {
 			return nil, nil, nil, ErrInfo(fmt.Sprintf("!InSliceInt64(myUserId, collective) %d %v", myUserId, collective))
 		}
-		myPrefix = Int64ToStr(myUserId) + "_"
 	}
 
-	nodePrivateKey, err := db.GetNodePrivateKey(myPrefix)
+	nodePrivateKey, err := db.GetNodePrivateKey()
 	if len(nodePrivateKey) == 0 {
 		return nil, nil, nil, ErrInfo("len(nodePrivateKey) == 0")
 	}
@@ -2636,15 +2634,8 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 
 func (db *DCDB) GetBinSign(forSign string, myUserId int64) ([]byte, error) {
 
-	community, err := db.GetCommunityUsers()
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	myPrefix := ""
-	if len(community) > 0 {
-		myPrefix = Int64ToStr(myUserId) + "_"
-	}
-	nodePrivateKey, err := db.GetNodePrivateKey(myPrefix)
+
+	nodePrivateKey, err := db.GetNodePrivateKey()
 	if err != nil {
 		return nil, ErrInfo(err)
 	}

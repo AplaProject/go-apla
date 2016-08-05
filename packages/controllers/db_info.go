@@ -56,7 +56,7 @@ func (c *Controller) DbInfo() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	transactionscandidateBlock, err := c.Single("SELECT count(*) FROM transactions_candidateBlock").Int64()
+	transactionscandidateBlock, err := c.Single("SELECT count(*) FROM transactions_candidate_block").Int64()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

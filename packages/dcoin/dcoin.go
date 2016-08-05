@@ -65,7 +65,6 @@ func Stop() {
 func firstBlock() {
 	if *utils.GenerateFirstBlock == 1 {
 
-		block := utils.DecToBin(0, 1)
 
 		PublicKey, _ := ioutil.ReadFile(*utils.Dir + "/PublicKey")
 		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
@@ -77,14 +76,17 @@ func firstBlock() {
 
 		tx := utils.DecToBin(1, 1)
 		tx = append(tx, utils.DecToBin(utils.Time(), 4)...)
+		tx = append(tx, utils.EncodeLengthPlusData("1")...) // wallet_id
+		tx = append(tx, utils.EncodeLengthPlusData("0")...) // citizen_id
 		tx = append(tx, utils.EncodeLengthPlusData(PublicKeyBytes)...)
 		tx = append(tx, utils.EncodeLengthPlusData(NodePublicKeyBytes)...)
 		tx = append(tx, utils.EncodeLengthPlusData(Host)...)
 
+		block := utils.DecToBin(0, 1)
 		block = append(block, utils.DecToBin(1, 4)...)
 		block = append(block, utils.DecToBin(utils.Time(), 4)...)
-		block = append(block, utils.DecToBin(1, 8)...)
-		block = append(block, utils.DecToBin(0, 1)...)
+		block = append(block, utils.EncodeLengthPlusData("1")...) // wallet_id
+		block = append(block, utils.DecToBin(0, 1)...) // cb_id
 		block = append(block, utils.EncodeLengthPlusData(tx)...)
 
 		ioutil.WriteFile("static/1block", block, 0644)

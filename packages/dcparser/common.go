@@ -75,6 +75,8 @@ type Parser struct {
 	PublicKeys       [][]byte
 	AdminUserId      int64
 	TxUserID         int64
+	TxCitizenID         int64
+	TxWalletID         int64
 	TxTime           int64
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte
@@ -190,7 +192,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 		}
 
 		// размер блока не может быть более чем max_block_size
-		if int64(len(binaryBlock)) > variables.Int64["max_block_size"] {
+		if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 		}
@@ -278,7 +280,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 		}
 	}
 
-	// теперь откатим и transactions_candidateBlock
+	// теперь откатим и transactions_candidate_block
 	p.RollbackTransactionsCandidateBlock(true)
 
 	err = p.ExecSql("DELETE FROM candidateBlock")
@@ -503,7 +505,7 @@ func (p *Parser) RollbackTransactionsCandidateBlock(truncate bool) error {
 	// прежде чем удалять, нужно откатить
 	// получим наши транзакции в 1 бинарнике, просто для удобства
 	var blockBody []byte
-	rows, err := p.Query("SELECT data, hash FROM transactions_candidateBlock ORDER BY id ASC")
+	rows, err := p.Query("SELECT data, hash FROM transactions_candidate_block ORDER BY id ASC")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -543,7 +545,7 @@ func (p *Parser) RollbackTransactionsCandidateBlock(truncate bool) error {
 	}
 
 	if truncate {
-		err = p.ExecSql("DELETE FROM transactions_candidateBlock")
+		err = p.ExecSql("DELETE FROM transactions_candidate_block")
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -681,12 +683,12 @@ func (p *Parser) dataPre() {
 
 func (p *Parser) ParseBlock() error {
 	/*
-		Заголовок (от 143 до 527 байт )
+		Заголовок
 		TYPE (0-блок, 1-тр-я)     1
 		BLOCK_ID   				       4
 		TIME       					       4
-		WALLET_ID                         5
-		CB_ID                         5
+		WALLET_ID                         1-8
+		CB_ID                         1
 		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
 		Далее - тело блока (Тр-ии)
 	*/
@@ -1122,7 +1124,7 @@ func (p *Parser) rollbackTransactionsCandidateBlock(truncate bool) error {
 	// прежде чем удалять, нужно откатить
 	// получим наши транзакции в 1 бинарнике, просто для удобства
 	var blockBody []byte
-	rows, err := p.Query("SELECT data, hash FROM transactions_candidateBlock ORDER BY id ASC")
+	rows, err := p.Query("SELECT data, hash FROM transactions_candidate_block ORDER BY id ASC")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -1161,7 +1163,7 @@ func (p *Parser) rollbackTransactionsCandidateBlock(truncate bool) error {
 	}
 
 	if truncate {
-		err = p.ExecSql("DELETE FROM transactions_candidateBlock")
+		err = p.ExecSql("DELETE FROM transactions_candidate_block")
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -1339,25 +1341,16 @@ func (p *Parser) InsertIntoBlockchain() error {
 		}
 	}
 
-	maxMinerId, err := p.Single("SELECT max(miner_id) FROM miners").Int64()
-	if err != nil {
-		return err
-	}
-	currentMinerId, err := p.Single("SELECT miner_id FROM miners_data WHERE user_id = ?", p.BlockData.CurrentUserId).Int64()
-	if err != nil {
-		return err
-	}
-
 	TxIdsJson, _ := json.Marshal(p.TxIds)
 
 	//mutex.Lock()
 	// пишем в цепочку блоков
-	err = p.ExecSql("DELETE FROM block_chain WHERE id = ?", p.BlockData.BlockId)
+	err := p.ExecSql("DELETE FROM block_chain WHERE id = ?", p.BlockData.BlockId)
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql("INSERT INTO block_chain (id, hash, head_hash, data, time, tx, cur_0l_miner_id, max_miner_id) VALUES (?, [hex],[hex],[hex], ?, ?, ?, ?)",
-		p.BlockData.BlockId, p.BlockData.Hash, p.BlockData.HeadHash, p.blockHex, p.BlockData.Time, TxIdsJson, currentMinerId, maxMinerId)
+	err = p.ExecSql("INSERT INTO block_chain (id, hash, head_hash, data, time, tx) VALUES (?, [hex],[hex],[hex], ?, ?)",
+		p.BlockData.BlockId, p.BlockData.Hash, p.BlockData.HeadHash, p.blockHex, p.BlockData.Time, TxIdsJson)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -1383,20 +1376,33 @@ func (p *Parser) UpdBlockInfo() {
 	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.CBID)
 	log.Debug("forSha", forSha)
 	p.BlockData.Hash = utils.DSha256(forSha)
+	log.Debug("%v", p.BlockData.Hash)
+	log.Debug("%v", blockId)
+	log.Debug("%v", p.BlockData.Time)
+	log.Debug("%v", p.CurrentVersion)
 
 	if p.BlockData.BlockId == 1 {
-		p.ExecSql("INSERT INTO info_block (hash, head_hash, block_id, time, current_version) VALUES ([hex], [hex], ?, ?, ?, ?)",
-			p.BlockData.Hash, p.BlockData.HeadHash, blockId, p.BlockData.Time, p.CurrentVersion)
+		err := p.ExecSql("INSERT INTO info_block (hash, block_id, time, current_version) VALUES ([hex], ?, ?, ?)",
+			p.BlockData.Hash, blockId, p.BlockData.Time, p.CurrentVersion)
+		if err!=nil {
+			log.Error("%v", err)
+		}
 	} else {
-		p.ExecSql("UPDATE info_block SET hash = [hex], head_hash = [hex], block_id = ?, time = ?, sent = 0",
-			p.BlockData.Hash, p.BlockData.HeadHash, blockId, p.BlockData.Time)
-		p.ExecSql("UPDATE config SET my_block_id = ? WHERE my_block_id < ?", blockId, blockId)
+		err := p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, sent = 0",
+			p.BlockData.Hash, blockId, p.BlockData.Time)
+		if err!=nil {
+			log.Error("%v", err)
+		}
+		err = p.ExecSql("UPDATE config SET my_block_id = ? WHERE my_block_id < ?", blockId, blockId)
+		if err!=nil {
+			log.Error("%v", err)
+		}
 	}
 }
 
 func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	log.Debug("p.TxSlice %s", p.TxSlice)
-	if len(p.TxSlice) != len(fields)+4 {
+	if len(p.TxSlice) != len(fields)+5 {
 		return fmt.Errorf("bad transaction_array %d != %d (type=%d)", len(p.TxSlice), len(fields)+4, p.TxSlice[0])
 	}
 	//log.Debug("p.TxSlice", p.TxSlice)
@@ -1410,30 +1416,33 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	p.TxMaps.Bytes["hash"] = p.TxSlice[0]
 	p.TxMaps.Int64["type"] = utils.BytesToInt64(p.TxSlice[1])
 	p.TxMaps.Int64["time"] = utils.BytesToInt64(p.TxSlice[2])
-	p.TxMaps.Int64["user_id"] = utils.BytesToInt64(p.TxSlice[3])
+	p.TxMaps.Int64["anonim_id"] = utils.BytesToInt64(p.TxSlice[3])
+	p.TxMaps.Int64["citizen_id"] = utils.BytesToInt64(p.TxSlice[4])
 	p.TxMap["hash"] = p.TxSlice[0]
 	p.TxMap["type"] = p.TxSlice[1]
 	p.TxMap["time"] = p.TxSlice[2]
-	p.TxMap["user_id"] = p.TxSlice[3]
+	p.TxMap["wallet_id"] = p.TxSlice[3]
+	p.TxMap["citizen_id"] = p.TxSlice[4]
 	for i := 0; i < len(fields); i++ {
 		for field, fType := range fields[i] {
-			p.TxMap[field] = p.TxSlice[i+4]
+			p.TxMap[field] = p.TxSlice[i+5]
 			switch fType {
 			case "int64":
-				p.TxMaps.Int64[field] = utils.BytesToInt64(p.TxSlice[i+4])
+				p.TxMaps.Int64[field] = utils.BytesToInt64(p.TxSlice[i+5])
 			case "float64":
-				p.TxMaps.Float64[field] = utils.BytesToFloat64(p.TxSlice[i+4])
+				p.TxMaps.Float64[field] = utils.BytesToFloat64(p.TxSlice[i+5])
 			case "money":
-				p.TxMaps.Money[field] = utils.StrToMoney(string(p.TxSlice[i+4]))
+				p.TxMaps.Money[field] = utils.StrToMoney(string(p.TxSlice[i+5]))
 			case "bytes":
-				p.TxMaps.Bytes[field] = p.TxSlice[i+4]
+				p.TxMaps.Bytes[field] = p.TxSlice[i+5]
 			case "string":
-				p.TxMaps.String[field] = string(p.TxSlice[i+4])
+				p.TxMaps.String[field] = string(p.TxSlice[i+5])
 			}
 		}
 	}
 	log.Debug("%s", p.TxMaps)
-	p.TxUserID = p.TxMaps.Int64["user_id"]
+	p.TxCitizenID = p.TxMaps.Int64["citizen_id"]
+	p.TxWalletID = p.TxMaps.Int64["wallet_id"]
 	p.TxTime = p.TxMaps.Int64["time"]
 	p.PublicKeys = nil
 	//log.Debug("p.TxMaps", p.TxMaps)
@@ -3184,7 +3193,7 @@ func (p *Parser) RollbackIncompatibleTx(typesArr []string) error {
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 		/*
 			 * создает проблемы для tesblock_is_ready
-			err = p.ExecSql("DELETE FROM transactions_candidateBlock WHERE hex(hash) = ?", md5)
+			err = p.ExecSql("DELETE FROM transactions_candidate_block WHERE hex(hash) = ?", md5)
 			if err != nil {
 				p.PrintSleep(err, 60)
 				continue BEGIN
@@ -3265,7 +3274,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                         )
 							UNION
 							SELECT user_id
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE (
 											 third_var = ?
 										) OR (
@@ -3296,7 +3305,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                         used = 0
 							UNION
 							SELECT data
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE type IN (?, ?) AND
 										 user_id = ?
 						)  AS x
@@ -3318,7 +3327,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
 					 * создает проблемы для tesblock_is_ready
-					err = p.ExecSql("DELETE FROM transactions_candidateBlock WHERE hex(hash) = ?md5(?tx_data)?")
+					err = p.ExecSql("DELETE FROM transactions_candidate_block WHERE hex(hash) = ?md5(?tx_data)?")
 					if err != nil {
 						p.PrintSleep(err, 60)
 						continue BEGIN
@@ -3462,7 +3471,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 						                     used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_candidateBlock
+								FROM transactions_candidate_block
 								WHERE  (
 						                        type = ? AND third_var IN (`+promisedAmountIds+`)
 						                      )
@@ -3556,7 +3565,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                          used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_candidateBlock
+								FROM transactions_candidate_block
 								WHERE type IN (?, ?, ?, ?) AND
 					                          third_var = ?
 							)  AS x
@@ -3583,7 +3592,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                         used = 0
 							UNION
 							SELECT data
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE type IN (?, ?) AND
 										 user_id = ?
 						)  AS x
@@ -3608,7 +3617,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
 					 * создает проблемы для tesblock_is_ready
-					err = p.ExecSql("DELETE FROM transactions_candidateBlock WHERE hex(hash) = ?", Md5(txData))
+					err = p.ExecSql("DELETE FROM transactions_candidate_block WHERE hex(hash) = ?", Md5(txData))
 					if err != nil {
 						p.PrintSleep(err, 60)
 						continue BEGIN
@@ -3629,7 +3638,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                         used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_candidateBlock
+								FROM transactions_candidate_block
 								WHERE user_id = ?
 							)  AS x
 							`, userId, userId).Int64()
@@ -3653,7 +3662,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                         used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_candidateBlock
+								FROM transactions_candidate_block
 								WHERE user_id = ?
 							)  AS x
 							`, thirdVar, thirdVar).Int64()
@@ -3679,7 +3688,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                         used = 0
 								UNION
 								SELECT user_id
-								FROM transactions_candidateBlock
+								FROM transactions_candidate_block
 								WHERE  (
 						                            (type = ? AND user_id = ?)
 						                            OR
@@ -3715,7 +3724,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                      used = 0
 							UNION
 							SELECT user_id
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE user_id = ?
 					)  AS x
 					`, userId, userId).Int64()

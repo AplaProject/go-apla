@@ -271,7 +271,7 @@ BEGIN:
 				file = nil
 			} else {
 
-				newBlock, err := static.Asset("static/1block.bin")
+				newBlock, err := static.Asset("static/1block")
 				if err != nil {
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN

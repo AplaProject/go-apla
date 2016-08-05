@@ -187,7 +187,7 @@ BEGIN:
 		}
 		// получим транзакции
 		var candidateBlockDataTx []byte
-		transactionscandidateBlock, err := d.GetList("SELECT data FROM transactions_candidateBlock ORDER BY id ASC").String()
+		transactionscandidateBlock, err := d.GetList("SELECT data FROM transactions_candidate_block ORDER BY id ASC").String()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
@@ -313,7 +313,7 @@ BEGIN:
 		}
 
 		// и можно удалять данные о тестблоке, т.к. они перешли в нормальный блок
-		affect, err := d.ExecSqlGetAffect("DELETE FROM transactions_candidateBlock")
+		affect, err := d.ExecSqlGetAffect("DELETE FROM transactions_candidate_block")
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
