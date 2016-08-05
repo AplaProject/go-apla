@@ -2,7 +2,7 @@
 	$(".aside .nav li").removeClass("active");
 	$(".dashboard, .dashboard_citizen").addClass("active");
 	
-	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_citizen", { }, function() {});
 </script>
 
 <div class="content-heading">
@@ -87,12 +87,12 @@
 				  <em class="fa fa-venus-mars fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">&nbsp;</div>
-				  <p class="m0">&nbsp;</p>
+				  <div class="text-lg"><a href="#citizen_marriage_registration">1</a></div>
+				  <p class="m0">Requests to me</p>
 			   </div>
 			</div>
 		 </div>
-		 <a href="#citizen_marriage_registration" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_marriage_registration">
 			<span class="pull-left">Marriage registration</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>

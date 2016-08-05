@@ -35,125 +35,131 @@
    <link rel="stylesheet" href="static/css/style.css" id="stylecss">
 </head>
 
-<body class="layout-fixed">
+<body class="layout-fixed aside-collapsed">
    <div class="wrapper">
       <!-- Main section-->
 	  <div id="_dl_menu">
-	  	<!-- top navbar-->
-		<header class="topnavbar-wrapper">
-		 <!-- START Top Navbar-->
-		 <nav role="navigation" class="navbar topnavbar">
-			<!-- START navbar header-->
-			<div class="navbar-header">
-			   <a href="/" class="navbar-brand">
-				  <div class="brand-logo">
-					 <img src="static/img/logo.png" alt="App Logo" class="img-responsive">
-				  </div>
-				  <div class="brand-logo-collapsed">
-					 <img src="static/img/logo-single.png" alt="App Logo" class="img-responsive">
-				  </div>
-			   </a>
-			</div>
-			<!-- END navbar header-->
-			<!-- START Nav wrapper-->
-			<div class="nav-wrapper">
-			   <!-- START Left navbar-->
-			   <ul class="nav navbar-nav">
-				  <li>
-					 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
-					 <a href="#" data-trigger-resize="" data-toggle-state="aside-collapsed" class="hidden-xs aside-collapse">
-						<em class="fa fa-navicon"></em>
-					 </a>
-					 <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
-					 <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle">
-						<em class="fa fa-navicon"></em>
-					 </a>
-				  </li>
-			   </ul>
-			   <!-- END Left navbar-->
-			   <!-- START Right Navbar-->
-			   <ul class="nav navbar-nav navbar-right">
-				  <!-- Search icon-->
-				  <!-- START Alert menu-->
-				  <li class="dropdown dropdown-list">
-					 <a id="bell" href="#" data-toggle="dropdown">
-						<em class="icon-bell"></em>
-						<div class="label label-danger">11</div>
-					 </a>
-					 <!-- START Dropdown menu-->
-					 <ul class="dropdown-menu animated flipInX">
-						<li>
-						   <!-- START list group-->
-						   <div class="list-group">
-							  <!-- list item-->
-							  <a href="#" class="list-group-item">
-								 <div class="media-box">
-									<div class="pull-left">
-									   <em class="fa fa-twitter fa-2x text-info"></em>
-									</div>
-									<div class="media-box-body clearfix">
-									   <p class="m0">New followers</p>
-									   <p class="m0 text-muted">
-										  <small>1 new follower</small>
-									   </p>
-									</div>
-								 </div>
-							  </a>
-							  <!-- list item-->
-							  <a href="#" class="list-group-item">
-								 <div class="media-box">
-									<div class="pull-left">
-									   <em class="fa fa-envelope fa-2x text-warning"></em>
-									</div>
-									<div class="media-box-body clearfix">
-									   <p class="m0">New e-mails</p>
-									   <p class="m0 text-muted">
-										  <small>You have 10 new emails</small>
-									   </p>
-									</div>
-								 </div>
-							  </a>
-							  <!-- list item-->
-							  <a href="#" class="list-group-item">
-								 <div class="media-box">
-									<div class="pull-left">
-									   <em class="fa fa-tasks fa-2x text-success"></em>
-									</div>
-									<div class="media-box-body clearfix">
-									   <p class="m0">Pending Tasks</p>
-									   <p class="m0 text-muted">
-										  <small>11 pending task</small>
-									   </p>
-									</div>
-								 </div>
-							  </a>
-							  <!-- last list item-->
-							  <a href="#" class="list-group-item">
-								 <small>More notifications</small>
-								 <span class="label label-danger pull-right">14</span>
-							  </a>
-						   </div>
-						   <!-- END list group-->
-						</li>
-					 </ul>
-					 <!-- END Dropdown menu-->
-				  </li>
-				  <!-- END Alert menu-->
-				  <!-- START User avatar toggle-->
-				  <li>
-					 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
-					 <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
-						<em class="icon-user"></em>
-					 </a>
-				  </li>
-				  <!-- END User avatar toggle-->
-			   </ul>
-			   <!-- END Right Navbar-->
-			</div>
-			<!-- END Nav wrapper-->
-		 </nav>
-		 <!-- END Top Navbar-->
-		</header>
+      <!-- top navbar-->
+      <header class="topnavbar-wrapper">
+         <!-- START Top Navbar-->
+         <nav role="navigation" class="navbar topnavbar">
+            <!-- START navbar header-->
+            <div class="navbar-header">
+               <a href="/" class="navbar-brand">
+                  <div class="brand-logo">
+                     <img src="static/img/logo.png" alt="App Logo" class="img-responsive">
+                  </div>
+                  <div class="brand-logo-collapsed">
+                     <img src="static/img/logo-single.png" alt="App Logo" class="img-responsive">
+                  </div>
+               </a>
+            </div>
+            <!-- END navbar header-->
+            <!-- START Nav wrapper-->
+            <div class="nav-wrapper">
+               <!-- START Left navbar-->
+               <ul class="nav navbar-nav">
+                  <li>
+                     <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                     <a href="#" data-trigger-resize="" data-toggle-state="aside-collapsed" class="hidden-xs">
+                        <em class="fa fa-navicon"></em>
+                     </a>
+                     <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
+                     <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle">
+                        <em class="fa fa-navicon"></em>
+                     </a>
+                  </li>
+                  <!-- START User avatar toggle-->
+                  <li>
+                     <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                     <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
+                        <em class="icon-user"></em>
+                     </a>
+                  </li>
+                  <!-- END User avatar toggle-->
+               </ul>
+               <!-- END Left navbar-->
+               <!-- START Right Navbar-->
+               <ul class="nav navbar-nav navbar-right">
+                  <!-- START Alert menu-->
+                  <li class="dropdown dropdown-list">
+                     <a href="#" data-toggle="dropdown">
+                        <em class="icon-bell"></em>
+                        <div class="label label-danger">11</div>
+                     </a>
+                     <!-- START Dropdown menu-->
+                     <ul class="dropdown-menu animated flipInX">
+                        <li>
+                           <!-- START list group-->
+                           <div class="list-group">
+                              <!-- list item-->
+                              <a href="#" class="list-group-item">
+                                 <div class="media-box">
+                                    <div class="pull-left">
+                                       <em class="fa fa-twitter fa-2x text-info"></em>
+                                    </div>
+                                    <div class="media-box-body clearfix">
+                                       <p class="m0">New followers</p>
+                                       <p class="m0 text-muted">
+                                          <small>1 new follower</small>
+                                       </p>
+                                    </div>
+                                 </div>
+                              </a>
+                              <!-- list item-->
+                              <a href="#" class="list-group-item">
+                                 <div class="media-box">
+                                    <div class="pull-left">
+                                       <em class="fa fa-envelope fa-2x text-warning"></em>
+                                    </div>
+                                    <div class="media-box-body clearfix">
+                                       <p class="m0">New e-mails</p>
+                                       <p class="m0 text-muted">
+                                          <small>You have 10 new emails</small>
+                                       </p>
+                                    </div>
+                                 </div>
+                              </a>
+                              <!-- list item-->
+                              <a href="#" class="list-group-item">
+                                 <div class="media-box">
+                                    <div class="pull-left">
+                                       <em class="fa fa-tasks fa-2x text-success"></em>
+                                    </div>
+                                    <div class="media-box-body clearfix">
+                                       <p class="m0">Pending Tasks</p>
+                                       <p class="m0 text-muted">
+                                          <small>11 pending task</small>
+                                       </p>
+                                    </div>
+                                 </div>
+                              </a>
+                              <!-- last list item-->
+                              <a href="#" class="list-group-item">
+                                 <small>More notifications</small>
+                                 <span class="label label-danger pull-right">14</span>
+                              </a>
+                           </div>
+                           <!-- END list group-->
+                        </li>
+                     </ul>
+                     <!-- END Dropdown menu-->
+                  </li>
+                  <!-- END Alert menu-->
+                  <!-- START Offsidebar button-->
+                  <li>
+                     <a href="#">
+                        <em class="icon-logout"></em>
+                     </a>
+                  </li>
+                  <!-- END Offsidebar menu-->
+               </ul>
+               <!-- END Right Navbar-->
+            </div>
+            <!-- END Nav wrapper-->
+         </nav>
+         <!-- END Top Navbar-->
+      </header>
 		<!-- sidebar-->
 		<aside class="aside">
 		 <!-- START Sidebar (left)-->
