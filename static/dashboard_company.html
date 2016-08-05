@@ -1,6 +1,8 @@
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".dashboard, .dashboard_company").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
 </script>
 
 <div class="content-heading">
