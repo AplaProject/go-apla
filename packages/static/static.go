@@ -101,10 +101,6 @@
 // static/menu.html
 // static/modal.html
 // static/modal_anonym.html
-// static/modal_cb.html
-// static/modal_citizen.html
-// static/modal_company.html
-// static/modal_gov.html
 // static/pass.html
 // static/sass/_colors.scss
 // static/sass/_mixins.scss
@@ -2138,78 +2134,6 @@ func staticModalHtml() (*asset, error) {
 func staticModal_anonymHtml() (*asset, error) {
 	path := "static/modal_anonym.html"
 	name := "static/modal_anonym.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticModal_cbHtml reads file data from disk. It returns an error on failure.
-func staticModal_cbHtml() (*asset, error) {
-	path := "static/modal_cb.html"
-	name := "static/modal_cb.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticModal_citizenHtml reads file data from disk. It returns an error on failure.
-func staticModal_citizenHtml() (*asset, error) {
-	path := "static/modal_citizen.html"
-	name := "static/modal_citizen.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticModal_companyHtml reads file data from disk. It returns an error on failure.
-func staticModal_companyHtml() (*asset, error) {
-	path := "static/modal_company.html"
-	name := "static/modal_company.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticModal_govHtml reads file data from disk. It returns an error on failure.
-func staticModal_govHtml() (*asset, error) {
-	path := "static/modal_gov.html"
-	name := "static/modal_gov.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6031,10 +5955,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/menu.html": staticMenuHtml,
 	"static/modal.html": staticModalHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
-	"static/modal_cb.html": staticModal_cbHtml,
-	"static/modal_citizen.html": staticModal_citizenHtml,
-	"static/modal_company.html": staticModal_companyHtml,
-	"static/modal_gov.html": staticModal_govHtml,
 	"static/pass.html": staticPassHtml,
 	"static/sass/_colors.scss": staticSass_colorsScss,
 	"static/sass/_mixins.scss": staticSass_mixinsScss,
@@ -6504,14 +6424,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"modal.html": &bintree{staticModalHtml, map[string]*bintree{
 		}},
 		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{
-		}},
-		"modal_cb.html": &bintree{staticModal_cbHtml, map[string]*bintree{
-		}},
-		"modal_citizen.html": &bintree{staticModal_citizenHtml, map[string]*bintree{
-		}},
-		"modal_company.html": &bintree{staticModal_companyHtml, map[string]*bintree{
-		}},
-		"modal_gov.html": &bintree{staticModal_govHtml, map[string]*bintree{
 		}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{
 		}},
