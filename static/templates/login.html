@@ -1,0 +1,116 @@
+{{ define "login" }}
+<style>
+	body {
+		display:flex;
+	}
+	.container-fluid {
+		display:flex;
+		left:0px;
+		flex-flow:row wrap;
+		align-items:center;
+		align-content:center;
+		padding-bottom:15px;
+		margin-left:auto;
+	}
+	#show_login, #show_signup{
+		float:left
+	}
+	#show_signup{
+		margin-left:5px;
+	}
+</style>
+
+{{if not .UserID}}
+<header class="nologin navbar-fixed-top">
+	<div class="logo no"><i></i></div>
+</header>
+{{end}}
+
+{{if .PoolTechWorks}}
+	<div class="alert alert-info" style="max-width: 540px; text-align: center; position: relative; top: 35%; bottom: 0px; margin: auto">{{.Lang.pool_tech_works}}</div><div id="show_login" style="width: 40px; height:40px"></div>
+{{else}}
+	<div id="login_div" style="width:100%; text-align:center; font-size:0px;">
+		<span style="display:inline-block;">
+			<button type="button" class="btn btn-primary btn-lg" id="show_login" style="vertical-align:top;">{{.Lang.login}}</button>
+			{{if .SignUp}}<button type="button" class="btn btn-primary btn-lg" id="show_signup" style="vertical-align:top;">{{.Lang.sign_up}}</button>{{end}}
+		</span>
+	</div>
+{{end}}
+
+<div style="display:none; width:100%; text-align:center;" id="loading_div">
+		<span style="display: inline-block; text-align: center">
+			<div id="available_key_alert"></div>
+			{{.Lang.please_wait_free_key}}
+		</span>
+</div>
+<div style="width:100%; text-align:center; padding-top:50px;">
+	<span style="display: inline-block; text-align: center">
+		<a href="mailto:darwin@dcoin.club">help</a>
+	</span>
+</div>
+
+{{ template "modal". }}
+
+<script>
+	$('#myModal').remove();
+	$('#show_login').bind('click', function () {
+		$('#myModalLogin').modal({ backdrop: 'static' });
+	});
+	$('#show_signup').bind('click', function () {
+		signUpModalFns();
+		//$('#signUpModal').modal({ backdrop: 'static' });
+	});
+
+	$( document ).ready(function() {
+		$('#loader').spin(false);
+	});
+
+	/*$('#take_key').bind('click', function () {
+		console.log("take_key");
+		$.get('http://pool.dcoin.club/tools?controllerName=availableKeys&download=1', function(data) {
+					console.log(data);
+					$('#key').text( data );
+					doSign('login');
+				});
+	});*/
+
+	function availableKeys() {
+		$('#loader').spin();
+		$('#sign_up_in_pool_send').prop('disabled', true);
+		$('#login_div').css('display', 'none');
+		$('#loading_div').css('display', 'table');
+		$.post('ajax?controllerName=availableKeys', { {{if .Community}}'email': $('#sign_up_in_pool_email').val(){{end}} }, function(data) {
+			$('#loader').spin(false);
+			if (data.success) {
+				$('#signUpModal').modal('hide');
+				$('.modal-backdrop').remove();
+				$('.modal-backdrop').css('display', 'none');
+				dc_navigate ('setPassword', '');
+			} else if (data.error && data.error == "no_available_keys") {
+				$('#login_div').css('display', 'table');
+				$('#loading_div').css('display', 'none');
+				$('#no_available_keys').css('display', 'block');
+				$('#sign_up_in_pool').css('display', 'none');
+				$('#signUpModal').modal({ backdrop: 'static' });
+			} else if (data.error) {
+				$('#signUpModal').modal('hide');
+				$('.modal-backdrop').remove();
+				$('.modal-backdrop').css('display', 'none');
+				$('#available_key_alert').html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+data.error+'</p></div>');
+			}
+		}, "JSON");
+	}
+
+	function signUpModalFns() {
+		{{if .Community}}
+			$('#no_available_keys').css('display', 'none');
+			$('#sign_up_in_pool').css('display', 'block');
+			$('#signUpModal').modal({ backdrop: 'static' });
+		{{else}}
+			availableKeys()
+		{{end}}
+	}
+
+</script>
+<div class="for-signature"></div>
+{{end}}
