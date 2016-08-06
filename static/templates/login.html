@@ -48,5 +48,69 @@
 		<a href="mailto:darwin@dcoin.club">help</a>
 	</span>
 </div>
+
+{{ template "modal". }}
+
+<script>
+	$('#myModal').remove();
+	$('#show_login').bind('click', function () {
+		$('#myModalLogin').modal({ backdrop: 'static' });
+	});
+	$('#show_signup').bind('click', function () {
+		signUpModalFns();
+		//$('#signUpModal').modal({ backdrop: 'static' });
+	});
+
+	$( document ).ready(function() {
+		$('#loader').spin(false);
+	});
+
+	/*$('#take_key').bind('click', function () {
+		console.log("take_key");
+		$.get('http://pool.dcoin.club/tools?controllerName=availableKeys&download=1', function(data) {
+					console.log(data);
+					$('#key').text( data );
+					doSign('login');
+				});
+	});*/
+
+	function availableKeys() {
+		$('#loader').spin();
+		$('#sign_up_in_pool_send').prop('disabled', true);
+		$('#login_div').css('display', 'none');
+		$('#loading_div').css('display', 'table');
+		$.post('ajax?controllerName=availableKeys', { {{if .Community}}'email': $('#sign_up_in_pool_email').val(){{end}} }, function(data) {
+			$('#loader').spin(false);
+			if (data.success) {
+				$('#signUpModal').modal('hide');
+				$('.modal-backdrop').remove();
+				$('.modal-backdrop').css('display', 'none');
+				dc_navigate ('setPassword', '');
+			} else if (data.error && data.error == "no_available_keys") {
+				$('#login_div').css('display', 'table');
+				$('#loading_div').css('display', 'none');
+				$('#no_available_keys').css('display', 'block');
+				$('#sign_up_in_pool').css('display', 'none');
+				$('#signUpModal').modal({ backdrop: 'static' });
+			} else if (data.error) {
+				$('#signUpModal').modal('hide');
+				$('.modal-backdrop').remove();
+				$('.modal-backdrop').css('display', 'none');
+				$('#available_key_alert').html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+data.error+'</p></div>');
+			}
+		}, "JSON");
+	}
+
+	function signUpModalFns() {
+		{{if .Community}}
+			$('#no_available_keys').css('display', 'none');
+			$('#sign_up_in_pool').css('display', 'block');
+			$('#signUpModal').modal({ backdrop: 'static' });
+		{{else}}
+			availableKeys()
+		{{end}}
+	}
+
+</script>
 <div class="for-signature"></div>
 {{end}}

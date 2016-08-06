@@ -1,5 +1,9 @@
 {{ define "modal" }}
 <script>
+$('#myModalLogin').on('shown.bs.modal', function (e) {
+	$(".modal-backdrop").remove();
+})
+
 $('#myModal').modal('hide');
 
 function show_text_key () {
@@ -108,6 +112,13 @@ $(document).keypress(function(e){
 </script>
 
 <style>
+	.modal-dialog {
+		margin-top:100px;
+	}
+	.modal-backdrop {
+		opacity:0 !important;
+		z-index:-1 !important;
+	}
 	.modal_password_label {
 		display:block;
 	}
