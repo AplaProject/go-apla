@@ -144,7 +144,7 @@ func (c *Controller) AlertMessage() (string, error) {
 	if c.SessRestricted == 0 {
 		// после обнуления таблиц my_node_key будет пуст
 		// получим время из последнего блока
-		myNodePrivateKey, err := c.GetNodePrivateKey(c.MyPrefix)
+		myNodePrivateKey, err := c.GetNodePrivateKey()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}

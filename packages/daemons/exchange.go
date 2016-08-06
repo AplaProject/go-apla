@@ -182,7 +182,7 @@ BEGIN:
 		 * 2. Обновляем проценты
 		 * 3. Чистим кол-во отправленных смс-ок
 		 * */
-		nodePrivateKey, err := d.GetNodePrivateKey(myPrefix)
+		nodePrivateKey, err := d.GetNodePrivateKey()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN

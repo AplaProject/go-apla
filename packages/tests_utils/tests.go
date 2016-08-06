@@ -145,7 +145,7 @@ func MakeFrontTest(transactionArray [][]byte, time int64, dataForSign string, tx
 			return utils.ErrInfo(err)
 		}
 
-		k, err := db.GetNodePrivateKey(MY_PREFIX)
+		k, err := db.GetNodePrivateKey()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

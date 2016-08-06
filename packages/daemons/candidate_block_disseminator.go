@@ -210,24 +210,24 @@ BEGIN:
 						}
 						// сами тр-ии
 						var transactions []byte
-						transactions_candidateBlock, err := d.GetList(`SELECT data FROM transactions_candidateBlock ` + addSql).String()
+						transactions_candidate_block, err := d.GetList(`SELECT data FROM transactions_candidate_block ` + addSql).String()
 						if err != nil {
 							logger.Error("%v", utils.ErrInfo(err))
 							return
 						}
-						for _, txData := range transactions_candidateBlock {
+						for _, txData := range transactions_candidate_block {
 							transactions = append(transactions, utils.EncodeLengthPlusData(txData)...)
 						}
 
 						responseBinaryData = append(responseBinaryData, utils.EncodeLengthPlusData(transactions)...)
 
 						// порядок тр-ий
-						transactions_candidateBlock, err = d.GetList(`SELECT hash FROM transactions_candidateBlock ORDER BY id ASC`).String()
+						transactions_candidate_block, err = d.GetList(`SELECT hash FROM transactions_candidate_block ORDER BY id ASC`).String()
 						if err != nil {
 							logger.Error("%v", utils.ErrInfo(err))
 							return
 						}
-						for _, txHash := range transactions_candidateBlock {
+						for _, txHash := range transactions_candidate_block {
 							responseBinaryData = append(responseBinaryData, []byte(txHash)...)
 						}
 

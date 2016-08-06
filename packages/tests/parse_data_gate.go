@@ -16,7 +16,7 @@ func main() {
 	p := new(dcparser.Parser)
 	p.DCDB = d
 	var mycandidateBlockBody []byte
-	transactionscandidateBlock, err := d.GetAll("SELECT data FROM transactions_candidateBlock ORDER BY id ASC", -1)
+	transactionscandidateBlock, err := d.GetAll("SELECT data FROM transactions_candidate_block ORDER BY id ASC", -1)
 	if err != nil {
 		fmt.Println(utils.ErrInfo(err))
 	}
