@@ -371,6 +371,23 @@
    <!-- DEMO-->
    <script src="static/js/demo/demo-flot.js"></script>
    
+   <script language="JavaScript" type="text/javascript">
+		function Generate_key() {
+			var key = "";
+			var hex = "0123456789abcdef";
+	
+			for (i = 0; i < 64; i++) {
+				key += hex.charAt(Math.floor(Math.random() * 16));
+			}
+			return key;
+		}
+		//console.log(iv.toString())
+	
+		function  doSign(type){
+			doSign_(type);
+		}
+	</script>
+   
    <script>
 		$( document ).ready(function() {
 			{{if not .DbOk}}

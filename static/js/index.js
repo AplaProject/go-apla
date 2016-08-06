@@ -24,6 +24,65 @@ function load_menu(lang) {
     });
 }
 
+function login_ok (result) {
+
+    if (result=='1') {
+
+        console.log('login_ok=1');
+
+        $('#myModal').modal('hide');
+        $('#myModalLogin').modal('hide');
+        $('.modal-backdrop').remove();
+        $('.modal-backdrop').css('display', 'none');
+
+        if ($('#exchangeTemplate').val() == "1") {
+
+            $('#SigninKeyModal').modal('hide');
+            window.location.href = $('#EHost').val();
+
+        } else if (typeof(get_key_and_sign)==='undefined' || get_key_and_sign=='null') {
+
+            var tpl_name = $('#tpl_name').val();
+            if (!tpl_name || typeof(tpl_name)==='undefined' || tpl_name=='installStep0' || tpl_name=='installStep6')
+                tpl_name = 'home';
+
+            if ($("#mobileos").val() == "1") {
+                $("#page-wrapper").css('padding-bottom', '40px');
+                $(".navbar-default").css('border-color', '#ccc');
+                $("#ios_menu").css('display', 'block');
+            }
+            $( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
+                $( "#dl_content" ).load( "content", { tpl_name: tpl_name}, function() {
+					$("#main-login").html('');
+					$("#loader").spin(false);
+                });
+            });
+        }
+        else if (get_key_and_sign=='sign') {
+            console.log('get_key_and_sign=sign');
+            doSign('sign');
+            $("#main-login").html('');
+            $("#loader").spin(false);
+        }
+        else if (get_key_and_sign=='send_to_net') {
+            console.log('get_key_and_sign=send_to_net');
+            doSign('sign');
+            $("#send_to_net").trigger("click");
+            $("#main-login").html('');
+            $("#loader").spin(false);
+        }
+
+    }
+    else if (result=='not_available') {
+        $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#pool_is_full').val()+'</p></div>');
+        $("#loader").spin(false);
+    }
+    else {
+        $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
+        $("#loader").spin(false);
+    }
+}
+
 function doSign_(type) {
 
     if (typeof(type) === 'undefined') type = 'sign';
@@ -144,4 +203,195 @@ function doSign_(type) {
 	else {
 			$("#signature1").val(e_n_sign['hSig']);
 	}
+}
+
+function save_key () {
+
+    $('#loader').spin();
+    console.log("$('#loader').spin();");
+    $('#modal_alert').html( "" );
+    $('#key').text( $("#modal_key").val() );
+    $('#password').text( $("#modal_password").val() );
+    $('#setup_password').text( $("#modal_setup_password").val() );
+    if ($("#modal_save_key").is(':checked')) {
+        console.log("save_key 1")
+        $('#save_key').text("1");
+    } else {
+        console.log("save_key 0");
+        console.log("modal_save_key:", $("#modal_save_key").val())
+        $('#save_key').text("0");
+    }
+}
+
+function base_convert(number, frombase, tobase) {
+    return parseInt(number + '', frombase | 0)
+        .toString(tobase | 0);
+}
+
+function img2key(img, key_id) {
+
+    //console.log(img);
+    var image = new Image();
+    image.src = img;
+    image.onload = function() {
+
+        $('#canvas_key').attr('width', this.width);
+        $('#canvas_key').attr('height', this.height);
+        var c=document.getElementById("canvas_key");
+        var ctx=c.getContext("2d");
+
+        ctx.drawImage(image,0,0);
+
+        // вначале прочитаем инфу, где искать rsa-ключ (64 пиксла = 64 бита = 8 байт = 4 числа = x,y,w,h)
+        var count_bits = 0;
+        var byte = '';
+        var rsa_search_params = [];
+        for (var x=0; x<64; x++) {
+            var Pixel = ctx.getImageData(x, 0, 1, 1);
+            //console.log(x+' '+y+' / '+Pixel.data[0]+' '+Pixel.data[1]+' '+Pixel.data[2]);
+            if (Pixel.data[0] > 100)
+                var  bin = 1;
+            else
+                var bin = 0;
+            byte = byte+''+bin;
+            count_bits=count_bits+1;
+            if (count_bits==16) {
+                //console.log(byte+' == '+base_convert(byte, 2, 10));
+                rsa_search_params.push(base_convert(byte, 2, 10));
+                count_bits = 0;
+                byte = '';
+            }
+        }
+        console.log(rsa_search_params);
+
+        var hex = '';
+        var count_bits = 0;
+        var byte = '';
+        var hex_byte = '';
+        for (var y=rsa_search_params[1]; y<(Number(rsa_search_params[1])+Number(rsa_search_params[3])); y++) {
+            for (var x=rsa_search_params[0]; x<(Number(rsa_search_params[0])+Number(rsa_search_params[2])-1); x++) {
+                var Pixel = ctx.getImageData(x, y, 1, 1);
+                //console.log(x+' '+y+' / '+Pixel.data[0]+' '+Pixel.data[1]+' '+Pixel.data[2]);
+                if (Pixel.data[0] > 100)
+                    var  bin = 1;
+                else
+                    var bin = 0;
+                byte = byte+''+bin;
+                count_bits=count_bits+1;
+                if (count_bits==8) {
+                    hex_byte = strpadleft(base_convert(byte, 2, 16));
+                    //console.log(byte+'='+hex_byte);
+                    hex = hex + ''+ hex_byte;
+                    count_bits = 0;
+                    byte = '';
+                }
+            }
+        }
+        hex = hex.split('00000000');
+        console.log(hex);
+        var key = hexToBase64(hex[0]);
+        console.log(key);
+        $('#'+key_id).val(key);
+    };
+}
+
+function strpadleft(mystr) {
+   // mystr = dechex(mystr);
+    var pad = "00";
+    var str = "" + mystr;
+    return (pad.substring(0, pad.length - str.length) + str);
+}
+
+function hexToBase64(str) {
+    return btoa(String.fromCharCode.apply(null,
+            str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" "))
+    );
+}
+
+function base64ToHex(str) {
+    for (var i = 0, bin = atob(str.replace(/[ \r\n]+$/, "")), hex = []; i < bin.length; ++i) {
+        var tmp = bin.charCodeAt(i).toString(16);
+        if (tmp.length === 1) tmp = "0" + tmp;
+        hex[hex.length] = tmp;
+    }
+    return hex.join(" ");
+}
+
+
+function hex2a(hex) {
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2)
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
+}
+
+function get_e_n_sign(key, pass, forsignature, alert_div) {
+
+    var modulus = '';
+    var exp = '';
+    var hSig = '';
+    var decrypt_PEM = '';
+    key = key.trim();
+    // ключ может быть незашифрованным, но без BEGIN RSA PRIVATE KEY
+    if (key.substr(0,4) == 'MIIE')
+        decrypt_PEM = '-----BEGIN RSA PRIVATE KEY-----'+key+'-----END RSA PRIVATE KEY-----';
+    else if (pass && key.indexOf('RSA PRIVATE KEY')==-1) {
+        try{
+
+            ivAndText = atob(key);
+            iv = ivAndText.substr(0, 16);
+            encText = ivAndText.substr(16);
+            cipherParams = CryptoJS.lib.CipherParams.create({
+                ciphertext: CryptoJS.enc.Base64.parse(btoa(encText))
+            });
+            pass = CryptoJS.enc.Latin1.parse(hex_md5(pass));
+            var decrypted = CryptoJS.AES.decrypt(cipherParams, pass, {mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Utf8.parse(iv), padding: CryptoJS.pad.Iso10126 });
+            decrypt_PEM = hex2a(decrypted.toString());
+
+/*
+            cipherParams = CryptoJS.lib.CipherParams.create({
+                ciphertext: CryptoJS.enc.Base64.parse((key.replace(/\n|\r/g, "")))
+            });
+            key = CryptoJS.enc.Latin1.parse(hex_md5(pass))
+            var decrypted = CryptoJS.AES.decrypt(cipherParams, key, {mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Base64.parse("AAAAAAAAAAAAAAAAAAAAAA=="), padding: CryptoJS.pad.NoPadding });
+            var decrypt_PEM = hex2a(decrypted.toString());
+*/
+
+
+        } catch(e) {
+            console.log(e)
+           decrypt_PEM = 'invalid base64 code';
+       }
+    }
+    else
+        decrypt_PEM = key;
+    console.log('decrypt_PEM='+decrypt_PEM);
+    console.log('typeof decrypt_PEM ='+typeof decrypt_PEM );
+   if (typeof decrypt_PEM != "string" || decrypt_PEM.indexOf('RSA PRIVATE KEY')==-1) {
+       console.log('incorrect_key_or_password');
+        $("#loader").spin(false);
+        $("#"+alert_div).html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
+       console.log(alert_div);
+    }
+    else {
+        var rsa = new RSAKey();
+        rsa.readPrivateKeyFromPEMString(decrypt_PEM);
+        var a = rsa.readPrivateKeyFromPEMString(decrypt_PEM);
+        modulus = a[1];
+        exp = a[2];
+
+        if (forsignature!='') {
+            console.log('forsignature='+forsignature);
+            hSig = rsa.signString(forsignature, 'sha1');
+            console.log('hSig='+hSig);
+        }
+
+        delete rsa;
+    }
+    var data = new Object();
+    data['modulus'] = modulus;
+    data['exp'] = exp;
+    data['hSig'] = hSig;
+    data['decrypt_key'] = decrypt_PEM;
+    return data;
 }

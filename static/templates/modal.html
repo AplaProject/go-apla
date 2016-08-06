@@ -127,12 +127,12 @@ $(document).keypress(function(e){
 				<input type="hidden" id="incorrect_key_or_password" value="{{.Lang.incorrect_key_or_password}}">
 				<input type="hidden" id="pool_is_full" value="{{.Lang.pool_is_full}}">
 
-					<fieldset>
+					<fieldset style="padding-bottom:0px; margin-bottom:0px;">
 						<span id="key_selector" style="float:right"><a href="#" onclick="show_text_key()">{{.Lang.text}}</a></span><div class="clearfix"></div>
-							<div style="width:100%;  border:2px dashed black; display: flex;  height: 100px; padding: 15px 0px 15px 0px" id="key_div">
+							<div style="width:100%;  border:2px dashed black; display: flex;  height: 110px; padding: 15px 0px 15px 0px" id="key_div">
 								<div style="margin:auto; text-align:center; line-height:22px">
-								 <p style="margin-bottom:0px"  id="key_file_name" onclick="document.getElementById('upload_hidden').click();"></p>
-								  <div id="key_btn" style="margin-top:0px"  class="btn btn-outline btn-primary" onclick="document.getElementById('upload_hidden').click();" type="button">
+								 <p style="margin-bottom:0px"  id="key_file_name" onclick="document.getElementById('upload_hidden').click();">The key is not selected</p>
+								  <div id="key_btn" style="margin-top:0px"  class="btn btn-primary" onclick="document.getElementById('upload_hidden').click();" type="button">
 								  	{{.Lang.select_key}}
 									<input type="file" accept="image/*,text/*" name="upload" id="upload_hidden" style="position: absolute; visibility:hidden;" />
 								  </div>
@@ -147,12 +147,13 @@ $(document).keypress(function(e){
 						<input type="password" id="modal_setup_password" class="form-control">
 						{{end}}
 						{{if not .Community}}
-						<div style="margin-top: 20px">
-							<input {{if or .Mobile .Desktop}}checked{{end}} type="checkbox" class="checkbox" id="modal_save_key" style="float:left;" >
-						<label for="modal_save_key" style="min-height: 0px; float: left; line-height: 14px; margin-left: 5px; white-space:nowrap;">
-							{{.Lang.save_key}}
-						</label>
-						</div>
+						<div class="checkbox c-checkbox" style="margin-top:20px; margin-bottom:0px;">
+							<label>
+							   <input type="checkbox" {{if or .Mobile .Desktop}}checked{{end}} id="modal_save_key">
+							   <span class="fa fa-check"></span>
+							   {{.Lang.save_key}}
+							</label>
+						 </div>
 						{{end}}
 					</fieldset>
 			</div>
