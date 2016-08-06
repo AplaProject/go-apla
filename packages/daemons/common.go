@@ -183,7 +183,7 @@ func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) 
 
 func StartDaemons() {
 	utils.DaemonsChans = nil
-	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"candidateBlockIsReady": candidateBlockIsReady, "candidateBlockGenerator": candidateBlockGenerator, "candidateBlockDisseminator": candidateBlockDisseminator, "QueueParserTx": QueueParserTx, "QueueParsercandidateBlock": QueueParsercandidateBlock, "QueueParserBlocks": QueueParserBlocks,  "Notifications": Notifications, "Disseminator": Disseminator, "Confirmations": Confirmations, "Connector": Connector, "Clear": Clear, "CleaningDb": CleaningDb, "BlocksCollection": BlocksCollection, "Exchange": Exchange, "AutoUpdate": AutoUpdate, "Stats": Stats}
+	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks,  "Notifications": Notifications, "Disseminator": Disseminator, "Confirmations": Confirmations, "Connector": Connector, "Clear": Clear, "CleaningDb": CleaningDb, "BlocksCollection": BlocksCollection, "Exchange": Exchange, "AutoUpdate": AutoUpdate, "Stats": Stats}
 	if utils.Mobile() {
 		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"QueueParserTx": QueueParserTx, "Notifications": Notifications, "Disseminator": Disseminator, "Confirmations": Confirmations, "Connector": Connector, "Clear": Clear, "CleaningDb": CleaningDb, "BlocksCollection": BlocksCollection}
 	}

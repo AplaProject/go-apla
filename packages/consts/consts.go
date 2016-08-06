@@ -40,6 +40,10 @@ const MAX_BLOCK_SIZE = 64<<20
 
 const MAX_TX_SIZE = 32<<20
 
+const MAX_TX_COUNT = 100000
+
+const ERROR_TIME = 1
+
 const DELAY = 5
 
 const USD_CURRENCY_ID = 71

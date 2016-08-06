@@ -205,7 +205,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 		}
 
 		// нам нужен меркель-рут текущего блока
-		mrklRoot, err := utils.GetMrklroot(binaryBlock, variables, false)
+		mrklRoot, err := utils.GetMrklroot(binaryBlock, false)
 		if err != nil {
 			ClearTmp(blocks)
 			return utils.ErrInfo(err)
@@ -722,7 +722,6 @@ func (p *Parser) CheckBlockHeader() error {
 
 	var first bool
 	if p.BlockData.BlockId == 1 {
-		p.Variables.Int64["max_tx_size"] = 1048576
 		first = true
 	} else {
 		first = false
@@ -731,7 +730,7 @@ func (p *Parser) CheckBlockHeader() error {
 
 	// меркель рут нужен для проверки подписи блока, а также проверки лимитов MAX_TX_SIZE и MAX_TX_COUNT
 	//log.Debug("p.Variables: %v", p.Variables)
-	p.MrklRoot, err = utils.GetMrklroot(p.BinaryData, p.Variables, first)
+	p.MrklRoot, err = utils.GetMrklroot(p.BinaryData, first)
 	log.Debug("p.MrklRoot: %s", p.MrklRoot)
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -746,7 +745,7 @@ func (p *Parser) CheckBlockHeader() error {
 
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	if !first {
-		if p.PrevBlock.Time+consts.GAPS_BETWEEN_BLOCKS+p.BlockData.Time > p.Variables.Int64["error_time"] {
+		if p.PrevBlock.Time+consts.GAPS_BETWEEN_BLOCKS+p.BlockData.Time > consts.ERROR_TIME {
 			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, consts.GAPS_BETWEEN_BLOCKS,  p.BlockData.Time, p.Variables.Int64["error_time"]))
 		}
 	}
@@ -815,11 +814,11 @@ func (p *Parser) GetInfoBlock() error {
 	p.PrevBlock = new(utils.BlockData)
 	var q string
 	if p.ConfigIni["db_type"] == "mysql" || p.ConfigIni["db_type"] == "sqlite" {
-		q = "SELECT LOWER(HEX(hash)) as hash, LOWER(HEX(head_hash)) as head_hash, block_id, time FROM info_block"
+		q = "SELECT LOWER(HEX(hash)) as hash, block_id, time FROM info_block"
 	} else if p.ConfigIni["db_type"] == "postgresql" {
-		q = "SELECT encode(hash, 'HEX')  as hash, encode(head_hash, 'HEX') as head_hash, block_id, time FROM info_block"
+		q = "SELECT encode(hash, 'HEX')  as hash, block_id, time FROM info_block"
 	}
-	err := p.QueryRow(q).Scan(&p.PrevBlock.Hash, &p.PrevBlock.HeadHash, &p.PrevBlock.BlockId, &p.PrevBlock.Time)
+	err := p.QueryRow(q).Scan(&p.PrevBlock.Hash, &p.PrevBlock.BlockId, &p.PrevBlock.Time)
 
 	if err != nil && err != sql.ErrNoRows {
 		return p.ErrInfo(err)
@@ -1305,7 +1304,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		for {
 			length := utils.DecodeLength(transactionBinaryData)
 			log.Debug("length: %d\n", length)
-			if length > 0 && length < p.Variables.Int64["max_tx_size"] {
+			if length > 0 && length < consts.MAX_TX_SIZE {
 				data := utils.BytesShift(transactionBinaryData, length)
 				returnSlice = append(returnSlice, data)
 				merkleSlice = append(merkleSlice, utils.DSha256(data))
