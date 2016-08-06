@@ -404,7 +404,7 @@ body {
   margin-left: 0;
   z-index: 111;
   background-color: #f5f7fa;
-  margin-bottom: 60px !important;
+  //margin-bottom: 60px !important;
 }
 .wrapper > footer {
   position: absolute;
