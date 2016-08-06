@@ -35,23 +35,26 @@ func (p *Parser) ParseDataFront() error {
 			return utils.ErrInfo(err)
 		}
 
-		p.Variables, err = p.GetAllVariables()
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
 		//меркель рут нужен для updblockinfo()
-		p.MrklRoot, err = utils.GetMrklroot(p.BinaryData, p.Variables, false)
+		p.MrklRoot, err = utils.GetMrklroot(p.BinaryData, false)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 		if len(p.BinaryData) > 0 {
+
+			log.Debug("len(p.BinaryData)", len(p.BinaryData))
+
 			for {
 				transactionSize := utils.DecodeLength(&p.BinaryData)
 				if len(p.BinaryData) == 0 {
 					return utils.ErrInfo(fmt.Errorf("empty BinaryData"))
 				}
+
+				log.Debug("transactionSize", transactionSize)
+
 				// отчекрыжим одну транзакцию от списка транзакций
 				transactionBinaryData := utils.BytesShift(&p.BinaryData, transactionSize)
+
 				transactionBinaryDataFull := transactionBinaryData
 
 				p.TxHash = string(utils.Md5(transactionBinaryData))
@@ -62,10 +65,10 @@ func (p *Parser) ParseDataFront() error {
 					return utils.ErrInfo(err)
 				}
 
-				// txSlice[3] могут подсунуть пустой
-				if len(p.TxSlice) > 3 {
-					if !utils.CheckInputData(p.TxSlice[3], "int64") {
-						return utils.ErrInfo(fmt.Errorf("empty user_id"))
+				// txSlice[4] могут подсунуть пустой
+				if len(p.TxSlice) > 4 {
+					if !utils.CheckInputData(p.TxSlice[3], "int64") || !utils.CheckInputData(p.TxSlice[4], "int64") {
+						return utils.ErrInfo(fmt.Errorf("empty wallet_id or citizen_id"))
 					}
 				} else {
 					return utils.ErrInfo(fmt.Errorf("empty user_id"))

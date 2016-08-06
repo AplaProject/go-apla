@@ -2475,7 +2475,7 @@ func DeleteHeader(binaryData []byte) []byte {
 	return binaryData
 }
 
-func GetMrklroot(binaryData []byte, variables *Variables, first bool) ([]byte, error) {
+func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 
 	var mrklSlice [][]byte
 	var txSize int64
@@ -2502,8 +2502,8 @@ func GetMrklroot(binaryData []byte, variables *Variables, first bool) ([]byte, e
 
 			// чтобы исключить атаку на переполнение памяти
 			if !first {
-				if len(mrklSlice) > int(variables.Int64["max_tx_count"]) {
-					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), variables.Int64["max_tx_count"]))
+				if len(mrklSlice) > consts.MAX_TX_COUNT {
+					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), consts.MAX_TX_COUNT))
 				}
 			}
 			if len(binaryData) == 0 {

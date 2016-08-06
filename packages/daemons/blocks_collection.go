@@ -542,7 +542,7 @@ BEGIN:
 				first = true
 			}
 			// нам нужен меркель-рут текущего блока
-			mrklRoot, err := utils.GetMrklroot(binaryBlock, variables, first)
+			mrklRoot, err := utils.GetMrklroot(binaryBlock, first)
 			if err != nil {
 				d.NodesBan(maxBlockIdUserId, fmt.Sprintf(`%v`, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

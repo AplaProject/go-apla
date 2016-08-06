@@ -25,15 +25,16 @@ Delays during generation because of main_lock currently sleep
 var err error
 
 func FindNodePos (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
+	logger.Debug("%v %v", fullNodesList, prevBlockFullNodeId)
 	for i, full_nodes := range fullNodesList {
-		if utils.StrToInt64(full_nodes["full_nodes_id"]) == prevBlockFullNodeId {
+		if utils.StrToInt64(full_nodes["full_node_id"]) == prevBlockFullNodeId {
 			return i
 		}
 	}
-	return 0
+	return -1
 }
 
-func candidateBlockGenerator(chBreaker chan bool, chAnswer chan string) {
+func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Error("daemon Recovered", r)
@@ -41,7 +42,7 @@ func candidateBlockGenerator(chBreaker chan bool, chAnswer chan string) {
 		}
 	}()
 
-	const GoroutineName = "candidateBlockGenerator"
+	const GoroutineName = "BlockGenerator"
 	d := new(daemon)
 	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
 	if d.DCDB == nil {
@@ -129,6 +130,7 @@ BEGIN:
 
 		myCBID, err := d.GetMyCBID();
 		myWalletId, err := d.GetMyWalletId();
+		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -159,7 +161,7 @@ BEGIN:
 			}
 		}
 
-		// Есть ли мы в списке тех, кто может егерить блоки
+		// Есть ли мы в списке тех, кто может генерить блоки
 		full_node_id, err:= d.Single("SELECT full_node_id FROM full_nodes WHERE final_delegate_cb_id = ? OR final_delegate_wallet_id = ? OR cb_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
 		if err != nil {
 			d.dbUnlock()
@@ -172,7 +174,7 @@ BEGIN:
 		if full_node_id == 0 {
 			d.dbUnlock()
 			logger.Debug("full_node_id == 0")
-			d.sleepTime = 3600
+			d.sleepTime = 10
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
 			}
@@ -192,7 +194,7 @@ BEGIN:
 		}
 
 		// возьмем список всех full_nodes
-		fullNodesList, err := d.GetAll("SELECT full_nodes_id, wallet_id, cb_id FROM full_nodes", -1)
+		fullNodesList, err := d.GetAll("SELECT full_node_id, wallet_id, cb_id FROM full_nodes", -1)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -203,7 +205,7 @@ BEGIN:
 		}
 
 		// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
-		prevBlockFullNodeId, err := d.Single("SELECT full_nodes_id FROM full_nodes WHERE cb_id = ? OR wallet_id = ?", prevBlock["cb_id"], prevBlock["wallet_id"]).Int64()
+		prevBlockFullNodeId, err := d.Single("SELECT full_node_id FROM full_nodes WHERE cb_id = ? OR wallet_id = ?", prevBlock["cb_id"], prevBlock["wallet_id"]).Int64()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -217,13 +219,14 @@ BEGIN:
 
 		// определим свое место (в том числе в delegate)
 		myPosition := func (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
+			logger.Debug("%v %v", fullNodesList, prevBlockFullNodeId)
 			for i, full_nodes := range fullNodesList {
 				if utils.StrToInt64(full_nodes["cb_id"]) == myCBID || utils.StrToInt64(full_nodes["wallet_id"]) == myWalletId || utils.StrToInt64(full_nodes["final_delegate_cb_id"]) == myWalletId || utils.StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
 					return i
 				}
 			}
-			return 0
-		} (fullNodesList, prevBlockFullNodeId)
+			return -1
+		} (fullNodesList, full_node_id)
 
 		// имея время предыдущего блока и позицию определяем время сна
 		if myPosition < prevBlockFullNodePosition {
@@ -231,8 +234,16 @@ BEGIN:
 		}
 		sleepTime := (myPosition - prevBlockFullNodePosition) * consts.DELAY
 
-		// учтем прошеднее время
+		logger.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / consts.DELAY %v", sleepTime, myPosition, prevBlockFullNodePosition, consts.DELAY)
+
+		d.dbUnlock()
+		// учтем прошедшее время
 		sleep := int64(sleepTime) - utils.Time() - prevBlock["time"]
+		if sleep < 0 {
+			sleep = 0
+		}
+
+		logger.Debug("utils.Time() %v / prevBlock[time] %v", utils.Time(), prevBlock["time"])
 
 		logger.Debug("sleep %v", sleep)
 
@@ -252,7 +263,7 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		prevBlock, err = d.OneRow("SELECT cb_id, wallet_id, block_id time FROM info_block").Int64()
+		prevBlock, err = d.OneRow("SELECT cb_id, wallet_id, block_id, time FROM info_block").Int64()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -319,8 +330,8 @@ BEGIN:
 		var mrklArray [][]byte
 		var usedTransactions string
 		var mrklRoot []byte
+		var blockDataTx []byte
 		// берем все данные из очереди. Они уже были проверены ранее, и можно их не проверять, а просто брать
-		utils.WriteSelectiveLog("SELECT data, hex(hash), type, user_id, third_var FROM transactions WHERE used = 0 AND verified = 1")
 		rows, err := d.Query(d.FormatQuery("SELECT data, hex(hash), type, wallet_id, citizen_id, third_var FROM transactions WHERE used = 0 AND verified = 1"))
 		if err != nil {
 			utils.WriteSelectiveLog(err)
@@ -359,25 +370,8 @@ BEGIN:
 			dataHex := fmt.Sprintf("%x", data)
 			logger.Debug("dataHex %v", dataHex)
 
-			exists, err := d.Single("SELECT hash FROM transactions_candidate_block WHERE hex(hash) = ?", hashMd5).String()
-			if err != nil {
-				rows.Close()
-				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			if len(exists) == 0 {
-				err = d.ExecSql(`INSERT INTO transactions_candidate_block (hash, data, type, wallet_id, citizen_id, third_var) VALUES ([hex], [hex], ?, ?, ?, ?)`,
-					hashMd5, dataHex, txType, txWalletId, txCitizenId, thirdVar)
-				if err != nil {
-					rows.Close()
-					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-			}
+			blockDataTx = append(blockDataTx, utils.EncodeLengthPlusData([]byte(data))...)
+
 			if configIni["db_type"] == "postgresql" {
 				usedTransactions += "decode('" + hash + "', 'hex'),"
 			} else {
@@ -394,7 +388,6 @@ BEGIN:
 
 
 		// подписываем нашим нод-ключем заголовок блока
-
 		block, _ := pem.Decode([]byte(nodePrivateKey))
 		if block == nil {
 			logger.Error("bad key data %v ", utils.GetParent())
@@ -424,21 +417,31 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		signatureHex := fmt.Sprintf("%x", bytes)
+		signatureBin := bytes
 
-		// чистим candidateBlock. когда было WHERE block_id = ? то возникал баг т.к. в таблу писал tcpserver.type6
-		err = d.ExecSql("DELETE FROM candidateBlock")
+		// готовим заголовок
+		newBlockIdBinary := utils.DecToBin(newBlockId, 4)
+		timeBinary := utils.DecToBin(Time, 4)
+		walletIdBinary := utils.EncodeLengthPlusData(myWalletId)
+		cbIdBinary := utils.DecToBin(myCBID, 1)
+
+		// заголовок
+		blockHeader := utils.DecToBin(0, 1)
+		blockHeader = append(blockHeader, newBlockIdBinary...)
+		blockHeader = append(blockHeader, timeBinary...)
+		blockHeader = append(blockHeader, walletIdBinary...)
+		blockHeader = append(blockHeader, cbIdBinary...)
+		blockHeader = append(blockHeader, utils.EncodeLengthPlusData(signatureBin)...)
+
+		// сам блок
+		blockBin := append(blockHeader, blockDataTx...)
+		logger.Debug("block %x", blockBin)
+
+		// теперь нужно разнести блок по таблицам и после этого мы будем его слать всем нодам демоном disseminator
+		p.BinaryData = blockBin
+		err = p.ParseDataFront()
 		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		err = d.ExecSql(`INSERT INTO candidateBlock (block_id, time, signature, mrkl_root) VALUES (?, ?, [hex], [hex])`,
-			newBlockId, Time, signatureHex, string(mrklRoot))
-		logger.Debug("newBlockId: %v / Time: %v / signatureHex: %v / mrklRoot: %v / ", newBlockId, Time, signatureHex, string(mrklRoot))
-		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
+			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN

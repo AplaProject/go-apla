@@ -245,6 +245,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			tplName = "updatingBlockchain"
 		}
 	}
+	log.Debug("lastBlockTime %v / utils.Time() %v / wTime %v", lastBlockTime, utils.Time(), wTime)
 
 	if tplName == "installStep0" {
 		log.Debug("ConfigInit monitor")
