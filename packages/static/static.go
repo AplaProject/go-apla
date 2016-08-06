@@ -21,6 +21,8 @@
 // static/dashboard_company.html
 // static/dashboard_gov.html
 // static/data/anonym_history.json
+// static/gov_currency_exchange.html
+// static/gov_shares_exchange.html
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/QR.png
@@ -700,6 +702,42 @@ func staticDashboard_govHtml() (*asset, error) {
 func staticDataAnonym_historyJson() (*asset, error) {
 	path := "static/data/anonym_history.json"
 	name := "static/data/anonym_history.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_currency_exchangeHtml reads file data from disk. It returns an error on failure.
+func staticGov_currency_exchangeHtml() (*asset, error) {
+	path := "static/gov_currency_exchange.html"
+	name := "static/gov_currency_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_shares_exchangeHtml reads file data from disk. It returns an error on failure.
+func staticGov_shares_exchangeHtml() (*asset, error) {
+	path := "static/gov_shares_exchange.html"
+	name := "static/gov_shares_exchange.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5989,6 +6027,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/dashboard_company.html": staticDashboard_companyHtml,
 	"static/dashboard_gov.html": staticDashboard_govHtml,
 	"static/data/anonym_history.json": staticDataAnonym_historyJson,
+	"static/gov_currency_exchange.html": staticGov_currency_exchangeHtml,
+	"static/gov_shares_exchange.html": staticGov_shares_exchangeHtml,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/QR.png": staticImgQrPng,
@@ -6346,6 +6386,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"data": &bintree{nil, map[string]*bintree{
 			"anonym_history.json": &bintree{staticDataAnonym_historyJson, map[string]*bintree{}},
 		}},
+		"gov_currency_exchange.html": &bintree{staticGov_currency_exchangeHtml, map[string]*bintree{}},
+		"gov_shares_exchange.html": &bintree{staticGov_shares_exchangeHtml, map[string]*bintree{}},
 		"i18n": &bintree{nil, map[string]*bintree{
 			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{}},
 			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{}},
