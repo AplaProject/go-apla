@@ -24,7 +24,7 @@ type index struct {
 	ShowIOSMenu       bool
 	ChatEnabled       string
 	AnalyticsDisabled string
-//	MyModalIdName     string	
+//	MyModalIdName     string
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -174,16 +174,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	modal, err := static.Asset("static/templates/modal.html")
-	if err != nil {
-		log.Error("%v", err)
-	}
-
 	data, err := static.Asset("static/index.html")
-
-	t := template.Must(template.New("template").Funcs(funcMap).Parse(string(data)))
-	t = template.Must(t.Parse(string(modal)))
-
+	t := template.New("template").Funcs(funcMap)
+	t, err = t.Parse(string(data))
 	if err != nil {
 		log.Error("%v", err)
 	}
@@ -191,10 +184,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("%v", err)
 	}*/
-
-
-
-
 
 	b := new(bytes.Buffer)
 	err = t.Execute(b, &index{
