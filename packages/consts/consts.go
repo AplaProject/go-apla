@@ -18,7 +18,7 @@ const WAIT_CONFIRMED_NODES = 10
 const AUTO_REDUCTION_PCT = 10
 
 // У скольких нодов должен быть такой же блок как и у нас, чтобы считать, что блок у большей части DC-сети. для get_confirmed_block_id()
-const MIN_CONFIRMED_NODES = 1
+const MIN_CONFIRMED_NODES = 0
 
 
 // примерный текущий крайний блок
