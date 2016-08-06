@@ -21,6 +21,7 @@
 // static/dashboard_company.html
 // static/dashboard_gov.html
 // static/data/anonym_history.json
+// static/gov_citizens.html
 // static/gov_currency_exchange.html
 // static/gov_shares_exchange.html
 // static/i18n/site-en.json
@@ -702,6 +703,24 @@ func staticDashboard_govHtml() (*asset, error) {
 func staticDataAnonym_historyJson() (*asset, error) {
 	path := "static/data/anonym_history.json"
 	name := "static/data/anonym_history.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_citizensHtml reads file data from disk. It returns an error on failure.
+func staticGov_citizensHtml() (*asset, error) {
+	path := "static/gov_citizens.html"
+	name := "static/gov_citizens.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6027,6 +6046,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/dashboard_company.html": staticDashboard_companyHtml,
 	"static/dashboard_gov.html": staticDashboard_govHtml,
 	"static/data/anonym_history.json": staticDataAnonym_historyJson,
+	"static/gov_citizens.html": staticGov_citizensHtml,
 	"static/gov_currency_exchange.html": staticGov_currency_exchangeHtml,
 	"static/gov_shares_exchange.html": staticGov_shares_exchangeHtml,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
@@ -6386,6 +6406,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"data": &bintree{nil, map[string]*bintree{
 			"anonym_history.json": &bintree{staticDataAnonym_historyJson, map[string]*bintree{}},
 		}},
+		"gov_citizens.html": &bintree{staticGov_citizensHtml, map[string]*bintree{}},
 		"gov_currency_exchange.html": &bintree{staticGov_currency_exchangeHtml, map[string]*bintree{}},
 		"gov_shares_exchange.html": &bintree{staticGov_shares_exchangeHtml, map[string]*bintree{}},
 		"i18n": &bintree{nil, map[string]*bintree{
