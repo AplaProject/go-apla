@@ -4,6 +4,14 @@
 	#table2 td{padding-top: 1px; padding-bottom: 1px; }
 	table caption{font-weight:bold}
 </style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".gov").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_gov", { }, function() {});
+</script>
+
 <div class="content-heading">
    Shares exchange
 </div>

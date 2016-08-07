@@ -1,5 +1,8 @@
 <script>
 $(document).ready(function() {
+	$('#modal_create_budget').on('shown.bs.modal', function (e) {
+		$('.filestyle').filestyle();
+	})
 	$('#modal_citizen_status').on('shown.bs.modal', function (e) {
 		$('#datetimepicker1').datetimepicker({
 		  icons: {
@@ -148,7 +151,7 @@ $(document).ready(function() {
 				<form role="form">
 				   <div class="form-group">
 					  <label>Budget</label>
-					  <input type="text" class="form-control">
+					  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
 				   </div>
 				</form>
 			</div>
