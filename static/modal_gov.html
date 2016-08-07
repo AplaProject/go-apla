@@ -137,6 +137,66 @@ $(document).ready(function() {
 	})
 });
 </script>
+<div class="modal fade" id="modal_create_budget" tabindex="-1" role="dialog" aria-labelledby="modal_create_budget_label">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modal_create_budget_label">Create budget</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+				   <div class="form-group">
+					  <label>Budget</label>
+					  <input type="text" class="form-control">
+				   </div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-purple">Create</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modal_settings" tabindex="-1" role="dialog" aria-labelledby="modal_settings_label">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modal_settings_label">Settings</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+				   <div class="form-group">
+					  <label>The term of office of regional heads</label>
+					  <select name="account" class="form-control m-b">
+						 <option>1 Year</option>
+						 <option>2 Years</option>
+						 <option>3 Years</option>
+						 <option>4 Years</option>
+						 <option>5 Years</option>
+					  </select>
+				   </div>
+				   <div class="form-group">
+					  <label>The term of office of elected bodies</label>
+					  <select name="account" class="form-control m-b">
+						 <option>1 Year</option>
+						 <option>2 Years</option>
+						 <option>3 Years</option>
+						 <option>4 Years</option>
+						 <option>5 Years</option>
+					  </select>
+				   </div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-success">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
 <div class="modal fade" id="modal_taxes" tabindex="-1" role="dialog" aria-labelledby="modal_taxes_label">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
@@ -371,32 +431,6 @@ $(document).ready(function() {
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 				<button type="button" class="btn btn-pink">Send</button>
-			</div>
-		</div>
-	</div>
-</div>
-<div class="modal fade" id="modal_divorce" role="dialog" aria-labelledby="modal_divorce_label">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="modal_divorce_label">modal_divorce</h4>
-			</div>
-			<div class="modal-body">
-				<form role="form">
-				   <div class="form-group">
-					  <label>Recipient</label>
-					  <input type="text" class="form-control">
-				   </div>
-				   <div class="form-group">
-					  <label>Smart contract</label>
-					  <textarea class="form-control"></textarea>
-				   </div>
-				</form>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-warning">Divorce</button>
 			</div>
 		</div>
 	</div>
