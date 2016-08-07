@@ -1,3 +1,5 @@
+{{define "modalAnonym"}}
+
 <script>
 $(document).ready(function() {
 	$('#modal_citizen_status').on('shown.bs.modal', function (e) {
@@ -64,7 +66,7 @@ $(document).ready(function() {
 			</div>
 			<div class="modal-body">
 				<center><img src="static/img/QR.png" alt=""></center>
-				<div class="well" style="margin-bottom:0px; margin-top:15px; text-align:center; background-color:#f5f5f5;">1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX</div>
+				<div class="well" style="margin-bottom:0px; margin-top:15px; text-align:center; background-color:#f5f5f5;">{{.MyWallet}}</div>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -146,6 +148,7 @@ $(document).ready(function() {
 				   <div class="form-group">
 					  <label>Country</label>
 					  <select id="select2-1" class="form-control">
+						 <option value="DL">DayLight</option>
 						 <option value="AL">Alabama</option>
 						 <option value="AR">Arkansas</option>
 						 <option value="IL">Illinois</option>
@@ -172,3 +175,5 @@ $(document).ready(function() {
 		</div>
 	</div>
 </div>
+
+{{end}}
