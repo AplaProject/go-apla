@@ -1,8 +1,32 @@
+{{ define "anonymMoneyTransfer" }}
+
 <script>
+
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_money_transfer").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+
+	$('#next').bind('click', function () {
+		doSign();
+		{{if .ShowSignData}}$("#send_to_net").trigger("click");{{end}}
+	} );
+
+	$('#send_to_net').bind('click', function () {
+
+		$.post( 'ajax?controllerName=saveQueue', {
+			'type' : '{{.TxType}}',
+			'time' : '{{.TimeNow}}',
+			'wallet_id' : '{{.WalletId}}',
+			'signature1': $('#signature1').val(),
+			'signature2': $('#signature2').val(),
+			'signature3': $('#signature3').val()
+		}, function (data) {
+			dl_navigate ('dashboardAnonym', {'alert': '{{.Lang.sent_to_the_net}}'} );
+		} );
+	} );
+	check_key_and_show_modal();
+
 </script>
 
 <div class="content-heading">
@@ -21,8 +45,13 @@
 		  <label>Wallet address</label>
 		  <input type="text" placeholder="Enter wallet address" class="form-control">
 	   </div>
-	   <button type="button" class="btn btn-green">Send</button>
+	   <button type="button" class="btn btn-green" id="next">Send</button>
 	</form>
  </div>
 </div>
 <!-- END panel-->
+
+{{template "signatures".}}
+
+
+{{end}}
