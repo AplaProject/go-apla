@@ -2,14 +2,17 @@
 
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".dashboard, .anonym, .dashboard_anonym").addClass("active");
+	$(".anonym, .dashboard_anonym").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {});
 </script>
 
 <div class="content-heading">
-   Dashboard Anonym
+   Anonym
 </div>
+<ol class="breadcrumb">
+   <li class="active">Dashboard</li>
+</ol>
 <div class="row">
    <div class="col-lg-3 col-md-6">
 	  <!-- START panel-->
