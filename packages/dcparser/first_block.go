@@ -25,7 +25,7 @@ func (p *Parser) FirstBlock() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`INSERT INTO wallets (wallet_id, hash, host, vote, public_key_0, node_public_key) VALUES (?, [hex], ?, [hex], [hex])`, 1, utils.HashSha1(string(p.TxMaps.Bytes["public_key"])), p.TxMaps.String["host"], 1, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"])
+	err = p.ExecSql(`INSERT INTO wallets (wallet_id, hash, host, vote, public_key_0, node_public_key) VALUES (?, [hex], ?, ?, [hex], [hex])`, 1, utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]), p.TxMaps.String["host"], 1, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}

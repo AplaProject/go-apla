@@ -2417,6 +2417,13 @@ func HashSha1(msg string) []byte {
 	return hash
 }
 
+func HashSha1Hex(msg []byte) string {
+	sh := crypto.SHA1.New()
+	sh.Write(msg)
+	hash := sh.Sum(nil)
+	return string(BinToHex(hash))
+}
+
 func Md5(msg_ interface{}) []byte {
 	var msg []byte
 	switch msg_.(type) {
