@@ -8,12 +8,12 @@ import (
 
 type BlockExplorerPage struct {
 	Lang           map[string]string
-	UserId         int64
+	CitizenId         int64
+	WalletId         int64
 	Data           string
 	MyNotice       map[string]string
 	BlockId        int64
 	PoolAdmin      bool
-	SessRestricted int64
 	Start          int64
 	CurrencyList   map[int64]string
 }
@@ -111,8 +111,8 @@ func (c *Controller) BlockExplorer() (string, error) {
 
 	// пока панель тут
 	myNotice := make(map[string]string)
-	if c.SessUserId > 0 {
-		myNotice, err = c.GetMyNoticeData(c.SessUserId, c.SessUserId, c.MyPrefix, c.Lang)
+	if c.SessCitizenId > 0 || c.SessWalletId > 0 {
+		myNotice, err = c.GetMyNoticeData(c.SessCitizenId, c.SessWalletId, c.Lang)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -126,8 +126,8 @@ func (c *Controller) BlockExplorer() (string, error) {
 		Start:          start,
 		BlockId:        blockId,
 		PoolAdmin:      c.PoolAdmin,
-		SessRestricted: c.SessRestricted,
-		UserId:         c.SessUserId})
+		CitizenId:         c.SessCitizenId,
+		WalletId:         c.SessWalletId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

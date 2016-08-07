@@ -26,7 +26,7 @@ func (c *Controller) CurrencyExchangeDelete() (string, error) {
 	timeNow := time.Now().Unix()
 
 	delId := utils.StrToInt64(c.Parameters["del_id"])
-	signData := fmt.Sprintf("%d,%d,%d,%d", txTypeId, timeNow, c.SessUserId, delId)
+	signData := fmt.Sprintf("%d,%d,%d,%d", txTypeId, timeNow, c.SessCitizenId, delId)
 
 	/*data, err := static.Asset("static/templates/currency_exchange_delete.html")
 	if err != nil {
@@ -60,7 +60,7 @@ func (c *Controller) CurrencyExchangeDelete() (string, error) {
 		Lang:         c.Lang,
 		CountSignArr: c.CountSignArr,
 		ShowSignData: c.ShowSignData,
-		UserId:       c.SessUserId,
+		UserId:       c.SessCitizenId,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,

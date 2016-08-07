@@ -35,27 +35,23 @@ function login_ok (result) {
         $('.modal-backdrop').remove();
         $('.modal-backdrop').css('display', 'none');
 
-        if ($('#exchangeTemplate').val() == "1") {
-
-            $('#SigninKeyModal').modal('hide');
-            window.location.href = $('#EHost').val();
-
-        } else if (typeof(get_key_and_sign)==='undefined' || get_key_and_sign=='null') {
+        if (typeof(get_key_and_sign)==='undefined' || get_key_and_sign=='null') {
 
             var tpl_name = $('#tpl_name').val();
             if (!tpl_name || typeof(tpl_name)==='undefined' || tpl_name=='installStep0' || tpl_name=='installStep6')
                 tpl_name = 'home';
+
+            console.log('tpl_name = ', tpl_name);
 
             if ($("#mobileos").val() == "1") {
                 $("#page-wrapper").css('padding-bottom', '40px');
                 $(".navbar-default").css('border-color', '#ccc');
                 $("#ios_menu").css('display', 'block');
             }
-            $( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
-                $( "#dl_content" ).load( "content", { tpl_name: tpl_name}, function() {
+
+            $( "#dl_content" ).load( "content", { tpl_name: tpl_name}, function() {
 					$("#main-login").html('');
 					$("#loader").spin(false);
-                });
             });
         }
         else if (get_key_and_sign=='sign') {
@@ -250,7 +246,7 @@ function img2key(img, key_id) {
             var Pixel = ctx.getImageData(x, 0, 1, 1);
             //console.log(x+' '+y+' / '+Pixel.data[0]+' '+Pixel.data[1]+' '+Pixel.data[2]);
             if (Pixel.data[0] > 100)
-                var  bin = 1;
+                var bin = 1;
             else
                 var bin = 0;
             byte = byte+''+bin;

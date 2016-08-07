@@ -94,7 +94,7 @@ $('#saveKeyAndLogin').bind('click', function () {
 	$(this).html('Wait...');
 	$(this).addClass( "disabled" );
 	setTimeout(function() {
-		doSign('login');
+		signIn();
 		$('#saveKeyAndLogin').html('{{.Lang.login}}');
 		$('#saveKeyAndLogin').removeClass( "disabled" );
 		$('#myModal').modal('hide');
@@ -108,6 +108,35 @@ $(document).keypress(function(e){
 		}
 	}
 });
+
+
+function signIn() {
+
+	var key = $("#key").text();
+	var pass = $("#password").text();
+	var setup_password = $("#setup_password").text();
+	if (key.length < 1) {
+		console.log("key.length < 1");
+		$("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>' + $('#incorrect_key_or_password').val() + '</p></div>');
+		$("#loader").spin(false);
+		return false;
+	}
+	if (key != localStorage.getItem('dcoin_key')) {
+		localStorage.setItem('dcoin_pass', pass );
+		localStorage.setItem('dcoin_key', key );
+	}
+	var e_n_sign = get_e_n_sign(key, pass, '', 'modal_alert');
+
+	$.post( 'ajax?controllerName=SignIn', {
+				'n' : e_n_sign['modulus'],
+				'e': e_n_sign['exp'],
+				'setup_password': setup_password
+			}, function (data) {
+				console.log("data.result: ", data.result);
+				login_ok( data.result );
+			}, 'JSON'
+	);
+}
 
 </script>
 

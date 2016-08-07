@@ -43,8 +43,8 @@ type Controller struct {
 	Alert            string
 	UserId           int64
 	Admin            bool
-	SessRestricted   int64
-	SessUserId       int64
+	SessCitizenId    int64
+	SessWalletId     int64
 	MyNotice         map[string]string
 	Parameters       map[string]string
 	Variables        *utils.Variables
@@ -208,8 +208,8 @@ func GetSessEUserId(sess session.SessionStore) int64 {
 	}
 	return 0
 }
-func GetSessUserId(sess session.SessionStore) int64 {
-	sessUserId := sess.Get("user_id")
+func GetSessWalletId(sess session.SessionStore) int64 {
+	sessUserId := sess.Get("wallet_id")
 	log.Debug("sessUserId: %v", sessUserId)
 	switch sessUserId.(type) {
 	case int64:
@@ -219,6 +219,23 @@ func GetSessUserId(sess session.SessionStore) int64 {
 	case string:
 		return utils.StrToInt64(sessUserId.(string))
 	default:
+		return 0
+	}
+	return 0
+}
+
+
+func GetSessCitizenId(sess session.SessionStore) int64 {
+	sessUserId := sess.Get("citizen_id")
+	log.Debug("sessUserId: %v", sessUserId)
+	switch sessUserId.(type) {
+		case int64:
+		return sessUserId.(int64)
+		case int:
+		return int64(sessUserId.(int))
+		case string:
+		return utils.StrToInt64(sessUserId.(string))
+		default:
 		return 0
 	}
 	return 0

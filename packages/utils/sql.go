@@ -1048,36 +1048,10 @@ func (db *DCDB) GetLastBlockData() (map[string]int64, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetMyNoticeData(sessRestricted int64, sessUserId int64, myPrefix string, lang map[string]string) (map[string]string, error) {
+func (db *DCDB) GetMyNoticeData(sessCitizenId int64, sessWalletId int64, lang map[string]string) (map[string]string, error) {
 	result := make(map[string]string)
-	if sessRestricted == 0 {
-		my_table, err := db.OneRow("SELECT user_id, miner_id, status FROM " + myPrefix + "my_table").String()
-		if err != nil {
-			return result, ErrInfo(err)
-		}
-		if my_table["user_id"] == "0" {
-			result["account_status"] = "searching"
-		} else if my_table["status"] == "bad_key" {
-			result["account_status"] = "bad_key"
-		} else if my_table["miner_id"] != "0" {
-			result["account_status"] = "miner"
-		} else if my_table["user_id"] != "0" {
-			result["account_status"] = "user"
-		}
-	} else {
-		// user_id уже есть, т.к. мы смогли зайти в урезанном режиме по паблик-кею
-		// проверим, может есть что-то в miners_data
-		status, err := db.Single("SELECT status FROM miners_data WHERE user_id = ?", sessUserId).String()
-		if err != nil {
-			return result, ErrInfo(err)
-		}
-		if len(status) > 0 {
-			result["account_status"] = status
-		} else {
-			result["account_status"] = "user"
-		}
-	}
-	result["account_status_text"] = lang["status_"+result["account_status"]]
+
+	result["account_status_text"] = lang["status_user"]
 
 	// Инфа о последнем блоке
 	blockData, err := db.GetLastBlockData()
@@ -2041,12 +2015,20 @@ func (db *DCDB) CheckCurrencyCF(currency_id int64) (bool, error) {
 	}
 }
 
-func (db *DCDB) GetUserIdByPublicKey(publicKey []byte) (string, error) {
-	userId, err := db.Single(`SELECT user_id FROM users WHERE hex(public_key_0) = ?`, string(publicKey)).String()
+func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
+	walletId, err := db.Single(`SELECT wallet_id FROM wallets WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
 	if err != nil {
-		return "", ErrInfo(err)
+		return 0, ErrInfo(err)
 	}
-	return userId, nil
+	return walletId, nil
+}
+
+func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
+	walletId, err := db.Single(`SELECT citizen_id FROM wallets WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
+	if err != nil {
+		return 0, ErrInfo(err)
+	}
+	return walletId, nil
 }
 
 func (db *DCDB) InsertIntoMyKey(prefix string, publicKey []byte, curBlockId string) error {

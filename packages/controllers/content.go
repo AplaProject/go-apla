@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/astaxie/beego/config"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"net/http"
@@ -33,24 +32,17 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessUserId := GetSessUserId(sess)
-	sessRestricted := GetSessRestricted(sess)
-	sessPublicKey := GetSessPublicKey(sess)
-	sessAdmin := GetSessAdmin(sess)
-	log.Debug("sessUserId", sessUserId)
-	log.Debug("sessRestricted", sessRestricted)
-	log.Debug("sessPublicKey", sessPublicKey)
-	log.Debug("user_id: %v", sess.Get("user_id"))
+	sessWalletId := GetSessWalletId(sess)
+	sessCitizenId := GetSessCitizenId(sess)
+	log.Debug("sessUserId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
 
 	c := new(Controller)
 	c.r = r
 	c.w = w
 	c.sess = sess
-	c.SessRestricted = sessRestricted
-	c.SessUserId = sessUserId
-	if sessAdmin == 1 {
-		c.Admin = true
-	}
+	c.SessWalletId = sessWalletId
+	c.SessCitizenId = sessCitizenId
+
 	c.ContentInc = true
 
 	var installProgress, configExists string
@@ -149,70 +141,17 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	c.Periods = map[int64]string{86400: "1 " + c.Lang["day"], 604800: "1 " + c.Lang["week"], 31536000: "1 " + c.Lang["year"], 2592000: "1 " + c.Lang["month"], 1209600: "2 " + c.Lang["weeks"]}
 
-	c.Races = map[int64]string{1: c.Lang["race_1"], 2: c.Lang["race_2"], 3: c.Lang["race_3"]}
-	var status string
-	var communityUsers []int64
-	if dbInit {
-		communityUsers, err = c.DCDB.GetCommunityUsers()
-		if err != nil {
-			log.Error("%v", err)
-		}
-		c.CommunityUsers = communityUsers
-		if len(communityUsers) == 0 {
-			c.MyPrefix = ""
-		} else {
-			c.MyPrefix = utils.Int64ToStr(sessUserId) + "_"
-			c.Community = true
-		}
-		log.Debug("c.MyPrefix %s", c.MyPrefix)
-		// нужна мин. комиссия на пуле для перевода монет
-		config, err := c.GetNodeConfig()
-		if err != nil {
-			log.Error("%v", err)
-		}
-		configCommission_ := make(map[string][]float64)
-		if len(config["commission"]) > 0 {
-			err = json.Unmarshal([]byte(config["commission"]), &configCommission_)
-			if err != nil {
-				log.Error("%v", err)
-			}
-		}
-		configCommission := make(map[int64][]float64)
-		for k, v := range configCommission_ {
-			configCommission[utils.StrToInt64(k)] = v
-		}
-		c.NodeConfig = config
-		c.ConfigCommission = configCommission
-
-		c.NodeAdmin, err = c.NodeAdminAccess(c.SessUserId, c.SessRestricted)
-		if err != nil {
-			log.Error("%v", err)
-		}
-
-		status, err = c.DCDB.Single("SELECT status FROM " + c.MyPrefix + "my_table").String()
-		if err != nil {
-			log.Error("%v", err)
-		}
-	}
-	log.Debug("dbInit", dbInit)
-
 	setupPassword := c.NodeConfig["setup_password"]
 	match, _ := regexp.MatchString("^(installStep[0-9_]+)|(blockExplorer)$", tplName)
 	// CheckInputData - гарантирует, что tplName чист
-	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessUserId > 0 || match) {
+	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletId > 0 || sessCitizenId > 0 || match) {
 		tplName = tplName
 	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
 		// первый запуск, еще не загружен блокчейн
 		tplName = "updatingBlockchain"
-	} else if dbInit && installProgress == "complete" && sessUserId > 0 {
-		if status == "waiting_set_new_key" {
-			tplName = "setPassword"
-		} else if status == "waiting_accept_new_key" {
-			tplName = "waitingAcceptNewKey"
-		}
-	} else if dbInit && installProgress == "complete" && !c.Community && sessUserId == 0 && status == "waiting_set_new_key" && setupPassword != "" {
+	} else if dbInit && installProgress == "complete" && !c.Community && (sessWalletId > 0 || sessCitizenId > 0) && setupPassword != "" {
 		tplName = "setupPassword"
-	} else if dbInit && installProgress == "complete" && sessUserId == 0 && status == "waiting_accept_new_key" {
+	} else if dbInit && installProgress == "complete" && (sessWalletId > 0 || sessCitizenId > 0) {
 		tplName = "waitingAcceptNewKey"
 	} else if dbInit && installProgress == "complete" {
 		if tplName != "setPassword" {
@@ -232,18 +171,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Debug("%v", lastBlockTime)
 	}
 	if dbInit && tplName != "installStep0" && (utils.Time()-lastBlockTime > 3600*wTime) && len(configExists) > 0 {
-		if len(communityUsers) > 0 {
-			// исключение - админ пула
-			poolAdminUserId, err := c.DCDB.Single("SELECT pool_admin_user_id FROM config").String()
-			if err != nil {
-				log.Error("%v", err)
-			}
-			if sessUserId != utils.StrToInt64(poolAdminUserId) {
-				tplName = "updatingBlockchain"
-			}
-		} else {
-			tplName = "updatingBlockchain"
-		}
+		tplName = "updatingBlockchain"
 	}
 	log.Debug("lastBlockTime %v / utils.Time() %v / wTime %v", lastBlockTime, utils.Time(), wTime)
 
@@ -271,12 +199,15 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	var countSign int
 	var userId int64
 	//	var myUserId int64
-	if sessUserId > 0 && dbInit && installProgress == "complete" {
-		userId = sessUserId
-		//myUserId = sessUserId
+	if (sessWalletId > 0 || sessCitizenId > 0) && dbInit && installProgress == "complete" {
 		countSign = 1
 		log.Debug("userId: %d", userId)
-		pk, err := c.OneRow("SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM users WHERE user_id = ?", userId).String()
+		var pk map[string]string
+		if sessWalletId > 0 {
+			pk, err = c.OneRow("SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM wallets WHERE wallet_id = ?", userId).String()
+		} else {
+			pk, err = c.OneRow("SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM citizens WHERE citizen_id = ?", userId).String()
+		}
 		if err != nil {
 			log.Error("%v", err)
 		}
@@ -289,9 +220,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			log.Debug("public_key_2: %x", pk["public_key_2"])
 			countSign = 3
 		}
-	} else {
-		userId = 0
-		//myUserId = 0
 	}
 
 	log.Debug("countSign: %v", countSign)
@@ -307,7 +235,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		tplName = "login"
 	}
 
-	log.Debug("tplName::", tplName, sessUserId, installProgress)
+	log.Debug("tplName::", tplName, sessCitizenId, sessWalletId, installProgress)
 
 	controller := r.FormValue("controllerHTML")
 	if len(controller) > 0 {
@@ -335,39 +263,10 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ok, _ := regexp.MatchString(`^(?i)Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|setupPassword|waitingAcceptNewKey|SetPassword|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
+	if ok, _ := regexp.MatchString(`^(?i)DashBoardAnonim|Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|setupPassword|waitingAcceptNewKey|SetPassword|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
 		w.Write([]byte("Access denied 0"))
-	} else if len(tplName) > 0 && sessUserId > 0 && installProgress == "complete" {
-		// если ключ юзера изменился, то выбрасываем его
-		userPublicKey, err := c.DCDB.GetUserPublicKey(userId)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		// но возможно у юзера включено сохранение приватного ключа
-		// тогда, чтобы не получилось зацикливания, нужно проверить и my_keys
-		myPrivateKey, err := c.GetMyPrivateKey(c.MyPrefix)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		myPublicKey, err := c.GetMyPublicKey(c.MyPrefix)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		/* !!! Зачем эта проверка нужна?
-			Если sessUserId > 0 && installProgress == "complete", то в users точно должно что-то быть
-		countUsers, err := c.Single(`SELECT count(*) FROM users`).Int64()
-		if err != nil {
-			log.Error("%v", err)
-		}*/
-		if (string(utils.BinToHex(userPublicKey)) != sessPublicKey && len(myPrivateKey) == 0) || (/*countUsers > 0 &&*/ len(myPrivateKey) > 0 && !bytes.Equal(myPublicKey, []byte(userPublicKey))) {
-			log.Debug("userPublicKey!=sessPublicKey %s!=%s / userId: %d", utils.BinToHex(userPublicKey), sessPublicKey, userId)
-			log.Debug("len(myPrivateKey) = %d  && %x!=%x", len(myPrivateKey), string(myPublicKey), userPublicKey)
-			c.Logout()
-			if len(userPublicKey) > 0 {
-				w.Write([]byte("<script language=\"javascript\">window.location.href = \"/\"</script>If you are not redirected automatically, follow the <a href=\"/\">/</a>"))
-				return
-			} 
-		}
+	} else if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId > 0) && installProgress == "complete" {
+
 
 		if tplName == "login" {
 			tplName = "home"
@@ -384,53 +283,15 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		} */
 		c.TplName = tplName
 
-		log.Debug("communityUsers:", communityUsers)
-		if dbInit && len(communityUsers) > 0 {
-			poolAdminUserId, err := c.GetPoolAdminUserId()
-			if err != nil {
-				log.Error("%v", err)
-			}
-			c.PoolAdminUserId = poolAdminUserId
-			if c.SessUserId == poolAdminUserId {
-				c.PoolAdmin = true
-			}
-		} else {
-			c.PoolAdmin = true
-		}
-
 		if dbInit {
-			// проверим, не идут ли тех. работы на пуле
-			config, err := c.DCDB.OneRow("SELECT pool_admin_user_id, pool_tech_works FROM config").String()
-			if err != nil {
-				log.Error("%v", err)
-			}
-			if len(config["pool_admin_user_id"]) > 0 && utils.StrToInt64(config["pool_admin_user_id"]) != sessUserId && config["pool_tech_works"] == "1" && c.Community {
-				tplName = "login"
-			}
 			// Если у юзера только 1 праймари ключ, то выдавать форму, где показываются данные для подписи и форма ввода подписи не нужно.
 			// Только если он сам не захочет, указав это в my_table
 			showSignData := false
-			if sessRestricted == 0 { // у незареганных в пуле юзеров нет MyPrefix, поэтому сохранять значение show_sign_data им негде
-				showSignData_, err := c.DCDB.Single("SELECT show_sign_data FROM " + c.MyPrefix + "my_table").String()
-				if err != nil {
-					log.Error("%v", err)
-				}
-				if showSignData_ == "1" {
-					showSignData = true
-				} else {
-					showSignData = false
-				}
-			}
 			if showSignData || countSign > 1 {
 				c.ShowSignData = true
 			} else {
 				c.ShowSignData = false
 			}
-		}
-
-		// писать в чат можно и при апдейте блокчейна
-		if r.FormValue("tpl_name") == "chat" && tplName == "updatingBlockchain" {
-			tplName = "chat"
 		}
 
 		if dbInit && tplName != "updatingBlockchain" && tplName != "setPassword" && tplName != "waitingAcceptNewKey" {
@@ -442,7 +303,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte("<input type='hidden' id='tpl_name' value='" + tplName + "'>"))
 
-		myNotice, err := c.DCDB.GetMyNoticeData(sessRestricted, sessUserId, c.MyPrefix, globalLangReadOnly[lang])
+		myNotice, err := c.DCDB.GetMyNoticeData(sessCitizenId, sessWalletId, globalLangReadOnly[lang])
 		if err != nil {
 			log.Error("%v", err)
 		}
@@ -468,7 +329,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 								</script>`))
 		skipRestrictedUsers := []string{"cashRequestIn", "cashRequestOut", "upgrade", "notifications"}
 		// тем, кто не зареган на пуле не выдаем некоторые страницы
-		if sessRestricted == 0 || !utils.InSliceString(tplName, skipRestrictedUsers) {
+		if !utils.InSliceString(tplName, skipRestrictedUsers) {
 			// вызываем контроллер в зависимости от шаблона
 			html, err := CallController(c, tplName)
 			if err != nil {
@@ -485,7 +346,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	} else if len(tplName) > 0 {
 		log.Debug("tplName", tplName)
 		html := ""
-		if ok, _ := regexp.MatchString(`^(?i)blockExplorer|waitingAcceptNewKey|SetupPassword|CfCatalog|CfPagePreview|CfStart|Check_sign|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SignLogin|SynchronizationBlockchain|UpdatingBlockchain|Menu$`, tplName); !ok && c.SessUserId <= 0 {
+		if ok, _ := regexp.MatchString(`^(?i)blockExplorer|waitingAcceptNewKey|SetupPassword|CfCatalog|CfPagePreview|CfStart|Check_sign|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SignLogin|SynchronizationBlockchain|UpdatingBlockchain|Menu$`, tplName); !ok && c.SessCitizenId <= 0 && c.SessWalletId <= 0 {
 			html = "Access denied 1"
 		} else {
 			// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
