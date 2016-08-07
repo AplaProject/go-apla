@@ -3,8 +3,210 @@
 	$(".dashboard, .dashboard_company").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	// CLASSYLOADER
+	// ----------------------------------- 
+	
+	(function(window, document, $, undefined){
+	
+	  $(function(){
+	
+		var $scroller       = $(window),
+			inViewFlagClass = 'js-is-in-view'; // a classname to detect when a chart has been triggered after scroll
+	
+		$('[data-classyloader]').each(initClassyLoader);
+		
+		function initClassyLoader() {
+		
+		  var $element = $(this),
+			  options  = $element.data();
+		  
+		  // At lease we need a data-percentage attribute
+		  if(options) {
+			if( options.triggerInView ) {
+	
+			  $scroller.scroll(function() {
+				checkLoaderInVIew($element, options);
+			  });
+			  // if the element starts already in view
+			  checkLoaderInVIew($element, options);
+			}
+			else
+			  startLoader($element, options);
+		  }
+		}
+		function checkLoaderInVIew(element, options) {
+		  var offset = -20;
+		  if( ! element.hasClass(inViewFlagClass) &&
+			  $.Utils.isInView(element, {topoffset: offset}) ) {
+			startLoader(element, options);
+		  }
+		}
+		function startLoader(element, options) {
+		  element.ClassyLoader(options).addClass(inViewFlagClass);
+		}
+	
+	  });
+	
+	})(window, document, window.jQuery);
 </script>
 
 <div class="content-heading">
    Dashboard Company
 </div>
+<!-- START radial charts-->
+<div class="row mb-lg">
+   <div class="col-sm-3 col-xs-6 text-center">
+	  <p>Current Project</p>
+	  <canvas data-classyloader="" data-height="150px" data-diameter="60" data-font-size="25px" data-percentage="60" data-speed="30" data-line-color="#23b7e5" data-remaining-line-color="#edf2f6" data-line-width="2"></canvas>
+   </div>
+   <div class="col-sm-3 col-xs-6 text-center">
+	  <p>Current Progress</p>
+	  <canvas data-classyloader="" data-height="150px" data-diameter="60" data-font-size="25px" data-percentage="30" data-speed="30" data-line-color="#f532e5" data-remaining-line-color="#edf2f6" data-line-width="2"></canvas>
+   </div>
+   <div class="col-sm-3 col-xs-6 text-center">
+	  <p>Space Usage</p>
+	  <canvas data-classyloader="" data-height="150px" data-diameter="60" data-font-size="25px" data-percentage="50" data-speed="30" data-line-color="#7266ba" data-remaining-line-color="#edf2f6" data-line-width="2"></canvas>
+   </div>
+   <div class="col-sm-3 col-xs-6 text-center">
+	  <p>Interactions</p>
+	  <canvas data-classyloader="" data-height="150px" data-diameter="60" data-font-size="25px" data-percentage="75" data-speed="30" data-line-color="#ff902b" data-remaining-line-color="#edf2f6" data-line-width="2"></canvas>
+   </div>
+</div>
+<!-- START radial charts-->
+<h4 class="page-header">CrowdFunding</h4>
+<!-- START Multiple List group-->
+<div class="list-group">
+   <a href="#" class="list-group-item">
+	  <table class="wd-wide">
+		 <tbody>
+			<tr>
+			   <td class="wd-xs">
+				  <div class="ph">
+					 <img src="static/img/dummy.png" alt="" class="media-box-object img-responsive img-rounded thumb64">
+				  </div>
+			   </td>
+			   <td>
+				  <div class="ph">
+					 <h4 class="media-box-heading">Project A</h4>
+					 <small class="text-muted">Vestibulum ante ipsum primis in faucibus orci</small>
+				  </div>
+			   </td>
+			   <td class="wd-sm hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0">Last change</p>
+					 <small class="text-muted">4 weeks ago</small>
+				  </div>
+			   </td>
+			   <td class="wd-xs hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0 text-muted">
+						<em class="icon-users mr fa-lg"></em>26</p>
+				  </div>
+			   </td>
+			   <td class="wd-xs hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0 text-muted">
+						<em class="icon-doc mr fa-lg"></em>3500</p>
+				  </div>
+			   </td>
+			   <td class="wd-sm">
+				  <div class="ph">
+					 <progressbar value="80" type="success" class="m0 progress-xs">80%</progressbar>
+				  </div>
+			   </td>
+			</tr>
+		 </tbody>
+	  </table>
+   </a>
+</div>
+<div class="list-group">
+   <a href="#" class="list-group-item">
+	  <table class="wd-wide">
+		 <tbody>
+			<tr>
+			   <td class="wd-xs">
+				  <div class="ph">
+					 <img src="static/img/dummy.png" alt="" class="media-box-object img-responsive img-rounded thumb64">
+				  </div>
+			   </td>
+			   <td>
+				  <div class="ph">
+					 <h4 class="media-box-heading">Project X</h4>
+					 <small class="text-muted">Vestibulum ante ipsum primis in faucibus orci</small>
+				  </div>
+			   </td>
+			   <td class="wd-sm hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0">Last change</p>
+					 <small class="text-muted">Today at 06:23 am</small>
+				  </div>
+			   </td>
+			   <td class="wd-xs hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0 text-muted">
+						<em class="icon-users mr fa-lg"></em>3</p>
+				  </div>
+			   </td>
+			   <td class="wd-xs hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0 text-muted">
+						<em class="icon-doc mr fa-lg"></em>150</p>
+				  </div>
+			   </td>
+			   <td class="wd-sm">
+				  <div class="ph">
+					 <progressbar value="50" type="purple" class="m0 progress-xs">50%</progressbar>
+				  </div>
+			   </td>
+			</tr>
+		 </tbody>
+	  </table>
+   </a>
+</div>
+<div class="list-group">
+   <a href="#" class="list-group-item">
+	  <table class="wd-wide">
+		 <tbody>
+			<tr>
+			   <td class="wd-xs">
+				  <div class="ph">
+					 <img src="static/img/dummy.png" alt="" class="media-box-object img-responsive img-rounded thumb64">
+				  </div>
+			   </td>
+			   <td>
+				  <div class="ph">
+					 <h4 class="media-box-heading">Project Z</h4>
+					 <small class="text-muted">Vestibulum ante ipsum primis in faucibus orci</small>
+				  </div>
+			   </td>
+			   <td class="wd-sm hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0">Last change</p>
+					 <small class="text-muted">Yesterday at 10:20 pm</small>
+				  </div>
+			   </td>
+			   <td class="wd-xs hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0 text-muted">
+						<em class="icon-users mr fa-lg"></em>15</p>
+				  </div>
+			   </td>
+			   <td class="wd-xs hidden-xs hidden-sm">
+				  <div class="ph">
+					 <p class="m0 text-muted">
+						<em class="icon-doc mr fa-lg"></em>480</p>
+				  </div>
+			   </td>
+			   <td class="wd-sm">
+				  <div class="ph">
+					 <progressbar value="20" type="green" class="m0 progress-xs">20%</progressbar>
+				  </div>
+			   </td>
+			</tr>
+		 </tbody>
+	  </table>
+   </a>
+   <!-- END dashboard main content-->
+</div>
+<!-- END Multiple List group-->

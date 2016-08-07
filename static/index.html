@@ -193,17 +193,31 @@
 					 <span data-localize="sidebar.heading.HEADER">Main Navigation</span>
 				  </li>-->
 				  <li class="dashboard">
-					 <a href="#dashboard" title="Dashboard" data-toggle="collapse" class="toggle-hover">
+					 <a href="#da" title="Dashboard" data-toggle="collapse" class="toggle-hover">
 						<div class="pull-right label label-info">5</div>
-						<em class="icon-speedometer"></em>
-						<span data-localize="sidebar.nav.DASHBOARD">Dashboard</span>
+						<em class="icon-home"></em>
+						<span>Main</span>
 					 </a>
-					 <ul id="dashboard" class="nav sidebar-subnav collapse in">
-						<li class="sidebar-subnav-header">Dashboard</li>
+					 <ul id="da" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Main</li>
 						<li class="dashboard_anonym">
-						   <a href="#dashboard_anonym">
-							  <span>Аноним</span>
+						   <a href="#anonym" data-toggle="collapse">
+							  <em class="fa fa-angle-right"></em>
+							  <span>Anonym</span>
 						   </a>
+						   <ul id="anonym" class="nav sidebar-subnav collapse">
+                              <li class="sidebar-subnav-header">Anonym</li>
+                              <li class="dashboard_anonym">
+                                 <a href="#dashboard_anonym" title="Dashboard">
+                                    <span>Dashboard</span>
+                                 </a>
+                              </li>
+							  <li class=" ">
+                                 <a href="#anonym_money_transfer" title="Money transfer">
+                                    <span>Money transfer</span>
+                                 </a>
+                              </li>
+                           </ul>
 						</li>
 						<li class="dashboard_citizen">
 						   <a href="#dashboard_citizen">
@@ -449,7 +463,7 @@
 	
 			var str = e.target.hash;
 			var page_match = str.match(/#(\w+)/i);
-			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3'  && page_match[1]!='myModal'  ) {
+			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='anonym'  ) {
 				var page = page_match[1];
 				var param_match = str.match(/\/\w+=\w+/gi);
 				var param_obj = {};
