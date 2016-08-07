@@ -5,7 +5,7 @@ import (
 )
 
 
-type dashboardAnonimPage struct {
+type dashboardAnonymPage struct {
 	Lang                  map[string]string
 	Title                 string
 	CountSign             int
@@ -14,9 +14,9 @@ type dashboardAnonimPage struct {
 	ShowSignData          bool
 }
 
-func (c *Controller) DashboardAnonim() (string, error) {
+func (c *Controller) DashboardAnonym() (string, error) {
 
-	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonim", &dashboardAnonimPage{
+	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonym", &dashboardAnonymPage{
 		CountSignArr:          c.CountSignArr,
 		CountSign:             c.CountSign,
 		Lang:                  c.Lang,

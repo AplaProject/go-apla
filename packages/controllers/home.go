@@ -16,7 +16,7 @@ type homePage struct {
 
 func (c *Controller) Home() (string, error) {
 
-	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonim", &homePage{
+	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonym", &homePage{
 		CountSignArr:          c.CountSignArr,
 		CountSign:             c.CountSign,
 		Lang:                  c.Lang,
