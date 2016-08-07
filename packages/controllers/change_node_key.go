@@ -10,7 +10,8 @@ type changeNodeKeyPage struct {
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	UserId       int64
+	WalletId       int64
+	CitizenId       int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
@@ -29,7 +30,8 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		UserId:       c.SessUserId,
+		WalletId:       c.SessWalletId,
+		CitizenId:       c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,

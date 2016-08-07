@@ -50,52 +50,19 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sess.SessionRelease(w)
 
-	sessUserId := GetSessUserId(sess)
+	sessCitizenId := GetSessCitizenId(sess)
+	sessWalletId := GetSessWalletId(sess)
 
-	var key, myPrefix, status string
-	var communityUsers []int64
+	var key string
 	var chatEnabled, analyticsDisabled string
-	if utils.DB != nil && utils.DB.DB != nil {
-		communityUsers, err = utils.DB.GetCommunityUsers()
-		if err != nil {
-			log.Error("%v", err)
-		}
-		if len(communityUsers) > 0 {
-			myPrefix = utils.Int64ToStr(sessUserId) + "_"
-		}
-		status, err = utils.DB.Single("SELECT status FROM " + myPrefix + "my_table").String()
-
-		// чтобы нельзя было зайти по локалке
-		// :: - для маков
-		if ok, _ := regexp.MatchString(`(\:\:)|(127\.0\.0\.1)`, r.RemoteAddr); ok {
-			if status != "waiting_accept_new_key" && status != "waiting_set_new_key" {
-				key, err = utils.DB.Single("SELECT private_key FROM " + myPrefix + "my_keys WHERE block_id = (SELECT max(block_id) FROM " + myPrefix + "my_keys)").String()
-				if err != nil {
-					log.Error("%v", err)
-				}
-			}
-		}
-		chatEnabled, err = utils.DB.Single(`SELECT chat_enabled FROM config`).String()
-		if err != nil {
-			log.Error("%v", err)
-		}
-		analyticsDisabled, err = utils.DB.Single(`SELECT analytics_disabled FROM config`).String()
-		if err != nil {
-			log.Error("%v", err)
-		}
-	}
 
 	showIOSMenu := true
 	// Когда меню не выдаем
 	if utils.DB == nil || utils.DB.DB == nil {
 		showIOSMenu = false
-	} else {
-		if status == "my_pending" || status == "waiting_set_new_key" || status == "waiting_accept_new_key" {
-			showIOSMenu = false
-		}
 	}
 
-	if sessUserId == 0 {
+	if sessCitizenId == 0 && sessWalletId == 0 {
 		showIOSMenu = false
 	}
 

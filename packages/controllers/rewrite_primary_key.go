@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -12,9 +11,7 @@ type rewritePrimaryKeyPage struct {
 
 func (c *Controller) RewritePrimaryKey() (string, error) {
 
-	if !c.NodeAdmin || c.SessRestricted != 0 {
-		return "", utils.ErrInfo(errors.New("Permission denied"))
-	}
+
 
 	TemplateStr, err := makeTemplate("rewrite_primary_key", "rewritePrimaryKey", &rewritePrimaryKeyPage{
 		Alert: c.Alert,

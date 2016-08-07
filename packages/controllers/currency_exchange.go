@@ -112,14 +112,14 @@ func (c *Controller) CurrencyExchange() (string, error) {
 			WHERE user_id =  ? AND
 						 empty_block_id = 0 AND
 						 del_block_id = 0
-						 `, 100, c.SessUserId)
+						 `, 100, c.SessCitizenId)
 
 	rows, err := c.Query(c.FormatQuery(`
 			SELECT amount, currency_id, last_update
-			FROM wallets
+			FROM accounts
 			WHERE user_id = ? AND
 						currency_id IN (?, ?)
-			`), c.SessUserId, sellCurrencyId, buyCurrencyId)
+			`), c.SessCitizenId, sellCurrencyId, buyCurrencyId)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -132,13 +132,13 @@ func (c *Controller) CurrencyExchange() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		profit, err := c.CalcProfitGen(currency_id, amount, c.SessUserId, last_update, timeNow, "wallet")
+		profit, err := c.CalcProfitGen(currency_id, amount, c.SessCitizenId, last_update, timeNow, "wallet")
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		amount += profit
 		amount = utils.Round(amount, 2)
-		forex_orders_amount, err := c.Single("SELECT sum(amount) FROM forex_orders WHERE user_id = ? AND sell_currency_id = ? AND del_block_id = 0", c.SessUserId, currency_id).Float64()
+		forex_orders_amount, err := c.Single("SELECT sum(amount) FROM forex_orders WHERE user_id = ? AND sell_currency_id = ? AND del_block_id = 0", c.SessCitizenId, currency_id).Float64()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -169,7 +169,7 @@ func (c *Controller) CurrencyExchange() (string, error) {
 		SellOrders:           sellOrders,
 		BuyOrders:            buyOrders,
 		MyOrders:             myOrders,
-		UserId:               c.SessUserId,
+		UserId:               c.SessCitizenId,
 		TxType:               txType,
 		TxTypeId:             txTypeId,
 		SignData:             ""})

@@ -33,6 +33,20 @@
    <!-- =============== APP STYLES ===============-->
    <link rel="stylesheet" href="static/css/app.css" id="maincss">
    <link rel="stylesheet" href="static/css/style.css" id="stylecss">
+
+
+
+	<script language="JavaScript" type="text/javascript" src="static/js/md5.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/jsbn.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/jsbn2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsa.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsa2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/sha1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/sha256.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/base64.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsapem-1.1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsasign-1.2.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/asn1hex-1.1.min.js"></script>
 </head>
 
 <body class="layout-fixed">
@@ -201,7 +215,7 @@
 					 <ul id="dashboard" class="nav sidebar-subnav collapse in">
 						<li class="sidebar-subnav-header">Dashboard</li>
 						<li class="dashboard_anonym">
-						   <a href="#dashboard_anonym">
+						   <a href="#" onclick="dl_navigate0('dashboardAnonim')">
 							  <span>Аноним</span>
 						   </a>
 						</li>
@@ -563,6 +577,31 @@
 		} );
 	
 		window.addEventListener("hashchange", dlNavHash);
+
+
+		function dl_navigate0 (page, parameters) {
+
+			var json = JSON.stringify(parameters);
+
+			$('#loader').spin();
+			$.post("content?page="+page, { tpl_name: page, parameters: json },
+					function(data) {
+						$("#loader").spin(false);
+						//console.log('$("#loader").spin(false)');
+						$('#dl_content').html( data );
+						if ( parameters && parameters.hasOwnProperty("lang")) {
+							if ( page[0] == 'E' )
+								load_emenu();
+							else
+								load_menu();
+						}
+						window.scrollTo(0,0);
+						if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
+							$('.sidebar-collapse').collapse('toggle');
+						}
+					}, "html");
+
+		}
 	</script>
 </body>
 
