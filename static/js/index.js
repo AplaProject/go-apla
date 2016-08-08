@@ -1,3 +1,17 @@
+function Demo() {
+	var id = $("#demo");
+	var val = id.val();
+	if (val == 0) {
+		id.prev().html("Stop Demo");
+		id.val(1);
+		$("body").addClass("demoMode");
+	} else {
+		id.prev().html("Demo Mode");
+		id.val(0);
+		$("body").removeClass("demoMode");
+	}
+}
+
 function dl_navigate (page, parameters) {
     var json = JSON.stringify(parameters);
     //$('#loader').spin();
