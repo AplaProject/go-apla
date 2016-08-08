@@ -1,0 +1,48 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('.filestyle').filestyle();
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">New shares</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-heading">Money transfer</div>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Select you company</label>
+		  <select id="select2-1" class="form-control">
+			 <option value="">Company 1</option>
+			 <option value="">Company 2</option>
+			 <option value="">Company 3</option>
+			 <option value="">Company 4</option>
+			 <option value="">Company 5</option>
+		  </select>
+	   </div>
+	   <div class="form-group">
+		  <label>Amount shares</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Shares privileges</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Index for stock-exchange</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <button type="button" class="btn btn-info">Next</button>
+	</form>
+ </div>
+</div>
+<!-- END panel-->
