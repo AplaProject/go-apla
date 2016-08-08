@@ -4,6 +4,9 @@
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
 	
+	$('#select2-1').select2({
+		theme: 'bootstrap'
+	});
 	$('.filestyle').filestyle();
 </script>
 
@@ -16,7 +19,6 @@
 </ol>
 <!-- START panel-->
 <div class="panel panel-default">
- <div class="panel-heading">Money transfer</div>
  <div class="panel-body">
 	<form role="form">
 	   <div class="form-group">
@@ -33,10 +35,58 @@
 		  <label>Amount shares</label>
 		  <input type="text" class="form-control">
 	   </div>
-	   <div class="form-group">
-		  <label>Shares privileges</label>
-		  <input type="text" class="form-control">
-	   </div>
+	   <legend>Stakes</legend>
+	   <fieldset>
+		   <div class="form-group form-horizontal">
+			  <div class="row">
+				  <div class="col-sm-1">
+					  <label class="control-label">UserId</label>
+				  </div>
+				  <div class="col-sm-3">
+					  <input type="text" class="form-control">
+				  </div>
+				  <div class="col-sm-1">
+					  <label class="control-label">Shares</label>
+				  </div>
+				  <div class="col-sm-3">
+					  <input type="text" class="form-control">
+				  </div>
+				  <div class="col-sm-1">
+					  <label class="control-label">privileges</label>
+				  </div>
+				  <div class="col-sm-3">
+					  <input type="text" class="form-control">
+				  </div>
+			  </div>
+		   </div>
+	   </fieldset>
+	   <fieldset>
+		   <div class="form-group form-horizontal">
+			  <div class="row">
+				  <div class="col-sm-1">
+					  <label class="control-label">UserId</label>
+				  </div>
+				  <div class="col-sm-3">
+					  <input type="text" class="form-control">
+				  </div>
+				  <div class="col-sm-1">
+					  <label class="control-label">Shares</label>
+				  </div>
+				  <div class="col-sm-3">
+					  <input type="text" class="form-control">
+				  </div>
+				  <div class="col-sm-1">
+					  <label class="control-label">privileges</label>
+				  </div>
+				  <div class="col-sm-3">
+					  <input type="text" class="form-control">
+				  </div>
+			  </div>
+		   </div>
+	   </fieldset>
+	   <fieldset>
+		   <button type="button" class="btn btn-primary btn-xs">Add user</button>
+	   </fieldset>
 	   <div class="form-group">
 		  <label>Index for stock-exchange</label>
 		  <input type="text" class="form-control">
