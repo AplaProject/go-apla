@@ -73,9 +73,9 @@ Dropped 52 nodes (cum <= 0.02s)
          0     0% 93.42%      0.02s  0.63%  database/sql.(*Rows).Close
          0     0% 93.42%      1.28s 40.13%  database/sql.(*Rows).Next
          0     0% 93.42%      0.02s  0.63%  fmt.Sprintf
-         0     0% 93.42%      0.46s 14.42%  github.com/democratic-coin/dcoin-go/packages/dcparser.(*Parser).CalcProfit_
-         0     0% 93.42%      0.02s  0.63%  github.com/democratic-coin/dcoin-go/packages/dcparser.(*Parser).ErrInfo
-         0     0% 93.42%      0.46s 14.42%  github.com/democratic-coin/dcoin-go/packages/dcparser.(*Parser).calcProfit_
+         0     0% 93.42%      0.46s 14.42%  github.com/democratic-coin/dcoin-go/packages/parser.(*Parser).CalcProfit_
+         0     0% 93.42%      0.02s  0.63%  github.com/democratic-coin/dcoin-go/packages/parser.(*Parser).ErrInfo
+         0     0% 93.42%      0.46s 14.42%  github.com/democratic-coin/dcoin-go/packages/parser.(*Parser).calcProfit_
          0     0% 93.42%      2.67s 83.70%  github.com/democratic-coin/dcoin-go/packages/tests/calcprofitgen.BenchmarkCalcProfit
          0     0% 93.42%      0.25s  7.84%  github.com/democratic-coin/dcoin-go/packages/utils.(*DCDB).GetAll
          0     0% 93.42%      0.25s  7.84%  github.com/democratic-coin/dcoin-go/packages/utils.(*DCDB).OneRow

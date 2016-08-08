@@ -8,10 +8,9 @@
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
 
 	$('#next').bind('click', function () {
-		$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},{{.WalletId}},'+$('#walletAddress').val());
-
+		$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},{{.WalletId}},'+$('#walletAddress').val()+','+$('#amount').val()+','+$('#commission').val()+','+$('#comment').val());
 		doSign();
-		{{if .ShowSignData}}$("#send_to_net").trigger("click");{{end}}
+		$("#send_to_net").trigger("click");
 	} );
 
 	$('#send_to_net').bind('click', function () {
@@ -19,7 +18,12 @@
 		$.post( 'ajax?controllerName=saveQueue', {
 			'type' : '{{.TxType}}',
 			'time' : '{{.TimeNow}}',
+			'walletId' : '{{.WalletId}}',
+			'citizenId' : '{{.CitizenId}}',
 			'walletAddress' : $('#walletAddress').val(),
+			'amount' : $('#amount').val(),
+			'commission' : $('#commission').val(),
+			'comment' : $('#comment').val(),
 			'signature1': $('#signature1').val(),
 			'signature2': $('#signature2').val(),
 			'signature3': $('#signature3').val()
@@ -43,8 +47,14 @@
  <div class="panel-body">
 	<form role="form">
 	   <div class="form-group">
-		  <label>Wallet address</label>
-		  <input type="text" placeholder="Enter wallet address" class="form-control" id="walletAddress">
+		   <label>Wallet address</label>
+		   <input type="text" placeholder="Enter wallet address" class="form-control" id="walletAddress">
+		   <label>Amount</label>
+		   <input type="text" placeholder="Enter Amount" class="form-control" id="amount">
+		   <label>Comment</label>
+		   <input type="text" placeholder="Enter Comment" class="form-control" id="comment">
+		   <label>Commission</label>
+		   <input type="text" placeholder="0.01" class="form-control" id="commission" value="0.01" disabled="" placeholder="Disabled">
 	   </div>
 	   <button type="button" class="btn btn-green" id="next">Send</button>
 	</form>

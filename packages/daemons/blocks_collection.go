@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	_ "github.com/lib/pq"
@@ -113,7 +113,7 @@ BEGIN:
 
 
 
-		parser := new(dcparser.Parser)
+		parser := new(parser.Parser)
 		parser.DCDB = d.DCDB
 		parser.GoroutineName = GoroutineName
 		if currentBlockId == 0 || *utils.StartBlockId > 0 {

@@ -6,7 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"regexp"
 )
@@ -256,7 +256,7 @@ BEGIN:
 				}
 				continue BEGIN
 			}
-			p := new(dcparser.Parser)
+			p := new(parser.Parser)
 			p.DCDB = d.DCDB
 			p.BinaryData = binaryData
 			p.ParseDataLite()

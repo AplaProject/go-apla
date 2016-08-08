@@ -1,4 +1,4 @@
-package dcparser
+package parser
 
 import (
 	"database/sql"
@@ -711,7 +711,8 @@ func (p *Parser) CheckBlockHeader() error {
 			return utils.ErrInfo(err)
 		}
 	}
-	log.Debug("PrevBlock", p.PrevBlock)
+	log.Debug("PrevBlock.BlockId: %v / PrevBlock.Time: %v / PrevBlock.WalletId: %v / PrevBlock.CBID: %v / PrevBlock.Sign: %v", p.PrevBlock.BlockId, p.PrevBlock.Time, p.PrevBlock.WalletId, p.PrevBlock.CBID, p.PrevBlock.Sign)
+
 	log.Debug("p.PrevBlock.BlockId", p.PrevBlock.BlockId)
 	// для локальных тестов
 	if p.PrevBlock.BlockId == 1 {
@@ -746,7 +747,7 @@ func (p *Parser) CheckBlockHeader() error {
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	if !first {
 		if p.PrevBlock.Time+consts.GAPS_BETWEEN_BLOCKS+p.BlockData.Time > consts.ERROR_TIME {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, consts.GAPS_BETWEEN_BLOCKS,  p.BlockData.Time, p.Variables.Int64["error_time"]))
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, consts.GAPS_BETWEEN_BLOCKS,  p.BlockData.Time, consts.ERROR_TIME))
 		}
 	}
 
@@ -3212,37 +3213,38 @@ func (p *Parser) RollbackIncompatibleTx(typesArr []string) error {
 	return nil
 }
 
-func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string, int64, int64, int64, int64) {
+func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string, int64, int64, int64, int64, int64) {
 
 	var fatalError, waitError string
 	var toUserId int64
 
 	// получим тип тр-ии и юзера
-	txType, userId, thirdVar := utils.GetTxTypeAndUserId(binaryTx)
+	txType, walletId, citizenId, thirdVar := utils.GetTxTypeAndUserId(binaryTx)
 
 	if !utils.CheckInputData(txType, "int") {
 		fatalError = "error type"
 	}
-	if !utils.CheckInputData(userId, "int") {
-		fatalError = "error userId"
+	if !utils.CheckInputData(walletId, "int") {
+		fatalError = "error walletId"
+	}
+	if !utils.CheckInputData(citizenId, "int") {
+		fatalError = "error citizenId"
 	}
 	if !utils.CheckInputData(thirdVar, "int") {
 		fatalError = "error thirdVar"
 	}
 
-	if txType == utils.TypeInt("CashRequestOut") {
-		toUserId = thirdVar
-	}
+
 	var forSelfUse int64
 	if utils.InSliceInt64(txType, utils.TypesToIds([]string{"NewPct", "NewReduction", "NewMaxPromisedAmounts", "NewMaxOtherCurrencies"})) {
 		//  чтобы никому не слать эту тр-ю
 		forSelfUse = 1
-		// $my_tx == true - это значит функция вызвана из pct_generator.php/reduction_generator.php
+		// $my_tx == true - это значит функция вызвана из pct_generator reduction_generator
 		// если же false, то она была спаршена query_tx или tesblock_generator и имела verified=0
 		// а т.к. new_pct/NewReduction актуальны только 1 блок, то нужно её удалять
 		if !myTx {
 			fatalError = "old new_pct/NewReduction/NewMaxPromisedAmounts/NewMaxOtherCurrencies"
-			return fatalError, waitError, forSelfUse, txType, userId, toUserId
+			return fatalError, waitError, forSelfUse, txType, walletId, citizenId, toUserId
 		}
 	} else {
 		forSelfUse = 0
@@ -3251,262 +3253,20 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 	// две тр-ии одного типа от одного юзера не должны попасть в один блок
 	// исключение - перевод DC между юзерами
 	if len(fatalError) == 0 {
-		p.ClearIncompatibleTxSql(txType, userId, &waitError)
+		p.ClearIncompatibleTxSql(txType, walletId, citizenId, &waitError)
 
-		// если новая тр-ия - это запрос на удаление или изменение обещанной суммы, то нужно проверить
-		// нет ли запросов на получение обещанных сумм к данному юзеру
-		// а также, нужно проверить, нет ли от данного юзера тр-ии cash_request_in
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"DelPromisedAmount", "ChangePromisedAmount"})) {
-			num, err := p.Single(`
-						SELECT count(*)
-			          	FROM (
-				            SELECT user_id
-				            FROM transactions
-				            WHERE (
-				                             third_var = ? AND
-					                         verified=1 AND
-					                         used = 0
-					                      )
-				                          OR (
-					                          type = ? AND
-					                          user_id = ?
-				                         )
-							UNION
-							SELECT user_id
-							FROM transactions_candidate_block
-							WHERE (
-											 third_var = ?
-										) OR (
-					                         type = ? AND
-					                         user_id = ?
-										)
-						)  AS x
-						`, userId, utils.TypeInt("CashRequestIn"), userId, userId, utils.TypeInt("CashRequestIn"), userId).Int64()
-			if err != nil {
-				fatalError = fmt.Sprintf("%s", err)
-			}
-			if num > 0 {
-				fatalError = "thirdVar = " + utils.Int64ToStr(userId)
-			}
-		}
-
-		// если новая тр-ия - это запрос на получение наличных, то нужно проверить
-		// нет ли у получающего юзера запросов на удаление или изменение обещанных сумм
-		if txType == utils.TypeInt("CashRequestOut") {
-			txData, err := p.Single(`
-					  SELECT data
-			            FROM (
-				            SELECT data
-				            FROM transactions
-				            WHERE type IN (?, ?) AND
-				                         user_id = ? AND
-				                         verified=1 AND
-				                         used = 0
-							UNION
-							SELECT data
-							FROM transactions_candidate_block
-							WHERE type IN (?, ?) AND
-										 user_id = ?
-						)  AS x
-					 `, utils.TypeInt("DelPromisedAmount"), utils.TypeInt("ChangePromisedAmount"), toUserId, utils.TypeInt("DelPromisedAmount"), utils.TypeInt("ChangePromisedAmount"), toUserId).String()
-			if err != nil {
-				fatalError = fmt.Sprintf("%s", err)
-			}
-			if len(txData) > 0 {
-				// откатим фронтальные записи
-				p.BinaryData = utils.EncodeLengthPlusData([]byte(txData))
-				p.ParseDataRollback()
-				// Удаляем именно уже записанную тр-ию. При этом новая (CashRequestOut) тр-ия успешно обработается
-				utils.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(utils.Md5(txData)))
-				affect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE hex(hash) = ?", utils.Md5(txData))
-				if err != nil {
-					utils.WriteSelectiveLog(err)
-					fatalError = fmt.Sprintf("%s", err)
-				}
-				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-				/*
-					 * создает проблемы для tesblock_is_ready
-					err = p.ExecSql("DELETE FROM transactions_candidate_block WHERE hex(hash) = ?md5(?tx_data)?")
-					if err != nil {
-						p.PrintSleep(err, 60)
-						continue BEGIN
-					}
-				*/
-			}
-		}
-
-		// если новая тр-ия - это запрос на получение банкнот, то нужно проверить
-		// нет ли у отправителя запроса на отправку DC, т.к. после списания может не остаться средств
-		if txType == utils.TypeInt("CashRequestOut") {
-			p.ClearIncompatibleTxSqlSet([]string{"SendDc", "NewForexOrder", "CfSendDc", "AutoPayment"}, userId, &waitError, "")
-		}
-		// и наоборот
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"SendDc", "NewForexOrder", "CfSendDc", "AutoPayment"})) {
-			p.ClearIncompatibleTxSqlSet([]string{"CashRequestOut"}, userId, &waitError, "")
-		}
-
-		// на всякий случай не даем попасть в один блок holidays и тр-им, где holidays используются
-		if txType == utils.TypeInt("NewHolidays") {
-			p.ClearIncompatibleTxSql("Mining", userId, &waitError)
-		}
-		if txType == utils.TypeInt("Mining") {
-			p.ClearIncompatibleTxSql("NewHolidays", userId, &waitError)
-		}
-
-		if txType == utils.TypeInt("NewHolidays") {
-			p.ClearIncompatibleTxSql("CashRequestIn", userId, &waitError)
-		}
-		if txType == utils.TypeInt("CashRequestIn") {
-			p.ClearIncompatibleTxSql("NewHolidays", userId, &waitError)
-		}
-
-		if txType == utils.TypeInt("CashRequestOut") {
-			p.ClearIncompatibleTxSql("NewHolidays", toUserId, &waitError)
-		}
-
-		// не должно попадать в одни блок NewMinerUpdate и NewMiner
-		if txType == utils.TypeInt("NewMiner") {
-			p.ClearIncompatibleTxSql("NewMinerUpdate", userId, &waitError)
-		}
-		if txType == utils.TypeInt("NewMinerUpdate") {
-			p.ClearIncompatibleTxSql("NewMiner", userId, &waitError)
-		}
-
-		// не должно попадать в один блок смена нодовского ключа и тр-ии которые этим ключем подписываются
-		if txType == utils.TypeInt("ChangeNodeKey") || txType == utils.TypeInt("NewMiner") {
-			p.ClearIncompatibleTxSql("NewMinerUpdate", userId, &waitError)
-		}
-		if txType == utils.TypeInt("ChangeNodeKey") || txType == utils.TypeInt("NewMiner") {
-			p.ClearIncompatibleTxSql("NewPct", userId, &waitError)
-		}
-		if txType == utils.TypeInt("NewMinerUpdate") {
-			p.ClearIncompatibleTxSqlSet([]string{"ChangeNodeKey", "NewMiner", "VotesNodeNewMiner"}, userId, &waitError, "")
-		}
-		if txType == utils.TypeInt("NewPct") {
-			p.ClearIncompatibleTxSqlSet([]string{"ChangeNodeKey", "NewMiner"}, userId, &waitError, "")
-		}
-		if txType == utils.TypeInt("ChangeNodeKey") || txType == utils.TypeInt("NewMiner") {
-			p.ClearIncompatibleTxSql("NewReduction", userId, &waitError)
-		}
-
-		// восстановление ключа
-		if txType == utils.TypeInt("ChangeKeyRequest") {
-			p.ClearIncompatibleTxSqlSet([]string{"ChangeKeyActive"}, thirdVar, &waitError, "")
-		}
-		if txType == utils.TypeInt("ChangeKeyActive") {
-			p.ClearIncompatibleTxSqlSet([]string{"ChangeKeyRequest"}, 0, &waitError, userId)
-		}
-
-		// нельзя удалить/изменить обещанную сумму и затем создать запрос на её майнинг
-		if txType == utils.TypeInt("Mining") {
-			p.ClearIncompatibleTxSqlSet([]string{"DelPromisedAmount", "ChangePromisedAmount"}, userId, &waitError, "")
-		}
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"DelPromisedAmount", "ChangePromisedAmount"})) {
-			p.ClearIncompatibleTxSql("Mining", userId, &waitError)
-		}
-		// в 1 блоке только 1 майнинг от юзера
-		if txType == utils.TypeInt("Mining") {
-			p.ClearIncompatibleTxSql("Mining", userId, &waitError)
-		}
-		if txType == utils.TypeInt("Mining") {
-			p.ClearIncompatibleTxSql("AdminBanMiners", 0, &waitError)
-		}
-
-		if txType == utils.TypeInt("CashRequestOut") {
-			p.ClearIncompatibleTxSql("AdminBanMiners", 0, &waitError)
-		}
-		if txType == utils.TypeInt("NewPromisedAmount") {
-			p.ClearIncompatibleTxSql("AdminBanMiners", 0, &waitError)
-		}
-
-		if txType == utils.TypeInt("AdminBanMiners") {
-			p.RollbackIncompatibleTx([]string{"CashRequestOut", "change_host", "NewPromisedAmount", "ChangeNodeKey", "NewPct", "Mining", "VotesMiner", "VotesNodeNewMiner", "VotesPromisedAmount", "Abuses", "NewPromisedAmount", "VotesComplex"})
-		}
-
-		if txType == utils.TypeInt("VotesMiner") {
-			p.ClearIncompatibleTxSqlSet([]string{"AdminBanMiners"}, 0, &waitError, "")
-		}
-		if txType == utils.TypeInt("VotesComplex") {
-			p.ClearIncompatibleTxSqlSet([]string{"AdminBanMiners"}, 0, &waitError, "")
-		}
-		if txType == utils.TypeInt("Abuses") { // AdminBanMiners преоритетнее, abuses надо вытеснять
-			p.ClearIncompatibleTxSqlSet([]string{"AdminBanMiners"}, 0, &waitError, "") // дополнить
-		}
-		if txType == utils.TypeInt("VotesNodeNewMiner") {
-			p.ClearIncompatibleTxSqlSet([]string{"AdminBanMiners", "NewMinerUpdate"}, 0, &waitError, "")
-		}
-		if txType == utils.TypeInt("VotesPromisedAmount") {
-			p.ClearIncompatibleTxSqlSet([]string{"AdminBanMiners"}, 0, &waitError, "")
-		}
-
-		// нельзя голосовать за обещанную сумму юзера $promised_amount_user_id, если он меняет свое местоположение, т.к. сменится статус
-		if txType == utils.TypeInt("VotesPromisedAmount") {
-			promisedAmountUserId, err := p.Single("SELECT user_id FROM promised_amount WHERE id  =  ?", thirdVar).Int64()
-			if err != nil {
-				fatalError = fmt.Sprintf("%s", err)
-			}
-			if promisedAmountUserId > 0 {
-				p.ClearIncompatibleTxSqlSet([]string{"ChangeGeolocation"}, promisedAmountUserId, &waitError, "")
-			}
-		}
-
-		// нельзя менять местоположение, если кто-то отдал голос за мою обещанную сумму
-		if txType == utils.TypeInt("ChangeGeolocation") {
-			promisedAmountIds_, err := p.GetList("SELECT id FROM promised_amount WHERE user_id  = ?", userId).String()
-			if err != nil {
-				fatalError = fmt.Sprintf("%s", err)
-			}
-			promisedAmountIds := strings.Join(promisedAmountIds_, ",")
-			if len(promisedAmountIds) > 0 {
-				num, err := p.Single(`
-							SELECT count(*)
-						     FROM (
-						        SELECT user_id
-						        FROM transactions
-						        WHERE  (
-						                        type = ? AND third_var IN (`+promisedAmountIds+`)
-						                      ) AND
-						                     verified=1 AND
-						                     used = 0
-								UNION
-								SELECT user_id
-								FROM transactions_candidate_block
-								WHERE  (
-						                        type = ? AND third_var IN (`+promisedAmountIds+`)
-						                      )
-							)  AS x
-							`, utils.TypeInt("VotesPromisedAmount"), utils.TypeInt("VotesPromisedAmount")).Int64()
-				if err != nil {
-					fatalError = fmt.Sprintf("%s", err)
-				}
-				if num > 0 {
-					waitError = fmt.Sprintf("%s", err)
-				}
-			}
-		}
 
 		// нельзя удалять CF-проект и в этом же блоке изменить его описание/профинансировать
 		if txType == utils.TypeInt("DelCfProject") {
-			p.ClearIncompatibleTxSqlSet([]string{"CfComment", "CfSendDc", "CfProjectChangeCategory", "CfProjectData"}, 0, &waitError, thirdVar)
+			p.ClearIncompatibleTxSqlSet([]string{"CfSendDc"}, 0, 0, &waitError, thirdVar)
 		}
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"CfComment", "CfSendDc", "CfProjectChangeCategory", "CfProjectData"})) {
-			p.ClearIncompatibleTxSqlSet([]string{"DelCfProject"}, 0, &waitError, thirdVar)
+		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"CfSendDc"})) {
+			p.ClearIncompatibleTxSqlSet([]string{"DelCfProject"}, 0, 0, &waitError, thirdVar)
 		}
 
 		// потом нужно сделать более тонко. но пока так. Если есть удаление проекта, тогда откатываем все тр-ии del_cf_funding
 		if txType == utils.TypeInt("DelCfProject") {
 			p.RollbackIncompatibleTx([]string{"DelCfFunding"})
-		}
-		// потом нужно сделать более тонко. но пока так. Если есть del_cf_funding, тогда откатываем все тр-ии удаления проектов
-		if txType == utils.TypeInt("DelCfFunding") {
-			p.RollbackIncompatibleTx([]string{"DelCfProject"})
-		}
-		// потом нужно сделать более тонко. но пока так. Если есть смена комиссии, то нельзя отправлять тр-ии, где указана комиссия
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"CfSendDc", "SendDc", "NewForexOrder", "AutoPayment"})) {
-			p.RollbackIncompatibleTx([]string{"ChangeCommission"})
-		}
-		if txType == utils.TypeInt("ChangeCommission") {
-			p.ClearIncompatibleTxSqlSet([]string{"CfSendDc", "SendDc", "NewForexOrder", "AutoPayment"}, 0, &waitError, "")
 		}
 
 		// Если есть смена коммиссий арбитров, то нельзя делать перевод монет, т.к. там может быть указана комиссия арбитра
@@ -3514,41 +3274,16 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 			p.RollbackIncompatibleTx([]string{"ChangeArbitratorConditions"})
 		}
 		if txType == utils.TypeInt("ChangeArbitratorConditions") {
-			p.ClearIncompatibleTxSqlSet([]string{"SendDc"}, 0, &waitError, "")
-		}
-		// если идет смена списка арбитров, то у отправителя и у получателя может получиться нестыковка
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"SendDc"})) {
-			p.RollbackIncompatibleTx([]string{"ChangeArbitratorList"})
-		}
-		if txType == utils.TypeInt("ChangeArbitratorList") {
-			p.ClearIncompatibleTxSqlSet([]string{"SendDc"}, 0, &waitError, "")
-		}
-		// на всякий случай не даем попасть в один блок тр-ии отправки в CF-проект монет и другим тр-ям связанным с этим CF-проектом. Т.к. проект может завершиться и 2-я тр-я вызовет ошибку
-		if txType == utils.TypeInt("CfSendDc") {
-			p.ClearIncompatibleTxSqlSet([]string{"CfSendDc", "CfComment", "DelCfProject", "CfProjectChangeCategory", "CfProjectData"}, 0, &waitError, thirdVar)
-		}
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"CfSendDc", "CfComment", "DelCfProject", "CfProjectChangeCategory", "CfProjectData"})) {
-			p.ClearIncompatibleTxSqlSet([]string{"CfSendDc"}, 0, &waitError, thirdVar)
+			p.ClearIncompatibleTxSqlSet([]string{"SendDc"}, 0, 0, &waitError, "")
 		}
 
-		// нельзя удалять promised_amount и голосовать за него
-		if txType == utils.TypeInt("DelPromisedAmount") {
-			p.ClearIncompatibleTxSqlSet([]string{"VotesPromisedAmount"}, 0, &waitError, thirdVar)
+
+		// на всякий случай не даем попасть в один блок тр-ии отправки в CF-проект монет и другим тр-ям связанным с этим CF-проектом. Т.к. проект может завершиться и 2-я тр-я вызовет ошибку
+		if txType == utils.TypeInt("CfSendDc") {
+			p.ClearIncompatibleTxSqlSet([]string{"DelCfProject"}, 0, 0, &waitError, thirdVar)
 		}
-		if txType == utils.TypeInt("VotesPromisedAmount") {
-			p.ClearIncompatibleTxSqlSet([]string{"DelPromisedAmount"}, 0, &waitError, thirdVar)
-		}
-		if txType == utils.TypeInt("NewMaxPromisedAmounts") {
-			p.ClearIncompatibleTxSqlSet([]string{"NewMaxPromisedAmounts"}, 0, &waitError, thirdVar)
-		}
-		if txType == utils.TypeInt("NewMaxOtherCurrencies") {
-			p.ClearIncompatibleTxSqlSet([]string{"NewMaxOtherCurrencies"}, 0, &waitError, thirdVar)
-		}
-		if txType == utils.TypeInt("NewPct") {
-			p.ClearIncompatibleTxSqlSet([]string{"NewPct"}, 0, &waitError, thirdVar)
-		}
-		if txType == utils.TypeInt("NewReductions") {
-			p.ClearIncompatibleTxSqlSet([]string{"NewReductions"}, 0, &waitError, thirdVar)
+		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"DelCfProject"})) {
+			p.ClearIncompatibleTxSqlSet([]string{"CfSendDc"}, 0, 0, &waitError, thirdVar)
 		}
 
 		// в один блок должен попасть только один голос за один объект голосования. thirdVar - объект голосования
@@ -3556,14 +3291,14 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 			num, err := p.Single(`
 			  			  SELECT count(*)
 				            FROM (
-					            SELECT user_id
+					            SELECT citizen_id
 					            FROM transactions
 					            WHERE  type IN (?, ?, ?, ?) AND
 					                          third_var = ? AND
 					                          verified=1 AND
 					                          used = 0
 								UNION
-								SELECT user_id
+								SELECT citizen_id
 								FROM transactions_candidate_block
 								WHERE type IN (?, ?, ?, ?) AND
 					                          third_var = ?
@@ -3577,70 +3312,22 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 			}
 		}
 
-		// если новая тр-ия - это запрос, в котором юзер отдает наличные (CashRequestIn)
-		// то нужно проверить, не хочет ли юзер удалить или изменить одну из обещанных сумм
-		if txType == utils.TypeInt("CashRequestIn") {
-			txData, err := p.Single(`
-					  SELECT *
-			            FROM (
-				            SELECT data
-				            FROM transactions
-				            WHERE type IN (?, ?) AND
-				                         user_id = ? AND
-				                         verified=1 AND
-				                         used = 0
-							UNION
-							SELECT data
-							FROM transactions_candidate_block
-							WHERE type IN (?, ?) AND
-										 user_id = ?
-						)  AS x
-						`, utils.TypeInt("DelPromisedAmount"), utils.TypeInt("ChangePromisedAmount"), userId, utils.TypeInt("DelPromisedAmount"), utils.TypeInt("ChangePromisedAmount"), userId).String()
-			if err != nil {
-				fatalError = fmt.Sprintf("%s", err)
-			}
-			if len(txData) > 0 {
-				// откатим фронтальные записи
-				p.BinaryData = utils.EncodeLengthPlusData([]byte(txData))
-				err = p.ParseDataRollback()
-				if err != nil {
-					fatalError = fmt.Sprintf("%s", err)
-				}
-				// Удаляем именно уже записанную тр-ию. При этом новая (CashRequestIn) тр-ия успешно обработается
-				utils.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(utils.Md5(txData)))
-				affect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE hex(hash) = ?", utils.Md5(txData))
-				if err != nil {
-					utils.WriteSelectiveLog(err)
-					fatalError = fmt.Sprintf("%s", err)
-				}
-				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-				/*
-					 * создает проблемы для tesblock_is_ready
-					err = p.ExecSql("DELETE FROM transactions_candidate_block WHERE hex(hash) = ?", Md5(txData))
-					if err != nil {
-						p.PrintSleep(err, 60)
-						continue BEGIN
-					}
-				*/
-			}
-		}
-
 		// если новая тр-я - это смена праймари ключа, то не должно быть никаких других тр-ий от этого юзера
 		if txType == utils.TypeInt("ChangePrimaryKey") {
 			num, err := p.Single(`
 						  SELECT count(*)
 				            FROM (
-					            SELECT user_id
+					            SELECT citizen_id
 					            FROM transactions
 					            WHERE  user_id = ? AND
 					                         verified=1 AND
 					                         used = 0
 								UNION
-								SELECT user_id
+								SELECT citizen_id
 								FROM transactions_candidate_block
 								WHERE user_id = ?
 							)  AS x
-							`, userId, userId).Int64()
+							`, citizenId, citizenId).Int64()
 			if err != nil {
 				fatalError = fmt.Sprintf("%s", err)
 			}
@@ -3649,52 +3336,29 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 			}
 		}
 
-		// если новая тр-я - это смена праймари ключа, то не должно быть никаких других тр-ий от юзера, которому меняем ключ"
-		if txType == utils.TypeInt("AdminChangePrimaryKey") {
-			num, err := p.Single(`
-						  SELECT count(*)
-				            FROM (
-					            SELECT user_id
-					            FROM transactions
-					            WHERE  user_id = ? AND
-					                         verified=1 AND
-					                         used = 0
-								UNION
-								SELECT user_id
-								FROM transactions_candidate_block
-								WHERE user_id = ?
-							)  AS x
-							`, thirdVar, thirdVar).Int64()
-			if err != nil {
-				fatalError = fmt.Sprintf("%s", err)
-			}
-			if num > 0 {
-				waitError = "there are other tr-s"
-			}
-		}
 		// любая тр-я от юзера не должна проходить, если уже есть тр-я со сменой праймари ключа или new_pct или NewReduction
 		num, err := p.Single(`
 						SELECT count(*)
 				          FROM (
-					            SELECT user_id
+					            SELECT citizen_id
 					            FROM transactions
 					            WHERE  (
-						                            (type = ? AND user_id = ?)
+						                            (type = ? AND citizen_id = ?)
 						                            OR
 						                            (type IN (?, ?) )
 					                          ) AND
 					                         verified=1 AND
 					                         used = 0
 								UNION
-								SELECT user_id
+								SELECT citizen_id
 								FROM transactions_candidate_block
 								WHERE  (
-						                            (type = ? AND user_id = ?)
+						                            (type = ? AND citizen_id = ?)
 						                            OR
 						                            (type IN (?, ?) )
 					                          )
 						)  AS x
-						`, utils.TypeInt("ChangePrimaryKey"), userId, utils.TypeInt("NewPct"), utils.TypeInt("NewReduction"), utils.TypeInt("ChangePrimaryKey"), userId, utils.TypeInt("NewPct"), utils.TypeInt("NewReduction")).Int64()
+						`, utils.TypeInt("ChangePrimaryKey"), citizenId, utils.TypeInt("NewPct"), utils.TypeInt("NewReduction"), utils.TypeInt("ChangePrimaryKey"), citizenId, utils.TypeInt("NewPct"), utils.TypeInt("NewReduction")).Int64()
 		if err != nil {
 			fatalError = fmt.Sprintf("%s", err)
 		}
@@ -3702,31 +3366,22 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 			waitError = "have ChangePrimaryKey tx"
 		}
 
-		// если пришло new_pct, то нужно откатить следующие тр-ии
-		if txType == utils.TypeInt("NewPct") {
-			p.RollbackIncompatibleTx([]string{"NewReduction", "ChangeNodeKey", "NewMiner", "VotesPromisedAmount", "SendDc", "CashRequestIn", "Mining", "CfSendDc", "DelCfProject", "NewForexOrder", "AutoPayment", "del_forex_order", "for_repaid_fix", "actualization_promised_amounts", "DelCfFunding", "admin_unban_miners", "AdminBanMiners"})
-		}
-
-		// если пришло NewReduction, то нужно откатить следующие тр-ии
-		if txType == utils.TypeInt("NewReduction") {
-			p.RollbackIncompatibleTx([]string{"NewPct", "ChangeNodeKey", "NewMiner", "VotesPromisedAmount", "SendDc", "CashRequestIn", "Mining", "CfSendDc", "DelCfProject", "NewForexOrder", "AutoPayment", "del_forex_order", "for_repaid_fix", "actualization_promised_amounts", "DelCfFunding", "admin_unban_miners", "AdminBanMiners"})
-		}
 
 		// временно запрещаем 2 тр-ии любого типа от одного юзера, а то затрахался уже.
 		num, err = p.Single(`
 				    SELECT count(*)
 				    FROM (
-							SELECT user_id
+							SELECT citizen_id
 							FROM transactions
-							WHERE  user_id = ? AND
+							WHERE  citizen_id = ? AND
 				                      verified=1 AND
 				                      used = 0
 							UNION
-							SELECT user_id
+							SELECT citizen_id
 							FROM transactions_candidate_block
-							WHERE user_id = ?
+							WHERE citizen_id = ?
 					)  AS x
-					`, userId, userId).Int64()
+					`, citizenId, citizenId).Int64()
 		if err != nil {
 			fatalError = fmt.Sprintf("%s", err)
 		}
@@ -3734,8 +3389,8 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 			waitError = "only 1 tx"
 		}
 	}
-	log.Debug("fatalError: %v, waitError: %v, forSelfUse: %v, txType: %v, userId: %v, thirdVar: %v", fatalError, waitError, forSelfUse, txType, userId, thirdVar)
-	return fatalError, waitError, forSelfUse, txType, userId, thirdVar
+	log.Debug("fatalError: %v, waitError: %v, forSelfUse: %v, txType: %v, walletId: %v, citizenId: %v, thirdVar: %v", fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar)
+	return fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar
 
 }
 
@@ -3746,7 +3401,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	// $fatal_error - удаляем тр-ию, т.к. она некорректная
 
 	var err error
-	fatalError, waitError, forSelfUse, txType, userId, thirdVar := p.ClearIncompatibleTx(binaryTx, myTx)
+	fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar := p.ClearIncompatibleTx(binaryTx, myTx)
 	if len(fatalError) == 0 && len(waitError) == 0 {
 		p.BinaryData = binaryTx
 		err = p.ParseDataGate(false)
@@ -3789,8 +3444,8 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
-		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, user_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?)")
-		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, user_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?)`, hashHex, utils.BinToHex(binaryTx), forSelfUse, txType, userId, thirdVar, counter)
+		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
+		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?)`, hashHex, utils.BinToHex(binaryTx), forSelfUse, txType, walletId, citizenId, thirdVar, counter)
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)

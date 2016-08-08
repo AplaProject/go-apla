@@ -300,7 +300,7 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 		signSize := DecodeLength(binaryBlock)
 		result.Sign = BytesShift(binaryBlock, signSize)
 	}
-	log.Debug("result: %v", result)
+	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.CBID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.CBID, result.Sign)
 	return result
 }
 
@@ -1976,10 +1976,12 @@ func GetIsReadySleepSum(level int64, data []int64) int64 {
 func EncodeLengthPlusData(data_ interface{}) []byte {
 	var data []byte
 	switch data_.(type) {
-	case string:
-		data = []byte(data_.(string))
-	case []byte:
-		data = data_.([]byte)
+		case int64:
+			data = Int64ToByte(data_.(int64))
+		case string:
+			data = []byte(data_.(string))
+		case []byte:
+			data = data_.([]byte)
 	}
 	//log.Debug("data: %x", data)
 	//log.Debug("len data: %d", len(data))

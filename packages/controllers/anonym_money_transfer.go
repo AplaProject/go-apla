@@ -15,6 +15,7 @@ type anonymMoneyTransferPage struct {
 	TxTypeId     int64
 	TimeNow      int64
 	WalletId int64
+	CitizenId int64
 }
 
 func (c *Controller) AnonymMoneyTransfer() (string, error) {
@@ -31,6 +32,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		ShowSignData:          c.ShowSignData,
 		SignData:              "",
 		WalletId: c.SessWalletId,
+		CitizenId: c.SessCitizenId,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId})

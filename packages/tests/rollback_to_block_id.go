@@ -4,7 +4,7 @@ import (
 	"fmt"
 //	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/DayLightProject/go-daylight/packages/tests_utils"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 	defer f.Close()
 
 	db := tests_utils.DbConn()
-	parser := new(dcparser.Parser)
+	parser := new(parser.Parser)
 	parser.DCDB = db
 	err := parser.RollbackToBlockId(261950)
 	if err!=nil {

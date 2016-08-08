@@ -1,7 +1,7 @@
 package daemons
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -86,7 +86,7 @@ BEGIN:
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
-		p := new(dcparser.Parser)
+		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		err = p.AllTxParser()
 		if err != nil {

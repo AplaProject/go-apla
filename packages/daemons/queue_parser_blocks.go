@@ -2,7 +2,7 @@ package daemons
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"math/big"
 )
@@ -174,7 +174,7 @@ BEGIN:
 		}
 		blockId := utils.StrToInt64(newBlockData["block_id"])
 
-		p := new(dcparser.Parser)
+		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		p.GoroutineName = GoroutineName
 		err = p.GetBlocks(blockId, host, utils.StrToInt64(newBlockData["user_id"]), "rollback_blocks_1", GoroutineName, 7, "")

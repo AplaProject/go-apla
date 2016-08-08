@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 /*	"errors"
 	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	_ "github.com/lib/pq"
 	"os"*/

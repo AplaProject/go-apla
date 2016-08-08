@@ -1,4 +1,4 @@
-package dcparser
+package parser
 
 import "github.com/DayLightProject/go-daylight/packages/utils"
 

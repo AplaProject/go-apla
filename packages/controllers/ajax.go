@@ -27,7 +27,6 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	sessCitizenId := GetSessCitizenId(sess)
 	log.Debug("sessWalletId", sessWalletId)
 	log.Debug("sessCitizenId", sessCitizenId)
-	log.Debug("user_id: %v", sess.Get("user_id"))
 
 	c := new(Controller)
 	c.r = r

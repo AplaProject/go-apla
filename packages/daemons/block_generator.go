@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	_ "github.com/lib/pq"
 	"time"
@@ -312,7 +312,7 @@ BEGIN:
 			continue
 		}
 		// откатим transactions_candidate_block
-		p := new(dcparser.Parser)
+		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		p.RollbackTransactionsCandidateBlock(true)
 

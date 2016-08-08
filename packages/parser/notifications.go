@@ -1,5 +1,5 @@
 // notifications
-package dcparser
+package parser
 
 import (
 	"fmt"

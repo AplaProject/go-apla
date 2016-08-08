@@ -73,9 +73,9 @@ ok  	github.com/democratic-coin/dcoin-go/packages/tests/calcprofitgen	5.073s
          0     0%   100%      0.01s  0.64%  database/sql.(*Rows).Close
          0     0%   100%      0.53s 33.97%  database/sql.(*Rows).Next
          0     0%   100%      0.06s  3.85%  database/sql.(*Rows).Scan
-         0     0%   100%      0.35s 22.44%  github.com/democratic-coin/dcoin-go/packages/dcparser.(*Parser).CalcProfit_
-         0     0%   100%      0.01s  0.64%  github.com/democratic-coin/dcoin-go/packages/dcparser.(*Parser).ErrInfo
-         0     0%   100%      0.35s 22.44%  github.com/democratic-coin/dcoin-go/packages/dcparser.(*Parser).calcProfit_
+         0     0%   100%      0.35s 22.44%  github.com/democratic-coin/dcoin-go/packages/parser.(*Parser).CalcProfit_
+         0     0%   100%      0.01s  0.64%  github.com/democratic-coin/dcoin-go/packages/parser.(*Parser).ErrInfo
+         0     0%   100%      0.35s 22.44%  github.com/democratic-coin/dcoin-go/packages/parser.(*Parser).calcProfit_
          0     0%   100%      1.21s 77.56%  github.com/democratic-coin/dcoin-go/packages/tests/calcprofitgen.BenchmarkCalcProfit
          0     0%   100%      0.59s 37.82%  github.com/democratic-coin/dcoin-go/packages/utils.(*DCDB).GetPct
          0     0%   100%      0.26s 16.67%  github.com/democratic-coin/dcoin-go/packages/utils.(*DCDB).OneRow

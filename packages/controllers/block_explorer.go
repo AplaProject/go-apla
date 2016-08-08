@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -47,7 +47,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		for _, blockData := range blocksChain {
 			hash := utils.BinToHex([]byte(blockData["hash"]))
 			binaryData := []byte(blockData["data"])
-			parser := new(dcparser.Parser)
+			parser := new(parser.Parser)
 			parser.DCDB = c.DCDB
 			parser.BinaryData = binaryData
 			err = parser.ParseDataLite()
@@ -69,7 +69,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		binToHexArray := []string{"sign", "public_key", "encrypted_message", "comment", "bin_public_keys"}
 		hash := utils.BinToHex([]byte(blockChain["hash"]))
 		binaryData := blockChain["data"]
-		parser := new(dcparser.Parser)
+		parser := new(parser.Parser)
 		parser.DCDB = c.DCDB
 		parser.BinaryData = []byte(binaryData)
 		err = parser.ParseDataLite()

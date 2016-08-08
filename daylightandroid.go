@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/dcoin"
+	"github.com/DayLightProject/go-daylight/packages/daylight"
 	"image"
 	"log"
 	"time"
@@ -46,7 +46,7 @@ func main() {
 	}
 	fmt.Println("dir::", dir)
 
-	go dcoin.Start(dir, nil)
+	go daylight.Start(dir, nil)
 
 	app.Main(func(a app.App) {
 

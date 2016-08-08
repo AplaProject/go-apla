@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/dcoin"
+	"github.com/DayLightProject/go-daylight/packages/daylight"
 	"github.com/go-thrust/thrust"
 	"github.com/go-thrust/lib/commands"
 	"github.com/DayLightProject/go-daylight/packages/static"

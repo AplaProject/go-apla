@@ -1,4 +1,4 @@
-package dcparser
+package parser
 
 import (
 	"database/sql"

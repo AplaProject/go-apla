@@ -11,10 +11,13 @@ func (c *Controller) SaveQueue() (string, error) {
 	var err error
 	c.r.ParseForm()
 
-	userId := []byte(c.r.FormValue("user_id"))
-	if !utils.CheckInputData(userId, "int") {
-		return `{"result":"incorrect userId"}`, nil
+	citizenId := utils.BytesToInt64([]byte(c.r.FormValue("citizenId")))
+	walletId := utils.BytesToInt64([]byte(c.r.FormValue("walletId")))
+
+	if citizenId <= 0 && walletId <= 0 {
+		return `{"result":"incorrect citizenId || walletId"}`, nil
 	}
+
 	txTime := utils.StrToInt64(c.r.FormValue("time"))
 	if !utils.CheckInputData(txTime, "int") {
 		return `{"result":"incorrect time"}`, nil
@@ -37,9 +40,29 @@ func (c *Controller) SaveQueue() (string, error) {
 	binSignatures := utils.EncodeLengthPlusData([]byte(sign))
 
 	log.Debug("txType_", txType_)
+	log.Debug("txType", txType)
 
 	var data []byte
 	switch txType_ {
+
+
+	case "DLTTransfer":
+
+		walletAddress := []byte(c.r.FormValue("walletAddress"))
+		amount := []byte(c.r.FormValue("amount"))
+		commission := []byte(c.r.FormValue("commission"))
+		comment := []byte(c.r.FormValue("comment"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(walletId)...) // wallet_id
+		data = append(data, utils.EncodeLengthPlusData(citizenId)...) // citizen_id
+		data = append(data, utils.EncodeLengthPlusData(walletAddress)...)
+		data = append(data, utils.EncodeLengthPlusData(amount)...)
+		data = append(data, utils.EncodeLengthPlusData(commission)...)
+		data = append(data, utils.EncodeLengthPlusData(comment)...)
+		data = append(data, binSignatures...)
+
 
 	case "DelForexOrder":
 
@@ -47,7 +70,6 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
 		data = append(data, utils.EncodeLengthPlusData(orderId)...)
 		data = append(data, binSignatures...)
 
@@ -64,7 +86,6 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
 		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
 		data = append(data, binSignatures...)
 
@@ -79,7 +100,6 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
 		data = append(data, utils.EncodeLengthPlusData(sellCurrencyId)...)
 		data = append(data, utils.EncodeLengthPlusData(sellRate)...)
 		data = append(data, utils.EncodeLengthPlusData(amount)...)
@@ -89,28 +109,40 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	}
 
+	log.Debug("md5")
+
 	md5 := utils.Md5(data)
-	if !utils.InSliceString(txType_, []string{"new_pct", "new_max_promised_amounts", "new_reduction", "votes_node_new_miner", "new_max_other_currencies"}) {
-		err := c.ExecSql(`INSERT INTO transactions_status (
+
+
+	log.Debug("md5")
+
+	err = c.ExecSql(`INSERT INTO transactions_status (
 				hash,
 				time,
 				type,
-				user_id
+				wallet_id,
+				citizen_id
 			)
 			VALUES (
 				[hex],
 				?,
 				?,
+				?,
 				?
-			)`, md5, time.Now().Unix(), txType, userId)
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}
+			)`, md5, time.Now().Unix(), txType, walletId, citizenId)
+	if err != nil {
+		return "", utils.ErrInfo(err)
 	}
+
+
+	log.Debug("transactions_status")
+
 	err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, utils.BinToHex(data))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+
+	log.Debug("queue_tx")
 
 	return `{"error":"null"}`, nil
 }

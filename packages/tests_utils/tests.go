@@ -6,7 +6,7 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"github.com/astaxie/beego/config"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"io"
 	"log"
@@ -194,7 +194,7 @@ func MakeFrontTest(transactionArray [][]byte, time int64, dataForSign string, tx
 	//fmt.Println("dataForSign", dataForSign)
 	transactionArray = append(transactionArray, binSign)
 
-	parser := new(dcparser.Parser)
+	parser := new(parser.Parser)
 	parser.DCDB = db
 	parser.GoroutineName = "test"
 	parser.TxSlice = transactionArray
@@ -224,7 +224,7 @@ func MakeTest(txSlice [][]byte, blockData *utils.BlockData, txType string, testT
 
 	db := DbConn()
 
-	parser := new(dcparser.Parser)
+	parser := new(parser.Parser)
 	parser.DCDB = db
 	parser.TxSlice = txSlice
 	parser.BlockData = blockData
@@ -237,7 +237,7 @@ func MakeTest(txSlice [][]byte, blockData *utils.BlockData, txType string, testT
 		return err
 	}
 
-	//fmt.Println("dcparser."+txType+"Init")
+	//fmt.Println("parser."+txType+"Init")
 	err0 := utils.CallMethod(parser, txType+"Init")
 	if i, ok := err0.(error); ok {
 		fmt.Println(err0.(error), i)

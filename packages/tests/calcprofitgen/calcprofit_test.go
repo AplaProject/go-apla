@@ -8,7 +8,7 @@ import (
 	"testing"
 	"github.com/astaxie/beego/config"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"path/filepath"
 )
 
@@ -21,7 +21,7 @@ go tool pprof -text calcprofitgen.test.exe cpu.log >>out1.txt
 // Путь к базе с lite.db и config.ini
 const PATH = `k:\dcoin\my1413`
 
-var p *dcparser.Parser
+var p *parser.Parser
 
 func init() {
 	*utils.Dir = PATH
@@ -35,7 +35,7 @@ func init() {
 	if utils.DB, err = utils.NewDbConnect(configIni); err != nil {
 		log.Fatalln(`Utils connect`, err)
 	}
-	p = new(dcparser.Parser)
+	p = new(parser.Parser)
 	p.DCDB = utils.DB
 }
 

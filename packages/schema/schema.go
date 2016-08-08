@@ -23,10 +23,6 @@ type SchemaStruct struct {
 	ChangeType bool
 }
 
-/*
-В самом начале разработки dcoin-а таблицы log_ использовались для логирования, потом я их стал использовать для откатов, но название log_ так и осталось
-*/
-
 func (schema *SchemaStruct) GetSchema() {
 
 	s := make(Recmap)
@@ -48,26 +44,17 @@ func (schema *SchemaStruct) GetSchema() {
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
 	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('[my_prefix]my_dc_transactions_id_seq')", "comment": ""}
-	s2[1] = map[string]string{"name": "status", "mysql": "enum('pending','approved') NOT NULL DEFAULT 'approved'", "sqlite": "varchar(100)  NOT NULL DEFAULT 'approved'", "postgresql": "enum('pending','approved') NOT NULL DEFAULT 'approved'", "comment": "pending - только при отправки DC с нашего кошелька, т.к. нужно показать юзеру, что запрос принят"}
-	s2[2] = map[string]string{"name": "notification", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": "Уведомления по sms и email"}
-	s2[3] = map[string]string{"name": "type", "mysql": "enum('null','cash_request','from_mining_id','from_repaid','from_user','node_commission','system_commission','referral','cf_project','cf_project_refund','loan_payment','arbitrator_commission', 'money_back') NOT NULL DEFAULT 'null'", "sqlite": "varchar(100) ", "postgresql": "enum('null','cash_request','from_mining_id','from_repaid','from_user','node_commission','system_commission','referral','cf_project','cf_project_refund','loan_payment','arbitrator_commission', 'money_back') NOT NULL DEFAULT 'null'", "comment": ""}
-	s2[4] = map[string]string{"name": "type_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[5] = map[string]string{"name": "to_user_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": "Тут не всегда user_id, может быть ID проекта или cash_request"}
-	s2[6] = map[string]string{"name": "amount", "mysql": "decimal(15,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(15,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(15,2) NOT NULL DEFAULT '0'", "comment": ""}
-	s2[7] = map[string]string{"name": "commission", "mysql": "decimal(15,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(15,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(15,2) NOT NULL DEFAULT '0'", "comment": ""}
-	s2[8] = map[string]string{"name": "del_block_id", "mysql": "int(11) unsigned NOT NULL DEFAULT '0'", "sqlite": "int(11)  NOT NULL DEFAULT '0'", "postgresql": "int  NOT NULL DEFAULT '0'", "comment": "Блок, в котором данная транзакция была отменена"}
-	s2[9] = map[string]string{"name": "time", "mysql": "int(10) unsigned NOT NULL DEFAULT '0'", "sqlite": "int(10)  NOT NULL DEFAULT '0'", "postgresql": "int  NOT NULL DEFAULT '0'", "comment": "Время, когда транзакцию создал юзер"}
-	s2[10] = map[string]string{"name": "block_id", "mysql": "int(10) unsigned NOT NULL DEFAULT '0'", "sqlite": "int(10)  NOT NULL DEFAULT '0'", "postgresql": "int  NOT NULL DEFAULT '0'", "comment": "Блок, в котором данная транзакция была запечатана. При откате блока все транзакции с таким block_id будут удалены"}
-	s2[11] = map[string]string{"name": "currency_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
-	s2[12] = map[string]string{"name": "comment", "mysql": "text CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "Если это перевод средств между юзерами или это комиссия, то тут будет расшифрованный комментарий"}
-	s2[13] = map[string]string{"name": "comment_status", "mysql": "enum('encrypted','decrypted') NOT NULL DEFAULT 'decrypted'", "sqlite": "varchar(100)  NOT NULL DEFAULT 'decrypted'", "postgresql": "enum('encrypted','decrypted') NOT NULL DEFAULT 'decrypted'", "comment": ""}
-	s2[14] = map[string]string{"name": "merchant_checked", "mysql": "tinyint(1) unsigned NOT NULL DEFAULT '0'", "sqlite": "tinyint(1)  NOT NULL DEFAULT '0'", "postgresql": "smallint  NOT NULL DEFAULT '0'", "comment": ""}
-	s2[15] = map[string]string{"name": "exchange_checked", "mysql": "tinyint(1) unsigned NOT NULL DEFAULT '0'", "sqlite": "tinyint(1)  NOT NULL DEFAULT '0'", "postgresql": "smallint  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[1] = map[string]string{"name": "recipient_wallet_address", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": "Тут не всегда user_id, может быть ID проекта или cash_request"}
+	s2[2] = map[string]string{"name": "amount", "mysql": "decimal(15,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(15,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(15,2) NOT NULL DEFAULT '0'", "comment": ""}
+	s2[3] = map[string]string{"name": "commission", "mysql": "decimal(15,2) NOT NULL DEFAULT '0'", "sqlite": "decimal(15,2) NOT NULL DEFAULT '0'", "postgresql": "decimal(15,2) NOT NULL DEFAULT '0'", "comment": ""}
+	s2[4] = map[string]string{"name": "time", "mysql": "int(10) unsigned NOT NULL DEFAULT '0'", "sqlite": "int(10)  NOT NULL DEFAULT '0'", "postgresql": "int  NOT NULL DEFAULT '0'", "comment": "Время, когда транзакцию создал юзер"}
+	s2[5] = map[string]string{"name": "comment", "mysql": "text CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": ""}
+	s2[6] = map[string]string{"name": "block_id", "mysql": "int(10) unsigned NOT NULL DEFAULT '0'", "sqlite": "int(10)  NOT NULL DEFAULT '0'", "postgresql": "int  NOT NULL DEFAULT '0'", "comment": "Блок, в котором данная транзакция была запечатана. При откате блока все транзакции с таким block_id будут удалены"}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"
-	s1["comment"] = "Нужно только для отчетов, которые показываются юзеру"
-	s["[my_prefix]my_dc_transactions"] = s1
+	s1["comment"] = ""
+	s["dlt_transactions"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -197,9 +184,10 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[0] = map[string]string{"name": "hash", "mysql": "binary(16) NOT NULL DEFAULT ''", "sqlite": "binary(16) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
 	s2[1] = map[string]string{"name": "time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s2[2] = map[string]string{"name": "type", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[3] = map[string]string{"name": "user_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[4] = map[string]string{"name": "block_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[5] = map[string]string{"name": "error", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[3] = map[string]string{"name": "wallet_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
+	s2[4] = map[string]string{"name": "citizen_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
+	s2[5] = map[string]string{"name": "block_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
+	s2[6] = map[string]string{"name": "error", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"hash"}
 	s1["comment"] = "Для удобства незарегенных юзеров на пуле. Показываем им статус их тр-ий"

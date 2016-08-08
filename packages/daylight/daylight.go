@@ -8,7 +8,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/controllers"
 	"github.com/DayLightProject/go-daylight/packages/daemons"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/stopdaemons"
 	"github.com/DayLightProject/go-daylight/packages/utils"
@@ -292,7 +292,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if *utils.RollbackToBlockId > 0 {
 		utils.DB, err = utils.NewDbConnect(configIni)
 
-		parser := new(dcparser.Parser)
+		parser := new(parser.Parser)
 		parser.DCDB = utils.DB
 		err = parser.RollbackToBlockId(*utils.RollbackToBlockId)
 		if err != nil {

@@ -2433,7 +2433,7 @@ func (db *DCDB) GetBlockDataFromBlockChain(blockId int64) (*BlockData, error) {
 	return BlockData, nil
 }
 
-func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, waitError *string) {
+func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, walletId int64, citizenId int64, waitError *string) {
 	var whereTypeID int64
 	switch whereType.(type) {
 	case string:
@@ -2442,8 +2442,11 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, wait
 		whereTypeID = whereType.(int64)
 	}
 	addSql := ""
-	if userId > 0 {
-		addSql = "AND user_id = " + Int64ToStr(userId)
+	if walletId > 0 {
+		addSql = "AND wallet_id = " + Int64ToStr(walletId)
+	}
+	if citizenId > 0 {
+		addSql = "AND citizen_id = " + Int64ToStr(citizenId)
 	}
 	num, err := db.Single(`
 					SELECT count(*)
@@ -2469,14 +2472,22 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, wait
 	}
 }
 
-func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}, waitError *string, thirdVar_ interface{}) error {
+func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, walletId_ interface{}, citizenId_ interface{}, waitError *string, thirdVar_ interface{}) error {
 
-	var userId int64
-	switch userId_.(type) {
-	case string:
-		userId = StrToInt64(userId_.(string))
-	case int64:
-		userId = userId_.(int64)
+	var walletId int64
+	switch walletId_.(type) {
+		case string:
+		walletId = StrToInt64(walletId_.(string))
+		case int64:
+		walletId = walletId_.(int64)
+	}
+
+	var citizenId int64
+	switch citizenId_.(type) {
+		case string:
+		citizenId = StrToInt64(citizenId_.(string))
+		case int64:
+		citizenId = citizenId_.(int64)
 	}
 
 	var thirdVar string
@@ -2494,13 +2505,16 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 	whereType = whereType[:len(whereType)-1]
 
 	addSql := ""
-	if userId > 0 {
-		addSql = "AND user_id = " + Int64ToStr(userId)
+	if walletId > 0 {
+		addSql = "AND wallet_id = " + Int64ToStr(walletId)
+	}
+	if citizenId > 0 {
+		addSql = "AND citizen_id = " + Int64ToStr(citizenId)
 	}
 
 	addSql1 := ""
 	if len(thirdVar) > 0 {
-		addSql1 = "AND user_id = " + thirdVar
+		addSql1 = "AND citizen_id = " + thirdVar
 	}
 
 	num, err := db.Single(`
@@ -2517,9 +2531,9 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 							FROM transactions_candidate_block
 							WHERE type IN (`+whereType+`)
 										 `+addSql+` `+addSql1+` AND
-										 user_id = ?
+										 citizen_id = ?
 					)  AS x
-					`, userId).Int64()
+					`, citizenId).Int64()
 	if err != nil {
 		*waitError = fmt.Sprintf("%v", ErrInfo(err))
 	}
@@ -2529,17 +2543,19 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 	return nil
 }
 
-func GetTxTypeAndUserId(binaryBlock []byte) (int64, int64, int64) {
-	var userId int64
+func GetTxTypeAndUserId(binaryBlock []byte) (int64, int64, int64, int64) {
 	var thirdVar int64
 	txType := BinToDecBytesShift(&binaryBlock, 1)
 	BytesShift(&binaryBlock, 4) // уберем время
-	userId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
-	if InSliceInt64(txType, TypesToIds([]string{"AdminChangePrimaryKey", "ChangeKeyRequest", "CfProjectData", "CfComment", "CfProjectChangeCategory", "CfSendDc", "DelCfProject", "CashRequestOut", "VotesGeolocation", "VotesMiner", "VotesNodeNewMiner", "VotesPct", "VotesPromisedAmount", "DelPromisedAmount"})) {
+	walletId := BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+	citizenId := BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+	// thirdVar - нужен тогда, когда нужно недопустить попадание в блок несовместимых тр-ий.
+	// Например, удаление крауд-фандинг проекта и инвестирование в него средств.
+	if InSliceInt64(txType, TypesToIds([]string{"CfSendDc", "DelCfProject"})) {
 		thirdVar = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
 	}
-	log.Debug("txType, userId, thirdVar %v, %v, %v", txType, userId, thirdVar)
-	return txType, userId, thirdVar
+	log.Debug("txType, userId, thirdVar %v, %v, %v, %v", txType, walletId, citizenId, thirdVar)
+	return txType, walletId, citizenId, thirdVar
 }
 
 func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
