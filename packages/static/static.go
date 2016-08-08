@@ -31,6 +31,7 @@
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/QR.png
+// static/img/US.svg
 // static/img/bg1.jpg
 // static/img/bg10.jpg
 // static/img/bg2.jpg
@@ -885,6 +886,24 @@ func staticI18nSiteEsJson() (*asset, error) {
 func staticImgQrPng() (*asset, error) {
 	path := "static/img/QR.png"
 	name := "static/img/QR.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgUsSvg reads file data from disk. It returns an error on failure.
+func staticImgUsSvg() (*asset, error) {
+	path := "static/img/US.svg"
+	name := "static/img/US.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6094,6 +6113,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/QR.png": staticImgQrPng,
+	"static/img/US.svg": staticImgUsSvg,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
 	"static/img/bg10.jpg": staticImgBg10Jpg,
 	"static/img/bg2.jpg": staticImgBg2Jpg,
@@ -6459,6 +6479,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"img": &bintree{nil, map[string]*bintree{
 			"QR.png": &bintree{staticImgQrPng, map[string]*bintree{}},
+			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
 			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
 			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{}},
 			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{}},
