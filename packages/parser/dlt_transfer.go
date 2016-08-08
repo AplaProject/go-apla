@@ -27,12 +27,12 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	if p.TxMaps.Money["amount"] == 0 {
+	if p.TxMaps.Int64["amount"] == 0 {
 		return p.ErrInfo("amount=0")
 	}
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
-	if p.TxMaps.Money["commission"] < consts.COMMISSION {
+	if p.TxMaps.Int64["commission"] < consts.COMMISSION {
 		return p.ErrInfo("commission")
 	}
 

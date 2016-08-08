@@ -3466,7 +3466,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
-		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?)`, hashHex, utils.BinToHex(binaryTx), forSelfUse, txType, walletId, citizenId, thirdVar, counter)
+		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)`, hashHex, utils.BinToHex(binaryTx), forSelfUse, txType, walletId, citizenId, thirdVar, counter)
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)

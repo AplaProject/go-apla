@@ -250,4 +250,4 @@ var DCTarget = map[int64]int64{
 
 // DL
 const GAPS_BETWEEN_BLOCKS = 1
-const COMMISSION = 0.001
+const COMMISSION = 1000
