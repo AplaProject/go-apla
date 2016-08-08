@@ -7942,3 +7942,32 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
   color: #23b7e5;
   background-color: #ffffff;
 }
+/*
+============================================================================
+  Demo styles
+============================================================================
+*/
+.btn-demo {
+		margin-top:3px;
+	}
+@media only screen and (min-width: 768px) {
+	.btn-demo {
+		margin-top:10px;
+	}
+}
+.Demo {
+	display:none;
+}
+.demoMode .Demo {
+	display:block;
+}
+.demoMode tbody.Demo {
+	display:table-header-group;
+}
+
+.notDemo {
+	display:block;
+}
+.demoMode .notDemo {
+	display:none;
+}
