@@ -21,7 +21,7 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"walletAddress": "sha256", "amount": "int", "commission": "int", "comment": "comment"}
+	verifyData := map[string]string{"walletAddress": "sha1", "amount": "int", "commission": "int", "comment": "comment"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)

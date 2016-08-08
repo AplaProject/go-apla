@@ -1296,6 +1296,10 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		if ok, _ := regexp.MatchString("^(vk|fb|qq)$", data); ok {
 			return true
 		}
+	case "sha1":
+		if ok, _ := regexp.MatchString("^[0-9a-z]{40}$", data); ok {
+			return true
+		}
 	case "photo_hash", "sha256":
 		if ok, _ := regexp.MatchString("^[0-9a-z]{64}$", data); ok {
 			return true
