@@ -23,6 +23,7 @@
 	$('#anonym_history').dataTable({
         'paging':   true,  // Table pagination
         'ordering': true,  // Column ordering 
+		"order": [[ 0, "desc" ]],
         'info':     true,  // Bottom left status text
 		"ajax": {
             "url": "ajax?controllerName=AnonymHistory",
@@ -37,8 +38,8 @@
         ],
 		columnDefs: [{
 			targets: 1,
-			render: $.fn.dataTable.render.moment( 'YYYY-MM-DD' )
-		}],
+			render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
+		}]
     });
 </script>
 
