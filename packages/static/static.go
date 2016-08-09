@@ -68,6 +68,7 @@
 // static/js/app.js
 // static/js/asn1hex-1.1.min.js
 // static/js/base64.js
+// static/js/clipboard.js
 // static/js/crypto/asn1-1.0.min.js
 // static/js/crypto/asn1hex-1.1.min.js
 // static/js/crypto/crypto-1.1.min.js
@@ -1564,6 +1565,24 @@ func staticJsAsn1hex11MinJs() (*asset, error) {
 func staticJsBase64Js() (*asset, error) {
 	path := "static/js/base64.js"
 	name := "static/js/base64.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsClipboardJs reads file data from disk. It returns an error on failure.
+func staticJsClipboardJs() (*asset, error) {
+	path := "static/js/clipboard.js"
+	name := "static/js/clipboard.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6378,6 +6397,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/app.js": staticJsAppJs,
 	"static/js/asn1hex-1.1.min.js": staticJsAsn1hex11MinJs,
 	"static/js/base64.js": staticJsBase64Js,
+	"static/js/clipboard.js": staticJsClipboardJs,
 	"static/js/crypto/asn1-1.0.min.js": staticJsCryptoAsn110MinJs,
 	"static/js/crypto/asn1hex-1.1.min.js": staticJsCryptoAsn1hex11MinJs,
 	"static/js/crypto/crypto-1.1.min.js": staticJsCryptoCrypto11MinJs,
@@ -6760,6 +6780,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"app.js": &bintree{staticJsAppJs, map[string]*bintree{}},
 			"asn1hex-1.1.min.js": &bintree{staticJsAsn1hex11MinJs, map[string]*bintree{}},
 			"base64.js": &bintree{staticJsBase64Js, map[string]*bintree{}},
+			"clipboard.js": &bintree{staticJsClipboardJs, map[string]*bintree{}},
 			"crypto": &bintree{nil, map[string]*bintree{
 				"asn1-1.0.min.js": &bintree{staticJsCryptoAsn110MinJs, map[string]*bintree{}},
 				"asn1hex-1.1.min.js": &bintree{staticJsCryptoAsn1hex11MinJs, map[string]*bintree{}},
