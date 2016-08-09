@@ -7956,13 +7956,13 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 	}
 }
 .Demo {
-	display:none;
+	display:none !important;
 }
 .demoMode .Demo {
-	display:block;
+	display:block !important;
 }
 .demoMode tbody.Demo {
-	display:table-header-group;
+	display:table-header-group !important;
 }
 
 .notDemo {

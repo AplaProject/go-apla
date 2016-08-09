@@ -2,11 +2,11 @@ function Demo() {
 	var id = $("#demo");
 	var val = id.val();
 	if (val == 0) {
-		id.prev().html("Stop Demo");
+		id.prev().html("Hide opportunities");
 		id.val(1);
 		$("body").addClass("demoMode");
 	} else {
-		id.prev().html("Demo Mode");
+		id.prev().html("Show opportunities");
 		id.val(0);
 		$("body").removeClass("demoMode");
 	}
