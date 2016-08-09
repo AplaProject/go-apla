@@ -86,6 +86,7 @@
 // static/js/crypto/ext/prng4-min.js
 // static/js/crypto/ext/rng-min.js
 // static/js/crypto/ext/yahoo-min.js
+// static/js/datetime.js
 // static/js/demo/demo-datatable.js
 // static/js/demo/demo-flot.js
 // static/js/demo/demo-forms.js
@@ -1887,6 +1888,24 @@ func staticJsCryptoExtRngMinJs() (*asset, error) {
 func staticJsCryptoExtYahooMinJs() (*asset, error) {
 	path := "static/js/crypto/ext/yahoo-min.js"
 	name := "static/js/crypto/ext/yahoo-min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsDatetimeJs reads file data from disk. It returns an error on failure.
+func staticJsDatetimeJs() (*asset, error) {
+	path := "static/js/datetime.js"
+	name := "static/js/datetime.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6377,6 +6396,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/crypto/ext/prng4-min.js": staticJsCryptoExtPrng4MinJs,
 	"static/js/crypto/ext/rng-min.js": staticJsCryptoExtRngMinJs,
 	"static/js/crypto/ext/yahoo-min.js": staticJsCryptoExtYahooMinJs,
+	"static/js/datetime.js": staticJsDatetimeJs,
 	"static/js/demo/demo-datatable.js": staticJsDemoDemoDatatableJs,
 	"static/js/demo/demo-flot.js": staticJsDemoDemoFlotJs,
 	"static/js/demo/demo-forms.js": staticJsDemoDemoFormsJs,
@@ -6764,6 +6784,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 					"yahoo-min.js": &bintree{staticJsCryptoExtYahooMinJs, map[string]*bintree{}},
 				}},
 			}},
+			"datetime.js": &bintree{staticJsDatetimeJs, map[string]*bintree{}},
 			"demo": &bintree{nil, map[string]*bintree{
 				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{}},
 				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{}},
