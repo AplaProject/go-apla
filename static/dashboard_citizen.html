@@ -1,13 +1,17 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".citizen").addClass("active");
+	$(".citizen, .dashboard_citizen").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_citizen", { }, function() {});
 </script>
 
 <div class="content-heading">
-   Dashboard Citizen
+   <div class="pull-right" style="margin-top:-3px;"><img src="static/img/US.svg" alt="USA" height="30"></div>
+   Citizen
 </div>
+<ol class="breadcrumb">
+   <li class="active">Dashboard</li>
+</ol>
 <div class="row">
    <div class="col-lg-4 col-md-6">
 	  <!-- START panel-->
@@ -139,6 +143,7 @@
 				  <thead>
 					 <tr>
 						<th>Position</th>
+						<th>Name</th>
 						<th>Current ID</th>
 						<th width="100">Status</th>
 						<th>Votes</th>
@@ -148,6 +153,7 @@
 				  <tbody class="Demo">
 					 <tr>
 						<td>President</td>
+						<td>Barack Obama</td>
 						<td>15</td>
 						<td><button class="btn btn-danger" style="display:block; width:100%;">go out</button></td>
 						<td>153 681 196</td>
@@ -155,6 +161,7 @@
 					 </tr>
 					 <tr>
 						<td>Head of CB</td>
+						<td>Janet Yellen</td>
 						<td>16</td>
 						<td><button class="btn btn-primary" style="display:block; width:100%;">run</button></td>
 						<td>0</td>
@@ -163,12 +170,14 @@
 					 <tr>
 						<td>Head of association CB</td>
 						<td>0</td>
+						<td>0</td>
 						<td><button class="btn btn-primary" style="display:block; width:100%;">run</button></td>
 						<td>0</td>
 						<td><input type="text" class="form-control"></td>
 					 </tr>
 					 <tr>
 						<td>Political party</td>
+						<td>0</td>
 						<td>0</td>
 						<td><button class="btn btn-primary" style="display:block; width:100%;">run</button></td>
 						<td>0</td>
@@ -177,12 +186,14 @@
 					 <tr>
 						<td>Senator</td>
 						<td>0</td>
+						<td>0</td>
 						<td><button class="btn btn-primary" style="display:block; width:100%;">run</button></td>
 						<td>0</td>
 						<td><input type="text" class="form-control"></td>
 					 </tr>
 					 <tr>
 						<td>Governor</td>
+						<td>0</td>
 						<td>0</td>
 						<td><button class="btn btn-primary" style="display:block; width:100%;">run</button></td>
 						<td>0</td>
