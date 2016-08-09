@@ -2,6 +2,7 @@
 // sources:
 // static/1block
 // static/alert_success.html
+// static/anonym_history.html
 // static/anonym_money_transfer.html
 // static/citizen_marriage_registration.html
 // static/citizen_property.html
@@ -377,6 +378,24 @@ func static1block() (*asset, error) {
 func staticAlert_successHtml() (*asset, error) {
 	path := "static/alert_success.html"
 	name := "static/alert_success.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticAnonym_historyHtml reads file data from disk. It returns an error on failure.
+func staticAnonym_historyHtml() (*asset, error) {
+	path := "static/anonym_history.html"
+	name := "static/anonym_history.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6331,6 +6350,7 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"static/1block": static1block,
 	"static/alert_success.html": staticAlert_successHtml,
+	"static/anonym_history.html": staticAnonym_historyHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
 	"static/citizen_marriage_registration.html": staticCitizen_marriage_registrationHtml,
 	"static/citizen_property.html": staticCitizen_propertyHtml,
@@ -6703,6 +6723,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"static": &bintree{nil, map[string]*bintree{
 		"1block": &bintree{static1block, map[string]*bintree{}},
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
+		"anonym_history.html": &bintree{staticAnonym_historyHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
 		"citizen_marriage_registration.html": &bintree{staticCitizen_marriage_registrationHtml, map[string]*bintree{}},
 		"citizen_property.html": &bintree{staticCitizen_propertyHtml, map[string]*bintree{}},
