@@ -21,8 +21,8 @@
 			'walletId' : '{{.WalletId}}',
 			'citizenId' : '{{.CitizenId}}',
 			'walletAddress' : $('#walletAddress').val(),
-			'amount' : $('#amount').val(),
-			'commission' : $('#commission').val(),
+			'amount' : parseFloat($('#amount').val()) * 100000,
+			'commission' : parseFloat($('#commission').val()) * 100000,
 			'comment' : $('#comment').val(),
 			'signature1': $('#signature1').val(),
 			'signature2': $('#signature2').val(),
@@ -54,7 +54,7 @@
 		   <label>Comment</label>
 		   <input type="text" placeholder="Enter Comment" class="form-control" id="comment">
 		   <label>Commission</label>
-		   <input type="text" placeholder="1000" class="form-control" id="commission" value="1000" disabled="" placeholder="Disabled">
+		   <input type="text" placeholder="0.01" class="form-control" id="commission" value="0.01" disabled="" placeholder="Disabled">
 	   </div>
 	   <button type="button" class="btn btn-green" id="next">Send</button>
 	</form>
