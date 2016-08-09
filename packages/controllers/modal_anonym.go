@@ -12,24 +12,40 @@ type modalAnonymPage struct {
 	CountSignArr          []int
 	SignData              string
 	ShowSignData          bool
-	MyWallet			  string
+	MyWalletData		  map[string]string
+	WalletId int64
+	CitizenId int64
+	TxType       string
+	TxTypeId     int64
+	TimeNow      int64
 }
 
 func (c *Controller) ModalAnonym() (string, error) {
 
-	walletHash, err := c.Single("SELECT hex(hash) FROM wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	txType := "DLTChangeHostVote"
+	txTypeId := utils.TypeInt(txType)
+	timeNow := utils.Time()
+
+	MyWalletData, err := c.OneRow("SELECT hex(address) as address, host, vote FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	log.Debug("MyWalletData %v", MyWalletData);
+
 
 	TemplateStr, err := makeTemplate("modal_anonym", "modalAnonym", &modalAnonymPage{
-		CountSignArr:          c.CountSignArr,
-		CountSign:             c.CountSign,
 		Lang:                  c.Lang,
-		MyWallet:              walletHash,
+		MyWalletData:          MyWalletData,
 		Title:                 "modalAnonym",
 		ShowSignData:          c.ShowSignData,
-		SignData:              ""})
+		SignData:              "",
+		WalletId: c.SessWalletId,
+		CitizenId: c.SessCitizenId,
+		CountSignArr:          c.CountSignArr,
+		CountSign:             c.CountSign,
+		TimeNow:      timeNow,
+		TxType:       txType,
+		TxTypeId:     txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

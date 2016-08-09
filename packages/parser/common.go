@@ -654,7 +654,7 @@ func (p *Parser) generalCheck() error {
 	}
 	// проверим, есть ли такой юзер и заодно получим public_key
 	if utils.BytesToInt64(p.TxMap["wallet_id"]) > 0 {
-		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
+		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -1437,7 +1437,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	p.TxMaps.Bytes["hash"] = p.TxSlice[0]
 	p.TxMaps.Int64["type"] = utils.BytesToInt64(p.TxSlice[1])
 	p.TxMaps.Int64["time"] = utils.BytesToInt64(p.TxSlice[2])
-	p.TxMaps.Int64["anonim_id"] = utils.BytesToInt64(p.TxSlice[3])
+	p.TxMaps.Int64["wallet_id"] = utils.BytesToInt64(p.TxSlice[3])
 	p.TxMaps.Int64["citizen_id"] = utils.BytesToInt64(p.TxSlice[4])
 	p.TxMap["hash"] = p.TxSlice[0]
 	p.TxMap["type"] = p.TxSlice[1]
@@ -2389,8 +2389,8 @@ func (p *Parser) updateRecipientWallet(toUserId, currencyId int64, amount float6
 		return p.ErrInfo("currencyId == 0")
 	}
 	walletWhere := "user_id = " + utils.Int64ToStr(toUserId) + " AND currency_id = " + utils.Int64ToStr(currencyId)
-	walletData, err := p.OneRow("SELECT amount, amount_backup, last_update, log_id FROM wallets WHERE " + walletWhere).String()
-	log.Debug("SELECT amount, amount_backup, last_update, log_id FROM wallets WHERE " + walletWhere)
+	walletData, err := p.OneRow("SELECT amount, amount_backup, last_update, log_id FROM dlt_wallets WHERE " + walletWhere).String()
+	log.Debug("SELECT amount, amount_backup, last_update, log_id FROM dlt_wallets WHERE " + walletWhere)
 	log.Debug("walletData", walletData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -2476,7 +2476,7 @@ func (p *Parser) updateRecipientWallet(toUserId, currencyId int64, amount float6
 func (p *Parser) updateSenderWallet(fromUserId, currencyId int64, amount, commission float64, from string, fromId, toUserId int64, comment, commentStatus string) error {
 	// получим инфу о текущих значениях таблицы wallets для юзера from_user_id
 	walletWhere := "user_id = " + utils.Int64ToStr(fromUserId) + " AND currency_id = " + utils.Int64ToStr(currencyId)
-	walletData, err := p.OneRow("SELECT amount, amount_backup, last_update, log_id FROM wallets WHERE " + walletWhere).String()
+	walletData, err := p.OneRow("SELECT amount, amount_backup, last_update, log_id FROM dlt_wallets WHERE " + walletWhere).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -2857,13 +2857,13 @@ func (p *Parser) limitRequestsMoneyOrders(limit int64) error {
 }
 
 func (p *Parser) getWalletsBufferAmount(currencyId int64) (float64, error) {
-	return p.Single("SELECT sum(amount) FROM wallets_buffer WHERE user_id = ? AND currency_id = ? AND del_block_id = 0", p.TxUserID, currencyId).Float64()
+	return p.Single("SELECT sum(amount) FROM dlt_wallets_buffer WHERE user_id = ? AND currency_id = ? AND del_block_id = 0", p.TxUserID, currencyId).Float64()
 }
 
 func (p *Parser) getTotalAmount(currencyId int64) (float64, error) {
 	var amount float64
 	var last_update int64
-	err := p.QueryRow(p.FormatQuery("SELECT amount, last_update FROM wallets WHERE user_id = ? AND currency_id = ?"), p.TxUserID, currencyId).Scan(&amount, &last_update)
+	err := p.QueryRow(p.FormatQuery("SELECT amount, last_update FROM dlt_wallets WHERE user_id = ? AND currency_id = ?"), p.TxUserID, currencyId).Scan(&amount, &last_update)
 	if err != nil && err != sql.ErrNoRows {
 		return 0, p.ErrInfo(err)
 	}
@@ -3138,7 +3138,7 @@ func (p *Parser) checkSenderMoney(currencyId, fromUserId int64, amount, commissi
 
 func (p *Parser) updateWalletsBuffer(amount float64, currencyId int64) error {
 	// добавим нашу сумму в буфер кошельков, чтобы юзер не смог послать запрос на вывод всех DC с кошелька.
-	hash, err := p.Single("SELECT hash FROM wallets_buffer WHERE hex(hash) = ?", p.TxHash).String()
+	hash, err := p.Single("SELECT hash FROM dlt_wallets_buffer WHERE hex(hash) = ?", p.TxHash).String()
 	if len(hash) > 0 {
 		err = p.ExecSql("UPDATE wallets_buffer SET user_id = ?, currency_id = ?, amount = ? WHERE hex(hash) = ?", p.TxUserID, currencyId, utils.Round(amount, 2), p.TxHash)
 	} else {

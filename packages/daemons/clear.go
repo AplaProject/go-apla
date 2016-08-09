@@ -103,7 +103,7 @@ BEGIN:
 		}
 
 		// через 14400 блоков чистим таблу wallets_buffer где есть del_block_id
-		err = d.ExecSql("DELETE FROM wallets_buffer WHERE del_block_id < ? AND del_block_id > 0", blockId-variables.Int64["rollback_blocks_2"]-14400)
+		err = d.ExecSql("DELETE FROM dlt_wallets_buffer WHERE del_block_id < ? AND del_block_id > 0", blockId-variables.Int64["rollback_blocks_2"]-14400)
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN

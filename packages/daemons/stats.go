@@ -80,7 +80,7 @@ BEGIN:
 				continue BEGIN
 			}
 			// получаем кол-во DC на кошельках
-			sumWallets, err := d.Single("SELECT sum(amount) as sum_amount FROM wallets WHERE currency_id = ?", currencyId).Float64()
+			sumWallets, err := d.Single("SELECT sum(amount) as sum_amount FROM dlt_wallets WHERE currency_id = ?", currencyId).Float64()
 			if err != nil {
 				if d.dPrintSleep(err, d.sleepTime) {
 					break BEGIN

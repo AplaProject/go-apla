@@ -14,6 +14,7 @@ import (
 	//"os"
 	//"regexp"
 	"time"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 func IosLog(text string) {
@@ -85,34 +86,35 @@ func tcpListener() {
 				}
 			}
 		}
-		tcpHost := db.GetTcpHost()
-		log.Debug("tcpHost: %v", tcpHost)
-		// включаем листинг TCP-сервером и обработку входящих запросов
-		l, err := net.Listen("tcp", tcpHost)
-		if err != nil {
-			log.Error("Error listening:", err)
-			panic(err)
-			//os.Exit(1)
-		}
-		//defer l.Close()
-		go func() {
-			for {
-				conn, err := l.Accept()
-				if err != nil {
-					log.Error("Error accepting:", err)
-					utils.Sleep(1)
-					//panic(err)
-					//os.Exit(1)
-				} else {
-					go func(conn net.Conn) {
-						t := new(tcpserver.TcpServer)
-						t.DCDB = db
-						t.Conn = conn
-						t.HandleTcpRequest()
-					}(conn)
-				}
+
+		log.Debug("*utils.tcpHost: %v", *utils.TcpHost+":"+consts.TCP_PORT)
+		if len(*utils.TcpHost) > 0 {
+			// включаем листинг TCP-сервером и обработку входящих запросов
+			l, err := net.Listen("tcp", *utils.TcpHost+":"+consts.TCP_PORT)
+			if err != nil {
+				log.Error("Error listening:", err)
+				panic(err)
 			}
-		}()
+			//defer l.Close()
+			go func() {
+				for {
+					conn, err := l.Accept()
+					if err != nil {
+						log.Error("Error accepting:", err)
+						utils.Sleep(1)
+						//panic(err)
+						//os.Exit(1)
+					} else {
+						go func(conn net.Conn) {
+							t := new(tcpserver.TcpServer)
+							t.DCDB = db
+							t.Conn = conn
+							t.HandleTcpRequest()
+						}(conn)
+					}
+				}
+			}()
+		}
 	}()
 
 	// Листенинг для чата

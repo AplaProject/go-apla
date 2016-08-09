@@ -156,6 +156,7 @@ var Countries = []string{"Afghanistan", "Albania", "Algeria", "American Samoa", 
 var TxTypes = map[int]string{
 	1: "FirstBlock",
 	2: "DLTTransfer",
+	3: "DLTChangeHostVote",
 }
 
 func init() {
@@ -251,3 +252,4 @@ var DCTarget = map[int64]int64{
 // DL
 const GAPS_BETWEEN_BLOCKS = 1
 const COMMISSION = 1000
+const TCP_PORT = "7079"

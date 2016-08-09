@@ -55,12 +55,25 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(walletId)...) // wallet_id
-		data = append(data, utils.EncodeLengthPlusData(citizenId)...) // citizen_id
+		data = append(data, utils.EncodeLengthPlusData(walletId)...)
+		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
 		data = append(data, utils.EncodeLengthPlusData(walletAddress)...)
 		data = append(data, utils.EncodeLengthPlusData(amount)...)
 		data = append(data, utils.EncodeLengthPlusData(commission)...)
 		data = append(data, utils.EncodeLengthPlusData(comment)...)
+		data = append(data, binSignatures...)
+
+	case "DLTChangeHostVote":
+
+		host := []byte(c.r.FormValue("host"))
+		vote := []byte(c.r.FormValue("vote"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(walletId)...)
+		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(host)...)
+		data = append(data, utils.EncodeLengthPlusData(vote)...)
 		data = append(data, binSignatures...)
 
 
@@ -134,17 +147,12 @@ func (c *Controller) SaveQueue() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-
-	log.Debug("transactions_status")
-
 	err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, utils.BinToHex(data))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	log.Debug("queue_tx")
-
-	return `{"error":"null"}`, nil
+	return `{"hash":"`+string(md5)+`"}`, nil
 }
 
 func CheckInputData(data map[string]string) error {

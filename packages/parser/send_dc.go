@@ -435,7 +435,7 @@ func (p *Parser) SendDcRollback() error {
 }
 
 func (p *Parser) SendDcRollbackFront() error {
-	err := p.ExecSql("DELETE FROM wallets_buffer WHERE hex(hash) = ?", p.TxHash)
+	err := p.ExecSql("DELETE FROM dlt_wallets_buffer WHERE hex(hash) = ?", p.TxHash)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

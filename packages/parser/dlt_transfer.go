@@ -21,7 +21,7 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"walletAddress": "sha1", "amount": "int", "commission": "int", "comment": "comment"}
+	verifyData := map[string]string{"walletAddress": "sha1", "amount": "int64", "commission": "int64", "comment": "comment"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -57,7 +57,22 @@ func (p *Parser) DLTTransferFront() error {
 }
 
 func (p *Parser) DLTTransfer() error {
-	err := p.ExecSql(`INSERT INTO dlt_transactions ( recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( [hex], ?, ?, ?, ?, ? )`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	if walletId > 0 {
+		err := p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ? WHERE wallet_id = ?`, p.TxMaps.Int64["amount"], walletId)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	} else {
+		err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount) VALUES ([hex], ?)`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"])
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	}
+
+	// пишем в общую историю тр-ий
+	err = p.ExecSql(`INSERT INTO dlt_transactions ( recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( [hex], ?, ?, ?, ?, ? )`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

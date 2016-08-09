@@ -362,7 +362,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	BrowserHttpHost := "http://localhost:8089"
 	HandleHttpHost := ""
-	ListenHttpHost := ":" + *utils.ListenHttpHost
+	ListenHttpHost := ":" + *utils.ListenHttpPort
 	go func() {
 		// уже прошли процесс инсталяции, где юзер указал БД и был перезапуск кошелька
 		if len(configIni["db_type"]) > 0 && !utils.Mobile() {
@@ -377,8 +377,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			fmt.Println("GET http host")
 			BrowserHttpHost, HandleHttpHost, ListenHttpHost = GetHttpHost()
-			// для биржы нужен хост или каталог, поэтому нужно подключение к БД
-			exhangeHttpListener(HandleHttpHost)
 			// для ноды тоже нужна БД
 			tcpListener()
 		}

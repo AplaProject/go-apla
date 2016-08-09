@@ -4,9 +4,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"time"
-	//"log"
 	"net"
-	"strings"
 )
 
 /*
@@ -104,20 +102,13 @@ BEGIN:
 
 			var hosts []map[string]string
 			if d.ConfigIni["test_mode"] == "1" {
-				hosts = []map[string]string{{"tcp_host": "localhost:8088", "user_id": "1"}}
+				hosts = []map[string]string{{"host": "localhost:"+consts.TCP_PORT}}
 			} else {
-				maxMinerId, err := d.Single("SELECT max(miner_id) FROM miners_data").Int64()
-				if err != nil {
-					logger.Error("%v", err)
-				}
-				if maxMinerId == 0 {
-					maxMinerId = 1
-				}
 				q := ""
 				if d.ConfigIni["db_type"] == "postgresql" {
-					q = "SELECT DISTINCT ON (tcp_host) tcp_host, user_id FROM miners_data WHERE miner_id IN (" + strings.Join(utils.RandSlice(1, maxMinerId, consts.COUNT_CONFIRMED_NODES), ",") + ")"
+					q = "SELECT DISTINCT ON (host) host FROM full_nodes"
 				} else {
-					q = "SELECT tcp_host, user_id FROM miners_data WHERE miner_id IN  (" + strings.Join(utils.RandSlice(1, maxMinerId, consts.COUNT_CONFIRMED_NODES), ",") + ") GROUP BY tcp_host"
+					q = "SELECT host FROM full_nodes GROUP BY host"
 				}
 				hosts, err = d.GetAll(q, consts.COUNT_CONFIRMED_NODES)
 				if err != nil {
@@ -127,8 +118,7 @@ BEGIN:
 
 			ch := make(chan string)
 			for i := 0; i < len(hosts); i++ {
-				logger.Info("hosts[i] %v", hosts[i])
-				host := hosts[i]["tcp_host"]
+				host := hosts[i]["host"]+":"+consts.TCP_PORT
 				logger.Info("host %v", host)
 				go func() {
 					IsReachable(host, blockId, ch)
@@ -145,7 +135,7 @@ BEGIN:
 				} else {
 					st0++
 				}
-				logger.Info("%v", "CHanswer", answer)
+				logger.Info("st0 %v  st1 %v", st0, st1)
 			}
 			exists, err := d.Single("SELECT block_id FROM confirmations WHERE block_id= ?", blockId).Int64()
 			if exists > 0 {

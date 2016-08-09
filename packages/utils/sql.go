@@ -832,54 +832,7 @@ func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, Gor
 	return true
 }
 
-func (db *DCDB) GetTcpHost() string {
-	// Слушать TCP нужно только полным нодам
-	/*for {
-		community, err := db.GetCommunityUsers()
-		if err != nil {
-			log.Error("%v", ErrInfo(err))
-		}
-		myPrefix := ""
-		var myUserId int64
-		if len(community) > 0 {
-			myUserId, err = db.GetPoolAdminUserId()
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-			myPrefix = Int64ToStr(myUserId) + "_"
-		} else {
-			myUserId, err = db.GetMyUserId("")
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-		}
 
-		data, err := db.OneRow("SELECT tcp_host, tcp_listening FROM " + myPrefix + "my_table").String()
-		if err != nil {
-			log.Error("%v", ErrInfo(err))
-		}
-		// чтобы листинг не включался у тех, кто зарегался на пуле удаленно и стал майнером
-		if data["tcp_listening"] != "1" {
-			Sleep(5)
-			continue
-		}
-		tcpHost := data["tcp_host"]
-		if len(tcpHost) == 0 {
-			tcpHost, err = db.Single("SELECT CASE WHEN m.pool_user_id > 0 then (SELECT tcp_host FROM miners_data WHERE user_id = m.pool_user_id) ELSE tcp_host end FROM miners_data as m WHERE m.user_id = ?", myUserId).String()
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-		}
-		if len(tcpHost) > 0 {
-			log.Debug("tcpHost: (%x)", tcpHost)
-			return tcpHost
-		} else {
-			Sleep(5)
-		}
-	}
-	log.Debug("tcpHost null")*/
-	return ""
-}
 
 func (db *DCDB) GetQuotes() string {
 	dq := `"`
@@ -1272,7 +1225,7 @@ func (db *DCDB) GetLastTx(userId int64, types []int64, limit int64, timeFormat s
 
 func (db *DCDB) GetBalances(userId int64) ([]DCAmounts, error) {
 	var result []DCAmounts
-	rows, err := db.Query(db.FormatQuery("SELECT amount, currency_id, last_update FROM wallets WHERE user_id= ?"), userId)
+	rows, err := db.Query(db.FormatQuery("SELECT amount, currency_id, last_update FROM dlt_wallets WHERE user_id= ?"), userId)
 	if err != nil {
 		return result, err
 	}
@@ -2016,7 +1969,7 @@ func (db *DCDB) CheckCurrencyCF(currency_id int64) (bool, error) {
 }
 
 func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
-	walletId, err := db.Single(`SELECT wallet_id FROM wallets WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
+	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`, string(HashSha1Hex(publicKey))).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
@@ -2024,7 +1977,7 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 }
 
 func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
-	walletId, err := db.Single(`SELECT citizen_id FROM wallets WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
+	walletId, err := db.Single(`SELECT citizen_id FROM citizens WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
@@ -2109,7 +2062,7 @@ func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, cb_id int64) ([]byte, erro
 	var result []byte
 	var err error
 	if wallet_id > 0 {
-		result, err = db.Single("SELECT node_public_key FROM wallets WHERE wallet_id = ?", wallet_id).Bytes()
+		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}

@@ -40,7 +40,7 @@ func (c *Controller) CurrencyExchange() (string, error) {
 	addSql := ""
 	if len(c.Parameters["all_currencies"]) == 0 {
 		// по умолчанию выдаем только те валюты, которые есть хоть у кого-то на кошельках
-		actualCurrencies, err := c.GetList("SELECT currency_id FROM wallets GROUP BY currency_id").String()
+		actualCurrencies, err := c.GetList("SELECT currency_id FROM dlt_wallets GROUP BY currency_id").String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}

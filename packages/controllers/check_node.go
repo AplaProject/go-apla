@@ -71,7 +71,7 @@ func (c *Controller) CheckNode() (string, error) {
 		}
 		allCounts = append(allCounts, map[string]interface{}{"sum_promised_amount": data["amount"]})
 		allCounts = append(allCounts, map[string]interface{}{"sum_promised_tdc_amount": data["tdc_amount"]})
-		sum_wallets_amount, err := c.Single("SELECT sum(amount) FROM wallets").String()
+		sum_wallets_amount, err := c.Single("SELECT sum(amount) FROM dlt_wallets").String()
 		allCounts = append(allCounts, map[string]interface{}{"sum_wallets_amount": sum_wallets_amount})
 		sum_forex_amount, err := c.Single("SELECT sum(amount) FROM forex_orders").String()
 		allCounts = append(allCounts, map[string]interface{}{"sum_forex_amount": sum_forex_amount})

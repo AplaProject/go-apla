@@ -74,6 +74,8 @@ type DaemonsChansType struct {
 	ChAnswer chan string
 }
 var (
+	TcpHost = flag.String("tcpHost", "", "")
+	ListenHttpPort = flag.String("listenHttpPort", "8089", "ListenHttpPort")
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	OldVersion = flag.String("oldVersion", "", "")
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
@@ -85,7 +87,6 @@ var (
 	StartBlockId = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
 	EndBlockId = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
 	RollbackToBlockId = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
-	ListenHttpHost = flag.String("listenHttpHost", "8089", "ListenHttpHost")
 	DaemonsChans []*DaemonsChansType
 	eWallets = &sync.Mutex{}
 )
@@ -1266,8 +1267,12 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		if ok, _ := regexp.MatchString(`^https?:\/\/[0-9a-z\_\.\-\/:]{1,100}[\/]$`, data); ok || data == "0" {
 			return true
 		}
+	case "host":
+		if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\_\.\-]{1,100}$`, data); ok {
+			return true
+		}
 	case "tcp_host":
-		if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\_\.\-\]{1,100}:[0-9]+$`, data); ok {
+		if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\_\.\-]{1,100}:[0-9]+$`, data); ok {
 			return true
 		}
 	case "coords":
