@@ -2,6 +2,13 @@
 
 <script>
 $(document).ready(function() {
+	var clipboard = new Clipboard("#clipboard");
+
+	clipboard.on('success', function(e) {
+		e.clearSelection();
+		clipboard.destroy();
+	});
+	
 	$('#modal_citizen_status').on('shown.bs.modal', function (e) {
 		$('#datetimepicker1').datetimepicker({
 		  icons: {
@@ -57,7 +64,7 @@ $(document).ready(function() {
 	})
 });
 </script>
-<div class="modal fade" id="modal_wallet_address" tabindex="-1" role="dialog" aria-labelledby="modal_wallet_address_label">
+<div class="modal fade" id="modal_wallet_address" role="dialog" aria-labelledby="modal_wallet_address_label">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -70,7 +77,7 @@ $(document).ready(function() {
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary" data-clipboard-text="{{.MyWallet}}">Copy to clipboard</button>
+				<button id="clipboard" type="button" class="btn btn-primary" data-clipboard-action="copy" data-clipboard-text="{{.MyWallet}}">Copy to clipboard</button>
 			</div>
 		</div>
 	</div>
