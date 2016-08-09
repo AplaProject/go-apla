@@ -1,11 +1,16 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".citizen").addClass("active");
+	$(".citizen, .citizen_marriage_registration").addClass("active");
 </script>
 
 <div class="content-heading">
-   Marriage registration
+   <div class="pull-right" style="margin-top:-3px;"><img src="static/img/US.svg" alt="USA" height="30"></div>
+   Citizen
 </div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_citizen">Dashboard</a></li>
+   <li class="active">Marriage registration</li>
+</ol>
 
 <div class="row">
    <div class="col-lg-6">
@@ -26,7 +31,7 @@
 				  </thead>
 				  <tbody class="Demo">
 					 <tr>
-						<td>122</td>
+						<td>Salma Valgarma Hayek Jiménez-Pinault</td>
 						<td>10/10/2016</td>
 						<td>Wait</td>
 						<td align="center"><button class="btn btn-success">Accept</button><button class="btn btn-danger" style="margin-left:5px;">Reject</button></td>
@@ -64,7 +69,7 @@
 				  </thead>
 				  <tbody class="Demo">
 					 <tr>
-						<td>122</td>
+						<td>Jennifer Lopez</td>
 						<td>10/10/2016</td>
 						<td>Wait</td>
 						<td align="center"><button class="btn btn-danger">Close</button></td>

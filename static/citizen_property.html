@@ -1,6 +1,6 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".citizen").addClass("active");
+	$(".citizen, .citizen_property").addClass("active");
 	
 /**=========================================================
  * Module: gmap.js
@@ -88,8 +88,13 @@
 </script>
 
 <div class="content-heading">
-   My property
+   <div class="pull-right" style="margin-top:-3px;"><img src="static/img/US.svg" alt="USA" height="30"></div>
+   Citizen
 </div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_citizen">Dashboard</a></li>
+   <li class="active">My property</li>
+</ol>
 
 <div class="row">
    <div class="col-lg-6">
