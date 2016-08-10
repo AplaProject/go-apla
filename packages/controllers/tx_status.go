@@ -15,7 +15,7 @@ func (c *Controller) TxStatus() (string, error) {
 	if tx["block_id"] != "0" && tx["block_id"] != "" {
 		return `{"success":"`+tx["block_id"]+`"}`, nil
 	} else if len(tx["error"]) > 0 {
-		return `{"error":"`+tx["block_id"]+`"}`, nil
+		return `{"error":"`+tx["error"]+`"}`, nil
 	}
 	return "", nil
 }
