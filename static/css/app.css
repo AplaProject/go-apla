@@ -8032,3 +8032,34 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 .demoMode .notDemo {
 	display:none;
 }
+.sweet-overlay {
+	display:none !important;
+}
+.sweet-alert {
+	flex-flow:row wrap;
+	align-items:center;
+	align-content:space-between;
+	justify-content:center;
+	position:absolute !important;
+	left:0px !important;
+	top:0px !important;
+	width:100% !important;
+	height:100% !important;
+	margin:0px !important;
+}
+.sweet-alert .sa-icon {
+	margin:0px auto !important;
+}
+.sweet-alert h2 {
+	width:100% !important;
+	margin:0px !important;
+}
+.sweet-alert .sa-button-container {
+	width:100% !important;
+}
+.sweet-alert button {
+	margin-top:0px !important;
+}
+.sweet-alert .sa-icon.sa-error .sa-x-mark {
+	width:100%;
+}

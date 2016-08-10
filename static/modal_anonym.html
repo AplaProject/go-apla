@@ -15,6 +15,7 @@
 	var interval;
 	
 	clearInterval(interval);
+	//alert($("[data-sweet-alert]").length)
 	
 	$('#next').bind('click', function () {
 		$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},{{.WalletId}},'+$('#host').val()+','+$('#vote').val() );
@@ -36,21 +37,23 @@
 		}, function (data) {
 
 			console.log("saveQueue tx hash", data.hash);
-			
+			//alert($("[data-sweet-alert]").parents(".modal").attr("id"))
 			interval = setInterval(function() {
 				$.post( 'ajax?controllerName=txStatus', {'hash': data.hash}, function (data) {
 					console.log("txStatus", data);
 					if (typeof data.success !== 'undefined') {
 						clearInterval(interval);
-						$("#modal_block_generation .panel").removeClass("whirl standard");
 						swal({
 							title : "Block generated successfully",
+							allowEscapeKey : false,
 							type : "success"
 						}, function (isConfirm) {
 							if (isConfirm) {
-								$("#modal_block_generation").modal("hide")
+								$("#modal_block_generation").modal("hide");
+								$("[data-sweet-alert]").removeClass("whirl standard");
 							}
 						});
+						$(".sweet-alert").appendTo($("[data-sweet-alert]"));
 					}
 		
 				}, 'JSON' );
@@ -178,7 +181,7 @@ $(document).ready(function() {
 </div>
 <div class="modal fade" id="modal_block_generation" role="dialog" aria-labelledby="modal_block_generation_label">
 	<div class="modal-dialog" role="document">
-		<div class="modal-content panel">
+		<div class="modal-content panel" data-sweet-alert>
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" id="modal_block_generation_label">Block generation</h4>
