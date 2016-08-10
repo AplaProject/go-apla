@@ -1,7 +1,21 @@
 {{define "modalAnonym"}}
 
+<style>
+	.sk-cube-grid {
+		display:none;
+	}
+	.whirl:after {
+		display:none !important;
+	}
+	.whirl .sk-cube-grid {
+		display:block;
+	}
+</style>
 <script>
-
+	var interval;
+	
+	clearInterval(interval);
+	
 	$('#next').bind('click', function () {
 		$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},{{.WalletId}},'+$('#host').val()+','+$('#vote').val() );
 		doSign();
@@ -22,7 +36,25 @@
 		}, function (data) {
 
 			console.log("saveQueue tx hash", data.hash);
-
+			
+			interval = setInterval(function() {
+				$.post( 'ajax?controllerName=txStatus', {'hash': data.hash}, function (data) {
+					console.log("txStatus", data);
+					if (typeof data.success !== 'undefined') {
+						clearInterval(interval);
+						$("#modal_block_generation .panel").removeClass("whirl standard");
+						swal({
+							title : "Block generated successfully",
+							type : "success"
+						}, function (isConfirm) {
+							if (isConfirm) {
+								$("#modal_block_generation").modal("hide")
+							}
+						});
+					}
+		
+				}, 'JSON' );
+			}, 1000)
 
 		}, 'JSON' );
 	} );
@@ -146,7 +178,7 @@ $(document).ready(function() {
 </div>
 <div class="modal fade" id="modal_block_generation" role="dialog" aria-labelledby="modal_block_generation_label">
 	<div class="modal-dialog" role="document">
-		<div class="modal-content">
+		<div class="modal-content panel">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" id="modal_block_generation_label">Block generation</h4>
@@ -165,7 +197,18 @@ $(document).ready(function() {
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-purple" id="next">Save</button>
+				<button type="button" class="btn btn-purple" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" id="next">Save</button>
+			</div>
+			<div class="sk-cube-grid">
+			   <div class="sk-cube sk-cube1"></div>
+			   <div class="sk-cube sk-cube2"></div>
+			   <div class="sk-cube sk-cube3"></div>
+			   <div class="sk-cube sk-cube4"></div>
+			   <div class="sk-cube sk-cube5"></div>
+			   <div class="sk-cube sk-cube6"></div>
+			   <div class="sk-cube sk-cube7"></div>
+			   <div class="sk-cube sk-cube8"></div>
+			   <div class="sk-cube sk-cube9"></div>
 			</div>
 		</div>
 	</div>
