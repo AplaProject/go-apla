@@ -12,6 +12,26 @@ function Demo() {
 	}
 }
 
+function Alert(title, text, type) {
+	var obj = $("[data-sweet-alert]");
+	obj.each(function() {
+		var el = $(this);
+		var id = el.parents(".modal").attr("id");
+		swal({
+			title : title,
+			text : text,
+			allowEscapeKey : false,
+			type : type
+		}, function (isConfirm) {
+			if (isConfirm) {
+				$("#" + id).modal("hide");
+				el.removeClass("whirl standard");
+			}
+		});
+		$(".sweet-alert").appendTo(el);
+	});
+}
+
 function dl_navigate (page, parameters) {
     var json = JSON.stringify(parameters);
     //$('#loader').spin();

@@ -15,7 +15,6 @@
 	var interval;
 	
 	clearInterval(interval);
-	//alert($("[data-sweet-alert]").length)
 	
 	$('#next').bind('click', function () {
 		$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},{{.WalletId}},'+$('#host').val()+','+$('#vote').val() );
@@ -24,42 +23,52 @@
 	} );
 
 	$('#send_to_net').bind('click', function () {
-
-		$.post( 'ajax?controllerName=saveQueue', {
-			'type' : '{{.TxType}}',
-			'time' : '{{.TimeNow}}',
-			'walletId' : '{{.WalletId}}',
-			'host' : $('#host').val(),
-			'vote' : $('#vote').val(),
-			'signature1': $('#signature1').val(),
-			'signature2': $('#signature2').val(),
-			'signature3': $('#signature3').val()
-		}, function (data) {
-
-			console.log("saveQueue tx hash", data.hash);
-			//alert($("[data-sweet-alert]").parents(".modal").attr("id"))
-			interval = setInterval(function() {
-				$.post( 'ajax?controllerName=txStatus', {'hash': data.hash}, function (data) {
-					console.log("txStatus", data);
-					if (typeof data.success !== 'undefined') {
-						clearInterval(interval);
-						swal({
-							title : "Block generated successfully",
-							allowEscapeKey : false,
-							type : "success"
-						}, function (isConfirm) {
-							if (isConfirm) {
-								$("#modal_block_generation").modal("hide");
-								$("[data-sweet-alert]").removeClass("whirl standard");
-							}
-						});
-						$(".sweet-alert").appendTo($("[data-sweet-alert]"));
-					}
-		
-				}, 'JSON' );
-			}, 1000)
-
-		}, 'JSON' );
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'type' : '{{.TxType}}',
+				'time' : '{{.TimeNow}}',
+				'walletId' : '{{.WalletId}}',
+				'host' : $('#host').val(),
+				'vote' : $('#vote').val(),
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data){
+				
+				console.log("saveQueue tx hash", data.hash);
+				
+				interval = setInterval(function() {
+					$.ajax({
+						type: 'POST',
+						url: 'ajax?controllerName=txStatus',
+						data: {
+							'hash': data.hash
+						},
+						dataType: 'json',
+						crossDomain: true,
+						success: function(data){
+							
+							console.log("txStatus", data);
+							
+							clearInterval(interval);
+							Alert("Block generated successfully", "", "success");
+						},
+						error: function(xhr, status, error) {
+							clearInterval(interval);
+							Alert("Error block generated", error, "error");
+						},
+					});
+				}, 1000)
+			},
+			error: function(xhr, status, error) {
+				Alert("Error block generated", error, "error");
+			},
+		});
 	} );
 
 $(document).ready(function() {
