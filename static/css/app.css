@@ -8063,3 +8063,12 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 .sweet-alert .sa-icon.sa-error .sa-x-mark {
 	width:100%;
 }
+.sk-cube-grid {
+	display:none;
+}
+.whirl:after {
+	display:none !important;
+}
+.whirl .sk-cube-grid {
+	display:block;
+}
