@@ -1910,30 +1910,6 @@
 
 }(jQuery, window, document));
 
-// NOW TIMER
-// ----------------------------------- 
-
-(function(window, document, $, undefined){
-
-  $(function(){
-
-    $('[data-now]').each(function(){
-      var element = $(this),
-          format = element.data('format');
-
-      function updateTime() {
-        var dt = moment( new Date() ).format(format);
-        element.text(dt);
-      }
-
-      updateTime();
-      setInterval(updateTime, 1000);
-    
-    });
-  });
-
-})(window, document, window.jQuery);
-
 /**=========================================================
  * Module: panel-tools.js
  * Dismiss panels
@@ -2601,26 +2577,6 @@
       skycons.play();
     });
 
-  });
-
-})(window, document, window.jQuery);
-// SLIMSCROLL
-// ----------------------------------- 
-
-(function(window, document, $, undefined){
-
-  $(function(){
-
-    $('[data-scrollable]').each(function(){
-
-      var element = $(this),
-          defaultHeight = 250;
-      
-      element.slimScroll({
-          height: (element.data('height') || defaultHeight)
-      });
-      
-    });
   });
 
 })(window, document, window.jQuery);
