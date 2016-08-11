@@ -39,28 +39,36 @@
 				//dl_navigate ('dashboardAnonym', {'alert': '{{.Lang.sent_to_the_net}}'} );
 				console.log("saveQueue tx hash", data.hash);
 				
-				interval = setInterval(function() {
-					$.ajax({
-						type: 'POST',
-						url: 'ajax?controllerName=txStatus',
-						data: {
-							'hash': data.hash
-						},
-						dataType: 'json',
-						crossDomain: true,
-						success: function(data){
-							
-							console.log("txStatus", data);
-							
-							clearInterval(interval);
-							Alert({{.Lang.sent_to_the_net}}, "", "success");
-						},
-						error: function(xhr, status, error) {
-							clearInterval(interval);
-							Alert("Error Money transfer", error, "error");
-						},
-					});
-				}, 1000)
+				if (typeof data.error != "undefined") {
+					Alert("Error", data.error, "error");
+				} else {
+					interval = setInterval(function() {
+						$.ajax({
+							type: 'POST',
+							url: 'ajax?controllerName=txStatus',
+							data: {
+								'hash': data.hash
+							},
+							dataType: 'json',
+							crossDomain: true,
+							success: function(data){
+								
+								console.log("txStatus", data);
+								
+								clearInterval(interval);
+								if (typeof data.error != "undefined") {
+									Alert("Error", data.error, "error");
+								} else {
+									Alert({{.Lang.sent_to_the_net}}, "", "success");
+								}
+							},
+							error: function(xhr, status, error) {
+								clearInterval(interval);
+								Alert("Error Money transfer", error, "error");
+							},
+						});
+					}, 1000)
+				}
 			},
 			error: function(xhr, status, error) {
 				Alert("Error Money transfer", error, "error");

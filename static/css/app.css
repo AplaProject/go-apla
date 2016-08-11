@@ -8054,6 +8054,18 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 	width:100% !important;
 	margin:0px !important;
 }
+.sweet-alert p {
+	width:100% !important;
+	max-height:80px;
+	overflow:hidden;
+	overflow-y:auto;
+	line-height:20px !important;
+	justify-content:center;
+}
+.sweet-alert p br {
+	display:block !important;
+	width:100% !important;
+}
 .sweet-alert .sa-button-container {
 	width:100% !important;
 }
