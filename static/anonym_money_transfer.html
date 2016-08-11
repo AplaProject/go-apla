@@ -1,7 +1,10 @@
 {{ define "anonymMoneyTransfer" }}
 
 <script>
-
+	var interval;
+	
+	clearInterval(interval);
+	
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_money_transfer").addClass("active");
 	
@@ -33,8 +36,31 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data){
-				Alert({{.Lang.sent_to_the_net}}, "", "success");
 				//dl_navigate ('dashboardAnonym', {'alert': '{{.Lang.sent_to_the_net}}'} );
+				console.log("saveQueue tx hash", data.hash);
+				
+				interval = setInterval(function() {
+					$.ajax({
+						type: 'POST',
+						url: 'ajax?controllerName=txStatus',
+						data: {
+							'hash': data.hash
+						},
+						dataType: 'json',
+						crossDomain: true,
+						success: function(data){
+							
+							console.log("txStatus", data);
+							
+							clearInterval(interval);
+							Alert({{.Lang.sent_to_the_net}}, "", "success");
+						},
+						error: function(xhr, status, error) {
+							clearInterval(interval);
+							Alert("Error Money transfer", error, "error");
+						},
+					});
+				}, 1000)
 			},
 			error: function(xhr, status, error) {
 				Alert("Error Money transfer", error, "error");

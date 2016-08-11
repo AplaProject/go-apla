@@ -5421,6 +5421,7 @@ button.list-group-item-danger.active:focus {
   line-height: 1.3;
 }
 .panel {
+  margin:0px auto;
   margin-bottom: 21px;
   background-color: #ffffff;
   border: 1px solid transparent;
