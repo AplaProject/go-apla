@@ -75,7 +75,8 @@ $(document).ready(function() {
 
 	clipboard.on('success', function(e) {
 		e.clearSelection();
-		clipboard.destroy();
+		//clipboard.destroy();
+		Alert("Success", "", "success");
 	});
 	
 	$('#modal_citizen_status').on('shown.bs.modal', function (e) {
@@ -103,7 +104,7 @@ $(document).ready(function() {
 </script>
 <div class="modal fade" id="modal_wallet_address" role="dialog" aria-labelledby="modal_wallet_address_label">
 	<div class="modal-dialog" role="document">
-		<div class="modal-content">
+		<div class="modal-content" data-sweet-alert>
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" id="modal_wallet_address_label">Wallet address</h4>
@@ -114,7 +115,7 @@ $(document).ready(function() {
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button id="clipboard" type="button" class="btn btn-primary" data-clipboard-action="copy" data-clipboard-text="{{.MyWalletData.address}}">Copy to clipboard</button>
+				<button id="clipboard" type="button" class="btn btn-primary" data-clipboard-action="copy" data-clipboard-text="{{.MyWalletData.address}}" onClick="preloader(this);">Copy to clipboard</button>
 			</div>
 		</div>
 	</div>
@@ -208,7 +209,7 @@ $(document).ready(function() {
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-purple" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader();" id="next">Save</button>
+				<button type="button" class="btn btn-purple" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" id="next">Save</button>
 			</div>
 		</div>
 	</div>

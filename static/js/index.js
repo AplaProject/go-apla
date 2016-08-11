@@ -12,33 +12,30 @@ function Demo() {
 	}
 }
 
+var obj;
+
 function Alert(title, text, type) {
-	var obj = $("[data-sweet-alert]");
-	obj.each(function() {
-		var el = $(this);
-		var id = el.parents(".modal").attr("id");
-		el.css({"position":"relative"});
-		swal({
-			title : title,
-			text : text,
-			allowEscapeKey : false,
-			type : type
-		}, function (isConfirm) {
-			if (isConfirm) {
-				$("#" + id).modal("hide");
-				el.removeClass("whirl standard");
-			}
-		});
-		$(".sweet-alert").appendTo(el);
+	obj.css({"position":"relative"});
+	var id = obj.parents(".modal").attr("id");
+	swal({
+		title : title,
+		text : text,
+		allowEscapeKey : false,
+		type : type
+	}, function (isConfirm) {
+		if (isConfirm) {
+			$("#" + id).modal("hide");
+			obj.removeClass("whirl standard");
+		}
 	});
+	$(".sweet-alert").appendTo(obj);
 }
 
-function preloader() {
-	var obj = $("[data-sweet-alert]");
-	obj.each(function() {
-		var el = $(this);
-		el.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
-	});
+function preloader(elem) {
+	obj = $("#" + elem.id).parents("[data-sweet-alert]");
+	if (!obj.find(".sk-cube-grid").length) {
+		obj.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
+	}
 }
 
 function dl_navigate (page, parameters) {
