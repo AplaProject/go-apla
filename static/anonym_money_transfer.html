@@ -53,13 +53,13 @@
 							crossDomain: true,
 							success: function(data){
 								
-								if (typeof data.wait != "undefined") {
-									console.log("txStatus", data);
-								} else if (typeof data.eror != "undefined") {
-									Alert("Error", error, "error");
+								console.log("txStatus", data);
+								
+								clearInterval(interval);
+								if (typeof data.error != "undefined") {
+									Alert("Error", data.error, "error");
 								} else {
-									clearInterval(interval);
-									Alert({{.Lang.sent_to_the_net}}, "", "success");
+									Alert("Success", "", "success");
 								}
 							},
 							error: function(xhr, status, error) {

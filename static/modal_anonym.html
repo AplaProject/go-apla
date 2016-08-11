@@ -45,12 +45,13 @@
 							},
 							dataType: 'json',
 							crossDomain: true,
-							success: function (data) {
-
-								if (typeof data.wait != "undefined") {
-									console.log("txStatus", data);
-								} else if (typeof data.eror != "undefined") {
-									Alert("Error", error, "error");
+							success: function (txStatus) {
+								console.log("txStatus", txStatus);
+								if (typeof txStatus.wait != "undefined") {
+									console.log("txStatus", txStatus);
+								} else if (typeof txStatus.error != "undefined") {
+									Alert("Error", txStatus.error, "error");
+									clearInterval(interval);
 								} else {
 									clearInterval(interval);
 									Alert("Success", "", "success");
