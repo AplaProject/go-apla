@@ -17,6 +17,7 @@ function Alert(title, text, type) {
 	obj.each(function() {
 		var el = $(this);
 		var id = el.parents(".modal").attr("id");
+		el.css({"position":"relative"});
 		swal({
 			title : title,
 			text : text,
