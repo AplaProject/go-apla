@@ -26,7 +26,7 @@ func main() {
 	// user_id
 	txSlice = append(txSlice, []byte("2"))
 	//ca1
-	txSlice = append(txSlice, []byte("http://ca1.dcoin.club/api/"))
+	txSlice = append(txSlice, []byte("http://ca1.daylight.world/api/"))
 	//ca2
 	txSlice = append(txSlice, []byte("0"))
 	//ca3

@@ -177,11 +177,11 @@ BEGIN:
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		p.GoroutineName = GoroutineName
-		err = p.GetBlocks(blockId, host, utils.StrToInt64(newBlockData["user_id"]), "rollback_blocks_1", GoroutineName, 7, "")
+		err = p.GetBlocks(blockId, host, "rollback_blocks_1", GoroutineName, 7)
 		if err != nil {
 			logger.Error("v", err)
 			d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
-			d.NodesBan(utils.StrToInt64(newBlockData["user_id"]), fmt.Sprintf("%v", err))
+			d.NodesBan(fmt.Sprintf("%v", err))
 			if d.unlockPrintSleep(utils.ErrInfo(err), 1) {
 				break BEGIN
 			}

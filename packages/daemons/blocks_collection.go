@@ -309,47 +309,19 @@ BEGIN:
 			continue
 		}
 
-		myConfig, err := d.OneRow("SELECT local_gate_ip, static_node_user_id FROM config").String()
+
+
+		var dataTypeMaxBlockId, dataTypeBlockBody int64
+
+		hosts, err := d.GetHosts()
 		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue
+			logger.Error("%v", err)
 		}
 
-		var hosts []map[string]string
-		var nodeHost string
-		var dataTypeMaxBlockId, dataTypeBlockBody int64
-		if len(myConfig["local_gate_ip"]) > 0 {
-			hosts = append(hosts, map[string]string{"host": myConfig["local_gate_ip"], "user_id": myConfig["static_node_user_id"]})
-			nodeHost, err = d.Single("SELECT tcp_host FROM miners_data WHERE user_id  =  ?", myConfig["static_node_user_id"]).String()
-			if err != nil {
-				if d.dPrintSleep(err, d.sleepTime) {
-					break BEGIN
-				}
-				continue
-			}
-			dataTypeMaxBlockId = 9
-			dataTypeBlockBody = 8
-			//getBlockScriptName = "ajax?controllerName=protectedGetBlock";
-			//addNodeHost = "&nodeHost="+nodeHost;
-		} else {
-			// получим список нодов, с кем установлено рукопожатие
-			hosts, err = d.GetAll("SELECT * FROM nodes_connection", -1)
-			if err != nil {
-				if d.dPrintSleep(err, d.sleepTime) {
-					break BEGIN
-				}
-				continue
-			}
-			dataTypeMaxBlockId = 10
-			dataTypeBlockBody = 7
-			//getBlockScriptName = "ajax?controllerName=getBlock";
-			//addNodeHost = "";
-		}
+		dataTypeMaxBlockId = 10
+		dataTypeBlockBody = 7
 
 		logger.Info("%v", hosts)
-//		fmt.Println(`Hosts`, hosts )
 		if len(hosts) == 0 {
 			if d.dPrintSleep(err, 1) {
 				break BEGIN
@@ -359,19 +331,19 @@ BEGIN:
 		
 		maxBlockId := int64(1)
 		maxBlockIdHost := ""
-		var maxBlockIdUserId int64
 		// получим максимальный номер блока
 		for i := 0; i < len(hosts); i++ {
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				break BEGIN
 			}
-			conn, err := utils.TcpConn(hosts[i]["host"])
+			conn, err := utils.TcpConn(hosts[i]+":"+consts.TCP_PORT)
 			if err != nil {
 				if d.dPrintSleep(err, 1) {
 					break BEGIN
 				}
 				continue
 			}
+
 			// шлем тип данных
 			_, err = conn.Write(utils.DecToBin(dataTypeMaxBlockId, 2))
 			if err != nil {
@@ -381,16 +353,7 @@ BEGIN:
 				}
 				continue
 			}
-			if len(nodeHost) > 0 { // защищенный режим
-				err = utils.WriteSizeAndData([]byte(nodeHost), conn)
-				if err != nil {
-					conn.Close()
-					if d.dPrintSleep(err, d.sleepTime) {
-						break BEGIN
-					}
-					continue
-				}
-			}
+
 			// в ответ получаем номер блока
 			blockIdBin := make([]byte, 4)
 			_, err = conn.Read(blockIdBin)
@@ -405,8 +368,7 @@ BEGIN:
 			id := utils.BinToDec(blockIdBin)
 			if id > maxBlockId || i == 0 {
 				maxBlockId = id
-				maxBlockIdHost = hosts[i]["host"]
-				maxBlockIdUserId = utils.StrToInt64(hosts[i]["user_id"])
+				maxBlockIdHost = hosts[i]+":"+consts.TCP_PORT
 			}
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				utils.Sleep(1)
@@ -460,13 +422,13 @@ BEGIN:
 				continue BEGIN
 			}
 			// качаем тело блока с хоста maxBlockIdHost
-			binaryBlock, err := utils.GetBlockBody(maxBlockIdHost, blockId, dataTypeBlockBody, nodeHost)
+			binaryBlock, err := utils.GetBlockBody(maxBlockIdHost, blockId, dataTypeBlockBody)
 
 			if len(binaryBlock) == 0 {
 				// баним на 1 час хост, который дал нам пустой блок, хотя должен был дать все до максимального
 				// для тестов убрал, потом вставить.
 				//nodes_ban ($db, $max_block_id_user_id, substr($binary_block, 0, 512)."\n".__FILE__.', '.__LINE__.', '. __FUNCTION__.', '.__CLASS__.', '. __METHOD__);
-				//p.NodesBan(maxBlockIdUserId, "len(binaryBlock) == 0")
+				//p.NodesBan("len(binaryBlock) == 0")
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -497,7 +459,7 @@ BEGIN:
 				}
 			}
 			if badBlocks[blockData.BlockId] == string(utils.BinToHex(blockData.Sign)) {
-				d.NodesBan(maxBlockIdUserId, fmt.Sprintf("bad_block = %v => %v", blockData.BlockId, badBlocks[blockData.BlockId]))
+				d.NodesBan(fmt.Sprintf("bad_block = %v => %v", blockData.BlockId, badBlocks[blockData.BlockId]))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -507,7 +469,7 @@ BEGIN:
 			// размер блока не может быть более чем max_block_size
 			if currentBlockId > 1 {
 				if int64(len(binaryBlock)) > variables.Int64["max_block_size"] {
-					d.NodesBan(maxBlockIdUserId, fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), variables.Int64["max_block_size"]))
+					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), variables.Int64["max_block_size"]))
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
@@ -516,7 +478,7 @@ BEGIN:
 			}
 
 			if blockData.BlockId != blockId {
-				d.NodesBan(maxBlockIdUserId, fmt.Sprintf(`blockData.BlockId != blockId  %v > %v`, blockData.BlockId, blockId))
+				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockId  %v > %v`, blockData.BlockId, blockId))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -544,7 +506,7 @@ BEGIN:
 			// нам нужен меркель-рут текущего блока
 			mrklRoot, err := utils.GetMrklroot(binaryBlock, first)
 			if err != nil {
-				d.NodesBan(maxBlockIdUserId, fmt.Sprintf(`%v`, err))
+				d.NodesBan(fmt.Sprintf(`%v`, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -579,11 +541,10 @@ BEGIN:
 					continue BEGIN
 				}
 				// нужно привести данные в нашей БД в соответствие с данными у того, у кого качаем более свежий блок
-				//func (p *Parser) GetOldBlocks (userId, blockId int64, host string, hostUserId int64, goroutineName, getBlockScriptName, addNodeHost string) error {
-				err := parser.GetOldBlocks(blockData.WalletId, blockData.CBID, blockId-1, maxBlockIdHost, maxBlockIdUserId, GoroutineName, dataTypeBlockBody, nodeHost)
+				err := parser.GetOldBlocks(blockData.WalletId, blockData.CBID, blockId-1, maxBlockIdHost, GoroutineName, dataTypeBlockBody)
 				if err != nil {
 					logger.Error("%v", err)
-					d.NodesBan(maxBlockIdUserId, fmt.Sprintf(`blockId: %v / %v`, blockId, err))
+					d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
@@ -671,7 +632,7 @@ BEGIN:
 			}
 			// начинаем всё с начала уже с другими нодами. Но у нас уже могут быть новые блоки до $block_id, взятые от нода, которого с в итоге мы баним
 			if err != nil {
-				d.NodesBan(maxBlockIdUserId, fmt.Sprintf(`blockId: %v / %v`, blockId, err))
+				d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -679,14 +640,6 @@ BEGIN:
 			}
 		}
 
-
-/*		toclose, err := collectBlocks(currentBlockId, maxBlockId, dataTypeBlockBody, maxBlockIdUserId, maxBlockIdHost, nodeHost); 
-		if toclose {
-			break
-		}
-		if err != nil {
-			continue
-		}*/
 
 		d.dbUnlock()
 
@@ -698,7 +651,6 @@ BEGIN:
 	if file != nil {
 		file.Close()
 	}
-//  Нужно ли разлочивать базу?
-// 	d.dbUnlock()
+
 	logger.Debug("break BEGIN %v", GoroutineName)
 }

@@ -19,7 +19,7 @@ import (
 )
 
 //const GETPOOLURL = `http://localhost:8089/getpool/`
-const GETPOOLURL = `http://getpool.dcoin.club/`
+const GETPOOLURL = `http://getpool.daylight.world/`
 
 type Pool struct {
 	Pool string `json:"pool"`
@@ -105,7 +105,7 @@ func main() {
 		json.Unmarshal(jsonPool, &pool)
 	}
 	if pool.Pool == `0` || len(pool.Pool) == 0 {
-		pool.Pool = `http://pool.dcoin.club`
+		pool.Pool = `http://pool.daylight.world`
 	}
 	
 	fmt.Println( pool.Pool )

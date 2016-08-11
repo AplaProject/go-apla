@@ -15,13 +15,6 @@ import (
 )
 
 
-
-/*
-Задержки во времени генерации из-за main_lock во время sleep
-
-Delays during generation because of main_lock currently sleep
-*/
-
 var err error
 
 func FindNodePos (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
@@ -33,6 +26,8 @@ func FindNodePos (fullNodesList []map[string]string, prevBlockFullNodeId int64) 
 	}
 	return -1
 }
+
+
 
 func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
@@ -107,17 +102,6 @@ BEGIN:
 
 		logger.Debug("candidateBlockId %v", candidateBlockId)
 
-		if x, err := d.GetMyLocalGateIp(); x != "" {
-			if err != nil {
-				logger.Error("%v", err)
-			}
-			logger.Info("%v", "continue")
-			d.dbUnlock()
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
 
 		if candidateBlockId == newBlockId {
 			d.dbUnlock()
@@ -128,8 +112,7 @@ BEGIN:
 			continue
 		}
 
-		myCBID, err := d.GetMyCBID();
-		myWalletId, err := d.GetMyWalletId();
+		myCBID, myWalletId, err := d.GetMyCBIDAndWalletId();
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()
@@ -139,9 +122,9 @@ BEGIN:
 			}
 			continue
 		}
-		// Если мы - ЦБ и у нас указан delegate, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
+
 		if myCBID > 0 {
-			delegate, err:= d.OneRow("SELECT delegate_wallet_id, delegate_cb_id FROM central_banks WHERE cb_id = ?", myCBID).Int64()
+			delegate, err := d.CheckDelegateCB(myCBID)
 			if err != nil {
 				d.dbUnlock()
 				logger.Error("%v", err)
@@ -150,7 +133,8 @@ BEGIN:
 				}
 				continue
 			}
-			if delegate["delegate_wallet_id"] > 0 || delegate["delegate_cb_id"] > 0  {
+			// Если мы - ЦБ и у нас указан delegate, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
+			if delegate {
 				d.dbUnlock()
 				logger.Debug("delegate > 0")
 				d.sleepTime = 3600

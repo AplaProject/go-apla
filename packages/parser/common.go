@@ -101,9 +101,9 @@ func ClearTmp(blocks map[int64]string) {
 /*
  * $get_block_script_name, $add_node_host используется только при работе в защищенном режиме и только из blocks_collection.php
  * */
-func (p *Parser) GetOldBlocks(walletId,CBID, blockId int64, host string, hostUserId int64, goroutineName string, dataTypeBlockBody int64, nodeHost string) error {
+func (p *Parser) GetOldBlocks(walletId,CBID, blockId int64, host string, goroutineName string, dataTypeBlockBody int64) error {
 	log.Debug("walletId", walletId,"CBID", CBID, "blockId", blockId)
-	err := p.GetBlocks(blockId, host, hostUserId, "rollback_blocks_2", goroutineName, dataTypeBlockBody, nodeHost)
+	err := p.GetBlocks(blockId, host, "rollback_blocks_2", goroutineName, dataTypeBlockBody)
 	if err != nil {
 		log.Error("v", err)
 		return err
@@ -111,7 +111,7 @@ func (p *Parser) GetOldBlocks(walletId,CBID, blockId int64, host string, hostUse
 	return nil
 }
 
-func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlocks, goroutineName string, dataTypeBlockBody int64, nodeHost string) error {
+func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutineName string, dataTypeBlockBody int64) error {
 
 	log.Debug("blockId", blockId)
 	variables, err := p.GetAllVariables()
@@ -141,16 +141,9 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
 		}
-		if len(host) == 0 {
-			host, err = p.Single("SELECT CASE WHEN m.pool_user_id > 0 then (SELECT tcp_host FROM miners_data WHERE user_id = m.pool_user_id) ELSE tcp_host end FROM miners_data as m WHERE m.user_id = ?", userId).String()
-			if err != nil {
-				ClearTmp(blocks)
-				return utils.ErrInfo(err)
-			}
-		}
 
 		// качаем тело блока с хоста host
-		binaryBlock, err := utils.GetBlockBody(host, blockId, dataTypeBlockBody, nodeHost)
+		binaryBlock, err := utils.GetBlockBody(host, blockId, dataTypeBlockBody)
 
 		if err != nil {
 			ClearTmp(blocks)
@@ -351,7 +344,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, userId int64, rollbackBlo
 				log.Debug("there is an error is rolled back all previous blocks of a new chain: %v", err)
 
 				// баним на 1 час хост, который дал нам ложную цепочку
-				err = p.NodesBan(userId, fmt.Sprintf("%s", err))
+				err = p.NodesBan(fmt.Sprintf("%s", err))
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
