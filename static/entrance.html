@@ -1,3 +1,137 @@
+<script>
+function show_text_key () {
+	$("#modal_key").css("display", "block");
+	$("#key_div").css("display", "none");
+	$("#key_selector").html('<a href="#" onclick="show_file_key()">{{.Lang.from_file}}</a>');
+	return false;
+}
+
+function show_file_key () {
+	$("#modal_key").css("display", "none");
+	$("#key_div").css("display", "block");
+	$("#key_selector").html('<a href="#" onclick="show_text_key()">{{.Lang.text}}</a>');
+	return false;
+}
+
+function handleFileSelect2(evt) {
+    $('#key_file_name').html(this.value);
+	var f = evt.target.files[0];
+	handleFileSelect(f);
+}
+
+var handleFileSelect = function(f) {
+
+    $('#key_file_name').html(f.name);
+    var reader = new FileReader();
+    if (f.type.substr(0,5) =='image') {
+	    reader.onload = (function(theFile) {
+	        return function(e) {
+		        console.log('img2key');
+				img2key(e.target.result, 'modal_key');
+	        };
+	    })(f);
+	    reader.readAsDataURL(f);
+	}
+	else {
+	    reader.onload = (function(theFile) {
+	        return function(e) {
+		            console.log(e.target.result);
+					$('#modal_key').val(e.target.result);
+	        };
+	    })(f);
+	    reader.readAsText(f);
+	}
+};
+
+$( document ).ready(function() {
+	if (window.FileReader === undefined) {
+		$("#modal_key").css("display", "block");
+		$("#key_div").css("display", "none");
+		$("#key_selector").css("display", "none");
+	}
+	var upload = document.getElementById('upload_hidden');
+	if (upload)
+		upload.addEventListener('change', handleFileSelect2, false);
+});
+
+
+$('#key_div').on(
+    'dragover',
+    function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+)
+$('#key_div').on(
+    'dragenter',
+    function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+)
+$('#key_div').on(
+    'drop',
+    function(e){
+        if(e.originalEvent.dataTransfer){
+            if(e.originalEvent.dataTransfer.files.length) {
+                e.preventDefault();
+                e.stopPropagation();
+               handleFileSelect(e.originalEvent.dataTransfer.files[0]);
+            }
+        }
+    }
+);
+
+$('#saveKeyAndLogin').bind('click', function () {
+	save_key();
+	$(this).html('Wait...');
+	$(this).addClass( "disabled" );
+	setTimeout(function() {
+		signIn();
+		$('#saveKeyAndLogin').html('{{.Lang.login}}');
+		$('#saveKeyAndLogin').removeClass( "disabled" );
+	}, 500);
+});
+
+$(document).keypress(function(e){
+	if(e.keyCode == 13){
+		if ($("#modal_password, #modal_setup_password").is(":focus")) {
+			$("#saveKeyAndLogin").click();
+		}
+	}
+});
+
+
+function signIn() {
+
+	var key = $("#key").text();
+	var pass = $("#password").text();
+	var setup_password = $("#setup_password").text();
+	if (key.length < 1) {
+		console.log("key.length < 1");
+		$("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>' + $('#incorrect_key_or_password').val() + '</p></div>');
+		$("#loader").spin(false);
+		return false;
+	}
+	if (key != localStorage.getItem('dcoin_key')) {
+		localStorage.setItem('dcoin_pass', pass );
+		localStorage.setItem('dcoin_key', key );
+	}
+	var e_n_sign = get_e_n_sign(key, pass, '', 'modal_alert');
+
+	$.post( 'ajax?controllerName=SignIn', {
+				'n' : e_n_sign['modulus'],
+				'e': e_n_sign['exp'],
+				'setup_password': setup_password
+			}, function (data) {
+				console.log("data.result: ", data.result);
+				login_ok( data.result );
+			}, 'JSON'
+	);
+}
+
+</script>
+
 <div class="content-heading">
    Login
 </div>
@@ -36,7 +170,6 @@
 		 </div>
 		{{end}}
 	</fieldset>
-	<button id="saveKeyAndLogin" type="button" class="btn btn-success  btn-lg btn-block" data-toggle="button">{{.Lang.login}}</button>
  </div>
 </div>
 <!-- END panel-->
