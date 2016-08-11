@@ -44,7 +44,7 @@ func (c *Controller) SignIn() (string, error) {
 		return "{\"result\":0}", err
 	}
 	if walletId > 0 {
-		err = c.ExecSql("UPDATE my_table SET wallet_id = ?", walletId)
+		err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
 		if err != nil {
 			log.Error("err %v", err)
 			return "{\"result\":0}", err
@@ -56,7 +56,7 @@ func (c *Controller) SignIn() (string, error) {
 			log.Error("err %v", err)
 			return "{\"result\":0}", err
 		}
-		err = c.ExecSql("UPDATE citizen_Id SET wallet_id = ?", citizenId)
+		err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
 		if err != nil {
 			log.Error("err %v", err)
 			return "{\"result\":0}", err

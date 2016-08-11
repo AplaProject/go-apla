@@ -74,7 +74,7 @@ type DaemonsChansType struct {
 	ChAnswer chan string
 }
 var (
-	TcpHost = flag.String("tcpHost", "", "")
+	TcpHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
 	ListenHttpPort = flag.String("listenHttpPort", "8089", "ListenHttpPort")
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	OldVersion = flag.String("oldVersion", "", "")
@@ -1495,7 +1495,7 @@ func sendMail(body, subj string, To string, mailData map[string]string) error {
 	                                            <td>
 	                                                     <table width="560" align="center" cellspacing="0" cellpadding="8" border="0">
 	                                                     <tr>
-															<td><img src="http://dcoin.club/email/logo.png" alt="Dcoin" style="width: 280px; height: 62px; margin: 10px 0 15px;" />
+															<td><img src="http://daylight.world/email/logo.png" alt="Dcoin" style="width: 280px; height: 62px; margin: 10px 0 15px;" />
 																<table width="100%" bgcolor="ffffff" style="border: 1px solid #eeeeee; margin-bottom: 10px; padding: 30px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.07); line-height: 1.4;" cellspacing="0" cellpadding="0" border="0">
 																<tr>
 																	<td>
@@ -3182,7 +3182,7 @@ func GetCurrentDir() string {
 	return dir
 }
 
-func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64, nodeHost string) ([]byte, error) {
+func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, error) {
 
 	conn, err := TcpConn(host)
 	if err != nil {
@@ -3195,12 +3195,6 @@ func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64, nodeHost 
 	_, err = conn.Write(DecToBin(dataTypeBlockBody, 2))
 	if err != nil {
 		return nil, ErrInfo(err)
-	}
-	if len(nodeHost) > 0 { // защищенный режим
-		err = WriteSizeAndDataTCPConn([]byte(nodeHost), conn)
-		if err != nil {
-			return nil, ErrInfo(err)
-		}
 	}
 
 	log.Debug("blockId: %v", blockId)

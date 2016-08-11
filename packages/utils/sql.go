@@ -1700,24 +1700,14 @@ func (db *DCDB) GetMyMinersIds(collective []int64) ([]int64, error) {
 }
 
 func (db *DCDB) GetConfirmedBlockId() (int64, error) {
-	localGateIp, err := db.Single("SELECT local_gate_ip FROM config").String()
-	if err != nil {
-		return 0, err
-	}
-	if localGateIp != "" {
-		blockId, err := db.GetBlockId()
-		if err != nil {
-			return 0, err
-		}
-		return blockId, nil
-	} else {
+
 		result, err := db.Single("SELECT max(block_id) FROM confirmations WHERE good >= ?", consts.MIN_CONFIRMED_NODES).Int64()
 		if err != nil {
 			return 0, err
 		}
 		//log.Debug("%v", "result int64",StrToInt64(result))
 		return result, nil
-	}
+
 }
 
 func (db *DCDB) GetCommunityUsers() ([]int64, error) {
@@ -1746,12 +1736,50 @@ func (db *DCDB) GetMyUserId(myPrefix string) (int64, error) {
 	return userId, nil
 }
 
+func (db *DCDB) GetMyCBIDAndWalletId() (int64, int64, error) {
+	myCBID, err := db.GetMyCBID();
+	if err != nil {
+		return 0, 0, err
+	}
+	myWalletId, err := db.GetMyWalletId();
+	if err != nil {
+		return 0, 0, err
+	}
+	return myCBID, myWalletId, nil
+}
+
+func (db *DCDB) GetHosts() ([]string, error) {
+	q := ""
+	if db.ConfigIni["db_type"] == "postgresql" {
+		q = "SELECT DISTINCT ON (host) host FROM full_nodes"
+	} else {
+		q = "SELECT host FROM full_nodes GROUP BY host"
+	}
+	hosts, err := db.GetList(q).String()
+	if err != nil {
+		return nil, err
+	}
+	return hosts, nil
+}
+
+func (db *DCDB) CheckDelegateCB(myCBID int64) (bool, error) {
+	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_cb_id FROM central_banks WHERE cb_id = ?", myCBID).Int64()
+	if err != nil {
+		return false, err
+	}
+	// Если мы - ЦБ и у нас указан delegate, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
+	if delegate["delegate_wallet_id"] > 0 || delegate["delegate_cb_id"] > 0 {
+		return true, nil
+	}
+	return false, nil
+}
 
 func (db *DCDB) GetMyWalletId() (int64, error) {
-	return db.Single("SELECT wallet_id FROM my_table").Int64()
+	return db.Single("SELECT dlt_wallet_id FROM config").Int64()
 }
+
 func (db *DCDB) GetMyCBID() (int64, error) {
-	return db.Single("SELECT cb_id FROM my_table").Int64()
+	return db.Single("SELECT cb_id FROM config").Int64()
 }
 
 func (db *DCDB) GetMyUsersIds(checkCommission, checkNodeKey bool) ([]int64, error) {
@@ -2044,13 +2072,7 @@ func (db *DCDB) GetMyPrefix(userId int64) (string, error) {
 	}
 }
 
-func (db *DCDB) GetMyLocalGateIp() (string, error) {
-	result, err := db.Single("SELECT local_gate_ip FROM config").String()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
+
 func (db *DCDB) GetNodePublicKey(userId int64) ([]byte, error) {
 	result, err := db.Single("SELECT node_public_key FROM miners_data WHERE user_id = ?", userId).Bytes()
 	if err != nil {
@@ -2350,22 +2372,8 @@ func (db *DCDB) GetAiId(table string) (string, error) {
 	return column, nil
 }
 
-func (db *DCDB) NodesBan(userId int64, info string) error {
-	ban, err := db.Single(`SELECT user_id FROM nodes_ban WHERE user_id = ?`, userId).Int64()
-	if err != nil {
-		return err
-	}
-	if ban == 0 {
-		err = db.ExecSql(`INSERT INTO nodes_ban (user_id, ban_start, info) VALUES (?, ?, ?)`, userId, Time(), info)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = db.ExecSql(`UPDATE nodes_ban SET ban_start = ?, info = ? WHERE user_id = ?`, Time(), info, userId)
-		if err != nil {
-			return err
-		}
-	}
+func (db *DCDB) NodesBan(info string) error {
+
 	return nil
 }
 

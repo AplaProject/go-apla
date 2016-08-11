@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	EMAIL_SERVER = `http://email.dcoin.club:8200`
+	EMAIL_SERVER = `http://email.daylight.world:8200`
 )
 
 const (

@@ -14,6 +14,7 @@ Using it for watching for forks
 Нужно чтобы следить за вилками
 */
 
+
 func Confirmations(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -100,17 +101,11 @@ BEGIN:
 			}
 			logger.Info("hash: %v", hash)
 
-			var hosts []map[string]string
+			var hosts []string
 			if d.ConfigIni["test_mode"] == "1" {
-				hosts = []map[string]string{{"host": "localhost:"+consts.TCP_PORT}}
+				hosts = []string{"localhost:"+consts.TCP_PORT}
 			} else {
-				q := ""
-				if d.ConfigIni["db_type"] == "postgresql" {
-					q = "SELECT DISTINCT ON (host) host FROM full_nodes"
-				} else {
-					q = "SELECT host FROM full_nodes GROUP BY host"
-				}
-				hosts, err = d.GetAll(q, consts.COUNT_CONFIRMED_NODES)
+				hosts, err = d.GetHosts()
 				if err != nil {
 					logger.Error("%v", err)
 				}
@@ -118,7 +113,7 @@ BEGIN:
 
 			ch := make(chan string)
 			for i := 0; i < len(hosts); i++ {
-				host := hosts[i]["host"]+":"+consts.TCP_PORT
+				host := hosts[i]+":"+consts.TCP_PORT
 				logger.Info("host %v", host)
 				go func() {
 					IsReachable(host, blockId, ch)

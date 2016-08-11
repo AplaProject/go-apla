@@ -29,7 +29,6 @@ func (c *Controller) InstallStep1() (string, error) {
 	dbUsername := c.r.FormValue("username")
 	dbPassword := c.r.FormValue("password")
 	sqliteDbUrl := c.r.FormValue("sqlite_db_url")
-	keyPassword := c.r.FormValue("key_password")
 
 	if installType == "standard" {
 		dbType = "sqlite"
@@ -134,14 +133,6 @@ func (c *Controller) InstallStep1() (string, error) {
 
 		}
 
-		//if len(userId)>0 {
-		err = c.DCDB.ExecSql("INSERT INTO my_table (key_password) VALUES (?)", keyPassword)
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			//			panic(err)
-			//os.Exit(1)
-		}
-		//}
 		log.Debug("setupPassword: (%s) / (%s)", setupPassword, utils.DSha256(setupPassword))
 		if len(setupPassword) > 0 {
 			setupPassword = string(utils.DSha256(setupPassword))
@@ -172,7 +163,7 @@ func (c *Controller) InstallStep1() (string, error) {
 				panic(err)
 				os.Exit(1)
 			}
-			err = c.DCDB.ExecSql(`UPDATE my_table SET wallet_id = ?`, 1)
+			err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, 1)
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				panic(err)

@@ -119,7 +119,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	formKey := r.FormValue("key")
 	if len(formKey) > 0 {
 		key = formKey
-		// пишем в сессию, что бы ctrl+F5 не сбрасывал ключ (для авто-входа с dcoin.club)
+		// пишем в сессию, что бы ctrl+F5 не сбрасывал ключ (для авто-входа с daylight.world)
 		sess.Set("private_key", key)
 	} else if len(key) == 0 {
 		key = GetSessPrivateKey(w, r)
