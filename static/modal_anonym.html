@@ -28,34 +28,44 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data){
-				
-				console.log("saveQueue tx hash", data.hash);
-				
-				interval = setInterval(function() {
-					$.ajax({
-						type: 'POST',
-						url: 'ajax?controllerName=txStatus',
-						data: {
-							'hash': data.hash
-						},
-						dataType: 'json',
-						crossDomain: true,
-						success: function(data){
-							
-							console.log("txStatus", data);
-							
-							clearInterval(interval);
-							Alert("Block generated successfully", "", "success");
-						},
-						error: function(xhr, status, error) {
-							clearInterval(interval);
-							Alert("Error block generated", error, "error");
-						},
-					});
-				}, 1000)
+
+				if(typeof data.error != "undefined") {
+					Alert("Error", data.error, "error");
+				} else {
+
+					interval = setInterval(function () {
+
+						console.log("data.hash", data.hash);
+
+						$.ajax({
+							type: 'POST',
+							url: 'ajax?controllerName=txStatus',
+							data: {
+								'hash': data.hash
+							},
+							dataType: 'json',
+							crossDomain: true,
+							success: function (data) {
+
+								if (typeof data.wait != "undefined") {
+									console.log("txStatus", data);
+								} else if (typeof data.eror != "undefined") {
+									Alert("Error", error, "error");
+								} else {
+									clearInterval(interval);
+									Alert("Success", "", "success");
+								}
+							},
+							error: function (xhr, status, error) {
+								clearInterval(interval);
+								Alert("Error", error, "error");
+							},
+						});
+					}, 1000)
+				}
 			},
 			error: function(xhr, status, error) {
-				Alert("Error block generated", error, "error");
+				Alert("Error", error, "error");
 			}
 		});
 	} );
