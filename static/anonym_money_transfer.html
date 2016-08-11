@@ -53,12 +53,12 @@
 							crossDomain: true,
 							success: function(data){
 								
-								console.log("txStatus", data);
-								
-								clearInterval(interval);
-								if (typeof data.error != "undefined") {
-									Alert("Error", data.error, "error");
+								if (typeof data.wait != "undefined") {
+									console.log("txStatus", data);
+								} else if (typeof data.eror != "undefined") {
+									Alert("Error", error, "error");
 								} else {
+									clearInterval(interval);
 									Alert({{.Lang.sent_to_the_net}}, "", "success");
 								}
 							},
