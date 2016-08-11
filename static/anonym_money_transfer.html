@@ -59,7 +59,7 @@
 								if (typeof data.error != "undefined") {
 									Alert("Error", data.error, "error");
 								} else {
-									Alert({{.Lang.sent_to_the_net}}, "", "success");
+									Alert("Success", "", "success");
 								}
 							},
 							error: function(xhr, status, error) {
