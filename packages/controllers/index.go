@@ -17,14 +17,9 @@ type index struct {
 	Key               string
 	SetLang           string
 	IOS               bool
-	Upgrade3          string
-	Upgrade4          string
 	Android           bool
 	Mobile            bool
 	ShowIOSMenu       bool
-	ChatEnabled       string
-	AnalyticsDisabled string
-//	MyModalIdName     string
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +49,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	sessWalletId := GetSessWalletId(sess)
 
 	var key string
-	var chatEnabled, analyticsDisabled string
 
 	showIOSMenu := true
 	// Когда меню не выдаем
@@ -108,33 +102,13 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		android = true
 	}
 
-	var upgrade3 string
-	if len(r.FormValue("upgrade3")) > 0 {
-		upgrade3 = "1"
-	}
-	var upgrade4 string
-	if len(r.FormValue("upgrade4")) > 0 {
-		upgrade4 = "1"
-	}
-	formKey := r.FormValue("key")
-	if len(formKey) > 0 {
-		key = formKey
-		// пишем в сессию, что бы ctrl+F5 не сбрасывал ключ (для авто-входа с daylight.world)
-		sess.Set("private_key", key)
-	} else if len(key) == 0 {
-		key = GetSessPrivateKey(w, r)
-	}
 	key = strings.Replace(key, "\r", "\n", -1)
 	key = strings.Replace(key, "\n\n", "\n", -1)
 	key = strings.Replace(key, "\n", "\\\n", -1)
 
 	setLang := r.FormValue("lang")
 
-/*	modal, err := static.Asset("static/templates/modal.html")
-	if err != nil {
-		log.Error("%v", err)
-	}
-	*/
+
 	funcMap := template.FuncMap{
 		"noescape": func(s string) template.HTML {
 			return template.HTML(s)
@@ -147,29 +121,17 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("%v", err)
 	}
-/*	t, err = t.Parse(string(modal))
-	if err != nil {
-		log.Error("%v", err)
-	}*/
 
 	b := new(bytes.Buffer)
 	err = t.Execute(b, &index{
-		Upgrade3:    upgrade3,
-		Upgrade4:    upgrade4,
 		DbOk:        true,
 		Lang:        globalLangReadOnly[lang],
 		Key:         key,
 		SetLang:     setLang,
 		ShowIOSMenu: showIOSMenu,
-		/*IOS: true,
-		Android: false,
-		Mobile: true})*/
 		IOS:               ios,
 		Android:           android,
-		ChatEnabled:       chatEnabled,
-		AnalyticsDisabled: analyticsDisabled,
-		Mobile:            mobile,
-/*		MyModalIdName: "myModal"*/})
+		Mobile:            mobile})
 	if err != nil {
 		log.Error("%v", err)
 	}

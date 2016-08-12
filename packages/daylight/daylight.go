@@ -385,9 +385,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.HandleFunc(HandleHttpHost+"/", controllers.Index)
 		http.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
-		http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
-		http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
-		http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
+		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
+		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
+		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
 		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
 
 		log.Debug("ListenHttpHost", ListenHttpHost)
@@ -440,34 +440,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	fmt.Println("ALL RIGHT")
 	utils.Sleep(3600 * 24 * 90)
 	log.Debug("EXIT")
-}
-
-func exhangeHttpListener(HandleHttpHost string) {
-
-	eConfig, err := utils.DB.GetMap(`SELECT * FROM e_config`, "name", "value")
-	if err != nil {
-		log.Error("%v", err)
-	}
-	fmt.Println("eConfig", eConfig)
-
-	//http.HandleFunc("e-tmp.com:8089/", controllers.IndexE)
-	//http.HandleFunc("e-tmp.com:8089/e/", controllers.IndexE)
-
-	config, err := utils.DB.GetNodeConfig()
-	if err != nil {
-		log.Error("%v", err)
-	}
-	fmt.Println("config", config)
-	if len(config["stat_host"]) > 0 {
-		//fmt.Println("stat_host", config["stat_host"])
-		http.HandleFunc(config["stat_host"]+"/", controllers.IndexStat)
-	}
-	if len(config["getpool_host"]) > 0 {
-		//fmt.Println("stat_host", config["stat_host"])
-		http.HandleFunc(config["getpool_host"]+"/", controllers.IndexGetPool)
-	}
-
-
 }
 
 // http://grokbase.com/t/gg/golang-nuts/12a9yhgr64/go-nuts-disable-directory-listing-with-http-fileserver#201210093cnylxyosmdfuf3wh5xqnwiut4
