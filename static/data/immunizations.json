@@ -1,0 +1,19 @@
+[
+  {
+    "immunization": "measles",
+    "date": "1470906142",
+    "facility": "Clinica A"
+  }, {
+    "immunization": "mumps",
+    "date": "1470906142",
+    "facility": "Clinica F"
+  }, {
+    "immunization": "pertussis",
+    "date": "1470906142",
+    "facility": "Clinica D"
+  }, {
+    "immunization": "pneumonia",
+    "date": "1470906142",
+    "facility": "Clinica Y"
+  }
+]
