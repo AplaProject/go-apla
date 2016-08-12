@@ -2,15 +2,18 @@ package parser
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) DLTTransferInit() error {
 
-	fields := []map[string]string{{"walletAddress": "bytes"}, {"amount": "int64"},  {"commission": "int64"}, {"comment": "bytes"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"walletAddress": "bytes"}, {"amount": "int64"},  {"commission": "int64"}, {"comment": "bytes"},{"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
+	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
 	return nil
 }
 
@@ -57,15 +60,23 @@ func (p *Parser) DLTTransferFront() error {
 }
 
 func (p *Parser) DLTTransfer() error {
-
+	var err error
 	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
 	if walletId > 0 {
-		err := p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ? WHERE wallet_id = ?`, p.TxMaps.Int64["amount"], walletId)
+		if len(p.TxMaps.Bytes["public_key"]) > 0 {
+			err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ?, public_key_0 = [hex] WHERE wallet_id = ?`, p.TxMaps.Int64["amount"],  p.TxMaps.Bytes["public_key"], walletId)
+		} else {
+			err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ? WHERE wallet_id = ?`, p.TxMaps.Int64["amount"], walletId)
+		}
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	} else {
-		err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount) VALUES ([hex], ?)`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"])
+		if len(p.TxMaps.Bytes["public_key"]) > 0 {
+			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount, public_key_0) VALUES ([hex], ?, [hex])`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"])
+		} else {
+			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount) VALUES ([hex], ?)`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"])
+		}
 		if err != nil {
 			return p.ErrInfo(err)
 		}

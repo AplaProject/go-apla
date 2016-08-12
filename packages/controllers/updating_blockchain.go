@@ -122,7 +122,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	}
 	diff := int64(math.Abs(float64(utils.Time() - networkTime.Unix())))
 	var alertTime string
-	if c.dbInit && diff > c.Variables.Int64["alert_error_time"] {
+	if c.dbInit && diff > consts.ALERT_ERROR_TIME {
 		alertTime = strings.Replace(c.Lang["alert_time"], "[sec]", utils.Int64ToStr(diff), -1)
 	}
 

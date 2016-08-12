@@ -3,6 +3,7 @@ package tcpserver
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"io"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 func (t *TcpServer) Type1() {
@@ -56,7 +57,7 @@ func (t *TcpServer) Type1() {
 			return
 		}
 		log.Debug("binaryData: %x", binaryData)
-		// host отправителя, чтобы знать у кого брать данные, когда они будут скачиваться другим скриптом
+		// host отправителя, чтобы знать у кого брать данные, когда они будут скачиваться другим демоном
 		size_ := utils.DecodeLength(&binaryData)
 		newDataHost := string(utils.BytesShift(&binaryData, size_))
 		log.Debug("newDataHost: %d", newDataHost)
@@ -176,13 +177,13 @@ func (t *TcpServer) Type1() {
 				}
 				txHex := utils.BinToHex(txBinData)
 				// проверим размер
-				if int64(len(txBinData)) > t.variables.Int64["max_tx_size"] {
+				if int64(len(txBinData)) > consts.MAX_TX_SIZE {
 					log.Debug("%v", utils.ErrInfo("len(txBinData) > max_tx_size"))
 					return
 				}
 
 				log.Debug("INSERT INTO queue_tx (hash, data) %s, %d, %s", utils.Md5(txBinData), txHex)
-				err = t.ExecSql(`INSERT INTO queue_tx (hash, data) VALUES ([hex], ?, [hex])`, utils.Md5(txBinData), txHex)
+				err = t.ExecSql(`INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])`, utils.Md5(txBinData), txHex)
 				if len(txBinData) == 0 {
 					log.Error("%v", utils.ErrInfo(err))
 					return

@@ -2,13 +2,17 @@
 
 <script>
 	var interval;
+	var serverTime;
 	
 	clearInterval(interval);
 	
 	$('#next').bind('click', function () {
-		$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},{{.WalletId}},'+$('#host').val()+','+$('#vote').val() );
-		doSign();
-		$("#send_to_net").trigger("click");
+		$.get( 'ajax?controllerName=GetServerTime', function (data) {
+			serverTime = data.time;
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#host').val()+','+$('#vote').val() );
+			doSign();
+			$("#send_to_net").trigger("click");
+		}, "json" );
 	} );
 
 	$('#send_to_net').bind('click', function () {
@@ -17,10 +21,13 @@
 			url: 'ajax?controllerName=saveQueue',
 			data: {
 				'type' : '{{.TxType}}',
-				'time' : '{{.TimeNow}}',
+				'time' : serverTime,
 				'walletId' : '{{.WalletId}}',
 				'host' : $('#host').val(),
 				'vote' : $('#vote').val(),
+				'publicKey' : $('#vote').val(),
+				'n' : e_n_sign['modulus'],
+				'e': e_n_sign['exp'],
 				'signature1': $('#signature1').val(),
 				'signature2': $('#signature2').val(),
 				'signature3': $('#signature3').val()

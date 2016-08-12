@@ -46,11 +46,8 @@ func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-	if utils.Mobile() {
-		d.sleepTime = 3600
-	} else {
-		d.sleepTime = 10
-	}
+	d.sleepTime = 1
+
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
 	}
@@ -167,7 +164,16 @@ BEGIN:
 
 		// если дошли до сюда, значит мы есть в full_nodes. надо определить в каком месте списка
 		// получим cb_id, wallet_id и время последнего блока
-		prevBlock, err := d.OneRow("SELECT cb_id, wallet_id, time FROM info_block").Int64()
+		prevBlock, err := d.OneRow("SELECT cb_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
+		if err != nil {
+			d.dbUnlock()
+			logger.Error("%v", err)
+			if d.dSleep(d.sleepTime) {
+				break BEGIN
+			}
+			continue BEGIN
+		}
+		prevBlockHash, err := d.Single("SELECT hex(hash) as hash FROM info_block").String()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -247,7 +253,17 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		prevBlock, err = d.OneRow("SELECT cb_id, wallet_id, block_id, time FROM info_block").Int64()
+		prevBlock, err = d.OneRow("SELECT cb_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
+		if err != nil {
+			d.dbUnlock()
+			logger.Error("%v", err)
+			if d.dSleep(d.sleepTime) {
+				break BEGIN
+			}
+			continue BEGIN
+		}
+		logger.Debug("prevBlock %v", prevBlock)
+		prevBlockHash, err = d.Single("SELECT hex(hash) as hash FROM info_block").String()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -392,7 +408,7 @@ BEGIN:
 			continue BEGIN
 		}
 		var forSign string
-		forSign = fmt.Sprintf("0,%v,%v,%v,%v", newBlockId, prevBlock["hash"], Time, string(mrklRoot))
+		forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID,  string(mrklRoot))
 		logger.Debug("forSign: %v", forSign)
 		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
 		if err != nil {

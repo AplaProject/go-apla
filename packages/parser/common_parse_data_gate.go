@@ -156,7 +156,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
 				// for not letting to send a DOS-block (for instance 10 GB, which fill out all transactions by itself)
-				if txCounter[userId] > p.Variables.Int64["max_block_user_transactions"] {
+				if txCounter[userId] > consts.MAX_BLOCK_USER_TXS {
 					p.RollbackTo(txForRollbackTo, true, false)
 					return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 				}

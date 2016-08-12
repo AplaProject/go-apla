@@ -3,6 +3,7 @@ package tcpserver
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"io"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 func (t *TcpServer) Type2() {
@@ -34,7 +35,7 @@ func (t *TcpServer) Type2() {
 		}
 		log.Debug("decryptedBinData: %x", decryptedBinData)
 		// проверим размер
-		if int64(len(binaryData)) > t.variables.Int64["max_tx_size"] {
+		if int64(len(binaryData)) > consts.MAX_TX_SIZE {
 			log.Debug("%v", utils.ErrInfo("len(txBinData) > max_tx_size"))
 			return
 		}

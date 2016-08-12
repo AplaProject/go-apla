@@ -47,14 +47,10 @@ BEGIN:
 		// первые 2 минуты спим по 10 сек, чтобы блоки успели собраться
 		s++
 
-		if utils.Mobile() {
-			d.sleepTime = 300
-		} else {
-			d.sleepTime = 60
-		}
+		d.sleepTime = 1
 
 		if s < 12 {
-			d.sleepTime = 10
+			d.sleepTime = 1
 		}
 
 		logger.Info(GoroutineName)
