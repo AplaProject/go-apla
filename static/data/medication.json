@@ -1,0 +1,15 @@
+{
+  {
+    "medicament": "HUMULIN",
+    "dose": "20",
+    "times": "1",
+    "when": "after meals",
+	"left": "15"
+  }, {
+    "medicament": "HUMULIN",
+    "dose": "50",
+    "times": "2",
+    "when": "after meals",
+	"left": "7"
+  }
+}
