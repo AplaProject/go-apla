@@ -109,6 +109,7 @@ $(document).keypress(function(e){
 	}
 });
 
+var e_n_sign;
 
 function signIn() {
 
@@ -125,7 +126,8 @@ function signIn() {
 		localStorage.setItem('dcoin_pass', pass );
 		localStorage.setItem('dcoin_key', key );
 	}
-	var e_n_sign = get_e_n_sign(key, pass, '', 'modal_alert');
+
+	e_n_sign = get_e_n_sign(key, pass, '', 'modal_alert');
 
 	$.post( 'ajax?controllerName=SignIn', {
 				'n' : e_n_sign['modulus'],

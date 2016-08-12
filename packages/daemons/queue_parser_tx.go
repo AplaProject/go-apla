@@ -26,11 +26,8 @@ func QueueParserTx(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-	if utils.Mobile() {
-		d.sleepTime = 60
-	} else {
-		d.sleepTime = 1
-	}
+	d.sleepTime = 1
+
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
 	}

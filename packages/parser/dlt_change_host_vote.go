@@ -1,15 +1,19 @@
 package parser
 
 import (
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) DLTChangeHostVoteInit() error {
 
-	fields := []map[string]string{{"host": "string"}, {"vote": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"host": "string"}, {"vote": "string"}, {"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
+	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
+	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
 	return nil
 }
 
@@ -40,8 +44,12 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 }
 
 func (p *Parser) DLTChangeHostVote() error {
-
-	err := p.ExecSql(`UPDATE dlt_wallets SET host = ?, vote = [hex] WHERE wallet_id = ?`, p.TxMaps.String["host"], p.TxMaps.String["vote"], p.TxWalletID)
+	var err error
+	if len(p.TxMaps.Bytes["public_key"]) > 0 {
+		err = p.ExecSql(`UPDATE dlt_wallets SET host = ?, vote = [hex], public_key_0 = [hex] WHERE wallet_id = ?`, p.TxMaps.String["host"], p.TxMaps.String["vote"], p.TxMaps.Bytes["public_key"], p.TxWalletID)
+	} else {
+		err = p.ExecSql(`UPDATE dlt_wallets SET host = ?, vote = [hex] WHERE wallet_id = ?`, p.TxMaps.String["host"], p.TxMaps.String["vote"], p.TxWalletID)
+	}
 	if err != nil {
 		return p.ErrInfo(err)
 	}

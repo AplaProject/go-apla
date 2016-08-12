@@ -251,3 +251,7 @@ var DCTarget = map[int64]int64{
 const GAPS_BETWEEN_BLOCKS = 1
 const COMMISSION = 1000
 const TCP_PORT = "7079"
+const MAX_BLOCK_USER_TXS = 100
+const RB_BLOCKS_1 = 30
+const RB_BLOCKS_2 = 1440
+const ALERT_ERROR_TIME = 1

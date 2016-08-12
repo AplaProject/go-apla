@@ -18,11 +18,6 @@ func (p *Parser) ParseDataFull() error {
 	}
 	var err error
 
-	p.Variables, err = p.GetAllVariables()
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-
 	//if len(p.BinaryData) > 500000 {
 	//	ioutil.WriteFile("block-"+string(utils.DSha256(p.BinaryData)), p.BinaryData, 0644)
 	//}
@@ -123,7 +118,7 @@ func (p *Parser) ParseDataFull() error {
 				txCounter[userId]++
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
-				if txCounter[userId] > p.Variables.Int64["max_block_user_transactions"] {
+				if txCounter[userId] > consts.MAX_BLOCK_USER_TXS {
 					err0 := p.RollbackTo(txForRollbackTo, true, false)
 					if err0!=nil{
 						log.Error("error: %v", err0)

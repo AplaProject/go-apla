@@ -5,6 +5,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"math/big"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 /* Берем блок. Если блок имеет лучший хэш, то ищем, в каком блоке у нас пошла вилка
@@ -37,11 +38,8 @@ func QueueParserBlocks(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-	if utils.Mobile() {
-		d.sleepTime = 1800
-	} else {
-		d.sleepTime = 10
-	}
+	d.sleepTime = 1
+
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
 	}
@@ -96,20 +94,13 @@ BEGIN:
 		newBlockData["hash_hex"] = string(utils.BinToHex(newBlockData["hash"]))
 		prevBlockData["hash_hex"] = string(utils.BinToHex(prevBlockData["hash"]))
 
-		variables, err := d.GetAllVariables()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
 
 		/*
 		 * Базовая проверка
 		 */
 
 		// проверим, укладывается ли блок в лимит rollback_blocks_1
-		if utils.StrToInt64(newBlockData["block_id"]) > utils.StrToInt64(prevBlockData["block_id"])+variables.Int64["rollback_blocks_1"] {
+		if utils.StrToInt64(newBlockData["block_id"]) > utils.StrToInt64(prevBlockData["block_id"])+consts.RB_BLOCKS_1 {
 			d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
 			if d.unlockPrintSleep(utils.ErrInfo("rollback_blocks_1"), 1) {
 				break BEGIN

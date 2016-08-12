@@ -26,7 +26,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -502,43 +501,9 @@ func openBrowser(BrowserHttpHost string) {
 }
 
 func GetHttpHost() (string, string, string) {
-	BrowserHttpHost := "http://localhost:8089"
+	BrowserHttpHost := "http://localhost:"+*utils.ListenHttpPort
 	HandleHttpHost := ""
-	ListenHttpHost := ":8089"
-	// Если первый запуск, то будет висеть на 8089
-	community, err := utils.DB.GetCommunityUsers()
-	log.Debug("community:%v", community)
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return BrowserHttpHost, HandleHttpHost, ListenHttpHost
-	}
-	//myPrefix := ""
-	//if len(community) > 0 {
-	//myUserId, err := db.GetPoolAdminUserId()
-	//	if err!=nil {
-	//		log.Error("%v", ErrInfo(err))
-	//		return BrowserHttpHost, HandleHttpHost, ListenHttpHost
-	//	}
-	//myPrefix = Int64ToStr(myUserId)+"_"
-	//}
-	httpHost, err := utils.DB.Single("SELECT http_host FROM config").String()
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return BrowserHttpHost, HandleHttpHost, ListenHttpHost
-	}
-	if len(httpHost) > 0 {
-		re := regexp.MustCompile(`https?:\/\/([0-9a-z\_\.\-:]+)`)
-		match := re.FindStringSubmatch(httpHost)
-		if len(match) != 0 {
-			port := ""
-			// если ":" нету, значит порт не указан, а если ":" есть, значит в match[1] и в ListenHttpHost уже будет порт
-			if ok, _ := regexp.MatchString(`:`, match[1]); !ok {
-				port = ":80"
-			}
-			HandleHttpHost = match[1]
-			ListenHttpHost = match[1] + port
-		}
-		BrowserHttpHost = httpHost
-	}
+	ListenHttpHost := ":"+*utils.ListenHttpPort
+
 	return BrowserHttpHost, HandleHttpHost, ListenHttpHost
 }

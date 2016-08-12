@@ -1,7 +1,6 @@
 package daemons
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/consts"
@@ -29,11 +28,7 @@ func BlocksCollection(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-	if utils.Mobile() {
-		d.sleepTime = 60
-	} else {
-		d.sleepTime = 60
-	}
+	d.sleepTime = 1
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
 	}
@@ -414,13 +409,7 @@ BEGIN:
 				d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime ) 
 				break BEGIN
 			}
-			variables, err := d.GetAllVariables()
-			if err != nil {
-				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
+
 			// качаем тело блока с хоста maxBlockIdHost
 			binaryBlock, err := utils.GetBlockBody(maxBlockIdHost, blockId, dataTypeBlockBody)
 
@@ -440,42 +429,18 @@ BEGIN:
 			blockData := utils.ParseBlockHeader(&binaryBlock)
 			logger.Info("blockData: %v, blockId: %v", blockData, blockId)
 
-			// если существуют глючная цепочка, тот тут мы её проигнорируем
-			badBlocks_, err := d.Single("SELECT bad_blocks FROM config").Bytes()
-			if err != nil {
-				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			badBlocks := make(map[int64]string)
-			if len(badBlocks_) > 0 {
-				err = json.Unmarshal(badBlocks_, &badBlocks)
-				if err != nil {
-					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-			}
-			if badBlocks[blockData.BlockId] == string(utils.BinToHex(blockData.Sign)) {
-				d.NodesBan(fmt.Sprintf("bad_block = %v => %v", blockData.BlockId, badBlocks[blockData.BlockId]))
-				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-
 			// размер блока не может быть более чем max_block_size
 			if currentBlockId > 1 {
-				if int64(len(binaryBlock)) > variables.Int64["max_block_size"] {
-					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), variables.Int64["max_block_size"]))
+				if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
+					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), consts.MAX_BLOCK_SIZE))
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
 					continue BEGIN
 				}
 			}
+
+			logger.Debug("currentBlockId %v", currentBlockId)
 
 			if blockData.BlockId != blockId {
 				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockId  %v > %v`, blockData.BlockId, blockId))
@@ -499,7 +464,11 @@ BEGIN:
 			} else {
 				prevBlockHash = "0"
 			}
-			first := false
+
+			logger.Debug("prevBlockHash %x", prevBlockHash)
+
+			first :=
+			false
 			if blockId == 1 {
 				first = true
 			}
@@ -513,6 +482,8 @@ BEGIN:
 				continue BEGIN
 			}
 
+			logger.Debug("mrklRoot %x", mrklRoot)
+
 			// публичный ключ того, кто этот блок сгенерил
 			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.CBID)
 			if err != nil {
@@ -522,8 +493,11 @@ BEGIN:
 				continue BEGIN
 			}
 
+			logger.Debug("nodePublicKey %x", nodePublicKey)
+
 			// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
 			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.CBID, mrklRoot)
+			logger.Debug("forSign %v", forSign)
 
 			// проверяем подпись
 			if !first {

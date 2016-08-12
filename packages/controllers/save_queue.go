@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"time"
 )
@@ -26,6 +25,15 @@ func (c *Controller) SaveQueue() (string, error) {
 	if !utils.CheckInputData(txType_, "type") {
 		return `{"result":"incorrect type"}`, nil
 	}
+
+	n := []byte(c.r.FormValue("n"))
+	e := []byte(c.r.FormValue("e"))
+	publicKey := utils.HexToBin(utils.MakeAsn1(n, e))
+	if len(publicKey) == 0 {
+		publicKey = []byte("null")
+	}
+	log.Debug("publicKey", string(publicKey))
+
 	txType := utils.TypeInt(txType_)
 	signature1 := c.r.FormValue("signature1")
 	signature2 := c.r.FormValue("signature2")
@@ -61,6 +69,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(amount)...)
 		data = append(data, utils.EncodeLengthPlusData(commission)...)
 		data = append(data, utils.EncodeLengthPlusData(comment)...)
+		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
 		data = append(data, binSignatures...)
 
 	case "DLTChangeHostVote":
@@ -74,60 +83,11 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
 		data = append(data, utils.EncodeLengthPlusData(host)...)
 		data = append(data, utils.EncodeLengthPlusData(vote)...)
-		data = append(data, binSignatures...)
-
-
-	case "DelForexOrder":
-
-		orderId := []byte(c.r.FormValue("order_id"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(orderId)...)
-		data = append(data, binSignatures...)
-
-
-	case "ChangeNodeKey":
-
-		publicKey := []byte(c.r.FormValue("public_key"))
-
-		verifyData := map[string]string{c.r.FormValue("public_key"): "public_key", c.r.FormValue("private_key"): "private_key"}
-		err := CheckInputData(verifyData)
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
-		data = append(data, binSignatures...)
-
-
-	case "NewForexOrder":
-
-		sellCurrencyId := []byte(c.r.FormValue("sell_currency_id"))
-		sellRate := []byte(c.r.FormValue("sell_rate"))
-		amount := []byte(c.r.FormValue("amount"))
-		buyCurrencyId := []byte(c.r.FormValue("buy_currency_id"))
-		commission := []byte(c.r.FormValue("commission"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(sellCurrencyId)...)
-		data = append(data, utils.EncodeLengthPlusData(sellRate)...)
-		data = append(data, utils.EncodeLengthPlusData(amount)...)
-		data = append(data, utils.EncodeLengthPlusData(buyCurrencyId)...)
-		data = append(data, utils.EncodeLengthPlusData(commission)...)
+		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
 		data = append(data, binSignatures...)
 
 	}
-
-	log.Debug("md5")
-
 	md5 := utils.Md5(data)
-
-
-	log.Debug("md5")
 
 	err = c.ExecSql(`INSERT INTO transactions_status (
 				hash,
@@ -153,13 +113,4 @@ func (c *Controller) SaveQueue() (string, error) {
 	}
 
 	return `{"hash":"`+string(md5)+`"}`, nil
-}
-
-func CheckInputData(data map[string]string) error {
-	for k, v := range data {
-		if !utils.CheckInputData(k, v) {
-			return utils.ErrInfo(fmt.Errorf("incorrect " + v))
-		}
-	}
-	return nil
 }
