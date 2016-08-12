@@ -1,6 +1,6 @@
 <script>
 $(document).ready(function() {
-	$('#modal_citizen_status').on('shown.bs.modal', function (e) {
+	$('#modal_vital_signs').on('shown.bs.modal', function (e) {
 		$('#datetimepicker1').datetimepicker({
 		  icons: {
 			  time: 'fa fa-clock-o',
@@ -16,121 +16,285 @@ $(document).ready(function() {
 			maxDate: 'now',
 			format: 'DD MMMM, YYYY'
 		});
-		$('.filestyle').filestyle();
-		$('#select2-1').select2({
+	})
+	$('#modal_symptom').on('shown.bs.modal', function (e) {
+		$('#datetimepicker2').datetimepicker({
+		  icons: {
+			  time: 'fa fa-clock-o',
+			  date: 'fa fa-calendar',
+			  up: 'fa fa-chevron-up',
+			  down: 'fa fa-chevron-down',
+			  previous: 'fa fa-chevron-left',
+			  next: 'fa fa-chevron-right',
+			  today: 'fa fa-crosshairs',
+			  clear: 'fa fa-trash'
+			},
+			minDate: moment("01/01/1950"),
+			maxDate: 'now',
+			format: 'DD MMMM, YYYY'
+		});
+	})
+	$('#modal_entries_clinic').on('shown.bs.modal', function (e) {
+		$('#facility').select2({
+			theme: 'bootstrap'
+		});
+	})
+	$('#modal_procedure').on('shown.bs.modal', function (e) {
+		$('#datetimepicker3').datetimepicker({
+		  icons: {
+			  time: 'fa fa-clock-o',
+			  date: 'fa fa-calendar',
+			  up: 'fa fa-chevron-up',
+			  down: 'fa fa-chevron-down',
+			  previous: 'fa fa-chevron-left',
+			  next: 'fa fa-chevron-right',
+			  today: 'fa fa-crosshairs',
+			  clear: 'fa fa-trash'
+			},
+			minDate: moment("01/01/1950"),
+			maxDate: 'now',
+			format: 'DD MMMM, YYYY'
+		});
+		$('#procedure').select2({
 			theme: 'bootstrap'
 		});
 	})
 });
 </script>
-<div class="modal fade" id="modal_wallet_address" role="dialog" aria-labelledby="modal_wallet_address_label">
+<div class="modal fade" id="modal_vital_signs" role="dialog" aria-labelledby="modal_vital_signs_label">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content" data-sweet-alert>
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="modal_wallet_address_label">Wallet address</h4>
+				<h4 class="modal-title" id="modal_vital_signs_label">Vital Signs</h4>
 			</div>
 			<div class="modal-body">
-				<center><img src="static/img/QR.png" alt=""></center>
-				<div class="well" style="margin-bottom:0px; margin-top:15px; text-align:center; background-color:#f5f5f5;">{{.MyWalletData.address}}</div>
+				<form role="form">
+				   <div class="row">
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Height</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Weight</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+				   </div>
+				   <div class="row">
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Temperature</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+				   </div>
+				   <div class="row">
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Pulse</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Respiration rate</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+				   </div>
+				   <div class="row">
+					   <div class="col-xs-6">
+						   <div class="form-group">
+							  <label>Arterial pressure</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+					   <div class="col-xs-6">
+						   <div class="form-group">
+							  <label>&nbsp;</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+				   </div>
+				   <div class="row">
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Hemoglobin level</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Glucose levels</label>
+							  <input type="number" class="form-control" value="">
+						   </div>
+					   </div>
+				   </div>
+				   <div class="row">
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Date</label>
+							  <div id="datetimepicker1" class="input-group date">
+								 <input type="text" class="form-control">
+								 <span class="input-group-addon">
+									<span class="fa fa-calendar"></span>
+								 </span>
+							  </div>
+						   </div>
+					   </div>
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Time</label>
+							  <input type="text" class="form-control" value="">
+						   </div>
+					   </div>
+				   </div>
+				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button id="clipboard" type="button" class="btn btn-primary" data-clipboard-action="copy" data-clipboard-text="{{.MyWalletData.address}}" onClick="preloader(this);">Copy to clipboard</button>
+				<button type="button" class="btn btn-danger">Save</button>
 			</div>
 		</div>
 	</div>
 </div>
-<div class="modal fade" id="modal_citizen_status" role="dialog" aria-labelledby="modal_citizen_status_label">
+<div class="modal fade" id="modal_symptom" role="dialog" aria-labelledby="modal_symptom_label">
 	<div class="modal-dialog" role="document">
-		<div class="modal-content">
+		<div class="modal-content" data-sweet-alert>
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="modal_citizen_status_label">Request for citizen status</h4>
+				<h4 class="modal-title" id="modal_symptom_label">Add symptom</h4>
 			</div>
 			<div class="modal-body">
 				<form role="form">
 				   <div class="form-group">
-					  <label>Price</label>
-					  <input type="text" class="form-control" value="10 DLT" disabled>
+					  <label>Symptoms</label>
+					  <input type="text" class="form-control" value="">
+					  <span class="help-block m-b-none">Enter symptoms (cough, dizziness), separated by commas</span>
 				   </div>
 				   <div class="form-group">
-					  <label>Name</label>
-					  <input type="text" class="form-control">
+					  <label>Pains</label>
+					  <input type="text" class="form-control" value="">
+					  <span class="help-block m-b-none">Enter pains (head, ear, heart), separated by commas</span>
 				   </div>
-				   <div class="form-group">
-					  <label>Surname</label>
-					  <input type="text" class="form-control">
+				   <div class="row">
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Date</label>
+							  <div id="datetimepicker2" class="input-group date">
+								 <input type="text" class="form-control">
+								 <span class="input-group-addon">
+									<span class="fa fa-calendar"></span>
+								 </span>
+							  </div>
+						   </div>
+					   </div>
+					   <div class="col-sm-6">
+						   <div class="form-group">
+							  <label>Time</label>
+							  <input type="text" class="form-control" value="">
+						   </div>
+					   </div>
 				   </div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-warning">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modal_entries_clinic" role="dialog" aria-labelledby="modal_entries_clinic_label">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content" data-sweet-alert>
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modal_entries_clinic_label">Write to the clinic</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
 				   <div class="form-group">
-					  <label>Birthday</label>
-					  <div id="datetimepicker1" class="input-group date">
-						 <input type="text" class="form-control">
-						 <span class="input-group-addon">
-							<span class="fa fa-calendar"></span>
-						 </span>
-					  </div>
-				   </div>
-				   <div class="form-group">
-					  <label>Photo</label>
-					  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
-				   </div>
-				   <div class="form-group">
-					  <label>Passport number</label>
-					  <input type="text" class="form-control">
-				   </div>
-				   <div class="form-group">
-					  <label>Country</label>
-					  <select id="select2-1" class="form-control">
-						 <option value="DL">DayLight</option>
-						 <option value="AL">Alabama</option>
-						 <option value="AR">Arkansas</option>
-						 <option value="IL">Illinois</option>
-						 <option value="IA">Iowa</option>
-						 <option value="KS">Kansas</option>
-						 <option value="KY">Kentucky</option>
-						 <option value="LA">Louisiana</option>
-						 <option value="MN">Minnesota</option>
-						 <option value="MS">Mississippi</option>
-						 <option value="MO">Missouri</option>
-						 <option value="OK">Oklahoma</option>
-						 <option value="SD">South Dakota</option>
-						 <option value="TX">Texas</option>
-						 <option value="TN">Tennessee</option>
-						 <option value="WI">Wisconsin</option>
+					  <label>Select Health facility</label>
+					  <select id="facility" class="form-control">
+						 <option value="">Clinica 1</option>
+						 <option value="">Clinica 2</option>
+						 <option value="">Clinica 3</option>
+						 <option value="">Clinica 4</option>
+						 <option value="">Clinica 5</option>
 					  </select>
 				   </div>
+				   <div class="form-group">
+					  <label>Your Phone number</label>
+					  <input type="tel" class="form-control" value="">
+				   </div>
+				   <div class="form-group">
+					  <label>Personal ID</label>
+					  <input type="text" class="form-control" value="">
+					  <span class="help-block m-b-none">Your personal ID and telephone number will be sent encrypted, decrypt the data can only institution specified by you.</span>
+				   </div>
 				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-danger">Request</button>
+				<button type="button" class="btn btn-green">Send</button>
 			</div>
 		</div>
 	</div>
 </div>
-<div class="modal fade" id="modal_block_generation" role="dialog" aria-labelledby="modal_block_generation_label">
+<div class="modal fade" id="modal_procedure" role="dialog" aria-labelledby="modal_procedure_label">
 	<div class="modal-dialog" role="document">
-		<div class="modal-content panel" data-sweet-alert>
+		<div class="modal-content" data-sweet-alert>
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="modal_block_generation_label">Block generation</h4>
+				<h4 class="modal-title" id="modal_procedure_label">Add procedure</h4>
 			</div>
 			<div class="modal-body">
 				<form role="form">
 				   <div class="form-group">
-					  <label>Ipv4</label>
-					  <input type="text" class="form-control" value="{{.MyWalletData.host}}" id="host">
+					  <label>Select Procedures or Exercise</label>
+					  <select id="procedure" class="form-control">
+						 <option value="">Procedure 1</option>
+						 <option value="">Procedure 2</option>
+						 <option value="">Procedure 3</option>
+						 <option value="">Procedure 4</option>
+						 <option value="">Procedure 5</option>
+					  </select>
 				   </div>
-				   <div class="form-group">
-					  <label>The address for which the vote</label>
-					  <input type="text" class="form-control" value="{{.MyWalletData.vote}}" id="vote">
+				   <div class="row">
+					   <div class="col-sm-4">
+						   <div class="form-group">
+							  <label>Date</label>
+							  <div id="datetimepicker3" class="input-group date">
+								 <input type="text" class="form-control">
+								 <span class="input-group-addon">
+									<span class="fa fa-calendar"></span>
+								 </span>
+							  </div>
+						   </div>
+					   </div>
+					   <div class="col-sm-4">
+						   <div class="form-group">
+							  <label>Start time</label>
+							  <input type="text" class="form-control" value="">
+						   </div>
+					   </div>
+					   <div class="col-sm-4">
+						   <div class="form-group">
+							  <label>Duration</label>
+							  <input type="text" class="form-control" value="">
+						   </div>
+					   </div>
 				   </div>
 				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-purple" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" id="next">Save</button>
+				<button type="button" class="btn btn-info">Save</button>
 			</div>
 		</div>
 	</div>
