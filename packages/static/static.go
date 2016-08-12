@@ -25,11 +25,21 @@
 // static/dashboard_citizen.html
 // static/dashboard_company.html
 // static/dashboard_gov.html
+// static/dashboard_health.html
 // static/data/anonym_history.json
+// static/data/entries_doctor.json
+// static/data/immunizations.json
+// static/data/medication.json
+// static/data/patients.json
 // static/entrance.html
 // static/gov_citizens.html
 // static/gov_currency_exchange.html
 // static/gov_shares_exchange.html
+// static/health_facility.html
+// static/health_immunization_records.html
+// static/health_medical_record.html
+// static/health_medication_records.html
+// static/health_patient.html
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/QR.png
@@ -112,6 +122,7 @@
 // static/js/rsa2.js
 // static/js/rsapem-1.1.js
 // static/js/rsasign-1.2.min.js
+// static/js/send_to_net.js
 // static/js/sha1.js
 // static/js/sha256.js
 // static/js/spin.js
@@ -126,6 +137,7 @@
 // static/modal_citizen.html
 // static/modal_company.html
 // static/modal_gov.html
+// static/modal_health.html
 // static/pass.html
 // static/sass/_colors.scss
 // static/sass/_mixins.scss
@@ -807,10 +819,100 @@ func staticDashboard_govHtml() (*asset, error) {
 	return a, err
 }
 
+// staticDashboard_healthHtml reads file data from disk. It returns an error on failure.
+func staticDashboard_healthHtml() (*asset, error) {
+	path := "static/dashboard_health.html"
+	name := "static/dashboard_health.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticDataAnonym_historyJson reads file data from disk. It returns an error on failure.
 func staticDataAnonym_historyJson() (*asset, error) {
 	path := "static/data/anonym_history.json"
 	name := "static/data/anonym_history.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataEntries_doctorJson reads file data from disk. It returns an error on failure.
+func staticDataEntries_doctorJson() (*asset, error) {
+	path := "static/data/entries_doctor.json"
+	name := "static/data/entries_doctor.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataImmunizationsJson reads file data from disk. It returns an error on failure.
+func staticDataImmunizationsJson() (*asset, error) {
+	path := "static/data/immunizations.json"
+	name := "static/data/immunizations.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataMedicationJson reads file data from disk. It returns an error on failure.
+func staticDataMedicationJson() (*asset, error) {
+	path := "static/data/medication.json"
+	name := "static/data/medication.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataPatientsJson reads file data from disk. It returns an error on failure.
+func staticDataPatientsJson() (*asset, error) {
+	path := "static/data/patients.json"
+	name := "static/data/patients.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -883,6 +985,96 @@ func staticGov_currency_exchangeHtml() (*asset, error) {
 func staticGov_shares_exchangeHtml() (*asset, error) {
 	path := "static/gov_shares_exchange.html"
 	name := "static/gov_shares_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_facilityHtml reads file data from disk. It returns an error on failure.
+func staticHealth_facilityHtml() (*asset, error) {
+	path := "static/health_facility.html"
+	name := "static/health_facility.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_immunization_recordsHtml reads file data from disk. It returns an error on failure.
+func staticHealth_immunization_recordsHtml() (*asset, error) {
+	path := "static/health_immunization_records.html"
+	name := "static/health_immunization_records.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_medical_recordHtml reads file data from disk. It returns an error on failure.
+func staticHealth_medical_recordHtml() (*asset, error) {
+	path := "static/health_medical_record.html"
+	name := "static/health_medical_record.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_medication_recordsHtml reads file data from disk. It returns an error on failure.
+func staticHealth_medication_recordsHtml() (*asset, error) {
+	path := "static/health_medication_records.html"
+	name := "static/health_medication_records.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_patientHtml reads file data from disk. It returns an error on failure.
+func staticHealth_patientHtml() (*asset, error) {
+	path := "static/health_patient.html"
+	name := "static/health_patient.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2373,6 +2565,24 @@ func staticJsRsasign12MinJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsSend_to_netJs reads file data from disk. It returns an error on failure.
+func staticJsSend_to_netJs() (*asset, error) {
+	path := "static/js/send_to_net.js"
+	name := "static/js/send_to_net.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsSha1Js reads file data from disk. It returns an error on failure.
 func staticJsSha1Js() (*asset, error) {
 	path := "static/js/sha1.js"
@@ -2611,6 +2821,24 @@ func staticModal_companyHtml() (*asset, error) {
 func staticModal_govHtml() (*asset, error) {
 	path := "static/modal_gov.html"
 	name := "static/modal_gov.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticModal_healthHtml reads file data from disk. It returns an error on failure.
+func staticModal_healthHtml() (*asset, error) {
+	path := "static/modal_health.html"
+	name := "static/modal_health.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6392,11 +6620,21 @@ var _bindata = map[string]func() (*asset, error){
 	"static/dashboard_citizen.html": staticDashboard_citizenHtml,
 	"static/dashboard_company.html": staticDashboard_companyHtml,
 	"static/dashboard_gov.html": staticDashboard_govHtml,
+	"static/dashboard_health.html": staticDashboard_healthHtml,
 	"static/data/anonym_history.json": staticDataAnonym_historyJson,
+	"static/data/entries_doctor.json": staticDataEntries_doctorJson,
+	"static/data/immunizations.json": staticDataImmunizationsJson,
+	"static/data/medication.json": staticDataMedicationJson,
+	"static/data/patients.json": staticDataPatientsJson,
 	"static/entrance.html": staticEntranceHtml,
 	"static/gov_citizens.html": staticGov_citizensHtml,
 	"static/gov_currency_exchange.html": staticGov_currency_exchangeHtml,
 	"static/gov_shares_exchange.html": staticGov_shares_exchangeHtml,
+	"static/health_facility.html": staticHealth_facilityHtml,
+	"static/health_immunization_records.html": staticHealth_immunization_recordsHtml,
+	"static/health_medical_record.html": staticHealth_medical_recordHtml,
+	"static/health_medication_records.html": staticHealth_medication_recordsHtml,
+	"static/health_patient.html": staticHealth_patientHtml,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/QR.png": staticImgQrPng,
@@ -6479,6 +6717,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/rsa2.js": staticJsRsa2Js,
 	"static/js/rsapem-1.1.js": staticJsRsapem11Js,
 	"static/js/rsasign-1.2.min.js": staticJsRsasign12MinJs,
+	"static/js/send_to_net.js": staticJsSend_to_netJs,
 	"static/js/sha1.js": staticJsSha1Js,
 	"static/js/sha256.js": staticJsSha256Js,
 	"static/js/spin.js": staticJsSpinJs,
@@ -6493,6 +6732,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/modal_citizen.html": staticModal_citizenHtml,
 	"static/modal_company.html": staticModal_companyHtml,
 	"static/modal_gov.html": staticModal_govHtml,
+	"static/modal_health.html": staticModal_healthHtml,
 	"static/pass.html": staticPassHtml,
 	"static/sass/_colors.scss": staticSass_colorsScss,
 	"static/sass/_mixins.scss": staticSass_mixinsScss,
@@ -6793,8 +7033,18 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"dashboard_gov.html": &bintree{staticDashboard_govHtml, map[string]*bintree{
 		}},
+		"dashboard_health.html": &bintree{staticDashboard_healthHtml, map[string]*bintree{
+		}},
 		"data": &bintree{nil, map[string]*bintree{
 			"anonym_history.json": &bintree{staticDataAnonym_historyJson, map[string]*bintree{
+			}},
+			"entries_doctor.json": &bintree{staticDataEntries_doctorJson, map[string]*bintree{
+			}},
+			"immunizations.json": &bintree{staticDataImmunizationsJson, map[string]*bintree{
+			}},
+			"medication.json": &bintree{staticDataMedicationJson, map[string]*bintree{
+			}},
+			"patients.json": &bintree{staticDataPatientsJson, map[string]*bintree{
 			}},
 		}},
 		"entrance.html": &bintree{staticEntranceHtml, map[string]*bintree{
@@ -6804,6 +7054,16 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"gov_currency_exchange.html": &bintree{staticGov_currency_exchangeHtml, map[string]*bintree{
 		}},
 		"gov_shares_exchange.html": &bintree{staticGov_shares_exchangeHtml, map[string]*bintree{
+		}},
+		"health_facility.html": &bintree{staticHealth_facilityHtml, map[string]*bintree{
+		}},
+		"health_immunization_records.html": &bintree{staticHealth_immunization_recordsHtml, map[string]*bintree{
+		}},
+		"health_medical_record.html": &bintree{staticHealth_medical_recordHtml, map[string]*bintree{
+		}},
+		"health_medication_records.html": &bintree{staticHealth_medication_recordsHtml, map[string]*bintree{
+		}},
+		"health_patient.html": &bintree{staticHealth_patientHtml, map[string]*bintree{
 		}},
 		"i18n": &bintree{nil, map[string]*bintree{
 			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{
@@ -6984,6 +7244,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			}},
 			"rsasign-1.2.min.js": &bintree{staticJsRsasign12MinJs, map[string]*bintree{
 			}},
+			"send_to_net.js": &bintree{staticJsSend_to_netJs, map[string]*bintree{
+			}},
 			"sha1.js": &bintree{staticJsSha1Js, map[string]*bintree{
 			}},
 			"sha256.js": &bintree{staticJsSha256Js, map[string]*bintree{
@@ -7014,6 +7276,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"modal_company.html": &bintree{staticModal_companyHtml, map[string]*bintree{
 		}},
 		"modal_gov.html": &bintree{staticModal_govHtml, map[string]*bintree{
+		}},
+		"modal_health.html": &bintree{staticModal_healthHtml, map[string]*bintree{
 		}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{
 		}},

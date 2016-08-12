@@ -2,7 +2,8 @@
 
 <script>
 	var interval;
-	
+	var serverTime;
+
 	clearInterval(interval);
 	
 	$(".aside .nav li").removeClass("active");
@@ -40,49 +41,14 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data){
-				//dl_navigate ('dashboardAnonym', {'alert': '{{.Lang.sent_to_the_net}}'} );
-				console.log("saveQueue tx hash", data.hash);
-				
-				if (typeof data.error != "undefined") {
-					Alert("Error", data.error, "error");
-				} else {
-					interval = setInterval(function() {
-						$.ajax({
-							type: 'POST',
-							url: 'ajax?controllerName=txStatus',
-							data: {
-								'hash': data.hash
-							},
-							dataType: 'json',
-							crossDomain: true,
-							success: function(txStatus){
-								
-								console.log("txStatus", txStatus);
-
-								if (typeof txStatus.wait != "undefined") {
-									console.log("txStatus", txStatus);
-								} else if (typeof txStatus.error != "undefined") {
-									Alert("Error", txStatus.error, "error");
-									clearInterval(interval);
-								} else {
-									clearInterval(interval);
-									Alert("Success", "", "success");
-								}
-							},
-							error: function(xhr, status, error) {
-								clearInterval(interval);
-								Alert("Error Money transfer", error, "error");
-							},
-						});
-					}, 1000)
-				}
-			},
+			success: function(data) { send_to_net_success(data) },
 			error: function(xhr, status, error) {
-				Alert("Error Money transfer", error, "error");
+				Alert("Error", error, "error");
 			}
 		});
 	} );
+
+
 
 </script>
 
