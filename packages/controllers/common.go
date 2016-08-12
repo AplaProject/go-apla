@@ -3,7 +3,6 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"github.com/astaxie/beego/config"
