@@ -27,6 +27,8 @@
 // static/dashboard_gov.html
 // static/dashboard_health.html
 // static/data/anonym_history.json
+// static/data/entries_doctor.json
+// static/data/medication.json
 // static/entrance.html
 // static/gov_citizens.html
 // static/gov_currency_exchange.html
@@ -836,6 +838,42 @@ func staticDashboard_healthHtml() (*asset, error) {
 func staticDataAnonym_historyJson() (*asset, error) {
 	path := "static/data/anonym_history.json"
 	name := "static/data/anonym_history.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataEntries_doctorJson reads file data from disk. It returns an error on failure.
+func staticDataEntries_doctorJson() (*asset, error) {
+	path := "static/data/entries_doctor.json"
+	name := "static/data/entries_doctor.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataMedicationJson reads file data from disk. It returns an error on failure.
+func staticDataMedicationJson() (*asset, error) {
+	path := "static/data/medication.json"
+	name := "static/data/medication.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6527,6 +6565,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/dashboard_gov.html": staticDashboard_govHtml,
 	"static/dashboard_health.html": staticDashboard_healthHtml,
 	"static/data/anonym_history.json": staticDataAnonym_historyJson,
+	"static/data/entries_doctor.json": staticDataEntries_doctorJson,
+	"static/data/medication.json": staticDataMedicationJson,
 	"static/entrance.html": staticEntranceHtml,
 	"static/gov_citizens.html": staticGov_citizensHtml,
 	"static/gov_currency_exchange.html": staticGov_currency_exchangeHtml,
@@ -6911,6 +6951,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"dashboard_health.html": &bintree{staticDashboard_healthHtml, map[string]*bintree{}},
 		"data": &bintree{nil, map[string]*bintree{
 			"anonym_history.json": &bintree{staticDataAnonym_historyJson, map[string]*bintree{}},
+			"entries_doctor.json": &bintree{staticDataEntries_doctorJson, map[string]*bintree{}},
+			"medication.json": &bintree{staticDataMedicationJson, map[string]*bintree{}},
 		}},
 		"entrance.html": &bintree{staticEntranceHtml, map[string]*bintree{}},
 		"gov_citizens.html": &bintree{staticGov_citizensHtml, map[string]*bintree{}},
