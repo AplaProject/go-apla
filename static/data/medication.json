@@ -1,4 +1,4 @@
-{
+[
   {
     "medicament": "HUMULIN",
     "dose": "20",
@@ -6,10 +6,10 @@
     "when": "after meals",
 	"left": "15"
   }, {
-    "medicament": "HUMULIN",
+    "medicament": "PRINIVIL",
     "dose": "50",
     "times": "2",
     "when": "after meals",
 	"left": "7"
   }
-}
+]
