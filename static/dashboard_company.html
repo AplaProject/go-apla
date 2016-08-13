@@ -1,6 +1,6 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".company").addClass("active");
+	$(".company, .dashboard_company").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
 	
@@ -116,7 +116,30 @@
 			</div>
 		 </div>
 		 <a href="#company_currency_exchange" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">Exchange</span>
+			<span class="pull-left">Currency Exchange</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-success">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-share-alt fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">1000 GLA</div>
+				  <p class="m0">Currency</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#company_shares_exchange" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Shares Exchange</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -130,7 +153,7 @@
 		 <div class="panel-heading">
 			<div class="row">
 			   <div class="col-xs-3">
-				  <em class="fa fa-share-alt fa-5x"></em>
+				  <em class="fa fa-plus fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
 				  <div class="text-lg">1000 GLA</div>
@@ -140,6 +163,75 @@
 		 </div>
 		 <a href="#company_shares" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">New shares</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-purple">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-smile-o fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#company_new_good" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">New good</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-pink">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-paragraph fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#company_new_item" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">New item</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-primary">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-indent fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_new_order">
+			<span class="pull-left">New order</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>

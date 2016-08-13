@@ -21,6 +21,8 @@
    <link rel="stylesheet" href="static/vendor/datatables-colvis/css/dataTables.colVis.css">
    <link rel="stylesheet" href="static/vendor/datatables/media/css/dataTables.bootstrap.css">
    <link rel="stylesheet" href="static/vendor/dataTables.fontAwesome/index.css">
+   <!-- XEDITABLE-->
+   <link rel="stylesheet" href="static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css">
    <!-- WEATHER ICONS-->
    <link rel="stylesheet" href="static/vendor/weather-icons/css/weather-icons.min.css">
    <!-- DATETIMEPICKER-->
@@ -253,6 +255,11 @@
 							  <span>Dashboard</span>
 						   </a>
 						</li>
+						<li class="citizen_bill_payment">
+						   <a href="#citizen_bill_payment" title="Bill Payment">
+							  <span>Bill Payment</span>
+						   </a>
+						</li>
 						<li class="citizen_property">
 						   <a href="#citizen_property" title="My property">
 							  <span>My property</span>
@@ -266,10 +273,43 @@
 					 </ul>
 				  </li>
 				  <li class="company Demo">
-					 <a href="#dashboard_company" title="Company">
+					 <a href="#dco" title="Company" data-toggle="collapse" class="toggle-hover">
 						<em class="fa fa-building-o"></em>
 						<span>Company</span>
 					 </a>
+					 <ul id="dco" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Company</li>
+						<li class="dashboard_company">
+						   <a href="#dashboard_company" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="company_shares">
+						   <a href="#company_shares" title="New shares">
+							  <span>New shares</span>
+						   </a>
+						</li>
+						<li class="company_new_good">
+						   <a href="#company_new_good" title="New good">
+							  <span>New good</span>
+						   </a>
+						</li>
+						<li class="company_new_item">
+						   <a href="#company_new_item" title="New item">
+							  <span>New item</span>
+						   </a>
+						</li>
+						<li class="company_currency_exchange">
+						   <a href="#company_currency_exchange" title="Currency Exchange">
+							  <span>Currency Exchange</span>
+						   </a>
+						</li>
+						<li class="company_shares_exchange">
+						   <a href="#company_shares_exchange" title="Shares Exchange">
+							  <span>Shares Exchange</span>
+						   </a>
+						</li>
+					 </ul>
 				  </li>
 				  <li class="health Demo">
 					 <a href="#dh" title="Health" data-toggle="collapse" class="toggle-hover">
@@ -373,6 +413,8 @@
    <script src="static/vendor/datatables-colvis/js/dataTables.colVis.js"></script>
    <script src="static/vendor/datatables/media/js/dataTables.bootstrap.js"></script>
    <script src="static/js/datetime.js"></script>
+   <!-- XEDITABLE-->
+   <script src="static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
    <!-- DATETIMEPICKER-->
    <script type="text/javascript" src="static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
    <!-- FILESTYLE-->
@@ -516,7 +558,7 @@
 	
 			var str = e.target.hash;
 			var page_match = str.match(/#(\w+)/i);
-			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dh'  ) {
+			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh'  ) {
 				var page = page_match[1];
 				var param_match = str.match(/\/\w+=\w+/gi);
 				var param_obj = {};

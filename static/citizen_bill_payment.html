@@ -1,0 +1,190 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .citizen_bill_payment").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_citizen", { }, function() {});
+	
+	// Font Awesome support
+	$.fn.editableform.buttons =
+	  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
+		'<i class="fa fa-fw fa-check"></i>'+
+	  '</button>'+
+	  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
+		'<i class="fa fa-fw fa-times"></i>'+
+	  '</button>';
+	  
+	//$.fn.editable.defaults.url = '../server/xeditable.res';
+	
+	$(document).ready(function() {
+		$('#datetimepicker1').datetimepicker({
+		  icons: {
+			  time: 'fa fa-clock-o',
+			  date: 'fa fa-calendar',
+			  up: 'fa fa-chevron-up',
+			  down: 'fa fa-chevron-down',
+			  previous: 'fa fa-chevron-left',
+			  next: 'fa fa-chevron-right',
+			  today: 'fa fa-crosshairs',
+			  clear: 'fa fa-trash'
+			},
+			minDate: moment("01/01/1950"),
+			maxDate: 'now',
+			format: 'DD MMMM, YYYY'
+		});
+		$(".edit").editable();
+	});
+</script>
+
+<div class="content-heading">
+   <div class="pull-right" style="margin-top:-3px;"><img src="static/img/US.svg" alt="USA" height="30"></div>
+   Citizen
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_citizen">Dashboard</a></li>
+   <li class="active">Bill Payment</li>
+</ol>
+<!-- START panel-->
+<h4 class="page-header" style="height:40px;">
+	Bill Payment
+	<div id="datetimepicker1" class="input-group date pull-right" style="width:180px; top:-5px;">
+		 <input type="text" class="form-control">
+		 <span class="input-group-addon">
+			<span class="fa fa-calendar"></span>
+		 </span>
+	  </div>
+</h4>
+<div class="panel panel-default">
+ <div class="panel-body">
+	<!-- START table-responsive-->
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <thead>
+			 <tr>
+				<th>Public utility</th>
+				<th>Company</th>
+				<th>Tax</th>
+				<th>Meters</th>
+				<th>Payment</th>
+				<th>Deposit</th>
+			 </tr>
+		  </thead>
+		  <tbody>
+			 <tr>
+				<td>Rent</td>
+				<td>CompanyR</td>
+				<td>0000</td>
+				<td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter meter"></a></td>
+				<td>0000</td>
+				<td>0000</td>
+			 </tr>
+			 <tr>
+				<td>Electricity</td>
+				<td>CompanyE</td>
+				<td>0.0</td>
+				<td>Smart meter</td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>Gas</td>
+				<td>CompanyG</td>
+				<td>0.0</td>
+				<td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter meter"></a></td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>Water </td>
+				<td>CompanyW</td>
+				<td>0.0</td>
+				<td>Smart meter</td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>Heat</td>
+				<td>CompanyH</td>
+				<td>0.0</td>
+				<td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter meter"></a></td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>Refuse </td>
+				<td>CompanyR</td>
+				<td>0.0</td>
+				<td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter meter"></a></td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>Phone</td>
+				<td>CompanyP</td>
+				<td>0.0</td>
+				<td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter meter"></a></td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>TV</td>
+				<td>CompanyTV</td>
+				<td>0.0</td>
+				<td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter meter"></a></td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>Internet</td>
+				<td>CompanyI</td>
+				<td>0.0</td>
+				<td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter meter"></a></td>
+				<td>000</td>
+				<td>000</td>
+			 </tr>
+			 <tr>
+				<td>Total</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>0000</td>
+				<td>0000</td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+	<!-- END table-responsive-->
+ </div>
+</div>
+<div class="panel panel-default">
+ <div class="panel-body">
+	<!-- START table-responsive-->
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <thead>
+			 <tr>
+				<th>Bills</th>
+				<th>Company</th>
+				<th>Contract</th>
+				<th>Payment</th>
+			 </tr>
+		  </thead>
+		  <tbody>
+			 <tr>
+				<td>Hypothec</td>
+				<td>Bank A</td>
+				<td>0000</td>
+				<td>0000</td>
+			 </tr>
+			 <tr>
+				<td>Laboratory test</td>
+				<td>Clinica B</td>
+				<td></td>
+				<td>000</td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+	<!-- END table-responsive-->
+ </div>
+</div>
+<!-- END panel-->

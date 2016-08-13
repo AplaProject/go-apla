@@ -7,14 +7,18 @@
 
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".company").addClass("active");
+	$(".company, .company_shares_exchange").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
 </script>
 
 <div class="content-heading">
-   Shares exchange
+   Company
 </div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">Shares exchange</li>
+</ol>
 <div class="row">
 	<div class="row" style="max-width:750px; margin:0px auto;">
 		<div class="col-md-12">

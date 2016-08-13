@@ -2,6 +2,8 @@
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .citizen_property").addClass("active");
 	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_citizen", { }, function() {});
+	
 /**=========================================================
  * Module: gmap.js
  * Init Google Map plugin
