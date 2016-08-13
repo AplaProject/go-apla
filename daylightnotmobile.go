@@ -3,17 +3,17 @@
 package main
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/daylight"
-	"github.com/go-thrust/thrust"
-	"github.com/go-thrust/lib/commands"
-	"github.com/DayLightProject/go-daylight/packages/static"
 	"fmt"
-	"net/http"
-	"github.com/go-thrust/lib/bindings/window"
-	"os"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"runtime"
+	"github.com/DayLightProject/go-daylight/packages/daylight"
+	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/system"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/go-thrust/lib/bindings/window"
+	"github.com/go-thrust/lib/commands"
+	"github.com/go-thrust/thrust"
+	"net/http"
+	"os"
+	"runtime"
 )
 
 func main_loader(w http.ResponseWriter, r *http.Request) {
@@ -38,8 +38,8 @@ func main() {
 		thrustWindow = thrust.NewWindow(thrust.WindowOptions{
 			RootUrl:  "http://localhost:8989/loader.html",
 			HasFrame: winVer() != 6,
-			Title : "Dcoin",
-			Size: commands.SizeHW{Width:width, Height:height},
+			Title:    "Dcoin",
+			Size:     commands.SizeHW{Width: width, Height: height},
 		})
 
 		thrust.NewEventHandler("*", func(cr commands.CommandResponse) {

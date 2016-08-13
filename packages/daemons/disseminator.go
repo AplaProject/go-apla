@@ -48,6 +48,8 @@ BEGIN:
 			break BEGIN
 		}
 
+
+
 		hosts, err := d.GetHosts()
 		if err != nil {
 			logger.Error("%v", err)
@@ -126,8 +128,8 @@ BEGIN:
 			 * Составляем данные на отправку
 			 * */
 			toBeSent := []byte{}
+			toBeSent = append(toBeSent, utils.DecToBin(full_node_id, 2)...)
 			if len(data) > 0 { // блок
-				toBeSent = append(toBeSent, utils.EncodeLengthPlusData(*utils.TcpHost+":"+consts.TCP_PORT)...)
 				// если 0, то на приемнике будем читать блок, если = 1 , то сразу хэши тр-ий
 				toBeSent = append(toBeSent, utils.DecToBin(0, 1)...)
 				toBeSent = append(toBeSent, utils.DecToBin(utils.BytesToInt64(data["block_id"]), 3)...)
@@ -142,6 +144,7 @@ BEGIN:
 			} else { // тр-ии без блока
 				toBeSent = append(toBeSent, utils.DecToBin(1, 1)...)
 			}
+			logger.Debug("toBeSent block %x", toBeSent)
 
 			// возьмем хэши тр-ий
 			//utils.WriteSelectiveLog("SELECT hash, high_rate FROM transactions WHERE sent = 0 AND for_self_use = 0")
@@ -166,6 +169,7 @@ BEGIN:
 			for _, data := range transactions {
 				hexHash := utils.BinToHex([]byte(data["hash"]))
 				toBeSent = append(toBeSent, []byte(data["hash"])...)
+				logger.Debug("hash %x", data["hash"])
 				utils.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hexHash))
 				affect, err := d.ExecSqlGetAffect("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", hexHash)
 				if err != nil {
@@ -178,6 +182,7 @@ BEGIN:
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 			}
 
+			logger.Debug("toBeSent %x", toBeSent)
 			// отправляем блок и хэши тр-ий, если есть что отправлять
 			if len(toBeSent) > 0 {
 				for _, host := range hosts {
@@ -326,8 +331,8 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 	logger.Debug("n: %x", n)
 	dataSize := utils.BinToDec(buf)
 	logger.Debug("dataSize %d", dataSize)
-	// и если данных менее 1мб, то получаем их
-	if dataSize < 1048576 {
+	// и если данных менее MAX_TX_SIZE, то получаем их
+	if dataSize < consts.MAX_TX_SIZE && dataSize > 0 {
 		binaryTxHashes := make([]byte, dataSize)
 		_, err = io.ReadFull(conn, binaryTxHashes)
 		if err != nil {

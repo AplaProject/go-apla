@@ -65,11 +65,6 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if dbInit {
-		myNotice, err := c.DCDB.GetMyNoticeData(sessCitizenId, sessWalletId, globalLangReadOnly[lang])
-		if err != nil {
-			log.Error("%v", err)
-		}
-		c.MyNotice = myNotice
 		config, err := c.GetNodeConfig()
 		if err != nil {
 			log.Error("%v", err)

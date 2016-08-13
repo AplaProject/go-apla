@@ -27,11 +27,13 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	parameters_ := make(map[string]interface{})
-	err := json.Unmarshal([]byte(r.PostFormValue("parameters")), &parameters_)
-	if err != nil {
-		log.Error("%v", err)
+	if len(r.PostFormValue("parameters")) > 0 {
+		err := json.Unmarshal([]byte(r.PostFormValue("parameters")), &parameters_)
+		if err != nil {
+			log.Error("%v", err)
+		}
+		log.Debug("parameters_=%", parameters_)
 	}
-	log.Debug("parameters_=%", parameters_)
 	parameters := make(map[string]string)
 	for k, v := range parameters_ {
 		parameters[k] = utils.InterfaceToStr(v)

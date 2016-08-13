@@ -11,12 +11,8 @@ func (p *Parser) ParseDataLite() error {
 	if p.dataType != 0 { // парсим только блоки
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
 	}
-	var err error
-	p.Variables, err = p.GetAllVariables()
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-	err = p.ParseBlock()
+
+	err := p.ParseBlock()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}

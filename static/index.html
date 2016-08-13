@@ -478,24 +478,6 @@
 					if ( status == "error" ) { window.location.href = "index"; }
 					$("#loading_db").css("display", "none");
 				})
-			{{else if .Upgrade3}}
-				$("#loader").spin();
-				$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
-					$("#dl_content").load( "content", { "tpl_name": "upgrade3" }, function() {
-						$("#key").text("{{.Key}}");
-						doSign('login');
-						$('#loader').spin(false);
-					})
-				});
-			{{else if .Upgrade4}}
-				$("#loader").spin();
-				$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
-					$("#dl_content").load( "content", { "tpl_name": "upgrade4" }, function() {
-						$("#key").text("{{.Key}}");
-						doSign('login');
-						$('#loader').spin(false);
-					})
-				});
 			{{else if .Key}}
 				$("#loader").spin();
 				$("#dl_content").load( "content", { {{if .SetLang}}"parameters": {"lang":{{.SetLang}} }{{end}} }, function() {
