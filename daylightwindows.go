@@ -22,7 +22,7 @@ import "C"
 
 func winVer() int {
 	ver := int(C.w_ver())
-	if ver & 0xff == 6 && ( ver & 0xff00 ) >> 8 <= 1 {
+	if ver&0xff == 6 && (ver&0xff00)>>8 <= 1 {
 		return 6
 	}
 	return 7

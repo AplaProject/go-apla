@@ -2035,22 +2035,6 @@ func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetcandidateBlockId() (int64, error) {
-	rows, err := db.Query("SELECT block_id FROM candidateBlock")
-	if err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-	if ok := rows.Next(); ok {
-		var block_id int64
-		err = rows.Scan(&block_id)
-		if err != nil {
-			return 0, err
-		}
-		return block_id, nil
-	}
-	return 0, nil
-}
 
 func (db *DCDB) GetMyPrefix(userId int64) (string, error) {
 	collective, err := db.GetCommunityUsers()
@@ -2192,8 +2176,8 @@ func (db *DCDB) DbLockGate(name string) error {
 	return nil
 }
 
-func (db *DCDB) DeleteQueueBlock(head_hash_hex, hash_hex string) error {
-	return db.ExecSql("DELETE FROM queue_blocks WHERE hex(head_hash) = ? AND hex(hash) = ?", head_hash_hex, hash_hex)
+func (db *DCDB) DeleteQueueBlock(hash_hex string) error {
+	return db.ExecSql("DELETE FROM queue_blocks WHERE hex(hash) = ?",  hash_hex)
 }
 
 func (db *DCDB) SetAI(table string, AI int64) error {
