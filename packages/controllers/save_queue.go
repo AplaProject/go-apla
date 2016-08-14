@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"time"
+	"fmt"
 )
 
 func (c *Controller) SaveQueue() (string, error) {
@@ -86,6 +87,36 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
 		data = append(data, binSignatures...)
 
+	case "ChangeNodeKey":
+
+
+		publicKey := []byte(c.r.FormValue("publicKey"))
+		privateKey := []byte(c.r.FormValue("privateKey"))
+
+		verifyData := map[string]string{c.r.FormValue("publicKey"): "public_key", c.r.FormValue("privateKey"): "private_key"}
+		err := CheckInputData(verifyData)
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+		err = c.ExecSql(`INSERT INTO my_node_keys (
+									public_key,
+									private_key
+								)
+								VALUES (
+									[hex],
+									?
+								)`, publicKey, privateKey)
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(walletId)...)
+		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
+		data = append(data, binSignatures...)
+
 	}
 	md5 := utils.Md5(data)
 
@@ -113,4 +144,13 @@ func (c *Controller) SaveQueue() (string, error) {
 	}
 
 	return `{"hash":"`+string(md5)+`"}`, nil
+}
+
+func CheckInputData(data map[string]string) error {
+	for k, v := range data {
+		if !utils.CheckInputData(k, v) {
+			return utils.ErrInfo(fmt.Errorf("incorrect " + v))
+		}
+	}
+	return nil
 }

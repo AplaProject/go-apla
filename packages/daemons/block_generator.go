@@ -122,7 +122,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		full_node_id, err:= d.Single("SELECT full_node_id FROM full_nodes WHERE final_delegate_cb_id = ? OR final_delegate_wallet_id = ? OR cb_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
+		full_node_id, err:= d.FindInFullNodes(myCBID, myWalletId)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -283,7 +283,7 @@ BEGIN:
 		//#####################################
 
 		if prevBlock["block_id"] >= newBlockId {
-			logger.Debug("continue")
+			logger.Debug("continue %d >= %d", prevBlock["block_id"], newBlockId)
 			d.dbUnlock()
 			if d.dSleep(d.sleepTime) {
 				break BEGIN

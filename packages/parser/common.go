@@ -96,10 +96,7 @@ func (p *Parser) GetOldBlocks(walletId,CBID, blockId int64, host string, gorouti
 func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutineName string, dataTypeBlockBody int64) error {
 
 	log.Debug("blockId", blockId)
-	variables, err := p.GetAllVariables()
-	if err != nil {
-		return err
-	}
+
 	parser := new(Parser)
 	parser.DCDB = p.DCDB
 	var count int64
@@ -119,7 +116,11 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			return utils.ErrInfo(errors.New("block_id < 2"))
 		}
 		// если превысили лимит кол-ва полученных от нода блоков
-		if count > variables.Int64[rollbackBlocks] {
+		var rollback = consts.RB_BLOCKS_1
+		if rollbackBlocks == "rollback_blocks_2" {
+			rollback = consts.RB_BLOCKS_2
+		}
+		if count > int64(rollback) {
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New("count > variables[rollback_blocks]"))
 		}
@@ -213,7 +214,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		count++
 
 		// качаем предыдущие блоки до тех пор, пока отличается хэш предыдущего.
-		// другими словами, пока подпись с $prev_block_hash будет неверной, т.е. пока что-то есть в $error
+		// другими словами, пока подпись с prevBlockHash будет неверной, т.е. пока что-то есть в okSignErr
 		if okSignErr == nil {
 			log.Debug("plug found blockId=%v\n", blockData.BlockId)
 			break
@@ -255,13 +256,6 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		}
 	}
 
-	// теперь откатим и transactions_candidate_block
-	p.RollbackTransactionsCandidateBlock(true)
-
-	err = p.ExecSql("DELETE FROM candidateBlock")
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
 
 	// откатываем наши блоки до начала вилки
 	rows, err := p.Query(p.FormatQuery(`
@@ -387,11 +381,10 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 				err = p.ExecSql(`
 					UPDATE info_block
 					SET   hash = [hex],
-							head_hash = [hex],
 							block_id = ?,
 							time = ?,
 							sent = 0
-					`, utils.BinToHex(lastMyBlock["hash"]), utils.BinToHex(lastMyBlock["head_hash"]), lastMyBlockData.BlockId, lastMyBlockData.Time)
+					`, utils.BinToHex(lastMyBlock["hash"]), lastMyBlockData.BlockId, lastMyBlockData.Time)
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
@@ -432,7 +425,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		blockHex := utils.BinToHex(block)
 
 		// пишем в цепочку блоков
-		err = p.ExecSql("UPDATE info_block SET hash = [hex], head_hash = [hex], block_id= ?, time= ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].HeadHash, prevBlock[blockId].BlockId, prevBlock[blockId].Time)
+		err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id= ?, time= ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].HeadHash, prevBlock[blockId].BlockId, prevBlock[blockId].Time)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -447,7 +440,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			return utils.ErrInfo(err)
 		}
 		if exists == 0 {
-			affect, err := p.ExecSqlGetAffect("INSERT INTO  block_chain (id, hash, head_hash, data) VALUES (?, [hex], [hex], [hex])", blockId, prevBlock[blockId].Hash, prevBlock[blockId].HeadHash, blockHex)
+			affect, err := p.ExecSqlGetAffect("INSERT INTO  block_chain (id, hash, data) VALUES (?, [hex], [hex])", blockId, prevBlock[blockId].Hash, blockHex)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -549,14 +542,14 @@ func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interfa
 	}
 
 	time := utils.BytesToInt(p.TxMap["time"])
-	num, err := p.Single("SELECT count(time) FROM log_time_"+txType+" WHERE user_id = ? AND time > ?", p.TxUserID, (time - period)).Int()
+	num, err := p.Single("SELECT count(time) FROM rb_time_"+txType+" WHERE user_id = ? AND time > ?", p.TxUserID, (time - period)).Int()
 	if err != nil {
 		return err
 	}
 	if num >= limit {
-		return utils.ErrInfo(fmt.Errorf("[limit_requests] log_time_%v %v >= %v", txType, num, limit))
+		return utils.ErrInfo(fmt.Errorf("[limit_requests] rb_time_%v %v >= %v", txType, num, limit))
 	} else {
-		err := p.ExecSql("INSERT INTO log_time_"+txType+" (user_id, time) VALUES (?, ?)", p.TxUserID, time)
+		err := p.ExecSql("INSERT INTO rb_time_"+txType+" (user_id, time) VALUES (?, ?)", p.TxUserID, time)
 		if err != nil {
 			return err
 		}
@@ -755,15 +748,15 @@ func (p *Parser) CheckBlockHeader() error {
 // Это защита от dos, когда одну транзакцию можно было бы послать миллион раз,
 // и она каждый раз успешно проходила бы фронтальную проверку
 func (p *Parser) CheckLogTx(tx_binary []byte) error {
-	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, utils.Md5(tx_binary)).String()
-	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", utils.Md5(tx_binary))
+	hash, err := p.Single(`SELECT hash FROM rb_transactions WHERE hex(hash) = ?`, utils.Md5(tx_binary)).String()
+	log.Debug("SELECT hash FROM rb_transactions WHERE hex(hash) = %s", utils.Md5(tx_binary))
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
 	log.Debug("hash %x", hash)
 	if len(hash) > 0 {
-		return utils.ErrInfo(fmt.Errorf("double log_transactions %s", utils.Md5(tx_binary)))
+		return utils.ErrInfo(fmt.Errorf("double rb_transactions %s", utils.Md5(tx_binary)))
 	}
 	return nil
 }
@@ -787,7 +780,7 @@ func (p *Parser) GetInfoBlock() error {
 }
 
 /**
- * Откат таблиц log_time_, которые были изменены транзакциями
+ * Откат таблиц rb_time_, которые были изменены транзакциями
  */
 func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 
@@ -832,8 +825,8 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 			}
 			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 		}
-		affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
-		log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
+		affected, err := p.ExecSqlGetAffect("DELETE FROM rb_transactions WHERE hex(hash) = ?", p.TxHash)
+		log.Debug("DELETE FROM rb_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -907,8 +900,8 @@ func (p *Parser) ParseDataRollback() error {
 				return p.ErrInfo(err)
 			}
 			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
-			log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
+			affected, err := p.ExecSqlGetAffect("DELETE FROM rb_transactions WHERE hex(hash) = ?", p.TxHash)
+			log.Debug("DELETE FROM rb_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
@@ -965,14 +958,7 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.RollbackTransactionsCandidateBlock(true)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSql("DELETE FROM candidateBlock")
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+
 	// откатываем наши блоки
 	var blocks []map[string][]byte
 	rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC"), blockId)
@@ -1005,8 +991,8 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 		}
 	}
 
-	var hash, head_hash, data []byte
-	err = p.QueryRow(p.FormatQuery("SELECT hash, head_hash, data FROM block_chain WHERE id  =  ?"), blockId).Scan(&hash, &head_hash, &data)
+	var hash, data []byte
+	err = p.QueryRow(p.FormatQuery("SELECT hash, data FROM block_chain WHERE id  =  ?"), blockId).Scan(&hash, &data)
 	if err != nil && err != sql.ErrNoRows {
 		return p.ErrInfo(err)
 	}
@@ -1015,7 +1001,7 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	time := utils.BinToDecBytesShift(&data, 4)
 	//user_id := utils.BinToDecBytesShift(&data, 5)
 	level := utils.BinToDecBytesShift(&data, 1)
-	err = p.ExecSql("UPDATE info_block SET hash = [hex], head_hash = [hex], block_id = ?, time = ?, level = ?", utils.BinToHex(hash), utils.BinToHex(head_hash), block_id, time, level)
+	err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, level = ?", utils.BinToHex(hash), block_id, time, level)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -1298,8 +1284,8 @@ func (p *Parser) InsertIntoBlockchain() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql("INSERT INTO block_chain (id, hash, head_hash, data, time, tx) VALUES (?, [hex],[hex],[hex], ?, ?)",
-		p.BlockData.BlockId, p.BlockData.Hash, p.BlockData.HeadHash, p.blockHex, p.BlockData.Time, TxIdsJson)
+	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, time, tx) VALUES (?, [hex], [hex], ?, ?)",
+		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.Time, TxIdsJson)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -1309,9 +1295,6 @@ func (p *Parser) InsertIntoBlockchain() error {
 }
 
 func (p *Parser) UpdBlockInfo() {
-
-	// для отладки
-	_, _, _, p.BlockData.CurrentUserId, _, _, _ = p.Candidate_block()
 
 	blockId := p.BlockData.BlockId
 	// для локальных тестов
@@ -1367,6 +1350,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	p.TxMaps.Int64["time"] = utils.BytesToInt64(p.TxSlice[2])
 	p.TxMaps.Int64["wallet_id"] = utils.BytesToInt64(p.TxSlice[3])
 	p.TxMaps.Int64["citizen_id"] = utils.BytesToInt64(p.TxSlice[4])
+	p.TxMaps.Int64["_id"] = utils.BytesToInt64(p.TxSlice[4])
 	p.TxMap["hash"] = p.TxSlice[0]
 	p.TxMap["type"] = p.TxSlice[1]
 	p.TxMap["time"] = p.TxSlice[2]
@@ -1445,39 +1429,6 @@ func (p *Parser) GetTxMapStr(fields []string) (map[string]string, error) {
 	return TxMapS, nil
 }
 
-func (p *Parser) GetMyUserId(userId int64) (int64, int64, string, []int64, error) {
-	var myUserId int64
-	var myPrefix string
-	var myUserIds []int64
-	var myBlockId int64
-	myBlockId, err := p.Single("SELECT my_block_id FROM config").Int64()
-	if err != nil {
-		return myUserId, myBlockId, myPrefix, myUserIds, err
-	}
-	collective, err := p.GetCommunityUsers()
-	if len(collective) > 0 { // если работаем в пуле
-		myUserIds = collective
-		// есть ли юзер, который задействован среди юзеров нашего пула
-		if utils.InSliceInt64(userId, collective) {
-			myPrefix = fmt.Sprintf("%d_", userId)
-			// чтобы не было проблем с change_primary_key нужно получить user_id только тогда, когда он был реально выдан
-			// в будущем можно будет переделать, чтобы user_id можно было указывать всем и всегда заранее.
-			// тогда при сбросе будут собираться более полные таблы my_, а не только те, что заполнятся в change_primary_key
-			myUserId, err = p.Single("SELECT user_id FROM " + myPrefix + "my_table").Int64()
-			if err != nil {
-				return myUserId, myBlockId, myPrefix, myUserIds, err
-			}
-		}
-	} else {
-		myUserId, err = p.Single("SELECT user_id FROM my_table").Int64()
-		if err != nil {
-			return myUserId, myBlockId, myPrefix, myUserIds, err
-		}
-		myUserIds = append(myUserIds, myUserId)
-	}
-	return myUserId, myBlockId, myPrefix, myUserIds, nil
-}
-
 func (p *Parser) CheckInputData(data map[string]string) error {
 	for k, v := range data {
 		if !utils.CheckInputData(p.TxMap[k], v) {
@@ -1490,11 +1441,11 @@ func (p *Parser) CheckInputData(data map[string]string) error {
 func (p *Parser) limitRequestsRollback(txType string) error {
 	time := p.TxMap["time"]
 	if p.ConfigIni["db_type"] == "mysql" {
-		return p.ExecSql("DELETE FROM log_time_"+txType+" WHERE user_id = ? AND time = ? LIMIT 1", p.TxUserID, time)
+		return p.ExecSql("DELETE FROM rb_time_"+txType+" WHERE user_id = ? AND time = ? LIMIT 1", p.TxUserID, time)
 	} else if p.ConfigIni["db_type"] == "postgresql" {
-		return p.ExecSql("DELETE FROM log_time_"+txType+" WHERE ctid IN (SELECT ctid FROM log_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
+		return p.ExecSql("DELETE FROM rb_time_"+txType+" WHERE ctid IN (SELECT ctid FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
 	} else {
-		return p.ExecSql("DELETE FROM log_time_"+txType+" WHERE id IN (SELECT id FROM log_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
+		return p.ExecSql("DELETE FROM rb_time_"+txType+" WHERE id IN (SELECT id FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
 	}
 	return nil
 }
@@ -1560,12 +1511,12 @@ func (p *Parser) generalRollback(table string, whereUserId_ interface{}, addWher
 	if whereUserId > 0 {
 		where = fmt.Sprintf(" WHERE user_id = %d ", whereUserId)
 	}
-	// получим log_id, по которому можно найти данные, которые были до этого
-	logId, err := p.Single("SELECT log_id FROM " + table + " " + where + addWhere).Int64()
+	// получим rb_id, по которому можно найти данные, которые были до этого
+	logId, err := p.Single("SELECT rb_id FROM " + table + " " + where + addWhere).Int64()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	// если $log_id = 0, значит восстанавливать нечего и нужно просто удалить запись
+	// если $rb_id = 0, значит восстанавливать нечего и нужно просто удалить запись
 	if logId == 0 {
 		err = p.ExecSql("DELETE FROM " + table + " " + where + addWhere)
 		if err != nil {
@@ -1573,14 +1524,14 @@ func (p *Parser) generalRollback(table string, whereUserId_ interface{}, addWher
 		}
 	} else {
 		// данные, которые восстановим
-		data, err := p.OneRow("SELECT * FROM log_"+table+" WHERE log_id = ?", logId).String()
+		data, err := p.OneRow("SELECT * FROM rb_"+table+" WHERE rb_id = ?", logId).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 		addSql := ""
 		for k, v := range data {
-			// block_id т.к. в log_ он нужен для удаления старых данных, а в обычной табле не нужен
-			if k == "log_id" || k == "prev_log_id" || k == "block_id" {
+			// block_id т.к. в rb_ он нужен для удаления старых данных, а в обычной табле не нужен
+			if k == "rb_id" || k == "prev_rb_id" || k == "block_id" {
 				continue
 			}
 			if k == "node_public_key" {
@@ -1596,19 +1547,19 @@ func (p *Parser) generalRollback(table string, whereUserId_ interface{}, addWher
 				addSql += fmt.Sprintf("%v = '%v',", k, v)
 			}
 		}
-		// всегда пишем предыдущий log_id
-		addSql += fmt.Sprintf("log_id = %v,", data["prev_log_id"])
+		// всегда пишем предыдущий rb_id
+		addSql += fmt.Sprintf("rb_id = %v,", data["prev_rb_id"])
 		addSql = addSql[0 : len(addSql)-1]
 		err = p.ExecSql("UPDATE " + table + " SET " + addSql + where + addWhere)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 		// подчищаем log
-		err = p.ExecSql("DELETE FROM log_"+table+" WHERE log_id= ?", logId)
+		err = p.ExecSql("DELETE FROM rb_"+table+" WHERE rb_id= ?", logId)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		err = p.rollbackAI("log_"+table, 1)
+		err = p.rollbackAI("rb_"+table, 1)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -1713,14 +1664,16 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	}
 
 	addSqlWhere := ""
-	for i := 0; i < len(whereFields); i++ {
-		addSqlWhere += whereFields[i] + "=" + whereValues[i] + " AND "
+	if whereFields!=nil && whereValues!=nil {
+		for i := 0; i < len(whereFields); i++ {
+			addSqlWhere += whereFields[i] + "=" + whereValues[i] + " AND "
+		}
 	}
 	if len(addSqlWhere) > 0 {
 		addSqlWhere = " WHERE " + addSqlWhere[0:len(addSqlWhere)-5]
 	}
 	// если есть, что логировать
-	logData, err := p.OneRow("SELECT " + addSqlFields + " log_id FROM " + table + " " + addSqlWhere).String()
+	logData, err := p.OneRow("SELECT " + addSqlFields + " rb_id FROM " + table + " " + addSqlWhere).String()
 	if err != nil {
 		return err
 	}
@@ -1728,7 +1681,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlValues := ""
 		addSqlFields := ""
 		for k, v := range logData {
-			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2"}) && v != "" {
+			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && v != "" {
 				v := string(utils.BinToHex([]byte(v)))
 				query := ""
 				switch p.ConfigIni["db_type"] {
@@ -1743,21 +1696,21 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			} else {
 				addSqlValues += `'` + v + `',`
 			}
-			if k == "log_id" {
-				k = "prev_log_id"
+			if k == "rb_id" {
+				k = "prev_rb_id"
 			}
 			addSqlFields += k + ","
 		}
 		addSqlValues = addSqlValues[0 : len(addSqlValues)-1]
 		addSqlFields = addSqlFields[0 : len(addSqlFields)-1]
 
-		logId, err := p.ExecSqlGetLastInsertId("INSERT INTO log_"+table+" ( "+addSqlFields+", block_id ) VALUES ( "+addSqlValues+", ? )", "log_id", p.BlockData.BlockId)
+		logId, err := p.ExecSqlGetLastInsertId("INSERT INTO rb_"+table+" ( "+addSqlFields+", block_id ) VALUES ( "+addSqlValues+", ? )", "rb_id", p.BlockData.BlockId)
 		if err != nil {
 			return err
 		}
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
-			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2"}) && len(values[i]) != 0 {
+			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
 				query := ""
 				switch p.ConfigIni["db_type"] {
 				case "sqlite":
@@ -1772,8 +1725,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}
 		}
-		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" log_id = ? "+addSqlWhere, logId)
-		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" log_id = ? "+addSqlWhere)
+		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+addSqlWhere, logId)
+		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+addSqlWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
 			return err
@@ -1783,7 +1736,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlIns1 := ""
 		for i := 0; i < len(fields); i++ {
 			addSqlIns0 += `` + fields[i] + `,`
-			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2"}) && len(values[i]) != 0 {
+			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
 				query := ""
 				switch p.ConfigIni["db_type"] {
 				case "sqlite":
@@ -1814,7 +1767,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 
 
 func (p *Parser) limitRequestsMoneyOrdersRollback() error {
-	err := p.ExecSql("DELETE FROM log_time_money_orders WHERE hex(tx_hash) = ?", p.TxHash)
+	err := p.ExecSql("DELETE FROM rb_time_money_orders WHERE hex(tx_hash) = ?", p.TxHash)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -1830,14 +1783,14 @@ func (p *Parser) selectiveRollback(fields []string, table string, where string, 
 	for _, field := range fields {
 		addSqlFields += field + ","
 	}
-	// получим log_id, по которому можно найти данные, которые были до этого
-	logId, err := p.Single("SELECT log_id FROM " + table + " " + where).Int64()
+	// получим rb_id, по которому можно найти данные, которые были до этого
+	logId, err := p.Single("SELECT rb_id FROM " + table + " " + where).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if logId > 0 {
 		// данные, которые восстановим
-		logData, err := p.OneRow("SELECT "+addSqlFields+" prev_log_id FROM log_"+table+" WHERE log_id  =  ?", logId).String()
+		logData, err := p.OneRow("SELECT "+addSqlFields+" prev_rb_id FROM rb_"+table+" WHERE rb_id  =  ?", logId).String()
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -1860,16 +1813,16 @@ func (p *Parser) selectiveRollback(fields []string, table string, where string, 
 				addSqlUpdate += field + `='` + logData[field] + `',`
 			}
 		}
-		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" log_id = ? "+where, logData["prev_log_id"])
+		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where, logData["prev_rb_id"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// подчищаем _log
-		err = p.ExecSql("DELETE FROM log_"+table+" WHERE log_id = ?", logId)
+		err = p.ExecSql("DELETE FROM rb_"+table+" WHERE rb_id = ?", logId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		p.rollbackAI("log_"+table, 1)
+		p.rollbackAI("rb_"+table, 1)
 	} else {
 		err = p.ExecSql("DELETE FROM " + table + " " + where)
 		if err != nil {
