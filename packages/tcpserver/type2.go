@@ -6,6 +6,8 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
+
+
 func (t *TcpServer) Type2() {
 	// размер данных
 	buf := make([]byte, 4)

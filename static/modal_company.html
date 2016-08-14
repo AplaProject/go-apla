@@ -1,3 +1,14 @@
+<style>
+	#modal_new_order .sweet-alert p, #modal_new_order .sweet-alert fieldset, #modal_new_order .sweet-alert .sa-error-container {
+		display:none !important;
+	}
+	@media only screen and (max-width: 767px) {
+		fieldset .form-group {
+		  margin-bottom: 15px;
+		}
+	}
+</style>
+
 <script>
 $(document).ready(function() {
 	$('#modal_crowdfunding').on('shown.bs.modal', function (e) {
@@ -16,6 +27,11 @@ $(document).ready(function() {
 		});
 		$('.filestyle').filestyle();
 		$('#select2-1').select2({
+			theme: 'bootstrap'
+		});
+	})
+	$('#modal_new_order').on('shown.bs.modal', function (e) {
+		$('#company').select2({
 			theme: 'bootstrap'
 		});
 	})
@@ -47,7 +63,7 @@ $(document).ready(function() {
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-danger">Create</button>
+				<button type="button" class="btn btn-primary">Create</button>
 			</div>
 		</div>
 	</div>
@@ -108,7 +124,72 @@ $(document).ready(function() {
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-green">Add</button>
+				<button type="button" class="btn btn-primary">Add</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modal_new_order" role="dialog" aria-labelledby="modal_new_order_label">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content" data-sweet-alert>
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modal_new_order_label">New order</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+				   <div class="form-group">
+					  <label>Select you company</label>
+					  <select id="company" class="form-control">
+						 <option value="">Company 1</option>
+						 <option value="">Company 2</option>
+						 <option value="">Company 3</option>
+						 <option value="">Company 4</option>
+						 <option value="">Company 5</option>
+					  </select>
+				   </div>
+				   <fieldset>
+					   <div class="row">
+						   <div class="col-sm-2">
+							   <div class="form-group">
+								  <label>Item id</label>
+								  <input type="text" class="form-control">
+							   </div>
+						   </div>
+						   <div class="col-sm-3">
+							   <div class="form-group">
+								  <label>Price</label>
+								  <input type="text" class="form-control">
+							   </div>
+						   </div>
+						   <div class="col-sm-2">
+							   <div class="form-group">
+								  <label>Qty</label>
+								  <input type="text" class="form-control">
+							   </div>
+						   </div>
+						   <div class="col-sm-2">
+							   <div class="form-group">
+								  <label>Total</label>
+								  <input type="text" class="form-control" value="10000" disabled>
+							   </div>
+						   </div>
+						   <div class="col-sm-3">
+							   <div class="form-group">
+								  <label>Discount</label>
+								  <input type="text" class="form-control">
+							   </div>
+						   </div>
+					   </div>
+				   </fieldset>
+				   <fieldset style="padding-bottom:0px; margin-bottom:0px;">
+					   <button class="btn btn-primary btn-xs" type="button">Add fields</button>
+				   </fieldset>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this); Alert('Order №26511691', '', 'success')" id="add">Add</button>
 			</div>
 		</div>
 	</div>

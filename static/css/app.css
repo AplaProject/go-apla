@@ -363,9 +363,14 @@ body {
 .wrapper {
   position: relative;
   width: 100%;
+  max-width:1200px;
   height: auto;
   min-height: 100%;
   overflow-x: hidden;
+  border-right:1px solid #cfdbe2;
+  box-shadow:0px 0px 5px rgba(0, 0, 0, 0.2);
+  background-color:#f9f9f9;
+  margin:0px auto;
 }
 .wrapper.ng-leave {
   display: none;
@@ -403,8 +408,8 @@ body {
   height: 100%;
   margin-left: 0;
   z-index: 111;
-  background-color: #f5f7fa;
-  //margin-bottom: 60px !important;
+  /*background-color: #f5f7fa;
+  margin-bottom: 60px !important;*/
 }
 .wrapper > footer {
   position: absolute;
@@ -674,8 +679,15 @@ body {
 }
 .layout-fixed .wrapper .topnavbar-wrapper {
   position: fixed;
+  left:0;
   top: 0;
   width: 100%;
+  background-color: #23b7e5;
+  background-image: -webkit-linear-gradient(left, #23b7e5 0%, #51c6ea 100%);
+  background-image: -o-linear-gradient(left, #23b7e5 0%, #51c6ea 100%);
+  background-image: linear-gradient(to right, #23b7e5 0%, #51c6ea 100%);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff23b7e5', endColorstr='#ff51c6ea', GradientType=1);
   z-index: 121;
 }
 .layout-fixed .wrapper > aside {
@@ -1014,10 +1026,15 @@ _:-ms-lang(x),
   /* fixes chrome jump */
   margin-bottom: 0;
   border-radius: 0;
-  background-color: #fff;
+  /*background-color: #fff;*/
   z-index: 1050;
   border: 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+@media only screen and (max-width: 767px) {
+  .topnavbar {
+    background-color: #fff;
+  }
 }
 @media only screen and (min-width: 768px) {
   .topnavbar .navbar-header {
@@ -1188,12 +1205,14 @@ _:-ms-lang(x),
 @media only screen and (min-width: 768px) {
   .topnavbar {
     border: 0;
-    background-color: #23b7e5;
+    /*background-color: #23b7e5;
     background-image: -webkit-linear-gradient(left, #23b7e5 0%, #51c6ea 100%);
     background-image: -o-linear-gradient(left, #23b7e5 0%, #51c6ea 100%);
     background-image: linear-gradient(to right, #23b7e5 0%, #51c6ea 100%);
     background-repeat: repeat-x;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff23b7e5', endColorstr='#ff51c6ea', GradientType=1);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff23b7e5', endColorstr='#ff51c6ea', GradientType=1);*/
+	max-width:1200px;
+	margin:0px auto;
   }
   .topnavbar .navbar-header {
     background-image: none;
@@ -1232,7 +1251,7 @@ _:-ms-lang(x),
   }
   .nav-wrapper {
     position: relative;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);*/
     z-index: 10;
   }
   .nav-wrapper:before,

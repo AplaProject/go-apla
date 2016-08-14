@@ -393,7 +393,7 @@ BEGIN:
 		}
 		logger.Info("currentBlockId", currentBlockId, "maxBlockId", maxBlockId)
 		if maxBlockId <= currentBlockId {
-			if d.unlockPrintSleep(utils.ErrInfo(errors.New("maxBlockId <= currentBlockId")), d.sleepTime) {
+			if d.unlockPrintSleepInfo(utils.ErrInfo(errors.New("maxBlockId <= currentBlockId")), d.sleepTime) {
 				break BEGIN
 			}
 			continue
@@ -575,20 +575,6 @@ BEGIN:
 					}
 				}
 
-				err = parser.RollbackTransactionsCandidateBlock(true)
-				if err != nil {
-					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				err = d.ExecSql("DELETE FROM candidateBlock")
-				if err != nil {
-					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
 			}
 
 			// теперь у нас в таблицах всё тоже самое, что у нода, у которого качаем блок

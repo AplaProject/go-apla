@@ -87,27 +87,6 @@ BEGIN:
 		}
 		newBlockId := blockId + 1
 		logger.Debug("newBlockId: %v", newBlockId)
-		candidateBlockId, err := d.GetcandidateBlockId()
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		logger.Debug("candidateBlockId %v", candidateBlockId)
-
-
-		if candidateBlockId == newBlockId {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
 
 		myCBID, myWalletId, err := d.GetMyCBIDAndWalletId();
 		logger.Debug("%v", myWalletId)

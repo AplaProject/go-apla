@@ -4,9 +4,18 @@
 // static/alert_success.html
 // static/anonym_history.html
 // static/anonym_money_transfer.html
+// static/citizen_bill_payment.html
 // static/citizen_marriage_registration.html
 // static/citizen_property.html
+// static/citizen_rule_details.html
+// static/company_application_purchase.html
+// static/company_contract.html
 // static/company_currency_exchange.html
+// static/company_new_good.html
+// static/company_new_item.html
+// static/company_offer_seller.html
+// static/company_offer_transport.html
+// static/company_select_transport.html
 // static/company_shares.html
 // static/company_shares_exchange.html
 // static/css/app.css
@@ -26,7 +35,6 @@
 // static/dashboard_company.html
 // static/dashboard_gov.html
 // static/dashboard_health.html
-// static/data/anonym_history.json
 // static/data/entries_doctor.json
 // static/data/immunizations.json
 // static/data/medication.json
@@ -441,6 +449,24 @@ func staticAnonym_money_transferHtml() (*asset, error) {
 	return a, err
 }
 
+// staticCitizen_bill_paymentHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_bill_paymentHtml() (*asset, error) {
+	path := "static/citizen_bill_payment.html"
+	name := "static/citizen_bill_payment.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticCitizen_marriage_registrationHtml reads file data from disk. It returns an error on failure.
 func staticCitizen_marriage_registrationHtml() (*asset, error) {
 	path := "static/citizen_marriage_registration.html"
@@ -477,10 +503,154 @@ func staticCitizen_propertyHtml() (*asset, error) {
 	return a, err
 }
 
+// staticCitizen_rule_detailsHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_rule_detailsHtml() (*asset, error) {
+	path := "static/citizen_rule_details.html"
+	name := "static/citizen_rule_details.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_application_purchaseHtml reads file data from disk. It returns an error on failure.
+func staticCompany_application_purchaseHtml() (*asset, error) {
+	path := "static/company_application_purchase.html"
+	name := "static/company_application_purchase.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_contractHtml reads file data from disk. It returns an error on failure.
+func staticCompany_contractHtml() (*asset, error) {
+	path := "static/company_contract.html"
+	name := "static/company_contract.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticCompany_currency_exchangeHtml reads file data from disk. It returns an error on failure.
 func staticCompany_currency_exchangeHtml() (*asset, error) {
 	path := "static/company_currency_exchange.html"
 	name := "static/company_currency_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_new_goodHtml reads file data from disk. It returns an error on failure.
+func staticCompany_new_goodHtml() (*asset, error) {
+	path := "static/company_new_good.html"
+	name := "static/company_new_good.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_new_itemHtml reads file data from disk. It returns an error on failure.
+func staticCompany_new_itemHtml() (*asset, error) {
+	path := "static/company_new_item.html"
+	name := "static/company_new_item.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_offer_sellerHtml reads file data from disk. It returns an error on failure.
+func staticCompany_offer_sellerHtml() (*asset, error) {
+	path := "static/company_offer_seller.html"
+	name := "static/company_offer_seller.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_offer_transportHtml reads file data from disk. It returns an error on failure.
+func staticCompany_offer_transportHtml() (*asset, error) {
+	path := "static/company_offer_transport.html"
+	name := "static/company_offer_transport.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_select_transportHtml reads file data from disk. It returns an error on failure.
+func staticCompany_select_transportHtml() (*asset, error) {
+	path := "static/company_select_transport.html"
+	name := "static/company_select_transport.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -823,24 +993,6 @@ func staticDashboard_govHtml() (*asset, error) {
 func staticDashboard_healthHtml() (*asset, error) {
 	path := "static/dashboard_health.html"
 	name := "static/dashboard_health.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticDataAnonym_historyJson reads file data from disk. It returns an error on failure.
-func staticDataAnonym_historyJson() (*asset, error) {
-	path := "static/data/anonym_history.json"
-	name := "static/data/anonym_history.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6599,9 +6751,18 @@ var _bindata = map[string]func() (*asset, error){
 	"static/alert_success.html": staticAlert_successHtml,
 	"static/anonym_history.html": staticAnonym_historyHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
+	"static/citizen_bill_payment.html": staticCitizen_bill_paymentHtml,
 	"static/citizen_marriage_registration.html": staticCitizen_marriage_registrationHtml,
 	"static/citizen_property.html": staticCitizen_propertyHtml,
+	"static/citizen_rule_details.html": staticCitizen_rule_detailsHtml,
+	"static/company_application_purchase.html": staticCompany_application_purchaseHtml,
+	"static/company_contract.html": staticCompany_contractHtml,
 	"static/company_currency_exchange.html": staticCompany_currency_exchangeHtml,
+	"static/company_new_good.html": staticCompany_new_goodHtml,
+	"static/company_new_item.html": staticCompany_new_itemHtml,
+	"static/company_offer_seller.html": staticCompany_offer_sellerHtml,
+	"static/company_offer_transport.html": staticCompany_offer_transportHtml,
+	"static/company_select_transport.html": staticCompany_select_transportHtml,
 	"static/company_shares.html": staticCompany_sharesHtml,
 	"static/company_shares_exchange.html": staticCompany_shares_exchangeHtml,
 	"static/css/app.css": staticCssAppCss,
@@ -6621,7 +6782,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/dashboard_company.html": staticDashboard_companyHtml,
 	"static/dashboard_gov.html": staticDashboard_govHtml,
 	"static/dashboard_health.html": staticDashboard_healthHtml,
-	"static/data/anonym_history.json": staticDataAnonym_historyJson,
 	"static/data/entries_doctor.json": staticDataEntries_doctorJson,
 	"static/data/immunizations.json": staticDataImmunizationsJson,
 	"static/data/medication.json": staticDataMedicationJson,
@@ -6985,9 +7145,18 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
 		"anonym_history.html": &bintree{staticAnonym_historyHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
+		"citizen_bill_payment.html": &bintree{staticCitizen_bill_paymentHtml, map[string]*bintree{}},
 		"citizen_marriage_registration.html": &bintree{staticCitizen_marriage_registrationHtml, map[string]*bintree{}},
 		"citizen_property.html": &bintree{staticCitizen_propertyHtml, map[string]*bintree{}},
+		"citizen_rule_details.html": &bintree{staticCitizen_rule_detailsHtml, map[string]*bintree{}},
+		"company_application_purchase.html": &bintree{staticCompany_application_purchaseHtml, map[string]*bintree{}},
+		"company_contract.html": &bintree{staticCompany_contractHtml, map[string]*bintree{}},
 		"company_currency_exchange.html": &bintree{staticCompany_currency_exchangeHtml, map[string]*bintree{}},
+		"company_new_good.html": &bintree{staticCompany_new_goodHtml, map[string]*bintree{}},
+		"company_new_item.html": &bintree{staticCompany_new_itemHtml, map[string]*bintree{}},
+		"company_offer_seller.html": &bintree{staticCompany_offer_sellerHtml, map[string]*bintree{}},
+		"company_offer_transport.html": &bintree{staticCompany_offer_transportHtml, map[string]*bintree{}},
+		"company_select_transport.html": &bintree{staticCompany_select_transportHtml, map[string]*bintree{}},
 		"company_shares.html": &bintree{staticCompany_sharesHtml, map[string]*bintree{}},
 		"company_shares_exchange.html": &bintree{staticCompany_shares_exchangeHtml, map[string]*bintree{}},
 		"css": &bintree{nil, map[string]*bintree{
@@ -7010,7 +7179,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"dashboard_gov.html": &bintree{staticDashboard_govHtml, map[string]*bintree{}},
 		"dashboard_health.html": &bintree{staticDashboard_healthHtml, map[string]*bintree{}},
 		"data": &bintree{nil, map[string]*bintree{
-			"anonym_history.json": &bintree{staticDataAnonym_historyJson, map[string]*bintree{}},
 			"entries_doctor.json": &bintree{staticDataEntries_doctorJson, map[string]*bintree{}},
 			"immunizations.json": &bintree{staticDataImmunizationsJson, map[string]*bintree{}},
 			"medication.json": &bintree{staticDataMedicationJson, map[string]*bintree{}},

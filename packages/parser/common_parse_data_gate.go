@@ -17,11 +17,6 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 	p.dataPre()
 	p.TxIds = []string{}
 
-	p.Variables, err = p.GetAllVariables()
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-
 	transactionBinaryData := p.BinaryData
 	var transactionBinaryDataFull []byte
 

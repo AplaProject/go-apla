@@ -91,11 +91,15 @@ BEGIN:
 
 			logger.Debug("blockId: %d", blockId)
 
-			hash, err := d.Single("SELECT hash FROM block_chain WHERE id =  ?", blockId).String()
+			hash, err := d.Single("SELECT hash FROM block_chain WHERE id = ?", blockId).String()
 			if err != nil {
 				logger.Error("%v", err)
 			}
-			logger.Info("hash: %v", hash)
+			logger.Info("hash: %x", hash)
+			if len(hash) == 0 {
+				logger.Debug("len(hash) == 0")
+				continue
+			}
 
 			var hosts []string
 			if d.ConfigIni["test_mode"] == "1" {

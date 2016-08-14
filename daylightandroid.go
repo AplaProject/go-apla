@@ -3,23 +3,23 @@
 package main
 
 import (
+	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/daylight"
-	"image"
-	"log"
-	"time"
-	_ "image/png"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/c-darwin/mobile/app"
 	"github.com/c-darwin/mobile/asset"
-	"github.com/c-darwin/mobile/event/size"
 	"github.com/c-darwin/mobile/event/paint"
+	"github.com/c-darwin/mobile/event/size"
 	"github.com/c-darwin/mobile/exp/f32"
 	"github.com/c-darwin/mobile/exp/sprite"
 	"github.com/c-darwin/mobile/exp/sprite/clock"
 	"github.com/c-darwin/mobile/exp/sprite/glsprite"
 	"github.com/c-darwin/mobile/get_files_dir"
-	"fmt"
+	"image"
+	_ "image/png"
+	"log"
 	"runtime"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"time"
 )
 
 /*
@@ -32,15 +32,15 @@ var (
 	startTime = time.Now()
 	eng       = glsprite.Engine()
 	scene     *sprite.Node
-	cfg size.Event
+	cfg       size.Event
 )
 
 func main() {
 
 	var dir string
 	//dir := C.GoString(C.getenv(C.CString("FILESDIR")))
-	if runtime.GOOS=="android" {
-		dir = get_files_dir.GetFilesDir();
+	if runtime.GOOS == "android" {
+		dir = get_files_dir.GetFilesDir()
 	} else {
 		dir = *utils.Dir
 	}
@@ -53,9 +53,9 @@ func main() {
 		for e := range a.Events() {
 			fmt.Println("e:", e)
 			switch e := app.Filter(e).(type) {
-				case size.Event:
+			case size.Event:
 				cfg = e
-				case paint.Event:
+			case paint.Event:
 				onPaint(cfg)
 				a.EndPaint(e)
 			}
@@ -87,10 +87,10 @@ func loadScene() {
 
 	//var n *sprite.Node
 	new_w := float32(cfg.WidthPt)
-	new_h := new_w*1.77
+	new_h := new_w * 1.77
 	if float32(cfg.WidthPt)/float32(cfg.HeightPt) > 1 {
 		new_w = float32(cfg.WidthPt)
-		new_h = float32(cfg.WidthPt)*0.5625
+		new_h = float32(cfg.WidthPt) * 0.5625
 
 	}
 	n := newNode()

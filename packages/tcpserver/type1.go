@@ -57,11 +57,9 @@ func (t *TcpServer) Type1() {
 			return
 		}
 		log.Debug("binaryData: %x", binaryData)
-		// host отправителя, чтобы знать у кого брать данные, когда они будут скачиваться другим демоном
-		size_ := utils.DecodeLength(&binaryData)
-		newDataHost := string(utils.BytesShift(&binaryData, size_))
-		log.Debug("newDataHost: %d", newDataHost)
-
+		// full_node_id отправителя, чтобы знать у кого брать данные, когда они будут скачиваться другим демоном
+		fullNodeId := utils.BinToDecBytesShift(&binaryData, 2)
+		log.Debug("fullNodeId: %d", fullNodeId)
 		// если 0 - значит вначале идет инфа о блоке, если 1 - значит сразу идет набор хэшей тр-ий
 		newDataType := utils.BinToDecBytesShift(&binaryData, 1)
 		log.Debug("newDataType: %d", newDataType)
@@ -71,7 +69,6 @@ func (t *TcpServer) Type1() {
 			log.Debug("newDataBlockId: %d / blockId: %d", newDataBlockId, blockId)
 			// нет смысла принимать старые блоки
 			if newDataBlockId >= blockId {
-				// Это хэш для соревнования, у кого меньше хэш
 				newDataHash := utils.BinToHex(utils.BytesShift(&binaryData, 32))
 				err = t.ExecSql(`DELETE FROM queue_blocks WHERE hex(hash) = ?`, newDataHash)
 				if err != nil {
@@ -81,24 +78,32 @@ func (t *TcpServer) Type1() {
 				err = t.ExecSql(`
 						INSERT INTO queue_blocks (
 							hash,
-							host,
+							full_node_id,
 							block_id
 						) VALUES (
 							[hex],
 							?,
 							?
-						)`, newDataHash, newDataHost, newDataBlockId)
+						)`, newDataHash, fullNodeId, newDataBlockId)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
 					return
 				}
+			} else {
+				// просто удалим хэш блока, что бы далее проверить тр-ии
+				utils.BinToHex(utils.BytesShift(&binaryData, 32))
 			}
 		}
 		log.Debug("binaryData: %x", binaryData)
 		var needTx []byte
-		// Разбираем список транзакций
+		// Разбираем список транзакций, но их может и не быть
 		if len(binaryData) == 0 {
 			log.Debug("%v", utils.ErrInfo("len(binaryData) == 0"))
+			_, err = t.Conn.Write(utils.Int64ToByte(int64(0)))
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				return
+			}
 			return
 		}
 		for {
@@ -124,7 +129,12 @@ func (t *TcpServer) Type1() {
 			}
 		}
 		if len(needTx) == 0 {
-			log.Error("%v", utils.ErrInfo(err))
+			log.Debug("len(needTx) == 0")
+			_, err = t.Conn.Write(utils.Int64ToByte(int64(0)))
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				return
+			}
 			return
 		}
 		log.Debug("needTx: %v", needTx)

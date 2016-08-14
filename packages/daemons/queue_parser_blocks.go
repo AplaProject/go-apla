@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"math/big"
 	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
@@ -89,11 +88,8 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		newBlockData["head_hash_hex"] = string(utils.BinToHex(newBlockData["head_hash"]))
-		prevBlockData["head_hash_hex"] = string(utils.BinToHex(prevBlockData["head_hash"]))
 		newBlockData["hash_hex"] = string(utils.BinToHex(newBlockData["hash"]))
 		prevBlockData["hash_hex"] = string(utils.BinToHex(prevBlockData["hash"]))
-
 
 		/*
 		 * Базовая проверка
@@ -101,7 +97,7 @@ BEGIN:
 
 		// проверим, укладывается ли блок в лимит rollback_blocks_1
 		if utils.StrToInt64(newBlockData["block_id"]) > utils.StrToInt64(prevBlockData["block_id"])+consts.RB_BLOCKS_1 {
-			d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
+			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			if d.unlockPrintSleep(utils.ErrInfo("rollback_blocks_1"), 1) {
 				break BEGIN
 			}
@@ -109,55 +105,20 @@ BEGIN:
 		}
 
 		// проверим не старый ли блок в очереди
-		if utils.StrToInt64(newBlockData["block_id"]) < utils.StrToInt64(prevBlockData["block_id"]) {
-			d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
-			if d.unlockPrintSleep(utils.ErrInfo("old block"), 1) {
+		if utils.StrToInt64(newBlockData["block_id"]) <= utils.StrToInt64(prevBlockData["block_id"]) {
+			d.DeleteQueueBlock(newBlockData["hash_hex"])
+			if d.unlockPrintSleepInfo(utils.ErrInfo("old block"), 1) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
 
-		if utils.StrToInt64(newBlockData["block_id"]) == utils.StrToInt64(prevBlockData["block_id"]) {
-			// сравним хэши
-			hash1 := big.NewInt(0)
-			hash1.SetString(string(newBlockData["head_hash_hex"]), 16)
-			hash2 := big.NewInt(0)
-			hash2.SetString(string(prevBlockData["head_hash_hex"]), 16)
-			// newBlockData["head_hash_hex"]) <= prevBlockData["head_hash_hex"]
-			if hash1.Cmp(hash2) < 1 {
-				// если это тотже блок и его генерил тот же юзер, то могут быть равные head_hash
-				if hash1.Cmp(hash2) == 0 {
-					// в этом случае проверяем вторые хэши. Если новый блок имеет больший хэш, то нам он не нужен
-					// или если тот же хэш, значит блоки одинаковые
-
-					hash1 := big.NewInt(0)
-					hash1.SetString(string(newBlockData["hash_hex"]), 16)
-					hash2 := big.NewInt(0)
-					hash2.SetString(string(prevBlockData["hash_hex"]), 16)
-					// newBlockData["head_hash_hex"]) >= prevBlockData["head_hash_hex"]
-					if hash1.Cmp(hash2) >= 0 {
-						d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
-						if d.unlockPrintSleep(utils.ErrInfo("newBlockData hash_hex == prevBlockData hash_hex"), 1) {
-							break BEGIN
-						}
-						continue BEGIN
-					}
-				}
-			} else {
-				d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
-				if d.unlockPrintSleep(utils.ErrInfo("newBlockData head_hash_hex >  prevBlockData head_hash_hex"), 1) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-		}
-
 		/*
 		 * Загрузка блоков для детальной проверки
 		 */
-		host, err := d.Single("SELECT CASE WHEN m.pool_user_id > 0 then (SELECT tcp_host FROM miners_data WHERE user_id = m.pool_user_id) ELSE tcp_host end FROM miners_data as m WHERE m.user_id = ?", newBlockData["user_id"]).String()
+		host, err := d.Single("SELECT host FROM full_nodes WHERE full_node_id = ?", newBlockData["full_node_id"]).String()
 		if err != nil {
-			d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
+			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
@@ -171,7 +132,7 @@ BEGIN:
 		err = p.GetBlocks(blockId, host, "rollback_blocks_1", GoroutineName, 7)
 		if err != nil {
 			logger.Error("v", err)
-			d.DeleteQueueBlock(newBlockData["head_hash_hex"], newBlockData["hash_hex"])
+			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			d.NodesBan(fmt.Sprintf("%v", err))
 			if d.unlockPrintSleep(utils.ErrInfo(err), 1) {
 				break BEGIN

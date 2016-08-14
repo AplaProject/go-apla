@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
-	"strings"
 	"time"
 )
 
@@ -24,22 +23,7 @@ func init() {
 	flag.Parse()
 }
 
-type vComplex struct {
-	Currency map[string][]float64 `json:"currency"`
-	Referral map[string]string    `json:"referral"`
-	Admin    int64                `json:"admin"`
-}
-type vComplex_ struct {
-	Currency map[string][]float64 `json:"currency"`
-	Referral map[string]int64     `json:"referral"`
-	Admin    int64                `json:"admin"`
-}
 
-type vComplex__ struct {
-	Currency map[string][]float64 `json:"currency"`
-	Referral map[string]string    `json:"referral"`
-	Admin    string               `json:"admin"`
-}
 type txMapsType struct {
 	Int64   map[string]int64
 	String  map[string]string
@@ -61,7 +45,6 @@ type Parser struct {
 	blockHashHex     []byte
 	dataType         int
 	blockHex         []byte
-	Variables        *utils.Variables
 	CurrentBlockId   int64
 	fullTxBinaryData []byte
 	halfRollback     bool // уже не актуально, т.к. нет ни одной половинной фронт-проверки
@@ -835,14 +818,8 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 		utils.BytesShiftReverse(&p.BinaryData, size_)
 		p.TxHash = string(utils.Md5(transactionBinaryData))
 
-		var err error
-		p.Variables, err = p.GetAllVariables()
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-
 		// инфа о предыдущем блоке (т.е. последнем занесенном)
-		err = p.GetInfoBlock()
+		err := p.GetInfoBlock()
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -891,10 +868,6 @@ func (p *Parser) ParseDataRollback() error {
 	}
 	var err error
 
-	p.Variables, err = p.GetAllVariables()
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
 	err = p.ParseBlock()
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -1570,28 +1543,6 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 	return nil
 }
 
-func (p *Parser) getMyMinersIds() (map[int]int, error) {
-	myMinersIds := make(map[int]int)
-	var err error
-	collective, err := p.GetCommunityUsers()
-	if err != nil {
-		return myMinersIds, p.ErrInfo(err)
-	}
-	if len(collective) > 0 {
-		myMinersIds, err = p.GetList("SELECT miner_id FROM miners_data WHERE user_id IN (" + strings.Join(utils.SliceInt64ToString(collective), ",") + ") AND miner_id > 0").MapInt()
-		if err != nil {
-			return myMinersIds, p.ErrInfo(err)
-		}
-	} else {
-		minerId, err := p.Single("SELECT miner_id FROM my_table").Int()
-		if err != nil {
-			return myMinersIds, p.ErrInfo(err)
-		}
-		myMinersIds[0] = minerId
-	}
-	return myMinersIds, nil
-}
-
 func (p *Parser) generalRollback(table string, whereUserId_ interface{}, addWhere string, AI bool) error {
 	var whereUserId int64
 	switch whereUserId_.(type) {
@@ -1935,22 +1886,6 @@ func (p *Parser) selectiveRollback(fields []string, table string, where string, 
 func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (float64, error) {
 	return consts.COMMISSION, nil
 
-}
-
-func (p *Parser) limitRequestsMoneyOrders(limit int64) error {
-	num, err := p.Single("SELECT count(tx_hash) FROM log_time_money_orders WHERE user_id  =  ? AND del_block_id  =  0", p.TxUserID).Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	if num >= limit {
-		return p.ErrInfo("[limit_requests] log_time_money_orders")
-	} else {
-		err = p.ExecSql("INSERT INTO log_time_money_orders ( tx_hash, user_id ) VALUES ( [hex], ? )", p.TxHash, p.TxUserID)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-	}
-	return nil
 }
 
 func (p *Parser) getWalletsBufferAmount(currencyId int64) (float64, error) {

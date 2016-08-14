@@ -41,11 +41,22 @@
         },
         "columns": [
           { "data": 'medicament' },
+		  { "data": 'status[]' },
           { "data": 'dose' },
           { "data": 'times' },
           { "data": 'when' },
 		  { "data": 'left' }
-        ]
+        ],
+		columnDefs: [{
+			targets: 1,
+			render: function (data, type, full, meta) {
+						if (data[0] == 0) {
+							return '<button class="btn btn-success btn-block" type="button">' + data[1] + '</button>';
+						} else {
+							return '<button class="btn btn-info btn-block" type="button" disabled>' + data[1] + '</button>';
+						}
+					}
+		}]
     });
 </script>
 
@@ -178,6 +189,7 @@
 		  <thead>
 			 <tr>
 				<th>Medicament</th>
+				<th>Status</th>
 				<th>Dose (mg)</th>
 				<th>Times per day</th>
 				<th>When to take</th>
