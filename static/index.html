@@ -342,10 +342,33 @@
 					 </a>
 				  </li>
 				  <li class="gov Demo">
-					 <a href="#dashboard_gov" title="Government">
+					 <a href="#dg" title="Government" data-toggle="collapse" class="toggle-hover">
 						<em class="icon-map"></em>
 						<span>Government</span>
 					 </a>
+					 <ul id="dg" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Government</li>
+						<li class="dashboard_gov">
+						   <a href="#dashboard_gov" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="gov_citizens">
+						   <a href="#gov_citizens" title="Citizens">
+							  <span>Citizens</span>
+						   </a>
+						</li>
+						<li class="gov_currency_exchange">
+						   <a href="#gov_currency_exchange" title="Currency Exchange">
+							  <span>Currency Exchange</span>
+						   </a>
+						</li>
+						<li class="gov_shares_exchange">
+						   <a href="#gov_shares_exchange" title="Shares Exchange">
+							  <span>Shares Exchange</span>
+						   </a>
+						</li>
+					 </ul>
 				  </li>
 			   </ul>
 			   <!-- END sidebar nav-->
@@ -558,7 +581,7 @@
 	
 			var str = e.target.hash;
 			var page_match = str.match(/#(\w+)/i);
-			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh'  ) {
+			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh' && page_match[1]!='dg'  ) {
 				var page = page_match[1];
 				var param_match = str.match(/\/\w+=\w+/gi);
 				var param_obj = {};
