@@ -347,7 +347,11 @@ option{
 41-page
 *********************************/
 
-
+.confirm{
+	font-size: 20px;
+  font-weight: bold;
+  display: block;
+}
 
 
 
