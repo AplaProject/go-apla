@@ -1,7 +1,7 @@
 function dl_navigate (page, parameters) {
     var json = JSON.stringify(parameters);
     //$('#loader').spin();
-    $.post("content?controllerName="+page, { tpl_name: page, parameters: json },
+    $.post("content?controllerHTML="+page, { tpl_name: page, parameters: json },
         function(data) {
             //$("#loader").spin(false);
             $('#dl_content').html( data );
