@@ -5,6 +5,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"io"
 	"math/big"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 func (t *TcpServer) Type6() {
@@ -119,7 +120,7 @@ func (t *TcpServer) Type6() {
 			return
 		}
 		// допустимая погрешность во времени генерации блока
-		maxErrorTime := t.variables.Int64["error_time"]
+		maxErrorTime := int64(consts.ERROR_TIME)
 		// получим значения для сна
 		sleep, err := t.GetGenSleep(prevBlock, level)
 		if err != nil {

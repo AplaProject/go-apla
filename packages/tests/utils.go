@@ -1,4 +1,4 @@
-package dcparser
+package parser
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func (db *DCDB) MakeFrontTest(transactionArray []string, time int64, dataForSign
 	MY_PREFIX := utils.Int64ToStr(userId)+"_"
 	var binSign []byte
 	if utils.InSliceString(txType, nodeArr) {
-		k, err := db.GetNodePrivateKey(MY_PREFIX)
+		k, err := db.GetNodePrivateKey()
 		privateKey, err := MakePrivateKey(k)
 		if err != nil {
 			return ErrInfo(err)

@@ -74,6 +74,8 @@ type DaemonsChansType struct {
 	ChAnswer chan string
 }
 var (
+	TcpHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
+	ListenHttpPort = flag.String("listenHttpPort", "8089", "ListenHttpPort")
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	OldVersion = flag.String("oldVersion", "", "")
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
@@ -85,7 +87,6 @@ var (
 	StartBlockId = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
 	EndBlockId = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
 	RollbackToBlockId = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
-	ListenHttpHost = flag.String("listenHttpHost", "8089", "ListenHttpHost")
 	DaemonsChans []*DaemonsChansType
 	eWallets = &sync.Mutex{}
 )
@@ -283,24 +284,24 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
 	// распарсим заголовок блока
 	/*
-		Заголовок (от 143 до 527 байт )
+		Заголовок
 		TYPE (0-блок, 1-тр-я)        1
 		BLOCK_ID   				       4
 		TIME       					       4
-		WALLET_ID                         8
+		WALLET_ID                         1-8
 		CB_ID                              1
 		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
 		Далее - тело блока (Тр-ии)
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId = BinToDecBytesShift(binaryBlock, 8)
+	result.WalletId = BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	result.CBID = BinToDecBytesShift(binaryBlock, 1)
 	if result.BlockId > 1 {
 		signSize := DecodeLength(binaryBlock)
 		result.Sign = BytesShift(binaryBlock, signSize)
 	}
-	log.Debug("result: %v", result)
+	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.CBID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.CBID, result.Sign)
 	return result
 }
 
@@ -1266,8 +1267,12 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		if ok, _ := regexp.MatchString(`^https?:\/\/[0-9a-z\_\.\-\/:]{1,100}[\/]$`, data); ok || data == "0" {
 			return true
 		}
+	case "host":
+		if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\_\.\-]{1,100}$`, data); ok {
+			return true
+		}
 	case "tcp_host":
-		if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\_\.\-\]{1,100}:[0-9]+$`, data); ok {
+		if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\_\.\-]{1,100}:[0-9]+$`, data); ok {
 			return true
 		}
 	case "coords":
@@ -1294,6 +1299,10 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 	case "sn_type":
 		if ok, _ := regexp.MatchString("^(vk|fb|qq)$", data); ok {
+			return true
+		}
+	case "sha1":
+		if ok, _ := regexp.MatchString("^[0-9a-z]{40}$", data); ok {
 			return true
 		}
 	case "photo_hash", "sha256":
@@ -1486,7 +1495,7 @@ func sendMail(body, subj string, To string, mailData map[string]string) error {
 	                                            <td>
 	                                                     <table width="560" align="center" cellspacing="0" cellpadding="8" border="0">
 	                                                     <tr>
-															<td><img src="http://dcoin.club/email/logo.png" alt="Dcoin" style="width: 280px; height: 62px; margin: 10px 0 15px;" />
+															<td><img src="http://daylight.world/email/logo.png" alt="Dcoin" style="width: 280px; height: 62px; margin: 10px 0 15px;" />
 																<table width="100%" bgcolor="ffffff" style="border: 1px solid #eeeeee; margin-bottom: 10px; padding: 30px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.07); line-height: 1.4;" cellspacing="0" cellpadding="0" border="0">
 																<tr>
 																	<td>
@@ -1976,10 +1985,12 @@ func GetIsReadySleepSum(level int64, data []int64) int64 {
 func EncodeLengthPlusData(data_ interface{}) []byte {
 	var data []byte
 	switch data_.(type) {
-	case string:
-		data = []byte(data_.(string))
-	case []byte:
-		data = data_.([]byte)
+		case int64:
+			data = Int64ToByte(data_.(int64))
+		case string:
+			data = []byte(data_.(string))
+		case []byte:
+			data = data_.([]byte)
 	}
 	//log.Debug("data: %x", data)
 	//log.Debug("len data: %d", len(data))
@@ -2417,6 +2428,13 @@ func HashSha1(msg string) []byte {
 	return hash
 }
 
+func HashSha1Hex(msg []byte) string {
+	sh := crypto.SHA1.New()
+	sh.Write(msg)
+	hash := sh.Sum(nil)
+	return string(BinToHex(hash))
+}
+
 func Md5(msg_ interface{}) []byte {
 	var msg []byte
 	switch msg_.(type) {
@@ -2475,7 +2493,7 @@ func DeleteHeader(binaryData []byte) []byte {
 	return binaryData
 }
 
-func GetMrklroot(binaryData []byte, variables *Variables, first bool) ([]byte, error) {
+func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 
 	var mrklSlice [][]byte
 	var txSize int64
@@ -2484,7 +2502,7 @@ func GetMrklroot(binaryData []byte, variables *Variables, first bool) ([]byte, e
 		for {
 			// чтобы исключить атаку на переполнение памяти
 			if !first {
-				if txSize > variables.Int64["max_tx_size"] {
+				if txSize > consts.MAX_TX_SIZE {
 					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
 				}
 			}
@@ -2502,8 +2520,8 @@ func GetMrklroot(binaryData []byte, variables *Variables, first bool) ([]byte, e
 
 			// чтобы исключить атаку на переполнение памяти
 			if !first {
-				if len(mrklSlice) > int(variables.Int64["max_tx_count"]) {
-					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), variables.Int64["max_tx_count"]))
+				if len(mrklSlice) > consts.MAX_TX_COUNT {
+					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), consts.MAX_TX_COUNT))
 				}
 			}
 			if len(binaryData) == 0 {
@@ -3164,7 +3182,7 @@ func GetCurrentDir() string {
 	return dir
 }
 
-func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64, nodeHost string) ([]byte, error) {
+func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, error) {
 
 	conn, err := TcpConn(host)
 	if err != nil {
@@ -3177,12 +3195,6 @@ func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64, nodeHost 
 	_, err = conn.Write(DecToBin(dataTypeBlockBody, 2))
 	if err != nil {
 		return nil, ErrInfo(err)
-	}
-	if len(nodeHost) > 0 { // защищенный режим
-		err = WriteSizeAndDataTCPConn([]byte(nodeHost), conn)
-		if err != nil {
-			return nil, ErrInfo(err)
-		}
 	}
 
 	log.Debug("blockId: %v", blockId)

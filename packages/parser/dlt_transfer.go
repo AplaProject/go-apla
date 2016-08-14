@@ -1,0 +1,102 @@
+package parser
+
+import (
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+)
+
+func (p *Parser) DLTTransferInit() error {
+
+	fields := []map[string]string{{"walletAddress": "bytes"}, {"amount": "int64"},  {"commission": "int64"}, {"comment": "bytes"},{"public_key": "bytes"}, {"sign": "bytes"}}
+	err := p.GetTxMaps(fields)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
+	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
+	return nil
+}
+
+func (p *Parser) DLTTransferFront() error {
+
+	err := p.generalCheck()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	verifyData := map[string]string{"walletAddress": "sha1", "amount": "int64", "commission": "int64", "comment": "comment"}
+	err = p.CheckInputData(verifyData)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	if p.TxMaps.Int64["amount"] == 0 {
+		return p.ErrInfo("amount=0")
+	}
+
+	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
+	if p.TxMaps.Int64["commission"] < consts.COMMISSION {
+		return p.ErrInfo("commission")
+	}
+
+	// есть ли нужная сумма на кошельке
+	// .....
+/*
+	forSign := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["walletAddress"], p.TxMap["sell_currency_id"], p.TxMap["sell_rate"], p.TxMap["amount"], p.TxMap["buy_currency_id"], p.TxMap["commission"])
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if !CheckSignResult {
+		return p.ErrInfo("incorrect sign")
+	}
+
+	err = p.checkSpamMoney(p.TxMaps.Int64["sell_currency_id"], p.TxMaps.Money["amount"])
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+*/
+	return nil
+}
+
+func (p *Parser) DLTTransfer() error {
+	var err error
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	if walletId > 0 {
+		if len(p.TxMaps.Bytes["public_key"]) > 0 {
+			err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ?, public_key_0 = [hex] WHERE wallet_id = ?`, p.TxMaps.Int64["amount"],  p.TxMaps.Bytes["public_key"], walletId)
+		} else {
+			err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ? WHERE wallet_id = ?`, p.TxMaps.Int64["amount"], walletId)
+		}
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	} else {
+		if len(p.TxMaps.Bytes["public_key"]) > 0 {
+			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount, public_key_0) VALUES ([hex], ?, [hex])`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"])
+		} else {
+			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount) VALUES ([hex], ?)`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"])
+		}
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	}
+
+	// пишем в общую историю тр-ий
+	err = p.ExecSql(`INSERT INTO dlt_transactions ( recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( [hex], ?, ?, ?, ?, ? )`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	return nil
+}
+
+func (p *Parser) DLTTransferRollback() error {
+
+	return nil
+}
+
+func (p *Parser) DLTTransferRollbackFront() error {
+
+	return nil
+
+}

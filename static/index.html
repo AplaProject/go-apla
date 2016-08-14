@@ -21,6 +21,8 @@
    <link rel="stylesheet" href="static/vendor/datatables-colvis/css/dataTables.colVis.css">
    <link rel="stylesheet" href="static/vendor/datatables/media/css/dataTables.bootstrap.css">
    <link rel="stylesheet" href="static/vendor/dataTables.fontAwesome/index.css">
+   <!-- XEDITABLE-->
+   <link rel="stylesheet" href="static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css">
    <!-- WEATHER ICONS-->
    <link rel="stylesheet" href="static/vendor/weather-icons/css/weather-icons.min.css">
    <!-- DATETIMEPICKER-->
@@ -28,17 +30,330 @@
    <!-- SELECT2-->
    <link rel="stylesheet" href="static/vendor/select2/dist/css/select2.css">
    <link rel="stylesheet" href="static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css">
+   <!-- Loaders.css-->
+   <link rel="stylesheet" href="static/vendor/loaders.css/loaders.css">
+   <!-- Spinkit-->
+   <link rel="stylesheet" href="static/vendor/spinkit/css/spinkit.css">
+   <!-- SWEET ALERT-->
+   <link rel="stylesheet" href="static/vendor/sweetalert/dist/sweetalert.css">
    <!-- =============== BOOTSTRAP STYLES ===============-->
    <link rel="stylesheet" href="static/css/bootstrap.css" id="bscss">
    <!-- =============== APP STYLES ===============-->
    <link rel="stylesheet" href="static/css/app.css" id="maincss">
    <link rel="stylesheet" href="static/css/style.css" id="stylecss">
+
+
+
+	<script language="JavaScript" type="text/javascript" src="static/js/md5.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/jsbn.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/jsbn2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsa.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsa2.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/sha1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/sha256.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/base64.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsapem-1.1.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/rsasign-1.2.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/asn1hex-1.1.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/send_to_net.js"></script>
+
+
 </head>
 
-<body>
+<body class="layout-fixed">
    <div class="wrapper">
       <!-- Main section-->
-	  <div id="dl_menu"></div>
+	  <div id="_dl_menu">
+      <!-- top navbar-->
+      <header class="topnavbar-wrapper">
+         <!-- START Top Navbar-->
+         <nav role="navigation" class="navbar topnavbar">
+            <!-- START navbar header-->
+            <div class="navbar-header">
+               <a href="/" class="navbar-brand">
+                  <div class="brand-logo">
+                     <img src="static/img/logo.png" alt="App Logo" class="img-responsive">
+                  </div>
+                  <div class="brand-logo-collapsed">
+                     <img src="static/img/logo-single.png" alt="App Logo" class="img-responsive">
+                  </div>
+               </a>
+            </div>
+            <!-- END navbar header-->
+            <!-- START Nav wrapper-->
+            <div class="nav-wrapper">
+               <!-- START Left navbar-->
+               <ul class="nav navbar-nav">
+                  <li>
+                     <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                     <a href="#" data-trigger-resize="" data-toggle-state="aside-collapsed" class="hidden-xs">
+                        <em class="fa fa-navicon"></em>
+                     </a>
+                     <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
+                     <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle">
+                        <em class="fa fa-navicon"></em>
+                     </a>
+                  </li>
+                  <!-- START User avatar toggle-->
+                  <li>
+                     <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                     <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
+                        <em class="icon-user"></em>
+                     </a>
+                  </li>
+                  <!-- END User avatar toggle-->
+               </ul>
+               <!-- END Left navbar-->
+               <!-- START Right Navbar-->
+               <ul class="nav navbar-nav navbar-right">
+                  <li><button class="btn btn-default btn-demo" type="button" onClick="Demo();">Show opportunities</button><input id="demo" type="hidden" value="0"></li>
+				  <!-- START Alert menu-->
+                  <li class="dropdown dropdown-list">
+                     <a href="#" data-toggle="dropdown">
+                        <em class="icon-bell"></em>
+                        <div class="label label-danger">11</div>
+                     </a>
+                     <!-- START Dropdown menu-->
+                     <ul class="dropdown-menu animated flipInX">
+                        <li>
+                           <!-- START list group-->
+                           <div class="list-group">
+                              <!-- list item-->
+                              <a href="#" class="list-group-item">
+                                 <div class="media-box">
+                                    <div class="pull-left">
+                                       <em class="fa fa-twitter fa-2x text-info"></em>
+                                    </div>
+                                    <div class="media-box-body clearfix">
+                                       <p class="m0">New followers</p>
+                                       <p class="m0 text-muted">
+                                          <small>1 new follower</small>
+                                       </p>
+                                    </div>
+                                 </div>
+                              </a>
+                              <!-- list item-->
+                              <a href="#" class="list-group-item">
+                                 <div class="media-box">
+                                    <div class="pull-left">
+                                       <em class="fa fa-envelope fa-2x text-warning"></em>
+                                    </div>
+                                    <div class="media-box-body clearfix">
+                                       <p class="m0">New e-mails</p>
+                                       <p class="m0 text-muted">
+                                          <small>You have 10 new emails</small>
+                                       </p>
+                                    </div>
+                                 </div>
+                              </a>
+                              <!-- list item-->
+                              <a href="#" class="list-group-item">
+                                 <div class="media-box">
+                                    <div class="pull-left">
+                                       <em class="fa fa-tasks fa-2x text-success"></em>
+                                    </div>
+                                    <div class="media-box-body clearfix">
+                                       <p class="m0">Pending Tasks</p>
+                                       <p class="m0 text-muted">
+                                          <small>11 pending task</small>
+                                       </p>
+                                    </div>
+                                 </div>
+                              </a>
+                              <!-- last list item-->
+                              <a href="#" class="list-group-item">
+                                 <small>More notifications</small>
+                                 <span class="label label-danger pull-right">14</span>
+                              </a>
+                           </div>
+                           <!-- END list group-->
+                        </li>
+                     </ul>
+                     <!-- END Dropdown menu-->
+                  </li>
+                  <!-- END Alert menu-->
+                  <!-- START Offsidebar button-->
+                  <li>
+                     <a href="#">
+                        <em class="icon-logout"></em>
+                     </a>
+                  </li>
+                  <!-- END Offsidebar menu-->
+               </ul>
+               <!-- END Right Navbar-->
+            </div>
+            <!-- END Nav wrapper-->
+         </nav>
+         <!-- END Top Navbar-->
+      </header>
+		<!-- sidebar-->
+		<aside class="aside">
+		 <!-- START Sidebar (left)-->
+		 <div class="aside-inner">
+			<nav data-sidebar-anyclick-close="" class="sidebar">
+			   <!-- START sidebar nav-->
+			   <ul class="nav">
+				  <!-- START user info-->
+				  <li class="has-user-block">
+					 <div id="user-block" class="collapse">
+						<div class="item user-block">
+						   <!-- User picture-->
+						   <div class="user-block-picture">
+							  <div class="user-block-status">
+		
+								 <img src="static/img/user/02.jpg" alt="Avatar" width="60" height="60" class="img-thumbnail img-circle">
+								 <div class="circle circle-success circle-lg"></div>
+							  </div>
+						   </div>
+						   <!-- Name and Job-->
+						   <div class="user-block-info">
+							  <span class="user-block-name">Hello, Mike</span>
+							  <span class="user-block-role">Designer</span>
+						   </div>
+						</div>
+					 </div>
+				  </li>
+				  <!-- END user info-->
+				  <!-- Iterates over all sidebar items-->
+				  <!--<li class="nav-heading ">
+					 <span data-localize="sidebar.heading.HEADER">Main Navigation</span>
+				  </li>-->
+				  <li class="anonym">
+					 <a href="#da" title="DLT-wallet" data-toggle="collapse" class="toggle-hover">
+						<div class="pull-right label label-info">2</div>
+						<em class="icon-user"></em>
+						<span>DLT-wallet</span>
+					 </a>
+					 <ul id="da" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">DLT-wallet</li>
+						<li class="dashboard_anonym">
+						   <a href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym')">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="anonym_money_transfer">
+						   <a href="#" title="Money transfer" onclick="dl_navigate0('anonymMoneyTransfer')">
+							  <span>Money transfer</span>
+						   </a>
+						</li>
+						<li class="anonym_history">
+						   <a href="#anonym_history" title="History">
+							  <span>History</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="citizen Demo">
+					 <a href="#dc" title="Citizen" data-toggle="collapse" class="toggle-hover">
+						<em class="icon-home"></em>
+						<span>Citizen</span>
+					 </a>
+					 <ul id="dc" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Citizen</li>
+						<li class="dashboard_citizen">
+						   <a href="#dashboard_citizen" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="citizen_bill_payment">
+						   <a href="#citizen_bill_payment" title="Bill Payment">
+							  <span>Bill Payment</span>
+						   </a>
+						</li>
+						<li class="citizen_property">
+						   <a href="#citizen_property" title="My property">
+							  <span>My property</span>
+						   </a>
+						</li>
+						<li class="citizen_marriage_registration">
+						   <a href="#citizen_marriage_registration" title="Marriage registration">
+							  <span>Marriage registration</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="company Demo">
+					 <a href="#dco" title="Company" data-toggle="collapse" class="toggle-hover">
+						<em class="fa fa-building-o"></em>
+						<span>Company</span>
+					 </a>
+					 <ul id="dco" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Company</li>
+						<li class="dashboard_company">
+						   <a href="#dashboard_company" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="company_shares">
+						   <a href="#company_shares" title="New shares">
+							  <span>New shares</span>
+						   </a>
+						</li>
+						<li class="company_new_good">
+						   <a href="#company_new_good" title="New good">
+							  <span>New good</span>
+						   </a>
+						</li>
+						<li class="company_new_item">
+						   <a href="#company_new_item" title="New item">
+							  <span>New item</span>
+						   </a>
+						</li>
+						<li class="company_currency_exchange">
+						   <a href="#company_currency_exchange" title="Currency Exchange">
+							  <span>Currency Exchange</span>
+						   </a>
+						</li>
+						<li class="company_shares_exchange">
+						   <a href="#company_shares_exchange" title="Shares Exchange">
+							  <span>Shares Exchange</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="health Demo">
+					 <a href="#dh" title="Health" data-toggle="collapse" class="toggle-hover">
+						<em class="fa fa-medkit"></em>
+						<span>Health</span>
+					 </a>
+					 <ul id="dh" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Health</li>
+						<li class="dashboard_health">
+						   <a href="#dashboard_health" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="health_patient">
+						   <a href="#health_patient" title="Patient">
+							  <span>Patient</span>
+						   </a>
+						</li>
+						<li class="health_facility">
+						   <a href="#health_facility" title="Health facility">
+							  <span>Health facility</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="cb Demo">
+					 <a href="#dashboard_cb" title="CB">
+						<em class="fa fa-money"></em>
+						<span>CB</span>
+					 </a>
+				  </li>
+				  <li class="gov Demo">
+					 <a href="#dashboard_gov" title="Government">
+						<em class="icon-map"></em>
+						<span>Government</span>
+					 </a>
+				  </li>
+			   </ul>
+			   <!-- END sidebar nav-->
+			</nav>
+		 </div>
+		 <!-- END Sidebar (left)-->
+		</aside>
+	  </div>
       <section>
          <!-- Page content-->
          <div id="dl_content" class="content-wrapper"></div>
@@ -97,12 +412,22 @@
    <script src="static/vendor/datatables/media/js/jquery.dataTables.min.js"></script>
    <script src="static/vendor/datatables-colvis/js/dataTables.colVis.js"></script>
    <script src="static/vendor/datatables/media/js/dataTables.bootstrap.js"></script>
+   <script src="static/js/datetime.js"></script>
+   <!-- XEDITABLE-->
+   <script src="static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
    <!-- DATETIMEPICKER-->
    <script type="text/javascript" src="static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
    <!-- FILESTYLE-->
    <script src="static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"></script>
    <!-- SELECT2-->
    <script src="static/vendor/select2/dist/js/select2.js"></script>
+   <!-- GOOGLE MAPS-->
+   <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+   <script src="static/vendor/jQuery-gMap/jquery.gmap.min.js"></script>
+   <!-- SWEET ALERT-->
+   <script src="static/vendor/sweetalert/dist/sweetalert.min.js"></script>
+   <!-- Clipboard-->
+   <script src="static/js/clipboard.js"></script>
    
    <script src="static/js/spin.js"></script>
 	<script>
@@ -170,8 +495,23 @@
    <!-- =============== APP SCRIPTS ===============-->
    <script src="static/js/app.js"></script>
    <script src="static/js/index.js"></script>
-   <!-- DEMO-->
-   <script src="static/js/demo/demo-flot.js"></script>
+   
+   <script language="JavaScript" type="text/javascript">
+		function Generate_key() {
+			var key = "";
+			var hex = "0123456789abcdef";
+	
+			for (i = 0; i < 64; i++) {
+				key += hex.charAt(Math.floor(Math.random() * 16));
+			}
+			return key;
+		}
+		//console.log(iv.toString())
+	
+		function  doSign(type){
+			doSign_(type);
+		}
+	</script>
    
    <script>
 		$( document ).ready(function() {
@@ -180,24 +520,6 @@
 					if ( status == "error" ) { window.location.href = "index"; }
 					$("#loading_db").css("display", "none");
 				})
-			{{else if .Upgrade3}}
-				$("#loader").spin();
-				$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
-					$("#dl_content").load( "content", { "tpl_name": "upgrade3" }, function() {
-						$("#key").text("{{.Key}}");
-						doSign('login');
-						$('#loader').spin(false);
-					})
-				});
-			{{else if .Upgrade4}}
-				$("#loader").spin();
-				$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
-					$("#dl_content").load( "content", { "tpl_name": "upgrade4" }, function() {
-						$("#key").text("{{.Key}}");
-						doSign('login');
-						$('#loader').spin(false);
-					})
-				});
 			{{else if .Key}}
 				$("#loader").spin();
 				$("#dl_content").load( "content", { {{if .SetLang}}"parameters": {"lang":{{.SetLang}} }{{end}} }, function() {
@@ -236,7 +558,7 @@
 	
 			var str = e.target.hash;
 			var page_match = str.match(/#(\w+)/i);
-			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3'  && page_match[1]!='myModal'  ) {
+			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh'  ) {
 				var page = page_match[1];
 				var param_match = str.match(/\/\w+=\w+/gi);
 				var param_obj = {};
@@ -350,6 +672,31 @@
 		} );
 	
 		window.addEventListener("hashchange", dlNavHash);
+
+
+		function dl_navigate0 (page, parameters) {
+
+			var json = JSON.stringify(parameters);
+
+			$('#loader').spin();
+			$.post("content?page="+page, { tpl_name: page, parameters: json },
+					function(data) {
+						$("#loader").spin(false);
+						//console.log('$("#loader").spin(false)');
+						$('#dl_content').html( data );
+						if ( parameters && parameters.hasOwnProperty("lang")) {
+							if ( page[0] == 'E' )
+								load_emenu();
+							else
+								load_menu();
+						}
+						window.scrollTo(0,0);
+						if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
+							$('.sidebar-collapse').collapse('toggle');
+						}
+					}, "html");
+
+		}
 	</script>
 </body>
 

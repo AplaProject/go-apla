@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 //	"database/sql"
-	//"github.com/DayLightProject/go-daylight/packages/dcparser"
+	//"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"tests_utils"
 	//_ "github.com/lib/pq"

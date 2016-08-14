@@ -1,0 +1,51 @@
+[
+  {
+    "patient": [
+		"health_medical_record",
+		"Patient1"
+	],
+	"problem": "DIABETES MELLITUS",
+    "last": "1470906142",
+    "next": "1471906142"
+  }, {
+	"patient": [
+		"health_medical_record",
+		"Patient2"
+	],
+	"problem": "HYPERTENSION",
+    "last": "1470906142",
+    "next": "1471906142"
+  }, {
+	"patient": [
+		"health_medical_record",
+		"Patient3"
+	],
+	"problem": "HYPERTENSION",
+    "last": "1470906142",
+    "next": "1471906142"
+  }, {
+	"patient": [
+		"health_medical_record",
+		"Patient4"
+	],
+	"problem": "DIABETES MELLITUS",
+    "last": "1470906142",
+    "next": "1471906142"
+  }, {
+	"patient": [
+		"health_medical_record",
+		"Patient5"
+	],
+	"problem": "DIABETES MELLITUS",
+    "last": "1470906142",
+    "next": "1471906142"
+  }, {
+	"patient": [
+		"health_medical_record",
+		"Patient6"
+	],
+	"problem": "HYPERTENSION",
+    "last": "1470906142",
+    "next": "1471906142"
+  }
+]

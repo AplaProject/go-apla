@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/DayLightProject/go-daylight/packages/tests_utils"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 )
 
 func main() {
@@ -13,10 +13,10 @@ func main() {
 	defer f.Close()
 
 	d := tests_utils.DbConn()
-	p := new(dcparser.Parser)
+	p := new(parser.Parser)
 	p.DCDB = d
 	var mycandidateBlockBody []byte
-	transactionscandidateBlock, err := d.GetAll("SELECT data FROM transactions_candidateBlock ORDER BY id ASC", -1)
+	transactionscandidateBlock, err := d.GetAll("SELECT data FROM transactions_candidate_block ORDER BY id ASC", -1)
 	if err != nil {
 		fmt.Println(utils.ErrInfo(err))
 	}

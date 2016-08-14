@@ -493,9 +493,14 @@
  *
  */
 .sk-cube-grid {
-  width: 40px;
-  height: 40px;
-  margin: 40px auto;
+  position:absolute;
+  left:50%;
+  top:50%;
+  width: 39px;
+  height: 39px;
+  margin-left:-19.5px;
+  margin-top:-19.5px;
+  z-index:10;
   /*
    * Spinner positions
    * 1 2 3
@@ -503,8 +508,8 @@
    * 7 8 9
    */ }
   .sk-cube-grid .sk-cube {
-    width: 33.33%;
-    height: 33.33%;
+    width: 13px;
+    height: 13px;
     background-color: #333;
     float: left;
     -webkit-animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out;

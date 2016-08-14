@@ -14,7 +14,7 @@ import (
 	//"github.com/DayLightProject/go-daylight/packages/daemons"
 //	"strconv"
 	//"errors"
-//	"github.com/DayLightProject/go-daylight/packages/dcparser"
+//	"github.com/DayLightProject/go-daylight/packages/parser"
 	"log"
 	"os"
 	//"github.com/alyu/configparser"

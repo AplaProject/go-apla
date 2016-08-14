@@ -4,9 +4,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"time"
-	//"log"
 	"net"
-	"strings"
 )
 
 /*
@@ -15,6 +13,7 @@ Using it for watching for forks
 Получаем кол-во нодов, у которых такой же хэш последнего блока как и у нас
 Нужно чтобы следить за вилками
 */
+
 
 func Confirmations(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
@@ -48,14 +47,10 @@ BEGIN:
 		// первые 2 минуты спим по 10 сек, чтобы блоки успели собраться
 		s++
 
-		if utils.Mobile() {
-			d.sleepTime = 300
-		} else {
-			d.sleepTime = 60
-		}
+		d.sleepTime = 1
 
 		if s < 12 {
-			d.sleepTime = 10
+			d.sleepTime = 1
 		}
 
 		logger.Info(GoroutineName)
@@ -96,30 +91,21 @@ BEGIN:
 
 			logger.Debug("blockId: %d", blockId)
 
-			hash, err := d.Single("SELECT hash FROM block_chain WHERE id =  ?", blockId).String()
+			hash, err := d.Single("SELECT hash FROM block_chain WHERE id = ?", blockId).String()
 			if err != nil {
 				logger.Error("%v", err)
 			}
-			logger.Info("hash: %v", hash)
+			logger.Info("hash: %x", hash)
+			if len(hash) == 0 {
+				logger.Debug("len(hash) == 0")
+				continue
+			}
 
-			var hosts []map[string]string
+			var hosts []string
 			if d.ConfigIni["test_mode"] == "1" {
-				hosts = []map[string]string{{"tcp_host": "localhost:8088", "user_id": "1"}}
+				hosts = []string{"localhost:"+consts.TCP_PORT}
 			} else {
-				maxMinerId, err := d.Single("SELECT max(miner_id) FROM miners_data").Int64()
-				if err != nil {
-					logger.Error("%v", err)
-				}
-				if maxMinerId == 0 {
-					maxMinerId = 1
-				}
-				q := ""
-				if d.ConfigIni["db_type"] == "postgresql" {
-					q = "SELECT DISTINCT ON (tcp_host) tcp_host, user_id FROM miners_data WHERE miner_id IN (" + strings.Join(utils.RandSlice(1, maxMinerId, consts.COUNT_CONFIRMED_NODES), ",") + ")"
-				} else {
-					q = "SELECT tcp_host, user_id FROM miners_data WHERE miner_id IN  (" + strings.Join(utils.RandSlice(1, maxMinerId, consts.COUNT_CONFIRMED_NODES), ",") + ") GROUP BY tcp_host"
-				}
-				hosts, err = d.GetAll(q, consts.COUNT_CONFIRMED_NODES)
+				hosts, err = d.GetHosts()
 				if err != nil {
 					logger.Error("%v", err)
 				}
@@ -127,8 +113,7 @@ BEGIN:
 
 			ch := make(chan string)
 			for i := 0; i < len(hosts); i++ {
-				logger.Info("hosts[i] %v", hosts[i])
-				host := hosts[i]["tcp_host"]
+				host := hosts[i]+":"+consts.TCP_PORT
 				logger.Info("host %v", host)
 				go func() {
 					IsReachable(host, blockId, ch)
@@ -145,7 +130,7 @@ BEGIN:
 				} else {
 					st0++
 				}
-				logger.Info("%v", "CHanswer", answer)
+				logger.Info("st0 %v  st1 %v", st0, st1)
 			}
 			exists, err := d.Single("SELECT block_id FROM confirmations WHERE block_id= ?", blockId).Int64()
 			if exists > 0 {

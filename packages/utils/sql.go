@@ -832,54 +832,7 @@ func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, Gor
 	return true
 }
 
-func (db *DCDB) GetTcpHost() string {
-	// Слушать TCP нужно только полным нодам
-	/*for {
-		community, err := db.GetCommunityUsers()
-		if err != nil {
-			log.Error("%v", ErrInfo(err))
-		}
-		myPrefix := ""
-		var myUserId int64
-		if len(community) > 0 {
-			myUserId, err = db.GetPoolAdminUserId()
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-			myPrefix = Int64ToStr(myUserId) + "_"
-		} else {
-			myUserId, err = db.GetMyUserId("")
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-		}
 
-		data, err := db.OneRow("SELECT tcp_host, tcp_listening FROM " + myPrefix + "my_table").String()
-		if err != nil {
-			log.Error("%v", ErrInfo(err))
-		}
-		// чтобы листинг не включался у тех, кто зарегался на пуле удаленно и стал майнером
-		if data["tcp_listening"] != "1" {
-			Sleep(5)
-			continue
-		}
-		tcpHost := data["tcp_host"]
-		if len(tcpHost) == 0 {
-			tcpHost, err = db.Single("SELECT CASE WHEN m.pool_user_id > 0 then (SELECT tcp_host FROM miners_data WHERE user_id = m.pool_user_id) ELSE tcp_host end FROM miners_data as m WHERE m.user_id = ?", myUserId).String()
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-		}
-		if len(tcpHost) > 0 {
-			log.Debug("tcpHost: (%x)", tcpHost)
-			return tcpHost
-		} else {
-			Sleep(5)
-		}
-	}
-	log.Debug("tcpHost null")*/
-	return ""
-}
 
 func (db *DCDB) GetQuotes() string {
 	dq := `"`
@@ -1048,36 +1001,10 @@ func (db *DCDB) GetLastBlockData() (map[string]int64, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetMyNoticeData(sessRestricted int64, sessUserId int64, myPrefix string, lang map[string]string) (map[string]string, error) {
+func (db *DCDB) GetMyNoticeData(sessCitizenId int64, sessWalletId int64, lang map[string]string) (map[string]string, error) {
 	result := make(map[string]string)
-	if sessRestricted == 0 {
-		my_table, err := db.OneRow("SELECT user_id, miner_id, status FROM " + myPrefix + "my_table").String()
-		if err != nil {
-			return result, ErrInfo(err)
-		}
-		if my_table["user_id"] == "0" {
-			result["account_status"] = "searching"
-		} else if my_table["status"] == "bad_key" {
-			result["account_status"] = "bad_key"
-		} else if my_table["miner_id"] != "0" {
-			result["account_status"] = "miner"
-		} else if my_table["user_id"] != "0" {
-			result["account_status"] = "user"
-		}
-	} else {
-		// user_id уже есть, т.к. мы смогли зайти в урезанном режиме по паблик-кею
-		// проверим, может есть что-то в miners_data
-		status, err := db.Single("SELECT status FROM miners_data WHERE user_id = ?", sessUserId).String()
-		if err != nil {
-			return result, ErrInfo(err)
-		}
-		if len(status) > 0 {
-			result["account_status"] = status
-		} else {
-			result["account_status"] = "user"
-		}
-	}
-	result["account_status_text"] = lang["status_"+result["account_status"]]
+
+	result["account_status_text"] = lang["status_user"]
 
 	// Инфа о последнем блоке
 	blockData, err := db.GetLastBlockData()
@@ -1298,7 +1225,7 @@ func (db *DCDB) GetLastTx(userId int64, types []int64, limit int64, timeFormat s
 
 func (db *DCDB) GetBalances(userId int64) ([]DCAmounts, error) {
 	var result []DCAmounts
-	rows, err := db.Query(db.FormatQuery("SELECT amount, currency_id, last_update FROM wallets WHERE user_id= ?"), userId)
+	rows, err := db.Query(db.FormatQuery("SELECT amount, currency_id, last_update FROM dlt_wallets WHERE user_id= ?"), userId)
 	if err != nil {
 		return result, err
 	}
@@ -1411,9 +1338,9 @@ func (db *DCDB) GetMyPrivateKey(myPrefix string) (string, error) {
 	return key, nil
 }
 
-func (db *DCDB) GetNodePrivateKey(myPrefix string) (string, error) {
+func (db *DCDB) GetNodePrivateKey() (string, error) {
 	var key string
-	key, err := db.Single("SELECT private_key FROM " + myPrefix + "my_node_keys WHERE block_id = (SELECT max(block_id) FROM " + myPrefix + "my_node_keys)").String()
+	key, err := db.Single("SELECT private_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
 	if err != nil {
 		return "", ErrInfo(err)
 	}
@@ -1773,24 +1700,14 @@ func (db *DCDB) GetMyMinersIds(collective []int64) ([]int64, error) {
 }
 
 func (db *DCDB) GetConfirmedBlockId() (int64, error) {
-	localGateIp, err := db.Single("SELECT local_gate_ip FROM config").String()
-	if err != nil {
-		return 0, err
-	}
-	if localGateIp != "" {
-		blockId, err := db.GetBlockId()
-		if err != nil {
-			return 0, err
-		}
-		return blockId, nil
-	} else {
+
 		result, err := db.Single("SELECT max(block_id) FROM confirmations WHERE good >= ?", consts.MIN_CONFIRMED_NODES).Int64()
 		if err != nil {
 			return 0, err
 		}
 		//log.Debug("%v", "result int64",StrToInt64(result))
 		return result, nil
-	}
+
 }
 
 func (db *DCDB) GetCommunityUsers() ([]int64, error) {
@@ -1819,12 +1736,50 @@ func (db *DCDB) GetMyUserId(myPrefix string) (int64, error) {
 	return userId, nil
 }
 
+func (db *DCDB) GetMyCBIDAndWalletId() (int64, int64, error) {
+	myCBID, err := db.GetMyCBID();
+	if err != nil {
+		return 0, 0, err
+	}
+	myWalletId, err := db.GetMyWalletId();
+	if err != nil {
+		return 0, 0, err
+	}
+	return myCBID, myWalletId, nil
+}
+
+func (db *DCDB) GetHosts() ([]string, error) {
+	q := ""
+	if db.ConfigIni["db_type"] == "postgresql" {
+		q = "SELECT DISTINCT ON (host) host FROM full_nodes"
+	} else {
+		q = "SELECT host FROM full_nodes GROUP BY host"
+	}
+	hosts, err := db.GetList(q).String()
+	if err != nil {
+		return nil, err
+	}
+	return hosts, nil
+}
+
+func (db *DCDB) CheckDelegateCB(myCBID int64) (bool, error) {
+	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_cb_id FROM central_banks WHERE cb_id = ?", myCBID).Int64()
+	if err != nil {
+		return false, err
+	}
+	// Если мы - ЦБ и у нас указан delegate, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
+	if delegate["delegate_wallet_id"] > 0 || delegate["delegate_cb_id"] > 0 {
+		return true, nil
+	}
+	return false, nil
+}
 
 func (db *DCDB) GetMyWalletId() (int64, error) {
-	return db.Single("SELECT wallet_id FROM my_table").Int64()
+	return db.Single("SELECT dlt_wallet_id FROM config").Int64()
 }
+
 func (db *DCDB) GetMyCBID() (int64, error) {
-	return db.Single("SELECT cb_id FROM my_table").Int64()
+	return db.Single("SELECT cb_id FROM config").Int64()
 }
 
 func (db *DCDB) GetMyUsersIds(checkCommission, checkNodeKey bool) ([]int64, error) {
@@ -2041,12 +1996,20 @@ func (db *DCDB) CheckCurrencyCF(currency_id int64) (bool, error) {
 	}
 }
 
-func (db *DCDB) GetUserIdByPublicKey(publicKey []byte) (string, error) {
-	userId, err := db.Single(`SELECT user_id FROM users WHERE hex(public_key_0) = ?`, string(publicKey)).String()
+func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
+	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`, string(HashSha1Hex(publicKey))).Int64()
 	if err != nil {
-		return "", ErrInfo(err)
+		return 0, ErrInfo(err)
 	}
-	return userId, nil
+	return walletId, nil
+}
+
+func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
+	walletId, err := db.Single(`SELECT citizen_id FROM citizens WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
+	if err != nil {
+		return 0, ErrInfo(err)
+	}
+	return walletId, nil
 }
 
 func (db *DCDB) InsertIntoMyKey(prefix string, publicKey []byte, curBlockId string) error {
@@ -2072,22 +2035,6 @@ func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetcandidateBlockId() (int64, error) {
-	rows, err := db.Query("SELECT block_id FROM candidateBlock")
-	if err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-	if ok := rows.Next(); ok {
-		var block_id int64
-		err = rows.Scan(&block_id)
-		if err != nil {
-			return 0, err
-		}
-		return block_id, nil
-	}
-	return 0, nil
-}
 
 func (db *DCDB) GetMyPrefix(userId int64) (string, error) {
 	collective, err := db.GetCommunityUsers()
@@ -2109,13 +2056,7 @@ func (db *DCDB) GetMyPrefix(userId int64) (string, error) {
 	}
 }
 
-func (db *DCDB) GetMyLocalGateIp() (string, error) {
-	result, err := db.Single("SELECT local_gate_ip FROM config").String()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
+
 func (db *DCDB) GetNodePublicKey(userId int64) ([]byte, error) {
 	result, err := db.Single("SELECT node_public_key FROM miners_data WHERE user_id = ?", userId).Bytes()
 	if err != nil {
@@ -2127,7 +2068,7 @@ func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, cb_id int64) ([]byte, erro
 	var result []byte
 	var err error
 	if wallet_id > 0 {
-		result, err = db.Single("SELECT node_public_key FROM wallets WHERE wallet_id = ?", wallet_id).Bytes()
+		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
@@ -2235,8 +2176,8 @@ func (db *DCDB) DbLockGate(name string) error {
 	return nil
 }
 
-func (db *DCDB) DeleteQueueBlock(head_hash_hex, hash_hex string) error {
-	return db.ExecSql("DELETE FROM queue_blocks WHERE hex(head_hash) = ? AND hex(hash) = ?", head_hash_hex, hash_hex)
+func (db *DCDB) DeleteQueueBlock(hash_hex string) error {
+	return db.ExecSql("DELETE FROM queue_blocks WHERE hex(hash) = ?",  hash_hex)
 }
 
 func (db *DCDB) SetAI(table string, AI int64) error {
@@ -2415,22 +2356,8 @@ func (db *DCDB) GetAiId(table string) (string, error) {
 	return column, nil
 }
 
-func (db *DCDB) NodesBan(userId int64, info string) error {
-	ban, err := db.Single(`SELECT user_id FROM nodes_ban WHERE user_id = ?`, userId).Int64()
-	if err != nil {
-		return err
-	}
-	if ban == 0 {
-		err = db.ExecSql(`INSERT INTO nodes_ban (user_id, ban_start, info) VALUES (?, ?, ?)`, userId, Time(), info)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = db.ExecSql(`UPDATE nodes_ban SET ban_start = ?, info = ? WHERE user_id = ?`, Time(), info, userId)
-		if err != nil {
-			return err
-		}
-	}
+func (db *DCDB) NodesBan(info string) error {
+
 	return nil
 }
 
@@ -2451,7 +2378,7 @@ func (db *DCDB) GetBlockDataFromBlockChain(blockId int64) (*BlockData, error) {
 	return BlockData, nil
 }
 
-func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, waitError *string) {
+func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, walletId int64, citizenId int64, waitError *string) {
 	var whereTypeID int64
 	switch whereType.(type) {
 	case string:
@@ -2460,8 +2387,11 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, wait
 		whereTypeID = whereType.(int64)
 	}
 	addSql := ""
-	if userId > 0 {
-		addSql = "AND user_id = " + Int64ToStr(userId)
+	if walletId > 0 {
+		addSql = "AND wallet_id = " + Int64ToStr(walletId)
+	}
+	if citizenId > 0 {
+		addSql = "AND citizen_id = " + Int64ToStr(citizenId)
 	}
 	num, err := db.Single(`
 					SELECT count(*)
@@ -2474,7 +2404,7 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, wait
 				                         used = 0
 							UNION
 							SELECT hash
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE type = ?
 										  `+addSql+`
 					)  AS x
@@ -2487,14 +2417,22 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, userId int64, wait
 	}
 }
 
-func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}, waitError *string, thirdVar_ interface{}) error {
+func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, walletId_ interface{}, citizenId_ interface{}, waitError *string, thirdVar_ interface{}) error {
 
-	var userId int64
-	switch userId_.(type) {
-	case string:
-		userId = StrToInt64(userId_.(string))
-	case int64:
-		userId = userId_.(int64)
+	var walletId int64
+	switch walletId_.(type) {
+		case string:
+		walletId = StrToInt64(walletId_.(string))
+		case int64:
+		walletId = walletId_.(int64)
+	}
+
+	var citizenId int64
+	switch citizenId_.(type) {
+		case string:
+		citizenId = StrToInt64(citizenId_.(string))
+		case int64:
+		citizenId = citizenId_.(int64)
 	}
 
 	var thirdVar string
@@ -2512,13 +2450,16 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 	whereType = whereType[:len(whereType)-1]
 
 	addSql := ""
-	if userId > 0 {
-		addSql = "AND user_id = " + Int64ToStr(userId)
+	if walletId > 0 {
+		addSql = "AND wallet_id = " + Int64ToStr(walletId)
+	}
+	if citizenId > 0 {
+		addSql = "AND citizen_id = " + Int64ToStr(citizenId)
 	}
 
 	addSql1 := ""
 	if len(thirdVar) > 0 {
-		addSql1 = "AND user_id = " + thirdVar
+		addSql1 = "AND citizen_id = " + thirdVar
 	}
 
 	num, err := db.Single(`
@@ -2532,12 +2473,12 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 				                         used = 0
 							UNION
 							SELECT hash
-							FROM transactions_candidateBlock
+							FROM transactions_candidate_block
 							WHERE type IN (`+whereType+`)
 										 `+addSql+` `+addSql1+` AND
-										 user_id = ?
+										 citizen_id = ?
 					)  AS x
-					`, userId).Int64()
+					`, citizenId).Int64()
 	if err != nil {
 		*waitError = fmt.Sprintf("%v", ErrInfo(err))
 	}
@@ -2547,17 +2488,19 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, userId_ interface{}
 	return nil
 }
 
-func GetTxTypeAndUserId(binaryBlock []byte) (int64, int64, int64) {
-	var userId int64
+func GetTxTypeAndUserId(binaryBlock []byte) (int64, int64, int64, int64) {
 	var thirdVar int64
 	txType := BinToDecBytesShift(&binaryBlock, 1)
 	BytesShift(&binaryBlock, 4) // уберем время
-	userId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
-	if InSliceInt64(txType, TypesToIds([]string{"AdminChangePrimaryKey", "ChangeKeyRequest", "CfProjectData", "CfComment", "CfProjectChangeCategory", "CfSendDc", "DelCfProject", "CashRequestOut", "VotesGeolocation", "VotesMiner", "VotesNodeNewMiner", "VotesPct", "VotesPromisedAmount", "DelPromisedAmount"})) {
+	walletId := BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+	citizenId := BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+	// thirdVar - нужен тогда, когда нужно недопустить попадание в блок несовместимых тр-ий.
+	// Например, удаление крауд-фандинг проекта и инвестирование в него средств.
+	if InSliceInt64(txType, TypesToIds([]string{"CfSendDc", "DelCfProject"})) {
 		thirdVar = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
 	}
-	log.Debug("txType, userId, thirdVar %v, %v, %v", txType, userId, thirdVar)
-	return txType, userId, thirdVar
+	log.Debug("txType, userId, thirdVar %v, %v, %v, %v", txType, walletId, citizenId, thirdVar)
+	return txType, walletId, citizenId, thirdVar
 }
 
 func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
@@ -2588,7 +2531,6 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, ErrInfo("len(*binaryTx) == 0")
 	}
 
-	myPrefix := ""
 	collective, err := db.GetCommunityUsers()
 	if err != nil {
 		return nil, nil, nil, err
@@ -2597,10 +2539,9 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		if !InSliceInt64(myUserId, collective) {
 			return nil, nil, nil, ErrInfo(fmt.Sprintf("!InSliceInt64(myUserId, collective) %d %v", myUserId, collective))
 		}
-		myPrefix = Int64ToStr(myUserId) + "_"
 	}
 
-	nodePrivateKey, err := db.GetNodePrivateKey(myPrefix)
+	nodePrivateKey, err := db.GetNodePrivateKey()
 	if len(nodePrivateKey) == 0 {
 		return nil, nil, nil, ErrInfo("len(nodePrivateKey) == 0")
 	}
@@ -2636,15 +2577,8 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 
 func (db *DCDB) GetBinSign(forSign string, myUserId int64) ([]byte, error) {
 
-	community, err := db.GetCommunityUsers()
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	myPrefix := ""
-	if len(community) > 0 {
-		myPrefix = Int64ToStr(myUserId) + "_"
-	}
-	nodePrivateKey, err := db.GetNodePrivateKey(myPrefix)
+
+	nodePrivateKey, err := db.GetNodePrivateKey()
 	if err != nil {
 		return nil, ErrInfo(err)
 	}

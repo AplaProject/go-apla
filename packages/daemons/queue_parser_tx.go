@@ -1,7 +1,7 @@
 package daemons
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -26,11 +26,8 @@ func QueueParserTx(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-	if utils.Mobile() {
-		d.sleepTime = 60
-	} else {
-		d.sleepTime = 1
-	}
+	d.sleepTime = 1
+
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
 	}
@@ -86,7 +83,7 @@ BEGIN:
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
-		p := new(dcparser.Parser)
+		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		err = p.AllTxParser()
 		if err != nil {

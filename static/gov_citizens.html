@@ -1,0 +1,338 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".gov").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_gov", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Citizens
+</div>
+<div class="row">
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-danger">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-user fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_citizen_status">
+			<span class="pull-left">Register citizen</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-info">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-home fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_add_property">
+			<span class="pull-left">Register property</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-green">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-child fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_birth_statement">
+			<span class="pull-left">Birth statement</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-md-6">
+	  <!-- START panel-->
+	  <div class="panel panel-inverse">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-frown-o fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_date_death">
+			<span class="pull-left">Date of death</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+</div>
+<h4 class="page-header">History</h4>
+<div class="panel panel-default">
+   <div class="panel-body">
+	  <div class="table-responsive b0">
+		 <table id="datatable1" class="table table-striped table-hover">
+			<thead>
+			   <tr>
+				  <th class="wd-md">Post title</th>
+				  <th>Author</th>
+				  <th>Categories</th>
+				  <th>Tags</th>
+				  <th>Created</th>
+				  <th>Updated</th>
+				  <th>Comments</th>
+				  <th>Status</th>
+			   </tr>
+			</thead>
+			<tbody>
+			   <tr>
+				  <td><a href="">AngularJS</a>
+				  </td>
+				  <td><a href="">Keith Gutierrez</a>
+				  </td>
+				  <td><a href="" class="mr">HTML5</a><a href="">JAVASCRIPT</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">angularjs</a><a href="" class="mr-sm label label-primary">mvc</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>1251</td>
+				  <td><a href="" class="mr-sm label label-success">Public</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">MeteorJs and Angularjs</a>
+				  </td>
+				  <td><a href="">Carlos Wilson</a>
+				  </td>
+				  <td><a href="" class="mr">WEB</a><a href="">JAVASCRIPT</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">angularjs</a><a href="" class="mr-sm label label-primary">node</a><a href="" class="mr-sm label label-primary">meteor</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>1361</td>
+				  <td><a href="" class="mr-sm label label-warning">Pending</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Working with ExpressJS </a>
+				  </td>
+				  <td><a href="">Carlos Wilson</a>
+				  </td>
+				  <td><a href="" class="mr">SERVER</a><a href="">JAVASCRIPT</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">expressJS</a><a href="" class="mr-sm label label-primary">node</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-success">Public</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Abstract object styles</a>
+				  </td>
+				  <td><a href="">Carlos Wilson</a>
+				  </td>
+				  <td><a href="">JAVASCRIPT</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">node</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-success">Public</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Animating progress bars</a>
+				  </td>
+				  <td><a href="">Clyde Bailey</a>
+				  </td>
+				  <td><a href="" class="mr">BOOTSTRAP</a><a href="">WEB</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">css</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-danger">Deleted</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Contextual alternatives</a>
+				  </td>
+				  <td><a href="">Tracy Black</a>
+				  </td>
+				  <td><a href="" class="mr">BOOTSTRAP</a><a href="">WEB</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">less</a><a href="" class="mr-sm label label-primary">sass</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-warning">Pending</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Responsive embed</a>
+				  </td>
+				  <td><a href="">Brittany Harrison</a>
+				  </td>
+				  <td><a href="" class="mr">FOUNDATION</a><a href="">WEB</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">techniques</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-default">Draft</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Digging into AngularJS</a>
+				  </td>
+				  <td><a href="">Keith Gutierrez</a>
+				  </td>
+				  <td><a href="" class="mr">HTML5</a><a href="">JAVASCRIPT</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">angularjs</a><a href="" class="mr-sm label label-primary">mvc</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-success">Public</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Application with MeteorJs and Angularjs</a>
+				  </td>
+				  <td><a href="">Nevaeh Hunter</a>
+				  </td>
+				  <td><a href="" class="mr">WEB</a><a href="">SERVER</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">angularjs</a><a href="" class="mr-sm label label-primary">node</a><a href="" class="mr-sm label label-primary">meteor</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-warning">Pending</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Introduction to ExpressJS </a>
+				  </td>
+				  <td><a href="">Carlos Wilson</a>
+				  </td>
+				  <td><a href="" class="mr">SERVER</a><a href="">JAVASCRIPT</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">expressJS</a><a href="" class="mr-sm label label-primary">node</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-success">Public</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Optional classes</a>
+				  </td>
+				  <td><a href="">Peter Lucas</a>
+				  </td>
+				  <td><a href="">WEB</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">node</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>125</td>
+				  <td><a href="" class="mr-sm label label-success">Public</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Typical user actions</a>
+				  </td>
+				  <td><a href="">Clyde Bailey</a>
+				  </td>
+				  <td><a href="" class="mr">BOOTSTRAP</a><a href="">WEB</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">css</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>1471</td>
+				  <td><a href="" class="mr-sm label label-danger">Deleted</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">A lightweight, flexible component</a>
+				  </td>
+				  <td><a href="">Brittany Harrison</a>
+				  </td>
+				  <td><a href="" class="mr">BOOTSTRAP</a><a href="">WEB</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">less</a><a href="" class="mr-sm label label-primary">sass</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>1581</td>
+				  <td><a href="" class="mr-sm label label-warning">Pending</a>
+				  </td>
+			   </tr>
+			   <tr>
+				  <td><a href="">Highlight new or unread items </a>
+				  </td>
+				  <td><a href="">Abigail Phillips</a>
+				  </td>
+				  <td><a href="" class="mr">FOUNDATION</a><a href="">WEB</a>
+				  </td>
+				  <td> <a href="" class="mr-sm label label-primary">coding</a><a href="" class="mr-sm label label-primary">techniques</a>
+				  </td>
+				  <td>10/05/2015</td>
+				  <td>10/05/2015</td>
+				  <td>1691</td>
+				  <td><a href="" class="mr-sm label label-default">Draft</a>
+				  </td>
+			   </tr>
+			</tbody>
+		 </table>
+	  </div>
+   </div>
+</div>
+<script src="static/js/demo/demo-datatable.js"></script>

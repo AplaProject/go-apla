@@ -2,6 +2,22 @@
 // sources:
 // static/1block
 // static/alert_success.html
+// static/anonym_history.html
+// static/anonym_money_transfer.html
+// static/citizen_bill_payment.html
+// static/citizen_marriage_registration.html
+// static/citizen_property.html
+// static/citizen_rule_details.html
+// static/company_application_purchase.html
+// static/company_contract.html
+// static/company_currency_exchange.html
+// static/company_new_good.html
+// static/company_new_item.html
+// static/company_offer_seller.html
+// static/company_offer_transport.html
+// static/company_select_transport.html
+// static/company_shares.html
+// static/company_shares_exchange.html
 // static/css/app.css
 // static/css/bootstrap.css
 // static/css/style.css
@@ -18,10 +34,24 @@
 // static/dashboard_citizen.html
 // static/dashboard_company.html
 // static/dashboard_gov.html
-// static/data/anonym_history.json
+// static/dashboard_health.html
+// static/data/entries_doctor.json
+// static/data/immunizations.json
+// static/data/medication.json
+// static/data/patients.json
+// static/entrance.html
+// static/gov_citizens.html
+// static/gov_currency_exchange.html
+// static/gov_shares_exchange.html
+// static/health_facility.html
+// static/health_immunization_records.html
+// static/health_medical_record.html
+// static/health_medication_records.html
+// static/health_patient.html
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/QR.png
+// static/img/US.svg
 // static/img/bg1.jpg
 // static/img/bg10.jpg
 // static/img/bg2.jpg
@@ -56,6 +86,9 @@
 // static/install_step_0.html
 // static/install_step_1.html
 // static/js/app.js
+// static/js/asn1hex-1.1.min.js
+// static/js/base64.js
+// static/js/clipboard.js
 // static/js/crypto/asn1-1.0.min.js
 // static/js/crypto/asn1hex-1.1.min.js
 // static/js/crypto/crypto-1.1.min.js
@@ -74,6 +107,7 @@
 // static/js/crypto/ext/prng4-min.js
 // static/js/crypto/ext/rng-min.js
 // static/js/crypto/ext/yahoo-min.js
+// static/js/datetime.js
 // static/js/demo/demo-datatable.js
 // static/js/demo/demo-flot.js
 // static/js/demo/demo-forms.js
@@ -89,21 +123,36 @@
 // static/js/demo/demo-wizard.js
 // static/js/demo/demo-xeditable.js
 // static/js/index.js
+// static/js/jsbn.js
+// static/js/jsbn2.js
+// static/js/md5.js
+// static/js/rsa.js
+// static/js/rsa2.js
+// static/js/rsapem-1.1.js
+// static/js/rsasign-1.2.min.js
+// static/js/send_to_net.js
+// static/js/sha1.js
+// static/js/sha256.js
 // static/js/spin.js
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
 // static/lang/locale_en-US.ini
 // static/lang/locale_ru-RU.ini
-// static/login.html
 // static/menu.html
-// static/modal.html
 // static/modal_anonym.html
+// static/modal_cb.html
+// static/modal_citizen.html
+// static/modal_company.html
+// static/modal_gov.html
+// static/modal_health.html
 // static/pass.html
 // static/sass/_colors.scss
 // static/sass/_mixins.scss
 // static/sass/style.scss
 // static/signatures.html
+// static/templates/login.html
+// static/templates/modal.html
 // static/test.html
 // static/updating_blockchain.html
 // static/vendor/Chart.js/Chart.js
@@ -309,9 +358,9 @@ package static
 import (
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // bindataRead reads the given file from disk. It returns an error on failure.
@@ -350,6 +399,294 @@ func static1block() (*asset, error) {
 func staticAlert_successHtml() (*asset, error) {
 	path := "static/alert_success.html"
 	name := "static/alert_success.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticAnonym_historyHtml reads file data from disk. It returns an error on failure.
+func staticAnonym_historyHtml() (*asset, error) {
+	path := "static/anonym_history.html"
+	name := "static/anonym_history.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticAnonym_money_transferHtml reads file data from disk. It returns an error on failure.
+func staticAnonym_money_transferHtml() (*asset, error) {
+	path := "static/anonym_money_transfer.html"
+	name := "static/anonym_money_transfer.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_bill_paymentHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_bill_paymentHtml() (*asset, error) {
+	path := "static/citizen_bill_payment.html"
+	name := "static/citizen_bill_payment.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_marriage_registrationHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_marriage_registrationHtml() (*asset, error) {
+	path := "static/citizen_marriage_registration.html"
+	name := "static/citizen_marriage_registration.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_propertyHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_propertyHtml() (*asset, error) {
+	path := "static/citizen_property.html"
+	name := "static/citizen_property.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_rule_detailsHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_rule_detailsHtml() (*asset, error) {
+	path := "static/citizen_rule_details.html"
+	name := "static/citizen_rule_details.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_application_purchaseHtml reads file data from disk. It returns an error on failure.
+func staticCompany_application_purchaseHtml() (*asset, error) {
+	path := "static/company_application_purchase.html"
+	name := "static/company_application_purchase.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_contractHtml reads file data from disk. It returns an error on failure.
+func staticCompany_contractHtml() (*asset, error) {
+	path := "static/company_contract.html"
+	name := "static/company_contract.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_currency_exchangeHtml reads file data from disk. It returns an error on failure.
+func staticCompany_currency_exchangeHtml() (*asset, error) {
+	path := "static/company_currency_exchange.html"
+	name := "static/company_currency_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_new_goodHtml reads file data from disk. It returns an error on failure.
+func staticCompany_new_goodHtml() (*asset, error) {
+	path := "static/company_new_good.html"
+	name := "static/company_new_good.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_new_itemHtml reads file data from disk. It returns an error on failure.
+func staticCompany_new_itemHtml() (*asset, error) {
+	path := "static/company_new_item.html"
+	name := "static/company_new_item.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_offer_sellerHtml reads file data from disk. It returns an error on failure.
+func staticCompany_offer_sellerHtml() (*asset, error) {
+	path := "static/company_offer_seller.html"
+	name := "static/company_offer_seller.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_offer_transportHtml reads file data from disk. It returns an error on failure.
+func staticCompany_offer_transportHtml() (*asset, error) {
+	path := "static/company_offer_transport.html"
+	name := "static/company_offer_transport.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_select_transportHtml reads file data from disk. It returns an error on failure.
+func staticCompany_select_transportHtml() (*asset, error) {
+	path := "static/company_select_transport.html"
+	name := "static/company_select_transport.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_sharesHtml reads file data from disk. It returns an error on failure.
+func staticCompany_sharesHtml() (*asset, error) {
+	path := "static/company_shares.html"
+	name := "static/company_shares.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_shares_exchangeHtml reads file data from disk. It returns an error on failure.
+func staticCompany_shares_exchangeHtml() (*asset, error) {
+	path := "static/company_shares_exchange.html"
+	name := "static/company_shares_exchange.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -652,10 +989,244 @@ func staticDashboard_govHtml() (*asset, error) {
 	return a, err
 }
 
-// staticDataAnonym_historyJson reads file data from disk. It returns an error on failure.
-func staticDataAnonym_historyJson() (*asset, error) {
-	path := "static/data/anonym_history.json"
-	name := "static/data/anonym_history.json"
+// staticDashboard_healthHtml reads file data from disk. It returns an error on failure.
+func staticDashboard_healthHtml() (*asset, error) {
+	path := "static/dashboard_health.html"
+	name := "static/dashboard_health.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataEntries_doctorJson reads file data from disk. It returns an error on failure.
+func staticDataEntries_doctorJson() (*asset, error) {
+	path := "static/data/entries_doctor.json"
+	name := "static/data/entries_doctor.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataImmunizationsJson reads file data from disk. It returns an error on failure.
+func staticDataImmunizationsJson() (*asset, error) {
+	path := "static/data/immunizations.json"
+	name := "static/data/immunizations.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataMedicationJson reads file data from disk. It returns an error on failure.
+func staticDataMedicationJson() (*asset, error) {
+	path := "static/data/medication.json"
+	name := "static/data/medication.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDataPatientsJson reads file data from disk. It returns an error on failure.
+func staticDataPatientsJson() (*asset, error) {
+	path := "static/data/patients.json"
+	name := "static/data/patients.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEntranceHtml reads file data from disk. It returns an error on failure.
+func staticEntranceHtml() (*asset, error) {
+	path := "static/entrance.html"
+	name := "static/entrance.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_citizensHtml reads file data from disk. It returns an error on failure.
+func staticGov_citizensHtml() (*asset, error) {
+	path := "static/gov_citizens.html"
+	name := "static/gov_citizens.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_currency_exchangeHtml reads file data from disk. It returns an error on failure.
+func staticGov_currency_exchangeHtml() (*asset, error) {
+	path := "static/gov_currency_exchange.html"
+	name := "static/gov_currency_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_shares_exchangeHtml reads file data from disk. It returns an error on failure.
+func staticGov_shares_exchangeHtml() (*asset, error) {
+	path := "static/gov_shares_exchange.html"
+	name := "static/gov_shares_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_facilityHtml reads file data from disk. It returns an error on failure.
+func staticHealth_facilityHtml() (*asset, error) {
+	path := "static/health_facility.html"
+	name := "static/health_facility.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_immunization_recordsHtml reads file data from disk. It returns an error on failure.
+func staticHealth_immunization_recordsHtml() (*asset, error) {
+	path := "static/health_immunization_records.html"
+	name := "static/health_immunization_records.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_medical_recordHtml reads file data from disk. It returns an error on failure.
+func staticHealth_medical_recordHtml() (*asset, error) {
+	path := "static/health_medical_record.html"
+	name := "static/health_medical_record.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_medication_recordsHtml reads file data from disk. It returns an error on failure.
+func staticHealth_medication_recordsHtml() (*asset, error) {
+	path := "static/health_medication_records.html"
+	name := "static/health_medication_records.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHealth_patientHtml reads file data from disk. It returns an error on failure.
+func staticHealth_patientHtml() (*asset, error) {
+	path := "static/health_patient.html"
+	name := "static/health_patient.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -710,6 +1281,24 @@ func staticI18nSiteEsJson() (*asset, error) {
 func staticImgQrPng() (*asset, error) {
 	path := "static/img/QR.png"
 	name := "static/img/QR.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgUsSvg reads file data from disk. It returns an error on failure.
+func staticImgUsSvg() (*asset, error) {
+	path := "static/img/US.svg"
+	name := "static/img/US.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1336,6 +1925,60 @@ func staticJsAppJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsAsn1hex11MinJs reads file data from disk. It returns an error on failure.
+func staticJsAsn1hex11MinJs() (*asset, error) {
+	path := "static/js/asn1hex-1.1.min.js"
+	name := "static/js/asn1hex-1.1.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsBase64Js reads file data from disk. It returns an error on failure.
+func staticJsBase64Js() (*asset, error) {
+	path := "static/js/base64.js"
+	name := "static/js/base64.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsClipboardJs reads file data from disk. It returns an error on failure.
+func staticJsClipboardJs() (*asset, error) {
+	path := "static/js/clipboard.js"
+	name := "static/js/clipboard.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsCryptoAsn110MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoAsn110MinJs() (*asset, error) {
 	path := "static/js/crypto/asn1-1.0.min.js"
@@ -1660,6 +2303,24 @@ func staticJsCryptoExtYahooMinJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsDatetimeJs reads file data from disk. It returns an error on failure.
+func staticJsDatetimeJs() (*asset, error) {
+	path := "static/js/datetime.js"
+	name := "static/js/datetime.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsDemoDemoDatatableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoDatatableJs() (*asset, error) {
 	path := "static/js/demo/demo-datatable.js"
@@ -1930,6 +2591,186 @@ func staticJsIndexJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsJsbnJs reads file data from disk. It returns an error on failure.
+func staticJsJsbnJs() (*asset, error) {
+	path := "static/js/jsbn.js"
+	name := "static/js/jsbn.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsJsbn2Js reads file data from disk. It returns an error on failure.
+func staticJsJsbn2Js() (*asset, error) {
+	path := "static/js/jsbn2.js"
+	name := "static/js/jsbn2.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsMd5Js reads file data from disk. It returns an error on failure.
+func staticJsMd5Js() (*asset, error) {
+	path := "static/js/md5.js"
+	name := "static/js/md5.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsRsaJs reads file data from disk. It returns an error on failure.
+func staticJsRsaJs() (*asset, error) {
+	path := "static/js/rsa.js"
+	name := "static/js/rsa.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsRsa2Js reads file data from disk. It returns an error on failure.
+func staticJsRsa2Js() (*asset, error) {
+	path := "static/js/rsa2.js"
+	name := "static/js/rsa2.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsRsapem11Js reads file data from disk. It returns an error on failure.
+func staticJsRsapem11Js() (*asset, error) {
+	path := "static/js/rsapem-1.1.js"
+	name := "static/js/rsapem-1.1.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsRsasign12MinJs reads file data from disk. It returns an error on failure.
+func staticJsRsasign12MinJs() (*asset, error) {
+	path := "static/js/rsasign-1.2.min.js"
+	name := "static/js/rsasign-1.2.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsSend_to_netJs reads file data from disk. It returns an error on failure.
+func staticJsSend_to_netJs() (*asset, error) {
+	path := "static/js/send_to_net.js"
+	name := "static/js/send_to_net.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsSha1Js reads file data from disk. It returns an error on failure.
+func staticJsSha1Js() (*asset, error) {
+	path := "static/js/sha1.js"
+	name := "static/js/sha1.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsSha256Js reads file data from disk. It returns an error on failure.
+func staticJsSha256Js() (*asset, error) {
+	path := "static/js/sha256.js"
+	name := "static/js/sha256.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsSpinJs reads file data from disk. It returns an error on failure.
 func staticJsSpinJs() (*asset, error) {
 	path := "static/js/spin.js"
@@ -2038,24 +2879,6 @@ func staticLangLocale_ruRuIni() (*asset, error) {
 	return a, err
 }
 
-// staticLoginHtml reads file data from disk. It returns an error on failure.
-func staticLoginHtml() (*asset, error) {
-	path := "static/login.html"
-	name := "static/login.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticMenuHtml reads file data from disk. It returns an error on failure.
 func staticMenuHtml() (*asset, error) {
 	path := "static/menu.html"
@@ -2074,10 +2897,10 @@ func staticMenuHtml() (*asset, error) {
 	return a, err
 }
 
-// staticModalHtml reads file data from disk. It returns an error on failure.
-func staticModalHtml() (*asset, error) {
-	path := "static/modal.html"
-	name := "static/modal.html"
+// staticModal_anonymHtml reads file data from disk. It returns an error on failure.
+func staticModal_anonymHtml() (*asset, error) {
+	path := "static/modal_anonym.html"
+	name := "static/modal_anonym.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2092,10 +2915,82 @@ func staticModalHtml() (*asset, error) {
 	return a, err
 }
 
-// staticModal_anonymHtml reads file data from disk. It returns an error on failure.
-func staticModal_anonymHtml() (*asset, error) {
-	path := "static/modal_anonym.html"
-	name := "static/modal_anonym.html"
+// staticModal_cbHtml reads file data from disk. It returns an error on failure.
+func staticModal_cbHtml() (*asset, error) {
+	path := "static/modal_cb.html"
+	name := "static/modal_cb.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticModal_citizenHtml reads file data from disk. It returns an error on failure.
+func staticModal_citizenHtml() (*asset, error) {
+	path := "static/modal_citizen.html"
+	name := "static/modal_citizen.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticModal_companyHtml reads file data from disk. It returns an error on failure.
+func staticModal_companyHtml() (*asset, error) {
+	path := "static/modal_company.html"
+	name := "static/modal_company.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticModal_govHtml reads file data from disk. It returns an error on failure.
+func staticModal_govHtml() (*asset, error) {
+	path := "static/modal_gov.html"
+	name := "static/modal_gov.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticModal_healthHtml reads file data from disk. It returns an error on failure.
+func staticModal_healthHtml() (*asset, error) {
+	path := "static/modal_health.html"
+	name := "static/modal_health.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2186,6 +3081,42 @@ func staticSassStyleScss() (*asset, error) {
 func staticSignaturesHtml() (*asset, error) {
 	path := "static/signatures.html"
 	name := "static/signatures.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticTemplatesLoginHtml reads file data from disk. It returns an error on failure.
+func staticTemplatesLoginHtml() (*asset, error) {
+	path := "static/templates/login.html"
+	name := "static/templates/login.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticTemplatesModalHtml reads file data from disk. It returns an error on failure.
+func staticTemplatesModalHtml() (*asset, error) {
+	path := "static/templates/modal.html"
+	name := "static/templates/modal.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5783,7 +6714,7 @@ func Asset(name string) ([]byte, error) {
 // It simplifies safe initialization of global variables.
 func MustAsset(name string) []byte {
 	a, err := Asset(name)
-	if (err != nil) {
+	if err != nil {
 		panic("asset: Asset(" + name + "): " + err.Error())
 	}
 
@@ -5818,6 +6749,22 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"static/1block": static1block,
 	"static/alert_success.html": staticAlert_successHtml,
+	"static/anonym_history.html": staticAnonym_historyHtml,
+	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
+	"static/citizen_bill_payment.html": staticCitizen_bill_paymentHtml,
+	"static/citizen_marriage_registration.html": staticCitizen_marriage_registrationHtml,
+	"static/citizen_property.html": staticCitizen_propertyHtml,
+	"static/citizen_rule_details.html": staticCitizen_rule_detailsHtml,
+	"static/company_application_purchase.html": staticCompany_application_purchaseHtml,
+	"static/company_contract.html": staticCompany_contractHtml,
+	"static/company_currency_exchange.html": staticCompany_currency_exchangeHtml,
+	"static/company_new_good.html": staticCompany_new_goodHtml,
+	"static/company_new_item.html": staticCompany_new_itemHtml,
+	"static/company_offer_seller.html": staticCompany_offer_sellerHtml,
+	"static/company_offer_transport.html": staticCompany_offer_transportHtml,
+	"static/company_select_transport.html": staticCompany_select_transportHtml,
+	"static/company_shares.html": staticCompany_sharesHtml,
+	"static/company_shares_exchange.html": staticCompany_shares_exchangeHtml,
 	"static/css/app.css": staticCssAppCss,
 	"static/css/bootstrap.css": staticCssBootstrapCss,
 	"static/css/style.css": staticCssStyleCss,
@@ -5834,10 +6781,24 @@ var _bindata = map[string]func() (*asset, error){
 	"static/dashboard_citizen.html": staticDashboard_citizenHtml,
 	"static/dashboard_company.html": staticDashboard_companyHtml,
 	"static/dashboard_gov.html": staticDashboard_govHtml,
-	"static/data/anonym_history.json": staticDataAnonym_historyJson,
+	"static/dashboard_health.html": staticDashboard_healthHtml,
+	"static/data/entries_doctor.json": staticDataEntries_doctorJson,
+	"static/data/immunizations.json": staticDataImmunizationsJson,
+	"static/data/medication.json": staticDataMedicationJson,
+	"static/data/patients.json": staticDataPatientsJson,
+	"static/entrance.html": staticEntranceHtml,
+	"static/gov_citizens.html": staticGov_citizensHtml,
+	"static/gov_currency_exchange.html": staticGov_currency_exchangeHtml,
+	"static/gov_shares_exchange.html": staticGov_shares_exchangeHtml,
+	"static/health_facility.html": staticHealth_facilityHtml,
+	"static/health_immunization_records.html": staticHealth_immunization_recordsHtml,
+	"static/health_medical_record.html": staticHealth_medical_recordHtml,
+	"static/health_medication_records.html": staticHealth_medication_recordsHtml,
+	"static/health_patient.html": staticHealth_patientHtml,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/QR.png": staticImgQrPng,
+	"static/img/US.svg": staticImgUsSvg,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
 	"static/img/bg10.jpg": staticImgBg10Jpg,
 	"static/img/bg2.jpg": staticImgBg2Jpg,
@@ -5872,6 +6833,9 @@ var _bindata = map[string]func() (*asset, error){
 	"static/install_step_0.html": staticInstall_step_0Html,
 	"static/install_step_1.html": staticInstall_step_1Html,
 	"static/js/app.js": staticJsAppJs,
+	"static/js/asn1hex-1.1.min.js": staticJsAsn1hex11MinJs,
+	"static/js/base64.js": staticJsBase64Js,
+	"static/js/clipboard.js": staticJsClipboardJs,
 	"static/js/crypto/asn1-1.0.min.js": staticJsCryptoAsn110MinJs,
 	"static/js/crypto/asn1hex-1.1.min.js": staticJsCryptoAsn1hex11MinJs,
 	"static/js/crypto/crypto-1.1.min.js": staticJsCryptoCrypto11MinJs,
@@ -5890,6 +6854,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/crypto/ext/prng4-min.js": staticJsCryptoExtPrng4MinJs,
 	"static/js/crypto/ext/rng-min.js": staticJsCryptoExtRngMinJs,
 	"static/js/crypto/ext/yahoo-min.js": staticJsCryptoExtYahooMinJs,
+	"static/js/datetime.js": staticJsDatetimeJs,
 	"static/js/demo/demo-datatable.js": staticJsDemoDemoDatatableJs,
 	"static/js/demo/demo-flot.js": staticJsDemoDemoFlotJs,
 	"static/js/demo/demo-forms.js": staticJsDemoDemoFormsJs,
@@ -5905,21 +6870,36 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
 	"static/js/index.js": staticJsIndexJs,
+	"static/js/jsbn.js": staticJsJsbnJs,
+	"static/js/jsbn2.js": staticJsJsbn2Js,
+	"static/js/md5.js": staticJsMd5Js,
+	"static/js/rsa.js": staticJsRsaJs,
+	"static/js/rsa2.js": staticJsRsa2Js,
+	"static/js/rsapem-1.1.js": staticJsRsapem11Js,
+	"static/js/rsasign-1.2.min.js": staticJsRsasign12MinJs,
+	"static/js/send_to_net.js": staticJsSend_to_netJs,
+	"static/js/sha1.js": staticJsSha1Js,
+	"static/js/sha256.js": staticJsSha256Js,
 	"static/js/spin.js": staticJsSpinJs,
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
 	"static/lang/locale_en-US.ini": staticLangLocale_enUsIni,
 	"static/lang/locale_ru-RU.ini": staticLangLocale_ruRuIni,
-	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
-	"static/modal.html": staticModalHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
+	"static/modal_cb.html": staticModal_cbHtml,
+	"static/modal_citizen.html": staticModal_citizenHtml,
+	"static/modal_company.html": staticModal_companyHtml,
+	"static/modal_gov.html": staticModal_govHtml,
+	"static/modal_health.html": staticModal_healthHtml,
 	"static/pass.html": staticPassHtml,
 	"static/sass/_colors.scss": staticSass_colorsScss,
 	"static/sass/_mixins.scss": staticSass_mixinsScss,
 	"static/sass/style.scss": staticSassStyleScss,
 	"static/signatures.html": staticSignaturesHtml,
+	"static/templates/login.html": staticTemplatesLoginHtml,
+	"static/templates/modal.html": staticTemplatesModalHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/Chart.js/Chart.js": staticVendorChartJsChartJs,
@@ -6156,922 +7136,671 @@ func AssetDir(name string) ([]string, error) {
 }
 
 type bintree struct {
-	Func func() (*asset, error)
+	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
 var _bintree = &bintree{nil, map[string]*bintree{
 	"static": &bintree{nil, map[string]*bintree{
-		"1block": &bintree{static1block, map[string]*bintree{
-		}},
-		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{
-		}},
+		"1block": &bintree{static1block, map[string]*bintree{}},
+		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
+		"anonym_history.html": &bintree{staticAnonym_historyHtml, map[string]*bintree{}},
+		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
+		"citizen_bill_payment.html": &bintree{staticCitizen_bill_paymentHtml, map[string]*bintree{}},
+		"citizen_marriage_registration.html": &bintree{staticCitizen_marriage_registrationHtml, map[string]*bintree{}},
+		"citizen_property.html": &bintree{staticCitizen_propertyHtml, map[string]*bintree{}},
+		"citizen_rule_details.html": &bintree{staticCitizen_rule_detailsHtml, map[string]*bintree{}},
+		"company_application_purchase.html": &bintree{staticCompany_application_purchaseHtml, map[string]*bintree{}},
+		"company_contract.html": &bintree{staticCompany_contractHtml, map[string]*bintree{}},
+		"company_currency_exchange.html": &bintree{staticCompany_currency_exchangeHtml, map[string]*bintree{}},
+		"company_new_good.html": &bintree{staticCompany_new_goodHtml, map[string]*bintree{}},
+		"company_new_item.html": &bintree{staticCompany_new_itemHtml, map[string]*bintree{}},
+		"company_offer_seller.html": &bintree{staticCompany_offer_sellerHtml, map[string]*bintree{}},
+		"company_offer_transport.html": &bintree{staticCompany_offer_transportHtml, map[string]*bintree{}},
+		"company_select_transport.html": &bintree{staticCompany_select_transportHtml, map[string]*bintree{}},
+		"company_shares.html": &bintree{staticCompany_sharesHtml, map[string]*bintree{}},
+		"company_shares_exchange.html": &bintree{staticCompany_shares_exchangeHtml, map[string]*bintree{}},
 		"css": &bintree{nil, map[string]*bintree{
-			"app.css": &bintree{staticCssAppCss, map[string]*bintree{
-			}},
-			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{
-			}},
-			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{
-			}},
-			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{
-			}},
-			"theme-b.css": &bintree{staticCssThemeBCss, map[string]*bintree{
-			}},
-			"theme-c.css": &bintree{staticCssThemeCCss, map[string]*bintree{
-			}},
-			"theme-d.css": &bintree{staticCssThemeDCss, map[string]*bintree{
-			}},
-			"theme-e.css": &bintree{staticCssThemeECss, map[string]*bintree{
-			}},
-			"theme-f.css": &bintree{staticCssThemeFCss, map[string]*bintree{
-			}},
-			"theme-g.css": &bintree{staticCssThemeGCss, map[string]*bintree{
-			}},
-			"theme-h.css": &bintree{staticCssThemeHCss, map[string]*bintree{
-			}},
+			"app.css": &bintree{staticCssAppCss, map[string]*bintree{}},
+			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{}},
+			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
+			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{}},
+			"theme-b.css": &bintree{staticCssThemeBCss, map[string]*bintree{}},
+			"theme-c.css": &bintree{staticCssThemeCCss, map[string]*bintree{}},
+			"theme-d.css": &bintree{staticCssThemeDCss, map[string]*bintree{}},
+			"theme-e.css": &bintree{staticCssThemeECss, map[string]*bintree{}},
+			"theme-f.css": &bintree{staticCssThemeFCss, map[string]*bintree{}},
+			"theme-g.css": &bintree{staticCssThemeGCss, map[string]*bintree{}},
+			"theme-h.css": &bintree{staticCssThemeHCss, map[string]*bintree{}},
 		}},
-		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{
-		}},
-		"dashboard_cb.html": &bintree{staticDashboard_cbHtml, map[string]*bintree{
-		}},
-		"dashboard_citizen.html": &bintree{staticDashboard_citizenHtml, map[string]*bintree{
-		}},
-		"dashboard_company.html": &bintree{staticDashboard_companyHtml, map[string]*bintree{
-		}},
-		"dashboard_gov.html": &bintree{staticDashboard_govHtml, map[string]*bintree{
-		}},
+		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{}},
+		"dashboard_cb.html": &bintree{staticDashboard_cbHtml, map[string]*bintree{}},
+		"dashboard_citizen.html": &bintree{staticDashboard_citizenHtml, map[string]*bintree{}},
+		"dashboard_company.html": &bintree{staticDashboard_companyHtml, map[string]*bintree{}},
+		"dashboard_gov.html": &bintree{staticDashboard_govHtml, map[string]*bintree{}},
+		"dashboard_health.html": &bintree{staticDashboard_healthHtml, map[string]*bintree{}},
 		"data": &bintree{nil, map[string]*bintree{
-			"anonym_history.json": &bintree{staticDataAnonym_historyJson, map[string]*bintree{
-			}},
+			"entries_doctor.json": &bintree{staticDataEntries_doctorJson, map[string]*bintree{}},
+			"immunizations.json": &bintree{staticDataImmunizationsJson, map[string]*bintree{}},
+			"medication.json": &bintree{staticDataMedicationJson, map[string]*bintree{}},
+			"patients.json": &bintree{staticDataPatientsJson, map[string]*bintree{}},
 		}},
+		"entrance.html": &bintree{staticEntranceHtml, map[string]*bintree{}},
+		"gov_citizens.html": &bintree{staticGov_citizensHtml, map[string]*bintree{}},
+		"gov_currency_exchange.html": &bintree{staticGov_currency_exchangeHtml, map[string]*bintree{}},
+		"gov_shares_exchange.html": &bintree{staticGov_shares_exchangeHtml, map[string]*bintree{}},
+		"health_facility.html": &bintree{staticHealth_facilityHtml, map[string]*bintree{}},
+		"health_immunization_records.html": &bintree{staticHealth_immunization_recordsHtml, map[string]*bintree{}},
+		"health_medical_record.html": &bintree{staticHealth_medical_recordHtml, map[string]*bintree{}},
+		"health_medication_records.html": &bintree{staticHealth_medication_recordsHtml, map[string]*bintree{}},
+		"health_patient.html": &bintree{staticHealth_patientHtml, map[string]*bintree{}},
 		"i18n": &bintree{nil, map[string]*bintree{
-			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{
-			}},
-			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{
-			}},
+			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{}},
+			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{}},
 		}},
 		"img": &bintree{nil, map[string]*bintree{
-			"QR.png": &bintree{staticImgQrPng, map[string]*bintree{
-			}},
-			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{
-			}},
-			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{
-			}},
-			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{
-			}},
-			"bg3.jpg": &bintree{staticImgBg3Jpg, map[string]*bintree{
-			}},
-			"bg4.jpg": &bintree{staticImgBg4Jpg, map[string]*bintree{
-			}},
-			"bg5.jpg": &bintree{staticImgBg5Jpg, map[string]*bintree{
-			}},
-			"bg6.jpg": &bintree{staticImgBg6Jpg, map[string]*bintree{
-			}},
-			"bg7.jpg": &bintree{staticImgBg7Jpg, map[string]*bintree{
-			}},
-			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{
-			}},
-			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{
-			}},
-			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{
-			}},
-			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{
-			}},
-			"logo-single.png": &bintree{staticImgLogoSinglePng, map[string]*bintree{
-			}},
-			"logo.png": &bintree{staticImgLogoPng, map[string]*bintree{
-			}},
-			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{
-			}},
-			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{
-			}},
-			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{
-			}},
+			"QR.png": &bintree{staticImgQrPng, map[string]*bintree{}},
+			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
+			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
+			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{}},
+			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{}},
+			"bg3.jpg": &bintree{staticImgBg3Jpg, map[string]*bintree{}},
+			"bg4.jpg": &bintree{staticImgBg4Jpg, map[string]*bintree{}},
+			"bg5.jpg": &bintree{staticImgBg5Jpg, map[string]*bintree{}},
+			"bg6.jpg": &bintree{staticImgBg6Jpg, map[string]*bintree{}},
+			"bg7.jpg": &bintree{staticImgBg7Jpg, map[string]*bintree{}},
+			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{}},
+			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{}},
+			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{}},
+			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{}},
+			"logo-single.png": &bintree{staticImgLogoSinglePng, map[string]*bintree{}},
+			"logo.png": &bintree{staticImgLogoPng, map[string]*bintree{}},
+			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{}},
+			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
+			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{}},
 			"user": &bintree{nil, map[string]*bintree{
-				"01.jpg": &bintree{staticImgUser01Jpg, map[string]*bintree{
-				}},
-				"02.jpg": &bintree{staticImgUser02Jpg, map[string]*bintree{
-				}},
-				"03.jpg": &bintree{staticImgUser03Jpg, map[string]*bintree{
-				}},
-				"04.jpg": &bintree{staticImgUser04Jpg, map[string]*bintree{
-				}},
-				"05.jpg": &bintree{staticImgUser05Jpg, map[string]*bintree{
-				}},
-				"06.jpg": &bintree{staticImgUser06Jpg, map[string]*bintree{
-				}},
-				"07.jpg": &bintree{staticImgUser07Jpg, map[string]*bintree{
-				}},
-				"08.jpg": &bintree{staticImgUser08Jpg, map[string]*bintree{
-				}},
-				"09.jpg": &bintree{staticImgUser09Jpg, map[string]*bintree{
-				}},
-				"10.jpg": &bintree{staticImgUser10Jpg, map[string]*bintree{
-				}},
-				"11.jpg": &bintree{staticImgUser11Jpg, map[string]*bintree{
-				}},
-				"12.jpg": &bintree{staticImgUser12Jpg, map[string]*bintree{
-				}},
-				"13.jpg": &bintree{staticImgUser13Jpg, map[string]*bintree{
-				}},
+				"01.jpg": &bintree{staticImgUser01Jpg, map[string]*bintree{}},
+				"02.jpg": &bintree{staticImgUser02Jpg, map[string]*bintree{}},
+				"03.jpg": &bintree{staticImgUser03Jpg, map[string]*bintree{}},
+				"04.jpg": &bintree{staticImgUser04Jpg, map[string]*bintree{}},
+				"05.jpg": &bintree{staticImgUser05Jpg, map[string]*bintree{}},
+				"06.jpg": &bintree{staticImgUser06Jpg, map[string]*bintree{}},
+				"07.jpg": &bintree{staticImgUser07Jpg, map[string]*bintree{}},
+				"08.jpg": &bintree{staticImgUser08Jpg, map[string]*bintree{}},
+				"09.jpg": &bintree{staticImgUser09Jpg, map[string]*bintree{}},
+				"10.jpg": &bintree{staticImgUser10Jpg, map[string]*bintree{}},
+				"11.jpg": &bintree{staticImgUser11Jpg, map[string]*bintree{}},
+				"12.jpg": &bintree{staticImgUser12Jpg, map[string]*bintree{}},
+				"13.jpg": &bintree{staticImgUser13Jpg, map[string]*bintree{}},
 			}},
 		}},
-		"index.html": &bintree{staticIndexHtml, map[string]*bintree{
-		}},
-		"install_step_0.html": &bintree{staticInstall_step_0Html, map[string]*bintree{
-		}},
-		"install_step_1.html": &bintree{staticInstall_step_1Html, map[string]*bintree{
-		}},
+		"index.html": &bintree{staticIndexHtml, map[string]*bintree{}},
+		"install_step_0.html": &bintree{staticInstall_step_0Html, map[string]*bintree{}},
+		"install_step_1.html": &bintree{staticInstall_step_1Html, map[string]*bintree{}},
 		"js": &bintree{nil, map[string]*bintree{
-			"app.js": &bintree{staticJsAppJs, map[string]*bintree{
-			}},
+			"app.js": &bintree{staticJsAppJs, map[string]*bintree{}},
+			"asn1hex-1.1.min.js": &bintree{staticJsAsn1hex11MinJs, map[string]*bintree{}},
+			"base64.js": &bintree{staticJsBase64Js, map[string]*bintree{}},
+			"clipboard.js": &bintree{staticJsClipboardJs, map[string]*bintree{}},
 			"crypto": &bintree{nil, map[string]*bintree{
-				"asn1-1.0.min.js": &bintree{staticJsCryptoAsn110MinJs, map[string]*bintree{
-				}},
-				"asn1hex-1.1.min.js": &bintree{staticJsCryptoAsn1hex11MinJs, map[string]*bintree{
-				}},
-				"crypto-1.1.min.js": &bintree{staticJsCryptoCrypto11MinJs, map[string]*bintree{
-				}},
-				"ecdsa-modified-1.0.min.js": &bintree{staticJsCryptoEcdsaModified10MinJs, map[string]*bintree{
-				}},
-				"ecparam-1.0.min.js": &bintree{staticJsCryptoEcparam10MinJs, map[string]*bintree{
-				}},
+				"asn1-1.0.min.js": &bintree{staticJsCryptoAsn110MinJs, map[string]*bintree{}},
+				"asn1hex-1.1.min.js": &bintree{staticJsCryptoAsn1hex11MinJs, map[string]*bintree{}},
+				"crypto-1.1.min.js": &bintree{staticJsCryptoCrypto11MinJs, map[string]*bintree{}},
+				"ecdsa-modified-1.0.min.js": &bintree{staticJsCryptoEcdsaModified10MinJs, map[string]*bintree{}},
+				"ecparam-1.0.min.js": &bintree{staticJsCryptoEcparam10MinJs, map[string]*bintree{}},
 				"ext": &bintree{nil, map[string]*bintree{
 					"cj": &bintree{nil, map[string]*bintree{
-						"cryptojs-312-core-fix-min.js": &bintree{staticJsCryptoExtCjCryptojs312CoreFixMinJs, map[string]*bintree{
-						}},
-						"ec-patch-min.js": &bintree{staticJsCryptoExtCjEcPatchMinJs, map[string]*bintree{
-						}},
-						"md5_min.js": &bintree{staticJsCryptoExtCjMd5_minJs, map[string]*bintree{
-						}},
-						"sha1_min.js": &bintree{staticJsCryptoExtCjSha1_minJs, map[string]*bintree{
-						}},
-						"sha256_min.js": &bintree{staticJsCryptoExtCjSha256_minJs, map[string]*bintree{
-						}},
-						"x64-core_min.js": &bintree{staticJsCryptoExtCjX64Core_minJs, map[string]*bintree{
-						}},
+						"cryptojs-312-core-fix-min.js": &bintree{staticJsCryptoExtCjCryptojs312CoreFixMinJs, map[string]*bintree{}},
+						"ec-patch-min.js": &bintree{staticJsCryptoExtCjEcPatchMinJs, map[string]*bintree{}},
+						"md5_min.js": &bintree{staticJsCryptoExtCjMd5_minJs, map[string]*bintree{}},
+						"sha1_min.js": &bintree{staticJsCryptoExtCjSha1_minJs, map[string]*bintree{}},
+						"sha256_min.js": &bintree{staticJsCryptoExtCjSha256_minJs, map[string]*bintree{}},
+						"x64-core_min.js": &bintree{staticJsCryptoExtCjX64Core_minJs, map[string]*bintree{}},
 					}},
-					"ec-min.js": &bintree{staticJsCryptoExtEcMinJs, map[string]*bintree{
-					}},
-					"ec-patch-min.js": &bintree{staticJsCryptoExtEcPatchMinJs, map[string]*bintree{
-					}},
-					"jsbn-min.js": &bintree{staticJsCryptoExtJsbnMinJs, map[string]*bintree{
-					}},
-					"jsbn2-min.js": &bintree{staticJsCryptoExtJsbn2MinJs, map[string]*bintree{
-					}},
-					"prng4-min.js": &bintree{staticJsCryptoExtPrng4MinJs, map[string]*bintree{
-					}},
-					"rng-min.js": &bintree{staticJsCryptoExtRngMinJs, map[string]*bintree{
-					}},
-					"yahoo-min.js": &bintree{staticJsCryptoExtYahooMinJs, map[string]*bintree{
-					}},
+					"ec-min.js": &bintree{staticJsCryptoExtEcMinJs, map[string]*bintree{}},
+					"ec-patch-min.js": &bintree{staticJsCryptoExtEcPatchMinJs, map[string]*bintree{}},
+					"jsbn-min.js": &bintree{staticJsCryptoExtJsbnMinJs, map[string]*bintree{}},
+					"jsbn2-min.js": &bintree{staticJsCryptoExtJsbn2MinJs, map[string]*bintree{}},
+					"prng4-min.js": &bintree{staticJsCryptoExtPrng4MinJs, map[string]*bintree{}},
+					"rng-min.js": &bintree{staticJsCryptoExtRngMinJs, map[string]*bintree{}},
+					"yahoo-min.js": &bintree{staticJsCryptoExtYahooMinJs, map[string]*bintree{}},
 				}},
 			}},
+			"datetime.js": &bintree{staticJsDatetimeJs, map[string]*bintree{}},
 			"demo": &bintree{nil, map[string]*bintree{
-				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{
-				}},
-				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{
-				}},
-				"demo-forms.js": &bintree{staticJsDemoDemoFormsJs, map[string]*bintree{
-				}},
-				"demo-jqcloud.js": &bintree{staticJsDemoDemoJqcloudJs, map[string]*bintree{
-				}},
-				"demo-jqgrid.js": &bintree{staticJsDemoDemoJqgridJs, map[string]*bintree{
-				}},
-				"demo-nestable.js": &bintree{staticJsDemoDemoNestableJs, map[string]*bintree{
-				}},
-				"demo-panels.js": &bintree{staticJsDemoDemoPanelsJs, map[string]*bintree{
-				}},
-				"demo-rtl.js": &bintree{staticJsDemoDemoRtlJs, map[string]*bintree{
-				}},
-				"demo-search.js": &bintree{staticJsDemoDemoSearchJs, map[string]*bintree{
-				}},
-				"demo-sortable.js": &bintree{staticJsDemoDemoSortableJs, map[string]*bintree{
-				}},
-				"demo-upload.js": &bintree{staticJsDemoDemoUploadJs, map[string]*bintree{
-				}},
-				"demo-vector-map.js": &bintree{staticJsDemoDemoVectorMapJs, map[string]*bintree{
-				}},
-				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{
-				}},
-				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{
-				}},
+				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{}},
+				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{}},
+				"demo-forms.js": &bintree{staticJsDemoDemoFormsJs, map[string]*bintree{}},
+				"demo-jqcloud.js": &bintree{staticJsDemoDemoJqcloudJs, map[string]*bintree{}},
+				"demo-jqgrid.js": &bintree{staticJsDemoDemoJqgridJs, map[string]*bintree{}},
+				"demo-nestable.js": &bintree{staticJsDemoDemoNestableJs, map[string]*bintree{}},
+				"demo-panels.js": &bintree{staticJsDemoDemoPanelsJs, map[string]*bintree{}},
+				"demo-rtl.js": &bintree{staticJsDemoDemoRtlJs, map[string]*bintree{}},
+				"demo-search.js": &bintree{staticJsDemoDemoSearchJs, map[string]*bintree{}},
+				"demo-sortable.js": &bintree{staticJsDemoDemoSortableJs, map[string]*bintree{}},
+				"demo-upload.js": &bintree{staticJsDemoDemoUploadJs, map[string]*bintree{}},
+				"demo-vector-map.js": &bintree{staticJsDemoDemoVectorMapJs, map[string]*bintree{}},
+				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
+				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
-			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{
-			}},
-			"spin.js": &bintree{staticJsSpinJs, map[string]*bintree{
-			}},
+			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
+			"jsbn.js": &bintree{staticJsJsbnJs, map[string]*bintree{}},
+			"jsbn2.js": &bintree{staticJsJsbn2Js, map[string]*bintree{}},
+			"md5.js": &bintree{staticJsMd5Js, map[string]*bintree{}},
+			"rsa.js": &bintree{staticJsRsaJs, map[string]*bintree{}},
+			"rsa2.js": &bintree{staticJsRsa2Js, map[string]*bintree{}},
+			"rsapem-1.1.js": &bintree{staticJsRsapem11Js, map[string]*bintree{}},
+			"rsasign-1.2.min.js": &bintree{staticJsRsasign12MinJs, map[string]*bintree{}},
+			"send_to_net.js": &bintree{staticJsSend_to_netJs, map[string]*bintree{}},
+			"sha1.js": &bintree{staticJsSha1Js, map[string]*bintree{}},
+			"sha256.js": &bintree{staticJsSha256Js, map[string]*bintree{}},
+			"spin.js": &bintree{staticJsSpinJs, map[string]*bintree{}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
-			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{
-			}},
-			"42.ini": &bintree{staticLang42Ini, map[string]*bintree{
-			}},
-			"en-us.all.json": &bintree{staticLangEnUsAllJson, map[string]*bintree{
-			}},
-			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{
-			}},
-			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{
-			}},
+			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
+			"42.ini": &bintree{staticLang42Ini, map[string]*bintree{}},
+			"en-us.all.json": &bintree{staticLangEnUsAllJson, map[string]*bintree{}},
+			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{}},
+			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{}},
 		}},
-		"login.html": &bintree{staticLoginHtml, map[string]*bintree{
-		}},
-		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{
-		}},
-		"modal.html": &bintree{staticModalHtml, map[string]*bintree{
-		}},
-		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{
-		}},
-		"pass.html": &bintree{staticPassHtml, map[string]*bintree{
-		}},
+		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
+		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{}},
+		"modal_cb.html": &bintree{staticModal_cbHtml, map[string]*bintree{}},
+		"modal_citizen.html": &bintree{staticModal_citizenHtml, map[string]*bintree{}},
+		"modal_company.html": &bintree{staticModal_companyHtml, map[string]*bintree{}},
+		"modal_gov.html": &bintree{staticModal_govHtml, map[string]*bintree{}},
+		"modal_health.html": &bintree{staticModal_healthHtml, map[string]*bintree{}},
+		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
 		"sass": &bintree{nil, map[string]*bintree{
-			"_colors.scss": &bintree{staticSass_colorsScss, map[string]*bintree{
-			}},
-			"_mixins.scss": &bintree{staticSass_mixinsScss, map[string]*bintree{
-			}},
-			"style.scss": &bintree{staticSassStyleScss, map[string]*bintree{
-			}},
+			"_colors.scss": &bintree{staticSass_colorsScss, map[string]*bintree{}},
+			"_mixins.scss": &bintree{staticSass_mixinsScss, map[string]*bintree{}},
+			"style.scss": &bintree{staticSassStyleScss, map[string]*bintree{}},
 		}},
-		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{
+		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{}},
+		"templates": &bintree{nil, map[string]*bintree{
+			"login.html": &bintree{staticTemplatesLoginHtml, map[string]*bintree{}},
+			"modal.html": &bintree{staticTemplatesModalHtml, map[string]*bintree{}},
 		}},
-		"test.html": &bintree{staticTestHtml, map[string]*bintree{
-		}},
-		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{
-		}},
+		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
+		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"vendor": &bintree{nil, map[string]*bintree{
 			"Chart.js": &bintree{nil, map[string]*bintree{
-				"Chart.js": &bintree{staticVendorChartJsChartJs, map[string]*bintree{
-				}},
+				"Chart.js": &bintree{staticVendorChartJsChartJs, map[string]*bintree{}},
 			}},
 			"Flot": &bintree{nil, map[string]*bintree{
-				"jquery.flot.categories.js": &bintree{staticVendorFlotJqueryFlotCategoriesJs, map[string]*bintree{
-				}},
-				"jquery.flot.js": &bintree{staticVendorFlotJqueryFlotJs, map[string]*bintree{
-				}},
-				"jquery.flot.pie.js": &bintree{staticVendorFlotJqueryFlotPieJs, map[string]*bintree{
-				}},
-				"jquery.flot.resize.js": &bintree{staticVendorFlotJqueryFlotResizeJs, map[string]*bintree{
-				}},
-				"jquery.flot.time.js": &bintree{staticVendorFlotJqueryFlotTimeJs, map[string]*bintree{
-				}},
+				"jquery.flot.categories.js": &bintree{staticVendorFlotJqueryFlotCategoriesJs, map[string]*bintree{}},
+				"jquery.flot.js": &bintree{staticVendorFlotJqueryFlotJs, map[string]*bintree{}},
+				"jquery.flot.pie.js": &bintree{staticVendorFlotJqueryFlotPieJs, map[string]*bintree{}},
+				"jquery.flot.resize.js": &bintree{staticVendorFlotJqueryFlotResizeJs, map[string]*bintree{}},
+				"jquery.flot.time.js": &bintree{staticVendorFlotJqueryFlotTimeJs, map[string]*bintree{}},
 			}},
 			"animate.css": &bintree{nil, map[string]*bintree{
-				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{
-				}},
+				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{}},
 			}},
 			"animo.js": &bintree{nil, map[string]*bintree{
-				"animo.js": &bintree{staticVendorAnimoJsAnimoJs, map[string]*bintree{
-				}},
+				"animo.js": &bintree{staticVendorAnimoJsAnimoJs, map[string]*bintree{}},
 			}},
 			"blueimp-canvas-to-blob": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"canvas-to-blob.js": &bintree{staticVendorBlueimpCanvasToBlobJsCanvasToBlobJs, map[string]*bintree{
-					}},
+					"canvas-to-blob.js": &bintree{staticVendorBlueimpCanvasToBlobJsCanvasToBlobJs, map[string]*bintree{}},
 				}},
 			}},
 			"blueimp-file-upload": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"jquery.fileupload.css": &bintree{staticVendorBlueimpFileUploadCssJqueryFileuploadCss, map[string]*bintree{
-					}},
+					"jquery.fileupload.css": &bintree{staticVendorBlueimpFileUploadCssJqueryFileuploadCss, map[string]*bintree{}},
 				}},
 				"img": &bintree{nil, map[string]*bintree{
-					"loading.gif": &bintree{staticVendorBlueimpFileUploadImgLoadingGif, map[string]*bintree{
-					}},
-					"progressbar.gif": &bintree{staticVendorBlueimpFileUploadImgProgressbarGif, map[string]*bintree{
-					}},
+					"loading.gif": &bintree{staticVendorBlueimpFileUploadImgLoadingGif, map[string]*bintree{}},
+					"progressbar.gif": &bintree{staticVendorBlueimpFileUploadImgProgressbarGif, map[string]*bintree{}},
 				}},
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.fileupload-angular.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAngularJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-audio.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAudioJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-image.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadImageJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-jquery-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJqueryUiJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-process.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadProcessJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadUiJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-validate.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadValidateJs, map[string]*bintree{
-					}},
-					"jquery.fileupload-video.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadVideoJs, map[string]*bintree{
-					}},
-					"jquery.fileupload.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJs, map[string]*bintree{
-					}},
-					"jquery.iframe-transport.js": &bintree{staticVendorBlueimpFileUploadJsJqueryIframeTransportJs, map[string]*bintree{
-					}},
+					"jquery.fileupload-angular.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAngularJs, map[string]*bintree{}},
+					"jquery.fileupload-audio.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadAudioJs, map[string]*bintree{}},
+					"jquery.fileupload-image.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadImageJs, map[string]*bintree{}},
+					"jquery.fileupload-jquery-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJqueryUiJs, map[string]*bintree{}},
+					"jquery.fileupload-process.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadProcessJs, map[string]*bintree{}},
+					"jquery.fileupload-ui.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadUiJs, map[string]*bintree{}},
+					"jquery.fileupload-validate.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadValidateJs, map[string]*bintree{}},
+					"jquery.fileupload-video.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadVideoJs, map[string]*bintree{}},
+					"jquery.fileupload.js": &bintree{staticVendorBlueimpFileUploadJsJqueryFileuploadJs, map[string]*bintree{}},
+					"jquery.iframe-transport.js": &bintree{staticVendorBlueimpFileUploadJsJqueryIframeTransportJs, map[string]*bintree{}},
 				}},
 			}},
 			"blueimp-load-image": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"load-image.all.min.js": &bintree{staticVendorBlueimpLoadImageJsLoadImageAllMinJs, map[string]*bintree{
-					}},
+					"load-image.all.min.js": &bintree{staticVendorBlueimpLoadImageJsLoadImageAllMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"blueimp-tmpl": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"tmpl.js": &bintree{staticVendorBlueimpTmplJsTmplJs, map[string]*bintree{
-					}},
+					"tmpl.js": &bintree{staticVendorBlueimpTmplJsTmplJs, map[string]*bintree{}},
 				}},
 			}},
 			"bootstrap": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap.css": &bintree{staticVendorBootstrapDistCssBootstrapCss, map[string]*bintree{
-						}},
+						"bootstrap.css": &bintree{staticVendorBootstrapDistCssBootstrapCss, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap.js": &bintree{staticVendorBootstrapDistJsBootstrapJs, map[string]*bintree{
-						}},
+						"bootstrap.js": &bintree{staticVendorBootstrapDistJsBootstrapJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"bootstrap-filestyle": &bintree{nil, map[string]*bintree{
 				"src": &bintree{nil, map[string]*bintree{
-					"bootstrap-filestyle.js": &bintree{staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs, map[string]*bintree{
-					}},
+					"bootstrap-filestyle.js": &bintree{staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs, map[string]*bintree{}},
 				}},
 			}},
 			"bootstrap-tagsinput": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"bootstrap-tagsinput.css": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputCss, map[string]*bintree{
-					}},
-					"bootstrap-tagsinput.min.js": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputMinJs, map[string]*bintree{
-					}},
+					"bootstrap-tagsinput.css": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputCss, map[string]*bintree{}},
+					"bootstrap-tagsinput.min.js": &bintree{staticVendorBootstrapTagsinputDistBootstrapTagsinputMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"bootstrap-tour": &bintree{nil, map[string]*bintree{
 				"build": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-tour-standalone.css": &bintree{staticVendorBootstrapTourBuildCssBootstrapTourStandaloneCss, map[string]*bintree{
-						}},
+						"bootstrap-tour-standalone.css": &bintree{staticVendorBootstrapTourBuildCssBootstrapTourStandaloneCss, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-tour-standalone.js": &bintree{staticVendorBootstrapTourBuildJsBootstrapTourStandaloneJs, map[string]*bintree{
-						}},
+						"bootstrap-tour-standalone.js": &bintree{staticVendorBootstrapTourBuildJsBootstrapTourStandaloneJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"bootstrap-wysiwyg": &bintree{nil, map[string]*bintree{
-				"bootstrap-wysiwyg.js": &bintree{staticVendorBootstrapWysiwygBootstrapWysiwygJs, map[string]*bintree{
-				}},
+				"bootstrap-wysiwyg.js": &bintree{staticVendorBootstrapWysiwygBootstrapWysiwygJs, map[string]*bintree{}},
 				"external": &bintree{nil, map[string]*bintree{
-					"jquery.hotkeys.js": &bintree{staticVendorBootstrapWysiwygExternalJqueryHotkeysJs, map[string]*bintree{
-					}},
+					"jquery.hotkeys.js": &bintree{staticVendorBootstrapWysiwygExternalJqueryHotkeysJs, map[string]*bintree{}},
 				}},
 			}},
 			"chartist": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"chartist.js": &bintree{staticVendorChartistDistChartistJs, map[string]*bintree{
-					}},
-					"chartist.min.css": &bintree{staticVendorChartistDistChartistMinCss, map[string]*bintree{
-					}},
+					"chartist.js": &bintree{staticVendorChartistDistChartistJs, map[string]*bintree{}},
+					"chartist.min.css": &bintree{staticVendorChartistDistChartistMinCss, map[string]*bintree{}},
 				}},
 			}},
 			"chosen_v1.2.0": &bintree{nil, map[string]*bintree{
-				"chosen-sprite.png": &bintree{staticVendorChosen_v120ChosenSpritePng, map[string]*bintree{
-				}},
-				"chosen-sprite@2x.png": &bintree{staticVendorChosen_v120ChosenSprite2xPng, map[string]*bintree{
-				}},
-				"chosen.jquery.min.js": &bintree{staticVendorChosen_v120ChosenJqueryMinJs, map[string]*bintree{
-				}},
-				"chosen.min.css": &bintree{staticVendorChosen_v120ChosenMinCss, map[string]*bintree{
-				}},
+				"chosen-sprite.png": &bintree{staticVendorChosen_v120ChosenSpritePng, map[string]*bintree{}},
+				"chosen-sprite@2x.png": &bintree{staticVendorChosen_v120ChosenSprite2xPng, map[string]*bintree{}},
+				"chosen.jquery.min.js": &bintree{staticVendorChosen_v120ChosenJqueryMinJs, map[string]*bintree{}},
+				"chosen.min.css": &bintree{staticVendorChosen_v120ChosenMinCss, map[string]*bintree{}},
 			}},
 			"cropper": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"cropper.css": &bintree{staticVendorCropperDistCropperCss, map[string]*bintree{
-					}},
-					"cropper.js": &bintree{staticVendorCropperDistCropperJs, map[string]*bintree{
-					}},
+					"cropper.css": &bintree{staticVendorCropperDistCropperCss, map[string]*bintree{}},
+					"cropper.js": &bintree{staticVendorCropperDistCropperJs, map[string]*bintree{}},
 				}},
 			}},
 			"d3": &bintree{nil, map[string]*bintree{
-				"d3.min.js": &bintree{staticVendorD3D3MinJs, map[string]*bintree{
-				}},
+				"d3.min.js": &bintree{staticVendorD3D3MinJs, map[string]*bintree{}},
 			}},
 			"dataTables.fontAwesome": &bintree{nil, map[string]*bintree{
-				"index.css": &bintree{staticVendorDatatablesFontawesomeIndexCss, map[string]*bintree{
-				}},
+				"index.css": &bintree{staticVendorDatatablesFontawesomeIndexCss, map[string]*bintree{}},
 			}},
 			"datatables": &bintree{nil, map[string]*bintree{
 				"media": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.css": &bintree{staticVendorDatatablesMediaCssDatatablesBootstrapCss, map[string]*bintree{
-						}},
+						"dataTables.bootstrap.css": &bintree{staticVendorDatatablesMediaCssDatatablesBootstrapCss, map[string]*bintree{}},
 					}},
 					"images": &bintree{nil, map[string]*bintree{
-						"Sorting icons.psd": &bintree{staticVendorDatatablesMediaImagesSortingIconsPsd, map[string]*bintree{
-						}},
-						"favicon.ico": &bintree{staticVendorDatatablesMediaImagesFaviconIco, map[string]*bintree{
-						}},
-						"sort_asc.png": &bintree{staticVendorDatatablesMediaImagesSort_ascPng, map[string]*bintree{
-						}},
-						"sort_asc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_asc_disabledPng, map[string]*bintree{
-						}},
-						"sort_both.png": &bintree{staticVendorDatatablesMediaImagesSort_bothPng, map[string]*bintree{
-						}},
-						"sort_desc.png": &bintree{staticVendorDatatablesMediaImagesSort_descPng, map[string]*bintree{
-						}},
-						"sort_desc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_desc_disabledPng, map[string]*bintree{
-						}},
+						"Sorting icons.psd": &bintree{staticVendorDatatablesMediaImagesSortingIconsPsd, map[string]*bintree{}},
+						"favicon.ico": &bintree{staticVendorDatatablesMediaImagesFaviconIco, map[string]*bintree{}},
+						"sort_asc.png": &bintree{staticVendorDatatablesMediaImagesSort_ascPng, map[string]*bintree{}},
+						"sort_asc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_asc_disabledPng, map[string]*bintree{}},
+						"sort_both.png": &bintree{staticVendorDatatablesMediaImagesSort_bothPng, map[string]*bintree{}},
+						"sort_desc.png": &bintree{staticVendorDatatablesMediaImagesSort_descPng, map[string]*bintree{}},
+						"sort_desc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_desc_disabledPng, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{
-						}},
-						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{
-						}},
+						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{}},
+						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"datatables-colvis": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.css": &bintree{staticVendorDatatablesColvisCssDatatablesColvisCss, map[string]*bintree{
-					}},
+					"dataTables.colVis.css": &bintree{staticVendorDatatablesColvisCssDatatablesColvisCss, map[string]*bintree{}},
 				}},
 				"js": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.js": &bintree{staticVendorDatatablesColvisJsDatatablesColvisJs, map[string]*bintree{
-					}},
+					"dataTables.colVis.js": &bintree{staticVendorDatatablesColvisJsDatatablesColvisJs, map[string]*bintree{}},
 				}},
 			}},
 			"eonasdan-bootstrap-datetimepicker": &bintree{nil, map[string]*bintree{
 				"build": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.css": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss, map[string]*bintree{
-						}},
+						"bootstrap-datetimepicker.min.css": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.js": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs, map[string]*bintree{
-						}},
+						"bootstrap-datetimepicker.min.js": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"fastclick": &bintree{nil, map[string]*bintree{
 				"lib": &bintree{nil, map[string]*bintree{
-					"fastclick.js": &bintree{staticVendorFastclickLibFastclickJs, map[string]*bintree{
-					}},
+					"fastclick.js": &bintree{staticVendorFastclickLibFastclickJs, map[string]*bintree{}},
 				}},
 			}},
 			"flatdoc": &bintree{nil, map[string]*bintree{
-				"flatdoc.js": &bintree{staticVendorFlatdocFlatdocJs, map[string]*bintree{
-				}},
+				"flatdoc.js": &bintree{staticVendorFlatdocFlatdocJs, map[string]*bintree{}},
 			}},
 			"flot-spline": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.flot.spline.min.js": &bintree{staticVendorFlotSplineJsJqueryFlotSplineMinJs, map[string]*bintree{
-					}},
+					"jquery.flot.spline.min.js": &bintree{staticVendorFlotSplineJsJqueryFlotSplineMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"flot.tooltip": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.flot.tooltip.min.js": &bintree{staticVendorFlotTooltipJsJqueryFlotTooltipMinJs, map[string]*bintree{
-					}},
+					"jquery.flot.tooltip.min.js": &bintree{staticVendorFlotTooltipJsJqueryFlotTooltipMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"fontawesome": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"font-awesome.min.css": &bintree{staticVendorFontawesomeCssFontAwesomeMinCss, map[string]*bintree{
-					}},
+					"font-awesome.min.css": &bintree{staticVendorFontawesomeCssFontAwesomeMinCss, map[string]*bintree{}},
 				}},
 				"fonts": &bintree{nil, map[string]*bintree{
-					"FontAwesome.otf": &bintree{staticVendorFontawesomeFontsFontawesomeOtf, map[string]*bintree{
-					}},
-					"fontawesome-webfont.eot": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontEot, map[string]*bintree{
-					}},
-					"fontawesome-webfont.svg": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontSvg, map[string]*bintree{
-					}},
-					"fontawesome-webfont.ttf": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontTtf, map[string]*bintree{
-					}},
-					"fontawesome-webfont.woff": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff, map[string]*bintree{
-					}},
-					"fontawesome-webfont.woff2": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff2, map[string]*bintree{
-					}},
+					"FontAwesome.otf": &bintree{staticVendorFontawesomeFontsFontawesomeOtf, map[string]*bintree{}},
+					"fontawesome-webfont.eot": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontEot, map[string]*bintree{}},
+					"fontawesome-webfont.svg": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontSvg, map[string]*bintree{}},
+					"fontawesome-webfont.ttf": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontTtf, map[string]*bintree{}},
+					"fontawesome-webfont.woff": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff, map[string]*bintree{}},
+					"fontawesome-webfont.woff2": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff2, map[string]*bintree{}},
 				}},
 			}},
 			"fullcalendar": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"fullcalendar.css": &bintree{staticVendorFullcalendarDistFullcalendarCss, map[string]*bintree{
-					}},
-					"fullcalendar.min.js": &bintree{staticVendorFullcalendarDistFullcalendarMinJs, map[string]*bintree{
-					}},
-					"gcal.js": &bintree{staticVendorFullcalendarDistGcalJs, map[string]*bintree{
-					}},
+					"fullcalendar.css": &bintree{staticVendorFullcalendarDistFullcalendarCss, map[string]*bintree{}},
+					"fullcalendar.min.js": &bintree{staticVendorFullcalendarDistFullcalendarMinJs, map[string]*bintree{}},
+					"gcal.js": &bintree{staticVendorFullcalendarDistGcalJs, map[string]*bintree{}},
 				}},
 			}},
 			"html.sortable": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"html.sortable.js": &bintree{staticVendorHtmlSortableDistHtmlSortableJs, map[string]*bintree{
-					}},
+					"html.sortable.js": &bintree{staticVendorHtmlSortableDistHtmlSortableJs, map[string]*bintree{}},
 				}},
 			}},
 			"ika.jvectormap": &bintree{nil, map[string]*bintree{
-				"jquery-jvectormap-1.2.2.css": &bintree{staticVendorIkaJvectormapJqueryJvectormap122Css, map[string]*bintree{
-				}},
-				"jquery-jvectormap-1.2.2.min.js": &bintree{staticVendorIkaJvectormapJqueryJvectormap122MinJs, map[string]*bintree{
-				}},
-				"jquery-jvectormap-us-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapUsMillEnJs, map[string]*bintree{
-				}},
-				"jquery-jvectormap-world-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapWorldMillEnJs, map[string]*bintree{
-				}},
+				"jquery-jvectormap-1.2.2.css": &bintree{staticVendorIkaJvectormapJqueryJvectormap122Css, map[string]*bintree{}},
+				"jquery-jvectormap-1.2.2.min.js": &bintree{staticVendorIkaJvectormapJqueryJvectormap122MinJs, map[string]*bintree{}},
+				"jquery-jvectormap-us-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapUsMillEnJs, map[string]*bintree{}},
+				"jquery-jvectormap-world-mill-en.js": &bintree{staticVendorIkaJvectormapJqueryJvectormapWorldMillEnJs, map[string]*bintree{}},
 			}},
 			"jQuery-Storage-API": &bintree{nil, map[string]*bintree{
-				"jquery.storageapi.js": &bintree{staticVendorJqueryStorageApiJqueryStorageapiJs, map[string]*bintree{
-				}},
+				"jquery.storageapi.js": &bintree{staticVendorJqueryStorageApiJqueryStorageapiJs, map[string]*bintree{}},
 			}},
 			"jQuery-gMap": &bintree{nil, map[string]*bintree{
-				"jquery.gmap.min.js": &bintree{staticVendorJqueryGmapJqueryGmapMinJs, map[string]*bintree{
-				}},
+				"jquery.gmap.min.js": &bintree{staticVendorJqueryGmapJqueryGmapMinJs, map[string]*bintree{}},
 			}},
 			"jqcloud2": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jqcloud.css": &bintree{staticVendorJqcloud2DistJqcloudCss, map[string]*bintree{
-					}},
-					"jqcloud.js": &bintree{staticVendorJqcloud2DistJqcloudJs, map[string]*bintree{
-					}},
+					"jqcloud.css": &bintree{staticVendorJqcloud2DistJqcloudCss, map[string]*bintree{}},
+					"jqcloud.js": &bintree{staticVendorJqcloud2DistJqcloudJs, map[string]*bintree{}},
 				}},
 			}},
 			"jqgrid": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"ui.jqgrid.css": &bintree{staticVendorJqgridCssUiJqgridCss, map[string]*bintree{
-					}},
+					"ui.jqgrid.css": &bintree{staticVendorJqgridCssUiJqgridCss, map[string]*bintree{}},
 				}},
 				"js": &bintree{nil, map[string]*bintree{
 					"i18n": &bintree{nil, map[string]*bintree{
-						"grid.locale-en.js": &bintree{staticVendorJqgridJsI18nGridLocaleEnJs, map[string]*bintree{
-						}},
+						"grid.locale-en.js": &bintree{staticVendorJqgridJsI18nGridLocaleEnJs, map[string]*bintree{}},
 					}},
-					"jquery.jqGrid.js": &bintree{staticVendorJqgridJsJqueryJqgridJs, map[string]*bintree{
-					}},
+					"jquery.jqGrid.js": &bintree{staticVendorJqgridJsJqueryJqgridJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{
-					}},
+					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-classyloader": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.classyloader.min.js": &bintree{staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs, map[string]*bintree{
-					}},
+					"jquery.classyloader.min.js": &bintree{staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-knob": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.knob.js": &bintree{staticVendorJqueryKnobJsJqueryKnobJs, map[string]*bintree{
-					}},
+					"jquery.knob.js": &bintree{staticVendorJqueryKnobJsJqueryKnobJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-localize-i18n": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.localize.js": &bintree{staticVendorJqueryLocalizeI18nDistJqueryLocalizeJs, map[string]*bintree{
-					}},
+					"jquery.localize.js": &bintree{staticVendorJqueryLocalizeI18nDistJqueryLocalizeJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-ui": &bintree{nil, map[string]*bintree{
 				"themes": &bintree{nil, map[string]*bintree{
 					"smoothness": &bintree{nil, map[string]*bintree{
 						"images": &bintree{nil, map[string]*bintree{
-							"animated-overlay.gif": &bintree{staticVendorJqueryUiThemesSmoothnessImagesAnimatedOverlayGif, map[string]*bintree{
-							}},
-							"ui-bg_flat_0_aaaaaa_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_0_aaaaaa_40x100Png, map[string]*bintree{
-							}},
-							"ui-bg_flat_75_ffffff_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_75_ffffff_40x100Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_55_fbf9ee_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_55_fbf9ee_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_65_ffffff_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_65_ffffff_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_75_dadada_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_dadada_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_75_e6e6e6_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_e6e6e6_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_glass_95_fef1ec_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_95_fef1ec_1x400Png, map[string]*bintree{
-							}},
-							"ui-bg_highlight-soft_75_cccccc_1x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_highlightSoft_75_cccccc_1x100Png, map[string]*bintree{
-							}},
-							"ui-icons_222222_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_222222_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_2e83ff_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_2e83ff_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_454545_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_454545_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_888888_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_888888_256x240Png, map[string]*bintree{
-							}},
-							"ui-icons_cd0a0a_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_cd0a0a_256x240Png, map[string]*bintree{
-							}},
+							"animated-overlay.gif": &bintree{staticVendorJqueryUiThemesSmoothnessImagesAnimatedOverlayGif, map[string]*bintree{}},
+							"ui-bg_flat_0_aaaaaa_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_0_aaaaaa_40x100Png, map[string]*bintree{}},
+							"ui-bg_flat_75_ffffff_40x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_flat_75_ffffff_40x100Png, map[string]*bintree{}},
+							"ui-bg_glass_55_fbf9ee_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_55_fbf9ee_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_65_ffffff_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_65_ffffff_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_75_dadada_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_dadada_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_75_e6e6e6_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_75_e6e6e6_1x400Png, map[string]*bintree{}},
+							"ui-bg_glass_95_fef1ec_1x400.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_glass_95_fef1ec_1x400Png, map[string]*bintree{}},
+							"ui-bg_highlight-soft_75_cccccc_1x100.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiBg_highlightSoft_75_cccccc_1x100Png, map[string]*bintree{}},
+							"ui-icons_222222_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_222222_256x240Png, map[string]*bintree{}},
+							"ui-icons_2e83ff_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_2e83ff_256x240Png, map[string]*bintree{}},
+							"ui-icons_454545_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_454545_256x240Png, map[string]*bintree{}},
+							"ui-icons_888888_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_888888_256x240Png, map[string]*bintree{}},
+							"ui-icons_cd0a0a_256x240.png": &bintree{staticVendorJqueryUiThemesSmoothnessImagesUiIcons_cd0a0a_256x240Png, map[string]*bintree{}},
 						}},
-						"jquery-ui.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiCss, map[string]*bintree{
-						}},
-						"jquery-ui.min.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiMinCss, map[string]*bintree{
-						}},
-						"theme.css": &bintree{staticVendorJqueryUiThemesSmoothnessThemeCss, map[string]*bintree{
-						}},
+						"jquery-ui.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiCss, map[string]*bintree{}},
+						"jquery-ui.min.css": &bintree{staticVendorJqueryUiThemesSmoothnessJqueryUiMinCss, map[string]*bintree{}},
+						"theme.css": &bintree{staticVendorJqueryUiThemesSmoothnessThemeCss, map[string]*bintree{}},
 					}},
 				}},
 				"ui": &bintree{nil, map[string]*bintree{
-					"accordion.js": &bintree{staticVendorJqueryUiUiAccordionJs, map[string]*bintree{
-					}},
-					"autocomplete.js": &bintree{staticVendorJqueryUiUiAutocompleteJs, map[string]*bintree{
-					}},
-					"button.js": &bintree{staticVendorJqueryUiUiButtonJs, map[string]*bintree{
-					}},
-					"core.js": &bintree{staticVendorJqueryUiUiCoreJs, map[string]*bintree{
-					}},
-					"datepicker.js": &bintree{staticVendorJqueryUiUiDatepickerJs, map[string]*bintree{
-					}},
-					"dialog.js": &bintree{staticVendorJqueryUiUiDialogJs, map[string]*bintree{
-					}},
-					"draggable.js": &bintree{staticVendorJqueryUiUiDraggableJs, map[string]*bintree{
-					}},
-					"droppable.js": &bintree{staticVendorJqueryUiUiDroppableJs, map[string]*bintree{
-					}},
-					"effect-blind.js": &bintree{staticVendorJqueryUiUiEffectBlindJs, map[string]*bintree{
-					}},
-					"effect-bounce.js": &bintree{staticVendorJqueryUiUiEffectBounceJs, map[string]*bintree{
-					}},
-					"effect-clip.js": &bintree{staticVendorJqueryUiUiEffectClipJs, map[string]*bintree{
-					}},
-					"effect-drop.js": &bintree{staticVendorJqueryUiUiEffectDropJs, map[string]*bintree{
-					}},
-					"effect-explode.js": &bintree{staticVendorJqueryUiUiEffectExplodeJs, map[string]*bintree{
-					}},
-					"effect-fade.js": &bintree{staticVendorJqueryUiUiEffectFadeJs, map[string]*bintree{
-					}},
-					"effect-fold.js": &bintree{staticVendorJqueryUiUiEffectFoldJs, map[string]*bintree{
-					}},
-					"effect-highlight.js": &bintree{staticVendorJqueryUiUiEffectHighlightJs, map[string]*bintree{
-					}},
-					"effect-puff.js": &bintree{staticVendorJqueryUiUiEffectPuffJs, map[string]*bintree{
-					}},
-					"effect-pulsate.js": &bintree{staticVendorJqueryUiUiEffectPulsateJs, map[string]*bintree{
-					}},
-					"effect-scale.js": &bintree{staticVendorJqueryUiUiEffectScaleJs, map[string]*bintree{
-					}},
-					"effect-shake.js": &bintree{staticVendorJqueryUiUiEffectShakeJs, map[string]*bintree{
-					}},
-					"effect-size.js": &bintree{staticVendorJqueryUiUiEffectSizeJs, map[string]*bintree{
-					}},
-					"effect-slide.js": &bintree{staticVendorJqueryUiUiEffectSlideJs, map[string]*bintree{
-					}},
-					"effect-transfer.js": &bintree{staticVendorJqueryUiUiEffectTransferJs, map[string]*bintree{
-					}},
-					"effect.js": &bintree{staticVendorJqueryUiUiEffectJs, map[string]*bintree{
-					}},
-					"menu.js": &bintree{staticVendorJqueryUiUiMenuJs, map[string]*bintree{
-					}},
-					"mouse.js": &bintree{staticVendorJqueryUiUiMouseJs, map[string]*bintree{
-					}},
-					"position.js": &bintree{staticVendorJqueryUiUiPositionJs, map[string]*bintree{
-					}},
-					"progressbar.js": &bintree{staticVendorJqueryUiUiProgressbarJs, map[string]*bintree{
-					}},
-					"resizable.js": &bintree{staticVendorJqueryUiUiResizableJs, map[string]*bintree{
-					}},
-					"selectable.js": &bintree{staticVendorJqueryUiUiSelectableJs, map[string]*bintree{
-					}},
-					"selectmenu.js": &bintree{staticVendorJqueryUiUiSelectmenuJs, map[string]*bintree{
-					}},
-					"slider.js": &bintree{staticVendorJqueryUiUiSliderJs, map[string]*bintree{
-					}},
-					"sortable.js": &bintree{staticVendorJqueryUiUiSortableJs, map[string]*bintree{
-					}},
-					"spinner.js": &bintree{staticVendorJqueryUiUiSpinnerJs, map[string]*bintree{
-					}},
-					"tabs.js": &bintree{staticVendorJqueryUiUiTabsJs, map[string]*bintree{
-					}},
-					"tooltip.js": &bintree{staticVendorJqueryUiUiTooltipJs, map[string]*bintree{
-					}},
-					"widget.js": &bintree{staticVendorJqueryUiUiWidgetJs, map[string]*bintree{
-					}},
+					"accordion.js": &bintree{staticVendorJqueryUiUiAccordionJs, map[string]*bintree{}},
+					"autocomplete.js": &bintree{staticVendorJqueryUiUiAutocompleteJs, map[string]*bintree{}},
+					"button.js": &bintree{staticVendorJqueryUiUiButtonJs, map[string]*bintree{}},
+					"core.js": &bintree{staticVendorJqueryUiUiCoreJs, map[string]*bintree{}},
+					"datepicker.js": &bintree{staticVendorJqueryUiUiDatepickerJs, map[string]*bintree{}},
+					"dialog.js": &bintree{staticVendorJqueryUiUiDialogJs, map[string]*bintree{}},
+					"draggable.js": &bintree{staticVendorJqueryUiUiDraggableJs, map[string]*bintree{}},
+					"droppable.js": &bintree{staticVendorJqueryUiUiDroppableJs, map[string]*bintree{}},
+					"effect-blind.js": &bintree{staticVendorJqueryUiUiEffectBlindJs, map[string]*bintree{}},
+					"effect-bounce.js": &bintree{staticVendorJqueryUiUiEffectBounceJs, map[string]*bintree{}},
+					"effect-clip.js": &bintree{staticVendorJqueryUiUiEffectClipJs, map[string]*bintree{}},
+					"effect-drop.js": &bintree{staticVendorJqueryUiUiEffectDropJs, map[string]*bintree{}},
+					"effect-explode.js": &bintree{staticVendorJqueryUiUiEffectExplodeJs, map[string]*bintree{}},
+					"effect-fade.js": &bintree{staticVendorJqueryUiUiEffectFadeJs, map[string]*bintree{}},
+					"effect-fold.js": &bintree{staticVendorJqueryUiUiEffectFoldJs, map[string]*bintree{}},
+					"effect-highlight.js": &bintree{staticVendorJqueryUiUiEffectHighlightJs, map[string]*bintree{}},
+					"effect-puff.js": &bintree{staticVendorJqueryUiUiEffectPuffJs, map[string]*bintree{}},
+					"effect-pulsate.js": &bintree{staticVendorJqueryUiUiEffectPulsateJs, map[string]*bintree{}},
+					"effect-scale.js": &bintree{staticVendorJqueryUiUiEffectScaleJs, map[string]*bintree{}},
+					"effect-shake.js": &bintree{staticVendorJqueryUiUiEffectShakeJs, map[string]*bintree{}},
+					"effect-size.js": &bintree{staticVendorJqueryUiUiEffectSizeJs, map[string]*bintree{}},
+					"effect-slide.js": &bintree{staticVendorJqueryUiUiEffectSlideJs, map[string]*bintree{}},
+					"effect-transfer.js": &bintree{staticVendorJqueryUiUiEffectTransferJs, map[string]*bintree{}},
+					"effect.js": &bintree{staticVendorJqueryUiUiEffectJs, map[string]*bintree{}},
+					"menu.js": &bintree{staticVendorJqueryUiUiMenuJs, map[string]*bintree{}},
+					"mouse.js": &bintree{staticVendorJqueryUiUiMouseJs, map[string]*bintree{}},
+					"position.js": &bintree{staticVendorJqueryUiUiPositionJs, map[string]*bintree{}},
+					"progressbar.js": &bintree{staticVendorJqueryUiUiProgressbarJs, map[string]*bintree{}},
+					"resizable.js": &bintree{staticVendorJqueryUiUiResizableJs, map[string]*bintree{}},
+					"selectable.js": &bintree{staticVendorJqueryUiUiSelectableJs, map[string]*bintree{}},
+					"selectmenu.js": &bintree{staticVendorJqueryUiUiSelectmenuJs, map[string]*bintree{}},
+					"slider.js": &bintree{staticVendorJqueryUiUiSliderJs, map[string]*bintree{}},
+					"sortable.js": &bintree{staticVendorJqueryUiUiSortableJs, map[string]*bintree{}},
+					"spinner.js": &bintree{staticVendorJqueryUiUiSpinnerJs, map[string]*bintree{}},
+					"tabs.js": &bintree{staticVendorJqueryUiUiTabsJs, map[string]*bintree{}},
+					"tooltip.js": &bintree{staticVendorJqueryUiUiTooltipJs, map[string]*bintree{}},
+					"widget.js": &bintree{staticVendorJqueryUiUiWidgetJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-validation": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.validate.js": &bintree{staticVendorJqueryValidationDistJqueryValidateJs, map[string]*bintree{
-					}},
+					"jquery.validate.js": &bintree{staticVendorJqueryValidationDistJqueryValidateJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.easing": &bintree{nil, map[string]*bintree{
 				"js": &bintree{nil, map[string]*bintree{
-					"jquery.easing.js": &bintree{staticVendorJqueryEasingJsJqueryEasingJs, map[string]*bintree{
-					}},
+					"jquery.easing.js": &bintree{staticVendorJqueryEasingJsJqueryEasingJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.easy-pie-chart": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.easypiechart.js": &bintree{staticVendorJqueryEasyPieChartDistJqueryEasypiechartJs, map[string]*bintree{
-					}},
+					"jquery.easypiechart.js": &bintree{staticVendorJqueryEasyPieChartDistJqueryEasypiechartJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.inputmask": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.inputmask.bundle.js": &bintree{staticVendorJqueryInputmaskDistJqueryInputmaskBundleJs, map[string]*bintree{
-					}},
+					"jquery.inputmask.bundle.js": &bintree{staticVendorJqueryInputmaskDistJqueryInputmaskBundleJs, map[string]*bintree{}},
 				}},
 			}},
 			"jquery.steps": &bintree{nil, map[string]*bintree{
 				"build": &bintree{nil, map[string]*bintree{
-					"jquery.steps.js": &bintree{staticVendorJqueryStepsBuildJqueryStepsJs, map[string]*bintree{
-					}},
+					"jquery.steps.js": &bintree{staticVendorJqueryStepsBuildJqueryStepsJs, map[string]*bintree{}},
 				}},
 			}},
 			"jqueryui-touch-punch": &bintree{nil, map[string]*bintree{
-				"jquery.ui.touch-punch.min.js": &bintree{staticVendorJqueryuiTouchPunchJqueryUiTouchPunchMinJs, map[string]*bintree{
-				}},
+				"jquery.ui.touch-punch.min.js": &bintree{staticVendorJqueryuiTouchPunchJqueryUiTouchPunchMinJs, map[string]*bintree{}},
 			}},
 			"loaders.css": &bintree{nil, map[string]*bintree{
-				"loaders.css": &bintree{staticVendorLoadersCssLoadersCss, map[string]*bintree{
-				}},
+				"loaders.css": &bintree{staticVendorLoadersCssLoadersCss, map[string]*bintree{}},
 			}},
 			"matchMedia": &bintree{nil, map[string]*bintree{
-				"matchMedia.js": &bintree{staticVendorMatchmediaMatchmediaJs, map[string]*bintree{
-				}},
+				"matchMedia.js": &bintree{staticVendorMatchmediaMatchmediaJs, map[string]*bintree{}},
 			}},
 			"mjolnic-bootstrap-colorpicker": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-colorpicker.css": &bintree{staticVendorMjolnicBootstrapColorpickerDistCssBootstrapColorpickerCss, map[string]*bintree{
-						}},
+						"bootstrap-colorpicker.css": &bintree{staticVendorMjolnicBootstrapColorpickerDistCssBootstrapColorpickerCss, map[string]*bintree{}},
 					}},
 					"img": &bintree{nil, map[string]*bintree{
 						"bootstrap-colorpicker": &bintree{nil, map[string]*bintree{
-							"alpha-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaHorizontalPng, map[string]*bintree{
-							}},
-							"alpha.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaPng, map[string]*bintree{
-							}},
-							"hue-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHueHorizontalPng, map[string]*bintree{
-							}},
-							"hue.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHuePng, map[string]*bintree{
-							}},
-							"saturation.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerSaturationPng, map[string]*bintree{
-							}},
+							"alpha-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaHorizontalPng, map[string]*bintree{}},
+							"alpha.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerAlphaPng, map[string]*bintree{}},
+							"hue-horizontal.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHueHorizontalPng, map[string]*bintree{}},
+							"hue.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerHuePng, map[string]*bintree{}},
+							"saturation.png": &bintree{staticVendorMjolnicBootstrapColorpickerDistImgBootstrapColorpickerSaturationPng, map[string]*bintree{}},
 						}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-colorpicker.js": &bintree{staticVendorMjolnicBootstrapColorpickerDistJsBootstrapColorpickerJs, map[string]*bintree{
-						}},
+						"bootstrap-colorpicker.js": &bintree{staticVendorMjolnicBootstrapColorpickerDistJsBootstrapColorpickerJs, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"modernizr": &bintree{nil, map[string]*bintree{
-				"modernizr.custom.js": &bintree{staticVendorModernizrModernizrCustomJs, map[string]*bintree{
-				}},
+				"modernizr.custom.js": &bintree{staticVendorModernizrModernizrCustomJs, map[string]*bintree{}},
 			}},
 			"moment": &bintree{nil, map[string]*bintree{
 				"min": &bintree{nil, map[string]*bintree{
-					"moment-with-locales.min.js": &bintree{staticVendorMomentMinMomentWithLocalesMinJs, map[string]*bintree{
-					}},
+					"moment-with-locales.min.js": &bintree{staticVendorMomentMinMomentWithLocalesMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"morris.js": &bintree{nil, map[string]*bintree{
-				"morris.css": &bintree{staticVendorMorrisJsMorrisCss, map[string]*bintree{
-				}},
-				"morris.js": &bintree{staticVendorMorrisJsMorrisJs, map[string]*bintree{
-				}},
+				"morris.css": &bintree{staticVendorMorrisJsMorrisCss, map[string]*bintree{}},
+				"morris.js": &bintree{staticVendorMorrisJsMorrisJs, map[string]*bintree{}},
 			}},
 			"nestable": &bintree{nil, map[string]*bintree{
-				"jquery.nestable.js": &bintree{staticVendorNestableJqueryNestableJs, map[string]*bintree{
-				}},
+				"jquery.nestable.js": &bintree{staticVendorNestableJqueryNestableJs, map[string]*bintree{}},
 			}},
 			"parsleyjs": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"parsley.min.js": &bintree{staticVendorParsleyjsDistParsleyMinJs, map[string]*bintree{
-					}},
+					"parsley.min.js": &bintree{staticVendorParsleyjsDistParsleyMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"raphael": &bintree{nil, map[string]*bintree{
-				"raphael.js": &bintree{staticVendorRaphaelRaphaelJs, map[string]*bintree{
-				}},
+				"raphael.js": &bintree{staticVendorRaphaelRaphaelJs, map[string]*bintree{}},
 			}},
 			"rickshaw": &bintree{nil, map[string]*bintree{
-				"rickshaw.js": &bintree{staticVendorRickshawRickshawJs, map[string]*bintree{
-				}},
-				"rickshaw.min.css": &bintree{staticVendorRickshawRickshawMinCss, map[string]*bintree{
-				}},
+				"rickshaw.js": &bintree{staticVendorRickshawRickshawJs, map[string]*bintree{}},
+				"rickshaw.min.css": &bintree{staticVendorRickshawRickshawMinCss, map[string]*bintree{}},
 			}},
 			"screenfull": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"screenfull.js": &bintree{staticVendorScreenfullDistScreenfullJs, map[string]*bintree{
-					}},
+					"screenfull.js": &bintree{staticVendorScreenfullDistScreenfullJs, map[string]*bintree{}},
 				}},
 			}},
 			"seiyria-bootstrap-slider": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"bootstrap-slider.min.js": &bintree{staticVendorSeiyriaBootstrapSliderDistBootstrapSliderMinJs, map[string]*bintree{
-					}},
+					"bootstrap-slider.min.js": &bintree{staticVendorSeiyriaBootstrapSliderDistBootstrapSliderMinJs, map[string]*bintree{}},
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-slider.min.css": &bintree{staticVendorSeiyriaBootstrapSliderDistCssBootstrapSliderMinCss, map[string]*bintree{
-						}},
+						"bootstrap-slider.min.css": &bintree{staticVendorSeiyriaBootstrapSliderDistCssBootstrapSliderMinCss, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"select2": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"select2.css": &bintree{staticVendorSelect2DistCssSelect2Css, map[string]*bintree{
-						}},
+						"select2.css": &bintree{staticVendorSelect2DistCssSelect2Css, map[string]*bintree{}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"select2.js": &bintree{staticVendorSelect2DistJsSelect2Js, map[string]*bintree{
-						}},
+						"select2.js": &bintree{staticVendorSelect2DistJsSelect2Js, map[string]*bintree{}},
 					}},
 				}},
 			}},
 			"select2-bootstrap-theme": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"select2-bootstrap.css": &bintree{staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss, map[string]*bintree{
-					}},
+					"select2-bootstrap.css": &bintree{staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss, map[string]*bintree{}},
 				}},
 			}},
 			"simple-line-icons": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"simple-line-icons.css": &bintree{staticVendorSimpleLineIconsCssSimpleLineIconsCss, map[string]*bintree{
-					}},
+					"simple-line-icons.css": &bintree{staticVendorSimpleLineIconsCssSimpleLineIconsCss, map[string]*bintree{}},
 				}},
 				"fonts": &bintree{nil, map[string]*bintree{
-					"Simple-Line-Icons.eot": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsEot, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.svg": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsSvg, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.ttf": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsTtf, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{
-					}},
-					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{
-					}},
+					"Simple-Line-Icons.eot": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsEot, map[string]*bintree{}},
+					"Simple-Line-Icons.svg": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsSvg, map[string]*bintree{}},
+					"Simple-Line-Icons.ttf": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsTtf, map[string]*bintree{}},
+					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{}},
+					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{}},
 				}},
 			}},
 			"skycons": &bintree{nil, map[string]*bintree{
-				"skycons.js": &bintree{staticVendorSkyconsSkyconsJs, map[string]*bintree{
-				}},
+				"skycons.js": &bintree{staticVendorSkyconsSkyconsJs, map[string]*bintree{}},
 			}},
 			"slimScroll": &bintree{nil, map[string]*bintree{
-				"jquery.slimscroll.min.js": &bintree{staticVendorSlimscrollJquerySlimscrollMinJs, map[string]*bintree{
-				}},
+				"jquery.slimscroll.min.js": &bintree{staticVendorSlimscrollJquerySlimscrollMinJs, map[string]*bintree{}},
 			}},
 			"sparkline": &bintree{nil, map[string]*bintree{
-				"index.js": &bintree{staticVendorSparklineIndexJs, map[string]*bintree{
-				}},
+				"index.js": &bintree{staticVendorSparklineIndexJs, map[string]*bintree{}},
 			}},
 			"spinkit": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"spinkit.css": &bintree{staticVendorSpinkitCssSpinkitCss, map[string]*bintree{
-					}},
+					"spinkit.css": &bintree{staticVendorSpinkitCssSpinkitCss, map[string]*bintree{}},
 				}},
 			}},
 			"sweetalert": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"sweetalert.css": &bintree{staticVendorSweetalertDistSweetalertCss, map[string]*bintree{
-					}},
-					"sweetalert.min.js": &bintree{staticVendorSweetalertDistSweetalertMinJs, map[string]*bintree{
-					}},
+					"sweetalert.css": &bintree{staticVendorSweetalertDistSweetalertCss, map[string]*bintree{}},
+					"sweetalert.min.js": &bintree{staticVendorSweetalertDistSweetalertMinJs, map[string]*bintree{}},
 				}},
 			}},
 			"weather-icons": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"weather-icons-wind.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsWindMinCss, map[string]*bintree{
-					}},
-					"weather-icons.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsMinCss, map[string]*bintree{
-					}},
+					"weather-icons-wind.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsWindMinCss, map[string]*bintree{}},
+					"weather-icons.min.css": &bintree{staticVendorWeatherIconsCssWeatherIconsMinCss, map[string]*bintree{}},
 				}},
 				"font": &bintree{nil, map[string]*bintree{
-					"weathericons-regular-webfont.eot": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontEot, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.svg": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontSvg, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.ttf": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontTtf, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.woff": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff, map[string]*bintree{
-					}},
-					"weathericons-regular-webfont.woff2": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff2, map[string]*bintree{
-					}},
+					"weathericons-regular-webfont.eot": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontEot, map[string]*bintree{}},
+					"weathericons-regular-webfont.svg": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontSvg, map[string]*bintree{}},
+					"weathericons-regular-webfont.ttf": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontTtf, map[string]*bintree{}},
+					"weathericons-regular-webfont.woff": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff, map[string]*bintree{}},
+					"weathericons-regular-webfont.woff2": &bintree{staticVendorWeatherIconsFontWeathericonsRegularWebfontWoff2, map[string]*bintree{}},
 				}},
 			}},
 			"whirl": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"whirl.css": &bintree{staticVendorWhirlDistWhirlCss, map[string]*bintree{
-					}},
+					"whirl.css": &bintree{staticVendorWhirlDistWhirlCss, map[string]*bintree{}},
 				}},
 			}},
 			"x-editable": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"bootstrap3-editable": &bintree{nil, map[string]*bintree{
 						"css": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.css": &bintree{staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss, map[string]*bintree{
-							}},
+							"bootstrap-editable.css": &bintree{staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss, map[string]*bintree{}},
 						}},
 						"img": &bintree{nil, map[string]*bintree{
-							"clear.png": &bintree{staticVendorXEditableDistBootstrap3EditableImgClearPng, map[string]*bintree{
-							}},
-							"loading.gif": &bintree{staticVendorXEditableDistBootstrap3EditableImgLoadingGif, map[string]*bintree{
-							}},
+							"clear.png": &bintree{staticVendorXEditableDistBootstrap3EditableImgClearPng, map[string]*bintree{}},
+							"loading.gif": &bintree{staticVendorXEditableDistBootstrap3EditableImgLoadingGif, map[string]*bintree{}},
 						}},
 						"js": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableJs, map[string]*bintree{
-							}},
-							"bootstrap-editable.min.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs, map[string]*bintree{
-							}},
+							"bootstrap-editable.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableJs, map[string]*bintree{}},
+							"bootstrap-editable.min.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs, map[string]*bintree{}},
 						}},
 					}},
 				}},
@@ -7082,48 +7811,48 @@ var _bintree = &bintree{nil, map[string]*bintree{
 
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
-        data, err := Asset(name)
-        if err != nil {
-                return err
-        }
-        info, err := AssetInfo(name)
-        if err != nil {
-                return err
-        }
-        err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
-        if err != nil {
-                return err
-        }
-        err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
-        if err != nil {
-                return err
-        }
-        err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
-        if err != nil {
-                return err
-        }
-        return nil
+	data, err := Asset(name)
+	if err != nil {
+		return err
+	}
+	info, err := AssetInfo(name)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
+	if err != nil {
+		return err
+	}
+	err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // RestoreAssets restores an asset under the given directory recursively
 func RestoreAssets(dir, name string) error {
-        children, err := AssetDir(name)
-        // File
-        if err != nil {
-                return RestoreAsset(dir, name)
-        }
-        // Dir
-        for _, child := range children {
-                err = RestoreAssets(dir, filepath.Join(name, child))
-                if err != nil {
-                        return err
-                }
-        }
-        return nil
+	children, err := AssetDir(name)
+	// File
+	if err != nil {
+		return RestoreAsset(dir, name)
+	}
+	// Dir
+	for _, child := range children {
+		err = RestoreAssets(dir, filepath.Join(name, child))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func _filePath(dir, name string) string {
-        cannonicalName := strings.Replace(name, "\\", "/", -1)
-        return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
+	cannonicalName := strings.Replace(name, "\\", "/", -1)
+	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
 

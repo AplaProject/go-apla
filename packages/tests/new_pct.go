@@ -14,7 +14,7 @@ import (
 	//"github.com/DayLightProject/go-daylight/packages/daemons"
 //	"strconv"
 	//"errors"
-	"github.com/DayLightProject/go-daylight/packages/dcparser"
+	"github.com/DayLightProject/go-daylight/packages/parser"
 	"log"
 	"os"
 	//"github.com/alyu/configparser"
@@ -77,7 +77,7 @@ func main() {
 	}
 	configIni, err := configIni_.GetSection("default")
 	db := utils.DbConnect(configIni)
-	parser := new(dcparser.Parser)
+	parser := new(parser.Parser)
 	parser.DCDB = db
 	parser.TxSlice = txSlice;
 	parser.BlockData = blockData;
@@ -85,7 +85,7 @@ func main() {
 	// делаем снимок БД в виде хэшей до начала тестов
 	hashesStart, err := parser.AllHashes()
 
-	err = dcparser.MakeTest(parser, txType, hashesStart);
+	err = parser.MakeTest(parser, txType, hashesStart);
 	if err != nil {
 		fmt.Println(err)
 	}

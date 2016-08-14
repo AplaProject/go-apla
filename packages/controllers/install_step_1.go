@@ -21,7 +21,6 @@ func (c *Controller) InstallStep1() (string, error) {
 	installType := c.r.FormValue("type")
 	url := c.r.FormValue("url")
 	setupPassword := c.r.FormValue("setup_password")
-	userId := utils.StrToInt64(c.r.FormValue("user_id"))
 	firstLoad := c.r.FormValue("first_load")
 	dbType := c.r.FormValue("db_type")
 	dbHost := c.r.FormValue("host")
@@ -30,7 +29,6 @@ func (c *Controller) InstallStep1() (string, error) {
 	dbUsername := c.r.FormValue("username")
 	dbPassword := c.r.FormValue("password")
 	sqliteDbUrl := c.r.FormValue("sqlite_db_url")
-	keyPassword := c.r.FormValue("key_password")
 
 	if installType == "standard" {
 		dbType = "sqlite"
@@ -135,14 +133,6 @@ func (c *Controller) InstallStep1() (string, error) {
 
 		}
 
-		//if len(userId)>0 {
-		err = c.DCDB.ExecSql("INSERT INTO my_table (user_id, key_password) VALUES (?, ?)", userId, keyPassword)
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-//			panic(err)
-			//os.Exit(1)
-		}
-		//}
 		log.Debug("setupPassword: (%s) / (%s)", setupPassword, utils.DSha256(setupPassword))
 		if len(setupPassword) > 0 {
 			setupPassword = string(utils.DSha256(setupPassword))
@@ -162,12 +152,26 @@ func (c *Controller) InstallStep1() (string, error) {
 		}
 
 		schema.Migration()
-/*		err = c.DCDB.ExecSql(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, consts.VERSION, utils.Time())
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-		}*/
 
-	}()
+		// если есть значит это тестовый запуск с генерацией 1block
+		if _, err := os.Stat(*utils.Dir + "/NodePrivateKey"); err == nil {
+
+			NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
+			err = c.DCDB.ExecSql(`INSERT INTO my_node_keys (private_key) VALUES (?)`, NodePrivateKey)
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				panic(err)
+				os.Exit(1)
+			}
+			err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, 1)
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				panic(err)
+				os.Exit(1)
+			}
+		}
+	} ()
+
 
 	utils.Sleep(3) // даем время обновиться config.ini, чтобы в content выдался не installStep0, а updatingBlockchain
 	TemplateStr, err := makeTemplate("install_step_1", "installStep1", &installStep1Struct{

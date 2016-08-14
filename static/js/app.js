@@ -963,51 +963,6 @@
 
 })(window, document, window.jQuery);
 
-// CLASSYLOADER
-// ----------------------------------- 
-
-(function(window, document, $, undefined){
-
-  $(function(){
-
-    var $scroller       = $(window),
-        inViewFlagClass = 'js-is-in-view'; // a classname to detect when a chart has been triggered after scroll
-
-    $('[data-classyloader]').each(initClassyLoader);
-    
-    function initClassyLoader() {
-    
-      var $element = $(this),
-          options  = $element.data();
-      
-      // At lease we need a data-percentage attribute
-      if(options) {
-        if( options.triggerInView ) {
-
-          $scroller.scroll(function() {
-            checkLoaderInVIew($element, options);
-          });
-          // if the element starts already in view
-          checkLoaderInVIew($element, options);
-        }
-        else
-          startLoader($element, options);
-      }
-    }
-    function checkLoaderInVIew(element, options) {
-      var offset = -20;
-      if( ! element.hasClass(inViewFlagClass) &&
-          $.Utils.isInView(element, {topoffset: offset}) ) {
-        startLoader(element, options);
-      }
-    }
-    function startLoader(element, options) {
-      element.ClassyLoader(options).addClass(inViewFlagClass);
-    }
-
-  });
-
-})(window, document, window.jQuery);
 
 /**=========================================================
  * Module: clear-storage.js
@@ -1176,90 +1131,6 @@
   });
 
 })(window, document, window.jQuery);
-
-/**=========================================================
- * Module: gmap.js
- * Init Google Map plugin
- =========================================================*/
-
-(function($, window, document){
-  'use strict';
-
-  // -------------------------
-  // Map Style definition
-  // -------------------------
-
-  // Custom core styles
-  // Get more styles from http://snazzymaps.com/style/29/light-monochrome
-  // - Just replace and assign to 'MapStyles' the new style array
-  var MapStyles = [{featureType:'water',stylers:[{visibility:'on'},{color:'#bdd1f9'}]},{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#334165'}]},{featureType:'landscape',stylers:[{color:'#e9ebf1'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#c5c6c6'}]},{featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#fff'}]},{featureType:'road.local',elementType:'geometry',stylers:[{color:'#fff'}]},{featureType:'transit',elementType:'geometry',stylers:[{color:'#d8dbe0'}]},{featureType:'poi',elementType:'geometry',stylers:[{color:'#cfd5e0'}]},{featureType:'administrative',stylers:[{visibility:'on'},{lightness:33}]},{featureType:'poi.park',elementType:'labels',stylers:[{visibility:'on'},{lightness:20}]},{featureType:'road',stylers:[{color:'#d8dbe0',lightness:20}]}];
-
-
-  // -------------------------
-  // Custom Script
-  // -------------------------
-
-  var mapSelector = '[data-gmap]';
-
-  if($.fn.gMap) {
-      var gMapRefs = [];
-      
-      $(mapSelector).each(function(){
-          
-          var $this   = $(this),
-              addresses = $this.data('address') && $this.data('address').split(';'),
-              titles    = $this.data('title') && $this.data('title').split(';'),
-              zoom      = $this.data('zoom') || 14,
-              maptype   = $this.data('maptype') || 'ROADMAP', // or 'TERRAIN'
-              markers   = [];
-
-          if(addresses) {
-            for(var a in addresses)  {
-                if(typeof addresses[a] == 'string') {
-                    markers.push({
-                        address:  addresses[a],
-                        html:     (titles && titles[a]) || '',
-                        popup:    true   /* Always popup */
-                      });
-                }
-            }
-
-            var options = {
-                controls: {
-                       panControl:         true,
-                       zoomControl:        true,
-                       mapTypeControl:     true,
-                       scaleControl:       true,
-                       streetViewControl:  true,
-                       overviewMapControl: true
-                   },
-                scrollwheel: false,
-                maptype: maptype,
-                markers: markers,
-                zoom: zoom
-                // More options https://github.com/marioestrada/jQuery-gMap
-            };
-
-            var gMap = $this.gMap(options);
-
-            var ref = gMap.data('gMap.reference');
-            // save in the map references list
-            gMapRefs.push(ref);
-
-            // set the styles
-            if($this.data('styled') !== undefined) {
-              
-              ref.setOptions({
-                styles: MapStyles
-              });
-
-            }
-          }
-
-      }); //each
-  }
-
-}(jQuery, window, document));
 
 /**=========================================================
  * Module: Image Cropper
@@ -2039,30 +1910,6 @@
 
 }(jQuery, window, document));
 
-// NOW TIMER
-// ----------------------------------- 
-
-(function(window, document, $, undefined){
-
-  $(function(){
-
-    $('[data-now]').each(function(){
-      var element = $(this),
-          format = element.data('format');
-
-      function updateTime() {
-        var dt = moment( new Date() ).format(format);
-        element.text(dt);
-      }
-
-      updateTime();
-      setInterval(updateTime, 1000);
-    
-    });
-  });
-
-})(window, document, window.jQuery);
-
 /**=========================================================
  * Module: panel-tools.js
  * Dismiss panels
@@ -2730,55 +2577,6 @@
       skycons.play();
     });
 
-  });
-
-})(window, document, window.jQuery);
-// SLIMSCROLL
-// ----------------------------------- 
-
-(function(window, document, $, undefined){
-
-  $(function(){
-
-    $('[data-scrollable]').each(function(){
-
-      var element = $(this),
-          defaultHeight = 250;
-      
-      element.slimScroll({
-          height: (element.data('height') || defaultHeight)
-      });
-      
-    });
-  });
-
-})(window, document, window.jQuery);
-
-// SPARKLINE
-// ----------------------------------- 
-
-(function(window, document, $, undefined){
-
-  $(function(){
-
-    $('[data-sparkline]').each(initSparkLine);
-
-    function initSparkLine() {
-      var $element = $(this),
-          options = $element.data(),
-          values  = options.values && options.values.split(',');
-
-      options.type = options.type || 'bar'; // default chart is bar
-      options.disableHiddenCheck = true;
-
-      $element.sparkline(values, options);
-
-      if(options.resize) {
-        $(window).resize(function(){
-          $element.sparkline(values, options);
-        });
-      }
-    }
   });
 
 })(window, document, window.jQuery);

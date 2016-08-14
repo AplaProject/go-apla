@@ -1,7 +1,7 @@
 
 //window.onresize = doLayout;
 
-var def_pool = 'http://pool2.dcoin.club';
+var def_pool = 'http://pool2.daylight.world';
 
 onload = function() {
      chrome.storage.local.get('pool',function( obj ) {
@@ -113,7 +113,7 @@ function doLayout() {
 				var e_n_sign = get_e_n_sign($("#change_pkey_private_key").val(), $("#change_pkey_password").val(), '', 'change_pkey_alert');
 				if ( e_n_sign['modulus'] != '' || e_n_sign['exp']!='' ) {
 					var public_key = make_public_key(e_n_sign['modulus'], e_n_sign['exp']);
-					$.post( 'http://getpool.dcoin.club/', {
+					$.post( 'http://getpool.daylight.world/', {
 						'public_key' : public_key
 					}, function(data) {
 						answer = JSON.parse( data );
