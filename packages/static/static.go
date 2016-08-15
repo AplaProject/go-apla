@@ -28,6 +28,7 @@
 // static/company_select_transport.html
 // static/company_shares.html
 // static/company_shares_exchange.html
+// static/company_smart_contracts.html
 // static/css/app.css
 // static/css/bootstrap.css
 // static/css/style.css
@@ -882,6 +883,24 @@ func staticCompany_sharesHtml() (*asset, error) {
 func staticCompany_shares_exchangeHtml() (*asset, error) {
 	path := "static/company_shares_exchange.html"
 	name := "static/company_shares_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCompany_smart_contractsHtml reads file data from disk. It returns an error on failure.
+func staticCompany_smart_contractsHtml() (*asset, error) {
+	path := "static/company_smart_contracts.html"
+	name := "static/company_smart_contracts.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7060,6 +7079,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/company_select_transport.html": staticCompany_select_transportHtml,
 	"static/company_shares.html": staticCompany_sharesHtml,
 	"static/company_shares_exchange.html": staticCompany_shares_exchangeHtml,
+	"static/company_smart_contracts.html": staticCompany_smart_contractsHtml,
 	"static/css/app.css": staticCssAppCss,
 	"static/css/bootstrap.css": staticCssBootstrapCss,
 	"static/css/style.css": staticCssStyleCss,
@@ -7469,6 +7489,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"company_select_transport.html": &bintree{staticCompany_select_transportHtml, map[string]*bintree{}},
 		"company_shares.html": &bintree{staticCompany_sharesHtml, map[string]*bintree{}},
 		"company_shares_exchange.html": &bintree{staticCompany_shares_exchangeHtml, map[string]*bintree{}},
+		"company_smart_contracts.html": &bintree{staticCompany_smart_contractsHtml, map[string]*bintree{}},
 		"css": &bintree{nil, map[string]*bintree{
 			"app.css": &bintree{staticCssAppCss, map[string]*bintree{}},
 			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{}},
