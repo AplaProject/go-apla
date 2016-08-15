@@ -59,7 +59,6 @@ type BlockData struct {
 	CurrentUserId int64
 	Sign          []byte
 	Hash          []byte
-	HeadHash      []byte
 }
 
 type prevBlockType struct {
