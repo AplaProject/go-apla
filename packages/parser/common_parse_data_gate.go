@@ -59,7 +59,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// время транзакции может быть немного больше, чем время на ноде.
 		// у нода может быть просто не настроено время.
 		// время транзакции используется только для борьбы с атаками вчерашними транзакциями.
-		// А т.к. мы храним хэши в log_transaction за 36 часов, то боятся нечего.
+		// А т.к. мы храним хэши в rb_transaction за 36 часов, то боятся нечего.
 
 		// Time of transaction can be slightly longer than time of a node.
 		// A node can use wrong time

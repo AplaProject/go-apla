@@ -46,7 +46,6 @@ type Controller struct {
 	SessWalletId     int64
 	MyNotice         map[string]string
 	Parameters       map[string]string
-	Variables        *utils.Variables
 	CountSign        int
 	CountSignArr     []int
 	TimeFormat       string
@@ -263,20 +262,6 @@ func GetSessPublicKey(sess session.SessionStore) string {
 	return ""
 }
 
-// ключ в сессии хранится до того момента, пока юзер его не сменит
-// т.е. ключ там лежит до тех пор, пока юзер играется и еще не начал пользоваться Dcoin-ом
-func GetSessPrivateKey(w http.ResponseWriter, r *http.Request) string {
-	sess, _ := globalSessions.SessionStart(w, r)
-	defer sess.SessionRelease(w)
-	sessPrivateKey := sess.Get("private_key")
-	switch sessPrivateKey.(type) {
-	default:
-		return ""
-	case string:
-		return sessPrivateKey.(string)
-	}
-	return ""
-}
 
 func SetLang(w http.ResponseWriter, r *http.Request, lang int) {
 	expiration := time.Now().Add(365 * 24 * time.Hour)

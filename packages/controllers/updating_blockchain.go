@@ -7,8 +7,6 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"html/template"
 	"math"
-	"net/http"
-	"runtime"
 	"strings"
 )
 
@@ -60,39 +58,12 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 			blockId = LastBlockData["blockId"]
 		}
 
-		// для сингл-мода, кнопка включения и выключения демонов
-		if !c.Community {
-			lockName, err := c.DCDB.GetMainLockName()
-			if err != nil {
-				return "", utils.ErrInfo(err)
-			}
-			if lockName == "main_lock" {
-				startDaemons = `<a href="#" id="start_daemons" style="color:#C90600">Start daemons</a>`
-			}
-			// инфа о синхронизации часов
-			switch runtime.GOOS {
-			case "linux":
-				checkTime = c.Lang["check_time_nix"]
-			case "windows":
-				checkTime = c.Lang["check_time_win"]
-			case "darwin":
-				checkTime = c.Lang["check_time_mac"]
-			default:
-				checkTime = c.Lang["check_time_nix"]
-			}
-			checkTime = c.Lang["check_time"] + checkTime
-			mainLock, err := c.Single(`SELECT lock_time from main_lock`).Int64()
-			if (mainLock > 0 && utils.Time()-300 > mainLock) {
-				restartDb = true
-			}
-		}
-
 		nodeConfig, err := c.GetNodeConfig()
 		blockchain_url := nodeConfig["first_load_blockchain_url"]
 		if len(blockchain_url) == 0 {
 			blockchain_url = consts.BLOCKCHAIN_URL
 		}
-		resp, err := http.Get(blockchain_url)
+		/*resp, err := http.Get(blockchain_url)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -100,7 +71,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		if blockChainSize == 0 {
 			blockChainSize = consts.BLOCKCHAIN_SIZE
 		}
-		defer resp.Body.Close()
+		defer resp.Body.Close()*/
 
 		blockMeter = int64(utils.Round(float64((blockId/consts.LAST_BLOCK)*100), 0))
 		if blockMeter > 0 {

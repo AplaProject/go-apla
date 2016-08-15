@@ -32,7 +32,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	defer sess.SessionRelease(w)
 	sessWalletId := GetSessWalletId(sess)
 	sessCitizenId := GetSessCitizenId(sess)
-	log.Debug("sessUserId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
+	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
 
 	c := new(Controller)
 	c.r = r
@@ -82,7 +82,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			log.Error("%v", err)
 		}
 
-		c.Variables, err = c.GetAllVariables()
 
 		// Инфа о последнем блоке
 		blockData, err := c.DCDB.GetLastBlockData()
@@ -93,11 +92,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-		currencyList, err := c.GetCurrencyList(false)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		c.CurrencyList = currencyList
 
 		confirmedBlockId, err := c.GetConfirmedBlockId()
 		if err != nil {

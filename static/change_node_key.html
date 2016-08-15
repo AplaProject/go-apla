@@ -1,0 +1,69 @@
+{{define "changeNodeKey"}}
+<script>
+
+	var interval;
+	var serverTime;
+
+	clearInterval(interval);
+
+
+	$('#generate_change_node_key').bind('click', function () {
+
+		$.post( 'ajax?controllerName=generateNewNodeKey', function (keys) {
+
+			$.get( 'ajax?controllerName=GetServerTime', function (data) {
+				serverTime = data.time;
+				$("#generate").css("display", "none");
+				$("#sign").css("display", "block");
+				$("#public_key").val( keys.public_key );
+				$("#private_key").val( keys.private_key );
+				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},{{.CitizenId}},'+$("#public_key").val() );
+				doSign();
+				$("#send_to_net").trigger("click");
+
+			}, "json" );
+
+		}, 'json' );
+
+	});
+
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+				'walletId' : '{{.WalletId}}',
+				'citizenId' : '{{.CitizenId}}',
+				'publicKey' : $('#public_key').val(),
+				'privateKey' : $('#private_key').val(),
+				'n' : e_n_sign['modulus'],
+				'e': e_n_sign['exp'],
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) { send_to_net_success(data) },
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );
+
+</script>
+
+<h1 class="page-header">{{.Lang.change_node_key_title}}</h1>
+{{template "alertSuccess".}}
+
+<div id="generate">
+	<button class="btn btn-danger" type="button" id="generate_change_node_key">{{.Lang.generate_new_node_key}}</button>
+</div>
+
+{{template "signatures".}}
+
+<input type="hidden" id="public_key">
+<input type="hidden" id="private_key">
+{{end}}

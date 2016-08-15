@@ -66,25 +66,25 @@ func AllHashes(db *utils.DCDB) (map[string]string, error) {
 	for _, table := range tables {
 		orderByFns := func(table string) string {
 			// ошибки не проверяются т.к. некритичны
-			match, _ := regexp.MatchString("^(log_forex_orders|log_forex_orders_main|cf_comments|cf_currency|cf_funding|cf_lang|cf_projects|cf_projects_data)$", table)
+			match, _ := regexp.MatchString("^(rb_forex_orders|rb_forex_orders_main|cf_comments|cf_currency|cf_funding|cf_lang|cf_projects|cf_projects_data)$", table)
 			if match {
 				return "id"
 			}
-			match, _ = regexp.MatchString("^log_time_(.*)$", table)
-			if match && table != "log_time_money_orders" {
+			match, _ = regexp.MatchString("^rb_time_(.*)$", table)
+			if match && table != "rb_time_money_orders" {
 				return "user_id, time"
 			}
-			match, _ = regexp.MatchString("^log_transactions$", table)
+			match, _ = regexp.MatchString("^rb_transactions$", table)
 			if match {
 				return "time"
 			}
-			match, _ = regexp.MatchString("^log_votes$", table)
+			match, _ = regexp.MatchString("^rb_votes$", table)
 			if match {
 				return "user_id, voting_id"
 			}
-			match, _ = regexp.MatchString("^log_(.*)$", table)
-			if match && table != "log_time_money_orders" && table != "log_minute" {
-				return "log_id"
+			match, _ = regexp.MatchString("^rb_(.*)$", table)
+			if match && table != "rb_time_money_orders" && table != "rb_minute" {
+				return "rb_id"
 			}
 			match, _ = regexp.MatchString("^wallets$", table)
 			if match {
