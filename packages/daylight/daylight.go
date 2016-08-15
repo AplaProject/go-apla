@@ -88,7 +88,13 @@ func firstBlock() {
 		block = append(block, utils.DecToBin(0, 1)...) // cb_id
 		block = append(block, utils.EncodeLengthPlusData(tx)...)
 
-		ioutil.WriteFile("static/1block", block, 0644)
+		static := filepath.Join(*utils.Dir, "static")
+		if _, err := os.Stat(static); os.IsNotExist(err) {
+			if err = os.Mkdir(static, 0755); err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+			} 
+		}
+		ioutil.WriteFile( filepath.Join( static, "1block"), block, 0644)
 		os.Exit(0)
 	}
 
