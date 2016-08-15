@@ -25,6 +25,38 @@
 		
 		$("#prev, .step").hide();
 		$(".step:first").show();
+		$(".s").on('click', function () {
+			var el = $(this);
+			if (!el.hasClass("disabled")) {
+				var id = el.find("a").attr("href").substr(1);
+				$(".steps li").removeClass("current");
+				el.addClass("current");
+				el.nextAll(".s").addClass("disabled");
+				$(".step").hide();
+				$("#" + id).show();
+				$("#next").html("Next");
+				if (!el.prev().hasClass("s")) {
+					$("#prev").hide();
+				}
+			}
+		});
+		$("#prev").on('click', function () {
+			var el = $(".steps .current");
+			if (el.prev().hasClass("s")) {
+				var id = el.prev().find("a").attr("href").substr(1);
+				$(".steps li").removeClass("current");
+				el.prev().addClass("current");
+				el.addClass("disabled");
+				$(".step").hide();
+				$("#" + id).show();
+			}
+			if (!el.prev().prev().hasClass("s")) {
+				$("#prev").hide();
+			}
+			if ($("#next").html() == "Add") {
+				$("#next").html("Next");
+			}
+		});
 		$("#next").on('click', function () {
 			var el = $(".steps .current");
 			if (el.next().hasClass("s")) {
