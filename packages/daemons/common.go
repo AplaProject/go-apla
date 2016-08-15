@@ -103,26 +103,6 @@ func (d *daemon) unlockPrintSleepInfo(err error, sleep int) bool {
 	return false
 }
 
-func (d *daemon) notMinerSetSleepTime(sleep int) error {
-	community, err := d.GetCommunityUsers()
-	if err != nil {
-		return err
-	}
-	logger.Debug("community", community)
-	if len(community) == 0 {
-		userId, err := d.GetMyUserId("")
-		if err != nil {
-			return err
-		}
-		minerId, err := d.GetMinerId(userId)
-		if minerId == 0 {
-			d.sleepTime = sleep
-		}
-		logger.Debug("minerId", minerId)
-	}
-	return nil
-}
-
 func ConfigInit() {
 	// мониторим config.ini на наличие изменений
 	go func() {
@@ -182,7 +162,7 @@ func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) 
 
 func StartDaemons() {
 	utils.DaemonsChans = nil
-	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks,   "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection}
+	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks,   "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection, "UpdFullNodes": UpdFullNodes}
 	if utils.Mobile() {
 		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"QueueParserTx": QueueParserTx, "Disseminator": Disseminator, "Confirmations": Confirmations,"BlocksCollection": BlocksCollection}
 	}

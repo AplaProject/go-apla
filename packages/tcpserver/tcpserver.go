@@ -23,7 +23,6 @@ func init() {
 type TcpServer struct {
 	*utils.DCDB
 	Conn      net.Conn
-	variables *utils.Variables
 }
 
 func (t *TcpServer) deferClose() {
@@ -70,26 +69,12 @@ func (t *TcpServer) HandleTcpRequest() {
 		t.Type1()
 	case 2:
 		t.Type2()
-	case 3:
-		t.Type3()
 	case 4:
 		t.Type4()
-	case 5:
-		t.Type5()
-	case 6:
-		t.Type6()
 	case 7:
 		t.Type7()
-	case 8:
-		t.Type8()
-	case 9:
-		t.Type9()
 	case 10:
 		t.Type10()
-	case 11:
-		t.Type11()
-	case 12:
-		t.Type12()
 	}
 	log.Debug("END")
 }

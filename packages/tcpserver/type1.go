@@ -6,6 +6,10 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
+/*
+ * от disseminator
+ */
+
 func (t *TcpServer) Type1() {
 	log.Debug("dataType: 1")
 	// размер данных
@@ -45,7 +49,6 @@ func (t *TcpServer) Type1() {
 		 * {если type==0}:
 		 * block_id - 3 байта
 		 * hash - 32 байт
-		 * head_hash - 32 байт
 		 * <любое кол-во следующих наборов>
 		 * high_rate - 1 байт
 		 * tx_hash - 16 байт
@@ -107,6 +110,9 @@ func (t *TcpServer) Type1() {
 			return
 		}
 		for {
+			if len(binaryData) == 0 { // если пришли сюда из continue, то binaryData может уже быть пустым
+				break
+			}
 			newDataTxHash := utils.BinToHex(utils.BytesShift(&binaryData, 16))
 			if len(newDataTxHash) == 0 {
 				log.Error("%v", utils.ErrInfo(err))
@@ -114,7 +120,7 @@ func (t *TcpServer) Type1() {
 			}
 			log.Debug("newDataTxHash %s", newDataTxHash)
 			// проверим, нет ли у нас такой тр-ии
-			exists, err := t.Single("SELECT count(hash) FROM log_transactions WHERE hex(hash) = ?", newDataTxHash).Int64()
+			exists, err := t.Single("SELECT count(hash) FROM rb_transactions WHERE hex(hash) = ?", newDataTxHash).Int64()
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				return

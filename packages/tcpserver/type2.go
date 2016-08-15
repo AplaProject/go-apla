@@ -6,7 +6,9 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
-
+/*
+ * от disseminator
+ */
 
 func (t *TcpServer) Type2() {
 	// размер данных
@@ -18,7 +20,7 @@ func (t *TcpServer) Type2() {
 	}
 	size := utils.BinToDec(buf)
 	log.Debug("size: %d", size)
-	if size < 10485760 {
+	if size < consts.MAX_TX_SIZE {
 		// сами данные
 		binaryData := make([]byte, size)
 		//binaryData, err = ioutil.ReadAll(t.Conn)
@@ -46,30 +48,13 @@ func (t *TcpServer) Type2() {
 			return
 		}
 		decryptedBinDataFull := decryptedBinData
-		txType := utils.BytesShift(&decryptedBinData, 1) // type
-		txTime := utils.BytesShift(&decryptedBinData, 4) // time
-		log.Debug("txType: %d", utils.BinToDec(txType))
-		log.Debug("txTime: %d", utils.BinToDec(txTime))
-		size := utils.DecodeLength(&decryptedBinData)
-		log.Debug("size: %d", size)
-		if int64(len(decryptedBinData)) < size {
-			log.Debug("%v", utils.ErrInfo("len(binaryData) < size"))
-			return
-		}
-		userId := utils.BytesToInt64(utils.BytesShift(&decryptedBinData, size))
-		log.Debug("userId: %d", userId)
-		highRate := 0
-		if userId == 1 {
-			highRate = 1
-		}
-		// заливаем тр-ию в БД
 		err = t.ExecSql(`DELETE FROM queue_tx WHERE hex(hash) = ?`, utils.Md5(decryptedBinDataFull))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return
 		}
-		log.Debug("INSERT INTO queue_tx (hash, high_rate, data) (%s, %d, %s)", utils.Md5(decryptedBinDataFull), highRate, utils.BinToHex(decryptedBinDataFull))
-		err = t.ExecSql(`INSERT INTO queue_tx (hash, high_rate, data) VALUES ([hex], ?, [hex])`, utils.Md5(decryptedBinDataFull), highRate, utils.BinToHex(decryptedBinDataFull))
+		log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", utils.Md5(decryptedBinDataFull), utils.BinToHex(decryptedBinDataFull))
+		err = t.ExecSql(`INSERT INTO queue_tx (hash, data) VALUES ([hex], ?, [hex])`, utils.Md5(decryptedBinDataFull), utils.BinToHex(decryptedBinDataFull))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return

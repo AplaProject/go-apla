@@ -4,10 +4,12 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
+/* Выдаем тело указанного блока
+ * запрос шлет демон blocksCollection и queue_parser_blocks через p.GetBlocks()
+ */
+
 func (t *TcpServer) Type7() {
-	/* Выдаем тело указанного блока
-	 * запрос шлет демон blocksCollection и queue_parser_blocks через p.GetBlocks()
-	 */
+
 	buf := make([]byte, 4)
 	_, err := t.Conn.Read(buf)
 	if err != nil {
@@ -21,7 +23,7 @@ func (t *TcpServer) Type7() {
 		return
 	}
 
-	log.Debug("blockId %x", blockId)
+	log.Debug("blockId %d", blockId)
 	log.Debug("block %x", block)
 	err = utils.WriteSizeAndData(block, t.Conn)
 	if err != nil {
