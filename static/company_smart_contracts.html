@@ -1,6 +1,6 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".company, .company_new_item").addClass("active");
+	$(".company").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
 	
@@ -17,6 +17,7 @@
    <li><a href="#dashboard_company">Dashboard</a></li>
    <li class="active">Smart-contracts</li>
 </ol>
+<h4 class="page-header">Add Smart-contract</h4>
 <!-- START panel-->
 <div class="panel panel-default">
  <div class="panel-body">
