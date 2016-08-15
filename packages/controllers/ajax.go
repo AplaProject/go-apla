@@ -70,11 +70,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			log.Error("%v", err)
 		}
 		c.NodeConfig = config
-		// валюты
-		c.CurrencyList, err = c.GetCurrencyList(false)
-		if err != nil {
-			log.Error("%v", err)
-		}
+
 	}
 
 	r.ParseForm()

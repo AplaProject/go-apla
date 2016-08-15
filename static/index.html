@@ -57,7 +57,35 @@
 	<script language="JavaScript" type="text/javascript" src="static/js/asn1hex-1.1.min.js"></script>
 	<script language="JavaScript" type="text/javascript" src="static/js/send_to_net.js"></script>
 
-
+	<style>
+		.btn-demo {
+			display:block;
+			width:164px;
+			padding-left:0px;
+			padding-right:0px;
+			margin-left:24px;
+		}
+		.aside-collapsed .btn-demo {
+			width:50px;
+			margin-left:6px;
+		}
+		.btn-demo em {
+			position:relative;
+			top:-1px;
+			display:inline-block;
+			font-style:normal;
+			padding-left:10px;
+		}
+		.aside-collapsed .btn-demo em {
+			display:none;
+		}
+		.btn-demo .fa {
+			font-size:1.5em;
+		}
+		.aside-collapsed .btn-demo .fa {
+			font-size:2em;
+		}
+	</style>
 </head>
 
 <body class="layout-fixed">
@@ -106,65 +134,24 @@
                <!-- END Left navbar-->
                <!-- START Right Navbar-->
                <ul class="nav navbar-nav navbar-right">
-                  <li><button class="btn btn-default btn-demo" type="button" onClick="Demo();">Show opportunities</button><input id="demo" type="hidden" value="0"></li>
 				  <!-- START Alert menu-->
                   <li class="dropdown dropdown-list">
                      <a href="#" data-toggle="dropdown">
                         <em class="icon-bell"></em>
-                        <div class="label label-danger">11</div>
+                        <!--<div class="label label-danger">11</div>-->
                      </a>
                      <!-- START Dropdown menu-->
                      <ul class="dropdown-menu animated flipInX">
                         <li>
                            <!-- START list group-->
                            <div class="list-group">
-                              <!-- list item-->
-                              <a href="#" class="list-group-item">
-                                 <div class="media-box">
-                                    <div class="pull-left">
-                                       <em class="fa fa-twitter fa-2x text-info"></em>
-                                    </div>
-                                    <div class="media-box-body clearfix">
-                                       <p class="m0">New followers</p>
-                                       <p class="m0 text-muted">
-                                          <small>1 new follower</small>
-                                       </p>
-                                    </div>
-                                 </div>
-                              </a>
-                              <!-- list item-->
-                              <a href="#" class="list-group-item">
-                                 <div class="media-box">
-                                    <div class="pull-left">
-                                       <em class="fa fa-envelope fa-2x text-warning"></em>
-                                    </div>
-                                    <div class="media-box-body clearfix">
-                                       <p class="m0">New e-mails</p>
-                                       <p class="m0 text-muted">
-                                          <small>You have 10 new emails</small>
-                                       </p>
-                                    </div>
-                                 </div>
-                              </a>
-                              <!-- list item-->
-                              <a href="#" class="list-group-item">
-                                 <div class="media-box">
-                                    <div class="pull-left">
-                                       <em class="fa fa-tasks fa-2x text-success"></em>
-                                    </div>
-                                    <div class="media-box-body clearfix">
-                                       <p class="m0">Pending Tasks</p>
-                                       <p class="m0 text-muted">
-                                          <small>11 pending task</small>
-                                       </p>
-                                    </div>
-                                 </div>
-                              </a>
-                              <!-- last list item-->
-                              <a href="#" class="list-group-item">
+                              <div class="list-group-item">
+							  	 <small>No notifications</small>
+							  </div>
+							  <!--<a href="#" class="list-group-item">
                                  <small>More notifications</small>
                                  <span class="label label-danger pull-right">14</span>
-                              </a>
+                              </a>-->
                            </div>
                            <!-- END list group-->
                         </li>
@@ -220,7 +207,7 @@
 				  </li>-->
 				  <li class="anonym">
 					 <a href="#da" title="DLT-wallet" data-toggle="collapse" class="toggle-hover">
-						<div class="pull-right label label-info">2</div>
+						<!--<div class="pull-right label label-info">2</div>-->
 						<em class="icon-user"></em>
 						<span>DLT-wallet</span>
 					 </a>
@@ -342,11 +329,42 @@
 					 </a>
 				  </li>
 				  <li class="gov Demo">
-					 <a href="#dashboard_gov" title="Government">
+					 <a href="#dg" title="Government" data-toggle="collapse" class="toggle-hover">
 						<em class="icon-map"></em>
 						<span>Government</span>
 					 </a>
+					 <ul id="dg" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Government</li>
+						<li class="dashboard_gov">
+						   <a href="#dashboard_gov" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="gov_citizens">
+						   <a href="#gov_citizens" title="Citizens">
+							  <span>Citizens</span>
+						   </a>
+						</li>
+						<li class="gov_currency_exchange">
+						   <a href="#gov_currency_exchange" title="Currency Exchange">
+							  <span>Currency Exchange</span>
+						   </a>
+						</li>
+						<li class="gov_shares_exchange">
+						   <a href="#gov_shares_exchange" title="Shares Exchange">
+							  <span>Shares Exchange</span>
+						   </a>
+						</li>
+					 </ul>
 				  </li>
+
+				   <li class="change_node_key Demo">
+					   <a href="#" title="change_node_key"  onclick="dl_navigate0('ChangeNodeKey')">
+						   <em class="fa fa-money"></em>
+						   <span>change_node_key</span>
+					   </a>
+				   </li>
+				  <li><button class="btn btn-default btn-demo" type="button" onClick="Demo();"><span class="fa fa-eye"></span><em> Show opportunities</em></button><input id="demo" type="hidden" value="0"></li>
 			   </ul>
 			   <!-- END sidebar nav-->
 			</nav>
@@ -558,7 +576,7 @@
 	
 			var str = e.target.hash;
 			var page_match = str.match(/#(\w+)/i);
-			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh'  ) {
+			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh' && page_match[1]!='dg'  ) {
 				var page = page_match[1];
 				var param_match = str.match(/\/\w+=\w+/gi);
 				var param_obj = {};
