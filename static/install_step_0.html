@@ -5,7 +5,8 @@
 		}
 	</style>
 	<script>
-	
+		g_menuShow = false;  // hide menu
+
 		$('.db_settings').hide();
 	
 		$('#extended').bind('click', function () {
@@ -77,7 +78,7 @@
 				'password' : $('#password').val(),
 				'setup_password' : $('#setup_password').val(),
 				'key_password' : $('#key_password').val()
-			}, function (data) { $('#dc_content').html( data );  $('#loader').spin(false); }, 'html' );
+			}, function (data) { $('#dl_content').html( data );  $('#loader').spin(false); }, 'html' );
 		} );
 	
 	</script>

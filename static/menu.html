@@ -1,0 +1,304 @@
+      <!-- top navbar-->
+      <header class="topnavbar-wrapper">
+         <!-- START Top Navbar-->
+         <nav role="navigation" class="navbar topnavbar">
+            <!-- START navbar header-->
+            <div class="navbar-header">
+               <a href="/" class="navbar-brand">
+                  <div class="brand-logo">
+                     <img src="static/img/logo.png" alt="App Logo" class="img-responsive">
+                  </div>
+                  <div class="brand-logo-collapsed">
+                     <img src="static/img/logo-single.png" alt="App Logo" class="img-responsive">
+                  </div>
+               </a>
+            </div>
+            <!-- END navbar header-->
+            <!-- START Nav wrapper-->
+            <div class="nav-wrapper">
+               <!-- START Left navbar-->
+               <ul class="nav navbar-nav">
+                  <li>
+                     <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                     <a href="#" data-trigger-resize="" data-toggle-state="aside-collapsed" class="hidden-xs">
+                        <em class="fa fa-navicon"></em>
+                     </a>
+                     <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
+                     <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle">
+                        <em class="fa fa-navicon"></em>
+                     </a>
+                  </li>
+                  <!-- START User avatar toggle-->
+                  <li>
+                     <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+                     <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
+                        <em class="icon-user"></em>
+                     </a>
+                  </li>
+                  <!-- END User avatar toggle-->
+               </ul>
+               <!-- END Left navbar-->
+               <!-- START Right Navbar-->
+               <ul class="nav navbar-nav navbar-right">
+				  <!-- START Alert menu-->
+                  <li class="dropdown dropdown-list">
+                     <a href="#" data-toggle="dropdown">
+                        <em class="icon-bell"></em>
+                        <!--<div class="label label-danger">11</div>-->
+                     </a>
+                     <!-- START Dropdown menu-->
+                     <ul class="dropdown-menu animated flipInX">
+                        <li>
+                           <!-- START list group-->
+                           <div class="list-group">
+                              <div class="list-group-item">
+							  	 <small>No notifications</small>
+							  </div>
+							  <!--<a href="#" class="list-group-item">
+                                 <small>More notifications</small>
+                                 <span class="label label-danger pull-right">14</span>
+                              </a>-->
+                           </div>
+                           <!-- END list group-->
+                        </li>
+                     </ul>
+                     <!-- END Dropdown menu-->
+                  </li>
+                  <!-- END Alert menu-->
+                  <!-- START Offsidebar button-->
+                  <li>
+                     <a href="#">
+                        <em class="icon-logout"></em>
+                     </a>
+                  </li>
+                  <!-- END Offsidebar menu-->
+               </ul>
+               <!-- END Right Navbar-->
+            </div>
+            <!-- END Nav wrapper-->
+         </nav>
+         <!-- END Top Navbar-->
+      </header>
+		<!-- sidebar-->
+		<aside class="aside">
+		 <!-- START Sidebar (left)-->
+		 <div class="aside-inner">
+			<nav data-sidebar-anyclick-close="" class="sidebar">
+			   <!-- START sidebar nav-->
+			   <ul class="nav">
+				  <!-- START user info-->
+				  <li class="has-user-block">
+					 <div id="user-block" class="collapse">
+						<div class="item user-block">
+						   <!-- User picture-->
+						   <div class="user-block-picture">
+							  <div class="user-block-status">
+		
+								 <img src="static/img/user/02.jpg" alt="Avatar" width="60" height="60" class="img-thumbnail img-circle">
+								 <div class="circle circle-success circle-lg"></div>
+							  </div>
+						   </div>
+						   <!-- Name and Job-->
+						   <div class="user-block-info">
+							  <span class="user-block-name">Hello, Mike</span>
+							  <span class="user-block-role">Designer</span>
+						   </div>
+						</div>
+					 </div>
+				  </li>
+				  <!-- END user info-->
+				  <!-- Iterates over all sidebar items-->
+				  <!--<li class="nav-heading ">
+					 <span data-localize="sidebar.heading.HEADER">Main Navigation</span>
+				  </li>-->
+				  <li class="anonym">
+					 <a href="#da" title="DLT-wallet" data-toggle="collapse" class="toggle-hover">
+						<!--<div class="pull-right label label-info">2</div>-->
+						<em class="icon-user"></em>
+						<span>DLT-wallet</span>
+					 </a>
+					 <ul id="da" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">DLT-wallet</li>
+						<li class="dashboard_anonym">
+						   <a href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym')">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="anonym_money_transfer">
+						   <a href="#" title="Money transfer" onclick="dl_navigate0('anonymMoneyTransfer')">
+							  <span>Money transfer</span>
+						   </a>
+						</li>
+						<li class="anonym_history">
+						   <a href="#anonym_history" title="History">
+							  <span>History</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="citizen Demo">
+					 <a href="#dc" title="Citizen" data-toggle="collapse" class="toggle-hover">
+						<em class="icon-home"></em>
+						<span>Citizen</span>
+					 </a>
+					 <ul id="dc" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Citizen</li>
+						<li class="dashboard_citizen">
+						   <a href="#dashboard_citizen" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="citizen_bill_payment">
+						   <a href="#citizen_bill_payment" title="Bill Payment">
+							  <span>Bill Payment</span>
+						   </a>
+						</li>
+						<li class="citizen_property">
+						   <a href="#citizen_property" title="My property">
+							  <span>My property</span>
+						   </a>
+						</li>
+						<li class="citizen_marriage_registration">
+						   <a href="#citizen_marriage_registration" title="Marriage registration">
+							  <span>Marriage registration</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="company Demo">
+					 <a href="#dco" title="Company" data-toggle="collapse" class="toggle-hover">
+						<em class="fa fa-building-o"></em>
+						<span>Company</span>
+					 </a>
+					 <ul id="dco" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Company</li>
+						<li class="dashboard_company">
+						   <a href="#dashboard_company" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="company_application_purchase">
+						   <a href="#company_application_purchase" title="Application for purchase">
+							  <span>Application for purchase</span>
+						   </a>
+						</li>
+						<li class="company_offer_seller">
+						   <a href="#company_offer_seller" title="Offer to seller Company">
+							  <span>Offer to seller Company</span>
+						   </a>
+						</li>
+						<li class="company_select_transport">
+						   <a href="#company_select_transport" title="Select Transport Company">
+							  <span>Select Transport Company</span>
+						   </a>
+						</li>
+						<li class="company_offer_transport">
+						   <a href="#company_offer_transport" title="Offer to Transport Company">
+							  <span>Offer to Transport Company</span>
+						   </a>
+						</li>
+						<li class="company_contract">
+						   <a href="#company_contract" title="Contract">
+							  <span>Contract</span>
+						   </a>
+						</li>
+						<li class="company_shares">
+						   <a href="#company_shares" title="New shares">
+							  <span>New shares</span>
+						   </a>
+						</li>
+						<li class="company_new_good">
+						   <a href="#company_new_good" title="New good">
+							  <span>New good</span>
+						   </a>
+						</li>
+						<li class="company_new_item">
+						   <a href="#company_new_item" title="New item">
+							  <span>New item</span>
+						   </a>
+						</li>
+						<li class="company_currency_exchange">
+						   <a href="#company_currency_exchange" title="Currency Exchange">
+							  <span>Currency Exchange</span>
+						   </a>
+						</li>
+						<li class="company_shares_exchange">
+						   <a href="#company_shares_exchange" title="Shares Exchange">
+							  <span>Shares Exchange</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="health Demo">
+					 <a href="#dh" title="Health" data-toggle="collapse" class="toggle-hover">
+						<em class="fa fa-medkit"></em>
+						<span>Health</span>
+					 </a>
+					 <ul id="dh" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Health</li>
+						<li class="dashboard_health">
+						   <a href="#dashboard_health" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="health_patient">
+						   <a href="#health_patient" title="Patient">
+							  <span>Patient</span>
+						   </a>
+						</li>
+						<li class="health_facility">
+						   <a href="#health_facility" title="Health facility">
+							  <span>Health facility</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+				  <li class="cb Demo">
+					 <a href="#dashboard_cb" title="CB">
+						<em class="fa fa-money"></em>
+						<span>CB</span>
+					 </a>
+				  </li>
+				  <li class="gov Demo">
+					 <a href="#dg" title="Government" data-toggle="collapse" class="toggle-hover">
+						<em class="icon-map"></em>
+						<span>Government</span>
+					 </a>
+					 <ul id="dg" class="nav sidebar-subnav collapse">
+						<li class="sidebar-subnav-header">Government</li>
+						<li class="dashboard_gov">
+						   <a href="#dashboard_gov" title="Dashboard">
+							  <span>Dashboard</span>
+						   </a>
+						</li>
+						<li class="gov_citizens">
+						   <a href="#gov_citizens" title="Citizens">
+							  <span>Citizens</span>
+						   </a>
+						</li>
+						<li class="gov_currency_exchange">
+						   <a href="#gov_currency_exchange" title="Currency Exchange">
+							  <span>Currency Exchange</span>
+						   </a>
+						</li>
+						<li class="gov_shares_exchange">
+						   <a href="#gov_shares_exchange" title="Shares Exchange">
+							  <span>Shares Exchange</span>
+						   </a>
+						</li>
+					 </ul>
+				  </li>
+
+				   <li class="change_node_key Demo">
+					   <a href="#" title="change_node_key"  onclick="dl_navigate0('ChangeNodeKey')">
+						   <em class="fa fa-money"></em>
+						   <span>change_node_key</span>
+					   </a>
+				   </li>
+				  <li><button class="btn btn-default btn-demo" type="button" onClick="Demo();"><span class="fa fa-eye"></span><em> Show opportunities</em></button><input id="demo" type="hidden" value="0"></li>
+			   </ul>
+			   <!-- END sidebar nav-->
+			</nav>
+		 </div>
+		 <!-- END Sidebar (left)-->
+		</aside>
