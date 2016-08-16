@@ -103,12 +103,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 	r.ParseForm()
 	tplName := r.FormValue("tpl_name")
-
+	if len(tplName) == 0 {
+		tplName = "dashboardAnonym"
+	}
 	c.Parameters, err = c.GetParameters()
 	log.Debug("parameters=", c.Parameters)
 
 	log.Debug("tpl_name=", tplName)
-
+ 
 	// если в параметрах пришел язык, то установим его
 	newLang := utils.StrToInt(c.Parameters["lang"])
 	if newLang > 0 {
@@ -144,7 +146,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	} else if dbInit && installProgress == "complete" && !c.Community && (sessWalletId > 0 || sessCitizenId > 0) && setupPassword != "" {
 		tplName = "setupPassword"
 	} else if dbInit && installProgress == "complete" && (sessWalletId > 0 || sessCitizenId > 0) {
-		tplName = "waitingAcceptNewKey"
+		tplName = "dashboardAnonym" //"waitingAcceptNewKey"
 	} else if dbInit && installProgress == "complete" {
 		if tplName != "setPassword" && tplName != "loginECDSA" {
 			tplName = "login"
@@ -352,6 +354,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte(html))
 	}
+	
 	//sess.Set("username", 11111)
 
 }
