@@ -1,0 +1,14 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".cb, .cb_citizens").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_cb", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Central Bank
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_cb">Dashboard</a></li>
+   <li class="active">Citizens</li>
+</ol>
