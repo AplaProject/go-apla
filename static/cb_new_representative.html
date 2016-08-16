@@ -1,0 +1,31 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".cb, .cb_representatives").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_cb", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Central Bank
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_cb">Dashboard</a></li>
+   <li><a href="#cb_representatives">Representatives</a></li>
+   <li class="active">New</li>
+</ol>
+<h4 class="page-header">Add New Representative</h4>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Send the key representative.</label>
+		  <textarea class="form-control" style="height:200px;"></textarea>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+	 <button type="button" class="btn btn-primary">Add</button>
+ </div>
+</div>
+<!-- END panel-->

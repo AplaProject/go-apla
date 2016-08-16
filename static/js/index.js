@@ -1,3 +1,5 @@
+var g_menuShow = true;
+
 function Demo() {
 	var id = $("#demo");
 	var val = id.val();
@@ -56,12 +58,16 @@ function dl_navigate (page, parameters) {
 }
 
 function load_menu(lang) {
-    parametersJson = "";
-    if (typeof lang!='undefined') {
-        parametersJson: '{"lang":"1"}'
-    }
-    $( "#dl_menu" ).load( "content?controllerHTML=menu", { parameters: parametersJson }, function() {
-    });
+	if (g_menuShow) {
+	    parametersJson = "";
+	    if (typeof lang!='undefined') {
+	        parametersJson: '{"lang":"1"}'
+	    }
+	    $("#dl_menu").load( "content?controllerHTML=menu", { parameters: parametersJson }, function() {
+	    });
+	} else {
+		$("#dl_menu").html('');
+	}
 }
 
 function login_ok (result) {
@@ -107,7 +113,8 @@ function login_ok (result) {
             $("#main-login").html('');
             $("#loader").spin(false);
         }
-
+		g_menuShow = true;
+		load_menu();
     }
     else if (result=='not_available') {
         $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#pool_is_full').val()+'</p></div>');
