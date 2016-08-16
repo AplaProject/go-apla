@@ -87,7 +87,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 		return "", err
 	}
 	return b.String(), nil*/
-	TemplateStr, err := makeTemplate("login", "login", &loginECDSAPage{
+	TemplateStr, err := makeTemplate("login", "loginECDSA", &loginECDSAPage{
 		Lang:                  c.Lang,
 		Title:                 "Login",		
 /*		MyWalletData:          MyWalletData,

@@ -46,12 +46,19 @@
 <div style="width:100%; text-align:center; padding-top:50px;">
 	<span style="display: inline-block; text-align: center">
 		<a href="mailto:darwin@daylight.world">help</a>
+		<a href="" onclick="return login_ecdsa()">ECDSA</a>
 	</span>
 </div>
 
 {{ template "modal". }}
 
 <script>
+
+function login_ecdsa() {
+	$( "#dl_content" ).load( "content?tpl_name=loginECDSA", { }, function() {});
+	return false;
+}
+
 	$('#myModal').remove();
 	$('#show_login').bind('click', function () {
 		$('#myModalLogin').modal({ backdrop: 'static' });

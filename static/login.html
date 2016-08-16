@@ -1,10 +1,10 @@
-{{ define "login" }}
+{{ define "loginECDSA" }}
 
 <div id="register" style="display:none;">
 	<form id="form_reg">
 	<div>Wallet seed</div>
 	<textarea name="phrase" id="phrase" style="width: 400px;" rows="5"></textarea><br>
-	<button class="btn btn-default" onclick="return do_phrase();">Generate new seed</button>
+	<button id="genseed" class="btn btn-default" onclick="return do_phrase();">Generate new seed</button>
 	<!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-default" onclick="return do_generate();">Generate keys</button><br/>
 	<p>
 	Private key: <span id="prvkey"></span><br/>
@@ -24,9 +24,22 @@
 	</form>
 </div>
 
+<div id="pass_login" style="display:none;">
+	<form id="form_login">
+	<div>Password</div>
+	<input id="decpass" type="password" value="" />
+	<div style="padding-top: 10px;">
+		<button type="button" class="btn btn-primary btn-lg" id="signup" style="vertical-align:top;" onclick="return do_login()">Login</button>
+		<button type="button" class="btn btn-primary btn-lg" id="back" onclick="return login_back()" style="vertical-align:top;margin-left: 20px;">Back</button>
+	</div>
+
+	</form>
+</div>
+
 <div id="login_div" style="width:100%; text-align:center;">
+	<div id="address"></div>
 	<span style="display:inline-block;">
-		<button type="button" class="btn btn-primary btn-lg" id="show_login" style="vertical-align:top;">{{.Lang.login}}</button>
+		<button type="button" class="btn btn-primary btn-lg" id="show_login" onclick="return login_account()" style="vertical-align:top;">{{.Lang.login}}</button>
 		<button type="button" class="btn btn-primary btn-lg" id="show_signup" onclick="return new_account()" style="vertical-align:top;margin-left: 20px;">{{.Lang.sign_up}}</button>
 	</span>
 </div>
@@ -265,11 +278,13 @@ function do_phrase() {
 
 function login_back() {
 	$("#register").hide();
+	$("#pass_login").hide();
 	$("#login_div").show();
 }
 
 function new_account() {
 	$("#login_div").hide();
+	$("#genseed").show();
 	$("#register").show();
 }
 
@@ -284,20 +299,68 @@ function do_register() {
 		return false;
 	} 
 	do_generate();
-	address = hex_sha1($("#pubkey").val()).toLowerCase();
+	var pubkey = $("#pubkey").val();
+	address = hex_sha1( pubkey ).toLowerCase();
 	var privkey = $("#prvkey").val();
-//	alert( 'Address: ' + address );
 	var encryptedAES = CryptoJS.AES.encrypt(privkey, pass);
 	
-    var decrypted    = CryptoJS.AES.decrypt( encryptedAES, pass).toString(CryptoJS.enc.Utf8);
-//	do_verify( privkey, $("#pubkey").val());
-	console.log( do_verify( decrypted, $("#pubkey").val()) );
-//	console.log('Enc', privkey, decrypted );*/
-//	console.log('Dec', decrypted );
+	$("#address").html( 'Address: ' +  address );
+	localStorage.setItem('EncKey', encryptedAES );
+	localStorage.setItem('PubKey', pubkey );
+	login_back();
 	return false;
 }
 
+var pubKey;
+var encKey;
+var loginAttempts = 0;
+
+function do_login() {
+	var pass = $("#decpass").val();
+
+    var decrypted = CryptoJS.AES.decrypt( encKey, pass).toString(CryptoJS.enc.Hex);
+	var prvkey = '';
+	for ( i=0; i < decrypted.length; i+=2 ) {
+		var num = parseInt( decrypted.substr(i,2),16);
+		prvkey += String.fromCharCode(num);
+	}
+	if (do_verify( prvkey, pubKey)) {
+		alert('Login OK');
+		login_back();
+	} else {
+		loginAttempts++;
+		alert('Login Fail ' + loginAttempts + '/3');
+		if (loginAttempts > 3) {
+			loginAttempts = 0;
+			localStorage.removeItem('EncKey');
+			localStorage.removeItem('PubKey');
+			$("#address").html('');
+			login_account();
+		}
+	}
+}
+
+function login_account() {
+	$("#login_div").hide();
+	$("#pass_login").hide();
+	$("#register").hide();
+	
+	pubKey = localStorage.getItem('PubKey');
+	encKey = localStorage.getItem('EncKey');
+	
+	if (encKey) {
+		$("#pass_login").show();
+	} else {
+		$("#genseed").hide();
+		$("#register").show();
+	}
+}
+
 $(document).ready(function(){
+	var pubkey = localStorage.getItem('PubKey');
+	if (pubkey) {
+		$("#address").html( 'Address: ' +  hex_sha1( pubkey ).toLowerCase());
+	}
 	do_phrase();
 });
 	
