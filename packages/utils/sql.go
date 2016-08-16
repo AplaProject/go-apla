@@ -1300,11 +1300,6 @@ func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, walletId int64, ci
 				                          `+addSql+` AND
 				                         verified=1 AND
 				                         used = 0
-							UNION
-							SELECT hash
-							FROM transactions_candidate_block
-							WHERE type = ?
-										  `+addSql+`
 					)  AS x
 					`, whereTypeID, whereTypeID).Int64()
 	if err != nil {
@@ -1369,12 +1364,6 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, walletId_ interface
 				                          `+addSql+` `+addSql1+` AND
 				                         verified=1 AND
 				                         used = 0
-							UNION
-							SELECT hash
-							FROM transactions_candidate_block
-							WHERE type IN (`+whereType+`)
-										 `+addSql+` `+addSql1+` AND
-										 citizen_id = ?
 					)  AS x
 					`, citizenId).Int64()
 	if err != nil {

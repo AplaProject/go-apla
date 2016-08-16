@@ -131,6 +131,7 @@ BEGIN:
 			}
 			continue
 		}
+		logger.Debug("full_node_id %d", full_node_id)
 		if full_node_id == 0 {
 			d.dbUnlock()
 			logger.Debug("full_node_id == 0")
@@ -152,6 +153,8 @@ BEGIN:
 			}
 			continue BEGIN
 		}
+		logger.Debug("prevBlock %v", prevBlock)
+
 		prevBlockHash, err := d.Single("SELECT hex(hash) as hash FROM info_block").String()
 		if err != nil {
 			d.dbUnlock()
@@ -161,6 +164,7 @@ BEGIN:
 			}
 			continue BEGIN
 		}
+		logger.Debug("prevBlockHash %s", prevBlockHash)
 
 		// возьмем список всех full_nodes
 		fullNodesList, err := d.GetAll("SELECT full_node_id, wallet_id, cb_id FROM full_nodes", -1)
@@ -172,6 +176,7 @@ BEGIN:
 			}
 			continue BEGIN
 		}
+		logger.Debug("fullNodesList %s", fullNodesList)
 
 		// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
 		prevBlockFullNodeId, err := d.Single("SELECT full_node_id FROM full_nodes WHERE cb_id = ? OR wallet_id = ?", prevBlock["cb_id"], prevBlock["wallet_id"]).Int64()
@@ -183,8 +188,10 @@ BEGIN:
 			}
 			continue BEGIN
 		}
+		logger.Debug("prevBlockFullNodeId %d", prevBlockFullNodeId)
 
 		prevBlockFullNodePosition := FindNodePos (fullNodesList, prevBlockFullNodeId)
+		logger.Debug("prevBlockFullNodePosition %d", prevBlockFullNodePosition)
 
 		// определим свое место (в том числе в delegate)
 		myPosition := func (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
@@ -196,18 +203,26 @@ BEGIN:
 			}
 			return -1
 		} (fullNodesList, full_node_id)
+		logger.Debug("myPosition %d", myPosition)
 
-		// имея время предыдущего блока и позицию определяем время сна
-		if myPosition < prevBlockFullNodePosition {
-			myPosition += len(fullNodesList)
+		sleepTime := 0
+		if myPosition == prevBlockFullNodePosition {
+			sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * consts.DELAY
 		}
-		sleepTime := (myPosition - prevBlockFullNodePosition) * consts.DELAY
+
+		if myPosition > prevBlockFullNodePosition {
+			sleepTime = (myPosition - int(prevBlockFullNodePosition)) * consts.DELAY
+		}
+
+		if myPosition < prevBlockFullNodePosition {
+			sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * consts.DELAY
+		}
 
 		logger.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / consts.DELAY %v", sleepTime, myPosition, prevBlockFullNodePosition, consts.DELAY)
 
 		d.dbUnlock()
 		// учтем прошедшее время
-		sleep := int64(sleepTime) - utils.Time() - prevBlock["time"]
+		sleep := int64(sleepTime) - (utils.Time() - prevBlock["time"])
 		if sleep < 0 {
 			sleep = 0
 		}
@@ -290,10 +305,8 @@ BEGIN:
 			}
 			continue
 		}
-		// откатим transactions_candidate_block
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB
-		p.RollbackTransactionsCandidateBlock(true)
 
 		Time := time.Now().Unix()
 

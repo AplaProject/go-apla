@@ -302,7 +302,6 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			if prevBlock[intBlockId-1] != nil {
 				log.Debug("prevBlock[intBlockId-1] != nil : %v", prevBlock[intBlockId-1])
 				parser.PrevBlock.Hash = prevBlock[intBlockId-1].Hash
-				parser.PrevBlock.HeadHash = prevBlock[intBlockId-1].HeadHash
 				parser.PrevBlock.Time = prevBlock[intBlockId-1].Time
 				parser.PrevBlock.BlockId = prevBlock[intBlockId-1].BlockId
 			}
@@ -425,7 +424,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		blockHex := utils.BinToHex(block)
 
 		// пишем в цепочку блоков
-		err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id= ?, time= ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].HeadHash, prevBlock[blockId].BlockId, prevBlock[blockId].Time)
+		err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, cb_id = ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].BlockId, prevBlock[blockId].Time, prevBlock[blockId].WalletId, prevBlock[blockId].CBID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -465,60 +464,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 }
 
 func (p *Parser) GetBlockInfo() *utils.BlockData {
-	return &utils.BlockData{Hash: p.BlockData.Hash, HeadHash: p.BlockData.HeadHash, Time: p.BlockData.Time, BlockId: p.BlockData.BlockId}
-}
-
-func (p *Parser) RollbackTransactionsCandidateBlock(truncate bool) error {
-	log.Debug("RollbackTransactionsCandidateBlock")
-	// прежде чем удалять, нужно откатить
-	// получим наши транзакции в 1 бинарнике, просто для удобства
-	var blockBody []byte
-	rows, err := p.Query("SELECT data, hash FROM transactions_candidate_block ORDER BY id ASC")
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var data, hash []byte
-		err = rows.Scan(&data, &hash)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		log.Debug("hash %x", hash)
-		blockBody = append(blockBody, utils.EncodeLengthPlusData(data)...)
-		if truncate {
-			// чтобы тр-ия не потерлась, её нужно заново записать
-			dataHex := utils.BinToHex(data)
-			hashHex := utils.BinToHex(hash)
-			err = p.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", hashHex)
-			if err != nil {
-				return utils.ErrInfo(err)
-			}
-			err = p.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hashHex, dataHex)
-			if err != nil {
-				return utils.ErrInfo(err)
-			}
-		}
-	}
-
-	// нужно откатить наши транзакции
-	if len(blockBody) > 0 {
-		parser := new(Parser)
-		parser.DCDB = p.DCDB
-		parser.BinaryData = blockBody
-		err = parser.ParseDataRollbackFront(true)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-	}
-
-	if truncate {
-		err = p.ExecSql("DELETE FROM transactions_candidate_block")
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-	}
-	return nil
+	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time,  WalletId: p.BlockData.WalletId,  CBID: p.BlockData.CBID, BlockId: p.BlockData.BlockId}
 }
 
 func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interface{}) error {
@@ -999,9 +945,10 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	utils.BytesShift(&data, 1)
 	block_id := utils.BinToDecBytesShift(&data, 4)
 	time := utils.BinToDecBytesShift(&data, 4)
-	//user_id := utils.BinToDecBytesShift(&data, 5)
-	level := utils.BinToDecBytesShift(&data, 1)
-	err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, level = ?", utils.BinToHex(hash), block_id, time, level)
+	size := utils.DecodeLength(&data)
+	walletId := utils.BinToDecBytesShift(&data, size)
+	CBID := utils.BinToDecBytesShift(&data, 1)
+	err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, cb_id = ?", utils.BinToHex(hash), block_id, time, walletId, CBID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -1047,58 +994,6 @@ func (p *Parser) RollbackTransactions() error {
 		parser.DCDB = p.DCDB
 		parser.BinaryData = blockBody
 		err = parser.ParseDataRollbackFront(false)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-	}
-	return nil
-}
-
-func (p *Parser) rollbackTransactionsCandidateBlock(truncate bool) error {
-
-	// прежде чем удалять, нужно откатить
-	// получим наши транзакции в 1 бинарнике, просто для удобства
-	var blockBody []byte
-	rows, err := p.Query("SELECT data, hash FROM transactions_candidate_block ORDER BY id ASC")
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var data, hash []byte
-		err = rows.Scan(&data, &hash)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		blockBody = append(blockBody, utils.EncodeLengthPlusData(data)...)
-		if truncate {
-			// чтобы тр-ия не потерлась, её нужно заново записать
-			dataHex := utils.BinToHex(data)
-			hashHex := utils.BinToHex(hash)
-			err = p.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", hashHex)
-			if err != nil {
-				return p.ErrInfo(err)
-			}
-			err = p.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hashHex, dataHex)
-			if err != nil {
-				return p.ErrInfo(err)
-			}
-		}
-	}
-
-	// нужно откатить наши транзакции
-	if len(blockBody) > 0 {
-		parser := new(Parser)
-		parser.DCDB = p.DCDB
-		parser.BinaryData = blockBody
-		err = parser.ParseDataRollbackFront(true)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-	}
-
-	if truncate {
-		err = p.ExecSql("DELETE FROM transactions_candidate_block")
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -1303,8 +1198,6 @@ func (p *Parser) UpdBlockInfo() {
 			blockId = *utils.StartBlockId
 		}
 	}
-	headHashData := fmt.Sprintf("%d,%d,%d,%s", p.BlockData.WalletId, p.BlockData.CBID, blockId, p.PrevBlock.HeadHash)
-	p.BlockData.HeadHash = utils.DSha256(headHashData)
 	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.CBID)
 	log.Debug("forSha", forSha)
 	p.BlockData.Hash = utils.DSha256(forSha)
@@ -1314,14 +1207,14 @@ func (p *Parser) UpdBlockInfo() {
 	log.Debug("%v", p.CurrentVersion)
 
 	if p.BlockData.BlockId == 1 {
-		err := p.ExecSql("INSERT INTO info_block (hash, block_id, time, current_version) VALUES ([hex], ?, ?, ?)",
-			p.BlockData.Hash, blockId, p.BlockData.Time, p.CurrentVersion)
+		err := p.ExecSql("INSERT INTO info_block (hash, block_id, time, cb_id, wallet_id, current_version) VALUES ([hex], ?, ?, ?, ?, ?)",
+			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.CBID, p.BlockData.WalletId, p.CurrentVersion)
 		if err!=nil {
 			log.Error("%v", err)
 		}
 	} else {
-		err := p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, sent = 0",
-			p.BlockData.Hash, blockId, p.BlockData.Time)
+		err := p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, cb_id = ?, wallet_id = ?, sent = 0",
+			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.CBID, p.BlockData.WalletId)
 		if err!=nil {
 			log.Error("%v", err)
 		}
@@ -1892,14 +1785,7 @@ func (p *Parser) RollbackIncompatibleTx(typesArr []string) error {
 			return utils.ErrInfo(err)
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-		/*
-			 * создает проблемы для tesblock_is_ready
-			err = p.ExecSql("DELETE FROM transactions_candidate_block WHERE hex(hash) = ?", md5)
-			if err != nil {
-				p.PrintSleep(err, 60)
-				continue BEGIN
-			}
-		*/
+
 
 		// создаем тр-ию, которую потом заново проверим
 		err = p.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", md5)
@@ -1998,11 +1884,6 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                          third_var = ? AND
 					                          verified=1 AND
 					                          used = 0
-								UNION
-								SELECT citizen_id
-								FROM transactions_candidate_block
-								WHERE type IN (?, ?, ?, ?) AND
-					                          third_var = ?
 							)  AS x
 							`, utils.TypeInt("VotesPromisedAmount"), utils.TypeInt("VotesMiner"), utils.TypeInt("VotesNodeNewMiner"), utils.TypeInt("VotesComplex"), thirdVar, utils.TypeInt("VotesPromisedAmount"), utils.TypeInt("VotesMiner"), utils.TypeInt("VotesNodeNewMiner"), utils.TypeInt("VotesComplex"), thirdVar).Int64()
 			if err != nil {
@@ -2023,10 +1904,6 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					            WHERE  user_id = ? AND
 					                         verified=1 AND
 					                         used = 0
-								UNION
-								SELECT citizen_id
-								FROM transactions_candidate_block
-								WHERE user_id = ?
 							)  AS x
 							`, citizenId, citizenId).Int64()
 			if err != nil {
@@ -2050,14 +1927,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 					                          ) AND
 					                         verified=1 AND
 					                         used = 0
-								UNION
-								SELECT citizen_id
-								FROM transactions_candidate_block
-								WHERE  (
-						                            (type = ? AND citizen_id = ?)
-						                            OR
-						                            (type IN (?, ?) )
-					                          )
+
 						)  AS x
 						`, utils.TypeInt("ChangePrimaryKey"), citizenId, utils.TypeInt("NewPct"), utils.TypeInt("NewReduction"), utils.TypeInt("ChangePrimaryKey"), citizenId, utils.TypeInt("NewPct"), utils.TypeInt("NewReduction")).Int64()
 		if err != nil {
@@ -2077,10 +1947,6 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 							WHERE  citizen_id = ? AND
 				                      verified=1 AND
 				                      used = 0
-							UNION
-							SELECT citizen_id
-							FROM transactions_candidate_block
-							WHERE citizen_id = ?
 					)  AS x
 					`, citizenId, citizenId).Int64()
 		if err != nil {
