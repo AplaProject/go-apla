@@ -439,7 +439,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			return utils.ErrInfo(err)
 		}
 		if exists == 0 {
-			affect, err := p.ExecSqlGetAffect("INSERT INTO  block_chain (id, hash, data) VALUES (?, [hex], [hex])", blockId, prevBlock[blockId].Hash, blockHex)
+			affect, err := p.ExecSqlGetAffect("INSERT INTO block_chain (id, hash, cb_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockId, prevBlock[blockId].Hash, prevBlock[blockId].CBID, prevBlock[blockId].WalletId, prevBlock[blockId].Time, blockHex)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -1179,8 +1179,8 @@ func (p *Parser) InsertIntoBlockchain() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, time, tx) VALUES (?, [hex], [hex], ?, ?)",
-		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.Time, TxIdsJson)
+	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, cb_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
+		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.CBID, p.BlockData.WalletId, p.BlockData.Time, TxIdsJson)
 	if err != nil {
 		fmt.Println(err)
 		return err

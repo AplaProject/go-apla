@@ -25,7 +25,7 @@ func (p *Parser) UpdFullNodes() error {
 	}
 
 	// выбирем ноды, где wallet_id
-	data, err := p.GetAll(`SELECT *FROM full_nodes WHERE wallet_id > 0`, -1)
+	data, err := p.GetAll(`SELECT * FROM full_nodes WHERE wallet_id > 0`, -1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -52,8 +52,13 @@ func (p *Parser) UpdFullNodes() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
 	// обновляем AI
-	err = p.SetAI("full_nodes", maxId+1)
+	if p.ConfigIni["db_type"] == "sqlite" {
+		err = p.SetAI("full_nodes", maxId)
+	} else {
+		err = p.SetAI("full_nodes", maxId+1)
+	}
 	if err != nil {
 		return p.ErrInfo(err)
 	}

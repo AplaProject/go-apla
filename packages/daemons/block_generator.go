@@ -46,7 +46,7 @@ func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-	d.sleepTime = 1
+
 
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
@@ -58,6 +58,9 @@ func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 
 BEGIN:
 	for {
+
+		// full_node_id == 0 приводитит к установке d.sleepTime = 10, тут надо обнулить, т.к. может быть первияная установка
+		d.sleepTime = 1
 
 		logger.Info(GoroutineName)
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
