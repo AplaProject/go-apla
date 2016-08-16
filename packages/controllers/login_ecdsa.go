@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-type loginPage struct {
+type loginECDSAPage struct {
 	Lang          map[string]string
 	Title         string
 /*	MyModalIdName string
@@ -21,7 +21,7 @@ type loginPage struct {
 	Desktop bool*/
 }
 
-func (c *Controller) Login() (string, error) {
+func (c *Controller) LoginECDSA() (string, error) {
 
 /*	var pool_tech_works int
 
@@ -87,8 +87,7 @@ func (c *Controller) Login() (string, error) {
 		return "", err
 	}
 	return b.String(), nil*/
-	fmt.Println("LOGIN 0")
-	TemplateStr, err := makeTemplate("login", "login", &loginPage{
+	TemplateStr, err := makeTemplate("login", "login", &loginECDSAPage{
 		Lang:                  c.Lang,
 		Title:                 "Login",		
 /*		MyWalletData:          MyWalletData,
