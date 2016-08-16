@@ -1,27 +1,29 @@
 package controllers
 
 import (
-	"bytes"
-	"github.com/DayLightProject/go-daylight/packages/static"
+//	"bytes"
+//	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"html/template"
+//	"html/template"
+	"fmt"
 )
 
-type loginStruct struct {
+type loginECDSAPage struct {
 	Lang          map[string]string
-	MyModalIdName string
+	Title         string
+/*	MyModalIdName string
 	UserID        int64
 	PoolTechWorks int
 	SetupPassword bool
 	Community     bool
 	Mobile        bool
 	SignUp        bool
-	Desktop bool
+	Desktop bool*/
 }
 
-func (c *Controller) Login() (string, error) {
+func (c *Controller) LoginECDSA() (string, error) {
 
-	var pool_tech_works int
+/*	var pool_tech_works int
 
 	funcMap := template.FuncMap{
 		"noescape": func(s string) template.HTML {
@@ -84,5 +86,16 @@ func (c *Controller) Login() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return b.String(), nil
+	return b.String(), nil*/
+	TemplateStr, err := makeTemplate("login", "login", &loginECDSAPage{
+		Lang:                  c.Lang,
+		Title:                 "Login",		
+/*		MyWalletData:          MyWalletData,
+		Title:                 "modalAnonym",
+*/})
+	fmt.Println("LOGIN", err)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+	return TemplateStr, nil
 }
