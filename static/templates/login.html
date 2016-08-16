@@ -53,6 +53,7 @@
 {{ template "modal". }}
 
 <script>
+g_menuShow = false;  // hide menu
 
 function login_ecdsa() {
 	$( "#dl_content" ).load( "content?tpl_name=loginECDSA", { }, function() {});
