@@ -242,6 +242,7 @@ function do_generate() {
 
   $("#prvkey").val(keypair.ecprvhex);
   $("#pubkey").val(keypair.ecpubhex);
+  console.log($("#pubkey").val());
   return false;
 }
 
@@ -253,6 +254,23 @@ function do_verify( prvkey, pubkey) {
   sig.initSign({'ecprvhex': prvkey, 'eccurvename': curve});
   sig.updateString(msg);
   var sigval = sig.sign();
+
+/*  console.log( 'H', sig.sHashHex);
+//  console.log( 'D', sig.md.digest());
+// .sHashHex = this.md.digest();
+  var ec = new KJUR.crypto.ECDSA({'curve': sig.eccurvename});
+  hSign = ec.signHex(sig.sHashHex, sig.ecprvhex);
+  var obj = sig.parseSig(hSign);
+  r = obj.r;
+  s = obj.s;	
+  var obj = KJUR.crypto.ECDSA.parseSigHex(hSign);
+  r = obj.r;
+  s = obj.s;
+
+  console.log('hSign', hSign.length, hSign);
+  console.log('R', r.toString(16).length, r.toString(16));
+  console.log('S', s.toString(16).length, s.toString(16));
+*/
 
   var siga = new KJUR.crypto.Signature({"alg": sigalg, "prov": "cryptojs/jsrsa"});
   siga.initVerifyByPublicKey({'ecpubhex': pubkey, 'eccurvename': curve});
@@ -307,6 +325,7 @@ function do_register() {
 	$("#address").html( 'Address: ' +  address );
 	localStorage.setItem('EncKey', encryptedAES );
 	localStorage.setItem('PubKey', pubkey );
+	console.log('verify', do_verify( privkey, pubkey));
 	login_back();
 	return false;
 }

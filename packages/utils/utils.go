@@ -7,6 +7,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	crand "crypto/rand"
+ 	"crypto/ecdsa"
+ 	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/sha256"
 //	"crypto/tls"
@@ -1525,6 +1527,59 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	}
 	return true, nil
 }
+
+func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
+
+	log.Debug("forSign", forSign)
+	//fmt.Println("publicKeys", publicKeys)
+	var signsSlice [][]byte
+	// у нода всегда 1 подпись
+	if nodeKeyOrLogin {
+		signsSlice = append(signsSlice, signs)
+	} else {
+		// в 1 signs может быть от 1 до 3-х подписей
+		for {
+			if len(signs) == 0 {
+				break
+			}
+			length := DecodeLength(&signs)
+			signsSlice = append(signsSlice, BytesShift(&signs, length))
+		}
+		if len(publicKeys) != len(signsSlice) {
+			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
+		}
+	}
+	pubkeyCurve := elliptic.P256()
+	signhash := sha256.Sum256([]byte(forSign))
+	
+	for i := 0; i < len(publicKeys); i++ {
+		public, err := hex.DecodeString(string(publicKeys[i]))
+		if err != nil {
+			return false, ErrInfo(err)
+		}
+		pubkey := new(ecdsa.PublicKey)
+   		pubkey.Curve = pubkeyCurve
+	   	pubkey.X = new(big.Int).SetBytes(public[0:32])
+	   	pubkey.Y = new(big.Int).SetBytes(public[32:])
+		
+		sign := signsSlice[i]
+		all, err := hex.DecodeString(string(sign[10:]))
+		if err != nil {
+			return false, ErrInfo(err)
+		}
+		r := new(big.Int).SetBytes(all[:32])
+		s := new(big.Int).SetBytes(all[35:])
+		
+		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
+		if !verifystatus {
+			return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x", 
+			       signhash, forSign, publicKeys[i], signsSlice[i])
+		}
+
+	}
+	return true, nil
+}
+
 
 func HashSha1(msg string) []byte {
 	sh := crypto.SHA1.New()
