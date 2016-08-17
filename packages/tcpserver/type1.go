@@ -92,6 +92,7 @@ func (t *TcpServer) Type1() {
 					log.Error("%v", utils.ErrInfo(err))
 					return
 				}
+				log.Debug("INSERT INTO queue_blocks")
 			} else {
 				// просто удалим хэш блока, что бы далее проверить тр-ии
 				utils.BinToHex(utils.BytesShift(&binaryData, 32))
@@ -102,7 +103,8 @@ func (t *TcpServer) Type1() {
 		// Разбираем список транзакций, но их может и не быть
 		if len(binaryData) == 0 {
 			log.Debug("%v", utils.ErrInfo("len(binaryData) == 0"))
-			_, err = t.Conn.Write(utils.Int64ToByte(int64(0)))
+			log.Debug("%x", utils.Int64ToByte(int64(0)))
+			_, err = t.Conn.Write(utils.DecToBin(0, 4))
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				return
@@ -136,7 +138,7 @@ func (t *TcpServer) Type1() {
 		}
 		if len(needTx) == 0 {
 			log.Debug("len(needTx) == 0")
-			_, err = t.Conn.Write(utils.Int64ToByte(int64(0)))
+			_, err = t.Conn.Write(utils.DecToBin(0, 4))
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				return

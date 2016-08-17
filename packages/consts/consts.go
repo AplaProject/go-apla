@@ -39,8 +39,6 @@ const MAX_TX_COUNT = 100000
 
 const ERROR_TIME = 1
 
-const DELAY = 5
-
 const ROUND_FIX = 0.00000000001
 
 // таймауты для TCP
@@ -50,7 +48,7 @@ const WRITE_TIMEOUT = 20
 // дефолтное знаение, со скольким нодами устанавляиваем связь
 const OUT_CONNECTIONS = 10
 
-const GAPS_BETWEEN_BLOCKS = 1
+const GAPS_BETWEEN_BLOCKS = 5
 const COMMISSION = 1000
 const TCP_PORT = "7079"
 const MAX_BLOCK_USER_TXS = 100
