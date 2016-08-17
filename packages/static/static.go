@@ -37,10 +37,10 @@
 // static/company_new_good.html
 // static/company_new_item.html
 // static/company_new_order.html
+// static/company_new_shares.html
 // static/company_offer_seller.html
 // static/company_offer_transport.html
 // static/company_select_transport.html
-// static/company_shares.html
 // static/company_shares_exchange.html
 // static/company_smart_contracts.html
 // static/css/app.css
@@ -1074,6 +1074,24 @@ func staticCompany_new_orderHtml() (*asset, error) {
 	return a, err
 }
 
+// staticCompany_new_sharesHtml reads file data from disk. It returns an error on failure.
+func staticCompany_new_sharesHtml() (*asset, error) {
+	path := "static/company_new_shares.html"
+	name := "static/company_new_shares.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticCompany_offer_sellerHtml reads file data from disk. It returns an error on failure.
 func staticCompany_offer_sellerHtml() (*asset, error) {
 	path := "static/company_offer_seller.html"
@@ -1114,24 +1132,6 @@ func staticCompany_offer_transportHtml() (*asset, error) {
 func staticCompany_select_transportHtml() (*asset, error) {
 	path := "static/company_select_transport.html"
 	name := "static/company_select_transport.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticCompany_sharesHtml reads file data from disk. It returns an error on failure.
-func staticCompany_sharesHtml() (*asset, error) {
-	path := "static/company_shares.html"
-	name := "static/company_shares.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7373,10 +7373,10 @@ var _bindata = map[string]func() (*asset, error){
 	"static/company_new_good.html": staticCompany_new_goodHtml,
 	"static/company_new_item.html": staticCompany_new_itemHtml,
 	"static/company_new_order.html": staticCompany_new_orderHtml,
+	"static/company_new_shares.html": staticCompany_new_sharesHtml,
 	"static/company_offer_seller.html": staticCompany_offer_sellerHtml,
 	"static/company_offer_transport.html": staticCompany_offer_transportHtml,
 	"static/company_select_transport.html": staticCompany_select_transportHtml,
-	"static/company_shares.html": staticCompany_sharesHtml,
 	"static/company_shares_exchange.html": staticCompany_shares_exchangeHtml,
 	"static/company_smart_contracts.html": staticCompany_smart_contractsHtml,
 	"static/css/app.css": staticCssAppCss,
@@ -7798,10 +7798,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"company_new_good.html": &bintree{staticCompany_new_goodHtml, map[string]*bintree{}},
 		"company_new_item.html": &bintree{staticCompany_new_itemHtml, map[string]*bintree{}},
 		"company_new_order.html": &bintree{staticCompany_new_orderHtml, map[string]*bintree{}},
+		"company_new_shares.html": &bintree{staticCompany_new_sharesHtml, map[string]*bintree{}},
 		"company_offer_seller.html": &bintree{staticCompany_offer_sellerHtml, map[string]*bintree{}},
 		"company_offer_transport.html": &bintree{staticCompany_offer_transportHtml, map[string]*bintree{}},
 		"company_select_transport.html": &bintree{staticCompany_select_transportHtml, map[string]*bintree{}},
-		"company_shares.html": &bintree{staticCompany_sharesHtml, map[string]*bintree{}},
 		"company_shares_exchange.html": &bintree{staticCompany_shares_exchangeHtml, map[string]*bintree{}},
 		"company_smart_contracts.html": &bintree{staticCompany_smart_contractsHtml, map[string]*bintree{}},
 		"css": &bintree{nil, map[string]*bintree{
