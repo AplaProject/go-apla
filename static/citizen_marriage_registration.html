@@ -14,6 +14,39 @@
    <li class="active">Marriage registration</li>
 </ol>
 <!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Recipient</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Smart contract</label>
+		  <textarea class="form-control" style="height:250px;">
+			# wife = citizen.id
+			# husband = citizen.id
+			# function money_transfer (sender, recipient, stake)
+			if treason.wife == false {
+			if property.citizen_id == husband && property.country == "USA" {
+			property.citizen_id = wife
+			}
+			money_transfer(husband, wife, 50)
+			}
+		   </textarea>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Send</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
+<!-- START panel-->
 <h4 class="page-header">Requests to me</h4>
 <div class="panel panel-default">
  <div class="panel-body">
