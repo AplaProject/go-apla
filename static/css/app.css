@@ -8109,3 +8109,14 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 .whirl .sk-cube-grid {
 	display:block;
 }
+.demo_alert {
+	border-radius:0px 0px 4px 4px;
+	margin:-20px;
+	margin-bottom:20px;
+}
+@media only screen and (max-width: 767px) {
+	.demo_alert {
+		margin:-15px;
+		margin-bottom:15px;
+	}
+}
