@@ -20,6 +20,13 @@
 	$('#company').select2({
 		theme: 'bootstrap'
 	});
+	
+	$(document).ready(function() {
+		var user = $("#fields").html();
+		$("#add_fields").on('click', function () {
+			$("#fields").append(user);
+		});
+	});
 </script>
 
 <div class="content-heading">
@@ -30,7 +37,7 @@
    <li class="active">New order</li>
 </ol>
 <!-- START panel-->
-<div class="panel panel-default">
+<div class="panel panel-default" data-sweet-alert>
  <div class="panel-body">
 	<form role="form">
 	   <div class="form-group">
@@ -43,42 +50,44 @@
 			 <option value="">Company 5</option>
 		  </select>
 	   </div>
-	   <fieldset>
-		   <div class="row">
-			   <div class="col-sm-2">
-				   <div class="form-group">
-					  <label>Item id</label>
-					  <input type="text" class="form-control">
+	   <div id="fields">
+		   <fieldset>
+			   <div class="row">
+				   <div class="col-sm-2">
+					   <div class="form-group">
+						  <label>Item id</label>
+						  <input type="text" class="form-control">
+					   </div>
+				   </div>
+				   <div class="col-sm-3">
+					   <div class="form-group">
+						  <label>Price</label>
+						  <input type="text" class="form-control">
+					   </div>
+				   </div>
+				   <div class="col-sm-2">
+					   <div class="form-group">
+						  <label>Qty</label>
+						  <input type="text" class="form-control">
+					   </div>
+				   </div>
+				   <div class="col-sm-2">
+					   <div class="form-group">
+						  <label>Total</label>
+						  <input type="text" class="form-control" value="10000" disabled>
+					   </div>
+				   </div>
+				   <div class="col-sm-3">
+					   <div class="form-group">
+						  <label>Discount</label>
+						  <input type="text" class="form-control">
+					   </div>
 				   </div>
 			   </div>
-			   <div class="col-sm-3">
-				   <div class="form-group">
-					  <label>Price</label>
-					  <input type="text" class="form-control">
-				   </div>
-			   </div>
-			   <div class="col-sm-2">
-				   <div class="form-group">
-					  <label>Qty</label>
-					  <input type="text" class="form-control">
-				   </div>
-			   </div>
-			   <div class="col-sm-2">
-				   <div class="form-group">
-					  <label>Total</label>
-					  <input type="text" class="form-control" value="10000" disabled>
-				   </div>
-			   </div>
-			   <div class="col-sm-3">
-				   <div class="form-group">
-					  <label>Discount</label>
-					  <input type="text" class="form-control">
-				   </div>
-			   </div>
-		   </div>
-	   </fieldset>
+		   </fieldset>
+	   </div>
 	   <fieldset style="padding-bottom:0px; margin-bottom:0px;">
-		   <button class="btn btn-primary btn-xs" type="button">Add fields</button>
+		   <button class="btn btn-primary btn-xs" type="button" id="add_fields">Add fields</button>
 	   </fieldset>
 	</form>
  </div>
