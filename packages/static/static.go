@@ -20,7 +20,12 @@
 // static/cb_select_emission.html
 // static/change_node_key.html
 // static/citizen_bill_payment.html
+// static/citizen_divorce.html
+// static/citizen_inheritance.html
 // static/citizen_marriage_registration.html
+// static/citizen_money_transfer.html
+// static/citizen_new_company.html
+// static/citizen_political_party.html
 // static/citizen_property.html
 // static/citizen_rule_details.html
 // static/company_application_purchase.html
@@ -760,10 +765,100 @@ func staticCitizen_bill_paymentHtml() (*asset, error) {
 	return a, err
 }
 
+// staticCitizen_divorceHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_divorceHtml() (*asset, error) {
+	path := "static/citizen_divorce.html"
+	name := "static/citizen_divorce.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_inheritanceHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_inheritanceHtml() (*asset, error) {
+	path := "static/citizen_inheritance.html"
+	name := "static/citizen_inheritance.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticCitizen_marriage_registrationHtml reads file data from disk. It returns an error on failure.
 func staticCitizen_marriage_registrationHtml() (*asset, error) {
 	path := "static/citizen_marriage_registration.html"
 	name := "static/citizen_marriage_registration.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_money_transferHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_money_transferHtml() (*asset, error) {
+	path := "static/citizen_money_transfer.html"
+	name := "static/citizen_money_transfer.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_new_companyHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_new_companyHtml() (*asset, error) {
+	path := "static/citizen_new_company.html"
+	name := "static/citizen_new_company.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_political_partyHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_political_partyHtml() (*asset, error) {
+	path := "static/citizen_political_party.html"
+	name := "static/citizen_political_party.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7204,7 +7299,12 @@ var _bindata = map[string]func() (*asset, error){
 	"static/cb_select_emission.html": staticCb_select_emissionHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
 	"static/citizen_bill_payment.html": staticCitizen_bill_paymentHtml,
+	"static/citizen_divorce.html": staticCitizen_divorceHtml,
+	"static/citizen_inheritance.html": staticCitizen_inheritanceHtml,
 	"static/citizen_marriage_registration.html": staticCitizen_marriage_registrationHtml,
+	"static/citizen_money_transfer.html": staticCitizen_money_transferHtml,
+	"static/citizen_new_company.html": staticCitizen_new_companyHtml,
+	"static/citizen_political_party.html": staticCitizen_political_partyHtml,
 	"static/citizen_property.html": staticCitizen_propertyHtml,
 	"static/citizen_rule_details.html": staticCitizen_rule_detailsHtml,
 	"static/company_application_purchase.html": staticCompany_application_purchaseHtml,
@@ -7621,7 +7721,12 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"cb_select_emission.html": &bintree{staticCb_select_emissionHtml, map[string]*bintree{}},
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{}},
 		"citizen_bill_payment.html": &bintree{staticCitizen_bill_paymentHtml, map[string]*bintree{}},
+		"citizen_divorce.html": &bintree{staticCitizen_divorceHtml, map[string]*bintree{}},
+		"citizen_inheritance.html": &bintree{staticCitizen_inheritanceHtml, map[string]*bintree{}},
 		"citizen_marriage_registration.html": &bintree{staticCitizen_marriage_registrationHtml, map[string]*bintree{}},
+		"citizen_money_transfer.html": &bintree{staticCitizen_money_transferHtml, map[string]*bintree{}},
+		"citizen_new_company.html": &bintree{staticCitizen_new_companyHtml, map[string]*bintree{}},
+		"citizen_political_party.html": &bintree{staticCitizen_political_partyHtml, map[string]*bintree{}},
 		"citizen_property.html": &bintree{staticCitizen_propertyHtml, map[string]*bintree{}},
 		"citizen_rule_details.html": &bintree{staticCitizen_rule_detailsHtml, map[string]*bintree{}},
 		"company_application_purchase.html": &bintree{staticCompany_application_purchaseHtml, map[string]*bintree{}},
