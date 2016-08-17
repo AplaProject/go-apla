@@ -1,0 +1,77 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".anonym, .anonym_block_generation").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+	
+	var interval;
+	var serverTime;
+	
+	clearInterval(interval);
+	
+	$('#next').bind('click', function () {
+		$.get( 'ajax?controllerName=GetServerTime', function (data) {
+			serverTime = data.time;
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#host').val()+','+$('#vote').val() );
+			doSign();
+			$("#send_to_net").trigger("click");
+		}, "json" );
+	} );
+
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+				'walletId' : '{{.WalletId}}',
+				'host' : $('#host').val(),
+				'vote' : $('#vote').val(),
+				'publicKey' : $('#vote').val(),
+				'n' : e_n_sign['modulus'],
+				'e': e_n_sign['exp'],
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) { send_to_net_success(data) },
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );
+</script>
+
+<div class="content-heading">
+   Anonym
+</div>
+<ol class="breadcrumb">
+   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
+   <li class="active">Block generation</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Ipv4</label>
+		  <input type="text" class="form-control" value="{{.MyWalletData.host}}" id="host">
+	   </div>
+	   <div class="form-group">
+		  <label>The address for which the vote</label>
+		  <input type="text" class="form-control" value="{{.MyWalletData.vote}}" id="vote">
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" id="next">Save</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
