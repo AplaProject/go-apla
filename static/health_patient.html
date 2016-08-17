@@ -1,6 +1,6 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".health, .health_patient").addClass("active");
+	$(".health, .health_patient, .health_patient_d").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
 
@@ -9,7 +9,7 @@
         'ordering': true,
 		"order": 	[[ 2, "desc" ]],
         'info':     true,
-		"lengthMenu": [[10, 50, 100, 0], [10, 50, 100, "All"]],
+		"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
 		"bLengthChange": false,
 		"bFilter": false,
 		"ajax": {
@@ -32,7 +32,7 @@
         'ordering': true,
 		"order": 	[[ 4, "desc" ]],
         'info':     true,
-		"lengthMenu": [[10, 50, 100, 0], [10, 50, 100, "All"]],
+		"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
 		"bLengthChange": false,
 		"bFilter": false,
 		"ajax": {
@@ -82,7 +82,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_vital_signs">
+		 <a href="#health_vital_signs" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Vital Signs</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
@@ -105,7 +105,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_symptom">
+		 <a href="#health_symptom" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Add symptom</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
@@ -128,7 +128,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_entries_clinic">
+		 <a href="#health_entries_clinic" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Write to the clinic</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
@@ -151,7 +151,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_procedure">
+		 <a href="#health_procedure" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Add procedure</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
