@@ -644,7 +644,14 @@ func (p *Parser) CheckBlockHeader() error {
 
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	if !first {
-		if p.PrevBlock.Time+consts.GAPS_BETWEEN_BLOCKS-p.BlockData.Time > consts.ERROR_TIME {
+
+		sleepTime, err := p.GetSleepTime(p.BlockData.WalletId, p.BlockData.CBID, p.PrevBlock.CBID, p.PrevBlock.WalletId)
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
+
+		log.Debug("p.PrevBlock.Time %v + sleepTime %v - p.BlockData.Time %v > consts.ERROR_TIME %v", p.PrevBlock.Time, sleepTime, p.BlockData.Time, consts.ERROR_TIME)
+		if p.PrevBlock.Time+sleepTime-p.BlockData.Time > consts.ERROR_TIME {
 			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, consts.GAPS_BETWEEN_BLOCKS,  p.BlockData.Time, consts.ERROR_TIME))
 		}
 	}
@@ -1614,6 +1621,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 					query = fields[i] + `=UNHEX("` + values[i] + `"),`
 				}
 				addSqlUpdate += query
+			} else if fields[i][:1] == "+" {
+				addSqlUpdate += fields[i] + `='` + fields[i] +`+`+ values[i] + `',`
 			} else {
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}

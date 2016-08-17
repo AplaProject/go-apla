@@ -129,7 +129,7 @@ BEGIN:
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		p.GoroutineName = GoroutineName
-		err = p.GetBlocks(blockId, host, "rollback_blocks_1", GoroutineName, 7)
+		err = p.GetBlocks(blockId, host+":"+consts.TCP_PORT, "rollback_blocks_1", GoroutineName, 7)
 		if err != nil {
 			logger.Error("v", err)
 			d.DeleteQueueBlock(newBlockData["hash_hex"])

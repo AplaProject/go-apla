@@ -60,13 +60,17 @@ func (p *Parser) DLTTransferFront() error {
 }
 
 func (p *Parser) DLTTransfer() error {
-	var err error
 	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	if walletId > 0 {
 		if len(p.TxMaps.Bytes["public_key"]) > 0 {
-			err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ?, public_key_0 = [hex] WHERE wallet_id = ?`, p.TxMaps.Int64["amount"],  p.TxMaps.Bytes["public_key"], walletId)
+			err = p.selectiveLoggingAndUpd([]string{"+amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)})
+			//err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ?, public_key_0 = [hex] WHERE wallet_id = ?`, p.TxMaps.Int64["amount"],  p.TxMaps.Bytes["public_key"], walletId)
 		} else {
-			err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ? WHERE wallet_id = ?`, p.TxMaps.Int64["amount"], walletId)
+			err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)})
+			//err = p.ExecSql(`UPDATE dlt_wallets SET amount = amount + ? WHERE wallet_id = ?`, p.TxMaps.Int64["amount"], walletId)
 		}
 		if err != nil {
 			return p.ErrInfo(err)
@@ -92,6 +96,20 @@ func (p *Parser) DLTTransfer() error {
 
 func (p *Parser) DLTTransferRollback() error {
 
+	rbId, err := p.Single(`SELECT rb_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if rbId > 0 {
+		err := p.selectiveRollback([]string{"http_host", "tcp_host", "e_host"}, "dlt_wallets", "user_id="+utils.Int64ToStr(p.TxUserID), false)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	}
+	err = p.ExecSql(`DELETE FROM dlt_transactions WHERE block_id = ?`, p.BlockData.BlockId)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
