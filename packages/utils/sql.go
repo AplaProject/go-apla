@@ -985,6 +985,7 @@ func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, cb_id int64) ([]byte, erro
 	var result []byte
 	var err error
 	if wallet_id > 0 {
+		log.Debug("wallet_id %v cb_id %v", wallet_id, cb_id)
 		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
 		if err != nil {
 			return []byte(""), err
@@ -1485,4 +1486,61 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 		return ErrInfo(err)
 	}
 	return nil
+}
+
+
+func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
+	// возьмем список всех full_nodes
+	fullNodesList, err := db.GetAll("SELECT full_node_id, wallet_id, cb_id FROM full_nodes", -1)
+	if err != nil {
+		return int64(0), ErrInfo(err)
+	}
+	log.Debug("fullNodesList %s", fullNodesList)
+
+	// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
+	prevBlockFullNodeId, err := db.Single("SELECT full_node_id FROM full_nodes WHERE cb_id = ? OR wallet_id = ?", prevBlockCBID, prevBlockWalletId).Int64()
+	if err != nil {
+		return int64(0), ErrInfo(err)
+	}
+	log.Debug("prevBlockFullNodeId %d", prevBlockFullNodeId)
+
+	log.Debug("%v %v", fullNodesList, prevBlockFullNodeId)
+
+	prevBlockFullNodePosition := func (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
+		for i, full_nodes := range fullNodesList {
+			if StrToInt64(full_nodes["full_node_id"]) == prevBlockFullNodeId {
+				return i
+			}
+		}
+		return -1
+	} (fullNodesList, prevBlockFullNodeId)
+	log.Debug("prevBlockFullNodePosition %d", prevBlockFullNodePosition)
+
+	// определим свое место (в том числе в delegate)
+	myPosition := func (fullNodesList []map[string]string, myWalletId, myCBID int64) int {
+		log.Debug("%v %v", fullNodesList, myWalletId)
+		for i, full_nodes := range fullNodesList {
+			if StrToInt64(full_nodes["cb_id"]) == myCBID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_cb_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
+				return i
+			}
+		}
+		return -1
+	} (fullNodesList, myWalletId, myCBID)
+	log.Debug("myPosition %d", myPosition)
+
+	sleepTime := 0
+	if myPosition == prevBlockFullNodePosition {
+		sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
+	}
+
+	if myPosition > prevBlockFullNodePosition {
+		sleepTime = (myPosition - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
+	}
+
+	if myPosition < prevBlockFullNodePosition {
+		sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * consts.GAPS_BETWEEN_BLOCKS
+	}
+	log.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / consts.GAPS_BETWEEN_BLOCKS %v", sleepTime, myPosition, prevBlockFullNodePosition, consts.GAPS_BETWEEN_BLOCKS)
+
+	return int64(sleepTime), nil
 }

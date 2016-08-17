@@ -8054,9 +8054,6 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 .sweet-overlay {
 	display:none !important;
 }
-.stop-scrolling .sweet-overlay {
-	display:block !important;
-}
 .panel .sweet-alert, .modal .sweet-alert {
 	position:absolute !important;
 	left:0px !important;
@@ -8108,4 +8105,23 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 }
 .whirl .sk-cube-grid {
 	display:block;
+}
+.demo_alert {
+	border-radius:0px;
+	background-color:#f3f3f3;
+	color:#b7b7b7 !important;
+	margin:-20px;
+	margin-bottom:20px;
+}
+.demo_alert .bg-primary-dark {
+	background-color:#d7d7d7;
+}
+.demo_alert .row-table {
+	display:block;
+}
+@media only screen and (max-width: 767px) {
+	.demo_alert {
+		margin:-15px;
+		margin-bottom:15px;
+	}
 }

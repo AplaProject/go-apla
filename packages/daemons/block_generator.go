@@ -11,22 +11,10 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	_ "github.com/lib/pq"
 	"time"
-	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 
 var err error
-
-func FindNodePos (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
-	logger.Debug("%v %v", fullNodesList, prevBlockFullNodeId)
-	for i, full_nodes := range fullNodesList {
-		if utils.StrToInt64(full_nodes["full_node_id"]) == prevBlockFullNodeId {
-			return i
-		}
-	}
-	return -1
-}
-
 
 
 func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
@@ -125,7 +113,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		full_node_id, err:= d.FindInFullNodes(myCBID, myWalletId)
+		my_full_node_id, err:= d.FindInFullNodes(myCBID, myWalletId)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -134,10 +122,10 @@ BEGIN:
 			}
 			continue
 		}
-		logger.Debug("full_node_id %d", full_node_id)
-		if full_node_id == 0 {
+		logger.Debug("my_full_node_id %d", my_full_node_id)
+		if my_full_node_id == 0 {
 			d.dbUnlock()
-			logger.Debug("full_node_id == 0")
+			logger.Debug("my_full_node_id == 0")
 			d.sleepTime = 10
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
@@ -169,8 +157,7 @@ BEGIN:
 		}
 		logger.Debug("prevBlockHash %s", prevBlockHash)
 
-		// возьмем список всех full_nodes
-		fullNodesList, err := d.GetAll("SELECT full_node_id, wallet_id, cb_id FROM full_nodes", -1)
+		sleepTime, err := d.GetSleepTime(myWalletId, myCBID, prevBlock["cb_id"], prevBlock["wallet_id"])
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -179,51 +166,9 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		logger.Debug("fullNodesList %s", fullNodesList)
-
-		// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
-		prevBlockFullNodeId, err := d.Single("SELECT full_node_id FROM full_nodes WHERE cb_id = ? OR wallet_id = ?", prevBlock["cb_id"], prevBlock["wallet_id"]).Int64()
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		logger.Debug("prevBlockFullNodeId %d", prevBlockFullNodeId)
-
-		prevBlockFullNodePosition := FindNodePos (fullNodesList, prevBlockFullNodeId)
-		logger.Debug("prevBlockFullNodePosition %d", prevBlockFullNodePosition)
-
-		// определим свое место (в том числе в delegate)
-		myPosition := func (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
-			logger.Debug("%v %v", fullNodesList, prevBlockFullNodeId)
-			for i, full_nodes := range fullNodesList {
-				if utils.StrToInt64(full_nodes["cb_id"]) == myCBID || utils.StrToInt64(full_nodes["wallet_id"]) == myWalletId || utils.StrToInt64(full_nodes["final_delegate_cb_id"]) == myWalletId || utils.StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
-					return i
-				}
-			}
-			return -1
-		} (fullNodesList, full_node_id)
-		logger.Debug("myPosition %d", myPosition)
-
-		sleepTime := 0
-		if myPosition == prevBlockFullNodePosition {
-			sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * consts.DELAY
-		}
-
-		if myPosition > prevBlockFullNodePosition {
-			sleepTime = (myPosition - int(prevBlockFullNodePosition)) * consts.DELAY
-		}
-
-		if myPosition < prevBlockFullNodePosition {
-			sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * consts.DELAY
-		}
-
-		logger.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / consts.DELAY %v", sleepTime, myPosition, prevBlockFullNodePosition, consts.DELAY)
 
 		d.dbUnlock()
+
 		// учтем прошедшее время
 		sleep := int64(sleepTime) - (utils.Time() - prevBlock["time"])
 		if sleep < 0 {

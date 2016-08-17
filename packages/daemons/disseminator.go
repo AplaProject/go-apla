@@ -304,7 +304,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 		logger.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	logger.Debug("n: %x", n)
+	logger.Debug("n: %x (host : %v)", n, host)
 
 	// в 4-х байтах пишем размер данных, которые пошлем далее
 	size := utils.DecToBin(len(toBeSent), 4)
@@ -313,13 +313,13 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 		logger.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	logger.Debug("n: %x", n)
+	logger.Debug("n: %x (host : %v)", n, host)
 	n, err = conn.Write(toBeSent)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	logger.Debug("n: %d / size: %v / len: %d", n, utils.BinToDec(size), len(toBeSent))
+	logger.Debug("n: %d / size: %v / len: %d  (host : %v)", n, utils.BinToDec(size), len(toBeSent), host)
 
 	// в ответ получаем размер данных, которые нам хочет передать сервер
 	buf := make([]byte, 4)
@@ -328,9 +328,9 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 		logger.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	logger.Debug("n: %x", n)
+	logger.Debug("n: %x (host : %v)", n, host)
 	dataSize := utils.BinToDec(buf)
-	logger.Debug("dataSize %d", dataSize)
+	logger.Debug("dataSize %d (host : %v)", dataSize, host)
 	// и если данных менее MAX_TX_SIZE, то получаем их
 	if dataSize < consts.MAX_TX_SIZE && dataSize > 0 {
 		binaryTxHashes := make([]byte, dataSize)
@@ -339,7 +339,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 			logger.Error("%v", utils.ErrInfo(err))
 			return
 		}
-		logger.Debug("binaryTxHashes %x", binaryTxHashes)
+		logger.Debug("binaryTxHashes %x (host : %v)", binaryTxHashes, host)
 		var binaryTx []byte
 		for {
 			// Разбираем список транзакций
@@ -348,7 +348,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 				txHash = utils.BytesShift(&binaryTxHashes, 16)
 			}
 			txHash = utils.BinToHex(txHash)
-			logger.Debug("txHash %s", txHash)
+			logger.Debug("txHash %s (host : %v)", txHash, host)
 			utils.WriteSelectiveLog("SELECT data FROM transactions WHERE hex(hash) = " + string(txHash))
 			tx, err := d.Single("SELECT data FROM transactions WHERE hex(hash) = ?", txHash).Bytes()
 			logger.Debug("tx %x", tx)
@@ -366,7 +366,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 			}
 		}
 
-		logger.Debug("binaryTx %x", binaryTx)
+		logger.Debug("binaryTx %x (host : %v)", binaryTx, host)
 
 		// шлем серверу
 		// в первых 4-х байтах пишем размер данных, которые пошлем далее
@@ -382,5 +382,9 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 			logger.Error("%v", utils.ErrInfo(err))
 			return
 		}
+	} else if dataSize == 0 {
+		logger.Debug("dataSize == 0 (%v)", host)
+	} else  {
+		logger.Error("incorrect dataSize  (host : %v)", host)
 	}
 }
