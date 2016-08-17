@@ -107,14 +107,14 @@ BEGIN:
 		curTime := utils.Time()
 
 		// проверим, прошло ли время с момента последнего обновления
-		adminTime, err := d.Single("SELECT time FROM upd_full_nodes").Int64()
+		upd_full_nodes, err := d.Single("SELECT time FROM upd_full_nodes").Int64()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		if curTime-adminTime <= consts.UPD_FULL_NODES_PERIOD {
+		if curTime-upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD {
 			if d.unlockPrintSleep(utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO"), d.sleepTime) {
 				break BEGIN
 			}

@@ -8054,17 +8054,23 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 .sweet-overlay {
 	display:none !important;
 }
-.sweet-alert {
-	flex-flow:row wrap;
-	align-items:center;
-	align-content:space-between;
-	justify-content:center;
+.stop-scrolling .sweet-overlay {
+	display:block !important;
+}
+.panel .sweet-alert, .modal .sweet-alert {
 	position:absolute !important;
 	left:0px !important;
 	top:0px !important;
 	width:100% !important;
 	height:100% !important;
 	margin:0px !important;
+}
+.sweet-alert {
+	flex-flow:row wrap;
+	align-items:center;
+	align-content:space-between;
+	justify-content:center;
+	min-height:300px;
 }
 .sweet-alert .sa-icon {
 	margin:0px auto !important;

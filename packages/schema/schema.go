@@ -124,10 +124,12 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[0] = map[string]string{"name": "id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s2[1] = map[string]string{"name": "hash", "mysql": "binary(32) NOT NULL DEFAULT ''", "sqlite": "binary(32) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Хэш от полного заголовка блока (new_block_id,prev_block_hash,merkle_root,time,user_id,level). Используется как PREV_BLOCK_HASH"}
 	s2[2] = map[string]string{"name": "data", "mysql": "longblob NOT NULL DEFAULT ''", "sqlite": "longblob NOT NULL DEFAULT ''", "postgresql": "bytea NOT NULL DEFAULT ''", "comment": ""}
-	s2[3] = map[string]string{"name": "time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[4] = map[string]string{"name": "tx", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": ""}
-	s2[5] = map[string]string{"name": "cur_0l_miner_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Майнер, который должен был сгенерить блок на 0-м уровне. Для отладки"}
-	s2[6] = map[string]string{"name": "max_miner_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Макс. miner_id на момент, когда был записан этот блок. Для отладки"}
+	s2[3] = map[string]string{"name": "cb_id", "mysql": "int(11) unsigned NOT NULL DEFAULT '0'", "sqlite": "int(11)  NOT NULL DEFAULT '0'", "postgresql": "int  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[4] = map[string]string{"name": "wallet_id", "mysql": "int(11) unsigned NOT NULL DEFAULT '0'", "sqlite": "int(11)  NOT NULL DEFAULT '0'", "postgresql": "int  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[5] = map[string]string{"name": "time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
+	s2[6] = map[string]string{"name": "tx", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": ""}
+	s2[7] = map[string]string{"name": "cur_0l_miner_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Майнер, который должен был сгенерить блок на 0-м уровне. Для отладки"}
+	s2[8] = map[string]string{"name": "max_miner_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Макс. miner_id на момент, когда был записан этот блок. Для отладки"}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"id"}
 	s1["comment"] = "Главная таблица. Хранит цепочку блоков"
