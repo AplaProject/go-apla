@@ -56,6 +56,25 @@
 	<script language="JavaScript" type="text/javascript" src="static/js/rsasign-1.2.min.js"></script>
 	<script language="JavaScript" type="text/javascript" src="static/js/asn1hex-1.1.min.js"></script>
 	<script language="JavaScript" type="text/javascript" src="static/js/send_to_net.js"></script>
+	
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/prng4-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/jsbn-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/jsbn2-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/ec-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/rng-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ecparam-1.0.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/x64-core_min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/md5_min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/aes.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/sha1_min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/sha256_min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/yahoo-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/ec-patch-min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/crypto-1.1.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/asn1-1.0.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/asn1hex-1.1.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ecdsa-modified-1.0.min.js"></script>
 
 	<style>
 		.btn-demo {
@@ -297,7 +316,8 @@
 	
 			var str = e.target.hash;
 			var page_match = str.match(/#(\w+)/i);
-			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='user-block' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh' && page_match[1]!='dhp' && page_match[1]!='dg' && page_match[1]!='dcb'  ) {
+			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='user-block' && page_match[1]!='da' && page_match[1]!='dc' && page_match[1]!='dco' && page_match[1]!='dh' && page_match[1]!='dhp' && page_match[1]!='dg' && page_match[1]!='dgc' && page_match[1]!='dcb'  ) {
+			
 				var page = page_match[1];
 				var param_match = str.match(/\/\w+=\w+/gi);
 				var param_obj = {};

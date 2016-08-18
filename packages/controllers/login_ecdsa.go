@@ -5,7 +5,7 @@ import (
 //	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 //	"html/template"
-	"fmt"
+//	"fmt"
 )
 
 type loginECDSAPage struct {
@@ -93,7 +93,6 @@ func (c *Controller) LoginECDSA() (string, error) {
 /*		MyWalletData:          MyWalletData,
 		Title:                 "modalAnonym",
 */})
-	fmt.Println("LOGIN", err)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -1,6 +1,6 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".gov, .gov_citizens").addClass("active");
+	$(".gov, .gov_citizens, .gov_citizens_d").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_gov", { }, function() {});
 </script>
@@ -27,7 +27,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_citizen_status">
+		 <a href="#gov_register_citizen" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Register citizen</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
@@ -50,7 +50,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_add_property">
+		 <a href="#gov_register_property" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Register property</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
@@ -73,7 +73,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_birth_statement">
+		 <a href="#gov_birth_statement" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Birth statement</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
@@ -96,7 +96,7 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_date_death">
+		 <a href="#gov_date_death" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
 			<span class="pull-left">Date of death</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
