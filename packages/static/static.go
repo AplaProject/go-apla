@@ -65,9 +65,16 @@
 // static/data/medication.json
 // static/data/patients.json
 // static/entrance.html
+// static/gov_birth_statement.html
 // static/gov_citizens.html
+// static/gov_create_budget.html
 // static/gov_currency_exchange.html
+// static/gov_date_death.html
+// static/gov_register_citizen.html
+// static/gov_register_property.html
+// static/gov_settings.html
 // static/gov_shares_exchange.html
+// static/gov_taxes.html
 // static/health_buy_medicament.html
 // static/health_entries_clinic.html
 // static/health_facility.html
@@ -1582,10 +1589,46 @@ func staticEntranceHtml() (*asset, error) {
 	return a, err
 }
 
+// staticGov_birth_statementHtml reads file data from disk. It returns an error on failure.
+func staticGov_birth_statementHtml() (*asset, error) {
+	path := "static/gov_birth_statement.html"
+	name := "static/gov_birth_statement.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticGov_citizensHtml reads file data from disk. It returns an error on failure.
 func staticGov_citizensHtml() (*asset, error) {
 	path := "static/gov_citizens.html"
 	name := "static/gov_citizens.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_create_budgetHtml reads file data from disk. It returns an error on failure.
+func staticGov_create_budgetHtml() (*asset, error) {
+	path := "static/gov_create_budget.html"
+	name := "static/gov_create_budget.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1618,10 +1661,100 @@ func staticGov_currency_exchangeHtml() (*asset, error) {
 	return a, err
 }
 
+// staticGov_date_deathHtml reads file data from disk. It returns an error on failure.
+func staticGov_date_deathHtml() (*asset, error) {
+	path := "static/gov_date_death.html"
+	name := "static/gov_date_death.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_register_citizenHtml reads file data from disk. It returns an error on failure.
+func staticGov_register_citizenHtml() (*asset, error) {
+	path := "static/gov_register_citizen.html"
+	name := "static/gov_register_citizen.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_register_propertyHtml reads file data from disk. It returns an error on failure.
+func staticGov_register_propertyHtml() (*asset, error) {
+	path := "static/gov_register_property.html"
+	name := "static/gov_register_property.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_settingsHtml reads file data from disk. It returns an error on failure.
+func staticGov_settingsHtml() (*asset, error) {
+	path := "static/gov_settings.html"
+	name := "static/gov_settings.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticGov_shares_exchangeHtml reads file data from disk. It returns an error on failure.
 func staticGov_shares_exchangeHtml() (*asset, error) {
 	path := "static/gov_shares_exchange.html"
 	name := "static/gov_shares_exchange.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticGov_taxesHtml reads file data from disk. It returns an error on failure.
+func staticGov_taxesHtml() (*asset, error) {
+	path := "static/gov_taxes.html"
+	name := "static/gov_taxes.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7477,9 +7610,16 @@ var _bindata = map[string]func() (*asset, error){
 	"static/data/medication.json": staticDataMedicationJson,
 	"static/data/patients.json": staticDataPatientsJson,
 	"static/entrance.html": staticEntranceHtml,
+	"static/gov_birth_statement.html": staticGov_birth_statementHtml,
 	"static/gov_citizens.html": staticGov_citizensHtml,
+	"static/gov_create_budget.html": staticGov_create_budgetHtml,
 	"static/gov_currency_exchange.html": staticGov_currency_exchangeHtml,
+	"static/gov_date_death.html": staticGov_date_deathHtml,
+	"static/gov_register_citizen.html": staticGov_register_citizenHtml,
+	"static/gov_register_property.html": staticGov_register_propertyHtml,
+	"static/gov_settings.html": staticGov_settingsHtml,
 	"static/gov_shares_exchange.html": staticGov_shares_exchangeHtml,
+	"static/gov_taxes.html": staticGov_taxesHtml,
 	"static/health_buy_medicament.html": staticHealth_buy_medicamentHtml,
 	"static/health_entries_clinic.html": staticHealth_entries_clinicHtml,
 	"static/health_facility.html": staticHealth_facilityHtml,
@@ -7910,9 +8050,16 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"patients.json": &bintree{staticDataPatientsJson, map[string]*bintree{}},
 		}},
 		"entrance.html": &bintree{staticEntranceHtml, map[string]*bintree{}},
+		"gov_birth_statement.html": &bintree{staticGov_birth_statementHtml, map[string]*bintree{}},
 		"gov_citizens.html": &bintree{staticGov_citizensHtml, map[string]*bintree{}},
+		"gov_create_budget.html": &bintree{staticGov_create_budgetHtml, map[string]*bintree{}},
 		"gov_currency_exchange.html": &bintree{staticGov_currency_exchangeHtml, map[string]*bintree{}},
+		"gov_date_death.html": &bintree{staticGov_date_deathHtml, map[string]*bintree{}},
+		"gov_register_citizen.html": &bintree{staticGov_register_citizenHtml, map[string]*bintree{}},
+		"gov_register_property.html": &bintree{staticGov_register_propertyHtml, map[string]*bintree{}},
+		"gov_settings.html": &bintree{staticGov_settingsHtml, map[string]*bintree{}},
 		"gov_shares_exchange.html": &bintree{staticGov_shares_exchangeHtml, map[string]*bintree{}},
+		"gov_taxes.html": &bintree{staticGov_taxesHtml, map[string]*bintree{}},
 		"health_buy_medicament.html": &bintree{staticHealth_buy_medicamentHtml, map[string]*bintree{}},
 		"health_entries_clinic.html": &bintree{staticHealth_entries_clinicHtml, map[string]*bintree{}},
 		"health_facility.html": &bintree{staticHealth_facilityHtml, map[string]*bintree{}},
