@@ -1,4 +1,87 @@
 var g_menuShow = true;
+var GKey = {
+	init: function() {
+		var pass = getCookie('psw');
+		var pubKey = localStorage.getItem('PubKey');
+		if (pubKey)
+			this.Public = pubKey;
+		if (pass && localStorage.getItem('EncKey')) {
+			this.decrypt(localStorage.getItem('EncKey'), pass)
+		}
+	}, 
+	decrypt: function( encKey, pass ) {
+		var decrypted = CryptoJS.AES.decrypt(encKey, pass).toString(CryptoJS.enc.Hex);
+		var prvkey = '';
+		for ( i=0; i < decrypted.length; i+=2 ) {
+			var num = parseInt( decrypted.substr(i,2),16);
+			prvkey += String.fromCharCode(num);
+		}
+		if (this.verify(prvkey, this.Public)) {
+			this.Private = prvkey;
+			this.Password = pass;
+			return true;
+		}
+		return false;
+	},
+	save: function() {
+		var encryptedAES = CryptoJS.AES.encrypt(this.Private, this.Password);
+		localStorage.setItem('EncKey', encryptedAES );
+		localStorage.setItem('PubKey', GKey.Public );
+		setCookie('psw', this.Password);
+	},
+	verify: function( prvkey, pubkey ) {
+  		var sigalg = 'SHA256withECDSA';
+		var msg = 'test';
+  		var sig = new KJUR.crypto.Signature({"alg": sigalg});
+
+  		sig.initSign({'ecprvhex': prvkey, 'eccurvename': this.Curve});
+  		sig.updateString(msg);
+  		var sigval = sig.sign();
+
+  		var siga = new KJUR.crypto.Signature({"alg": sigalg, "prov": "cryptojs/jsrsa"});
+  		siga.initVerifyByPublicKey({'ecpubhex': pubkey, 'eccurvename': this.Curve});
+  		siga.updateString(msg);
+  		return siga.verify(sigval);
+	},
+	Curve: 'secp256r1',
+	Password: '',
+	Private: '',
+	Public:  '',
+}
+
+GKey.init();
+
+function getCookie(name) {
+	var matches = document.cookie.match(new RegExp(
+    	"(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+  	));
+  	return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+function setCookie(name, value, options) {
+	options = options || {};
+	var expires = options.expires;
+
+ 	if (typeof expires == "number" && expires) {
+    	var d = new Date();
+    	d.setTime(d.getTime() + expires * 1000);
+    	expires = options.expires = d;
+  	}
+	if (expires && expires.toUTCString) {
+    	options.expires = expires.toUTCString();
+  	}
+	value = encodeURIComponent(value);
+	var updatedCookie = name + "=" + value;
+
+  	for (var propName in options) {
+    	updatedCookie += "; " + propName;
+    	var propValue = options[propName];
+    	if (propValue !== true) {
+      		updatedCookie += "=" + propValue;
+    	}
+  	}
+	document.cookie = updatedCookie;
+}
 
 function Demo() {
 	var id = $("#demo");
