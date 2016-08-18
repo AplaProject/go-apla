@@ -1,0 +1,95 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".gov, .gov_citizens, .gov_register_citizen").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_gov", { }, function() {});
+	
+	$('#datetimepicker1').datetimepicker({
+	  icons: {
+		  time: 'fa fa-clock-o',
+		  date: 'fa fa-calendar',
+		  up: 'fa fa-chevron-up',
+		  down: 'fa fa-chevron-down',
+		  previous: 'fa fa-chevron-left',
+		  next: 'fa fa-chevron-right',
+		  today: 'fa fa-crosshairs',
+		  clear: 'fa fa-trash'
+		},
+		minDate: moment("01/01/1950"),
+		maxDate: 'now',
+		format: 'DD MMMM, YYYY'
+	});
+	$('.filestyle').filestyle();
+	$('#select2-1').select2({
+		theme: 'bootstrap'
+	});
+</script>
+
+<div class="content-heading">
+   Government
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_gov">Dashboard</a></li>
+   <li><a href="#gov_citizens">Citizens</a></li>
+   <li class="active">Register citizen</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Name</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Surname</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Birthday</label>
+		  <div id="datetimepicker1" class="input-group date">
+			 <input type="text" class="form-control">
+			 <span class="input-group-addon">
+				<span class="fa fa-calendar"></span>
+			 </span>
+		  </div>
+	   </div>
+	   <div class="form-group">
+		  <label>Photo</label>
+		  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
+	   </div>
+	   <div class="form-group">
+		  <label>Passport number</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Country</label>
+		  <select id="select2-1" class="form-control">
+			 <option value="AL">Alabama</option>
+			 <option value="AR">Arkansas</option>
+			 <option value="IL">Illinois</option>
+			 <option value="IA">Iowa</option>
+			 <option value="KS">Kansas</option>
+			 <option value="KY">Kentucky</option>
+			 <option value="LA">Louisiana</option>
+			 <option value="MN">Minnesota</option>
+			 <option value="MS">Mississippi</option>
+			 <option value="MO">Missouri</option>
+			 <option value="OK">Oklahoma</option>
+			 <option value="SD">South Dakota</option>
+			 <option value="TX">Texas</option>
+			 <option value="TN">Tennessee</option>
+			 <option value="WI">Wisconsin</option>
+		  </select>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Register</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
