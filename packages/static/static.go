@@ -19,9 +19,11 @@
 // static/cb_representatives.html
 // static/cb_select_emission.html
 // static/change_node_key.html
+// static/citizen_admission_high_school.html
 // static/citizen_bill_payment.html
 // static/citizen_divorce.html
 // static/citizen_inheritance.html
+// static/citizen_marriage_contract.html
 // static/citizen_marriage_registration.html
 // static/citizen_money_transfer.html
 // static/citizen_new_company.html
@@ -761,6 +763,24 @@ func staticChange_node_keyHtml() (*asset, error) {
 	return a, err
 }
 
+// staticCitizen_admission_high_schoolHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_admission_high_schoolHtml() (*asset, error) {
+	path := "static/citizen_admission_high_school.html"
+	name := "static/citizen_admission_high_school.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticCitizen_bill_paymentHtml reads file data from disk. It returns an error on failure.
 func staticCitizen_bill_paymentHtml() (*asset, error) {
 	path := "static/citizen_bill_payment.html"
@@ -801,6 +821,24 @@ func staticCitizen_divorceHtml() (*asset, error) {
 func staticCitizen_inheritanceHtml() (*asset, error) {
 	path := "static/citizen_inheritance.html"
 	name := "static/citizen_inheritance.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCitizen_marriage_contractHtml reads file data from disk. It returns an error on failure.
+func staticCitizen_marriage_contractHtml() (*asset, error) {
+	path := "static/citizen_marriage_contract.html"
+	name := "static/citizen_marriage_contract.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7564,9 +7602,11 @@ var _bindata = map[string]func() (*asset, error){
 	"static/cb_representatives.html": staticCb_representativesHtml,
 	"static/cb_select_emission.html": staticCb_select_emissionHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
+	"static/citizen_admission_high_school.html": staticCitizen_admission_high_schoolHtml,
 	"static/citizen_bill_payment.html": staticCitizen_bill_paymentHtml,
 	"static/citizen_divorce.html": staticCitizen_divorceHtml,
 	"static/citizen_inheritance.html": staticCitizen_inheritanceHtml,
+	"static/citizen_marriage_contract.html": staticCitizen_marriage_contractHtml,
 	"static/citizen_marriage_registration.html": staticCitizen_marriage_registrationHtml,
 	"static/citizen_money_transfer.html": staticCitizen_money_transferHtml,
 	"static/citizen_new_company.html": staticCitizen_new_companyHtml,
@@ -8000,9 +8040,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"cb_representatives.html": &bintree{staticCb_representativesHtml, map[string]*bintree{}},
 		"cb_select_emission.html": &bintree{staticCb_select_emissionHtml, map[string]*bintree{}},
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{}},
+		"citizen_admission_high_school.html": &bintree{staticCitizen_admission_high_schoolHtml, map[string]*bintree{}},
 		"citizen_bill_payment.html": &bintree{staticCitizen_bill_paymentHtml, map[string]*bintree{}},
 		"citizen_divorce.html": &bintree{staticCitizen_divorceHtml, map[string]*bintree{}},
 		"citizen_inheritance.html": &bintree{staticCitizen_inheritanceHtml, map[string]*bintree{}},
+		"citizen_marriage_contract.html": &bintree{staticCitizen_marriage_contractHtml, map[string]*bintree{}},
 		"citizen_marriage_registration.html": &bintree{staticCitizen_marriage_registrationHtml, map[string]*bintree{}},
 		"citizen_money_transfer.html": &bintree{staticCitizen_money_transferHtml, map[string]*bintree{}},
 		"citizen_new_company.html": &bintree{staticCitizen_new_companyHtml, map[string]*bintree{}},
