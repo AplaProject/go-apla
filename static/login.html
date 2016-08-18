@@ -68,6 +68,7 @@
 <script language="JavaScript" type="text/javascript" src="static/js/crypto/ecdsa-modified-1.0.min.js"></script>
 
 <script language="JavaScript" type="text/javascript">
+g_menuShow = false;  // hide menu
 
 //https://github.com/bitcoin/bips/blob/master/bip-0039/bip-0039-wordlists.md
 var word_list = ["abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident",
@@ -306,6 +307,21 @@ function new_account() {
 	$("#register").show();
 }
 
+function do_sign() {
+	var key = pubKey;
+	if (key.length > 128) {
+		key = key.substr( 2 );
+	}
+	$.post( 'ajax?controllerName=SignIn', {
+			'key': key,
+			'setup_password': ''
+		}, function (data) {
+			console.log("data.result: ", data.result);
+			login_ok( data.result );
+		}, 'JSON'
+	);
+}
+
 function do_register() {
 	var pass = $("#pass").val();
 	if (pass.length < 6) {
@@ -317,16 +333,17 @@ function do_register() {
 		return false;
 	} 
 	do_generate();
-	var pubkey = $("#pubkey").val();
+	pubKey = $("#pubkey").val();
 	address = hex_sha1( pubkey ).toLowerCase();
 	var privkey = $("#prvkey").val();
 	var encryptedAES = CryptoJS.AES.encrypt(privkey, pass);
 	
 	$("#address").html( 'Address: ' +  address );
 	localStorage.setItem('EncKey', encryptedAES );
-	localStorage.setItem('PubKey', pubkey );
-	console.log('verify', do_verify( privkey, pubkey));
-	login_back();
+	localStorage.setItem('PubKey', pubKey );
+//	console.log('verify', do_verify( privkey, pubkey));
+//	login_back();
+	do_sign();
 	return false;
 }
 
@@ -344,8 +361,9 @@ function do_login() {
 		prvkey += String.fromCharCode(num);
 	}
 	if (do_verify( prvkey, pubKey)) {
-		alert('Login OK');
-		login_back();
+		do_sign();
+//		alert('Login OK');
+//		login_back();
 	} else {
 		loginAttempts++;
 		alert('Login Fail ' + loginAttempts + '/3');
