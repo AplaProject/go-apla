@@ -104,13 +104,15 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	tplName := r.FormValue("tpl_name")
 	if len(tplName) == 0 {
-		tplName = "dashboardAnonym"
+		tplName = r.FormValue("controllerHTML")
+		if len(tplName) == 0 {
+			tplName = "dashboardAnonym"
+		}
 	}
 	c.Parameters, err = c.GetParameters()
 	log.Debug("parameters=", c.Parameters)
 
 	log.Debug("tpl_name=", tplName)
- 
 	// если в параметрах пришел язык, то установим его
 	newLang := utils.StrToInt(c.Parameters["lang"])
 	if newLang > 0 {
@@ -231,6 +233,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("tplName::", tplName, sessCitizenId, sessWalletId, installProgress)
 
+	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, installProgress)
 	controller := r.FormValue("controllerHTML")
 	if len(controller) > 0 {
 
@@ -256,7 +259,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		w.Write(b.Bytes())
 		return
 	}
-
 	if ok, _ := regexp.MatchString(`^(?i)LoginECDSA|AnonymMoneyTransfer|ModalAnonym|DashBoardAnonym|Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|setupPassword|waitingAcceptNewKey|SetPassword|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
 		w.Write([]byte("Access denied 0"))
 	} else if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId > 0) && installProgress == "complete" {
@@ -329,6 +331,10 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte(html))
 	} else if len(tplName) > 0 {
+		if tplName == "login" {
+			tplName = "LoginECDSA"
+		}
+
 		log.Debug("tplName", tplName)
 		html := ""
 		if ok, _ := regexp.MatchString(`^(?i)LoginECDSA|blockExplorer|waitingAcceptNewKey|SetupPassword|CfCatalog|CfPagePreview|CfStart|Check_sign|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SignLogin|SynchronizationBlockchain|UpdatingBlockchain|Menu$`, tplName); !ok && c.SessCitizenId <= 0 && c.SessWalletId <= 0 {
@@ -348,7 +354,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte(html))
 	} else {
-		html, err := CallController(c, "login")
+		html, err := CallController(c, "LoginECDSA")
 		if err != nil {
 			log.Error("%v", err)
 		}

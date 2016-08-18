@@ -29,7 +29,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"encoding/base64"
+//	"encoding/base64"
+	"encoding/hex"
 )
 
 var (
@@ -66,11 +67,12 @@ func firstBlock() {
 
 
 		PublicKey, _ := ioutil.ReadFile(*utils.Dir + "/PublicKey")
-		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
+//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
+		PublicKeyBytes,_ := hex.DecodeString(string(PublicKey))
 
 		NodePublicKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePublicKey")
-		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
-
+//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
+		NodePublicKeyBytes,_ := hex.DecodeString(string(NodePublicKey))
 		Host, _ := ioutil.ReadFile(*utils.Dir + "/Host")
 
 		tx := utils.DecToBin(1, 1)

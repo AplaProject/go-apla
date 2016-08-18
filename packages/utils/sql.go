@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"crypto"
+//	"crypto"
 	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -1460,19 +1460,18 @@ func (db *DCDB) FindInFullNodes(myCBID, myWalletId int64) (int64, error) {
 }
 
 func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
-
-
 	nodePrivateKey, err := db.GetNodePrivateKey()
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
-	log.Debug("nodePrivateKey = %s", nodePrivateKey)
+/*	log.Debug("nodePrivateKey = %s", nodePrivateKey)
 	// подписываем нашим нод-ключем данные транзакции
 	privateKey, err := MakePrivateKey(nodePrivateKey)
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
-	return rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, HashSha1(forSign))
+	return rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, HashSha1(forSign))*/
+	return SignECDSA(nodePrivateKey,forSign)
 }
 
 func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
