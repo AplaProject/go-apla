@@ -1699,7 +1699,7 @@ func (p *Parser) selectiveRollback(fields []string, table string, where string, 
 		//log.Debug("logData",logData)
 		addSqlUpdate := ""
 		for _, field := range fields {
-			if utils.InSliceString(field, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2"}) && len(logData[field]) != 0 {
+			if utils.InSliceString(field, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(logData[field]) != 0 {
 				query := ""
 				logData[field] = string(utils.BinToHex([]byte(logData[field])))
 				switch p.ConfigIni["db_type"] {
@@ -1715,6 +1715,9 @@ func (p *Parser) selectiveRollback(fields []string, table string, where string, 
 				addSqlUpdate += field + `='` + logData[field] + `',`
 			}
 		}
+		//log.Debug("%v", logData)
+		//log.Debug("%v", logData["prev_rb_id"])
+		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where)
 		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where, logData["prev_rb_id"])
 		if err != nil {
 			return p.ErrInfo(err)

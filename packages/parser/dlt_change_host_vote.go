@@ -46,9 +46,9 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 func (p *Parser) DLTChangeHostVote() error {
 	var err error
 	if len(p.TxMaps.Bytes["public_key"]) > 0 {
-		err = p.ExecSql(`UPDATE dlt_wallets SET host = ?, vote = [hex], public_key_0 = [hex] WHERE wallet_id = ?`, p.TxMaps.String["host"], p.TxMaps.String["vote"], p.TxMaps.Bytes["public_key"], p.TxWalletID)
+		err = p.selectiveLoggingAndUpd([]string{"host", "vote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["vote"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)})
 	} else {
-		err = p.ExecSql(`UPDATE dlt_wallets SET host = ?, vote = [hex] WHERE wallet_id = ?`, p.TxMaps.String["host"], p.TxMaps.String["vote"], p.TxWalletID)
+		err = p.selectiveLoggingAndUpd([]string{"host", "vote"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["vote"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)})
 	}
 	if err != nil {
 		return p.ErrInfo(err)
@@ -57,12 +57,18 @@ func (p *Parser) DLTChangeHostVote() error {
 }
 
 func (p *Parser) DLTChangeHostVoteRollback() error {
-
+	var err error
+	if len(p.TxMaps.Bytes["public_key"]) > 0 {
+		err = p.selectiveRollback([]string{"host", "vote", "public_key_0"}, "dlt_wallets", "", false)
+	} else {
+		err = p.selectiveRollback([]string{"host", "vote"}, "dlt_wallets", "", false)
+	}
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
 func (p *Parser) DLTChangeHostVoteRollbackFront() error {
-
 	return nil
-
 }

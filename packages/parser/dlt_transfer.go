@@ -96,12 +96,29 @@ func (p *Parser) DLTTransfer() error {
 
 func (p *Parser) DLTTransferRollback() error {
 
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	rbId, err := p.Single(`SELECT rb_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	// Если это не первая запись, а обновление
 	if rbId > 0 {
-		err := p.selectiveRollback([]string{"http_host", "tcp_host", "e_host"}, "dlt_wallets", "user_id="+utils.Int64ToStr(p.TxUserID), false)
+		if len(p.TxMaps.Bytes["public_key"]) > 0 {
+			err := p.selectiveRollback([]string{"public_key_0", "amount"}, "dlt_wallets", "wallet_id="+utils.Int64ToStr(walletId), false)
+			if err != nil {
+				return p.ErrInfo(err)
+			}
+		} else {
+			err := p.selectiveRollback([]string{"amount"}, "dlt_wallets", "wallet_id="+utils.Int64ToStr(walletId), false)
+			if err != nil {
+				return p.ErrInfo(err)
+			}
+		}
+	} else {
+		err = p.ExecSql(`DELETE FROM dlt_wallets WHERE wallet_id = ?`, walletId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
