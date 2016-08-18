@@ -1,3 +1,11 @@
+<style>
+	.form-inline .form-group {
+		display:inline-block !important;
+		vertical-align:middle !important;
+		margin-bottom:0px !important;
+	}
+</style>
+
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .citizen_marriage_registration").addClass("active");
@@ -14,3 +22,211 @@
    <li><a href="#citizen_marriage_registration">Marriage registration</a></li>
    <li class="active">Marriage Contract</li>
 </ol>
+<h4 class="page-header">Obligation after divorce</h4>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<!-- START table-responsive-->
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <thead>
+			 <tr>
+				<th style="width:33.33%;">Имущество</th>
+				<th style="width:33.33%;">Необходимое условие</th>
+				<th style="width:33.33%;">Собственность</th>
+			 </tr>
+		  </thead>
+		  <tbody>
+			 <tr>
+				<td>Суммы на счетах</td>
+				<td></td>
+				<td>
+				  <select name="account" class="form-control m-b">
+					 <option>на чье имя</option>
+				  </select>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Ценные бумаги</td>
+				<td></td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>на чье имя</option>
+				  </select>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Недвижимость</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>no child</option>
+				  </select>
+				</td>
+				<td>
+				  <div class="form-inline" style="width:350px; font-size:0px;">
+					  <div class="form-group">
+						  <select name="account" class="form-control" style="width:200px;">
+							 <option>доли в %</option>
+						  </select>
+					  </div>
+					  <div class="form-group">
+						  <input type="text" class="form-control" value="H:50" style="width:75px;">
+					  </div>
+					  <div class="form-group">
+						  <input type="text" class="form-control" value="W:50" style="width:75px;">
+					  </div>
+					</div>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Недвижимость</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>child</option>
+				  </select>
+				</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>wife</option>
+				  </select>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Земля</td>
+				<td></td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>на чье имя</option>
+				  </select>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Прочее</td>
+				<td></td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>на чье имя</option>
+				  </select>
+				</td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+	<!-- END table-responsive-->
+ </div>
+</div>
+<!-- END panel-->
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<!-- START table-responsive-->
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <thead>
+			 <tr>
+				<th style="width:33.33%;">Выплаты</th>
+				<th style="width:33.33%;">Необходимое условие</th>
+				<th style="width:33.33%;">Кто оплачивает расходы</th>
+			 </tr>
+		  </thead>
+		  <tbody>
+			 <tr>
+				<td>Единовременная выплата</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>иницитива - муж</option>
+				  </select>
+				</td>
+				<td>
+				  <div class="form-inline" style="width:350px; font-size:0px;">
+					  <div class="form-group">
+						  <select name="account" class="form-control" style="width:200px;">
+							 <option>husband</option>
+						  </select>
+					  </div>
+					  <div class="form-group">
+						  <input type="text" class="form-control" value="25 000" style="width:150px;">
+					  </div>
+					</div>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Ежемесячная выплата</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>ребенок до 18</option>
+				  </select>
+				</td>
+				<td>
+				  <div class="form-inline" style="width:350px; font-size:0px;">
+					  <div class="form-group">
+						  <select name="account" class="form-control" style="width:200px;">
+							 <option>husband</option>
+						  </select>
+					  </div>
+					  <div class="form-group">
+						  <input type="text" class="form-control" value="2 000" style="width:150px;">
+					  </div>
+					</div>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Ежемесячная выплата</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>wife disability</option>
+				  </select>
+				  <select name="account" class="form-control">
+					 <option>wife no marriage</option>
+				  </select>
+				</td>
+				<td>
+				  <div class="form-inline" style="width:350px; font-size:0px;">
+					  <div class="form-group">
+						  <select name="account" class="form-control" style="width:200px;">
+							 <option>husband</option>
+						  </select>
+					  </div>
+					  <div class="form-group">
+						  <input type="text" class="form-control" value="1 500" style="width:150px;">
+					  </div>
+					</div>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Обучение в ВУЗ</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>Admission to HS</option>
+				  </select>
+				</td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>husband</option>
+				  </select>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Обязательства по долгам</td>
+				<td></td>
+				<td>
+				  <select name="account" class="form-control">
+					 <option>на чье имя</option>
+				  </select>
+				</td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+	<!-- END table-responsive-->
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-success">Husband</button>
+		 <button type="button" class="btn btn-green">Wife</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
