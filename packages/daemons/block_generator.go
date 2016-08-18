@@ -1,11 +1,11 @@
 package daemons
 
 import (
-	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
+//	"crypto"
+//	"crypto/rand"
+//	"crypto/rsa"
+//	"crypto/x509"
+//	"encoding/pem"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
@@ -328,7 +328,7 @@ BEGIN:
 
 
 		// подписываем нашим нод-ключем заголовок блока
-		block, _ := pem.Decode([]byte(nodePrivateKey))
+/*		block, _ := pem.Decode([]byte(nodePrivateKey))
 		if block == nil {
 			logger.Error("bad key data %v ", utils.GetParent())
 			utils.Sleep(1)
@@ -346,11 +346,12 @@ BEGIN:
 				break BEGIN
 			}
 			continue BEGIN
-		}
+		}*/
 		var forSign string
 		forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID,  string(mrklRoot))
 		logger.Debug("forSign: %v", forSign)
-		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
+//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
+		bytes, err := utils.SignECDSA(nodePrivateKey, forSign)
 		if err != nil {
 			if d.dPrintSleep(fmt.Sprintf("err %v %v", err, utils.GetParent()), d.sleepTime) {
 				break BEGIN
