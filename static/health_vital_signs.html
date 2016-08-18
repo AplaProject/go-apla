@@ -1,0 +1,129 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".health, .health_patient, .health_vital_signs").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
+	
+	$('#datetimepicker1').datetimepicker({
+	  icons: {
+		  time: 'fa fa-clock-o',
+		  date: 'fa fa-calendar',
+		  up: 'fa fa-chevron-up',
+		  down: 'fa fa-chevron-down',
+		  previous: 'fa fa-chevron-left',
+		  next: 'fa fa-chevron-right',
+		  today: 'fa fa-crosshairs',
+		  clear: 'fa fa-trash'
+		},
+		minDate: moment("01/01/1950"),
+		maxDate: 'now',
+		format: 'DD MMMM, YYYY'
+	});
+</script>
+
+<div class="content-heading">
+   Citizen
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_health">Dashboard</a></li>
+   <li><a href="#health_patient">Patient</a></li>
+   <li class="active">Vital Signs</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="row">
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Height</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Weight</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+	   </div>
+	   <div class="row">
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Temperature</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+	   </div>
+	   <div class="row">
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Pulse</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Respiration rate</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+	   </div>
+	   <div class="row">
+		   <div class="col-xs-6">
+			   <div class="form-group">
+				  <label>Arterial pressure</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-xs-6">
+			   <div class="form-group">
+				  <label>&nbsp;</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+	   </div>
+	   <div class="row">
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Hemoglobin level</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Glucose levels</label>
+				  <input type="number" class="form-control" value="">
+			   </div>
+		   </div>
+	   </div>
+	   <div class="row">
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Date</label>
+				  <div id="datetimepicker1" class="input-group date">
+					 <input type="text" class="form-control">
+					 <span class="input-group-addon">
+						<span class="fa fa-calendar"></span>
+					 </span>
+				  </div>
+			   </div>
+		   </div>
+		   <div class="col-sm-6">
+			   <div class="form-group">
+				  <label>Time</label>
+				  <input type="text" class="form-control" value="">
+			   </div>
+		   </div>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Save</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

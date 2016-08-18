@@ -1,3 +1,9 @@
+<style>
+	#fields {
+		margin-bottom:-20px;
+	}
+</style>
+
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".company, .company_new_good").addClass("active");
@@ -8,6 +14,13 @@
 		theme: 'bootstrap'
 	});
 	$('.filestyle').filestyle();
+	
+	$(document).ready(function() {
+		var user = $("#fields").html();
+		$("#add_fields").on('click', function () {
+			$("#fields").append(user);
+		});
+	});
 </script>
 
 <div class="content-heading">
@@ -53,31 +66,39 @@
 			 <option value="">Category 5</option>
 		  </select>
 	   </div>
-	   <fieldset>
-		   <div class="row">
-				<div class="col-xs-6">
-					<div class="form-group">
-					  <label>Parameter name</label>
-					  <input type="text" class="form-control">
-				   </div>
+	   <div id="fields">
+		   <fieldset>
+			   <div class="row">
+					<div class="col-xs-6">
+						<div class="form-group">
+						  <label>Parameter name</label>
+						  <input type="text" class="form-control">
+					   </div>
+					</div>
+					<div class="col-xs-6">
+						<div class="form-group">
+						  <label>Parameter value</label>
+						  <input type="text" class="form-control">
+					   </div>
+					</div>
 				</div>
-				<div class="col-xs-6">
-					<div class="form-group">
-					  <label>Parameter value</label>
-					  <input type="text" class="form-control">
-				   </div>
-				</div>
-	   		</div>
-	   </fieldset>
+		   </fieldset>
+	   </div>
 	   <fieldset>
-		   <button class="btn btn-primary btn-xs" type="button">Add fields</button>
+		   <button class="btn btn-primary btn-xs" type="button" id="add_fields">Add fields</button>
 	   </fieldset>
 	   <div class="form-group">
 		  <label>Description</label>
 		  <textarea class="form-control"></textarea>
 	   </div>
-	   <button type="button" class="btn btn-primary">Add</button>
 	</form>
  </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Add</button>
+	  </div>
+   </div>
+  </div>
 </div>
 <!-- END panel-->

@@ -1,0 +1,90 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_crowdfunding").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('#datetimepicker1').datetimepicker({
+	  icons: {
+		  time: 'fa fa-clock-o',
+		  date: 'fa fa-calendar',
+		  up: 'fa fa-chevron-up',
+		  down: 'fa fa-chevron-down',
+		  previous: 'fa fa-chevron-left',
+		  next: 'fa fa-chevron-right',
+		  today: 'fa fa-crosshairs',
+		  clear: 'fa fa-trash'
+		},
+		format: 'DD MMMM, YYYY'
+	});
+	$('.filestyle').filestyle();
+	$('#select2-1').select2({
+		theme: 'bootstrap'
+	});
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">Crowdfunding</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Select you company</label>
+		  <select id="select2-1" class="form-control">
+			 <option value="">Company 1</option>
+			 <option value="">Company 2</option>
+			 <option value="">Company 3</option>
+			 <option value="">Company 4</option>
+			 <option value="">Company 5</option>
+		  </select>
+	   </div>
+	   <div class="form-group">
+		  <label>Small image</label>
+		  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
+	   </div>
+	   <div class="form-group">
+		  <label>Big image or video</label>
+		  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
+	   </div>
+	   <div class="form-group">
+		  <label>Amount shares</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Shares privileges</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Target</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>End Date</label>
+		  <div id="datetimepicker1" class="input-group date">
+			 <input type="text" class="form-control">
+			 <span class="input-group-addon">
+				<span class="fa fa-calendar"></span>
+			 </span>
+		  </div>
+	   </div>
+	   <div class="form-group">
+		  <label>Description</label>
+		  <textarea class="form-control"></textarea>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Add</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

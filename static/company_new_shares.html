@@ -1,4 +1,7 @@
 <style>
+	#users {
+		margin-bottom:-20px;
+	}
 	.wizard > .steps > ul > li {
 		width:33.33%;
 	}
@@ -8,7 +11,7 @@
 </style>
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".company, .company_shares").addClass("active");
+	$(".company, .company_new_shares").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
 	
