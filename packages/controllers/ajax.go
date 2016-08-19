@@ -25,6 +25,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	defer sess.SessionRelease(w)
 	sessWalletId := GetSessWalletId(sess)
 	sessCitizenId := GetSessCitizenId(sess)
+	sessAddress := GetSessString(sess, "address")
 	log.Debug("sessWalletId", sessWalletId)
 	log.Debug("sessCitizenId", sessCitizenId)
 
@@ -39,6 +40,8 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 
 	c.SessWalletId = sessWalletId
 	c.SessCitizenId = sessCitizenId
+	c.SessAddress = sessAddress
+	
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)
 
@@ -91,7 +94,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		if utils.Mobile() { // На IOS можно сгенерить ключ без сессии
 			pages += "|DcoinKey"
 		}
-		if ok, _ := regexp.MatchString(`^(?i)`+pages+`$`, controllerName); !ok && c.SessWalletId <= 0 && c.SessCitizenId <= 0 {
+		if ok, _ := regexp.MatchString(`^(?i)`+pages+`$`, controllerName); !ok && c.SessWalletId <= 0 && c.SessCitizenId <= 0 && len(c.SessAddress) == 0 {
 			html = "Access denied 1"
 		} else {
 			// без БД будет выдавать панику

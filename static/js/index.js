@@ -9,6 +9,11 @@ var GKey = {
 			this.decrypt(localStorage.getItem('EncKey'), pass)
 		}
 	}, 
+	clear: function() {
+//		localStorage.removeItem('PubKey');
+		localStorage.removeItem('EncKey');
+		deleteCookie('psw');
+	},
 	decrypt: function( encKey, pass ) {
 		var decrypted = CryptoJS.AES.decrypt(encKey, pass).toString(CryptoJS.enc.Hex);
 		var prvkey = '';
@@ -41,7 +46,7 @@ var GKey = {
 	verify: function( prvkey, pubkey ) {
 		var msg = 'test';
   		var sigval = this.sign(msg, prvkey);
-  		var siga = new KJUR.crypto.Signature({"alg": 'SHA256withECDSA', "prov": "cryptojs/jsrsa"});
+  		var siga = new KJUR.crypto.Signature({"alg": this.SignAlg, "prov": "cryptojs/jsrsa"});
   		siga.initVerifyByPublicKey({'ecpubhex': pubkey, 'eccurvename': this.Curve});
   		siga.updateString(msg);
   		return siga.verify(sigval);
@@ -60,6 +65,12 @@ function getCookie(name) {
     	"(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
   	));
   	return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+function deleteCookie(name) {
+  setCookie(name, "", {
+    expires: -1
+  })
 }
 
 function setCookie(name, value, options) {
@@ -85,6 +96,16 @@ function setCookie(name, value, options) {
     	}
   	}
 	document.cookie = updatedCookie;
+}
+
+function logout() {
+	GKey.clear();
+    $.get("ajax?controllerName=logout",
+        function() {
+            window.location.href = "/";
+        });
+			
+	return false;
 }
 
 function Demo() {
@@ -237,12 +258,7 @@ function doSign_(type) {
         }
     });
 
-    var key = $("#key").text();
-    var pass = $("#password").text();
-    var save_key = $("#save_key").text();
-    console.log("save_key=" + save_key);
-
-    if (key.length < 512) {
+    if (!GKey.Private) {
         $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
         $("#loader").spin(false);
         return false;
@@ -262,16 +278,10 @@ function doSign_(type) {
         }
     }
 
+	var signature;
     console.log('forsignature='+forsignature);
-
     if (forsignature) {
-        console.log('key='+key);
-        console.log('pass='+pass);
-		if (key != localStorage.getItem('dcoin_key')) {
-			localStorage.setItem('dcoin_pass', pass );
-			localStorage.setItem('dcoin_key', key );
-		}
-        var e_n_sign = get_e_n_sign(key, pass, forsignature, 'modal_alert');
+		signature = GKey.sign(forsignature);
 	} else {
 		return;
 	}
@@ -282,10 +292,6 @@ function doSign_(type) {
 			//$("#loader").spin();
 			if (key) {
                 var privKey = "";
-                if (save_key == "1") {
-                    privKey = e_n_sign['decrypt_key']
-                }
-
                 if ($('#exchangeTemplate').val() == "1") {
                     var check_url = 'ajax?controllerName=ECheckSign'
                 } else {
@@ -293,9 +299,7 @@ function doSign_(type) {
                 }
 				// шлем подпись на сервер на проверку
 				$.post( check_url, {
-							'sign': e_n_sign['hSig'],
-							'n' : e_n_sign['modulus'],
-							'e': e_n_sign['exp'],
+					        'signature': signature,
                             'private_key': privKey,
                             'forsignature' : forsignature,
 						}, function (data) {
@@ -329,25 +333,8 @@ function doSign_(type) {
 
 	}
 	else {
-			$("#signature1").val(e_n_sign['hSig']);
+		$("#signature1").val(signature);
 	}
-}
-
-function save_key () {
-
-    $('#loader').spin();
-    console.log("$('#loader').spin();");
-    $('#modal_alert').html( "" );
-    $('#key').text( $("#modal_key").val() );
-    $('#password').text( $("#modal_password").val() );
-    if ($("#modal_save_key").is(':checked')) {
-        console.log("save_key 1")
-        $('#save_key').text("1");
-    } else {
-        console.log("save_key 0");
-        console.log("modal_save_key:", $("#modal_save_key").val())
-        $('#save_key').text("0");
-    }
 }
 
 function base_convert(number, frombase, tobase) {
@@ -452,73 +439,3 @@ function hex2a(hex) {
     return str;
 }
 
-function get_e_n_sign(key, pass, forsignature, alert_div) {
-
-    var modulus = '';
-    var exp = '';
-    var hSig = '';
-    var decrypt_PEM = '';
-    key = key.trim();
-    // ключ может быть незашифрованным, но без BEGIN RSA PRIVATE KEY
-    if (key.substr(0,4) == 'MIIE')
-        decrypt_PEM = '-----BEGIN RSA PRIVATE KEY-----'+key+'-----END RSA PRIVATE KEY-----';
-    else if (pass && key.indexOf('RSA PRIVATE KEY')==-1) {
-        try{
-
-            ivAndText = atob(key);
-            iv = ivAndText.substr(0, 16);
-            encText = ivAndText.substr(16);
-            cipherParams = CryptoJS.lib.CipherParams.create({
-                ciphertext: CryptoJS.enc.Base64.parse(btoa(encText))
-            });
-            pass = CryptoJS.enc.Latin1.parse(hex_md5(pass));
-            var decrypted = CryptoJS.AES.decrypt(cipherParams, pass, {mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Utf8.parse(iv), padding: CryptoJS.pad.Iso10126 });
-            decrypt_PEM = hex2a(decrypted.toString());
-
-/*
-            cipherParams = CryptoJS.lib.CipherParams.create({
-                ciphertext: CryptoJS.enc.Base64.parse((key.replace(/\n|\r/g, "")))
-            });
-            key = CryptoJS.enc.Latin1.parse(hex_md5(pass))
-            var decrypted = CryptoJS.AES.decrypt(cipherParams, key, {mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Base64.parse("AAAAAAAAAAAAAAAAAAAAAA=="), padding: CryptoJS.pad.NoPadding });
-            var decrypt_PEM = hex2a(decrypted.toString());
-*/
-
-
-        } catch(e) {
-            console.log(e)
-           decrypt_PEM = 'invalid base64 code';
-       }
-    }
-    else
-        decrypt_PEM = key;
-    console.log('decrypt_PEM='+decrypt_PEM);
-    console.log('typeof decrypt_PEM ='+typeof decrypt_PEM );
-   if (typeof decrypt_PEM != "string" || decrypt_PEM.indexOf('RSA PRIVATE KEY')==-1) {
-       console.log('incorrect_key_or_password');
-        $("#loader").spin(false);
-        $("#"+alert_div).html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
-       console.log(alert_div);
-    }
-    else {
-        var rsa = new RSAKey();
-        rsa.readPrivateKeyFromPEMString(decrypt_PEM);
-        var a = rsa.readPrivateKeyFromPEMString(decrypt_PEM);
-        modulus = a[1];
-        exp = a[2];
-
-        if (forsignature!='') {
-            console.log('forsignature='+forsignature);
-            hSig = rsa.signString(forsignature, 'sha1');
-            console.log('hSig='+hSig);
-        }
-
-        delete rsa;
-    }
-    var data = new Object();
-    data['modulus'] = modulus;
-    data['exp'] = exp;
-    data['hSig'] = hSig;
-    data['decrypt_key'] = decrypt_PEM;
-    return data;
-}
