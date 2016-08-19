@@ -8125,3 +8125,11 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 		margin-bottom:15px;
 	}
 }
+@media only screen and (min-width: 768px) {
+	.dashboard {
+		margin-right:-5px;
+	}
+	.dashboard .menu {
+		padding-right:5px;
+	}
+}

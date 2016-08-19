@@ -1,5 +1,27 @@
 {{ define "loginECDSA" }}
 
+<style>
+	.wrapper {
+		display:flex;
+		flex-flow:row wrap;
+		align-items:center;
+	}
+	.wrapper > section {
+		flex:1 100%;
+		border:0px;
+		margin:0px !important;
+		transition:none !important;
+	}
+	.content-wrapper {
+		border-top:0px;
+	}
+	.flex {
+		display:flex;
+		flex-flow:row nowrap;
+		justify-content:space-between;
+	}
+</style>
+
 <div class="start_type">
 	<input type="hidden" id="prvkey" value="" />
 	<input type="hidden" id="pubkey" value="" />
@@ -11,8 +33,8 @@
 				<fieldset class="form-group phrase">
 					<label class="col-sm-3 control-label" for="phrase">Wallet seed</label>
 					<div class="col-sm-9">
-						<textarea name="phrase" id="phrase" style="width: 400px;" rows="5"></textarea>
-						<br><button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
+						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
+						<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
 					</div>
 				</fieldset>
 
@@ -30,13 +52,21 @@
 				</fieldset>
 			</form>
 		</div>
-		<div style="padding-top: 10px;" class="noimport">
-			<button type="button" class="btn btn-primary btn-lg" style="vertical-align:top;" onclick="return do_register()">Create account</button>
-			<a href="" onclick="return import_form()" style="margin: 0px 30px;">Import account</a> <a href="" onclick="return login_form()" class="islogin">Login</a>
+		<div style="padding-top: 10px; text-align:left;" class="noimport">
+			<div class="col-sm-3"></div>
+			<div class="flex">
+				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Create account</button>
+				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import account</a>
+				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
+			</div>
 		</div>
-		<div style="padding-top: 10px;display:none;" class="noregister">
-			<button type="button" class="btn btn-primary btn-lg" style="vertical-align:top;" onclick="return do_register()">Import account</button>
-			<a href="" onclick="return register_form()" style="margin: 0px 30px;">Create account</a> <a href="" onclick="return login_form()" class="islogin">Login</a>
+		<div style="padding-top: 10px; text-align:left; display:none;" class="noregister">
+			<div class="col-sm-3"></div>
+			<div class="flex">
+				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Import account</button>
+				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
+				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
+			</div>
 		</div>
 	</div>
 	
@@ -52,9 +82,13 @@
 				</fieldset>
 			</form>
 		</div>
-		<div style="padding-top: 10px;">
-			<button type="button" class="btn btn-primary btn-lg" style="vertical-align:top;" onclick="return do_login()">Login</button>
-			<a href="" onclick="return import_form()" style="margin: 0px 30px;">Import account</a> <a href="" onclick="return register_form()">Create account</a>
+		<div style="padding-top:10px; text-align:left;">
+			<div class="col-sm-3"></div>
+			<div class="flex">
+				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_login()">Login</button>
+				<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
+				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
+			</div>
 		</div>
 	</div>
 </div>
