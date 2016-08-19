@@ -9,6 +9,11 @@ var GKey = {
 			this.decrypt(localStorage.getItem('EncKey'), pass)
 		}
 	}, 
+	clear: function() {
+//		localStorage.removeItem('PubKey');
+		localStorage.removeItem('EncKey');
+		deleteCookie('psw');
+	},
 	decrypt: function( encKey, pass ) {
 		var decrypted = CryptoJS.AES.decrypt(encKey, pass).toString(CryptoJS.enc.Hex);
 		var prvkey = '';
@@ -62,6 +67,12 @@ function getCookie(name) {
   	return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
+function deleteCookie(name) {
+  setCookie(name, "", {
+    expires: -1
+  })
+}
+
 function setCookie(name, value, options) {
 	options = options || {};
 	var expires = options.expires;
@@ -85,6 +96,16 @@ function setCookie(name, value, options) {
     	}
   	}
 	document.cookie = updatedCookie;
+}
+
+function logout() {
+	GKey.clear();
+    $.get("ajax?controllerName=logout",
+        function() {
+            window.location.href = "/";
+        });
+			
+	return false;
 }
 
 function Demo() {
