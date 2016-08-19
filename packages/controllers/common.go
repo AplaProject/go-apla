@@ -44,6 +44,7 @@ type Controller struct {
 	Admin            bool
 	SessCitizenId    int64
 	SessWalletId     int64
+	SessAddress      string
 	MyNotice         map[string]string
 	Parameters       map[string]string
 	CountSign        int
@@ -249,6 +250,15 @@ func GetSessInt64(sessName string, sess session.SessionStore) int64 {
 		return sess_.(int64)
 	}
 	return 0
+}
+
+func GetSessString(sess session.SessionStore, name string) string {
+	sessVal := sess.Get(name)
+	switch sessVal.(type) {
+		case string:
+			return sessVal.(string)
+	}
+	return ""
 }
 
 func GetSessPublicKey(sess session.SessionStore) string {

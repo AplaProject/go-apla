@@ -275,7 +275,11 @@ function do_sign() {
 	if (key.length > 128) {
 		key = key.substr( 2 );
 	}
+	var msg = 'login';
+	var sign = GKey.sign(msg);
 	$.post( 'ajax?controllerName=SignIn', {
+			'msg': msg,
+			'sign': sign,
 			'key': key,
 		}, function (data) {
 			console.log("data.result: ", data.result);
