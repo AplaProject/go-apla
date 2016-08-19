@@ -15,6 +15,11 @@
 	.content-wrapper {
 		border-top:0px;
 	}
+	.flex {
+		display:flex;
+		flex-flow:row nowrap;
+		justify-content:space-between;
+	}
 </style>
 
 <div class="start_type">
@@ -49,13 +54,19 @@
 		</div>
 		<div style="padding-top: 10px; text-align:left;" class="noimport">
 			<div class="col-sm-3"></div>
-			<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Create account</button>
-			<a href="" onclick="return import_form()" class="btn btn-link">Import account</a> <a href="" onclick="return login_form()" class="islogin">Login</a>
+			<div class="flex">
+				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Create account</button>
+				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import account</a>
+				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
+			</div>
 		</div>
 		<div style="padding-top: 10px; text-align:left; display:none;" class="noregister">
 			<div class="col-sm-3"></div>
-			<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Import account</button>
-			<a href="" onclick="return register_form()" class="btn btn-link">Create account</a> <a href="" onclick="return login_form()" class="islogin">Login</a>
+			<div class="flex">
+				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Import account</button>
+				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
+				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
+			</div>
 		</div>
 	</div>
 	
@@ -73,8 +84,11 @@
 		</div>
 		<div style="padding-top:10px; text-align:left;">
 			<div class="col-sm-3"></div>
-			<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_login()">Login</button>
-			<a href="" onclick="return import_form()" class="btn btn-link">Import account</a> <a href="" onclick="return register_form()">Create account</a>
+			<div class="flex">
+				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_login()">Login</button>
+				<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
+				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
+			</div>
 		</div>
 	</div>
 </div>
