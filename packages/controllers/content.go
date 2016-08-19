@@ -141,7 +141,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	match, _ := regexp.MatchString("^(installStep[0-9_]+)|(blockExplorer)$", tplName)
 	// CheckInputData - гарантирует, что tplName чист
-	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletId > 0 || sessCitizenId > 0 || match) {
+	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletId > 0 || sessCitizenId > 0 || len(sessAddress) > 0 || match) {
 		tplName = tplName
 	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
 		// первый запуск, еще не загружен блокчейн
