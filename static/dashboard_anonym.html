@@ -1,6 +1,14 @@
 {{define "dashboardAnonym"}}
 
 <style>
+	#nodata {
+		display:none;
+		border:0px;
+		margin-bottom:0px;
+	}
+	#latest_operation {
+		display:none;
+	}
 	.dataTables_length, .dataTables_info {
 		padding-left:15px;
 	}
@@ -20,27 +28,44 @@
 	
 	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {});
 	
-	$('#latest_operation').dataTable({
-        'paging':   true,
-        'ordering': true,
-		"order": 	[[ 0, "desc" ]],
-        'info':     true,
-		"ajax": {
-            "url": "ajax?controllerName=AnonymHistory",
-            "dataSrc": ""
-        },
-        "columns": [
-          { "data": 'block_id' },
-          { "data": 'time' },
-          { "data": 'amount' },
-          { "data": 'recipient_wallet_address' },
-          { "data": 'comment' }
-        ],
-		columnDefs: [{
-			targets: 1,
-			render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
-		}]
-    });
+	
+	$.ajax({
+		type: 'POST',
+		url: 'ajax?controllerName=AnonymHistory',
+		dataType: 'json',
+		crossDomain: true,
+		success: function(data) {
+			if (data.length == 0) {
+				$('#nodata').show();
+			} else {
+				$('#latest_operation').show().dataTable({
+					'paging':   true,
+					'ordering': true,
+					"order": 	[[ 0, "desc" ]],
+					'info':     true,
+					data: data,
+					/*"ajax": {
+						"url": "ajax?controllerName=AnonymHistory",
+						"dataSrc": ""
+					},*/
+					"columns": [
+					  { "data": 'block_id' },
+					  { "data": 'time' },
+					  { "data": 'amount' },
+					  { "data": 'recipient_wallet_address' },
+					  { "data": 'comment' }
+					],
+					columnDefs: [{
+						targets: 1,
+						render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
+					}]
+				});
+			}
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
 </script>
 
 <div class="content-heading">
@@ -160,6 +185,7 @@
  <div class="tab-content p0 bg-white">
 	<div id="tab1" role="tabpanel" class="tab-pane active">
 	   <!-- START table responsive-->
+	   <div id="nodata" class="box-placeholder text-center">No data available</div>
 	   <div class="table-responsive">
 		   <table id="latest_operation" class="table table-striped table-bordered table-hover">
 			  <thead>

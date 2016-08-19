@@ -74,14 +74,14 @@ func (c *Controller) SaveQueue() (string, error) {
 	case "DLTChangeHostVote":
 
 		host := []byte(c.r.FormValue("host"))
-		vote := []byte(c.r.FormValue("vote"))
+		addressVote := []byte(c.r.FormValue("addressVote"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
 		data = append(data, utils.EncodeLengthPlusData(walletId)...)
 		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
 		data = append(data, utils.EncodeLengthPlusData(host)...)
-		data = append(data, utils.EncodeLengthPlusData(vote)...)
+		data = append(data, utils.EncodeLengthPlusData(addressVote)...)
 		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
 		data = append(data, binSignatures...)
 

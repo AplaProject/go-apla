@@ -26,7 +26,7 @@ func (c *Controller) ModalAnonym() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	MyWalletData, err := c.OneRow("SELECT hex(address) as address, host, hex(vote) as vote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	MyWalletData, err := c.OneRow("SELECT hex(address) as address, host, hex(addressVote) as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -64,14 +64,6 @@ type Parser struct {
 	newPublicKeysHex [3][]byte
 }
 
-type MinerData struct {
-	adminUserId     int64
-	myMinersIds      map[int]int
-	minersIds        map[int]int
-	votes0           int64
-	votes1           int64
-	minMinersKeepers int64
-}
 
 
 func ClearTmp(blocks map[int64]string) {
@@ -1478,31 +1470,8 @@ func arrayIntersect(arr1, arr2 map[int]int) bool {
 	return false
 }
 
-func (p *Parser) minersCheckMyMinerIdAndVotes0(data *MinerData) bool {
-	log.Debug("data.myMinersIds", data.myMinersIds)
-	log.Debug("data.minersIds", data.minersIds)
-	log.Debug("data.votes0", data.votes0)
-	log.Debug("data.minMinersKeepers", data.minMinersKeepers)
-	log.Debug("int(data.votes0)", int(data.votes0))
-	log.Debug("len(data.minersIds)", len(data.minersIds))
-	if (arrayIntersect(data.myMinersIds, data.minersIds)) && (data.votes0 > data.minMinersKeepers || int(data.votes0) == len(data.minersIds)) {
-		return true
-	} else {
-		return false
-	}
-}
 
-func (p *Parser) minersCheckVotes1(data *MinerData) bool {
-	log.Debug("data.votes1", data.votes1)
-	log.Debug("data.minMinersKeepers", data.minMinersKeepers)
-	log.Debug("data.minersIds", len(data.minersIds))
-	if data.votes1 >= data.minMinersKeepers || int(data.votes1) == len(data.minersIds) /*|| data.adminUiserId == p.TxUserID Админская нода не решающая*/ {
-		log.Debug("true")
-		return true
-	} else {
-		return false
-	}
-}
+
 
 func (p *Parser) FormatBlockData() string {
 	result := ""
@@ -1599,7 +1568,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			if k == "rb_id" {
 				k = "prev_rb_id"
 			}
-			addSqlFields += k + ","
+			if k[:1] == "+" {
+				addSqlFields += k[1:len(k)] + ","
+			} else {
+				addSqlFields += k + ","
+			}
 		}
 		addSqlValues = addSqlValues[0 : len(addSqlValues)-1]
 		addSqlFields = addSqlFields[0 : len(addSqlFields)-1]
@@ -1622,7 +1595,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				}
 				addSqlUpdate += query
 			} else if fields[i][:1] == "+" {
-				addSqlUpdate += fields[i] + `='` + fields[i] +`+`+ values[i] + `',`
+				addSqlUpdate += fields[i][1:len(fields[i])] + `='` + fields[i][1:len(fields[i])] +`+`+ values[i] + `',`
 			} else {
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}
