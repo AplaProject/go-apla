@@ -235,7 +235,6 @@ function doSign_(type) {
 
     var key = $("#key").text();
     var pass = $("#password").text();
-    var setup_password = $("#setup_password").text();
     var save_key = $("#save_key").text();
     console.log("save_key=" + save_key);
 
@@ -295,7 +294,6 @@ function doSign_(type) {
 							'e': e_n_sign['exp'],
                             'private_key': privKey,
                             'forsignature' : forsignature,
-                            'setup_password': setup_password
 						}, function (data) {
 							// залогинились
 							console.log("data.result: ", data.result);
@@ -338,7 +336,6 @@ function save_key () {
     $('#modal_alert').html( "" );
     $('#key').text( $("#modal_key").val() );
     $('#password').text( $("#modal_password").val() );
-    $('#setup_password').text( $("#modal_setup_password").val() );
     if ($("#modal_save_key").is(':checked')) {
         console.log("save_key 1")
         $('#save_key').text("1");

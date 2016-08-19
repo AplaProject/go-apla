@@ -20,7 +20,6 @@ func (c *Controller) InstallStep1() (string, error) {
 	c.r.ParseForm()
 	installType := c.r.FormValue("type")
 	url := c.r.FormValue("url")
-	setupPassword := c.r.FormValue("setup_password")
 	firstLoad := c.r.FormValue("first_load")
 	dbType := c.r.FormValue("db_type")
 	dbHost := c.r.FormValue("host")
@@ -133,11 +132,7 @@ func (c *Controller) InstallStep1() (string, error) {
 
 		}
 
-		log.Debug("setupPassword: (%s) / (%s)", setupPassword, utils.DSha256(setupPassword))
-		if len(setupPassword) > 0 {
-			setupPassword = string(utils.DSha256(setupPassword))
-		}
-		err = c.DCDB.ExecSql("INSERT INTO config (sqlite_db_url, first_load_blockchain, first_load_blockchain_url, setup_password, auto_reload, chat_enabled) VALUES (?, ?, ?, ?, ?, ?)", sqliteDbUrl, firstLoad, url, setupPassword, 259200, 1)
+		err = c.DCDB.ExecSql("INSERT INTO config (sqlite_db_url, first_load_blockchain, first_load_blockchain_url, auto_reload, chat_enabled) VALUES (?, ?, ?, ?, ?)", sqliteDbUrl, firstLoad, url, 259200, 1)
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			panic(err)

@@ -115,7 +115,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 			return template.HTML(s)
 		},
 	}
-	data, err := static.Asset("static/templates/updating_blockchain.html")
+	data, err := static.Asset("static/updating_blockchain.html")
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
