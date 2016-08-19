@@ -29,20 +29,24 @@ var GKey = {
 		localStorage.setItem('PubKey', GKey.Public );
 		setCookie('psw', this.Password);
 	},
-	verify: function( prvkey, pubkey ) {
-  		var sigalg = 'SHA256withECDSA';
-		var msg = 'test';
-  		var sig = new KJUR.crypto.Signature({"alg": sigalg});
-
+	sign: function(msg,prvkey) {
+		if (!prvkey) {
+			prvkey = this.Private
+		}
+  		var sig = new KJUR.crypto.Signature({"alg": this.SignAlg});
   		sig.initSign({'ecprvhex': prvkey, 'eccurvename': this.Curve});
   		sig.updateString(msg);
-  		var sigval = sig.sign();
-
-  		var siga = new KJUR.crypto.Signature({"alg": sigalg, "prov": "cryptojs/jsrsa"});
+  		return sig.sign();
+	},
+	verify: function( prvkey, pubkey ) {
+		var msg = 'test';
+  		var sigval = this.sign(msg, prvkey);
+  		var siga = new KJUR.crypto.Signature({"alg": 'SHA256withECDSA', "prov": "cryptojs/jsrsa"});
   		siga.initVerifyByPublicKey({'ecpubhex': pubkey, 'eccurvename': this.Curve});
   		siga.updateString(msg);
   		return siga.verify(sigval);
 	},
+	SignAlg: 'SHA256withECDSA',
 	Curve: 'secp256r1',
 	Password: '',
 	Private: '',
