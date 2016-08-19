@@ -26,7 +26,7 @@ func (c *Controller) SignIn() (string, error) {
 
 	log.Debug("n %s", n)
 	log.Debug("e %s", e)*/
-	fmt.Printf("Signature %d %s\r\n", len(sign), sign)
+//	fmt.Printf("Signature %d %s\r\n", len(sign), sign)
 	if verify,_ := utils.CheckECDSA([][]byte{key}, msg, sign, true); !verify {
 		return ret, fmt.Errorf("incorrect signature")
 	} 

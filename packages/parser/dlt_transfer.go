@@ -14,11 +14,12 @@ func (p *Parser) DLTTransferInit() error {
 	}
 	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
 	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
+	p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])
+	p.TxMap["sign"] = utils.BinToHex(p.TxMap["sign"])
 	return nil
 }
 
 func (p *Parser) DLTTransferFront() error {
-
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
