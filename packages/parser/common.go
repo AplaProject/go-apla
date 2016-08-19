@@ -1599,7 +1599,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			if k == "rb_id" {
 				k = "prev_rb_id"
 			}
-			addSqlFields += k + ","
+			if k[:1] == "+" {
+				addSqlFields += k[1:len(k)] + ","
+			} else {
+				addSqlFields += k + ","
+			}
 		}
 		addSqlValues = addSqlValues[0 : len(addSqlValues)-1]
 		addSqlFields = addSqlFields[0 : len(addSqlFields)-1]
@@ -1622,7 +1626,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				}
 				addSqlUpdate += query
 			} else if fields[i][:1] == "+" {
-				addSqlUpdate += fields[i] + `='` + fields[i] +`+`+ values[i] + `',`
+				addSqlUpdate += fields[i][1:len(fields[i])] + `='` + fields[i][1:len(fields[i])] +`+`+ values[i] + `',`
 			} else {
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}

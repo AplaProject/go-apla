@@ -6,7 +6,7 @@ import (
 
 func (p *Parser) DLTChangeHostVoteInit() error {
 
-	fields := []map[string]string{{"host": "string"}, {"vote": "string"}, {"public_key": "bytes"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"host": "string"}, {"vote": "bytes"}, {"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -14,6 +14,8 @@ func (p *Parser) DLTChangeHostVoteInit() error {
 
 	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
 	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
+	p.TxMaps.Bytes["vote"] = utils.BinToHex(p.TxMaps.Bytes["vote"])
+	p.TxMap["vote"] = utils.BinToHex(p.TxMap["vote"])
 	return nil
 }
 
@@ -46,7 +48,7 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 func (p *Parser) DLTChangeHostVote() error {
 	var err error
 	if len(p.TxMaps.Bytes["public_key"]) > 0 {
-		err = p.selectiveLoggingAndUpd([]string{"host", "vote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["vote"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)})
+		err = p.selectiveLoggingAndUpd([]string{"host", "vote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.Bytes["vote"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)})
 	} else {
 		err = p.selectiveLoggingAndUpd([]string{"host", "vote"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["vote"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)})
 	}
