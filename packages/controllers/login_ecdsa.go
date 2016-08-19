@@ -47,8 +47,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 	// есть ли установочный пароль и был ли начально записан ключ
 	if !c.Community {
 		// Нельзя зарегистрироваться если в my_table уже есть статус
-		if status, err := c.Single("SELECT status FROM my_table").String(); err == nil &&
-			status != "waiting_set_new_key" && status != "my_pending" {
+		if status, err := c.Single("SELECT status FROM my_table").String(); err == nil && status != "my_pending" {
 			signUp = false
 		}
 		

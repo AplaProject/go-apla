@@ -1555,9 +1555,6 @@ func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
 }
 
 func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
-
-	log.Debug("forSign", forSign)
-	//fmt.Println("publicKeys", publicKeys)
 	var signsSlice [][]byte
 	// у нода всегда 1 подпись
 	if nodeKeyOrLogin {
@@ -1589,16 +1586,19 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	   	pubkey.Y = new(big.Int).SetBytes(public[32:])
 		
 		sign := signsSlice[i]
-		all, err := hex.DecodeString(string(sign[10:]))
+		off := 8
+		if sign[7] == '1' {
+			off = 10
+		}
+		all, err := hex.DecodeString(string(sign[off:]))
 		if err != nil {
 			return false, ErrInfo(err)
 		}
 		r := new(big.Int).SetBytes(all[:32])
-		s := new(big.Int).SetBytes(all[35:])
-		
+		s := new(big.Int).SetBytes(all[len(all)-32:])
 		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
 		if !verifystatus {
-			log.Error("Check sign: %i %x\n", i, signsSlice[i])
+			log.Error("Check sign: %i %s\n", i, signsSlice[i])
 			return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x", 
 			       signhash, forSign, publicKeys[i], signsSlice[i])
 		}

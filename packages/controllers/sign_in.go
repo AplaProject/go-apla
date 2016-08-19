@@ -1,14 +1,17 @@
 package controllers
 
 import (
-//	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
 )
 
 func (c *Controller) SignIn() (string, error) {
-
+	
+	ret := `{"result":0}`
 	c.r.ParseForm()
 	key := []byte(c.r.FormValue("key"))
+	msg := c.r.FormValue("msg")
+	sign := []byte(c.r.FormValue("sign"))
 /*	n := []byte(c.r.FormValue("n"))
 	e := []byte(c.r.FormValue("e"))
 
@@ -23,6 +26,13 @@ func (c *Controller) SignIn() (string, error) {
 
 	log.Debug("n %s", n)
 	log.Debug("e %s", e)*/
+	fmt.Printf("Signature %d %s\r\n", len(sign), sign)
+	if verify,_ := utils.CheckECDSA([][]byte{key}, msg, sign, true); !verify {
+		return ret, fmt.Errorf("incorrect signature")
+	} 
+	address := utils.HashSha1Hex(key)
+	c.sess.Set("address", address)
+
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
@@ -31,7 +41,7 @@ func (c *Controller) SignIn() (string, error) {
 //	log.Debug("new key", string(publicKey))
 	publicKey := []byte(key)
 	walletId, err := c.GetWalletIdByPublicKey(publicKey)
-	fmt.Println(`walletId`, walletId)
+	fmt.Printf("Sign in wallet=%d address=%s\r\n", walletId, address)
 	if err != nil {
 		log.Error("err %v", err)
 		return "{\"result\":0}", err
@@ -56,5 +66,5 @@ func (c *Controller) SignIn() (string, error) {
 		}
 		c.sess.Set("citizen_id", citizenId)
 	}
-	return "{\"result\":1}", nil
+	return `{"result":1}`, nil
 }
