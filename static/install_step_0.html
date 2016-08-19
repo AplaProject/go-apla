@@ -76,7 +76,6 @@
 				'db_name' : $('#db_name').val(),
 				'username' : $('#username').val(),
 				'password' : $('#password').val(),
-				'setup_password' : $('#setup_password').val(),
 				'key_password' : $('#key_password').val()
 			}, function (data) { $('#dl_content').html( data );  $('#loader').spin(false); }, 'html' );
 		} );
@@ -89,12 +88,6 @@
 		<label id="extended" class="settings"><input id="settings_extended" type="radio" name="settings" id="extended" value="extended"> Extended</label>
 		<div id="extended_div" style="display: none">
 			<form class="extended_form">
-				<fieldset class="form-group setup_password">
-					<label class="col-sm-3 control-label" for="setup_password">Setup password</label>
-					<div class="col-sm-9">
-						<input id="setup_password" class="form-control" type="password">
-					</div>
-				</fieldset>
 				<fieldset class="form-group user_id">
 					<label class="col-sm-3 control-label" for="user_id">Your user ID</label>
 					<div class="col-sm-9">

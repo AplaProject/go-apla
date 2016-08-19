@@ -12,7 +12,6 @@ type loginStruct struct {
 	MyModalIdName string
 	UserID        int64
 	PoolTechWorks int
-	SetupPassword bool
 	Community     bool
 	Mobile        bool
 	SignUp        bool
@@ -44,7 +43,6 @@ func (c *Controller) Login() (string, error) {
 	b := new(bytes.Buffer)
 	signUp := true
 	// есть ли установочный пароль и был ли начально записан ключ
-	var setupPassword bool
 	if !c.Community {
 		// Нельзя зарегистрироваться если в my_table уже есть статус
 		if status, err := c.Single("SELECT status FROM my_table").String(); err == nil &&
@@ -52,17 +50,6 @@ func (c *Controller) Login() (string, error) {
 			signUp = false
 		}
 		
-		setupPassword_, err := c.Single("SELECT setup_password FROM config").String()
-		if err != nil {
-			return "", err
-		}
-		myKey, err := c.GetMyPublicKey(c.MyPrefix)
-		if err != nil {
-			return "", err
-		}
-		if len(myKey) == 0 && (len(setupPassword_) > 0 || setupPassword_ == string(utils.DSha256(""))) {
-			setupPassword = true
-		}
 	}
 	//fmt.Println(c.Lang)
 	// проверим, не идут ли тех. работы на пуле
@@ -76,7 +63,6 @@ func (c *Controller) Login() (string, error) {
 		MyModalIdName: "myModalLogin",
 		UserID:        c.UserId,
 		PoolTechWorks: pool_tech_works,
-		SetupPassword: setupPassword,
 		Community:     c.Community,
 		SignUp:        signUp,
 		Desktop: utils.Desktop(),

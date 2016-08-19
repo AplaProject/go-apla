@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
+//	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
 )
 
@@ -9,7 +9,6 @@ func (c *Controller) SignIn() (string, error) {
 
 	c.r.ParseForm()
 	key := []byte(c.r.FormValue("key"))
-	setupPassword := c.r.FormValue("setup_password")
 /*	n := []byte(c.r.FormValue("n"))
 	e := []byte(c.r.FormValue("e"))
 
@@ -26,17 +25,6 @@ func (c *Controller) SignIn() (string, error) {
 	log.Debug("e %s", e)*/
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
-
-	// проверим, верный ли установочный пароль, если он, конечно, есть
-	setupPassword_, err := c.Single("SELECT setup_password FROM config").String()
-	if err != nil {
-		log.Error("err %v", err)
-		return "{\"result\":0}", err
-	}
-	if len(setupPassword_) > 0 && setupPassword_ != string(utils.DSha256(setupPassword)) {
-		log.Error(setupPassword_, string(utils.DSha256(setupPassword)), setupPassword)
-		return "{\"result\":0}", nil
-	}
 
 //	publicKey := utils.MakeAsn1(n, e)
 //	publicKey := []byte(utils.HexToBin(key))

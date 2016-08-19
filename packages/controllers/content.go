@@ -137,7 +137,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	c.Periods = map[int64]string{86400: "1 " + c.Lang["day"], 604800: "1 " + c.Lang["week"], 31536000: "1 " + c.Lang["year"], 2592000: "1 " + c.Lang["month"], 1209600: "2 " + c.Lang["weeks"]}
 
-	setupPassword := c.NodeConfig["setup_password"]
 	match, _ := regexp.MatchString("^(installStep[0-9_]+)|(blockExplorer)$", tplName)
 	// CheckInputData - гарантирует, что tplName чист
 	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletId > 0 || sessCitizenId > 0 || match) {
@@ -145,8 +144,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
 		// первый запуск, еще не загружен блокчейн
 		tplName = "updatingBlockchain"
-	} else if dbInit && installProgress == "complete" && !c.Community && (sessWalletId > 0 || sessCitizenId > 0) && setupPassword != "" {
-		tplName = "setupPassword"
 	} else if dbInit && installProgress == "complete" && (sessWalletId > 0 || sessCitizenId > 0) {
 		tplName = "dashboardAnonym" //"waitingAcceptNewKey"
 	} else if dbInit && installProgress == "complete" {
@@ -259,7 +256,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		w.Write(b.Bytes())
 		return
 	}
-	if ok, _ := regexp.MatchString(`^(?i)blockGeneration|LoginECDSA|AnonymMoneyTransfer|ModalAnonym|DashBoardAnonym|Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|setupPassword|waitingAcceptNewKey|SetPassword|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
+	if ok, _ := regexp.MatchString(`^(?i)blockGeneration|LoginECDSA|AnonymMoneyTransfer|ModalAnonym|DashBoardAnonym|Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|waitingAcceptNewKey|SetPassword|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
 		w.Write([]byte("Access denied 0"))
 	} else if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId > 0) && installProgress == "complete" {
 
@@ -337,7 +334,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("tplName", tplName)
 		html := ""
-		if ok, _ := regexp.MatchString(`^(?i)LoginECDSA|blockExplorer|waitingAcceptNewKey|SetupPassword|CfCatalog|CfPagePreview|CfStart|Check_sign|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SignLogin|SynchronizationBlockchain|UpdatingBlockchain|Menu$`, tplName); !ok && c.SessCitizenId <= 0 && c.SessWalletId <= 0 {
+		if ok, _ := regexp.MatchString(`^(?i)LoginECDSA|blockExplorer|waitingAcceptNewKey|CfCatalog|CfPagePreview|CfStart|Check_sign|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SignLogin|SynchronizationBlockchain|UpdatingBlockchain|Menu$`, tplName); !ok && c.SessCitizenId <= 0 && c.SessWalletId <= 0 {
 			html = "Access denied 1"
 		} else {
 			// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
