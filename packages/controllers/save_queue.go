@@ -27,18 +27,16 @@ func (c *Controller) SaveQueue() (string, error) {
 		return `{"result":"incorrect type"}`, nil
 	}
 
-	n := []byte(c.r.FormValue("n"))
-	e := []byte(c.r.FormValue("e"))
-	publicKey := utils.HexToBin(utils.MakeAsn1(n, e))
+	pubKey := []byte(c.r.FormValue("pubkey"))
+	publicKey := utils.HexToBin(pubKey)
 	if len(publicKey) == 0 {
 		publicKey = []byte("null")
 	}
-	log.Debug("publicKey", string(publicKey))
 
 	txType := utils.TypeInt(txType_)
-	signature1 := c.r.FormValue("signature1")
-	signature2 := c.r.FormValue("signature2")
-	signature3 := c.r.FormValue("signature3")
+	signature1,_,_ := utils.ParseSign(c.r.FormValue("signature1"))
+	signature2,_,_ := utils.ParseSign(c.r.FormValue("signature2"))
+	signature3,_,_ := utils.ParseSign(c.r.FormValue("signature3"))
 	sign := utils.EncodeLengthPlusData(utils.HexToBin([]byte(signature1)))
 	if len(signature2) > 0 {
 		sign = append(sign, utils.EncodeLengthPlusData(utils.HexToBin([]byte(signature2)))...)
