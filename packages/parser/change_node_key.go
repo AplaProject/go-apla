@@ -70,6 +70,18 @@ func (p *Parser) ChangeNodeKey() error {
 }
 
 func (p *Parser) ChangeNodeKeyRollback() error {
+	if p.TxMaps.Int64["wallet_id"] > 0 {
+		log.Debug("p.TxWalletID %d", p.TxWalletID)
+		err := p.selectiveRollback([]string{"node_public_key"}, "dlt_wallets", "wallet_id="+utils.Int64ToStr(p.TxWalletID), false)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	} else {
+		err := p.selectiveRollback([]string{"node_public_key"}, "central_banks", "head_citizen_id="+utils.Int64ToStr(p.TxCitizenID), false)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	}
 	return nil
 }
 

@@ -1,3 +1,5 @@
+{{ define "blockGeneration" }}
+
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_block_generation").addClass("active");
@@ -75,3 +77,7 @@
   </div>
 </div>
 <!-- END panel-->
+
+{{template "signatures".}}
+
+{{end}}

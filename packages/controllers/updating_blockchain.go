@@ -116,6 +116,9 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		},
 	}
 	data, err := static.Asset("static/templates/updating_blockchain.html")
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
 	t := template.New("template").Funcs(funcMap)
 	t, err = t.Parse(string(data))
 	if err != nil {
