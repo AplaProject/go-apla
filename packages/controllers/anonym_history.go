@@ -7,7 +7,7 @@ import (
 
 
 func (c *Controller) AnonymHistory() (string, error) {
-	var str string
+	str := "{}"
 	var err error
 		if c.SessWalletId > 0 {
 		str, err = c.GetJSON(`SELECT id, hex(recipient_wallet_address) as recipient_wallet_address, amount, time, comment, block_id FROM dlt_transactions WHERE recipient_wallet_id= ? OR sender_wallet_id`, c.SessWalletId, c.SessWalletId);
