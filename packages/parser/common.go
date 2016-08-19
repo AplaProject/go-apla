@@ -64,14 +64,6 @@ type Parser struct {
 	newPublicKeysHex [3][]byte
 }
 
-type MinerData struct {
-	adminUserId     int64
-	myMinersIds      map[int]int
-	minersIds        map[int]int
-	votes0           int64
-	votes1           int64
-	minMinersKeepers int64
-}
 
 
 func ClearTmp(blocks map[int64]string) {
@@ -1478,31 +1470,8 @@ func arrayIntersect(arr1, arr2 map[int]int) bool {
 	return false
 }
 
-func (p *Parser) minersCheckMyMinerIdAndVotes0(data *MinerData) bool {
-	log.Debug("data.myMinersIds", data.myMinersIds)
-	log.Debug("data.minersIds", data.minersIds)
-	log.Debug("data.votes0", data.votes0)
-	log.Debug("data.minMinersKeepers", data.minMinersKeepers)
-	log.Debug("int(data.votes0)", int(data.votes0))
-	log.Debug("len(data.minersIds)", len(data.minersIds))
-	if (arrayIntersect(data.myMinersIds, data.minersIds)) && (data.votes0 > data.minMinersKeepers || int(data.votes0) == len(data.minersIds)) {
-		return true
-	} else {
-		return false
-	}
-}
 
-func (p *Parser) minersCheckVotes1(data *MinerData) bool {
-	log.Debug("data.votes1", data.votes1)
-	log.Debug("data.minMinersKeepers", data.minMinersKeepers)
-	log.Debug("data.minersIds", len(data.minersIds))
-	if data.votes1 >= data.minMinersKeepers || int(data.votes1) == len(data.minersIds) /*|| data.adminUiserId == p.TxUserID Админская нода не решающая*/ {
-		log.Debug("true")
-		return true
-	} else {
-		return false
-	}
-}
+
 
 func (p *Parser) FormatBlockData() string {
 	result := ""
