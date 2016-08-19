@@ -88,7 +88,7 @@ func (p *Parser) DLTTransfer() error {
 	}
 
 	// пишем в общую историю тр-ий
-	err = p.ExecSql(`INSERT INTO dlt_transactions ( recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( [hex], ?, ?, ?, ?, ? )`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+	err = p.ExecSql(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, p.TxWalletID, walletId, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
