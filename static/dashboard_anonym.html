@@ -66,6 +66,8 @@
 			Alert("Error", error, "error");
 		}
 	});
+	
+	$(document).ready( unixtime );
 </script>
 
 <div class="content-heading">
@@ -213,103 +215,22 @@
 					<th>Block ID</th>
 					<th>Hash</th>
 					<th>Time</th>
-					<th>User id</th>
-					<th>Miner id</th>
-					<th>Level</th>
+					<th>Citizen id</th>
+					<th>Wallet id</th>
 					<th>Transactions</th>
 				 </tr>
 			  </thead>
 			  <tbody>
+				{{range .BlockExplorer}}
 			  	 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
+				 	<td><a href="#">{{.id}}</a></td>
+					<td>{{.hash}}</td>
+					<td class="unixtime">{{.time}}</td>
+					<td>{{.cb_id}}</td>
+					<td>{{.wallet_id}}</td>
+					<td>{{.tx}}</td>
 				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
-				 <tr>
-				 	<td><a href="#">396583</a></td>
-					<td>102fa2827b4f3b78c30cd241b70ecc829ce1166e379f20ebb4fed0ac314822bf</td>
-					<td>19.08.2016, 11:51:30</td>
-					<td>1026</td>
-					<td>83</td>
-					<td>0</td>
-					<td>0</td>
-				 </tr>
+				{{end}}
 			  </tbody>
 		   </table>
 	   </div>
