@@ -484,6 +484,8 @@ func GetHttpHost() (string, string, string) {
 	BrowserHttpHost := "http://localhost:"+*utils.ListenHttpPort
 	HandleHttpHost := ""
 	ListenHttpHost := ":"+*utils.ListenHttpPort
-
+	if len(*utils.TcpHost) > 0 {
+		ListenHttpHost = *utils.TcpHost+":"+*utils.ListenHttpPort
+	}
 	return BrowserHttpHost, HandleHttpHost, ListenHttpHost
 }
