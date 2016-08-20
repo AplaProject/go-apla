@@ -90,7 +90,7 @@ func firstBlock() {
 		block = append(block, utils.DecToBin(0, 1)...) // cb_id
 		block = append(block, utils.EncodeLengthPlusData(tx)...)
 
-		static := filepath.Join(*utils.Dir, "static")
+		static := filepath.Join("", "static")
 		if _, err := os.Stat(static); os.IsNotExist(err) {
 			if err = os.Mkdir(static, 0755); err != nil {
 				log.Error("%v", utils.ErrInfo(err))

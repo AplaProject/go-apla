@@ -32,7 +32,6 @@ func (c *Controller) BlockGeneration() (string, error) {
 	}
 	log.Debug("MyWalletData %v", MyWalletData);
 
-
 	TemplateStr, err := makeTemplate("block_generation", "blockGeneration", &blockGenerationPage{
 		Lang:                  c.Lang,
 		MyWalletData:          MyWalletData,
