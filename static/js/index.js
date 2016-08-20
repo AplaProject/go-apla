@@ -125,20 +125,22 @@ function Demo() {
 var obj;
 
 function Alert(title, text, type) {
-	obj.css({"position":"relative"});
-	var id = obj.parents(".modal").attr("id");
-	swal({
-		title : title,
-		text : text,
-		allowEscapeKey : false,
-		type : type
-	}, function (isConfirm) {
-		if (isConfirm) {
-			$("#" + id).modal("hide");
-			obj.removeClass("whirl standard");
-		}
-	});
-	$(".sweet-alert").appendTo(obj);
+	if (obj) {
+		obj.css({"position":"relative"});
+		var id = obj.parents(".modal").attr("id");
+		swal({
+			title : title,
+			text : text,
+			allowEscapeKey : false,
+			type : type
+		}, function (isConfirm) {
+			if (isConfirm) {
+				$("#" + id).modal("hide");
+				obj.removeClass("whirl standard");
+			}
+		});
+		$(".sweet-alert").appendTo(obj);
+	}
 }
 
 function preloader(elem) {
@@ -439,3 +441,18 @@ function hex2a(hex) {
     return str;
 }
 
+function unixtime() {
+    if ( $( ".unixtime" ).length ) {
+        $(".unixtime").each(function () {
+            var time_val =$(this).text();
+            if (time_val) {
+                var time = Number($(this).text() + '000');
+                /*var d = new Date(time);
+                $(this).text(d);*/
+                var d = new Date();
+                d.setTime(time);
+                $(this).text(d.toLocaleString());
+            }
+        });
+    }
+}
