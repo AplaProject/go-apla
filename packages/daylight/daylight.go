@@ -367,9 +367,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// мониторим сигнал из БД о том, что демонам надо завершаться
 	go stopdaemons.WaitStopTime()
 
-	BrowserHttpHost := "http://localhost:8089"
+	BrowserHttpHost := "http://localhost:"+ *utils.ListenHttpPort
 	HandleHttpHost := ""
-	ListenHttpHost := ":" + *utils.ListenHttpPort
+	ListenHttpHost := *utils.TcpHost + ":" + *utils.ListenHttpPort
 	go func() {
 		// уже прошли процесс инсталяции, где юзер указал БД и был перезапуск кошелька
 		if len(configIni["db_type"]) > 0 && !utils.Mobile() {
