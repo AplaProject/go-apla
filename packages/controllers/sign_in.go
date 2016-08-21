@@ -9,7 +9,7 @@ func (c *Controller) SignIn() (string, error) {
 	
 	ret := `{"result":0}`
 	c.r.ParseForm()
-	key := []byte(c.r.FormValue("key"))
+	key := utils.HexToBin([]byte(c.r.FormValue("key")))
 	msg := c.r.FormValue("msg")
 	sign := []byte(c.r.FormValue("sign"))
 /*	n := []byte(c.r.FormValue("n"))

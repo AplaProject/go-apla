@@ -1599,10 +1599,11 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	
 	for i := 0; i < len(publicKeys); i++ {
 		log.Debug("publicKeys[i] %x", publicKeys[i])
-		public, err := hex.DecodeString(string(publicKeys[i]))
+		/*public, err := hex.DecodeString(string(publicKeys[i]))
 		if err != nil {
 			return false, ErrInfo(err)
-		}
+		}*/
+		public := publicKeys[i]
 		pubkey := new(ecdsa.PublicKey)
    		pubkey.Curve = pubkeyCurve
 	   	pubkey.X = new(big.Int).SetBytes(public[0:32])
