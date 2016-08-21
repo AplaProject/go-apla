@@ -1623,6 +1623,10 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 		}
 		r := new(big.Int).SetBytes(all[:32])
 		s := new(big.Int).SetBytes(all[len(all)-32:])*/
+		log.Debug("pubkey %v", pubkey)
+		log.Debug("signhash[:] %v", signhash[:])
+		log.Debug("r %v", r)
+		log.Debug("s %v", s)
 		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
 		if !verifystatus {
 			log.Error("Check sign: %i %s\n", i, signsSlice[i])
