@@ -76,7 +76,7 @@ type DaemonsChansType struct {
 }
 var (
 	TcpHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
-	ListenHttpPort = flag.String("listenHttpPort", "8089", "ListenHttpPort")
+	ListenHttpPort = flag.String("listenHttpPort", "7079", "ListenHttpPort")
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	OldVersion = flag.String("oldVersion", "", "")
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
