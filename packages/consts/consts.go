@@ -50,12 +50,14 @@ const OUT_CONNECTIONS = 10
 
 const GAPS_BETWEEN_BLOCKS = 5
 const COMMISSION = 1000
-const TCP_PORT = "7079"
+const TCP_PORT = "7078"
 const MAX_BLOCK_USER_TXS = 100
 const RB_BLOCKS_1 = 30
 const RB_BLOCKS_2 = 1440
 const ALERT_ERROR_TIME = 1
 
+const DATA_TYPE_MAX_BLOCK_ID = 10
+const DATA_TYPE_BLOCK_BODY = 7
 
 const UPD_FULL_NODES_PERIOD = 1 // на время тестов 1, потом надо ставить 86400
 

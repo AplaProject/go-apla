@@ -1604,12 +1604,14 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 			return false, ErrInfo(err)
 		}*/
 		public := publicKeys[i]
+		log.Debug("x %x", public[0:32])
+		log.Debug("y %x", public[32:])
 		pubkey := new(ecdsa.PublicKey)
    		pubkey.Curve = pubkeyCurve
 	   	pubkey.X = new(big.Int).SetBytes(public[0:32])
 	   	pubkey.Y = new(big.Int).SetBytes(public[32:])
 		
-		sign := signsSlice[i]
+		sign := BinToHex(signsSlice[i])
 		_,r,s := ParseSign(string(sign))
 /*		off := 8
 		if sign[7] == '1' {
