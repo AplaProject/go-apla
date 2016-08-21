@@ -28,7 +28,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s := make(Recmap)
 	s1 := make(Recmap)
 	s2 := make(Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('[my_prefix]my_dc_transactions_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('dlt_transactions_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "sender_wallet_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
 	s2[2] = map[string]string{"name": "recipient_wallet_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
 	s2[3] = map[string]string{"name": "recipient_wallet_address", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
@@ -49,7 +49,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('[my_prefix]my_keys_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('my_keys_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "add_time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "для удаления старых my_pending"}
 	s2[2] = map[string]string{"name": "notification", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
 	s2[3] = map[string]string{"name": "public_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Нужно для поиска в users"}
@@ -63,14 +63,14 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"
 	s1["comment"] = "Ключи для авторизации юзера. Используем крайний"
-	s["[my_prefix]my_keys"] = s1
+	s["my_keys"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('[my_prefix]my_node_keys_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('my_node_keys_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "add_time", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "для удаления старых my_pending"}
 	s2[2] = map[string]string{"name": "public_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
 	s2[3] = map[string]string{"name": "private_key", "mysql": "varchar(3096) NOT NULL DEFAULT ''", "sqlite": "varchar(3096) NOT NULL DEFAULT ''", "postgresql": "varchar(3096) NOT NULL DEFAULT ''", "comment": ""}
@@ -82,7 +82,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"
 	s1["comment"] = ""
-	s["[my_prefix]my_node_keys"] = s1
+	s["my_node_keys"] = s1
 	schema.S = s
 	schema.PrintSchema()
 

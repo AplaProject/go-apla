@@ -482,7 +482,7 @@ BEGIN:
 				continue BEGIN
 			}
 
-			logger.Debug("mrklRoot %x", mrklRoot)
+			logger.Debug("mrklRoot %s", mrklRoot)
 
 			// публичный ключ того, кто этот блок сгенерил
 			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.CBID)

@@ -358,6 +358,8 @@ BEGIN:
 			}
 			continue BEGIN
 		}
+		logger.Debug("SignECDSA %x", bytes)
+
 		signatureBin := bytes
 
 		// готовим заголовок
