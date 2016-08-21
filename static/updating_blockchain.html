@@ -312,15 +312,7 @@
 		});
 	});
 	
-	$( document ).ready(function() {
-		$.get('ajax?controllerName=AlertFromAdmin', function (data) {
-			if (typeof data.success !== 'undefined') {
-				$('#AlertMessage').css("display", "block");
-				$('#AlertMessage p').html(data.success);
-			}
-		}, 'JSON');
-	});
-	
+
 	$(document).keydown(function(e){
 		'use strict';
 		if (e.shiftKey === true && e.keyCode === 68) {
