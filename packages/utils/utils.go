@@ -1530,6 +1530,13 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	return CheckECDSA(publicKeys, forSign, signs, nodeKeyOrLogin)
 }
 
+func FillLeft(slice []byte) []byte {
+	if len(slice) >= 32 {
+		return slice
+	}
+	return append( make([]byte, 32 - len(slice)), slice...)
+}
+
 func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
  	pubkeyCurve := elliptic.P256()
 
@@ -1550,8 +1557,8 @@ func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
 		log.Error("SignECDSA 0 %v", err)
  		return
  	}
-	ret = r.Bytes()
- 	ret = append(ret, s.Bytes()...)
+	ret = FillLeft(r.Bytes())
+ 	ret = append(ret, FillLeft(s.Bytes())...)
 	return
 }
 
@@ -1599,36 +1606,18 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	signhash := sha256.Sum256([]byte(forSign))
 	
 	for i := 0; i < len(publicKeys); i++ {
-		log.Debug("publicKeys[i] %x", publicKeys[i])
 		/*public, err := hex.DecodeString(string(publicKeys[i]))
 		if err != nil {
 			return false, ErrInfo(err)
 		}*/
 		public := publicKeys[i]
-		log.Debug("x %x", public[0:32])
-		log.Debug("y %x", public[32:])
 		pubkey := new(ecdsa.PublicKey)
    		pubkey.Curve = pubkeyCurve
 	   	pubkey.X = new(big.Int).SetBytes(public[0:32])
 	   	pubkey.Y = new(big.Int).SetBytes(public[32:])
 		
 		sign := BinToHex(signsSlice[i])
-		log.Debug("sign %s", sign)
 		_,r,s := ParseSign(string(sign))
-/*		off := 8
-		if sign[7] == '1' {
-			off = 10
-		}
-		all, err := hex.DecodeString(string(sign[off:]))
-		if err != nil {
-			return false, ErrInfo(err)
-		}
-		r := new(big.Int).SetBytes(all[:32])
-		s := new(big.Int).SetBytes(all[len(all)-32:])*/
-		log.Debug("pubkey %v", pubkey)
-		log.Debug("signhash[:] %v", signhash[:])
-		log.Debug("r %v", r)
-		log.Debug("s %v", s)
 		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
 		if !verifystatus {
 			log.Error("Check sign: %i %s\n", i, signsSlice[i])
