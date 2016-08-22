@@ -177,6 +177,7 @@
 // static/js/sha1.js
 // static/js/sha256.js
 // static/js/spin.js
+// static/js/unixtime.js
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
@@ -3593,6 +3594,24 @@ func staticJsSha256Js() (*asset, error) {
 func staticJsSpinJs() (*asset, error) {
 	path := "static/js/spin.js"
 	name := "static/js/spin.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsUnixtimeJs reads file data from disk. It returns an error on failure.
+func staticJsUnixtimeJs() (*asset, error) {
+	path := "static/js/unixtime.js"
+	name := "static/js/unixtime.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7760,6 +7779,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/sha1.js": staticJsSha1Js,
 	"static/js/sha256.js": staticJsSha256Js,
 	"static/js/spin.js": staticJsSpinJs,
+	"static/js/unixtime.js": staticJsUnixtimeJs,
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
@@ -8217,6 +8237,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"sha1.js": &bintree{staticJsSha1Js, map[string]*bintree{}},
 			"sha256.js": &bintree{staticJsSha256Js, map[string]*bintree{}},
 			"spin.js": &bintree{staticJsSpinJs, map[string]*bintree{}},
+			"unixtime.js": &bintree{staticJsUnixtimeJs, map[string]*bintree{}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
 			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
