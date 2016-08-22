@@ -1966,18 +1966,12 @@ func MakeLastTx(lastTx []map[string]string, lng map[string]string) (string, map[
 	return result, pendingTx
 }
 
-func GenKeys() (string, string) {
-	privatekey, _ := rsa.GenerateKey(crand.Reader, 2048)
-	var pemkey = &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privatekey)}
-	PrivBytes0 := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: pemkey.Bytes})
-
-	PubASN1, _ := x509.MarshalPKIXPublicKey(&privatekey.PublicKey)
-	pubBytes := pem.EncodeToMemory(&pem.Block{Type: "RSA PUBLIC KEY", Bytes: PubASN1})
-	s := strings.Replace(string(pubBytes), "-----BEGIN RSA PUBLIC KEY-----", "", -1)
-	s = strings.Replace(s, "-----END RSA PUBLIC KEY-----", "", -1)
-	sDec, _ := base64.StdEncoding.DecodeString(s)
-
-	return string(PrivBytes0), fmt.Sprintf("%x", sDec)
+func GenKeys() (privKey string, pubKey string) {
+    private,_  := ecdsa.GenerateKey(elliptic.P256(), crand.Reader) 
+	privKey = hex.EncodeToString( private.D.Bytes())
+	r := private.PublicKey.X.Bytes()
+	pubKey = hex.EncodeToString(append(r, private.PublicKey.Y.Bytes()...))
+	return
 }
 
 func Encrypt(key, text []byte) ([]byte, error) {
