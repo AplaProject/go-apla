@@ -27,6 +27,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mcuadros/go-version"
+	b58 "github.com/jbenet/go-base58"
 	"image"
 	"image/color"
 	"image/draw"
@@ -1639,6 +1640,9 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	return true, nil
 }
 
+func KeyToAddress(pubKey string) string {
+	return b58.Encode(HashSha1(pubKey))
+}
 
 func HashSha1(msg string) []byte {
 	sh := crypto.SHA1.New()
