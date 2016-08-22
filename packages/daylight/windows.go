@@ -1,6 +1,6 @@
 // +build windows
 
-package dcoin
+package daylight
 
 import (
 	//"os/exec"

@@ -989,6 +989,8 @@ func (db *DCDB) GetMyBlockId() (int64, error) {
 }
 
 func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
+	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
+	log.Debug("publicKey %s", publicKey)
 	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`, string(HashSha1Hex(publicKey))).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
@@ -1078,6 +1080,7 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		}
 	}()
 
+	log.Debug("DbLock")
 	var ok bool
 	for {
 		select {
@@ -1089,6 +1092,8 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		}
 
 		Mutex.Lock()
+
+		log.Debug("DbLock Mutex.Lock()")
 
 		exists, err := db.OneRow("SELECT lock_time, script_name FROM main_lock").String()
 		if err != nil {

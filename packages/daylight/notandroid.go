@@ -1,6 +1,6 @@
 // +build !android,!ios
 
-package dcoin
+package daylight
 
 import (
 	//"fmt"

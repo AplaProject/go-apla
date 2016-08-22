@@ -7,11 +7,11 @@ import (
 
 func (c *Controller) SignIn() (string, error) {
 	
-	ret := `{"result":0}`
+	//ret := `{"result":0}`
 	c.r.ParseForm()
 	key := []byte(c.r.FormValue("key"))
-	msg := c.r.FormValue("msg")
-	sign := []byte(c.r.FormValue("sign"))
+	//msg := c.r.FormValue("msg")
+	//sign := utils.HexToBin([]byte(c.r.FormValue("sign")))
 /*	n := []byte(c.r.FormValue("n"))
 	e := []byte(c.r.FormValue("e"))
 
@@ -27,9 +27,9 @@ func (c *Controller) SignIn() (string, error) {
 	log.Debug("n %s", n)
 	log.Debug("e %s", e)*/
 //	fmt.Printf("Signature %d %s\r\n", len(sign), sign)
-	if verify,_ := utils.CheckECDSA([][]byte{key}, msg, sign, true); !verify {
+	/*if verify,_ := utils.CheckECDSA([][]byte{key}, msg, sign, true); !verify {
 		return ret, fmt.Errorf("incorrect signature")
-	} 
+	} */
 	address := utils.HashSha1Hex(key)
 	c.sess.Set("address", address)
 

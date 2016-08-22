@@ -63,7 +63,7 @@ func main() {
 	}
 	tray()
 
-	go dcoin.Start("", thrustWindow)
+	go daylight.Start("", thrustWindow)
 
 	enterLoop()
 	system.Finish(0)

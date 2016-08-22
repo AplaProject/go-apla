@@ -76,7 +76,7 @@ type DaemonsChansType struct {
 }
 var (
 	TcpHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
-	ListenHttpPort = flag.String("listenHttpPort", "8089", "ListenHttpPort")
+	ListenHttpPort = flag.String("listenHttpPort", "7079", "ListenHttpPort")
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	OldVersion = flag.String("oldVersion", "", "")
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
@@ -1593,20 +1593,26 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
+	log.Debug("publicKeys %v", publicKeys)
 	pubkeyCurve := elliptic.P256()
 	signhash := sha256.Sum256([]byte(forSign))
 	
 	for i := 0; i < len(publicKeys); i++ {
-		public, err := hex.DecodeString(string(publicKeys[i]))
+		log.Debug("publicKeys[i] %x", publicKeys[i])
+		/*public, err := hex.DecodeString(string(publicKeys[i]))
 		if err != nil {
 			return false, ErrInfo(err)
-		}
+		}*/
+		public := publicKeys[i]
+		log.Debug("x %x", public[0:32])
+		log.Debug("y %x", public[32:])
 		pubkey := new(ecdsa.PublicKey)
    		pubkey.Curve = pubkeyCurve
 	   	pubkey.X = new(big.Int).SetBytes(public[0:32])
 	   	pubkey.Y = new(big.Int).SetBytes(public[32:])
 		
-		sign := signsSlice[i]
+		sign := BinToHex(signsSlice[i])
+		log.Debug("sign %s", sign)
 		_,r,s := ParseSign(string(sign))
 /*		off := 8
 		if sign[7] == '1' {
@@ -1618,6 +1624,10 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 		}
 		r := new(big.Int).SetBytes(all[:32])
 		s := new(big.Int).SetBytes(all[len(all)-32:])*/
+		log.Debug("pubkey %v", pubkey)
+		log.Debug("signhash[:] %v", signhash[:])
+		log.Debug("r %v", r)
+		log.Debug("s %v", s)
 		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
 		if !verifystatus {
 			log.Error("Check sign: %i %s\n", i, signsSlice[i])

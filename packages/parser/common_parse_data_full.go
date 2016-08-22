@@ -48,7 +48,6 @@ func (p *Parser) ParseDataFull() error {
 		for {
 			// обработка тр-ий может занять много времени, нужно отметиться
 			p.UpdDaemonTime(p.GoroutineName)
-			p.halfRollback = false
 			log.Debug("&p.BinaryData", p.BinaryData)
 			transactionSize := utils.DecodeLength(&p.BinaryData)
 			if len(p.BinaryData) == 0 {

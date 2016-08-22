@@ -1,7 +1,7 @@
 // +build linux freebsd darwin
 // +build 386 amd64
 
-package dcoin
+package daylight
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"

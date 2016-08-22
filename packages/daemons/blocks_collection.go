@@ -304,17 +304,11 @@ BEGIN:
 			continue
 		}
 
-
-
-		var dataTypeMaxBlockId, dataTypeBlockBody int64
-
 		hosts, err := d.GetHosts()
 		if err != nil {
 			logger.Error("%v", err)
 		}
 
-		dataTypeMaxBlockId = 10
-		dataTypeBlockBody = 7
 
 		logger.Info("%v", hosts)
 		if len(hosts) == 0 {
@@ -339,8 +333,10 @@ BEGIN:
 				continue
 			}
 
+			logger.Debug("conn", conn)
+
 			// шлем тип данных
-			_, err = conn.Write(utils.DecToBin(dataTypeMaxBlockId, 2))
+			_, err = conn.Write(utils.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
 			if err != nil {
 				conn.Close()
 				if d.dPrintSleep(err, 1) {
@@ -360,6 +356,9 @@ BEGIN:
 				continue
 			}
 			conn.Close()
+
+			logger.Debug("blockIdBin %x", blockIdBin)
+
 			id := utils.BinToDec(blockIdBin)
 			if id > maxBlockId || i == 0 {
 				maxBlockId = id
@@ -411,7 +410,7 @@ BEGIN:
 			}
 
 			// качаем тело блока с хоста maxBlockIdHost
-			binaryBlock, err := utils.GetBlockBody(maxBlockIdHost, blockId, dataTypeBlockBody)
+			binaryBlock, err := utils.GetBlockBody(maxBlockIdHost, blockId, consts.DATA_TYPE_BLOCK_BODY)
 
 			if len(binaryBlock) == 0 {
 				// баним на 1 час хост, который дал нам пустой блок, хотя должен был дать все до максимального
@@ -482,7 +481,7 @@ BEGIN:
 				continue BEGIN
 			}
 
-			logger.Debug("mrklRoot %x", mrklRoot)
+			logger.Debug("mrklRoot %s", mrklRoot)
 
 			// публичный ключ того, кто этот блок сгенерил
 			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.CBID)
@@ -515,7 +514,7 @@ BEGIN:
 					continue BEGIN
 				}
 				// нужно привести данные в нашей БД в соответствие с данными у того, у кого качаем более свежий блок
-				err := parser.GetOldBlocks(blockData.WalletId, blockData.CBID, blockId-1, maxBlockIdHost, GoroutineName, dataTypeBlockBody)
+				err := parser.GetOldBlocks(blockData.WalletId, blockData.CBID, blockId-1, maxBlockIdHost, GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
 				if err != nil {
 					logger.Error("%v", err)
 					d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))

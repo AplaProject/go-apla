@@ -1,7 +1,7 @@
 // +build darwin
 // +build arm arm64
 
-package dcoin
+package daylight
 
 /*
 #cgo CFLAGS: -x objective-c

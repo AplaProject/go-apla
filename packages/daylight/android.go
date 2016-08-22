@@ -1,6 +1,6 @@
 // +build android
 
-package dcoin
+package daylight
 
 import (
 	"net/http"
