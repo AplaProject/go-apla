@@ -64,6 +64,11 @@ $desktop: 1516px;
 	}
 	.alerts {
 		display:none;
+		position:static;
+		top:0px;
+		left:0px;
+		width:auto;
+		right:0px;
 	}
 	.alert {
 		display:flex !important;
@@ -148,7 +153,7 @@ $desktop: 1516px;
 			top:0px;
 			width:100%;
 			height:100%;
-			background-image:url(../images/D_null.png);
+			background-image:url(../img/D_null.png);
 			background-repeat:no-repeat;
 			background-position:center top;
 			background-size:100% auto;
@@ -159,7 +164,7 @@ $desktop: 1516px;
 			bottom:0px;
 			width:100%;
 			max-height:100%;
-			background-image:url(../images/D_ok.png);
+			background-image:url(../img/D_ok.png);
 			background-repeat:no-repeat;
 			background-position:center bottom;
 			background-size:100% auto;
