@@ -7,9 +7,9 @@ import (
 
 func (c *Controller) SignIn() (string, error) {
 	
-	//ret := `{"result":0}`
+	ret := `{"result":0}`
 	c.r.ParseForm()
-	key := []byte(c.r.FormValue("key"))
+	key := c.r.FormValue("key")
 	//msg := c.r.FormValue("msg")
 	//sign := utils.HexToBin([]byte(c.r.FormValue("sign")))
 /*	n := []byte(c.r.FormValue("n"))
@@ -30,9 +30,8 @@ func (c *Controller) SignIn() (string, error) {
 	/*if verify,_ := utils.CheckECDSA([][]byte{key}, msg, sign, true); !verify {
 		return ret, fmt.Errorf("incorrect signature")
 	} */
-	address := utils.HashSha1Hex(key)
+	address := utils.KeyToAddress(key)
 	c.sess.Set("address", address)
-
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
@@ -44,25 +43,25 @@ func (c *Controller) SignIn() (string, error) {
 	fmt.Printf("Sign in wallet=%d address=%s\r\n", walletId, address)
 	if err != nil {
 		log.Error("err %v", err)
-		return "{\"result\":0}", err
+		return ret, err
 	}
 	if walletId > 0 {
 		err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
 		if err != nil {
 			log.Error("err %v", err)
-			return "{\"result\":0}", err
+			return ret, err
 		}
 		c.sess.Set("wallet_id", walletId)
 	} else {
 		citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
 		if err != nil {
 			log.Error("err %v", err)
-			return "{\"result\":0}", err
+			return ret, err
 		}
 		err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
 		if err != nil {
 			log.Error("err %v", err)
-			return "{\"result\":0}", err
+			return ret, err
 		}
 		c.sess.Set("citizen_id", citizenId)
 	}
