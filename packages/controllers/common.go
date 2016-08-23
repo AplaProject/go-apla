@@ -32,16 +32,10 @@ type Controller struct {
 	Lang             map[string]string
 	TplName          string
 	LangInt          int64
-	Navigate         string
 	ContentInc       bool
 	Periods          map[int64]string
-	Community        bool
-	CommunityUsers   []int64
 	ShowSignData     bool
-	MyPrefix         string
 	Alert            string
-	UserId           int64
-	Admin            bool
 	SessCitizenId    int64
 	SessWalletId     int64
 	SessAddress      string
@@ -50,20 +44,10 @@ type Controller struct {
 	CountSign        int
 	CountSignArr     []int
 	TimeFormat       string
-	PoolAdmin        bool
-	PoolAdminUserId  int64
 	NodeAdmin        bool
 	NodeConfig       map[string]string
-	ConfigCommission map[int64][]float64
 	CurrencyList     map[int64]string
-	CurrencyListCf   map[int64]string
-	PaymentSystems   map[string]string
 	ConfirmedBlockId int64
-	MinerId          int64
-	Races            map[int64]string
-	EConfig          map[string]string
-	ECommission      float64
-	EURL             string
 }
 
 var (
