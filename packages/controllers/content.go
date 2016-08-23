@@ -223,7 +223,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Debug("countSign: %v", countSign)
-	c.UserId = userId
 	var CountSignArr []int
 	for i := 0; i < countSign; i++ {
 		CountSignArr = append(CountSignArr, i)
