@@ -10,9 +10,7 @@
 	$('#generate_change_node_key').bind('click', function () {
 
 		$.post( 'ajax?controllerName=generateNewNodeKey', function (keys) {
-
-			$.get( 'ajax?controllerName=GetServerTime', function (data) {
-				serverTime = data.time;
+				serverTime = keys.time;
 				$("#generate").css("display", "none");
 				$("#sign").css("display", "block");
 				$("#public_key").val( keys.public_key );
@@ -22,9 +20,6 @@
 				$("#send_to_net").trigger("click");
 
 			}, "json" );
-
-		}, 'json' );
-
 	});
 
 	$('#send_to_net').bind('click', function () {

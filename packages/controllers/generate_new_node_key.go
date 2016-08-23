@@ -8,7 +8,8 @@ import (
 func (c *Controller) GenerateNewNodeKey() (string, error) {
 
 	priv, pub := utils.GenKeys()
-	json, err := json.Marshal(map[string]string{"private_key": priv, "public_key": pub})
+	json, err := json.Marshal(map[string]string{"private_key": priv, "public_key": pub,
+								"time": utils.Int64ToStr(utils.Time()) })
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
