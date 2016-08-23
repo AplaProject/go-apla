@@ -11,6 +11,21 @@
 	$(".anonym").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+	
+	// Font Awesome support
+	$.fn.editableform.buttons =
+	  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
+		'<i class="fa fa-fw fa-check"></i>'+
+	  '</button>'+
+	  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
+		'<i class="fa fa-fw fa-times"></i>'+
+	  '</button>';
+	  
+	//$.fn.editable.defaults.url = '../server/xeditable.res';
+	
+	$(document).ready(function() {
+		$(".edit").editable();
+	});
 </script>
 
 <div class="content-heading">
@@ -28,7 +43,7 @@
 		  <tbody>
 			 <tr>
 				<td class="thead">Block ID</td>
-				<td><strong>400405400405</strong></td>
+				<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter block ID for search">400405400405</a></strong></td>
 			 </tr>
 			 <tr>
 				<td class="thead">Time</td>
