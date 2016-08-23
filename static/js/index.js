@@ -156,6 +156,7 @@ function dl_navigate (page, parameters) {
     $.post("content?controllerHTML="+page, { tpl_name: page, parameters: json },
         function(data) {
             //$("#loader").spin(false);
+			$(".sweet-overlay, .sweet-alert").remove();
             $('#dl_content').html( data );
 			/*if ( parameters && parameters.hasOwnProperty("lang")) {
 				if ( page[0] == 'E' )

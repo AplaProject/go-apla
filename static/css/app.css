@@ -8054,7 +8054,7 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 .sweet-overlay {
 	display:none !important;
 }
-.panel .sweet-alert, .modal .sweet-alert {
+[data-sweet-alert] .sweet-alert {
 	position:absolute !important;
 	left:0px !important;
 	top:0px !important;
@@ -8132,4 +8132,8 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 	.dashboard .menu {
 		padding-right:5px;
 	}
+}
+[data-sweet-alert] {
+	position:relative;
+	min-height:250px;
 }

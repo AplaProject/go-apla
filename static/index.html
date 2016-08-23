@@ -439,6 +439,7 @@
 			$.post("content?page="+page, { tpl_name: page, parameters: json },
 					function(data) {
 						$("#loader").spin(false);
+						$(".sweet-overlay, .sweet-alert").remove();
 						//console.log('$("#loader").spin(false)');
 						$('#dl_content').html( data );
 						if ( parameters && parameters.hasOwnProperty("lang")) {
