@@ -227,7 +227,7 @@ hr {
   font-size: 13px;
 }
 .form-control {
-  box-shadow: 0 0 0 #000 !important;
+  box-shadow:none !important;
 }
 .input-sm,
 select.input-sm {
@@ -275,7 +275,7 @@ fieldset .form-group {
   box-shadow: 0 0 0 #000000;
 }
 .popover {
-  box-shadow: 0 0 0 #000;
+  box-shadow:none !important;
   border-color: #eee;
   border-bottom: 2px solid #e4eaec;
   border-radius: 3px;
