@@ -5,6 +5,7 @@
 // static/anonym_citizen_status.html
 // static/anonym_history.html
 // static/anonym_money_transfer.html
+// static/block_detail.html
 // static/block_generation.html
 // static/cb_citizens.html
 // static/cb_citizens_new_user.html
@@ -498,6 +499,24 @@ func staticAnonym_historyHtml() (*asset, error) {
 func staticAnonym_money_transferHtml() (*asset, error) {
 	path := "static/anonym_money_transfer.html"
 	name := "static/anonym_money_transfer.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticBlock_detailHtml reads file data from disk. It returns an error on failure.
+func staticBlock_detailHtml() (*asset, error) {
+	path := "static/block_detail.html"
+	name := "static/block_detail.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7607,6 +7626,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/anonym_citizen_status.html": staticAnonym_citizen_statusHtml,
 	"static/anonym_history.html": staticAnonym_historyHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
+	"static/block_detail.html": staticBlock_detailHtml,
 	"static/block_generation.html": staticBlock_generationHtml,
 	"static/cb_citizens.html": staticCb_citizensHtml,
 	"static/cb_citizens_new_user.html": staticCb_citizens_new_userHtml,
@@ -8046,6 +8066,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"anonym_citizen_status.html": &bintree{staticAnonym_citizen_statusHtml, map[string]*bintree{}},
 		"anonym_history.html": &bintree{staticAnonym_historyHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
+		"block_detail.html": &bintree{staticBlock_detailHtml, map[string]*bintree{}},
 		"block_generation.html": &bintree{staticBlock_generationHtml, map[string]*bintree{}},
 		"cb_citizens.html": &bintree{staticCb_citizensHtml, map[string]*bintree{}},
 		"cb_citizens_new_user.html": &bintree{staticCb_citizens_new_userHtml, map[string]*bintree{}},
