@@ -1,0 +1,31 @@
+	   <!-- START table responsive-->
+	   <div class="table-responsive">
+		   <table class="table table-striped table-bordered table-hover">
+			  <thead>
+				 <tr>
+					<th>Block ID</th>
+					<th>Hash</th>
+					<th>Time</th>
+					<th>Citizen id</th>
+					<th>Wallet id</th>
+					<th>Transactions</th>
+				 </tr>
+			  </thead>
+			  <tbody>
+				{{range .List}}
+			  	 <tr>
+				 	<td><a href="#block_detail">{{.id}}</a></td>
+					<td>{{.hash}}</td>
+					<td class="unixtime">{{.time}}</td>
+					<td>{{.cb_id}}</td>
+					<td>{{.wallet_id}}</td>
+					<td>{{.tx}}</td>
+				 </tr>
+				{{end}}
+			  </tbody>
+		   </table>
+	   </div>
+	   <!-- END table responsive-->
+<script type="text/javascript">
+	$(document).ready( unixtime );
+</script>
