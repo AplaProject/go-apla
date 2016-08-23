@@ -1,0 +1,42 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".anonym").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Anonym
+</div>
+<ol class="breadcrumb">
+   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
+   <li class="active">Block Information</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <tbody>
+			 <tr>
+				<td width="100">Block ID</td>
+				<td>400405400405</td>
+			 </tr>
+			 <tr>
+				<td width="100">Time</td>
+				<td>23.08.2016, 10:53:15</td>
+			 </tr>
+			 <tr>
+				<td width="100">Hash</td>
+				<td>88fc9ea1b57d3375e604409c68c2ee3b0681c98864c9091891e6967f82f656b8</td>
+			 </tr>
+			 <tr>
+				<td width="100">Parent Hash:</td>
+				<td><a href="#">3b5fcbdf15d9141b12c35abdc398070933c06ff6dd4e8d9580aa0d749eaddd08</a></td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+ </div>
+</div>
+<!-- END panel-->
