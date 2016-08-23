@@ -34,9 +34,9 @@ func (c *Controller) SaveQueue() (string, error) {
 	}
 
 	txType := utils.TypeInt(txType_)
-	signature1,_,_ := utils.ParseSign(c.r.FormValue("signature1"))
-	signature2,_,_ := utils.ParseSign(c.r.FormValue("signature2"))
-	signature3,_,_ := utils.ParseSign(c.r.FormValue("signature3"))
+	signature1 := utils.ConvertJSSign(c.r.FormValue("signature1"))
+	signature2 := utils.ConvertJSSign(c.r.FormValue("signature2"))
+	signature3 := utils.ConvertJSSign(c.r.FormValue("signature3"))
 	sign := utils.EncodeLengthPlusData(utils.HexToBin([]byte(signature1)))
 	if len(signature2) > 0 {
 		sign = append(sign, utils.EncodeLengthPlusData(utils.HexToBin([]byte(signature2)))...)
