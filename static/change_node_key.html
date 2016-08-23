@@ -11,8 +11,8 @@
 
 		$.post( 'ajax?controllerName=generateNewNodeKey', function (keys) {
 				serverTime = keys.time;
-				$("#generate").css("display", "none");
-				$("#sign").css("display", "block");
+				//$("#generate").css("display", "none");
+				//$("#sign").css("display", "block");
 				$("#public_key").val( keys.public_key );
 				$("#private_key").val( keys.private_key );
 				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},{{.CitizenId}},'+$("#public_key").val() );
@@ -49,11 +49,13 @@
 
 </script>
 
-<h1 class="page-header">{{.Lang.change_node_key_title}}</h1>
+<div class="content-heading">
+   {{.Lang.change_node_key_title}}
+</div>
 {{template "alertSuccess".}}
 
-<div id="generate">
-	<button class="btn btn-danger" type="button" id="generate_change_node_key">{{.Lang.generate_new_node_key}}</button>
+<div id="generate" data-sweet-alert>
+	<button class="btn btn-danger" type="button" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" id="generate_change_node_key">{{.Lang.generate_new_node_key}}</button>
 </div>
 
 {{template "signatures".}}

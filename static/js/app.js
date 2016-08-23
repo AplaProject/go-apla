@@ -2081,7 +2081,7 @@
   // catch clicks to toggle panel refresh
   $(document).on('click', panelSelector, function () {
       var $this   = $(this),
-          panel   = $this.parents('.panel').eq(0),
+          panel   = $this.parents('[data-sweet-alert]').eq(0),
           spinner = $this.data('spinner') || defaultSpinner
           ;
 
