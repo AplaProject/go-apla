@@ -66,8 +66,12 @@
 			Alert("Error", error, "error");
 		}
 	});
-	
-	$(document).ready( unixtime );
+
+	function blockExplorer() {
+		$("#tab2").html('');
+		$("#tab2").load( "content?page=blockExplorer", {}, function(){});
+	}
+
 </script>
 
 <div class="content-heading">
@@ -179,7 +183,7 @@
 		  <em class="fa fa-clock-o fa-fw"></em> Transactions History</a>
 	</li>
 	<li role="presentation">
-	   <a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab" class="bb0">
+	   <a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab" class="bb0" onclick="blockExplorer()">
 		  <em class="fa fa-th fa-fw"></em> Block Explorer</a>
 	</li>
  </ul>
@@ -207,34 +211,6 @@
 	   </div>
 	</div>
 	<div id="tab2" role="tabpanel" class="tab-pane">
-	   <!-- START table responsive-->
-	   <div class="table-responsive">
-		   <table class="table table-striped table-bordered table-hover">
-			  <thead>
-				 <tr>
-					<th>Block ID</th>
-					<th>Hash</th>
-					<th>Time</th>
-					<th>Citizen id</th>
-					<th>Wallet id</th>
-					<th>Transactions</th>
-				 </tr>
-			  </thead>
-			  <tbody>
-				{{range .BlockExplorer}}
-			  	 <tr>
-				 	<td><a href="#block_detail">{{.id}}</a></td>
-					<td>{{.hash}}</td>
-					<td class="unixtime">{{.time}}</td>
-					<td>{{.cb_id}}</td>
-					<td>{{.wallet_id}}</td>
-					<td>{{.tx}}</td>
-				 </tr>
-				{{end}}
-			  </tbody>
-		   </table>
-	   </div>
-	   <!-- END table responsive-->
 	</div>
  </div>
 </div>
