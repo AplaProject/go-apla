@@ -482,8 +482,8 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 			return true
 		}
 	case "private_key":
-		if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\+\-\s\=\/\n\r]+$`, data); ok {
-			if len(data) > 256 && len(data) < 3072 {
+		if ok, _ := regexp.MatchString(`^[0-9a-fA-F]+$`, data); ok {
+			if len(data) == 64 {
 				return true
 			}
 		}

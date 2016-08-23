@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"time"
+	"encoding/hex"
 	"fmt"
 )
 
@@ -27,24 +28,24 @@ func (c *Controller) SaveQueue() (string, error) {
 		return `{"result":"incorrect type"}`, nil
 	}
 
-	pubKey := []byte(c.r.FormValue("pubkey"))
-	publicKey := utils.HexToBin(pubKey)
-	if len(publicKey) == 0 {
+	publicKey,_ := hex.DecodeString(c.r.FormValue("pubkey"))
+	lenpub := len(publicKey)
+	if lenpub>64 {
+		publicKey = publicKey[lenpub-64:]
+	} else if lenpub == 0 {
 		publicKey = []byte("null")
 	}
-
+	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
 	txType := utils.TypeInt(txType_)
-	signature1 := utils.ConvertJSSign(c.r.FormValue("signature1"))
-	signature2 := utils.ConvertJSSign(c.r.FormValue("signature2"))
-	signature3 := utils.ConvertJSSign(c.r.FormValue("signature3"))
-	sign := utils.EncodeLengthPlusData(utils.HexToBin([]byte(signature1)))
-	if len(signature2) > 0 {
-		sign = append(sign, utils.EncodeLengthPlusData(utils.HexToBin([]byte(signature2)))...)
+	sign := make([]byte, 0)
+	for i := 1; i<=3; i++ {
+		signature := utils.ConvertJSSign(c.r.FormValue( fmt.Sprintf("signature%d", i )))
+		if i==1 || len(signature) > 0 {
+			bsign,_ := hex.DecodeString(signature)
+			sign = append(sign, utils.EncodeLengthPlusData(bsign)...)
+		}
 	}
-	if len(signature3) > 0 {
-		sign = append(sign, utils.EncodeLengthPlusData(utils.HexToBin([]byte(signature3)))...)
-	}
-	binSignatures := utils.EncodeLengthPlusData([]byte(sign))
+	binSignatures := utils.EncodeLengthPlusData(sign)
 
 	log.Debug("txType_", txType_)
 	log.Debug("txType", txType)
