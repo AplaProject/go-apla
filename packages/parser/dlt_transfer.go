@@ -16,7 +16,6 @@ func (p *Parser) DLTTransferInit() error {
 	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
 	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
 	p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])
-	p.TxMap["sign"] = utils.BinToHex(p.TxMap["sign"])
 	return nil
 }
 
@@ -41,13 +40,11 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo("commission")
 	}
 
-	// есть ли нужная сумма на кошельке
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
-	if err != nil {
-		return p.ErrInfo(err)
+	if p.TxMaps.Int64["amount"] <= 0 {
+		return p.ErrInfo("amount<=0")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxCitizenID, p.TxMap["walletAddress"], p.TxMap["amount"], p.TxMap["commission"], p.TxMap["comment"])
+	forSign := fmt.Sprintf("%s,%s,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["walletAddress"], p.TxMap["amount"], p.TxMap["commission"], p.TxMap["comment"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -55,12 +52,20 @@ func (p *Parser) DLTTransferFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-/*
-	err = p.checkSpamMoney(p.TxMaps.Int64["sell_currency_id"], p.TxMaps.Money["amount"])
+
+	// есть ли нужная сумма на кошельке
+	amountAndCommission, err := p.checkSenderMoney(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-*/
+
+	// вычитаем из wallets_buffer
+	// amount_and_commission взято из check_sender_money()
+	err = p.updateWalletsBuffer(amountAndCommission)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	return nil
 }
 

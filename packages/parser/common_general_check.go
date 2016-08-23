@@ -65,7 +65,7 @@ func (p *Parser) generalCheck() error {
 	}
 	// чтобы не записали слишком длинную подпись
 	// 128 - это нод-ключ
-	if len(p.TxMap["sign"]) < 128 || len(p.TxMap["sign"]) > 5120 {
+	if len(p.TxMap["sign"]) < 64 || len(p.TxMap["sign"]) > 5120 {
 		return utils.ErrInfoFmt("incorrect sign size %d", len(p.TxMap["sign"]))
 	}
 	return nil

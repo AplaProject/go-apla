@@ -47,11 +47,13 @@ func (c *Controller) SaveQueue() (string, error) {
 			log.Debug("bsign %s", bsign)
 			log.Debug("bsign %x", bsign)
 			sign = append(sign, utils.EncodeLengthPlusData(bsign)...)
+			log.Debug("sign %x", sign)
 		}
 	}
 	binSignatures := utils.EncodeLengthPlusData(sign)
 
 	log.Debug("binSignatures %x", binSignatures)
+	log.Debug("binSignatures %s", binSignatures)
 	log.Debug("txType_", txType_)
 	log.Debug("txType", txType)
 

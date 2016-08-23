@@ -1600,12 +1600,15 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
+
+		log.Debug("signs %x", signs)
 		// в 1 signs может быть от 1 до 3-х подписей
 		for {
 			if len(signs) == 0 {
 				break
 			}
 			length := DecodeLength(&signs)
+			log.Debug("length %d", length)
 			signsSlice = append(signsSlice, BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
