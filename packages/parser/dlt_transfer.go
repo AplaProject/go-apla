@@ -3,6 +3,7 @@ package parser
 import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"fmt"
 )
 
 func (p *Parser) DLTTransferInit() error {
@@ -25,7 +26,7 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"walletAddress": "sha1", "amount": "int64", "commission": "int64", "comment": "comment"}
+	verifyData := map[string]string{"walletAddress": "walletAddress", "amount": "int64", "commission": "int64", "comment": "comment"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -41,9 +42,12 @@ func (p *Parser) DLTTransferFront() error {
 	}
 
 	// есть ли нужная сумма на кошельке
-	// .....
-/*
-	forSign := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["walletAddress"], p.TxMap["sell_currency_id"], p.TxMap["sell_rate"], p.TxMap["amount"], p.TxMap["buy_currency_id"], p.TxMap["commission"])
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	forSign := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxCitizenID, p.TxMap["walletAddress"], p.TxMap["amount"], p.TxMap["commission"], p.TxMap["comment"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -51,7 +55,7 @@ func (p *Parser) DLTTransferFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-
+/*
 	err = p.checkSpamMoney(p.TxMaps.Int64["sell_currency_id"], p.TxMaps.Money["amount"])
 	if err != nil {
 		return p.ErrInfo(err)
@@ -61,7 +65,8 @@ func (p *Parser) DLTTransferFront() error {
 }
 
 func (p *Parser) DLTTransfer() error {
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	hexAddress := utils.BinToHex(utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -78,9 +83,9 @@ func (p *Parser) DLTTransfer() error {
 		}
 	} else {
 		if len(p.TxMaps.Bytes["public_key"]) > 0 {
-			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount, public_key_0) VALUES ([hex], ?, [hex])`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"])
+			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount, public_key_0) VALUES ([hex], ?, [hex])`, hexAddress, p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"])
 		} else {
-			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount) VALUES ([hex], ?)`, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"])
+			err = p.ExecSql(`INSERT INTO dlt_wallets (address, amount) VALUES ([hex], ?)`, hexAddress, p.TxMaps.Int64["amount"])
 		}
 		if err != nil {
 			return p.ErrInfo(err)
@@ -96,12 +101,13 @@ func (p *Parser) DLTTransfer() error {
 }
 
 func (p *Parser) DLTTransferRollback() error {
+	hexAddress := utils.BinToHex(utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
 
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	rbId, err := p.Single(`SELECT rb_id FROM dlt_wallets WHERE address = [hex]`, p.TxMaps.Bytes["walletAddress"]).Int64()
+	rbId, err := p.Single(`SELECT rb_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

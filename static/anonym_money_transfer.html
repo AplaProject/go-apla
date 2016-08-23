@@ -14,7 +14,7 @@
 	$('#next').bind('click', function () {
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#walletAddress').val()+','+$('#amount').val()+','+$('#commission').val()+','+$('#comment').val());;
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#walletAddress').val()+','+$('#amount').val()+','+$('#commission').val()+','+$('#comment').val());
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -26,7 +26,7 @@
 			url: 'ajax?controllerName=saveQueue',
 			data: {
 				'type' : '{{.TxType}}',
-				'time' : '{{.TimeNow}}',
+				'time' : serverTime,
 				'walletId' : '{{.WalletId}}',
 				'citizenId' : '{{.CitizenId}}',
 				'walletAddress' : $('#walletAddress').val(),
