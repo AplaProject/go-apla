@@ -1562,7 +1562,7 @@ func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
 	return
 }
 
-func ParseSign(sign string) (out string, r,s *big.Int) {
+func ParseSign(sign string) (r,s *big.Int) {
 	var off int
 	if len(sign) > 128 {
 		off = 8
@@ -1578,9 +1578,15 @@ func ParseSign(sign string) (out string, r,s *big.Int) {
 	}
 	r = new(big.Int).SetBytes(all[:32])
 	s = new(big.Int).SetBytes(all[len(all)-32:])
-	slice := r.Bytes()
-	out = hex.EncodeToString( append( slice, s.Bytes()... ))
 	return 
+}
+
+func ConvertJSSign(in string) string {
+	if len(in) == 0 {
+		return ``
+	}
+	r,s := ParseSign(in)
+	return hex.EncodeToString( append( FillLeft(r.Bytes()), FillLeft(s.Bytes())... ))
 }
 
 func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
@@ -1616,8 +1622,7 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	   	pubkey.X = new(big.Int).SetBytes(public[0:32])
 	   	pubkey.Y = new(big.Int).SetBytes(public[32:])
 		
-		sign := BinToHex(signsSlice[i])
-		_,r,s := ParseSign(string(sign))
+		r,s := ParseSign(hex.EncodeToString(signsSlice[i]))
 		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
 		if !verifystatus {
 			log.Error("Check sign: %i %s\n", i, signsSlice[i])
@@ -1958,8 +1963,7 @@ func MakeLastTx(lastTx []map[string]string, lng map[string]string) (string, map[
 func GenKeys() (privKey string, pubKey string) {
     private,_  := ecdsa.GenerateKey(elliptic.P256(), crand.Reader) 
 	privKey = hex.EncodeToString( private.D.Bytes())
-	r := private.PublicKey.X.Bytes()
-	pubKey = hex.EncodeToString(append(r, private.PublicKey.Y.Bytes()...))
+	pubKey = hex.EncodeToString(append( FillLeft(private.PublicKey.X.Bytes()), FillLeft(private.PublicKey.Y.Bytes())...))
 	return
 }
 
