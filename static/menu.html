@@ -709,10 +709,24 @@
 				</li>
 			 </ul>
 		  </li>
-		  <li><button class="btn btn-default btn-demo" type="button" onClick="Demo();"><span class="fa fa-eye"></span><em> Show opportunities</em></button><input id="demo" type="hidden" value="0"></li>
+		  <li id="DemoButton"><button class="btn btn-default btn-demo" type="button" onClick="Demo();"><span class="fa fa-eye"></span><em> Show opportunities</em></button><input id="demo" type="hidden" value="0"></li>
 	   </ul>
 	   <!-- END sidebar nav-->
 	</nav>
  </div>
  <!-- END Sidebar (left)-->
 </aside>
+<style>
+	#DemoButton {
+		display:none;
+	}
+</style>
+<script>
+	$(document).keydown(function(e){
+		'use strict';
+		
+		if (e.shiftKey === true && e.keyCode === 68) {
+			$("#DemoButton").show();
+		}
+	});
+</script>
