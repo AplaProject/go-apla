@@ -1,0 +1,93 @@
+<style>
+	.thead {
+		width:120px;
+		font-weight:bold;
+		white-space:nowrap;
+	}
+</style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".anonym").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+	
+	// Font Awesome support
+	$.fn.editableform.buttons =
+	  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
+		'<i class="fa fa-fw fa-check"></i>'+
+	  '</button>'+
+	  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
+		'<i class="fa fa-fw fa-times"></i>'+
+	  '</button>';
+	  
+	//$.fn.editable.defaults.url = '../server/xeditable.res';
+	
+	$(document).ready(function() {
+		$(".edit").editable({
+			url: '/post',
+			name: 'block',
+			success: function(data) {
+				console.log('success')
+			}
+		});
+	});
+</script>
+
+<div class="content-heading">
+   Anonym
+</div>
+<ol class="breadcrumb">
+   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
+   <li class="active">Block Information</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <tbody>
+			 <tr>
+				<td class="thead">Block ID</td>
+				<td><strong><a id="block" class="edit" href="#" data-type="text" data-pk="1" data-title="Enter block ID for search">400405400405</a></strong></td>
+			 </tr>
+			 <tr>
+				<td class="thead">Time</td>
+				<td>23.08.2016, 10:53:15</td>
+			 </tr>
+			 <tr>
+				<td class="thead">Hash</td>
+				<td>88fc9ea1b57d3375e604409c68c2ee3b0681c98864c9091891e6967f82f656b8</td>
+			 </tr>
+			 <tr>
+				<td class="thead">Parent Hash:</td>
+				<td><a href="#">3b5fcbdf15d9141b12c35abdc398070933c06ff6dd4e8d9580aa0d749eaddd08</a></td>
+			 </tr>
+			 <tr>
+				<td class="thead">Central Bank ID</td>
+				<td>2CShaz8ny3xQZBF8SgivAVquKgj4</td>
+			 </tr>
+			 <tr>
+				<td class="thead">Wallet ID</td>
+				<td>2CShaz8ny3xQZBF8SgivAVquKgj4</td>
+			 </tr>
+			 <tr>
+				<td class="thead">Size</td>
+				<td>1889 bytes</td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-left">
+		 <a href="#" class="btn btn-primary"><span class="fa fa-angle-left"></span> &nbsp; Prev Block</a>
+	  </div>
+	  <div class="pull-right">
+		 <a href="#" class="btn btn-primary">Next Block &nbsp; <span class="fa fa-angle-right"></span></a>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
