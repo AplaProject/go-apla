@@ -722,6 +722,11 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		if ok, _ := regexp.MatchString("^[0-9a-z]{40}$", data); ok {
 			return true
 		}
+
+	case "walletAddress":
+		if ok, _ := regexp.MatchString("^(?i)[0-9a-z]{25,34}$", data); ok {
+			return true
+		}
 	case "photo_hash", "sha256":
 		if ok, _ := regexp.MatchString("^[0-9a-z]{64}$", data); ok {
 			return true
@@ -1595,12 +1600,15 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
+
+		log.Debug("signs %x", signs)
 		// в 1 signs может быть от 1 до 3-х подписей
 		for {
 			if len(signs) == 0 {
 				break
 			}
 			length := DecodeLength(&signs)
+			log.Debug("length %d", length)
 			signsSlice = append(signsSlice, BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
@@ -1636,6 +1644,17 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 
 func KeyToAddress(pubKey string) string {
 	return b58.Encode(HashSha1(pubKey))
+}
+
+func B54Decode(b54_ interface{}) string {
+	var b54 string
+	switch b54_.(type) {
+		case string:
+		b54 = b54_.(string)
+		case []byte:
+		b54 = string(b54_.([]byte))
+	}
+	return string(b58.Decode(b54))
 }
 
 func HashSha1(msg string) []byte {
