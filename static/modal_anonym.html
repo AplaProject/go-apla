@@ -19,7 +19,7 @@ $(document).ready(function() {
 				<h4 class="modal-title" id="modal_wallet_address_label">Wallet address</h4>
 			</div>
 			<div class="modal-body">
-				<center><img src="static/img/QR.png" alt=""></center>
+				<center><img src="ajax?qr={{.Address}}" alt=""></center>
 				<div class="well" style="margin-bottom:0px; margin-top:15px; text-align:center; background-color:#f5f5f5;">{{.Address}}</div>
 			</div>
 			<div class="modal-footer">
