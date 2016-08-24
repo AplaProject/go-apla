@@ -29,6 +29,15 @@
 	$('#select2-1').select2({
 		theme: 'bootstrap'
 	});
+	
+	function changeCountry(elem) {
+		var id = elem.value;
+		if (id == "DL") {
+			$("#message").hide();
+		} else {
+			$("#message").show();
+		}
+	}
 </script>
 
 <div class="content-heading">
@@ -73,7 +82,7 @@
 	   </div>
 	   <div class="form-group">
 		  <label>Country</label>
-		  <select id="select2-1" class="form-control">
+		  <select id="select2-1" class="form-control" onChange="changeCountry(this);">
 			 <option value="DL">DayLight</option>
 			 <option value="AL">Alabama</option>
 			 <option value="AR">Arkansas</option>
