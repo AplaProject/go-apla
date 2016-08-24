@@ -24,7 +24,13 @@
 	//$.fn.editable.defaults.url = '../server/xeditable.res';
 	
 	$(document).ready(function() {
-		$(".edit").editable();
+		$(".edit").editable({
+			url: '/post',
+			name: 'block',
+			success: function(data) {
+				console.log('success')
+			}
+		});
 	});
 </script>
 
@@ -43,7 +49,7 @@
 		  <tbody>
 			 <tr>
 				<td class="thead">Block ID</td>
-				<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter block ID for search">400405400405</a></strong></td>
+				<td><strong><a id="block" class="edit" href="#" data-type="text" data-pk="1" data-title="Enter block ID for search">400405400405</a></strong></td>
 			 </tr>
 			 <tr>
 				<td class="thead">Time</td>

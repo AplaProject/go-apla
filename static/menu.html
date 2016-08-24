@@ -282,6 +282,12 @@
 	  }
 	
 	})(window, document, window.jQuery);
+	
+	function HideMenu() {
+		if ($("body").hasClass("aside-toggled")) {
+			$(".sidebar-toggle").click();
+		}
+	}
 </script>
 <!-- top navbar-->
 <header class="topnavbar-wrapper">
@@ -405,27 +411,27 @@
 			 <ul id="da" class="nav sidebar-subnav collapse">
 				<li class="sidebar-subnav-header">DLT-wallet</li>
 				<li class="dashboard_anonym">
-				   <a href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym')">
+				   <a href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym'); HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
 				</li>
 				<li class="anonym_money_transfer">
-				   <a href="#" title="Money transfer" onclick="dl_navigate0('anonymMoneyTransfer')">
+				   <a href="#" title="Money transfer" onclick="dl_navigate0('anonymMoneyTransfer'); HideMenu();">
 					  <span>Money transfer</span>
 				   </a>
 				</li>
 				<li class="anonym_history">
-				   <a href="#anonym_history" title="History">
+				   <a href="#anonym_history" title="History" onClick="HideMenu();">
 					  <span>History</span>
 				   </a>
 				</li>
 				<li class="anonym_citizen_status">
-				   <a href="#anonym_citizen_status" title="Request for citizen status">
+				   <a href="#anonym_citizen_status" title="Request for citizen status" onClick="HideMenu();">
 					  <span>Request for citizen status</span>
 				   </a>
 				</li>
 				<li class="anonym_block_generation">
-				   <a href="#"  onclick="dl_navigate0('blockGeneration')" title="Block generation">
+				   <a href="#"  onclick="dl_navigate0('blockGeneration'); HideMenu();" title="Block generation">
 					  <span>Block generation</span>
 				   </a>
 				</li>
@@ -439,52 +445,52 @@
 			 <ul id="dc" class="nav sidebar-subnav collapse">
 				<li class="sidebar-subnav-header">Citizen</li>
 				<li class="dashboard_citizen">
-				   <a href="#dashboard_citizen" title="Dashboard">
+				   <a href="#dashboard_citizen" title="Dashboard" onClick="HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
 				</li>
 				<li class="citizen_money_transfer">
-				   <a href="#citizen_money_transfer" title="Money transfer">
+				   <a href="#citizen_money_transfer" title="Money transfer" onClick="HideMenu();">
 					  <span>Money transfer</span>
 				   </a>
 				</li>
 				<li class="citizen_bill_payment">
-				   <a href="#citizen_bill_payment" title="Bill Payment">
+				   <a href="#citizen_bill_payment" title="Bill Payment" onClick="HideMenu();">
 					  <span>Bill Payment</span>
 				   </a>
 				</li>
 				<li class="citizen_admission_high_school">
-				   <a href="#citizen_admission_high_school" title="Admission to high school">
+				   <a href="#citizen_admission_high_school" title="Admission to high school" onClick="HideMenu();">
 					  <span>Admission to high school</span>
 				   </a>
 				</li>
 				<li class="citizen_new_company">
-				   <a href="#citizen_new_company" title="New company">
+				   <a href="#citizen_new_company" title="New company" onClick="HideMenu();">
 					  <span>New company</span>
 				   </a>
 				</li>
 				<li class="citizen_property">
-				   <a href="#citizen_property" title="My property">
+				   <a href="#citizen_property" title="My property" onClick="HideMenu();">
 					  <span>My property</span>
 				   </a>
 				</li>
 				<li class="citizen_political_party">
-				   <a href="#citizen_political_party" title="Сreate a political party">
+				   <a href="#citizen_political_party" title="Сreate a political party" onClick="HideMenu();">
 					  <span>Сreate a political party</span>
 				   </a>
 				</li>
 				<li class="citizen_inheritance">
-				   <a href="#citizen_inheritance" title="Inheritance">
+				   <a href="#citizen_inheritance" title="Inheritance" onClick="HideMenu();">
 					  <span>Inheritance</span>
 				   </a>
 				</li>
 				<li class="citizen_marriage_registration">
-				   <a href="#citizen_marriage_registration" title="Marriage registration">
+				   <a href="#citizen_marriage_registration" title="Marriage registration" onClick="HideMenu();">
 					  <span>Marriage registration</span>
 				   </a>
 				</li>
 				<li class="citizen_divorce">
-				   <a href="#citizen_divorce" title="Divorce">
+				   <a href="#citizen_divorce" title="Divorce" onClick="HideMenu();">
 					  <span>Divorce</span>
 				   </a>
 				</li>
@@ -498,47 +504,47 @@
 			 <ul id="dco" class="nav sidebar-subnav collapse">
 				<li class="sidebar-subnav-header">Company</li>
 				<li class="dashboard_company">
-				   <a href="#dashboard_company" title="Dashboard">
+				   <a href="#dashboard_company" title="Dashboard" onClick="HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
 				</li>
 				<li class="company_new_company">
-				   <a href="#company_new_company" title="New company">
+				   <a href="#company_new_company" title="New company" onClick="HideMenu();">
 					  <span>New company</span>
 				   </a>
 				</li>
 				<li class="company_crowdfunding">
-				   <a href="#company_crowdfunding" title="CrowdFunding">
+				   <a href="#company_crowdfunding" title="CrowdFunding" onClick="HideMenu();">
 					  <span>CrowdFunding</span>
 				   </a>
 				</li>
 				<li class="company_new_shares">
-				   <a href="#company_new_shares" title="New shares">
+				   <a href="#company_new_shares" title="New shares" onClick="HideMenu();">
 					  <span>New shares</span>
 				   </a>
 				</li>
 				<li class="company_new_good">
-				   <a href="#company_new_good" title="New good">
+				   <a href="#company_new_good" title="New good" onClick="HideMenu();">
 					  <span>New good</span>
 				   </a>
 				</li>
 				<li class="company_new_item">
-				   <a href="#company_new_item" title="New item">
+				   <a href="#company_new_item" title="New item" onClick="HideMenu();">
 					  <span>New item</span>
 				   </a>
 				</li>
 				<li class="company_new_order">
-				   <a href="#company_new_order" title="New order">
+				   <a href="#company_new_order" title="New order" onClick="HideMenu();">
 					  <span>New order</span>
 				   </a>
 				</li>
 				<li class="company_currency_exchange">
-				   <a href="#company_currency_exchange" title="Currency Exchange">
+				   <a href="#company_currency_exchange" title="Currency Exchange" onClick="HideMenu();">
 					  <span>Currency Exchange</span>
 				   </a>
 				</li>
 				<li class="company_shares_exchange">
-				   <a href="#company_shares_exchange" title="Shares Exchange">
+				   <a href="#company_shares_exchange" title="Shares Exchange" onClick="HideMenu();">
 					  <span>Shares Exchange</span>
 				   </a>
 				</li>
@@ -552,7 +558,7 @@
 			 <ul id="dh" class="nav sidebar-subnav collapse">
 				<li class="sidebar-subnav-header">Health</li>
 				<li class="dashboard_health">
-				   <a href="#dashboard_health" title="Dashboard">
+				   <a href="#dashboard_health" title="Dashboard" onClick="HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
 				</li>
@@ -564,34 +570,34 @@
 				   <ul id="dhp" class="nav sidebar-subnav collapse">
 					<li class="sidebar-subnav-header">Patient</li>
 					<li class="health_patient_d">
-					   <a href="#health_patient" title="Dashboard">
+					   <a href="#health_patient" title="Dashboard" onClick="HideMenu();">
 						  <span>Dashboard</span>
 					   </a>
 					</li>
 					<li class="health_vital_signs">
-					   <a href="#health_vital_signs" title="Vital Signs">
+					   <a href="#health_vital_signs" title="Vital Signs" onClick="HideMenu();">
 						  <span>Vital Signs</span>
 					   </a>
 					</li>
 					<li class="health_symptom">
-					   <a href="#health_symptom" title="Add symptom">
+					   <a href="#health_symptom" title="Add symptom" onClick="HideMenu();">
 						  <span>Add symptom</span>
 					   </a>
 					</li>
 					<li class="health_entries_clinic">
-					   <a href="#health_entries_clinic" title="Write to the clinic">
+					   <a href="#health_entries_clinic" title="Write to the clinic" onClick="HideMenu();">
 						  <span>Write to the clinic</span>
 					   </a>
 					</li>
 					<li class="health_procedure">
-					   <a href="#health_procedure" title="Add procedure">
+					   <a href="#health_procedure" title="Add procedure" onClick="HideMenu();">
 						  <span>Add procedure</span>
 					   </a>
 					</li>
 				   </ul>
 				</li>
 				<li class="health_facility">
-				   <a href="#health_facility" title="Health facility">
+				   <a href="#health_facility" title="Health facility" onClick="HideMenu();">
 					  <span>Health facility</span>
 				   </a>
 				</li>
@@ -605,32 +611,32 @@
 			 <ul id="dcb" class="nav sidebar-subnav collapse">
 				<li class="sidebar-subnav-header">CB</li>
 				<li class="dashboard_cb">
-				   <a href="#dashboard_cb" title="Dashboard">
+				   <a href="#dashboard_cb" title="Dashboard" onClick="HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
 				</li>
 				<li class="cb_citizens">
-				   <a href="#cb_citizens" title="Citizens">
+				   <a href="#cb_citizens" title="Citizens" onClick="HideMenu();">
 					  <span>Citizens</span>
 				   </a>
 				</li>
 				<li class="cb_representatives">
-				   <a href="#cb_representatives" title="Representatives">
+				   <a href="#cb_representatives" title="Representatives" onClick="HideMenu();">
 					  <span>Representatives</span>
 				   </a>
 				</li>
 				<li class="cb_delegate">
-				   <a href="#cb_delegate" title="Delegate">
+				   <a href="#cb_delegate" title="Delegate" onClick="HideMenu();">
 					  <span>Delegate</span>
 				   </a>
 				</li>
 				<li class="cb_select_emission">
-				   <a href="#cb_select_emission" title="Emission">
+				   <a href="#cb_select_emission" title="Emission" onClick="HideMenu();">
 					  <span>Emission</span>
 				   </a>
 				</li>
 				<li class="cb_currency_exchange">
-				   <a href="#cb_currency_exchange" title="Currency exchange">
+				   <a href="#cb_currency_exchange" title="Currency exchange" onClick="HideMenu();">
 					  <span>Currency exchange</span>
 				   </a>
 				</li>
@@ -644,7 +650,7 @@
 			 <ul id="dg" class="nav sidebar-subnav collapse">
 				<li class="sidebar-subnav-header">Government</li>
 				<li class="dashboard_gov">
-				   <a href="#dashboard_gov" title="Dashboard">
+				   <a href="#dashboard_gov" title="Dashboard" onClick="HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
 				</li>
@@ -656,54 +662,54 @@
 				   <ul id="dgc" class="nav sidebar-subnav collapse">
 					<li class="sidebar-subnav-header">Citizens</li>
 					<li class="gov_citizens_d">
-					   <a href="#gov_citizens" title="Dashboard">
+					   <a href="#gov_citizens" title="Dashboard" onClick="HideMenu();">
 						  <span>Dashboard</span>
 					   </a>
 					</li>
 					<li class="gov_register_citizen">
-					   <a href="#gov_register_citizen" title="Register citizen">
+					   <a href="#gov_register_citizen" title="Register citizen" onClick="HideMenu();">
 						  <span>Register citizen</span>
 					   </a>
 					</li>
 					<li class="gov_register_property">
-					   <a href="#gov_register_property" title="Register property">
+					   <a href="#gov_register_property" title="Register property" onClick="HideMenu();">
 						  <span>Register property</span>
 					   </a>
 					</li>
 					<li class="gov_birth_statement">
-					   <a href="#gov_birth_statement" title="Birth statement">
+					   <a href="#gov_birth_statement" title="Birth statement" onClick="HideMenu();">
 						  <span>Birth statement</span>
 					   </a>
 					</li>
 					<li class="gov_date_death">
-					   <a href="#gov_date_death" title="Date of death">
+					   <a href="#gov_date_death" title="Date of death" onClick="HideMenu();">
 						  <span>Date of death</span>
 					   </a>
 					</li>
 				   </ul>
 				</li>
 				<li class="gov_create_budget">
-				   <a href="#gov_create_budget" title="Create budget">
+				   <a href="#gov_create_budget" title="Create budget" onClick="HideMenu();">
 					  <span>Create budget</span>
 				   </a>
 				</li>
 				<li class="gov_settings">
-				   <a href="#gov_settings" title="Settings">
+				   <a href="#gov_settings" title="Settings" onClick="HideMenu();">
 					  <span>Settings</span>
 				   </a>
 				</li>
 				<li class="gov_taxes">
-				   <a href="#gov_taxes" title="Taxes">
+				   <a href="#gov_taxes" title="Taxes" onClick="HideMenu();">
 					  <span>Taxes</span>
 				   </a>
 				</li>
 				<li class="gov_currency_exchange">
-				   <a href="#gov_currency_exchange" title="Currency Exchange">
+				   <a href="#gov_currency_exchange" title="Currency Exchange" onClick="HideMenu();">
 					  <span>Currency Exchange</span>
 				   </a>
 				</li>
 				<li class="gov_shares_exchange">
-				   <a href="#gov_shares_exchange" title="Shares Exchange">
+				   <a href="#gov_shares_exchange" title="Shares Exchange" onClick="HideMenu();">
 					  <span>Shares Exchange</span>
 				   </a>
 				</li>
