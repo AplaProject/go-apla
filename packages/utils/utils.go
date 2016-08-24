@@ -27,6 +27,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mcuadros/go-version"
+    "golang.org/x/crypto/ripemd160"
 	b58 "github.com/jbenet/go-base58"
 	"image"
 	"image/color"
@@ -720,6 +721,11 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 	case "sha1":
 		if ok, _ := regexp.MatchString("^[0-9a-z]{40}$", data); ok {
+			return true
+		}
+
+	case "walletAddress":
+		if ok, _ := regexp.MatchString("^(?i)[0-9a-z]{25,34}$", data); ok {
 			return true
 		}
 	case "photo_hash", "sha256":
@@ -1595,12 +1601,15 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
+
+		log.Debug("signs %x", signs)
 		// в 1 signs может быть от 1 до 3-х подписей
 		for {
 			if len(signs) == 0 {
 				break
 			}
 			length := DecodeLength(&signs)
+			log.Debug("length %d", length)
 			signsSlice = append(signsSlice, BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
@@ -1635,7 +1644,43 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 }
 
 func KeyToAddress(pubKey string) string {
-	return b58.Encode(HashSha1(pubKey))
+	bkey, err := hex.DecodeString(pubKey)
+	if err != nil {
+		return ``
+	}
+	prefix := []byte{0}
+    h256 := sha256.Sum256(bkey)
+    h := ripemd160.New()
+    h.Write(h256[:])
+    finger := h.Sum(nil)
+	h256 = sha256.Sum256(finger)
+	h256 = sha256.Sum256(h256[:])
+	checksum := h256[:4]
+	bkey = append(append(prefix, finger...), checksum...)
+	return b58.Encode(bkey)
+}
+
+func IsValidAddress(address string) bool {
+	key := b58.Decode(address)
+	if key[0] != 0 { // default prefix
+		return false
+	}
+	checksum := key[len(key)-4:]
+	finger := key[1:len(key)-4]
+	h256 := sha256.Sum256(finger)
+	h256 = sha256.Sum256(h256[:])
+	return bytes.Compare(checksum, h256[:4]) == 0
+}
+
+func B54Decode(b54_ interface{}) string {
+	var b54 string
+	switch b54_.(type) {
+		case string:
+		b54 = b54_.(string)
+		case []byte:
+		b54 = string(b54_.([]byte))
+	}
+	return string(b58.Decode(b54))
 }
 
 func HashSha1(msg string) []byte {
