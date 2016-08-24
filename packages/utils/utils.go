@@ -27,6 +27,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mcuadros/go-version"
+    "golang.org/x/crypto/ripemd160"
 	b58 "github.com/jbenet/go-base58"
 	"image"
 	"image/color"
@@ -1643,7 +1644,32 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 }
 
 func KeyToAddress(pubKey string) string {
-	return b58.Encode(HashSha1(pubKey))
+	bkey, err := hex.DecodeString(pubKey)
+	if err != nil {
+		return ``
+	}
+	prefix := []byte{0}
+    h256 := sha256.Sum256(bkey)
+    h := ripemd160.New()
+    h.Write(h256[:])
+    finger := h.Sum(nil)
+	h256 = sha256.Sum256(finger)
+	h256 = sha256.Sum256(h256[:])
+	checksum := h256[:4]
+	bkey = append(append(prefix, finger...), checksum...)
+	return b58.Encode(bkey)
+}
+
+func IsValidAddress(address string) bool {
+	key := b58.Decode(address)
+	if key[0] != 0 { // default prefix
+		return false
+	}
+	checksum := key[len(key)-4:]
+	finger := key[1:len(key)-4]
+	h256 := sha256.Sum256(finger)
+	h256 = sha256.Sum256(h256[:])
+	return bytes.Compare(checksum, h256[:4]) == 0
 }
 
 func B54Decode(b54_ interface{}) string {
