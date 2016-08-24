@@ -45,25 +45,23 @@ func (c *Controller) SignIn() (string, error) {
 		log.Error("err %v", err)
 		return ret, err
 	}
-	if walletId > 0 {
-		err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
-		if err != nil {
-			log.Error("err %v", err)
-			return ret, err
-		}
-		c.sess.Set("wallet_id", walletId)
-	} else {
-		citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
-		if err != nil {
-			log.Error("err %v", err)
-			return ret, err
-		}
-		err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
-		if err != nil {
-			log.Error("err %v", err)
-			return ret, err
-		}
-		c.sess.Set("citizen_id", citizenId)
+//	if walletId > 0 {
+	err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
+	if err != nil {
+		log.Error("err %v", err)
+		return ret, err
 	}
+	c.sess.Set("wallet_id", walletId)
+	citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
+	if err != nil {
+		log.Error("err %v", err)
+		return ret, err
+	}
+	err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
+	if err != nil {
+		log.Error("err %v", err)
+		return ret, err
+	}
+	c.sess.Set("citizen_id", citizenId)
 	return `{"result":1}`, nil
 }
