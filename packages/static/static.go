@@ -5,7 +5,6 @@
 // static/anonym_citizen_status.html
 // static/anonym_history.html
 // static/anonym_money_transfer.html
-// static/block_detail.html
 // static/block_explorer.html
 // static/block_generation.html
 // static/cb_citizens.html
@@ -92,7 +91,6 @@
 // static/i18n/site-es.json
 // static/img/D_null.png
 // static/img/D_ok.png
-// static/img/QR.png
 // static/img/US.svg
 // static/img/bg1.jpg
 // static/img/bg10.jpg
@@ -500,24 +498,6 @@ func staticAnonym_historyHtml() (*asset, error) {
 func staticAnonym_money_transferHtml() (*asset, error) {
 	path := "static/anonym_money_transfer.html"
 	name := "static/anonym_money_transfer.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticBlock_detailHtml reads file data from disk. It returns an error on failure.
-func staticBlock_detailHtml() (*asset, error) {
-	path := "static/block_detail.html"
-	name := "static/block_detail.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2066,24 +2046,6 @@ func staticImgD_nullPng() (*asset, error) {
 func staticImgD_okPng() (*asset, error) {
 	path := "static/img/D_ok.png"
 	name := "static/img/D_ok.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticImgQrPng reads file data from disk. It returns an error on failure.
-func staticImgQrPng() (*asset, error) {
-	path := "static/img/QR.png"
-	name := "static/img/QR.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7645,7 +7607,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/anonym_citizen_status.html": staticAnonym_citizen_statusHtml,
 	"static/anonym_history.html": staticAnonym_historyHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
-	"static/block_detail.html": staticBlock_detailHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
 	"static/block_generation.html": staticBlock_generationHtml,
 	"static/cb_citizens.html": staticCb_citizensHtml,
@@ -7732,7 +7693,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/D_null.png": staticImgD_nullPng,
 	"static/img/D_ok.png": staticImgD_okPng,
-	"static/img/QR.png": staticImgQrPng,
 	"static/img/US.svg": staticImgUsSvg,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
 	"static/img/bg10.jpg": staticImgBg10Jpg,
@@ -8086,7 +8046,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"anonym_citizen_status.html": &bintree{staticAnonym_citizen_statusHtml, map[string]*bintree{}},
 		"anonym_history.html": &bintree{staticAnonym_historyHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
-		"block_detail.html": &bintree{staticBlock_detailHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
 		"block_generation.html": &bintree{staticBlock_generationHtml, map[string]*bintree{}},
 		"cb_citizens.html": &bintree{staticCb_citizensHtml, map[string]*bintree{}},
@@ -8180,7 +8139,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"img": &bintree{nil, map[string]*bintree{
 			"D_null.png": &bintree{staticImgD_nullPng, map[string]*bintree{}},
 			"D_ok.png": &bintree{staticImgD_okPng, map[string]*bintree{}},
-			"QR.png": &bintree{staticImgQrPng, map[string]*bintree{}},
 			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
 			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
 			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{}},
