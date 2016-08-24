@@ -41,6 +41,14 @@ func (c *Controller) BlockExplorer() (string, error) {
 				}
 			}
 			blockInfo[`data`] = out
+			if blockId > 1 {
+				parent,err := c.Single("SELECT hash FROM block_chain where id=?", blockId-1).String()
+				if err == nil {
+					blockInfo[`parent`] = hex.EncodeToString([]byte(parent))
+				} else {
+					blockInfo[`parent`] = err.Error()
+				}
+			}
 		}
 		pageData.BlockData = blockInfo	
 	} else {

@@ -22,11 +22,6 @@
 			'<i class="fa fa-fw fa-times"></i>'+
 		  '</button>';
 		  
-		//$.fn.editable.defaults.url = '../server/xeditable.res';
-		
-		$(document).ready(function() {
-			$(".edit").editable();
-		});
 	</script>
 	
 	<div class="content-heading">
@@ -55,10 +50,12 @@
 					<td class="thead">Hash</td>
 					<td>{{.BlockData.hash}}</td>
 				 </tr>
-				 <!--tr>
+				{{if gt .BlockId 1}}
+				 <tr>
 					<td class="thead">Parent Hash:</td>
-					<td><a href="#">3b5fcbdf15d9141b12c35abdc398070933c06ff6dd4e8d9580aa0d749eaddd08</a></td>
-				 </tr-->
+					<td><a onclick="return prev_block()" >{{.BlockData.parent}}</a></td>
+				 </tr>
+				{{end}}
 				 <tr>
 					<td class="thead">Central Bank ID</td>
 					<td>{{.BlockData.cb_id}}</td>
@@ -139,6 +136,7 @@
 		return false
 	}
 
+{{if .BlockId}}
 	function prev_block() {
 		return block_detail( {{.BlockId}} - 1 );
 	}
@@ -147,5 +145,14 @@
 		return block_detail( {{.BlockId}} + 1 );
 	}
 	
+	$(document).ready(function() {
+		$(".edit").editable({
+            type: 'text',
+		    success: function(response, newValue) {
+				block_detail( parseInt(newValue));
+    		}
+		})
+	});
+{{end}}	
 	$(document).ready( unixtime );
 </script>
