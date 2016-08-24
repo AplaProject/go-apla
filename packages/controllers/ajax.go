@@ -4,6 +4,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"net/http"
 	"regexp"
+	qrcode "github.com/skip2/go-qrcode"	
 	"fmt"
 )
 
@@ -14,6 +15,16 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("ajax Recovered", r)
 		}
 	}()
+	qr := r.FormValue("qr")
+	if len(qr) > 0 {
+		if utils.IsValidAddress(qr) {
+			png,_ := qrcode.Encode(qr, qrcode.Medium, 170)
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(png)
+		}
+		return		
+	}
+	
 	log.Debug("Ajax")
 	w.Header().Set("Content-type", "text/html")
 
