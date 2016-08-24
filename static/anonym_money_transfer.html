@@ -58,7 +58,7 @@
 <!-- START panel-->
 <div class="panel panel-default" data-sweet-alert style="max-width:400px;">
  <div class="panel-body">
-	<form role="form">
+	<form id="anonymMoneyTransfer" role="form">
 	   <div class="form-group">
 		   <label>Wallet address <strong class="text-danger">*</strong></label>
 		   <input type="text" placeholder="Enter wallet address" class="form-control" id="walletAddress">
@@ -109,7 +109,7 @@ function floorFigure(figure, decimals){
 
 var reg = /[^0-9\.]/g;
 
-$(document).on('input', function () {
+$("#anonymMoneyTransfer").on('input', function () {
 	var wallet = $("#walletAddress");
 	var amount = $("#amount");
 	var i = 0;
