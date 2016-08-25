@@ -106,7 +106,9 @@
 // static/img/dummy.png
 // static/img/lock-bg.jpg
 // static/img/logo-single.png
+// static/img/logo-single.svg
 // static/img/logo.png
+// static/img/logo.svg
 // static/img/mb-sample.jpg
 // static/img/mockup.png
 // static/img/profile-bg.jpg
@@ -2331,10 +2333,46 @@ func staticImgLogoSinglePng() (*asset, error) {
 	return a, err
 }
 
+// staticImgLogoSingleSvg reads file data from disk. It returns an error on failure.
+func staticImgLogoSingleSvg() (*asset, error) {
+	path := "static/img/logo-single.svg"
+	name := "static/img/logo-single.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticImgLogoPng reads file data from disk. It returns an error on failure.
 func staticImgLogoPng() (*asset, error) {
 	path := "static/img/logo.png"
 	name := "static/img/logo.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgLogoSvg reads file data from disk. It returns an error on failure.
+func staticImgLogoSvg() (*asset, error) {
+	path := "static/img/logo.svg"
+	name := "static/img/logo.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7727,7 +7765,9 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/dummy.png": staticImgDummyPng,
 	"static/img/lock-bg.jpg": staticImgLockBgJpg,
 	"static/img/logo-single.png": staticImgLogoSinglePng,
+	"static/img/logo-single.svg": staticImgLogoSingleSvg,
 	"static/img/logo.png": staticImgLogoPng,
+	"static/img/logo.svg": staticImgLogoSvg,
 	"static/img/mb-sample.jpg": staticImgMbSampleJpg,
 	"static/img/mockup.png": staticImgMockupPng,
 	"static/img/profile-bg.jpg": staticImgProfileBgJpg,
@@ -8174,7 +8214,9 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{}},
 			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{}},
 			"logo-single.png": &bintree{staticImgLogoSinglePng, map[string]*bintree{}},
+			"logo-single.svg": &bintree{staticImgLogoSingleSvg, map[string]*bintree{}},
 			"logo.png": &bintree{staticImgLogoPng, map[string]*bintree{}},
+			"logo.svg": &bintree{staticImgLogoSvg, map[string]*bintree{}},
 			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{}},
 			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
 			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{}},
