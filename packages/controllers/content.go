@@ -263,7 +263,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(pageName) > 0 && isPage(pageName) {
-		fmt.Println(`Page`, pageName)
+		c.Data = &CommonPage{
+			Address: c.SessAddress,
+		}
 		w.Write([]byte(CallPage(c, pageName)))
 		return
 	}

@@ -12,7 +12,7 @@ import (
 
 type CommonPage struct {
 	//Lang   map[string]string
-	Test string
+	Address  string
 }
 
 type pageTemplate struct {
