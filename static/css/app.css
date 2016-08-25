@@ -1076,6 +1076,16 @@ _:-ms-lang(x),
   display: block;
   padding: 10px 25px;
 }
+@media only screen and (max-width: 767px) {
+	.topnavbar .navbar-header .brand-logo > img,
+	.topnavbar .navbar-header .brand-logo-collapsed > img {
+	  height:35px;
+	  width:168px;
+	}
+	.topnavbar .navbar-header .brand-logo {
+	  padding: 10px 15px;
+	}
+}
 .topnavbar .navbar-header .brand-logo-collapsed {
   display: none;
   padding: 7px 15px;
