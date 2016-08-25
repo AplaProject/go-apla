@@ -299,7 +299,7 @@ function do_register() {
 //	address = hex_sha1( GKey.Public ).toLowerCase();
 	GKey.Private = $("#prvkey").val();
 	GKey.Password = pass;
-	GKey.save();
+	GKey.save($("#phrase").val());
 	do_sign();
 	return false;
 }

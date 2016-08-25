@@ -28,10 +28,11 @@ var GKey = {
 		}
 		return false;
 	},
-	save: function() {
-		var encryptedAES = CryptoJS.AES.encrypt(this.Private, this.Password);
-		localStorage.setItem('EncKey', encryptedAES );
+	save: function(seed) {
+		localStorage.setItem('EncKey', CryptoJS.AES.encrypt(this.Private, this.Password));
 		localStorage.setItem('PubKey', GKey.Public );
+		if (seed)
+			localStorage.setItem('Encrypt', CryptoJS.AES.encrypt(seed, this.Password));
 		setCookie('psw', this.Password);
 	},
 	sign: function(msg,prvkey) {
