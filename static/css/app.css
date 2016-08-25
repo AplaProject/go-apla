@@ -1074,11 +1074,11 @@ _:-ms-lang(x),
 }
 .topnavbar .navbar-header .brand-logo {
   display: block;
-  padding: 10px 15px;
+  padding: 10px 25px;
 }
 .topnavbar .navbar-header .brand-logo-collapsed {
   display: none;
-  padding: 6px 15px;
+  padding: 7px 15px;
 }
 .topnavbar .navbar-nav > li > .navbar-text {
   color: #23b7e5;
