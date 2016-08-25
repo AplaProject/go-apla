@@ -48,6 +48,7 @@ type Controller struct {
 	NodeConfig       map[string]string
 	CurrencyList     map[int64]string
 	ConfirmedBlockId int64
+	Data             *CommonPage
 }
 
 var (

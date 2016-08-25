@@ -8,7 +8,7 @@ import (
 const NBlockExplorer = `block_explorer`
 
 type blockExplorerPage struct {
-	CommonPage
+	Data       *CommonPage
 	List       []map[string]string
 	BlockId    int64
 	BlockData  map[string]string
@@ -19,7 +19,7 @@ func init() {
 }
 
 func (c *Controller) BlockExplorer() (string, error) {
-	var pageData blockExplorerPage
+	pageData := blockExplorerPage{Data:c.Data}
 	
 	blockId := utils.StrToInt64( c.r.FormValue("blockId"))
 	

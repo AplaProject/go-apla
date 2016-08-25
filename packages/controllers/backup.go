@@ -3,8 +3,7 @@ package controllers
 const NBackup = `backup`
 
 type backupPage struct {
-	CommonPage
-	Address     string
+	Data        *CommonPage
 }
 
 func init() {
@@ -12,5 +11,5 @@ func init() {
 }
 
 func (c *Controller) Backup() (string, error) {
-	return proceedTemplate( c, NBackup, &backupPage{Address: c.SessAddress})
+	return proceedTemplate( c, NBackup, &backupPage{c.Data})
 }
