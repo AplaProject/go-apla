@@ -1660,6 +1660,10 @@ func KeyToAddress(pubKey string) string {
 	return b58.Encode(bkey)
 }
 
+func BytesToAddress(address []byte) string {
+	return b58.Encode(address)
+}
+
 func IsValidAddress(address string) bool {
 	key := b58.Decode(address)
 	if key[0] != 0 { // default prefix
