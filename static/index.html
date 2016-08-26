@@ -437,8 +437,6 @@
 			var json = JSON.stringify(parameters);
 
 			//$('#loader').spin();
-			NProgress.configure({ showSpinner: false });
-			//NProgress.start();
 			NProgress.set(1.0);
 			$.post("content?page="+page, { tpl_name: page, parameters: json },
 					function(data) {

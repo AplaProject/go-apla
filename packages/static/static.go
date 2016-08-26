@@ -49,7 +49,7 @@
 // static/company_smart_contracts.html
 // static/css/app.css
 // static/css/bootstrap.css
-// static/css/pace.css
+// static/css/nprogress.css
 // static/css/style.css
 // static/css/theme-a.css
 // static/css/theme-b.css
@@ -171,7 +171,7 @@
 // static/js/jsbn.js
 // static/js/jsbn2.js
 // static/js/md5.js
-// static/js/pace.min.js
+// static/js/nprogress.js
 // static/js/rsa.js
 // static/js/rsa2.js
 // static/js/rsapem-1.1.js
@@ -1307,10 +1307,10 @@ func staticCssBootstrapCss() (*asset, error) {
 	return a, err
 }
 
-// staticCssPaceCss reads file data from disk. It returns an error on failure.
-func staticCssPaceCss() (*asset, error) {
-	path := "static/css/pace.css"
-	name := "static/css/pace.css"
+// staticCssNprogressCss reads file data from disk. It returns an error on failure.
+func staticCssNprogressCss() (*asset, error) {
+	path := "static/css/nprogress.css"
+	name := "static/css/nprogress.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3503,10 +3503,10 @@ func staticJsMd5Js() (*asset, error) {
 	return a, err
 }
 
-// staticJsPaceMinJs reads file data from disk. It returns an error on failure.
-func staticJsPaceMinJs() (*asset, error) {
-	path := "static/js/pace.min.js"
-	name := "static/js/pace.min.js"
+// staticJsNprogressJs reads file data from disk. It returns an error on failure.
+func staticJsNprogressJs() (*asset, error) {
+	path := "static/js/nprogress.js"
+	name := "static/js/nprogress.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7708,7 +7708,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/company_smart_contracts.html": staticCompany_smart_contractsHtml,
 	"static/css/app.css": staticCssAppCss,
 	"static/css/bootstrap.css": staticCssBootstrapCss,
-	"static/css/pace.css": staticCssPaceCss,
+	"static/css/nprogress.css": staticCssNprogressCss,
 	"static/css/style.css": staticCssStyleCss,
 	"static/css/theme-a.css": staticCssThemeACss,
 	"static/css/theme-b.css": staticCssThemeBCss,
@@ -7830,7 +7830,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/jsbn.js": staticJsJsbnJs,
 	"static/js/jsbn2.js": staticJsJsbn2Js,
 	"static/js/md5.js": staticJsMd5Js,
-	"static/js/pace.min.js": staticJsPaceMinJs,
+	"static/js/nprogress.js": staticJsNprogressJs,
 	"static/js/rsa.js": staticJsRsaJs,
 	"static/js/rsa2.js": staticJsRsa2Js,
 	"static/js/rsapem-1.1.js": staticJsRsapem11Js,
@@ -8151,7 +8151,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"css": &bintree{nil, map[string]*bintree{
 			"app.css": &bintree{staticCssAppCss, map[string]*bintree{}},
 			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{}},
-			"pace.css": &bintree{staticCssPaceCss, map[string]*bintree{}},
+			"nprogress.css": &bintree{staticCssNprogressCss, map[string]*bintree{}},
 			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
 			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{}},
 			"theme-b.css": &bintree{staticCssThemeBCss, map[string]*bintree{}},
@@ -8291,7 +8291,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"jsbn.js": &bintree{staticJsJsbnJs, map[string]*bintree{}},
 			"jsbn2.js": &bintree{staticJsJsbn2Js, map[string]*bintree{}},
 			"md5.js": &bintree{staticJsMd5Js, map[string]*bintree{}},
-			"pace.min.js": &bintree{staticJsPaceMinJs, map[string]*bintree{}},
+			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{}},
 			"rsa.js": &bintree{staticJsRsaJs, map[string]*bintree{}},
 			"rsa2.js": &bintree{staticJsRsa2Js, map[string]*bintree{}},
 			"rsapem-1.1.js": &bintree{staticJsRsapem11Js, map[string]*bintree{}},
