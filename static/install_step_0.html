@@ -63,7 +63,9 @@
 	
 		$('#next').bind('click', function () {
 			$('#next').prop('disabled', true);
-			$('#loader').spin();
+			//$('#loader').spin();
+			//NProgressStart.set(1);
+			NProgressStart.start();
 			$.post( 'content', {
 				'tpl_name' : 'installStep1',
 				'type' : $('input[name=settings]:checked').val(),
@@ -77,7 +79,7 @@
 				'username' : $('#username').val(),
 				'password' : $('#password').val(),
 				'key_password' : $('#key_password').val()
-			}, function (data) { $('#dl_content').html( data );  $('#loader').spin(false); }, 'html' );
+			}, function (data) { $('#dl_content').html( data );  NProgressStart.done();/*$('#loader').spin(false);*/ }, 'html' );
 		} );
 	
 	</script>

@@ -1,18 +1,24 @@
 /* Make clicks pass-through */
 #nprogress {
   pointer-events: none;
+  position: fixed;
+  left:0px;
+  top:0px;
+  z-index:100000;
 }
 
 #nprogress .bar {
-  background: #5d9cec;
+  background: #2f80e7;
 
   position: fixed;
-  z-index:100000;
-  top: 0;
+  top:55px;
   left: 0;
 
   width: 100%;
   height: 2px;
+  background-repeat:no-repeat;
+  background-position:0px 0px;
+  background-size:170px 35px !important;
 }
 
 /* Fancy blur effect */
@@ -22,7 +28,7 @@
   right: 0px;
   width: 100px;
   height: 100%;
-  box-shadow: 0 0 10px #5d9cec, 0 0 5px #5d9cec;
+  /*box-shadow: 0 0 10px #23b7e5, 0 0 5px #23b7e5;*/
   opacity: 1.0;
 
   -webkit-transform: rotate(3deg) translate(0px, -4px);
@@ -34,7 +40,6 @@
 #nprogress .spinner {
   display: block;
   position: fixed;
-  z-index:100000;
   top: 15px;
   right: 15px;
 }
@@ -62,3 +67,46 @@
   100% { transform: rotate(360deg); }
 }
 
+#NProgressStart {
+  pointer-events: none;
+  position: fixed;
+  left:0px;
+  top:0px;
+  width:100%;
+  height:100%;
+  background-color:#23b7e5;
+  z-index:100001;
+}
+
+#NProgressStart .bar {
+  position: fixed;
+  left:50%;
+  top:50%;
+  width:170px;
+  height:35px;
+  margin-left:-85px;
+  margin-top:-17px;
+}
+#NProgressStart .bar:before {
+  content:'';
+  position:absolute;
+  left:0px;
+  top:0px;
+  width:170px;
+  height:35px;
+  background-image:url(/static/img/logo.svg);
+  background-repeat:no-repeat;
+  background-position:0px 0px;
+  background-size:170px 35px !important;
+  opacity:0.3;
+}
+#NProgressStart .bar .peg {
+  position:absolute;
+  left:0px;
+  top:0px;
+  height:35px;
+  background-image:url(/static/img/logo.svg);
+  background-repeat:no-repeat;
+  background-position:0px 0px;
+  background-size:170px 35px !important;
+}

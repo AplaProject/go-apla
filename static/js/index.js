@@ -182,6 +182,7 @@ function preloader(elem) {
 function dl_navigate (page, parameters) {
     var json = JSON.stringify(parameters);
     //$('#loader').spin();
+	NProgress.set(1.0);
     $.post("content?controllerHTML="+page, { tpl_name: page, parameters: json },
         function(data) {
             //$("#loader").spin(false);
@@ -237,32 +238,32 @@ function login_ok (result) {
 
             $( "#dl_content" ).load( "content", { tpl_name: tpl_name}, function() {
 					$("#main-login").html('');
-					$("#loader").spin(false);
+					//$("#loader").spin(false);
             });
         }
         else if (get_key_and_sign=='sign') {
             console.log('get_key_and_sign=sign');
             doSign('sign');
             $("#main-login").html('');
-            $("#loader").spin(false);
+            //$("#loader").spin(false);
         }
         else if (get_key_and_sign=='send_to_net') {
             console.log('get_key_and_sign=send_to_net');
             doSign('sign');
             $("#send_to_net").trigger("click");
             $("#main-login").html('');
-            $("#loader").spin(false);
+            //$("#loader").spin(false);
         }
 		g_menuShow = true;
 		load_menu();
     }
     else if (result=='not_available') {
         $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#pool_is_full').val()+'</p></div>');
-        $("#loader").spin(false);
+        //$("#loader").spin(false);
     }
     else {
         $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
-        $("#loader").spin(false);
+        //$("#loader").spin(false);
     }
 }
 
@@ -292,7 +293,7 @@ function doSign_(type) {
 
     if (!GKey.Private) {
         $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
-        $("#loader").spin(false);
+        //$("#loader").spin(false);
         return false;
     }
     if (type=='sign') {
