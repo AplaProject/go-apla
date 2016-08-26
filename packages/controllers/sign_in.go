@@ -63,5 +63,5 @@ func (c *Controller) SignIn() (string, error) {
 		return ret, err
 	}
 	c.sess.Set("citizen_id", citizenId)
-	return `{"result":1}`, nil
+	return `{"result":1,"address": "`+address+`"}`, nil
 }

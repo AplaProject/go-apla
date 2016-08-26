@@ -5,13 +5,39 @@ var GKey = {
 		var pubKey = localStorage.getItem('PubKey');
 		if (pubKey)
 			this.Public = pubKey;
+		
 		if (pass && localStorage.getItem('EncKey')) {
 			this.decrypt(localStorage.getItem('EncKey'), pass)
 		}
+		if (localStorage.getItem('Address'))
+			this.Address = localStorage.getItem('Address');
+		if (localStorage.getItem('Accounts')) 
+			this.Accounts = JSON.parse(localStorage.getItem('Accounts'));
 	}, 
+	add: function(address) {
+		localStorage.setItem('Address', address);
+		GKey.Address = address;
+		var data = {
+			EncKey: localStorage.getItem('EncKey'),
+			Encrypt: localStorage.getItem('Encrypt'),
+			Public: GKey.Public,
+			Address: address
+		}
+		for (i=0; i<this.Accounts.length; i++) {
+			if ( this.Accounts[i].Address == address ) {
+				this.Accounts[i] = data;
+				break;
+			}
+		}
+		if (i>=this.Accounts.length) 
+			this.Accounts.push(data);	
+		localStorage.setItem('Accounts', JSON.stringify(this.Accounts));
+	},
 	clear: function() {
 //		localStorage.removeItem('PubKey');
 		localStorage.removeItem('EncKey');
+		localStorage.removeItem('Address');
+		this.Address = '';
 		deleteCookie('psw');
 	},
 	decrypt: function( encKey, pass ) {
@@ -54,9 +80,11 @@ var GKey = {
 	},
 	SignAlg: 'SHA256withECDSA',
 	Curve: 'secp256r1',
+	Accounts: [],
 	Password: '',
 	Private: '',
 	Public:  '',
+	Address: ''
 }
 
 GKey.init();
