@@ -1,6 +1,9 @@
 package parser
 
-import "github.com/DayLightProject/go-daylight/packages/utils"
+import (
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/consts"
+)
 
 
 func (p *Parser) FirstBlockInit() error {
@@ -26,7 +29,7 @@ func (p *Parser) FirstBlock() error {
 	}
 
 	myAddress := utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
-	err = p.ExecSql(`INSERT INTO dlt_wallets (wallet_id, address, host, addressVote, public_key_0, node_public_key) VALUES (?, [hex], ?, ?, [hex], [hex])`, 1, myAddress, p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"])
+	err = p.ExecSql(`INSERT INTO dlt_wallets (wallet_id, address, host, addressVote, public_key_0, node_public_key, amount) VALUES (?, [hex], ?, ?, [hex], [hex], ?)`, 1, myAddress, p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"], consts.FIRST_DLT)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

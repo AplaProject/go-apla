@@ -430,7 +430,7 @@ body {
 .content-wrapper {
   padding: 15px;
   width: 100%;
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  /*border-top: 1px solid rgba(0, 0, 0, 0.15);*/
   margin-top: -1px;
 }
 .content-wrapper > .unwrap {

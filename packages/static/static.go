@@ -49,6 +49,7 @@
 // static/company_smart_contracts.html
 // static/css/app.css
 // static/css/bootstrap.css
+// static/css/nprogress.css
 // static/css/style.css
 // static/css/theme-a.css
 // static/css/theme-b.css
@@ -105,9 +106,7 @@
 // static/img/bg9.jpg
 // static/img/dummy.png
 // static/img/lock-bg.jpg
-// static/img/logo-single.png
 // static/img/logo-single.svg
-// static/img/logo.png
 // static/img/logo.svg
 // static/img/mb-sample.jpg
 // static/img/mockup.png
@@ -172,6 +171,7 @@
 // static/js/jsbn.js
 // static/js/jsbn2.js
 // static/js/md5.js
+// static/js/nprogress.js
 // static/js/rsa.js
 // static/js/rsa2.js
 // static/js/rsapem-1.1.js
@@ -1307,6 +1307,24 @@ func staticCssBootstrapCss() (*asset, error) {
 	return a, err
 }
 
+// staticCssNprogressCss reads file data from disk. It returns an error on failure.
+func staticCssNprogressCss() (*asset, error) {
+	path := "static/css/nprogress.css"
+	name := "static/css/nprogress.css"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticCssStyleCss reads file data from disk. It returns an error on failure.
 func staticCssStyleCss() (*asset, error) {
 	path := "static/css/style.css"
@@ -2315,46 +2333,10 @@ func staticImgLockBgJpg() (*asset, error) {
 	return a, err
 }
 
-// staticImgLogoSinglePng reads file data from disk. It returns an error on failure.
-func staticImgLogoSinglePng() (*asset, error) {
-	path := "static/img/logo-single.png"
-	name := "static/img/logo-single.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticImgLogoSingleSvg reads file data from disk. It returns an error on failure.
 func staticImgLogoSingleSvg() (*asset, error) {
 	path := "static/img/logo-single.svg"
 	name := "static/img/logo-single.svg"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticImgLogoPng reads file data from disk. It returns an error on failure.
-func staticImgLogoPng() (*asset, error) {
-	path := "static/img/logo.png"
-	name := "static/img/logo.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3507,6 +3489,24 @@ func staticJsJsbn2Js() (*asset, error) {
 func staticJsMd5Js() (*asset, error) {
 	path := "static/js/md5.js"
 	name := "static/js/md5.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsNprogressJs reads file data from disk. It returns an error on failure.
+func staticJsNprogressJs() (*asset, error) {
+	path := "static/js/nprogress.js"
+	name := "static/js/nprogress.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7708,6 +7708,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/company_smart_contracts.html": staticCompany_smart_contractsHtml,
 	"static/css/app.css": staticCssAppCss,
 	"static/css/bootstrap.css": staticCssBootstrapCss,
+	"static/css/nprogress.css": staticCssNprogressCss,
 	"static/css/style.css": staticCssStyleCss,
 	"static/css/theme-a.css": staticCssThemeACss,
 	"static/css/theme-b.css": staticCssThemeBCss,
@@ -7764,9 +7765,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/bg9.jpg": staticImgBg9Jpg,
 	"static/img/dummy.png": staticImgDummyPng,
 	"static/img/lock-bg.jpg": staticImgLockBgJpg,
-	"static/img/logo-single.png": staticImgLogoSinglePng,
 	"static/img/logo-single.svg": staticImgLogoSingleSvg,
-	"static/img/logo.png": staticImgLogoPng,
 	"static/img/logo.svg": staticImgLogoSvg,
 	"static/img/mb-sample.jpg": staticImgMbSampleJpg,
 	"static/img/mockup.png": staticImgMockupPng,
@@ -7831,6 +7830,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/jsbn.js": staticJsJsbnJs,
 	"static/js/jsbn2.js": staticJsJsbn2Js,
 	"static/js/md5.js": staticJsMd5Js,
+	"static/js/nprogress.js": staticJsNprogressJs,
 	"static/js/rsa.js": staticJsRsaJs,
 	"static/js/rsa2.js": staticJsRsa2Js,
 	"static/js/rsapem-1.1.js": staticJsRsapem11Js,
@@ -8151,6 +8151,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"css": &bintree{nil, map[string]*bintree{
 			"app.css": &bintree{staticCssAppCss, map[string]*bintree{}},
 			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{}},
+			"nprogress.css": &bintree{staticCssNprogressCss, map[string]*bintree{}},
 			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
 			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{}},
 			"theme-b.css": &bintree{staticCssThemeBCss, map[string]*bintree{}},
@@ -8213,9 +8214,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{}},
 			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{}},
 			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{}},
-			"logo-single.png": &bintree{staticImgLogoSinglePng, map[string]*bintree{}},
 			"logo-single.svg": &bintree{staticImgLogoSingleSvg, map[string]*bintree{}},
-			"logo.png": &bintree{staticImgLogoPng, map[string]*bintree{}},
 			"logo.svg": &bintree{staticImgLogoSvg, map[string]*bintree{}},
 			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{}},
 			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
@@ -8292,6 +8291,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"jsbn.js": &bintree{staticJsJsbnJs, map[string]*bintree{}},
 			"jsbn2.js": &bintree{staticJsJsbn2Js, map[string]*bintree{}},
 			"md5.js": &bintree{staticJsMd5Js, map[string]*bintree{}},
+			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{}},
 			"rsa.js": &bintree{staticJsRsaJs, map[string]*bintree{}},
 			"rsa2.js": &bintree{staticJsRsa2Js, map[string]*bintree{}},
 			"rsapem-1.1.js": &bintree{staticJsRsapem11Js, map[string]*bintree{}},

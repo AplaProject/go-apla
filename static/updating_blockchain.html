@@ -301,7 +301,7 @@
 		$('#reloadBlockchain').html('<img src="/static/img/squares.gif" style="width:20px; margin:0px">');
 		$('#reloadBlockchain').prop('disabled', true);
 		$.get('ajax?controllerName=' + {{if .StandardInstall}}'ReloadDb'{{else}}'RestartDb'{{end}}, function (data) {
-			$('#loader').spin( false );
+			//$('#loader').spin( false );
 			window.location.href = "/";
 		});
 	});

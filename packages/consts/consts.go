@@ -3,11 +3,7 @@ package consts
 // текущая версия
 const VERSION = "0.1.1b3"
 
-// чтобы не выдавать одно и тоже голосование
-const ASSIGN_TIME = 86400
-
-const DAY = 3600 * 24
-const DAY2 = 3600 * 24 * 2
+const FIRST_DLT = 100000000
 
 // используется в confirmations
 const COUNT_CONFIRMED_NODES = 5
@@ -29,7 +25,7 @@ const BLOCKCHAIN_URL = "http://blockchain.daylight.world/blockchain"
 const MAX_TX_FORW = 0
 
 // тр-ия может блуждать по сети сутки и потом попасть в блок
-const MAX_TX_BACK = DAY
+const MAX_TX_BACK = 86400
 
 const MAX_BLOCK_SIZE = 64<<20
 

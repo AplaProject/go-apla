@@ -293,7 +293,6 @@ func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (
 
 }
 
-
 func (p *Parser) checkSenderMoney(amount, commission int64) (int64, error) {
 
 	// получим все списания (табла wallets_buffer), которые еще не попали в блок и стоят в очереди
