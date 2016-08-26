@@ -262,7 +262,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		w.Write(b.Bytes())
 		return
 	}
-	if len(pageName) > 0 && isPage(pageName) {
+	if len(pageName) > 0 && isPage(pageName, TPage) {
 		c.Data = &CommonPage{
 			Address: c.SessAddress,
 		}

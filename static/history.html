@@ -2,23 +2,23 @@
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_history").addClass("active");
 	
-	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
-
 	$('#anonym_history').dataTable({
-        'paging':   true,
-        'ordering': true,
-		"order": 	[[ 0, "desc" ]],
-        'info':     true,
-		"ajax": {
-            "url": "ajax?controllerName=AnonymHistory",
-            "dataSrc": ""
-        },
+        paging:   true,
+        ordering: false,
+		searching: false,
+//		"order": 	[[ 0, "desc" ]],
+        info:     true,
+		"processing": true,
+        "serverSide": true,
+		"ajax": "ajax?json=ajax_history",
         "columns": [
           { "data": 'block_id' },
           { "data": 'time' },
           { "data": 'amount' },
-          { "data": 'recipient_wallet_address' },
-          { "data": 'comment' }
+          { "data": 'sender_address' },
+          { "data": 'recipient_address' },
+          { "data": 'comment' },
+          { "data": 'confirm' }
         ],
 		columnDefs: [{
 			targets: 1,
@@ -28,12 +28,13 @@
 </script>
 
 <div class="content-heading">
-   Anonym
+   Transactions History
 </div>
 <ol class="breadcrumb">
    <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
    <li class="active">History</li>
 </ol>
+
 <!-- START panel-->
 <div class="panel panel-default">
  <div class="panel-body">
@@ -41,14 +42,17 @@
 	   <table id="anonym_history" class="table table-striped table-hover">
 		  <thead>
 			 <tr>
-				<th style="width:20%">Block ID</th>
-				<th style="width:25%">Time</th>
-				<th style="width:25%">Amount</th>
-				<th style="width:15%">Recipient</th>
-				<th style="width:15%">Comment</th>
+				<th>Block ID</th>
+				<th >Time</th>
+				<th >Amount</th>
+				<th >Sender</th>
+				<th >Recipient</th>
+				<th >Comment</th>
+				<th >Confirmations</th>
 			 </tr>
 		  </thead>
-		  <tbody></tbody>
+		  <tbody>
+		</tbody>
 	   </table>
 	</div>
  </div>

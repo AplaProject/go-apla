@@ -15,8 +15,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("ajax Recovered", r)
 		}
 	}()
-	qr := r.FormValue("qr")
-	if len(qr) > 0 {
+	if qr := r.FormValue("qr");len(qr) > 0 {
 		if utils.IsValidAddress(qr) {
 			png,_ := qrcode.Encode(qr, qrcode.Medium, 170)
 			w.Header().Set("Content-Type", "image/png")
@@ -24,10 +23,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		}
 		return		
 	}
-	
 	log.Debug("Ajax")
-	w.Header().Set("Content-type", "text/html")
-
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
 		log.Error("%v", err)
@@ -88,6 +84,15 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
+
+	if jsonName := r.FormValue(`json`); len(jsonName) > 0 && isPage(jsonName, TJson) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Write(CallJson(c, jsonName))
+		return
+	}
+
+	w.Header().Set("Content-type", "text/html")
+
 	controllerName := r.FormValue("controllerName")
 	log.Debug("controllerName=", controllerName)
 

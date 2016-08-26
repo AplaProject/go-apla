@@ -137,6 +137,19 @@ function logout() {
 	return false;
 }
 
+function load_page(page, parameters) {
+//    $('#loader').spin();
+    $.post("content?page="+page, parameters ? parameters : {},
+        function(data) {
+//            $("#loader").spin(false);
+			$(".sweet-overlay, .sweet-alert").remove();
+            $('#dl_content').html( data );
+            window.scrollTo(0,0);
+			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) 
+				$('.sidebar-collapse').collapse('toggle');
+    }, "html");
+}
+
 function Demo() {
 	var id = $("#demo");
 	var val = id.val();
