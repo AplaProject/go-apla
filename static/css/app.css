@@ -430,7 +430,7 @@ body {
 .content-wrapper {
   padding: 15px;
   width: 100%;
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  /*border-top: 1px solid rgba(0, 0, 0, 0.15);*/
   margin-top: -1px;
 }
 .content-wrapper > .unwrap {
@@ -1075,6 +1075,16 @@ _:-ms-lang(x),
 .topnavbar .navbar-header .brand-logo {
   display: block;
   padding: 10px 25px;
+}
+@media only screen and (max-width: 767px) {
+	.topnavbar .navbar-header .brand-logo > img,
+	.topnavbar .navbar-header .brand-logo-collapsed > img {
+	  height:35px;
+	  width:168px;
+	}
+	.topnavbar .navbar-header .brand-logo {
+	  padding: 10px 15px;
+	}
 }
 .topnavbar .navbar-header .brand-logo-collapsed {
   display: none;

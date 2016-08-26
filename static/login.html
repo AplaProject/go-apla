@@ -20,6 +20,15 @@
 		flex-flow:row nowrap;
 		justify-content:space-between;
 	}
+	.accounts {
+		text-align:left;
+		padding: 0em;
+		margin:0;
+	}
+	.accounts li {
+		margin-left: 20px;
+		padding:0;
+	}
 </style>
 
 <div class="start_type">
@@ -74,6 +83,21 @@
 		<h1 style="padding-bottom: 10px;">Login</h1>
 		<div id="extended_div" >
 			<form class="extended_form">
+				<fieldset class="form-group" id="field-list">
+					<label class="col-sm-3 control-label" for="list"></label>
+					<div class="col-sm-9">
+						<ul class="accounts" id="accounts">
+						</ul>
+					</div>
+				</fieldset>
+			
+				<fieldset class="form-group" id="field-address">
+					<label class="col-sm-3 control-label" for="address">Address</label>
+					<div class="col-sm-9">
+						<input id="address" class="form-control" type="text" disabled/>
+					</div>
+				</fieldset>
+
 				<fieldset class="form-group decpass">
 					<label class="col-sm-3 control-label" for="decpass">Password</label>
 					<div class="col-sm-9">
@@ -316,7 +340,9 @@ function do_sign() {
 			'sign': sign,
 			'key': key,
 		}, function (data) {
-			console.log("data.result: ", data.result);
+			if (data.address) {
+				GKey.add(data.address);
+			}
 			login_ok( data.result );
 		}, 'JSON'
 	);
@@ -325,6 +351,7 @@ function do_sign() {
 function login_form() {
 	$("#register_form").hide();
 	$("#login_form").show();
+	$("#address").val(GKey.Address ? GKey.Address : '');
 	return false;
 }
 
@@ -348,6 +375,8 @@ var encKey;
 var loginAttempts = 0;
 
 function do_login() {
+	// Check encKey
+	
 	var pass = $("#decpass").val();
 	if (GKey.decrypt(encKey, pass)) {
 		GKey.save();
@@ -365,14 +394,49 @@ function do_login() {
 	}
 }
 
+function sel_account(ind) {
+	var newAccount = GKey.Accounts[ind];
+	localStorage.setItem('EncKey', newAccount.EncKey);
+	localStorage.setItem('Encrypt', newAccount.Encrypt);
+	localStorage.setItem('PubKey', newAccount.Public);
+	localStorage.setItem('Address', newAccount.Address);
+	
+	GKey.Public = newAccount.Public;
+	encKey = newAccount.EncKey;
+	$("#address").val(newAccount.Address);
+	return false;
+}
+
+function load_accounts() {
+	var accounts = '';
+	for (i=0;i<GKey.Accounts.length;i++) {
+		accounts += '<li><a href="" onclick="return sel_account(' + i + ');">' + GKey.Accounts[i].Address + 
+		 '</a>&nbsp;&nbsp;&nbsp;<a class="atimes" href="" onclick="return del_account( this, ' + i + ');"><i class="fa fa-fw fa-times"></i></a></li>';
+	}
+	$("#accounts").html(accounts);
+}
+
+function del_account(obj, ind) {
+	$(obj).parent().remove();
+	GKey.Accounts.splice(ind, 1);
+	localStorage.setItem('Accounts', JSON.stringify(GKey.Accounts));
+	load_accounts();
+	if (!GKey.Accounts.length) {
+		import_form();
+	}
+	return false;
+}
+
+
 $(document).ready(function(){
 /*	if (pubkey) {
 		$("#address").html( 'Address: ' +  hex_sha1( pubkey ).toLowerCase());
 	}*/
 	do_phrase();
-	if (!GKey.Public) {
+	load_accounts();
+	if (!GKey.Public && !GKey.Accounts.length) {
 		register_form();
-	} else if (localStorage.getItem('EncKey')) {
+	} else if (localStorage.getItem('EncKey') || GKey.Accounts.length) {
 		login_form();
 	} else {
 		import_form();
