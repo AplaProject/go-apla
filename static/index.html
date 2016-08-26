@@ -39,8 +39,10 @@
    <!-- =============== BOOTSTRAP STYLES ===============-->
    <link rel="stylesheet" href="static/css/bootstrap.css" id="bscss">
    <!-- =============== APP STYLES ===============-->
+   <link rel="stylesheet" href="static/css/nprogress.css">
    <link rel="stylesheet" href="static/css/app.css" id="maincss">
    <link rel="stylesheet" href="static/css/style.css" id="stylecss">
+   
 
 	<script language="JavaScript" type="text/javascript" src="static/js/md5.js"></script>
 	<script language="JavaScript" type="text/javascript" src="static/js/jsbn.js"></script>
@@ -73,57 +75,7 @@
 	<script language="JavaScript" type="text/javascript" src="static/js/crypto/asn1-1.0.min.js"></script>
 	<script language="JavaScript" type="text/javascript" src="static/js/crypto/asn1hex-1.1.min.js"></script>
 	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ecdsa-modified-1.0.min.js"></script>
-
-	<style>
-		.btn-demo {
-			display:block;
-			width:164px;
-			padding-left:0px;
-			padding-right:0px;
-			margin-left:24px;
-		}
-		.aside-collapsed .btn-demo {
-			width:50px;
-			margin-left:6px;
-		}
-		.btn-demo em {
-			position:relative;
-			top:-1px;
-			display:inline-block;
-			font-style:normal;
-			padding-left:10px;
-		}
-		.aside-collapsed .btn-demo em {
-			display:none;
-		}
-		.btn-demo .fa {
-			font-size:1.5em;
-		}
-		.aside-collapsed .btn-demo .fa {
-			font-size:2em;
-		}
-	</style>
-</head>
-
-<body class="layout-fixed">
-   <div class="wrapper">
-      <!-- Main section-->
-	  <div id="dl_menu">
-	  </div>
-      <section>
-         <!-- Page content-->
-         <div id="dl_content" class="content-wrapper"></div>
-      </section>
-   </div>
-   <div id="dl_modal"></div>
-   <div id="loader"></div>
-   <div style="display: none;">
-		<div id="key">key</div>
-		<div id="password">password</div>
-		<img  id="image_key" alt="" />
-		<canvas  id="canvas_key"></canvas>
-	</div>
-
+	
    <!-- =============== VENDOR SCRIPTS ===============-->
    <!-- MODERNIZR-->
    <script src="static/vendor/modernizr/modernizr.custom.js"></script>
@@ -182,8 +134,59 @@
    <script src="static/vendor/sweetalert/dist/sweetalert.min.js"></script>
    <!-- Clipboard-->
    <script src="static/js/clipboard.js"></script>
-   
+   <script src="static/js/nprogress.js"></script>
    <script src="static/js/spin.js"></script>
+	
+	<style>
+		.btn-demo {
+			display:block;
+			width:164px;
+			padding-left:0px;
+			padding-right:0px;
+			margin-left:24px;
+		}
+		.aside-collapsed .btn-demo {
+			width:50px;
+			margin-left:6px;
+		}
+		.btn-demo em {
+			position:relative;
+			top:-1px;
+			display:inline-block;
+			font-style:normal;
+			padding-left:10px;
+		}
+		.aside-collapsed .btn-demo em {
+			display:none;
+		}
+		.btn-demo .fa {
+			font-size:1.5em;
+		}
+		.aside-collapsed .btn-demo .fa {
+			font-size:2em;
+		}
+	</style>
+</head>
+
+<body class="layout-fixed">
+   <div class="wrapper">
+      <!-- Main section-->
+	  <div id="dl_menu">
+	  </div>
+      <section>
+         <!-- Page content-->
+         <div id="dl_content" class="content-wrapper"></div>
+      </section>
+   </div>
+   <div id="dl_modal"></div>
+   <div id="loader"></div>
+   <div style="display: none;">
+		<div id="key">key</div>
+		<div id="password">password</div>
+		<img  id="image_key" alt="" />
+		<canvas  id="canvas_key"></canvas>
+	</div>
+
 	<script>
 		(function ($) {
 			$.fn.spin = function (opts, color) {
@@ -433,10 +436,13 @@
 
 			var json = JSON.stringify(parameters);
 
-			$('#loader').spin();
+			//$('#loader').spin();
+			NProgress.configure({ showSpinner: false });
+			//NProgress.start();
+			NProgress.set(1.0);
 			$.post("content?page="+page, { tpl_name: page, parameters: json },
 					function(data) {
-						$("#loader").spin(false);
+						//$("#loader").spin(false);
 						$(".sweet-overlay, .sweet-alert").remove();
 						//console.log('$("#loader").spin(false)');
 						$('#dl_content').html( data );
