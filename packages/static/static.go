@@ -3,7 +3,6 @@
 // static/1block
 // static/alert_success.html
 // static/anonym_citizen_status.html
-// static/anonym_history.html
 // static/anonym_money_transfer.html
 // static/backup.html
 // static/block_explorer.html
@@ -89,6 +88,7 @@
 // static/health_procedure.html
 // static/health_symptom.html
 // static/health_vital_signs.html
+// static/history.html
 // static/i18n/site-en.json
 // static/i18n/site-es.json
 // static/img/D_null.png
@@ -180,7 +180,6 @@
 // static/js/sha1.js
 // static/js/sha256.js
 // static/js/spin.js
-// static/js/unixtime.js
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
@@ -465,24 +464,6 @@ func staticAlert_successHtml() (*asset, error) {
 func staticAnonym_citizen_statusHtml() (*asset, error) {
 	path := "static/anonym_citizen_status.html"
 	name := "static/anonym_citizen_status.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticAnonym_historyHtml reads file data from disk. It returns an error on failure.
-func staticAnonym_historyHtml() (*asset, error) {
-	path := "static/anonym_history.html"
-	name := "static/anonym_history.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2013,6 +1994,24 @@ func staticHealth_symptomHtml() (*asset, error) {
 func staticHealth_vital_signsHtml() (*asset, error) {
 	path := "static/health_vital_signs.html"
 	name := "static/health_vital_signs.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticHistoryHtml reads file data from disk. It returns an error on failure.
+func staticHistoryHtml() (*asset, error) {
+	path := "static/history.html"
+	name := "static/history.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3651,24 +3650,6 @@ func staticJsSha256Js() (*asset, error) {
 func staticJsSpinJs() (*asset, error) {
 	path := "static/js/spin.js"
 	name := "static/js/spin.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsUnixtimeJs reads file data from disk. It returns an error on failure.
-func staticJsUnixtimeJs() (*asset, error) {
-	path := "static/js/unixtime.js"
-	name := "static/js/unixtime.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7662,7 +7643,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/1block": static1block,
 	"static/alert_success.html": staticAlert_successHtml,
 	"static/anonym_citizen_status.html": staticAnonym_citizen_statusHtml,
-	"static/anonym_history.html": staticAnonym_historyHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
 	"static/backup.html": staticBackupHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
@@ -7748,6 +7728,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/health_procedure.html": staticHealth_procedureHtml,
 	"static/health_symptom.html": staticHealth_symptomHtml,
 	"static/health_vital_signs.html": staticHealth_vital_signsHtml,
+	"static/history.html": staticHistoryHtml,
 	"static/i18n/site-en.json": staticI18nSiteEnJson,
 	"static/i18n/site-es.json": staticI18nSiteEsJson,
 	"static/img/D_null.png": staticImgD_nullPng,
@@ -7839,7 +7820,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/sha1.js": staticJsSha1Js,
 	"static/js/sha256.js": staticJsSha256Js,
 	"static/js/spin.js": staticJsSpinJs,
-	"static/js/unixtime.js": staticJsUnixtimeJs,
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
@@ -8104,7 +8084,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"1block": &bintree{static1block, map[string]*bintree{}},
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
 		"anonym_citizen_status.html": &bintree{staticAnonym_citizen_statusHtml, map[string]*bintree{}},
-		"anonym_history.html": &bintree{staticAnonym_historyHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
 		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
@@ -8194,6 +8173,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"health_procedure.html": &bintree{staticHealth_procedureHtml, map[string]*bintree{}},
 		"health_symptom.html": &bintree{staticHealth_symptomHtml, map[string]*bintree{}},
 		"health_vital_signs.html": &bintree{staticHealth_vital_signsHtml, map[string]*bintree{}},
+		"history.html": &bintree{staticHistoryHtml, map[string]*bintree{}},
 		"i18n": &bintree{nil, map[string]*bintree{
 			"site-en.json": &bintree{staticI18nSiteEnJson, map[string]*bintree{}},
 			"site-es.json": &bintree{staticI18nSiteEsJson, map[string]*bintree{}},
@@ -8300,7 +8280,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"sha1.js": &bintree{staticJsSha1Js, map[string]*bintree{}},
 			"sha256.js": &bintree{staticJsSha256Js, map[string]*bintree{}},
 			"spin.js": &bintree{staticJsSpinJs, map[string]*bintree{}},
-			"unixtime.js": &bintree{staticJsUnixtimeJs, map[string]*bintree{}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
 			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
