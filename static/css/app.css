@@ -8147,3 +8147,22 @@ fieldset[disabled] .flatdoc-wrapper .button.focus {
 	position:relative;
 	min-height:250px;
 }
+.available_balance {
+	border-radius:0px;
+	margin:-20px;
+	margin-bottom:20px;
+}
+.available_balance .ico {
+	width:105px !important;
+}
+.available_balance .text {
+	width:auto !important;
+}
+.available_balance .row-table {
+	display:block;
+}
+@media only screen and (max-width: 767px) {
+	.available_balance {
+		margin-top:-20px;
+	}
+}
