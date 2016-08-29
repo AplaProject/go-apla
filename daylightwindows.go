@@ -31,10 +31,10 @@ func winVer() int {
 func tray() {
 	go func() {
 		// Be sure to call this to link the tray icon to the target url
-		trayhost.SetUrl("http://localhost:8089")
+		trayhost.SetUrl("http://localhost:7079")
 	}()
 }
 
 func enterLoop() {
-	trayhost.EnterLoop("Dcoin", iconData)
+	trayhost.EnterLoop("DayLight", iconData)
 }

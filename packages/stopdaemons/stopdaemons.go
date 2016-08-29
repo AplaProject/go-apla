@@ -44,12 +44,12 @@ func WaitStopTime() {
 				log.Error(utils.ErrInfo(err).Error())
 			}
 			fmt.Println("DB Closed")
-			err = os.Remove(*utils.Dir + "/dcoin.pid")
+			err = os.Remove(*utils.Dir + "/daylight.pid")
 			if err != nil {
 				log.Error(utils.ErrInfo(err).Error())
 				panic(err)
 			}
-			fmt.Println("removed " + *utils.Dir + "/dcoin.pid")
+			fmt.Println("removed " + *utils.Dir + "/daylight.pid")
 			system.FinishThrust(1)
 		}
 		utils.Sleep(1)

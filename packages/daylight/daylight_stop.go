@@ -11,7 +11,7 @@ func Stop() {
 	IosLog("Stop()")
 	var err error
 	utils.DB, err = utils.NewDbConnect(configIni)
-	log.Debug("DCOIN Stop : %v", utils.DB)
+	log.Debug("DayLight Stop : %v", utils.DB)
 	IosLog("utils.DB:" + fmt.Sprintf("%v", utils.DB))
 	if err != nil {
 		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
@@ -24,6 +24,6 @@ func Stop() {
 		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 		log.Error("%v", utils.ErrInfo(err))
 	}
-	log.Debug("DCOIN Stop")
-	IosLog("DCOIN Stop")
+	log.Debug("DayLight Stop")
+	IosLog("DayLight Stop")
 }
