@@ -82,9 +82,9 @@ var (
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
 	OldVersion = flag.String("oldVersion", "", "")
 	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
-	Dir = flag.String("dir", GetCurrentDir(), "Dcoin directory")
+	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
 	OldFileName = flag.String("oldFileName", "", "")
-	LogLevel = flag.String("logLevel", "", "Dcoin LogLevel")
+	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
 	Console = flag.Int64("console", 0, "Start from console")
 	SqliteDbUrl string
 	StartBlockId = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")

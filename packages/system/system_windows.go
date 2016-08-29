@@ -25,8 +25,8 @@ void kill_childproc( DWORD myprocID) {
 	
 	    while (bContinue)
 	    {
-	        if (pe.th32ParentProcessID == myprocID && memcmp( pe.szExeFile, "tmp_dcoin", 9 ) != 0 &&
-				memcmp(pe.szExeFile, "dcoin", 5) != 0)
+	        if (pe.th32ParentProcessID == myprocID && memcmp( pe.szExeFile, "tmp_daylight", 9 ) != 0 &&
+				memcmp(pe.szExeFile, "daylight", 5) != 0)
 	        {
 	            HANDLE hChildProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe.th32ProcessID);
 	
@@ -44,7 +44,7 @@ void kill_childproc( DWORD myprocID) {
 */
 import "C"
 
-// lstrcmp( pe.szExeFile, TEXT("tmp_dcoin.exe")) != 0 && lstrcmp( pe.szExeFile, TEXT("dcoin.exe")) != 0
+// lstrcmp( pe.szExeFile, TEXT("tmp_daylight.exe")) != 0 && lstrcmp( pe.szExeFile, TEXT("daylight.exe")) != 0
 				
 func killChildProc() {
 	C.kill_childproc( C.DWORD(os.Getpid()))

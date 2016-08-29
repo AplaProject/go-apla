@@ -59,7 +59,7 @@ func main() {
 	if idUser == 0 {
 		introWindow := thrust.NewWindow(thrust.WindowOptions{
 			RootUrl: `http://localhost:8990`,
-			Title : "Dcoin Lite",
+			Title : "DayLight Lite",
 			Size:    commands.SizeHW{Width: 1024, Height: 600},
 		})
 		introWindow.HandleRemote(func(er commands.EventResult, this *window.Window) {
@@ -111,7 +111,7 @@ func main() {
 	fmt.Println( pool.Pool )
 
 	thrustWindow = thrust.NewWindow(thrust.WindowOptions{
-		Title : "Dcoin Lite",
+		Title : "DayLight Lite",
 		RootUrl: pool.Pool,
 		Size:    commands.SizeHW{Width: 1024, Height: 600},
 	})

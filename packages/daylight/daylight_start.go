@@ -73,11 +73,11 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		configIni, err = configIni_.GetSection("default")
 	}
 
-	// убьем ранее запущенный Dcoin
+	// убьем ранее запущенный daylight
 	if !utils.Mobile() {
-		fmt.Println("kill dcoin.pid")
-		if _, err := os.Stat(*utils.Dir + "/dcoin.pid"); err == nil {
-			dat, err := ioutil.ReadFile(*utils.Dir + "/dcoin.pid")
+		fmt.Println("kill daylight.pid")
+		if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
+			dat, err := ioutil.ReadFile(*utils.Dir + "/daylight.pid")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -86,7 +86,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
-			fmt.Println("old PID ("+*utils.Dir+"/dcoin.pid"+"):", pidMap["pid"])
+			fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
 
 			utils.DB, err = utils.NewDbConnect(configIni)
 
@@ -100,10 +100,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				// даем 15 сек, чтобы завершиться предыдущему процессу
 				for i := 0; i < 15; i++ {
 					log.Debug("waiting killer %d", i)
-					if _, err := os.Stat(*utils.Dir + "/dcoin.pid"); err == nil {
+					if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
 						fmt.Println("waiting killer")
 						utils.Sleep(1)
-					} else { // если dcoin.pid нет, значит завершился
+					} else { // если daylight.pid нет, значит завершился
 						break
 					}
 				}
@@ -192,7 +192,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
-			err = os.Remove(filepath.Join(*utils.Dir, "dcoin.pid"))
+			err = os.Remove(filepath.Join(*utils.Dir, "daylight.pid"))
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -217,7 +217,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		err = ioutil.WriteFile(*utils.Dir+"/dcoin.pid", PidAndVer, 0644)
+		err = ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			panic(err)
