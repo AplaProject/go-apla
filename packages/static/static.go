@@ -48,6 +48,7 @@
 // static/company_smart_contracts.html
 // static/css/app.css
 // static/css/bootstrap.css
+// static/css/icons.css
 // static/css/nprogress.css
 // static/css/style.css
 // static/css/theme-a.css
@@ -68,6 +69,26 @@
 // static/data/immunizations.json
 // static/data/medication.json
 // static/data/patients.json
+// static/fonts/glyphicons-filetypes-regular.eot
+// static/fonts/glyphicons-filetypes-regular.svg
+// static/fonts/glyphicons-filetypes-regular.ttf
+// static/fonts/glyphicons-filetypes-regular.woff
+// static/fonts/glyphicons-filetypes-regular.woff2
+// static/fonts/glyphicons-halflings-regular.eot
+// static/fonts/glyphicons-halflings-regular.svg
+// static/fonts/glyphicons-halflings-regular.ttf
+// static/fonts/glyphicons-halflings-regular.woff
+// static/fonts/glyphicons-halflings-regular.woff2
+// static/fonts/glyphicons-regular.eot
+// static/fonts/glyphicons-regular.svg
+// static/fonts/glyphicons-regular.ttf
+// static/fonts/glyphicons-regular.woff
+// static/fonts/glyphicons-regular.woff2
+// static/fonts/glyphicons-social-regular.eot
+// static/fonts/glyphicons-social-regular.svg
+// static/fonts/glyphicons-social-regular.ttf
+// static/fonts/glyphicons-social-regular.woff
+// static/fonts/glyphicons-social-regular.woff2
 // static/gov_birth_statement.html
 // static/gov_citizens.html
 // static/gov_create_budget.html
@@ -1289,6 +1310,24 @@ func staticCssBootstrapCss() (*asset, error) {
 	return a, err
 }
 
+// staticCssIconsCss reads file data from disk. It returns an error on failure.
+func staticCssIconsCss() (*asset, error) {
+	path := "static/css/icons.css"
+	name := "static/css/icons.css"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticCssNprogressCss reads file data from disk. It returns an error on failure.
 func staticCssNprogressCss() (*asset, error) {
 	path := "static/css/nprogress.css"
@@ -1635,6 +1674,366 @@ func staticDataMedicationJson() (*asset, error) {
 func staticDataPatientsJson() (*asset, error) {
 	path := "static/data/patients.json"
 	name := "static/data/patients.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsFiletypesRegularEot reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsFiletypesRegularEot() (*asset, error) {
+	path := "static/fonts/glyphicons-filetypes-regular.eot"
+	name := "static/fonts/glyphicons-filetypes-regular.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsFiletypesRegularSvg reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsFiletypesRegularSvg() (*asset, error) {
+	path := "static/fonts/glyphicons-filetypes-regular.svg"
+	name := "static/fonts/glyphicons-filetypes-regular.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsFiletypesRegularTtf reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsFiletypesRegularTtf() (*asset, error) {
+	path := "static/fonts/glyphicons-filetypes-regular.ttf"
+	name := "static/fonts/glyphicons-filetypes-regular.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsFiletypesRegularWoff reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsFiletypesRegularWoff() (*asset, error) {
+	path := "static/fonts/glyphicons-filetypes-regular.woff"
+	name := "static/fonts/glyphicons-filetypes-regular.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsFiletypesRegularWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsFiletypesRegularWoff2() (*asset, error) {
+	path := "static/fonts/glyphicons-filetypes-regular.woff2"
+	name := "static/fonts/glyphicons-filetypes-regular.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsHalflingsRegularEot reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsHalflingsRegularEot() (*asset, error) {
+	path := "static/fonts/glyphicons-halflings-regular.eot"
+	name := "static/fonts/glyphicons-halflings-regular.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsHalflingsRegularSvg reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsHalflingsRegularSvg() (*asset, error) {
+	path := "static/fonts/glyphicons-halflings-regular.svg"
+	name := "static/fonts/glyphicons-halflings-regular.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsHalflingsRegularTtf reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsHalflingsRegularTtf() (*asset, error) {
+	path := "static/fonts/glyphicons-halflings-regular.ttf"
+	name := "static/fonts/glyphicons-halflings-regular.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsHalflingsRegularWoff reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsHalflingsRegularWoff() (*asset, error) {
+	path := "static/fonts/glyphicons-halflings-regular.woff"
+	name := "static/fonts/glyphicons-halflings-regular.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsHalflingsRegularWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsHalflingsRegularWoff2() (*asset, error) {
+	path := "static/fonts/glyphicons-halflings-regular.woff2"
+	name := "static/fonts/glyphicons-halflings-regular.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsRegularEot reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsRegularEot() (*asset, error) {
+	path := "static/fonts/glyphicons-regular.eot"
+	name := "static/fonts/glyphicons-regular.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsRegularSvg reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsRegularSvg() (*asset, error) {
+	path := "static/fonts/glyphicons-regular.svg"
+	name := "static/fonts/glyphicons-regular.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsRegularTtf reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsRegularTtf() (*asset, error) {
+	path := "static/fonts/glyphicons-regular.ttf"
+	name := "static/fonts/glyphicons-regular.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsRegularWoff reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsRegularWoff() (*asset, error) {
+	path := "static/fonts/glyphicons-regular.woff"
+	name := "static/fonts/glyphicons-regular.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsRegularWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsRegularWoff2() (*asset, error) {
+	path := "static/fonts/glyphicons-regular.woff2"
+	name := "static/fonts/glyphicons-regular.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsSocialRegularEot reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsSocialRegularEot() (*asset, error) {
+	path := "static/fonts/glyphicons-social-regular.eot"
+	name := "static/fonts/glyphicons-social-regular.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsSocialRegularSvg reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsSocialRegularSvg() (*asset, error) {
+	path := "static/fonts/glyphicons-social-regular.svg"
+	name := "static/fonts/glyphicons-social-regular.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsSocialRegularTtf reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsSocialRegularTtf() (*asset, error) {
+	path := "static/fonts/glyphicons-social-regular.ttf"
+	name := "static/fonts/glyphicons-social-regular.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsSocialRegularWoff reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsSocialRegularWoff() (*asset, error) {
+	path := "static/fonts/glyphicons-social-regular.woff"
+	name := "static/fonts/glyphicons-social-regular.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsGlyphiconsSocialRegularWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsGlyphiconsSocialRegularWoff2() (*asset, error) {
+	path := "static/fonts/glyphicons-social-regular.woff2"
+	name := "static/fonts/glyphicons-social-regular.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7707,6 +8106,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/company_smart_contracts.html": staticCompany_smart_contractsHtml,
 	"static/css/app.css": staticCssAppCss,
 	"static/css/bootstrap.css": staticCssBootstrapCss,
+	"static/css/icons.css": staticCssIconsCss,
 	"static/css/nprogress.css": staticCssNprogressCss,
 	"static/css/style.css": staticCssStyleCss,
 	"static/css/theme-a.css": staticCssThemeACss,
@@ -7727,6 +8127,26 @@ var _bindata = map[string]func() (*asset, error){
 	"static/data/immunizations.json": staticDataImmunizationsJson,
 	"static/data/medication.json": staticDataMedicationJson,
 	"static/data/patients.json": staticDataPatientsJson,
+	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
+	"static/fonts/glyphicons-filetypes-regular.svg": staticFontsGlyphiconsFiletypesRegularSvg,
+	"static/fonts/glyphicons-filetypes-regular.ttf": staticFontsGlyphiconsFiletypesRegularTtf,
+	"static/fonts/glyphicons-filetypes-regular.woff": staticFontsGlyphiconsFiletypesRegularWoff,
+	"static/fonts/glyphicons-filetypes-regular.woff2": staticFontsGlyphiconsFiletypesRegularWoff2,
+	"static/fonts/glyphicons-halflings-regular.eot": staticFontsGlyphiconsHalflingsRegularEot,
+	"static/fonts/glyphicons-halflings-regular.svg": staticFontsGlyphiconsHalflingsRegularSvg,
+	"static/fonts/glyphicons-halflings-regular.ttf": staticFontsGlyphiconsHalflingsRegularTtf,
+	"static/fonts/glyphicons-halflings-regular.woff": staticFontsGlyphiconsHalflingsRegularWoff,
+	"static/fonts/glyphicons-halflings-regular.woff2": staticFontsGlyphiconsHalflingsRegularWoff2,
+	"static/fonts/glyphicons-regular.eot": staticFontsGlyphiconsRegularEot,
+	"static/fonts/glyphicons-regular.svg": staticFontsGlyphiconsRegularSvg,
+	"static/fonts/glyphicons-regular.ttf": staticFontsGlyphiconsRegularTtf,
+	"static/fonts/glyphicons-regular.woff": staticFontsGlyphiconsRegularWoff,
+	"static/fonts/glyphicons-regular.woff2": staticFontsGlyphiconsRegularWoff2,
+	"static/fonts/glyphicons-social-regular.eot": staticFontsGlyphiconsSocialRegularEot,
+	"static/fonts/glyphicons-social-regular.svg": staticFontsGlyphiconsSocialRegularSvg,
+	"static/fonts/glyphicons-social-regular.ttf": staticFontsGlyphiconsSocialRegularTtf,
+	"static/fonts/glyphicons-social-regular.woff": staticFontsGlyphiconsSocialRegularWoff,
+	"static/fonts/glyphicons-social-regular.woff2": staticFontsGlyphiconsSocialRegularWoff2,
 	"static/gov_birth_statement.html": staticGov_birth_statementHtml,
 	"static/gov_citizens.html": staticGov_citizensHtml,
 	"static/gov_create_budget.html": staticGov_create_budgetHtml,
@@ -8150,6 +8570,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"css": &bintree{nil, map[string]*bintree{
 			"app.css": &bintree{staticCssAppCss, map[string]*bintree{}},
 			"bootstrap.css": &bintree{staticCssBootstrapCss, map[string]*bintree{}},
+			"icons.css": &bintree{staticCssIconsCss, map[string]*bintree{}},
 			"nprogress.css": &bintree{staticCssNprogressCss, map[string]*bintree{}},
 			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
 			"theme-a.css": &bintree{staticCssThemeACss, map[string]*bintree{}},
@@ -8172,6 +8593,28 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"immunizations.json": &bintree{staticDataImmunizationsJson, map[string]*bintree{}},
 			"medication.json": &bintree{staticDataMedicationJson, map[string]*bintree{}},
 			"patients.json": &bintree{staticDataPatientsJson, map[string]*bintree{}},
+		}},
+		"fonts": &bintree{nil, map[string]*bintree{
+			"glyphicons-filetypes-regular.eot": &bintree{staticFontsGlyphiconsFiletypesRegularEot, map[string]*bintree{}},
+			"glyphicons-filetypes-regular.svg": &bintree{staticFontsGlyphiconsFiletypesRegularSvg, map[string]*bintree{}},
+			"glyphicons-filetypes-regular.ttf": &bintree{staticFontsGlyphiconsFiletypesRegularTtf, map[string]*bintree{}},
+			"glyphicons-filetypes-regular.woff": &bintree{staticFontsGlyphiconsFiletypesRegularWoff, map[string]*bintree{}},
+			"glyphicons-filetypes-regular.woff2": &bintree{staticFontsGlyphiconsFiletypesRegularWoff2, map[string]*bintree{}},
+			"glyphicons-halflings-regular.eot": &bintree{staticFontsGlyphiconsHalflingsRegularEot, map[string]*bintree{}},
+			"glyphicons-halflings-regular.svg": &bintree{staticFontsGlyphiconsHalflingsRegularSvg, map[string]*bintree{}},
+			"glyphicons-halflings-regular.ttf": &bintree{staticFontsGlyphiconsHalflingsRegularTtf, map[string]*bintree{}},
+			"glyphicons-halflings-regular.woff": &bintree{staticFontsGlyphiconsHalflingsRegularWoff, map[string]*bintree{}},
+			"glyphicons-halflings-regular.woff2": &bintree{staticFontsGlyphiconsHalflingsRegularWoff2, map[string]*bintree{}},
+			"glyphicons-regular.eot": &bintree{staticFontsGlyphiconsRegularEot, map[string]*bintree{}},
+			"glyphicons-regular.svg": &bintree{staticFontsGlyphiconsRegularSvg, map[string]*bintree{}},
+			"glyphicons-regular.ttf": &bintree{staticFontsGlyphiconsRegularTtf, map[string]*bintree{}},
+			"glyphicons-regular.woff": &bintree{staticFontsGlyphiconsRegularWoff, map[string]*bintree{}},
+			"glyphicons-regular.woff2": &bintree{staticFontsGlyphiconsRegularWoff2, map[string]*bintree{}},
+			"glyphicons-social-regular.eot": &bintree{staticFontsGlyphiconsSocialRegularEot, map[string]*bintree{}},
+			"glyphicons-social-regular.svg": &bintree{staticFontsGlyphiconsSocialRegularSvg, map[string]*bintree{}},
+			"glyphicons-social-regular.ttf": &bintree{staticFontsGlyphiconsSocialRegularTtf, map[string]*bintree{}},
+			"glyphicons-social-regular.woff": &bintree{staticFontsGlyphiconsSocialRegularWoff, map[string]*bintree{}},
+			"glyphicons-social-regular.woff2": &bintree{staticFontsGlyphiconsSocialRegularWoff2, map[string]*bintree{}},
 		}},
 		"gov_birth_statement.html": &bintree{staticGov_birth_statementHtml, map[string]*bintree{}},
 		"gov_citizens.html": &bintree{staticGov_citizensHtml, map[string]*bintree{}},
