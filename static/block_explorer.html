@@ -153,6 +153,26 @@
     		}
 		})
 	});
+{{else}}	
+	var latestBlock = {{.Latest}};
+	var  latestTime;
+	
+	function block_reload() {
+		$.post("content?page=block_explorer", {latest: latestBlock},
+        function(data) {
+			if ($("#tab2").css('display') == 'none') {
+				return;
+			}
+			if (data) {
+				clearTimeout(latestTime);
+	            $('#tab2').html( data );
+			} else
+				latestTime = setTimeout( block_reload, 2000 );
+    	}, "html");
+//		$("#dl_content").load( "content?page=blockExplorer", { latest: latestBlock }, function() {
+	}
+	
+	latestTime = setTimeout( block_reload, 2000 );
 {{end}}	
 	$(document).ready( unixtime );
 </script>
