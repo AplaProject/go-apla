@@ -105,6 +105,7 @@
 // static/img/bg8.jpg
 // static/img/bg9.jpg
 // static/img/dummy.png
+// static/img/favicon.ico
 // static/img/lock-bg.jpg
 // static/img/logo-single.svg
 // static/img/logo.svg
@@ -2300,6 +2301,24 @@ func staticImgBg9Jpg() (*asset, error) {
 func staticImgDummyPng() (*asset, error) {
 	path := "static/img/dummy.png"
 	name := "static/img/dummy.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgFaviconIco reads file data from disk. It returns an error on failure.
+func staticImgFaviconIco() (*asset, error) {
+	path := "static/img/favicon.ico"
+	name := "static/img/favicon.ico"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7745,6 +7764,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/bg8.jpg": staticImgBg8Jpg,
 	"static/img/bg9.jpg": staticImgBg9Jpg,
 	"static/img/dummy.png": staticImgDummyPng,
+	"static/img/favicon.ico": staticImgFaviconIco,
 	"static/img/lock-bg.jpg": staticImgLockBgJpg,
 	"static/img/logo-single.svg": staticImgLogoSingleSvg,
 	"static/img/logo.svg": staticImgLogoSvg,
@@ -8193,6 +8213,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{}},
 			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{}},
 			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{}},
+			"favicon.ico": &bintree{staticImgFaviconIco, map[string]*bintree{}},
 			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{}},
 			"logo-single.svg": &bintree{staticImgLogoSingleSvg, map[string]*bintree{}},
 			"logo.svg": &bintree{staticImgLogoSvg, map[string]*bintree{}},
