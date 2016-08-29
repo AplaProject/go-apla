@@ -10,6 +10,7 @@ const NBlockExplorer = `block_explorer`
 type blockExplorerPage struct {
 	Data       *CommonPage
 	List       []map[string]string
+	Latest     int64
 	BlockId    int64
 	BlockData  map[string]string
 }
@@ -52,7 +53,14 @@ func (c *Controller) BlockExplorer() (string, error) {
 		}
 		pageData.BlockData = blockInfo	
 	} else {
-		blockExplorer,err := c.GetAll("SELECT hash, cb_id, wallet_id, time, tx, id FROM block_chain order by id desc limit 0, 30",-1)
+		latest := utils.StrToInt64( c.r.FormValue("latest"))
+		if latest > 0 {
+			curid,_ := c.Single("select max(id) from block_chain").Int64()
+			if curid <= latest {
+				return ``, nil
+			}
+		}	
+		blockExplorer,err := c.GetAll("SELECT hash, cb_id, wallet_id, time, tx, id FROM block_chain order by id desc limit 0, 30", -1 )
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -60,6 +68,9 @@ func (c *Controller) BlockExplorer() (string, error) {
 			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
 		}
 		pageData.List = blockExplorer
+		if blockExplorer != nil && len(blockExplorer) > 0 {
+			pageData.Latest = utils.StrToInt64(blockExplorer[0][`id`])
+		}
 	}
 	return proceedTemplate( c, NBlockExplorer, &pageData )
 }
