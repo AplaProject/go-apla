@@ -103,7 +103,7 @@
 {{else}}
 	   <!-- START table responsive-->
 	   <div class="table-responsive">
-		   <table class="table table-striped table-bordered table-hover">
+		   <table id="block_explorer" class="table table-striped table-bordered table-hover">
 			  <thead>
 				 <tr>
 					<th>Block ID</th>
@@ -131,6 +131,15 @@
 	   <!-- END table responsive-->
 {{end}}
 <script type="text/javascript">
+	function addRow(n) {
+		var id = $("#block_explorer tbody");
+		var el = '<tr class="addRow"><td><a href="#">123</a></td><td>43b19de006038337df61209a0226a531018cbbea4ff3c54a8e452db60ae54468</td><td class="unixtime">30.08.2016, 16:02:45</td><td>0</td><td>0</td><td>["4"]</td></tr>';
+				 
+		for (var i = 1; i <= n; i++) {
+			id.prepend(el);
+		}
+	}
+
 	function block_detail( id ) {
 	    $("#dl_content").load( "content?page=blockExplorer", { blockId: id }, function() {});
 		return false

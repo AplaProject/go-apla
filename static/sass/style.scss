@@ -230,7 +230,19 @@ $desktop: 1516px;
 		}
 	}
 }
-
+.addRow {
+	opacity:1;
+	animation-play-state:running;
+	animation:show 0.3s;
+}
+@keyframes show {
+	from {
+		opacity:0;
+	}
+	to {
+		opacity:1;
+	}
+}
 
 
 

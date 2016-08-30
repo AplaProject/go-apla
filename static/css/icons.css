@@ -27,6 +27,7 @@
 }
 .glyphicons.x3:before {
     //padding: 16px 20px;
+	padding-left:5px;
 }
 .glyphicons.x4 {
     font-size: 96px;
