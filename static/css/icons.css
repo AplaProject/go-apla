@@ -17,16 +17,16 @@
     font-size: 12px;
 }
 .glyphicons.x2 {
-    font-size: 48px;
+    font-size: 56px;
 }
 .glyphicons.x2:before {
-    padding: 8px 12px;
+    //padding: 8px 12px;
 }
 .glyphicons.x3 {
     font-size: 72px;
 }
 .glyphicons.x3:before {
-    padding: 16px 20px;
+    //padding: 16px 20px;
 }
 .glyphicons.x4 {
     font-size: 96px;
