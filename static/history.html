@@ -52,15 +52,15 @@
 		dataType: 'json',
 		crossDomain: true,
 		success: function(data) {
-			if (!data.length) {
+			if (!data.recordsTotal) {
 				$('#nodata').show();
 			} else {
 				$('#history').show().dataTable({
-					paging:   false,
+					paging:   true,
 					ordering: false,
 					searching: false,
 					order: 	[[ 0, "desc" ]],
-					info:     false,
+					info:     true,
 					"processing": true,
 					"serverSide": true,
 					"ajax": "ajax?json=ajax_history",

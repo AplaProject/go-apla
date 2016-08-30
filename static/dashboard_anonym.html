@@ -59,7 +59,7 @@
 		dataType: 'json',
 		crossDomain: true,
 		success: function(data) {
-			if (!data.length) {
+			if (!data.recordsTotal) {
 				$('#nodata').show();
 			} else {
 				$('#history').show().dataTable({
