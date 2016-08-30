@@ -70,7 +70,7 @@
 		   <label>Amount <strong class="text-danger">*</strong></label>
 		   <input type="text" placeholder="Enter Amount" class="form-control" id="amount">
 		   <ul class="parsley-errors-list">
-		       <li class="parsley-required">Amount should be from 0.01 to 1000</li>
+		       <li class="parsley-required">Amount should be from 0.00001 to 100000000</li>
 		   </ul>
 	   </div>
 	   <div class="form-group">
@@ -128,15 +128,15 @@ $("#anonymMoneyTransfer").on('input', function () {
 	
 	amount.val(newstr);
 	
-	if (!amount.val() || parseFloat(amount.val()) < 0.01 || parseFloat(amount.val()) > 1000) {
+	if (!amount.val() || parseFloat(amount.val()) < 0.00001 || parseFloat(amount.val()) > 100000000) {
 		amount.addClass("parsley-error");
 		amount.next(".parsley-errors-list").addClass("filled");
 	} else {
 		var val = Number(amount.val());
-		var decimal = Number(floorFigure(val, 2));
+		var decimal = Number(floorFigure(val, 5));
 		var str = getDecimal(val).toString();
 		
-		if (str.length > 4) {
+		if (str.length > 7) {
 			amount.val(decimal);
 			return false;
 		}
