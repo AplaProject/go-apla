@@ -326,7 +326,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
 		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
 		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
-
+		if len(*utils.Tls) > 0 {
+			http.Handle(HandleHttpHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))			
+		}
+		
 		log.Debug("ListenHttpHost", ListenHttpHost)
 
 		IosLog(fmt.Sprintf("ListenHttpHost: %v", ListenHttpHost))
