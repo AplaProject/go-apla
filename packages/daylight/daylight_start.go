@@ -29,8 +29,6 @@ import (
 	"time"
 )
 
-
-
 func Start(dir string, thrustWindowLoder *window.Window) {
 
 	var err error
@@ -328,6 +326,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
 		if len(*utils.Tls) > 0 {
 			http.Handle(HandleHttpHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))			
+			httpsMux := http.NewServeMux()
+			httpsMux.HandleFunc(HandleHttpHost+"/", controllers.Index)
+			httpsMux.HandleFunc(HandleHttpHost+"/content", controllers.Content)
+			httpsMux.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
+			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
+			go http.ListenAndServeTLS(":443", *utils.Tls + `/fullchain.pem`, *utils.Tls + `/privkey.pem`, httpsMux)
 		}
 		
 		log.Debug("ListenHttpHost", ListenHttpHost)
@@ -335,6 +339,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		IosLog(fmt.Sprintf("ListenHttpHost: %v", ListenHttpHost))
 
 		fmt.Println("ListenHttpHost", ListenHttpHost)
+		 
 
 		httpListener(ListenHttpHost, BrowserHttpHost)
 
