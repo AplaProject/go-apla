@@ -90,6 +90,7 @@ var (
 	StartBlockId = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
 	EndBlockId = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
 	RollbackToBlockId = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
+	Tls = flag.String("tls", "", "Support https. Specify directory for .well-known")
 	DaemonsChans []*DaemonsChansType
 	eWallets = &sync.Mutex{}
 )
