@@ -2,7 +2,6 @@
 // sources:
 // static/1block
 // static/alert_success.html
-// static/anonym_citizen_status.html
 // static/anonym_money_transfer.html
 // static/backup.html
 // static/block_explorer.html
@@ -216,6 +215,7 @@
 // static/modal_gov.html
 // static/modal_health.html
 // static/pass.html
+// static/request_citizen_status.html
 // static/sass/_colors.scss
 // static/sass/_mixins.scss
 // static/sass/style.scss
@@ -468,24 +468,6 @@ func static1block() (*asset, error) {
 func staticAlert_successHtml() (*asset, error) {
 	path := "static/alert_success.html"
 	name := "static/alert_success.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticAnonym_citizen_statusHtml reads file data from disk. It returns an error on failure.
-func staticAnonym_citizen_statusHtml() (*asset, error) {
-	path := "static/anonym_citizen_status.html"
-	name := "static/anonym_citizen_status.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4334,6 +4316,24 @@ func staticPassHtml() (*asset, error) {
 	return a, err
 }
 
+// staticRequest_citizen_statusHtml reads file data from disk. It returns an error on failure.
+func staticRequest_citizen_statusHtml() (*asset, error) {
+	path := "static/request_citizen_status.html"
+	name := "static/request_citizen_status.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticSass_colorsScss reads file data from disk. It returns an error on failure.
 func staticSass_colorsScss() (*asset, error) {
 	path := "static/sass/_colors.scss"
@@ -8060,7 +8060,6 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"static/1block": static1block,
 	"static/alert_success.html": staticAlert_successHtml,
-	"static/anonym_citizen_status.html": staticAnonym_citizen_statusHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
 	"static/backup.html": staticBackupHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
@@ -8274,6 +8273,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/modal_gov.html": staticModal_govHtml,
 	"static/modal_health.html": staticModal_healthHtml,
 	"static/pass.html": staticPassHtml,
+	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
 	"static/sass/_colors.scss": staticSass_colorsScss,
 	"static/sass/_mixins.scss": staticSass_mixinsScss,
 	"static/sass/style.scss": staticSassStyleScss,
@@ -8523,7 +8523,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"static": &bintree{nil, map[string]*bintree{
 		"1block": &bintree{static1block, map[string]*bintree{}},
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
-		"anonym_citizen_status.html": &bintree{staticAnonym_citizen_statusHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
 		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
@@ -8761,6 +8760,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"modal_gov.html": &bintree{staticModal_govHtml, map[string]*bintree{}},
 		"modal_health.html": &bintree{staticModal_healthHtml, map[string]*bintree{}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
+		"request_citizen_status.html": &bintree{staticRequest_citizen_statusHtml, map[string]*bintree{}},
 		"sass": &bintree{nil, map[string]*bintree{
 			"_colors.scss": &bintree{staticSass_colorsScss, map[string]*bintree{}},
 			"_mixins.scss": &bintree{staticSass_mixinsScss, map[string]*bintree{}},
