@@ -25,7 +25,7 @@
 	</script>
 	
 	<div class="content-heading">
-	   Anonym
+	   Block Information
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
@@ -61,8 +61,8 @@
 					<td>{{.BlockData.cb_id}}</td>
 				 </tr>
 				 <tr>
-					<td class="thead">Wallet ID</td>
-					<td>{{.BlockData.wallet_id}}</td>
+					<td class="thead">Added by</td>
+					<td>{{.BlockData.wallet_address}}</td>
 				 </tr>
 				 <tr>
 					<td class="thead">Transactions</td>
@@ -107,10 +107,10 @@
 			  <thead>
 				 <tr>
 					<th>Block ID</th>
-					<th>Hash</th>
-					<th>Time</th>
-					<th>Central Bank ID</th>
-					<th>Wallet ID</th>
+					<!--th>Hash</th-->
+					<th>Timestamp</th>
+					<!--th>Central Bank ID</th-->
+					<th>Added by</th>
 					<th>Transactions</th>
 				 </tr>
 			  </thead>
@@ -118,11 +118,11 @@
 				{{range .List}}
 			  	 <tr>
 				 	<td><a href="" onclick="return block_detail({{.id}})">{{.id}}</a></td>
-					<td>{{.hash}}</td>
+					<!--td>.hash</td-->
 					<td class="unixtime">{{.time}}</td>
-					<td>{{.cb_id}}</td>
-					<td>{{.wallet_id}}</td>
-					<td>{{.tx}}</td>
+					<!--td>.cb_id</td-->
+					<td>{{.wallet_address}}</td>
+					<td>{{.tx_count}}</td>
 				 </tr>
 				{{end}}
 			  </tbody>
@@ -131,13 +131,11 @@
 	   <!-- END table responsive-->
 {{end}}
 <script type="text/javascript">
-	function addRow(n) {
+	function addRow(item) {
 		var id = $("#block_explorer tbody");
-		var el = '<tr class="addRow"><td><a href="#">123</a></td><td>43b19de006038337df61209a0226a531018cbbea4ff3c54a8e452db60ae54468</td><td class="unixtime">30.08.2016, 16:02:45</td><td>0</td><td>0</td><td>["4"]</td></tr>';
-				 
-		for (var i = 1; i <= n; i++) {
-			id.prepend(el);
-		}
+		var el = '<tr class="addRow"><td><a href="" onclick="return block_detail('+item.id+')">'+item.id+'</a></td>'+
+		'<td class="addtime">'+item.time+'</td><td>'+item.wallet_address+'</td><td>'+item.tx_count+'</td><tr>';			
+		id.prepend(el);
 	}
 
 	function block_detail( id ) {
@@ -167,21 +165,25 @@
 	var  latestTime;
 	
 	function block_reload() {
-		$.post("content?page=block_explorer", {latest: latestBlock},
+		$.post("ajax?json=ajax_explorer", {latest: latestBlock},
         function(data) {
 			if ($("#tab2").css('display') == 'none') {
 				return;
 			}
-			if (data) {
-				clearTimeout(latestTime);
-	            $('#tab2').html( data );
-			} else
-				latestTime = setTimeout( block_reload, 2000 );
-    	}, "html");
-//		$("#dl_content").load( "content?page=blockExplorer", { latest: latestBlock }, function() {
+			if (data.data && data.data.length > 0 ) {
+//				clearTimeout(latestTime);
+				for (i=data.data.length-1; i>=0; i-- )
+					addRow( data.data[i]);
+				unixtime('.addtime');
+				$('.addtime').removeClass('addtime');
+	            //$('#tab2').html( data );
+				latestBlock = data.latest;
+			} 
+			latestTime = setTimeout( block_reload, 2000 );
+    	}, "JSON");
 	}
 	
 	latestTime = setTimeout( block_reload, 2000 );
 {{end}}	
-	$(document).ready( unixtime );
+	$(document).ready( function(){ unixtime(); });
 </script>

@@ -485,9 +485,12 @@ function hex2a(hex) {
     return str;
 }
 
-function unixtime() {
-    if ( $( ".unixtime" ).length ) {
-        $(".unixtime").each(function () {
+function unixtime(target) {
+	if (!target) {
+		target = ".unixtime";
+	}
+    if ( $(target).length ) {
+        $(target).each(function () {
             var time_val =$(this).text();
             if (time_val) {
                 var time = Number($(this).text() + '000');

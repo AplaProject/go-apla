@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"encoding/hex"
+	"encoding/json"
 )
 
 const NBlockExplorer = `block_explorer`
@@ -26,13 +27,20 @@ func (c *Controller) BlockExplorer() (string, error) {
 	
 	if blockId > 0 {
 		pageData.BlockId = blockId
-		blockInfo,err := c.OneRow("SELECT * FROM block_chain where id=?", blockId).String()
+		blockInfo,err := c.OneRow(`SELECT b.*, w.address FROM block_chain as b
+		left join dlt_wallets as w on b.wallet_id=w.wallet_id
+		where b.id=?`, blockId).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		if len(blockInfo) > 0 {
 			blockInfo[`hash`] = hex.EncodeToString([]byte(blockInfo[`hash`]))
 			blockInfo[`size`] = utils.IntToStr(len(blockInfo[`data`]))
+			if len(blockInfo[`address`]) > 0 && blockInfo[`address`] != `NULL` {
+				blockInfo[`wallet_address`] = utils.BytesToAddress([]byte(blockInfo[`address`]))
+			} else {
+				blockInfo[`wallet_address`] = ``
+			}
 			tmp := hex.EncodeToString([]byte(blockInfo[`data`]))
 			out := ``
 			for i, ch := range tmp {
@@ -60,12 +68,28 @@ func (c *Controller) BlockExplorer() (string, error) {
 				return ``, nil
 			}
 		}	
-		blockExplorer,err := c.GetAll("SELECT hash, cb_id, wallet_id, time, tx, id FROM block_chain order by id desc limit 0, 30", -1 )
+		blockExplorer,err := c.GetAll(`SELECT  w.address, b.hash, b.cb_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
+		left join dlt_wallets as w on b.wallet_id=w.wallet_id
+		order by b.id desc limit 0, 30`, -1 )
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		for ind := range blockExplorer {
 			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
+			if len(blockExplorer[ind][`address`]) > 0 && blockExplorer[ind][`address`] != `NULL` {
+				blockExplorer[ind][`wallet_address`] = utils.BytesToAddress([]byte(blockExplorer[ind][`address`]))
+			} else {
+				blockExplorer[ind][`wallet_address`] = ``
+			}
+			if blockExplorer[ind][`tx`] == `[]` {
+				blockExplorer[ind][`tx_count`] = `0`
+			} else {
+				var tx []string
+				json.Unmarshal( []byte(blockExplorer[ind][`tx`]), &tx )
+				if tx != nil && len(tx) > 0 {
+					blockExplorer[ind][`tx_count`] = utils.IntToStr(len(tx))
+				}
+			}
 		}
 		pageData.List = blockExplorer
 		if blockExplorer != nil && len(blockExplorer) > 0 {
