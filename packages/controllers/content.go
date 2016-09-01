@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"fmt"
+	"time"
 	"html/template"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"runtime/debug"
@@ -238,6 +239,22 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress )
 	controller := r.FormValue("controllerHTML")
+	if val,ok := configIni[`psw`]; ok && tplName != `login`&& tplName != `loginECDSA` {
+		if psw,err := r.Cookie(`psw`); err == http.ErrNoCookie || psw.Value != val {
+			if err == nil {
+				cookie := http.Cookie{Name: "psw", Value: ``, Expires: time.Now().AddDate(0, 0, -1)}
+				http.SetCookie(w, &cookie)
+			}
+			if controller == `menu` || tplName == `ModalAnonym` {
+				w.Write([]byte{})
+				return
+			}
+			c.Logout()
+			controller = `psw`
+			pageName = ``
+			tplName = ``
+		} 
+	}
 	if len(controller) > 0 {
 
 		log.Debug("controller:", controller)
