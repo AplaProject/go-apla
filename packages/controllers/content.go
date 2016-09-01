@@ -12,7 +12,57 @@ import (
 	"html/template"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"runtime/debug"
+	"strings"
+	"math/rand"
+	"io/ioutil"
 )
+
+var (
+	passUpd   time.Time
+	passwords map[string]bool
+	alphabet = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+)
+
+
+func genPass(length int) string {
+ 	ret := make([]byte, length)
+    for i := range ret {
+        ret[i] = alphabet[rand.Intn(len(alphabet))]
+    }
+    return string(ret)	
+}
+
+func IsPassValid(pass, psw string) bool {
+	if passwords == nil {
+		passwords = make(map[string]bool)
+	}
+	if len(passwords) == 0 || passUpd.Add( 5*time.Minute ).Before(time.Now()) {
+		filename := *utils.Dir + `/passlist.txt`
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			out := make([]string, 1000)
+			out[0] = pass
+			for i:=1; i<1000; i++ {
+				out[i] = genPass(6)
+			}
+			ioutil.WriteFile(filename, []byte( strings.Join(out, "\r\n")), 0644)
+		}
+		
+		if list,err := ioutil.ReadFile(filename); err == nil && len(list) > 0 {
+			for key := range passwords {
+				passwords[key] = false
+			}
+			out := strings.Split(string(list), "\r\n")
+			for i := range out {
+				plist := strings.SplitN( out[i], `,`, 2)
+				if len(plist[0]) > 0 {
+					passwords[plist[0]] = true
+				}
+			}
+			passUpd = time.Now()
+		}
+	}
+	return passwords[psw]
+}
 
 func Content(w http.ResponseWriter, r *http.Request) {
 	defer func() {
@@ -240,7 +290,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress )
 	controller := r.FormValue("controllerHTML")
 	if val,ok := configIni[`psw`]; ok && (tplName != `login`&& tplName != `loginECDSA`) || len(controller) > 0 {
-		if psw,err := r.Cookie(`psw`); err != nil || psw.Value != val {
+		if psw,err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
 			if err == nil {
 				cookie := http.Cookie{Name: "psw", Value: ``, Expires: time.Now().AddDate(0, 0, -1)}
 				http.SetCookie(w, &cookie)
