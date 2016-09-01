@@ -239,13 +239,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress )
 	controller := r.FormValue("controllerHTML")
-	if val,ok := configIni[`psw`]; ok && tplName != `login`&& tplName != `loginECDSA` {
-		if psw,err := r.Cookie(`psw`); err == http.ErrNoCookie || psw.Value != val {
+	if val,ok := configIni[`psw`]; ok && (tplName != `login`&& tplName != `loginECDSA`) || len(controller) > 0 {
+		if psw,err := r.Cookie(`psw`); err != nil || psw.Value != val {
 			if err == nil {
 				cookie := http.Cookie{Name: "psw", Value: ``, Expires: time.Now().AddDate(0, 0, -1)}
 				http.SetCookie(w, &cookie)
 			}
-			if controller == `menu` || tplName == `ModalAnonym` {
+			if controller == `menu` || tplName == `menu` || tplName == `ModalAnonym` {
 				w.Write([]byte{})
 				return
 			}
