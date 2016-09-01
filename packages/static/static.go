@@ -215,6 +215,7 @@
 // static/modal_gov.html
 // static/modal_health.html
 // static/pass.html
+// static/psw.html
 // static/request_citizen_status.html
 // static/sass/_colors.scss
 // static/sass/_mixins.scss
@@ -4316,6 +4317,24 @@ func staticPassHtml() (*asset, error) {
 	return a, err
 }
 
+// staticPswHtml reads file data from disk. It returns an error on failure.
+func staticPswHtml() (*asset, error) {
+	path := "static/psw.html"
+	name := "static/psw.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticRequest_citizen_statusHtml reads file data from disk. It returns an error on failure.
 func staticRequest_citizen_statusHtml() (*asset, error) {
 	path := "static/request_citizen_status.html"
@@ -8273,6 +8292,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/modal_gov.html": staticModal_govHtml,
 	"static/modal_health.html": staticModal_healthHtml,
 	"static/pass.html": staticPassHtml,
+	"static/psw.html": staticPswHtml,
 	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
 	"static/sass/_colors.scss": staticSass_colorsScss,
 	"static/sass/_mixins.scss": staticSass_mixinsScss,
@@ -8760,6 +8780,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"modal_gov.html": &bintree{staticModal_govHtml, map[string]*bintree{}},
 		"modal_health.html": &bintree{staticModal_healthHtml, map[string]*bintree{}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
+		"psw.html": &bintree{staticPswHtml, map[string]*bintree{}},
 		"request_citizen_status.html": &bintree{staticRequest_citizen_statusHtml, map[string]*bintree{}},
 		"sass": &bintree{nil, map[string]*bintree{
 			"_colors.scss": &bintree{staticSass_colorsScss, map[string]*bintree{}},
