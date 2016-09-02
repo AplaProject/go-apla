@@ -15,11 +15,13 @@ import (
 	"strings"
 	"math/rand"
 	"io/ioutil"
+	"sync"
 )
 
 var (
-	passUpd   time.Time
-	passwords map[string]bool
+	passMutex = sync.Mutex{}
+	passUpd   = time.Now()
+	passwords = make(map[string]bool)
 	alphabet = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 )
 
@@ -33,10 +35,11 @@ func genPass(length int) string {
 }
 
 func IsPassValid(pass, psw string) bool {
-	if passwords == nil {
-		passwords = make(map[string]bool)
-	}
+	passMutex.Lock()
+	defer passMutex.Unlock()
+
 	if len(passwords) == 0 || passUpd.Add( 5*time.Minute ).Before(time.Now()) {
+		
 		filename := *utils.Dir + `/passlist.txt`
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			out := make([]string, 1000)
@@ -46,7 +49,6 @@ func IsPassValid(pass, psw string) bool {
 			}
 			ioutil.WriteFile(filename, []byte( strings.Join(out, "\r\n")), 0644)
 		}
-		
 		if list,err := ioutil.ReadFile(filename); err == nil && len(list) > 0 {
 			for key := range passwords {
 				passwords[key] = false
@@ -305,6 +307,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			tplName = ``
 		} 
 	}
+
 	if len(controller) > 0 {
 
 		log.Debug("controller:", controller)
