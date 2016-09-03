@@ -53,6 +53,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"encoding/binary"
 )
 
 type BlockData struct {
@@ -299,7 +300,11 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId = BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+	result.WalletId,_ = DecodeLenInt64(binaryBlock)//BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+	// Delete after re-build blocks
+	if result.WalletId == 0x31 {
+		result.WalletId = 1
+	}
 	result.CBID = BinToDecBytesShift(binaryBlock, 1)
 	if result.BlockId > 1 {
 		signSize := DecodeLength(binaryBlock)
@@ -2560,4 +2565,32 @@ func ShellExecute( cmdline string ) {
 		case "darwin":
 			exec.Command("open", cmdline).Start()
 	}
+}
+
+// EncodeLenInt64 appends int64 to []byte as uint8 + little-endian order of uint8.
+//
+//  65000 => [0x02, 0xe8, 0xfd]
+//
+func EncodeLenInt64(data *[]byte, x int64) *[]byte {
+	var length int
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, uint64(x))
+	for length = 8;length > 0 && buf[length-1] == 0; length-- {
+	}
+	*data = append( append( *data, byte(length)), buf[:length]...)
+	return data
+}
+
+// DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
+// encoded with EncodeLengthPlusInt64.
+func DecodeLenInt64(data *[]byte) (int64,error) {
+	length := int((*data)[0]) + 1
+	if len(*data) < length {
+		return 0, fmt.Errorf(`length of data %d < %d`, len(*data), length)
+	}
+    buf := make([]byte, 8)
+	copy(buf, (*data)[1:length])
+	x := int64(binary.LittleEndian.Uint64(buf))
+	*data = (*data)[length:]
+	return x, nil
 }
