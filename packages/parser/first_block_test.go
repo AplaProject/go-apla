@@ -3,7 +3,7 @@ package parser
 import ( "testing"
 	"fmt"
 	"encoding/json"
-	"encoding/binary"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 type InputTest struct {
@@ -64,9 +64,9 @@ func LoadData( input []byte, t *testing.T) []*BlockTest {
 }
 
 func TestFirstBlock(t *testing.T) {
-	fmt.Printf("%x %x %x\r\n",EncodeLengthPlusInt64(1), EncodeLengthPlusInt64(0), EncodeLengthPlusInt64(65000))
-	b127 := append( EncodeLengthPlusInt64(0))//, 1, 2, 3, 4)
-	fmt.Println( DecodeLengthPlusInt64(&b127))
+	fmt.Printf("%x %x %x\r\n",utils.EncodeLenInt64(1), utils.EncodeLenInt64(0), utils.EncodeLenInt64(65000))
+	b127 := append( utils.EncodeLenInt64(0))//, 1, 2, 3, 4)
+	fmt.Println( utils.DecodeLenInt64(&b127))
 	fmt.Println(`b`, b127)
 	blocks = LoadData(input, t) 
 	t.Log(`First Block`)

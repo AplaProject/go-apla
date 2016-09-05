@@ -1002,35 +1002,6 @@ func EncodeLengthPlusData(data_ interface{}) []byte {
 	return append(EncodeLength(int64(len(data))), data...)
 }
 
-func EncodeLength(len0 int64) []byte {
-	//log.Debug("len0: %v", len0)
-	if len0 <= 127 {
-		if len0 < 16 {
-			result := HexToBin([]byte(fmt.Sprintf("0%x", len0)))
-			log.Debug("%x", result)
-			return result
-		}
-		result := HexToBin([]byte(fmt.Sprintf("%x", len0)))
-		log.Debug("%s", fmt.Sprintf("%x", len0))
-		log.Debug("%x", []byte(fmt.Sprintf("%x", len0)))
-		log.Debug("%x", result)
-		return result
-	}
-	temphex := fmt.Sprintf("%x", len0)
-	if len(temphex)%2 > 0 {
-		temphex = "0" + temphex
-	}
-	str, _ := hex.DecodeString(temphex)
-	temp := string(str)
-	t1 := (0x80 | len(temp))
-	t1hex := fmt.Sprintf("%x", t1)
-	len_and_t1 := t1hex + temphex
-	len_and_t1_bin, _ := hex.DecodeString(len_and_t1)
-	//fmt.Println("len_and_t1_bin", len_and_t1_bin)
-	//fmt.Printf("len_and_t1_bin %x\n", len_and_t1_bin)
-	return len_and_t1_bin
-}
-
 func DecToHex(dec int64) string {
 	return strconv.FormatInt(dec, 16)
 }
@@ -1214,34 +1185,6 @@ func BytesShiftReverse(str *[]byte, index_ interface{}) []byte {
 	*str = str_
 	//fmt.Println(utils.BinToHex(str_))
 	return substr
-}
-
-func DecodeLength(str *[]byte) int64 {
-	var str_ []byte
-	str_ = *str
-	if len(str_) == 0 {
-		return 0
-	}
-	length_ := []byte(BytesShift(&str_, 1))
-	*str = str_
-	length := int64(length_[0])
-	//fmt.Println(length)
-	t1 := (length & 0x80)
-	//fmt.Printf("length&0x80 %x", t1)
-	if t1 > 0 {
-		//fmt.Println("1")
-		length &= 0x7F
-		//fmt.Printf("length %x\n", length)
-		temp := BytesShift(&str_, length)
-		*str = str_
-		//fmt.Printf("temp %x\n", temp)
-		temp2 := fmt.Sprintf("%08x", temp)
-		//fmt.Println("temp2", temp2)
-		temp3 := HexToDec(temp2)
-		//fmt.Println("temp3", temp3)
-		return temp3
-	}
-	return length
 }
 
 func SleepDiff(sleep *int64, diff int64) {
@@ -2440,6 +2383,69 @@ func DecodeLenInt64(data *[]byte) (int64,error) {
 	return x, nil
 }
 
+// Encode values into binary data. The format parameter can contains the following characters:
+// 1 - 1 byte for encoding byte, int8, uint8
+// 4 - 4 bytes for encoding int32, uint32
+// i - 2-9 bytes for encoding int64, uint64 by EncodeLenInt64 function
+// s - for encoding string or []byte by EncodeLenByte function
+/*func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
+	if out == nil {
+		*out = make([]byte, 0, 2048)
+	}
+	if len(format) != len(args) {
+		return fmt.Errorf(`wrong count of parameters %d != %d`, len(format), len(args))
+	}
+	for i, ch := range format {
+		
+	}
+}
+*/
+
+// Encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
+// Otherwise, it returns (0x80 | len of int64) + int64 as BigEndian []byte 
+//
+//   67 => 0x43
+//   1024 => 0x820400
+//   1000000 => 0x830f4240
+//
+func EncodeLength(length int64) []byte {
+	if length > 0 && length <= 127 {
+		return []byte{byte(length)}
+	}
+	buf := make([]byte, 9)
+	binary.BigEndian.PutUint64(buf[1:], uint64(length))
+	i := 1
+	for ; buf[i] == 0; i++ {
+	}
+	buf[0] = 0x80 | byte(9-i)
+	return append(buf[:1], buf[i:]...)
+}
+
+// Decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
+//
+//   0x43 => 67
+//   0x820400 => 1024
+//   0x830f4240 => 1000000
+//
+func DecodeLength(buf *[]byte) (ret int64) {
+	length := (*buf)[0]
+	if (length & 0x80) != 0 {
+		length &= 0x7F
+		ret = int64(binary.BigEndian.Uint64(append(make([]byte,8-length), (*buf)[1:length+1]...)))
+	} else {
+		ret = int64(length)
+		length = 0
+	}
+	*buf = (*buf)[length + 1:]
+	return 
+}
+
+// Appends the length of the slice + the buf slice. 
+func EncodeLenByte(out *[]byte, buf []byte) *[]byte {
+	*out = append(append(*out, EncodeLength(int64(len(buf)))...), buf...)
+	return out
+}
+
 // EncodeLenInt64 appends int64 to []byte as uint8 + little-endian order of uint8.
 //
 //  65000 => [0x02, 0xe8, 0xfd]
@@ -2478,3 +2484,4 @@ func KeyToAddress(pubKey []byte) string {
 	checksum := h256[:4]
 	return BytesToAddress(append(finger, checksum...))
 }
+

@@ -104,8 +104,24 @@ func TestAddress(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		key, seed := test.RandBytes(64)
 		address := KeyToAddress(key)
-		if !IsValidAddress(address) {
+		if (i % 10) == 0 {
+			if IsValidAddress(address[:len(address) - 1]) {
+				t.Errorf("valid address %s for %x seed: %d", address[:len(address) - 1], key, seed)
+			}
+		} else if !IsValidAddress(address) {
 			t.Errorf("not valid address %s for %x seed: %d", address, key, seed)
+		}
+	}
+}
+
+func TestEncodeDecodeLength(t *testing.T) {
+	vals := []int64{1, 67, 127, 128, 256, 1024, 2000, 10000, 65000, 1000000, 0xffeeffff, 
+	                8123498762, 25000060000,400000000035, -10000000044546, -1}
+	for _, i := range vals {
+		result := EncodeLength(i)
+		got := DecodeLength(&result)
+		if got != i {
+			t.Errorf("worng length encoding %d != %d", i, got)
 		}
 	}
 }
