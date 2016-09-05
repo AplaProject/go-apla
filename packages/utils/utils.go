@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/golang/freetype"
 	"github.com/kardianos/osext"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -30,9 +29,6 @@ import (
     "golang.org/x/crypto/ripemd160"
 	b58 "github.com/jbenet/go-base58"
 	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
 	"io"
 	"io/ioutil"
 	"math"
@@ -172,117 +168,6 @@ func getImageDimension(imagePath string) (int, int) {
 type ParamType struct {
 	X, Y, Width, Height int64
 	Bg_path             string
-}
-
-func KeyToImg(key, resultPath string, userId int64, timeFormat string, param ParamType) (*bytes.Buffer, error) {
-
-	keyBin, _ := base64.StdEncoding.DecodeString(key)
-	keyHex := append(BinToHex(keyBin), []byte("00000000")...)
-	keyBin = HexToBin(keyHex)
-
-	w, h := getImageDimension(param.Bg_path)
-	/*fSrc, err := os.Open(param.Bg_path)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	defer fSrc.Close()*/
-	data, _ := static.Asset(param.Bg_path)
-	fSrc := bytes.NewReader(data)
-
-	src, err := png.Decode(fSrc)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-
-	dst := image.NewRGBA(image.Rect(0, 0, w, h))
-	white := image.NewUniform(color.White)
-	black := image.NewUniform(color.Black)
-	draw.Draw(dst, dst.Bounds(), src, image.Point{0, 0}, draw.Src)
-
-	x := param.X
-	y := param.Y
-	var color *image.Uniform
-	for i := 0; i < len(keyBin); i++ {
-		b := fmt.Sprintf("%08b ", keyBin[i])
-		for j := 0; j < 8; j++ {
-			if b[j:j+1] == "0" {
-				color = black
-			} else {
-				color = white
-			}
-			dst.Set(int(x), int(y), color)
-			x++
-			if (x+1-param.X)%param.Width == 0 {
-				x = param.X
-				y++
-			}
-		}
-	}
-	param.Height = y - param.Y + 1
-
-	x = 0
-	// теперь пишем инфу, где искать квадрат
-	info := fmt.Sprintf("%016s", strconv.FormatInt(param.X, 2)) + fmt.Sprintf("%016s", strconv.FormatInt(param.Y, 2)) + fmt.Sprintf("%016s", strconv.FormatInt(param.Width, 2)) + fmt.Sprintf("%016s", strconv.FormatInt(param.Height, 2))
-	for i := 0; i < len(info); i++ {
-		if info[i:i+1] == "0" {
-			color = black
-		} else {
-			color = white
-		}
-		dst.Set(int(x), 0, color)
-		x++
-	}
-
-	fontBytes, err := static.Asset("static/fonts/luxisr.ttf")
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	font, err := freetype.ParseFont(fontBytes)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-
-	c := freetype.NewContext()
-	c.SetDPI(72)
-	c.SetFont(font)
-	c.SetFontSize(15)
-	c.SetClip(dst.Bounds())
-	c.SetDst(dst)
-	c.SetSrc(image.Black)
-
-	// Draw the text.
-	pt := freetype.Pt(13, 300)
-	_, err = c.DrawString("User ID: "+Int64ToStr(userId), pt)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-
-	t := time.Unix(time.Now().Unix(), 0)
-	txTime := t.Format(timeFormat)
-	pt = freetype.Pt(300, 300)
-	_, err = c.DrawString(txTime, pt)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-
-	if len(resultPath) > 0 {
-		fDst, err := os.Create(resultPath)
-		if err != nil {
-			return nil, ErrInfo(err)
-		}
-		defer fDst.Close()
-		err = png.Encode(fDst, dst)
-		if err != nil {
-			return nil, ErrInfo(err)
-		}
-	}
-	buffer := new(bytes.Buffer)
-	err = png.Encode(buffer, dst)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-
-	return buffer, nil
 }
 
 func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
@@ -1649,39 +1534,6 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	return true, nil
 }
 
-func KeyToAddress(pubKey string) string {
-	bkey, err := hex.DecodeString(pubKey)
-	if err != nil {
-		return ``
-	}
-	prefix := []byte{0}
-    h256 := sha256.Sum256(bkey)
-    h := ripemd160.New()
-    h.Write(h256[:])
-    finger := h.Sum(nil)
-	h256 = sha256.Sum256(finger)
-	h256 = sha256.Sum256(h256[:])
-	checksum := h256[:4]
-	bkey = append(append(prefix, finger...), checksum...)
-	return b58.Encode(bkey)
-}
-
-func BytesToAddress(address []byte) string {
-	return b58.Encode(address)
-}
-
-func IsValidAddress(address string) bool {
-	key := b58.Decode(address)
-	if key[0] != 0 { // default prefix
-		return false
-	}
-	checksum := key[len(key)-4:]
-	finger := key[1:len(key)-4]
-	h256 := sha256.Sum256(finger)
-	h256 = sha256.Sum256(h256[:])
-	return bytes.Compare(checksum, h256[:4]) == 0
-}
-
 func B54Decode(b54_ interface{}) string {
 	var b54 string
 	switch b54_.(type) {
@@ -2567,18 +2419,11 @@ func ShellExecute( cmdline string ) {
 	}
 }
 
-// EncodeLenInt64 appends int64 to []byte as uint8 + little-endian order of uint8.
-//
-//  65000 => [0x02, 0xe8, 0xfd]
-//
-func EncodeLenInt64(data *[]byte, x int64) *[]byte {
-	var length int
-	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buf, uint64(x))
-	for length = 8;length > 0 && buf[length-1] == 0; length-- {
-	}
-	*data = append( append( *data, byte(length)), buf[:length]...)
-	return data
+// Tested functions are below
+
+// Converts binary address to DayLight address.
+func BytesToAddress(address []byte) string {
+	return `D` + b58.Encode(address)
 }
 
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
@@ -2593,4 +2438,43 @@ func DecodeLenInt64(data *[]byte) (int64,error) {
 	x := int64(binary.LittleEndian.Uint64(buf))
 	*data = (*data)[length:]
 	return x, nil
+}
+
+// EncodeLenInt64 appends int64 to []byte as uint8 + little-endian order of uint8.
+//
+//  65000 => [0x02, 0xe8, 0xfd]
+//
+func EncodeLenInt64(data *[]byte, x int64) *[]byte {
+	var length int
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, uint64(x))
+	for length = 8;length > 0 && buf[length-1] == 0; length-- {
+	}
+	*data = append( append( *data, byte(length)), buf[:length]...)
+	return data
+}
+
+// Function IsValidAddress checks if the specified address is DayLight address.
+func IsValidAddress(address string) bool {
+	if address[0] != 'D' { 
+		return false
+	}
+	key := b58.Decode(address[1:])
+	checksum := key[len(key)-4:]
+	finger := key[:len(key)-4]
+	h256 := sha256.Sum256(finger)
+	h256 = sha256.Sum256(h256[:])
+	return bytes.Compare(checksum, h256[:4]) == 0
+}
+
+// Converts a public key to DayLight address.
+func KeyToAddress(pubKey []byte) string {
+    h256 := sha256.Sum256(pubKey)
+    h := ripemd160.New()
+    h.Write(h256[:])
+    finger := h.Sum(nil)
+	h256 = sha256.Sum256(finger)
+	h256 = sha256.Sum256(h256[:])
+	checksum := h256[:4]
+	return BytesToAddress(append(finger, checksum...))
 }

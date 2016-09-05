@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"testing"
+	"github.com/DayLightProject/go-daylight/packages/test"
 )
 
 
@@ -96,5 +97,15 @@ func TestDecodeLenInt64(t *testing.T) {
 		if x != val.value {
 			t.Errorf("different int64 %d != %d", x, val.value)
 		}	
+	}
+}
+
+func TestAddress(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		key, seed := test.RandBytes(64)
+		address := KeyToAddress(key)
+		if !IsValidAddress(address) {
+			t.Errorf("not valid address %s for %x seed: %d", address, key, seed)
+		}
 	}
 }
