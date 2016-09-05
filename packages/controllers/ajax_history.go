@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"fmt"
 )
 
@@ -45,8 +46,8 @@ func (c *Controller) AjaxHistory() interface{} {
 			for ind := range history {
 				max,_ := c.Single(`select max(id) from block_chain order by id desc`).Int64()
 				history[ind][`confirm`] = utils.Int64ToStr(max - utils.StrToInt64(history[ind][`block_id`]))
-				history[ind][`sender_address`] = utils.BytesToAddress([]byte(history[ind][`sw`]))
-				history[ind][`recipient_address`] = utils.BytesToAddress([]byte(history[ind][`rw`]))
+				history[ind][`sender_address`] = lib.BytesToAddress([]byte(history[ind][`sw`]))
+				history[ind][`recipient_address`] = lib.BytesToAddress([]byte(history[ind][`rw`]))
 			}
 		}
 	}

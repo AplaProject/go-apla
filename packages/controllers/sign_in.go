@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"encoding/hex"
 	"fmt"
 )
@@ -36,7 +36,7 @@ func (c *Controller) SignIn() (string, error) {
 		log.Error("err %v", err)
 		return ret, err
 	}
-	address := utils.KeyToAddress(bkey)
+	address := lib.KeyToAddress(bkey)
 	c.sess.Set("address", address)
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))

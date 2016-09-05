@@ -1,13 +1,14 @@
 package controllers
 
 import (
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"encoding/json"
 )
 
 func (c *Controller) GenerateNewNodeKey() (string, error) {
 
-	priv, pub := utils.GenKeys()
+	priv, pub := lib.GenKeys()
 	json, err := json.Marshal(map[string]string{"private_key": priv, "public_key": pub,
 								"time": utils.Int64ToStr(utils.Time()) })
 	if err != nil {

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"encoding/hex"
 	"encoding/json"
 )
@@ -33,7 +34,7 @@ func (c *Controller) AjaxExplorer() interface{} {
 				for ind := range explorer {
 					explorer[ind][`hash`] = hex.EncodeToString([]byte(explorer[ind][`hash`]))
 					if len(explorer[ind][`address`]) > 0 && explorer[ind][`address`] != `NULL`{
-						explorer[ind][`wallet_address`] = utils.BytesToAddress([]byte(explorer[ind][`address`]))
+						explorer[ind][`wallet_address`] = lib.BytesToAddress([]byte(explorer[ind][`address`]))
 					} else {
 					 	explorer[ind][`wallet_address`] = ``
 					}

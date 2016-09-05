@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"encoding/hex"
 	"encoding/json"
 )
@@ -37,7 +38,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 			blockInfo[`hash`] = hex.EncodeToString([]byte(blockInfo[`hash`]))
 			blockInfo[`size`] = utils.IntToStr(len(blockInfo[`data`]))
 			if len(blockInfo[`address`]) > 0 && blockInfo[`address`] != `NULL` {
-				blockInfo[`wallet_address`] = utils.BytesToAddress([]byte(blockInfo[`address`]))
+				blockInfo[`wallet_address`] = lib.BytesToAddress([]byte(blockInfo[`address`]))
 			} else {
 				blockInfo[`wallet_address`] = ``
 			}
@@ -77,7 +78,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		for ind := range blockExplorer {
 			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
 			if len(blockExplorer[ind][`address`]) > 0 && blockExplorer[ind][`address`] != `NULL` {
-				blockExplorer[ind][`wallet_address`] = utils.BytesToAddress([]byte(blockExplorer[ind][`address`]))
+				blockExplorer[ind][`wallet_address`] = lib.BytesToAddress([]byte(blockExplorer[ind][`address`]))
 			} else {
 				blockExplorer[ind][`wallet_address`] = ``
 			}

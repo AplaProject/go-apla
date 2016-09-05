@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego/session"
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/op/go-logging"
 	_ "image/png"
 	"io/ioutil"
@@ -46,7 +47,7 @@ func firstBlock() {
 		block := utils.DecToBin(0, 1)
 		block = append(block, utils.DecToBin(1, 4)...)
 		block = append(block, utils.DecToBin(utils.Time(), 4)...)
-		utils.EncodeLenInt64(&block, 1) //wallet_id
+		lib.EncodeLenInt64(&block, 1) //wallet_id
 //		block = append(block, utils.EncodeLengthPlusData("1")...) // wallet_id
 		block = append(block, utils.DecToBin(0, 1)...) // cb_id
 		block = append(block, utils.EncodeLengthPlusData(tx)...)

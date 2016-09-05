@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"net/http"
 	"regexp"
 	qrcode "github.com/skip2/go-qrcode"	
@@ -16,7 +17,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	if qr := r.FormValue("qr");len(qr) > 0 {
-		if utils.IsValidAddress(qr) {
+		if lib.IsValidAddress(qr) {
 			png,_ := qrcode.Encode(qr, qrcode.Medium, 170)
 			w.Header().Set("Content-Type", "image/png")
 			w.Write(png)

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	_ "github.com/lib/pq"
 	"time"
 )
@@ -371,7 +372,7 @@ BEGIN:
 		blockHeader := utils.DecToBin(0, 1)
 		blockHeader = append(blockHeader, newBlockIdBinary...)
 		blockHeader = append(blockHeader, timeBinary...)
-		utils.EncodeLenInt64(&blockHeader, myWalletId)
+		lib.EncodeLenInt64(&blockHeader, myWalletId)
 		blockHeader = append(blockHeader, cbIdBinary...)
 		blockHeader = append(blockHeader, utils.EncodeLengthPlusData(signatureBin)...)
 
