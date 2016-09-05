@@ -146,7 +146,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[0] = map[string]string{"name": "id", "mysql": "tinyint(3) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "smallint  NOT NULL  default nextval('currency_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "name", "mysql": "char(3) NOT NULL DEFAULT ''", "sqlite": "char(3) NOT NULL DEFAULT ''", "postgresql": "char(3) NOT NULL DEFAULT ''", "comment": ""}
 	s2[2] = map[string]string{"name": "full_name", "mysql": "varchar(50) NOT NULL DEFAULT ''", "sqlite": "varchar(50) NOT NULL DEFAULT ''", "postgresql": "varchar(50) NOT NULL DEFAULT ''", "comment": ""}
-	s2[3] = map[string]string{"name": "max_other_currencies", "mysql": "tinyint(3) unsigned NOT NULL DEFAULT '0'", "sqlite": "tinyint(3)  NOT NULL DEFAULT '0'", "postgresql": "smallint  NOT NULL DEFAULT '0'", "comment": "Со сколькими валютами данная валюта может майниться"}
+	s2[3] = map[string]string{"name": "max_other_currencies", "mysql": "tinyint(3) unsigned NOT NULL DEFAULT '0'", "sqlite": "tinyint(3)  NOT NULL DEFAULT '0'", "postgresql": "smallint  NOT NULL DEFAULT '0'", "comment": ""}
 	s2[4] = map[string]string{"name": "rb_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"id"}
@@ -215,9 +215,9 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[0] = map[string]string{"name": "full_node_id", "mysql": "int(11) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "int NOT NULL  default nextval('full_nodes_full_node_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "host", "mysql": "varchar(100) NOT NULL DEFAULT ''", "sqlite": "varchar(100) NOT NULL DEFAULT ''", "postgresql": "varchar(100) NOT NULL DEFAULT ''", "comment": ""}
 	s2[2] = map[string]string{"name": "wallet_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[3] = map[string]string{"name": "cb_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
+	s2[3] = map[string]string{"name": "state_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s2[4] = map[string]string{"name": "final_delegate_wallet_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[5] = map[string]string{"name": "final_delegate_cb_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
+	s2[5] = map[string]string{"name": "final_delegate_state_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
 	s2[6] = map[string]string{"name": "rb_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"full_node_id"}
@@ -348,20 +348,39 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('wallets_wallet_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('dn_citizens_citizen_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "hash_public_key", "mysql": "binary(20) NOT NULL DEFAULT ''", "sqlite": "binary(20) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "При авторизации надо понять, какие даные показать юзеру, поэтому он нам шлет хэш, мы по нему ищем, пишем citizen_id в сессию. Юзеру удобно, т.к надо знать только свой приватный ключ"}
 	s2[2] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Открытый ключ которым проверяются все транзакции от юзера"}
 	s2[3] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "2-й ключ, если есть"}
 	s2[4] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3-й ключ, если есть"}
-	s2[5] = map[string]string{"name": "rb_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[5] = map[string]string{"name": "name", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[6] = map[string]string{"name": "surname", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[7] = map[string]string{"name": "patronymic", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[8] = map[string]string{"name": "address", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[9] = map[string]string{"name": "email", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[10] = map[string]string{"name": "rb_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"citizen_id"}
 	s1["AI"] = "citizen_id"
 	s1["comment"] = ""
-	s["citizens"] = s1
+	s["dn_citizens"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
+
+	s = make(Recmap)
+	s1 = make(Recmap)
+	s2 = make(Recmapi)
+	s2[0] = map[string]string{"name": "state_code", "mysql": "varchar(2) NOT NULL DEFAULT ''", "sqlite": "varchar(2) NOT NULL DEFAULT ''", "postgresql": "varchar(2) NOT NULL DEFAULT ''", "comment": ""}
+	s2[1] = map[string]string{"name": "fields", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""} // example: { {"name":"surname", "type":"textinput", "title":"Surname"}, {"name":"photo_face", "type":"photo", "title":"photo face"} }
+	s2[2] = map[string]string{"name": "rb_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
+	s1["fields"] = s2
+	s1["PRIMARY"] = []string{"citizen_id"}
+	s1["AI"] = "citizen_id"
+	s1["comment"] = ""
+	s["citizen_fields"] = s1
+	schema.S = s
+	schema.PrintSchema()
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -409,17 +428,17 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "cb_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('central_banks_cb_id_seq')", "comment": ""}
-	s2[1] = map[string]string{"name": "node_public_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
-	s2[2] = map[string]string{"name": "public_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
+	s2[0] = map[string]string{"name": "state_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('states_state_id_seq')", "comment": ""}
+	s2[1] = map[string]string{"name": "state_code", "mysql": "varchar(2) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(2) NOT NULL DEFAULT ''", "postgresql": "varchar(2) NOT NULL DEFAULT ''", "comment": ""}
+	s2[2] = map[string]string{"name": "node_public_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
 	s2[3] = map[string]string{"name": "host", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s2[4] = map[string]string{"name": "delegate_wallet_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[5] = map[string]string{"name": "delegate_cb_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "В каком блоке было занесено. Нужно для удаления старых данных"}
+	s2[5] = map[string]string{"name": "delegate_state_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "В каком блоке было занесено. Нужно для удаления старых данных"}
 	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"cb_id"}
-	s1["AI"] = "cb_id"
+	s1["PRIMARY"] = []string{"state_id"}
+	s1["AI"] = "state_id"
 	s1["comment"] = ""
-	s["central_banks"] = s1
+	s["states"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -457,43 +476,26 @@ func (schema *SchemaStruct) GetSchema() {
 	s2 = make(Recmapi)
 	s2[0] = map[string]string{"name": "my_block_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Параллельно с info_block пишем и сюда. Нужно при обнулении рабочих таблиц, чтобы знать до какого блока не трогаем таблы my_"}
 	s2[1] = map[string]string{"name": "dlt_wallet_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[2] = map[string]string{"name": "cb_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
+	s2[2] = map[string]string{"name": "state_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s2[3] = map[string]string{"name": "citizen_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[4] = map[string]string{"name": "in_connections", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Кол-во нодов и просто юзеров, от кого принимаем данные. Считаем кол-во ip за 1 минуту"}
-	s2[5] = map[string]string{"name": "out_connections", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Кол-во нодов, кому шлем данные"}
-	s2[6] = map[string]string{"name": "bad_blocks", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "Номера и sign плохих блоков. Нужно, чтобы не подцепить более длинную, но глючную цепочку блоков"}
-	s2[7] = map[string]string{"name": "pool_max_users", "mysql": "int(11) NOT NULL DEFAULT '100'", "sqlite": "int(11) NOT NULL DEFAULT '100'", "postgresql": "int NOT NULL DEFAULT '100'", "comment": ""}
-	s2[8] = map[string]string{"name": "pool_admin_user_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[9] = map[string]string{"name": "pool_tech_works", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[10] = map[string]string{"name": "exchange_api_url", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "На home далается ajax-запрос к api биржи и выдается инфа о курсе и пр."}
-	s2[11] = map[string]string{"name": "cf_url", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "URL, который отображается в соц. кнопках и с которого подгружаются css/js/img/fonts при прямом заходе в CF-каталог"}
-	s2[12] = map[string]string{"name": "pool_url", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "URL, на который ссылается кнопка Contribute now из внешнего CF-каталога "}
-	s2[13] = map[string]string{"name": "pool_email", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "В режиме пула используется как адрес отправителя при рассылке уведомлений"}
-	s2[14] = map[string]string{"name": "cf_available_coins_url", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "URL биржи, где можно узнать, сколько там осталось монет в продаже по курсу 1"}
-	s2[15] = map[string]string{"name": "cf_exchange_url", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "URL биржи. Просто, чтобы дать на неё ссылку в сообщении, где говорится, что монеты на бирже кончились"}
-	s2[16] = map[string]string{"name": "cf_top_html", "mysql": "text CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "html-код с платежными системами для страницы cf_page_preview"}
-	s2[17] = map[string]string{"name": "cf_bottom_html", "mysql": "text CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "html-код с платежными системами для страницы cf_page_preview"}
-	s2[18] = map[string]string{"name": "cf_ps", "mysql": "text CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "Массива с платежными системами, которые будут выводиться на cf_page_preview"}
-	s2[19] = map[string]string{"name": "auto_reload", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Если произойдет сбой и в main_lock будет висеть запись более auto_reload секунд, тогда будет запущен сбор блоков с чистого листа"}
-	s2[20] = map[string]string{"name": "commission", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "Максимальная комиссия, которую могут поставить ноды на данном пуле"}
-	s2[21] = map[string]string{"name": "setup_password", "mysql": "varchar(255)  NOT NULL DEFAULT ''", "sqlite": "varchar(255)  NOT NULL DEFAULT ''", "postgresql": "varchar(255)  NOT NULL DEFAULT ''", "comment": "После установки и после сбора блоков, появляется окно, когда кто-угодно может ввести главный ключ"}
-	s2[22] = map[string]string{"name": "sqlite_db_url", "mysql": "varchar(255)  NOT NULL DEFAULT ''", "sqlite": "varchar(255)  NOT NULL DEFAULT ''", "postgresql": "varchar(255)  NOT NULL DEFAULT ''", "comment": "Если не пусто, значит качаем с сервера sqlite базу данных"}
-	s2[23] = map[string]string{"name": "first_load_blockchain_url", "mysql": "varchar(255)  NOT NULL DEFAULT ''", "sqlite": "varchar(255)  NOT NULL DEFAULT ''", "postgresql": "varchar(255)  NOT NULL DEFAULT ''", "comment": ""}
-	s2[24] = map[string]string{"name": "first_load_blockchain", "mysql": "enum('nodes','file','null') DEFAULT 'null'", "sqlite": "varchar(100)  DEFAULT 'null'", "postgresql": "enum('nodes','file','null') DEFAULT 'null'", "comment": ""}
-	s2[25] = map[string]string{"name": "current_load_blockchain", "mysql": "enum('nodes','file','null') DEFAULT 'null'", "sqlite": "varchar(100)  DEFAULT 'null'", "postgresql": "enum('nodes','file','null') DEFAULT 'null'", "comment": "Откуда сейчас собирается база данных"}
-	s2[26] = map[string]string{"name": "http_host", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "адрес, по которому будет висеть панель юзера.  Если это майнер, то адрес должен совпадать с my_table.http_host"}
-	s2[27] = map[string]string{"name": "auto_update", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[28] = map[string]string{"name": "auto_update_url","mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-	s2[29] = map[string]string{"name": "chat_enabled", "mysql": "tinyint(1) NOT NULL DEFAULT '1'", "sqlite": "tinyint(1) NOT NULL DEFAULT '1'", "postgresql": "smallint NOT NULL DEFAULT '1'", "comment": ""}
-	s2[30] = map[string]string{"name": "analytics_disabled", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[31] = map[string]string{"name": "stat_host","mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-	s2[32] = map[string]string{"name": "getpool_host","mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[4] = map[string]string{"name": "bad_blocks", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "Номера и sign плохих блоков. Нужно, чтобы не подцепить более длинную, но глючную цепочку блоков"}
+	s2[5] = map[string]string{"name": "pool_tech_works", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
+	s2[6] = map[string]string{"name": "auto_reload", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "Если произойдет сбой и в main_lock будет висеть запись более auto_reload секунд, тогда будет запущен сбор блоков с чистого листа"}
+	s2[7] = map[string]string{"name": "setup_password", "mysql": "varchar(255)  NOT NULL DEFAULT ''", "sqlite": "varchar(255)  NOT NULL DEFAULT ''", "postgresql": "varchar(255)  NOT NULL DEFAULT ''", "comment": "После установки и после сбора блоков, появляется окно, когда кто-угодно может ввести главный ключ"}
+	s2[8] = map[string]string{"name": "sqlite_db_url", "mysql": "varchar(255)  NOT NULL DEFAULT ''", "sqlite": "varchar(255)  NOT NULL DEFAULT ''", "postgresql": "varchar(255)  NOT NULL DEFAULT ''", "comment": "Если не пусто, значит качаем с сервера sqlite базу данных"}
+	s2[9] = map[string]string{"name": "first_load_blockchain_url", "mysql": "varchar(255)  NOT NULL DEFAULT ''", "sqlite": "varchar(255)  NOT NULL DEFAULT ''", "postgresql": "varchar(255)  NOT NULL DEFAULT ''", "comment": ""}
+	s2[10] = map[string]string{"name": "first_load_blockchain", "mysql": "enum('nodes','file','null') DEFAULT 'null'", "sqlite": "varchar(100)  DEFAULT 'null'", "postgresql": "enum('nodes','file','null') DEFAULT 'null'", "comment": ""}
+	s2[11] = map[string]string{"name": "current_load_blockchain", "mysql": "enum('nodes','file','null') DEFAULT 'null'", "sqlite": "varchar(100)  DEFAULT 'null'", "postgresql": "enum('nodes','file','null') DEFAULT 'null'", "comment": "Откуда сейчас собирается база данных"}
+	s2[12] = map[string]string{"name": "http_host", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "адрес, по которому будет висеть панель юзера.  Если это майнер, то адрес должен совпадать с my_table.http_host"}
+	s2[13] = map[string]string{"name": "auto_update", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
+	s2[14] = map[string]string{"name": "auto_update_url","mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[15] = map[string]string{"name": "analytics_disabled", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
+	s2[16] = map[string]string{"name": "stat_host","mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s1["fields"] = s2
 	s1["comment"] = ""
 	s["config"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 
 	s = make(Recmap)
@@ -551,13 +553,7 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-	prefix := ""
-	if schema.PrefixUserId > 0 {
-		prefix = utils.IntToStr(schema.PrefixUserId) + `_`
-	}
-	schema.DB.Exec(`INSERT INTO ` + prefix + `my_notifications (name, email, sms, mobile) VALUES ('admin_messages',1,1,1),('change_in_status',1,0,0),('dc_came_from',1,0,1),('dc_sent',1,0,0),('incoming_cash_requests',1,1,1),('node_time',0,0,0),('system_error',1,1,0),('update_email',1,0,0),('update_primary_key',1,0,0),('update_sms_request',1,0,0),('voting_results',0,0,0),('voting_time',1,0,0)`)
-	schema.DB.Exec(`INSERT INTO e_currency VALUES (1,1001,'USD',5),(2,72,'dUSD',5),(3,23,'dEUR',10),(4,1,'dWOC',100),(5,1002,'BTC',0.01)`)
-	schema.DB.Exec(`INSERT INTO e_currency_pair VALUES (1,1001,72),(2,1001,1),(3,1001,23),(4,1002,72)`)
+	schema.DCDB.ExecSql(`INSERT INTO states (state_id, state_code, node_public_key, delegate_wallet_id) VALUES (1, "DN", [hex], 1)`, "key")
 }
 
 func (schema *SchemaStruct) typeMysql() {
