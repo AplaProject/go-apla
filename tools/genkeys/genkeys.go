@@ -1,9 +1,11 @@
-// genkeys
 package main
 
 import (
 	"crypto/sha256"
+	"crypto/ecdsa"
+ 	"crypto/elliptic"
 	"encoding/hex"
+	"math/big"
 	"flag"
 	"github.com/DayLightProject/go-daylight/packages/lib"
 	"io/ioutil"
@@ -22,16 +24,17 @@ func main() {
 	flag.Parse()
 
 	if len(*seed) > 0 {
-		if seedText, err := ioutil.ReadFile(seed); err != nil {
-			privkey = err.Error()
+		if seedText, err := ioutil.ReadFile(*seed); err != nil {
+			privKey = err.Error()
 		} else if len(seedText) == 0 {
-			privkey = `Seed file is empty`
+			privKey = `Seed file is empty`
 		} else {
-			bi := new(big.Int).SetBytes(sha256.Sum256(seedText))
+			hash := sha256.Sum256(seedText)
+			bi := new(big.Int).SetBytes(hash[:])
 			priv := new(ecdsa.PrivateKey)
 			priv.PublicKey.Curve = elliptic.P256()
 			priv.D = bi
-			priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
+			priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(bi.Bytes())
 			privKey = hex.EncodeToString(priv.D.Bytes())
 			pubKey = hex.EncodeToString(append(lib.FillLeft(priv.PublicKey.X.Bytes()),
 				lib.FillLeft(priv.PublicKey.Y.Bytes())...))
