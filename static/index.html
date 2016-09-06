@@ -24,8 +24,6 @@
    <link rel="stylesheet" href="static/vendor/dataTables.fontAwesome/index.css">
    <!-- XEDITABLE-->
    <link rel="stylesheet" href="static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css">
-   <!-- WEATHER ICONS-->
-   <link rel="stylesheet" href="static/vendor/weather-icons/css/weather-icons.min.css">
    <!-- DATETIMEPICKER-->
    <link rel="stylesheet" href="static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css">
    <!-- SELECT2-->
@@ -81,41 +79,11 @@
    <!-- =============== VENDOR SCRIPTS ===============-->
    <!-- MODERNIZR-->
    <script src="static/vendor/modernizr/modernizr.custom.js"></script>
-   <!-- MATCHMEDIA POLYFILL-->
-   <script src="static/vendor/matchMedia/matchMedia.js"></script>
    <!-- JQUERY-->
    <script src="static/vendor/jquery/dist/jquery.js"></script>
    <!-- BOOTSTRAP-->
    <script src="static/vendor/bootstrap/dist/js/bootstrap.js"></script>
-   <!-- STORAGE API-->
-   <script src="static/vendor/jQuery-Storage-API/jquery.storageapi.js"></script>
-   <!-- JQUERY EASING-->
-   <script src="static/vendor/jquery.easing/js/jquery.easing.js"></script>
-   <!-- ANIMO-->
-   <script src="static/vendor/animo.js/animo.js"></script>
-   <!-- SLIMSCROLL-->
-   <script src="static/vendor/slimScroll/jquery.slimscroll.min.js"></script>
-   <!-- SCREENFULL-->
-   <script src="static/vendor/screenfull/dist/screenfull.js"></script>
-   <!-- LOCALIZE-->
-   <script src="static/vendor/jquery-localize-i18n/dist/jquery.localize.js"></script>
-   <!-- RTL demo-->
-   <script src="static/js/demo/demo-rtl.js"></script>
    <!-- =============== PAGE VENDOR SCRIPTS ===============-->
-   <!-- SPARKLINE-->
-   <script src="static/vendor/sparkline/index.js"></script>
-   <!-- FLOT CHART-->
-   <script src="static/vendor/Flot/jquery.flot.js"></script>
-   <script src="static/vendor/flot.tooltip/js/jquery.flot.tooltip.min.js"></script>
-   <script src="static/vendor/Flot/jquery.flot.resize.js"></script>
-   <script src="static/vendor/Flot/jquery.flot.pie.js"></script>
-   <script src="static/vendor/Flot/jquery.flot.time.js"></script>
-   <script src="static/vendor/Flot/jquery.flot.categories.js"></script>
-   <script src="static/vendor/flot-spline/js/jquery.flot.spline.min.js"></script>
-   <!-- CLASSY LOADER-->
-   <script src="static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"></script>
-   <!-- MOMENT JS-->
-   <script src="static/vendor/moment/min/moment-with-locales.min.js"></script>
    <!-- DATATABLES-->
    <script src="static/vendor/datatables/media/js/jquery.dataTables.min.js"></script>
    <script src="static/vendor/datatables-colvis/js/dataTables.colVis.js"></script>
@@ -129,15 +97,12 @@
    <script src="static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"></script>
    <!-- SELECT2-->
    <script src="static/vendor/select2/dist/js/select2.js"></script>
-   <!-- GOOGLE MAPS-->
-   <!--script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
-   <script src="static/vendor/jQuery-gMap/jquery.gmap.min.js"></script-->
    <!-- SWEET ALERT-->
    <script src="static/vendor/sweetalert/dist/sweetalert.min.js"></script>
    <!-- Clipboard-->
    <script src="static/js/clipboard.js"></script>
+   <!-- Preloader-->
    <script src="static/js/nprogress.js"></script>
-   <script src="static/js/spin.js"></script>
    
    <script>
 		$( document ).ready(function() {
@@ -148,19 +113,15 @@
 					$("#loading_db").css("display", "none");
 				})
 			{{else if .Key}}
-				//$("#loader").spin();
 				NProgressStart.set(1);
 				$("#dl_content").load( "content", { {{if .SetLang}}"parameters": {"lang":{{.SetLang}} }{{end}} }, function() {
 					$("#key").text("{{.Key}}");
 					doSign('login');
-					//$('#loader').spin(false);
 				})
 				load_menu({{if .SetLang}}{{.SetLang}}{{end}});
 			{{else}}
-				//$("#loader").spin();
 				NProgressStart.set(1);
 				$("#dl_content").load( "content", function() {
-					//$("#loader").spin(false);
 					load_menu();
 				});
 			{{end}}
@@ -217,68 +178,6 @@
 		<canvas  id="canvas_key"></canvas>
 	</div>
 
-	<script>
-		(function ($) {
-			$.fn.spin = function (opts, color) {
-				var presets = {
-					"tiny": {
-						lines: 8,
-						length: 2,
-						width: 2,
-						radius: 3
-					},
-					"small": {
-						lines: 8,
-						length: 4,
-						width: 3,
-						radius: 5
-					},
-					"large": {
-						lines: 10,
-						length: 8,
-						width: 4,
-						radius: 8
-					}
-				};
-				if (Spinner) {
-					return this.each(function () {
-						var $this = $(this),
-								data = $this.data();
-	
-						if (data.spinner) {
-							data.spinner.stop();
-							delete data.spinner;
-						}
-						if (opts !== false) {
-							if (typeof opts === "string") {
-								if (opts in presets) {
-									opts = presets[opts];
-								} else {
-									opts = {};
-								}
-								if (color) {
-									opts.color = color;
-								}
-							}
-							data.spinner = new Spinner($.extend({
-								color: $this.css('color')
-							}, opts)).spin(this);
-						}
-					});
-				} else {
-					throw "Spinner class not available.";
-				}
-			};
-		})(jQuery);
-		
-		$( document ).ready(function() {
-			//$( "#dl_content" ).load( "content?controllerName=updating_blockchain", { }, function() {});
-/*			$( "#dl_menu" ).load( "content?controllerHTML=menu", { }, function() {
-				$( "#dl_content" ).load( "content?controllerHTML=dashboard_anonym", { }, function() {});
-			});*/
-		});
-	</script>
-	
    <!-- =============== APP SCRIPTS ===============-->
    <script src="static/js/app.js"></script>
    <script src="static/js/index.js"></script>
