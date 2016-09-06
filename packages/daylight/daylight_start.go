@@ -70,7 +70,14 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	} else {
 		configIni, err = configIni_.GetSection("default")
 	}
-
+	
+/*	outfile, err := os.Create("./out.txt")
+    if err != nil {
+        panic(err)
+    }
+    defer outfile.Close()
+	os.Stdout = outfile*/
+	
 	// убьем ранее запущенный daylight
 	if !utils.Mobile() {
 		fmt.Println("kill daylight.pid")

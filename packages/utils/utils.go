@@ -2363,5 +2363,5 @@ func DecodeLenInt64(data *[]byte) (int64,error) {
 }
 
 func FillLeft(slice []byte) []byte {
-	return FillLeft(slice)
+	return lib.FillLeft(slice)
 }

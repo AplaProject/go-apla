@@ -1540,14 +1540,14 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 
 func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
 	// возьмем список всех full_nodes
-	fullNodesList, err := db.GetAll("SELECT full_node_id, wallet_id, cb_id FROM full_nodes", -1)
+	fullNodesList, err := db.GetAll("SELECT full_node_id, wallet_id, state_id as cb_id FROM full_nodes", -1)
 	if err != nil {
 		return int64(0), ErrInfo(err)
 	}
 	log.Debug("fullNodesList %s", fullNodesList)
 
 	// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
-	prevBlockFullNodeId, err := db.Single("SELECT full_node_id FROM full_nodes WHERE cb_id = ? OR wallet_id = ?", prevBlockCBID, prevBlockWalletId).Int64()
+	prevBlockFullNodeId, err := db.Single("SELECT full_node_id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockCBID, prevBlockWalletId).Int64()
 	if err != nil {
 		return int64(0), ErrInfo(err)
 	}

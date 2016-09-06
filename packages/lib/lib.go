@@ -2,13 +2,13 @@ package lib
 
 import (
 	"bytes"
-	"fmt"
-	"encoding/hex"
 	"crypto/ecdsa"
- 	"crypto/elliptic"
-	"crypto/sha256"
+	"crypto/elliptic"
 	crand "crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
+	"fmt"
 	b58 "github.com/jbenet/go-base58"
 	"golang.org/x/crypto/ripemd160"
 )
@@ -20,12 +20,12 @@ func BytesToAddress(address []byte) string {
 
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
 // encoded with EncodeLengthPlusInt64.
-func DecodeLenInt64(data *[]byte) (int64,error) {
+func DecodeLenInt64(data *[]byte) (int64, error) {
 	length := int((*data)[0]) + 1
 	if len(*data) < length {
 		return 0, fmt.Errorf(`length of data %d < %d`, len(*data), length)
 	}
-    buf := make([]byte, 8)
+	buf := make([]byte, 8)
 	copy(buf, (*data)[1:length])
 	x := int64(binary.LittleEndian.Uint64(buf))
 	*data = (*data)[length:]
@@ -45,13 +45,13 @@ func DecodeLenInt64(data *[]byte) (int64,error) {
 		return fmt.Errorf(`wrong count of parameters %d != %d`, len(format), len(args))
 	}
 	for i, ch := range format {
-		
+
 	}
 }
 */
 
 // Encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
-// Otherwise, it returns (0x80 | len of int64) + int64 as BigEndian []byte 
+// Otherwise, it returns (0x80 | len of int64) + int64 as BigEndian []byte
 //
 //   67 => 0x43
 //   1024 => 0x820400
@@ -78,24 +78,24 @@ func EncodeLength(length int64) []byte {
 //
 func DecodeLength(buf *[]byte) (ret int64, err error) {
 	if len(*buf) == 0 {
-		return 
+		return
 	}
 	length := (*buf)[0]
 	if (length & 0x80) != 0 {
 		length &= 0x7F
-		if len(*buf) < int(length + 1) {
+		if len(*buf) < int(length+1) {
 			return 0, fmt.Errorf(`input slice has small size`)
 		}
-		ret = int64(binary.BigEndian.Uint64(append(make([]byte,8-length), (*buf)[1:length+1]...)))
+		ret = int64(binary.BigEndian.Uint64(append(make([]byte, 8-length), (*buf)[1:length+1]...)))
 	} else {
 		ret = int64(length)
 		length = 0
 	}
-	*buf = (*buf)[length + 1:]
-	return 
+	*buf = (*buf)[length+1:]
+	return
 }
 
-// Appends the length of the slice + the buf slice. 
+// Appends the length of the slice (EncodeLength) + the slice.
 func EncodeLenByte(out *[]byte, buf []byte) *[]byte {
 	*out = append(append(*out, EncodeLength(int64(len(buf)))...), buf...)
 	return out
@@ -109,9 +109,9 @@ func EncodeLenInt64(data *[]byte, x int64) *[]byte {
 	var length int
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, uint64(x))
-	for length = 8;length > 0 && buf[length-1] == 0; length-- {
+	for length = 8; length > 0 && buf[length-1] == 0; length-- {
 	}
-	*data = append( append( *data, byte(length)), buf[:length]...)
+	*data = append(append(*data, byte(length)), buf[:length]...)
 	return data
 }
 
@@ -120,20 +120,20 @@ func FillLeft(slice []byte) []byte {
 	if len(slice) >= 32 {
 		return slice
 	}
-	return append( make([]byte, 32 - len(slice)), slice...)
+	return append(make([]byte, 32-len(slice)), slice...)
 }
 
 // Function generate a random pair of ECDSA private and public keys.
 func GenKeys() (privKey string, pubKey string) {
-    private,_  := ecdsa.GenerateKey(elliptic.P256(), crand.Reader) 
-	privKey = hex.EncodeToString( private.D.Bytes())
-	pubKey = hex.EncodeToString(append( FillLeft(private.PublicKey.X.Bytes()), FillLeft(private.PublicKey.Y.Bytes())...))
+	private, _ := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+	privKey = hex.EncodeToString(private.D.Bytes())
+	pubKey = hex.EncodeToString(append(FillLeft(private.PublicKey.X.Bytes()), FillLeft(private.PublicKey.Y.Bytes())...))
 	return
 }
 
 // Function IsValidAddress checks if the specified address is DayLight address.
 func IsValidAddress(address string) bool {
-	if address[0] != 'D' { 
+	if address[0] != 'D' {
 		return false
 	}
 	key := b58.Decode(address[1:])
@@ -146,13 +146,12 @@ func IsValidAddress(address string) bool {
 
 // Converts a public key to DayLight address.
 func KeyToAddress(pubKey []byte) string {
-    h256 := sha256.Sum256(pubKey)
-    h := ripemd160.New()
-    h.Write(h256[:])
-    finger := h.Sum(nil)
+	h256 := sha256.Sum256(pubKey)
+	h := ripemd160.New()
+	h.Write(h256[:])
+	finger := h.Sum(nil)
 	h256 = sha256.Sum256(finger)
 	h256 = sha256.Sum256(h256[:])
 	checksum := h256[:4]
 	return BytesToAddress(append(finger, checksum...))
 }
-
