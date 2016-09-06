@@ -20,8 +20,9 @@ func main() {
 	if sqlText, err := ioutil.ReadFile(*sql); err != nil {
 		fmt.Println( err.Error())
 	} else {
-		parts := strings.Split( strings.Replace(string(sqlText), ` comment `, ` COMMENT `, -1), ` COMMENT `)
-		pattern := regexp.MustCompile( `^\s*"[^"]*"`) //`^\s*"[^"]*"\s*,`)
+		tmp := strings.Replace(string(sqlText), ` COMMENT=`, ` COMMENT =`, -1)
+		parts := strings.Split( strings.Replace(tmp, ` comment=`, ` COMMENT =`, -1), ` COMMENT`)
+		pattern := regexp.MustCompile( `(?i)^[=\s]+"[^"]*"`) //`^\s*"[^"]*"\s*,`)
 		output := ``
 		for _,item := range parts {
 			found := pattern.FindStringIndex(item)

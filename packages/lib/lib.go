@@ -32,23 +32,60 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 	return x, nil
 }
 
-// Encode values into binary data. The format parameter can contains the following characters:
+// Encodes values into binary data. The format parameter can contain the following characters:
 // 1 - 1 byte for encoding byte, int8, uint8
 // 4 - 4 bytes for encoding int32, uint32
 // i - 2-9 bytes for encoding int64, uint64 by EncodeLenInt64 function
 // s - for encoding string or []byte by EncodeLenByte function
-/*func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
-	if out == nil {
+func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
+	if *out == nil {
 		*out = make([]byte, 0, 2048)
 	}
 	if len(format) != len(args) {
 		return fmt.Errorf(`wrong count of parameters %d != %d`, len(format), len(args))
 	}
+	tmp := make([]byte,4)
 	for i, ch := range format {
-
+		switch ch {
+			case '1', '4': 
+				switch ival := args[i].(type) {
+					case int8, uint8, int, int32, uint32: 
+						val,_ := ival.(int)
+						if ch == '1' {
+							*out = append(*out, uint8(val))
+						} else {
+							binary.LittleEndian.PutUint32(tmp, uint32(val))	
+							*out = append(*out, tmp...)
+						}
+					default: 
+						return fmt.Errorf(`wrong type %d`, i)
+				}
+			case 'i': 
+				switch ival := args[i].(type) {
+					case int8, uint8, int, int32, uint32:
+						val,_ := ival.(int)
+						EncodeLenInt64(out, int64(val))
+					case int64, uint64: 
+						val,_ := ival.(int64)
+						EncodeLenInt64(out, val)
+					default: 
+						return fmt.Errorf(`wrong type %d`, i)
+				}
+			case 's':
+				switch ival := args[i].(type) {
+					case string:
+						EncodeLenByte(out, []byte(ival))
+					case []byte: 
+						EncodeLenByte(out, ival)
+					default: 
+						return fmt.Errorf(`wrong type %d`, i)
+				}
+			default: 
+				return fmt.Errorf(`unknown input binary format`)
+		}
 	}
+	return nil
 }
-*/
 
 // Encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
 // Otherwise, it returns (0x80 | len of int64) + int64 as BigEndian []byte
