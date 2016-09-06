@@ -5,6 +5,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/test"
 	"math/rand"
 	"testing"
+	"encoding/hex"
 )
 
 type ByteTest struct {
@@ -92,5 +93,26 @@ func TestFill(t *testing.T) {
 			t.Errorf(`different slices %x %x`, input, out)
 		}
 	}
+}
 
+func TestEncodeBinary(t *testing.T) {
+	var (
+		out []byte
+		off int
+	)
+	check := func( format string, cmp []byte, args ...interface{}) {
+		if err := EncodeBinary(&out, format, args...); err!=nil {
+			t.Errorf(err.Error())
+		} else if bytes.Compare(out[off:], cmp) != 0 {
+			t.Errorf(`different output binary data %x`, out )
+		}
+		off = len(out)
+	}
+	check( `1`, []byte{255}, 255)
+	check( `414`, []byte{0x01,0x01,0,0, 0x7e, 0xa1,0x86,1,0}, 257, 126, 100001 )
+	check( `ii4i`, []byte{0x01,0x43, 0x3,0x9a,0x31,1, 0xff,0xff,0,0, 0x3,0x2c,0xdd,0x15}, 
+	               67, 78234, 0xffff, int64(1432876))
+	cmp,_ := hex.DecodeString(`0474657374c8057b0001ff86`)
+	check( `s1s`, cmp, `test`, 200, []byte{ 123, 0, 1, 255, 134})
+//	fmt.Printf( "\r\n%x", out[24:])
 }
