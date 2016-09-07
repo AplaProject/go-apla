@@ -26,7 +26,12 @@ type FirstBlock struct {
 var blockStructs = make(map[string]reflect.Type)
 
 func init() {
-	blockStructs[reflect.TypeOf(FirstBlock{}).Name()] = reflect.TypeOf(FirstBlock{})
+	list := []interface{}{ FirstBlock{},
+	   // New structures must be inserted here
+	}
+	for _, item := range list {
+		blockStructs[reflect.TypeOf(item).Name()] = reflect.TypeOf(item)
+	}
 }
 
 func MakeStruct(name string) interface{} {
