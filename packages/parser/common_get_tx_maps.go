@@ -3,6 +3,8 @@ package parser
 import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"encoding/json"
 )
 
 func (p *Parser) GetTxMaps(fields []map[string]string) error {
@@ -29,6 +31,31 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	p.TxMap["time"] = p.TxSlice[2]
 	p.TxMap["wallet_id"] = p.TxSlice[3]
 	p.TxMap["citizen_id"] = p.TxSlice[4]
+
+	if p.TxMaps.Int64["type"] == 0 {
+		return fmt.Errorf(`p.TxMaps.Int64["type"] == 0`)
+
+	}
+	if  p.TxMaps.Int64["type"] <= int64(len(consts.TxTypes)) && consts.TxTypes[int(p.TxMaps.Int64["type"])] == "new_citizen" {
+		// получим набор доп. полей, которые должны быть в данной тр-ии
+		additionalFields, err := p.Single(`SELECT fields FROM citizen_fields WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).Bytes()
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+
+		additionalFieldsMap := []map[string]string{}
+		err = json.Unmarshal(additionalFields, &additionalFieldsMap)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+
+		fields = []map[string]string{}
+		for _, date := range additionalFieldsMap {
+			fields = append(fields, map[string]string{date["name"]: date["txType"]})
+		}
+		fields = append(fields, map[string]string{"sign": "bytes"})
+	}
+
 	for i := 0; i < len(fields); i++ {
 		for field, fType := range fields[i] {
 			p.TxMap[field] = p.TxSlice[i+5]

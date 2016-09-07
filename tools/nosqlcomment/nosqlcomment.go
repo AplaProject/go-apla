@@ -22,7 +22,7 @@ func main() {
 	} else {
 		tmp := strings.Replace(string(sqlText), ` COMMENT=`, ` COMMENT =`, -1)
 		parts := strings.Split( strings.Replace(tmp, ` comment=`, ` COMMENT =`, -1), ` COMMENT`)
-		pattern := regexp.MustCompile( `(?i)^[=\s]+"[^"]*"`) //`^\s*"[^"]*"\s*,`)
+		pattern := regexp.MustCompile( `(?i)^[=\s]+'[^']*'`) //`^\s*"[^"]*"\s*,`)
 		output := ``
 		for _,item := range parts {
 			found := pattern.FindStringIndex(item)
