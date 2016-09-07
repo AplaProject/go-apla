@@ -27,9 +27,9 @@ const MAX_TX_FORW = 0
 // тр-ия может блуждать по сети сутки и потом попасть в блок
 const MAX_TX_BACK = 86400
 
-const MAX_BLOCK_SIZE = 64<<20
+const MAX_BLOCK_SIZE = 64 << 20
 
-const MAX_TX_SIZE = 32<<20
+const MAX_TX_SIZE = 32 << 20
 
 const MAX_TX_COUNT = 100000
 

@@ -57,6 +57,7 @@ type Parser struct {
 	TxTime           int64
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte
+	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
 }
 
 

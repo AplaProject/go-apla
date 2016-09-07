@@ -186,13 +186,15 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
 	result.WalletId,_ = DecodeLenInt64(binaryBlock)//BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	// Delete after re-build blocks
-	if result.WalletId == 0x31 {
+/*	if result.WalletId == 0x31 {
 		result.WalletId = 1
-	}
+	}*/
 	result.CBID = BinToDecBytesShift(binaryBlock, 1)
 	if result.BlockId > 1 {
 		signSize := DecodeLength(binaryBlock)
 		result.Sign = BytesShift(binaryBlock, signSize)
+	} else {
+		*binaryBlock = (*binaryBlock)[1:]
 	}
 	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.CBID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.CBID, result.Sign)
 	return result

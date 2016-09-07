@@ -2539,7 +2539,8 @@
 
       // Load the state string and restore the classlist
       restoreState: function($elem) {
-        var data = $.localStorage.get(storageKeyName);
+//        var data = $.localStorage.get(storageKeyName);
+        var data = localStorage.getItem(storageKeyName);
 
         // nothing to restore
         if(!data) return;

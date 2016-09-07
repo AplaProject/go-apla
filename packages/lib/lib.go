@@ -11,6 +11,8 @@ import (
 	"fmt"
 	b58 "github.com/jbenet/go-base58"
 	"golang.org/x/crypto/ripemd160"
+	"reflect"
+	"time"
 )
 
 // Converts binary address to DayLight address.
@@ -37,7 +39,7 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 // 4 - 4 bytes for encoding int32, uint32
 // i - 2-9 bytes for encoding int64, uint64 by EncodeLenInt64 function
 // s - for encoding string or []byte by EncodeLenByte function
-func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
+/*func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
 	if *out == nil {
 		*out = make([]byte, 0, 2048)
 	}
@@ -47,44 +49,51 @@ func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
 	tmp := make([]byte,4)
 	for i, ch := range format {
 		switch ch {
-			case '1', '4': 
+			case '1', '4':
 				switch ival := args[i].(type) {
-					case int8, uint8, int, int32, uint32: 
+					case int8, uint8, int, int32, uint32:
 						val,_ := ival.(int)
 						if ch == '1' {
 							*out = append(*out, uint8(val))
 						} else {
-							binary.LittleEndian.PutUint32(tmp, uint32(val))	
+							binary.BigEndian.PutUint32(tmp, uint32(val))
 							*out = append(*out, tmp...)
 						}
-					default: 
+					default:
 						return fmt.Errorf(`wrong type %d`, i)
 				}
-			case 'i': 
+			case 'i':
 				switch ival := args[i].(type) {
 					case int8, uint8, int, int32, uint32:
 						val,_ := ival.(int)
 						EncodeLenInt64(out, int64(val))
-					case int64, uint64: 
+					case int64, uint64:
 						val,_ := ival.(int64)
 						EncodeLenInt64(out, val)
-					default: 
+					default:
 						return fmt.Errorf(`wrong type %d`, i)
 				}
 			case 's':
 				switch ival := args[i].(type) {
 					case string:
 						EncodeLenByte(out, []byte(ival))
-					case []byte: 
+					case []byte:
 						EncodeLenByte(out, ival)
-					default: 
+					default:
 						return fmt.Errorf(`wrong type %d`, i)
 				}
-			default: 
+			default:
 				return fmt.Errorf(`unknown input binary format`)
 		}
 	}
 	return nil
+}*/
+
+// Convert 32-byte value into [4]byte (BigEndian)
+func UintToBytes(val uint32) []byte {
+	tmp := make([]byte, 4)
+	binary.BigEndian.PutUint32(tmp, val)
+	return tmp
 }
 
 // Encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
@@ -95,13 +104,13 @@ func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
 //   1000000 => 0x830f4240
 //
 func EncodeLength(length int64) []byte {
-	if length > 0 && length <= 127 {
+	if length >= 0 && length <= 127 {
 		return []byte{byte(length)}
 	}
 	buf := make([]byte, 9)
 	binary.BigEndian.PutUint64(buf[1:], uint64(length))
 	i := 1
-	for ; buf[i] == 0; i++ {
+	for ; buf[i] == 0 && i < 8; i++ {
 	}
 	buf[0] = 0x80 | byte(9-i)
 	return append(buf[:1], buf[i:]...)
@@ -181,8 +190,7 @@ func IsValidAddress(address string) bool {
 	return bytes.Compare(checksum, h256[:4]) == 0
 }
 
-// Converts a public key to DayLight address.
-func KeyToAddress(pubKey []byte) string {
+func Address(pubKey []byte) []byte {
 	h256 := sha256.Sum256(pubKey)
 	h := ripemd160.New()
 	h.Write(h256[:])
@@ -190,5 +198,120 @@ func KeyToAddress(pubKey []byte) string {
 	h256 = sha256.Sum256(finger)
 	h256 = sha256.Sum256(h256[:])
 	checksum := h256[:4]
-	return BytesToAddress(append(finger, checksum...))
+	return append(finger, checksum...)
+}
+
+// Converts a public key to DayLight address.
+func KeyToAddress(pubKey []byte) string {
+	return BytesToAddress(Address(pubKey))
+}
+
+// Tiem gets the current time in UNIX format.
+func Time32() uint32 {
+	return uint32(time.Now().Unix())
+}
+
+func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
+	t := reflect.ValueOf(v)
+	if *out == nil {
+		*out = make([]byte, 0, 2048)
+	}
+
+	switch t.Kind() {
+	case reflect.Uint8, reflect.Int8:
+		*out = append(*out, uint8(t.Uint()))
+	case reflect.Uint32, reflect.Int32:
+		tmp := make([]byte, 4)
+		binary.BigEndian.PutUint32(tmp, uint32(t.Uint()))
+		*out = append(*out, tmp...)
+	case reflect.Int64, reflect.Uint64:
+		EncodeLenInt64(out, t.Int())
+	case reflect.String:
+		*out = append(append(*out, EncodeLength(int64(t.Len()))...), []byte(t.String())...)
+	case reflect.Struct:
+		for i := 0; i < t.NumField(); i++ {
+			BinMarshal(out, t.Field(i).Interface())
+		}
+	case reflect.Slice:
+		*out = append(append(*out, EncodeLength(int64(t.Len()))...), t.Bytes()...)
+	case reflect.Ptr:
+		BinMarshal(out, t.Elem().Interface())
+	default:
+		return out, fmt.Errorf(`unsupported type of BinMarshal`)
+	}
+	return out, nil
+}
+
+func BinUnmarshal(out *[]byte, v interface{}) error {
+	t := reflect.ValueOf(v)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	if len(*out) == 0 {
+		return fmt.Errorf(`input slice is empty`)
+	}
+	switch t.Kind() {
+	case reflect.Uint8, reflect.Int8:
+		val := uint64((*out)[0])
+		t.SetUint(val)
+		*out = (*out)[1:]
+	case reflect.Uint32, reflect.Int32:
+		t.SetUint(uint64(binary.BigEndian.Uint32((*out)[:4])))
+		*out = (*out)[4:]
+	case reflect.Int64, reflect.Uint64:
+		if val, err := DecodeLenInt64(out); err != nil {
+			return err
+		} else {
+			t.SetInt(val)
+		}
+	case reflect.String:
+		if val, err := DecodeLength(out); err != nil {
+			return err
+		} else {
+			if len(*out) < int(val) {
+				return fmt.Errorf(`input slice is short`)
+			}
+			t.SetString(string((*out)[:val]))
+			*out = (*out)[val:]
+		}
+	case reflect.Struct:
+		for i := 0; i < t.NumField(); i++ {
+			BinUnmarshal(out, t.Field(i).Addr().Interface())
+		}
+	case reflect.Slice:
+		if val, err := DecodeLength(out); err != nil {
+			return err
+		} else {
+			if len(*out) < int(val) {
+				return fmt.Errorf(`input slice is short`)
+			}
+			t.SetBytes((*out)[:val])
+			*out = (*out)[val:]
+		}
+	default:
+		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
+	}
+	return nil
+}
+
+func FieldToBytes(v interface{}, num int) []byte {
+	t := reflect.ValueOf(v)
+	ret := make([]byte, 0, 2048)
+	if t.Kind() == reflect.Struct && num < t.NumField() {
+		field := t.Field(num)
+		switch field.Kind() {
+		case reflect.Uint8, reflect.Uint32, reflect.Uint64:
+			ret = append( ret, []byte(fmt.Sprintf("%d", field.Uint()))...)
+		case reflect.Int8, reflect.Int32, reflect.Int64:
+			ret = append( ret, []byte(fmt.Sprintf("%d", field.Int()))...)
+		case reflect.String:
+			ret = append( ret, []byte(field.String())...)
+		case reflect.Slice:
+			ret = append( ret, field.Bytes()...)
+//		case reflect.Ptr:
+//		case reflect.Struct:
+//		default:
+		}
+	}
+	return ret
 }

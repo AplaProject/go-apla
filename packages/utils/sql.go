@@ -7,9 +7,11 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"encoding/pem"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
@@ -977,7 +979,7 @@ func (db *DCDB) GetMyWalletId() (int64, error) {
 }
 
 func (db *DCDB) GetMyCBID() (int64, error) {
-	return db.Single("SELECT cb_id FROM config").Int64()
+	return db.Single("SELECT state_id FROM config").Int64()
 }
 
 func (db *DCDB) GetBlockId() (int64, error) {
@@ -991,7 +993,9 @@ func (db *DCDB) GetMyBlockId() (int64, error) {
 func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
 	log.Debug("publicKey %s", publicKey)
-	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`, string(HashSha1Hex(publicKey))).Int64()
+	key,_ := hex.DecodeString(string(publicKey))
+	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`, 
+	       string(/*HashSha1Hex*/hex.EncodeToString(lib.Address(key)))).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
@@ -999,7 +1003,7 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 }
 
 func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
-	walletId, err := db.Single(`SELECT citizen_id FROM citizens WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
+	walletId, err := db.Single(`SELECT citizen_id FROM dn_citizens WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
@@ -1055,7 +1059,7 @@ func (db *DCDB) GetPublicKeyWalletOrCitizen(wallet_id, citizen_id int64) ([]byte
 			return []byte(""), err
 		}
 	} else {
-		result, err = db.Single("SELECT public_key_0 FROM citizens WHERE citizen_is = ?", citizen_id).Bytes()
+		result, err = db.Single("SELECT public_key_0 FROM dn_citizens WHERE citizen_is = ?", citizen_id).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
@@ -1506,7 +1510,7 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 }
 
 func (db *DCDB) FindInFullNodes(myCBID, myWalletId int64) (int64, error) {
-	return db.Single("SELECT full_node_id FROM full_nodes WHERE final_delegate_cb_id = ? OR final_delegate_wallet_id = ? OR cb_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
+	return db.Single("SELECT full_node_id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
 }
 
 func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
@@ -1569,7 +1573,7 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 	myPosition := func (fullNodesList []map[string]string, myWalletId, myCBID int64) int {
 		log.Debug("%v %v", fullNodesList, myWalletId)
 		for i, full_nodes := range fullNodesList {
-			if StrToInt64(full_nodes["cb_id"]) == myCBID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_cb_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
+			if StrToInt64(full_nodes["cb_id"]) == myCBID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_state_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
 				return i
 			}
 		}

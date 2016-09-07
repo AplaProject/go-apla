@@ -36,21 +36,34 @@ func firstBlock() {
 		NodePublicKeyBytes,_ := hex.DecodeString(string(NodePublicKey))
 		Host, _ := ioutil.ReadFile(*utils.Dir + "/Host")
 
-		tx := utils.DecToBin(1, 1)
+		var block, tx []byte
+		now := lib.Time32()
+		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: 1})
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+		}
+		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{Type: 1, Time: now, WalletId: 1, CitizenId: 0,
+				PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+		}
+		lib.EncodeLenByte(&block, tx)
+		/*tx := utils.DecToBin(1, 1)
 		tx = append(tx, utils.DecToBin(utils.Time(), 4)...)
 		tx = append(tx, utils.EncodeLengthPlusData("1")...) // wallet_id
 		tx = append(tx, utils.EncodeLengthPlusData("0")...) // citizen_id
 		tx = append(tx, utils.EncodeLengthPlusData(PublicKeyBytes)...)
 		tx = append(tx, utils.EncodeLengthPlusData(NodePublicKeyBytes)...)
 		tx = append(tx, utils.EncodeLengthPlusData(Host)...)
-
+		lib.EncodeBinary(&tx, `14iisss`, 1, now, 1, 0, PublicKeyBytes, NodePublicKeyBytes, Host)
+		lib.EncodeBinary(&block, `144i1s`, 0, 1, now, 1, 0, tx)
 		block := utils.DecToBin(0, 1)
 		block = append(block, utils.DecToBin(1, 4)...)
 		block = append(block, utils.DecToBin(utils.Time(), 4)...)
 		lib.EncodeLenInt64(&block, 1) //wallet_id
 //		block = append(block, utils.EncodeLengthPlusData("1")...) // wallet_id
 		block = append(block, utils.DecToBin(0, 1)...) // cb_id
-		block = append(block, utils.EncodeLengthPlusData(tx)...)
+		block = append(block, utils.EncodeLengthPlusData(tx)...)*/
 
 		static := filepath.Join("", "static")
 		if _, err := os.Stat(static); os.IsNotExist(err) {

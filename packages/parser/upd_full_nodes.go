@@ -135,7 +135,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 
 	for _, data := range full_nodes_wallet {
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
-		err = p.ExecSql(`INSERT INTO full_nodes (full_node_id, host, wallet_id, cb_id, final_delegate_wallet_id, final_delegate_cb_id, rb_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, data["full_node_id"], data["host"], data["wallet_id"], data["cb_id"], data["final_delegate_wallet_id"], data["final_delegate_cb_id"], data["rb_id"])
+		err = p.ExecSql(`INSERT INTO full_nodes (full_node_id, host, wallet_id, cb_id, final_delegate_wallet_id, final_delegate_state_id, rb_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, data["full_node_id"], data["host"], data["wallet_id"], data["cb_id"], data["final_delegate_wallet_id"], data["final_delegate_state_id"], data["rb_id"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}

@@ -2,10 +2,12 @@ package lib
 
 import (
 	"bytes"
+	"encoding/hex"
 	"github.com/DayLightProject/go-daylight/packages/test"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 	"math/rand"
 	"testing"
-	"encoding/hex"
+		"fmt"
 )
 
 type ByteTest struct {
@@ -95,6 +97,7 @@ func TestFill(t *testing.T) {
 	}
 }
 
+/*
 func TestEncodeBinary(t *testing.T) {
 	var (
 		out []byte
@@ -109,10 +112,71 @@ func TestEncodeBinary(t *testing.T) {
 		off = len(out)
 	}
 	check( `1`, []byte{255}, 255)
-	check( `414`, []byte{0x01,0x01,0,0, 0x7e, 0xa1,0x86,1,0}, 257, 126, 100001 )
-	check( `ii4i`, []byte{0x01,0x43, 0x3,0x9a,0x31,1, 0xff,0xff,0,0, 0x3,0x2c,0xdd,0x15}, 
+	check( `414`, []byte{0,0,0x01,0x01, 0x7e, 0,1,0x86,0xa1}, 257, 126, 100001 )
+	check( `ii4i`, []byte{0x01,0x43, 0x3,0x9a,0x31,1, 0,0,0xff,0xff, 0x3,0x2c,0xdd,0x15},
 	               67, 78234, 0xffff, int64(1432876))
-	cmp,_ := hex.DecodeString(`0474657374c8057b0001ff86`)
-	check( `s1s`, cmp, `test`, 200, []byte{ 123, 0, 1, 255, 134})
-//	fmt.Printf( "\r\n%x", out[24:])
+	check( `s1s`, test.HexToBytes(`0474657374c8057b0001ff86`), `test`, 200, []byte{ 123, 0, 1, 255, 134})
+}*/
+
+func TestBinMarshal(t *testing.T) {
+	var out, tx []byte
+	var err error
+	host := `Unicode текст`
+	now := Time32()
+	node := test.HexToBytes(`20304350647f8f96a8`)
+	_, err = BinMarshal(&out, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: 1})
+	_, err = BinMarshal(&tx, &consts.FirstBlock{Type: 1, Time: now, WalletId: 1, CitizenId: 0,
+		PublicKey:     test.HexToBytes(`0102300040fffa6789`),
+		NodePublicKey: node,
+		Host:          host})
+	EncodeLenByte(&out, tx)
+
+	tmp := hex.EncodeToString(UintToBytes(now))
+	cmp := test.HexToBytes(`0000000001` + tmp + `010100002f01` + tmp +
+		`010100090102300040fffa67890920304350647f8f96a812556e69636f646520d182d0b5d0bad181d182`)
+	if bytes.Compare(out, cmp) != 0 {
+		t.Errorf(`different output binary data %x %x`, out, cmp)
+	}
+	var block consts.BlockHeader
+	if err = BinUnmarshal(&out, &block); err != nil {
+		t.Errorf(err.Error())
+	}
+
+	//	fmt.Println( block )
+	var first consts.FirstBlock
+	DecodeLength(&out)
+	dup := out[:]
+	if err = BinUnmarshal(&out, &first); err != nil {
+		t.Errorf(err.Error())
+	}
+	if first.Time != now || first.Host != host || first.WalletId != 1 ||
+		bytes.Compare(first.NodePublicKey, node) != 0 {
+		t.Errorf(`different unmarshaled %v`, first)
+	}
+	if len(out) != 0 {
+		t.Errorf(`unfinished`)
+	}
+	var inter interface{}
+	inter = consts.MakeStruct(`FirstBlock`)
+	err = BinUnmarshal(&dup, inter)
+	p := inter.(*consts.FirstBlock)
+	if p.Time != now || p.Host != host || p.WalletId != 1 ||
+		bytes.Compare(p.NodePublicKey, node) != 0 {
+		t.Errorf(`different unmarshaled %v`, p)
+	}
+}
+
+func TestFieldToBytes(t *testing.T) {
+    first := consts.FirstBlock{Type: 1, Time: 2345, WalletId: 67, CitizenId: 89,
+		PublicKey:     []byte(`010203`),
+		NodePublicKey: []byte(`040506`),
+		Host:          `070809`}
+	out := ``
+	for i:=0; i< 7; i++ {
+		out += string(FieldToBytes(first, i))
+	}
+	if out != `123456789010203040506070809` {
+		t.Errorf(`different out %s`, out)
+	}
+	fmt.Println(out)
 }
