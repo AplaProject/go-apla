@@ -2,6 +2,12 @@
 	#message {
 		display:none;
 	}
+	#refresh {
+		visibility:hidden;
+		position:absolute;
+		left:-100000px;
+		top:-100000px;
+	}
 </style>
 
 <script>
@@ -26,27 +32,55 @@
 		format: 'DD MMMM, YYYY'
 	});
 	$('.filestyle').filestyle();
-	$('#select2-1').select2({
+	$('#countries').select2({
 		theme: 'bootstrap'
 	});
 	
+	var container = $("#fields");
+	var msg = $("#message");
+	
+	function Country(id) {
+		if (!id) {
+			id = 1;
+		}
+		
+		container.html("");
+		$("#refresh").click();
+		
+		$.get( 'ajax?json=ajax_citizen_fields',{state_id: id}, function(data) {
+			$('[data-sweet-alert]').removeClass("whirl standard");
+			if (data.fields.length) {
+				var fields = JSON.parse(data.fields);
+				if (fields[0].htmlType == "textinput") {
+					el = '<div class="form-group"><label for="' + fields[0].name + '">Name</label><input id="' + fields[0].name + '" name="' + fields[0].name + '" type="text" class="form-control"></div>'
+				}
+				container.append(el);
+			}
+		},'json')
+	}
+	
 	function changeCountry(elem) {
 		var id = elem.value;
-		if (id == "DL") {
-			$("#message").hide();
+		if (id != "1") {
+			msg.show();
+			container.html("");
 		} else {
-			$("#message").show();
+			msg.hide();
+			Country(id);
 		}
 	}
+	
+	Country();
 	// Example of ajax_citizen_fields
-	$.get( 'ajax?json=ajax_citizen_fields',{state_id: 1}, function(data) {
-		if (data.data.length) {
+	/*$.get( 'ajax?json=ajax_citizen_fields',{state_id: 1}, function(data) {
+		console.log(data);
+		if (data.fields.length) {
 			var fields = JSON.parse(data.data);
 			alert(fields[0].name +', ' + fields[0].title + ', ' + 
 			fields[0].txType +', ' + fields[0].htmlType	 );
 			console.log( fields );
 		}
-	},'json')
+	},'json')*/
 </script>
 
 <div class="content-heading">
@@ -61,10 +95,11 @@
  <div class="panel-body">
 	<form role="form">
 	   <div class="form-group">
-		  <label>Price</label>
-		  <input type="text" class="form-control" value="10 DLT" disabled>
+		  <label for="price">Price</label>
+		  <input id="price" type="text" class="form-control" value="10 DLT" disabled>
 	   </div>
-	   <div class="form-group">
+	   <div id="fields"></div>
+	   <!--<div class="form-group">
 		  <label>Name</label>
 		  <input type="text" class="form-control">
 	   </div>
@@ -88,11 +123,11 @@
 	   <div class="form-group">
 		  <label>Passport number</label>
 		  <input type="text" class="form-control">
-	   </div>
+	   </div>-->
 	   <div class="form-group">
-		  <label>Country</label>
-		  <select id="select2-1" class="form-control" onChange="changeCountry(this);">
-			 <option value="DL">DayLight</option>
+		  <label for="countries">Country</label>
+		  <select id="countries" class="form-control" onChange="changeCountry(this);">
+			 <option value="1">DayLight</option>
 			 <option value="AL">Alabama</option>
 			 <option value="AR">Arkansas</option>
 			 <option value="IL">Illinois</option>
@@ -117,6 +152,7 @@
    <div class="clearfix">
 	  <div class="pull-right">
 		 <button type="button" class="btn btn-primary">Request</button>
+		 <button id="refresh" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
 	  </div>
    </div>
   </div>
