@@ -8,10 +8,13 @@ import (
 
 func (p *Parser) NewCitizenInit() error {
 
-	err := p.GetTxMaps(nil)
+	fields := []map[string]string{{"public_key": "bytes"}}
+	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	p.TxMap["public_key_hex"] = utils.BinToHex(p.TxMap["public_key"])
+	p.TxMaps.Bytes["public_key_hex"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
 	return nil
 }
 
@@ -19,6 +22,11 @@ func (p *Parser) NewCitizenFront() error {
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+
+	// чтобы не записали слишком мелкий или слишком крупный ключ
+	if !utils.CheckInputData(p.TxMap["public_key_hex"], "public_key") {
+		return utils.ErrInfo(fmt.Errorf("incorrect public_key %s", p.TxMap["public_key_hex"]))
 	}
 
 	// получим набор доп. полей, которые должны быть в данной тр-ии
@@ -42,10 +50,9 @@ func (p *Parser) NewCitizenFront() error {
 		return p.ErrInfo(err)
 	}
 
-	// проверим, есть ли такое гос-во
+	// добавить граждани может только гржданин то же страны
 
-
-	// есть ли сумма, которую просит гос-во за регистрацию гражданства в DLT
+	// тот, кто добавляет должен быть действующим представителем органа, назначенного в ds_state_settings
 
 
 	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxWalletID)
@@ -55,24 +62,6 @@ func (p *Parser) NewCitizenFront() error {
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
-	}
-
-	// есть ли нужная сумма на кошельке
-	amountAndCommission, err := p.checkSenderMoney(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	amount, err := p.Single(`SELECT value FROM dn_state_settings WHERE parameter = ?`, "citizen_dlt_price").Int64()
-	if amount > amountAndCommission {
-		return p.ErrInfo("incorrect amount")
-	}
-
-	// вычитаем из wallets_buffer
-	// amount_and_commission взято из check_sender_money()
-	err = p.updateWalletsBuffer(amountAndCommission)
-	if err != nil {
-		return p.ErrInfo(err)
 	}
 
 	return nil

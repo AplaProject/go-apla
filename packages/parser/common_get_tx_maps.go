@@ -9,9 +9,7 @@ import (
 
 func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	log.Debug("p.TxSlice %s", p.TxSlice)
-	if len(p.TxSlice) != len(fields)+5 {
-		return fmt.Errorf("bad transaction_array %d != %d (type=%d)", len(p.TxSlice), len(fields)+4, p.TxSlice[0])
-	}
+
 	//log.Debug("p.TxSlice", p.TxSlice)
 	p.TxMap = make(map[string][]byte)
 	p.TxMaps = new(txMapsType)
@@ -36,6 +34,8 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 		return fmt.Errorf(`p.TxMaps.Int64["type"] == 0`)
 
 	}
+	var allFields []map[string]string
+	allFields = append(allFields, fields...)
 	if  p.TxMaps.Int64["type"] <= int64(len(consts.TxTypes)) && consts.TxTypes[int(p.TxMaps.Int64["type"])] == "new_citizen" {
 		// получим набор доп. полей, которые должны быть в данной тр-ии
 		additionalFields, err := p.Single(`SELECT fields FROM citizen_fields WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).Bytes()
@@ -49,15 +49,16 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 			return p.ErrInfo(err)
 		}
 
-		fields = []map[string]string{}
 		for _, date := range additionalFieldsMap {
-			fields = append(fields, map[string]string{date["name"]: date["txType"]})
+			allFields = append(allFields, map[string]string{date["name"]: date["txType"]})
 		}
-		fields = append(fields, map[string]string{"sign": "bytes"})
+		allFields = append(allFields, map[string]string{"sign": "bytes"})
 	}
-
-	for i := 0; i < len(fields); i++ {
-		for field, fType := range fields[i] {
+	if len(p.TxSlice) != len(allFields)+5 {
+		return fmt.Errorf("bad transaction_array %d != %d (type=%d)", len(p.TxSlice), len(allFields)+4, p.TxSlice[0])
+	}
+	for i := 0; i < len(allFields); i++ {
+		for field, fType := range allFields[i] {
 			p.TxMap[field] = p.TxSlice[i+5]
 			switch fType {
 			case "int64":
