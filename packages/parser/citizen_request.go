@@ -3,6 +3,7 @@ package parser
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 func (p *Parser) CitizenRequestInit() error {
@@ -44,16 +45,17 @@ func (p *Parser) CitizenRequestFront() error {
 	}
 
 	// есть ли нужная сумма на кошельке
-	amountAndCommission, err := p.checkSenderMoney(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
+	amount, err := p.Single(`SELECT value FROM dn_state_settings WHERE parameter = ?`, "citizen_dlt_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	amount, err := p.Single(`SELECT value FROM dn_state_settings WHERE parameter = ?`, "citizen_dlt_price").Int64()
+	amountAndCommission, err := p.checkSenderMoney(amount, consts.COMMISSION)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	if amount > amountAndCommission {
 		return p.ErrInfo("incorrect amount")
 	}
-
 	// вычитаем из wallets_buffer
 	// amount_and_commission взято из check_sender_money()
 	err = p.updateWalletsBuffer(amountAndCommission)
