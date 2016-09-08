@@ -7,8 +7,8 @@ import (
 const ACitizenFields = `ajax_citizen_fields`
 
 type CitizenFieldsJson struct {
-	Data   string    `json:"data"`
-	Error  string    `json:"error"`
+	Data   string `json:"data"`
+	Error  string `json:"error"`
 }
 
 func init() {
@@ -22,7 +22,7 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 	if err != nil {
 		result.Error = err.Error()
 	} else {
-		result.Data = data
+		result.Data = `[` + data[1:len(data)-1] + `]`
 	}
 	return result
 }

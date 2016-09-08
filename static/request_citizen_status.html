@@ -38,6 +38,15 @@
 			$("#message").show();
 		}
 	}
+	// Example of ajax_citizen_fields
+	$.get( 'ajax?json=ajax_citizen_fields',{state_id: 1}, function(data) {
+		if (data.data.length) {
+			var fields = JSON.parse(data.data);
+			alert(fields[0].name +', ' + fields[0].title + ', ' + 
+			fields[0].txType +', ' + fields[0].htmlType	 );
+			console.log( fields );
+		}
+	},'json')
 </script>
 
 <div class="content-heading">
