@@ -8,6 +8,12 @@
 		left:-100000px;
 		top:-100000px;
 	}
+	#sorry {
+		visibility:hidden;
+		position:absolute;
+		left:-100000px;
+		top:-100000px;
+	}
 </style>
 
 <script>
@@ -38,6 +44,7 @@
 	
 	var container = $("#fields");
 	var msg = $("#message");
+	var btn = $("#send");
 	
 	function Country(id) {
 		if (!id) {
@@ -47,16 +54,34 @@
 		container.html("");
 		$("#refresh").click();
 		
-		$.get( 'ajax?json=ajax_citizen_fields',{state_id: id}, function(data) {
-			$('[data-sweet-alert]').removeClass("whirl standard");
-			if (data.fields.length) {
-				var fields = JSON.parse(data.fields);
-				if (fields[0].htmlType == "textinput") {
-					el = '<div class="form-group"><label for="' + fields[0].name + '">Name</label><input id="' + fields[0].name + '" name="' + fields[0].name + '" type="text" class="form-control"></div>'
+		$.ajax({
+			type: 'GET',
+			url: 'ajax?json=ajax_citizen_fields',
+			data: {
+				'state_id' : id
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) {
+				btn.prop("disabled", false);
+				$('[data-sweet-alert]').removeClass("whirl standard");
+				container.append('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
+				if (data.valid == false) {
+					$("#sorry").click();
+					btn.prop("disabled", true);
 				}
-				container.append(el);
+				if (data.fields.length) {
+					var fields = JSON.parse(data.fields);
+					if (fields[0].htmlType == "textinput") {
+						el = '<div class="form-group"><label for="' + fields[0].name + '">Name</label><input id="' + fields[0].name + '" name="' + fields[0].name + '" type="text" class="form-control"></div>'
+					}
+					container.append(el);
+				}
+			},
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
 			}
-		},'json')
+		});
 	}
 	
 	function changeCountry(elem) {
@@ -64,6 +89,7 @@
 		if (id != "1") {
 			msg.show();
 			container.html("");
+			btn.prop("disabled", true);
 		} else {
 			msg.hide();
 			Country(id);
@@ -81,6 +107,57 @@
 			console.log( fields );
 		}
 	},'json')*/
+	
+	/**=========================================================
+	 * Module: notify.js
+	 * Create toggleable notifications that fade out automatically.
+	 * Based on Notify addon from UIKit (http://getuikit.com/docs/addons_notify.html)
+	 * [data-toggle="notify"]
+	 * [data-options="options in json format" ]
+	 =========================================================*/
+	
+	(function($, window, document){
+	  'use strict';
+	
+	  var Selector = '[data-notify]',
+		  autoloadSelector = '[data-onload]',
+		  doc = $(document);
+	
+	
+	  $(function() {
+	
+		$(Selector).each(function(){
+	
+		  var $this  = $(this),
+			  onload = $this.data('onload');
+	
+		  if(onload !== undefined) {
+			setTimeout(function(){
+			  notifyNow($this);
+			}, 800);
+		  }
+	
+		  $this.on('click', function (e) {
+			e.preventDefault();
+			notifyNow($this);
+		  });
+	
+		});
+	
+	  });
+	
+	  function notifyNow($element) {
+		  var message = $element.data('message'),
+			  options = $element.data('options');
+	
+		  if(!message)
+			$.error('Notify: No message specified');
+		 
+		  $.notify(message, options || {});
+	  }
+	
+	
+	}(jQuery, window, document));
 </script>
 
 <div class="content-heading">
@@ -95,9 +172,27 @@
  <div class="panel-body">
 	<form role="form">
 	   <div class="form-group">
-		  <label for="price">Price</label>
-		  <input id="price" type="text" class="form-control" value="10 DLT" disabled>
+		  <label for="countries">Country</label>
+		  <select id="countries" class="form-control" onChange="changeCountry(this);">
+			 <option value="1">DayLight</option>
+			 <option value="AL">Alabama</option>
+			 <option value="AR">Arkansas</option>
+			 <option value="IL">Illinois</option>
+			 <option value="IA">Iowa</option>
+			 <option value="KS">Kansas</option>
+			 <option value="KY">Kentucky</option>
+			 <option value="LA">Louisiana</option>
+			 <option value="MN">Minnesota</option>
+			 <option value="MS">Mississippi</option>
+			 <option value="MO">Missouri</option>
+			 <option value="OK">Oklahoma</option>
+			 <option value="SD">South Dakota</option>
+			 <option value="TX">Texas</option>
+			 <option value="TN">Tennessee</option>
+			 <option value="WI">Wisconsin</option>
+		  </select>
 	   </div>
+	   <div id="message" class="alert alert-danger">At this point in your chosen country, the Central Bank has not yet begun to register citizens in DayLight. If the Central Bank does not begin to citizens registered to 03.01.2017,  then these powers led association of CB will be transferred.</div>
 	   <div id="fields"></div>
 	   <!--<div class="form-group">
 		  <label>Name</label>
@@ -124,37 +219,16 @@
 		  <label>Passport number</label>
 		  <input type="text" class="form-control">
 	   </div>-->
-	   <div class="form-group">
-		  <label for="countries">Country</label>
-		  <select id="countries" class="form-control" onChange="changeCountry(this);">
-			 <option value="1">DayLight</option>
-			 <option value="AL">Alabama</option>
-			 <option value="AR">Arkansas</option>
-			 <option value="IL">Illinois</option>
-			 <option value="IA">Iowa</option>
-			 <option value="KS">Kansas</option>
-			 <option value="KY">Kentucky</option>
-			 <option value="LA">Louisiana</option>
-			 <option value="MN">Minnesota</option>
-			 <option value="MS">Mississippi</option>
-			 <option value="MO">Missouri</option>
-			 <option value="OK">Oklahoma</option>
-			 <option value="SD">South Dakota</option>
-			 <option value="TX">Texas</option>
-			 <option value="TN">Tennessee</option>
-			 <option value="WI">Wisconsin</option>
-		  </select>
-	   </div>
-	   <div id="message" class="alert alert-danger">At this point in your chosen country, the Central Bank has not yet begun to register citizens in DayLight. If the Central Bank does not begin to citizens registered to 03.01.2017,  then these powers led association of CB will be transferred.</div>
 	</form>
  </div>
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">
-		 <button type="button" class="btn btn-primary">Request</button>
+		 <button id="send" type="button" class="btn btn-primary">Request</button>
 		 <button id="refresh" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
 	  </div>
    </div>
   </div>
 </div>
 <!-- END panel-->
+<button id="sorry" type="button" data-notify="" data-message="Insufficient funds in the account for the registration of the citizen." data-options="{&quot;status&quot;:&quot;danger&quot;}"></button>
