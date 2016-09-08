@@ -661,7 +661,10 @@ func (schema *SchemaStruct) GetSchema() {
 		if err!=nil {
 			log.Error("%v", err)
 		}
-
+		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_dlt_price", "1000000", "president")`)
+		if err!=nil {
+			log.Error(err)
+		}
 		err = schema.DCDB.ExecSql(`INSERT INTO president (state_id, citizen_id) VALUES (1, 1)`)
 		if err!=nil {
 			log.Error("%v", err)
@@ -684,10 +687,7 @@ func (schema *SchemaStruct) GetSchema() {
 		if err!=nil {
 			log.Error(err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_dlt_price", "1000000", "parliament")`)
-		if err!=nil {
-			log.Error(err)
-		}*/
+		*/
 	}
 }
 
