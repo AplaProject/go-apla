@@ -8,7 +8,7 @@ import (
 
 func (p *Parser) NewCitizenInit() error {
 
-	fields := []map[string]string{{"public_key": "bytes"}}
+	fields := []map[string]string{{"public_key": "bytes"}, {"state_id": "int64"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -24,12 +24,12 @@ func (p *Parser) NewCitizenFront() error {
 		return p.ErrInfo(err)
 	}
 
-	// чтобы не записали слишком мелкий или слишком крупный ключ
+	// To not record too small or too big key
 	if !utils.CheckInputData(p.TxMap["public_key_hex"], "public_key") {
 		return utils.ErrInfo(fmt.Errorf("incorrect public_key %s", p.TxMap["public_key_hex"]))
 	}
 
-	// получим набор доп. полей, которые должны быть в данной тр-ии
+	// We get a set of custom fields that need to be in the tx
 	additionalFields, err := p.Single(`SELECT fields FROM citizen_fields WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).Bytes()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -50,9 +50,9 @@ func (p *Parser) NewCitizenFront() error {
 		return p.ErrInfo(err)
 	}
 
-	// добавить граждани может только гржданин то же страны
+	// Citizens can only add a citizen of the same country
 
-	// тот, кто добавляет должен быть действующим представителем органа, назначенного в ds_state_settings
+	// One who adds a citizen must be a valid representative body appointed in ds_state_settings
 
 
 	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxWalletID)
@@ -73,8 +73,7 @@ func (p *Parser) NewCitizen() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	// пишем в общую историю тр-ий
-	err = p.ExecSql(`INSERT INTO `+stateCode+`_citizens_requests ( dlt_wallet_is, block_id ) VALUES ( ?, ? )`, p.TxWalletID, p.BlockData.BlockId)
+	err = p.ExecSql(`INSERT INTO `+stateCode+`_citizens ( public_key_0, block_id ) VALUES ( [hex], ? )`, p.TxMap["public_key_hex"], p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -87,8 +86,7 @@ func (p *Parser) NewCitizenRollback() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	// пишем в общую историю тр-ий
-	err = p.ExecSql(`DELETE FROM `+stateCode+`_citizens_requests WHERE block_id = ?`, p.BlockData.BlockId)
+	err = p.ExecSql(`DELETE FROM `+stateCode+`_citizens WHERE block_id = ?`, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

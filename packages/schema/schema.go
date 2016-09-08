@@ -363,10 +363,11 @@ func (schema *SchemaStruct) GetSchema() {
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
 	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ds_citizens_citizen_id_seq')", "comment": ""}
-	s2[1] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "Открытый ключ которым проверяются все транзакции от юзера"}
-	s2[2] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "2-й ключ, если есть"}
-	s2[3] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3-й ключ, если есть"}
-	s2[4] = map[string]string{"name": "rb_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[1] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "The public key that verifies all transactions from the user"}
+	s2[2] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "2nd key, if there is"}
+	s2[3] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3rd key, if there is"}
+	s2[4] = map[string]string{"name": "block_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
+	s2[5] = map[string]string{"name": "rb_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"citizen_id"}
 	s1["AI"] = "citizen_id"
