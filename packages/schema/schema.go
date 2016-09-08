@@ -391,35 +391,10 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.PrintSchema()
 
 
-	s = make(Recmap)
-	s1 = make(Recmap)
-	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "state_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
-	s2[1] = map[string]string{"name": "fields", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": ""}	// example: { {"name":"surname", "htmlType":"textinput", "txType":"string", "title":"Surname"}, {"name":"photo_face", "type":"photo", "title":"photo face"} }
-	s2[2] = map[string]string{"name": "rb_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
-	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"citizen_id"}
-	s1["AI"] = "citizen_id"
-	s1["comment"] = ""
-	s["citizen_fields"] = s1
-	schema.S = s
-	schema.PrintSchema()
 
 
-	s = make(Recmap)
-	s1 = make(Recmap)
-	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "rb_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('rb_citizen_fields_rb_id_seq')", "comment": ""}
-	s2[1] = map[string]string{"name": "fields", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": ""}	// example: { {"name":"surname", "type":"textinput", "title":"Surname"}, {"name":"photo_face", "type":"photo", "title":"photo face"} }
-	s2[2] = map[string]string{"name": "block_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": "В каком блоке было занесено. Нужно для удаления старых данных"}
-	s2[3] = map[string]string{"name": "prev_rb_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
-	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"rb_id"}
-	s1["AI"] = "rb_id"
-	s1["comment"] = ""
-	s["rb_citizen_fields"] = s1
-	schema.S = s
-	schema.PrintSchema()
+
+
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -646,11 +621,6 @@ func (schema *SchemaStruct) GetSchema() {
 		if err!=nil {
 			log.Error("%v", err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO citizen_fields (state_id, fields) VALUES (1, ?)`, `{ {"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"} }`)
-		if err!=nil {
-			log.Error("%v", err)
-		}
-
 
 		err = schema.DCDB.ExecSql(`INSERT INTO ds_citizens (state_id, public_key_0) VALUES (1, [hex])`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
 		if err!=nil {
@@ -658,6 +628,10 @@ func (schema *SchemaStruct) GetSchema() {
 		}
 
 		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("registration_of_citizens", "president", "president")`)
+		if err!=nil {
+			log.Error("%v", err)
+		}
+		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_fields", "{ {"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"} }", "president")`)
 		if err!=nil {
 			log.Error("%v", err)
 		}
