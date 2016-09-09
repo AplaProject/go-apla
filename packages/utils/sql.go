@@ -1445,7 +1445,6 @@ func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletId int64, citiz
 		// thirdVar - нужен тогда, когда нужно недопустить попадание в блок несовместимых тр-ий.
 		// Например, удаление крауд-фандинг проекта и инвестирование в него средств.
 	}
-	fmt.Println("txType, walletId, citizenId %v, %v, %v", txType, walletId, citizenId)
 	return 
 }
 

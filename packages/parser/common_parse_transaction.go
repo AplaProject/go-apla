@@ -24,13 +24,16 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		txType := utils.BinToDecBytesShift(transactionBinaryData, 1)
 		isStruct := consts.IsStruct(int(txType))
 		if isStruct {
-			fmt.Println(`ParseTransaction`, input)
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 			if err := lib.BinUnmarshal(&input, p.TxPtr); err != nil {
-				fmt.Println(`PareseTransaction Err`, err)
 				return nil, err
 			}
 			p.TxVars = make(map[string]string)
+			head := consts.Header(p.TxPtr)
+			p.TxCitizenID = head.CitizenId
+			p.TxWalletID = head.WalletId
+			p.TxTime = int64(head.Time)
+			
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)
 		} 
 		transSlice = append(transSlice, utils.Int64ToByte(txType))
@@ -46,6 +49,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		// преобразуем бинарные данные транзакции в массив
 		if isStruct {
 			t := reflect.ValueOf(p.TxPtr).Elem()
+			
 			//walletId & citizenId
 			for i:=2; i<4; i++ {
 				data := lib.FieldToBytes( t.Field(0).Interface(), i)	
@@ -90,6 +94,5 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 	}
 	p.MerkleRoot = utils.MerkleTreeRoot(merkleSlice)
 	log.Debug("MerkleRoot %s\n", p.MerkleRoot)
-	fmt.Println(`PareseTransaction End`)
 	return append(transSlice, returnSlice...), nil
 }
