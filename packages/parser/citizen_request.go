@@ -7,13 +7,14 @@ import (
 )
 
 func (p *Parser) CitizenRequestInit() error {
-
-	fields := []map[string]string{{"state_id": "int64"}, {"sign": "bytes"}}
+	fmt.Println(`CitizenRequestInit`)
+/*	fields := []map[string]string{{"state_id": "int64"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])
+	p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])*/
+	fmt.Println(p.TxPtr.(*consts.CitizenRequest))
 	return nil
 }
 

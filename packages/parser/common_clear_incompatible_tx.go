@@ -8,10 +8,10 @@ import (
 func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string, int64, int64, int64, int64, int64) {
 
 	var fatalError, waitError string
-	var toUserId int64
-
+	var thirdVar int64
+	
 	// получим тип тр-ии и юзера
-	txType, walletId, citizenId, thirdVar := utils.GetTxTypeAndUserId(binaryTx)
+	txType, walletId, citizenId := utils.GetTxTypeAndUserId(binaryTx)
 
 	if !utils.CheckInputData(txType, "int") {
 		fatalError = "error type"
@@ -22,63 +22,15 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 	if !utils.CheckInputData(citizenId, "int") {
 		fatalError = "error citizenId"
 	}
-	if !utils.CheckInputData(thirdVar, "int") {
-		fatalError = "error thirdVar"
-	}
 
 
 	var forSelfUse int64
-	if utils.InSliceInt64(txType, utils.TypesToIds([]string{"NewPct", "NewReduction", "NewMaxPromisedAmounts", "NewMaxOtherCurrencies"})) {
-		//  чтобы никому не слать эту тр-ю
-		forSelfUse = 1
-		// $my_tx == true - это значит функция вызвана из pct_generator reduction_generator
-		// если же false, то она была спаршена query_tx или tesblock_generator и имела verified=0
-		// а т.к. new_pct/NewReduction актуальны только 1 блок, то нужно её удалять
-		if !myTx {
-			fatalError = "old new_pct/NewReduction/NewMaxPromisedAmounts/NewMaxOtherCurrencies"
-			return fatalError, waitError, forSelfUse, txType, walletId, citizenId, toUserId
-		}
-	} else {
-		forSelfUse = 0
-	}
-
 	// две тр-ии одного типа от одного юзера не должны попасть в один блок
 	// исключение - перевод DC между юзерами
 	if len(fatalError) == 0 {
 		p.ClearIncompatibleTxSql(txType, walletId, citizenId, &waitError)
 
-
-		// нельзя удалять CF-проект и в этом же блоке изменить его описание/профинансировать
-		if txType == utils.TypeInt("DelCfProject") {
-			p.ClearIncompatibleTxSqlSet([]string{"CfSendDc"}, 0, 0, &waitError, thirdVar)
-		}
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"CfSendDc"})) {
-			p.ClearIncompatibleTxSqlSet([]string{"DelCfProject"}, 0, 0, &waitError, thirdVar)
-		}
-
-		// потом нужно сделать более тонко. но пока так. Если есть удаление проекта, тогда откатываем все тр-ии del_cf_funding
-		if txType == utils.TypeInt("DelCfProject") {
-			p.RollbackIncompatibleTx([]string{"DelCfFunding"})
-		}
-
-		// Если есть смена коммиссий арбитров, то нельзя делать перевод монет, т.к. там может быть указана комиссия арбитра
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"SendDc"})) {
-			p.RollbackIncompatibleTx([]string{"ChangeArbitratorConditions"})
-		}
-		if txType == utils.TypeInt("ChangeArbitratorConditions") {
-			p.ClearIncompatibleTxSqlSet([]string{"SendDc"}, 0, 0, &waitError, "")
-		}
-
-
-		// на всякий случай не даем попасть в один блок тр-ии отправки в CF-проект монет и другим тр-ям связанным с этим CF-проектом. Т.к. проект может завершиться и 2-я тр-я вызовет ошибку
-		if txType == utils.TypeInt("CfSendDc") {
-			p.ClearIncompatibleTxSqlSet([]string{"DelCfProject"}, 0, 0, &waitError, thirdVar)
-		}
-		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"DelCfProject"})) {
-			p.ClearIncompatibleTxSqlSet([]string{"CfSendDc"}, 0, 0, &waitError, thirdVar)
-		}
-
-		// в один блок должен попасть только один голос за один объект голосования. thirdVar - объект голосования
+ 	// в один блок должен попасть только один голос за один объект голосования. thirdVar - объект голосования
 		if utils.InSliceInt64(txType, utils.TypesToIds([]string{"VotesPromisedAmount", "VotesMiner", "VotesNodeNewMiner", "VotesComplex"})) {
 			num, err := p.Single(`
 			  			  SELECT count(*)
@@ -163,5 +115,4 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 	}
 	log.Debug("fatalError: %v, waitError: %v, forSelfUse: %v, txType: %v, walletId: %v, citizenId: %v, thirdVar: %v", fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar)
 	return fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar
-
 }

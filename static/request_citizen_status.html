@@ -158,6 +158,40 @@
 	
 	
 	}(jQuery, window, document));
+
+	var serverTime;
+	
+	$('#send').bind('click', function () {
+		$.get( 'ajax?controllerName=GetServerTime', function (data) {
+			serverTime = data.time;
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}}');
+			doSign();
+			$("#send_to_net").trigger("click");
+		}, "json" );
+	} );
+
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+				'walletId' : '{{.Data.WalletId}}',
+				'stateId': $("#countries").val(),
+				'pubkey' : GKey.Public,
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) { send_to_net_success(data) },
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );	
 </script>
 
 <div class="content-heading">
@@ -232,3 +266,4 @@
 </div>
 <!-- END panel-->
 <button id="sorry" type="button" data-notify="" data-message="Insufficient funds in the account for the registration of the citizen." data-options="{&quot;status&quot;:&quot;danger&quot;}"></button>
+{{template "signatures".}}

@@ -15,6 +15,9 @@ import (
 type CommonPage struct {
 	//Lang   map[string]string
 	Address  string
+	WalletId int64
+	CitizenId int64
+	CountSignArr  []byte
 }
 
 const (   // Type of pages
@@ -232,7 +235,18 @@ func proceedTemplate(c *Controller, html string, data interface{}) (string, erro
 		}
 		w.Write(b.Bytes())
 		*/
-	t := template.Must(template.New("template").Parse(string(pattern)))
+	funcMap := template.FuncMap{
+		"sum": func(a, b interface{}) float64 {
+			return utils.InterfaceToFloat64(a) + utils.InterfaceToFloat64(b)
+		},
+	}			
+	sign, err := static.Asset("static/signatures_new.html")
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}		
+			
+	t := template.Must(template.New("template").Funcs(funcMap).Parse(string(pattern)))
+	t = template.Must(t.Parse(string(sign)))
 	b := new(bytes.Buffer)
 	err = t.Execute(b, data)
 	if err != nil {

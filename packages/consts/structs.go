@@ -13,6 +13,13 @@ type BlockHeader struct {
 	Sign     []byte
 }
 
+type TxHeader struct {
+	Type          byte
+	Time          uint32
+	WalletId      int64
+	CitizenId     int64
+}
+
 type FirstBlock struct {
 	Type          byte
 	Time          uint32
@@ -23,10 +30,20 @@ type FirstBlock struct {
 	Host          string
 }
 
+type CitizenRequest struct {
+//	TxHeader
+	Type          byte
+	Time          uint32
+	WalletId      int64
+	CitizenId     int64
+	StateId       int64
+	Sign          []byte
+}
+
 var blockStructs = make(map[string]reflect.Type)
 
 func init() {
-	list := []interface{}{ FirstBlock{},
+	list := []interface{}{ FirstBlock{}, CitizenRequest{},
 	   // New structures must be inserted here
 	}
 	for _, item := range list {
@@ -37,4 +54,8 @@ func init() {
 func MakeStruct(name string) interface{} {
     v := reflect.New(blockStructs[name])//.Elem()
     return v.Interface()
+}
+
+func IsStruct(tx int) bool {
+	return tx > 0 && tx <= 2 /*CitizenRequest*/
 }

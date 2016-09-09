@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 	"time"
 	"encoding/hex"
 	"fmt"
@@ -50,6 +52,10 @@ func (c *Controller) SaveQueue() (string, error) {
 			log.Debug("sign %x", sign)
 		}
 	}
+	if len(sign) == 0 {
+		return `{"result":"signature is empty"}`, nil
+	}
+	fmt.Printf("Len sign %d\r\n", len(sign))
 	binSignatures := utils.EncodeLengthPlusData(sign)
 
 	log.Debug("binSignatures %x", binSignatures)
@@ -58,9 +64,14 @@ func (c *Controller) SaveQueue() (string, error) {
 	log.Debug("txType", txType)
 
 	var data []byte
+//	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime), 
+//								WalletId: walletId, CitizenId: citizenId }
 	switch txType_ {
-
-
+	case "CitizenRequest": 
+		_, err = lib.BinMarshal(&data, &consts.CitizenRequest{// TxHeader: txHead, 
+		Type: uint8(txType), Time: uint32(txTime), WalletId: walletId, CitizenId: citizenId,
+		 		StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign })
+		fmt.Printf("REQUEST %v %x \r\n", err, data )
 	case "DLTTransfer":
 
 		walletAddress := []byte(c.r.FormValue("walletAddress"))
@@ -122,7 +133,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
 		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
 		data = append(data, binSignatures...)
-
 	}
 	md5 := utils.Md5(data)
 

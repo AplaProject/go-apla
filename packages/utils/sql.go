@@ -1430,19 +1430,23 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, walletId_ interface
 	return nil
 }
 
-func GetTxTypeAndUserId(binaryBlock []byte) (int64, int64, int64, int64) {
-	var thirdVar int64
-	txType := BinToDecBytesShift(&binaryBlock, 1)
-	BytesShift(&binaryBlock, 4) // уберем время
-	walletId := BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
-	citizenId := BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
-	// thirdVar - нужен тогда, когда нужно недопустить попадание в блок несовместимых тр-ий.
-	// Например, удаление крауд-фандинг проекта и инвестирование в него средств.
-	if InSliceInt64(txType, TypesToIds([]string{"CfSendDc", "DelCfProject"})) {
-		thirdVar = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletId int64, citizenId int64) {
+	tmp := binaryBlock[:]
+	txType = BinToDecBytesShift(&binaryBlock, 1)
+	if consts.IsStruct(int(txType)) {
+		var txHead consts.TxHeader
+		lib.BinUnmarshal(&tmp, &txHead)				
+		walletId = txHead.WalletId
+		citizenId = txHead.CitizenId
+	} else {
+		BytesShift(&binaryBlock, 4) // уберем время
+		walletId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+		citizenId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+		// thirdVar - нужен тогда, когда нужно недопустить попадание в блок несовместимых тр-ий.
+		// Например, удаление крауд-фандинг проекта и инвестирование в него средств.
 	}
-	log.Debug("txType, userId, thirdVar %v, %v, %v, %v", txType, walletId, citizenId, thirdVar)
-	return txType, walletId, citizenId, thirdVar
+	fmt.Println("txType, walletId, citizenId %v, %v, %v", txType, walletId, citizenId)
+	return 
 }
 
 func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {

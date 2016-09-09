@@ -335,6 +335,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	if len(pageName) > 0 && isPage(pageName, TPage) {
 		c.Data = &CommonPage{
 			Address: c.SessAddress,
+			WalletId: c.SessWalletId,
+			CitizenId: c.SessCitizenId,
+			CountSignArr: []byte{1}, // !!! Добавить вычисление
 		}
 		w.Write([]byte(CallPage(c, pageName)))
 		return
