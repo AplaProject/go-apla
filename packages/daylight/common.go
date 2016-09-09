@@ -42,7 +42,8 @@ func firstBlock() {
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{Type: 1, Time: now, WalletId: 1, CitizenId: 0,
+		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{ Type: 1, 
+		       	Time: now, WalletId: 1, CitizenId: 0},
 				PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))

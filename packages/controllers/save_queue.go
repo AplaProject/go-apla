@@ -64,12 +64,12 @@ func (c *Controller) SaveQueue() (string, error) {
 	log.Debug("txType", txType)
 
 	var data []byte
-//	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime), 
-//								WalletId: walletId, CitizenId: citizenId }
+	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime), 
+								WalletId: walletId, CitizenId: citizenId }
 	switch txType_ {
 	case "CitizenRequest": 
-		_, err = lib.BinMarshal(&data, &consts.CitizenRequest{// TxHeader: txHead, 
-		Type: uint8(txType), Time: uint32(txTime), WalletId: walletId, CitizenId: citizenId,
+		_, err = lib.BinMarshal(&data, &consts.CitizenRequest{ TxHeader: txHead, 
+//		Type: uint8(txType), Time: uint32(txTime), WalletId: walletId, CitizenId: citizenId,
 		 		StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign })
 		fmt.Printf("REQUEST %v %x \r\n", err, data )
 	case "DLTTransfer":

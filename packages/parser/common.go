@@ -58,6 +58,7 @@ type Parser struct {
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
+	TxVars           map[string]string
 }
 
 

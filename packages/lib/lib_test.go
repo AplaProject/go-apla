@@ -7,6 +7,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"math/rand"
 	"testing"
+	"reflect"
 		"fmt"
 )
 
@@ -125,7 +126,7 @@ func TestBinMarshal(t *testing.T) {
 	now := Time32()
 	node := test.HexToBytes(`20304350647f8f96a8`)
 	_, err = BinMarshal(&out, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: 1})
-	_, err = BinMarshal(&tx, &consts.FirstBlock{Type: 1, Time: now, WalletId: 1, CitizenId: 0,
+	_, err = BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1, Time: now, WalletId: 1, CitizenId: 0},
 		PublicKey:     test.HexToBytes(`0102300040fffa6789`),
 		NodePublicKey: node,
 		Host:          host})
@@ -166,16 +167,47 @@ func TestBinMarshal(t *testing.T) {
 	}
 }
 
+func TestHeader(t *testing.T) {
+	var tx []byte
+	now := Time32()
+	sign := test.HexToBytes(`0056575879`)
+	_, err := BinMarshal(&tx, &consts.CitizenRequest{ TxHeader: consts.TxHeader{Type: 45, Time: now, 
+	        WalletId: 123, CitizenId: 456}, StateId: 78, Sign: sign})
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	var inter interface{}
+	inter = consts.MakeStruct(`CitizenRequest`)
+	if err = BinUnmarshal(&tx, inter); err != nil {
+		t.Errorf(err.Error())
+	}
+	p := inter.(*consts.CitizenRequest)
+	header := reflect.ValueOf(p).Elem().Field(0)
+	data := FieldToBytes( header.Interface(), 2)
+	if bytes.Compare( data, test.HexToBytes(`313233`)) != 0 {
+		t.Errorf(`wrong wallet_id`)
+	}
+	data = FieldToBytes( header.Interface(), 3)
+	if bytes.Compare( data, test.HexToBytes(`343536`)) != 0 {
+		t.Errorf(`wrong citizen_id`)
+	}
+	if bytes.Compare( consts.Sign(p), sign) != 0 {
+		t.Errorf(`wrong sign`)
+	}
+}
+
+
 func TestFieldToBytes(t *testing.T) {
-    first := consts.FirstBlock{Type: 1, Time: 2345, WalletId: 67, CitizenId: 89,
+    first := consts.FirstBlock{ TxHeader: consts.TxHeader{Type: 1, Time: 2345, 
+	    WalletId: 67, CitizenId: 89},
 		PublicKey:     []byte(`010203`),
 		NodePublicKey: []byte(`040506`),
 		Host:          `070809`}
 	out := ``
-	for i:=0; i< 7; i++ {
+	for i:=1; i< 7; i++ {
 		out += string(FieldToBytes(first, i))
 	}
-	if out != `123456789010203040506070809` {
+	if out != `010203040506070809` {
 		t.Errorf(`different out %s`, out)
 	}
 	fmt.Println(out)
