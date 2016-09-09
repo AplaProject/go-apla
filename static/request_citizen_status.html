@@ -186,7 +186,60 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(result) {
+				if (typeof result.error != "undefined") {
+					Alert("Error", result.error, "error");
+				} else {
+					interval = setInterval(function() {
+						$.ajax({
+							type: 'POST',
+							url: 'ajax?json=ajax_citizen_request',
+							dataType: 'json',
+							crossDomain: true,
+							success: function(data){
+								if (typeof data.error != "undefined") {
+									Alert("Error", data.error, "error");
+									clearInterval(interval);
+								} else {
+									clearInterval(interval);
+									$.ajax({
+										type: 'POST',
+										url: data.host + '\ajax?json=upload_citizen',
+										data: {
+											'type' : '{{.TxType}}',
+											'time' : serverTime,
+											'walletId' : '{{.Data.WalletId}}',
+											'stateId': $("#countries").val(),
+											'price': parseInt($("#price").val()),
+											'name': $("#name").val(),
+											'pubkey' : GKey.Public,
+											'signature1': $('#signature1').val(),
+											'signature2': $('#signature2').val(),
+											'signature3': $('#signature3').val()
+										},
+										dataType: 'json',
+										crossDomain: true,
+										success: function(status){
+											if (typeof status.error != "undefined") {
+												Alert("Error", status.error, "error");
+											} else {
+												Alert("Success", "", "success");
+											}
+										},
+										error: function(xhr, status, error) {
+											Alert("Error", error, "error");
+										},
+									});
+								}
+							},
+							error: function(xhr, status, error) {
+								clearInterval(interval);
+								Alert("Error", error, "error");
+							},
+						});
+					}, 1000)
+				}
+			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
