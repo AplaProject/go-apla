@@ -55,6 +55,7 @@ func (p *Parser) NewCitizenFront() error {
 	// One who adds a citizen must be a valid representative body appointed in ds_state_settings
 
 
+	// must be supplemented
 	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxWalletID)
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
