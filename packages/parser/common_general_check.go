@@ -2,6 +2,8 @@ package parser
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"fmt"
 )
 
 // общая проверка для всех _front
@@ -68,5 +70,73 @@ func (p *Parser) generalCheck() error {
 	if len(p.TxMap["sign"]) < 64 || len(p.TxMap["sign"]) > 5120 {
 		return utils.ErrInfoFmt("incorrect sign size %d", len(p.TxMap["sign"]))
 	}
+	return nil
+}
+
+// общая проверка для всех _front
+func (p *Parser) generalCheckStruct(moreSign string) error {
+//	head := reflect.ValueOf(p.TxPtr).Elem().Field(0).Interface().(consts.TxHeader)
+	head := consts.Header(p.TxPtr)
+	fmt.Println(`General`, head)
+	// проверим, есть ли такой юзер и заодно получим public_key
+	if int64(head.Type) == utils.TypeInt("DLTTransfer") || int64(head.Type) == utils.TypeInt("DLTChangeHostVote") || int64(head.Type) == utils.TypeInt("CitizenRequest") {
+		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", head.WalletId ).String()
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
+		if len(data["public_key_0"]) == 0 {
+			if len(p.TxMap["public_key"]) == 0 {
+				return utils.ErrInfoFmt("incorrect public_key")
+			}
+			// возможно юзер послал ключ с тр-ией
+			log.Debug("lower(hex(address) %s", string(utils.HashSha1Hex([]byte(p.TxMap["public_key"]))))
+			walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, string(utils.HashSha1Hex([]byte(p.TxMap["public_key"])))).Int64()
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
+			if walletId == 0 {
+				return utils.ErrInfoFmt("incorrect wallet_id or public_key")
+			}
+			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key"]))
+		}
+		p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
+		if len(data["public_key_1"]) > 10 {
+			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
+		}
+		if len(data["public_key_2"]) > 10 {
+			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
+		}
+	} else {
+		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM citizens WHERE citizen_id = ?", head.CitizenId ).String()
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
+		if len(data["public_key_0"]) == 0 {
+			return utils.ErrInfoFmt("incorrect user_id")
+		}
+		p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
+		if len(data["public_key_1"]) > 10 {
+			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
+		}
+		if len(data["public_key_2"]) > 10 {
+			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
+		}
+	}
+	forSign := fmt.Sprintf("%d,%d,%d", head.Type, head.Time, head.WalletId) + moreSign
+	//fmt.Println(`forSign`, forSign)
+	//fmt.Printf("PublicKeys %x \r\n", p.PublicKeys)
+	//fmt.Printf("Sign %x \r\n", data.Sign)
+	sign := consts.Sign(p.TxPtr)
+	if len(sign) == 0 {
+		return p.ErrInfo("empty sign")
+	}
+	checkSignResult, err := utils.CheckSign(p.PublicKeys, forSign, sign, false)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if !checkSignResult {
+		return p.ErrInfo("incorrect sign")
+	}
+
 	return nil
 }

@@ -21,21 +21,14 @@ type TxHeader struct {
 }
 
 type FirstBlock struct {
-	Type          byte
-	Time          uint32
-	WalletId      int64
-	CitizenId     int64
+	TxHeader
 	PublicKey     []byte
 	NodePublicKey []byte
 	Host          string
 }
 
 type CitizenRequest struct {
-//	TxHeader
-	Type          byte
-	Time          uint32
-	WalletId      int64
-	CitizenId     int64
+	TxHeader
 	StateId       int64
 	Sign          []byte
 }
@@ -58,4 +51,16 @@ func MakeStruct(name string) interface{} {
 
 func IsStruct(tx int) bool {
 	return tx > 0 && tx <= 2 /*CitizenRequest*/
+}
+
+func Header(v interface{}) TxHeader {
+	return reflect.ValueOf(v).Elem().Field(0).Interface().(TxHeader)
+}
+
+func Sign(v interface{}) (sign []byte) {
+	field := reflect.ValueOf(v).Elem().FieldByName(`Sign`)
+	if field.IsValid() && field.Kind() == reflect.Slice {
+		sign = field.Bytes()
+	}
+	return
 }
