@@ -51,7 +51,7 @@
 			id = 1;
 		}
 		
-		container.html("");
+		//container.html("");
 		$("#refresh").click();
 		
 		$.ajax({
@@ -65,17 +65,21 @@
 			success: function(data) {
 				btn.prop("disabled", false);
 				$('[data-sweet-alert]').removeClass("whirl standard");
-				container.append('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
+				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
 				if (data.valid == false) {
 					$("#sorry").click();
 					btn.prop("disabled", true);
+					container.find(".form-group").hide();
+				} else {
+					container.find(".form-group").show();
 				}
 				if (data.fields.length) {
-					var fields = JSON.parse(data.fields);
+					console.log(data)
+					/*var fields = JSON.parse(data.fields);
 					if (fields[0].htmlType == "textinput") {
 						el = '<div class="form-group"><label for="' + fields[0].name + '">Name</label><input id="' + fields[0].name + '" name="' + fields[0].name + '" type="text" class="form-control"></div>'
 					}
-					container.append(el);
+					container.append(el);*/
 				}
 			},
 			error: function(xhr, status, error) {
@@ -88,7 +92,9 @@
 		var id = elem.value;
 		if (id != "1") {
 			msg.show();
-			container.html("");
+			//container.html("");
+			container.find(".form-group").hide();
+			container.find("#price").parent().remove();
 			btn.prop("disabled", true);
 		} else {
 			msg.hide();
@@ -215,6 +221,10 @@
 											'stateId': $("#countries").val(),
 											'price': parseInt($("#price").val()),
 											'name': $("#name").val(),
+											'surname': $("#surname").val(),
+											'birthday': $("#birthday").val(),
+											//'photo': $("#photo").val(),
+											'passport': $("#passport").val(),
 											'pubkey' : GKey.Public,
 											'signature1': $('#signature1').val(),
 											'signature2': $('#signature2').val(),
@@ -283,38 +293,39 @@
 		  </select>
 	   </div>
 	   <div id="message" class="alert alert-danger">At this point in your chosen country, the Central Bank has not yet begun to register citizens in DayLight. If the Central Bank does not begin to citizens registered to 03.01.2017,  then these powers led association of CB will be transferred.</div>
-	   <div id="fields"></div>
-	   <!--<div class="form-group">
-		  <label>Name</label>
-		  <input type="text" class="form-control">
+	   <div id="fields">
+		   <div class="form-group">
+			  <label for="name">Name</label>
+			  <input id="name" type="text" class="form-control">
+		   </div>
+		   <div class="form-group">
+			  <label for="surname">Surname</label>
+			  <input id="surname" type="text" class="form-control">
+		   </div>
+		   <div class="form-group">
+			  <label for="birthday">Birthday</label>
+			  <div id="datetimepicker1" class="input-group date">
+				 <input id="birthday" type="text" class="form-control">
+				 <span class="input-group-addon">
+					<span class="fa fa-calendar"></span>
+				 </span>
+			  </div>
+		   </div>
+		   <div class="form-group">
+			  <label for="photo">Photo</label>
+			  <input id="photo" type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
+		   </div>
+		   <div class="form-group">
+			  <label for="passport">Passport number</label>
+			  <input id="passport" type="text" class="form-control">
+		   </div>
 	   </div>
-	   <div class="form-group">
-		  <label>Surname</label>
-		  <input type="text" class="form-control">
-	   </div>
-	   <div class="form-group">
-		  <label>Birthday</label>
-		  <div id="datetimepicker1" class="input-group date">
-			 <input type="text" class="form-control">
-			 <span class="input-group-addon">
-				<span class="fa fa-calendar"></span>
-			 </span>
-		  </div>
-	   </div>
-	   <div class="form-group">
-		  <label>Photo</label>
-		  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
-	   </div>
-	   <div class="form-group">
-		  <label>Passport number</label>
-		  <input type="text" class="form-control">
-	   </div>-->
 	</form>
  </div>
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">
-		 <button id="send" type="button" class="btn btn-primary">Request</button>
+		 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
 		 <button id="refresh" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
 	  </div>
    </div>

@@ -16,7 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 .whirl:before {
   content: "";
-  z-index: 1;
+  z-index: 3;
   position: absolute;
   top: 0;
   right: 0;
