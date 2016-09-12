@@ -187,27 +187,30 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(result) {
-				if (typeof result.error != "undefined") {
+				if (typeof result.error != "undefined" && result.error.length > 0 ) {
 					Alert("Error", result.error, "error");
 				} else {
 					interval = setInterval(function() {
 						$.ajax({
 							type: 'POST',
 							url: 'ajax?json=ajax_citizen_request',
+							data: {state_id: $("#countries").val()},
 							dataType: 'json',
 							crossDomain: true,
 							success: function(data){
-								if (typeof data.error != "undefined") {
+								if (typeof data.error != "undefined" && data.error.length > 0) {
 									Alert("Error", data.error, "error");
 									clearInterval(interval);
-								} else {
+								} else if (data.host.length > 0) {
 									clearInterval(interval);
+									$("#for-signature").val( data.type_id + ','+data.time+',{{.Data.WalletId}}');
+									doSign();
 									$.ajax({
 										type: 'POST',
-										url: data.host + '\ajax?json=upload_citizen',
+										url: data.host + 'ajax?controllerName=saveQueue',
 										data: {
-											'type' : '{{.TxType}}',
-											'time' : serverTime,
+											'type' : data.type_name,
+											'time' : data.time,
 											'walletId' : '{{.Data.WalletId}}',
 											'stateId': $("#countries").val(),
 											'price': parseInt($("#price").val()),
@@ -220,7 +223,7 @@
 										dataType: 'json',
 										crossDomain: true,
 										success: function(status){
-											if (typeof status.error != "undefined") {
+											if (typeof status.error != "undefined" && status.error.length > 0 ) {
 												Alert("Error", status.error, "error");
 											} else {
 												Alert("Success", "", "success");
@@ -237,7 +240,7 @@
 								Alert("Error", error, "error");
 							},
 						});
-					}, 1000)
+					}, 2000)
 				}
 			},
 			error: function(xhr, status, error) {

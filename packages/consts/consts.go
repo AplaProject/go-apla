@@ -72,6 +72,7 @@ var TxTypes = map[int]string{
 	4: "DLTChangeHostVote",
 	5: "UpdFullNodes",
 	6: "ChangeNodeKey",
+	7: "NewCitizen",
 }
 
 func init() {

@@ -1,27 +1,28 @@
 package utils
 
 import (
-//	"crypto"
+	//	"crypto"
 	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"database/sql"
-	"encoding/pem"
 	"encoding/hex"
+	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
-	"github.com/op/go-logging"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-	"encoding/json"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	"github.com/op/go-logging"
 )
 
 var Mutex = &sync.Mutex{}
@@ -93,11 +94,9 @@ func (db *DCDB) GetConfigIni(name string) string {
 	return db.ConfigIni[name]
 }
 
-
 func (db *DCDB) GetMainLockName() (string, error) {
 	return db.Single("SELECT script_name FROM main_lock").String()
 }
-
 
 func (db *DCDB) GetAllTables() ([]string, error) {
 	var result []string
@@ -116,8 +115,6 @@ func (db *DCDB) GetAllTables() ([]string, error) {
 	}
 	return result, nil
 }
-
-
 
 type singleResult struct {
 	result []byte
@@ -309,9 +306,6 @@ func (db *DCDB) GetList(query string, args ...interface{}) *listResult {
 	return &listResult{result, nil}
 }
 
-
-
-
 func GetParent() string {
 	parent := ""
 	for i := 2; ; i++ {
@@ -496,7 +490,6 @@ func (db *DCDB) GetJSON(query string, args ...interface{}) (string, error) {
 	return string(jsonData), nil
 }
 
-
 func (db *DCDB) ExecSqlGetLastInsertId(query, returning string, args ...interface{}) (int64, error) {
 	var lastId int64
 	var res sql.Result
@@ -657,8 +650,6 @@ func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, Gor
 	}
 	return true
 }
-
-
 
 func (db *DCDB) GetQuotes() string {
 	dq := `"`
@@ -827,9 +818,6 @@ func (db *DCDB) GetLastBlockData() (map[string]int64, error) {
 	return result, nil
 }
 
-
-
-
 func (db *DCDB) GetMyPublicKey(myPrefix string) ([]byte, error) {
 	result, err := db.Single("SELECT public_key FROM my_keys WHERE block_id = (SELECT max(block_id) FROM my_keys)").Bytes()
 	if err != nil {
@@ -837,7 +825,6 @@ func (db *DCDB) GetMyPublicKey(myPrefix string) ([]byte, error) {
 	}
 	return result, nil
 }
-
 
 func (db *DCDB) GetMyPrivateKey(myPrefix string) (string, error) {
 	key, err := db.Single("SELECT private_key FROM my_keys WHERE block_id = (SELECT max(block_id) FROM my_keys)").String()
@@ -867,7 +854,6 @@ func (db *DCDB) GetMyNodePublicKey(myPrefix string) (string, error) {
 	return key, nil
 }
 
-
 func (db *DCDB) GetPrivateKey(myPrefix string) (string, error) {
 	var key string
 	key, err := db.Single("SELECT private_key FROM my_keys WHERE block_id = (SELECT max(block_id) FROM my_keys)").String()
@@ -880,7 +866,6 @@ func (db *DCDB) GetPrivateKey(myPrefix string) (string, error) {
 func (db *DCDB) GetNodeConfig() (map[string]string, error) {
 	return db.OneRow("SELECT * FROM config").String()
 }
-
 
 func (db *DCDB) FormatQuery(q string) string {
 
@@ -926,22 +911,21 @@ func (db *DCDB) FormatQuery(q string) string {
 
 func (db *DCDB) GetConfirmedBlockId() (int64, error) {
 
-		result, err := db.Single("SELECT max(block_id) FROM confirmations WHERE good >= ?", consts.MIN_CONFIRMED_NODES).Int64()
-		if err != nil {
-			return 0, err
-		}
-		//log.Debug("%v", "result int64",StrToInt64(result))
-		return result, nil
+	result, err := db.Single("SELECT max(block_id) FROM confirmations WHERE good >= ?", consts.MIN_CONFIRMED_NODES).Int64()
+	if err != nil {
+		return 0, err
+	}
+	//log.Debug("%v", "result int64",StrToInt64(result))
+	return result, nil
 
 }
 
-
 func (db *DCDB) GetMyCBIDAndWalletId() (int64, int64, error) {
-	myCBID, err := db.GetMyCBID();
+	myCBID, err := db.GetMyCBID()
 	if err != nil {
 		return 0, 0, err
 	}
-	myWalletId, err := db.GetMyWalletId();
+	myWalletId, err := db.GetMyWalletId()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -993,9 +977,9 @@ func (db *DCDB) GetMyBlockId() (int64, error) {
 func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
 	log.Debug("publicKey %s", publicKey)
-	key,_ := hex.DecodeString(string(publicKey))
-	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`, 
-	       string(/*HashSha1Hex*/hex.EncodeToString(lib.Address(key)))).Int64()
+	key, _ := hex.DecodeString(string(publicKey))
+	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`,
+		string( /*HashSha1Hex*/ hex.EncodeToString(lib.Address(key)))).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
@@ -1010,8 +994,6 @@ func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
 	return walletId, nil
 }
 
-
-
 func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	var result map[string]string
 	result, err := db.OneRow("SELECT * FROM info_block").String()
@@ -1023,7 +1005,6 @@ func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	}
 	return result, nil
 }
-
 
 func (db *DCDB) GetNodePublicKey(userId int64) ([]byte, error) {
 	result, err := db.Single("SELECT node_public_key FROM miners_data WHERE user_id = ?", userId).Bytes()
@@ -1158,7 +1139,7 @@ func (db *DCDB) DbLockGate(name string) error {
 }
 
 func (db *DCDB) DeleteQueueBlock(hash_hex string) error {
-	return db.ExecSql("DELETE FROM queue_blocks WHERE hex(hash) = ?",  hash_hex)
+	return db.ExecSql("DELETE FROM queue_blocks WHERE hex(hash) = ?", hash_hex)
 }
 
 func (db *DCDB) SetAI(table string, AI int64) error {
@@ -1236,8 +1217,6 @@ func (db *DCDB) DbUnlockGate(name string) error {
 	log.Debug("DbUnlockGate %v %v", Caller(2), name)
 	return db.ExecSql("DELETE FROM main_lock WHERE script_name = ?", name)
 }
-
-
 
 func (db *DCDB) UpdDaemonTime(name string) {
 
@@ -1369,17 +1348,17 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, walletId_ interface
 
 	var walletId int64
 	switch walletId_.(type) {
-		case string:
+	case string:
 		walletId = StrToInt64(walletId_.(string))
-		case int64:
+	case int64:
 		walletId = walletId_.(int64)
 	}
 
 	var citizenId int64
 	switch citizenId_.(type) {
-		case string:
+	case string:
 		citizenId = StrToInt64(citizenId_.(string))
-		case int64:
+	case int64:
 		citizenId = citizenId_.(int64)
 	}
 
@@ -1435,7 +1414,7 @@ func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletId int64, citiz
 	txType = BinToDecBytesShift(&binaryBlock, 1)
 	if consts.IsStruct(int(txType)) {
 		var txHead consts.TxHeader
-		lib.BinUnmarshal(&tmp, &txHead)				
+		lib.BinUnmarshal(&tmp, &txHead)
 		walletId = txHead.WalletId
 		citizenId = txHead.CitizenId
 	} else {
@@ -1445,7 +1424,7 @@ func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletId int64, citiz
 		// thirdVar - нужен тогда, когда нужно недопустить попадание в блок несовместимых тр-ий.
 		// Например, удаление крауд-фандинг проекта и инвестирование в него средств.
 	}
-	return 
+	return
 }
 
 func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
@@ -1475,8 +1454,6 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	if len(*binaryTx) == 0 {
 		return nil, nil, nil, ErrInfo("len(*binaryTx) == 0")
 	}
-
-
 
 	nodePrivateKey, err := db.GetNodePrivateKey()
 	if len(nodePrivateKey) == 0 {
@@ -1521,14 +1498,14 @@ func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
-/*	log.Debug("nodePrivateKey = %s", nodePrivateKey)
-	// подписываем нашим нод-ключем данные транзакции
-	privateKey, err := MakePrivateKey(nodePrivateKey)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	return rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, HashSha1(forSign))*/
-	return SignECDSA(nodePrivateKey,forSign)
+	/*	log.Debug("nodePrivateKey = %s", nodePrivateKey)
+		// подписываем нашим нод-ключем данные транзакции
+		privateKey, err := MakePrivateKey(nodePrivateKey)
+		if err != nil {
+			return nil, ErrInfo(err)
+		}
+		return rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, HashSha1(forSign))*/
+	return SignECDSA(nodePrivateKey, forSign)
 }
 
 func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
@@ -1543,7 +1520,6 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 	}
 	return nil
 }
-
 
 func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
 	// возьмем список всех full_nodes
@@ -1562,18 +1538,18 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 
 	log.Debug("%v %v", fullNodesList, prevBlockFullNodeId)
 
-	prevBlockFullNodePosition := func (fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
+	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
 		for i, full_nodes := range fullNodesList {
 			if StrToInt64(full_nodes["full_node_id"]) == prevBlockFullNodeId {
 				return i
 			}
 		}
 		return -1
-	} (fullNodesList, prevBlockFullNodeId)
+	}(fullNodesList, prevBlockFullNodeId)
 	log.Debug("prevBlockFullNodePosition %d", prevBlockFullNodePosition)
 
 	// определим свое место (в том числе в delegate)
-	myPosition := func (fullNodesList []map[string]string, myWalletId, myCBID int64) int {
+	myPosition := func(fullNodesList []map[string]string, myWalletId, myCBID int64) int {
 		log.Debug("%v %v", fullNodesList, myWalletId)
 		for i, full_nodes := range fullNodesList {
 			if StrToInt64(full_nodes["cb_id"]) == myCBID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_state_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
@@ -1581,7 +1557,7 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 			}
 		}
 		return -1
-	} (fullNodesList, myWalletId, myCBID)
+	}(fullNodesList, myWalletId, myCBID)
 	log.Debug("myPosition %d", myPosition)
 
 	sleepTime := 0
@@ -1599,4 +1575,12 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 	log.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / consts.GAPS_BETWEEN_BLOCKS %v", sleepTime, myPosition, prevBlockFullNodePosition, consts.GAPS_BETWEEN_BLOCKS)
 
 	return int64(sleepTime), nil
+}
+
+func (db *DCDB) GetStatePrefix(stateId int64) (string, error) {
+	stateCode, err := db.Single(`SELECT state_code FROM states WHERE state_id = ?`, stateId).String()
+	if err != nil {
+		return ``, err
+	}
+	return strings.ToLower(stateCode), nil
 }
