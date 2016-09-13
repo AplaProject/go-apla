@@ -217,7 +217,7 @@ function load_menu(lang) {
 	    if (typeof lang!='undefined') {
 	        parametersJson: '{"lang":"1"}'
 	    }
-	    $("#dl_menu").load( "content?controllerHTML=menu", { parameters: parametersJson }, function() {
+	    $("#dl_menu").load( "content?page=menu", { parameters: parametersJson }, function() {
 	    });
 	} else {
 		$("#dl_menu").html('');
