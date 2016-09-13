@@ -226,16 +226,13 @@ function load_menu(lang) {
 
 function login_ok (result) {
 
-    if (result=='1') {
+    if (result) {
+//        $('#myModal').modal('hide');
+//        $('#myModalLogin').modal('hide');
+//        $('.modal-backdrop').remove();
+//        $('.modal-backdrop').css('display', 'none');
 
-        console.log('login_ok=1');
-
-        $('#myModal').modal('hide');
-        $('#myModalLogin').modal('hide');
-        $('.modal-backdrop').remove();
-        $('.modal-backdrop').css('display', 'none');
-
-        if (typeof(get_key_and_sign)==='undefined' || get_key_and_sign=='null') {
+/*        if (typeof(get_key_and_sign)==='undefined' || get_key_and_sign=='null') {
 
             var tpl_name = $('#tpl_name').val();
             if (!tpl_name || typeof(tpl_name)==='undefined' || tpl_name=='installStep0' || tpl_name=='installStep6')
@@ -248,36 +245,23 @@ function login_ok (result) {
                 $(".navbar-default").css('border-color', '#ccc');
                 $("#ios_menu").css('display', 'block');
             }
-
-            $( "#dl_content" ).load( "content", { tpl_name: tpl_name}, function() {
-					$("#main-login").html('');
-					//$("#loader").spin(false);
-            });
-        }
-        else if (get_key_and_sign=='sign') {
-            console.log('get_key_and_sign=sign');
-            doSign('sign');
-            $("#main-login").html('');
-            //$("#loader").spin(false);
-        }
-        else if (get_key_and_sign=='send_to_net') {
-            console.log('get_key_and_sign=send_to_net');
-            doSign('sign');
-            $("#send_to_net").trigger("click");
-            $("#main-login").html('');
-            //$("#loader").spin(false);
-        }
+*/
+        $( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
+//			$("#main-login").html('');
+			//$("#loader").spin(false);
+        });
+//        }
 		g_menuShow = true;
 		load_menu();
     }
-    else if (result=='not_available') {
+/*    else if (result=='not_available') {
         $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#pool_is_full').val()+'</p></div>');
         //$("#loader").spin(false);
     }
     else {
         $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
         //$("#loader").spin(false);
-    }
+    }*/
 }
 
 function doSign_(type) {

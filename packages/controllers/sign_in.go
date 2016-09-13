@@ -1,73 +1,77 @@
 package controllers
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/lib"
 	"encoding/hex"
-	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-func (c *Controller) SignIn() (string, error) {
-	
-	ret := `{"result":0}`
+const ASignIn = `ajax_sign_in`
+
+type SignInJson struct {
+	Address string `json:"address"`
+	Result  bool   `json:"result"`
+	Error   string `json:"error"`
+}
+
+func init() {
+	newPage(ASignIn, `json`)
+}
+
+func (c *Controller) AjaxSignIn() interface{} {
+	var result SignInJson
+
+	//	ret := `{"result":0}`
 	c.r.ParseForm()
 	key := c.r.FormValue("key")
-	//msg := c.r.FormValue("msg")
-	//sign := utils.HexToBin([]byte(c.r.FormValue("sign")))
-/*	n := []byte(c.r.FormValue("n"))
-	e := []byte(c.r.FormValue("e"))
-
-	if !utils.CheckInputData(n, "hex") {
-		log.Error("incorrect n %v", n)
-		return `{"result":"incorrect n"}`, nil
-	}
-	if !utils.CheckInputData(e, "hex") {
-		log.Error("incorrect e %v", e)
-		return `{"result":"incorrect e"}`, nil
-	}
-
-	log.Debug("n %s", n)
-	log.Debug("e %s", e)*/
-//	fmt.Printf("Signature %d %s\r\n", len(sign), sign)
-	/*if verify,_ := utils.CheckECDSA([][]byte{key}, msg, sign, true); !verify {
-		return ret, fmt.Errorf("incorrect signature")
-	} */
 	bkey, err := hex.DecodeString(key)
 	if err != nil {
-		log.Error("err %v", err)
-		return ret, err
+		result.Error = err.Error()
+		return result
 	}
-	address := lib.KeyToAddress(bkey)
-	c.sess.Set("address", address)
+	sign, _ := hex.DecodeString(c.r.FormValue("sign"))
+	var msg string
+	switch uid := c.sess.Get(`uid`).(type) {
+	case string:
+		msg = uid
+	default:
+		result.Error = "unknown uid"
+		return result
+	}
+
+	if verify, _ := utils.CheckECDSA([][]byte{bkey}, msg, sign, true); !verify {
+		result.Error = "incorrect signature"
+		return result
+	}
+	result.Result = true
+	result.Address = lib.KeyToAddress(bkey)
+	c.sess.Set("address", result.Address)
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
-//	publicKey := utils.MakeAsn1(n, e)
-//	publicKey := []byte(utils.HexToBin(key))
-//	log.Debug("new key", string(publicKey))
 	publicKey := []byte(key)
 	walletId, err := c.GetWalletIdByPublicKey(publicKey)
-	fmt.Printf("Sign in wallet=%d address=%s\r\n", walletId, address)
 	if err != nil {
-		log.Error("err %v", err)
-		return ret, err
+		result.Error = err.Error()
+		return result
 	}
-//	if walletId > 0 {
 	err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
 	if err != nil {
-		log.Error("err %v", err)
-		return ret, err
+		result.Error = err.Error()
+		return result
 	}
 	c.sess.Set("wallet_id", walletId)
 	citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
 	if err != nil {
-		log.Error("err %v", err)
-		return ret, err
+		result.Error = err.Error()
+		return result
 	}
 	err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
 	if err != nil {
-		log.Error("err %v", err)
-		return ret, err
+		result.Error = err.Error()
+		return result
 	}
 	c.sess.Set("citizen_id", citizenId)
-	return `{"result":1,"address": "`+address+`"}`, nil
+	return result //`{"result":1,"address": "` + address + `"}`, nil
 }

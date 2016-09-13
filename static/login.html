@@ -329,23 +329,24 @@ function do_register() {
 }
 
 function do_sign() {
-	var key = GKey.Public;
-	if (key.length > 128) {
-		key = key.substr( 2 );
-	}
-	var msg = 'login';
-	var sign = GKey.sign(msg);
-	$.post( 'ajax?controllerName=SignIn', {
-			'msg': msg,
-			'sign': sign,
-			'key': key,
-		}, function (data) {
-			if (data.address) {
-				GKey.add(data.address);
-			}
-			login_ok( data.result );
-		}, 'JSON'
-	);
+	$.get( 'ajax?json=ajax_get_uid',{}, function(data) {
+		console.log(data);
+		var key = GKey.Public;
+		if (key.length > 128) {
+			key = key.substr( 2 );
+		}
+		var sign = GKey.sign(data.uid);
+		$.post( 'ajax?json=ajax_sign_in', {
+				'sign': sign,
+				'key': key,
+			}, function (data) {
+				if (data.address) {
+					GKey.add(data.address);
+				}
+				login_ok( data.result );
+			}, 'JSON'
+		)
+	}, 'JSON');
 }
 
 function login_form() {
