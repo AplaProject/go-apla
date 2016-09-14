@@ -8,10 +8,20 @@ import (
 const (
 	CMD_ERROR = iota // error
 	CMD_PUSH         // Push value to stack
-	CMD_ADD
+	CMD_VAR          // Push variable to stack
+)
+
+const (
+	CMD_NOT = iota | 0x0100
+)
+
+const (
+	CMD_ADD = iota | 0x0200
 	CMD_SUB
 	CMD_MUL
 	CMD_DIV
+	CMD_AND
+	CMD_OR
 
 	CMD_SYS = 0xff
 )
@@ -23,8 +33,9 @@ type Oper struct {
 
 var (
 	OPERS = map[string]Oper{
-		`+`: {CMD_ADD, 1}, `-`: {CMD_SUB, 1}, `*`: {CMD_MUL, 2},
-		`/`: {CMD_DIV, 2}, `(`: {CMD_SYS, 0xff}, `)`: {CMD_SYS, 0},
+		`||`: {CMD_OR, 10}, `&&`: {CMD_AND, 15},
+		`+`: {CMD_ADD, 25}, `-`: {CMD_SUB, 25}, `*`: {CMD_MUL, 30},
+		`/`: {CMD_DIV, 30}, `!`: {CMD_NOT, 50}, `(`: {CMD_SYS, 0xff}, `)`: {CMD_SYS, 0},
 	}
 )
 
@@ -83,9 +94,17 @@ func Compile(input []rune) Bytecodes {
 						break
 					} else {
 						prev := buffer[len(buffer)-1]
-						if prev.Value.(uint16) >= oper.Priority && prev.Cmd != CMD_SYS {
-							bytecode = append(bytecode, prev)
-							buffer = buffer[:len(buffer)-1]
+						if prev.Value.(uint16) >= oper.Priority && oper.Priority != 50 && prev.Cmd != CMD_SYS {
+							if prev.Value.(uint16) == 50 { // Right to left
+								unar := len(buffer) - 1
+								for ; unar > 0 && buffer[unar-1].Value.(uint16) == 50; unar-- {
+								}
+								bytecode = append(bytecode, buffer[unar:]...)
+								buffer = buffer[:unar]
+							} else {
+								bytecode = append(bytecode, prev)
+								buffer = buffer[:len(buffer)-1]
+							}
 						} else {
 							buffer = append(buffer, byteOper)
 							break
@@ -101,6 +120,8 @@ func Compile(input []rune) Bytecodes {
 			} else {
 				cmd = &Bytecode{CMD_ERROR, err.Error(), lexem}
 			}
+		case LEX_IDENT:
+			cmd = &Bytecode{CMD_VAR, string(input[lexem.Offset:lexem.Right]), lexem}
 		}
 		if cmd != nil {
 			bytecode = append(bytecode, cmd)

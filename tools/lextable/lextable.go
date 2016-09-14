@@ -12,20 +12,46 @@ import (
 type Action map[string][]string
 type States map[string]Action
 
+const (
+	ALPHASIZE = 20 // The length of alphabet
+)
+
 var (
-	table    [][14]uint32
+	table    [][ALPHASIZE]uint32
 	lexem    = map[string]uint32{``: 0, `sys`: 1, `oper`: 2, `number`: 3, `ident`: 4}
 	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4}
-	alphabet = []byte{0x01, 0x0a, ' ', '(', ')', '*', '+', '-', '/', '0', '1', 'a', '_', 128}
-	//              default  n     s                                                      r
+	alphabet = []byte{0x01, 0x0a, ' ', '(', ')', '&', '|', '<', '>', '=', '!', '*',
+		//              default  n     s
+		'+', '-', '/', '0', '1', 'a', '_', 128}
+	//													r
 	states = `{
 	"main": {
 			"n()": ["main", "sys", "next"],
 			"s": ["main", "", "next"],
+			"&": ["and", "", "push next"],
+			"|": ["or", "", "push next"],
+			"=": ["eq", "", "push next"],
+			"<>!": ["oneq", "", "push next"],
 			"*+-/": ["main", "oper", "next"],
 			"01": ["number", "", "push next"],
 			"a_r": ["ident", "", "push next"],
 			"d": ["error", "", ""]
+		},
+	"and": {
+			"&": ["main", "oper", "pop next"],
+			"d": ["error", "", ""]
+		},
+	"or": {
+			"|": ["main", "oper", "pop next"],
+			"d": ["error", "", ""]
+		},
+	"eq": {
+			"=": ["main", "oper", "pop next"],
+			"d": ["error", "", ""]
+		},
+	"oneq": {
+			"=": ["main", "oper", "pop next"],
+			"d": ["main", "oper", "pop"]
 		},
 	"number": {
 			"01": ["number", "", "next"],
@@ -88,7 +114,7 @@ var (
 				state2int[key] = uint(len(state2int))
 			}
 		}
-		table = make([][14]uint32, len(state2int))
+		table = make([][ALPHASIZE]uint32, len(state2int))
 		for key, istate := range data {
 			curstate := state2int[key]
 			for i := range table[curstate] {
@@ -119,7 +145,7 @@ var (
 					case 's':
 						ind = 2
 					case 'r':
-						ind = 13
+						ind = ALPHASIZE - 1
 					default:
 						for k, ach := range alphabet {
 							if ach == ch {
@@ -139,7 +165,7 @@ var (
 				}
 			}
 		}
-		out += "\t\tLEXTABLE = [][14]uint32{\r\n"
+		out += "\t\tLEXTABLE = [][" + fmt.Sprint(ALPHASIZE) + "]uint32{\r\n"
 		for _, line := range table {
 			out += "\t\t\t{"
 			for _, ival := range line {
