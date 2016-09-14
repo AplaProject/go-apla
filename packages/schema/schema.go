@@ -1,3 +1,19 @@
+// Copyright 2016 The go-daylight Authors
+// This file is part of the go-daylight library.
+//
+// The go-daylight library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The go-daylight library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+
 package schema
 
 import (
@@ -295,7 +311,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[2] = map[string]string{"name": "block_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"hash"}
-	s1["comment"] = "Блоки, которые мы должны забрать у указанных нодов"
+	s1["comment"] = ""
 	s["queue_blocks"] = s1
 	schema.S = s
 	schema.PrintSchema()
@@ -608,6 +624,8 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[0] = map[string]string{"name": "parameter", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(2) NOT NULL DEFAULT ''", "postgresql": "varchar(2) NOT NULL DEFAULT ''", "comment": ""}
 	s2[1] = map[string]string{"name": "value", "mysql": "varchar(2) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(2) NOT NULL DEFAULT ''", "postgresql": "varchar(2) NOT NULL DEFAULT ''", "comment": ""}
 	s2[2] = map[string]string{"name": "change", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[3] = map[string]string{"name": "parent", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[4] = map[string]string{"name": "text", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"
@@ -615,6 +633,24 @@ func (schema *SchemaStruct) GetSchema() {
 	s["ds_state_settings"] = s1
 	schema.S = s
 	schema.PrintSchema()
+
+
+	s = make(Recmap)
+	s1 = make(Recmap)
+	s2 = make(Recmapi)
+	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('rollback_id_seq')", "comment": ""}
+	s2[1] = map[string]string{"name": "block_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
+	s2[2] = map[string]string{"name": "tx_hash", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": ""}
+	s2[3] = map[string]string{"name": "table_name", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[4] = map[string]string{"name": "table_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "bigint(20) NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
+	s1["fields"] = s2
+	s1["PRIMARY"] = []string{"id"}
+	s1["AI"] = "id"
+	s1["comment"] = ""
+	s["rollback"] = s1
+	schema.S = s
+	schema.PrintSchema()
+
 
 	if !schema.OnlyPrint {
 
@@ -638,6 +674,10 @@ func (schema *SchemaStruct) GetSchema() {
 			log.Error("%v", err)
 		}
 		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_dlt_price", "1000000", "president")`)
+		if err!=nil {
+			log.Error("%v", err)
+		}
+		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("new_state_table", ?, "if (citizenId == president.citizen_id) ")`, `{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
 		if err!=nil {
 			log.Error("%v", err)
 		}
