@@ -18,6 +18,7 @@ package script
 
 import (
 	"fmt"
+	"reflect"
 )
 
 type ValStack struct {
@@ -28,7 +29,33 @@ type Stack []*ValStack
 
 type VM struct {
 	stack Stack
-	vars  map[string]interface{}
+	vars  *map[string]interface{}
+}
+
+func VMFunc(vm *VM, name string, count int) error {
+	var (
+		ok bool
+		f  interface{}
+	)
+	if f, ok = (*vm.vars)[name]; !ok || reflect.ValueOf(f).Kind().String() != `func` {
+		return fmt.Errorf(`unknown function %s`, name)
+	}
+	size := len(vm.stack)
+	foo := reflect.ValueOf(f)
+	if count != foo.Type().NumIn() {
+		return fmt.Errorf(`The number of params %s is wrong`, name)
+	}
+	pars := make([]reflect.Value, count)
+	for i := count; i > 0; i-- {
+		pars[count-i] = reflect.ValueOf(vm.stack[size-i].Value)
+	}
+	result := foo.Call(pars)
+	if result[len(result)-1].Interface() != nil {
+		return result[len(result)-1].Interface().(error)
+	}
+	vm.stack[size-count] = &ValStack{Value: result[0].Interface()}
+	vm.stack = vm.stack[:size-count+1]
+	return nil
 }
 
 func ValueToBool(v interface{}) bool {
@@ -48,19 +75,15 @@ func ValueToBool(v interface{}) bool {
 }
 
 func Eval(input string, vars *map[string]interface{}) interface{} {
-	vm := VM{make(Stack, 0, 1024), make(map[string]interface{})}
+	vm := VM{make(Stack, 0, 1024), vars}
 	bytecode := Compile([]rune(input))
-	if vars != nil {
-		for name, val := range *vars {
-			vm.vars[name] = val
-		}
-	}
 	last := bytecode[len(bytecode)-1]
 	if last.Cmd == CMD_ERROR {
 		return fmt.Errorf(`%v [%d:%d]`, last.Value, last.Lex.Line, last.Lex.Column)
 	}
 	top := make([]interface{}, 8)
 	for _, cmd := range bytecode {
+		var bin interface{}
 		size := len(vm.stack)
 		if size < int(cmd.Cmd>>8) {
 			return fmt.Errorf(`stack is empty [%d:%d]`, last.Lex.Line, last.Lex.Column)
@@ -71,8 +94,15 @@ func Eval(input string, vars *map[string]interface{}) interface{} {
 		switch cmd.Cmd {
 		case CMD_PUSH:
 			vm.stack = append(vm.stack, &ValStack{Value: cmd.Value})
+		case CMD_PUSHSTR:
+			vm.stack = append(vm.stack, &ValStack{Value: cmd.Value.(string)})
+		case CMD_TABLE:
+			err := VMFunc(&vm, `Table`, 4)
+			if err != nil {
+				return fmt.Errorf(`%s [%d:%d]`, err.Error(), last.Lex.Line, last.Lex.Column)
+			}
 		case CMD_VAR:
-			if val, ok := vm.vars[cmd.Value.(string)]; ok {
+			if val, ok := (*vm.vars)[cmd.Value.(string)]; ok {
 				var number int64
 				switch varVal := val.(type) {
 				case int:
@@ -88,24 +118,40 @@ func Eval(input string, vars *map[string]interface{}) interface{} {
 			vm.stack[size-1] = &ValStack{Value: !ValueToBool(top[0])}
 
 		case CMD_ADD:
-			vm.stack[size-2] = &ValStack{Value: top[1].(int64) + top[0].(int64)}
+			bin = top[1].(int64) + top[0].(int64)
 		case CMD_SUB:
-			vm.stack[size-2] = &ValStack{Value: top[1].(int64) - top[0].(int64)}
+			bin = top[1].(int64) - top[0].(int64)
 		case CMD_MUL:
-			vm.stack[size-2] = &ValStack{Value: top[1].(int64) * top[0].(int64)}
+			bin = top[1].(int64) * top[0].(int64)
 		case CMD_DIV:
 			if top[0].(int64) == 0 {
 				return fmt.Errorf(`divided by zero [%d:%d]`, last.Lex.Line, last.Lex.Column)
 			}
-			vm.stack[size-2] = &ValStack{Value: top[1].(int64) / top[0].(int64)}
+			bin = top[1].(int64) / top[0].(int64)
 		case CMD_AND:
-			vm.stack[size-2] = &ValStack{Value: ValueToBool(top[1]) && ValueToBool(top[0])}
+			bin = ValueToBool(top[1]) && ValueToBool(top[0])
 		case CMD_OR:
-			vm.stack[size-2] = &ValStack{Value: ValueToBool(top[1]) || ValueToBool(top[0])}
+			bin = ValueToBool(top[1]) || ValueToBool(top[0])
+		case CMD_EQUAL, CMD_NOTEQ:
+			bin = top[1].(int64) == top[0].(int64)
+			if cmd.Cmd == CMD_NOTEQ {
+				bin = !bin.(bool)
+			}
+		case CMD_LESS, CMD_NOTLESS:
+			bin = top[1].(int64) < top[0].(int64)
+			if cmd.Cmd == CMD_NOTLESS {
+				bin = !bin.(bool)
+			}
+		case CMD_GREAT, CMD_NOTGREAT:
+			bin = top[1].(int64) > top[0].(int64)
+			if cmd.Cmd == CMD_NOTGREAT {
+				bin = !bin.(bool)
+			}
 		default:
 			return fmt.Errorf(`Unknown command [%d:%d]`, last.Lex.Line, last.Lex.Column)
 		}
 		if (cmd.Cmd >> 8) == 2 {
+			vm.stack[size-2] = &ValStack{Value: bin}
 			vm.stack = vm.stack[:size-1]
 		}
 	}

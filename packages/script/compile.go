@@ -22,9 +22,11 @@ import (
 )
 
 const (
-	CMD_ERROR = iota // error
-	CMD_PUSH         // Push value to stack
-	CMD_VAR          // Push variable to stack
+	CMD_ERROR   = iota // error
+	CMD_PUSH           // Push value to stack
+	CMD_VAR            // Push variable to stack
+	CMD_PUSHSTR        // Push ident as string
+	CMD_TABLE          // #table_name[id_column_name = value].column_name
 )
 
 const (
@@ -38,8 +40,16 @@ const (
 	CMD_DIV
 	CMD_AND
 	CMD_OR
+	CMD_EQUAL
+	CMD_NOTEQ
+	CMD_LESS
+	CMD_NOTLESS
+	CMD_GREAT
+	CMD_NOTGREAT
 
-	CMD_SYS = 0xff
+	CMD_SYS           = 0xff
+	UNARY      uint16 = 50
+	MODE_TABLE        = 1
 )
 
 type Oper struct {
@@ -49,9 +59,10 @@ type Oper struct {
 
 var (
 	OPERS = map[string]Oper{
-		`||`: {CMD_OR, 10}, `&&`: {CMD_AND, 15},
+		`||`: {CMD_OR, 10}, `&&`: {CMD_AND, 15}, `==`: {CMD_EQUAL, 20}, `!=`: {CMD_NOTEQ, 20},
+		`<`: {CMD_LESS, 22}, `>=`: {CMD_NOTLESS, 22}, `>`: {CMD_GREAT, 22}, `<=`: {CMD_NOTGREAT, 22},
 		`+`: {CMD_ADD, 25}, `-`: {CMD_SUB, 25}, `*`: {CMD_MUL, 30},
-		`/`: {CMD_DIV, 30}, `!`: {CMD_NOT, 50}, `(`: {CMD_SYS, 0xff}, `)`: {CMD_SYS, 0},
+		`/`: {CMD_DIV, 30}, `!`: {CMD_NOT, UNARY}, `(`: {CMD_SYS, 0xff}, `)`: {CMD_SYS, 0},
 	}
 )
 
@@ -64,6 +75,7 @@ type Bytecode struct {
 type Bytecodes []*Bytecode
 
 func Compile(input []rune) Bytecodes {
+	var i int
 	bytecode := make(Bytecodes, 0, 100)
 
 	lexems := LexParser(input)
@@ -75,16 +87,40 @@ func Compile(input []rune) Bytecodes {
 		return append(bytecode, &Bytecode{CMD_ERROR, fmt.Sprintf(`unknown lexem %s`,
 			string(input[last.Offset:last.Right])), last})
 	}
+	getNext := func() (string, *Lexem) {
+		i++
+		return string(input[lexems[i].Offset:lexems[i].Right]), lexems[i]
+	}
 	buffer := make(Bytecodes, 0, 20)
-	for _, lexem := range lexems {
+	mode := 0
+	for i = 0; i < len(lexems); i++ {
 		var cmd *Bytecode
+		lexem := lexems[i]
+		//		fmt.Println(i, lexem, buffer, bytecode)
 		strlex := string(input[lexem.Offset:lexem.Right])
 		switch lexem.Type {
 		case LEX_SYS:
 			switch strlex {
+			case `#`:
+				mode = MODE_TABLE
+				buffer = append(buffer, &Bytecode{CMD_TABLE, UNARY, lexem})
+
+				strnext, next := getNext()
+				bytecode = append(bytecode, &Bytecode{CMD_PUSHSTR, strnext, next})
+				strnext, next = getNext()
+				if strnext != `[` {
+					cmd = &Bytecode{CMD_ERROR, `must be [`, next}
+				} else {
+					strnext, next = getNext()
+					bytecode = append(bytecode, &Bytecode{CMD_PUSHSTR, strnext, next})
+					strnext, next = getNext()
+					if strnext != `=` {
+						cmd = &Bytecode{CMD_ERROR, `must be =`, next}
+					}
+				}
 			case `(`:
 				buffer = append(buffer, &Bytecode{CMD_SYS, uint16(0xff), lexem})
-			case `)`:
+			case `)`, `]`:
 				for {
 					if len(buffer) == 0 {
 						cmd = &Bytecode{CMD_ERROR, `there is not pair`, lexem}
@@ -92,13 +128,25 @@ func Compile(input []rune) Bytecodes {
 					} else {
 						prev := buffer[len(buffer)-1]
 						buffer = buffer[:len(buffer)-1]
-						if prev.Value.(uint16) == 0xff {
+						if (strlex == `)` && prev.Value.(uint16) == 0xff) ||
+							(strlex == `]` && prev.Cmd == CMD_TABLE) {
 							break
 						} else {
 							bytecode = append(bytecode, prev)
 						}
 					}
 
+				}
+				if mode == MODE_TABLE && strlex == `]` {
+					strnext, next := getNext()
+					if strnext != `.` {
+						cmd = &Bytecode{CMD_ERROR, `must be .`, next}
+					} else {
+						strnext, next = getNext()
+						bytecode = append(bytecode, &Bytecode{CMD_PUSHSTR, strnext, next})
+						mode = 0
+						bytecode = append(bytecode, &Bytecode{CMD_TABLE, UNARY, next})
+					}
 				}
 			}
 		case LEX_OPER:
@@ -110,10 +158,10 @@ func Compile(input []rune) Bytecodes {
 						break
 					} else {
 						prev := buffer[len(buffer)-1]
-						if prev.Value.(uint16) >= oper.Priority && oper.Priority != 50 && prev.Cmd != CMD_SYS {
-							if prev.Value.(uint16) == 50 { // Right to left
+						if prev.Value.(uint16) >= oper.Priority && oper.Priority != UNARY && prev.Cmd != CMD_SYS {
+							if prev.Value.(uint16) == UNARY { // Right to left
 								unar := len(buffer) - 1
-								for ; unar > 0 && buffer[unar-1].Value.(uint16) == 50; unar-- {
+								for ; unar > 0 && buffer[unar-1].Value.(uint16) == UNARY; unar-- {
 								}
 								bytecode = append(bytecode, buffer[unar:]...)
 								buffer = buffer[:unar]
@@ -137,7 +185,7 @@ func Compile(input []rune) Bytecodes {
 				cmd = &Bytecode{CMD_ERROR, err.Error(), lexem}
 			}
 		case LEX_IDENT:
-			cmd = &Bytecode{CMD_VAR, string(input[lexem.Offset:lexem.Right]), lexem}
+			cmd = &Bytecode{CMD_VAR, strlex, lexem}
 		}
 		if cmd != nil {
 			bytecode = append(bytecode, cmd)

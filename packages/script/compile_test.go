@@ -38,6 +38,7 @@ func (bytecode Bytecodes) String(source []rune) (ret string) {
 
 func TestCompile(t *testing.T) {
 	test := []TestComp{
+		{`10 + #mytable[id = 234].name * 20`, `[1 10][3 mytable][3 id][1 234][3 name][4 50][1 20][514 30][512 25]`},
 		{"!!12 + !!0", "[1 12][256 50][256 50][1 0][256 50][256 50][512 25]"},
 		{"12346 7890", "[1 12346][1 7890]"},
 		{"460+ 1540", "[1 460][1 1540][512 25]"},
@@ -58,6 +59,6 @@ func TestCompile(t *testing.T) {
 		if out != item.Output {
 			t.Error(`error of compile ` + item.Input)
 		}
-		//fmt.Println(out)
+		//		fmt.Println(out)
 	}
 }

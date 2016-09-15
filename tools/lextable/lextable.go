@@ -1,3 +1,19 @@
+// Copyright 2016 The go-daylight Authors
+// This file is part of the go-daylight library.
+//
+// The go-daylight library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The go-daylight library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+
 package main
 
 import (
@@ -13,20 +29,20 @@ type Action map[string][]string
 type States map[string]Action
 
 const (
-	ALPHASIZE = 20 // The length of alphabet
+	ALPHASIZE = 24 // The length of alphabet
 )
 
 var (
 	table    [][ALPHASIZE]uint32
 	lexem    = map[string]uint32{``: 0, `sys`: 1, `oper`: 2, `number`: 3, `ident`: 4}
 	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4}
-	alphabet = []byte{0x01, 0x0a, ' ', '(', ')', '&', '|', '<', '>', '=', '!', '*',
+	alphabet = []byte{0x01, 0x0a, ' ', '(', ')', '[', ']', '&', '|', '#', '.', '<', '>', '=', '!', '*',
 		//              default  n     s
 		'+', '-', '/', '0', '1', 'a', '_', 128}
 	//													r
 	states = `{
 	"main": {
-			"n()": ["main", "sys", "next"],
+			"n()#[].": ["main", "sys", "next"],
 			"s": ["main", "", "next"],
 			"&": ["and", "", "push next"],
 			"|": ["or", "", "push next"],
@@ -47,7 +63,7 @@ var (
 		},
 	"eq": {
 			"=": ["main", "oper", "pop next"],
-			"d": ["error", "", ""]
+			"d": ["main", "oper", "pop"]
 		},
 	"oneq": {
 			"=": ["main", "oper", "pop next"],

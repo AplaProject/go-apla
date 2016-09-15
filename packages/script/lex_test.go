@@ -48,6 +48,7 @@ func TestLexParser(t *testing.T) {
 		{`23+13424 Тест`, `[3 23][2 +][3 13424][4 Тест]`},
 		{` 0785/67+iname*(56-31)`, `[3 0785][2 /][3 67][2 +][4 iname][2 *][1 (][3 56][2 -][3 31][1 )]`},
 		{`myvar_45 - a_qwe + t81you - 345rt`, `[4 myvar_45][2 -][4 a_qwe][2 +][4 t81you][2 -][0 error]`},
+		{`10 + #mytable[id = 234].name * 20`, `[3 10][2 +][1 #][4 mytable][1 [][4 id][2 =][3 234][1 ]][1 .][4 name][2 *][3 20]`},
 	}
 	for _, item := range test {
 		source := []rune(item.Input)
