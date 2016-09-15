@@ -18,10 +18,11 @@ package schema
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/op/go-logging"
 	"regexp"
 	"strings"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("schema")
@@ -34,9 +35,9 @@ type SchemaStruct struct {
 	DbType       string
 	PrefixUserId int
 	S            Recmap
-	OnlyPrint bool
-	AddColumn bool
-	ChangeType bool
+	OnlyPrint    bool
+	AddColumn    bool
+	ChangeType   bool
 }
 
 func (schema *SchemaStruct) GetSchema() {
@@ -60,7 +61,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["dlt_transactions"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -102,8 +102,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -135,7 +133,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -155,7 +152,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -171,8 +167,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -187,8 +181,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["ds_account"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -207,10 +199,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
-
-
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -222,8 +210,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["rb_transactions"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -257,7 +243,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -272,7 +257,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["rb_full_nodes"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -302,7 +286,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -316,7 +299,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -329,7 +311,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["queue_tx"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -374,7 +355,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -392,7 +372,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -406,12 +385,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["ds_citizenship_requests"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
-
-
-
-
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -430,8 +403,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["rb_ds_citizens"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -470,9 +441,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
-
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -500,10 +468,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
-
-
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -521,15 +485,14 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[11] = map[string]string{"name": "current_load_blockchain", "mysql": "enum('nodes','file','null') DEFAULT 'null'", "sqlite": "varchar(100)  DEFAULT 'null'", "postgresql": "enum('nodes','file','null') DEFAULT 'null'", "comment": "Откуда сейчас собирается база данных"}
 	s2[12] = map[string]string{"name": "http_host", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": "адрес, по которому будет висеть панель юзера.  Если это майнер, то адрес должен совпадать с my_table.http_host"}
 	s2[13] = map[string]string{"name": "auto_update", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[14] = map[string]string{"name": "auto_update_url","mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[14] = map[string]string{"name": "auto_update_url", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s2[15] = map[string]string{"name": "analytics_disabled", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
-	s2[16] = map[string]string{"name": "stat_host","mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[16] = map[string]string{"name": "stat_host", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s1["fields"] = s2
 	s1["comment"] = ""
 	s["config"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -540,7 +503,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["stop_daemons"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -569,8 +531,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -585,7 +545,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["dlt_wallets_buffer"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -602,7 +561,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -616,7 +574,6 @@ func (schema *SchemaStruct) GetSchema() {
 	s["cb_head"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -634,7 +591,6 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
@@ -651,58 +607,57 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
-
 	if !schema.OnlyPrint {
 
 		err := schema.DCDB.ExecSql(`INSERT INTO states (state_id, state_code, node_public_key, delegate_wallet_id) VALUES (1, "DS", [hex], 1)`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
-		if err!=nil {
+		if err != nil {
 			log.Error("%v", err)
 		}
 
 		err = schema.DCDB.ExecSql(`INSERT INTO ds_citizens (citizen_id, public_key_0) VALUES (1, [hex])`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
-		if err!=nil {
+		if err != nil {
 			log.Error("%v", err)
 		}
 
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("registration_of_citizens", "president", "president")`)
-		if err!=nil {
+		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("registration_of_citizens", "president", "president", "", "")`)
+		if err != nil {
 			log.Error("%v", err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_fields", ?, "president")`,
-		                          `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
-		if err!=nil {
+		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_fields", ?, "president", "", "")`,
+			`[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
+		if err != nil {
 			log.Error("%v", err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_dlt_price", "1000000", "president")`)
-		if err!=nil {
+		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_dlt_price", "1000000", "president", "", "")`)
+		if err != nil {
 			log.Error("%v", err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("new_state_table", ?, "if (citizenId == president.citizen_id) ")`, `{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
-		if err!=nil {
+		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("new_state_table", ?, "if (citizenId == president.citizen_id) ", "", "")`, `{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
+		if err != nil {
 			log.Error("%v", err)
 		}
 		err = schema.DCDB.ExecSql(`INSERT INTO president (state_id, citizen_id) VALUES (1, 1)`)
-		if err!=nil {
+		if err != nil {
 			log.Error("%v", err)
 		}
 		/*
-		// President can only be a citizen of this state
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("president_candidate", "if (CurrentTime - citizen.start_time > 86400) && count(president.citizen_id) < 2)", "referendum")`)
-		if err!=nil {
-			log.Error(err)
-		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("change_head_cb", "president", "parliament")`)
-		if err!=nil {
-			log.Error(err)
-		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("president_period_years", "5", "parliament")`)
-		if err!=nil {
-			log.Error(err)
-		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("parliament", "unicameralism", "parliament+president")`)
-		if err!=nil {
-			log.Error(err)
-		}
+			// President can only be a citizen of this state
+			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("president_candidate", "if (CurrentTime - citizen.start_time > 86400) && count(president.citizen_id) < 2)", "referendum")`)
+			if err!=nil {
+				log.Error(err)
+			}
+			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("change_head_cb", "president", "parliament")`)
+			if err!=nil {
+				log.Error(err)
+			}
+			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("president_period_years", "5", "parliament")`)
+			if err!=nil {
+				log.Error(err)
+			}
+			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("parliament", "unicameralism", "parliament+president")`)
+			if err!=nil {
+				log.Error(err)
+			}
 		*/
 	}
 }
