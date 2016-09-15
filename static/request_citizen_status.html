@@ -42,6 +42,7 @@
 		theme: 'bootstrap'
 	});
 	
+	var arr = [];
 	var container = $("#fields");
 	var msg = $("#message");
 	var btn = $("#send");
@@ -51,7 +52,7 @@
 			id = 1;
 		}
 		
-		//container.html("");
+		container.html("");
 		$("#refresh").click();
 		
 		$.ajax({
@@ -63,23 +64,30 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
+				arr = [];
 				btn.prop("disabled", false);
 				$('[data-sweet-alert]').removeClass("whirl standard");
 				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
 				if (data.valid == false) {
 					$("#sorry").click();
 					btn.prop("disabled", true);
-					container.find(".form-group").hide();
+					//container.find(".form-group").hide();
 				} else {
-					container.find(".form-group").show();
+					//container.find(".form-group").show();
 				}
 				if (data.fields.length) {
-					console.log(data)
-					/*var fields = JSON.parse(data.fields);
-					if (fields[0].htmlType == "textinput") {
-						el = '<div class="form-group"><label for="' + fields[0].name + '">Name</label><input id="' + fields[0].name + '" name="' + fields[0].name + '" type="text" class="form-control"></div>'
+					var fields = JSON.parse(data.fields);
+					
+					for (i = 0; i < fields.length; i++ ) {
+						if (fields[0].htmlType == "textinput") {
+							var el = '<div class="form-group"><label for="' + fields[0].name + '">Name</label><input id="' + fields[0].name + '" name="' + fields[0].name + '" type="text" class="form-control"></div>'
+						}
+						container.append(el);
+						arr.push(fields[i].name);
 					}
-					container.append(el);*/
+					
+					//console.log(fields.length)
+					//console.log(arr)
 				}
 			},
 			error: function(xhr, status, error) {
@@ -92,9 +100,9 @@
 		var id = elem.value;
 		if (id != "1") {
 			msg.show();
-			//container.html("");
-			container.find(".form-group").hide();
-			container.find("#price").parent().remove();
+			container.html("");
+			//container.find(".form-group").hide();
+			//container.find("#price").parent().remove();
 			btn.prop("disabled", true);
 		} else {
 			msg.hide();
@@ -211,25 +219,29 @@
 									clearInterval(interval);
 									$("#for-signature").val( data.type_id + ','+data.time+',{{.Data.WalletId}}');
 									doSign();
+									
+									var predata = {
+										'type' : data.type_name,
+										'time' : data.time,
+										'walletId' : '{{.Data.WalletId}}',
+										'stateId': $("#countries").val(),
+										'price': parseInt($("#price").val()),
+										'pubkey' : GKey.Public,
+										'signature1': $('#signature1').val(),
+										'signature2': $('#signature2').val(),
+										'signature3': $('#signature3').val()
+									};
+									
+									for (i = 0; i < arr.length; i++ ) {
+										var field = arr[i];
+										predata[field] = $("#" + field).val();
+									}
+									
+									//console.log(predata)
 									$.ajax({
 										type: 'POST',
 										url: data.host + 'ajax?controllerName=saveQueue',
-										data: {
-											'type' : data.type_name,
-											'time' : data.time,
-											'walletId' : '{{.Data.WalletId}}',
-											'stateId': $("#countries").val(),
-											'price': parseInt($("#price").val()),
-											'name': $("#name").val(),
-											'surname': $("#surname").val(),
-											'birthday': $("#birthday").val(),
-											//'photo': $("#photo").val(),
-											'passport': $("#passport").val(),
-											'pubkey' : GKey.Public,
-											'signature1': $('#signature1').val(),
-											'signature2': $('#signature2').val(),
-											'signature3': $('#signature3').val()
-										},
+										data: predata,
 										dataType: 'json',
 										crossDomain: true,
 										success: function(status){
@@ -294,7 +306,7 @@
 	   </div>
 	   <div id="message" class="alert alert-danger">At this point in your chosen country, the Central Bank has not yet begun to register citizens in DayLight. If the Central Bank does not begin to citizens registered to 03.01.2017,  then these powers led association of CB will be transferred.</div>
 	   <div id="fields">
-		   <div class="form-group">
+		   <!--<div class="form-group">
 			  <label for="name">Name</label>
 			  <input id="name" type="text" class="form-control">
 		   </div>
@@ -318,7 +330,7 @@
 		   <div class="form-group">
 			  <label for="passport">Passport number</label>
 			  <input id="passport" type="text" class="form-control">
-		   </div>
+		   </div>-->
 	   </div>
 	</form>
  </div>
