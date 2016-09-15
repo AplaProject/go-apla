@@ -22,22 +22,6 @@
 	
 //	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
 	
-	$('#datetimepicker1').datetimepicker({
-	  icons: {
-		  time: 'fa fa-clock-o',
-		  date: 'fa fa-calendar',
-		  up: 'fa fa-chevron-up',
-		  down: 'fa fa-chevron-down',
-		  previous: 'fa fa-chevron-left',
-		  next: 'fa fa-chevron-right',
-		  today: 'fa fa-crosshairs',
-		  clear: 'fa fa-trash'
-		},
-		minDate: moment("01/01/1950"),
-		maxDate: 'now',
-		format: 'DD MMMM, YYYY'
-	});
-	$('.filestyle').filestyle();
 	$('#countries').select2({
 		theme: 'bootstrap'
 	});
@@ -79,15 +63,37 @@
 					var fields = JSON.parse(data.fields);
 					
 					for (i = 0; i < fields.length; i++ ) {
-						if (fields[0].htmlType == "textinput") {
-							var el = '<div class="form-group"><label for="' + fields[0].name + '">Name</label><input id="' + fields[0].name + '" name="' + fields[0].name + '" type="text" class="form-control"></div>'
+						if (fields[i].htmlType == "textinput") {
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" name="' + fields[i].name + '" type="text" class="form-control"></div>'
+						}
+						if (fields[i].htmlType == "calendar") {
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><div class="input-group date datetimepicker"><input id="' + fields[i].name + '" type="text" class="form-control"><span class="input-group-addon"><span class="fa fa-calendar"></span></span></div></div>'
+						}
+						if (fields[i].htmlType == "file") {
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle"></div>'
 						}
 						container.append(el);
 						arr.push(fields[i].name);
 					}
+					$(".datetimepicker").datetimepicker({
+						icons: {
+							time: 'fa fa-clock-o',
+							date: 'fa fa-calendar',
+							up: 'fa fa-chevron-up',
+							down: 'fa fa-chevron-down',
+							previous: 'fa fa-chevron-left',
+							next: 'fa fa-chevron-right',
+							today: 'fa fa-crosshairs',
+							clear: 'fa fa-trash'
+						},
+						minDate: moment("01/01/1950"),
+						maxDate: 'now',
+						format: 'DD MMMM, YYYY'
+					});
+					$(".filestyle").filestyle();
 					
-					//console.log(fields.length)
-					//console.log(arr)
+					console.log(fields)
+					console.log(arr)
 				}
 			},
 			error: function(xhr, status, error) {
