@@ -32,7 +32,7 @@ type VM struct {
 	vars  *map[string]interface{}
 }
 
-func VMFunc(vm *VM, name string, count int) error {
+func VMFunc(vm *VM, name string) error {
 	var (
 		ok bool
 		f  interface{}
@@ -42,9 +42,10 @@ func VMFunc(vm *VM, name string, count int) error {
 	}
 	size := len(vm.stack)
 	foo := reflect.ValueOf(f)
-	if count != foo.Type().NumIn() {
+	/*	if count != foo.Type().NumIn() {
 		return fmt.Errorf(`The number of params %s is wrong`, name)
-	}
+	}*/
+	count := foo.Type().NumIn()
 	pars := make([]reflect.Value, count)
 	for i := count; i > 0; i-- {
 		pars[count-i] = reflect.ValueOf(vm.stack[size-i].Value)
@@ -96,8 +97,12 @@ func Eval(input string, vars *map[string]interface{}) interface{} {
 			vm.stack = append(vm.stack, &ValStack{Value: cmd.Value})
 		case CMD_PUSHSTR:
 			vm.stack = append(vm.stack, &ValStack{Value: cmd.Value.(string)})
-		case CMD_TABLE:
-			err := VMFunc(&vm, `Table`, 4)
+		case CMD_TABLE, CMD_CALL:
+			funcname := `Table`
+			if cmd.Cmd == CMD_CALL {
+				funcname = cmd.Value.(string)
+			}
+			err := VMFunc(&vm, funcname)
 			if err != nil {
 				return fmt.Errorf(`%s [%d:%d]`, err.Error(), last.Lex.Line, last.Lex.Column)
 			}
@@ -159,4 +164,12 @@ func Eval(input string, vars *map[string]interface{}) interface{} {
 		return fmt.Errorf(`Stack empty`)
 	}
 	return vm.stack[len(vm.stack)-1].Value
+}
+
+func EvalIf(input string, vars *map[string]interface{}) (bool, error) {
+	ret := Eval(input, vars)
+	if err, ok := ret.(error); ok {
+		return false, err
+	}
+	return ValueToBool(ret), nil
 }

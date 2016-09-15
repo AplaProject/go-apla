@@ -38,6 +38,8 @@ func (bytecode Bytecodes) String(source []rune) (ret string) {
 
 func TestCompile(t *testing.T) {
 	test := []TestComp{
+		{"Multi( (34+35)*2, Multi( citizenId, 56))", "[1 34][1 35][512 25][1 2][514 30][2 citizenId][1 56][5 Multi][5 Multi]"},
+		{"myfunc1() + myfunc2(10+56)*myfunc3((5+id), func4(qwerty), 6*(3+8))", "[5 myfunc1][1 10][1 56][512 25][5 myfunc2][1 5][2 id][512 25][2 qwerty][5 func4][1 6][1 3][1 8][512 25][514 30][5 myfunc3][514 30][512 25]"},
 		{`10 + #mytable[id = 234].name * 20`, `[1 10][3 mytable][3 id][1 234][3 name][4 50][1 20][514 30][512 25]`},
 		{"!!12 + !!0", "[1 12][256 50][256 50][1 0][256 50][256 50][512 25]"},
 		{"12346 7890", "[1 12346][1 7890]"},

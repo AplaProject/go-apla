@@ -41,8 +41,21 @@ func TestEval(t *testing.T) {
 	}
 }
 
+func MyTable(table, id_column string, id int64, ret_column string) (int64, error) {
+	if ret_column != `wallet` {
+		return 0, fmt.Errorf(`Invalid result column name %s`, ret_column)
+	}
+	fmt.Println(table, id_column, id, ret_column)
+	return 125, nil
+}
+
+func Multi(a, b int64) (int64, error) {
+	return a + b*2, nil
+}
+
 func TestEvalVar(t *testing.T) {
 	test := []TestComp{
+		{"2+ Multi( (34+35)*2, Multi( citizenId, 56)) /2", `56972`},
 		{"#my[id=3345].wa", "Invalid result column name wa [1:14]"},
 		{"7665 + #my[id=345].wallet*2 == 7915", "true"},
 		{"7665 > (citizenId-48000)", "false"},
@@ -64,19 +77,40 @@ func TestEvalVar(t *testing.T) {
 	vars := map[string]interface{}{
 		`citizenId`: 56789,
 		`wallet_id`: 893451,
-		`Table`: func(table, id_column string, id int64, ret_column string) (int64, error) {
-			if ret_column != `wallet` {
-				return 0, fmt.Errorf(`Invalid result column name %s`, ret_column)
-			}
-			fmt.Println(table, id_column, id, ret_column)
-			return 125, nil
-		},
+		`Multi`:     Multi,
+		`Table`:     MyTable,
 	}
 	for _, item := range test {
 		out := Eval(item.Input, &vars)
 		if fmt.Sprint(out) != item.Output {
 			t.Error(`error of eval ` + item.Input)
 		}
-		//fmt.Println(out)
+		//		fmt.Println(out)
+	}
+}
+
+func TestEvalIf(t *testing.T) {
+	test := []TestComp{
+		{"citizenId == 56780 + 9", `true`},
+		{"qwerty(45)", `unknown function qwerty [1:1]`},
+		{"Multi(2, 5) > 36", "false"},
+	}
+	vars := map[string]interface{}{
+		`citizenId`: 56789,
+		`wallet_id`: 893451,
+		`Multi`:     Multi,
+		`Table`:     MyTable,
+	}
+	for _, item := range test {
+		out, err := EvalIf(item.Input, &vars)
+		if err != nil {
+			if err.Error() != item.Output {
+				t.Error(`error of ifeval ` + item.Input)
+			}
+		} else {
+			if fmt.Sprint(out) != item.Output {
+				t.Error(`error of ifeval ` + item.Input)
+			}
+		}
 	}
 }

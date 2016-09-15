@@ -27,6 +27,7 @@ const (
 	CMD_VAR            // Push variable to stack
 	CMD_PUSHSTR        // Push ident as string
 	CMD_TABLE          // #table_name[id_column_name = value].column_name
+	CMD_CALL           // call a function
 )
 
 const (
@@ -120,6 +121,16 @@ func Compile(input []rune) Bytecodes {
 				}
 			case `(`:
 				buffer = append(buffer, &Bytecode{CMD_SYS, uint16(0xff), lexem})
+			case `,`:
+				for len(buffer) > 0 {
+					prev := buffer[len(buffer)-1]
+					if prev.Cmd == CMD_SYS && prev.Value.(uint16) == 0xff {
+						break
+					} else {
+						bytecode = append(bytecode, prev)
+						buffer = buffer[:len(buffer)-1]
+					}
+				}
 			case `)`, `]`:
 				for {
 					if len(buffer) == 0 {
@@ -135,7 +146,12 @@ func Compile(input []rune) Bytecodes {
 							bytecode = append(bytecode, prev)
 						}
 					}
-
+				}
+				if strlex == `)` && len(buffer) > 0 {
+					if prev := buffer[len(buffer)-1]; prev.Cmd == CMD_CALL {
+						buffer = buffer[:len(buffer)-1]
+						bytecode = append(bytecode, prev)
+					}
 				}
 				if mode == MODE_TABLE && strlex == `]` {
 					strnext, next := getNext()
@@ -185,7 +201,18 @@ func Compile(input []rune) Bytecodes {
 				cmd = &Bytecode{CMD_ERROR, err.Error(), lexem}
 			}
 		case LEX_IDENT:
-			cmd = &Bytecode{CMD_VAR, strlex, lexem}
+			var call bool
+			if i < len(lexems)-1 {
+				strnext, _ := getNext()
+				if strnext == `(` {
+					buffer = append(buffer, &Bytecode{CMD_CALL, strlex, lexem})
+					call = true
+				}
+				i--
+			}
+			if !call {
+				cmd = &Bytecode{CMD_VAR, strlex, lexem}
+			}
 		}
 		if cmd != nil {
 			bytecode = append(bytecode, cmd)
