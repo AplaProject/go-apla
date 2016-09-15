@@ -68,8 +68,8 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 			}
 			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 		}
-		affected, err := p.ExecSqlGetAffect("DELETE FROM rb_transactions WHERE hex(hash) = ?", p.TxHash)
-		log.Debug("DELETE FROM rb_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
+		affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
+		log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -144,8 +144,8 @@ func (p *Parser) ParseDataRollback() error {
 				return p.ErrInfo(err)
 			}
 			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			affected, err := p.ExecSqlGetAffect("DELETE FROM rb_transactions WHERE hex(hash) = ?", p.TxHash)
-			log.Debug("DELETE FROM rb_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
+			affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
+			log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 			if err != nil {
 				return p.ErrInfo(err)
 			}

@@ -72,12 +72,12 @@ func (p *Parser) ChangeNodeKeyFront() error {
 func (p *Parser) ChangeNodeKey() error {
 
 	if p.TxMaps.Int64["wallet_id"] > 0 {
-		err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{p.TxMaps.Bytes["new_node_public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)})
+		err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{p.TxMaps.Bytes["new_node_public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	} else {
-		err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{p.TxMaps.Bytes["new_node_public_key"]}, "central_banks",  []string{"head_citizen_id"}, []string{utils.Int64ToStr(p.TxCitizenID)})
+		err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{p.TxMaps.Bytes["new_node_public_key"]}, "central_banks",  []string{"head_citizen_id"}, []string{utils.Int64ToStr(p.TxCitizenID)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -86,6 +86,9 @@ func (p *Parser) ChangeNodeKey() error {
 }
 
 func (p *Parser) ChangeNodeKeyRollback() error {
+/*
+	return p.autoRollback()
+
 	if p.TxMaps.Int64["wallet_id"] > 0 {
 		log.Debug("p.TxWalletID %d", p.TxWalletID)
 		err := p.selectiveRollback([]string{"node_public_key"}, "dlt_wallets", "wallet_id="+utils.Int64ToStr(p.TxWalletID), false)
@@ -97,8 +100,8 @@ func (p *Parser) ChangeNodeKeyRollback() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-	}
-	return nil
+	}*/
+	return p.autoRollback()
 }
 
 func (p *Parser) ChangeNodeKeyRollbackFront() error {

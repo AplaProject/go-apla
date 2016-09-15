@@ -18,14 +18,16 @@ package parser
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"encoding/json"
 )
 
 // не использовать для комментов
-func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string) error {
+func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) error {
 
+	var tableId int64
 	values := utils.InterfaceSliceToStr(values_)
 
-	addSqlFields := ""
+	addSqlFields := p.AllPkeys[table]+", "
 	for _, field := range fields {
 		addSqlFields += field + ","
 	}
@@ -45,23 +47,15 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		return err
 	}
 	if len(logData) > 0 {
-		addSqlValues := ""
-		addSqlFields := ""
+		var jsonMap map[string]string
 		for k, v := range logData {
-			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && v != "" {
-				v := string(utils.BinToHex([]byte(v)))
-				query := ""
-				switch p.ConfigIni["db_type"] {
-				case "sqlite":
-					query = `x'` + v + `',`
-				case "postgresql":
-					query = `decode('` + v + `','HEX'),`
-				case "mysql":
-					query = `UNHEX("` + v + `"),`
-				}
-				addSqlValues += query
+			if k == p.AllPkeys[table] {
+				continue
+			}
+			if utils.InSliceString(k, []string{"address", "hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && v != "" {
+				jsonMap[k] = string(utils.BinToHex([]byte(v)))
 			} else {
-				addSqlValues += `'` + v + `',`
+				jsonMap[k] = v
 			}
 			if k == "rb_id" {
 				k = "prev_rb_id"
@@ -72,16 +66,17 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlFields += k + ","
 			}
 		}
-		addSqlValues = addSqlValues[0 : len(addSqlValues)-1]
-		addSqlFields = addSqlFields[0 : len(addSqlFields)-1]
-
-		logId, err := p.ExecSqlGetLastInsertId("INSERT INTO rb_"+table+" ( "+addSqlFields+", block_id ) VALUES ( "+addSqlValues+", ? )", "rb_id", p.BlockData.BlockId)
+		jsonData, _ := json.Marshal(jsonMap)
+		if err != nil {
+			return err
+		}
+		rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
 		if err != nil {
 			return err
 		}
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
-			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
+			if utils.InSliceString(fields[i], []string{"address", "hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
 				query := ""
 				switch p.ConfigIni["db_type"] {
 				case "sqlite":
@@ -98,12 +93,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}
 		}
-		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+addSqlWhere, logId)
+		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+addSqlWhere, rbId)
 		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+addSqlWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
 			return err
 		}
+		tableId = utils.StrToInt64(logData[p.AllPkeys[table]])
 	} else {
 		addSqlIns0 := ""
 		addSqlIns1 := ""
@@ -130,7 +126,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		addSqlIns0 = addSqlIns0[0 : len(addSqlIns0)-1]
 		addSqlIns1 = addSqlIns1[0 : len(addSqlIns1)-1]
-		err = p.ExecSql("INSERT INTO " + table + " (" + addSqlIns0 + ") VALUES (" + addSqlIns1 + ")")
+		tableId, err = p.ExecSqlGetLastInsertId("INSERT INTO " + table + " (" + addSqlIns0 + ") VALUES (" + addSqlIns1 + ")", table)
+		if err != nil {
+			return err
+		}
+	}
+	if generalRollback {
+		err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tableId)
 		if err != nil {
 			return err
 		}

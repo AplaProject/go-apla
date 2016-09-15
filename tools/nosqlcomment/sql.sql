@@ -113,9 +113,9 @@ CREATE TABLE IF NOT EXISTS info_block (
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 COMMENT='Текущий блок, данные из которого мы уже занесли к себе';
 
 
-DROP TABLE IF EXISTS rb_transactions;
+DROP TABLE IF EXISTS log_transactions;
 
-CREATE TABLE IF NOT EXISTS rb_transactions (
+CREATE TABLE IF NOT EXISTS log_transactions (
 `hash` binary(16) NOT NULL DEFAULT '' COMMENT '',
 `time` int(11) NOT NULL DEFAULT '0' COMMENT '',
 PRIMARY KEY (`hash`)

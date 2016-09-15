@@ -90,7 +90,7 @@ func AllHashes(db *utils.DCDB) (map[string]string, error) {
 			if match && table != "rb_time_money_orders" {
 				return "user_id, time"
 			}
-			match, _ = regexp.MatchString("^rb_transactions$", table)
+			match, _ = regexp.MatchString("^log_transactions$", table)
 			if match {
 				return "time"
 			}

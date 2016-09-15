@@ -114,6 +114,22 @@ func (db *DCDB) GetMainLockName() (string, error) {
 	return db.Single("SELECT script_name FROM main_lock").String()
 }
 
+func (db *DCDB) GetFirstColumnName(table string) (string, error) {
+	rows, err := db.Query("SELECT * FROM "+table+" LIMIT 1")
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	columns, err := rows.Columns()
+	if err != nil {
+		return "", err
+	}
+	if len(columns) > 0 {
+		return columns[0], nil
+	}
+	return "", nil
+}
+
 func (db *DCDB) GetAllTables() ([]string, error) {
 	var result []string
 	var sql string
@@ -130,6 +146,15 @@ func (db *DCDB) GetAllTables() ([]string, error) {
 		return result, err
 	}
 	return result, nil
+}
+
+func (db *DCDB) GetFirstColumnNamesPg(table string) (string, error) {
+	var result []string
+	result, err := db.GetList("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='"+table+"'").String()
+	if err != nil {
+		return "", err
+	}
+	return result[0], nil
 }
 
 type singleResult struct {
@@ -444,8 +469,8 @@ func (db *DCDB) OneRow(query string, args ...interface{}) *oneRow {
 
 func (db *DCDB) InsertInLogTx(binaryTx []byte, time int64) error {
 	txMD5 := Md5(binaryTx)
-	err := db.ExecSql("INSERT INTO rb_transactions (hash, time) VALUES ([hex], ?)", txMD5, time)
-	log.Debug("INSERT INTO rb_transactions (hash, time) VALUES ([hex], %s)", txMD5)
+	err := db.ExecSql("INSERT INTO log_transactions (hash, time) VALUES ([hex], ?)", txMD5, time)
+	log.Debug("INSERT INTO log_transactions (hash, time) VALUES ([hex], %s)", txMD5)
 	if err != nil {
 		return ErrInfo(err)
 	}
@@ -454,8 +479,8 @@ func (db *DCDB) InsertInLogTx(binaryTx []byte, time int64) error {
 
 func (db *DCDB) DelLogTx(binaryTx []byte) error {
 	txMD5 := Md5(binaryTx)
-	affected, err := db.ExecSqlGetAffect("DELETE FROM rb_transactions WHERE hex(hash) = ?", txMD5)
-	log.Debug("DELETE FROM rb_transactions WHERE hex(hash) = %s / affected = %d", txMD5, affected)
+	affected, err := db.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", txMD5)
+	log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", txMD5, affected)
 	if err != nil {
 		return ErrInfo(err)
 	}
@@ -506,13 +531,21 @@ func (db *DCDB) GetJSON(query string, args ...interface{}) (string, error) {
 	return string(jsonData), nil
 }
 
-func (db *DCDB) ExecSqlGetLastInsertId(query, returning string, args ...interface{}) (int64, error) {
+func (db *DCDB) QueryRows(query string, args ...interface{}) (*sql.Rows, error) {
+	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	return db.Query(newQuery, newArgs...)
+}
+func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{}) (int64, error) {
 	var lastId int64
 	var res sql.Result
 	var err error
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	if db.ConfigIni["db_type"] == "postgresql" {
-		newQuery = newQuery + " RETURNING " + returning
+		colName, err := db.GetFirstColumnNamesPg(table)
+		if err != nil {
+			return 0, fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
+		}
+		newQuery = newQuery + " RETURNING " + colName
 		for {
 			err := db.QueryRow(newQuery, newArgs...).Scan(&lastId)
 			if err != nil {

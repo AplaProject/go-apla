@@ -79,27 +79,13 @@ func (p *Parser) NewStateTableFront() error {
 
 func (p *Parser) NewStateTable() error {
 
-	stateCode, err := p.Single(`SELECT state_code FROM states WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSql(`INSERT INTO `+stateCode+`_citizens ( public_key_0, block_id ) VALUES ( [hex], ? )`, p.TxMap["public_key_hex"], p.BlockData.BlockId)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+
 	return nil
 }
 
 func (p *Parser) NewStateTableRollback() error {
 
-	stateCode, err := p.Single(`SELECT state_code FROM states WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSql(`DELETE FROM `+stateCode+`_citizens WHERE block_id = ?`, p.BlockData.BlockId)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+
 	return nil
 }
 

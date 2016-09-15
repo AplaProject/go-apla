@@ -98,16 +98,7 @@ func (p *Parser) NewCitizen() error {
 }
 
 func (p *Parser) NewCitizenRollback() error {
-
-	stateCode, err := p.Single(`SELECT state_code FROM states WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSql(`DELETE FROM `+stateCode+`_citizens WHERE block_id = ?`, p.BlockData.BlockId)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	return nil
+	return p.autoRollback()
 }
 
 func (p *Parser) NewCitizenRollbackFront() error {

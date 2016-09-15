@@ -138,7 +138,7 @@ func (t *TcpServer) Type1() {
 			}
 			log.Debug("newDataTxHash %s", newDataTxHash)
 			// проверим, нет ли у нас такой тр-ии
-			exists, err := t.Single("SELECT count(hash) FROM rb_transactions WHERE hex(hash) = ?", newDataTxHash).Int64()
+			exists, err := t.Single("SELECT count(hash) FROM log_transactions WHERE hex(hash) = ?", newDataTxHash).Int64()
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				return

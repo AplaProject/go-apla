@@ -20,35 +20,32 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-func (p *Parser) ParseBlock() error {
-	/*
-		Заголовок
-		TYPE (0-блок, 1-тр-я)     1
-		BLOCK_ID   				       4
-		TIME       					       4
-		WALLET_ID                         1-8
-		CB_ID                         1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
-		Далее - тело блока (Тр-ии)
-	*/
-	p.BlockData = utils.ParseBlockHeader(&p.BinaryData)
-	log.Debug("%v", p.BlockData)
+type rollbackTxRowType struct {
+	tx_hash string
+	table_name string
+	table_id string
+}
 
-	p.CurrentBlockId = p.BlockData.BlockId
+func (p *Parser) autoRollback() error {
 
-	// Until then let it be. Get tables p_keys. then it is necessary to update only when you change tables
-	allTables, err := p.GetAllTables()
+	var rollbackTxRow rollbackTxRowType
+	rows, err := p.QueryRows("SELECT tx_hash, table_name, table_id FROM rollback_tx WHERE tx_hash = [hex] ORDER BY id DESC", p.TxHash)
 	if err != nil {
-		return utils.ErrInfo(err)
+		return utils.ErrInfo("incorrect time")
 	}
-	p.AllPkeys = make(map[string]string)
-	for _, table := range allTables {
-		col, err := p.GetFirstColumnName(table)
+	for rows.Next() {
+		err = rows.Scan(&rollbackTxRow.tx_hash, &rollbackTxRow.table_name, &rollbackTxRow.table_id)
 		if err != nil {
-			return utils.ErrInfo(err)
+			return utils.ErrInfo("incorrect time")
 		}
-		p.AllPkeys[table] = col
+		err := p.selectiveRollback(rollbackTxRow.table_name, p.AllPkeys[rollbackTxRow.table_name]+"="+rollbackTxRow.table_id, true)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 	}
-
+	err = p.ExecSql("DELETE FROM rollback_tx WHERE tx_hash = [hex]", p.TxHash)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }

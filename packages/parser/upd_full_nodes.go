@@ -35,7 +35,7 @@ func (p *Parser) UpdFullNodesFront() error {
 
 func (p *Parser) UpdFullNodes() error {
 
-	err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "upd_full_nodes", nil, nil)
+	err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "", nil, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -54,7 +54,7 @@ func (p *Parser) UpdFullNodes() error {
 	log.Debug("data %v", data[0])
 	log.Debug("data %v", data[0]["rb_id"])
 	// логируем их в одну запись JSON
-	rbId, err := p.ExecSqlGetLastInsertId(`INSERT INTO rb_full_nodes (full_nodes_wallet_json, block_id, prev_rb_id) VALUES (?, ?, ?)`, "rb_id", string(jsonData), p.BlockData.BlockId, data[0]["rb_id"])
+	rbId, err := p.ExecSqlGetLastInsertId(`INSERT INTO rb_full_nodes (full_nodes_wallet_json, block_id, prev_rb_id) VALUES (?, ?, ?)`, "rb_full_nodes", string(jsonData), p.BlockData.BlockId, data[0]["rb_id"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -100,7 +100,7 @@ func (p *Parser) UpdFullNodes() error {
 }
 
 func (p *Parser) UpdFullNodesRollback() error {
-	err := p.selectiveRollback([]string{"time"}, "upd_full_nodes", "", false)
+	err := p.selectiveRollback("upd_full_nodes", "", false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

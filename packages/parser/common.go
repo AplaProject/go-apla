@@ -75,6 +75,7 @@ type Parser struct {
 	newPublicKeysHex [3][]byte
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
 	TxVars           map[string]string
+	AllPkeys    map[string]string
 }
 
 
@@ -137,15 +138,15 @@ func (p *Parser) dataPre() {
 // Это защита от dos, когда одну транзакцию можно было бы послать миллион раз,
 // и она каждый раз успешно проходила бы фронтальную проверку
 func (p *Parser) CheckLogTx(tx_binary []byte) error {
-	hash, err := p.Single(`SELECT hash FROM rb_transactions WHERE hex(hash) = ?`, utils.Md5(tx_binary)).String()
-	log.Debug("SELECT hash FROM rb_transactions WHERE hex(hash) = %s", utils.Md5(tx_binary))
+	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, utils.Md5(tx_binary)).String()
+	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", utils.Md5(tx_binary))
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
 	log.Debug("hash %x", hash)
 	if len(hash) > 0 {
-		return utils.ErrInfo(fmt.Errorf("double rb_transactions %s", utils.Md5(tx_binary)))
+		return utils.ErrInfo(fmt.Errorf("double log_transactions %s", utils.Md5(tx_binary)))
 	}
 	return nil
 }
