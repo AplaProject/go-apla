@@ -631,7 +631,11 @@ func (schema *SchemaStruct) GetSchema() {
 			log.Error("%v", err)
 		}
 		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_fields", ?, "president", "", "")`,
-			`[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
+			`[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
+{"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
+{"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
+{"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
+]`)
 		if err != nil {
 			log.Error("%v", err)
 		}
