@@ -17,8 +17,10 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"encoding/json"
+	"strings"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 // не использовать для комментов
@@ -27,13 +29,17 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	var tableId int64
 	values := utils.InterfaceSliceToStr(values_)
 
-	addSqlFields := p.AllPkeys[table]+", "
-	for _, field := range fields {
-		addSqlFields += field + ","
+	addSqlFields := p.AllPkeys[table]
+	if len(addSqlFields) > 0 && len(fields) > 0 {
+		addSqlFields += ", "
+	}
+	addSqlFields += strings.Join(fields, `,`)
+	if len(addSqlFields) > 0 {
+		addSqlFields += `,`
 	}
 
 	addSqlWhere := ""
-	if whereFields!=nil && whereValues!=nil {
+	if whereFields != nil && whereValues != nil {
 		for i := 0; i < len(whereFields); i++ {
 			addSqlWhere += whereFields[i] + "=" + whereValues[i] + " AND "
 		}
@@ -88,7 +94,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				}
 				addSqlUpdate += query
 			} else if fields[i][:1] == "+" {
-				addSqlUpdate += fields[i][1:len(fields[i])] + `='` + fields[i][1:len(fields[i])] +`+`+ values[i] + `',`
+				addSqlUpdate += fields[i][1:len(fields[i])] + `='` + fields[i][1:len(fields[i])] + `+` + values[i] + `',`
 			} else {
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}
@@ -126,7 +132,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		addSqlIns0 = addSqlIns0[0 : len(addSqlIns0)-1]
 		addSqlIns1 = addSqlIns1[0 : len(addSqlIns1)-1]
-		tableId, err = p.ExecSqlGetLastInsertId("INSERT INTO " + table + " (" + addSqlIns0 + ") VALUES (" + addSqlIns1 + ")", table)
+		tableId, err = p.ExecSqlGetLastInsertId("INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")", table)
 		if err != nil {
 			return err
 		}
