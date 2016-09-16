@@ -17,35 +17,77 @@
 package controllers
 
 import (
-	"strings"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-const ACitizenRequest = `ajax_citizen_request`
+const ACitizenInfo = `ajax_citizen_info`
 
-type CitizenRequestJson struct {
-	Host string `json:"host"`
-	Time int64  `json:"time"`
-	//	TypeName string `json:"type_name"`
-	//	TypeId   int64  `json:"type_id"`
-	Error string `json:"error"`
+type FieldInfo struct {
+	Name     string `json:"name"`
+	HtmlType string `json:"htmlType"`
+	TxType   string `json:"txType"`
+	Title    string `json:"title"`
+}
+
+type CitizenInfoJson struct {
+	Result bool   `json:"result"`
+	Error  string `json:"error"`
 }
 
 func init() {
-	newPage(ACitizenRequest, `json`)
+	newPage(ACitizenInfo, `json`)
 }
 
-func (c *Controller) AjaxCitizenRequest() interface{} {
+func (c *Controller) AjaxCitizenInfo() interface{} {
 	var (
-		result CitizenRequestJson
+		result CitizenInfoJson
 		err    error
-		host   string
 	)
-
-	stateCode := utils.StrToInt64(c.r.FormValue(`state_id`))
+	c.w.Header().Add("Access-Control-Allow-Origin", "*")
+	stateCode := utils.StrToInt64(c.r.FormValue(`stateId`))
 	statePrefix, err := c.GetStatePrefix(stateCode)
+
+	fmt.Println(`1`, statePrefix)
+	field, err := c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).String()
+	fmt.Println(`2`, field, err)
 	if err == nil {
+		var (
+			fields []FieldInfo
+		)
+		vals := make(map[string]string)
+		if err = json.Unmarshal([]byte(field), &fields); err == nil {
+			fmt.Println(`3`, field, err)
+			time := c.r.FormValue(`time`)
+			walletId := c.r.FormValue(`walletId`)
+			for _, ifield := range fields {
+				vals[ifield.Name] = c.r.FormValue(ifield.Name)
+			}
+
+			data, err := c.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", walletId).String()
+			if err == nil {
+				fmt.Println(`4`, data)
+
+				var PublicKeys [][]byte
+				PublicKeys = append(PublicKeys, []byte(data["public_key_0"]))
+				forSign := fmt.Sprintf("CitizenInfo,%d,%d", time, walletId)
+				sign, err := hex.DecodeString(c.r.FormValue(`signature1`))
+				fmt.Println(`5`, err)
+
+				if err == nil {
+					checkSignResult, err := utils.CheckSign(PublicKeys, forSign, sign, false)
+					fmt.Println(`SIGNATURE`, checkSignResult, err)
+					/*			if err != nil {
+								return p.ErrInfo(err)
+							}*/
+				}
+			}
+		}
+	}
+	/*	if err == nil {
 		request, err := c.Single(`SELECT block_id FROM `+statePrefix+`_citizenship_requests where dlt_wallet_id=?`, c.SessWalletId).Int64()
 		if err == nil {
 			if request > 0 {
@@ -69,15 +111,16 @@ func (c *Controller) AjaxCitizenRequest() interface{} {
 					if !strings.HasSuffix(host, `/`) {
 						host += `/`
 					}
-					//					result.TypeName = `NewCitizen`
-					//					result.TypeId = utils.TypeInt(result.TypeName)
+					result.TypeName = `NewCitizen`
+					result.TypeId = utils.TypeInt(result.TypeName)
 				}
-				result.Host = `/` //host
+				result.Host = host
 			}
 		} else {
 			result.Error = err.Error()
 		}
-	}
+	}*/
+	fmt.Println(`Error`, err)
 	if err != nil {
 		result.Error = err.Error()
 	}
