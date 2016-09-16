@@ -1,0 +1,106 @@
+<style>
+	@media only screen and (min-width: 992px) {
+		.info {
+			padding-left:0px;
+		}
+	}
+	.info label {
+		padding-right:0px;
+	}
+</style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".anonym, .check_citizen_status").addClass("active");
+</script>
+
+<div class="content-heading">
+   Check citizen status
+</div>
+<ol class="breadcrumb">
+   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
+   <li class="active">Check citizen status</li>
+</ol>
+
+<div class="row df">
+   <div class="col-md-4 df">
+	  <div class="panel panel-default f100">
+		 <div class="panel-body text-center">
+			<div class="pv-lg">
+			   <img src="static/img/user/02.jpg" alt="Contact" class="center-block img-responsive img-circle img-thumbnail thumb96">
+			</div>
+			<h3 class="m0 text-bold">Audrey Hunt</h3>
+			<div class="text-center mt-lg">
+				<button type="button" class="btn btn-success">Accept</button>
+				<button type="button" class="btn btn-danger">Reject</button>
+			</div>
+		 </div>
+	  </div>
+   </div>
+   <div class="col-md-8 info">
+	  <div class="panel panel-default">
+		 <div class="panel-body">
+			<div class="pull-right">
+			   <div class="btn-group">
+				  <button data-toggle="dropdown" class="btn btn-link">
+					 <em class="fa fa-ellipsis-v fa-lg text-muted"></em>
+				  </button>
+				  <ul role="menu" class="dropdown-menu dropdown-menu-right animated fadeInLeft">
+					 <li>
+						<a href="#">
+						   <span>Action 1</span>
+						</a>
+					 </li>
+					 <li>
+						<a href="#">
+						   <span>Action 2</span>
+						</a>
+					 </li>
+					 <li>
+						<a href="#">
+						   <span>Action 3</span>
+						</a>
+					 </li>
+					 <li>
+						<a href="#">
+						   <span class="text-warning">Action 4</span>
+						</a>
+					 </li>
+				  </ul>
+			   </div>
+			</div>
+			<div class="h4 text-center">Information</div>
+			<div class="row pt-lg">
+			   <div class="col-lg-12">
+				  <form class="form-horizontal">
+					 <div class="form-group">
+						<label class="col-sm-3 control-label">First Name</label>
+						<div class="col-sm-9">
+						   <input type="text" placeholder="" value="Audrey" class="form-control" disabled>
+						</div>
+					 </div>
+					 <div class="form-group">
+						<label class="col-sm-3 control-label">Last Name</label>
+						<div class="col-sm-9">
+						   <input type="text" placeholder="" value="Hunt" class="form-control" disabled>
+						</div>
+					 </div>
+					 <div class="form-group">
+						<label class="col-sm-3 control-label">Birthday</label>
+						<div class="col-sm-9">
+						   <input type="text" placeholder="" value="16 September, 2016" class="form-control" disabled>
+						</div>
+					 </div>
+					 <div class="form-group">
+						<label class="col-sm-3 control-label">Passport number</label>
+						<div class="col-sm-9">
+						   <input type="text" placeholder="" value="EO 567890" class="form-control" disabled>
+						</div>
+					 </div>
+					</form>
+				  </div>
+			   </div>
+			</div>
+		 </div>
+	</div>
+</div>
