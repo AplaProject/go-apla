@@ -18,7 +18,6 @@ package parser
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
@@ -29,13 +28,9 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	var tableId int64
 	values := utils.InterfaceSliceToStr(values_)
 
-	addSqlFields := p.AllPkeys[table]
-	if len(addSqlFields) > 0 && len(fields) > 0 {
-		addSqlFields += ", "
-	}
-	addSqlFields += strings.Join(fields, `,`)
-	if len(addSqlFields) > 0 {
-		addSqlFields += `,`
+	addSqlFields := p.AllPkeys[table] + ", "
+	for _, field := range fields {
+		addSqlFields += field + ","
 	}
 
 	addSqlWhere := ""

@@ -32,10 +32,9 @@ func (p *Parser) UpdFullNodesFront() error {
 	return nil
 }
 
-
 func (p *Parser) UpdFullNodes() error {
 
-	err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "", nil, nil, false)
+	err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "rb_upd_full_nodes", nil, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
