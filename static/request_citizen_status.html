@@ -223,11 +223,11 @@
 									clearInterval(interval);
 								} else if (data.host.length > 0) {
 									clearInterval(interval);
-									$("#for-signature").val( data.type_id + ','+data.time+',{{.Data.WalletId}}');
+									$("#for-signature").val( 'CitizenInfo,'+data.time+',{{.Data.WalletId}}');
 									doSign();
 									
 									var predata = {
-										'type' : data.type_name,
+//										'type' : data.type_name,
 										'time' : data.time,
 										'walletId' : '{{.Data.WalletId}}',
 										'stateId': $("#countries").val(),
@@ -246,7 +246,7 @@
 									//console.log(predata)
 									$.ajax({
 										type: 'POST',
-										url: data.host + 'ajax?controllerName=saveQueue',
+										url: data.host + 'ajax?json=ajax_citizen_info',
 										data: predata,
 										dataType: 'json',
 										crossDomain: true,

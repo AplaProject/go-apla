@@ -51,7 +51,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		return err
 	}
 	if len(logData) > 0 {
-		var jsonMap map[string]string
+		jsonMap := make(map[string]string)
 		for k, v := range logData {
 			if k == p.AllPkeys[table] {
 				continue

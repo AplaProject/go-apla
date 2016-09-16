@@ -17,12 +17,13 @@
 package controllers
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"fmt"
 	"net/http"
 	"regexp"
-	qrcode "github.com/skip2/go-qrcode"	
-	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 func Ajax(w http.ResponseWriter, r *http.Request) {
@@ -32,13 +33,13 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("ajax Recovered", r)
 		}
 	}()
-	if qr := r.FormValue("qr");len(qr) > 0 {
+	if qr := r.FormValue("qr"); len(qr) > 0 {
 		if lib.IsValidAddress(qr) {
-			png,_ := qrcode.Encode(qr, qrcode.Medium, 170)
+			png, _ := qrcode.Encode(qr, qrcode.Medium, 170)
 			w.Header().Set("Content-Type", "image/png")
 			w.Write(png)
 		}
-		return		
+		return
 	}
 	log.Debug("Ajax")
 	sess, err := globalSessions.SessionStart(w, r)
@@ -65,7 +66,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	c.SessWalletId = sessWalletId
 	c.SessCitizenId = sessCitizenId
 	c.SessAddress = sessAddress
-	
+
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)
 
@@ -101,7 +102,6 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
-
 	if jsonName := r.FormValue(`json`); len(jsonName) > 0 && isPage(jsonName, TJson) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.Write(CallJson(c, jsonName))
@@ -120,8 +120,8 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	pages := "SignIn|UpdateDcoin|AlertFromAdmin|FreecoinProcess|RestartDb|ReloadDb|DebugInfo|CheckSetupPassword|AcceptNewKeyStatus|availableKeys|CfCatalog|CfPagePreview|CfStart|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SynchronizationBlockchain|UpdatingBlockchain|Menu|SignUpInPool|SignLogin"
 	// Почему CfCatalog,CfPagePreview,CfStart,Index,IndexCf,InstallStep0,InstallStep1,
 	// InstallStep2,Login,UpdatingBlockchain были только во втором случае? Похоже не нужны больше.
-	
-	if ok, _ := regexp.MatchString(`^(?i)` + pages + `|GetServerTime|TxStatus|AnonymHistory|RewritePrimaryKeySave|SendPromisedAmountToPool|SaveEmailAndSendTestMess|sendMobile|rewritePrimaryKey|EImportData|EDataBaseDump|Update|exchangeAdmin|exchangeSupport|exchangeUser|ETicket|newPhoto|NodeConfigControl|SaveDecryptComment|EncryptChatMessage|GetChatMessages|SendToTheChat|SaveToken|SendToPool|ClearDbLite|ClearDb|UploadVideo|DcoinKey|PoolAddUsers|SaveQueue|AlertMessage|SaveHost|PoolDataBaseDump|GenerateNewPrimaryKey|GenerateNewNodeKey|SaveNotifications|ProgressBar|MinersMap|EncryptComment|Logout|SaveVideo|SaveShopData|SaveRaceCountry|MyNoticeData|HolidaysList|ClearVideo|CheckCfCurrency|WalletsListCfProject|SendTestEmail|SendSms|SaveUserCoords|SaveGeolocation|SaveEmailSms|Profile|DeleteVideo|CropPhoto$`, controllerName); !ok {
+
+	if ok, _ := regexp.MatchString(`^(?i)`+pages+`|GetServerTime|TxStatus|AnonymHistory|RewritePrimaryKeySave|SendPromisedAmountToPool|SaveEmailAndSendTestMess|sendMobile|rewritePrimaryKey|EImportData|EDataBaseDump|Update|exchangeAdmin|exchangeSupport|exchangeUser|ETicket|newPhoto|NodeConfigControl|SaveDecryptComment|EncryptChatMessage|GetChatMessages|SendToTheChat|SaveToken|SendToPool|ClearDbLite|ClearDb|UploadVideo|DcoinKey|PoolAddUsers|SaveQueue|AlertMessage|SaveHost|PoolDataBaseDump|GenerateNewPrimaryKey|GenerateNewNodeKey|SaveNotifications|ProgressBar|MinersMap|EncryptComment|Logout|SaveVideo|SaveShopData|SaveRaceCountry|MyNoticeData|HolidaysList|ClearVideo|CheckCfCurrency|WalletsListCfProject|SendTestEmail|SendSms|SaveUserCoords|SaveGeolocation|SaveEmailSms|Profile|DeleteVideo|CropPhoto$`, controllerName); !ok {
 		html = "Access denied 0"
 	} else {
 		if utils.Mobile() { // На IOS можно сгенерить ключ без сессии
