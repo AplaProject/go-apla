@@ -46,83 +46,63 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	var (
 		result CitizenInfoJson
 		err    error
+		data   map[string]string
 	)
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
 	stateCode := utils.StrToInt64(c.r.FormValue(`stateId`))
 	statePrefix, err := c.GetStatePrefix(stateCode)
 
-	fmt.Println(`1`, statePrefix)
 	field, err := c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).String()
-	fmt.Println(`2`, field, err)
+	vals := make(map[string]string)
+	time := c.r.FormValue(`time`)
+	walletId := c.r.FormValue(`walletId`)
+
 	if err == nil {
 		var (
-			fields []FieldInfo
+			fields    []FieldInfo
+			sign      []byte
+			checkSign bool
 		)
-		vals := make(map[string]string)
 		if err = json.Unmarshal([]byte(field), &fields); err == nil {
-			fmt.Println(`3`, field, err)
-			time := c.r.FormValue(`time`)
-			walletId := c.r.FormValue(`walletId`)
 			for _, ifield := range fields {
 				vals[ifield.Name] = c.r.FormValue(ifield.Name)
 			}
 
-			data, err := c.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", walletId).String()
+			data, err = c.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", walletId).String()
 			if err == nil {
-				fmt.Println(`4`, data)
-
 				var PublicKeys [][]byte
 				PublicKeys = append(PublicKeys, []byte(data["public_key_0"]))
-				forSign := fmt.Sprintf("CitizenInfo,%d,%d", time, walletId)
-				sign, err := hex.DecodeString(c.r.FormValue(`signature1`))
-				fmt.Println(`5`, err)
+				forSign := fmt.Sprintf("CitizenInfo,%s,%s", time, walletId)
+				sign, err = hex.DecodeString(c.r.FormValue(`signature1`))
 
 				if err == nil {
-					checkSignResult, err := utils.CheckSign(PublicKeys, forSign, sign, false)
-					fmt.Println(`SIGNATURE`, checkSignResult, err)
-					/*			if err != nil {
-								return p.ErrInfo(err)
-							}*/
+					checkSign, err = utils.CheckSign(PublicKeys, forSign, sign, true)
+					if err == nil && !checkSign {
+						err = fmt.Errorf(`incorrect signature`)
+					}
 				}
 			}
 		}
 	}
-	/*	if err == nil {
-		request, err := c.Single(`SELECT block_id FROM `+statePrefix+`_citizenship_requests where dlt_wallet_id=?`, c.SessWalletId).Int64()
-		if err == nil {
-			if request > 0 {
-				var state map[string]string
-				state, err = c.OneRow(`select * from states where state_id=?`, stateCode).String()
-				if len(state[`host`]) == 0 {
-					if walletId := utils.StrToInt64(state[`delegate_wallet_id`]); walletId > 0 {
-						host, _ = c.Single(`select host from dlt_wallets where wallet_id=?`, walletId).String()
-					}
-					if len(host) == 0 {
-						if stateId := utils.StrToInt64(state[`delegate_state_id`]); stateId > 0 {
-							host, err = c.Single(`select host from states where state_id=?`, stateId).String()
-						}
-					}
-				}
-				result.Time = utils.Time()
-				if len(host) > 0 {
-					if !strings.HasPrefix(host, `http`) {
-						host = `http://` + host
-					}
-					if !strings.HasSuffix(host, `/`) {
-						host += `/`
-					}
-					result.TypeName = `NewCitizen`
-					result.TypeId = utils.TypeInt(result.TypeName)
-				}
-				result.Host = host
-			}
+	if err == nil {
+		data, err = c.OneRow(`SELECT * FROM `+statePrefix+`_citizenship_requests WHERE dlt_wallet_id = ? order by request_id desc`, walletId).String()
+		if err != nil || data == nil || len(data) == 0 {
+			err = fmt.Errorf(`unknown request for wallet %s`, walletId)
 		} else {
-			result.Error = err.Error()
+			var (
+				fval []byte
+			)
+			if fval, err = json.Marshal(vals); err == nil {
+				err = c.ExecSql(`INSERT INTO `+statePrefix+`_citizens_requests_private ( request_id, fields, public ) VALUES ( ?, ?, [hex] )`,
+					data[`request_id`], fval, c.r.FormValue(`publicKey`))
+			}
 		}
-	}*/
-	fmt.Println(`Error`, err)
+	}
 	if err != nil {
 		result.Error = err.Error()
+	} else {
+		result.Result = true
 	}
+
 	return result
 }

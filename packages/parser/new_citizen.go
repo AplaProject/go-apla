@@ -17,9 +17,10 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"fmt"
 	"encoding/json"
+	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) NewCitizenInit() error {
@@ -46,7 +47,9 @@ func (p *Parser) NewCitizenFront() error {
 	}
 
 	// We get a set of custom fields that need to be in the tx
-	additionalFields, err := p.Single(`SELECT fields FROM citizen_fields WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).Bytes()
+	statePrefix, err := p.GetStatePrefix(p.TxMaps.Int64["state_id"])
+	additionalFields, err := p.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).Bytes()
+
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -69,7 +72,6 @@ func (p *Parser) NewCitizenFront() error {
 	// Citizens can only add a citizen of the same country
 
 	// One who adds a citizen must be a valid representative body appointed in ds_state_settings
-
 
 	// must be supplemented
 	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxWalletID)
