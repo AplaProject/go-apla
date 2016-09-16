@@ -28,7 +28,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	var tableId int64
 	values := utils.InterfaceSliceToStr(values_)
 
-	addSqlFields := p.AllPkeys[table] + ", "
+	addSqlFields := p.AllPkeys[table]
+	if len(addSqlFields) > 0 {
+		addSqlFields += `,`
+	}
 	for _, field := range fields {
 		addSqlFields += field + ","
 	}
