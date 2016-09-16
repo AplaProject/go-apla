@@ -267,8 +267,26 @@ var word_list = ["abandon","ability","able","about","above","absent","absorb","a
 	
 KJUR.crypto.ECDSA.prototype.GenKeyPairHex = function() {
   var biN = this.ecparams['n'];
-  var hash = CryptoJS.SHA256( $("#phrase").val());
-  var biPrv = new BigInteger(hash.toString(CryptoJS.enc.Hex), 16);
+  var phrase = $("#phrase").val();
+  var phrasepriv = '';
+  var phrase_low = phrase.toLowerCase();
+  for (i=0; i<phrase_low.length; i++) {
+	if (phrase_low[i]== ' ')
+		continue;
+	if ((phrase_low[i] >= '0' && phrase_low[i] <= '9') || 
+		(phrase_low[i] >= 'a' && phrase_low[i] <= 'f'))
+		phrasepriv += phrase_low[i];
+	else 
+		break;
+  }
+  var srcHash;
+  if (i==phrase_low.length && phrasepriv.length == 64) {
+	srcHash = phrasepriv;
+  } else {
+	var hash = CryptoJS.SHA256(phrase);
+  	srcHash =hash.toString(CryptoJS.enc.Hex);
+  }
+  var biPrv = new BigInteger(srcHash, 16);
   var epPub = this.ecparams['G'].multiply(biPrv);
   var biX = epPub.getX().toBigInteger();
   var biY = epPub.getY().toBigInteger();
