@@ -78,7 +78,7 @@ func (p *Parser) CitizenRequest() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.selectiveLoggingAndUpd([]string{"+amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+	err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -89,6 +89,10 @@ func (p *Parser) CitizenRequestRollback() error {
 	// пишем в общую историю тр-ий
 	err := p.ExecSql(`DELETE FROM `+p.TxVars[`state_code`]+
 		`_citizenship_requests WHERE block_id = ?`, p.BlockData.BlockId)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.autoRollback()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

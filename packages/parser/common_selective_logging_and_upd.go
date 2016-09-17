@@ -93,6 +93,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlUpdate += query
 			} else if fields[i][:1] == "+" {
 				addSqlUpdate += fields[i][1:len(fields[i])] + `='` + fields[i][1:len(fields[i])] + `+` + values[i] + `',`
+			} else if fields[i][:1] == "-" {
+				addSqlUpdate += fields[i][1:len(fields[i])] + `='` + fields[i][1:len(fields[i])] + `-` + values[i] + `',`
 			} else {
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}
