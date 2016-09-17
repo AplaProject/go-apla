@@ -182,6 +182,21 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.S = s
 	schema.PrintSchema()
 
+
+	s = make(Recmap)
+	s1 = make(Recmap)
+	s2 = make(Recmapi)
+	s2[0] = map[string]string{"name": "name", "mysql": "varchar(255) NOT NULL DEFAULT '0.0.1'", "sqlite": "varchar(255) NOT NULL DEFAULT '0.0.1'", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
+	s2[1] = map[string]string{"name": "columns", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": ""}
+	s1["fields"] = s2
+	s1["PRIMARY"] = []string{"id"}
+	s1["comment"] = ""
+	s["ea_state_tables"] = s1
+	schema.S = s
+	schema.PrintSchema()
+
+
+
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
