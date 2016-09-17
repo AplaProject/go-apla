@@ -76,6 +76,7 @@ type Parser struct {
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
 	TxVars           map[string]string
 	AllPkeys    map[string]string
+	States    map[int64]string
 }
 
 
@@ -332,4 +333,45 @@ func (p *Parser) checkSenderMoney(amount, commission int64) (int64, error) {
 		return 0, p.ErrInfo(fmt.Sprintf("%f < %f)", all, amountAndCommission))
 	}
 	return amountAndCommission, nil
+}
+
+
+func (p *Parser) MyTable(table, id_column string, id int64, ret_column string) (int64, error) {
+	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string")  {
+		return 0, fmt.Errorf("!string")
+	}
+	return p.Single(`SELECT `+ret_column+` FROM `+table+` WHERE `+id_column+` = ?`, id).Int64()
+}
+
+
+func (p *Parser) MyTableChecking(table, id_column string, id int64, ret_column string) (bool, error) {
+	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string")  {
+		return false, fmt.Errorf("!string")
+	}
+
+	if ok, err := p.CheckTableExists(table); !ok {
+		return true, err
+	}
+	return false, nil
+}
+
+func (p *Parser) CheckTableExists(table string) (bool, error) {
+	var q string
+	switch p.ConfigIni["db_type"] {
+	case "sqlite":
+		q = `SELECT name FROM sqlite_master WHERE type='table' AND name='`+table+`';`
+	case "postgresql":
+		q = `SELECT relname FROM pg_class WHERE relname = '`+table+`';`
+	case "mysql":
+		q = `SHOW TABLES LIKE '`+table+`'`
+	}
+	exists, err := p.Single(q).Int64()
+	if err!=nil {
+		return false, err
+	}
+	if exists > 0 {
+		return true, nil
+	}
+
+	return false, nil
 }

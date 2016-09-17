@@ -50,5 +50,14 @@ func (p *Parser) ParseBlock() error {
 		p.AllPkeys[table] = col
 	}
 
+	p.States = make(map[int64]string)
+	all, err := p.GetAll(`SELECT state_id, state_code FROM states`, -1)
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+	for _, v := range all {
+		p.States[utils.StrToInt64(v["state_id"])] = v["state_code"]
+	}
+
 	return nil
 }

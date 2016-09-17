@@ -20,18 +20,15 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/script"
-	"github.com/DayLightProject/go-daylight/packages/schema"
-
-	"encoding/json"
 )
 
 /*
 Adding state tables should be spelled out in state settings
 */
 
-func (p *Parser) NewStateTableInit() error {
+func (p *Parser) ChangeStateSettingsConditionsInit() error {
 
-	fields := []map[string]string{{"public_key": "bytes"}, {"table_name": "string"}, {"table_columns": "string"}}
+	fields := []map[string]string{{"state_id": "int64"}, {"parameter": "string"}, {"value": "string"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -41,7 +38,7 @@ func (p *Parser) NewStateTableInit() error {
 
 
 
-func (p *Parser) NewStateTableFront() error {
+func (p *Parser) ChangeStateSettingsConditionsFront() error {
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -64,24 +61,38 @@ func (p *Parser) NewStateTableFront() error {
 
 
 	// Check the condition that must be met to complete this transaction
-	// select value from ds_state_settings where name = "new_state_table"
-	// ...
-
-	newStateCondition := "#dlt_wallets[wallet_id=walletId].amount > 0"
+	conditions, err := p.Single(`SELECT change FROM `+p.States[p.TxMaps.Int64["state_id"]]+`_state_settings WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 
 	vars := map[string]interface{}{
 		`citizenId`: 	p.TxCitizenID,
 		`walletId`: 	p.TxWalletID,
 		`Table`:     	p.MyTable,
 	}
-	out, err := script.EvalIf(newStateCondition, &vars)
+	out, err := script.EvalIf(conditions, &vars)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !out {
-		return p.ErrInfo("newStateCond false")
+		return p.ErrInfo("conditions false")
 	}
 
+	// Checking new condition
+	vars = map[string]interface{}{
+		`citizenId`: 	p.TxCitizenID,
+		`walletId`: 	p.TxWalletID,
+		`Table`:     	p.MyTableChecking,
+	}
+	out, err = script.EvalIf(p.TxMaps.String["conditions"], &vars)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if !out {
+		return p.ErrInfo("conditions false")
+	}
+	
 	// must be supplemented
 	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxMap["state_id"], p.TxCitizenID)
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
@@ -95,38 +106,19 @@ func (p *Parser) NewStateTableFront() error {
 	return nil
 }
 
-func (p *Parser) NewStateTable() error {
-
-	var cols []string
-	json.Unmarshal(p.TxMaps.Bytes["table_columns"], &cols)
-
-	s := make(schema.Recmap)
-	s1 := make(schema.Recmap)
-	s2 := make(schema.Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('"+p.TxMaps.String["table_name"]+"_id_seq')", "comment": ""}
-	i:=1
-	for _,name := range cols {
-		s2[i] = map[string]string{"name": name, "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-		i++
+func (p *Parser) ChangeStateSettingsConditions() error {
+	err := p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{p.TxMaps.String["value"]}, p.States[p.TxMaps.Int64["state_id"]]+"_state_settings", []string{"parameter"}, []string{p.TxMaps.String["parameter"]}, true)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"id"}
-	s1["AI"] = "id"
-	s1["comment"] = ""
-	s[p.TxMaps.String["table_name"]] = s1
-	schema_ := &schema.SchemaStruct{}
-	schema_.DbType = p.ConfigIni["db_type"]
-	schema_.PrintSchema()
-
 	return nil
 }
 
-func (p *Parser) NewStateTableRollback() error {
-	return p.ExecSql(`DROP TABLE "`+p.TxMaps.String["table_name"]+`"`)
+func (p *Parser) ChangeStateSettingsConditionsRollback() error {
+	return p.autoRollback()
 }
 
-func (p *Parser) NewStateTableRollbackFront() error {
+func (p *Parser) ChangeStateSettingsConditionsRollbackFront() error {
 
 	return nil
-
 }

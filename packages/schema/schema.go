@@ -553,14 +553,13 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "parameter", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(2) NOT NULL DEFAULT ''", "postgresql": "varchar(2) NOT NULL DEFAULT ''", "comment": ""}
+	s2[0] = map[string]string{"name": "parameter", "mysql": "varchar(100) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(100) NOT NULL DEFAULT ''", "postgresql": "varchar(100) NOT NULL DEFAULT ''", "comment": ""}
 	s2[1] = map[string]string{"name": "value", "mysql": "varchar(2) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(2) NOT NULL DEFAULT ''", "postgresql": "varchar(2) NOT NULL DEFAULT ''", "comment": ""}
 	s2[2] = map[string]string{"name": "change", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s2[3] = map[string]string{"name": "parent", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s2[4] = map[string]string{"name": "text", "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"id"}
-	s1["AI"] = "id"
+	s1["PRIMARY"] = []string{"parameter"}
 	s1["comment"] = ""
 	s["ds_state_settings"] = s1
 	schema.S = s
@@ -683,151 +682,11 @@ func (schema *SchemaStruct) GetSchema() {
 	}
 }
 
-func (schema *SchemaStruct) typeMysql() {
-	var err error
-	var result string
-	for table_name, v := range schema.S {
-		if ok, _ := regexp.MatchString(`\[my_prefix\]`, table_name); !ok {
-			if schema.PrefixUserId > 0 {
-				continue
-			}
-		}
-		AI := ""
-		AI_START := "1"
-		schema.replMy(&table_name)
-
-		result = ""
-		/*if schema.ChangeType {
-			if !schema.OnlyPrint {
-				err = schema.DCDB.ExecSql(fmt.Sprintf("ALTER TABLE \"%[1]s\" RENAME TO tmp;\n", table_name))
-			} else {
-				fmt.Println(fmt.Sprintf("ALTER TABLE \"%[1]s\" RENAME TO tmp;\n", table_name))
-			}
-		}
-
-		if !schema.AddColumn {
-			if !schema.OnlyPrint {
-				err = schema.DCDB.ExecSql("DROP TABLE IF EXISTS " + table_name)
-			} else {
-				fmt.Println("DROP TABLE IF EXISTS " + table_name+";")
-			}
-		}*/
-		if schema.ChangeType {
-			if !schema.OnlyPrint {
-				err = schema.DCDB.ExecSql(fmt.Sprintf("ALTER TABLE %[1]s RENAME TO tmp;\n", table_name))
-			} else {
-				fmt.Println(fmt.Sprintf("ALTER TABLE %[1]s RENAME TO tmp;\n", table_name))
-			}
-			//result += fmt.Sprintf("ALTER TABLE %[1]s RENAME TO tmp;\n", table_name)
-		}
-		if !schema.AddColumn {
-			if !schema.OnlyPrint {
-				err = schema.DCDB.ExecSql(fmt.Sprintf("DROP TABLE IF EXISTS %[1]s;\n", table_name))
-			} else {
-				fmt.Println(fmt.Sprintf("DROP TABLE IF EXISTS %[1]s;\n", table_name))
-			}
-			//result += fmt.Sprintf("DROP TABLE IF EXISTS %[1]s;\n", table_name)
-		}
-		if err != nil {
-			log.Error("%v %v", err, table_name)
-		}
-
-		if !schema.AddColumn {
-			result += fmt.Sprintf("CREATE TABLE IF NOT EXISTS %[1]s (\n", table_name)
-		} else {
-			result += fmt.Sprintf("ALTER TABLE %[1]s\n", table_name)
-		}
-
-		var tableComment string
-		primaryKey := ""
-		uniqKey := ""
-		var tableSlice []string
-		for k, v1 := range v.(Recmap) {
-			if k == "comment" {
-				tableComment = v1.(string)
-				//fmt.Println(k, v1.(string), v1)
-			} else if k == "fields" {
-				//fmt.Println(k, v1)
-				//i:=0
-				//end:=""
-				for i := 0; i < len(v1.(Recmapi)); i++ {
-					/*if i == len(v1.(Recmap)) - 1 {
-						end = ""
-					} else {
-						end = ","
-					}*/
-					dType := v1.(Recmapi)[i].(map[string]string)["mysql"]
-					if ok, _ := regexp.MatchString(`AUTO_INCREMENT`, dType); ok {
-						dType = strings.Replace(dType, "DEFAULT '0'", "", -1)
-					}
-					tableSlice = append(tableSlice, fmt.Sprintf("`%s` %s COMMENT '%s'", v1.(Recmapi)[i].(map[string]string)["name"], dType, v1.(Recmapi)[i].(map[string]string)["comment"]))
-					//fmt.Println(i)
-					//i++
-				}
-			} else if k == "PRIMARY" {
-				primaryKey = fmt.Sprintf("PRIMARY KEY (`%s`)", strings.Join(v1.([]string), "`,`"))
-			} else if k == "UNIQ" {
-				uniqKey = fmt.Sprintf("UNIQUE KEY (`%v`)", strings.Join(v1.([]string), "`,`"))
-			} else if k == "AI" {
-				AI = v1.(string)
-			} else if k == "AI_START" {
-				AI_START = v1.(string)
-			}
-		}
-		if len(uniqKey) > 0 {
-			tableSlice = append(tableSlice, uniqKey)
-			//fmt.Printf("%s,\n", uniqKey)
-		}
-		if len(primaryKey) > 0 {
-			tableSlice = append(tableSlice, primaryKey)
-			//fmt.Printf("%s\n", primaryKey)
-		}
-		//fmt.Println(tableSlice)
-		for i, line := range tableSlice {
-			if schema.AddColumn {
-				result += "ADD COLUMN "
-			}
-			if i == len(tableSlice)-1 {
-				result += fmt.Sprintf("%s\n", line)
-			} else {
-				result += fmt.Sprintf("%s,\n", line)
-			}
-		}
-		if !schema.AddColumn {
-			if len(AI) > 0 {
-				result += fmt.Sprintf(") ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=%s COMMENT='%s';\n\n", AI_START, tableComment)
-			} else {
-				result += fmt.Sprintf(") ENGINE=MyISAM  DEFAULT CHARSET=latin1 COMMENT='%s';\n\n", tableComment)
-			}
-		} else {
-			result += ";"
-		}
-		if schema.ChangeType {
-			result += fmt.Sprintf("INSERT INTO %[1]s SELECT * FROM tmp;\nDROP TABLE tmp;\n", table_name)
-		}
-		if !schema.OnlyPrint {
-			err = schema.DCDB.ExecSql(result)
-			log.Debug("sql", result)
-		} else {
-			fmt.Println(result)
-		}
-		if err != nil {
-			log.Error("%s", err)
-		}
-	}
-}
-
 func (schema *SchemaStruct) typePostgresql() {
 	var result string
 	var err error
 	for table_name, v := range schema.S {
-		if ok, _ := regexp.MatchString(`\[my_prefix\]`, table_name); !ok {
-			if schema.PrefixUserId > 0 {
-				continue
-			}
-		}
 		result = ""
-		schema.replMy(&table_name)
 		primaryKey := ""
 		uniqKey := ""
 		AI := ""
@@ -848,8 +707,6 @@ func (schema *SchemaStruct) typePostgresql() {
 								if !utils.InSliceString(match[1], enumSlice) {
 									enumSlice = append(enumSlice, match[1])
 								}
-								//fmt.Println(match)
-								//fmt.Println(enumSlice)
 							}
 						}
 						name := v1.(Recmapi)[i].(map[string]string)["name"]
@@ -943,28 +800,11 @@ func (schema *SchemaStruct) typePostgresql() {
 	}
 }
 
-func (schema *SchemaStruct) replMy(table_name *string) {
-	if ok, _ := regexp.MatchString(`\[my_prefix\]`, *table_name); ok {
-		if schema.PrefixUserId == 0 {
-			*table_name = strings.Replace(*table_name, "[my_prefix]", "", -1)
-		} else {
-			*table_name = strings.Replace(*table_name, "[my_prefix]", utils.IntToStr(schema.PrefixUserId)+"_", -1)
-		}
-	}
-}
-
 func (schema *SchemaStruct) typeSqlite() {
 	var result string
 	for table_name, v := range schema.S {
 		log.Debug("table_name", table_name)
-		if ok, _ := regexp.MatchString(`\[my_prefix\]`, table_name); !ok {
-			if schema.PrefixUserId > 0 {
-				continue
-			}
-		}
 		result = ""
-		schema.replMy(&table_name)
-
 		if schema.ChangeType {
 			result += fmt.Sprintf("ALTER TABLE \"%[1]s\" RENAME TO tmp;\n", table_name)
 		}
@@ -1047,8 +887,6 @@ func (schema *SchemaStruct) typeSqlite() {
 
 func (schema *SchemaStruct) PrintSchema() {
 	switch schema.DbType {
-	case "mysql":
-		schema.typeMysql()
 	case "sqlite":
 		schema.typeSqlite()
 	case "postgresql":
