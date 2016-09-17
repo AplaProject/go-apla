@@ -17,12 +17,13 @@
 package controllers
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"time"
 	"encoding/hex"
 	"fmt"
+	"time"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (c *Controller) SaveQueue() (string, error) {
@@ -46,9 +47,9 @@ func (c *Controller) SaveQueue() (string, error) {
 		return `{"result":"incorrect type"}`, nil
 	}
 
-	publicKey,_ := hex.DecodeString(c.r.FormValue("pubkey"))
+	publicKey, _ := hex.DecodeString(c.r.FormValue("pubkey"))
 	lenpub := len(publicKey)
-	if lenpub>64 {
+	if lenpub > 64 {
 		publicKey = publicKey[lenpub-64:]
 	} else if lenpub == 0 {
 		publicKey = []byte("null")
@@ -56,12 +57,12 @@ func (c *Controller) SaveQueue() (string, error) {
 	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
 	txType := utils.TypeInt(txType_)
 	sign := make([]byte, 0)
-	for i := 1; i<=3; i++ {
-		log.Debug("signature %s", c.r.FormValue( fmt.Sprintf("signature%d", i )))
-		signature := utils.ConvertJSSign(c.r.FormValue( fmt.Sprintf("signature%d", i )))
+	for i := 1; i <= 3; i++ {
+		log.Debug("signature %s", c.r.FormValue(fmt.Sprintf("signature%d", i)))
+		signature := utils.ConvertJSSign(c.r.FormValue(fmt.Sprintf("signature%d", i)))
 		log.Debug("signature %s", signature)
-		if i==1 || len(signature) > 0 {
-			bsign,_ := hex.DecodeString(signature)
+		if i == 1 || len(signature) > 0 {
+			bsign, _ := hex.DecodeString(signature)
 			log.Debug("bsign %s", bsign)
 			log.Debug("bsign %x", bsign)
 			sign = append(sign, utils.EncodeLengthPlusData(bsign)...)
@@ -80,14 +81,12 @@ func (c *Controller) SaveQueue() (string, error) {
 	log.Debug("txType", txType)
 
 	var data []byte
-	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime), 
-								WalletId: walletId, CitizenId: citizenId }
+	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime),
+		WalletId: walletId, CitizenId: citizenId}
 	switch txType_ {
-	case "CitizenRequest": 
-		_, err = lib.BinMarshal(&data, &consts.CitizenRequest{ TxHeader: txHead, 
-//		Type: uint8(txType), Time: uint32(txTime), WalletId: walletId, CitizenId: citizenId,
-		 		StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign })
-		fmt.Printf("REQUEST %v %x \r\n", err, data )
+	case "CitizenRequest":
+		_, err = lib.BinMarshal(&data, &consts.CitizenRequest{TxHeader: txHead,
+			StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign})
 	case "DLTTransfer":
 
 		walletAddress := []byte(c.r.FormValue("walletAddress"))
@@ -121,7 +120,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, binSignatures...)
 
 	case "ChangeNodeKey":
-
 
 		publicKey := []byte(c.r.FormValue("publicKey"))
 		privateKey := []byte(c.r.FormValue("privateKey"))
@@ -175,7 +173,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	return `{"hash":"`+string(md5)+`"}`, nil
+	return `{"hash":"` + string(md5) + `"}`, nil
 }
 
 func CheckInputData(data map[string]string) error {

@@ -15,7 +15,7 @@
 		top:-100000px;
 	}
 </style>
-
+<script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_citizen_status").addClass("active");
@@ -182,6 +182,10 @@
 	var serverTime;
 	
 	$('#send').bind('click', function () {
+		if (!$("#phrase").val()) {
+			alert('Generate seed');
+			return;
+		}
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
 			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}}');
@@ -225,13 +229,18 @@
 									clearInterval(interval);
 									$("#for-signature").val( 'CitizenInfo,'+data.time+',{{.Data.WalletId}}');
 									doSign();
-									
+									do_generate();
+									var key = $("#pubkey").val();
+									if (key.length > 128) {
+										key = key.substr( 2 );
+									}
 									var predata = {
 //										'type' : data.type_name,
 										'time' : data.time,
 										'walletId' : '{{.Data.WalletId}}',
 										'stateId': $("#countries").val(),
 										'price': parseInt($("#price").val()),
+										'publicKey': key,
 										'pubkey' : GKey.Public,
 										'signature1': $('#signature1').val(),
 										'signature2': $('#signature2').val(),
@@ -276,6 +285,10 @@
 			}
 		});
 	} );	
+	$(document).ready(function(){
+		do_phrase();
+	});
+		
 </script>
 
 <div class="content-heading">
@@ -338,6 +351,14 @@
 			  <input id="passport" type="text" class="form-control">
 		   </div>-->
 	   </div>
+		   <div class="form-group">
+			  <label for="phrase">GENERATE AND REMEMBER SEED</label>
+			  <textarea id="phrase" class="form-control"></textarea>
+			 <button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
+			<input type="hidden" id="prvkey" value="" />
+			<input type="hidden" id="pubkey" value="" />
+			
+		   </div>
 	</form>
  </div>
  <div class="panel-footer">
