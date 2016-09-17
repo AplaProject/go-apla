@@ -21,6 +21,7 @@ import (
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	//	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) CitizenRequestInit() error {
@@ -32,11 +33,7 @@ func (p *Parser) CitizenRequestInit() error {
 		}
 		p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])*/
 	data := p.TxPtr.(*consts.CitizenRequest)
-	stateCode, err := p.GetStatePrefix(data.StateId)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	p.TxVars[`state_code`] = stateCode
+	p.TxVars[`state_code`] = p.States[data.StateId]
 	fmt.Println(data)
 	return nil
 }
@@ -57,7 +54,7 @@ func (p *Parser) CitizenRequestFront() error {
 		return p.ErrInfo(err)
 	}
 
-	amountAndCommission, err := p.checkSenderMoney(amount, consts.COMMISSION)
+	amountAndCommission, err := p.checkSenderDLT(amount, consts.COMMISSION)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -78,6 +75,10 @@ func (p *Parser) CitizenRequest() error {
 	err := p.ExecSql(`INSERT INTO `+p.TxVars[`state_code`]+
 		`_citizenship_requests ( dlt_wallet_id, block_id ) VALUES ( ?, ? )`,
 		p.TxWalletID, p.BlockData.BlockId)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.selectiveLoggingAndUpd([]string{"+amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
