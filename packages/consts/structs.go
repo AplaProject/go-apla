@@ -30,10 +30,10 @@ type BlockHeader struct {
 }
 
 type TxHeader struct {
-	Type          byte
-	Time          uint32
-	WalletId      int64
-	CitizenId     int64
+	Type      byte
+	Time      uint32
+	WalletId  int64
+	CitizenId int64
 }
 
 type FirstBlock struct {
@@ -45,28 +45,36 @@ type FirstBlock struct {
 
 type CitizenRequest struct {
 	TxHeader
-	StateId       int64
-	Sign          []byte
+	StateId int64
+	Sign    []byte
 }
+
+type NewCitizen struct {
+	TxHeader
+	StateId   int64
+	PublicKey []byte
+	Sign      []byte
+}
+
+// Don't forget to insert the structure in init() - list
 
 var blockStructs = make(map[string]reflect.Type)
 
 func init() {
-	list := []interface{}{ FirstBlock{}, CitizenRequest{},
-	   // New structures must be inserted here
-	}
+	list := []interface{}{FirstBlock{}, CitizenRequest{}, NewCitizen{}} // New structures must be inserted here
+
 	for _, item := range list {
 		blockStructs[reflect.TypeOf(item).Name()] = reflect.TypeOf(item)
 	}
 }
 
 func MakeStruct(name string) interface{} {
-    v := reflect.New(blockStructs[name])//.Elem()
-    return v.Interface()
+	v := reflect.New(blockStructs[name]) //.Elem()
+	return v.Interface()
 }
 
 func IsStruct(tx int) bool {
-	return tx > 0 && tx <= 2 /*CitizenRequest*/
+	return tx > 0 && tx <= 3 /*NewCitizen*/
 }
 
 func Header(v interface{}) TxHeader {

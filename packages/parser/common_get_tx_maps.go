@@ -17,10 +17,11 @@
 package parser
 
 import (
+	//	"encoding/json"
 	"fmt"
+
+	//	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"encoding/json"
 )
 
 func (p *Parser) GetTxMaps(fields []map[string]string) error {
@@ -52,7 +53,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	}
 	var allFields []map[string]string
 	allFields = append(allFields, fields...)
-	if  p.TxMaps.Int64["type"] <= int64(len(consts.TxTypes)) && consts.TxTypes[int(p.TxMaps.Int64["type"])] == "new_citizen" {
+	/*	if  p.TxMaps.Int64["type"] <= int64(len(consts.TxTypes)) && consts.TxTypes[int(p.TxMaps.Int64["type"])] == "new_citizen" {
 		// получим набор доп. полей, которые должны быть в данной тр-ии
 		additionalFields, err := p.Single(`SELECT fields FROM citizen_fields WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).Bytes()
 		if err != nil {
@@ -69,7 +70,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 			allFields = append(allFields, map[string]string{date["name"]: date["txType"]})
 		}
 		allFields = append(allFields, map[string]string{"sign": "bytes"})
-	}
+	}*/
 	if len(p.TxSlice) != len(allFields)+5 {
 		return fmt.Errorf("bad transaction_array %d != %d (type=%d)", len(p.TxSlice), len(allFields)+4, p.TxSlice[0])
 	}

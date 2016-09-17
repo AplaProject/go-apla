@@ -84,11 +84,11 @@ var Countries = []string{"Afghanistan", "Albania", "Algeria", "American Samoa", 
 var TxTypes = map[int]string{
 	1: "FirstBlock",
 	2: "CitizenRequest",
-	3: "DLTTransfer",
-	4: "DLTChangeHostVote",
-	5: "UpdFullNodes",
-	6: "ChangeNodeKey",
-	7: "NewCitizen",
+	3: "NewCitizen",
+	4: "DLTTransfer",
+	5: "DLTChangeHostVote",
+	6: "UpdFullNodes",
+	7: "ChangeNodeKey",
 }
 
 func init() {

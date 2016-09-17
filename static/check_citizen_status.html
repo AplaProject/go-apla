@@ -10,6 +10,113 @@
 </style>
 
 <script>
+	function js_approve( accept ) {
+		if (!accept)
+			load_page('check_citizen_status', {accept: accept, request_id: {{.Values.id}}});
+		else {
+			$.get( 'ajax?controllerName=GetServerTime', function (data) {
+				serverTime = data.time;
+				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}},{{.Data.CitizenId}}');
+				doSign();
+				$("#send_to_net").trigger("click");
+			}, "json" );
+		}
+		return false;
+	}
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+				'walletId' : '{{.Data.WalletId}}',
+				'citizenId' : '{{.Data.CitizenId}}',
+				'stateId': {{.Values.stateId}},
+				'publicKey': '{{.Values.publicKey}}',
+//				'pubkey' : GKey.Public,
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(result) {
+				if (typeof result.error != "undefined" && result.error.length > 0 ) {
+					Alert("Error", result.error, "error");
+				} else {
+/*					interval = setInterval(function() {
+						$.ajax({
+							type: 'POST',
+							url: 'ajax?json=ajax_citizen_request',
+							data: {state_id: $("#countries").val()},
+							dataType: 'json',
+							crossDomain: true,
+							success: function(data){
+								if (typeof data.error != "undefined" && data.error.length > 0) {
+									Alert("Error", data.error, "error");
+									clearInterval(interval);
+								} else if (data.host.length > 0) {
+									clearInterval(interval);
+									$("#for-signature").val( 'CitizenInfo,'+data.time+',{{.Data.WalletId}}');
+									doSign();
+									do_generate();
+									var key = $("#pubkey").val();
+									if (key.length > 128) {
+										key = key.substr( 2 );
+									}
+									var predata = {
+//										'type' : data.type_name,
+										'time' : data.time,
+										'walletId' : '{{.Data.WalletId}}',
+										'stateId': $("#countries").val(),
+										'price': parseInt($("#price").val()),
+										'publicKey': key,
+										'pubkey' : GKey.Public,
+										'signature1': $('#signature1').val(),
+										'signature2': $('#signature2').val(),
+										'signature3': $('#signature3').val()
+									};
+									
+									for (i = 0; i < arr.length; i++ ) {
+										var field = arr[i];
+										predata[field] = $("#" + field).val();
+									}
+									
+									//console.log(predata)
+									$.ajax({
+										type: 'POST',
+										url: data.host + 'ajax?json=ajax_citizen_info',
+										data: predata,
+										dataType: 'json',
+										crossDomain: true,
+										success: function(status){
+											if (typeof status.error != "undefined" && status.error.length > 0 ) {
+												Alert("Error", status.error, "error");
+											} else {
+												Alert("Success", "", "success");
+											}
+										},
+										error: function(xhr, status, error) {
+											Alert("Error", error, "error");
+										},
+									});
+								}
+							},
+							error: function(xhr, status, error) {
+								clearInterval(interval);
+								Alert("Error", error, "error");
+							},
+						});
+					}, 2000)*/
+				}
+			},
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );	
+	
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .check_citizen_status").addClass("active");
 	var fields = JSON.parse({{.Values.fields}});
@@ -27,7 +134,7 @@
    <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
    <li class="active">Check citizen status</li>
 </ol>
-
+{{if .Values}}
 <div class="row df">
    <div class="col-md-4 df">
 	  <div class="panel panel-default f100">
@@ -37,8 +144,8 @@
 			</div>
 			<h3 class="m0 text-bold" id="fullname"></h3>
 			<div class="text-center mt-lg">
-				<button type="button" class="btn btn-success">Accept</button>
-				<button type="button" class="btn btn-danger">Reject</button>
+				<button type="button" class="btn btn-success" onclick="return js_approve(true);">Accept</button>
+				<button type="button" class="btn btn-danger" onclick="return js_approve(false);">Reject</button>
 			</div>
 		 </div>
 	  </div>
@@ -96,4 +203,8 @@
 		 </div>
 	</div>
 </div>
+{{else}}
+<p>There is no citisen requests.</p>
 {{end}}
+{{end}}
+{{template "signatures".}}

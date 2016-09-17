@@ -17,19 +17,22 @@
 package controllers
 
 import (
+	"encoding/hex"
 	"encoding/json"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 //	"fmt"
 
-//	"github.com/DayLightProject/go-daylight/packages/utils"
-
 const NCheckCitizen = `check_citizen_status`
 
 type checkPage struct {
-	Data   *CommonPage
-	Values map[string]string
-	Fields []FieldInfo
+	Data     *CommonPage
+	TxType   string
+	TxTypeId int64
+	Values   map[string]string
+	Fields   []FieldInfo
 }
 
 func init() {
@@ -38,7 +41,15 @@ func init() {
 
 func (c *Controller) CheckCitizenStatus() (string, error) {
 	var fields []FieldInfo
+
 	pref := `ds`
+	if c.r.FormValue(`accept`) == `false` {
+		requestId := utils.StrToInt64(c.r.FormValue(`request_id`))
+		if err := c.ExecSql(`update `+pref+`_citizens_requests_private set approved=-1 where id=?`,
+			requestId); err != nil {
+			return ``, err
+		}
+	}
 	field, err := c.Single(`SELECT value FROM ` + pref + `_state_settings where parameter='citizen_fields'`).String()
 	if err != nil {
 		return ``, err
@@ -50,5 +61,11 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if err != nil {
 		return ``, err
 	}
-	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals, Fields: fields})
+	if len(vals) > 0 {
+		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
+		vals[`stateId`] = `1`
+	}
+	txType := "NewCitizen"
+	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals,
+		Fields: fields, TxType: txType, TxTypeId: utils.TypeInt(txType)})
 }

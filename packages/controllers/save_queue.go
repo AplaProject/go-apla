@@ -80,13 +80,22 @@ func (c *Controller) SaveQueue() (string, error) {
 	log.Debug("txType_", txType_)
 	log.Debug("txType", txType)
 
-	var data []byte
+	var (
+		data []byte
+		key  []byte
+	)
 	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime),
 		WalletId: walletId, CitizenId: citizenId}
 	switch txType_ {
 	case "CitizenRequest":
 		_, err = lib.BinMarshal(&data, &consts.CitizenRequest{TxHeader: txHead,
 			StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign})
+	case "NewCitizen":
+		if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
+			_, err = lib.BinMarshal(&data, &consts.NewCitizen{TxHeader: txHead,
+				StateId:   utils.StrToInt64(c.r.FormValue("stateId")),
+				PublicKey: key, Sign: sign})
+		}
 	case "DLTTransfer":
 
 		walletAddress := []byte(c.r.FormValue("walletAddress"))
@@ -147,6 +156,9 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
 		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
 		data = append(data, binSignatures...)
+	}
+	if err != nil {
+		return "", utils.ErrInfo(err)
 	}
 	md5 := utils.Md5(data)
 

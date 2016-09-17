@@ -17,9 +17,10 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/consts"
 	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 // общая проверка для всех _front
@@ -91,12 +92,12 @@ func (p *Parser) generalCheck() error {
 
 // общая проверка для всех _front
 func (p *Parser) generalCheckStruct(moreSign string) error {
-//	head := reflect.ValueOf(p.TxPtr).Elem().Field(0).Interface().(consts.TxHeader)
+	//	head := reflect.ValueOf(p.TxPtr).Elem().Field(0).Interface().(consts.TxHeader)
 	head := consts.Header(p.TxPtr)
 	fmt.Println(`General`, head)
 	// проверим, есть ли такой юзер и заодно получим public_key
 	if int64(head.Type) == utils.TypeInt("DLTTransfer") || int64(head.Type) == utils.TypeInt("DLTChangeHostVote") || int64(head.Type) == utils.TypeInt("CitizenRequest") {
-		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", head.WalletId ).String()
+		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", head.WalletId).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -123,7 +124,7 @@ func (p *Parser) generalCheckStruct(moreSign string) error {
 			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
 		}
 	} else {
-		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM citizens WHERE citizen_id = ?", head.CitizenId ).String()
+		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM "+p.TxVars[`state_code`]+"_citizens WHERE citizen_id = ?", head.CitizenId).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
