@@ -151,8 +151,8 @@ BEGIN:
 		}
 
 		// если дошли до сюда, значит мы есть в full_nodes. надо определить в каком месте списка
-		// получим cb_id, wallet_id и время последнего блока
-		prevBlock, err := d.OneRow("SELECT cb_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
+		// получим state_id, wallet_id и время последнего блока
+		prevBlock, err := d.OneRow("SELECT state_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -174,7 +174,7 @@ BEGIN:
 		}
 		logger.Debug("prevBlockHash %s", prevBlockHash)
 
-		sleepTime, err := d.GetSleepTime(myWalletId, myCBID, prevBlock["cb_id"], prevBlock["wallet_id"])
+		sleepTime, err := d.GetSleepTime(myWalletId, myCBID, prevBlock["state_id"], prevBlock["wallet_id"])
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -212,7 +212,7 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		prevBlock, err = d.OneRow("SELECT cb_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
+		prevBlock, err = d.OneRow("SELECT state_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)

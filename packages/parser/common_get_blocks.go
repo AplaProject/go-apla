@@ -139,7 +139,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			return utils.ErrInfo(err)
 		}
 
-		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
+		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
 		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.CBID, mrklRoot)
 		log.Debug("forSign", forSign)
 
@@ -370,7 +370,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		blockHex := utils.BinToHex(block)
 
 		// пишем в цепочку блоков
-		err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, cb_id = ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].BlockId, prevBlock[blockId].Time, prevBlock[blockId].WalletId, prevBlock[blockId].CBID)
+		err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].BlockId, prevBlock[blockId].Time, prevBlock[blockId].WalletId, prevBlock[blockId].CBID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -385,7 +385,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			return utils.ErrInfo(err)
 		}
 		if exists == 0 {
-			affect, err := p.ExecSqlGetAffect("INSERT INTO block_chain (id, hash, cb_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockId, prevBlock[blockId].Hash, prevBlock[blockId].CBID, prevBlock[blockId].WalletId, prevBlock[blockId].Time, blockHex)
+			affect, err := p.ExecSqlGetAffect("INSERT INTO block_chain (id, hash, state_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockId, prevBlock[blockId].Hash, prevBlock[blockId].CBID, prevBlock[blockId].WalletId, prevBlock[blockId].Time, blockHex)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}

@@ -996,12 +996,12 @@ func (db *DCDB) GetHosts() ([]string, error) {
 }
 
 func (db *DCDB) CheckDelegateCB(myCBID int64) (bool, error) {
-	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_cb_id FROM central_banks WHERE cb_id = ?", myCBID).Int64()
+	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_state_id FROM central_banks WHERE state_id = ?", myCBID).Int64()
 	if err != nil {
 		return false, err
 	}
 	// Если мы - ЦБ и у нас указан delegate, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
-	if delegate["delegate_wallet_id"] > 0 || delegate["delegate_cb_id"] > 0 {
+	if delegate["delegate_wallet_id"] > 0 || delegate["delegate_state_id"] > 0 {
 		return true, nil
 	}
 	return false, nil
@@ -1062,17 +1062,17 @@ func (db *DCDB) GetNodePublicKey(userId int64) ([]byte, error) {
 	}
 	return result, nil
 }
-func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, cb_id int64) ([]byte, error) {
+func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, state_id int64) ([]byte, error) {
 	var result []byte
 	var err error
 	if wallet_id > 0 {
-		log.Debug("wallet_id %v cb_id %v", wallet_id, cb_id)
+		log.Debug("wallet_id %v state_id %v", wallet_id, state_id)
 		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
 	} else {
-		result, err = db.Single("SELECT node_public_key FROM central_banks WHERE cb_id = ?", cb_id).Bytes()
+		result, err = db.Single("SELECT node_public_key FROM central_banks WHERE state_id = ?", state_id).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
@@ -1572,7 +1572,7 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 
 func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
 	// возьмем список всех full_nodes
-	fullNodesList, err := db.GetAll("SELECT full_node_id, wallet_id, state_id as cb_id FROM full_nodes", -1)
+	fullNodesList, err := db.GetAll("SELECT full_node_id, wallet_id, state_id as state_id FROM full_nodes", -1)
 	if err != nil {
 		return int64(0), ErrInfo(err)
 	}
@@ -1601,7 +1601,7 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 	myPosition := func(fullNodesList []map[string]string, myWalletId, myCBID int64) int {
 		log.Debug("%v %v", fullNodesList, myWalletId)
 		for i, full_nodes := range fullNodesList {
-			if StrToInt64(full_nodes["cb_id"]) == myCBID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_state_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
+			if StrToInt64(full_nodes["state_id"]) == myCBID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_state_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
 				return i
 			}
 		}

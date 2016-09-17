@@ -27,8 +27,8 @@ func (p *Parser) ParseBlock() error {
 		BLOCK_ID   				       4
 		TIME       					       4
 		WALLET_ID                         1-8
-		CB_ID                         1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, CB_ID, MRKL_ROOT
+		state_id                         1
+		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
 		Далее - тело блока (Тр-ии)
 	*/
 	p.BlockData = utils.ParseBlockHeader(&p.BinaryData)

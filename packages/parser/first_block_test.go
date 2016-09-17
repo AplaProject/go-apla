@@ -33,7 +33,7 @@ type BlockTest struct {
 
 var (
 	//       1     4       4       len       1
-	//head = 0, block_id, time, wallet_id, cb_id
+	//head = 0, block_id, time, wallet_id, state_id
 	//         1     4      len        len         len         len        len
 	//tx   = type, time, wallet_id, citizen_id, public_key, node_public, host
 	rules = []string{

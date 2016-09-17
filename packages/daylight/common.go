@@ -79,7 +79,7 @@ func firstBlock() {
 		block = append(block, utils.DecToBin(utils.Time(), 4)...)
 		lib.EncodeLenInt64(&block, 1) //wallet_id
 //		block = append(block, utils.EncodeLengthPlusData("1")...) // wallet_id
-		block = append(block, utils.DecToBin(0, 1)...) // cb_id
+		block = append(block, utils.DecToBin(0, 1)...) // state_id
 		block = append(block, utils.EncodeLengthPlusData(tx)...)*/
 
 		static := filepath.Join("", "static")

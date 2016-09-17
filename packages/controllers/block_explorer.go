@@ -85,7 +85,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 				return ``, nil
 			}
 		}	
-		blockExplorer,err := c.GetAll(`SELECT  w.address, b.hash, b.cb_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
+		blockExplorer,err := c.GetAll(`SELECT  w.address, b.hash, b.state_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
 		left join dlt_wallets as w on b.wallet_id=w.wallet_id
 		order by b.id desc limit 0, 30`, -1 )
 		if err != nil {

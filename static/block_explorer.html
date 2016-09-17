@@ -58,7 +58,7 @@
 				{{end}}
 				 <tr>
 					<td class="thead">Central Bank ID</td>
-					<td>{{.BlockData.cb_id}}</td>
+					<td>{{.BlockData.state_id}}</td>
 				 </tr>
 				 <tr>
 					<td class="thead">Added by</td>
@@ -120,7 +120,7 @@
 				 	<td><a href="" onclick="return block_detail({{.id}})">{{.id}}</a></td>
 					<!--td>.hash</td-->
 					<td class="unixtime">{{.time}}</td>
-					<!--td>.cb_id</td-->
+					<!--td>.state_id</td-->
 					<td>{{.wallet_address}}</td>
 					<td>{{.tx_count}}</td>
 				 </tr>

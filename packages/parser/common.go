@@ -187,7 +187,7 @@ func (p *Parser) InsertIntoBlockchain() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, cb_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
+	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, state_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
 		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.CBID, p.BlockData.WalletId, p.BlockData.Time, TxIdsJson)
 	if err != nil {
 		fmt.Println(err)

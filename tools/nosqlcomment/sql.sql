@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS block_chain (
 `id` int(11) NOT NULL DEFAULT '0' COMMENT '',
 `hash` binary(32) NOT NULL DEFAULT '' COMMENT 'Хэш от полного заголовка блока (new_block_id,prev_block_hash,merkle_root,time,user_id,level). Используется как PREV_BLOCK_HASH',
 `data` longblob NOT NULL DEFAULT '' COMMENT '',
-`cb_id` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '',
+`state_id` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '',
 `wallet_id` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '',
 `time` int(11) NOT NULL DEFAULT '0' COMMENT '',
 `tx` text NOT NULL DEFAULT '' COMMENT '',
@@ -104,7 +104,7 @@ DROP TABLE IF EXISTS info_block;
 CREATE TABLE IF NOT EXISTS info_block (
 `hash` binary(32) NOT NULL DEFAULT '' COMMENT 'Хэш от полного заголовка блока (new_block_id,prev_block_hash,merkle_root,time,user_id,level). Используется как prev_hash',
 `block_id` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '',
-`cb_id` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '',
+`state_id` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '',
 `wallet_id` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '',
 `time` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Время создания блока',
 `level` tinyint(4) unsigned NOT NULL DEFAULT '0' COMMENT 'На каком уровне был сгенерирован блок',

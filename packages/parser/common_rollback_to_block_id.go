@@ -79,7 +79,7 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	size := utils.DecodeLength(&data)
 	walletId := utils.BinToDecBytesShift(&data, size)
 	CBID := utils.BinToDecBytesShift(&data, 1)
-	err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, cb_id = ?", utils.BinToHex(hash), block_id, time, walletId, CBID)
+	err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?", utils.BinToHex(hash), block_id, time, walletId, CBID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
