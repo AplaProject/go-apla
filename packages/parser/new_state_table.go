@@ -64,7 +64,7 @@ func (p *Parser) NewStateTableFront() error {
 
 
 	// Check the condition that must be met to complete this transaction
-	// select value from ds_state_settings where name = "new_state_table"
+	// select value from ea_state_settings where name = "new_state_table"
 	// ...
 
 	newStateCondition := "#dlt_wallets[wallet_id=walletId].amount > 0"

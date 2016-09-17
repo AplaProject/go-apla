@@ -178,7 +178,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"
 	s1["comment"] = ""
-	s["ds_account"] = s1
+	s["ea_account"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -358,7 +358,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ds_citizens_citizen_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ea_citizens_citizen_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "public_key_0", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "The public key that verifies all transactions from the user"}
 	s2[2] = map[string]string{"name": "public_key_1", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "2nd key, if there is"}
 	s2[3] = map[string]string{"name": "public_key_2", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3rd key, if there is"}
@@ -368,28 +368,28 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"citizen_id"}
 	s1["AI"] = "citizen_id"
 	s1["comment"] = ""
-	s["ds_citizens"] = s1
+	s["ea_citizens"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "request_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ds_citizenship_requests_request_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "request_id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ea_citizenship_requests_request_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "dlt_wallet_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
 	s2[2] = map[string]string{"name": "block_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "bigint(20)  NOT NULL DEFAULT '0'", "postgresql": "bigint  NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"citizen_id"}
 	s1["AI"] = "request_id"
 	s1["comment"] = ""
-	s["ds_citizenship_requests"] = s1
+	s["ea_citizenship_requests"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('ds_citizens_private_citizen_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('ea_citizens_private_citizen_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "main_citizen_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s2[2] = map[string]string{"name": "name", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s2[3] = map[string]string{"name": "private_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3-й ключ, если есть"}
@@ -398,14 +398,14 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"citizen_id"}
 	s1["AI"] = "citizen_id"
 	s1["comment"] = ""
-	s["ds_citizens_private"] = s1
+	s["ea_citizens_private"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ds_citizens_requests_private_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ea_citizens_requests_private_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "request_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "INTEGER NOT NULL", "postgresql": "bigint  NOT NULL  default '0'", "comment": ""}
 	s2[2] = map[string]string{"name": "fields", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "JSON of request fields"}
 	s2[3] = map[string]string{"name": "binary", "mysql": "longblob NOT NULL DEFAULT ''", "sqlite": "longblob NOT NULL DEFAULT ''", "postgresql": "bytea NOT NULL DEFAULT ''", "comment": ""}
@@ -415,7 +415,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"
 	s1["comment"] = ""
-	s["ds_citizens_requests_private"] = s1
+	s["ea_citizens_requests_private"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -564,7 +564,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"parameter"}
 	s1["comment"] = ""
-	s["ds_state_settings"] = s1
+	s["ea_state_settings"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
@@ -628,21 +628,21 @@ func (schema *SchemaStruct) GetSchema() {
 
 	if !schema.OnlyPrint {
 
-		err := schema.DCDB.ExecSql(`INSERT INTO states (state_id, state_code, node_public_key, delegate_wallet_id) VALUES (1, "DS", [hex], 1)`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
+		err := schema.DCDB.ExecSql(`INSERT INTO states (state_id, state_code, node_public_key, delegate_wallet_id) VALUES (1, "EA", [hex], 1)`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
 		if err != nil {
 			log.Error("%v", err)
 		}
 
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_citizens (citizen_id, public_key_0) VALUES (1, [hex])`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
+		err = schema.DCDB.ExecSql(`INSERT INTO ea_citizens (citizen_id, public_key_0) VALUES (1, [hex])`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
 		if err != nil {
 			log.Error("%v", err)
 		}
 
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("registration_of_citizens", "president", "president", "", "")`)
+		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("registration_of_citizens", "president", "president", "", "")`)
 		if err != nil {
 			log.Error("%v", err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_fields", ?, "president", "", "")`,
+		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("citizen_fields", ?, "president", "", "")`,
 			`[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
 {"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
 {"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
@@ -651,11 +651,11 @@ func (schema *SchemaStruct) GetSchema() {
 		if err != nil {
 			log.Error("%v", err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("citizen_dlt_price", "1000000", "president", "", "")`)
+		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("citizen_dlt_price", "1000000", "president", "", "")`)
 		if err != nil {
 			log.Error("%v", err)
 		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("new_state_table", ?, "if (citizenId == president.citizen_id) ", "", "")`, `{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
+		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("new_state_table", ?, "if (citizenId == president.citizen_id) ", "", "")`, `{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
 		if err != nil {
 			log.Error("%v", err)
 		}
@@ -665,19 +665,19 @@ func (schema *SchemaStruct) GetSchema() {
 		}
 		/*
 			// President can only be a citizen of this state
-			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("president_candidate", "if (CurrentTime - citizen.start_time > 86400) && count(president.citizen_id) < 2)", "referendum")`)
+			err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("president_candidate", "if (CurrentTime - citizen.start_time > 86400) && count(president.citizen_id) < 2)", "referendum")`)
 			if err!=nil {
 				log.Error(err)
 			}
-			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("change_head_cb", "president", "parliament")`)
+			err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("change_head_cb", "president", "parliament")`)
 			if err!=nil {
 				log.Error(err)
 			}
-			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("president_period_years", "5", "parliament")`)
+			err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("president_period_years", "5", "parliament")`)
 			if err!=nil {
 				log.Error(err)
 			}
-			err = schema.DCDB.ExecSql(`INSERT INTO ds_state_settings VALUES ("parliament", "unicameralism", "parliament+president")`)
+			err = schema.DCDB.ExecSql(`INSERT INTO ea_state_settings VALUES ("parliament", "unicameralism", "parliament+president")`)
 			if err!=nil {
 				log.Error(err)
 			}

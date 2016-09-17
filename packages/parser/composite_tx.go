@@ -67,7 +67,7 @@ func (p *Parser) CompositeTxFront() error {
 
 func (p *Parser) CompositeTx() error {
 /*
-	retirees := getDataFromDB(ds_retirees)
+	retirees := getDataFromDB(ea_retirees)
 for data := range retirees {
   // пока что запрещаем всё, кроме:
   // update других таблиц через наш метод selectiveLoggingAndUpd() т.к. это легко роллбечится

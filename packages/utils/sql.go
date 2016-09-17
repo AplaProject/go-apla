@@ -1036,7 +1036,7 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 }
 
 func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
-	walletId, err := db.Single(`SELECT citizen_id FROM ds_citizens WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
+	walletId, err := db.Single(`SELECT citizen_id FROM ea_citizens WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
@@ -1089,7 +1089,7 @@ func (db *DCDB) GetPublicKeyWalletOrCitizen(wallet_id, citizen_id int64) ([]byte
 			return []byte(""), err
 		}
 	} else {
-		result, err = db.Single("SELECT public_key_0 FROM ds_citizens WHERE citizen_is = ?", citizen_id).Bytes()
+		result, err = db.Single("SELECT public_key_0 FROM ea_citizens WHERE citizen_is = ?", citizen_id).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
