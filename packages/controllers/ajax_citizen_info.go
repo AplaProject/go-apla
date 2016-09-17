@@ -65,7 +65,9 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		)
 		if err = json.Unmarshal([]byte(field), &fields); err == nil {
 			for _, ifield := range fields {
-				vals[ifield.Name] = c.r.FormValue(ifield.Name)
+				if ifield.HtmlType != `file` {
+					vals[ifield.Name] = c.r.FormValue(ifield.Name)
+				}
 			}
 
 			data, err = c.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", walletId).String()

@@ -16,9 +16,7 @@
 
 package controllers
 
-import (
-	"fmt"
-)
+//"fmt"
 
 const NMenu = `menu`
 
@@ -31,6 +29,5 @@ func init() {
 }
 
 func (c *Controller) Menu() (string, error) {
-	fmt.Println(`Menu Page`)
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data})
 }

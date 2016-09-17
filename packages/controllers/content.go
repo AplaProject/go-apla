@@ -18,60 +18,60 @@ package controllers
 
 import (
 	"bytes"
-	"github.com/astaxie/beego/config"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"fmt"
+	"html/template"
+	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"regexp"
-	"fmt"
-	"time"
-	"html/template"
-	"github.com/DayLightProject/go-daylight/packages/static"
 	"runtime/debug"
 	"strings"
-	"math/rand"
-	"io/ioutil"
 	"sync"
+	"time"
+
+	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/astaxie/beego/config"
 )
 
 var (
 	passMutex = sync.Mutex{}
 	passUpd   = time.Now()
 	passwords = make(map[string]bool)
-	alphabet = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+	alphabet  = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 )
 
-
 func genPass(length int) string {
- 	ret := make([]byte, length)
-    for i := range ret {
-        ret[i] = alphabet[rand.Intn(len(alphabet))]
-    }
-    return string(ret)	
+	ret := make([]byte, length)
+	for i := range ret {
+		ret[i] = alphabet[rand.Intn(len(alphabet))]
+	}
+	return string(ret)
 }
 
 func IsPassValid(pass, psw string) bool {
 	passMutex.Lock()
 	defer passMutex.Unlock()
 
-	if len(passwords) == 0 || passUpd.Add( 5*time.Minute ).Before(time.Now()) {
-		
+	if len(passwords) == 0 || passUpd.Add(5*time.Minute).Before(time.Now()) {
+
 		filename := *utils.Dir + `/passlist.txt`
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			out := make([]string, 1000)
 			out[0] = pass
-			for i:=1; i<1000; i++ {
+			for i := 1; i < 1000; i++ {
 				out[i] = genPass(6)
 			}
-			ioutil.WriteFile(filename, []byte( strings.Join(out, "\r\n")), 0644)
+			ioutil.WriteFile(filename, []byte(strings.Join(out, "\r\n")), 0644)
 		}
-		if list,err := ioutil.ReadFile(filename); err == nil && len(list) > 0 {
+		if list, err := ioutil.ReadFile(filename); err == nil && len(list) > 0 {
 			for key := range passwords {
 				passwords[key] = false
 			}
 			out := strings.Split(string(list), "\r\n")
 			for i := range out {
-				plist := strings.SplitN( out[i], `,`, 2)
+				plist := strings.SplitN(out[i], `,`, 2)
 				if len(plist[0]) > 0 {
 					passwords[plist[0]] = true
 				}
@@ -93,7 +93,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-type", "text/html")
 
-
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
 		log.Error("%v", err)
@@ -103,7 +102,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	sessCitizenId := GetSessCitizenId(sess)
 	sessAddress := GetSessString(sess, "address")
 	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
-	
+
 	c := new(Controller)
 	c.r = r
 	c.w = w
@@ -153,7 +152,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			log.Error("%v", err)
 		}
 
-
 		// Инфа о последнем блоке
 		blockData, err := c.DCDB.GetLastBlockData()
 		if err != nil {
@@ -163,18 +161,16 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-
 		confirmedBlockId, err := c.GetConfirmedBlockId()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		c.ConfirmedBlockId = confirmedBlockId
 
-
 	}
 	r.ParseForm()
 	pageName := r.FormValue("page")
-	
+
 	tplName := r.FormValue("tpl_name")
 	if len(tplName) == 0 {
 		tplName = r.FormValue("controllerHTML")
@@ -220,8 +216,8 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
 		// первый запуск, еще не загружен блокчейн
 		tplName = "updatingBlockchain"
-	} else if dbInit && installProgress == "complete" && (sessWalletId > 0 || sessCitizenId > 0 || len(sessAddress) > 0 ) {
-		tplName = "dashboardAnonym" 
+	} else if dbInit && installProgress == "complete" && (sessWalletId > 0 || sessCitizenId > 0 || len(sessAddress) > 0) {
+		tplName = "dashboardAnonym"
 	} else if dbInit && installProgress == "complete" {
 		if tplName != "loginECDSA" {
 			tplName = "login"
@@ -305,10 +301,10 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("tplName::", tplName, sessCitizenId, sessWalletId, installProgress)
 
-	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress )
+	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress)
 	controller := r.FormValue("controllerHTML")
-	if val,ok := configIni[`psw`]; ok && (tplName != `login`&& tplName != `loginECDSA`) || len(controller) > 0 {
-		if psw,err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
+	if val, ok := configIni[`psw`]; ok && (tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0 {
+		if psw, err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
 			if err == nil {
 				cookie := http.Cookie{Name: "psw", Value: ``, Expires: time.Now().AddDate(0, 0, -1)}
 				http.SetCookie(w, &cookie)
@@ -321,7 +317,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			controller = `psw`
 			pageName = ``
 			tplName = ``
-		} 
+		}
 	}
 
 	if len(controller) > 0 {
@@ -333,13 +329,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 				return template.HTML(s)
 			},
 		}
-		data, err := static.Asset("static/"+controller+".html")
+		data, err := static.Asset("static/" + controller + ".html")
 		t := template.New("template").Funcs(funcMap)
 		t, err = t.Parse(string(data))
 		if err != nil {
 			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
 		}
-		
+
 		b := new(bytes.Buffer)
 		err = t.Execute(b, c)
 		if err != nil {
@@ -350,9 +346,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(pageName) > 0 && isPage(pageName, TPage) {
 		c.Data = &CommonPage{
-			Address: c.SessAddress,
-			WalletId: c.SessWalletId,
-			CitizenId: c.SessCitizenId,
+			Address:      c.SessAddress,
+			WalletId:     c.SessWalletId,
+			CitizenId:    c.SessCitizenId,
 			CountSignArr: []byte{1}, // !!! Добавить вычисление
 		}
 		w.Write([]byte(CallPage(c, pageName)))
@@ -360,22 +356,21 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 	if ok, _ := regexp.MatchString(`^(?i)blockGeneration|LoginECDSA|AnonymMoneyTransfer|ModalAnonym|DashBoardAnonym|Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
 		w.Write([]byte("Access denied 0"))
-	} else if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId > 0 || len(sessAddress)>0) && installProgress == "complete" {
-
+	} else if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId > 0 || len(sessAddress) > 0) && installProgress == "complete" {
 
 		if tplName == "login" {
 			tplName = "dashboard_anonym"
 		}
 
-/*		if tplName == "home" && c.Parameters["first_select"] != "1" {
-			data, err := c.OneRow(`SELECT first_select, miner_id from ` + c.MyPrefix + `my_table`).Int64()
-			if err != nil {
-				log.Error("%v", err)
-			}
-			if data["first_select"] == 0 && data["miner_id"] == 0 && c.SessRestricted == 0 {
-				tplName = "firstSelect"
-			}
-		} */
+		/*		if tplName == "home" && c.Parameters["first_select"] != "1" {
+				data, err := c.OneRow(`SELECT first_select, miner_id from ` + c.MyPrefix + `my_table`).Int64()
+				if err != nil {
+					log.Error("%v", err)
+				}
+				if data["first_select"] == 0 && data["miner_id"] == 0 && c.SessRestricted == 0 {
+					tplName = "firstSelect"
+				}
+			} */
 		c.TplName = tplName
 
 		if dbInit {
@@ -453,7 +448,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte(html))
 	}
-	
+
 	//sess.Set("username", 11111)
 
 }
