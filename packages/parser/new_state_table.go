@@ -118,15 +118,30 @@ func (p *Parser) NewStateTable() error {
 	schema_.DbType = p.ConfigIni["db_type"]
 	schema_.PrintSchema()
 
+
+	err := p.ExecSql(`INSERT INTO `+p.TxVars[`state_code`]+
+	`_state_tables ( name, columns ) VALUES ( ?, ? )`,
+		p.TxMaps.String["table_name"], p.TxMaps.String["table_columns"])
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	return nil
 }
 
 func (p *Parser) NewStateTableRollback() error {
-	return p.ExecSql(`DROP TABLE "`+p.TxMaps.String["table_name"]+`"`)
+
+	err := p.ExecSql(`DROP TABLE "`+p.TxMaps.String["table_name"]+`"`)
+
+	err = p.ExecSql(`DELETE FROM `+p.TxVars[`state_code`]+
+	`_state_tables WHERE name = ?`, p.TxMaps.String["table_name"])
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	return nil
 }
 
 func (p *Parser) NewStateTableRollbackFront() error {
 
 	return nil
-
 }

@@ -87,8 +87,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 					query = fields[i] + `=x'` + values[i] + `',`
 				case "postgresql":
 					query = fields[i] + `=decode('` + values[i] + `','HEX'),`
-				case "mysql":
-					query = fields[i] + `=UNHEX("` + values[i] + `"),`
 				}
 				addSqlUpdate += query
 			} else if fields[i][:1] == "+" {
@@ -118,8 +116,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 					query = `x'` + values[i] + `',`
 				case "postgresql":
 					query = `decode('` + values[i] + `','HEX'),`
-				case "mysql":
-					query = `UNHEX("` + values[i] + `"),`
 				}
 				addSqlIns1 += query
 			} else {
