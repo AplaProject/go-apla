@@ -235,6 +235,7 @@
 										key = key.substr( 2 );
 									}
 									var stateId = $("#countries").val();
+									var files = new FormData();
 									var predata = {
 //										'type' : data.type_name,
 										'time' : data.time,
@@ -250,14 +251,21 @@
 									
 									for (i = 0; i < arr.length; i++ ) {
 										var field = arr[i];
-										predata[field] = $("#" + field).val();
+										if ($("#" + field).attr("type") == "file") {
+											files[field] = $("#" + field).prop('files')[0];
+											//console.log($("#" + field).prop('files')[0]);
+										} else {
+											predata[field] = $("#" + field).val();
+										}
+										
+										//console.log(field);
 									}
 									
 									//console.log(predata)
 									$.ajax({
 										type: 'POST',
 										url: data.host + 'ajax?json=ajax_citizen_info',
-										data: predata,
+										data: [predata, files],
 										dataType: 'json',
 										crossDomain: true,
 										success: function(status){
