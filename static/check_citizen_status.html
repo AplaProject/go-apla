@@ -32,7 +32,7 @@
 				'time' : serverTime,
 				'walletId' : '{{.Data.WalletId}}',
 				'citizenId' : '{{.Data.CitizenId}}',
-				'stateId': {{.Values.stateId}},
+				'stateId': {{.Data.StateId}},
 				'publicKey': '{{.Values.publicKey}}',
 //				'pubkey' : GKey.Public,
 				'signature1': $('#signature1').val(),
@@ -45,70 +45,7 @@
 				if (typeof result.error != "undefined" && result.error.length > 0 ) {
 					Alert("Error", result.error, "error");
 				} else {
-/*					interval = setInterval(function() {
-						$.ajax({
-							type: 'POST',
-							url: 'ajax?json=ajax_citizen_request',
-							data: {state_id: $("#countries").val()},
-							dataType: 'json',
-							crossDomain: true,
-							success: function(data){
-								if (typeof data.error != "undefined" && data.error.length > 0) {
-									Alert("Error", data.error, "error");
-									clearInterval(interval);
-								} else if (data.host.length > 0) {
-									clearInterval(interval);
-									$("#for-signature").val( 'CitizenInfo,'+data.time+',{{.Data.WalletId}}');
-									doSign();
-									do_generate();
-									var key = $("#pubkey").val();
-									if (key.length > 128) {
-										key = key.substr( 2 );
-									}
-									var predata = {
-//										'type' : data.type_name,
-										'time' : data.time,
-										'walletId' : '{{.Data.WalletId}}',
-										'stateId': $("#countries").val(),
-										'price': parseInt($("#price").val()),
-										'publicKey': key,
-										'pubkey' : GKey.Public,
-										'signature1': $('#signature1').val(),
-										'signature2': $('#signature2').val(),
-										'signature3': $('#signature3').val()
-									};
-									
-									for (i = 0; i < arr.length; i++ ) {
-										var field = arr[i];
-										predata[field] = $("#" + field).val();
-									}
-									
-									//console.log(predata)
-									$.ajax({
-										type: 'POST',
-										url: data.host + 'ajax?json=ajax_citizen_info',
-										data: predata,
-										dataType: 'json',
-										crossDomain: true,
-										success: function(status){
-											if (typeof status.error != "undefined" && status.error.length > 0 ) {
-												Alert("Error", status.error, "error");
-											} else {
-												Alert("Success", "", "success");
-											}
-										},
-										error: function(xhr, status, error) {
-											Alert("Error", error, "error");
-										},
-									});
-								}
-							},
-							error: function(xhr, status, error) {
-								clearInterval(interval);
-								Alert("Error", error, "error");
-							},
-						});
-					}, 2000)*/
+					load_page('check_citizen_status', {accept: true, request_id: {{.Values.id}}});
 				}
 			},
 			error: function(xhr, status, error) {

@@ -404,8 +404,8 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[0] = map[string]string{"name": "citizen_id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('ea_citizens_private_citizen_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "main_citizen_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s2[2] = map[string]string{"name": "name", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-	s2[3] = map[string]string{"name": "private_key", "mysql": "varbinary(512) NOT NULL DEFAULT ''", "sqlite": "varbinary(512) NOT NULL DEFAULT ''", "postgresql": "bytea  NOT NULL DEFAULT ''", "comment": "3-й ключ, если есть"}
-	s2[4] = map[string]string{"name": "wallet_id", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "INTEGER NOT NULL", "postgresql": "bigint NOT NULL  default '0'", "comment": ""}
+	s2[3] = map[string]string{"name": "fields", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "JSON of request fields"}
+	s2[4] = map[string]string{"name": "binary", "mysql": "longblob NOT NULL DEFAULT ''", "sqlite": "longblob NOT NULL DEFAULT ''", "postgresql": "bytea NOT NULL DEFAULT ''", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"citizen_id"}
 	s1["AI"] = "citizen_id"
@@ -422,7 +422,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[2] = map[string]string{"name": "fields", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "JSON of request fields"}
 	s2[3] = map[string]string{"name": "binary", "mysql": "longblob NOT NULL DEFAULT ''", "sqlite": "longblob NOT NULL DEFAULT ''", "postgresql": "bytea NOT NULL DEFAULT ''", "comment": ""}
 	s2[4] = map[string]string{"name": "public", "mysql": "varchar(255) NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-	s2[5] = map[string]string{"name": "approved", "mysql": "tinyint(1) NOT NULL DEFAULT '0'", "sqlite": "tinyint(1) NOT NULL DEFAULT '0'", "postgresql": "smallint NOT NULL DEFAULT '0'", "comment": ""}
+	s2[5] = map[string]string{"name": "approved", "mysql": "bigint(20) NOT NULL DEFAULT '0'", "sqlite": "INTEGER NOT NULL DEFAULT '0'", "postgresql": "bigint NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"

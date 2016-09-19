@@ -42,28 +42,30 @@ func init() {
 func (c *Controller) CheckCitizenStatus() (string, error) {
 	var fields []FieldInfo
 
-	pref := `ds`
-	if c.r.FormValue(`accept`) == `false` {
+	if len(c.r.FormValue(`accept`)) > 0 {
 		requestId := utils.StrToInt64(c.r.FormValue(`request_id`))
-		if err := c.ExecSql(`update `+pref+`_citizens_requests_private set approved=-1 where id=?`,
-			requestId); err != nil {
+		approved := -1
+		if c.r.FormValue(`accept`) == `true` {
+			approved = 1
+		}
+		if err := c.ExecSql(`update `+c.StatePrefix+`_citizens_requests_private set approved=? where id=?`,
+			approved, requestId); err != nil {
 			return ``, err
 		}
 	}
-	field, err := c.Single(`SELECT value FROM ` + pref + `_state_settings where parameter='citizen_fields'`).String()
+	field, err := c.Single(`SELECT value FROM ` + c.StatePrefix + `_state_settings where parameter='citizen_fields'`).String()
 	if err != nil {
 		return ``, err
 	}
 	if err = json.Unmarshal([]byte(field), &fields); err != nil {
 		return ``, err
 	}
-	vals, err := c.OneRow(`select * from ` + pref + `_citizens_requests_private where approved=0 order by id`).String()
+	vals, err := c.OneRow(`select * from ` + c.StatePrefix + `_citizens_requests_private where approved=0 order by id`).String()
 	if err != nil {
 		return ``, err
 	}
 	if len(vals) > 0 {
 		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
-		vals[`stateId`] = `1`
 	}
 	txType := "NewCitizen"
 	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals,
