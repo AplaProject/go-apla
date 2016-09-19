@@ -358,6 +358,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			Address:      c.SessAddress,
 			WalletId:     c.SessWalletId,
 			CitizenId:    c.SessCitizenId,
+			StateId:      c.SessStateId,
 			CountSignArr: []byte{1}, // !!! Добавить вычисление
 		}
 		w.Write([]byte(CallPage(c, pageName)))

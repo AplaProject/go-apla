@@ -15,7 +15,7 @@ var GKey = {
 		var stateId = localStorage.getItem('StateId');
 		if (stateId)
 			this.StateId = stateId;
-		var citizenId = localStorage.getItem('citizenId');
+		var citizenId = localStorage.getItem('CitizenId');
 		if (citizenId)
 			this.CitizenId = citizenId;
 			
@@ -69,6 +69,8 @@ var GKey = {
 	save: function(seed) {
 		localStorage.setItem('EncKey', CryptoJS.AES.encrypt(this.Private, this.Password));
 		localStorage.setItem('PubKey', GKey.Public );
+		localStorage.setItem('CitizenId', GKey.CitizenId );
+		localStorage.setItem('StateId', GKey.StateId );
 		if (seed)
 			localStorage.setItem('Encrypt', CryptoJS.AES.encrypt(seed, this.Password));
 		setCookie('psw', this.Password);

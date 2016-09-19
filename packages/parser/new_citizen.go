@@ -35,24 +35,17 @@ func (p *Parser) NewCitizenInit() error {
 		p.TxMaps.Bytes["public_key_hex"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
 	*/
 	data := p.TxPtr.(*consts.NewCitizen)
-	stateCode, err := p.GetStatePrefix(data.StateId)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	p.TxVars[`state_code`] = stateCode
-	fmt.Println(data)
+	p.TxVars[`state_code`] = p.States[data.StateId]
+	//		fmt.Println(data)
 	return nil
 }
 
 func (p *Parser) NewCitizenFront() error {
-	fmt.Println(`NEW Citizen Front`)
 	data := p.TxPtr.(*consts.NewCitizen)
 
 	if err := p.generalCheckStruct(fmt.Sprintf(`,%d`, data.CitizenId)); err != nil {
-		return p.ErrInfo(err)
+		return err
 	}
-	fmt.Println(`NEW Citizen Front OK`)
-
 	/*	err := p.generalCheck()
 		if err != nil {
 			return p.ErrInfo(err)
@@ -104,17 +97,23 @@ func (p *Parser) NewCitizenFront() error {
 }
 
 func (p *Parser) NewCitizen() error {
-	fmt.Println(`NEW Citizen`)
 	data := p.TxPtr.(*consts.NewCitizen)
 
-	/*	stateCode, err := p.Single(`SELECT state_code FROM states WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
-		if err != nil {
-			return p.ErrInfo(err)
-		}*/
-	err := p.ExecSql(`INSERT INTO `+p.TxVars[`state_code`]+`_citizens ( public_key_0, block_id ) VALUES ( [hex], ? )`,
-		hex.EncodeToString(data.PublicKey), p.BlockData.BlockId)
+	citizenId, err := p.ExecSqlGetLastInsertId(`INSERT INTO `+p.States[data.StateId]+`_citizens ( public_key_0, block_id ) VALUES ( [hex], ? )`,
+		p.States[data.StateId]+`_citizens`, hex.EncodeToString(data.PublicKey), p.BlockData.BlockId)
 	if err != nil {
-		return p.ErrInfo(err)
+		return err
+	} else {
+		if req, err := p.OneRow(`select * from `+p.States[data.StateId]+`_citizens_requests_private where approved=1 AND public=[hex]`,
+			hex.EncodeToString(data.PublicKey)).String(); err == nil {
+
+			if err = p.ExecSql(`update `+p.States[data.StateId]+`_citizens_requests_private set approved=? where id=?`,
+				citizenId, req[`id`]); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 	return nil
 }
