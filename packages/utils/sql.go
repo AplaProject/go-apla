@@ -115,7 +115,7 @@ func (db *DCDB) GetMainLockName() (string, error) {
 }
 
 func (db *DCDB) GetFirstColumnName(table string) (string, error) {
-	rows, err := db.Query("SELECT * FROM "+table+" LIMIT 1")
+	rows, err := db.Query("SELECT * FROM " + table + " LIMIT 1")
 	if err != nil {
 		return "", err
 	}
@@ -150,7 +150,7 @@ func (db *DCDB) GetAllTables() ([]string, error) {
 
 func (db *DCDB) GetFirstColumnNamesPg(table string) (string, error) {
 	var result []string
-	result, err := db.GetList("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='"+table+"'").String()
+	result, err := db.GetList("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='" + table + "'").String()
 	if err != nil {
 		return "", err
 	}

@@ -111,13 +111,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	c.SessWalletId = sessWalletId
 	c.SessCitizenId = sessCitizenId
 	c.SessStateId = sessStateId
-	if sessStateId > 0 {
-		statePref, err := c.GetStatePrefix(sessStateId)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		c.StatePrefix = statePref
-	}
 	c.SessAddress = sessAddress
 
 	c.ContentInc = true
@@ -146,6 +139,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 				dbInit = false
 			}
 		}
+	}
+	if sessStateId > 0 {
+		statePref, err := c.GetStatePrefix(sessStateId)
+		if err != nil {
+			log.Error("%v", err)
+		}
+		c.StatePrefix = statePref
 	}
 
 	c.dbInit = dbInit

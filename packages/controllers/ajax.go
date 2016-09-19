@@ -69,13 +69,6 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	c.SessCitizenId = sessCitizenId
 	c.SessAddress = sessAddress
 	c.SessStateId = sessStateId
-	if sessStateId > 0 {
-		statePref, err := c.GetStatePrefix(sessStateId)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		c.StatePrefix = statePref
-	}
 
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)
@@ -86,6 +79,13 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
+	}
+	if sessStateId > 0 {
+		statePref, err := c.GetStatePrefix(sessStateId)
+		if err != nil {
+			log.Error("%v", err)
+		}
+		c.StatePrefix = statePref
 	}
 	c.dbInit = dbInit
 
