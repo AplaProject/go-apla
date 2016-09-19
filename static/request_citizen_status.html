@@ -234,11 +234,12 @@
 									if (key.length > 128) {
 										key = key.substr( 2 );
 									}
+									var stateId = $("#countries").val();
 									var predata = {
 //										'type' : data.type_name,
 										'time' : data.time,
 										'walletId' : '{{.Data.WalletId}}',
-										'stateId': $("#countries").val(),
+										'stateId': stateId,
 										'price': parseInt($("#price").val()),
 										'publicKey': key,
 										'pubkey' : GKey.Public,
@@ -260,6 +261,9 @@
 										dataType: 'json',
 										crossDomain: true,
 										success: function(status){
+											localStorage.setItem('reqPrv', $("#prvkey").val());
+											localStorage.setItem('reqState', stateId );
+											localStorage.setItem('reqHost', data.host );
 											if (typeof status.error != "undefined" && status.error.length > 0 ) {
 												Alert("Error", status.error, "error");
 											} else {
@@ -351,10 +355,10 @@
 			  <input id="passport" type="text" class="form-control">
 		   </div>-->
 	   </div>
-		   <div class="form-group">
+		   <div class="form-group" style="display:none;">
 			  <label for="phrase">GENERATE AND REMEMBER SEED</label>
 			  <textarea id="phrase" class="form-control"></textarea>
-			 <button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
+			 <!--button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button-->
 			<input type="hidden" id="prvkey" value="" />
 			<input type="hidden" id="pubkey" value="" />
 			

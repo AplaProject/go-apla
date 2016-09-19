@@ -21,12 +21,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/astaxie/beego/config"
-	"github.com/astaxie/beego/session"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/op/go-logging"
 	"html/template"
 	"net/http"
 	"os"
@@ -35,6 +29,13 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/astaxie/beego/config"
+	"github.com/astaxie/beego/session"
+	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("controllers")
@@ -52,6 +53,8 @@ type Controller struct {
 	Periods          map[int64]string
 	ShowSignData     bool
 	Alert            string
+	SessStateId      int64
+	StatePrefix      string
 	SessCitizenId    int64
 	SessWalletId     int64
 	SessAddress      string
@@ -224,23 +227,21 @@ func GetSessWalletId(sess session.SessionStore) int64 {
 	return 0
 }
 
-
 func GetSessCitizenId(sess session.SessionStore) int64 {
 	sessUserId := sess.Get("citizen_id")
 	log.Debug("sessUserId: %v", sessUserId)
 	switch sessUserId.(type) {
-		case int64:
+	case int64:
 		return sessUserId.(int64)
-		case int:
+	case int:
 		return int64(sessUserId.(int))
-		case string:
+	case string:
 		return utils.StrToInt64(sessUserId.(string))
-		default:
+	default:
 		return 0
 	}
 	return 0
 }
-
 
 func GetSessInt64(sessName string, sess session.SessionStore) int64 {
 	sess_ := sess.Get(sessName)
@@ -256,8 +257,8 @@ func GetSessInt64(sessName string, sess session.SessionStore) int64 {
 func GetSessString(sess session.SessionStore, name string) string {
 	sessVal := sess.Get(name)
 	switch sessVal.(type) {
-		case string:
-			return sessVal.(string)
+	case string:
+		return sessVal.(string)
 	}
 	return ""
 }
@@ -272,7 +273,6 @@ func GetSessPublicKey(sess session.SessionStore) string {
 	}
 	return ""
 }
-
 
 func SetLang(w http.ResponseWriter, r *http.Request, lang int) {
 	expiration := time.Now().Add(365 * 24 * time.Hour)
@@ -430,9 +430,8 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 			return lang["notifications_"+name]
 		},
 		"issuffix": func(text, name string) bool {
-			return strings.HasSuffix(text,name)
+			return strings.HasSuffix(text, name)
 		},
-
 	}
 	t := template.Must(template.New("template").Funcs(funcMap).Parse(string(data)))
 	t = template.Must(t.Parse(string(alert_success)))

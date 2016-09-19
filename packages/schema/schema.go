@@ -175,13 +175,12 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[2] = map[string]string{"name": "full_name", "mysql": "varchar(50) NOT NULL DEFAULT ''", "sqlite": "varchar(50) NOT NULL DEFAULT ''", "postgresql": "varchar(50) NOT NULL DEFAULT ''", "comment": ""}
 	s2[3] = map[string]string{"name": "rb_id", "mysql": "int(11) NOT NULL DEFAULT '0'", "sqlite": "int(11) NOT NULL DEFAULT '0'", "postgresql": "int NOT NULL DEFAULT '0'", "comment": ""}
 	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"id"}
+	s1["PRIMARY"] = []string{"account_id"}
 	s1["AI"] = "id"
 	s1["comment"] = ""
 	s["ea_account"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)
@@ -189,13 +188,11 @@ func (schema *SchemaStruct) GetSchema() {
 	s2[0] = map[string]string{"name": "name", "mysql": "varchar(255) NOT NULL DEFAULT '0.0.1'", "sqlite": "varchar(255) NOT NULL DEFAULT '0.0.1'", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
 	s2[1] = map[string]string{"name": "columns", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": ""}
 	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"id"}
+	//	s1["PRIMARY"] = []string{"id"}
 	s1["comment"] = ""
 	s["ea_state_tables"] = s1
 	schema.S = s
 	schema.PrintSchema()
-
-
 
 	s = make(Recmap)
 	s1 = make(Recmap)

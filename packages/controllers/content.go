@@ -100,6 +100,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	defer sess.SessionRelease(w)
 	sessWalletId := GetSessWalletId(sess)
 	sessCitizenId := GetSessCitizenId(sess)
+	sessStateId := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
 
@@ -109,6 +110,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	c.sess = sess
 	c.SessWalletId = sessWalletId
 	c.SessCitizenId = sessCitizenId
+	c.SessStateId = sessStateId
+	if sessStateId > 0 {
+		statePref, err := c.GetStatePrefix(sessStateId)
+		if err != nil {
+			log.Error("%v", err)
+		}
+		c.StatePrefix = statePref
+	}
 	c.SessAddress = sessAddress
 
 	c.ContentInc = true

@@ -25,10 +25,11 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	b58 "github.com/jbenet/go-base58"
-	"golang.org/x/crypto/ripemd160"
 	"reflect"
 	"time"
+
+	b58 "github.com/jbenet/go-base58"
+	"golang.org/x/crypto/ripemd160"
 )
 
 // Converts binary address to DayLight address.
@@ -317,17 +318,25 @@ func FieldToBytes(v interface{}, num int) []byte {
 		field := t.Field(num)
 		switch field.Kind() {
 		case reflect.Uint8, reflect.Uint32, reflect.Uint64:
-			ret = append( ret, []byte(fmt.Sprintf("%d", field.Uint()))...)
+			ret = append(ret, []byte(fmt.Sprintf("%d", field.Uint()))...)
 		case reflect.Int8, reflect.Int32, reflect.Int64:
-			ret = append( ret, []byte(fmt.Sprintf("%d", field.Int()))...)
+			ret = append(ret, []byte(fmt.Sprintf("%d", field.Int()))...)
 		case reflect.String:
-			ret = append( ret, []byte(field.String())...)
+			ret = append(ret, []byte(field.String())...)
 		case reflect.Slice:
-			ret = append( ret, field.Bytes()...)
-//		case reflect.Ptr:
-//		case reflect.Struct:
-//		default:
+			ret = append(ret, field.Bytes()...)
+			//		case reflect.Ptr:
+			//		case reflect.Struct:
+			//		default:
 		}
 	}
 	return ret
+}
+
+func HexToInt64(input string) (ret int64) {
+	hex, _ := hex.DecodeString(input)
+	if length := len(hex); length <= 8 {
+		ret = int64(binary.BigEndian.Uint64(append(make([]byte, 8-length), hex...)))
+	}
+	return
 }

@@ -51,6 +51,8 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	sessWalletId := GetSessWalletId(sess)
 	sessCitizenId := GetSessCitizenId(sess)
 	sessAddress := GetSessString(sess, "address")
+	sessStateId := GetSessInt64("state_id", sess)
+
 	log.Debug("sessWalletId", sessWalletId)
 	log.Debug("sessCitizenId", sessCitizenId)
 
@@ -66,6 +68,14 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	c.SessWalletId = sessWalletId
 	c.SessCitizenId = sessCitizenId
 	c.SessAddress = sessAddress
+	c.SessStateId = sessStateId
+	if sessStateId > 0 {
+		statePref, err := c.GetStatePrefix(sessStateId)
+		if err != nil {
+			log.Error("%v", err)
+		}
+		c.StatePrefix = statePref
+	}
 
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)

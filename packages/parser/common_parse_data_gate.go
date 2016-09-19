@@ -19,6 +19,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
@@ -32,7 +33,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 	var err error
 	p.dataPre()
 	p.TxIds = []string{}
-
+	p.ParseInit()
 	transactionBinaryData := p.BinaryData
 	var transactionBinaryDataFull []byte
 

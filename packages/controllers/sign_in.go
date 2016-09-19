@@ -42,6 +42,8 @@ func (c *Controller) AjaxSignIn() interface{} {
 	c.r.ParseForm()
 	key := c.r.FormValue("key")
 	bkey, err := hex.DecodeString(key)
+	stateId := lib.HexToInt64(c.r.FormValue("state_id"))
+	citizenId := lib.HexToInt64(c.r.FormValue("citizen_id"))
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -72,22 +74,36 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
+	/*	err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
+		if err != nil {
+			result.Error = err.Error()
+			return result
+		}*/
 	c.sess.Set("wallet_id", walletId)
-	citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
-	if err != nil {
-		result.Error = err.Error()
-		return result
+	if citizenId > 0 && stateId > 0 {
+		if statePrefix, err := c.GetStatePrefix(stateId); err == nil {
+			id, err := c.Single(`SELECT citizen_id FROM `+statePrefix+`_citizens WHERE citizen_id=? && hex(public_key_0) = ?`,
+				citizenId, string(publicKey)).Int64()
+			if err != nil {
+				result.Error = err.Error()
+				return result
+			}
+			if id == 0 {
+				citizenId = 0
+				stateId = 0
+			}
+		} else {
+			result.Error = err.Error()
+			return result
+		}
 	}
-	err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
+	/*	citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
+		err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
+		if err != nil {
+			result.Error = err.Error()
+			return result
+		}*/
 	c.sess.Set("citizen_id", citizenId)
+	c.sess.Set("state_id", stateId)
 	return result //`{"result":1,"address": "` + address + `"}`, nil
 }

@@ -34,7 +34,7 @@ func (p *Parser) CitizenRequestInit() error {
 		p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])*/
 	data := p.TxPtr.(*consts.CitizenRequest)
 	p.TxVars[`state_code`] = p.States[data.StateId]
-	fmt.Println(data)
+	//	fmt.Println(data, p.States)
 	return nil
 }
 
@@ -78,7 +78,11 @@ func (p *Parser) CitizenRequest() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	amount, err := p.getWalletsBufferAmount()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amount}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

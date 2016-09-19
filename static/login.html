@@ -151,6 +151,8 @@ function do_sign() {
 		$.post( 'ajax?json=ajax_sign_in', {
 				'sign': sign,
 				'key': key,
+				'state_id': GKey.StateId,
+				'citizen_id': GKey.CitizenId,
 			}, function (data) {
 				if (data.address) {
 					GKey.add(data.address);
@@ -213,8 +215,12 @@ function sel_account(ind) {
 	localStorage.setItem('Encrypt', newAccount.Encrypt);
 	localStorage.setItem('PubKey', newAccount.Public);
 	localStorage.setItem('Address', newAccount.Address);
+	localStorage.setItem('StateId', newAccount.StateId);
+	localStorage.setItem('CitizenId', newAccount.CitizenId);
 	
 	GKey.Public = newAccount.Public;
+	GKey.StateId = newAccount.StateId;
+	GKey.CitizenId = newAccount.CitizenId;
 	encKey = newAccount.EncKey;
 	$("#address").val(newAccount.Address);
 	return false;

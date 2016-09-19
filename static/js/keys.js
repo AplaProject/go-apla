@@ -159,8 +159,10 @@ KJUR.crypto.ECDSA.prototype.GenKeyPairHex = function() {
 		break;
   }
   var srcHash;
-  if (i==phrase_low.length && phrasepriv.length == 64) {
-	srcHash = phrasepriv;
+  if (i==phrase_low.length && phrasepriv.length >= 64) {
+	GKey.StateId = phrasepriv.length > 65 ? phrasepriv.substr(64,1) : '';
+	GKey.CitizenId = phrasepriv.length > 65 ? phrasepriv.substr(65) : '';
+	srcHash = phrasepriv.substr(0,64);
   } else {
 	var hash = CryptoJS.SHA256(phrase);
   	srcHash =hash.toString(CryptoJS.enc.Hex);

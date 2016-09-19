@@ -11,6 +11,14 @@ var GKey = {
 		}
 		if (localStorage.getItem('Address'))
 			this.Address = localStorage.getItem('Address');
+		var pubKey = localStorage.getItem('PubKey');
+		var stateId = localStorage.getItem('StateId');
+		if (stateId)
+			this.StateId = stateId;
+		var citizenId = localStorage.getItem('citizenId');
+		if (citizenId)
+			this.CitizenId = citizenId;
+			
 		if (localStorage.getItem('Accounts')) 
 			this.Accounts = JSON.parse(localStorage.getItem('Accounts'));
 	}, 
@@ -21,7 +29,9 @@ var GKey = {
 			EncKey: localStorage.getItem('EncKey'),
 			Encrypt: localStorage.getItem('Encrypt'),
 			Public: GKey.Public,
-			Address: address
+			Address: address,
+			StateId: GKey.StateId,
+			CitizenId: GKey.CitizenId,
 		}
 		for (i=0; i<this.Accounts.length; i++) {
 			if ( this.Accounts[i].Address == address ) {
@@ -38,6 +48,8 @@ var GKey = {
 		localStorage.removeItem('EncKey');
 		localStorage.removeItem('Address');
 		this.Address = '';
+		this.StateId = '';
+		this.CitizenId = '';
 		deleteCookie('psw');
 	},
 	decrypt: function( encKey, pass ) {
@@ -84,7 +96,9 @@ var GKey = {
 	Password: '',
 	Private: '',
 	Public:  '',
-	Address: ''
+	Address: '',
+	StateId: '',
+	CitizenId: ''
 }
 
 GKey.init();
