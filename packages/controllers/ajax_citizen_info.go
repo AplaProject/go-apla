@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -51,7 +52,11 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
 	stateCode := utils.StrToInt64(c.r.FormValue(`stateId`))
 	statePrefix, err := c.GetStatePrefix(stateCode)
+	c.r.ParseMultipartForm(16 << 20) // Max memory 16 MiB
+	formdata := c.r.MultipartForm
+	defer formdata.RemoveAll()
 
+	//	fmt.Println(`FORM START`, formdata)
 	field, err := c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).String()
 	vals := make(map[string]string)
 	time := c.r.FormValue(`time`)
@@ -94,9 +99,17 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 			var (
 				fval []byte
 			)
+			buf := new(bytes.Buffer)
+			for _, f := range formdata.File[`photo-0`] {
+				src, err := f.Open()
+				if err == nil {
+					buf.ReadFrom(src)
+					src.Close()
+				}
+			}
 			if fval, err = json.Marshal(vals); err == nil {
-				err = c.ExecSql(`INSERT INTO `+statePrefix+`_citizens_requests_private ( request_id, fields, public ) VALUES ( ?, ?, [hex] )`,
-					data[`request_id`], fval, c.r.FormValue(`publicKey`))
+				err = c.ExecSql(`INSERT INTO `+statePrefix+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
+					data[`request_id`], fval, hex.EncodeToString(buf.Bytes()), c.r.FormValue(`publicKey`))
 			}
 		}
 	}

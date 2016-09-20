@@ -235,6 +235,7 @@
 										key = key.substr( 2 );
 									}
 									var stateId = $("#countries").val();
+									var formdata = new FormData();
 									var predata = {
 //										'type' : data.type_name,
 										'time' : data.time,
@@ -247,29 +248,28 @@
 										'signature2': $('#signature2').val(),
 										'signature3': $('#signature3').val()
 									};
-									
+									for (key in predata) {
+										formdata.append(key, predata[key]);
+									}
 									for (i = 0; i < arr.length; i++ ) {
 										var field = arr[i];
 										if ($("#" + field).attr("type") == "file") {
-											var array = [];
-											var files = {};
-											files[field] = $("#" + field).prop('files')[0];
-											array = $.map(files, function(value, index) {
-												return [value];
+											$.each($('#'+field)[0].files, function(i, file) {
+    											formdata.append(field +'-'+i, file);
 											});
-											predata[field] = array;
 										} else {
-											predata[field] = $("#" + field).val();
+											formdata.append(field, $("#" + field).val());
 										}
 									}
 									
-									console.log(predata)
+									console.log(data);
 									$.ajax({
 										type: 'POST',
 										url: data.host + 'ajax?json=ajax_citizen_info',
-										data: predata,
-										dataType: 'json',
+										data: formdata,
 										crossDomain: true,
+										contentType: false,
+                						processData: false,
 										success: function(status){
 											localStorage.setItem('reqPrv', $("#prvkey").val());
 											localStorage.setItem('reqState', stateId );

@@ -425,18 +425,6 @@
 					  <span>History</span>
 				   </a>
 				</li>
-				<li class="anonym_citizen_status">
-				   <a href="#" title="Request for citizen status" onClick="load_page('request_citizen_status');HideMenu();">
-					  <span>Request for citizen status</span>
-				   </a>
-				</li>
-				{{if eq .Data.CitizenId 1}}
-				<li class="check_citizen_status">
-				   <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
-					  <span>Check citizen status</span>
-				   </a>
-				</li>
-				{{end}}
 				<li class="anonym_block_generation">
 				   <a href="#"  onclick="dl_navigate0('blockGeneration'); HideMenu();" title="Block generation">
 					  <span>Block generation</span>
@@ -456,7 +444,22 @@
 			 </a>
 			 <ul id="dc" class="nav sidebar-subnav collapse">
 				<li class="sidebar-subnav-header">Citizen</li>
-				<li class="dashboard_citizen">
+				{{if eq .Data.CitizenId 0}}
+				<li class="anonym_citizen_status">
+				   <a href="#" title="Request for citizen status" onClick="load_page('request_citizen_status');HideMenu();">
+					  <span>Request for citizen status</span>
+				   </a>
+				</li>
+				{{end}}
+				{{if eq .Data.CitizenId 1}}
+				<li class="check_citizen_status">
+				   <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
+					  <span>Check citizen status</span>
+				   </a>
+				</li>
+				{{end}}
+
+				<!--li class="dashboard_citizen">
 				   <a href="#dashboard_citizen" title="Dashboard" onClick="HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
@@ -505,7 +508,7 @@
 				   <a href="#citizen_divorce" title="Divorce" onClick="HideMenu();">
 					  <span>Divorce</span>
 				   </a>
-				</li>
+				</li-->
 			 </ul>
 		  </li>
 		  <li class="company Demo">

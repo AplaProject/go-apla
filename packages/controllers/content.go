@@ -280,7 +280,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		if sessWalletId > 0 {
 			pk, err = c.OneRow("SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM dlt_wallets WHERE wallet_id = ?", userId).String()
 		} else {
-			pk, err = c.OneRow("SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM citizens WHERE citizen_id = ?", userId).String()
+			pk, err = c.OneRow(`SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM `+c.StatePrefix+`_citizens WHERE citizen_id = ?`, userId).String()
 		}
 		if err != nil {
 			log.Error("%v", err)

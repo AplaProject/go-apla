@@ -17,15 +17,11 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	//	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) CitizenRequestInit() error {
-	fmt.Println(`CitizenRequestInit`)
 	/*	fields := []map[string]string{{"state_id": "int64"}, {"sign": "bytes"}}
 		err := p.GetTxMaps(fields)
 		if err != nil {
@@ -78,14 +74,14 @@ func (p *Parser) CitizenRequest() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	amount, err := p.getWalletsBufferAmount()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amount}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+	/*	amount, err := p.getWalletsBufferAmount()
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+			err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amount}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+			if err != nil {
+				return p.ErrInfo(err)
+			}*/
 	return nil
 }
 
