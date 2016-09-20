@@ -30,7 +30,8 @@
 	var container = $("#fields");
 	var msg = $("#message");
 	var btn = $("#send");
-	
+	var test = 65000;
+	console.log( test.toString(16));	
 	function Country(id) {
 		if (!id) {
 			id = 1;
@@ -48,6 +49,28 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
+				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
+					if (data.approved == 0) {
+						alert('The request is in the queue.');
+					}
+					if (data.approved < 0) {
+						alert('The request has been rejected.');
+					}
+					if (data.approved == 1) {
+						alert('The request has been accepted. Wait for a moment.');
+					}
+					if (data.approved > 1) {
+						var idz = id.toString(16);
+						if (idz.length & 1)
+							idz = '0' + idz;
+						var ciz = data.approved.toString(16);
+						if (ciz.length & 1)
+							ciz = '0' + ciz;
+							
+						alert('Your Private key: ' + localStorage.getItem('reqPrv') + idz + ciz);
+					}
+//					return
+				}
 				arr = [];
 				btn.prop("disabled", false);
 				$('[data-sweet-alert]').removeClass("whirl standard");
