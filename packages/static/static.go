@@ -9,6 +9,7 @@
 // static/block_generation.html
 // static/change_node_key.html
 // static/change_state_parameters.html
+// static/change_state_smart_laws.html
 // static/check_citizen_status.html
 // static/css/style.css
 // static/dashboard_anonym.html
@@ -125,6 +126,7 @@
 // static/signatures.html
 // static/signatures_new.html
 // static/state_parameters.html
+// static/state_smart_laws.html
 // static/test.html
 // static/updating_blockchain.html
 // static/vendor/animate.css/animate.min.css
@@ -349,6 +351,24 @@ func staticChange_node_keyHtml() (*asset, error) {
 func staticChange_state_parametersHtml() (*asset, error) {
 	path := "static/change_state_parameters.html"
 	name := "static/change_state_parameters.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticChange_state_smart_lawsHtml reads file data from disk. It returns an error on failure.
+func staticChange_state_smart_lawsHtml() (*asset, error) {
+	path := "static/change_state_smart_laws.html"
+	name := "static/change_state_smart_laws.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2451,6 +2471,24 @@ func staticState_parametersHtml() (*asset, error) {
 	return a, err
 }
 
+// staticState_smart_lawsHtml reads file data from disk. It returns an error on failure.
+func staticState_smart_lawsHtml() (*asset, error) {
+	path := "static/state_smart_laws.html"
+	name := "static/state_smart_laws.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticTestHtml reads file data from disk. It returns an error on failure.
 func staticTestHtml() (*asset, error) {
 	path := "static/test.html"
@@ -3412,6 +3450,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/block_generation.html": staticBlock_generationHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
 	"static/change_state_parameters.html": staticChange_state_parametersHtml,
+	"static/change_state_smart_laws.html": staticChange_state_smart_lawsHtml,
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
@@ -3528,6 +3567,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/signatures.html": staticSignaturesHtml,
 	"static/signatures_new.html": staticSignatures_newHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
+	"static/state_smart_laws.html": staticState_smart_lawsHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
@@ -3638,6 +3678,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{
 		}},
 		"change_state_parameters.html": &bintree{staticChange_state_parametersHtml, map[string]*bintree{
+		}},
+		"change_state_smart_laws.html": &bintree{staticChange_state_smart_lawsHtml, map[string]*bintree{
 		}},
 		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{
 		}},
@@ -3890,6 +3932,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"signatures_new.html": &bintree{staticSignatures_newHtml, map[string]*bintree{
 		}},
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{
+		}},
+		"state_smart_laws.html": &bintree{staticState_smart_lawsHtml, map[string]*bintree{
 		}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{
 		}},
