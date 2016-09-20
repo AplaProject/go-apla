@@ -2800,3 +2800,53 @@
   });
 
 })(window, document, window.jQuery);
+
+/**=========================================================
+ * Module: notify.js
+ * Create toggleable notifications that fade out automatically.
+ * Based on Notify addon from UIKit (http://getuikit.com/docs/addons_notify.html)
+ * [data-toggle="notify"]
+ * [data-options="options in json format" ]
+ =========================================================*/
+ 
+(function($, window, document){
+  'use strict';
+
+  var Selector = '[data-notify]',
+	  autoloadSelector = '[data-onload]',
+	  doc = $(document);
+
+
+  $(function() {
+
+	$(Selector).each(function(){
+
+	  var $this  = $(this),
+		  onload = $this.data('onload');
+
+	  if(onload !== undefined) {
+		setTimeout(function(){
+		  notifyNow($this);
+		}, 800);
+	  }
+
+	  $this.on('click', function (e) {
+		e.preventDefault();
+		notifyNow($this);
+	  });
+
+	});
+
+  });
+
+  function notifyNow($element) {
+	  var message = $element.data('message'),
+		  options = $element.data('options');
+
+	  if(!message)
+		$.error('Notify: No message specified');
+	 
+	  $.notify(message, options || {});
+  }
+
+}(jQuery, window, document));
