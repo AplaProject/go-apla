@@ -404,9 +404,9 @@ PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 COMMENT='';
 
 
-DROP TABLE IF EXISTS dn_state_settings;
+DROP TABLE IF EXISTS dn_state_parameters;
 
-CREATE TABLE IF NOT EXISTS dn_state_settings (
+CREATE TABLE IF NOT EXISTS dn_state_parameters (
 `parameter` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '' COMMENT '',
 `value` varchar(2) CHARACTER SET utf8 NOT NULL DEFAULT '' COMMENT '',
 `change` varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT '' COMMENT '',

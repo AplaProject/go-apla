@@ -125,6 +125,7 @@
 // static/request_citizen_status.html
 // static/signatures.html
 // static/signatures_new.html
+// static/state_laws.html
 // static/state_parameters.html
 // static/state_smart_laws.html
 // static/test.html
@@ -2453,6 +2454,24 @@ func staticSignatures_newHtml() (*asset, error) {
 	return a, err
 }
 
+// staticState_lawsHtml reads file data from disk. It returns an error on failure.
+func staticState_lawsHtml() (*asset, error) {
+	path := "static/state_laws.html"
+	name := "static/state_laws.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticState_parametersHtml reads file data from disk. It returns an error on failure.
 func staticState_parametersHtml() (*asset, error) {
 	path := "static/state_parameters.html"
@@ -3566,6 +3585,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
 	"static/signatures.html": staticSignaturesHtml,
 	"static/signatures_new.html": staticSignatures_newHtml,
+	"static/state_laws.html": staticState_lawsHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
 	"static/state_smart_laws.html": staticState_smart_lawsHtml,
 	"static/test.html": staticTestHtml,
@@ -3930,6 +3950,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{
 		}},
 		"signatures_new.html": &bintree{staticSignatures_newHtml, map[string]*bintree{
+		}},
+		"state_laws.html": &bintree{staticState_lawsHtml, map[string]*bintree{
 		}},
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{
 		}},

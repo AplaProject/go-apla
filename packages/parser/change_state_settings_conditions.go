@@ -61,7 +61,7 @@ func (p *Parser) ChangeStateSettingsConditionsFront() error {
 
 
 	// Check the condition that must be met to complete this transaction
-	conditions, err := p.Single(`SELECT change FROM `+p.States[p.TxMaps.Int64["state_id"]]+`_state_settings WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
+	conditions, err := p.Single(`SELECT change FROM `+p.States[p.TxMaps.Int64["state_id"]]+`_state_parameters WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -107,7 +107,7 @@ func (p *Parser) ChangeStateSettingsConditionsFront() error {
 }
 
 func (p *Parser) ChangeStateSettingsConditions() error {
-	err := p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{p.TxMaps.String["value"]}, p.States[p.TxMaps.Int64["state_id"]]+"_state_settings", []string{"parameter"}, []string{p.TxMaps.String["parameter"]}, true)
+	err := p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{p.TxMaps.String["value"]}, p.States[p.TxMaps.Int64["state_id"]]+"_state_parameters", []string{"parameter"}, []string{p.TxMaps.String["parameter"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

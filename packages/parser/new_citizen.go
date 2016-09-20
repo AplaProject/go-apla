@@ -58,7 +58,7 @@ func (p *Parser) NewCitizenFront() error {
 	*/
 	// We get a set of custom fields that need to be in the tx
 	/*	statePrefix, err := p.GetStatePrefix(p.TxMaps.Int64["state_id"])
-		additionalFields, err := p.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).Bytes()
+		additionalFields, err := p.Single(`SELECT value FROM ` + statePrefix + `_state_parameters where parameter='citizen_fields'`).Bytes()
 
 		if err != nil {
 			return p.ErrInfo(err)

@@ -1,4 +1,4 @@
-{{ define "changeStateParameters" }}
+{{ define "stateLaws" }}
 <style>
 		.thead {
 			width:120px;
@@ -29,13 +29,13 @@
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href="#">Dashboard</a></li>
-	   <li class="active">State parameters</li>
+	   <li class="active">stateSmartLaws</li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
-			{{.StateParameters.parameter}}
+			stateSmartLaws
 		</div>
 	 </div>
 	 <div class="panel-body">
@@ -43,31 +43,39 @@
 		   <table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
-				  <td class="thead">Value</td><td class="thead"><textarea>{{.StateParameters.value}}</textarea></td>
+				  <td>name</td>
+				  <td>conditions_parameter</td>
+				  <td>text_description</td>
+				  <td>last_update</td>
+				  <td>author</td>
+				  <td>status</td>
+				  <td></td>
 			  </tr>
-			  <tr>
-				  <td class="thead">conditions_parameter</td><td class="thead">
-
-				  <select>
-				  {{ range $param := .AllStateParameters }} <option {{if eq (index $.StateParameters "conditions_parameter") $param}} selected {{end}}>{{$param}}</option> {{end}}
-				  </select>
-			  </td><td></td>
-			  </tr>
-			  <tr>
-				  <td class="thead">text_description</td><td class="thead"><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.text_description}}</a></td><td></td>
-			  </tr>
-			  <tr>
-				  <td class="thead">last_update</td><td class="thead"><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.last_update}}</a></td><td></td>
-			  </tr>
-			  <tr>
-				  <td class="thead">parent</td><td class="thead"><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.parent}}</a></td><td></td>
-			  </tr>
+			  {{ range $value := .StateLaws }}
+				 <tr>
+					 <td class="thead"><strong>{{$value.name}}</strong></td>
+					 <td><strong>{{$value.conditions_parameter}}</strong></td>
+					 <td><strong>{{$value.text_description}}</strong></td>
+					 <td><strong>{{$value.last_update}}</strong></td>
+					 <td><strong>{{$value.author}}</strong></td>
+					 <td><strong>{{$value.status}}</strong></td>
+					<td><button type="button" class="btn btn-primary" onclick="load_page('changeStateLaws', {parameter: {{$value.parameter}}} )">Change</button></td>
+				 </tr>
+			  {{end}}
 			  </tbody>
 		   </table>
-			<button type="button" class="btn btn-primary">Save</button>
-
 		</div>
 	 </div>
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-left">
+
+		  </div>
+		  <div class="pull-left">
+			 <button type="button" class="btn btn-primary">Add new</button>
+		  </div>
+	   </div>
+	  </div>
 	</div>
 	<!-- END panel-->
 <script type="text/javascript">

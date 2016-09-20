@@ -45,7 +45,7 @@ func (p *Parser) CitizenRequestFront() error {
 	// Проверка подписи перенесена в generalCheckStruct
 
 	// есть ли нужная сумма на кошельке
-	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_settings WHERE parameter = ?`, "citizen_dlt_price").Int64()
+	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE parameter = ?`, "citizen_dlt_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
