@@ -23,10 +23,11 @@ import (
 const ACitizenFields = `ajax_citizen_fields`
 
 type CitizenFieldsJson struct {
-	Fields string `json:"fields"`
-	Price  int64  `json:"price"`
-	Valid  bool   `json:"valid"`
-	Error  string `json:"error"`
+	Fields   string `json:"fields"`
+	Price    int64  `json:"price"`
+	Valid    bool   `json:"valid"`
+	Approved int64  `json:"approved"`
+	Error    string `json:"error"`
 }
 
 func init() {
@@ -41,12 +42,22 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 	)
 	statePrefix, err := c.GetStatePrefix(utils.StrToInt64(c.r.FormValue(`state_id`)))
 	if err == nil {
-		result.Fields, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).String()
-		if err == nil {
-			result.Price, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_dlt_price'`).Int64()
-			if err == nil {
-				amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
-				result.Valid = (err == nil && amount >= result.Price)
+		if reqId, err := c.Single(`select request_id from `+statePrefix+`_citizenship_requests where dlt_wallet_id=? order by request_id desc`,
+			c.SessWalletId).Int64(); err == nil {
+			if reqId > 0 {
+				if approved, err := c.Single(`select approved from `+statePrefix+`_citizens_requests_private where request_id=? order by id desc`,
+					reqId).Int64(); err == nil {
+					result.Approved = approved
+				}
+			} else {
+				result.Fields, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).String()
+				if err == nil {
+					result.Price, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_dlt_price'`).Int64()
+					if err == nil {
+						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
+						result.Valid = (err == nil && amount >= result.Price)
+					}
+				}
 			}
 		}
 	}

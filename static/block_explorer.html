@@ -133,8 +133,14 @@
 <script type="text/javascript">
 	function addRow(item) {
 		var id = $("#block_explorer tbody");
-		var el = '<tr class="addRow"><td><a href="" onclick="return block_detail('+item.id+')">'+item.id+'</a></td>'+
-		'<td class="addtime">'+item.time+'</td><td>'+item.wallet_address+'</td><td>'+item.tx_count+'</td><tr>';			
+		var el = '<tr class="addRow">'+
+					'<td>'+
+						'<a href="" onclick="return block_detail('+item.id+')">'+item.id+'</a>'+
+					'</td>'+
+					'<td class="addtime">'+item.time+'</td>'+
+					'<td>'+item.wallet_address+'</td>'+
+					'<td>'+item.tx_count+'</td>'+
+				 '</tr>';			
 		id.prepend(el);
 	}
 

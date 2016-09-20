@@ -111,6 +111,15 @@ func (p *Parser) NewCitizen() error {
 				citizenId, req[`id`]); err != nil {
 				return err
 			}
+			if len(req[`binary`]) > 0 {
+				if err = p.ExecSql(`insert into `+p.States[data.StateId]+`_citizens_private (citizen_id, fields, binary) 
+				    values(?, ?, [hex])`, citizenId, req[`fields`], hex.EncodeToString([]byte(req[`binary`]))); err != nil {
+					return err
+				}
+			} else if err = p.ExecSql(`insert into `+p.States[data.StateId]+`_citizens_private (citizen_id, fields) 
+				    values(?, ?, [hex])`, citizenId, req[`fields`]); err != nil {
+				return err
+			}
 		} else {
 			return err
 		}
