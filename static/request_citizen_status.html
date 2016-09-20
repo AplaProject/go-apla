@@ -2,25 +2,11 @@
 	#message {
 		display:none;
 	}
-	#refresh {
-		visibility:hidden;
-		position:absolute;
-		left:-100000px;
-		top:-100000px;
-	}
-	#sorry {
-		visibility:hidden;
-		position:absolute;
-		left:-100000px;
-		top:-100000px;
-	}
 </style>
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".anonym, .anonym_citizen_status").addClass("active");
-	
-//	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+	$(".citizen, .anonym_citizen_status").addClass("active");
 	
 	$('#countries').select2({
 		theme: 'bootstrap'
@@ -30,13 +16,48 @@
 	var container = $("#fields");
 	var msg = $("#message");
 	var btn = $("#send");
+	var btns = $("#buttons");
 	var test = 65000;
-	console.log( test.toString(16));	
+	console.log( test.toString(16));
+	
+	function Message(text) {
+		if (!text) {
+			msg.html('').hide();
+		} else {
+			msg.html(text).show();
+		}
+	}
+	
+	function showFields() {
+		arr = [];
+		msg.hide();
+		btns.show();
+		btn.prop("disabled", false);
+		$('[data-sweet-alert]').removeClass("whirl standard");
+	}
+	
+	function hideFields(text) {
+		Message(text);
+		btns.hide();
+		container.html("");
+		btn.prop("disabled", true);
+	}
+	
+	function changeCountry(elem) {
+		var id = elem.value;
+		if (id != "1") {
+			hideFields('At this point in your chosen country, the Central Bank has not yet begun to register citizens in DayLight. If the Central Bank does not begin to citizens registered to 03.01.2017,  then these powers led association of CB will be transferred.');
+		} else {
+			Country(id);
+		}
+	}
+	
 	function Country(id) {
 		if (!id) {
 			id = 1;
 		}
 		
+		msg.hide();
 		container.html("");
 		$("#refresh").click();
 		
@@ -49,15 +70,23 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
+				showFields();
+				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
+				
 				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
 					if (data.approved == 0) {
-						alert('The request is in the queue.');
+						//alert('The request is in the queue.');
+						hideFields();
+						Notify('The request is in the queue.', 'warning');
 					}
 					if (data.approved < 0) {
-						alert('The request has been rejected.');
+						//alert('The request has been rejected.');
+						hideFields('The request has been rejected.');
 					}
 					if (data.approved == 1) {
-						alert('The request has been accepted. Wait for a moment.');
+						//alert('The request has been accepted. Wait for a moment.');
+						hideFields();
+						Notify('The request has been accepted. Wait for a moment.', 'success');
 					}
 					if (data.approved > 1) {
 						var idz = id.toString(16);
@@ -71,17 +100,12 @@
 					}
 //					return
 				}
-				arr = [];
-				btn.prop("disabled", false);
-				$('[data-sweet-alert]').removeClass("whirl standard");
-				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
+				
 				if (data.valid == false) {
 					$("#sorry").click();
-					//btn.prop("disabled", true);
-					//container.find(".form-group").hide();
-				} else {
-					//container.find(".form-group").show();
+					btn.prop("disabled", true);
 				}
+				
 				if (data.fields.length) {
 					var fields = JSON.parse(data.fields);
 					
@@ -125,20 +149,6 @@
 		});
 	}
 	
-	function changeCountry(elem) {
-		var id = elem.value;
-		if (id != "1") {
-			msg.show();
-			container.html("");
-			//container.find(".form-group").hide();
-			//container.find("#price").parent().remove();
-			//btn.prop("disabled", true);
-		} else {
-			msg.hide();
-			Country(id);
-		}
-	}
-	
 	Country();
 	// Example of ajax_citizen_fields
 	/*$.get( 'ajax?json=ajax_citizen_fields',{state_id: 1}, function(data) {
@@ -150,57 +160,6 @@
 			console.log( fields );
 		}
 	},'json')*/
-	
-	/**=========================================================
-	 * Module: notify.js
-	 * Create toggleable notifications that fade out automatically.
-	 * Based on Notify addon from UIKit (http://getuikit.com/docs/addons_notify.html)
-	 * [data-toggle="notify"]
-	 * [data-options="options in json format" ]
-	 =========================================================*/
-	
-	(function($, window, document){
-	  'use strict';
-	
-	  var Selector = '[data-notify]',
-		  autoloadSelector = '[data-onload]',
-		  doc = $(document);
-	
-	
-	  $(function() {
-	
-		$(Selector).each(function(){
-	
-		  var $this  = $(this),
-			  onload = $this.data('onload');
-	
-		  if(onload !== undefined) {
-			setTimeout(function(){
-			  notifyNow($this);
-			}, 800);
-		  }
-	
-		  $this.on('click', function (e) {
-			e.preventDefault();
-			notifyNow($this);
-		  });
-	
-		});
-	
-	  });
-	
-	  function notifyNow($element) {
-		  var message = $element.data('message'),
-			  options = $element.data('options');
-	
-		  if(!message)
-			$.error('Notify: No message specified');
-		 
-		  $.notify(message, options || {});
-	  }
-	
-	
-	}(jQuery, window, document));
 
 	var serverTime;
 	
@@ -360,34 +319,8 @@
 			 <option value="WI">Wisconsin</option>
 		  </select>
 	   </div>
-	   <div id="message" class="alert alert-danger">At this point in your chosen country, the Central Bank has not yet begun to register citizens in DayLight. If the Central Bank does not begin to citizens registered to 03.01.2017,  then these powers led association of CB will be transferred.</div>
-	   <div id="fields">
-		   <!--<div class="form-group">
-			  <label for="name">Name</label>
-			  <input id="name" type="text" class="form-control">
-		   </div>
-		   <div class="form-group">
-			  <label for="surname">Surname</label>
-			  <input id="surname" type="text" class="form-control">
-		   </div>
-		   <div class="form-group">
-			  <label for="birthday">Birthday</label>
-			  <div id="datetimepicker1" class="input-group date">
-				 <input id="birthday" type="text" class="form-control">
-				 <span class="input-group-addon">
-					<span class="fa fa-calendar"></span>
-				 </span>
-			  </div>
-		   </div>
-		   <div class="form-group">
-			  <label for="photo">Photo</label>
-			  <input id="photo" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
-		   </div>
-		   <div class="form-group">
-			  <label for="passport">Passport number</label>
-			  <input id="passport" type="text" class="form-control">
-		   </div>-->
-	   </div>
+	   <div id="message" class="alert alert-danger"></div>
+	   <div id="fields"></div>
 		   <div class="form-group" style="display:none;">
 			  <label for="phrase">GENERATE AND REMEMBER SEED</label>
 			  <textarea id="phrase" class="form-control"></textarea>
@@ -398,15 +331,14 @@
 		   </div>
 	</form>
  </div>
- <div class="panel-footer">
+ <div id="buttons" class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">
 		 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
-		 <button id="refresh" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
+		 <button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
 	  </div>
    </div>
   </div>
 </div>
 <!-- END panel-->
-<button id="sorry" type="button" data-notify="" data-message="Insufficient funds in the account for the registration of the citizen." data-options="{&quot;status&quot;:&quot;danger&quot;}"></button>
 {{template "signatures".}}

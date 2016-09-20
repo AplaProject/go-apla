@@ -182,6 +182,13 @@ function Demo() {
 
 var obj;
 
+function Notify(message, options) {
+	var btn_notify = $("#notify");
+	btn_notify.data("message", message);
+	btn_notify.data("options", options);
+	btn_notify.click();
+}
+
 function Alert(title, text, type) {
 	if (obj) {
 		obj.css({"position":"relative"});
