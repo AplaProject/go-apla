@@ -45,7 +45,12 @@
 			  {{ range $value := .StateParameters }}
 				 <tr>
 					<td class="thead">{{$value.parameter}}</td>
-					<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{$value.value}}</a></strong></td>
+					 <td><strong>{{$value.value}}</strong></td>
+					 <td><strong>{{$value.conditions_parameter}}</strong></td>
+					 <td><strong>{{$value.text_description}}</strong></td>
+					 <td><strong>{{$value.last_update}}</strong></td>
+					 <td><strong>{{$value.parent}}</strong></td>
+					<td><button type="button" class="btn btn-primary">Change</button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>
@@ -55,10 +60,10 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary">Save Changes</button>
+
 		  </div>
-		  <div class="pull-right">
-			 <button type="button" class="btn btn-primary">Add new somthing</button>
+		  <div class="pull-left">
+			 <button type="button" class="btn btn-primary">Add new parameter</button>
 		  </div>
 	   </div>
 	  </div>
