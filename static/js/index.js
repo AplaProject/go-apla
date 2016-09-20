@@ -197,7 +197,8 @@ function Alert(title, text, type) {
 			title : title,
 			text : text,
 			allowEscapeKey : false,
-			type : type
+			type : type,
+			html: true
 		}, function (isConfirm) {
 			if (isConfirm) {
 				$("#" + id).modal("hide");
