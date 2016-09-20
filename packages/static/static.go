@@ -11,6 +11,7 @@
 // static/check_citizen_status.html
 // static/css/style.css
 // static/dashboard_anonym.html
+// static/ds_state_settings.html
 // static/fonts/glyphicons-filetypes-regular.eot
 // static/fonts/glyphicons-filetypes-regular.svg
 // static/fonts/glyphicons-filetypes-regular.ttf
@@ -383,6 +384,24 @@ func staticCssStyleCss() (*asset, error) {
 func staticDashboard_anonymHtml() (*asset, error) {
 	path := "static/dashboard_anonym.html"
 	name := "static/dashboard_anonym.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticDs_state_settingsHtml reads file data from disk. It returns an error on failure.
+func staticDs_state_settingsHtml() (*asset, error) {
+	path := "static/ds_state_settings.html"
+	name := "static/ds_state_settings.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3376,6 +3395,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
+	"static/ds_state_settings.html": staticDs_state_settingsHtml,
 	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
 	"static/fonts/glyphicons-filetypes-regular.svg": staticFontsGlyphiconsFiletypesRegularSvg,
 	"static/fonts/glyphicons-filetypes-regular.ttf": staticFontsGlyphiconsFiletypesRegularTtf,
@@ -3594,6 +3614,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
 		}},
 		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{}},
+		"ds_state_settings.html": &bintree{staticDs_state_settingsHtml, map[string]*bintree{}},
 		"fonts": &bintree{nil, map[string]*bintree{
 			"glyphicons-filetypes-regular.eot": &bintree{staticFontsGlyphiconsFiletypesRegularEot, map[string]*bintree{}},
 			"glyphicons-filetypes-regular.svg": &bintree{staticFontsGlyphiconsFiletypesRegularSvg, map[string]*bintree{}},
