@@ -8,6 +8,7 @@
 // static/block_explorer.html
 // static/block_generation.html
 // static/change_node_key.html
+// static/change_state_parameters.html
 // static/check_citizen_status.html
 // static/css/style.css
 // static/dashboard_anonym.html
@@ -330,6 +331,24 @@ func staticBlock_generationHtml() (*asset, error) {
 func staticChange_node_keyHtml() (*asset, error) {
 	path := "static/change_node_key.html"
 	name := "static/change_node_key.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticChange_state_parametersHtml reads file data from disk. It returns an error on failure.
+func staticChange_state_parametersHtml() (*asset, error) {
+	path := "static/change_state_parameters.html"
+	name := "static/change_state_parameters.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3392,6 +3411,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/block_explorer.html": staticBlock_explorerHtml,
 	"static/block_generation.html": staticBlock_generationHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
+	"static/change_state_parameters.html": staticChange_state_parametersHtml,
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
@@ -3616,6 +3636,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"block_generation.html": &bintree{staticBlock_generationHtml, map[string]*bintree{
 		}},
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{
+		}},
+		"change_state_parameters.html": &bintree{staticChange_state_parametersHtml, map[string]*bintree{
 		}},
 		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{
 		}},
