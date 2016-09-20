@@ -81,7 +81,7 @@ func (p *Parser) NewCitizenFront() error {
 	*/
 	// Citizens can only add a citizen of the same country
 
-	// One who adds a citizen must be a valid representative body appointed in ea_state_settings
+	// One who adds a citizen must be a valid representative body appointed in ea_state_parameters
 
 	// must be supplemented
 	/*	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID)
