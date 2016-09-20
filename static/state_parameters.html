@@ -1,4 +1,5 @@
-	<style>
+{{ define "stateParameters" }}
+<style>
 		.thead {
 			width:120px;
 			font-weight:bold;
@@ -24,37 +25,34 @@
 	</script>
 	
 	<div class="content-heading">
-	   ds_state_settings
+		State parameters
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href="#">Dashboard</a></li>
-	   <li class="active">ds_state_settings</li>
+	   <li class="active">State parameters</li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
 	 <div class="panel-heading">
-	 	<div class="panel-title">parameter (не изменяемый)</div>
+	 	<div class="panel-title">
+			State parameters
+		</div>
 	 </div>
 	 <div class="panel-body">
 		<div class="table-responsive">
 		   <table class="table table-striped table-bordered table-hover">
 			  <tbody>
+			  {{ range $value := .StateParameters }}
 				 <tr>
-					<td class="thead">Field</td>
-					<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">value (текст, изменяемое)</a></strong></td>
+					<td class="thead">{{$value.parameter}}</td>
+					 <td><strong>{{$value.value}}</strong></td>
+					 <td><strong>{{$value.conditions_parameter}}</strong></td>
+					 <td><strong>{{$value.text_description}}</strong></td>
+					 <td><strong>{{$value.last_update}}</strong></td>
+					 <td><strong>{{$value.parent}}</strong></td>
+					<td><button type="button" class="btn btn-primary">Change</button></td>
 				 </tr>
-				 <tr>
-					<td class="thead">Field</td>
-					<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">change (текст, изменяемое)</a></strong></td>
-				 </tr>
-				 <tr>
-					<td class="thead">Field</td>
-					<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">parent (текст, изменяемое)</a></strong></td>
-				 </tr>
-				 <tr>
-					<td class="thead">Field</td>
-					<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">text (текст, изменяемое)</a></strong></td>
-				 </tr>
+			  {{end}}
 			  </tbody>
 		   </table>
 		</div>
@@ -62,10 +60,10 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary">Save Changes</button>
+
 		  </div>
-		  <div class="pull-right">
-			 <button type="button" class="btn btn-primary">Add new somthing</button>
+		  <div class="pull-left">
+			 <button type="button" class="btn btn-primary">Add new parameter</button>
 		  </div>
 	   </div>
 	  </div>
@@ -78,3 +76,4 @@
 		})
 	});
 </script>
+{{end}}

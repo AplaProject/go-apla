@@ -106,10 +106,11 @@ func (p *Parser) ChangeStateSettingsChangeFront() error {
 }
 
 func (p *Parser) ChangeStateSettingsChange() error {
-	err := p.selectiveLoggingAndUpd([]string{"changes"}, []interface{}{p.TxMaps.String["changes"]}, "ea_state_settings", []string{"parameter"}, []string{p.TxMaps.String["parameter"]}, true)
+/*	err := p.selectiveLoggingAndUpd([]string{"changes"}, []interface{}{p.TxMaps.String["changes"]}, "ea_state_parameters", []string{"parameter"}, []string{p.TxMaps.String["parameter"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	*/
 	return nil
 }
 
