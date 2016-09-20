@@ -19,6 +19,7 @@ package parser
 import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	//	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) CitizenRequestInit() error {
@@ -74,14 +75,15 @@ func (p *Parser) CitizenRequest() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	/*	amount, err := p.getWalletsBufferAmount()
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-			err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amount}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
-			if err != nil {
-				return p.ErrInfo(err)
-			}*/
+
+	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_settings WHERE parameter = ?`, "citizen_dlt_price").Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amount}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
