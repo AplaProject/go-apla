@@ -103,5 +103,9 @@ func (p *Parser) CitizenRequestRollback() error {
 }
 
 func (p *Parser) CitizenRequestRollbackFront() error {
+	err := p.ExecSql("DELETE FROM wallets_buffer WHERE hex(hash) = ?", p.TxHash)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
