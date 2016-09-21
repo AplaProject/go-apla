@@ -16,10 +16,8 @@
 
 package script
 
-import (
-	"fmt"
-	"reflect"
-)
+//	"fmt"
+//	"reflect"
 
 type ValStack struct {
 	Value interface{}
@@ -27,12 +25,13 @@ type ValStack struct {
 
 type Stack []*ValStack
 
-type VM struct {
+type Vm struct {
 	stack Stack
 	vars  *map[string]interface{}
 }
 
-func VMFunc(vm *VM, name string) error {
+/*
+func VMFunc(vm *Vm, name string) error {
 	var (
 		ok bool
 		f  interface{}
@@ -42,9 +41,9 @@ func VMFunc(vm *VM, name string) error {
 	}
 	size := len(vm.stack)
 	foo := reflect.ValueOf(f)
-	/*	if count != foo.Type().NumIn() {
-		return fmt.Errorf(`The number of params %s is wrong`, name)
-	}*/
+	//	if count != foo.Type().NumIn() {
+	//	return fmt.Errorf(`The number of params %s is wrong`, name)
+	//
 	count := foo.Type().NumIn()
 	pars := make([]reflect.Value, count)
 	for i := count; i > 0; i-- {
@@ -76,7 +75,7 @@ func ValueToBool(v interface{}) bool {
 }
 
 func Eval(input string, vars *map[string]interface{}) interface{} {
-	vm := VM{make(Stack, 0, 1024), vars}
+	vm := Vm{make(Stack, 0, 1024), vars}
 	bytecode := Compile([]rune(input))
 	last := bytecode[len(bytecode)-1]
 	if last.Cmd == CMD_ERROR {
@@ -173,3 +172,4 @@ func EvalIf(input string, vars *map[string]interface{}) (bool, error) {
 	}
 	return ValueToBool(ret), nil
 }
+*/

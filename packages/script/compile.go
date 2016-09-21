@@ -16,10 +16,8 @@
 
 package script
 
-import (
-	"fmt"
-	"strconv"
-)
+//	"fmt"
+//	"strconv"
 
 const (
 	CMD_ERROR   = iota // error
@@ -75,6 +73,7 @@ type Bytecode struct {
 
 type Bytecodes []*Bytecode
 
+/*
 func Compile(input []rune) Bytecodes {
 	var i int
 	bytecode := make(Bytecodes, 0, 100)
@@ -233,3 +232,4 @@ func Compile(input []rune) Bytecodes {
 	}
 	return bytecode
 }
+*/

@@ -18,7 +18,7 @@ package script
 
 import (
 	"fmt"
-	"testing"
+	//	"testing"
 )
 
 type TestComp struct {
@@ -36,6 +36,7 @@ func (bytecode Bytecodes) String(source []rune) (ret string) {
 	return
 }
 
+/*
 func TestCompile(t *testing.T) {
 	test := []TestComp{
 		{"Multi( (34+35)*2, Multi( citizenId, 56))", "[1 34][1 35][512 25][1 2][514 30][2 citizenId][1 56][5 Multi][5 Multi]"},
@@ -64,3 +65,4 @@ func TestCompile(t *testing.T) {
 		//		fmt.Println(out)
 	}
 }
+*/

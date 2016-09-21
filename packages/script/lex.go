@@ -16,7 +16,11 @@
 
 package script
 
-//	"fmt"
+import (
+	"encoding/binary"
+	"fmt"
+	"strconv"
+)
 
 const (
 	LEX_UNKNOWN = iota
@@ -24,27 +28,60 @@ const (
 	LEX_OPER
 	LEX_NUMBER
 	LEX_IDENT
+	LEX_NEWLINE
+	LEX_STRING
+	LEX_KEYWORD
 
-	LEX_ERROR = 0xFF
+	LEX_ERROR = 0xff
 	LEXF_NEXT = 1
 	LEXF_PUSH = 2
 	LEXF_POP  = 4
+
+	// System characters
+	IS_LPAR   = 0x2801 // (
+	IS_RPAR   = 0x2901 // )
+	IS_LCURLY = 0x7b01 // {
+	IS_RCURLY = 0x7d01 // }
+
+	// Operators
+	IS_NOT    = 0x0021 // !
+	IS_PLUS   = 0x002b // +
+	IS_MINUS  = 0x002d // -
+	IS_NOTEQ  = 0x213d // !=
+	IS_AND    = 0x2626 // &&
+	IS_LESSEQ = 0x3c3d // <=
+	IS_EQEQ   = 0x3d3d // ==
+	IS_OR     = 0x7c7c // ||
+
+)
+
+const (
+	KEY_UNKNOWN = iota
+	KEY_CONTRACT
+	KEY_FUNC
+	KEY_RETURN
+	KEY_IF
+	KEY_WHILE
+)
+
+var (
+	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
+		`if`: KEY_IF, `while`: KEY_WHILE}
 )
 
 type Lexem struct {
-	Type   uint8  // Type of the lexem
-	Offset uint32 // Absolute offset
-	Right  uint32 // Right Offset of the lexem
-	Line   uint32 // Line of the lexem
-	Column uint32 // Position inside the line
+	Type   uint32      // Type of the lexem
+	Value  interface{} // Value of lexem
+	Line   uint32      // Line of the lexem
+	Column uint32      // Position inside the line
 }
 
 type Lexems []*Lexem
 
-func LexParser(input []rune) Lexems {
+func LexParser(input []rune) (Lexems, error) {
 	var (
-		curState, lexId                          uint8
-		length, line, off, offline, flags, start uint32
+		curState                                        uint8
+		length, line, off, offline, flags, start, lexId uint32
 	)
 
 	lexems := make(Lexems, 0, len(input)/4)
@@ -59,7 +96,7 @@ func LexParser(input []rune) Lexems {
 		}
 		val := LEXTABLE[curState][letter]
 		curState = uint8(val >> 16)
-		lexId = uint8((val >> 8) & 0xff)
+		lexId = (val >> 8) & 0xff
 		flags = val & 0xff
 	}
 	length = uint32(len(input)) + 1
@@ -72,8 +109,8 @@ func LexParser(input []rune) Lexems {
 			todo(input[off])
 		}
 		if curState == LEX_ERROR {
-			lexems = append(lexems, &Lexem{LEX_UNKNOWN, off, off + 1, line, off - offline + 1})
-			break
+			return nil, fmt.Errorf(`unknown lexem %s [Ln:%d Col:%d]`,
+				string(input[off:off+1]), line, off-offline+1)
 		}
 		if lexId > 0 {
 			lexOff := off
@@ -84,11 +121,45 @@ func LexParser(input []rune) Lexems {
 			if (flags & LEXF_NEXT) != 0 {
 				right++
 			}
-			lexems = append(lexems, &Lexem{lexId, lexOff, right, line, lexOff - offline + 1})
-			if lexId == LEX_SYS && input[lexOff] == rune(0x0a) {
-				line++
-				offline = off
+			var value interface{}
+			switch lexId {
+			case LEX_NEWLINE:
+				if input[lexOff] == rune(0x0a) {
+					line++
+					offline = off
+				}
+			case LEX_SYS:
+				ch := uint32(input[lexOff])
+				lexId |= ch << 8
+				value = ch
+			case LEX_STRING:
+				value = string(input[lexOff+1 : right-1])
+				for i, ch := range value.(string) {
+					if ch == 0xa {
+						line++
+						offline = off + uint32(i) + 1
+					}
+				}
+			case LEX_OPER:
+				oper := []byte(string(input[lexOff:right]))
+				value = binary.BigEndian.Uint32(append(make([]byte, 4-len(oper)), oper...))
+			case LEX_NUMBER:
+				name := string(input[lexOff:right])
+				if val, err := strconv.ParseInt(name, 10, 64); err == nil {
+					value = val
+				} else {
+					return nil, fmt.Errorf(`%v %s [Ln:%d Col:%d]`, err, name, line, off-offline+1)
+				}
+			case LEX_IDENT:
+				name := string(input[lexOff:right])
+				if keyId, ok := KEYWORDS[name]; ok {
+					lexId = LEX_KEYWORD | (keyId << 8)
+					value = keyId
+				} else {
+					value = name
+				}
 			}
+			lexems = append(lexems, &Lexem{lexId, value, line, lexOff - offline + 1})
 		}
 		if (flags & LEXF_PUSH) != 0 {
 			start = off
@@ -97,5 +168,5 @@ func LexParser(input []rune) Lexems {
 			off++
 		}
 	}
-	return lexems
+	return lexems, nil
 }

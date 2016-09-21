@@ -28,35 +28,40 @@ type TestLexem struct {
 
 func (lexems Lexems) String(source []rune) (ret string) {
 	for _, item := range lexems {
-		slex := string(source[item.Offset:item.Right])
+		//		slex := string(source[item.Offset:item.Right])
 		if item.Type == 0 {
-			slex = `error`
+			item.Value = `error`
 		}
-		ret += fmt.Sprintf("[%d %s]", item.Type, slex)
+		ret += fmt.Sprintf("[%d %v]", item.Type, item.Value)
 	}
 	return
 }
 
 func TestLexParser(t *testing.T) {
 	test := []TestLexem{
-		{`callfunc( 1, name + 10)`, `[4 callfunc][1 (][3 1][1 ,][4 name][2 +][3 10][1 )]`},
-		{`(ab <= 24 )|| (12>67) && (56==78)`, `[1 (][4 ab][2 <=][3 24][1 )][2 ||][1 (][3 12][2 >][3 67][1 )][2 &&][1 (][3 56][2 ==][3 78][1 )]`},
-		{`!ab < !b && 12>=56 && qwe!=asd`, `[2 !][4 ab][2 <][2 !][4 b][2 &&][3 12][2 >=][3 56][2 &&][4 qwe][2 !=][4 asd]`},
-		{`ab || 12 && 56`, `[4 ab][2 ||][3 12][2 &&][3 56]`},
-		{`true | 42`, `[4 true][0 error]`},
-		{"(\r\n)\x03 -", "[1 (][1 \n][1 )][0 error]"},
-		{` +( - )	/ `, `[2 +][1 (][2 -][1 )][2 /]`},
-		{`23+13424 Тест`, `[3 23][2 +][3 13424][4 Тест]`},
-		{` 0785/67+iname*(56-31)`, `[3 0785][2 /][3 67][2 +][4 iname][2 *][1 (][3 56][2 -][3 31][1 )]`},
-		{`myvar_45 - a_qwe + t81you - 345rt`, `[4 myvar_45][2 -][4 a_qwe][2 +][4 t81you][2 -][0 error]`},
-		{`10 + #mytable[id = 234].name * 20`, `[3 10][2 +][1 #][4 mytable][1 [][4 id][2 =][3 234][1 ]][1 .][4 name][2 *][3 20]`},
+		{"contract my { func init {}}", "[263 1][4 my][31489 123][519 2][4 init][31489 123][32001 125][32001 125]"},
+		{"`my string` \"another String\"", "[6 my string][6 another String]"},
+		{`callfunc( 1, name + 10)`, `[4 callfunc][10241 40][3 1][11265 44][4 name][2 43][3 10][10497 41]`},
+		{`(ab <= 24 )|| (12>67) && (56==78)`, `[10241 40][4 ab][2 15421][3 24][10497 41][2 31868][10241 40][3 12][2 62][3 67][10497 41][2 9766][10241 40][3 56][2 15677][3 78][10497 41]`},
+		{`!ab < !b && 12>=56 && qwe!=asd`, `[2 33][4 ab][2 60][2 33][4 b][2 9766][3 12][2 15933][3 56][2 9766][4 qwe][2 8509][4 asd]`},
+		{`ab || 12 && 56`, `[4 ab][2 31868][3 12][2 9766][3 56]`},
+		{`true | 42`, `unknown lexem   [Ln:1 Col:7]`},
+		{"(\r\n)\x03 -", "unknown lexem  [Ln:2 Col:3]"},
+		{` +( - )	/ `, `[2 43][10241 40][2 45][10497 41][2 47]`},
+		{`23+13424 Тест`, `[3 23][2 43][3 13424][4 Тест]`},
+		{` 0785/67+iname*(56-31)`, `[3 785][2 47][3 67][2 43][4 iname][2 42][10241 40][3 56][2 45][3 31][10497 41]`},
+		{`myvar_45 - a_qwe + t81you - 345rt`, `unknown lexem r [Ln:1 Col:32]`},
+		{`10 + #mytable[id = 234].name * 20`, `[3 10][2 43][8961 35][4 mytable][23297 91][4 id][2 61][3 234][23809 93][11777 46][4 name][2 42][3 20]`},
 	}
 	for _, item := range test {
 		source := []rune(item.Input)
-		out := LexParser(source)
-		if out.String(source) != item.Output {
+		if out, err := LexParser(source); err != nil {
+			if err.Error() != item.Output {
+				t.Error(`error of lexical parser ` + err.Error())
+			}
+		} else if out.String(source) != item.Output {
 			t.Error(`error of lexical parser ` + item.Input)
+			fmt.Println(out.String(source))
 		}
-		//		fmt.Println(out.String(source))
 	}
 }

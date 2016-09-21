@@ -16,11 +16,10 @@
 
 package script
 
-import (
-	"fmt"
-	"testing"
-)
+//	"fmt"
+//	"testing"
 
+/*
 func TestEval(t *testing.T) {
 	test := []TestComp{
 		{"789 63", "63"},
@@ -114,3 +113,4 @@ func TestEvalIf(t *testing.T) {
 		}
 	}
 }
+*/
