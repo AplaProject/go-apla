@@ -1,1172 +1,1178 @@
 [
   [
-    'ad',
-	'Principat d’Andorra',
-    'Andorra',
-    'Андорра'
+    "dl",
+	"DayLight",
+    "DayLight",
+    "DayLight"
   ],
   [
-    'ae',
-	'الإمارات العربيّة المتّحدة',
-    'United Arab Emirates',
-    'Объединённые Арабские Эмираты'
+    "ad",
+	"Principat d’Andorra",
+    "Andorra",
+    "Андорра"
   ],
   [
-    'af',
-	'د افغانستان اسلامي جمهوریت',
-    'Afghanistan',
-    'Афганистан'
+    "ae",
+	"الإمارات العربيّة المتّحدة",
+    "United Arab Emirates",
+    "Объединённые Арабские Эмираты"
   ],
   [
-    'ag',
-	'Antigua and Barbuda',
-    'Antigua and Barbuda',
-    'Антигуа и Барбуда'
+    "af",
+	"د افغانستان اسلامي جمهوریت",
+    "Afghanistan",
+    "Афганистан"
   ],
   [
-    'ai',
-	'Anguilla',
-    'Anguilla',
-    'Ангилья'
+    "ag",
+	"Antigua and Barbuda",
+    "Antigua and Barbuda",
+    "Антигуа и Барбуда"
   ],
   [
-    'al',
-	'Republika e Shqipërisë',
-    'Albania',
-    'Албания'
+    "ai",
+	"Anguilla",
+    "Anguilla",
+    "Ангилья"
   ],
   [
-    'am',
-	'Հայաստանի Հանրապետություն',
-    'Armenia',
-    'Армения'
+    "al",
+	"Republika e Shqipërisë",
+    "Albania",
+    "Албания"
   ],
   [
-    'ao',
-	'República de Angola',
-    'Angola',
-    'Ангола'
+    "am",
+	"Հայաստանի Հանրապետություն",
+    "Armenia",
+    "Армения"
   ],
   [
-    'ar',
-	'República Argentina',
-    'Argentina',
-    'Аргентина'
+    "ao",
+	"República de Angola",
+    "Angola",
+    "Ангола"
   ],
   [
-    'as',
-	'American Samoa',
-    'American Samoa',
-    'Американское Самоа'
+    "ar",
+	"República Argentina",
+    "Argentina",
+    "Аргентина"
   ],
   [
-    'at',
-	'Republik Österreich',
-    'Austria',
-    'Австрия'
+    "as",
+	"American Samoa",
+    "American Samoa",
+    "Американское Самоа"
   ],
   [
-    'au',
-	'Commonwealth of Australia',
-    'Australia',
-    'Австралия'
+    "at",
+	"Republik Österreich",
+    "Austria",
+    "Австрия"
   ],
   [
-    'az',
-	'Azərbaycan Respublikası',
-    'Azerbaijan',
-    'Азербайджан'
+    "au",
+	"Commonwealth of Australia",
+    "Australia",
+    "Австралия"
   ],
   [
-    'ba',
-	'Босна и Херцеговина',
-    'Bosnia and Herzegovina',
-    'Босния и Герцеговина'
+    "az",
+	"Azərbaycan Respublikası",
+    "Azerbaijan",
+    "Азербайджан"
   ],
   [
-    'bb',
-	'Barbados',
-    'Barbados',
-    'Барбадос'
+    "ba",
+	"Босна и Херцеговина",
+    "Bosnia and Herzegovina",
+    "Босния и Герцеговина"
   ],
   [
-    'bd',
-	'গণপ্রজাতন্ত্রী বাংলাদেশ',
-    'Bangladesh',
-    'Бангладеш'
+    "bb",
+	"Barbados",
+    "Barbados",
+    "Барбадос"
   ],
   [
-    'be',
-	'Royaume de Belgique',
-    'Belgium',
-    'Бельгия'
+    "bd",
+	"গণপ্রজাতন্ত্রী বাংলাদেশ",
+    "Bangladesh",
+    "Бангладеш"
   ],
   [
-    'bf',
-	'Burkina Faso',
-    'Burkina Faso',
-    'Буркина-Фасо'
+    "be",
+	"Royaume de Belgique",
+    "Belgium",
+    "Бельгия"
   ],
   [
-    'bg',
-	'Република България',
-    'Bulgaria',
-    'Болгария'
+    "bf",
+	"Burkina Faso",
+    "Burkina Faso",
+    "Буркина-Фасо"
   ],
   [
-    'bh',
-	'مملكة البحرين‎‎',
-    'Bahrain',
-    'Бахрейн'
+    "bg",
+	"Република България",
+    "Bulgaria",
+    "Болгария"
   ],
   [
-    'bi',
-	'Republika y’u Burundi',
-    'Burundi',
-    'Бурунди'
+    "bh",
+	"مملكة البحرين‎‎",
+    "Bahrain",
+    "Бахрейн"
   ],
   [
-    'bj',
-	'République du Bénin',
-    'Benin',
-    'Бенин'
+    "bi",
+	"Republika y’u Burundi",
+    "Burundi",
+    "Бурунди"
   ],
   [
-    'bn',
-	'Negara Brunei Darussalam',
-    'Brunei',
-    'Бруней'
+    "bj",
+	"République du Bénin",
+    "Benin",
+    "Бенин"
   ],
   [
-    'bo',
-	'Estado Plurinacional de Bolivia',
-    'Bolivia',
-    'Боливия'
+    "bn",
+	"Negara Brunei Darussalam",
+    "Brunei",
+    "Бруней"
   ],
   [
-    'br',
-	'República Federativa do Brasil',
-    'Brazil',
-    'Бразилия'
+    "bo",
+	"Estado Plurinacional de Bolivia",
+    "Bolivia",
+    "Боливия"
   ],
   [
-    'bs',
-	'Commonwealth of the Bahamas',
-    'Bahamas',
-    'Багамы'
+    "br",
+	"República Federativa do Brasil",
+    "Brazil",
+    "Бразилия"
   ],
   [
-    'bt',
-	'འབྲུག་རྒྱལ་ཁབ་',
-    'Bhutan',
-    'Бутан'
+    "bs",
+	"Commonwealth of the Bahamas",
+    "Bahamas",
+    "Багамы"
   ],
   [
-    'bw',
-	'Republic of Botswana',
-    'Botswana',
-    'Ботсвана'
+    "bt",
+	"འབྲུག་རྒྱལ་ཁབ་",
+    "Bhutan",
+    "Бутан"
   ],
   [
-    'by',
-	'Рэспубліка Беларусь',
-    'Belarus',
-    'Беларусь'
+    "bw",
+	"Republic of Botswana",
+    "Botswana",
+    "Ботсвана"
   ],
   [
-    'bz',
-	'Belize',
-    'Belize',
-    'Белиз'
+    "by",
+	"Рэспубліка Беларусь",
+    "Belarus",
+    "Беларусь"
   ],
   [
-    'ca',
-	'Canada',
-    'Canada',
-    'Канада'
+    "bz",
+	"Belize",
+    "Belize",
+    "Белиз"
   ],
   [
-    'cd',
-	'République Démocratique du Congo',
-    'Congo (Democratic Republic)',
-    'Конго (Демократическая Республика)'
+    "ca",
+	"Canada",
+    "Canada",
+    "Канада"
   ],
   [
-    'cf',
-	'République Centrafricaine',
-    'Central African Republic',
-    'Центральноафриканская Республика'
+    "cd",
+	"République Démocratique du Congo",
+    "Congo (Democratic Republic)",
+    "Конго (Демократическая Республика)"
   ],
   [
-    'cg',
-	'République du Congo',
-    'Congo',
-    'Конго'
+    "cf",
+	"République Centrafricaine",
+    "Central African Republic",
+    "Центральноафриканская Республика"
   ],
   [
-    'ch',
-	'Schweizerische Eidgenossenschaft',
-    'Switzerland',
-    'Швейцария'
+    "cg",
+	"République du Congo",
+    "Congo",
+    "Конго"
   ],
   [
-    'ci',
-	'République de Côte d’Ivoire',
-    'Cote d’Ivoire',
-    'Кот-д’Ивуар'
+    "ch",
+	"Schweizerische Eidgenossenschaft",
+    "Switzerland",
+    "Швейцария"
   ],
   [
-    'cl',
-	'República de Chile',
-    'Chile',
-    'Чили'
+    "ci",
+	"République de Côte d’Ivoire",
+    "Cote d’Ivoire",
+    "Кот-д’Ивуар"
   ],
   [
-    'cm',
-	'République du Cameroun',
-    'Cameroon',
-    'Камерун'
+    "cl",
+	"República de Chile",
+    "Chile",
+    "Чили"
   ],
   [
-    'cn',
-	'中华人民共和国',
-    'China',
-    'Китай'
+    "cm",
+	"République du Cameroun",
+    "Cameroon",
+    "Камерун"
   ],
   [
-    'co',
-	'República de Colombia',
-    'Colombia',
-    'Колумбия'
+    "cn",
+	"中华人民共和国",
+    "China",
+    "Китай"
   ],
   [
-    'cr',
-	'República de Costa Rica',
-    'Costa Rica',
-    'Коста-Рика'
+    "co",
+	"República de Colombia",
+    "Colombia",
+    "Колумбия"
   ],
   [
-    'cu',
-	'República de Cuba',
-    'Cuba',
-    'Куба'
+    "cr",
+	"República de Costa Rica",
+    "Costa Rica",
+    "Коста-Рика"
   ],
   [
-    'cv',
-	'Cabo Verde',
-    'Cape Verde',
-    'Кабо-Верде'
+    "cu",
+	"República de Cuba",
+    "Cuba",
+    "Куба"
   ],
   [
-    'cy',
-	'Kuzey Kıbrıs Türk Cumhuriyeti',
-    'Cyprus',
-    'Кипр'
+    "cv",
+	"Cabo Verde",
+    "Cape Verde",
+    "Кабо-Верде"
   ],
   [
-    'cz',
-	'Česká republika',
-    'Czech Republic',
-    'Чехия'
+    "cy",
+	"Kuzey Kıbrıs Türk Cumhuriyeti",
+    "Cyprus",
+    "Кипр"
   ],
   [
-    'de',
-	'Bundesrepublik Deutschland',
-    'Germany',
-    'Германия'
+    "cz",
+	"Česká republika",
+    "Czech Republic",
+    "Чехия"
   ],
   [
-    'dj',
-	'جمهورية جيبوتي',
-    'Djibouti',
-    'Джибути'
+    "de",
+	"Bundesrepublik Deutschland",
+    "Germany",
+    "Германия"
   ],
   [
-    'dk',
-	'Kongeriget Danmark',
-    'Denmark',
-    'Дания'
+    "dj",
+	"جمهورية جيبوتي",
+    "Djibouti",
+    "Джибути"
   ],
   [
-    'dm',
-	'Commonwealth of Dominica',
-    'Dominica',
-    'Доминика'
+    "dk",
+	"Kongeriget Danmark",
+    "Denmark",
+    "Дания"
   ],
   [
-    'do',
-	'República Dominicana',
-    'Dominican Republic',
-    'Доминиканская Республика'
+    "dm",
+	"Commonwealth of Dominica",
+    "Dominica",
+    "Доминика"
   ],
   [
-    'dz',
-	'الجمهورية الجزائرية الديمقراطية الشعبية',
-    'Algeria',
-    'Алжир'
+    "do",
+	"República Dominicana",
+    "Dominican Republic",
+    "Доминиканская Республика"
   ],
   [
-    'ec',
-	'República del Ecuador',
-    'Ecuador',
-    'Эквадор'
+    "dz",
+	"الجمهورية الجزائرية الديمقراطية الشعبية",
+    "Algeria",
+    "Алжир"
   ],
   [
-    'ee',
-	'Eesti Vabariik',
-    'Estonia',
-    'Эстония'
+    "ec",
+	"República del Ecuador",
+    "Ecuador",
+    "Эквадор"
   ],
   [
-    'eg',
-	'جمهورية مصر العربية',
-    'Egypt',
-    'Египет'
+    "ee",
+	"Eesti Vabariik",
+    "Estonia",
+    "Эстония"
   ],
   [
-    'er',
-	'إرتريا',
-    'Eritrea',
-    'Эритрея'
+    "eg",
+	"جمهورية مصر العربية",
+    "Egypt",
+    "Египет"
   ],
   [
-    'es',
-	'Reino de España',
-    'Spain',
-    'Испания'
+    "er",
+	"إرتريا",
+    "Eritrea",
+    "Эритрея"
   ],
   [
-    'et',
-	'የኢትዮጵያ ፈደራላዊ ዲሞክራሲያዊ ሪፐብሊክ',
-    'Ethiopia',
-    'Эфиопия'
+    "es",
+	"Reino de España",
+    "Spain",
+    "Испания"
   ],
   [
-    'fi',
-	'Suomen tasavalta',
-    'Finland',
-    'Финляндия'
+    "et",
+	"የኢትዮጵያ ፈደራላዊ ዲሞክራሲያዊ ሪፐብሊክ",
+    "Ethiopia",
+    "Эфиопия"
   ],
   [
-    'fj',
-	'Republic of the Fiji Islands',
-    'Republic of the Fiji Islands',
-    'Фиджи'
+    "fi",
+	"Suomen tasavalta",
+    "Finland",
+    "Финляндия"
   ],
   [
-  	'fm',
-	'Federated States of Micronesia',
-	'Federated States of Micronesia',
-	'Федеративные Штаты Микронезии'
+    "fj",
+	"Republic of the Fiji Islands",
+    "Republic of the Fiji Islands",
+    "Фиджи"
   ],
   [
-    'fr',
-	'République française',
-    'France',
-    'Франция'
+  	"fm",
+	"Federated States of Micronesia",
+	"Federated States of Micronesia",
+	"Федеративные Штаты Микронезии"
   ],
   [
-    'ga',
-	'République Gabonaise',
-    'Gabon',
-    'Габон'
+    "fr",
+	"République française",
+    "France",
+    "Франция"
   ],
   [
-    'gb',
-	'United Kingdom of Great Britain and Northern Ireland',
-    'United Kingdom',
-    'Великобритания'
+    "ga",
+	"République Gabonaise",
+    "Gabon",
+    "Габон"
   ],
   [
-    'gd',
-	'Grenada',
-    'Grenada',
-    'Гренада'
+    "gb",
+	"United Kingdom of Great Britain and Northern Ireland",
+    "United Kingdom",
+    "Великобритания"
   ],
   [
-    'ge',
-	'საქართველო',
-    'Georgia',
-    'Грузия'
+    "gd",
+	"Grenada",
+    "Grenada",
+    "Гренада"
   ],
   [
-    'gh',
-	'Republic of Ghana',
-    'Ghana',
-    'Гана'
+    "ge",
+	"საქართველო",
+    "Georgia",
+    "Грузия"
   ],
   [
-    'gm',
-	'Republic of The Gambia',
-    'Gambia',
-    'Гамбия'
+    "gh",
+	"Republic of Ghana",
+    "Ghana",
+    "Гана"
   ],
   [
-    'gn',
-	'République de Guinée',
-    'Guinea',
-    'Гвинея'
+    "gm",
+	"Republic of The Gambia",
+    "Gambia",
+    "Гамбия"
   ],
   [
-    'gq',
-	'República de Guinea Ecuatorial',
-    'Equatorial Guinea',
-    'Экваториальная Гвинея'
+    "gn",
+	"République de Guinée",
+    "Guinea",
+    "Гвинея"
   ],
   [
-    'gr',
-	'Ελληνική Δημοκρατία',
-    'Greece',
-    'Греция'
+    "gq",
+	"República de Guinea Ecuatorial",
+    "Equatorial Guinea",
+    "Экваториальная Гвинея"
   ],
   [
-    'gt',
-	'República de Guatemala',
-    'Guatemala',
-    'Гватемала'
+    "gr",
+	"Ελληνική Δημοκρατία",
+    "Greece",
+    "Греция"
   ],
   [
-    'gw',
-	'República da Guiné-Bissau',
-    'Guinea-Bissau',
-    'Гвинея-Бисау'
+    "gt",
+	"República de Guatemala",
+    "Guatemala",
+    "Гватемала"
   ],
   [
-    'gy',
-	'Co-operative Republic of Guyana',
-    'Guyana',
-    'Гайана'
+    "gw",
+	"República da Guiné-Bissau",
+    "Guinea-Bissau",
+    "Гвинея-Бисау"
   ],
   [
-    'hn',
-	'República de Honduras',
-    'Honduras',
-    'Гондурас'
+    "gy",
+	"Co-operative Republic of Guyana",
+    "Guyana",
+    "Гайана"
   ],
   [
-    'hr',
-	'Republika Hrvatska',
-    'Croatia',
-    'Хорватия'
+    "hn",
+	"República de Honduras",
+    "Honduras",
+    "Гондурас"
   ],
   [
-    'ht',
-	'République d’Haïti',
-    'Haiti',
-    'Гаити'
+    "hr",
+	"Republika Hrvatska",
+    "Croatia",
+    "Хорватия"
   ],
   [
-    'hu',
-	'Magyarország',
-    'Hungary',
-    'Венгрия'
+    "ht",
+	"République d’Haïti",
+    "Haiti",
+    "Гаити"
   ],
   [
-    'id',
-	'Republik Indonesia',
-    'Indonesia',
-    'Индонезия'
+    "hu",
+	"Magyarország",
+    "Hungary",
+    "Венгрия"
   ],
   [
-    'ie',
-	'Éire',
-    'Ireland',
-    'Ирландия'
+    "id",
+	"Republik Indonesia",
+    "Indonesia",
+    "Индонезия"
   ],
   [
-    'il',
-	'מְדִינַת יִשְׂרָאֵל',
-    'Israel',
-    'Израиль'
+    "ie",
+	"Éire",
+    "Ireland",
+    "Ирландия"
   ],
   [
-    'in',
-	'भारत गणराज्य',
-    'India',
-    'Индия'
+    "il",
+	"מְדִינַת יִשְׂרָאֵל",
+    "Israel",
+    "Израиль"
   ],
   [
-    'iq',
-	'جمهورية العراق',
-    'Iraq',
-    'Ирак'
+    "in",
+	"भारत गणराज्य",
+    "India",
+    "Индия"
   ],
   [
-    'ir',
-	'جمهوری اسلامی ایران',
-    'Iran',
-    'Иран'
+    "iq",
+	"جمهورية العراق",
+    "Iraq",
+    "Ирак"
   ],
   [
-    'is',
-	'Lýðveldið Ísland',
-    'Iceland',
-    'Исландия'
+    "ir",
+	"جمهوری اسلامی ایران",
+    "Iran",
+    "Иран"
   ],
   [
-    'it',
-	'Repubblica Italiana',
-    'Italy',
-    'Италия'
+    "is",
+	"Lýðveldið Ísland",
+    "Iceland",
+    "Исландия"
   ],
   [
-    'jm',
-	'Jamaica',
-    'Jamaica',
-    'Ямайка'
+    "it",
+	"Repubblica Italiana",
+    "Italy",
+    "Италия"
   ],
   [
-    'jo',
-	'المملكة الأردنية الهاشميه',
-    'Jordan',
-    'Иордания'
+    "jm",
+	"Jamaica",
+    "Jamaica",
+    "Ямайка"
   ],
   [
-    'jp',
-	'日本国',
-    'Japan',
-    'Япония'
+    "jo",
+	"المملكة الأردنية الهاشميه",
+    "Jordan",
+    "Иордания"
   ],
   [
-    'ke',
-	'Republic of Kenya',
-    'Kenya',
-    'Кения'
+    "jp",
+	"日本国",
+    "Japan",
+    "Япония"
   ],
   [
-    'kg',
-	'Кыргыз Республикасы',
-    'Kyrgyzstan',
-    'Киргизия'
+    "ke",
+	"Republic of Kenya",
+    "Kenya",
+    "Кения"
   ],
   [
-    'kh',
-	'ព្រះរាជាណាចក្រកម្ពុជា',
-    'Cambodia',
-    'Камбоджа'
+    "kg",
+	"Кыргыз Республикасы",
+    "Kyrgyzstan",
+    "Киргизия"
   ],
   [
-    'ki',
-	'Republic of Kiribati',
-    'Kiribati',
-    'Кирибати'
+    "kh",
+	"ព្រះរាជាណាចក្រកម្ពុជា",
+    "Cambodia",
+    "Камбоджа"
   ],
   [
-    'km',
-	'Komori',
-    'Comoros',
-    'Коморы'
+    "ki",
+	"Republic of Kiribati",
+    "Kiribati",
+    "Кирибати"
   ],
   [
-    'kn',
-	'Federation of Saint Christopher and Nevis',
-    'Saint Kitts and Nevis',
-    'Сент-Китс и Невис'
+    "km",
+	"Komori",
+    "Comoros",
+    "Коморы"
   ],
   [
-    'kp',
-	'조선민주주의인민공화국',
-    'North Korea',
-    'Северная Корея'
+    "kn",
+	"Federation of Saint Christopher and Nevis",
+    "Saint Kitts and Nevis",
+    "Сент-Китс и Невис"
   ],
   [
-    'kr',
-	'대한민국',
-    'South Korea',
-    'Южная Корея'
+    "kp",
+	"조선민주주의인민공화국",
+    "North Korea",
+    "Северная Корея"
   ],
   [
-    'kw',
-	'دولة الكويت',
-    'Kuwait',
-    'Кувейт'
+    "kr",
+	"대한민국",
+    "South Korea",
+    "Южная Корея"
   ],
   [
-    'kz',
-	'Қазақстан Республикасы',
-    'Kazakhstan',
-    'Казахстан'
+    "kw",
+	"دولة الكويت",
+    "Kuwait",
+    "Кувейт"
   ],
   [
-    'la',
-	'ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ',
-    'Laos',
-    'Лаос'
+    "kz",
+	"Қазақстан Республикасы",
+    "Kazakhstan",
+    "Казахстан"
   ],
   [
-    'lb',
-	'اَلْجُمْهُورِيَّة اَللُّبْنَانِيَّة',
-    'Lebanon',
-    'Ливан'
+    "la",
+	"ສາທາລະນະລັດ ປະຊາທິປະໄຕ ປະຊາຊົນລາວ",
+    "Laos",
+    "Лаос"
   ],
   [
-    'lc',
-	'Saint Lucia',
-    'Saint Lucia',
-    'Сент-Люсия'
+    "lb",
+	"اَلْجُمْهُورِيَّة اَللُّبْنَانِيَّة",
+    "Lebanon",
+    "Ливан"
   ],
   [
-    'li',
-	'Fürstentum Liechtenstein',
-    'Liechtenstein',
-    'Лихтенштейн'
+    "lc",
+	"Saint Lucia",
+    "Saint Lucia",
+    "Сент-Люсия"
   ],
   [
-    'lk',
-	'ශ්‍රී ලංකා ප්‍රජාතාන්ත්‍රික සමාජවාදී ජනරජය',
-    'Sri Lanka',
-    'Шри-Ланка'
+    "li",
+	"Fürstentum Liechtenstein",
+    "Liechtenstein",
+    "Лихтенштейн"
   ],
   [
-    'lr',
-	'Republic of Liberia',
-    'Liberia',
-    'Либерия'
+    "lk",
+	"ශ්‍රී ලංකා ප්‍රජාතාන්ත්‍රික සමාජවාදී ජනරජය",
+    "Sri Lanka",
+    "Шри-Ланка"
   ],
   [
-    'ls',
-	'Muso oa Lesotho',
-    'Lesotho',
-    'Лесото'
+    "lr",
+	"Republic of Liberia",
+    "Liberia",
+    "Либерия"
   ],
   [
-    'lt',
-	'Lietuvos Respublika',
-    'Lithuania',
-    'Литва'
+    "ls",
+	"Muso oa Lesotho",
+    "Lesotho",
+    "Лесото"
   ],
   [
-    'lu',
-	'Groussherzogtum Lëtzebuerg',
-    'Luxembourg',
-    'Люксембург'
+    "lt",
+	"Lietuvos Respublika",
+    "Lithuania",
+    "Литва"
   ],
   [
-    'lv',
-	'Latvijas Republika',
-    'Latvia',
-    'Латвия'
+    "lu",
+	"Groussherzogtum Lëtzebuerg",
+    "Luxembourg",
+    "Люксембург"
   ],
   [
-    'ly',
-	'الجماهيرية العربية الليبية الشعبية الإشتراكية العظمى',
-    'Libya',
-    'Ливия'
+    "lv",
+	"Latvijas Republika",
+    "Latvia",
+    "Латвия"
   ],
   [
-    'ma',
-	'المملكة المغربية',
-    'Morocco',
-    'Марокко'
+    "ly",
+	"الجماهيرية العربية الليبية الشعبية الإشتراكية العظمى",
+    "Libya",
+    "Ливия"
   ],
   [
-    'mc',
-	'Principauté de Monaco',
-    'Monaco',
-    'Монако'
+    "ma",
+	"المملكة المغربية",
+    "Morocco",
+    "Марокко"
   ],
   [
-    'md',
-	'Republica Moldova',
-    'Moldova',
-    'Молдова'
+    "mc",
+	"Principauté de Monaco",
+    "Monaco",
+    "Монако"
   ],
   [
-    'me',
-	'Црна Гора',
-    'Montenegro',
-    'Черногория'
+    "md",
+	"Republica Moldova",
+    "Moldova",
+    "Молдова"
   ],
   [
-    'mg',
-	'Repoblikan’i Madagasikara',
-    'Madagascar',
-    'Мадагаскар'
+    "me",
+	"Црна Гора",
+    "Montenegro",
+    "Черногория"
   ],
   [
-    'mh',
-	'Republic of the Marshall Islands',
-    'Marshall Islands',
-    'Маршалловы острова'
+    "mg",
+	"Repoblikan’i Madagasikara",
+    "Madagascar",
+    "Мадагаскар"
   ],
   [
-    'mk',
-	'Република Македонија',
-    'Macedonia',
-    'Македония'
+    "mh",
+	"Republic of the Marshall Islands",
+    "Marshall Islands",
+    "Маршалловы острова"
   ],
   [
-    'ml',
-	'République du Mali',
-    'Mali',
-    'Мали'
+    "mk",
+	"Република Македонија",
+    "Macedonia",
+    "Македония"
   ],
   [
-    'mm',
-	'ပြည်ထောင်စု သမ္မတ မြန်မာနိုင်ငံတော်',
-    'Myanmar',
-    'Мьянма'
+    "ml",
+	"République du Mali",
+    "Mali",
+    "Мали"
   ],
   [
-    'mn',
-	'Монгол Улс',
-    'Mongolia',
-    'Монголия'
+    "mm",
+	"ပြည်ထောင်စု သမ္မတ မြန်မာနိုင်ငံတော်",
+    "Myanmar",
+    "Мьянма"
   ],
   [
-    'mr',
-	'الجمهورية الإسلامية الموريتانية',
-    'Mauritania',
-    'Мавритания'
+    "mn",
+	"Монгол Улс",
+    "Mongolia",
+    "Монголия"
   ],
   [
-    'mt',
-	'Repubblika ta&#39; Malta',
-    'Malta',
-    'Мальта'
+    "mr",
+	"الجمهورية الإسلامية الموريتانية",
+    "Mauritania",
+    "Мавритания"
   ],
   [
-    'mu',
-	'Republic of Mauritius',
-    'Mauritius',
-    'Маврикий'
+    "mt",
+	"Repubblika ta&#39; Malta",
+    "Malta",
+    "Мальта"
   ],
   [
-    'mv',
-	'ދިވެހިރާއްޖޭގެ ޖުމްހޫރިއްޔާ',
-    'Maldives',
-    'Мальдивы'
+    "mu",
+	"Republic of Mauritius",
+    "Mauritius",
+    "Маврикий"
   ],
   [
-    'mw',
-	'Republic of Malaŵi',
-    'Malawi',
-    'Малави'
+    "mv",
+	"ދިވެހިރާއްޖޭގެ ޖުމްހޫރިއްޔާ",
+    "Maldives",
+    "Мальдивы"
   ],
   [
-    'mx',
-	'Estados Unidos Mexicanos',
-    'Mexico',
-    'Мексика'
+    "mw",
+	"Republic of Malaŵi",
+    "Malawi",
+    "Малави"
   ],
   [
-    'my',
-	'Malaysia',
-    'Malaysia',
-    'Малайзия'
+    "mx",
+	"Estados Unidos Mexicanos",
+    "Mexico",
+    "Мексика"
   ],
   [
-    'mz',
-	'República de Moçambique',
-    'Mozambique',
-    'Мозамбик'
+    "my",
+	"Malaysia",
+    "Malaysia",
+    "Малайзия"
   ],
   [
-    'na',
-	'Republic of Namibia',
-    'Namibia',
-    'Намибия'
+    "mz",
+	"República de Moçambique",
+    "Mozambique",
+    "Мозамбик"
   ],
   [
-    'ne',
-	'République du Niger',
-    'Niger',
-    'Нигер'
+    "na",
+	"Republic of Namibia",
+    "Namibia",
+    "Намибия"
   ],
   [
-    'ng',
-	'Federal Republic of Nigeria',
-    'Nigeria',
-    'Нигерия'
+    "ne",
+	"République du Niger",
+    "Niger",
+    "Нигер"
   ],
   [
-    'ni',
-	'República de Nicaragua',
-    'Nicaragua',
-    'Никарагуа'
+    "ng",
+	"Federal Republic of Nigeria",
+    "Nigeria",
+    "Нигерия"
   ],
   [
-    'nl',
-	'Koninkrijk der Nederlanden',
-    'Netherlands',
-    'Нидерланды'
+    "ni",
+	"República de Nicaragua",
+    "Nicaragua",
+    "Никарагуа"
   ],
   [
-    'no',
-	'Kongeriket Norge',
-    'Norway',
-    'Норвегия'
+    "nl",
+	"Koninkrijk der Nederlanden",
+    "Netherlands",
+    "Нидерланды"
   ],
   [
-    'np',
-	'संघीय लोकतान्त्रिक गणतन्त्र नेपाल',
-    'Nepal',
-    'Непал'
+    "no",
+	"Kongeriket Norge",
+    "Norway",
+    "Норвегия"
   ],
   [
-    'nr',
-	'Ripublik Naoero',
-    'Nauru',
-    'Науру'
+    "np",
+	"संघीय लोकतान्त्रिक गणतन्त्र नेपाल",
+    "Nepal",
+    "Непал"
   ],
   [
-    'nz',
-	'New Zealand',
-    'New Zealand',
-    'Новая Зеландия'
+    "nr",
+	"Ripublik Naoero",
+    "Nauru",
+    "Науру"
   ],
   [
-    'om',
-	'سلطنة عُمان',
-    'Oman',
-    'Оман'
+    "nz",
+	"New Zealand",
+    "New Zealand",
+    "Новая Зеландия"
   ],
   [
-    'pa',
-	'República de Panamá',
-    'Panama',
-    'Панама'
+    "om",
+	"سلطنة عُمان",
+    "Oman",
+    "Оман"
   ],
   [
-    'pe',
-	'República del Perú',
-    'Peru',
-    'Перу'
+    "pa",
+	"República de Panamá",
+    "Panama",
+    "Панама"
   ],
   [
-    'pg',
-	'Independent State of Papua New Guinea',
-    'Papua New Guinea',
-    'Папуа - Новая Гвинея'
+    "pe",
+	"República del Perú",
+    "Peru",
+    "Перу"
   ],
   [
-    'ph',
-	'Republika ng Pilipinas',
-    'Philippines',
-    'Филиппины'
+    "pg",
+	"Independent State of Papua New Guinea",
+    "Papua New Guinea",
+    "Папуа - Новая Гвинея"
   ],
   [
-    'pk',
-	'اسلامی جمہوریۂ پاکستان',
-    'Pakistan',
-    'Пакистан'
+    "ph",
+	"Republika ng Pilipinas",
+    "Philippines",
+    "Филиппины"
   ],
   [
-    'pl',
-	'Rzeczpospolita Polska',
-    'Poland',
-    'Польша'
+    "pk",
+	"اسلامی جمہوریۂ پاکستان",
+    "Pakistan",
+    "Пакистан"
   ],
   [
-  	'ps',
-	'السلطة الوطنية الفلسطينية',
-	'Palestinian Territory',
-	'Государство Палестина'
+    "pl",
+	"Rzeczpospolita Polska",
+    "Poland",
+    "Польша"
   ],
   [
-    'pt',
-	'República Portuguesa',
-    'Portugal',
-    'Португалия'
+  	"ps",
+	"السلطة الوطنية الفلسطينية",
+	"Palestinian Territory",
+	"Государство Палестина"
   ],
   [
-    'pw',
-	'Republic of Palau',
-    'Palau',
-    'Палау'
+    "pt",
+	"República Portuguesa",
+    "Portugal",
+    "Португалия"
   ],
   [
-    'py',
-	'República del Paraguay',
-    'Paraguay',
-    'Парагвай'
+    "pw",
+	"Republic of Palau",
+    "Palau",
+    "Палау"
   ],
   [
-    'qa',
-	'دولة قطر',
-    'Qatar',
-    'Катар'
+    "py",
+	"República del Paraguay",
+    "Paraguay",
+    "Парагвай"
   ],
   [
-    'ro',
-	'România',
-    'Romania',
-    'Румыния'
+    "qa",
+	"دولة قطر",
+    "Qatar",
+    "Катар"
   ],
   [
-    'rs',
-	'Република Србија',
-    'Serbia',
-    'Сербия'
+    "ro",
+	"România",
+    "Romania",
+    "Румыния"
   ],
   [
-    'ru',
-	'Российская Федерация',
-    'Russian Federation',
-    'Россия'
+    "rs",
+	"Република Србија",
+    "Serbia",
+    "Сербия"
   ],
   [
-    'rw',
-	'République du Rwanda',
-    'Rwanda',
-    'Руанда'
+    "ru",
+	"Российская Федерация",
+    "Russian Federation",
+    "Россия"
   ],
   [
-    'sa',
-	'المملكة العربية السعودية',
-    'Saudi Arabia',
-    'Саудовская Аравия'
+    "rw",
+	"République du Rwanda",
+    "Rwanda",
+    "Руанда"
   ],
   [
-    'sb',
-	'Solomon Islands',
-    'Solomon Islands',
-    'Соломоновы острова'
+    "sa",
+	"المملكة العربية السعودية",
+    "Saudi Arabia",
+    "Саудовская Аравия"
   ],
   [
-    'sc',
-	'Repiblik Sesel',
-    'Seychelles',
-    'Сейшельские Острова'
+    "sb",
+	"Solomon Islands",
+    "Solomon Islands",
+    "Соломоновы острова"
   ],
   [
-    'sd',
-	'جمهورية السودان',
-    'Sudan',
-    'Судан'
+    "sc",
+	"Repiblik Sesel",
+    "Seychelles",
+    "Сейшельские Острова"
   ],
   [
-    'se',
-	'Konungariket Sverige',
-    'Sweden',
-    'Швеция'
+    "sd",
+	"جمهورية السودان",
+    "Sudan",
+    "Судан"
   ],
   [
-    'sg',
-	'Republik Singapura',
-    'Singapore',
-    'Сингапур'
+    "se",
+	"Konungariket Sverige",
+    "Sweden",
+    "Швеция"
   ],
   [
-    'si',
-	'Republika Slovenija',
-    'Slovenia',
-    'Словения'
+    "sg",
+	"Republik Singapura",
+    "Singapore",
+    "Сингапур"
   ],
   [
-    'sk',
-	'Slovenská republika',
-    'Slovakia',
-    'Словакия'
+    "si",
+	"Republika Slovenija",
+    "Slovenia",
+    "Словения"
   ],
   [
-    'sl',
-	'Republic of Sierra Leone',
-    'Sierra Leone',
-    'Сьерра-Леоне'
+    "sk",
+	"Slovenská republika",
+    "Slovakia",
+    "Словакия"
   ],
   [
-    'sm',
-	'Repubblica di San Marino',
-    'San Marino',
-    'Сан-Марино'
+    "sl",
+	"Republic of Sierra Leone",
+    "Sierra Leone",
+    "Сьерра-Леоне"
   ],
   [
-    'sn',
-	'République du Sénégal',
-    'Senegal',
-    'Сенегал'
+    "sm",
+	"Repubblica di San Marino",
+    "San Marino",
+    "Сан-Марино"
   ],
   [
-    'so',
-	'Jamhuuriyadda Federaalka Soomaaliya',
-    'Somalia',
-    'Сомали'
+    "sn",
+	"République du Sénégal",
+    "Senegal",
+    "Сенегал"
   ],
   [
-    'sr',
-	'Republiek Suriname',
-    'Suriname',
-    'Суринам'
+    "so",
+	"Jamhuuriyadda Federaalka Soomaaliya",
+    "Somalia",
+    "Сомали"
   ],
   [
-    'st',
-	'República Democrática de São Tomé e Príncipe',
-    'Sao Tome and Principe',
-    'Сан-Томе и Принсипи'
+    "sr",
+	"Republiek Suriname",
+    "Suriname",
+    "Суринам"
   ],
   [
-    'sv',
-	'República de El Salvador',
-    'El Salvador',
-    'Эль-Сальвадор'
+    "st",
+	"República Democrática de São Tomé e Príncipe",
+    "Sao Tome and Principe",
+    "Сан-Томе и Принсипи"
   ],
   [
-    'sy',
-	'الجمهوريّة العربيّة السّوريّة',
-    'Syrian Arab Republic',
-    'Сирийская Арабская Республика'
+    "sv",
+	"República de El Salvador",
+    "El Salvador",
+    "Эль-Сальвадор"
   ],
   [
-    'sz',
-	'Kingdom of Swaziland',
-    'Swaziland',
-    'Свазиленд'
+    "sy",
+	"الجمهوريّة العربيّة السّوريّة",
+    "Syrian Arab Republic",
+    "Сирийская Арабская Республика"
   ],
   [
-    'td',
-	'République du Tchad',
-    'Chad',
-    'Чад'
+    "sz",
+	"Kingdom of Swaziland",
+    "Swaziland",
+    "Свазиленд"
   ],
   [
-    'tg',
-	'République Togolaise',
-    'Togo',
-    'Того'
+    "td",
+	"République du Tchad",
+    "Chad",
+    "Чад"
   ],
   [
-    'th',
-	'ราชอาณาจักรไทย',
-    'Thailand',
-    'Таиланд'
+    "tg",
+	"République Togolaise",
+    "Togo",
+    "Того"
   ],
   [
-    'tj',
-	'Ҷумҳурии Тоҷикистон',
-    'Tajikistan',
-    'Таджикистан'
+    "th",
+	"ราชอาณาจักรไทย",
+    "Thailand",
+    "Таиланд"
   ],
   [
-    'tm',
-	'Türkmenistan',
-    'Turkmenistan',
-    'Туркмения'
+    "tj",
+	"Ҷумҳурии Тоҷикистон",
+    "Tajikistan",
+    "Таджикистан"
   ],
   [
-    'tn',
-	'الجمهورية التونسية',
-    'Tunisia',
-    'Тунис'
+    "tm",
+	"Türkmenistan",
+    "Turkmenistan",
+    "Туркмения"
   ],
   [
-    'to',
-	'Pule&#8217;anga Fakatu&#8217;i &#39;o Tonga',
-    'Tonga',
-    'Тонга'
+    "tn",
+	"الجمهورية التونسية",
+    "Tunisia",
+    "Тунис"
   ],
   [
-    'tr',
-	'Türkiye Cumhuriyeti',
-    'Turkey',
-    'Турция'
+    "to",
+	"Pule&#8217;anga Fakatu&#8217;i &#39;o Tonga",
+    "Tonga",
+    "Тонга"
   ],
   [
-    'tt',
-	'Republic of Trinidad and Tobago',
-    'Trinidad and Tobago',
-    'Тринидад и Тобаго'
+    "tr",
+	"Türkiye Cumhuriyeti",
+    "Turkey",
+    "Турция"
   ],
   [
-    'tv',
-	'Tuvalu',
-    'Tuvalu',
-    'Тувалу'
+    "tt",
+	"Republic of Trinidad and Tobago",
+    "Trinidad and Tobago",
+    "Тринидад и Тобаго"
   ],
   [
-    'tz',
-	'United Republic of Tanzania',
-    'Tanzania',
-    'Танзания'
+    "tv",
+	"Tuvalu",
+    "Tuvalu",
+    "Тувалу"
   ],
   [
-    'ua',
-	'Україна',
-    'Ukraine',
-    'Украина'
+    "tz",
+	"United Republic of Tanzania",
+    "Tanzania",
+    "Танзания"
   ],
   [
-    'ug',
-	'Republic of Uganda',
-    'Uganda',
-    'Уганда'
+    "ua",
+	"Україна",
+    "Ukraine",
+    "Украина"
   ],
   [
-    'us',
-	'United States of America',
-    'United States of America',
-    'Соединённые Штаты Америки'
+    "ug",
+	"Republic of Uganda",
+    "Uganda",
+    "Уганда"
   ],
   [
-    'uy',
-	'República Oriental del Uruguay',
-    'Uruguay',
-    'Уругвай'
+    "us",
+	"United States of America",
+    "United States of America",
+    "Соединённые Штаты Америки"
   ],
   [
-    'uz',
-	'O‘zbekiston Respublikasi',
-    'Uzbekistan',
-    'Узбекистан'
+    "uy",
+	"República Oriental del Uruguay",
+    "Uruguay",
+    "Уругвай"
   ],
   [
-    'va',
-	'Status Civitatis Vaticanæ',
-    'Holy See (Vatican)',
-    'Ватикан — Святой Престол'
+    "uz",
+	"O‘zbekiston Respublikasi",
+    "Uzbekistan",
+    "Узбекистан"
   ],
   [
-    'vc',
-	'Saint Vincent and the Grenadines',
-    'Saint Vincent and the Grenadines',
-    'Сент-Винсент и Гренадины'
+    "va",
+	"Status Civitatis Vaticanæ",
+    "Holy See (Vatican)",
+    "Ватикан — Святой Престол"
   ],
   [
-    've',
-	'República Bolivariana de Venezuela',
-    'Venezuela',
-    'Венесуэла'
+    "vc",
+	"Saint Vincent and the Grenadines",
+    "Saint Vincent and the Grenadines",
+    "Сент-Винсент и Гренадины"
   ],
   [
-    'vn',
-	'Cộng hòa xã hội chủ nghĩa Việt Nam',
-    'Viet Nam',
-    'Вьетнам'
+    "ve",
+	"República Bolivariana de Venezuela",
+    "Venezuela",
+    "Венесуэла"
   ],
   [
-    'vu',
-	'Ripablik blong Vanuatu',
-    'Vanuatu',
-    'Вануату'
+    "vn",
+	"Cộng hòa xã hội chủ nghĩa Việt Nam",
+    "Viet Nam",
+    "Вьетнам"
   ],
   [
-    'ws',
-	'Independent State of Samoa',
-    'Samoa',
-    'Самоа'
+    "vu",
+	"Ripablik blong Vanuatu",
+    "Vanuatu",
+    "Вануату"
   ],
   [
-    'ye',
-	'الجمهوريّة اليمنية',
-    'Yemen',
-    'Йемен'
+    "ws",
+	"Independent State of Samoa",
+    "Samoa",
+    "Самоа"
   ],
   [
-    'za',
-	'Republic of South Africa',
-    'Republic of South Africa',
-    'Южно-Африканская Республика'
+    "ye",
+	"الجمهوريّة اليمنية",
+    "Yemen",
+    "Йемен"
   ],
   [
-    'zm',
-	'Republic of Zambia',
-    'Zambia',
-    'Замбия'
+    "za",
+	"Republic of South Africa",
+    "Republic of South Africa",
+    "Южно-Африканская Республика"
   ],
   [
-    'zw',
-	'Republic of Zimbabwe',
-    'Zimbabwe',
-    'Зимбабве'
+    "zm",
+	"Republic of Zambia",
+    "Zambia",
+    "Замбия"
+  ],
+  [
+    "zw",
+	"Republic of Zimbabwe",
+    "Zimbabwe",
+    "Зимбабве"
   ]
 ]

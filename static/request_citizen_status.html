@@ -8,17 +8,45 @@
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .anonym_citizen_status").addClass("active");
 	
-	$('#countries').select2({
-		theme: 'bootstrap'
-	});
-	
 	var arr = [];
+	var selectbox = $("#countries");
 	var container = $("#fields");
 	var msg = $("#message");
 	var btn = $("#send");
 	var btns = $("#buttons");
 	var test = 65000;
 	console.log( test.toString(16));
+	
+	$.ajax({
+		type: 'GET',
+		url: 'static/countries/countries.json',
+		dataType: 'json',
+		crossDomain: true,
+		success: function(data) {
+			var j = 0;
+			for (i = 0; i < data.length; i++ ) {
+				selectbox.append('<option value="' + data[i][0] + '" data-id="' + i + '">' + data[i][1] + '</option>');
+			}
+			selectbox.select2({
+				templateResult: formatState,
+				templateSelection: formatState,
+				theme: 'bootstrap'
+			});
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
+	
+	function formatState(state) {
+		if (!state.id) { return state.text; }
+		var $state = $(
+			'<span><i style="background-position:0px ' + selectbox.find("option[value=" + state.id + "]").attr("data-id") * (-9) + 'px"></i>' +
+			state.text +
+			'</span>'
+		);
+		return $state;
+	};
 	
 	function Message(text) {
 		if (!text) {
@@ -45,7 +73,7 @@
 	
 	function changeCountry(elem) {
 		var id = elem.value;
-		if (id != "1") {
+		if (id != "dl") {
 			hideFields('Coming soon');
 		} else {
 			Country(id);
@@ -54,7 +82,7 @@
 	
 	function Country(id) {
 		if (!id) {
-			id = 1;
+			id = 'dl';
 		}
 		
 		msg.hide();
@@ -301,24 +329,7 @@
 	<form role="form">
 	   <div class="form-group">
 		  <label for="countries">Country</label>
-		  <select id="countries" class="form-control" onChange="changeCountry(this);">
-			 <option value="1">Earth</option>
-			 <option value="AL">Alabama</option>
-			 <option value="AR">Arkansas</option>
-			 <option value="IL">Illinois</option>
-			 <option value="IA">Iowa</option>
-			 <option value="KS">Kansas</option>
-			 <option value="KY">Kentucky</option>
-			 <option value="LA">Louisiana</option>
-			 <option value="MN">Minnesota</option>
-			 <option value="MS">Mississippi</option>
-			 <option value="MO">Missouri</option>
-			 <option value="OK">Oklahoma</option>
-			 <option value="SD">South Dakota</option>
-			 <option value="TX">Texas</option>
-			 <option value="TN">Tennessee</option>
-			 <option value="WI">Wisconsin</option>
-		  </select>
+		  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
 	   </div>
 	   <div id="message" class="alert alert-danger"></div>
 	   <div id="fields"></div>
