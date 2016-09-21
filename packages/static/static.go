@@ -120,6 +120,7 @@
 // static/login.html
 // static/menu.html
 // static/modal_anonym.html
+// static/new_table.html
 // static/pass.html
 // static/psw.html
 // static/request_citizen_status.html
@@ -2364,6 +2365,24 @@ func staticModal_anonymHtml() (*asset, error) {
 	return a, err
 }
 
+// staticNew_tableHtml reads file data from disk. It returns an error on failure.
+func staticNew_tableHtml() (*asset, error) {
+	path := "static/new_table.html"
+	name := "static/new_table.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticPassHtml reads file data from disk. It returns an error on failure.
 func staticPassHtml() (*asset, error) {
 	path := "static/pass.html"
@@ -3580,6 +3599,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
+	"static/new_table.html": staticNew_tableHtml,
 	"static/pass.html": staticPassHtml,
 	"static/psw.html": staticPswHtml,
 	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
@@ -3940,6 +3960,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{
 		}},
 		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{
+		}},
+		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{
 		}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{
 		}},
