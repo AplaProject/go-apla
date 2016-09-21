@@ -1,4 +1,4 @@
-{{ define "stateParameters" }}
+{{ define "stateSmartLaws" }}
 <style>
 		.thead {
 			width:120px;
@@ -29,13 +29,13 @@
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href="#">Dashboard</a></li>
-	   <li class="active">State parameters</li>
+	   <li class="active">stateSmartLaws</li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
-			State parameters
+			stateSmartLaws
 		</div>
 	 </div>
 	 <div class="panel-body">
@@ -43,7 +43,8 @@
 		   <table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
-				  <td>parameter</td>
+				  <td>id</td>
+				  <td>name</td>
 				  <td>value</td>
 				  <td>conditions_parameter</td>
 				  <td>text_description</td>
@@ -51,9 +52,10 @@
 				  <td>parent</td>
 				  <td></td>
 			  </tr>
-			  {{ range $value := .StateParameters }}
+			  {{ range $value := .StateSmartLaws }}
 				 <tr>
-					<td class="thead">{{$value.parameter}}</td>
+					 <td class="thead"><strong>{{$value.id}}</strong></td>
+					 <td><strong>{{$value.name}}</strong></td>
 					 <td><strong>{{$value.value}}</strong></td>
 					 <td><strong>{{$value.conditions_parameter}}</strong></td>
 					 <td><strong>{{$value.text_description}}</strong></td>
@@ -72,7 +74,7 @@
 
 		  </div>
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary">Add new parameter</button>
+			 <button type="button" class="btn btn-primary">Add new</button>
 		  </div>
 	   </div>
 	  </div>

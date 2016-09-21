@@ -57,7 +57,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	defer formdata.RemoveAll()
 
 	//	fmt.Println(`FORM START`, formdata)
-	field, err := c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).String()
+	field, err := c.Single(`SELECT value FROM ` + statePrefix + `_state_parameters where parameter='citizen_fields'`).String()
 	vals := make(map[string]string)
 	time := c.r.FormValue(`time`)
 	walletId := c.r.FormValue(`walletId`)

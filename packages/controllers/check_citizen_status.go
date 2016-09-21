@@ -53,7 +53,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 			return ``, err
 		}
 	}
-	field, err := c.Single(`SELECT value FROM ` + c.StatePrefix + `_state_settings where parameter='citizen_fields'`).String()
+	field, err := c.Single(`SELECT value FROM ` + c.StatePrefix + `_state_parameters where parameter='citizen_fields'`).String()
 	if err != nil {
 		return ``, err
 	}

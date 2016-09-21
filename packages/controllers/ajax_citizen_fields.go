@@ -50,9 +50,9 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 					result.Approved = approved
 				}
 			} else {
-				result.Fields, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_fields'`).String()
+				result.Fields, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_parameters where parameter='citizen_fields'`).String()
 				if err == nil {
-					result.Price, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_settings where parameter='citizen_dlt_price'`).Int64()
+					result.Price, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_parameters where parameter='citizen_dlt_price'`).Int64()
 					if err == nil {
 						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
 						result.Valid = (err == nil && amount >= result.Price)

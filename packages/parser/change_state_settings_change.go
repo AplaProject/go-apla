@@ -61,7 +61,7 @@ func (p *Parser) ChangeStateSettingsChangeFront() error {
 
 
 	// Check the condition that must be met to complete this transaction
-	conditions, err := p.Single(`SELECT change FROM `+p.States[p.TxMaps.Int64["state_id"]]+`_state_settings WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
+	conditions, err := p.Single(`SELECT change FROM `+p.States[p.TxMaps.Int64["state_id"]]+`_state_parameters WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
