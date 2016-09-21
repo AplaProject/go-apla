@@ -44,7 +44,6 @@ func (p *Parser) CitizenRequestFront() error {
 	// есть ли сумма, которую просит гос-во за регистрацию гражданства в DLT
 	// Проверка подписи перенесена в generalCheckStruct
 
-	// есть ли нужная сумма на кошельке
 	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE parameter = ?`, "citizen_dlt_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -67,6 +66,7 @@ func (p *Parser) CitizenRequestFront() error {
 }
 
 func (p *Parser) CitizenRequest() error {
+
 	// пишем в общую историю тр-ий
 	err := p.ExecSql(`INSERT INTO `+p.TxVars[`state_code`]+
 		`_citizenship_requests ( dlt_wallet_id, block_id ) VALUES ( ?, ? )`,
@@ -74,7 +74,9 @@ func (p *Parser) CitizenRequest() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	amount, err := p.getWalletsBufferAmount()
+
+	// вычитаем
+	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE parameter = ?`, "citizen_dlt_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -82,6 +84,7 @@ func (p *Parser) CitizenRequest() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
 	return nil
 }
 
