@@ -17,9 +17,7 @@
 package parser
 
 import (
-	"encoding/hex"
 	"fmt"
-
 	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
@@ -97,9 +95,15 @@ func (p *Parser) NewCitizenFront() error {
 }
 
 func (p *Parser) NewCitizen() error {
+
 	data := p.TxPtr.(*consts.NewCitizen)
 
-	citizenId, err := p.ExecSqlGetLastInsertId(`INSERT INTO `+p.States[data.StateId]+`_citizens ( public_key_0, block_id ) VALUES ( [hex], ? )`,
+	err := p.selectiveLoggingAndUpd([]string{"public_key_0", "block_id"}, []interface{}{data.PublicKey,  p.BlockData.BlockId}, "dlt_wallets", nil, nil, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	/*citizenId, err := p.ExecSqlGetLastInsertId(`INSERT INTO `+p.States[data.StateId]+`_citizens ( public_key_0, block_id ) VALUES ( [hex], ? )`,
 		p.States[data.StateId]+`_citizens`, hex.EncodeToString(data.PublicKey), p.BlockData.BlockId)
 	if err != nil {
 		return err
@@ -123,7 +127,7 @@ func (p *Parser) NewCitizen() error {
 		} else {
 			return err
 		}
-	}
+	}*/
 	return nil
 }
 

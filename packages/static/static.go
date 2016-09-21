@@ -120,6 +120,7 @@
 // static/login.html
 // static/menu.html
 // static/modal_anonym.html
+// static/new_table.html
 // static/pass.html
 // static/psw.html
 // static/request_citizen_status.html
@@ -128,6 +129,7 @@
 // static/state_laws.html
 // static/state_parameters.html
 // static/state_smart_laws.html
+// static/table_list.html
 // static/test.html
 // static/updating_blockchain.html
 // static/vendor/animate.css/animate.min.css
@@ -2364,6 +2366,24 @@ func staticModal_anonymHtml() (*asset, error) {
 	return a, err
 }
 
+// staticNew_tableHtml reads file data from disk. It returns an error on failure.
+func staticNew_tableHtml() (*asset, error) {
+	path := "static/new_table.html"
+	name := "static/new_table.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticPassHtml reads file data from disk. It returns an error on failure.
 func staticPassHtml() (*asset, error) {
 	path := "static/pass.html"
@@ -2494,6 +2514,24 @@ func staticState_parametersHtml() (*asset, error) {
 func staticState_smart_lawsHtml() (*asset, error) {
 	path := "static/state_smart_laws.html"
 	name := "static/state_smart_laws.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticTable_listHtml reads file data from disk. It returns an error on failure.
+func staticTable_listHtml() (*asset, error) {
+	path := "static/table_list.html"
+	name := "static/table_list.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3580,6 +3618,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
+	"static/new_table.html": staticNew_tableHtml,
 	"static/pass.html": staticPassHtml,
 	"static/psw.html": staticPswHtml,
 	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
@@ -3588,6 +3627,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/state_laws.html": staticState_lawsHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
 	"static/state_smart_laws.html": staticState_smart_lawsHtml,
+	"static/table_list.html": staticTable_listHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
@@ -3941,6 +3981,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{
 		}},
+		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{
+		}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{
 		}},
 		"psw.html": &bintree{staticPswHtml, map[string]*bintree{
@@ -3956,6 +3998,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{
 		}},
 		"state_smart_laws.html": &bintree{staticState_smart_lawsHtml, map[string]*bintree{
+		}},
+		"table_list.html": &bintree{staticTable_listHtml, map[string]*bintree{
 		}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{
 		}},
