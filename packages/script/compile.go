@@ -16,220 +16,216 @@
 
 package script
 
-//	"fmt"
-//	"strconv"
-
-const (
-	CMD_ERROR   = iota // error
-	CMD_PUSH           // Push value to stack
-	CMD_VAR            // Push variable to stack
-	CMD_PUSHSTR        // Push ident as string
-	CMD_TABLE          // #table_name[id_column_name = value].column_name
-	CMD_CALL           // call a function
+import (
+	"fmt"
 )
 
-const (
-	CMD_NOT = iota | 0x0100
-)
-
-const (
-	CMD_ADD = iota | 0x0200
-	CMD_SUB
-	CMD_MUL
-	CMD_DIV
-	CMD_AND
-	CMD_OR
-	CMD_EQUAL
-	CMD_NOTEQ
-	CMD_LESS
-	CMD_NOTLESS
-	CMD_GREAT
-	CMD_NOTGREAT
-
-	CMD_SYS           = 0xff
-	UNARY      uint16 = 50
-	MODE_TABLE        = 1
-)
-
-type Oper struct {
-	Cmd      uint16
-	Priority uint16
+type State struct {
+	NewState int
+	Func     int
 }
+
+type StateLine map[int]State
+
+type States []StateLine
+
+type FuncCompile func(*[]*Block, int, *Lexem) error
+
+const (
+	STATE_ROOT = iota
+	STATE_BODY
+	STATE_BLOCK
+	STATE_CONTRACT
+	STATE_FUNC
+	STATE_PUSH = 0x0100
+	STATE_POP  = 0x0200
+)
+
+const (
+	ERR_NOERROR    = iota
+	ERR_UNKNOWNCMD // unknown command
+	ERR_MUSTNAME   // must be the name
+	ERR_MUSTLCURLY // must be '{'
+	ERR_MUSTRCURLY // must be '}'
+)
+
+const (
+	CF_NOTHING = iota
+	CF_ERROR
+	CF_NAMEBLOCK
+)
 
 var (
-	OPERS = map[string]Oper{
-		`||`: {CMD_OR, 10}, `&&`: {CMD_AND, 15}, `==`: {CMD_EQUAL, 20}, `!=`: {CMD_NOTEQ, 20},
-		`<`: {CMD_LESS, 22}, `>=`: {CMD_NOTLESS, 22}, `>`: {CMD_GREAT, 22}, `<=`: {CMD_NOTGREAT, 22},
-		`+`: {CMD_ADD, 25}, `-`: {CMD_SUB, 25}, `*`: {CMD_MUL, 30},
-		`/`: {CMD_DIV, 30}, `!`: {CMD_NOT, UNARY}, `(`: {CMD_SYS, 0xff}, `)`: {CMD_SYS, 0},
+	funcs = []FuncCompile{nil,
+		fError,
+		fNameBlock,
+	}
+	states = States{
+		{ // STATE_ROOT
+			LEX_NEWLINE:                       {STATE_ROOT, 0},
+			LEX_KEYWORD | (KEY_CONTRACT << 8): {STATE_CONTRACT | STATE_PUSH, 0},
+			0: {ERR_UNKNOWNCMD, CF_ERROR},
+		},
+		{ // STATE_BODY
+			LEX_NEWLINE:                   {STATE_BODY, 0},
+			LEX_KEYWORD | (KEY_FUNC << 8): {STATE_FUNC | STATE_PUSH, 0},
+			IS_RCURLY:                     {STATE_POP, 0},
+			0:                             {ERR_MUSTRCURLY, CF_ERROR},
+		},
+		{ // STATE_BLOCK
+			LEX_NEWLINE: {STATE_BLOCK, 0},
+			IS_LCURLY:   {STATE_BODY, 0},
+			0:           {ERR_MUSTLCURLY, CF_ERROR},
+		},
+		{ // STATE_CONTRACT
+			LEX_NEWLINE: {STATE_CONTRACT, 0},
+			LEX_IDENT:   {STATE_BLOCK, CF_NAMEBLOCK},
+			0:           {ERR_MUSTNAME, CF_ERROR},
+		},
+		{ // STATE_FUNC
+			LEX_NEWLINE: {STATE_FUNC, 0},
+			LEX_IDENT:   {STATE_BLOCK, CF_NAMEBLOCK},
+			0:           {ERR_MUSTNAME, CF_ERROR},
+		},
 	}
 )
 
-type Bytecode struct {
-	Cmd   uint16
-	Value interface{}
-	Lex   *Lexem
+func fError(buf *[]*Block, state int, lexem *Lexem) error {
+	errors := []string{`no error`,
+		`unknown command`,  // ERR_UNKNOWNCMD
+		`must be the name`, // ERR_MUSTNAME
+		`must be '{'`,      // ERR_MUSTLCURLY
+		`must be '}'`,      // ERR_MUSTRCURLY
+	}
+	return fmt.Errorf(`%s %v [Ln:%d Col:%d]`, errors[state], lexem.Value, lexem.Line, lexem.Column)
 }
 
-type Bytecodes []*Bytecode
+func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
+	itype := OBJ_FUNC
+	switch state {
+	case STATE_CONTRACT:
+		itype = OBJ_CONTRACT
+	}
+	prev := (*buf)[len(*buf)-2]
+	prev.Objects[lexem.Value.(string)] = &ObjInfo{Type: itype, Value: len(prev.Children) - 1}
+	return nil
+}
 
-/*
-func Compile(input []rune) Bytecodes {
-	var i int
-	bytecode := make(Bytecodes, 0, 100)
+func (vm *VM) Compile(input []rune) error {
 
-	lexems := LexParser(input)
+	lexems, err := LexParser(input)
+	if err != nil {
+		return err
+	}
 	if len(lexems) == 0 {
-		return append(bytecode, &Bytecode{CMD_ERROR, `empty program`, nil})
+		return nil
 	}
-	last := lexems[len(lexems)-1]
-	if last.Type == LEX_UNKNOWN {
-		return append(bytecode, &Bytecode{CMD_ERROR, fmt.Sprintf(`unknown lexem %s`,
-			string(input[last.Offset:last.Right])), last})
-	}
-	getNext := func() (string, *Lexem) {
-		i++
-		return string(input[lexems[i].Offset:lexems[i].Right]), lexems[i]
-	}
-	buffer := make(Bytecodes, 0, 20)
-	mode := 0
-	for i = 0; i < len(lexems); i++ {
-		var cmd *Bytecode
-		lexem := lexems[i]
-		//		fmt.Println(i, lexem, buffer, bytecode)
-		strlex := string(input[lexem.Offset:lexem.Right])
-		switch lexem.Type {
-		case LEX_SYS:
-			switch strlex {
-			case `#`:
-				mode = MODE_TABLE
-				buffer = append(buffer, &Bytecode{CMD_TABLE, UNARY, lexem})
+	curState := 0
+	root := &Block{}
+	stack := make([]int, 0, 64)
+	blockstack := make([]*Block, 1, 64)
+	blockstack[0] = root
 
-				strnext, next := getNext()
-				bytecode = append(bytecode, &Bytecode{CMD_PUSHSTR, strnext, next})
-				strnext, next = getNext()
-				if strnext != `[` {
-					cmd = &Bytecode{CMD_ERROR, `must be [`, next}
-				} else {
-					strnext, next = getNext()
-					bytecode = append(bytecode, &Bytecode{CMD_PUSHSTR, strnext, next})
-					strnext, next = getNext()
-					if strnext != `=` {
-						cmd = &Bytecode{CMD_ERROR, `must be =`, next}
-					}
-				}
-			case `(`:
-				buffer = append(buffer, &Bytecode{CMD_SYS, uint16(0xff), lexem})
-			case `,`:
-				for len(buffer) > 0 {
-					prev := buffer[len(buffer)-1]
-					if prev.Cmd == CMD_SYS && prev.Value.(uint16) == 0xff {
-						break
-					} else {
-						bytecode = append(bytecode, prev)
-						buffer = buffer[:len(buffer)-1]
-					}
-				}
-			case `)`, `]`:
-				for {
-					if len(buffer) == 0 {
-						cmd = &Bytecode{CMD_ERROR, `there is not pair`, lexem}
-						break
-					} else {
-						prev := buffer[len(buffer)-1]
-						buffer = buffer[:len(buffer)-1]
-						if (strlex == `)` && prev.Value.(uint16) == 0xff) ||
-							(strlex == `]` && prev.Cmd == CMD_TABLE) {
-							break
-						} else {
-							bytecode = append(bytecode, prev)
-						}
-					}
-				}
-				if strlex == `)` && len(buffer) > 0 {
-					if prev := buffer[len(buffer)-1]; prev.Cmd == CMD_CALL {
-						buffer = buffer[:len(buffer)-1]
-						bytecode = append(bytecode, prev)
-					}
-				}
-				if mode == MODE_TABLE && strlex == `]` {
-					strnext, next := getNext()
-					if strnext != `.` {
-						cmd = &Bytecode{CMD_ERROR, `must be .`, next}
-					} else {
-						strnext, next = getNext()
-						bytecode = append(bytecode, &Bytecode{CMD_PUSHSTR, strnext, next})
-						mode = 0
-						bytecode = append(bytecode, &Bytecode{CMD_TABLE, UNARY, next})
-					}
-				}
+	for i := 0; i < len(lexems); i++ {
+		var (
+			newState State
+			ok       bool
+		)
+		lexem := lexems[i]
+		if newState, ok = states[curState][int(lexem.Type)]; !ok {
+			newState = states[curState][0]
+		}
+		if (newState.NewState & STATE_PUSH) > 0 {
+			stack = append(stack, curState)
+			top := blockstack[len(blockstack)-1]
+			if top.Objects == nil {
+				top.Objects = make(map[string]*ObjInfo)
 			}
-		case LEX_OPER:
-			if oper, ok := OPERS[strlex]; ok {
-				byteOper := &Bytecode{oper.Cmd, oper.Priority, lexem}
-				for {
-					if len(buffer) == 0 {
-						buffer = append(buffer, byteOper)
-						break
-					} else {
-						prev := buffer[len(buffer)-1]
-						if prev.Value.(uint16) >= oper.Priority && oper.Priority != UNARY && prev.Cmd != CMD_SYS {
-							if prev.Value.(uint16) == UNARY { // Right to left
-								unar := len(buffer) - 1
-								for ; unar > 0 && buffer[unar-1].Value.(uint16) == UNARY; unar-- {
-								}
-								bytecode = append(bytecode, buffer[unar:]...)
-								buffer = buffer[:unar]
-							} else {
-								bytecode = append(bytecode, prev)
-								buffer = buffer[:len(buffer)-1]
-							}
-						} else {
-							buffer = append(buffer, byteOper)
-							break
-						}
-					}
-				}
-			} else {
-				cmd = &Bytecode{CMD_ERROR, `unknown operator`, lexem}
+			block := &Block{}
+			top.Children = append(top.Children, block)
+			blockstack = append(blockstack, block)
+		}
+		if (newState.NewState & STATE_POP) > 0 {
+			if len(stack) == 0 {
+				return fError(&blockstack, ERR_MUSTLCURLY, lexem)
 			}
-		case LEX_NUMBER:
-			if val, err := strconv.ParseInt(strlex, 10, 64); err == nil {
-				cmd = &Bytecode{CMD_PUSH, val, lexem}
-			} else {
-				cmd = &Bytecode{CMD_ERROR, err.Error(), lexem}
-			}
-		case LEX_IDENT:
-			var call bool
-			if i < len(lexems)-1 {
-				strnext, _ := getNext()
-				if strnext == `(` {
-					buffer = append(buffer, &Bytecode{CMD_CALL, strlex, lexem})
-					call = true
-				}
-				i--
-			}
-			if !call {
-				cmd = &Bytecode{CMD_VAR, strlex, lexem}
+			newState.NewState = stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			blockstack = blockstack[:len(blockstack)-1]
+			//			fmt.Println(`POP`, stack, newState.NewState)
+			continue
+		}
+		if newState.Func > 0 {
+			if err := funcs[newState.Func](&blockstack, curState, lexem); err != nil {
+				return err
 			}
 		}
-		if cmd != nil {
-			bytecode = append(bytecode, cmd)
-			if cmd.Cmd == CMD_ERROR {
-				cmd.Value = fmt.Sprintf(`%s %s`, cmd.Value.(string), strlex)
-				cmd.Lex = lexem
-				break
-			}
-		}
+		//		fmt.Println(`LEX`, curState, lexem, buf, stack)
+		curState = newState.NewState & 0xff
 	}
-	for i := len(buffer) - 1; i >= 0; i-- {
-		if buffer[i].Cmd == CMD_SYS {
-			bytecode = append(bytecode, &Bytecode{CMD_ERROR, fmt.Sprintf(`there is not pair`), buffer[i].Lex})
-			break
-		} else {
-			bytecode = append(bytecode, buffer[i])
-		}
+	if len(stack) > 0 {
+		return fError(&blockstack, ERR_MUSTRCURLY, lexems[len(lexems)-1])
 	}
-	return bytecode
+	shift := len(vm.Children)
+	for key, item := range root.Objects {
+		if item.Type == OBJ_CONTRACT || item.Type == OBJ_FUNC {
+			item.Value = item.Value.(int) + shift
+		}
+		vm.Objects[key] = item
+	}
+	for _, item := range root.Children {
+		vm.Children = append(vm.Children, item)
+	}
+
+	fmt.Println(`Root`, blockstack[0])
+	fmt.Println(`VM`, vm)
+	/*	getName := func(i int) string {
+				return `name` //string(input[lexems[i].Offset:lexems[i].Right])
+			}
+			getNameErr := func(msg string, i int) error {
+				return fmt.Errorf(`%s %s [Ln:%d Col:%d]`, msg, getName(i), lexems[i].Line, lexems[i].Column)
+			}
+		getNext := func(soft bool) (string, *Lexem, error) {
+			i++
+			if soft {
+				for i < len(lexems) && lexems[i].Type == LEX_NEWLINE {
+					i++
+				}
+			}
+			if i >= len(lexems) {
+				return ``, nil, fmt.Errorf(`end of source code`)
+			}
+			return getName(i), lexems[i], nil
+		}
+		for i = 0; i < len(lexems); i++ {
+			lexem := lexems[i]
+			if lexem.Type == LEX_NEWLINE {
+				continue
+			}
+			if lexem.Type != LEX_KEYWORD && lexem.Value != KEY_CONTRACT {
+				return getNameErr(`unknown lexem`, i)
+			}
+			name, next, err := getNext(true)
+			if err != nil {
+				return err
+			}
+			if next.Type != LEX_IDENT {
+				return getNameErr(`must be identifier here`, i)
+			}
+			if _, next, err = getNext(true); err != nil {
+				return err
+			}
+			if next.Type != LEX_SYS || next.Value != '{' {
+				return getNameErr(`must be '{' here`, i)
+			}
+			fmt.Println(`ops`)
+			i++
+			block, err := vm.compileContract(&input, &lexems, &i)
+			if err != nil {
+				return err
+			}
+			vm.Children = append(vm.Children, block)
+			vm.Objects[name] = len(vm.Children) - 1
+		}*/
+	return nil
 }
-*/

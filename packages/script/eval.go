@@ -16,8 +16,10 @@
 
 package script
 
-//	"fmt"
-//	"reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type ValStack struct {
 	Value interface{}
@@ -30,7 +32,6 @@ type Vm struct {
 	vars  *map[string]interface{}
 }
 
-/*
 func VMFunc(vm *Vm, name string) error {
 	var (
 		ok bool
@@ -172,4 +173,3 @@ func EvalIf(input string, vars *map[string]interface{}) (bool, error) {
 	}
 	return ValueToBool(ret), nil
 }
-*/
