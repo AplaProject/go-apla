@@ -22,6 +22,9 @@
 			'<i class="fa fa-fw fa-times"></i>'+
 		  '</button>';
 		  
+		  $(".selectbox").select2({
+				theme: 'bootstrap'
+			});
 	</script>
 	
 	<div class="content-heading">
@@ -43,31 +46,44 @@
 		   <table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
-				  <td class="thead">Value</td><td class="thead"><textarea>{{.StateParameters.value}}</textarea></td>
+				  <td class="thead">Value</td>
+				  <td><textarea class="form-control">{{.StateParameters.value}}</textarea></td>
 			  </tr>
 			  <tr>
-				  <td class="thead">conditions_parameter</td><td class="thead">
-
-				  <select>
-				  {{ range $param := .AllStateParameters }} <option {{if eq (index $.StateParameters "conditions_parameter") $param}} selected {{end}}>{{$param}}</option> {{end}}
-				  </select>
-			  </td><td></td>
+				  <td class="thead">conditions_parameter</td>
+				  <td>
+					  <select class="selectbox form-control">
+						{{ range $param := .AllStateParameters }} <option {{if eq (index $.StateParameters "conditions_parameter") $param}} selected {{end}}>{{$param}}</option> {{end}}
+					  </select>
+				  </td>
 			  </tr>
 			  <tr>
-				  <td class="thead">text_description</td><td class="thead"><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.text_description}}</a></td><td></td>
+				  <td class="thead">text_description</td>
+				  <td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.text_description}}</a></td>
 			  </tr>
 			  <tr>
-				  <td class="thead">last_update</td><td class="thead"><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.last_update}}</a></td><td></td>
+				  <td class="thead">last_update</td>
+				  <td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.last_update}}</a></td>
 			  </tr>
 			  <tr>
-				  <td class="thead">parent</td><td class="thead"><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.parent}}</a></td><td></td>
+				  <td class="thead">parent</td>
+				  <td><a class="edit" href="#" data-type="text" data-pk="1" data-title="Text">{{.StateParameters.parent}}</a></td>
 			  </tr>
 			  </tbody>
 		   </table>
-			<button type="button" class="btn btn-primary">Save</button>
-
 		</div>
 	 </div>
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-left">
+
+		  </div>
+		  <div class="pull-right">
+			 <button type="button" class="btn btn-primary">Save</button>
+		  </div>
+	   </div>
+	  </div>
+	</div>
 	</div>
 	<!-- END panel-->
 <script type="text/javascript">
