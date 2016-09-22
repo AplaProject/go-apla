@@ -51,6 +51,7 @@ func TestVMCompile(t *testing.T) {
 	test := []TestLexem{
 		{`contract my {
 		func init {
+			Println(65123, "Тестовая строка", "OK")
 		}
 		func main {
 		} 
@@ -77,9 +78,7 @@ func TestVMCompile(t *testing.T) {
 				]}
 				]`},*/
 	}
-	vm := VMInit(map[string]interface{}{"Println": fmt.Println})
-
-	vm.Call(`Println`, []interface{}{"Qwerty", 100, `OOOPS`}, nil)
+	vm := VMInit(map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf})
 
 	for _, item := range test {
 		source := []rune(item.Input)
@@ -94,6 +93,9 @@ func TestVMCompile(t *testing.T) {
 		}
 		//		fmt.Println(`%s`, out)
 		//fmt.Printf("%s", item.Output)
-
 	}
+	vm.Call(`Println`, []interface{}{"Qwerty", 100, `OOOPS`}, nil)
+	ret, _ := vm.Call(`Sprintf`, []interface{}{"Value %d %s OK", 100, `String value`}, nil)
+	vm.Call(`my.init`, nil, nil)
+	fmt.Println(ret[0].(string))
 }

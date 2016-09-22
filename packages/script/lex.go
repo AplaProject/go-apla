@@ -40,6 +40,7 @@ const (
 	// System characters
 	IS_LPAR   = 0x2801 // (
 	IS_RPAR   = 0x2901 // )
+	IS_COMMA  = 0x2c01 // ,
 	IS_LCURLY = 0x7b01 // {
 	IS_RCURLY = 0x7d01 // }
 

@@ -19,6 +19,7 @@ package script
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 type ByteCode struct {
@@ -42,6 +43,12 @@ type ExtFuncInfo struct {
 	Func     interface{}
 }
 
+type FuncInfo struct {
+	Params   []reflect.Kind
+	Results  []reflect.Kind
+	Variadic bool
+}
+
 type ObjInfo struct {
 	Type  int
 	Value interface{}
@@ -49,6 +56,7 @@ type ObjInfo struct {
 
 type Block struct {
 	Objects  map[string]*ObjInfo
+	Info     interface{}
 	Code     ByteCodes
 	Children Blocks
 }
@@ -82,41 +90,65 @@ func VMInit(obj map[string]interface{}) *VM {
 	return &vm
 }
 
-func (vm *VM) getObjByName(name string) *ObjInfo {
-	ret, ok := vm.Objects[name]
-	if !ok {
-		return nil
+func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
+	var ok bool
+	names := strings.Split(name, `.`)
+	block := &vm.Block
+	for i, name := range names {
+		ret, ok = block.Objects[name]
+		if !ok {
+			return nil
+		}
+		if i == len(names)-1 {
+			return
+		}
+		if ret.Type != OBJ_CONTRACT && ret.Type != OBJ_FUNC {
+			return nil
+		}
+		block = ret.Value.(*Block)
 	}
-	return ret
+	return
+}
+
+func (vm *VM) getInParams(ret *ObjInfo) int {
+	if ret.Type == OBJ_EXTFUNC {
+		return len(ret.Value.(ExtFuncInfo).Params)
+	}
+	return len(ret.Value.(*Block).Info.(FuncInfo).Params)
 }
 
 func (vm *VM) Call(name string, params []interface{}, extend map[string]interface{}) ([]interface{}, error) {
+	var ret []interface{}
 	obj := vm.getObjByName(name)
 	if obj == nil {
 		return nil, fmt.Errorf(`unknown function`, name)
 	}
 	switch obj.Type {
+	case OBJ_FUNC:
+		rt := vm.RunInit()
+		rt.Run(obj.Value.(*Block), params, extend)
 	case OBJ_EXTFUNC:
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)
+		var result []reflect.Value
 		pars := make([]reflect.Value, len(finfo.Params))
-		for i := 0; i < len(pars); i++ {
-			pars[i] = reflect.ValueOf(params[i])
-		}
 		if finfo.Variadic {
-
-			for i := len(pars); i < len(params); i++ {
-				pars = append(pars, reflect.ValueOf(params[i]))
+			for i := 0; i < len(pars)-1; i++ {
+				pars[i] = reflect.ValueOf(params[i])
 			}
-			fmt.Println(`Pars`, pars)
-			result := foo.CallSlice(pars)
-			fmt.Println(`Result`, result)
+			pars[len(pars)-1] = reflect.ValueOf(params[len(pars)-1:])
+			result = foo.CallSlice(pars)
 		} else {
-			result := foo.Call(pars)
-			fmt.Println(`Result`, result)
+			for i := 0; i < len(pars); i++ {
+				pars[i] = reflect.ValueOf(params[i])
+			}
+			result = foo.Call(pars)
+		}
+		for _, iret := range result {
+			ret = append(ret, iret.Interface())
 		}
 	default:
 		return nil, fmt.Errorf(`unknown function`, name)
 	}
-	return nil, nil
+	return ret, nil
 }
