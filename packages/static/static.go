@@ -148,6 +148,11 @@
 // static/vendor/datatables/media/images/sort_desc.png
 // static/vendor/datatables/media/images/sort_desc_disabled.png
 // static/vendor/datatables/media/js/dataTables.bootstrap.js
+// static/vendor/datatables/media/js/dataTables.buttons.min.js
+// static/vendor/datatables/media/js/dataTables.colReorder.min.js
+// static/vendor/datatables/media/js/dataTables.editor.min.js
+// static/vendor/datatables/media/js/dataTables.keyTable.min.js
+// static/vendor/datatables/media/js/dataTables.select.min.js
 // static/vendor/datatables/media/js/jquery.dataTables.min.js
 // static/vendor/datatables-colvis/css/dataTables.colVis.css
 // static/vendor/datatables-colvis/js/dataTables.colVis.js
@@ -2872,6 +2877,96 @@ func staticVendorDatatablesMediaJsDatatablesBootstrapJs() (*asset, error) {
 	return a, err
 }
 
+// staticVendorDatatablesMediaJsDatatablesButtonsMinJs reads file data from disk. It returns an error on failure.
+func staticVendorDatatablesMediaJsDatatablesButtonsMinJs() (*asset, error) {
+	path := "static/vendor/datatables/media/js/dataTables.buttons.min.js"
+	name := "static/vendor/datatables/media/js/dataTables.buttons.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticVendorDatatablesMediaJsDatatablesColreorderMinJs reads file data from disk. It returns an error on failure.
+func staticVendorDatatablesMediaJsDatatablesColreorderMinJs() (*asset, error) {
+	path := "static/vendor/datatables/media/js/dataTables.colReorder.min.js"
+	name := "static/vendor/datatables/media/js/dataTables.colReorder.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticVendorDatatablesMediaJsDatatablesEditorMinJs reads file data from disk. It returns an error on failure.
+func staticVendorDatatablesMediaJsDatatablesEditorMinJs() (*asset, error) {
+	path := "static/vendor/datatables/media/js/dataTables.editor.min.js"
+	name := "static/vendor/datatables/media/js/dataTables.editor.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticVendorDatatablesMediaJsDatatablesKeytableMinJs reads file data from disk. It returns an error on failure.
+func staticVendorDatatablesMediaJsDatatablesKeytableMinJs() (*asset, error) {
+	path := "static/vendor/datatables/media/js/dataTables.keyTable.min.js"
+	name := "static/vendor/datatables/media/js/dataTables.keyTable.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticVendorDatatablesMediaJsDatatablesSelectMinJs reads file data from disk. It returns an error on failure.
+func staticVendorDatatablesMediaJsDatatablesSelectMinJs() (*asset, error) {
+	path := "static/vendor/datatables/media/js/dataTables.select.min.js"
+	name := "static/vendor/datatables/media/js/dataTables.select.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticVendorDatatablesMediaJsJqueryDatatablesMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsJqueryDatatablesMinJs() (*asset, error) {
 	path := "static/vendor/datatables/media/js/jquery.dataTables.min.js"
@@ -3684,6 +3779,11 @@ var _bindata = map[string]func() (*asset, error){
 	"static/vendor/datatables/media/images/sort_desc.png": staticVendorDatatablesMediaImagesSort_descPng,
 	"static/vendor/datatables/media/images/sort_desc_disabled.png": staticVendorDatatablesMediaImagesSort_desc_disabledPng,
 	"static/vendor/datatables/media/js/dataTables.bootstrap.js": staticVendorDatatablesMediaJsDatatablesBootstrapJs,
+	"static/vendor/datatables/media/js/dataTables.buttons.min.js": staticVendorDatatablesMediaJsDatatablesButtonsMinJs,
+	"static/vendor/datatables/media/js/dataTables.colReorder.min.js": staticVendorDatatablesMediaJsDatatablesColreorderMinJs,
+	"static/vendor/datatables/media/js/dataTables.editor.min.js": staticVendorDatatablesMediaJsDatatablesEditorMinJs,
+	"static/vendor/datatables/media/js/dataTables.keyTable.min.js": staticVendorDatatablesMediaJsDatatablesKeytableMinJs,
+	"static/vendor/datatables/media/js/dataTables.select.min.js": staticVendorDatatablesMediaJsDatatablesSelectMinJs,
 	"static/vendor/datatables/media/js/jquery.dataTables.min.js": staticVendorDatatablesMediaJsJqueryDatatablesMinJs,
 	"static/vendor/datatables-colvis/css/dataTables.colVis.css": staticVendorDatatablesColvisCssDatatablesColvisCss,
 	"static/vendor/datatables-colvis/js/dataTables.colVis.js": staticVendorDatatablesColvisJsDatatablesColvisJs,
@@ -3955,6 +4055,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 					}},
 					"js": &bintree{nil, map[string]*bintree{
 						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{}},
+						"dataTables.buttons.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesButtonsMinJs, map[string]*bintree{}},
+						"dataTables.colReorder.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesColreorderMinJs, map[string]*bintree{}},
+						"dataTables.editor.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesEditorMinJs, map[string]*bintree{}},
+						"dataTables.keyTable.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesKeytableMinJs, map[string]*bintree{}},
+						"dataTables.select.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesSelectMinJs, map[string]*bintree{}},
 						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{}},
 					}},
 				}},

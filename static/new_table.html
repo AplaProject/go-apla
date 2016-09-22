@@ -1,25 +1,64 @@
 {{ define "newTable" }}
-<script>
+	<style>
+		th {
+			cursor:move;
+		}
+	</style>
+	
+	<script>
 		$(".aside .nav li").removeClass("active");
 		$(".citizen, .citizen_form").addClass("active");
 		
+		$.fn.editable.defaults.mode = 'inline';
+		$.fn.editableform.buttons =
+		  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
+			'<i class="fa fa-fw fa-check"></i>'+
+		  '</button>'+
+		  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
+			'<i class="fa fa-fw fa-times"></i>'+
+		  '</button>';
+		
+		var table = $("#table");
 		var el = $("#table tr");
+		var table_init;
+		
 		$("#add").on('click', function(){
+			$("body").click();
+			table_init.destroy();
 			el.each(function() {
-				var col = $(this).find(":last").clone();
+				var col = $(this).find("th:last, td:last").clone();
 				$(this).append(col);
 			});
+			InitTable();
 		})
 		$("#remove").on('click', function(){
+			table_init.destroy();
 			el.each(function() {
-				var col = $(this).children().length;
+				var col = $(this).children("th, td").length;
 				if (col > 1) {
-					$(this).find(":last").remove();
+					$(this).find("th:last, td:last").remove();
 				} else {
 					return false;
 				}
 			});
+			InitTable();
 		})
+		
+		function InitTable() {
+			table_init = table.DataTable({
+				destroy: true,
+				colReorder: true,
+				paging:   false,
+				ordering: false,
+				searching: false,
+				info:     false
+			});
+			$(".edit").editable({
+				type: 'text'
+			})
+		}
+		
+		InitTable();
 	</script>
 	
 	<div class="content-heading">
@@ -41,26 +80,16 @@
 		   <table id="table" class="table table-striped table-bordered table-hover">
 			  <thead>
 				 <tr>
-					<th>Название колонки</th>
-					<th>Название колонки</th>
-					<th>Название колонки</th>
+					<th><span class="edit">Название колонки1</span></th>
+					<th><span class="edit">Название колонки2</span></th>
+					<th><span class="edit">Название колонки3</span></th>
 				 </tr>
 			  </thead>
 			  <tbody>
 				 <tr>
-					<td>Текст колонки</td>
-					<td>Текст колонки</td>
-					<td>Текст колонки</td>
-				 </tr>
-				 <tr>
-					<td>Текст колонки</td>
-					<td>Текст колонки</td>
-					<td>Текст колонки</td>
-				 </tr>
-				 <tr>
-					<td>Текст колонки</td>
-					<td>Текст колонки</td>
-					<td>Текст колонки</td>
+					<td><span class="edit">Текст колонки</span></td>
+					<td><span class="edit">Текст колонки</span></td>
+					<td><span class="edit">Текст колонки</span></td>
 				 </tr>
 			  </tbody>
 		   </table>
