@@ -417,7 +417,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s = make(Recmap)
 	s1 = make(Recmap)
 	s2 = make(Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ea_citizens_requests_private_id_seq')", "comment": ""}
+	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) unsigned NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint  NOT NULL  default nextval('ea_citizenship_requests_private_id_seq')", "comment": ""}
 	s2[1] = map[string]string{"name": "request_id", "mysql": "bigint(20) unsigned NOT NULL DEFAULT '0'", "sqlite": "INTEGER NOT NULL", "postgresql": "bigint  NOT NULL  default '0'", "comment": ""}
 	s2[2] = map[string]string{"name": "fields", "mysql": "text NOT NULL DEFAULT ''", "sqlite": "text NOT NULL DEFAULT ''", "postgresql": "text NOT NULL DEFAULT ''", "comment": "JSON of request fields"}
 	s2[3] = map[string]string{"name": "binary", "mysql": "longblob NOT NULL DEFAULT ''", "sqlite": "longblob NOT NULL DEFAULT ''", "postgresql": "bytea NOT NULL DEFAULT ''", "comment": ""}
@@ -427,7 +427,7 @@ func (schema *SchemaStruct) GetSchema() {
 	s1["PRIMARY"] = []string{"id"}
 	s1["AI"] = "id"
 	s1["comment"] = ""
-	s["ea_citizens_requests_private"] = s1
+	s["ea_citizenship_requests_private"] = s1
 	schema.S = s
 	schema.PrintSchema()
 
