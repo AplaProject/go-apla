@@ -19,6 +19,7 @@ package script
 import (
 	"encoding/binary"
 	"fmt"
+	"reflect"
 	"strconv"
 )
 
@@ -31,6 +32,7 @@ const (
 	LEX_NEWLINE
 	LEX_STRING
 	LEX_KEYWORD
+	LEX_TYPE
 
 	LEX_ERROR = 0xff
 	LEXF_NEXT = 1
@@ -45,14 +47,19 @@ const (
 	IS_RCURLY = 0x7d01 // }
 
 	// Operators
-	IS_NOT    = 0x0021 // !
-	IS_PLUS   = 0x002b // +
-	IS_MINUS  = 0x002d // -
-	IS_NOTEQ  = 0x213d // !=
-	IS_AND    = 0x2626 // &&
-	IS_LESSEQ = 0x3c3d // <=
-	IS_EQEQ   = 0x3d3d // ==
-	IS_OR     = 0x7c7c // ||
+	IS_NOT      = 0x0021 // !
+	IS_ASTERISK = 0x002a // *
+	IS_PLUS     = 0x002b // +
+	IS_MINUS    = 0x002d // -
+	IS_SOLIDUS  = 0x002f // /
+	IS_LESS     = 0x003c // <
+	IS_GREAT    = 0x003e // >
+	IS_NOTEQ    = 0x213d // !=
+	IS_AND      = 0x2626 // &&
+	IS_LESSEQ   = 0x3c3d // <=
+	IS_EQEQ     = 0x3d3d // ==
+	IS_GREQ     = 0x3e3d // >=
+	IS_OR       = 0x7c7c // ||
 
 )
 
@@ -68,6 +75,7 @@ const (
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
 		`if`: KEY_IF, `while`: KEY_WHILE}
+	TYPES = map[string]reflect.Kind{`int`: reflect.Int64, `string`: reflect.String}
 )
 
 type Lexem struct {
@@ -156,6 +164,9 @@ func LexParser(input []rune) (Lexems, error) {
 				if keyId, ok := KEYWORDS[name]; ok {
 					lexId = LEX_KEYWORD | (keyId << 8)
 					value = keyId
+				} else if typeId, ok := TYPES[name]; ok {
+					lexId = LEX_TYPE
+					value = typeId
 				} else {
 					value = name
 				}
