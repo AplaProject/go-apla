@@ -14,6 +14,7 @@
 // static/check_citizen_status.html
 // static/countries/countries.json
 // static/countries/flags.png
+// static/countries/mm.png
 // static/css/style.css
 // static/dashboard_anonym.html
 // static/fonts/glyphicons-filetypes-regular.eot
@@ -452,6 +453,24 @@ func staticCountriesCountriesJson() (*asset, error) {
 func staticCountriesFlagsPng() (*asset, error) {
 	path := "static/countries/flags.png"
 	name := "static/countries/flags.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCountriesMmPng reads file data from disk. It returns an error on failure.
+func staticCountriesMmPng() (*asset, error) {
+	path := "static/countries/mm.png"
+	name := "static/countries/mm.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3664,6 +3683,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
 	"static/countries/countries.json": staticCountriesCountriesJson,
 	"static/countries/flags.png": staticCountriesFlagsPng,
+	"static/countries/mm.png": staticCountriesMmPng,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
 	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
@@ -3896,6 +3916,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"countries": &bintree{nil, map[string]*bintree{
 			"countries.json": &bintree{staticCountriesCountriesJson, map[string]*bintree{}},
 			"flags.png": &bintree{staticCountriesFlagsPng, map[string]*bintree{}},
+			"mm.png": &bintree{staticCountriesMmPng, map[string]*bintree{}},
 		}},
 		"css": &bintree{nil, map[string]*bintree{
 			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
