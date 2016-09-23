@@ -85,6 +85,10 @@
 				columns.push(val);
 			});
 			
+			serverTime = data.time;
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}}');
+			doSign();
+			
 			$("#send_to_net").trigger("click");
 		});
 	
@@ -96,9 +100,9 @@
 					'tableName' : $("#tableName").val(),
 					'columns' : columns,
 					'type' : '{{.TxType}}',
-					'time' : 123456789,
+					'time' : serverTime,
 					'citizenId' : '{{.CitizenId}}',
-					'stateId' : 'dl',
+					'stateId' : '{{.StateId}}',
 					'signature1': $('#signature1').val(),
 					'signature2': $('#signature2').val(),
 					'signature3': $('#signature3').val()
