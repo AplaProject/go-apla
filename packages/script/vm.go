@@ -44,67 +44,42 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) error {
 	} else {
 		count = in
 	}
-	//	fmt.Println(`Count`, count, `In`, in)
-
-	finfo := obj.Value.(ExtFuncInfo)
-	foo := reflect.ValueOf(finfo.Func)
-	var result []reflect.Value
-	pars := make([]reflect.Value, in)
-	i := count
-	limit := 0
-	if finfo.Variadic {
-		limit = count - in + 1
-	}
-	for ; i > limit; i-- {
-		pars[count-i] = reflect.ValueOf(rt.stack[size-i])
-	}
-	if i > 0 {
-		pars[in-1] = reflect.ValueOf(rt.stack[in-i : size])
-	}
-	//	fmt.Println(`Pars`, len(pars), pars, pars[0].Interface())
-	if finfo.Variadic {
-		result = foo.CallSlice(pars)
+	if obj.Type == OBJ_FUNC {
+		return rt.RunCode(obj.Value.(*Block))
 	} else {
-		result = foo.Call(pars)
-	}
-	fmt.Println(`Result`, result)
-	/*
+		finfo := obj.Value.(ExtFuncInfo)
+		foo := reflect.ValueOf(finfo.Func)
+		var result []reflect.Value
+		pars := make([]reflect.Value, in)
+		i := count
+		limit := 0
 		if finfo.Variadic {
-			for i := 0; i < len(pars)-1; i++ {
-				pars[i] = reflect.ValueOf(rt.stack[size - count+i-1 ])
-			}
-			pars[len(pars)-1] = reflect.ValueOf(params[len(pars)-1:])
+			limit = count - in + 1
+		}
+		//	fmt.Println(`CALL`, count, i, in, limit)
+		for ; i > limit; i-- {
+			pars[count-i] = reflect.ValueOf(rt.stack[size-i])
+		}
+		if i > 0 {
+			pars[in-1] = reflect.ValueOf(rt.stack[size-i : size])
+		}
+		//	fmt.Println(`Pars`, len(pars), pars, pars[0].Interface())
+		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {
-			for i := 0; i < len(pars); i++ {
-				pars[i] = reflect.ValueOf(params[i])
-			}
 			result = foo.Call(pars)
-		}*/
-	/*		for _, iret := range result {
-			ret = append(ret, iret.Interface())
-		}*/
-
+		}
+		rt.stack = rt.stack[:size-count]
+		//	fmt.Println(`Result`, result)
+		for _, iret := range result {
+			rt.stack = append(rt.stack, iret.Interface())
+		}
+	}
 	/*	if
-
-		if f, ok = (*rt.vars)[name]; !ok || reflect.ValueOf(f).Kind().String() != `func` {
-			return fmt.Errorf(`unknown function %s`, name)
-		}
-		foo := reflect.ValueOf(f)
-		//	if count != foo.Type().NumIn() {
-		//	return fmt.Errorf(`The number of params %s is wrong`, name)
-		//
-		count := foo.Type().NumIn()
-		pars := make([]reflect.Value, count)
-		for i := count; i > 0; i-- {
-			pars[count-i] = reflect.ValueOf(rt.stack[size-i].Value)
-		}
-		result := foo.Call(pars)
 		if result[len(result)-1].Interface() != nil {
 			return result[len(result)-1].Interface().(error)
 		}
-		rt.stack[size-count] = &ValStack{Value: result[0].Interface()}
-		rt.stack = rt.stack[:size-count+1]*/
+	*/
 	return nil
 }
 
@@ -131,6 +106,8 @@ func (vm *VM) RunInit() *RunTime {
 
 func (rt *RunTime) RunCode(block *Block) error {
 	top := make([]interface{}, 8)
+	start := len(rt.stack)
+main:
 	for _, cmd := range block.Code {
 		var bin interface{}
 		size := len(rt.stack)
@@ -145,8 +122,17 @@ func (rt *RunTime) RunCode(block *Block) error {
 			rt.stack = append(rt.stack, cmd.Value)
 		case CMD_PUSHSTR:
 			rt.stack = append(rt.stack, cmd.Value.(string))
+		case CMD_RETURN:
+			for count := cmd.Value.(int); count > 0; count-- {
+				rt.stack[start] = rt.stack[len(rt.stack)-count]
+				start++
+			}
+			break main
 		case CMD_CALLVARI, CMD_CALL:
-			rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
+			err := rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
+			if err != nil {
+				return err
+			}
 			/*			if err != nil {
 						return fmt.Errorf(`%s [%d:%d]`, err.Error(), last.Lex.Line, last.Lex.Column)
 					}*/
@@ -213,15 +199,16 @@ func (rt *RunTime) RunCode(block *Block) error {
 			rt.stack = rt.stack[:size-1]
 		}
 	}
+	rt.stack = rt.stack[:start]
 	return nil
 }
 
 func (rt *RunTime) Run(block *Block, params []interface{}, extend map[string]interface{}) ([]interface{}, error) {
-	rt.RunCode(block)
+	err := rt.RunCode(block)
 	/*	if len(rt.stack) == 0 {
 		return fmt.Errorf(`Stack empty`)
 	}*/
-	return nil, nil //rt.stack[len(rt.stack)-1].Value
+	return nil, err //rt.stack[len(rt.stack)-1].Value
 }
 
 /*

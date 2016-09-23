@@ -29,6 +29,7 @@ const (
 	CMD_TABLE           // #table_name[id_column_name = value].column_name
 	CMD_CALL            // call a function
 	CMD_CALLVARI        // call a variadic function
+	CMD_RETURN          // return from function
 )
 
 const (
@@ -53,11 +54,6 @@ const (
 	UNARY      uint16 = 50
 	MODE_TABLE        = 1
 )
-
-type Oper struct {
-	Cmd      uint16
-	Priority uint16
-}
 
 var (
 	OPERS = map[string]Oper{

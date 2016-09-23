@@ -114,11 +114,10 @@ func (vm *VM) getInParams(ret *ObjInfo) int {
 	if ret.Type == OBJ_EXTFUNC {
 		return len(ret.Value.(ExtFuncInfo).Params)
 	}
-	return len(ret.Value.(*Block).Info.(FuncInfo).Params)
+	return len(ret.Value.(*Block).Info.(*FuncInfo).Params)
 }
 
-func (vm *VM) Call(name string, params []interface{}, extend map[string]interface{}) ([]interface{}, error) {
-	var ret []interface{}
+func (vm *VM) Call(name string, params []interface{}, extend map[string]interface{}) (ret []interface{}, err error) {
 	obj := vm.getObjByName(name)
 	if obj == nil {
 		return nil, fmt.Errorf(`unknown function`, name)
@@ -126,7 +125,7 @@ func (vm *VM) Call(name string, params []interface{}, extend map[string]interfac
 	switch obj.Type {
 	case OBJ_FUNC:
 		rt := vm.RunInit()
-		rt.Run(obj.Value.(*Block), params, extend)
+		_, err = rt.Run(obj.Value.(*Block), params, extend)
 	case OBJ_EXTFUNC:
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)
@@ -150,5 +149,5 @@ func (vm *VM) Call(name string, params []interface{}, extend map[string]interfac
 	default:
 		return nil, fmt.Errorf(`unknown function`, name)
 	}
-	return ret, nil
+	return ret, err
 }
