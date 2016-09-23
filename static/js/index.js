@@ -153,8 +153,18 @@ function logout() {
 	return false;
 }
 
+function clearAllTimeouts(){
+	var maxId = setTimeout(function(){}, 0);
+
+	for(var i=0; i < maxId; i+=1) { 
+		clearTimeout(i);
+	}
+}
+
 function load_page(page, parameters) {
 //    $('#loader').spin();
+	clearAllTimeouts();
+	NProgress.set(1.0);
     $.post("content?page="+page, parameters ? parameters : {},
         function(data) {
 //            $("#loader").spin(false);
@@ -219,6 +229,7 @@ function preloader(elem) {
 function dl_navigate (page, parameters) {
     var json = JSON.stringify(parameters);
     //$('#loader').spin();
+	clearAllTimeouts();
 	NProgress.set(1.0);
     $.post("content?controllerHTML="+page, { tpl_name: page, parameters: json },
         function(data) {

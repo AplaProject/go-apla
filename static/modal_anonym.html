@@ -29,6 +29,23 @@ $(document).ready(function() {
 		</div>
 	</div>
 </div>
+<div class="modal fade" id="modal_AddRow" role="dialog" aria-labelledby="modal_AddRow">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content" data-sweet-alert>
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="modal_AddRow_label">AddRow</h4>
+			</div>
+			<div class="modal-body">
+				
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+				<button id="AddRow" type="button" class="btn btn-primary" onClick="preloader(this);">Add Row</button>
+			</div>
+		</div>
+	</div>
+</div>
 
 {{template "signatures".}}
 

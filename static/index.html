@@ -329,6 +329,7 @@
 			var json = JSON.stringify(parameters);
 
 			//$('#loader').spin();
+			clearAllTimeouts();
 			NProgress.set(1.0);
 			$.post("content?page="+page, { tpl_name: page, parameters: json },
 					function(data) {
