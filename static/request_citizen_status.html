@@ -41,8 +41,9 @@
 	function formatState(state) {
 		if (!state.id) { return state.text; }
 		var $state = $(
-			'<span><i style="background-position:0px ' + selectbox.find("option[value=" + state.id + "]").attr("data-id") * (-9) + 'px"></i>' +
-			state.text +
+			'<span class="state_' + state.id + '">' +
+				'<i style="background-position:0px ' + selectbox.find("option[value=" + state.id + "]").attr("data-id") * (-9) + 'px"></i>' +
+				state.text +
 			'</span>'
 		);
 		return $state;
