@@ -31,6 +31,7 @@ const (
 	LEX_IDENT
 	LEX_NEWLINE
 	LEX_STRING
+	LEX_COMMENT
 	LEX_KEYWORD
 	LEX_TYPE
 
@@ -69,13 +70,16 @@ const (
 	KEY_FUNC
 	KEY_RETURN
 	KEY_IF
+	KEY_ELSE
 	KEY_WHILE
+	KEY_TRUE
+	KEY_FALSE
 )
 
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
-		`if`: KEY_IF, `while`: KEY_WHILE}
-	TYPES = map[string]reflect.Kind{`int`: reflect.Int64, `string`: reflect.String}
+		`if`: KEY_IF, `else`: KEY_ELSE, `while`: KEY_WHILE, `true`: KEY_TRUE, `false`: KEY_FALSE}
+	TYPES = map[string]reflect.Kind{`bool`: reflect.Bool, `int`: reflect.Int64, `string`: reflect.String}
 )
 
 type Lexem struct {
@@ -141,7 +145,7 @@ func LexParser(input []rune) (Lexems, error) {
 				ch := uint32(input[lexOff])
 				lexId |= ch << 8
 				value = ch
-			case LEX_STRING:
+			case LEX_STRING, LEX_COMMENT:
 				value = string(input[lexOff+1 : right-1])
 				for i, ch := range value.(string) {
 					if ch == 0xa {
@@ -162,8 +166,17 @@ func LexParser(input []rune) (Lexems, error) {
 			case LEX_IDENT:
 				name := string(input[lexOff:right])
 				if keyId, ok := KEYWORDS[name]; ok {
-					lexId = LEX_KEYWORD | (keyId << 8)
-					value = keyId
+					switch keyId {
+					case KEY_TRUE:
+						lexId = LEX_NUMBER
+						value = true
+					case KEY_FALSE:
+						lexId = LEX_NUMBER
+						value = false
+					default:
+						lexId = LEX_KEYWORD | (keyId << 8)
+						value = keyId
+					}
 				} else if typeId, ok := TYPES[name]; ok {
 					lexId = LEX_TYPE
 					value = typeId

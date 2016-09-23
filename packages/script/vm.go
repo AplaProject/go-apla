@@ -122,6 +122,14 @@ main:
 			rt.stack = append(rt.stack, cmd.Value)
 		case CMD_PUSHSTR:
 			rt.stack = append(rt.stack, cmd.Value.(string))
+		case CMD_IF:
+			if ValueToBool(rt.stack[len(rt.stack)-1]) {
+				rt.RunCode(cmd.Value.(*Block))
+			}
+		case CMD_ELSE:
+			if !ValueToBool(rt.stack[len(rt.stack)-1]) {
+				rt.RunCode(cmd.Value.(*Block))
+			}
 		case CMD_RETURN:
 			for count := cmd.Value.(int); count > 0; count-- {
 				rt.stack[start] = rt.stack[len(rt.stack)-count]

@@ -44,12 +44,14 @@ const (
 	STATE_CONTRACT
 	STATE_FUNC
 	STATE_FRESULT
+	STATE_IF
 
 	STATE_EVAL
 
-	STATE_PUSH = 0x0100
-	STATE_POP  = 0x0200
-	STATE_STAY = 0x0400
+	STATE_PUSH    = 0x0100
+	STATE_POP     = 0x0200
+	STATE_STAY    = 0x0400
+	STATE_TOBLOCK = 0x0800
 )
 
 const (
@@ -66,6 +68,8 @@ const (
 	CF_NAMEBLOCK
 	CF_FRESULT
 	CF_RETURN
+	CF_IF
+	CF_ELSE
 	CF_EVAL
 )
 
@@ -81,6 +85,8 @@ var (
 		fNameBlock,
 		fFuncResult,
 		fReturn,
+		fIf,
+		fElse,
 	}
 	states = States{
 		{ // STATE_ROOT
@@ -93,6 +99,8 @@ var (
 			LEX_NEWLINE:                     {STATE_BODY, 0},
 			LEX_KEYWORD | (KEY_FUNC << 8):   {STATE_FUNC | STATE_PUSH, 0},
 			LEX_KEYWORD | (KEY_RETURN << 8): {STATE_EVAL, CF_RETURN},
+			LEX_KEYWORD | (KEY_IF << 8):     {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK, CF_IF},
+			LEX_KEYWORD | (KEY_ELSE << 8):   {STATE_BLOCK | STATE_PUSH, CF_ELSE},
 			LEX_IDENT:                       {STATE_EVAL, 0},
 			IS_RCURLY:                       {STATE_POP, 0},
 			0:                               {ERR_MUSTRCURLY, CF_ERROR},
@@ -118,6 +126,9 @@ var (
 			IS_COMMA:    {STATE_FRESULT, 0},
 			0:           {STATE_BLOCK | STATE_STAY, 0},
 		},
+		{ // STATE_IF
+			0: {STATE_EVAL | STATE_TOBLOCK | STATE_PUSH, CF_IF},
+		},
 	}
 )
 
@@ -128,7 +139,8 @@ func fError(buf *[]*Block, state int, lexem *Lexem) error {
 		`must be '{'`,      // ERR_MUSTLCURLY
 		`must be '}'`,      // ERR_MUSTRCURLY
 	}
-	return fmt.Errorf(`%s %v [Ln:%d Col:%d]`, errors[state], lexem.Value, lexem.Line, lexem.Column)
+	fmt.Printf("%s %x %v [Ln:%d Col:%d]\r\n", errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
+	return fmt.Errorf(`%s %x %v [Ln:%d Col:%d]`, errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
 }
 
 func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
@@ -140,6 +152,28 @@ func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
 	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
 	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
+	return nil
+}
+
+func fIf(buf *[]*Block, state int, lexem *Lexem) error {
+	//	last := (*(*buf)[len(*buf)-2]).Code[len((*(*buf)[len(*buf)-2]).Code)-1]
+	//	fmt.Println(`IF Condition`, (*(*buf)[len(*buf)-2]).Code )
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_IF, (*buf)[len(*buf)-1]})
+	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
+	//	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
+	return nil
+}
+
+func fElse(buf *[]*Block, state int, lexem *Lexem) error {
+	//	last := (*(*buf)[len(*buf)-2]).Code[len((*(*buf)[len(*buf)-2]).Code)-1]
+	//	fmt.Println(`IF Condition`, (*(*buf)[len(*buf)-2]).Code )
+	code := (*(*buf)[len(*buf)-2]).Code
+	if code[len(code)-1].Cmd != CMD_IF {
+		return fmt.Errorf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column)
+	}
+	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{CMD_ELSE, (*buf)[len(*buf)-1]})
+	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
+	//	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
 	return nil
 }
 
@@ -182,16 +216,18 @@ func (vm *VM) Compile(input []rune) error {
 		if newState, ok = states[curState][int(lexem.Type)]; !ok {
 			newState = states[curState][0]
 		}
+		nextState := newState.NewState & 0xff
+		//		fmt.Printf("State %x %x %v\r\n", curState, newState.NewState, stack)
 		if (newState.NewState & STATE_STAY) > 0 {
-			curState = newState.NewState & 0xff
+			curState = nextState
 			i--
 			continue
 		}
-		if newState.NewState == STATE_EVAL {
+		if nextState == STATE_EVAL {
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
 				return err
 			}
-			newState.NewState = curState
+			nextState = curState
 			//			fmt.Println(`Block`, *blockstack[len(blockstack)-1], len(blockstack)-1)
 		}
 		if (newState.NewState & STATE_PUSH) > 0 {
@@ -203,25 +239,29 @@ func (vm *VM) Compile(input []rune) error {
 			block := &Block{}
 			top.Children = append(top.Children, block)
 			blockstack = append(blockstack, block)
-			//fmt.Println(`PUSH`, curState)
+			//			fmt.Println(`PUSH`, curState)
 		}
 		if (newState.NewState & STATE_POP) > 0 {
 			if len(stack) == 0 {
 				return fError(&blockstack, ERR_MUSTLCURLY, lexem)
 			}
-			newState.NewState = stack[len(stack)-1]
+			nextState = stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
 			blockstack = blockstack[:len(blockstack)-1]
 			//	fmt.Println(`POP`, stack, newState.NewState)
 			//			continue
 		}
+		if (newState.NewState & STATE_TOBLOCK) > 0 {
+			nextState = STATE_BLOCK
+		}
 		//		fmt.Println(`LEX`, curState, lexem, stack)
 		if newState.Func > 0 {
-			if err := funcs[newState.Func](&blockstack, curState, lexem); err != nil {
+			if err := funcs[newState.Func](&blockstack, nextState, lexem); err != nil {
 				return err
 			}
+			//		fmt.Println(`Block Func`, *blockstack[len(blockstack)-1], len(blockstack)-1)
 		}
-		curState = newState.NewState & 0xff
+		curState = nextState
 	}
 	if len(stack) > 0 {
 		return fError(&blockstack, ERR_MUSTRCURLY, lexems[len(lexems)-1])
@@ -268,7 +308,10 @@ main:
 		lexem := (*lexems)[i]
 		//		fmt.Println(i, parcount, lexem)
 		switch lexem.Type {
-		case IS_RCURLY, LEX_NEWLINE:
+		case IS_RCURLY, IS_LCURLY, LEX_NEWLINE:
+			if lexem.Type != LEX_NEWLINE {
+				i--
+			}
 			break main
 		case IS_LPAR:
 			buffer = append(buffer, &ByteCode{CMD_SYS, uint16(0xff)})

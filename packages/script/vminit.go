@@ -94,6 +94,7 @@ func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
 	var ok bool
 	names := strings.Split(name, `.`)
 	block := &vm.Block
+	//	fmt.Println(block.Objects)
 	for i, name := range names {
 		ret, ok = block.Objects[name]
 		if !ok {

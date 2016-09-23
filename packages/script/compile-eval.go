@@ -30,6 +30,8 @@ const (
 	CMD_CALL            // call a function
 	CMD_CALLVARI        // call a variadic function
 	CMD_RETURN          // return from function
+	CMD_IF              // run block if Value is true
+	CMD_ELSE            // run block if Value is false
 )
 
 const (

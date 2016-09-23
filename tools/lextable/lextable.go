@@ -33,8 +33,9 @@ const (
 )
 
 var (
-	table    [][ALPHASIZE]uint32
-	lexem    = map[string]uint32{``: 0, `sys`: 1, `oper`: 2, `number`: 3, `ident`: 4, `newline`: 5, `string`: 6}
+	table [][ALPHASIZE]uint32
+	lexem = map[string]uint32{``: 0, `sys`: 1, `oper`: 2, `number`: 3, `ident`: 4, `newline`: 5, `string`: 6,
+		`comment`: 7}
 	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4}
 	alphabet = []byte{0x01, 0x0a, ' ', '`', '"', ';', '(', ')', '[', ']', '{', '}', '&', '|', '#', '.', ',', '<', '>', '=', '!', '*',
 		//           default  n    s    q    Q
@@ -50,8 +51,9 @@ var (
 			"&": ["and", "", "push next"],
 			"|": ["or", "", "push next"],
 			"=": ["eq", "", "push next"],
+			"/": ["solidus", "", "push next"],
 			"<>!": ["oneq", "", "push next"],
-			"*+-/": ["main", "oper", "next"],
+			"*+-": ["main", "oper", "next"],
 			"01": ["number", "", "push next"],
 			"a_r": ["ident", "", "push next"],
 			"d": ["error", "", ""]
@@ -76,6 +78,11 @@ var (
 			"=": ["main", "oper", "pop next"],
 			"d": ["main", "oper", "pop"]
 		},
+	"solidus": {
+			"/": ["comline", "", "pop next"],
+			"*": ["comment", "", "next"],
+			"d": ["main", "oper", "pop"]
+		},
 	"oneq": {
 			"=": ["main", "oper", "pop next"],
 			"d": ["main", "oper", "pop"]
@@ -88,9 +95,23 @@ var (
 	"ident": {
 			"01a_r": ["ident", "", "next"],
 			"d": ["main", "ident", "pop"]
+		},
+	"comment": {
+			"*": ["comstop", "", "next"],
+			"d": ["comment", "", "next"]
+		},
+	"comstop": {
+			"/": ["main", "comment", "pop next"],
+			"d": ["comment", "", "next"]
+		},
+	"comline": {
+			"n": ["main", "", ""],
+			"d": ["comline", "", "next"]
 		}
 }`
 )
+
+//			"/": ["comment", "", "pop next"],
 
 func main() {
 	var alpha [129]byte

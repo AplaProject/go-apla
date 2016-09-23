@@ -50,19 +50,30 @@ func (block *Block) String() (ret string) {
 func TestVMCompile(t *testing.T) {
 	test := []TestLexem{
 		{`func my_test string {
-			return Sprintf("Called my_test %s", "Ooops")
-		}
-		
-contract my {
-		func temp {
-			Println("Main function")
-		} 
+						return Sprintf("Called my_test %s %d", "Ooops", 777)
+					}
 
-		func init {
-			Println(65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
-			temp()
-		}
-}`, ``},
+			contract my {
+					func temp {
+						if (111> 10) { //01 Commment
+if 0==1 {
+								Println("TRUE TRUE temp function")
+							} else { // 02 Commment
+								Println("TRUE FALSE temp function" /*comment*/ )
+								Println("Post") /* 
+3232 Комментарий	*/
+							}
+						} else {
+							Println("FALSE temp function")
+						}
+					}
+
+					func init {
+						Println(65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
+						temp()
+					}
+			}`,
+			``},
 	}
 	vm := VMInit(map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf})
 
