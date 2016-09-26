@@ -63,6 +63,24 @@ func (block *Block) String() (ret string) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
+		{`func params2(myval int, mystr string ) string {
+			if 101>myval {
+				if myval == 90 {
+				} else {
+					return Sprintf("myval=%d + %s", myval, mystr ) /* dede
+			
+			ded*/
+				}
+			} 
+			return "OOPs"
+		}
+		func temp2 string {
+			if true {
+				return params2(51, "Params 2 test")
+			}
+		}
+		`, `temp2`, `myval=51 + Params 2 test`},
+
 		{`func params(myval int, mystr string ) string {
 			return Sprintf("Params function %d %s", 33 + myval, mystr + " end" ) /* dede
 			

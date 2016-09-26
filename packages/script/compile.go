@@ -171,8 +171,8 @@ func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
-	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
+	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, 0}) //len(fblock.Results)})
 	return nil
 }
 
