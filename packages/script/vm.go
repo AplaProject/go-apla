@@ -25,13 +25,25 @@ import (
 	Value interface{}
 }*/
 
+const (
+	STATUS_NORMAL = iota
+	STATUS_RETURN
+)
+
+type BlockStack struct {
+	Block  *Block
+	Offset int
+}
+
 type RunTime struct {
-	stack []interface{}
-	vm    *VM
+	stack  []interface{}
+	blocks []*BlockStack
+	vars   []interface{}
+	vm     *VM
 	//	vars  *map[string]interface{}
 }
 
-func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) error {
+func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 	var (
 		count, in int
 		//		f         interface{}
@@ -45,7 +57,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) error {
 		count = in
 	}
 	if obj.Type == OBJ_FUNC {
-		return rt.RunCode(obj.Value.(*Block))
+		_, err = rt.RunCode(obj.Value.(*Block))
 	} else {
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)
@@ -80,7 +92,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) error {
 			return result[len(result)-1].Interface().(error)
 		}
 	*/
-	return nil
+	return
 }
 
 func valueToBool(v interface{}) bool {
@@ -104,15 +116,39 @@ func (vm *VM) RunInit() *RunTime {
 	return &rt
 }
 
-func (rt *RunTime) RunCode(block *Block) error {
+func (rt *RunTime) RunCode(block *Block) (status int, err error) {
+
 	top := make([]interface{}, 8)
 	start := len(rt.stack)
-main:
+	rt.blocks = append(rt.blocks, &BlockStack{block, len(rt.vars)})
+	for vkey, vpar := range block.Vars {
+		var value interface{}
+		if block.Type == OBJ_FUNC && vkey < len(block.Info.(*FuncInfo).Params) {
+			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
+		} else {
+			var vtype reflect.Type
+			switch vpar {
+			case reflect.Int64:
+				vtype = reflect.TypeOf(int64(0))
+			case reflect.String:
+				vtype = reflect.TypeOf(``)
+			case reflect.Bool:
+				vtype = reflect.TypeOf(true)
+			}
+			value = reflect.New(vtype).Interface()
+		}
+		rt.vars = append(rt.vars, value)
+	}
+	if block.Type == OBJ_FUNC {
+		start -= len(block.Info.(*FuncInfo).Params)
+	}
+
+	//main:
 	for _, cmd := range block.Code {
 		var bin interface{}
 		size := len(rt.stack)
 		if size < int(cmd.Cmd>>8) {
-			return fmt.Errorf(`stack is empty`)
+			return 0, fmt.Errorf(`stack is empty`)
 		}
 		for i := 1; i <= int(cmd.Cmd>>8); i++ {
 			top[i-1] = rt.stack[size-i]
@@ -124,23 +160,21 @@ main:
 			rt.stack = append(rt.stack, cmd.Value.(string))
 		case CMD_IF:
 			if ValueToBool(rt.stack[len(rt.stack)-1]) {
-				rt.RunCode(cmd.Value.(*Block))
+				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
 		case CMD_ELSE:
 			if !ValueToBool(rt.stack[len(rt.stack)-1]) {
-				rt.RunCode(cmd.Value.(*Block))
+				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
 		case CMD_RETURN:
-			for count := cmd.Value.(int); count > 0; count-- {
-				rt.stack[start] = rt.stack[len(rt.stack)-count]
-				start++
-			}
-			break main
+			status = STATUS_RETURN
+			/*			for count := cmd.Value.(int); count > 0; count-- {
+						rt.stack[start] = rt.stack[len(rt.stack)-count]
+						start++
+					}*/
 		case CMD_CALLVARI, CMD_CALL:
-			err := rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
-			if err != nil {
-				return err
-			}
+			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
+
 			/*			if err != nil {
 						return fmt.Errorf(`%s [%d:%d]`, err.Error(), last.Lex.Line, last.Lex.Column)
 					}*/
@@ -154,6 +188,20 @@ main:
 						return fmt.Errorf(`%s [%d:%d]`, err.Error(), last.Lex.Line, last.Lex.Column)
 					}*/
 		case CMD_VAR:
+			ivar := cmd.Value.(*VarInfo)
+			var i int
+			for i = len(rt.blocks) - 1; i >= 0; i-- {
+				if ivar.Owner == rt.blocks[i].Block {
+					rt.stack = append(rt.stack, rt.vars[rt.blocks[i].Offset+ivar.Obj.Value.(int)])
+					break
+				}
+			}
+			if i < 0 {
+				return 0, fmt.Errorf(`wrong var`)
+			}
+			//			fmt.Println(`VAR`, voff, *ivar.Obj, ivar.Owner.Vars, rt.vars)
+			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
+
 			/*			if val, ok := (*rt.vars)[cmd.Value.(string)]; ok {
 							var number int64
 							switch varVal := val.(type) {
@@ -170,14 +218,24 @@ main:
 			rt.stack[size-1] = !ValueToBool(top[0])
 
 		case CMD_ADD:
-			bin = top[1].(int64) + top[0].(int64)
+			/*			fmt.Println(`Stack`)
+						for _, item := range rt.stack {
+							fmt.Printf("|%v|", item)
+						}
+						fmt.Println(`Stack`, rt.stack)*/
+			switch top[1].(type) {
+			case string:
+				bin = top[1].(string) + top[0].(string)
+			default:
+				bin = top[1].(int64) + top[0].(int64)
+			}
 		case CMD_SUB:
 			bin = top[1].(int64) - top[0].(int64)
 		case CMD_MUL:
 			bin = top[1].(int64) * top[0].(int64)
 		case CMD_DIV:
 			if top[0].(int64) == 0 {
-				return fmt.Errorf(`divided by zero`)
+				return 0, fmt.Errorf(`divided by zero`)
 			}
 			bin = top[1].(int64) / top[0].(int64)
 		case CMD_AND:
@@ -200,23 +258,49 @@ main:
 				bin = !bin.(bool)
 			}
 		default:
-			return fmt.Errorf(`Unknown command %d`, cmd.Cmd)
+			return 0, fmt.Errorf(`Unknown command %d`, cmd.Cmd)
+		}
+		if err != nil {
+			return 0, err
+		}
+		if status == STATUS_RETURN {
+			break
 		}
 		if (cmd.Cmd >> 8) == 2 {
 			rt.stack[size-2] = bin
 			rt.stack = rt.stack[:size-1]
 		}
 	}
+	if status == STATUS_RETURN {
+		//		fmt.Println(`Status`, rt.stack)
+		if rt.blocks[len(rt.blocks)-1].Block.Type == OBJ_FUNC {
+			for count := len(rt.blocks[len(rt.blocks)-1].Block.Info.(*FuncInfo).Results); count > 0; count-- {
+				rt.stack[start] = rt.stack[len(rt.stack)-count]
+				start++
+			}
+			status = STATUS_NORMAL
+			rt.blocks = rt.blocks[:len(rt.blocks)-1]
+
+			//fmt.Println(`Ret function`, rt.stack)
+		} else {
+			rt.blocks = rt.blocks[:len(rt.blocks)-1]
+			return
+		}
+	}
 	rt.stack = rt.stack[:start]
-	return nil
+	return
 }
 
-func (rt *RunTime) Run(block *Block, params []interface{}, extend map[string]interface{}) ([]interface{}, error) {
-	err := rt.RunCode(block)
-	/*	if len(rt.stack) == 0 {
-		return fmt.Errorf(`Stack empty`)
-	}*/
-	return nil, err //rt.stack[len(rt.stack)-1].Value
+func (rt *RunTime) Run(block *Block, params []interface{}, extend map[string]interface{}) (ret []interface{}, err error) {
+	info := block.Info.(*FuncInfo)
+	if _, err = rt.RunCode(block); err == nil {
+		off := len(rt.stack) - len(info.Results)
+		//		fmt.Println(`RUN`, len(rt.stack), len(info.Results))
+		for i := 0; i < len(info.Results); i++ {
+			ret = append(ret, rt.stack[off+i])
+		}
+	}
+	return
 }
 
 /*

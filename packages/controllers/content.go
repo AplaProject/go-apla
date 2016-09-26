@@ -312,7 +312,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress)
 	controller := r.FormValue("controllerHTML")
-	if val, ok := configIni[`psw`]; ok && (tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0 {
+	if val, ok := configIni[`psw`]; ok && ((tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0) {
 		if psw, err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
 			if err == nil {
 				cookie := http.Cookie{Name: "psw", Value: ``, Expires: time.Now().AddDate(0, 0, -1)}
@@ -330,7 +330,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(controller) > 0 {
-
+		fmt.Println(`Controller HTML`, controller)
 		log.Debug("controller:", controller)
 
 		funcMap := template.FuncMap{

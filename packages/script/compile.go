@@ -43,6 +43,8 @@ const (
 	STATE_BLOCK
 	STATE_CONTRACT
 	STATE_FUNC
+	STATE_FPARAMS
+	STATE_FPARAM
 	STATE_FRESULT
 	STATE_IF
 
@@ -60,6 +62,7 @@ const (
 	ERR_MUSTNAME   // must be the name
 	ERR_MUSTLCURLY // must be '{'
 	ERR_MUSTRCURLY // must be '}'
+	ERR_PARAMS     // wrong parameters
 )
 
 const (
@@ -70,6 +73,8 @@ const (
 	CF_RETURN
 	CF_IF
 	CF_ELSE
+	CF_FPARAM
+	CF_FTYPE
 	CF_EVAL
 )
 
@@ -87,6 +92,8 @@ var (
 		fReturn,
 		fIf,
 		fElse,
+		fFparam,
+		fFtype,
 	}
 	states = States{
 		{ // STATE_ROOT
@@ -117,8 +124,21 @@ var (
 		},
 		{ // STATE_FUNC
 			LEX_NEWLINE: {STATE_FUNC, 0},
-			LEX_IDENT:   {STATE_FRESULT, CF_NAMEBLOCK},
+			LEX_IDENT:   {STATE_FPARAMS, CF_NAMEBLOCK},
 			0:           {ERR_MUSTNAME, CF_ERROR},
+		},
+		{ // STATE_FPARAMS
+			LEX_NEWLINE: {STATE_FPARAMS, 0},
+			IS_LPAR:     {STATE_FPARAM, 0},
+			0:           {STATE_FRESULT | STATE_STAY, 0},
+		},
+		{ // STATE_FPARAM
+			LEX_NEWLINE: {STATE_FPARAM, 0},
+			LEX_IDENT:   {STATE_FPARAM, CF_FPARAM},
+			LEX_TYPE:    {STATE_FPARAM, CF_FTYPE},
+			IS_COMMA:    {STATE_FPARAM, 0},
+			IS_RPAR:     {STATE_FRESULT, 0},
+			0:           {ERR_PARAMS, CF_ERROR},
 		},
 		{ // STATE_FRESULT
 			LEX_NEWLINE: {STATE_FRESULT, 0},
@@ -138,6 +158,7 @@ func fError(buf *[]*Block, state int, lexem *Lexem) error {
 		`must be the name`, // ERR_MUSTNAME
 		`must be '{'`,      // ERR_MUSTLCURLY
 		`must be '}'`,      // ERR_MUSTRCURLY
+		`wrong parameters`, // ERR_PARAMS
 	}
 	fmt.Printf("%s %x %v [Ln:%d Col:%d]\r\n", errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
 	return fmt.Errorf(`%s %x %v [Ln:%d Col:%d]`, errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
@@ -150,8 +171,36 @@ func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
-	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
+	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, 0}) //len(fblock.Results)})
+	return nil
+}
+
+func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
+	block := (*buf)[len(*buf)-1]
+	fblock := block.Info.(*FuncInfo)
+	fblock.Params = append(fblock.Params, reflect.Invalid)
+	if block.Objects == nil {
+		block.Objects = make(map[string]*ObjInfo)
+	}
+	block.Objects[lexem.Value.(string)] = &ObjInfo{Type: OBJ_PARAM, Value: len(block.Vars)}
+	block.Vars = append(block.Vars, reflect.Invalid)
+	return nil
+}
+
+func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
+	block := (*buf)[len(*buf)-1]
+	fblock := block.Info.(*FuncInfo)
+	for pkey, param := range fblock.Params {
+		if param == reflect.Invalid {
+			fblock.Params[pkey] = lexem.Value.(reflect.Kind)
+		}
+	}
+	for vkey, ivar := range block.Vars {
+		if ivar == reflect.Invalid {
+			block.Vars[vkey] = lexem.Value.(reflect.Kind)
+		}
+	}
 	return nil
 }
 
@@ -188,6 +237,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	if itype == OBJ_FUNC {
 		fblock.Info = &FuncInfo{}
 	}
+	fblock.Type = itype
 	prev.Objects[lexem.Value.(string)] = &ObjInfo{Type: itype, Value: fblock}
 	return nil
 }
@@ -282,16 +332,16 @@ func (vm *VM) Compile(input []rune) error {
 	return nil
 }
 
-func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo) {
+func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
 	var ok bool
 	i := len(*block) - 1
 	for ; i >= 0; i-- {
 		ret, ok = (*block)[i].Objects[name]
 		if ok {
-			return ret
+			return ret, (*block)[i]
 		}
 	}
-	return vm.getObjByName(name)
+	return vm.getObjByName(name), nil
 }
 
 func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
@@ -386,9 +436,12 @@ main:
 			cmd = &ByteCode{CMD_PUSH, lexem.Value}
 		case LEX_IDENT:
 			var call bool
+			objInfo, tobj := vm.findObj(lexem.Value.(string), block)
+			if objInfo == nil {
+				return fmt.Errorf(`unknown identifier %s`, lexem.Value.(string))
+			}
 			if i < len(*lexems)-2 {
 				if (*lexems)[i+1].Type == IS_LPAR {
-					objInfo := vm.findObj(lexem.Value.(string), block)
 					if objInfo == nil || (objInfo.Type != OBJ_EXTFUNC && objInfo.Type != OBJ_FUNC) {
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))
 					}
@@ -407,7 +460,7 @@ main:
 				}
 			}
 			if !call {
-				cmd = &ByteCode{CMD_VAR, lexem.Value}
+				cmd = &ByteCode{CMD_VAR, &VarInfo{objInfo, tobj}}
 			}
 		}
 		if cmd != nil {
