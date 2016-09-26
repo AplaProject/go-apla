@@ -697,39 +697,13 @@ func (schema *SchemaStruct) GetSchema() {
 	schema.PrintSchema()
 
 	if !schema.OnlyPrint {
-
-		err := schema.DCDB.ExecSql(`INSERT INTO states (state_id, state_code, node_public_key, delegate_wallet_id) VALUES (1, "EA", [hex], 1)`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
-		if err != nil {
-			log.Error("%v", err)
-		}
-
-		err = schema.DCDB.ExecSql(`INSERT INTO ea_citizens (citizen_id, public_key_0) VALUES (1, [hex])`, "a4cb8cb9d55dcb4b2fc44cf84dee6761fcf12fd1c502fce1102d60da17fe32b329227118cce092230d6f555024e3874bee5beb5587c943e142c5c11105ceba91")
-		if err != nil {
-			log.Error("%v", err)
-		}
-
-		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_parameters (parameter, value) VALUES ("registration_of_citizens", "president")`)
-		if err != nil {
-			log.Error("%v", err)
-		}
+	/*
 		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_parameters (parameter, value) VALUES ("citizen_fields", ?)`,
 			`[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
 {"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
 {"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
 {"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
 ]`)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_parameters (parameter, value)  VALUES ("citizen_dlt_price", "1000000")`)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		err = schema.DCDB.ExecSql(`INSERT INTO ea_state_parameters (parameter, value)  VALUES ("new_state_table", ?)`, `{"name":"name", "htmlType":"textinput", "txType":"string", "title":"Name"}]`)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		err = schema.DCDB.ExecSql(`INSERT INTO president (state_id, citizen_id) VALUES (1, 1)`)
 		if err != nil {
 			log.Error("%v", err)
 		}
