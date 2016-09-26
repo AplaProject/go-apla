@@ -23,6 +23,7 @@ import (
 
 type TestVM struct {
 	Input  string
+	Func   string
 	Output string
 }
 
@@ -47,53 +48,60 @@ func (block *Block) String() (ret string) {
 	return
 }
 
+/*			if (111> 10) { //01 Commment
+				if 0==1 {
+					Println("TRUE TRUE temp function")
+				} else { // 02 Commment
+				eeee
+
+3232 Комментарий
+				}
+			} else {
+				Println("FALSE temp function")
+			}
+			return "OK"*/
+
 func TestVMCompile(t *testing.T) {
-	test := []TestLexem{
+	test := []TestVM{
+		{`func params(myval int, mystr string ) string {
+			return Sprintf("Params function %d %s", 33 + myval, mystr + " end" ) /* dede
+			
+			ded*/
+		}
+		func temp string {
+			return "Prefix " + params(20, "Test string")
+		}
+		`, `temp`, `Prefix Params function 53 Test string end`},
 		{`func my_test string {
 						return Sprintf("Called my_test %s %d", "Ooops", 777)
 					}
 
 			contract my {
-					func temp {
-						if (111> 10) { //01 Commment
-if 0==1 {
-								Println("TRUE TRUE temp function")
-							} else { // 02 Commment
-								Println("TRUE FALSE temp function" /*comment*/ )
-								Println("Post") /* 
-3232 Комментарий	*/
-							}
-						} else {
-							Println("FALSE temp function")
-						}
+					func initf string {
+						return Sprintf("%d %s %s %s", 65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
 					}
-
-					func init {
-						Println(65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
-						temp()
-					}
-			}`,
-			``},
+			}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},
 	}
 	vm := VMInit(map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf})
 
 	for _, item := range test {
 		source := []rune(item.Input)
-		var out string
 		if err := vm.Compile(source); err != nil {
 			t.Error(err)
 		} else {
-			out = vm.String()
-			if out != item.Output {
-				//			t.Error(`error of vm compile ` + item.Input)
+			if out, err := vm.Call(item.Func, nil, nil); err == nil {
+				if out[0].(string) != item.Output {
+					fmt.Println(out[0].(string))
+					t.Error(`error vm` + item.Input)
+				}
+			} else {
+				t.Error(err)
 			}
+
 		}
-		//		fmt.Println(`%s`, out)
-		//fmt.Printf("%s", item.Output)
 	}
-	vm.Call(`Println`, []interface{}{"Qwerty", 100, `OOOPS`}, nil)
-	ret, _ := vm.Call(`Sprintf`, []interface{}{"Value %d %s OK", 100, `String value`}, nil)
-	fmt.Println(ret[0].(string))
-	_, err := vm.Call(`my.init`, nil, nil)
-	fmt.Println(`Result`, err)
+	//	vm.Call(`Println`, []interface{}{"Qwerty", 100, `OOOPS`}, nil)
+	//ret, _ := vm.Call(`Sprintf`, []interface{}{"Value %d %s OK", 100, `String value`}, nil)
+	//fmt.Println(ret[0].(string))
+	//	fmt.Println(`Result`, err)
 }

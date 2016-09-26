@@ -34,6 +34,7 @@ const (
 	OBJ_CONTRACT
 	OBJ_FUNC
 	OBJ_EXTFUNC
+	OBJ_PARAM
 )
 
 type ExtFuncInfo struct {
@@ -49,6 +50,11 @@ type FuncInfo struct {
 	Variadic bool
 }
 
+type VarInfo struct {
+	Obj   *ObjInfo
+	Owner *Block
+}
+
 type ObjInfo struct {
 	Type  int
 	Value interface{}
@@ -56,7 +62,9 @@ type ObjInfo struct {
 
 type Block struct {
 	Objects  map[string]*ObjInfo
+	Type     int
 	Info     interface{}
+	Vars     []reflect.Kind
 	Code     ByteCodes
 	Children Blocks
 }
@@ -126,7 +134,7 @@ func (vm *VM) Call(name string, params []interface{}, extend map[string]interfac
 	switch obj.Type {
 	case OBJ_FUNC:
 		rt := vm.RunInit()
-		_, err = rt.Run(obj.Value.(*Block), params, extend)
+		ret, err = rt.Run(obj.Value.(*Block), params, extend)
 	case OBJ_EXTFUNC:
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)
