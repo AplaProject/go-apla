@@ -330,7 +330,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(controller) > 0 {
-
+		fmt.Println(`Controller HTML`, controller)
 		log.Debug("controller:", controller)
 
 		funcMap := template.FuncMap{
