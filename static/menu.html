@@ -453,90 +453,137 @@
 				   </a>
 				</li>
 				{{end}}
-				{{if eq .Data.CitizenId 1}}
-				<li class="check_citizen_status">
-				   <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
-					  <span>Check citizen status</span>
-				   </a>
-				</li>
-				{{end}}
+
+
+				 Tables
 				 <li class="state_parameters">
-					 <a href="#" title="state_parameters" onClick="load_page('stateParameters');HideMenu();">
-						 <span>state_parameters</span>
+					 <a href="#" title="state_name" onClick="load_page('stateTables');HideMenu();">
+						 <span>state_name</span>
 					 </a>
 				 </li>
-				 <li class="state_smart_laws">
-					 <a href="#" title="state_smart_laws" onClick="load_page('stateSmartLaws');HideMenu();">
-						 <span>stateSmartLaws</span>
+				 <li class="state_parameters">
+					 <a href="#" title="state_name" onClick="load_page('globalTables');HideMenu();">
+						 <span>globalTables</span>
 					 </a>
 				 </li>
-				 <li class="state_laws">
-					 <a href="#" title="state_laws" onClick="load_page('stateLaws');HideMenu();">
-						 <span>stateLaws</span>
-					 </a>
-				 </li>
-				 <li class="new_table">
-					 <a href="#" title="new_table" onClick="load_page('newTable');HideMenu();">
-						 <span>newTable</span>
-					 </a>
-				 </li>
-				 <li class="table_list">
-					 <a href="#" title="table_list" onClick="load_page('tableList');HideMenu();">
-						 <span>tableList</span>
+				 <li class="state_parameters">
+					 <a href="#" title="state_name" onClick="load_page('sysTables');HideMenu();">
+						 <span>sysTables</span>
 					 </a>
 				 </li>
 
 
-				<!--li class="dashboard_citizen">
-				   <a href="#dashboard_citizen" title="Dashboard" onClick="HideMenu();">
-					  <span>Dashboard</span>
-				   </a>
-				</li>
-				<li class="citizen_money_transfer">
-				   <a href="#citizen_money_transfer" title="Money transfer" onClick="HideMenu();">
-					  <span>Money transfer</span>
-				   </a>
-				</li>
-				<li class="citizen_bill_payment">
-				   <a href="#citizen_bill_payment" title="Bill Payment" onClick="HideMenu();">
-					  <span>Bill Payment</span>
-				   </a>
-				</li>
-				<li class="citizen_admission_high_school">
-				   <a href="#citizen_admission_high_school" title="Admission to high school" onClick="HideMenu();">
-					  <span>Admission to high school</span>
-				   </a>
-				</li>
-				<li class="citizen_new_company">
-				   <a href="#citizen_new_company" title="New company" onClick="HideMenu();">
-					  <span>New company</span>
-				   </a>
-				</li>
-				<li class="citizen_property">
-				   <a href="#citizen_property" title="My property" onClick="HideMenu();">
-					  <span>My property</span>
-				   </a>
-				</li>
-				<li class="citizen_political_party">
-				   <a href="#citizen_political_party" title="Сreate a political party" onClick="HideMenu();">
-					  <span>Сreate a political party</span>
-				   </a>
-				</li>
-				<li class="citizen_inheritance">
-				   <a href="#citizen_inheritance" title="Inheritance" onClick="HideMenu();">
-					  <span>Inheritance</span>
-				   </a>
-				</li>
-				<li class="citizen_marriage_registration">
-				   <a href="#citizen_marriage_registration" title="Marriage registration" onClick="HideMenu();">
-					  <span>Marriage registration</span>
-				   </a>
-				</li>
-				<li class="citizen_divorce">
-				   <a href="#citizen_divorce" title="Divorce" onClick="HideMenu();">
-					  <span>Divorce</span>
-				   </a>
-				</li-->
+				 Smart contracts
+				 <li class="state_parameters">
+					 <a href="#" title="state_name" onClick="load_page('stateContracts');HideMenu();">
+						 <span>state_name</span>
+					 </a>
+				 </li>
+				 <li class="state_parameters">
+					 <a href="#" title="state_name" onClick="load_page('globalContracts');HideMenu();">
+						 <span>globalTables</span>
+					 </a>
+				 </li>
+				 <li class="state_parameters">
+					 <a href="#" title="state_name" onClick="load_page('sysContracts');HideMenu();">
+						 <span>sysTables</span>
+					 </a>
+				 </li>
+
+<br>
+		  </li>
+		   <li class="state_parameters">
+			   <a href="#" title="state_name" onClick="load_page('addState');HideMenu();">
+				   <span>addState</span>
+			   </a>
+		   </li>
+
+				 <!--
+                {{if eq .Data.CitizenId 1}}
+                <li class="check_citizen_status">
+                   <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
+                      <span>Check citizen status</span>
+                   </a>
+                </li>
+                {{end}}
+                 <li class="state_parameters">
+                     <a href="#" title="state_parameters" onClick="load_page('stateParameters');HideMenu();">
+                         <span>state_parameters</span>
+                     </a>
+                 </li>
+                 <li class="state_smart_laws">
+                     <a href="#" title="state_smart_laws" onClick="load_page('stateSmartLaws');HideMenu();">
+                         <span>stateSmartLaws</span>
+                     </a>
+                 </li>
+                 <li class="state_laws">
+                     <a href="#" title="state_laws" onClick="load_page('stateLaws');HideMenu();">
+                         <span>stateLaws</span>
+                     </a>
+                 </li>
+                 <li class="new_table">
+                     <a href="#" title="new_table" onClick="load_page('newTable');HideMenu();">
+                         <span>newTable</span>
+                     </a>
+                 </li>
+                 <li class="table_list">
+                     <a href="#" title="table_list" onClick="load_page('tableList');HideMenu();">
+                         <span>tableList</span>
+                     </a>
+                 </li>
+                 -->
+
+
+                <!--li class="dashboard_citizen">
+                   <a href="#dashboard_citizen" title="Dashboard" onClick="HideMenu();">
+                      <span>Dashboard</span>
+                   </a>
+                </li>
+                <li class="citizen_money_transfer">
+                   <a href="#citizen_money_transfer" title="Money transfer" onClick="HideMenu();">
+                      <span>Money transfer</span>
+                   </a>
+                </li>
+                <li class="citizen_bill_payment">
+                   <a href="#citizen_bill_payment" title="Bill Payment" onClick="HideMenu();">
+                      <span>Bill Payment</span>
+                   </a>
+                </li>
+                <li class="citizen_admission_high_school">
+                   <a href="#citizen_admission_high_school" title="Admission to high school" onClick="HideMenu();">
+                      <span>Admission to high school</span>
+                   </a>
+                </li>
+                <li class="citizen_new_company">
+                   <a href="#citizen_new_company" title="New company" onClick="HideMenu();">
+                      <span>New company</span>
+                   </a>
+                </li>
+                <li class="citizen_property">
+                   <a href="#citizen_property" title="My property" onClick="HideMenu();">
+                      <span>My property</span>
+                   </a>
+                </li>
+                <li class="citizen_political_party">
+                   <a href="#citizen_political_party" title="Сreate a political party" onClick="HideMenu();">
+                      <span>Сreate a political party</span>
+                   </a>
+                </li>
+                <li class="citizen_inheritance">
+                   <a href="#citizen_inheritance" title="Inheritance" onClick="HideMenu();">
+                      <span>Inheritance</span>
+                   </a>
+                </li>
+                <li class="citizen_marriage_registration">
+                   <a href="#citizen_marriage_registration" title="Marriage registration" onClick="HideMenu();">
+                      <span>Marriage registration</span>
+                   </a>
+                </li>
+                <li class="citizen_divorce">
+                   <a href="#citizen_divorce" title="Divorce" onClick="HideMenu();">
+                      <span>Divorce</span>
+                   </a>
+                </li-->
 			 </ul>
 		  </li>
 		  <li class="company Demo">
