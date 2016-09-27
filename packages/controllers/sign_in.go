@@ -81,8 +81,8 @@ func (c *Controller) AjaxSignIn() interface{} {
 		}*/
 	c.sess.Set("wallet_id", walletId)
 	if citizenId > 0 && stateId > 0 {
-		if statePrefix, err := c.GetStatePrefix(stateId); err == nil {
-			id, err := c.Single(`SELECT citizen_id FROM `+statePrefix+`_citizens WHERE citizen_id=? AND hex(public_key_0) = ?`,
+		if _, err := c.GetStateName(stateId); err == nil {
+			id, err := c.Single(`SELECT citizen_id FROM `+utils.Int64ToStr(stateId)+`_citizens WHERE citizen_id=? AND hex(public_key_0) = ?`,
 				citizenId, string(publicKey)).Int64()
 			if err != nil {
 				result.Error = err.Error()

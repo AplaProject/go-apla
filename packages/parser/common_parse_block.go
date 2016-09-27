@@ -21,16 +21,16 @@ import (
 )
 
 func (p *Parser) ParseInit() error {
-	if p.States == nil {
+	/*if p.States == nil {
 		p.States = make(map[int64]string)
-		all, err := p.GetAll(`SELECT state_id, state_code FROM states`, -1)
+		all, err := p.GetAll(`SELECT id, name FROM system_states`, -1)
 		if err != nil {
 			return err
 		}
 		for _, v := range all {
-			p.States[utils.StrToInt64(v["state_id"])] = v["state_code"]
+			p.States[utils.StrToInt64(v["id"])] = v["name"]
 		}
-	}
+	}*/
 	return nil
 }
 

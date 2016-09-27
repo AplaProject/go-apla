@@ -140,12 +140,19 @@ func (c *Controller) InstallStep1() (string, error) {
 		}
 
 		if dbType != "sqlite" || len(sqliteDbUrl) == 0 {
-			schema_ := &schema.SchemaStruct{}
-			schema_.DCDB = c.DCDB
-			schema_.DbType = dbType
-			schema_.PrefixUserId = 0
-			schema_.GetSchema()
 
+			schema, err := ioutil.ReadFile("packages/schema/schema.sql")
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				panic(err)
+				os.Exit(1)
+			}
+			err = c.DCDB.ExecSql(string(schema))
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				panic(err)
+				os.Exit(1)
+			}
 		}
 
 		err = c.DCDB.ExecSql("INSERT INTO config (sqlite_db_url, first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?, ?)", sqliteDbUrl, firstLoad, url, 259200)

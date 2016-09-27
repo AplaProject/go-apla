@@ -81,11 +81,13 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if sessStateId > 0 {
-		statePref, err := c.GetStatePrefix(sessStateId)
+		stateName, err := c.GetStateName(sessStateId)
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.StatePrefix = statePref
+		c.StateName = stateName
+		c.StateId = sessStateId
+		c.StateIdStr = utils.Int64ToStr(sessStateId)
 	}
 	c.dbInit = dbInit
 

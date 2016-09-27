@@ -114,26 +114,6 @@ ALTER TABLE ONLY "currency" ADD CONSTRAINT currency_pkey PRIMARY KEY (id);
 
 
 
-DROP SEQUENCE IF EXISTS ea_account_id_seq CASCADE;
-CREATE SEQUENCE ea_account_id_seq START WITH 1;
-DROP TABLE IF EXISTS "ea_account"; CREATE TABLE "ea_account" (
-"account_id" smallint  NOT NULL  default nextval('currency_id_seq'),
-"name" char(3) NOT NULL DEFAULT '',
-"full_name" varchar(50) NOT NULL DEFAULT '',
-"rb_id" int NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE ea_account_id_seq owned by ea_account.id;
-ALTER TABLE ONLY "ea_account" ADD CONSTRAINT ea_account_pkey PRIMARY KEY (account_id);
-
-
-
-
-DROP TABLE IF EXISTS "ea_state_tables"; CREATE TABLE "ea_state_tables" (
-"name" varchar(255) NOT NULL DEFAULT '',
-"columns" text NOT NULL DEFAULT ''
-);
-
-
 
 
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
@@ -277,7 +257,7 @@ DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "node_public_key" bytea  NOT NULL DEFAULT '',
 "amount" decimal(30) NOT NULL DEFAULT '0',
 "host" varchar(50) NOT NULL DEFAULT '',
-"addressVote" varchar(255) NOT NULL DEFAULT '',
+"address_vote" varchar(255) NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE dlt_wallets_wallet_id_seq owned by dlt_wallets.wallet_id;
@@ -286,62 +266,9 @@ ALTER TABLE ONLY "dlt_wallets" ADD CONSTRAINT dlt_wallets_pkey PRIMARY KEY (wall
 
 
 
-DROP SEQUENCE IF EXISTS ea_citizens_citizen_id_seq CASCADE;
-CREATE SEQUENCE ea_citizens_citizen_id_seq START WITH 1;
-DROP TABLE IF EXISTS "ea_citizens"; CREATE TABLE "ea_citizens" (
-"citizen_id" bigint  NOT NULL  default nextval('ea_citizens_citizen_id_seq'),
-"public_key_0" bytea  NOT NULL DEFAULT '',
-"public_key_1" bytea  NOT NULL DEFAULT '',
-"public_key_2" bytea  NOT NULL DEFAULT '',
-"block_id" bigint  NOT NULL DEFAULT '0',
-"rb_id" bigint  NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE ea_citizens_citizen_id_seq owned by ea_citizens.citizen_id;
-ALTER TABLE ONLY "ea_citizens" ADD CONSTRAINT ea_citizens_pkey PRIMARY KEY (citizen_id);
 
 
 
-
-DROP SEQUENCE IF EXISTS ea_citizenship_requests_request_id_seq CASCADE;
-CREATE SEQUENCE ea_citizenship_requests_request_id_seq START WITH 1;
-DROP TABLE IF EXISTS "ea_citizenship_requests"; CREATE TABLE "ea_citizenship_requests" (
-"request_id" bigint  NOT NULL  default nextval('ea_citizenship_requests_request_id_seq'),
-"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
-"block_id" bigint  NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE ea_citizenship_requests_request_id_seq owned by ea_citizenship_requests.request_id;
-ALTER TABLE ONLY "ea_citizenship_requests" ADD CONSTRAINT ea_citizenship_requests_pkey PRIMARY KEY (citizen_id);
-
-
-
-
-DROP SEQUENCE IF EXISTS ea_citizens_private_citizen_id_seq CASCADE;
-CREATE SEQUENCE ea_citizens_private_citizen_id_seq START WITH 1;
-DROP TABLE IF EXISTS "ea_citizens_private"; CREATE TABLE "ea_citizens_private" (
-"citizen_id" bigint NOT NULL  default nextval('ea_citizens_private_citizen_id_seq'),
-"main_citizen_id" int NOT NULL DEFAULT '0',
-"name" varchar(255) NOT NULL DEFAULT '',
-"fields" text NOT NULL DEFAULT '',
-"binary" bytea NOT NULL DEFAULT ''
-);
-ALTER SEQUENCE ea_citizens_private_citizen_id_seq owned by ea_citizens_private.citizen_id;
-ALTER TABLE ONLY "ea_citizens_private" ADD CONSTRAINT ea_citizens_private_pkey PRIMARY KEY (citizen_id);
-
-
-
-
-DROP SEQUENCE IF EXISTS ea_citizenship_requests_private_id_seq CASCADE;
-CREATE SEQUENCE ea_citizenship_requests_private_id_seq START WITH 1;
-DROP TABLE IF EXISTS "ea_citizenship_requests_private"; CREATE TABLE "ea_citizenship_requests_private" (
-"id" bigint  NOT NULL  default nextval('ea_citizenship_requests_private_id_seq'),
-"request_id" bigint  NOT NULL  default '0',
-"fields" text NOT NULL DEFAULT '',
-"binary" bytea NOT NULL DEFAULT '',
-"public" varchar(255) NOT NULL DEFAULT '',
-"approved" bigint NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE ea_citizenship_requests_private_id_seq owned by ea_citizenship_requests_private.id;
-ALTER TABLE ONLY "ea_citizenship_requests_private" ADD CONSTRAINT ea_citizenship_requests_private_pkey PRIMARY KEY (id);
 
 
 
@@ -353,7 +280,6 @@ DROP TABLE IF EXISTS "system_recognized_states"; CREATE TABLE "system_recognized
 "delegate_wallet_id" bigint NOT NULL DEFAULT '0',
 "delegate_state_id" int NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE system_recognized_states_state_id_seq owned by system_recognized_states.state_id;
 ALTER TABLE ONLY "system_recognized_states" ADD CONSTRAINT system_recognized_states_pkey PRIMARY KEY (state_id);
 
 
@@ -462,68 +388,12 @@ ALTER TABLE ONLY "cb_head" ADD CONSTRAINT cb_head_pkey PRIMARY KEY (id);
 
 
 
-DROP TABLE IF EXISTS "ea_state_parameters"; CREATE TABLE "ea_state_parameters" (
-"parameter" varchar(100) NOT NULL DEFAULT '',
-"value" text NOT NULL DEFAULT '',
-"bytecode" bytea NOT NULL DEFAULT '',
-"conditions_parameter" varchar(255) NOT NULL DEFAULT '',
-"text_description" text NOT NULL DEFAULT '',
-"last_update" bigint NOT NULL DEFAULT '0',
-"parent" varchar(255) NOT NULL DEFAULT '',
-"rb_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "ea_state_parameters" ADD CONSTRAINT ea_state_parameters_pkey PRIMARY KEY (parameter);
-
-
-
-
-DROP TABLE IF EXISTS "ea_state_variables"; CREATE TABLE "ea_state_variables" (
-"name" varchar(100) NOT NULL DEFAULT '',
-"value" text NOT NULL DEFAULT '',
-"visibility" varchar(255) NOT NULL DEFAULT '',
-"rb_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "ea_state_variables" ADD CONSTRAINT ea_state_variables_pkey PRIMARY KEY (name);
-
-
-
-
-DROP SEQUENCE IF EXISTS ea_state_smart_laws_id_seq CASCADE;
-CREATE SEQUENCE ea_state_smart_laws_id_seq START WITH 1;
-DROP TABLE IF EXISTS "ea_state_smart_laws"; CREATE TABLE "ea_state_smart_laws" (
-"id" bigint NOT NULL  default nextval('ea_state_smart_laws_id_seq'),
-"name" varchar(100) NOT NULL DEFAULT '',
-"value" text NOT NULL DEFAULT '',
-"bytecode" bytea NOT NULL DEFAULT '',
-"conditions_parameter" varchar(255) NOT NULL DEFAULT '',
-"text_description" text NOT NULL DEFAULT '',
-"last_update" bigint NOT NULL DEFAULT '0',
-"parent" varchar(255) NOT NULL DEFAULT '',
-"rb_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE ea_state_smart_laws_id_seq owned by ea_state_smart_laws.id;
-ALTER TABLE ONLY "ea_state_smart_laws" ADD CONSTRAINT ea_state_smart_laws_pkey PRIMARY KEY (id);
-
-
-
-
-DROP TABLE IF EXISTS "ea_state_laws"; CREATE TABLE "ea_state_laws" (
-"name" varchar(100) NOT NULL DEFAULT '',
-"text_description" text NOT NULL DEFAULT '',
-"author" varchar(255) NOT NULL DEFAULT '',
-"status" varchar(255) NOT NULL DEFAULT '',
-"last_update" bigint NOT NULL DEFAULT '0',
-"rb_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "ea_state_laws" ADD CONSTRAINT ea_state_laws_pkey PRIMARY KEY (name);
-
-
 
 
 DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
 CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
 DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
-"id" bigint NOT NULL  default nextval('rollback_id_seq'),
+"id" bigint NOT NULL  default nextval('rollback_tx_id_seq'),
 "block_id" bigint NOT NULL DEFAULT '0',
 "tx_hash" bytea  NOT NULL DEFAULT '',
 "table_name" varchar(255) NOT NULL DEFAULT '',
@@ -561,23 +431,25 @@ ALTER TABLE ONLY "rb_upd_full_nodes" ADD CONSTRAINT rb_upd_full_nodes_pkey PRIMA
 
 
 
-DROP SEQUENCE IF EXISTS rollback_id_seq CASCADE;
-CREATE SEQUENCE rollback_id_seq START WITH 1;
+DROP SEQUENCE IF EXISTS rollback_rb_id_seq CASCADE;
+CREATE SEQUENCE rollback_rb_id_seq START WITH 1;
 DROP TABLE IF EXISTS "rollback"; CREATE TABLE "rollback" (
 "rb_id" bigint NOT NULL  default nextval('rollback_rb_id_seq'),
 "block_id" bigint NOT NULL DEFAULT '0',
 "data" text NOT NULL DEFAULT ''
 );
-ALTER SEQUENCE rollback_id_seq owned by rollback.id;
+ALTER SEQUENCE rollback_rb_id_seq owned by rollback.rb_id;
 ALTER TABLE ONLY "rollback" ADD CONSTRAINT rollback_pkey PRIMARY KEY (rb_id);
 
+
+DROP TABLE IF EXISTS "system_parameters";
 CREATE TABLE "system_parameters" (
-"name" bytea  NOT NULL DEFAULT '',
+"name" varchar(255)  NOT NULL DEFAULT '',
 "value" bytea  NOT NULL DEFAULT '',
 "conditions" bytea  NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY (name);
+ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
 
 DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;

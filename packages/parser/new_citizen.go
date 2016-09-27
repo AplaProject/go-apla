@@ -32,8 +32,8 @@ func (p *Parser) NewCitizenInit() error {
 		p.TxMap["public_key_hex"] = utils.BinToHex(p.TxMap["public_key"])
 		p.TxMaps.Bytes["public_key_hex"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
 	*/
-	data := p.TxPtr.(*consts.NewCitizen)
-	p.TxVars[`state_code`] = p.States[data.StateId]
+	// p.TxPtr.(*consts.NewCitizen)
+	//p.TxVars[`state_code`] = data.StateId
 	//		fmt.Println(data)
 	return nil
 }

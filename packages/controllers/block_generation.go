@@ -42,7 +42,7 @@ func (c *Controller) BlockGeneration() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	MyWalletData, err := c.OneRow("SELECT hex(address) as address, host, addressVote FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	MyWalletData, err := c.OneRow("SELECT hex(address) as address, host, address_vote FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

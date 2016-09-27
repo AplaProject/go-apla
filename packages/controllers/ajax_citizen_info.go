@@ -51,13 +51,13 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	)
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
 	stateCode := utils.StrToInt64(c.r.FormValue(`stateId`))
-	statePrefix, err := c.GetStatePrefix(stateCode)
+	_, err = c.GetStateName(stateCode)
 	c.r.ParseMultipartForm(16 << 20) // Max memory 16 MiB
 	formdata := c.r.MultipartForm
 	defer formdata.RemoveAll()
 
 	//	fmt.Println(`FORM START`, formdata)
-	field, err := c.Single(`SELECT value FROM ` + statePrefix + `_state_parameters where parameter='citizen_fields'`).String()
+	field, err := c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateCode) + `_state_parameters where parameter='citizen_fields'`).String()
 	vals := make(map[string]string)
 	time := c.r.FormValue(`time`)
 	walletId := c.r.FormValue(`walletId`)
@@ -92,7 +92,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		}
 	}
 	if err == nil {
-		data, err = c.OneRow(`SELECT * FROM `+statePrefix+`_citizenship_requests WHERE dlt_wallet_id = ? order by request_id desc`, walletId).String()
+		data, err = c.OneRow(`SELECT * FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests WHERE dlt_wallet_id = ? order by request_id desc`, walletId).String()
 		if err != nil || data == nil || len(data) == 0 {
 			err = fmt.Errorf(`unknown request for wallet %s`, walletId)
 		} else {
@@ -108,7 +108,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 				}
 			}
 			if fval, err = json.Marshal(vals); err == nil {
-				err = c.ExecSql(`INSERT INTO `+statePrefix+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
+				err = c.ExecSql(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
 					data[`request_id`], fval, hex.EncodeToString(buf.Bytes()), c.r.FormValue(`publicKey`))
 			}
 		}

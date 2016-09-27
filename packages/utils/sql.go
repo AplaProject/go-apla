@@ -1626,10 +1626,10 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 	return int64(sleepTime), nil
 }
 
-func (db *DCDB) GetStatePrefix(stateId int64) (string, error) {
-	stateCode, err := db.Single(`SELECT state_code FROM states WHERE state_id = ?`, stateId).String()
+func (db *DCDB) GetStateName(stateId int64) (string, error) {
+	stateName, err := db.Single(`SELECT name FROM system_states WHERE id = ?`, stateId).String()
 	if err != nil {
 		return ``, err
 	}
-	return strings.ToLower(stateCode), nil
+	return stateName, nil
 }

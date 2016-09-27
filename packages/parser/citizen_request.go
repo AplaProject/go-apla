@@ -28,8 +28,8 @@ func (p *Parser) CitizenRequestInit() error {
 			return p.ErrInfo(err)
 		}
 		p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])*/
-	data := p.TxPtr.(*consts.CitizenRequest)
-	p.TxVars[`state_code`] = p.States[data.StateId]
+	//p.TxPtr.(*consts.CitizenRequest)
+	//p.TxVars[`state_code`] = data.StateId
 	//	fmt.Println(data, p.States)
 	return nil
 }

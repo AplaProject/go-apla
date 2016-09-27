@@ -20,7 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-type addStatePage struct {
+type newStatePage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
@@ -33,16 +33,16 @@ type addStatePage struct {
 	TimeNow      int64
 }
 
-func (c *Controller) AddState() (string, error) {
+func (c *Controller) NewState() (string, error) {
 
 	var err error
 
-	txType := "addState"
+	txType := "newState"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 
-	TemplateStr, err := makeTemplate("add_state", "addState", &addStatePage {
+	TemplateStr, err := makeTemplate("new_state", "newState", &newStatePage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,

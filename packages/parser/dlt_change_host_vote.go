@@ -66,9 +66,9 @@ func (p *Parser) DLTChangeHostVote() error {
 	log.Debug("p.TxMaps.String[addressVote] %s", p.TxMaps.String["addressVote"])
 
 	if len(p.TxMaps.Bytes["public_key"]) > 0 {
-		err = p.selectiveLoggingAndUpd([]string{"host", "addressVote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.String["addressVote"]), p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.String["addressVote"]), p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		err = p.selectiveLoggingAndUpd([]string{"host", "addressVote"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		err = p.selectiveLoggingAndUpd([]string{"host", "address_vote"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)

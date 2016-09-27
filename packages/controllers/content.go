@@ -141,11 +141,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if sessStateId > 0 {
-		statePref, err := c.GetStatePrefix(sessStateId)
+		stateName, err := c.GetStateName(sessStateId)
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.StatePrefix = statePref
+		c.StateName = stateName
+		c.StateId = sessStateId
+		c.StateIdStr = utils.Int64ToStr(sessStateId)
 	}
 
 	c.dbInit = dbInit
@@ -280,7 +282,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		if sessWalletId > 0 {
 			pk, err = c.OneRow("SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM dlt_wallets WHERE wallet_id = ?", userId).String()
 		} else {
-			pk, err = c.OneRow(`SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM `+c.StatePrefix+`_citizens WHERE citizen_id = ?`, userId).String()
+			pk, err = c.OneRow(`SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM `+c.StateIdStr+`_citizens WHERE citizen_id = ?`, userId).String()
 		}
 		if err != nil {
 			log.Error("%v", err)

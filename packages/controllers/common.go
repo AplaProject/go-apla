@@ -54,7 +54,9 @@ type Controller struct {
 	ShowSignData     bool
 	Alert            string
 	SessStateId      int64
-	StatePrefix      string
+	StateName      string
+	StateId      int64
+	StateIdStr string
 	SessCitizenId    int64
 	SessWalletId     int64
 	SessAddress      string

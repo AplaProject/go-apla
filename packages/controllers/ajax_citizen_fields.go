@@ -40,19 +40,20 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 		err    error
 		amount int64
 	)
-	statePrefix, err := c.GetStatePrefix(utils.StrToInt64(c.r.FormValue(`state_id`)))
+	stateId := utils.StrToInt64(c.r.FormValue(`state_id`))
+	_, err = c.GetStateName(stateId)
 	if err == nil {
-		if reqId, err := c.Single(`select request_id from `+statePrefix+`_citizenship_requests where dlt_wallet_id=? order by request_id desc`,
+		if reqId, err := c.Single(`select request_id from `+utils.Int64ToStr(stateId)+`_citizenship_requests where dlt_wallet_id=? order by request_id desc`,
 			c.SessWalletId).Int64(); err == nil {
 			if reqId > 0 {
-				if approved, err := c.Single(`select approved from `+statePrefix+`_citizens_requests_private where request_id=? order by id desc`,
+				if approved, err := c.Single(`select approved from `+utils.Int64ToStr(stateId)+`_citizens_requests_private where request_id=? order by id desc`,
 					reqId).Int64(); err == nil {
 					result.Approved = approved
 				}
 			} else {
-				result.Fields, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_parameters where parameter='citizen_fields'`).String()
+				result.Fields, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
 				if err == nil {
-					result.Price, err = c.Single(`SELECT value FROM ` + statePrefix + `_state_parameters where parameter='citizen_dlt_price'`).Int64()
+					result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_dlt_price'`).Int64()
 					if err == nil {
 						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
 						result.Valid = (err == nil && amount >= result.Price)
