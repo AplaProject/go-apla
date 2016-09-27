@@ -96,6 +96,23 @@ func (c *Controller) SaveQueue() (string, error) {
 				StateId:   utils.StrToInt64(c.r.FormValue("stateId")),
 				PublicKey: key, Sign: sign})
 		}
+	case "TXNewCitizen":
+		// This will be common part
+		userId := walletId
+		stateId := uint32(utils.StrToInt64(c.r.FormValue("stateId")))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		TXHead := consts.TXHeader{Type: uint8(txType), Time: uint32(txTime),
+			UserId: userId, StateId: stateId, Sign: sign}
+		// ---
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+		if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
+			_, err = lib.BinMarshal(&data, &consts.TXNewCitizen{TXHeader: TXHead,
+				PublicKey: key})
+		}
 	case "DLTTransfer":
 
 		walletAddress := []byte(c.r.FormValue("walletAddress"))
