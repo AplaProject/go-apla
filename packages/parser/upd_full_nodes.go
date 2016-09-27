@@ -63,7 +63,7 @@ func (p *Parser) UpdFullNodes() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	maxId, err := p.Single(`SELECT max(full_node_id) FROM full_nodes`).Int64()
+	maxId, err := p.Single(`SELECT max(id) FROM full_nodes`).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -79,7 +79,7 @@ func (p *Parser) UpdFullNodes() error {
 	}
 
 	// получаем новые данные по wallet-нодам
-	all, err := p.GetList(`SELECT wallet_id FROM dlt_wallets GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 10`).Int64()
+	all, err := p.GetList(`SELECT wallet_id FROM dlt_wallets GROUP BY dlt_wallets.address_vote ORDER BY sum(amount) DESC LIMIT 10`).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -126,7 +126,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 		return p.ErrInfo(err)
 	}
 
-	maxId, err := p.Single(`SELECT max(full_node_id) FROM full_nodes`).Int64()
+	maxId, err := p.Single(`SELECT max(id) FROM full_nodes`).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -150,7 +150,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 
 	for _, data := range full_nodes_wallet {
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
-		err = p.ExecSql(`INSERT INTO full_nodes (full_node_id, host, wallet_id, state_id, final_delegate_wallet_id, final_delegate_state_id, rb_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, data["full_node_id"], data["host"], data["wallet_id"], data["state_id"], data["final_delegate_wallet_id"], data["final_delegate_state_id"], data["rb_id"])
+		err = p.ExecSql(`INSERT INTO full_nodes (id, host, wallet_id, state_id, final_delegate_wallet_id, final_delegate_state_id, rb_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, data["id"], data["host"], data["wallet_id"], data["state_id"], data["final_delegate_wallet_id"], data["final_delegate_state_id"], data["rb_id"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}

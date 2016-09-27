@@ -37,7 +37,7 @@ func (c *Controller) NewState() (string, error) {
 
 	var err error
 
-	txType := "newState"
+	txType := "NewState"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 

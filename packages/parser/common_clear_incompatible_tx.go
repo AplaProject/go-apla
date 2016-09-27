@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -41,6 +40,8 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 
 
 	var forSelfUse int64
+
+	/*
 	// две тр-ии одного типа от одного юзера не должны попасть в один блок
 	// исключение - перевод DC между юзерами
 	if len(fatalError) == 0 {
@@ -121,14 +122,14 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 				                      verified=1 AND
 				                      used = 0
 					)  AS x
-					`, citizenId, citizenId).Int64()
+					`, citizenId).Int64()
 		if err != nil {
 			fatalError = fmt.Sprintf("%s", err)
 		}
 		if num > 0 {
 			waitError = "only 1 tx"
 		}
-	}
+	}*/
 	log.Debug("fatalError: %v, waitError: %v, forSelfUse: %v, txType: %v, walletId: %v, citizenId: %v, thirdVar: %v", fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar)
 	return fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar
 }

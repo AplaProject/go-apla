@@ -132,7 +132,7 @@ BEGIN:
 		/*
 		 * Загрузка блоков для детальной проверки
 		 */
-		host, err := d.Single("SELECT host FROM full_nodes WHERE full_node_id = ?", newBlockData["full_node_id"]).String()
+		host, err := d.Single("SELECT host FROM full_nodes WHERE id = ?", newBlockData["full_node_id"]).String()
 		if err != nil {
 			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

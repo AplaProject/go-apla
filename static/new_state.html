@@ -4,13 +4,10 @@
 	var serverTime;
 
 	$('#send').bind('click', function () {
-		if (!$("#phrase").val()) {
-			alert('Generate seed');
-			return;
-		}
+
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}}');
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}}');
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -21,6 +18,8 @@
 			type: 'POST',
 			url: 'ajax?controllerName=saveQueue',
 			data: {
+				'state_name' : $('#state_name').val(),
+				'currency_name' : $('#currency_name').val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
 				'walletId' : '{{.WalletId}}',
@@ -56,10 +55,10 @@
 		   <table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
-				  <td>State name</td><td><input type="text"></td>
+				  <td>State name</td><td><input type="text" id="state_name"></td>
 			  </tr>
 			  <tr>
-				  <td>Currency name</td><td><input type="text"></td>
+				  <td>Currency name</td><td><input type="text" id="currency_name"></td>
 			  </tr>
 			  </tbody>
 		   </table>
@@ -67,12 +66,9 @@
 		</div>
 	 </div>
 	</div>
-	<!-- END panel-->
-<script type="text/javascript">
-	$(document).ready(function() {
-		$(".edit").editable({
-            type: 'text'
-		})
-	});
-</script>
+
+
+
+{{template "signatures".}}
+
 {{end}}

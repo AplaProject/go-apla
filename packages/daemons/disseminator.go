@@ -100,7 +100,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		full_node_id, err:= d.Single("SELECT full_node_id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
+		full_node_id, err:= d.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)

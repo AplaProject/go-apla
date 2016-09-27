@@ -150,10 +150,10 @@ CREATE UNIQUE INDEX main_lock_uniq ON "main_lock" USING btree (uniq);
 
 
 
-DROP SEQUENCE IF EXISTS full_nodes_full_node_id_seq CASCADE;
-CREATE SEQUENCE full_nodes_full_node_id_seq START WITH 1;
+DROP SEQUENCE IF EXISTS full_nodes_id_seq CASCADE;
+CREATE SEQUENCE full_nodes_id_seq START WITH 1;
 DROP TABLE IF EXISTS "full_nodes"; CREATE TABLE "full_nodes" (
-"full_node_id" int NOT NULL  default nextval('full_nodes_full_node_id_seq'),
+"id" int NOT NULL  default nextval('full_nodes_id_seq'),
 "host" varchar(100) NOT NULL DEFAULT '',
 "wallet_id" bigint NOT NULL DEFAULT '0',
 "state_id" int NOT NULL DEFAULT '0',
@@ -161,8 +161,8 @@ DROP TABLE IF EXISTS "full_nodes"; CREATE TABLE "full_nodes" (
 "final_delegate_state_id" bigint NOT NULL DEFAULT '0',
 "rb_id" int NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE full_nodes_full_node_id_seq owned by full_nodes.full_node_id;
-ALTER TABLE ONLY "full_nodes" ADD CONSTRAINT full_nodes_pkey PRIMARY KEY (full_node_id);
+ALTER SEQUENCE full_nodes_id_seq owned by full_nodes.id;
+ALTER TABLE ONLY "full_nodes" ADD CONSTRAINT full_nodes_pkey PRIMARY KEY (id);
 
 
 
@@ -257,7 +257,7 @@ DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "node_public_key" bytea  NOT NULL DEFAULT '',
 "amount" decimal(30) NOT NULL DEFAULT '0',
 "host" varchar(50) NOT NULL DEFAULT '',
-"address_vote" varchar(255) NOT NULL DEFAULT '',
+"address_vote" bytea NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE dlt_wallets_wallet_id_seq owned by dlt_wallets.wallet_id;

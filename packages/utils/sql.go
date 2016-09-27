@@ -1539,7 +1539,7 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 }
 
 func (db *DCDB) FindInFullNodes(myCBID, myWalletId int64) (int64, error) {
-	return db.Single("SELECT full_node_id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
+	return db.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
 }
 
 func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
@@ -1572,14 +1572,14 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 
 func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
 	// возьмем список всех full_nodes
-	fullNodesList, err := db.GetAll("SELECT full_node_id, wallet_id, state_id as state_id FROM full_nodes", -1)
+	fullNodesList, err := db.GetAll("SELECT id, wallet_id, state_id as state_id FROM full_nodes", -1)
 	if err != nil {
 		return int64(0), ErrInfo(err)
 	}
 	log.Debug("fullNodesList %s", fullNodesList)
 
 	// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
-	prevBlockFullNodeId, err := db.Single("SELECT full_node_id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockCBID, prevBlockWalletId).Int64()
+	prevBlockFullNodeId, err := db.Single("SELECT id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockCBID, prevBlockWalletId).Int64()
 	if err != nil {
 		return int64(0), ErrInfo(err)
 	}
@@ -1589,7 +1589,7 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 
 	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
 		for i, full_nodes := range fullNodesList {
-			if StrToInt64(full_nodes["full_node_id"]) == prevBlockFullNodeId {
+			if StrToInt64(full_nodes["id"]) == prevBlockFullNodeId {
 				return i
 			}
 		}
