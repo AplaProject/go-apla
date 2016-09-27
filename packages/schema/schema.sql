@@ -462,3 +462,7 @@ DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 ALTER SEQUENCE system_states_id_seq owned by system_states.citizen_id;
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (citizen_id);
 
+
+INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');
+INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000');
+INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"insert":"10", "update":"30*count_rows", "select_wo_index":"500", "select_w_index":"10", "add_state":"1000000"}');

@@ -57,10 +57,12 @@ func (p *Parser) ParseBlock() error {
 	}
 	p.AllPkeys = make(map[string]string)
 	for _, table := range allTables {
+		log.Debug("%s", table)
 		col, err := p.GetFirstColumnName(table)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
+		log.Debug("%s", col)
 		p.AllPkeys[table] = col
 	}
 	if err := p.ParseInit(); err != nil {

@@ -115,7 +115,7 @@ func (db *DCDB) GetMainLockName() (string, error) {
 }
 
 func (db *DCDB) GetFirstColumnName(table string) (string, error) {
-	rows, err := db.Query("SELECT * FROM " + table + " LIMIT 1")
+	rows, err := db.Query(`SELECT * FROM "` + table + `" LIMIT 1`)
 	if err != nil {
 		return "", err
 	}
