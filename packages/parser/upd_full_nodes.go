@@ -18,6 +18,7 @@ package parser
 
 import (
 	"encoding/json"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) UpdFullNodesInit() error {
@@ -79,17 +80,17 @@ func (p *Parser) UpdFullNodes() error {
 	}
 
 	// получаем новые данные по wallet-нодам
-	all, err := p.GetList(`SELECT wallet_id FROM dlt_wallets GROUP BY dlt_wallets.address_vote, wallet_id ORDER BY sum(amount) DESC LIMIT 10`).Int64()
+	all, err := p.GetList(`SELECT address_vote FROM dlt_wallets GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 10`).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	for _, wallet_id := range all {
-		host, err := p.Single(`SELECT host FROM dlt_wallets WHERE wallet_id = ?`, wallet_id).String()
+	for _, address_vote := range all {
+		dlt_wallets, err := p.OneRow(`SELECT host, wallet_id FROM dlt_wallets WHERE address = [hex]`, utils.BinToHex(address_vote)).String()
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
-		err = p.ExecSql(`INSERT INTO full_nodes (wallet_id, host, rb_id) VALUES (?, ?, ?)`, wallet_id, host, rbId)
+		err = p.ExecSql(`INSERT INTO full_nodes (wallet_id, host, rb_id) VALUES (?, ?, ?)`, dlt_wallets["wallet_id"], dlt_wallets["host"], rbId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

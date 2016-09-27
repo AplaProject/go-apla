@@ -28,7 +28,7 @@ Adding state tables should be spelled out in state settings
 
 func (p *Parser) NewStateInit() error {
 
-	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}}
+	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
