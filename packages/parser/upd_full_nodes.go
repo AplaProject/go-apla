@@ -79,7 +79,9 @@ func (p *Parser) UpdFullNodes() error {
 	}
 
 	// получаем новые данные по wallet-нодам
-	all, err := p.GetList(`SELECT wallet_id FROM dlt_wallets GROUP BY dlt_wallets.address_vote ORDER BY sum(amount) DESC LIMIT 10`).Int64()
+	// TODO
+	// 	all, err := p.GetList(`SELECT wallet_id FROM dlt_wallets GROUP BY dlt_wallets.address_vote ORDER BY sum(amount) DESC LIMIT 10`).Int64()
+	all, err := p.GetList(`SELECT wallet_id FROM dlt_wallets LIMIT 10`).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -71,23 +71,26 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 		}
 		allFields = append(allFields, map[string]string{"sign": "bytes"})
 	}*/
-	if len(p.TxSlice) != len(allFields)+5 {
-		return fmt.Errorf("bad transaction_array %d != %d (type=%d)", len(p.TxSlice), len(allFields)+4, p.TxSlice[0])
+	log.Debug("%v", allFields)
+	log.Debug("%d %d", len(allFields), len(p.TxSlice))
+	log.Debug("%s", p.TxMap)
+	if len(p.TxSlice) != len(allFields)+6 {
+		return fmt.Errorf("bad transaction_array %d != %d (type=%d)", len(p.TxSlice), len(allFields)+6, p.TxSlice[0])
 	}
 	for i := 0; i < len(allFields); i++ {
 		for field, fType := range allFields[i] {
-			p.TxMap[field] = p.TxSlice[i+5]
+			p.TxMap[field] = p.TxSlice[i+6]
 			switch fType {
 			case "int64":
-				p.TxMaps.Int64[field] = utils.BytesToInt64(p.TxSlice[i+5])
+				p.TxMaps.Int64[field] = utils.BytesToInt64(p.TxSlice[i+6])
 			case "float64":
-				p.TxMaps.Float64[field] = utils.BytesToFloat64(p.TxSlice[i+5])
+				p.TxMaps.Float64[field] = utils.BytesToFloat64(p.TxSlice[i+6])
 			case "money":
-				p.TxMaps.Money[field] = utils.StrToMoney(string(p.TxSlice[i+5]))
+				p.TxMaps.Money[field] = utils.StrToMoney(string(p.TxSlice[i+6]))
 			case "bytes":
-				p.TxMaps.Bytes[field] = p.TxSlice[i+5]
+				p.TxMaps.Bytes[field] = p.TxSlice[i+6]
 			case "string":
-				p.TxMaps.String[field] = string(p.TxSlice[i+5])
+				p.TxMaps.String[field] = string(p.TxSlice[i+6])
 			}
 		}
 	}

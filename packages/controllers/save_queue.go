@@ -139,7 +139,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
 		data = append(data, utils.EncodeLengthPlusData(stateName)...)
 		data = append(data, utils.EncodeLengthPlusData(currencyName)...)
-		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
 		data = append(data, binSignatures...)
 
 	case "ChangeNodeKey":
