@@ -1,5 +1,6 @@
-// +build windows
-
+// Copyright 2016 The go-daylight Authors
+// This file is part of the go-daylight library.
+//
 // The go-daylight library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -13,21 +14,29 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package smart
 
 import (
-	"runtime"
+	"fmt"
 
-	"github.com/DayLightProject/go-daylight/packages/daylight"
-	"github.com/DayLightProject/go-daylight/packages/system"
-	"github.com/go-thrust/lib/bindings/window"
+	"github.com/DayLightProject/go-daylight/packages/script"
 )
 
-func main() {
-	runtime.LockOSThread()
-	var thrustWindow *window.Window
-	tray()
-	go daylight.Start("", thrustWindow)
-	enterLoop()
-	system.Finish(0)
+var (
+	smartVM *script.VM
+)
+
+func init() {
+	smartVM = script.VMInit(map[string]interface{}{
+		"Println": fmt.Println,
+		"Sprintf": fmt.Sprintf,
+	})
+}
+
+func NewContract(src string) error {
+	return smartVM.Compile([]rune(src))
+}
+
+func SmartFront() {
+
 }
