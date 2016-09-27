@@ -44,6 +44,7 @@ const (
 	IS_LPAR   = 0x2801 // (
 	IS_RPAR   = 0x2901 // )
 	IS_COMMA  = 0x2c01 // ,
+	IS_EQ     = 0x3d01 // =
 	IS_LCURLY = 0x7b01 // {
 	IS_RCURLY = 0x7d01 // }
 
@@ -74,11 +75,12 @@ const (
 	KEY_WHILE
 	KEY_TRUE
 	KEY_FALSE
+	KEY_VAR
 )
 
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
-		`if`: KEY_IF, `else`: KEY_ELSE, `while`: KEY_WHILE, `true`: KEY_TRUE, `false`: KEY_FALSE}
+		`if`: KEY_IF, `else`: KEY_ELSE, `while`: KEY_WHILE, `true`: KEY_TRUE, `false`: KEY_FALSE, `var`: KEY_VAR}
 	TYPES = map[string]reflect.Kind{`bool`: reflect.Bool, `int`: reflect.Int64, `string`: reflect.String}
 )
 

@@ -135,14 +135,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case reflect.Bool:
 				vtype = reflect.TypeOf(true)
 			}
-			value = reflect.New(vtype).Interface()
+			value = reflect.New(vtype).Elem().Interface()
 		}
 		rt.vars = append(rt.vars, value)
 	}
 	if block.Type == OBJ_FUNC {
 		start -= len(block.Info.(*FuncInfo).Params)
 	}
-
+	var assign []*VarInfo
 	//main:
 	for _, cmd := range block.Code {
 		var bin interface{}
@@ -166,6 +166,21 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if !ValueToBool(rt.stack[len(rt.stack)-1]) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
+		case CMD_ASSIGNVAR:
+			assign = cmd.Value.([]*VarInfo)
+		case CMD_ASSIGN:
+			count := len(assign)
+			for ivar, item := range assign {
+				var i int
+				//				fmt.Println(`Var`, ivar, item.Obj.Value.(int))
+				for i = len(rt.blocks) - 1; i >= 0; i-- {
+					if item.Owner == rt.blocks[i].Block {
+						rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
+						break
+					}
+				}
+			}
+			//			fmt.Println(`CMD ASSIGN`, count, rt.stack, rt.vars)
 		case CMD_RETURN:
 			status = STATUS_RETURN
 			/*			for count := cmd.Value.(int); count > 0; count-- {
