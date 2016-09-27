@@ -20,8 +20,6 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/script"
-	"github.com/DayLightProject/go-daylight/packages/schema"
-
 	"encoding/json"
 )
 
@@ -29,7 +27,7 @@ import (
 Adding state tables should be spelled out in state settings
 */
 
-func (p *Parser) NewStateTableInit() error {
+func (p *Parser) NewTableInit() error {
 
 	fields := []map[string]string{{"public_key": "bytes"}, {"table_name": "string"}, {"table_columns": "string"}}
 	err := p.GetTxMaps(fields)
@@ -41,7 +39,7 @@ func (p *Parser) NewStateTableInit() error {
 
 
 
-func (p *Parser) NewStateTableFront() error {
+func (p *Parser) NewTableFront() error {
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -95,32 +93,31 @@ func (p *Parser) NewStateTableFront() error {
 	return nil
 }
 
-func (p *Parser) NewStateTable() error {
+func (p *Parser) NewTable() error {
 
 	var cols []string
 	json.Unmarshal(p.TxMaps.Bytes["table_columns"], &cols)
 
-	s := make(schema.Recmap)
-	s1 := make(schema.Recmap)
-	s2 := make(schema.Recmapi)
-	s2[0] = map[string]string{"name": "id", "mysql": "bigint(20) NOT NULL AUTO_INCREMENT DEFAULT '0'", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL", "postgresql": "bigint NOT NULL  default nextval('"+p.TxMaps.String["table_name"]+"_id_seq')", "comment": ""}
-	i:=1
+	colsSql := ""
 	for _,name := range cols {
-		s2[i] = map[string]string{"name": name, "mysql": "varchar(255) CHARACTER SET utf8 NOT NULL DEFAULT ''", "sqlite": "varchar(255) NOT NULL DEFAULT ''", "postgresql": "varchar(255) NOT NULL DEFAULT ''", "comment": ""}
-		i++
+		colsSql += name+" varchar(255) NOT NULL DEFAULT ''\n"
 	}
-	s1["fields"] = s2
-	s1["PRIMARY"] = []string{"id"}
-	s1["AI"] = "id"
-	s1["comment"] = ""
-	s[p.TxMaps.String["table_name"]] = s1
-	schema_ := &schema.SchemaStruct{}
-	schema_.DbType = p.ConfigIni["db_type"]
-	schema_.PrintSchema()
 
+	sql := `CREATE SEQUENCE `+p.TxMaps.String["table_name"]+`_id_seq START WITH 1;
+				CREATE TABLE "`+p.TxMaps.String["table_name"]+`" (
+				"id" bigint NOT NULL  default nextval('`+p.TxMaps.String["table_name"]+`_id_seq'),
+				`+colsSql+`
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER SEQUENCE `+p.TxMaps.String["table_name"]+`_id_seq owned by `+p.TxMaps.String["table_name"]+`.id;
+				ALTER TABLE ONLY "`+p.TxMaps.String["table_name"]+`" ADD CONSTRAINT `+p.TxMaps.String["table_name"]+`_pkey PRIMARY KEY (id);`
 
-	err := p.ExecSql(`INSERT INTO `+p.TxVars[`state_code`]+
-	`_state_tables ( name, columns ) VALUES ( ?, ? )`,
+	err := p.ExecSql(sql)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	err = p.ExecSql(`INSERT INTO `+p.TxVars[`state_code`]+`_tables ( name, columns_and_permissions ) VALUES ( ?, ? )`,
 		p.TxMaps.String["table_name"], p.TxMaps.String["table_columns"])
 	if err != nil {
 		return p.ErrInfo(err)
@@ -129,7 +126,7 @@ func (p *Parser) NewStateTable() error {
 	return nil
 }
 
-func (p *Parser) NewStateTableRollback() error {
+func (p *Parser) NewTableRollback() error {
 
 	err := p.ExecSql(`DROP TABLE "`+p.TxMaps.String["table_name"]+`"`)
 
@@ -141,7 +138,7 @@ func (p *Parser) NewStateTableRollback() error {
 	return nil
 }
 
-func (p *Parser) NewStateTableRollbackFront() error {
+func (p *Parser) NewTableRollbackFront() error {
 
 	return nil
 }

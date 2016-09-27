@@ -166,8 +166,8 @@ func (p *Parser) NewState() error {
 	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+id+`_citizens.id=1", "update": "", "insert": "`+id+`_citizens.id=1", "add_column":"`+id+`_citizens.id=1"}`, "", id+`_state_parameters.main_conditions`,
-		id+`_accounts`, `{"general_update":"`+id+`_citizens.id=1", "update": "", "insert": "`+id+`_citizens.id=1", "add_column":"`+id+`_citizens.id=1"}`, "", id+`_state_parameters.main_conditions`)
+		id+`_citizens`, `{"general_update":"`+id+`_citizens.id=1", "update": {"public_key": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "add_column":"`+id+`_citizens.id=1"}`, "", id+`_state_parameters.main_conditions`,
+		id+`_accounts`, `{"general_update":"`+id+`_citizens.id=1", "update": {"amount": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "add_column":"`+id+`_citizens.id=1"}`, "", id+`_state_parameters.main_conditions`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
