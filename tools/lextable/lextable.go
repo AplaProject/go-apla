@@ -76,7 +76,7 @@ var (
 		},
 	"eq": {
 			"=": ["main", "oper", "pop next"],
-			"d": ["main", "oper", "pop"]
+			"d": ["main", "sys", "pop"]
 		},
 	"solidus": {
 			"/": ["comline", "", "pop next"],

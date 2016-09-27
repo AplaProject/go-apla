@@ -47,6 +47,9 @@ const (
 	STATE_FPARAM
 	STATE_FRESULT
 	STATE_IF
+	STATE_VAR
+	STATE_ASSIGNEVAL
+	STATE_ASSIGN
 
 	STATE_EVAL
 
@@ -54,6 +57,9 @@ const (
 	STATE_POP     = 0x0200
 	STATE_STAY    = 0x0400
 	STATE_TOBLOCK = 0x0800
+	STATE_TOBODY  = 0x1000
+	STATE_FORK    = 0x2000
+	STATE_TOFORK  = 0x4000
 )
 
 const (
@@ -63,6 +69,8 @@ const (
 	ERR_MUSTLCURLY // must be '{'
 	ERR_MUSTRCURLY // must be '}'
 	ERR_PARAMS     // wrong parameters
+	ERR_VARS       // wrong variables
+	ERR_ASSIGN     // must be '='
 )
 
 const (
@@ -75,6 +83,8 @@ const (
 	CF_ELSE
 	CF_FPARAM
 	CF_FTYPE
+	CF_ASSIGNVAR
+	CF_ASSIGN
 	CF_EVAL
 )
 
@@ -94,6 +104,8 @@ var (
 		fElse,
 		fFparam,
 		fFtype,
+		fAssignVar,
+		fAssign,
 	}
 	states = States{
 		{ // STATE_ROOT
@@ -108,7 +120,9 @@ var (
 			LEX_KEYWORD | (KEY_RETURN << 8): {STATE_EVAL, CF_RETURN},
 			LEX_KEYWORD | (KEY_IF << 8):     {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK, CF_IF},
 			LEX_KEYWORD | (KEY_ELSE << 8):   {STATE_BLOCK | STATE_PUSH, CF_ELSE},
-			LEX_IDENT:                       {STATE_EVAL, 0},
+			LEX_KEYWORD | (KEY_VAR << 8):    {STATE_VAR, 0},
+			LEX_COMMENT:                     {STATE_BODY, 0},
+			LEX_IDENT:                       {STATE_ASSIGNEVAL | STATE_FORK, 0},
 			IS_RCURLY:                       {STATE_POP, 0},
 			0:                               {ERR_MUSTRCURLY, CF_ERROR},
 		},
@@ -149,6 +163,23 @@ var (
 		{ // STATE_IF
 			0: {STATE_EVAL | STATE_TOBLOCK | STATE_PUSH, CF_IF},
 		},
+		{ // STATE_VAR
+			LEX_NEWLINE: {STATE_BODY, 0},
+			LEX_IDENT:   {STATE_VAR, CF_FPARAM},
+			LEX_TYPE:    {STATE_VAR, CF_FTYPE},
+			IS_COMMA:    {STATE_VAR, 0},
+			0:           {ERR_VARS, CF_ERROR},
+		},
+		{ // STATE_ASSIGNEVAL
+			IS_LPAR: {STATE_EVAL | STATE_TOFORK | STATE_TOBODY, 0},
+			0:       {STATE_ASSIGN | STATE_TOFORK | STATE_STAY, 0},
+		},
+		{ // STATE_ASSIGN
+			IS_COMMA:  {STATE_ASSIGN, 0},
+			LEX_IDENT: {STATE_ASSIGN, CF_ASSIGNVAR},
+			IS_EQ:     {STATE_EVAL | STATE_TOBODY, CF_ASSIGN},
+			0:         {ERR_ASSIGN, CF_ERROR},
+		},
 	}
 )
 
@@ -159,6 +190,8 @@ func fError(buf *[]*Block, state int, lexem *Lexem) error {
 		`must be '{'`,      // ERR_MUSTLCURLY
 		`must be '}'`,      // ERR_MUSTRCURLY
 		`wrong parameters`, // ERR_PARAMS
+		`wrong variables`,  // ERR_VARS
+		`must be '='`,      // ERR_ASSIGN
 	}
 	fmt.Printf("%s %x %v [Ln:%d Col:%d]\r\n", errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
 	return fmt.Errorf(`%s %x %v [Ln:%d Col:%d]`, errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
@@ -178,22 +211,26 @@ func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
-	fblock := block.Info.(*FuncInfo)
-	fblock.Params = append(fblock.Params, reflect.Invalid)
+	if block.Type == OBJ_FUNC && state == STATE_FPARAM {
+		fblock := block.Info.(*FuncInfo)
+		fblock.Params = append(fblock.Params, reflect.Invalid)
+	}
 	if block.Objects == nil {
 		block.Objects = make(map[string]*ObjInfo)
 	}
-	block.Objects[lexem.Value.(string)] = &ObjInfo{Type: OBJ_PARAM, Value: len(block.Vars)}
+	block.Objects[lexem.Value.(string)] = &ObjInfo{Type: OBJ_VAR, Value: len(block.Vars)}
 	block.Vars = append(block.Vars, reflect.Invalid)
 	return nil
 }
 
 func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
-	fblock := block.Info.(*FuncInfo)
-	for pkey, param := range fblock.Params {
-		if param == reflect.Invalid {
-			fblock.Params[pkey] = lexem.Value.(reflect.Kind)
+	if block.Type == OBJ_FUNC && state == STATE_FPARAM {
+		fblock := block.Info.(*FuncInfo)
+		for pkey, param := range fblock.Params {
+			if param == reflect.Invalid {
+				fblock.Params[pkey] = lexem.Value.(reflect.Kind)
+			}
 		}
 	}
 	for vkey, ivar := range block.Vars {
@@ -201,6 +238,7 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 			block.Vars[vkey] = lexem.Value.(reflect.Kind)
 		}
 	}
+	//	fmt.Println(`VARS`, block.Vars)
 	return nil
 }
 
@@ -210,6 +248,39 @@ func fIf(buf *[]*Block, state int, lexem *Lexem) error {
 	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_IF, (*buf)[len(*buf)-1]})
 	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
 	//	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
+	return nil
+}
+
+func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
+	//	fmt.Println(`Assign Var`, state, lexem)
+	block := (*buf)[len(*buf)-1]
+	objInfo, tobj := findVar(lexem.Value.(string), buf)
+	if objInfo == nil || objInfo.Type != OBJ_VAR {
+		return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+	}
+	var prev []*VarInfo
+
+	if len(block.Code) > 0 {
+		if block.Code[len(block.Code)-1].Cmd == CMD_ASSIGNVAR {
+			prev = block.Code[len(block.Code)-1].Value.([]*VarInfo)
+		}
+	}
+	prev = append(prev, &VarInfo{objInfo, tobj})
+	if len(prev) == 1 {
+		(*(*buf)[len(*buf)-1]).Code = append((*block).Code, &ByteCode{CMD_ASSIGNVAR, prev})
+	} else {
+		(*(*buf)[len(*buf)-1]).Code[len(block.Code)-1] = &ByteCode{CMD_ASSIGNVAR, prev}
+	}
+	//	fmt.Println(`Prev`, prev)
+	//	cmd = &ByteCode{CMD_ASSIGNVAR, &VarInfo{objInfo, tobj}}
+	//	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_IF, (*buf)[len(*buf)-1]})
+	return nil
+}
+
+func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
+	//	fmt.Println(`Assign`)
+
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_ASSIGN, 0})
 	return nil
 }
 
@@ -256,6 +327,7 @@ func (vm *VM) Compile(input []rune) error {
 	stack := make([]int, 0, 64)
 	blockstack := make([]*Block, 1, 64)
 	blockstack[0] = root
+	fork := 0
 
 	for i := 0; i < len(lexems); i++ {
 		var (
@@ -267,12 +339,32 @@ func (vm *VM) Compile(input []rune) error {
 			newState = states[curState][0]
 		}
 		nextState := newState.NewState & 0xff
-		//		fmt.Printf("State %x %x %v\r\n", curState, newState.NewState, stack)
+		if (newState.NewState & STATE_FORK) > 0 {
+			fork = i
+			//			continue
+		}
+		if (newState.NewState & STATE_TOFORK) > 0 {
+			i = fork
+			fork = 0
+			lexem = lexems[i]
+			//			fmt.Printf("State %x %x %v %v\r\n", curState, newState.NewState, lexem, stack)
+			//			continue
+		}
+
 		if (newState.NewState & STATE_STAY) > 0 {
 			curState = nextState
 			i--
 			continue
 		}
+		/*		if (newState.NewState & STATE_PREV) > 0 {
+				i--
+				lexem = lexems[i]
+				if nextState != STATE_EVAL {
+					i--
+					curState = nextState
+					continue
+				}
+			}*/
 		if nextState == STATE_EVAL {
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
 				return err
@@ -304,7 +396,10 @@ func (vm *VM) Compile(input []rune) error {
 		if (newState.NewState & STATE_TOBLOCK) > 0 {
 			nextState = STATE_BLOCK
 		}
-		//		fmt.Println(`LEX`, curState, lexem, stack)
+		if (newState.NewState & STATE_TOBODY) > 0 {
+			nextState = STATE_BODY
+		}
+		//fmt.Println(`LEX`, curState, lexem, stack)
 		if newState.Func > 0 {
 			if err := funcs[newState.Func](&blockstack, nextState, lexem); err != nil {
 				return err
@@ -332,7 +427,7 @@ func (vm *VM) Compile(input []rune) error {
 	return nil
 }
 
-func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
+func findVar(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
 	var ok bool
 	i := len(*block) - 1
 	for ; i >= 0; i-- {
@@ -340,6 +435,14 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 		if ok {
 			return ret, (*block)[i]
 		}
+	}
+	return nil, nil
+}
+
+func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
+	ret, owner = findVar(name, block)
+	if ret != nil {
+		return
 	}
 	return vm.getObjByName(name), nil
 }

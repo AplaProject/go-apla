@@ -34,7 +34,7 @@ const (
 	OBJ_CONTRACT
 	OBJ_FUNC
 	OBJ_EXTFUNC
-	OBJ_PARAM
+	OBJ_VAR
 )
 
 type ExtFuncInfo struct {
