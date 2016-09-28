@@ -28,9 +28,7 @@ type TestSmart struct {
 
 func TestNewContract(t *testing.T) {
 	test := []TestSmart{
-		{`contract my {
-			func init {
-			}
+		{`contract NewCitizen {
 			func front {
 			}
 			func main {
@@ -39,7 +37,7 @@ func TestNewContract(t *testing.T) {
 		`, ``},
 	}
 	for _, item := range test {
-		if err := NewContract(item.Input); err != nil {
+		if err := Compile(item.Input); err != nil {
 			t.Error(err)
 		}
 	}

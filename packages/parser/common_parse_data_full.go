@@ -18,7 +18,9 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -85,7 +87,7 @@ func (p *Parser) ParseDataFull() error {
 			err = p.CheckLogTx(transactionBinaryDataFull)
 			if err != nil {
 				err0 := p.RollbackTo(txForRollbackTo, true, false)
-				if err0!=nil{
+				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
 				return utils.ErrInfo(err)
@@ -97,7 +99,7 @@ func (p *Parser) ParseDataFull() error {
 				utils.WriteSelectiveLog(err)
 				utils.WriteSelectiveLog("RollbackTo")
 				err0 := p.RollbackTo(txForRollbackTo, true, false)
-				if err0!=nil{
+				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
 				return utils.ErrInfo(err)
@@ -110,7 +112,7 @@ func (p *Parser) ParseDataFull() error {
 			log.Debug("p.TxSlice %v", p.TxSlice)
 			if err != nil {
 				err0 := p.RollbackTo(txForRollbackTo, true, false)
-				if err0!=nil{
+				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
 				return err
@@ -135,7 +137,7 @@ func (p *Parser) ParseDataFull() error {
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
 				if txCounter[userId] > consts.MAX_BLOCK_USER_TXS {
 					err0 := p.RollbackTo(txForRollbackTo, true, false)
-					if err0!=nil{
+					if err0 != nil {
 						log.Error("error: %v", err0)
 					}
 					return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
@@ -146,7 +148,7 @@ func (p *Parser) ParseDataFull() error {
 			// и  время в транзакции не может быть меньше времени блока -24ч.
 			if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > p.BlockData.Time || utils.BytesToInt64(p.TxSlice[2]) < p.BlockData.Time-consts.MAX_TX_BACK {
 				err0 := p.RollbackTo(txForRollbackTo, true, false)
-				if err0!=nil{
+				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
 				return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
@@ -164,31 +166,46 @@ func (p *Parser) ParseDataFull() error {
 			p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-			log.Debug("MethodName", MethodName+"Init")
-			err_ := utils.CallMethod(p, MethodName+"Init")
-			if _, ok := err_.(error); ok {
-				log.Error("error: %v", err)
-				return utils.ErrInfo(err_.(error))
-			}
-
-			log.Debug("MethodName", MethodName+"Front")
-			err_ = utils.CallMethod(p, MethodName+"Front")
-			if _, ok := err_.(error); ok {
-				log.Error("error: %v", err_)
-				err0 := p.RollbackTo(txForRollbackTo, true, false)
-				if err0!=nil{
-					log.Error("error: %v", err0)
+			if contract := smart.GetContract(MethodName); contract != nil {
+				if err := contract.Init(); err != nil {
+					return utils.ErrInfo(err)
 				}
-				return utils.ErrInfo(err_.(error))
-			}
+				if err := contract.Front(); err != nil {
+					err0 := p.RollbackTo(txForRollbackTo, true, false)
+					if err0 != nil {
+						log.Error("error: %v", err0)
+					}
+					return utils.ErrInfo(err)
+				}
+				if err := contract.Main(); err != nil {
+					return utils.ErrInfo(err)
+				}
+			} else {
+				log.Debug("MethodName", MethodName+"Init")
+				err_ := utils.CallMethod(p, MethodName+"Init")
+				if _, ok := err_.(error); ok {
+					log.Error("error: %v", err)
+					return utils.ErrInfo(err_.(error))
+				}
 
-			log.Debug("MethodName", MethodName)
-			err_ = utils.CallMethod(p, MethodName)
-			if _, ok := err_.(error); ok {
-				log.Error("error: %v", err)
-				return utils.ErrInfo(err_.(error))
-			}
+				log.Debug("MethodName", MethodName+"Front")
+				err_ = utils.CallMethod(p, MethodName+"Front")
+				if _, ok := err_.(error); ok {
+					log.Error("error: %v", err_)
+					err0 := p.RollbackTo(txForRollbackTo, true, false)
+					if err0 != nil {
+						log.Error("error: %v", err0)
+					}
+					return utils.ErrInfo(err_.(error))
+				}
 
+				log.Debug("MethodName", MethodName)
+				err_ = utils.CallMethod(p, MethodName)
+				if _, ok := err_.(error); ok {
+					log.Error("error: %v", err)
+					return utils.ErrInfo(err_.(error))
+				}
+			}
 			// даем юзеру понять, что его тр-ия попала в блок
 			p.ExecSql("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 

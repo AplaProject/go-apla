@@ -455,7 +455,7 @@ ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMA
 DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
 DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
-"citizen_id" bigint NOT NULL default nextval('system_states_id_seq'),
+"id" bigint NOT NULL default nextval('system_states_id_seq'),
 "name" varchar(255) NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );

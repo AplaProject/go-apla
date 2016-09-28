@@ -94,6 +94,10 @@ func Header(v interface{}) TxHeader {
 	return reflect.ValueOf(v).Elem().Field(0).Interface().(TxHeader)
 }
 
+func HeaderNew(v interface{}) TXHeader {
+	return reflect.ValueOf(v).Elem().Field(0).Interface().(TXHeader)
+}
+
 func Sign(v interface{}) (sign []byte) {
 	field := reflect.ValueOf(v).Elem().FieldByName(`Sign`)
 	if field.IsValid() && field.Kind() == reflect.Slice {

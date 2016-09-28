@@ -22,6 +22,11 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/script"
 )
 
+type Contract struct {
+	Name  string
+	block *script.Block
+}
+
 var (
 	smartVM *script.VM
 )
@@ -33,10 +38,28 @@ func init() {
 	})
 }
 
-func NewContract(src string) error {
+// Compiles contract source code
+func Compile(src string) error {
 	return smartVM.Compile([]rune(src))
 }
 
-func SmartFront() {
+// Returns true if the contract exists
+func GetContract(name string) *Contract {
+	obj, ok := smartVM.Objects[name]
+	if ok && obj.Type == script.OBJ_CONTRACT {
+		return &Contract{Name: name, block: obj.Value.(*script.Block)}
+	}
+	return nil
+}
 
+func (contract *Contract) Init() error {
+	return nil
+}
+
+func (contract *Contract) Front() error {
+	return nil
+}
+
+func (contract *Contract) Main() error {
+	return nil
 }
