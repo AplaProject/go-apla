@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package smart
+package parser
 
 import (
 	"encoding/hex"
@@ -51,11 +51,12 @@ func TestNewContract(t *testing.T) {
 	}
 	sign, _ := hex.DecodeString(`3276233276237115`)
 	public, _ := hex.DecodeString(`12456788999900087676`)
-	data := &consts.TXNewCitizen{
+	p := Parser{}
+	p.TxPtr = &consts.TXNewCitizen{
 		consts.TXHeader{4, uint32(time.Now().Unix()), 1, 1, sign}, public,
 	}
 	//	fmt.Println(`Data`, data)
-	cnt := GetContract(`NewCitizen`, data)
+	cnt := GetContract(`NewCitizen`, &p)
 	if cnt == nil {
 		t.Error(`GetContract error`)
 	}

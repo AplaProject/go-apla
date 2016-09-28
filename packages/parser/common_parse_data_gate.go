@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -188,8 +187,8 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 				p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
-					if err := contract.Call(smart.CALL_INIT | smart.CALL_FRONT); err != nil {
+				if contract := GetContract(MethodName, p); contract != nil {
+					if err := contract.Call(CALL_INIT | CALL_FRONT); err != nil {
 						p.RollbackTo(txForRollbackTo, true, true)
 						return utils.ErrInfo(err)
 					}
@@ -227,8 +226,8 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// Оперативные транзакции
 		// Operative transactions
 		MethodName := consts.TxTypes[p.dataType]
-		if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
-			if err := contract.Call(smart.CALL_INIT | smart.CALL_FRONT); err != nil {
+		if contract := GetContract(MethodName, p); contract != nil {
+			if err := contract.Call(CALL_INIT | CALL_FRONT); err != nil {
 				return utils.ErrInfo(err)
 			}
 		} else {

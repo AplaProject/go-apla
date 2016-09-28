@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -166,9 +165,9 @@ func (p *Parser) ParseDataFull() error {
 			p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-			if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
-				if err := contract.Call(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
-					if contract.Called == smart.CALL_FRONT {
+			if contract := GetContract(MethodName, p); contract != nil {
+				if err := contract.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
+					if contract.Called == CALL_FRONT {
 						err0 := p.RollbackTo(txForRollbackTo, true, false)
 						if err0 != nil {
 							log.Error("error: %v", err0)

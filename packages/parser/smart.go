@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package smart
+package parser
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ import (
 type Contract struct {
 	Name   string
 	Called uint32
-	data   interface{}
+	parser *Parser //interface{}
 	block  *script.Block
 }
 
@@ -54,11 +54,11 @@ func Compile(src string) error {
 }
 
 // Returns true if the contract exists
-func GetContract(name string, data interface{}) *Contract {
+func GetContract(name string, p *Parser /*data interface{}*/) *Contract {
 	obj, ok := smartVM.Objects[name]
 	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
 	if ok && obj.Type == script.OBJ_CONTRACT {
-		return &Contract{Name: name, data: data, block: obj.Value.(*script.Block)}
+		return &Contract{Name: name, parser: p, block: obj.Value.(*script.Block)}
 	}
 	return nil
 }
@@ -71,7 +71,7 @@ func (contract *Contract) getFunc(name string) *script.Block {
 }
 
 func (contract *Contract) getExtend() *map[string]interface{} {
-	head := consts.HeaderNew(contract.data)
+	head := consts.HeaderNew(contract.parser.TxPtr)
 	var citizenId, walletId int64
 	if head.StateId > 0 {
 		citizenId = head.UserId
@@ -80,7 +80,7 @@ func (contract *Contract) getExtend() *map[string]interface{} {
 	}
 	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `stateId`: head.StateId,
 		`citizenId`: citizenId, `walletId`: walletId}
-	v := reflect.ValueOf(contract.data).Elem()
+	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
 	t := v.Type()
 	for i := 1; i < t.NumField(); i++ {
 		extend[t.Field(i).Name] = v.Field(i).Interface()
