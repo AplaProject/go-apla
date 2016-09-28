@@ -58,6 +58,7 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 ]`, nil
 				//				c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
 				if err == nil {
+					result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where name='citizenship_price'`).Int64()
 					if err == nil {
 						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
 						result.Valid = (err == nil && amount >= result.Price)
