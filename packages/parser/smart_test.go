@@ -14,11 +14,15 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package smart
+package parser
 
 import (
-	//	"fmt"
+	"encoding/hex"
+	_ "fmt"
 	"testing"
+	"time"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 type TestSmart struct {
@@ -27,20 +31,36 @@ type TestSmart struct {
 }
 
 func TestNewContract(t *testing.T) {
+	var err error
 	test := []TestSmart{
-		{`contract my {
-			func init {
-			}
+		{`contract NewCitizen {
 			func front {
+				$tmp = "Test string"
+				Println("NewCitizen Front", $tmp, $citizenId, $stateId, $PublicKey )
 			}
 			func main {
+				Println("NewCitizen Main", $tmp, $type, $walletId )
 			}
 }			
 		`, ``},
 	}
 	for _, item := range test {
-		if err := NewContract(item.Input); err != nil {
+		if err := Compile(item.Input); err != nil {
 			t.Error(err)
 		}
+	}
+	sign, _ := hex.DecodeString(`3276233276237115`)
+	public, _ := hex.DecodeString(`12456788999900087676`)
+	p := Parser{}
+	p.TxPtr = &consts.TXNewCitizen{
+		consts.TXHeader{4, uint32(time.Now().Unix()), 1, 1, sign}, public,
+	}
+	//	fmt.Println(`Data`, data)
+	cnt := GetContract(`NewCitizen`, &p)
+	if cnt == nil {
+		t.Error(`GetContract error`)
+	}
+	if err = cnt.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
+		t.Error(err.Error())
 	}
 }

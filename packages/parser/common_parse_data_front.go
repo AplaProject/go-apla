@@ -18,6 +18,7 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
@@ -102,18 +103,24 @@ func (p *Parser) ParseDataFront() error {
 				p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				log.Debug("MethodName", MethodName+"Init")
-				err_ := utils.CallMethod(p, MethodName+"Init")
-				if _, ok := err_.(error); ok {
-					log.Debug("error: %v", err)
-					return utils.ErrInfo(err_.(error))
-				}
 
-				log.Debug("MethodName", MethodName)
-				err_ = utils.CallMethod(p, MethodName)
-				if _, ok := err_.(error); ok {
-					log.Debug("error: %v", err)
-					return utils.ErrInfo(err_.(error))
+				if contract := GetContract(MethodName, p); contract != nil {
+					if err := contract.Call(CALL_INIT | CALL_MAIN); err != nil {
+						return utils.ErrInfo(err)
+					}
+				} else {
+					log.Debug("MethodName", MethodName+"Init")
+					err_ := utils.CallMethod(p, MethodName+"Init")
+					if _, ok := err_.(error); ok {
+						log.Debug("error: %v", err)
+						return utils.ErrInfo(err_.(error))
+					}
+					log.Debug("MethodName", MethodName)
+					err_ = utils.CallMethod(p, MethodName)
+					if _, ok := err_.(error); ok {
+						log.Debug("error: %v", err)
+						return utils.ErrInfo(err_.(error))
+					}
 				}
 
 				utils.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(utils.Md5(transactionBinaryDataFull)))

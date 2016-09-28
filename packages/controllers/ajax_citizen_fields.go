@@ -51,9 +51,14 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 					result.Approved = approved
 				}
 			} else {
-				result.Fields, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
+				result.Fields, err = `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
+{"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
+{"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
+{"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
+]`, nil
+				//				c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
 				if err == nil {
-					result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_dlt_price'`).Int64()
+					result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where name='citizenship_price'`).Int64()
 					if err == nil {
 						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
 						result.Valid = (err == nil && amount >= result.Price)

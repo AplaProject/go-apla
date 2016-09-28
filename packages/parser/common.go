@@ -21,11 +21,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
+	"reflect"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/op/go-logging"
-	"os"
-	"reflect"
 )
 
 var (
@@ -35,7 +36,6 @@ var (
 func init() {
 	flag.Parse()
 }
-
 
 type txMapsType struct {
 	Int64   map[string]int64
@@ -68,17 +68,17 @@ type Parser struct {
 	MrklRoot         []byte
 	PublicKeys       [][]byte
 	TxUserID         int64
-	TxCitizenID         int64
-	TxWalletID         int64
+	TxCitizenID      int64
+	TxWalletID       int64
+	TxStateID        uint32
 	TxTime           int64
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
 	TxVars           map[string]string
-	AllPkeys    map[string]string
-	States    map[int64]string
+	AllPkeys         map[string]string
+	States           map[int64]string
 }
-
 
 func ClearTmp(blocks map[int64]string) {
 	for _, tmpFileName := range blocks {
@@ -86,9 +86,8 @@ func ClearTmp(blocks map[int64]string) {
 	}
 }
 
-
 func (p *Parser) GetBlockInfo() *utils.BlockData {
-	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time,  WalletId: p.BlockData.WalletId,  CBID: p.BlockData.CBID, BlockId: p.BlockData.BlockId}
+	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletId: p.BlockData.WalletId, CBID: p.BlockData.CBID, BlockId: p.BlockData.BlockId}
 }
 
 func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interface{}) error {
@@ -126,7 +125,6 @@ func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interfa
 	}
 	return nil
 }
-
 
 func (p *Parser) dataPre() {
 	p.blockHashHex = utils.DSha256(p.BinaryData)
@@ -197,7 +195,6 @@ func (p *Parser) InsertIntoBlockchain() error {
 	return nil
 }
 
-
 // старое
 func (p *Parser) GetTxMap(fields []string) (map[string][]byte, error) {
 	if len(p.TxSlice) != len(fields)+4 {
@@ -223,7 +220,7 @@ func (p *Parser) GetTxMap(fields []string) (map[string][]byte, error) {
 func (p *Parser) CheckInputData(data map[string]string) error {
 	for k, v := range data {
 		if !utils.CheckInputData(p.TxMap[k], v) {
-			return fmt.Errorf("incorrect " + k + "(" + string(p.TxMap[k]) + " : "+v+")")
+			return fmt.Errorf("incorrect " + k + "(" + string(p.TxMap[k]) + " : " + v + ")")
 		}
 	}
 	return nil
@@ -240,7 +237,6 @@ func (p *Parser) limitRequestsRollback(txType string) error {
 	}
 	return nil
 }
-
 
 func arrayIntersect(arr1, arr2 map[int]int) bool {
 	for _, v := range arr1 {
@@ -335,17 +331,15 @@ func (p *Parser) checkSenderDLT(amount, commission int64) (int64, error) {
 	return amountAndCommission, nil
 }
 
-
 func (p *Parser) MyTable(table, id_column string, id int64, ret_column string) (int64, error) {
-	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string")  {
+	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string") {
 		return 0, fmt.Errorf("!string")
 	}
 	return p.Single(`SELECT `+ret_column+` FROM `+table+` WHERE `+id_column+` = ?`, id).Int64()
 }
 
-
 func (p *Parser) MyTableChecking(table, id_column string, id int64, ret_column string) (bool, error) {
-	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string")  {
+	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string") {
 		return false, fmt.Errorf("!string")
 	}
 
@@ -359,14 +353,14 @@ func (p *Parser) CheckTableExists(table string) (bool, error) {
 	var q string
 	switch p.ConfigIni["db_type"] {
 	case "sqlite":
-		q = `SELECT name FROM sqlite_master WHERE type='table' AND name='`+table+`';`
+		q = `SELECT name FROM sqlite_master WHERE type='table' AND name='` + table + `';`
 	case "postgresql":
-		q = `SELECT relname FROM pg_class WHERE relname = '`+table+`';`
+		q = `SELECT relname FROM pg_class WHERE relname = '` + table + `';`
 	case "mysql":
-		q = `SHOW TABLES LIKE '`+table+`'`
+		q = `SHOW TABLES LIKE '` + table + `'`
 	}
 	exists, err := p.Single(q).Int64()
-	if err!=nil {
+	if err != nil {
 		return false, err
 	}
 	if exists > 0 {

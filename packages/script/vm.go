@@ -39,6 +39,7 @@ type RunTime struct {
 	stack  []interface{}
 	blocks []*BlockStack
 	vars   []interface{}
+	extend *map[string]interface{}
 	vm     *VM
 	//	vars  *map[string]interface{}
 }
@@ -93,6 +94,35 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 		}
 	*/
 	return
+}
+
+func (rt *RunTime) extendFunc(name string) error {
+	var (
+		ok bool
+		f  interface{}
+	)
+	if f, ok = (*rt.extend)[name]; !ok || reflect.ValueOf(f).Kind().String() != `func` {
+		return fmt.Errorf(`unknown function %s`, name)
+	}
+	size := len(rt.stack)
+	foo := reflect.ValueOf(f)
+	//	if count != foo.Type().NumIn() {
+	//	return fmt.Errorf(`The number of params %s is wrong`, name)
+	//
+	count := foo.Type().NumIn()
+	pars := make([]reflect.Value, count)
+	for i := count; i > 0; i-- {
+		pars[count-i] = reflect.ValueOf(rt.stack[size-i])
+	}
+	result := foo.Call(pars)
+	/*	if result[len(result)-1].Interface() != nil {
+		return result[len(result)-1].Interface().(error)
+	}*/
+	rt.stack = rt.stack[:size-count]
+	for _, iret := range result {
+		rt.stack = append(rt.stack, iret.Interface())
+	}
+	return nil
 }
 
 func valueToBool(v interface{}) bool {
@@ -171,12 +201,18 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case CMD_ASSIGN:
 			count := len(assign)
 			for ivar, item := range assign {
-				var i int
-				//				fmt.Println(`Var`, ivar, item.Obj.Value.(int))
-				for i = len(rt.blocks) - 1; i >= 0; i-- {
-					if item.Owner == rt.blocks[i].Block {
-						rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
-						break
+				if item.Owner == nil {
+					if (*item).Obj.Type == OBJ_EXTEND {
+						(*rt.extend)[(*item).Obj.Value.(string)] = rt.stack[len(rt.stack)-count+ivar]
+					}
+				} else {
+					var i int
+					//				fmt.Println(`Var`, ivar, item.Obj.Value.(int))
+					for i = len(rt.blocks) - 1; i >= 0; i-- {
+						if item.Owner == rt.blocks[i].Block {
+							rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
+							break
+						}
 					}
 				}
 			}
@@ -216,19 +252,23 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			//			fmt.Println(`VAR`, voff, *ivar.Obj, ivar.Owner.Vars, rt.vars)
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
-
-			/*			if val, ok := (*rt.vars)[cmd.Value.(string)]; ok {
-							var number int64
-							switch varVal := val.(type) {
-							case int:
-								number = int64(varVal)
-							case int64:
-								number = varVal
-							}
-							rt.stack = append(rt.stack, number)
-						} else {
-							return nil, fmt.Errorf(`unknown identifier %s`, cmd.Value.(string), last.Lex.Line, last.Lex.Column)
-						}*/
+		case CMD_EXTEND, CMD_CALLEXTEND:
+			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
+				if cmd.Cmd == CMD_CALLEXTEND {
+					err := rt.extendFunc(cmd.Value.(string))
+					if err != nil {
+						return 0, fmt.Errorf(`extend function %s %s`, cmd.Value.(string), err.Error())
+					}
+				} else {
+					switch varVal := val.(type) {
+					case int:
+						val = int64(varVal)
+					}
+					rt.stack = append(rt.stack, val)
+				}
+			} else {
+				return 0, fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
+			}
 		case CMD_NOT:
 			rt.stack[size-1] = !ValueToBool(top[0])
 
@@ -306,8 +346,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	return
 }
 
-func (rt *RunTime) Run(block *Block, params []interface{}, extend map[string]interface{}) (ret []interface{}, err error) {
+func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	info := block.Info.(*FuncInfo)
+	rt.extend = extend
 	if _, err = rt.RunCode(block); err == nil {
 		off := len(rt.stack) - len(info.Results)
 		//		fmt.Println(`RUN`, len(rt.stack), len(info.Results))

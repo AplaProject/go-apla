@@ -187,22 +187,28 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 				p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				log.Debug("MethodName", MethodName+"Init")
-				err_ := utils.CallMethod(p, MethodName+"Init")
-				if _, ok := err_.(error); ok {
-					log.Debug("error: %v", err)
-					p.RollbackTo(txForRollbackTo, true, true)
-					return utils.ErrInfo(err_.(error))
-				}
+				if contract := GetContract(MethodName, p); contract != nil {
+					if err := contract.Call(CALL_INIT | CALL_FRONT); err != nil {
+						p.RollbackTo(txForRollbackTo, true, true)
+						return utils.ErrInfo(err)
+					}
+				} else {
+					log.Debug("MethodName", MethodName+"Init")
+					err_ := utils.CallMethod(p, MethodName+"Init")
+					if _, ok := err_.(error); ok {
+						log.Debug("error: %v", err)
+						p.RollbackTo(txForRollbackTo, true, true)
+						return utils.ErrInfo(err_.(error))
+					}
 
-				log.Debug("MethodName", MethodName+"Front")
-				err_ = utils.CallMethod(p, MethodName+"Front")
-				if _, ok := err_.(error); ok {
-					log.Debug("error: %v", err)
-					p.RollbackTo(txForRollbackTo, true, true)
-					return utils.ErrInfo(err_.(error))
+					log.Debug("MethodName", MethodName+"Front")
+					err_ = utils.CallMethod(p, MethodName+"Front")
+					if _, ok := err_.(error); ok {
+						log.Debug("error: %v", err)
+						p.RollbackTo(txForRollbackTo, true, true)
+						return utils.ErrInfo(err_.(error))
+					}
 				}
-
 				// пишем хэш тр-ии в лог
 				// write the hash of the transaction to logs
 				err = p.InsertInLogTx(transactionBinaryDataFull, utils.BytesToInt64(p.TxMap["time"]))
@@ -220,20 +226,25 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// Оперативные транзакции
 		// Operative transactions
 		MethodName := consts.TxTypes[p.dataType]
-		log.Debug("MethodName", MethodName+"Init")
-		err_ := utils.CallMethod(p, MethodName+"Init")
-		if _, ok := err_.(error); ok {
-			log.Error("%v", utils.ErrInfo(err_.(error)))
-			return utils.ErrInfo(err_.(error))
-		}
+		if contract := GetContract(MethodName, p); contract != nil {
+			if err := contract.Call(CALL_INIT | CALL_FRONT); err != nil {
+				return utils.ErrInfo(err)
+			}
+		} else {
+			log.Debug("MethodName", MethodName+"Init")
+			err_ := utils.CallMethod(p, MethodName+"Init")
+			if _, ok := err_.(error); ok {
+				log.Error("%v", utils.ErrInfo(err_.(error)))
+				return utils.ErrInfo(err_.(error))
+			}
 
-		log.Debug("MethodName", MethodName+"Front")
-		err_ = utils.CallMethod(p, MethodName+"Front")
-		if _, ok := err_.(error); ok {
-			log.Error("%v", utils.ErrInfo(err_.(error)))
-			return utils.ErrInfo(err_.(error))
+			log.Debug("MethodName", MethodName+"Front")
+			err_ = utils.CallMethod(p, MethodName+"Front")
+			if _, ok := err_.(error); ok {
+				log.Error("%v", utils.ErrInfo(err_.(error)))
+				return utils.ErrInfo(err_.(error))
+			}
 		}
-
 		// пишем хэш тр-ии в лог
 		// write the hash of the transaction to logs
 		err = p.InsertInLogTx(transactionBinaryDataFull, utils.BytesToInt64(p.TxMap["time"]))

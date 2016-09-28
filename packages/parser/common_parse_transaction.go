@@ -19,9 +19,10 @@ package parser
 import (
 	"fmt"
 	"reflect"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, error) {
@@ -45,13 +46,26 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				return nil, err
 			}
 			p.TxVars = make(map[string]string)
-			head := consts.Header(p.TxPtr)
-			p.TxCitizenID = head.CitizenId
-			p.TxWalletID = head.WalletId
-			p.TxTime = int64(head.Time)
-			
+			if int(txType) == 4 { // TXNewCitizen
+				head := consts.HeaderNew(p.TxPtr)
+				p.TxStateID = head.StateId
+				if head.StateId > 0 {
+					p.TxCitizenID = head.UserId
+					p.TxWalletID = 0
+				} else {
+					p.TxCitizenID = 0
+					p.TxWalletID = head.UserId
+				}
+				p.TxTime = int64(head.Time)
+			} else {
+				head := consts.Header(p.TxPtr)
+				p.TxCitizenID = head.CitizenId
+				p.TxWalletID = head.WalletId
+				p.TxTime = int64(head.Time)
+			}
+
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)
-		} 
+		}
 		transSlice = append(transSlice, utils.Int64ToByte(txType))
 		if len(*transactionBinaryData) == 0 {
 			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
@@ -65,15 +79,15 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		// преобразуем бинарные данные транзакции в массив
 		if isStruct {
 			t := reflect.ValueOf(p.TxPtr).Elem()
-			
+
 			//walletId & citizenId
-			for i:=2; i<4; i++ {
-				data := lib.FieldToBytes( t.Field(0).Interface(), i)	
-				returnSlice = append(returnSlice, data) 
+			for i := 2; i < 4; i++ {
+				data := lib.FieldToBytes(t.Field(0).Interface(), i)
+				returnSlice = append(returnSlice, data)
 				merkleSlice = append(merkleSlice, utils.DSha256(data))
-			}	
-			for i:= 1; i < t.NumField(); i++ {
-				data := lib.FieldToBytes( t.Interface(), i )
+			}
+			for i := 1; i < t.NumField(); i++ {
+				data := lib.FieldToBytes(t.Interface(), i)
 				returnSlice = append(returnSlice, data)
 				merkleSlice = append(merkleSlice, utils.DSha256(data))
 			}
