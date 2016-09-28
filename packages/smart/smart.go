@@ -25,10 +25,17 @@ import (
 )
 
 type Contract struct {
-	Name  string
-	data  interface{}
-	block *script.Block
+	Name   string
+	Called uint32
+	data   interface{}
+	block  *script.Block
 }
+
+const (
+	CALL_INIT  = 0x01
+	CALL_FRONT = 0x02
+	CALL_MAIN  = 0x04
+)
 
 var (
 	smartVM *script.VM
@@ -63,7 +70,7 @@ func (contract *Contract) getFunc(name string) *script.Block {
 	return nil
 }
 
-func (contract *Contract) getExtend() map[string]interface{} {
+func (contract *Contract) getExtend() *map[string]interface{} {
 	head := consts.HeaderNew(contract.data)
 	var citizenId, walletId int64
 	if head.StateId > 0 {
@@ -79,35 +86,25 @@ func (contract *Contract) getExtend() map[string]interface{} {
 		extend[t.Field(i).Name] = v.Field(i).Interface()
 	}
 	//	fmt.Println(`Extend`, extend)
-	return extend
+	return &extend
 }
 
-func (contract *Contract) Init() error {
-	init := contract.getFunc(`init`)
-	if init == nil {
-		return nil
+func (contract *Contract) Call(flags int) (err error) {
+	methods := []string{`init`, `front`, `main`}
+	extend := contract.getExtend()
+	for i := uint32(0); i < 3; i++ {
+		if (flags & (1 << i)) > 0 {
+			cfunc := contract.getFunc(methods[i])
+			if cfunc == nil {
+				continue
+			}
+			rt := smartVM.RunInit()
+			contract.Called = 1 << i
+			_, err = rt.Run(cfunc, nil, extend)
+			if err != nil {
+				return
+			}
+		}
 	}
-	rt := smartVM.RunInit()
-	_, err := rt.Run(init, nil, contract.getExtend())
-	return err
-}
-
-func (contract *Contract) Front() error {
-	front := contract.getFunc(`front`)
-	if front == nil {
-		return nil
-	}
-	rt := smartVM.RunInit()
-	_, err := rt.Run(front, nil, contract.getExtend())
-	return err
-}
-
-func (contract *Contract) Main() error {
-	main := contract.getFunc(`main`)
-	if main == nil {
-		return nil
-	}
-	rt := smartVM.RunInit()
-	_, err := rt.Run(main, nil, contract.getExtend())
-	return err
+	return
 }

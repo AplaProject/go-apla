@@ -94,14 +94,14 @@ func TestVMCompile(t *testing.T) {
 		`, `temp2`, `myval=51 + Params 2 test`},
 
 		{`func params(myval int, mystr string ) string {
-			return Sprintf("Params function %d %s", 33 + myval, mystr + " end" ) /* dede
+			return Sprintf("Params function %d %s", 33 + myval + $test1, mystr + " end" ) /* dede
 
 			ded*/
 		}
 		func temp string {
-			return "Prefix " + params(20, "Test string")
+			return "Prefix " + params(20, "Test string " + $test2) + $test3( 202 )
 		}
-		`, `temp`, `Prefix Params function 53 Test string end`},
+		`, `temp`, `Prefix Params function 154 Test string test 2 endtest=202=test`},
 		{`func my_test string {
 						return Sprintf("Called my_test %s %d", "Ooops", 777)
 					}
@@ -119,7 +119,11 @@ func TestVMCompile(t *testing.T) {
 		if err := vm.Compile(source); err != nil {
 			t.Error(err)
 		} else {
-			if out, err := vm.Call(item.Func, nil, nil); err == nil {
+			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
+				`test1`: 101, `test2`: `test 2`, `test3`: func(param int64) string {
+					return fmt.Sprintf("test=%d=test", param)
+				},
+			}); err == nil {
 				if out[0].(string) != item.Output {
 					fmt.Println(out[0].(string))
 					t.Error(`error vm` + item.Input)

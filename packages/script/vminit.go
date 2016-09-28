@@ -35,6 +35,7 @@ const (
 	OBJ_FUNC
 	OBJ_EXTFUNC
 	OBJ_VAR
+	OBJ_EXTEND
 )
 
 type ExtFuncInfo struct {
@@ -126,7 +127,7 @@ func (vm *VM) getInParams(ret *ObjInfo) int {
 	return len(ret.Value.(*Block).Info.(*FuncInfo).Params)
 }
 
-func (vm *VM) Call(name string, params []interface{}, extend map[string]interface{}) (ret []interface{}, err error) {
+func (vm *VM) Call(name string, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	obj := vm.getObjByName(name)
 	if obj == nil {
 		return nil, fmt.Errorf(`unknown function`, name)

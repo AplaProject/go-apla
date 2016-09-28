@@ -123,6 +123,7 @@ var (
 			LEX_KEYWORD | (KEY_VAR << 8):    {STATE_VAR, 0},
 			LEX_COMMENT:                     {STATE_BODY, 0},
 			LEX_IDENT:                       {STATE_ASSIGNEVAL | STATE_FORK, 0},
+			LEX_EXTEND:                      {STATE_ASSIGNEVAL | STATE_FORK, 0},
 			IS_RCURLY:                       {STATE_POP, 0},
 			0:                               {ERR_MUSTRCURLY, CF_ERROR},
 		},
@@ -175,10 +176,11 @@ var (
 			0:       {STATE_ASSIGN | STATE_TOFORK | STATE_STAY, 0},
 		},
 		{ // STATE_ASSIGN
-			IS_COMMA:  {STATE_ASSIGN, 0},
-			LEX_IDENT: {STATE_ASSIGN, CF_ASSIGNVAR},
-			IS_EQ:     {STATE_EVAL | STATE_TOBODY, CF_ASSIGN},
-			0:         {ERR_ASSIGN, CF_ERROR},
+			IS_COMMA:   {STATE_ASSIGN, 0},
+			LEX_IDENT:  {STATE_ASSIGN, CF_ASSIGNVAR},
+			LEX_EXTEND: {STATE_ASSIGN, CF_ASSIGNVAR},
+			IS_EQ:      {STATE_EVAL | STATE_TOBODY, CF_ASSIGN},
+			0:          {ERR_ASSIGN, CF_ERROR},
 		},
 	}
 )
@@ -254,18 +256,25 @@ func fIf(buf *[]*Block, state int, lexem *Lexem) error {
 func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 	//	fmt.Println(`Assign Var`, state, lexem)
 	block := (*buf)[len(*buf)-1]
-	objInfo, tobj := findVar(lexem.Value.(string), buf)
-	if objInfo == nil || objInfo.Type != OBJ_VAR {
-		return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+	var (
+		prev []*VarInfo
+		ivar VarInfo
+	)
+	if lexem.Type == LEX_EXTEND {
+		ivar = VarInfo{&ObjInfo{OBJ_EXTEND, lexem.Value.(string)}, nil}
+	} else {
+		objInfo, tobj := findVar(lexem.Value.(string), buf)
+		if objInfo == nil || objInfo.Type != OBJ_VAR {
+			return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+		}
+		ivar = VarInfo{objInfo, tobj}
 	}
-	var prev []*VarInfo
-
 	if len(block.Code) > 0 {
 		if block.Code[len(block.Code)-1].Cmd == CMD_ASSIGNVAR {
 			prev = block.Code[len(block.Code)-1].Value.([]*VarInfo)
 		}
 	}
-	prev = append(prev, &VarInfo{objInfo, tobj})
+	prev = append(prev, &ivar)
 	if len(prev) == 1 {
 		(*(*buf)[len(*buf)-1]).Code = append((*block).Code, &ByteCode{CMD_ASSIGNVAR, prev})
 	} else {
@@ -458,6 +467,7 @@ func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 main:
 	for ; i < len(*lexems); i++ {
 		var cmd *ByteCode
+		var call bool
 		lexem := (*lexems)[i]
 		//		fmt.Println(i, parcount, lexem)
 		switch lexem.Type {
@@ -537,8 +547,22 @@ main:
 			}
 		case LEX_NUMBER, LEX_STRING:
 			cmd = &ByteCode{CMD_PUSH, lexem.Value}
+		case LEX_EXTEND:
+			if i < len(*lexems)-2 {
+				if (*lexems)[i+1].Type == IS_LPAR {
+					count := 0
+					if (*lexems)[i+2].Type != IS_RPAR {
+						count++
+					}
+					parcount = append(parcount, count)
+					buffer = append(buffer, &ByteCode{CMD_CALLEXTEND, lexem.Value.(string)})
+					call = true
+				}
+			}
+			if !call {
+				cmd = &ByteCode{CMD_EXTEND, lexem.Value.(string)}
+			}
 		case LEX_IDENT:
-			var call bool
 			objInfo, tobj := vm.findObj(lexem.Value.(string), block)
 			if objInfo == nil {
 				return fmt.Errorf(`unknown identifier %s`, lexem.Value.(string))

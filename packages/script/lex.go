@@ -34,6 +34,7 @@ const (
 	LEX_COMMENT
 	LEX_KEYWORD
 	LEX_TYPE
+	LEX_EXTEND
 
 	LEX_ERROR = 0xff
 	LEXF_NEXT = 1
@@ -167,7 +168,10 @@ func LexParser(input []rune) (Lexems, error) {
 				}
 			case LEX_IDENT:
 				name := string(input[lexOff:right])
-				if keyId, ok := KEYWORDS[name]; ok {
+				if name[0] == '$' {
+					lexId = LEX_EXTEND
+					value = name[1:]
+				} else if keyId, ok := KEYWORDS[name]; ok {
 					switch keyId {
 					case KEY_TRUE:
 						lexId = LEX_NUMBER

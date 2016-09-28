@@ -18,7 +18,7 @@ package smart
 
 import (
 	"encoding/hex"
-	"fmt"
+	_ "fmt"
 	"testing"
 	"time"
 
@@ -35,10 +35,11 @@ func TestNewContract(t *testing.T) {
 	test := []TestSmart{
 		{`contract NewCitizen {
 			func front {
-				Println("NewCitizen Front")
+				$tmp = "Test string"
+				Println("NewCitizen Front", $tmp, $citizenId, $stateId, $PublicKey )
 			}
 			func main {
-				Println("NewCitizen Main")
+				Println("NewCitizen Main", $tmp, $type, $walletId )
 			}
 }			
 		`, ``},
@@ -53,19 +54,12 @@ func TestNewContract(t *testing.T) {
 	data := &consts.TXNewCitizen{
 		consts.TXHeader{4, uint32(time.Now().Unix()), 1, 1, sign}, public,
 	}
-	fmt.Println(`Data`, data)
+	//	fmt.Println(`Data`, data)
 	cnt := GetContract(`NewCitizen`, data)
 	if cnt == nil {
 		t.Error(`GetContract error`)
 	}
-	if err = cnt.Init(); err != nil {
+	if err = cnt.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
 		t.Error(err.Error())
 	}
-	if err = cnt.Front(); err != nil {
-		t.Error(err.Error())
-	}
-	if err = cnt.Main(); err != nil {
-		t.Error(err.Error())
-	}
-
 }

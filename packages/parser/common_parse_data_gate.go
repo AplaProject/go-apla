@@ -189,11 +189,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 				if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
-					if err := contract.Init(); err != nil {
-						p.RollbackTo(txForRollbackTo, true, true)
-						return utils.ErrInfo(err)
-					}
-					if err := contract.Front(); err != nil {
+					if err := contract.Call(smart.CALL_INIT | smart.CALL_FRONT); err != nil {
 						p.RollbackTo(txForRollbackTo, true, true)
 						return utils.ErrInfo(err)
 					}
@@ -232,10 +228,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// Operative transactions
 		MethodName := consts.TxTypes[p.dataType]
 		if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
-			if err := contract.Init(); err != nil {
-				return utils.ErrInfo(err)
-			}
-			if err := contract.Front(); err != nil {
+			if err := contract.Call(smart.CALL_INIT | smart.CALL_FRONT); err != nil {
 				return utils.ErrInfo(err)
 			}
 		} else {

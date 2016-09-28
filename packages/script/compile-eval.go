@@ -22,18 +22,20 @@ import (
 )
 
 const (
-	CMD_ERROR     = iota // error
-	CMD_PUSH             // Push value to stack
-	CMD_VAR              // Push variable to stack
-	CMD_PUSHSTR          // Push ident as string
-	CMD_TABLE            // #table_name[id_column_name = value].column_name
-	CMD_CALL             // call a function
-	CMD_CALLVARI         // call a variadic function
-	CMD_RETURN           // return from function
-	CMD_IF               // run block if Value is true
-	CMD_ELSE             // run block if Value is false
-	CMD_ASSIGNVAR        // list of assigned var
-	CMD_ASSIGN           // assign
+	CMD_ERROR      = iota // error
+	CMD_PUSH              // Push value to stack
+	CMD_VAR               // Push variable to stack
+	CMD_EXTEND            // Push extend variable to stack
+	CMD_CALLEXTEND        // Call extend function
+	CMD_PUSHSTR           // Push ident as string
+	CMD_TABLE             // #table_name[id_column_name = value].column_name
+	CMD_CALL              // call a function
+	CMD_CALLVARI          // call a variadic function
+	CMD_RETURN            // return from function
+	CMD_IF                // run block if Value is true
+	CMD_ELSE              // run block if Value is false
+	CMD_ASSIGNVAR         // list of assigned var
+	CMD_ASSIGN            // assign
 )
 
 const (
