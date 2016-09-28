@@ -17,9 +17,10 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"fmt"
 	"encoding/json"
+	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 /*
@@ -35,7 +36,6 @@ func (p *Parser) NewStateInit() error {
 	}
 	return nil
 }
-
 
 func (p *Parser) NewStateFront() error {
 	err := p.generalCheck()
@@ -89,7 +89,7 @@ func (p *Parser) NewStateFront() error {
 
 func (p *Parser) NewState() error {
 
-	id_, err := p.ExecSqlGetLastInsertId(`INSERT INTO system_states ( name ) VALUES ( ? )`, "system_states",	p.TxMaps.String["state_name"])
+	id_, err := p.ExecSqlGetLastInsertId(`INSERT INTO system_states ( name ) VALUES ( ? )`, "system_states", p.TxMaps.String["state_name"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -99,14 +99,14 @@ func (p *Parser) NewState() error {
 		return err
 	}
 
-	err = p.ExecSql(`CREATE TABLE "`+id+`_state_parameters" (
-				"name" bytea  NOT NULL DEFAULT '',
-				"value" bytea  NOT NULL DEFAULT '',
+	err = p.ExecSql(`CREATE TABLE "` + id + `_state_parameters" (
+				"name" varchar(100)  NOT NULL DEFAULT '',
+				"value" text  NOT NULL DEFAULT '',
 				"bytecode" bytea  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "`+id+`_state_parameters" ADD CONSTRAINT `+id+`_state_parameters_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT ` + id + `_state_parameters_pkey PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -135,30 +135,29 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE `+id+`_smart_contracts_id_seq START WITH 1;
-				CREATE TABLE "`+id+`_smart_contracts" (
-				"id" bigint NOT NULL  default nextval('`+id+`_smart_contracts_id_seq'),
-				"name" bytea  NOT NULL DEFAULT '',
+	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_smart_contracts_id_seq START WITH 1;
+				CREATE TABLE "` + id + `_smart_contracts" (
+				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
+				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" bytea  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"variables" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE `+id+`_smart_contracts_id_seq owned by `+id+`_smart_contracts.id;
-				ALTER TABLE ONLY "`+id+`_smart_contracts" ADD CONSTRAINT `+id+`_smart_contracts_pkey PRIMARY KEY (id);
+				ALTER SEQUENCE ` + id + `_smart_contracts_id_seq owned by ` + id + `_smart_contracts.id;
+				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT ` + id + `_smart_contracts_pkey PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-
-	err = p.ExecSql(`CREATE TABLE "`+id+`_tables" (
+	err = p.ExecSql(`CREATE TABLE "` + id + `_tables" (
 				"name" bytea  NOT NULL DEFAULT '',
 				"columns_and_permissions" bytea  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "`+id+`_tables" ADD CONSTRAINT `+id+`_tables_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT ` + id + `_tables_pkey PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -173,14 +172,14 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE `+id+`_citizens_id_seq START WITH 1;
-				CREATE TABLE "`+id+`_citizens" (
-				"id" bigint NOT NULL  default nextval('`+id+`_citizens_id_seq'),
+	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_citizens_id_seq START WITH 1;
+				CREATE TABLE "` + id + `_citizens" (
+				"id" bigint NOT NULL  default nextval('` + id + `_citizens_id_seq'),
 				"public_key" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE `+id+`_citizens_id_seq owned by `+id+`_citizens.id;
-				ALTER TABLE ONLY "`+id+`_citizens" ADD CONSTRAINT `+id+`_citizens_pkey PRIMARY KEY (id);
+				ALTER SEQUENCE ` + id + `_citizens_id_seq owned by ` + id + `_citizens.id;
+				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT ` + id + `_citizens_pkey PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -196,19 +195,18 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE `+id+`_accounts_id_seq START WITH 1;
-				CREATE TABLE "`+id+`_accounts" (
-				"id" bigint NOT NULL  default nextval('`+id+`_accounts_id_seq'),
+	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_accounts_id_seq START WITH 1;
+				CREATE TABLE "` + id + `_accounts" (
+				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
 				"amount" bigint  NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE `+id+`_accounts_id_seq owned by `+id+`_accounts.id;
-				ALTER TABLE ONLY "`+id+`_accounts" ADD CONSTRAINT `+id+`_accounts_pkey PRIMARY KEY (id);
+				ALTER SEQUENCE ` + id + `_accounts_id_seq owned by ` + id + `_accounts.id;
+				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT ` + id + `_accounts_pkey PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
 
 	return nil
 }
@@ -221,27 +219,27 @@ func (p *Parser) NewStateRollback() error {
 	}
 	id := utils.Int64ToStr(id_)
 
-	err = p.ExecSql(`DROP TABLE "`+id+`_accounts"`)
+	err = p.ExecSql(`DROP TABLE "` + id + `_accounts"`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`DROP TABLE "`+id+`_citizens"`)
+	err = p.ExecSql(`DROP TABLE "` + id + `_citizens"`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`DROP TABLE "`+id+`_tables"`)
+	err = p.ExecSql(`DROP TABLE "` + id + `_tables"`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`DROP TABLE "`+id+`_smart_contracts"`)
+	err = p.ExecSql(`DROP TABLE "` + id + `_smart_contracts"`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`DROP TABLE "`+id+`_state_parameters"`)
+	err = p.ExecSql(`DROP TABLE "` + id + `_state_parameters"`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -188,7 +188,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 				p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				if contract := smart.GetContract(MethodName); contract != nil {
+				if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
 					if err := contract.Init(); err != nil {
 						p.RollbackTo(txForRollbackTo, true, true)
 						return utils.ErrInfo(err)
@@ -231,7 +231,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// Оперативные транзакции
 		// Operative transactions
 		MethodName := consts.TxTypes[p.dataType]
-		if contract := smart.GetContract(MethodName); contract != nil {
+		if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
 			if err := contract.Init(); err != nil {
 				return utils.ErrInfo(err)
 			}

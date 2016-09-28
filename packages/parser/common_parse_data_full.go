@@ -166,7 +166,7 @@ func (p *Parser) ParseDataFull() error {
 			p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-			if contract := smart.GetContract(MethodName); contract != nil {
+			if contract := smart.GetContract(MethodName, p.TxPtr); contract != nil {
 				if err := contract.Init(); err != nil {
 					return utils.ErrInfo(err)
 				}

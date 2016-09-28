@@ -17,8 +17,12 @@
 package smart
 
 import (
-	//	"fmt"
+	"encoding/hex"
+	"fmt"
 	"testing"
+	"time"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 type TestSmart struct {
@@ -27,11 +31,14 @@ type TestSmart struct {
 }
 
 func TestNewContract(t *testing.T) {
+	var err error
 	test := []TestSmart{
 		{`contract NewCitizen {
 			func front {
+				Println("NewCitizen Front")
 			}
 			func main {
+				Println("NewCitizen Main")
 			}
 }			
 		`, ``},
@@ -41,4 +48,24 @@ func TestNewContract(t *testing.T) {
 			t.Error(err)
 		}
 	}
+	sign, _ := hex.DecodeString(`3276233276237115`)
+	public, _ := hex.DecodeString(`12456788999900087676`)
+	data := &consts.TXNewCitizen{
+		consts.TXHeader{4, uint32(time.Now().Unix()), 1, 1, sign}, public,
+	}
+	fmt.Println(`Data`, data)
+	cnt := GetContract(`NewCitizen`, data)
+	if cnt == nil {
+		t.Error(`GetContract error`)
+	}
+	if err = cnt.Init(); err != nil {
+		t.Error(err.Error())
+	}
+	if err = cnt.Front(); err != nil {
+		t.Error(err.Error())
+	}
+	if err = cnt.Main(); err != nil {
+		t.Error(err.Error())
+	}
+
 }

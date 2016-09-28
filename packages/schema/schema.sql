@@ -459,8 +459,8 @@ DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 "name" varchar(255) NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE system_states_id_seq owned by system_states.citizen_id;
-ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (citizen_id);
+ALTER SEQUENCE system_states_id_seq owned by system_states.id;
+ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
 
 
 INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');

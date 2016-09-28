@@ -300,7 +300,7 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	itype := OBJ_FUNC
 	switch state {
-	case STATE_CONTRACT:
+	case STATE_BLOCK:
 		itype = OBJ_CONTRACT
 	}
 	prev := (*buf)[len(*buf)-2]

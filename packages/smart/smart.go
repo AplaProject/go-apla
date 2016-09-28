@@ -18,12 +18,15 @@ package smart
 
 import (
 	"fmt"
+	"reflect"
 
+	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/script"
 )
 
 type Contract struct {
 	Name  string
+	data  interface{}
 	block *script.Block
 }
 
@@ -44,22 +47,67 @@ func Compile(src string) error {
 }
 
 // Returns true if the contract exists
-func GetContract(name string) *Contract {
+func GetContract(name string, data interface{}) *Contract {
 	obj, ok := smartVM.Objects[name]
+	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
 	if ok && obj.Type == script.OBJ_CONTRACT {
-		return &Contract{Name: name, block: obj.Value.(*script.Block)}
+		return &Contract{Name: name, data: data, block: obj.Value.(*script.Block)}
 	}
 	return nil
 }
 
-func (contract *Contract) Init() error {
+func (contract *Contract) getFunc(name string) *script.Block {
+	if block, ok := (*contract).block.Objects[name]; ok && block.Type == script.OBJ_FUNC {
+		return block.Value.(*script.Block)
+	}
 	return nil
+}
+
+func (contract *Contract) getExtend() map[string]interface{} {
+	head := consts.HeaderNew(contract.data)
+	var citizenId, walletId int64
+	if head.StateId > 0 {
+		citizenId = head.UserId
+	} else {
+		walletId = head.UserId
+	}
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `stateId`: head.StateId,
+		`citizenId`: citizenId, `walletId`: walletId}
+	v := reflect.ValueOf(contract.data).Elem()
+	t := v.Type()
+	for i := 1; i < t.NumField(); i++ {
+		extend[t.Field(i).Name] = v.Field(i).Interface()
+	}
+	//	fmt.Println(`Extend`, extend)
+	return extend
+}
+
+func (contract *Contract) Init() error {
+	init := contract.getFunc(`init`)
+	if init == nil {
+		return nil
+	}
+	rt := smartVM.RunInit()
+	_, err := rt.Run(init, nil, contract.getExtend())
+	return err
 }
 
 func (contract *Contract) Front() error {
-	return nil
+	front := contract.getFunc(`front`)
+	if front == nil {
+		return nil
+	}
+	rt := smartVM.RunInit()
+	_, err := rt.Run(front, nil, contract.getExtend())
+	return err
 }
 
 func (contract *Contract) Main() error {
-	return nil
+	main := contract.getFunc(`main`)
+	if main == nil {
+		return nil
+	}
+	rt := smartVM.RunInit()
+	_, err := rt.Run(main, nil, contract.getExtend())
+	return err
 }
