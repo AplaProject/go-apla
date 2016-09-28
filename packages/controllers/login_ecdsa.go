@@ -27,6 +27,7 @@ import (
 type loginECDSAPage struct {
 	Lang          map[string]string
 	Title         string
+	States []map[string]string
 /*	MyModalIdName string
 	UserID        int64
 	PoolTechWorks int
@@ -92,9 +93,16 @@ func (c *Controller) LoginECDSA() (string, error) {
 		return "", err
 	}
 	return b.String(), nil*/
+
+	states, err := c.GetAll(`SELECT * FROM system_states ORDER BY name DESC`, -1)
+	if err != nil {
+		return "", err
+	}
+
 	TemplateStr, err := makeTemplate("login", "loginECDSA", &loginECDSAPage{
 		Lang:                  c.Lang,
-		Title:                 "Login",		
+		Title:                 "Login",
+		States : states,
 /*		MyWalletData:          MyWalletData,
 		Title:                 "modalAnonym",
 */})

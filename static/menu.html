@@ -437,6 +437,11 @@
 					  <span>Backup</span>
 				   </a>
 				</li>
+				 <li class="state_parameters">
+					 <a href="#" title="state_name" onClick="load_page('newState');HideMenu();">
+						 <span>newState</span>
+					 </a>
+				 </li>
 			 </ul>
 		  </li>
 		  <li class="citizen">
@@ -458,7 +463,7 @@
 				 Tables
 				 <li class="state_parameters">
 					 <a href="#" title="state_name" onClick="load_page('stateTables');HideMenu();">
-						 <span>state_name</span>
+						 <span>{{.Data.StateName}}</span>
 					 </a>
 				 </li>
 				 <li class="state_parameters">
@@ -476,7 +481,7 @@
 				 Smart contracts
 				 <li class="state_parameters">
 					 <a href="#" title="state_name" onClick="load_page('stateContracts');HideMenu();">
-						 <span>state_name</span>
+						 <span>{{.Data.StateName}}</span>
 					 </a>
 				 </li>
 				 <li class="state_parameters">
@@ -490,11 +495,7 @@
 					 </a>
 				 </li>
 		   <br>
-		   <li class="state_parameters">
-			   <a href="#" title="state_name" onClick="load_page('newState');HideMenu();">
-				   <span>newState</span>
-			   </a>
-		   </li>
+
 
 				 <!--
                 {{if eq .Data.CitizenId 1}}

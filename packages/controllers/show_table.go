@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	//"encoding/json"
+	//"fmt"
 )
 
-type tableListPage struct {
+type showTablePage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
@@ -31,23 +33,43 @@ type tableListPage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	Tables []map[string]string
+	TableData map[string]string
+	Columns map[string]string
+	ColumnsAndPermissions map[string]string
 }
 
-func (c *Controller) TableList() (string, error) {
+func (c *Controller) ShowTable() (string, error) {
 
 	var err error
 
-	txType := "tableList"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	var tableName string
+	if utils.CheckInputData(c.r.FormValue("name"), "string") {
+		tableName = c.r.FormValue("name")
+	}
 
-	tables, err := c.GetAll(`SELECT * FROM ea_state_tables`, -1)
+	tableData, err := c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(c.StateId)+`_tables" WHERE name = ? `, tableName).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("table_list", "tableList", &tableListPage {
+	var columns map[string]string
+	columns, err = c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	/*
+	err = json.Unmarshal([]byte(tableData["columns_and_permissions"]), &columnsAndPermissions)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+	var columns map[string]string
+	err = json.Unmarshal([]byte(columnsAndPermissions["update"]), &columns)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}*/
+
+	TemplateStr, err := makeTemplate("show_table", "showTable", &showTablePage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
@@ -55,10 +77,9 @@ func (c *Controller) TableList() (string, error) {
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		Tables : tables,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Columns : columns,
+		//ColumnsAndPermissions : columnsAndPermissions,
+		TableData : tableData})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

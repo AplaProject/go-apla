@@ -42,8 +42,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 	c.r.ParseForm()
 	key := c.r.FormValue("key")
 	bkey, err := hex.DecodeString(key)
-	stateId := lib.HexToInt64(c.r.FormValue("state_id"))
-	citizenId := lib.HexToInt64(c.r.FormValue("citizen_id"))
+	stateId := utils.StrToInt64(c.r.FormValue("state_id"))
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -80,17 +79,24 @@ func (c *Controller) AjaxSignIn() interface{} {
 			return result
 		}*/
 	c.sess.Set("wallet_id", walletId)
-	if citizenId > 0 && stateId > 0 {
+	var citizenId int64
+	if stateId > 0 {
+		result = SignInJson{}
+		log.Debug("stateId %v", stateId)
 		if _, err := c.GetStateName(stateId); err == nil {
-			id, err := c.Single(`SELECT citizen_id FROM `+utils.Int64ToStr(stateId)+`_citizens WHERE citizen_id=? AND hex(public_key_0) = ?`,
-				citizenId, string(publicKey)).Int64()
+			citizenId, err = c.Single(`SELECT id FROM `+utils.Int64ToStr(stateId)+`_citizens WHERE hex(public_key) = ?`,
+				string(publicKey)).Int64()
 			if err != nil {
 				result.Error = err.Error()
 				return result
 			}
-			if id == 0 {
-				citizenId = 0
+			log.Debug("citizenId %v", citizenId)
+			if citizenId == 0 {
 				stateId = 0
+				result.Error = "not a citizen"
+			} else {
+				result.Result = true
+				result.Address = lib.KeyToAddress(bkey)
 			}
 		} else {
 			result.Error = err.Error()

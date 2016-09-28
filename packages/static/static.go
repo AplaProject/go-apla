@@ -2,6 +2,7 @@
 // sources:
 // static/1block
 // static/1block-local
+// static/add_column.html
 // static/alert_success.html
 // static/anonym_money_transfer.html
 // static/backup.html
@@ -17,6 +18,7 @@
 // static/countries/mm.png
 // static/css/style.css
 // static/dashboard_anonym.html
+// static/edit_table.html
 // static/fonts/glyphicons-filetypes-regular.eot
 // static/fonts/glyphicons-filetypes-regular.svg
 // static/fonts/glyphicons-filetypes-regular.ttf
@@ -129,13 +131,13 @@
 // static/pass.html
 // static/psw.html
 // static/request_citizen_status.html
+// static/show_table.html
 // static/signatures.html
 // static/signatures_new.html
 // static/state_laws.html
 // static/state_parameters.html
 // static/state_smart_laws.html
 // static/state_tables.html
-// static/table_list.html
 // static/test.html
 // static/updating_blockchain.html
 // static/vendor/animate.css/animate.min.css
@@ -239,6 +241,24 @@ func static1block() (*asset, error) {
 func static1blockLocal() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/1block-local"
 	name := "static/1block-local"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticAdd_columnHtml reads file data from disk. It returns an error on failure.
+func staticAdd_columnHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/add_column.html"
+	name := "static/add_column.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -509,6 +529,24 @@ func staticCssStyleCss() (*asset, error) {
 func staticDashboard_anonymHtml() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/dashboard_anonym.html"
 	name := "static/dashboard_anonym.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEdit_tableHtml reads file data from disk. It returns an error on failure.
+func staticEdit_tableHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_table.html"
+	name := "static/edit_table.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2539,6 +2577,24 @@ func staticRequest_citizen_statusHtml() (*asset, error) {
 	return a, err
 }
 
+// staticShow_tableHtml reads file data from disk. It returns an error on failure.
+func staticShow_tableHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/show_table.html"
+	name := "static/show_table.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticSignaturesHtml reads file data from disk. It returns an error on failure.
 func staticSignaturesHtml() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/signatures.html"
@@ -2633,24 +2689,6 @@ func staticState_smart_lawsHtml() (*asset, error) {
 func staticState_tablesHtml() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/state_tables.html"
 	name := "static/state_tables.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticTable_listHtml reads file data from disk. It returns an error on failure.
-func staticTable_listHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/table_list.html"
-	name := "static/table_list.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3709,6 +3747,7 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"static/1block": static1block,
 	"static/1block-local": static1blockLocal,
+	"static/add_column.html": staticAdd_columnHtml,
 	"static/alert_success.html": staticAlert_successHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
 	"static/backup.html": staticBackupHtml,
@@ -3724,6 +3763,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/countries/mm.png": staticCountriesMmPng,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
+	"static/edit_table.html": staticEdit_tableHtml,
 	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
 	"static/fonts/glyphicons-filetypes-regular.svg": staticFontsGlyphiconsFiletypesRegularSvg,
 	"static/fonts/glyphicons-filetypes-regular.ttf": staticFontsGlyphiconsFiletypesRegularTtf,
@@ -3836,13 +3876,13 @@ var _bindata = map[string]func() (*asset, error){
 	"static/pass.html": staticPassHtml,
 	"static/psw.html": staticPswHtml,
 	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
+	"static/show_table.html": staticShow_tableHtml,
 	"static/signatures.html": staticSignaturesHtml,
 	"static/signatures_new.html": staticSignatures_newHtml,
 	"static/state_laws.html": staticState_lawsHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
 	"static/state_smart_laws.html": staticState_smart_lawsHtml,
 	"static/state_tables.html": staticState_tablesHtml,
-	"static/table_list.html": staticTable_listHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
@@ -3945,6 +3985,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"1block-local": &bintree{static1blockLocal, map[string]*bintree{
 		}},
+		"add_column.html": &bintree{staticAdd_columnHtml, map[string]*bintree{
+		}},
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{
 		}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{
@@ -3978,6 +4020,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			}},
 		}},
 		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{
+		}},
+		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{
 		}},
 		"fonts": &bintree{nil, map[string]*bintree{
 			"glyphicons-filetypes-regular.eot": &bintree{staticFontsGlyphiconsFiletypesRegularEot, map[string]*bintree{
@@ -4221,6 +4265,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"request_citizen_status.html": &bintree{staticRequest_citizen_statusHtml, map[string]*bintree{
 		}},
+		"show_table.html": &bintree{staticShow_tableHtml, map[string]*bintree{
+		}},
 		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{
 		}},
 		"signatures_new.html": &bintree{staticSignatures_newHtml, map[string]*bintree{
@@ -4232,8 +4278,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"state_smart_laws.html": &bintree{staticState_smart_lawsHtml, map[string]*bintree{
 		}},
 		"state_tables.html": &bintree{staticState_tablesHtml, map[string]*bintree{
-		}},
-		"table_list.html": &bintree{staticTable_listHtml, map[string]*bintree{
 		}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{
 		}},

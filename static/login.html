@@ -39,6 +39,20 @@
 		<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
 		<div id="extended_div" >
 			<form class="extended_form">
+
+
+				<fieldset class="form-group phrase">
+					<label class="col-sm-3 control-label" for="phrase">Country</label>
+					<div class="col-sm-9">
+						<select id="state_id">
+							{{ range $data := .States }}
+							<option value="{{index $data "id"}}">{{index $data "name"}}</option>
+							{{end}}
+						</select>
+					</div>
+				</fieldset>
+
+
 				<fieldset class="form-group phrase">
 					<label class="col-sm-3 control-label" for="phrase">Wallet seed or <br>Private key</label>
 					<div class="col-sm-9">
@@ -151,7 +165,7 @@ function do_sign() {
 		$.post( 'ajax?json=ajax_sign_in', {
 				'sign': sign,
 				'key': key,
-				'state_id': GKey.StateId,
+				'state_id': $( "#state_id" ).val(),
 				'citizen_id': GKey.CitizenId,
 			}, function (data) {
 				if (data.address) {

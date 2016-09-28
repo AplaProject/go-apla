@@ -29,5 +29,6 @@ func init() {
 }
 
 func (c *Controller) Menu() (string, error) {
+
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data})
 }

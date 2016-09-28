@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	//"encoding/json"
+	//"fmt"
 )
 
-type stateTablePage struct {
+type editTablePage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
@@ -31,20 +33,32 @@ type stateTablePage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	Tables []map[string]string
+	TableData map[string]string
+	Columns map[string]string
+	ColumnsAndPermissions map[string]string
 }
 
-func (c *Controller) StateTables() (string, error) {
+func (c *Controller) EditTable() (string, error) {
 
 	var err error
 
+	var tableName string
+	if utils.CheckInputData(c.r.FormValue("name"), "string") {
+		tableName = c.r.FormValue("name")
+	}
 
-	tables, err := c.GetAll(`SELECT * FROM `+utils.Int64ToStr(c.StateId)+`_tables`, -1)
+	tableData, err := c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(c.StateId)+`_tables" WHERE name = ? `, tableName).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("state_tables", "stateTables", &stateTablePage {
+	var columns map[string]string
+	columns, err = c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	TemplateStr, err := makeTemplate("edit_table", "editTable", &editTablePage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
@@ -52,7 +66,9 @@ func (c *Controller) StateTables() (string, error) {
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		Tables : tables})
+		Columns : columns,
+		//ColumnsAndPermissions : columnsAndPermissions,
+		TableData : tableData})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

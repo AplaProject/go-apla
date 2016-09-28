@@ -20,7 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-type stateTablePage struct {
+type addColumnPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
@@ -31,28 +31,31 @@ type stateTablePage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	Tables []map[string]string
+	TableName string
 }
 
-func (c *Controller) StateTables() (string, error) {
+func (c *Controller) AddColumn() (string, error) {
 
 	var err error
 
+	txType := "AddColumn"
+	txTypeId := utils.TypeInt(txType)
+	timeNow := utils.Time()
 
-	tables, err := c.GetAll(`SELECT * FROM `+utils.Int64ToStr(c.StateId)+`_tables`, -1)
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}
+	tableName := c.r.FormValue("name")
 
-	TemplateStr, err := makeTemplate("state_tables", "stateTables", &stateTablePage {
+	TemplateStr, err := makeTemplate("add_column", "addColumn", &addColumnPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
+		TableName: tableName,
 		SignData:     "",
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		Tables : tables})
+		TimeNow:      timeNow,
+		TxType:       txType,
+		TxTypeId:     txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
