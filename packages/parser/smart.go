@@ -19,10 +19,11 @@ package parser
 import (
 	"fmt"
 	"reflect"
-	//	"strings"
+	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/script"
+	//	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 type Contract struct {
@@ -46,10 +47,23 @@ func init() {
 	smartVM = script.VMInit(map[string]interface{}{
 		"Println":  fmt.Println,
 		"Sprintf":  fmt.Sprintf,
-		"DBUpdate": DBUpdate,
+		"DBInsert": DBInsert,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	})
+
+	contract := `contract TXNewCitizen {
+			func front {
+				Println("NewCitizen Front", $citizen, $state, $PublicKey )
+			}
+			func main {
+				Println("NewCitizen Main", $type, $citizen, $block )
+				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
+			}
+}`
+	if err := Compile(contract); err != nil {
+		fmt.Println(`SMART ERROR`, err)
+	}
 }
 
 // Compiles contract source code
@@ -82,8 +96,12 @@ func (contract *Contract) getExtend() *map[string]interface{} {
 	} else {
 		walletId = head.UserId
 	}
+	block := int64(0)
+	if contract.parser.BlockData != nil {
+		block = contract.parser.BlockData.BlockId
+	}
 	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: head.StateId,
-		`block`: contract.parser.BlockData.BlockId, `citizen`: citizenId, `wallet`: walletId,
+		`block`: block, `citizen`: citizenId, `wallet`: walletId,
 		`parser`: contract.parser}
 	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
 	t := v.Type()
@@ -114,8 +132,8 @@ func (contract *Contract) Call(flags int) (err error) {
 	return
 }
 
-func DBUpdate(p *Parser, tblname string, params string, val ...interface{}) (err error) { // map[string]interface{}) {
-	//	err := p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
-	fmt.Println(`DBUpdate`, p, tblname, params, val)
+func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (err error) { // map[string]interface{}) {
+	fmt.Println(`DBInsert`, tblname, params, val, len(val))
+	err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
 	return
 }

@@ -14,9 +14,10 @@
 		if (!accept)
 			load_page('check_citizen_status', {accept: accept, request_id: {{.Values.id}}});
 		else {
+			console.log('Approve');
 			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;
-				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}},{{.Data.CitizenId}}');
+				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.CitizenId}},{{.Data.StateId}}');
 				doSign();
 				$("#send_to_net").trigger("click");
 			}, "json" );

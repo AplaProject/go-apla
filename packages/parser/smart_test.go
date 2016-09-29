@@ -41,7 +41,7 @@ func TestNewContract(t *testing.T) {
 			}
 			func main {
 				Println("NewCitizen Main", $tmp, $type, $wallet )
-				DBUpdate(Sprintf( "%d_citizens", $state), "public_key,rb_id", $PublicKey, $block)
+				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
 			}
 }			
 		`, ``},

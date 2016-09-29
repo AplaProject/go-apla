@@ -17,7 +17,9 @@
 package parser
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
@@ -26,6 +28,7 @@ import (
 func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) error {
 
 	var tableId int64
+
 	values := utils.InterfaceSliceToStr(values_)
 
 	addSqlFields := p.AllPkeys[table]
@@ -50,7 +53,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	if err != nil {
 		return err
 	}
-	if len(logData) > 0 {
+	if whereFields != nil && len(logData) > 0 {
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
 			if k == p.AllPkeys[table] {
@@ -80,13 +83,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
-			if utils.InSliceString(fields[i], []string{"address", "hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
+			if utils.InSliceString(fields[i], []string{"address", "hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
 				query := ""
 				switch p.ConfigIni["db_type"] {
 				case "sqlite":
 					query = fields[i] + `=x'` + values[i] + `',`
 				case "postgresql":
-					query = fields[i] + `=decode('` + values[i] + `','HEX'),`
+					query = fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 				}
 				addSqlUpdate += query
 			} else if fields[i][:1] == "+" {
@@ -109,13 +112,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlIns1 := ""
 		for i := 0; i < len(fields); i++ {
 			addSqlIns0 += `` + fields[i] + `,`
-			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
+			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
 				query := ""
 				switch p.ConfigIni["db_type"] {
 				case "sqlite":
 					query = `x'` + values[i] + `',`
 				case "postgresql":
-					query = `decode('` + values[i] + `','HEX'),`
+					query = `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 				}
 				addSqlIns1 += query
 			} else {
@@ -128,8 +131,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		addSqlIns0 = addSqlIns0[0 : len(addSqlIns0)-1]
 		addSqlIns1 = addSqlIns1[0 : len(addSqlIns1)-1]
+		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")")
 		tableId, err = p.ExecSqlGetLastInsertId("INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")", table)
 		if err != nil {
+			fmt.Println(`Sel Log Err`, tableId, err)
 			return err
 		}
 	}

@@ -76,7 +76,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
 		vals[`publicKey`] = hex.EncodeToString(pubkey)
 	}
-	txType := "NewCitizen"
+	txType := "TXNewCitizen"
 	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals,
 		Fields: fields, TxType: txType, TxTypeId: utils.TypeInt(txType)})
 }
