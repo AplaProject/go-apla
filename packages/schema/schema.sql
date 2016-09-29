@@ -396,7 +396,7 @@ DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
 "block_id" bigint NOT NULL DEFAULT '0',
 "tx_hash" bytea  NOT NULL DEFAULT '',
 "table_name" varchar(255) NOT NULL DEFAULT '',
-"table_id" bigint NOT NULL DEFAULT '0'
+"table_id" varchar(255) NOT NULL DEFAULT ''
 );
 ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
 ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);

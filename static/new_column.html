@@ -7,7 +7,7 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$('#table_name').val()+','+$('#column_name').val()+','+$('#permissions').val());
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+{{.TableName}}+','+$('#column_name').val()+','+$('#permissions').val());
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -58,7 +58,6 @@
 			  <tbody>
 			  <tr><td>Column name</td><td><input type="text" id="column_name"></td></tr>
 			  <tr><td>Permissions</td><td><input type="text" id="permissions"></td></tr>
-			  <tr><td>Conditions</td><td><textarea id="conditions"></textarea></td></tr>
 			  </tbody>
 		   </table>
 		</div>
