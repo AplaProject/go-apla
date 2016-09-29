@@ -63,7 +63,7 @@
 		var columns = [];
 		var table = $("#table tbody");
 		
-		function AddColumn() {
+		function NewColumn() {
 			var col = '<tr>' +
 						 '<td><input class="colname form-control" type="text" placeholder="colname" value=""></td>' +
 						 '<td width="50"><button type="button" class="btn btn-primary" onClick="RemoveColumn(this);">(-)</button></td>' +
@@ -76,7 +76,7 @@
 			$(elem).parents("tr").remove();
 		}
 		
-		AddColumn();
+		NewColumn();
 		
 		$('#send').bind('click', function () {
 			columns = [];
@@ -141,7 +141,7 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			 <button type="button" id="add" class="btn btn-primary" onClick="AddColumn();">Add column</button>
+			 <button type="button" id="add" class="btn btn-primary" onClick="NewColumn();">Add column</button>
 		  </div>
 		  <div class="pull-right">
 			 <button type="button" id="send" class="btn btn-primary">Send</button>

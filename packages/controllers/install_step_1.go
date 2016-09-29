@@ -147,6 +147,8 @@ func (c *Controller) InstallStep1() (string, error) {
 				panic(err)
 				os.Exit(1)
 			}
+
+
 			err = c.DCDB.ExecSql(string(schema))
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))

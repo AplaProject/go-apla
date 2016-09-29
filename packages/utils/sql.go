@@ -92,7 +92,7 @@ func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 			return &DCDB{}, err
 		}
 	case "postgresql":
-		db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"]))
+		db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable port=%s", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"], ConfigIni["db_port"]))
 		if err != nil {
 			return &DCDB{}, err
 		}

@@ -406,6 +406,12 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 				return true
 			}
 		}
+	case "word":
+		if ok, _ := regexp.MatchString(`^(?i)[a-z]+$`, data); ok {
+			if StrToInt(data) <= 1024 {
+				return true
+			}
+		}
 	case "string":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
 			if StrToInt(data) <= 1024 {

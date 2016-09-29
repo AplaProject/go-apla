@@ -19,16 +19,13 @@ package parser
 import (
 	//"encoding/json"
 	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-/*
-Adding state tables should be spelled out in state settings
-*/
+func (p *Parser) NewColumnInit() error {
 
-func (p *Parser) NewStateInit() error {
-
-	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"column_name": "string"}, {"permissions": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -36,20 +33,20 @@ func (p *Parser) NewStateInit() error {
 	return nil
 }
 
-func (p *Parser) NewStateFront() error {
+func (p *Parser) NewColumnFront() error {
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"state_name": "string", "currency_name": "string"}
+	verifyData := map[string]string{"column_name": "word", "permissions": "string", "conditions": "string"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	fPrice, err := p.Single(`SELECT value->'new_state' FROM system_parameters WHERE name = ?`, "op_price").Int64()
+	fPrice, err := p.Single(`SELECT value->'new_column' FROM system_parameters WHERE name = ?`, "op_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -67,13 +64,7 @@ func (p *Parser) NewStateFront() error {
 		return p.ErrInfo(err)
 	}
 
-	// есть ли нужная сумма на кошельке
-	_, err = p.checkSenderDLT(0, dltPrice)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	forSign := fmt.Sprintf("%s,%s,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["state_name"], p.TxMap["currency_name"])
+	forSign := fmt.Sprintf("%s,%s,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["conditions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -85,7 +76,7 @@ func (p *Parser) NewStateFront() error {
 	return nil
 }
 
-func (p *Parser) NewState() error {
+func (p *Parser) NewColumn() error {
 
 	id_, err := p.ExecSqlGetLastInsertId(`INSERT INTO system_states ( name ) VALUES ( ? )`, "system_states", p.TxMaps.String["state_name"])
 	if err != nil {
@@ -209,7 +200,7 @@ func (p *Parser) NewState() error {
 	return nil
 }
 
-func (p *Parser) NewStateRollback() error {
+func (p *Parser) NewColumnRollback() error {
 
 	id_, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
 	if err != nil {
@@ -249,7 +240,7 @@ func (p *Parser) NewStateRollback() error {
 	return nil
 }
 
-func (p *Parser) NewStateRollbackFront() error {
+func (p *Parser) NewColumnRollbackFront() error {
 
 	return nil
 }

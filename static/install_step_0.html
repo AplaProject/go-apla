@@ -38,29 +38,10 @@
 			} else {
 				$('#url').css("display", "block")
 			}
+			$('.db_settings').show();
+			$('html, body').css("min-height", mh + dmh + "px")
 		});
-		$('#db_type').on('change', function() {
-			console.log(this.value)
-			
-			if ($('body').width() < 768) {
-				var mh = 684;
-				var dmh = 204;
-			} else {
-				var mh = 506;
-				var dmh = 196;
-			}
-			
-			if (this.value=="sqlite") {
-				$('.db_settings').hide();
-				$('.sqlite_settings').show();
-				$('html, body').css("min-height", mh + "px")
-			} else {
-				$('.db_settings').show();
-				$('.sqlite_settings').hide();
-				$('html, body').css("min-height", mh + dmh + "px")
-			}
-		});
-	
+
 		$('#next').bind('click', function () {
 			$('#next').prop('disabled', true);
 			//$('#loader').spin();
@@ -72,7 +53,7 @@
 				'url' : $('#url').val(),
 				'sqlite_db_url' : $('#sqlite_db_url').val(),
 				'first_load' : $('#first_load').val(),
-				'db_type' : $('#db_type').val(),
+				'db_type' : "postgresql",
 				'host' : $('#host').val(),
 				'port' : $('#port').val(),
 				'db_name' : $('#db_name').val(),
@@ -108,16 +89,6 @@
 						</div>
 					</div>
 				</fieldset>
-				<fieldset class="form-group">
-					<label class="col-sm-3 control-label" for="db_type">DB type</label>
-					<div class="col-sm-9">
-						<select id="db_type" class="form-control c-select">
-							<option value="sqlite">Sqlite</option>
-							<option value="postgresql">Postgresql</option>
-							<option value="mysql">Mysql</option>
-						</select>
-					</div>
-				</fieldset>
 				<fieldset class="form-group db_settings">
 					<label class="col-sm-3 control-label" for="host">Host</label>
 					<div class="col-sm-9">
@@ -127,31 +98,25 @@
 				<fieldset class="form-group db_settings">
 					<label class="col-sm-3 control-label" for="port">Port</label>
 					<div class="col-sm-9">
-						<input id="port" class="form-control" type="text" value="5432">
+						<input id="port" class="form-control" type="text" value="5433">
 					</div>
 				</fieldset>
 				<fieldset class="form-group db_settings">
 					<label class="col-sm-3 control-label" for="db_name">DB name</label>
 					<div class="col-sm-9">
-						<input id="db_name" class="form-control" type="text" value="DL">
+						<input id="db_name" class="form-control" type="text" value="dl">
 					</div>
 				</fieldset>
 				<fieldset class="form-group db_settings">
 					<label class="col-sm-3 control-label" for="username">Username</label>
 					<div class="col-sm-9">
-						<input id="username" class="form-control" type="text" value="postgres_user">
+						<input id="username" class="form-control" type="text" value="postgres">
 					</div>
 				</fieldset>
 				<fieldset class="form-group db_settings">
 					<label class="col-sm-3 control-label" for="password">Password</label>
 					<div class="col-sm-9">
-						<input id="password" class="form-control" type="password" value="1232589876">
-					</div>
-				</fieldset>
-				<fieldset class="form-group sqlite_settings">
-					<label class="col-sm-3 control-label" for="sqlite_db_url">DB url</label>
-					<div class="col-sm-9">
-						<input id="sqlite_db_url" class="form-control" type="text" value="http://daylight.world/mlitedb.db">
+						<input id="password" class="form-control" type="password" value="postgres">
 					</div>
 				</fieldset>
 			</form>

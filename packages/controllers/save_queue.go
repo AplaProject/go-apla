@@ -158,6 +158,21 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(currencyName)...)
 		data = append(data, binSignatures...)
 
+	case "NewColumn":
+
+		columnName := []byte(c.r.FormValue("column_name"))
+		permissions := []byte(c.r.FormValue("permissions"))
+		conditions := []byte(c.r.FormValue("conditions"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(walletId)...)
+		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(columnName)...)
+		data = append(data, utils.EncodeLengthPlusData(permissions)...)
+		data = append(data, utils.EncodeLengthPlusData(conditions)...)
+		data = append(data, binSignatures...)
+
 	case "ChangeNodeKey":
 
 		publicKey := []byte(c.r.FormValue("publicKey"))

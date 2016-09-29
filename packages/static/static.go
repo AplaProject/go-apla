@@ -2,7 +2,6 @@
 // sources:
 // static/1block
 // static/1block-local
-// static/add_column.html
 // static/alert_success.html
 // static/anonym_money_transfer.html
 // static/backup.html
@@ -126,6 +125,7 @@
 // static/login.html
 // static/menu.html
 // static/modal_anonym.html
+// static/new_column.html
 // static/new_state.html
 // static/new_table.html
 // static/pass.html
@@ -241,24 +241,6 @@ func static1block() (*asset, error) {
 func static1blockLocal() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/1block-local"
 	name := "static/1block-local"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticAdd_columnHtml reads file data from disk. It returns an error on failure.
-func staticAdd_columnHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/add_column.html"
-	name := "static/add_column.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2487,6 +2469,24 @@ func staticModal_anonymHtml() (*asset, error) {
 	return a, err
 }
 
+// staticNew_columnHtml reads file data from disk. It returns an error on failure.
+func staticNew_columnHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/new_column.html"
+	name := "static/new_column.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticNew_stateHtml reads file data from disk. It returns an error on failure.
 func staticNew_stateHtml() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/new_state.html"
@@ -3747,7 +3747,6 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"static/1block": static1block,
 	"static/1block-local": static1blockLocal,
-	"static/add_column.html": staticAdd_columnHtml,
 	"static/alert_success.html": staticAlert_successHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
 	"static/backup.html": staticBackupHtml,
@@ -3871,6 +3870,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
+	"static/new_column.html": staticNew_columnHtml,
 	"static/new_state.html": staticNew_stateHtml,
 	"static/new_table.html": staticNew_tableHtml,
 	"static/pass.html": staticPassHtml,
@@ -3984,8 +3984,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"1block": &bintree{static1block, map[string]*bintree{
 		}},
 		"1block-local": &bintree{static1blockLocal, map[string]*bintree{
-		}},
-		"add_column.html": &bintree{staticAdd_columnHtml, map[string]*bintree{
 		}},
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{
 		}},
@@ -4254,6 +4252,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{
 		}},
 		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{
+		}},
+		"new_column.html": &bintree{staticNew_columnHtml, map[string]*bintree{
 		}},
 		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{
 		}},

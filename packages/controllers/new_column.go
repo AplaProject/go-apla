@@ -20,7 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-type addColumnPage struct {
+type newColumnPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
@@ -34,17 +34,17 @@ type addColumnPage struct {
 	TableName string
 }
 
-func (c *Controller) AddColumn() (string, error) {
+func (c *Controller) NewColumn() (string, error) {
 
 	var err error
 
-	txType := "AddColumn"
+	txType := "NewColumn"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	tableName := c.r.FormValue("name")
 
-	TemplateStr, err := makeTemplate("add_column", "addColumn", &addColumnPage {
+	TemplateStr, err := makeTemplate("new_column", "newColumn", &newColumnPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
