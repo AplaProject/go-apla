@@ -160,17 +160,26 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewColumn":
 
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		tableName := []byte(c.r.FormValue("table_name"))
 		columnName := []byte(c.r.FormValue("column_name"))
 		permissions := []byte(c.r.FormValue("permissions"))
-		conditions := []byte(c.r.FormValue("conditions"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(walletId)...)
-		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(tableName)...)
 		data = append(data, utils.EncodeLengthPlusData(columnName)...)
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
 
 	case "ChangeNodeKey":

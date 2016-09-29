@@ -32,6 +32,7 @@ type newColumnPage struct {
 	TxTypeId     int64
 	TimeNow      int64
 	TableName string
+	StateId int64
 }
 
 func (c *Controller) NewColumn() (string, error) {
@@ -52,6 +53,7 @@ func (c *Controller) NewColumn() (string, error) {
 		SignData:     "",
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
+		StateId: c.SessStateId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,

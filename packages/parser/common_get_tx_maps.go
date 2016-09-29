@@ -38,14 +38,32 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	p.TxMaps.Bytes["hash"] = p.TxSlice[0]
 	p.TxMaps.Int64["type"] = utils.BytesToInt64(p.TxSlice[1])
 	p.TxMaps.Int64["time"] = utils.BytesToInt64(p.TxSlice[2])
-	p.TxMaps.Int64["wallet_id"] = utils.BytesToInt64(p.TxSlice[3])
-	p.TxMaps.Int64["citizen_id"] = utils.BytesToInt64(p.TxSlice[4])
+	p.TxMaps.Int64["user_id"] = utils.BytesToInt64(p.TxSlice[3])
+	p.TxMaps.Int64["state_id"] = utils.BytesToInt64(p.TxSlice[4])
 	p.TxMaps.Int64["_id"] = utils.BytesToInt64(p.TxSlice[4])
 	p.TxMap["hash"] = p.TxSlice[0]
 	p.TxMap["type"] = p.TxSlice[1]
 	p.TxMap["time"] = p.TxSlice[2]
-	p.TxMap["wallet_id"] = p.TxSlice[3]
-	p.TxMap["citizen_id"] = p.TxSlice[4]
+	p.TxMap["user_id"] = p.TxSlice[3]
+	p.TxMap["state_id"] = p.TxSlice[4]
+
+	if p.TxMaps.Int64["state_id"] > 0 {
+		p.TxStateID = uint32(p.TxMaps.Int64["state_id"])
+		p.TxMap["citizen_id"] = p.TxMap["user_id"]
+		p.TxMaps.Int64["citizen_id"] = p.TxMaps.Int64["user_id"]
+		p.TxCitizenID = p.TxMaps.Int64["user_id"]
+		p.TxWalletID = 0
+		p.TxMap["wallet_id"] = utils.Int64ToByte(0)
+		p.TxMaps.Int64["wallet_id"] = 0
+	} else {
+		p.TxStateID = 0
+		p.TxMap["wallet_id"] = p.TxMap["user_id"]
+		p.TxMaps.Int64["wallet_id"] = p.TxMaps.Int64["user_id"]
+		p.TxWalletID = p.TxMaps.Int64["user_id"]
+		p.TxCitizenID = 0
+		p.TxMap["citizen_id"] = utils.Int64ToByte(0)
+		p.TxMaps.Int64["citizen_id"] = 0
+	}
 
 	if p.TxMaps.Int64["type"] == 0 {
 		return fmt.Errorf(`p.TxMaps.Int64["type"] == 0`)
@@ -95,8 +113,6 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 		}
 	}
 	log.Debug("%s", p.TxMaps)
-	p.TxCitizenID = p.TxMaps.Int64["citizen_id"]
-	p.TxWalletID = p.TxMaps.Int64["wallet_id"]
 	p.TxTime = p.TxMaps.Int64["time"]
 	p.PublicKeys = nil
 	//log.Debug("p.TxMaps", p.TxMaps)

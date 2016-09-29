@@ -84,7 +84,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result = SignInJson{}
 		log.Debug("stateId %v", stateId)
 		if _, err := c.GetStateName(stateId); err == nil {
-			citizenId, err = c.Single(`SELECT id FROM `+utils.Int64ToStr(stateId)+`_citizens WHERE hex(public_key) = ?`,
+			citizenId, err = c.Single(`SELECT id FROM `+utils.Int64ToStr(stateId)+`_citizens WHERE hex(public_key_0) = ?`,
 				string(publicKey)).Int64()
 			if err != nil {
 				result.Error = err.Error()

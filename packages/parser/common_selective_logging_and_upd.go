@@ -53,7 +53,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	if err != nil {
 		return err
 	}
-	if whereFields != nil && len(logData) > 0 {
+	log.Debug("SELECT " + addSqlFields + " rb_id FROM " + table + " " + addSqlWhere);
+	if /*whereFields != nil && */ len(logData) > 0 {
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
 			if k == p.AllPkeys[table] {

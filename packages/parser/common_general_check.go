@@ -66,7 +66,7 @@ func (p *Parser) generalCheck() error {
 			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
 		}
 	} else {
-		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM citizens WHERE citizen_id = ?", utils.BytesToInt64(p.TxMap["citizen_id"])).String()
+		data, err := p.OneRow("SELECT * FROM "+utils.UInt32ToStr(p.TxStateID)+"_citizens WHERE id = ?", utils.Int64ToStr(p.TxCitizenID)).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

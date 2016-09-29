@@ -7,7 +7,7 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},'+$('#column_name').val()+','+$('#permissions').val()+','+$('#conditions').val());
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$('#table_name').val()+','+$('#column_name').val()+','+$('#permissions').val());
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -18,12 +18,13 @@
 			type: 'POST',
 			url: 'ajax?controllerName=saveQueue',
 			data: {
+				'table_name' : '{{.TableName}}',
 				'column_name' : $('#column_name').val(),
 				'permissions' : $('#permissions').val(),
-				'conditions' : $('#conditions').val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
 				'citizenId' : '{{.CitizenId}}',
+				'stateId' : '{{.StateId}}',
 				'signature1': $('#signature1').val(),
 				'signature2': $('#signature2').val(),
 				'signature3': $('#signature3').val()

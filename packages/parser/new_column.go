@@ -18,14 +18,14 @@ package parser
 
 import (
 	//"encoding/json"
+	"encoding/json"
 	"fmt"
-
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) NewColumnInit() error {
 
-	fields := []map[string]string{{"column_name": "string"}, {"permissions": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -40,7 +40,7 @@ func (p *Parser) NewColumnFront() error {
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"column_name": "word", "permissions": "string", "conditions": "string"}
+	verifyData := map[string]string{"table_name": "string", "column_name": "word", "permissions": "string"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -64,7 +64,7 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(err)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["conditions"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -78,166 +78,45 @@ func (p *Parser) NewColumnFront() error {
 
 func (p *Parser) NewColumn() error {
 
-	id_, err := p.ExecSqlGetLastInsertId(`INSERT INTO system_states ( name ) VALUES ( ? )`, "system_states", p.TxMaps.String["state_name"])
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	id := utils.Int64ToStr(id_)
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "system_states", id)
+	table := utils.UInt32ToStr(p.TxStateID) + `_tables`
+	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
 	if err != nil {
 		return err
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_state_parameters" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"value" text  NOT NULL DEFAULT '',
-				"bytecode" bytea  NOT NULL DEFAULT '',
-				"conditions" bytea  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT ` + id + `_state_parameters_pkey PRIMARY KEY (name);
-				`)
+	jsonMap := make(map[string]string)
+	for k, v := range logData {
+		if k == p.AllPkeys[table] {
+			continue
+		}
+		jsonMap[k] = v
+		if k == "rb_id" {
+			k = "prev_rb_id"
+		}
+	}
+	jsonData, _ := json.Marshal(jsonMap)
+	if err != nil {
+		return err
+	}
+	rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	if err != nil {
+		return err
+	}
+	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rbId = ? WHERE name = ?`, `"`+p.TxMaps.String["permissions"]+`"`, p.TxMaps.String["table_name"], rbId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?)`,
-		"main_conditions", id+`_citizens.id=1`, "", "",
-		"new_table", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
-		"new_column", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
-		"changing_tables", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
-		"changing_smart_contracts", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
-		"currency_name", p.TxMap["currency_name"], "", id+`_state_parameters.main_conditions`,
-		"state_name", p.TxMap["state_name"], "", id+`_state_parameters.main_conditions`,
-		"dlt_spending", p.TxWalletID, "", id+`_state_parameters.main_conditions`,
-		"citizenship_price", "1000000", "", id+`_state_parameters.main_conditions`)
+	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.TxMaps.String["table_name"])
 	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_smart_contracts_id_seq START WITH 1;
-				CREATE TABLE "` + id + `_smart_contracts" (
-				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"value" bytea  NOT NULL DEFAULT '',
-				"conditions" bytea  NOT NULL DEFAULT '',
-				"variables" bytea  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER SEQUENCE ` + id + `_smart_contracts_id_seq owned by ` + id + `_smart_contracts.id;
-				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT ` + id + `_smart_contracts_pkey PRIMARY KEY (id);
-				`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`CREATE TABLE "` + id + `_tables" (
-				"name" bytea  NOT NULL DEFAULT '',
-				"columns_and_permissions" jsonb,
-				"conditions" bytea  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT ` + id + `_tables_pkey PRIMARY KEY (name);
-				`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
-		(?, ?, ?),
-		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+id+`_citizens.id=1", "update": {"public_key": "`+id+`_citizens.id=1"}, "update": {"public_key":""}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`,
-		id+`_accounts`, `{"general_update":"`+id+`_citizens.id=1", "update": {"amount": "`+id+`_citizens.id=1"}, "update": {"amount":""}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_citizens_id_seq START WITH 1;
-				CREATE TABLE "` + id + `_citizens" (
-				"id" bigint NOT NULL  default nextval('` + id + `_citizens_id_seq'),
-				"public_key" bytea  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER SEQUENCE ` + id + `_citizens_id_seq owned by ` + id + `_citizens.id;
-				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT ` + id + `_citizens_pkey PRIMARY KEY (id);
-				`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	pKey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Bytes()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`INSERT INTO "`+id+`_citizens" (public_key) VALUES ([hex])`, utils.BinToHex(pKey))
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_accounts_id_seq START WITH 1;
-				CREATE TABLE "` + id + `_accounts" (
-				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
-				"amount" bigint  NOT NULL DEFAULT '0',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER SEQUENCE ` + id + `_accounts_id_seq owned by ` + id + `_accounts.id;
-				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT ` + id + `_accounts_pkey PRIMARY KEY (id);
-				`)
-	if err != nil {
-		return p.ErrInfo(err)
+		return err
 	}
 
 	return nil
 }
 
 func (p *Parser) NewColumnRollback() error {
-
-	id_, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	id := utils.Int64ToStr(id_)
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_accounts"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_citizens"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_tables"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_smart_contracts"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_state_parameters"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DELETE FROM "system_states" WHERE id = ?`, id)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	return nil
+	return p.autoRollback()
 }
 
 func (p *Parser) NewColumnRollbackFront() error {

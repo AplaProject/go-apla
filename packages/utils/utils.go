@@ -1050,6 +1050,10 @@ func DecToHexBig(hex string) string {
 	return hex
 }
 
+
+func UInt32ToStr(num uint32) string {
+	return strconv.FormatInt(int64(num), 10)
+}
 func Int64ToStr(num int64) string {
 	return strconv.FormatInt(num, 10)
 }

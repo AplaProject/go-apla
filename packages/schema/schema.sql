@@ -180,16 +180,15 @@ ALTER TABLE ONLY "rb_full_nodes" ADD CONSTRAINT rb_full_nodes_pkey PRIMARY KEY (
 
 
 
-
-DROP SEQUENCE IF EXISTS upd_full_nodes_rb_id_seq CASCADE;
-CREATE SEQUENCE upd_full_nodes_rb_id_seq START WITH 1;
+DROP SEQUENCE IF EXISTS upd_full_nodes_id_seq CASCADE;
+CREATE SEQUENCE upd_full_nodes_id_seq START WITH 1;
 DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
+"id" bigint NOT NULL  default nextval('upd_full_nodes_id_seq'),
 "time" int NOT NULL DEFAULT '0',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE upd_full_nodes_rb_id_seq owned by upd_full_nodes.rb_id;
-ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (rb_id);
-
+ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
+ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);
 
 
 
