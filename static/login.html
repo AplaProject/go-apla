@@ -45,7 +45,7 @@
 					<label class="col-sm-3 control-label" for="phrase">Country</label>
 					<div class="col-sm-9">
 						<select id="state_id">
-							<option value="0">-----</option>
+							<!--<option value="0">-----</option>-->
 							{{ range $data := .States }}
 							<option value="{{index $data "id"}}">{{index $data "name"}}</option>
 							{{end}}

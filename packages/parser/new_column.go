@@ -64,7 +64,7 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(err)
 	}
 
-	table := utils.UInt32ToStr(p.TxStateID) + `_tables`
+	table := p.TxStateIDStr + `_tables`
 	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
 	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"])
 	if err != nil {
@@ -88,7 +88,7 @@ func (p *Parser) NewColumnFront() error {
 
 func (p *Parser) NewColumn() error {
 
-	table := utils.UInt32ToStr(p.TxStateID) + `_tables`
+	table := p.TxStateIDStr + `_tables`
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
 	if err != nil {
 		return err

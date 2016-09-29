@@ -49,6 +49,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 
 	if p.TxMaps.Int64["state_id"] > 0 {
 		p.TxStateID = uint32(p.TxMaps.Int64["state_id"])
+		p.TxStateIDStr = utils.Int64ToStr(p.TxMaps.Int64["state_id"])
 		p.TxMap["citizen_id"] = p.TxMap["user_id"]
 		p.TxMaps.Int64["citizen_id"] = p.TxMaps.Int64["user_id"]
 		p.TxCitizenID = p.TxMaps.Int64["user_id"]
@@ -57,6 +58,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 		p.TxMaps.Int64["wallet_id"] = 0
 	} else {
 		p.TxStateID = 0
+		p.TxStateIDStr = ""
 		p.TxMap["wallet_id"] = p.TxMap["user_id"]
 		p.TxMaps.Int64["wallet_id"] = p.TxMaps.Int64["user_id"]
 		p.TxWalletID = p.TxMaps.Int64["user_id"]

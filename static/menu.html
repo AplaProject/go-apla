@@ -442,6 +442,13 @@
 						 <span>newState</span>
 					 </a>
 				 </li>
+
+				 <li class="anonym_citizen_status">
+					 <a href="#" title="Request for citizen status" onClick="load_page('request_citizen_status');HideMenu();">
+						 <span>Request for citizen status</span>
+					 </a>
+				 </li>
+
 			 </ul>
 		  </li>
 		  <li class="citizen">
@@ -450,14 +457,9 @@
 				<span>Citizen</span>
 			 </a>
 			 <ul id="dc" class="nav sidebar-subnav collapse">
+
 				<li class="sidebar-subnav-header">Citizen</li>
-				{{if eq .Data.CitizenId 0}}
-				<li class="anonym_citizen_status">
-				   <a href="#" title="Request for citizen status" onClick="load_page('request_citizen_status');HideMenu();">
-					  <span>Request for citizen status</span>
-				   </a>
-				</li>
-				{{end}}
+
 
 
 				 Tables

@@ -71,6 +71,7 @@ type Parser struct {
 	TxCitizenID      int64
 	TxWalletID       int64
 	TxStateID        uint32
+	TxStateIDStr     string
 	TxTime           int64
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte

@@ -26,8 +26,8 @@ type newTablePage struct {
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	WalletId  int64
 	CitizenId int64
+	StateId int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
@@ -37,7 +37,7 @@ func (c *Controller) NewTable() (string, error) {
 
 	var err error
 
-	txType := "newTable"
+	txType := "NewTable"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
@@ -47,8 +47,8 @@ func (c *Controller) NewTable() (string, error) {
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
+		StateId: c.StateId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,

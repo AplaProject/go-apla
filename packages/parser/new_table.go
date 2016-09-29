@@ -19,7 +19,6 @@ package parser
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/script"
 	"encoding/json"
 )
 
@@ -29,7 +28,7 @@ Adding state tables should be spelled out in state settings
 
 func (p *Parser) NewTableInit() error {
 
-	fields := []map[string]string{{"public_key": "bytes"}, {"table_name": "string"}, {"table_columns": "string"}}
+	fields := []map[string]string{{"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -40,6 +39,7 @@ func (p *Parser) NewTableInit() error {
 
 
 func (p *Parser) NewTableFront() error {
+
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -65,23 +65,17 @@ func (p *Parser) NewTableFront() error {
 	// select value from ea_state_parameters where name = "new_state_table"
 	// ...
 
-	newStateCondition := "#dlt_wallets[wallet_id=walletId].amount > 0"
-
-	vars := map[string]interface{}{
-		`citizenId`: 	p.TxCitizenID,
-		`walletId`: 	p.TxWalletID,
-		`Table`:     	p.MyTable,
-	}
-	out, err := script.EvalIf(newStateCondition, &vars)
+	var cols []string
+	err = json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if !out {
-		return p.ErrInfo("newStateCond false")
+	if len(cols) == 0 {
+		return p.ErrInfo(`len(cols) == 0`)
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxMap["state_id"], p.TxCitizenID)
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["columns"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -95,30 +89,35 @@ func (p *Parser) NewTableFront() error {
 
 func (p *Parser) NewTable() error {
 
+	tableName := p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
 	var cols []string
-	json.Unmarshal(p.TxMaps.Bytes["table_columns"], &cols)
+	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
 
+	citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
 	colsSql := ""
+	colsSql2 := ""
 	for _,name := range cols {
-		colsSql += name+" varchar(255) NOT NULL DEFAULT ''\n"
+		colsSql += `"`+name+"\" varchar(255) NOT NULL DEFAULT '',\n"
+		colsSql2 += `"`+name+`": "`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`",`
 	}
+	colsSql2 = colsSql2[:len(colsSql2)-1]
 
-	sql := `CREATE SEQUENCE `+p.TxMaps.String["table_name"]+`_id_seq START WITH 1;
-				CREATE TABLE "`+p.TxMaps.String["table_name"]+`" (
-				"id" bigint NOT NULL  default nextval('`+p.TxMaps.String["table_name"]+`_id_seq'),
+	sql := `CREATE SEQUENCE "`+tableName+`_id_seq" START WITH 1;
+				CREATE TABLE "`+tableName+`" (
+				"id" bigint NOT NULL  default nextval('`+tableName+`_id_seq'),
 				`+colsSql+`
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE `+p.TxMaps.String["table_name"]+`_id_seq owned by `+p.TxMaps.String["table_name"]+`.id;
-				ALTER TABLE ONLY "`+p.TxMaps.String["table_name"]+`" ADD CONSTRAINT `+p.TxMaps.String["table_name"]+`_pkey PRIMARY KEY (id);`
-
+				ALTER SEQUENCE "`+tableName+`_id_seq" owned by "`+tableName+`".id;
+				ALTER TABLE ONLY "`+tableName+`" ADD CONSTRAINT "`+tableName+`_pkey" PRIMARY KEY (id);`
+	fmt.Println(sql)
 	err := p.ExecSql(sql)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`INSERT INTO `+p.TxVars[`state_code`]+`_tables ( name, columns_and_permissions ) VALUES ( ?, ? )`,
-		p.TxMaps.String["table_name"], p.TxMaps.String["table_columns"])
+	err = p.ExecSql(`INSERT INTO `+p.TxStateIDStr+`_tables ( name, columns_and_permissions ) VALUES ( ?, ? )`,
+		tableName, `{"general_update":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "update": {`+colsSql2+`}, "insert": "`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "new_column":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`"}`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -128,10 +127,12 @@ func (p *Parser) NewTable() error {
 
 func (p *Parser) NewTableRollback() error {
 
-	err := p.ExecSql(`DROP TABLE "`+p.TxMaps.String["table_name"]+`"`)
+	tableName := p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
+
+	err := p.ExecSql(`DROP TABLE "`+tableName+`"`)
 
 	err = p.ExecSql(`DELETE FROM `+p.TxVars[`state_code`]+
-	`_state_tables WHERE name = ?`, p.TxMaps.String["table_name"])
+	`_state_tables WHERE name = ?`, tableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -139,6 +140,5 @@ func (p *Parser) NewTableRollback() error {
 }
 
 func (p *Parser) NewTableRollbackFront() error {
-
 	return nil
 }

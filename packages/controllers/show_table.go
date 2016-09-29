@@ -33,9 +33,10 @@ type showTablePage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	TableData map[string]string
+	TableData []map[string]string
 	Columns map[string]string
 	ColumnsAndPermissions map[string]string
+	TableName string
 }
 
 func (c *Controller) ShowTable() (string, error) {
@@ -47,13 +48,13 @@ func (c *Controller) ShowTable() (string, error) {
 		tableName = c.r.FormValue("name")
 	}
 
-	tableData, err := c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(c.StateId)+`_tables" WHERE name = ? `, tableName).String()
+	var columns map[string]string
+	columns, err = c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	var columns map[string]string
-	columns, err = c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	tableData, err := c.GetAll(`SELECT * FROM "`+tableName+`"`, 1000)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -78,7 +79,8 @@ func (c *Controller) ShowTable() (string, error) {
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		Columns : columns,
-		//ColumnsAndPermissions : columnsAndPermissions,
+		//tableData : columnsAndPermissions,
+		TableName : tableName,
 		TableData : tableData})
 	if err != nil {
 		return "", utils.ErrInfo(err)

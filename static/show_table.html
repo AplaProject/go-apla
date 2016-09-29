@@ -11,7 +11,7 @@
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
-			showTable
+			{{.TableName}}
 		</div>
 	 </div>
 	 <div class="panel-body">
@@ -23,6 +23,14 @@
 			  	  <td class="thead"><strong>{{$name}}</strong></td>
 			  {{end}}
 			  </tr>
+
+			  {{ range $name, $permissions := .Columns }}
+				  {{ range $data := $.TableData }}
+				  <td class="thead"><strong>{{index $data $name}}</strong></td>
+				  {{end}}
+			  {{end}}
+
+
 
 			  </tbody>
 		   </table>

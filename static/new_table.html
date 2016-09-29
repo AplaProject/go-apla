@@ -6,61 +6,13 @@
 	</style>
 	
 	<script>
+		var serverTime;
+
 		$(".aside .nav li").removeClass("active");
 		$(".citizen, .citizen_form").addClass("active");
-		
-		/*$.fn.editable.defaults.mode = 'inline';
-		$.fn.editableform.buttons =
-		  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
-			'<i class="fa fa-fw fa-check"></i>'+
-		  '</button>'+
-		  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
-			'<i class="fa fa-fw fa-times"></i>'+
-		  '</button>';
-		
-		var table = $("#table");
-		var el = $("#table tr");
-		var table_init;
-		
-		$("#add").on('click', function(){
-			$("body").click();
-			table_init.destroy();
-			el.each(function() {
-				var col = $(this).find("th:last, td:last").clone();
-				$(this).append(col);
-			});
-			InitTable();
-		})
-		$("#remove").on('click', function(){
-			table_init.destroy();
-			el.each(function() {
-				var col = $(this).children("th, td").length;
-				if (col > 1) {
-					$(this).find("th:last, td:last").remove();
-				} else {
-					return false;
-				}
-			});
-			InitTable();
-		})
-		
-		function InitTable() {
-			table_init = table.DataTable({
-				destroy: true,
-				colReorder: true,
-				paging:   false,
-				ordering: false,
-				searching: false,
-				info:     false
-			});
-			$(".edit").editable({
-				type: 'text'
-			})
-		}
-		
-		InitTable();*/
-		
+
 		var columns = [];
+		var columns_json = "";
 		var table = $("#table tbody");
 		
 		function NewColumn() {
@@ -77,28 +29,32 @@
 		}
 		
 		NewColumn();
-		
+
 		$('#send').bind('click', function () {
+
 			columns = [];
 			$(".colname").each(function() {
 				var val = $(this).val();
 				columns.push(val);
 			});
-			
-			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}}');
+			columns_json = JSON.stringify(columns)
+
+			$.get( 'ajax?controllerName=GetServerTime', function (data) {
+				serverTime = data.time;
+				$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#tableName").val()+','+columns_json);
 			doSign();
-			
 			$("#send_to_net").trigger("click");
-		});
-	
+		}, "json" );
+		} );
+
+
 		$('#send_to_net').bind('click', function () {
 			$.ajax({
 				type: 'POST',
 				url: 'ajax?controllerName=saveQueue',
 				data: {
-					'tableName' : $("#tableName").val(),
-					'columns' : columns,
+					'table_name' : $("#tableName").val(),
+					'columns' : columns_json,
 					'type' : '{{.TxType}}',
 					'time' : serverTime,
 					'citizenId' : '{{.CitizenId}}',

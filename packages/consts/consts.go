@@ -92,6 +92,7 @@ var TxTypes = map[int]string{
 	8: "ChangeNodeKey",
 	9: "NewState",
 	10: "NewColumn",
+	11: "NewTable",
 }
 
 func init() {
