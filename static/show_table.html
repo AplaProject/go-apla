@@ -16,33 +16,18 @@
 	 </div>
 	 <div class="panel-body">
 		<div class="table-responsive">
-			{{.TableData}} / {{.Columns}}
 			<table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
-				  <td>name</td>
-				  <td>permissions</td>
-			  </tr>
 			  {{ range $name, $permissions := .Columns }}
-				 <tr>
-					 <td class="thead"><strong>{{$name}}</strong></td>
-					 <td><strong>{{$permissions}}</strong></td>
-				 </tr>
+			  	  <td class="thead"><strong>{{$name}}</strong></td>
 			  {{end}}
+			  </tr>
+
 			  </tbody>
 		   </table>
 		</div>
 	 </div>
-	 <div class="panel-footer">
-	   <div class="clearfix">
-		  <div class="pull-left">
-
-		  </div>
-		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary">Add new</button>
-		  </div>
-	   </div>
-	  </div>
 	</div>
 	<!-- END panel-->
 <script type="text/javascript">

@@ -64,6 +64,16 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(err)
 	}
 
+	table := utils.UInt32ToStr(p.TxStateID) + `_tables`
+	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
+	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"])
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if exists > 0 {
+		return p.ErrInfo(`column exists`)
+	}
+
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
@@ -112,11 +122,25 @@ func (p *Parser) NewColumn() error {
 		return err
 	}
 
+	err = p.ExecSql(`ALTER TABLE `+p.TxMaps.String["table_name"]+` ADD COLUMN `+p.TxMaps.String["column_name"]+` varchar(512)`)
+	if err != nil {
+		return err
+	}
+
+
 	return nil
 }
 
 func (p *Parser) NewColumnRollback() error {
-	return p.autoRollback()
+	err := p.autoRollback()
+	if err != nil {
+		return err
+	}
+	err = p.ExecSql(`ALTER TABLE `+p.TxMaps.String["table_name"]+` DROP COLUMN `+p.TxMaps.String["column_name"]+``)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *Parser) NewColumnRollbackFront() error {
