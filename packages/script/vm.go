@@ -64,25 +64,39 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 		foo := reflect.ValueOf(finfo.Func)
 		var result []reflect.Value
 		pars := make([]reflect.Value, in)
-		i := count
 		limit := 0
+		//	fmt.Println(`CALL`, count, i, in, limit)
+		auto := 0
+		for k := 0; k < in; k++ {
+			if len(finfo.Auto[k]) > 0 {
+				auto++
+			}
+		}
+		shift := size - count + auto
 		if finfo.Variadic {
+			shift = size - count
+			count += auto
 			limit = count - in + 1
 		}
-		//	fmt.Println(`CALL`, count, i, in, limit)
+		i := count
 		for ; i > limit; i-- {
-			pars[count-i] = reflect.ValueOf(rt.stack[size-i])
+			if len(finfo.Auto[count-i]) > 0 {
+				pars[count-i] = reflect.ValueOf((*rt.extend)[finfo.Auto[count-i]])
+				auto--
+			} else {
+				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
+			}
 		}
 		if i > 0 {
-			pars[in-1] = reflect.ValueOf(rt.stack[size-i : size])
+			pars[in-1] = reflect.ValueOf(rt.stack[shift+count-i : size])
 		}
-		//	fmt.Println(`Pars`, len(pars), pars, pars[0].Interface())
+		//		fmt.Println(`Pars`, i, pars)
 		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {
 			result = foo.Call(pars)
 		}
-		rt.stack = rt.stack[:size-count]
+		rt.stack = rt.stack[:shift]
 		//	fmt.Println(`Result`, result)
 		for _, iret := range result {
 			rt.stack = append(rt.stack, iret.Interface())

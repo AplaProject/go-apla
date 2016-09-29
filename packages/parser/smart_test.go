@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 type TestSmart struct {
@@ -36,10 +37,11 @@ func TestNewContract(t *testing.T) {
 		{`contract NewCitizen {
 			func front {
 				$tmp = "Test string"
-				Println("NewCitizen Front", $tmp, $citizenId, $stateId, $PublicKey )
+				Println("NewCitizen Front", $tmp, $citizen, $state, $PublicKey )
 			}
 			func main {
-				Println("NewCitizen Main", $tmp, $type, $walletId )
+				Println("NewCitizen Main", $tmp, $type, $wallet )
+				DBUpdate(Sprintf( "%d_citizens", $state), "public_key,rb_id", $PublicKey, $block)
 			}
 }			
 		`, ``},
@@ -51,7 +53,7 @@ func TestNewContract(t *testing.T) {
 	}
 	sign, _ := hex.DecodeString(`3276233276237115`)
 	public, _ := hex.DecodeString(`12456788999900087676`)
-	p := Parser{}
+	p := Parser{BlockData: &utils.BlockData{BlockId: 133}}
 	p.TxPtr = &consts.TXNewCitizen{
 		consts.TXHeader{4, uint32(time.Now().Unix()), 1, 1, sign}, public,
 	}

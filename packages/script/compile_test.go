@@ -112,7 +112,7 @@ func TestVMCompile(t *testing.T) {
 					}
 			}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},
 	}
-	vm := VMInit(map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf})
+	vm := VMInit(map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf}, nil)
 
 	for _, item := range test {
 		source := []rune(item.Input)
