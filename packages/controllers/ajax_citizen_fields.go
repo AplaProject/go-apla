@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -36,37 +38,42 @@ func init() {
 
 func (c *Controller) AjaxCitizenFields() interface{} {
 	var (
-		result CitizenFieldsJson
-		err    error
-		amount int64
+		result        CitizenFieldsJson
+		err           error
+		amount, reqId int64
 	)
-	stateId := utils.StrToInt64(c.r.FormValue(`state_id`))
-	_, err = c.GetStateName(stateId)
-	if err == nil {
-		if reqId, err := c.Single(`select request_id from `+utils.Int64ToStr(stateId)+`_citizenship_requests where dlt_wallet_id=? order by request_id desc`,
-			c.SessWalletId).Int64(); err == nil {
-			if reqId > 0 {
-				if approved, err := c.Single(`select approved from `+utils.Int64ToStr(stateId)+`_citizens_requests_private where request_id=? order by id desc`,
-					reqId).Int64(); err == nil {
-					result.Approved = approved
-				}
-			} else {
-				result.Fields, err = `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
+	stateId := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
+	//	_, err = c.GetStateName(stateId)
+	//	if err == nil {
+	fmt.Println(`Fields 0`)
+	if reqId, err = c.Single(`select request_id from `+utils.Int64ToStr(stateId)+`_citizenship_requests where dlt_wallet_id=? order by request_id desc`,
+		c.SessWalletId).Int64(); err == nil {
+		fmt.Println(`Fields 1`, reqId)
+		if reqId > 0 {
+			if approved, err := c.Single(`select approved from `+utils.Int64ToStr(stateId)+`_citizens_requests_private where request_id=? order by id desc`,
+				reqId).Int64(); err == nil {
+				result.Approved = approved
+			}
+		} else {
+			result.Fields, err = `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
 {"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
 {"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
 {"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
 ]`, nil
-				//				c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
+			//				c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
+			fmt.Println(`Fields 2`, err)
+			if err == nil {
+				result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where name='citizenship_price'`).Int64()
+				fmt.Println(`Fields 3`, result.Price)
 				if err == nil {
-					result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where name='citizenship_price'`).Int64()
-					if err == nil {
-						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
-						result.Valid = (err == nil && amount >= result.Price)
-					}
+					amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
+					result.Valid = (err == nil && amount >= result.Price)
 				}
 			}
 		}
 	}
+	fmt.Println(`Error`, err)
+	//	}
 	if err != nil {
 		result.Error = err.Error()
 	}

@@ -144,7 +144,7 @@ func (p *Parser) NewState() error {
 				"variables" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE ` + id + `_smart_contracts_id_seq owned by ` + id + `_smart_contracts.id;
+				ALTER SEQUENCE "` + id + `_smart_contracts_id_seq" owned by "` + id + `_smart_contracts".id;
 				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT ` + id + `_smart_contracts_pkey PRIMARY KEY (id);
 				`)
 	if err != nil {
@@ -178,7 +178,7 @@ func (p *Parser) NewState() error {
 				"public_key" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE ` + id + `_citizens_id_seq owned by ` + id + `_citizens.id;
+				ALTER SEQUENCE "` + id + `_citizens_id_seq" owned by "` + id + `_citizens".id;
 				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT ` + id + `_citizens_pkey PRIMARY KEY (id);
 				`)
 	if err != nil {
@@ -195,13 +195,27 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
+	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_citizenship_requests_id_seq START WITH 1;
+				CREATE TABLE "` + id + `_citizenship_requests" (
+				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
+				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
+				"approved" int  NOT NULL DEFAULT '0',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER SEQUENCE "` + id + `_citizenship_requests_id_seq" owned by "` + id + `_citizenship_requests".id;
+				ALTER TABLE ONLY "` + id + `_citizenship_requests" ADD CONSTRAINT ` + id + `_citizenship_requests_pkey PRIMARY KEY (id);
+				`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_accounts_id_seq START WITH 1;
 				CREATE TABLE "` + id + `_accounts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
 				"amount" bigint  NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE ` + id + `_accounts_id_seq owned by ` + id + `_accounts.id;
+				ALTER SEQUENCE "` + id + `_accounts_id_seq" owned by "` + id + `_accounts".id;
 				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT ` + id + `_accounts_pkey PRIMARY KEY (id);
 				`)
 	if err != nil {
@@ -240,6 +254,11 @@ func (p *Parser) NewStateRollback() error {
 	}
 
 	err = p.ExecSql(`DROP TABLE "` + id + `_state_parameters"`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	err = p.ExecSql(`DROP TABLE "` + id + `_citizenship_requests"`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
