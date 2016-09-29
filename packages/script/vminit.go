@@ -41,6 +41,7 @@ const (
 type ExtFuncInfo struct {
 	Params   []reflect.Kind
 	Results  []reflect.Kind
+	Auto     []string
 	Variadic bool
 	Func     interface{}
 }
@@ -76,7 +77,7 @@ type VM struct {
 	Block
 }
 
-func VMInit(obj map[string]interface{}) *VM {
+func VMInit(obj map[string]interface{}, autopar map[string]string) *VM {
 	vm := VM{}
 	vm.Objects = make(map[string]*ObjInfo)
 
@@ -85,9 +86,12 @@ func VMInit(obj map[string]interface{}) *VM {
 		switch fobj.Kind() {
 		case reflect.Func:
 			data := ExtFuncInfo{make([]reflect.Kind, fobj.NumIn()),
-				make([]reflect.Kind, fobj.NumOut()),
+				make([]reflect.Kind, fobj.NumOut()), make([]string, fobj.NumIn()),
 				fobj.IsVariadic(), item}
 			for i := 0; i < fobj.NumIn(); i++ {
+				if isauto, ok := autopar[fobj.In(i).String()]; ok {
+					data.Auto[i] = isauto
+				}
 				data.Params[i] = fobj.In(i).Kind()
 			}
 			for i := 0; i < fobj.NumOut(); i++ {

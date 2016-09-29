@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 	"reflect"
+	//	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/script"
@@ -43,8 +44,11 @@ var (
 
 func init() {
 	smartVM = script.VMInit(map[string]interface{}{
-		"Println": fmt.Println,
-		"Sprintf": fmt.Sprintf,
+		"Println":  fmt.Println,
+		"Sprintf":  fmt.Sprintf,
+		"DBUpdate": DBUpdate,
+	}, map[string]string{
+		`*parser.Parser`: `parser`,
 	})
 }
 
@@ -78,8 +82,9 @@ func (contract *Contract) getExtend() *map[string]interface{} {
 	} else {
 		walletId = head.UserId
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `stateId`: head.StateId,
-		`citizenId`: citizenId, `walletId`: walletId}
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: head.StateId,
+		`block`: contract.parser.BlockData.BlockId, `citizen`: citizenId, `wallet`: walletId,
+		`parser`: contract.parser}
 	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
 	t := v.Type()
 	for i := 1; i < t.NumField(); i++ {
@@ -106,5 +111,11 @@ func (contract *Contract) Call(flags int) (err error) {
 			}
 		}
 	}
+	return
+}
+
+func DBUpdate(p *Parser, tblname string, params string, val ...interface{}) (err error) { // map[string]interface{}) {
+	//	err := p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	fmt.Println(`DBUpdate`, p, tblname, params, val)
 	return
 }
