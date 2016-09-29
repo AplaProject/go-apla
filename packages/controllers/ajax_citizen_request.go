@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"strings"
+	//	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
@@ -40,44 +40,44 @@ func (c *Controller) AjaxCitizenRequest() interface{} {
 	var (
 		result CitizenRequestJson
 		err    error
-		host   string
+		//		host   string
 	)
 
-	stateCode := utils.StrToInt64(c.r.FormValue(`state_id`))
-	_, err = c.GetStateName(stateCode)
+	stateCode := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
+	//	_, err = c.GetStateName(stateCode)
+	//	if err == nil {
+	request, err := c.Single(`SELECT block_id FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests where dlt_wallet_id=?`, c.SessWalletId).Int64()
 	if err == nil {
-		request, err := c.Single(`SELECT block_id FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests where dlt_wallet_id=?`, c.SessWalletId).Int64()
-		if err == nil {
-			if request > 0 {
-				var state map[string]string
-				state, err = c.OneRow(`select * from states where state_id=?`, stateCode).String()
-				if len(state[`host`]) == 0 {
-					if walletId := utils.StrToInt64(state[`delegate_wallet_id`]); walletId > 0 {
-						host, _ = c.Single(`select host from dlt_wallets where wallet_id=?`, walletId).String()
-					}
-					if len(host) == 0 {
-						if stateId := utils.StrToInt64(state[`delegate_state_id`]); stateId > 0 {
-							host, err = c.Single(`select host from states where state_id=?`, stateId).String()
-						}
-					}
-				}
-				result.Time = utils.Time()
-				if len(host) > 0 {
-					if !strings.HasPrefix(host, `http`) {
-						host = `http://` + host
-					}
-					if !strings.HasSuffix(host, `/`) {
-						host += `/`
-					}
-					//					result.TypeName = `NewCitizen`
-					//					result.TypeId = utils.TypeInt(result.TypeName)
-				}
-				result.Host = `/` //host
-			}
-		} else {
-			result.Error = err.Error()
+		if request > 0 {
+			/*				var state map[string]string
+							state, err = c.OneRow(`select * from states where state_id=?`, stateCode).String()
+							if len(state[`host`]) == 0 {
+								if walletId := utils.StrToInt64(state[`delegate_wallet_id`]); walletId > 0 {
+									host, _ = c.Single(`select host from dlt_wallets where wallet_id=?`, walletId).String()
+								}
+								if len(host) == 0 {
+									if stateId := utils.StrToInt64(state[`delegate_state_id`]); stateId > 0 {
+										host, err = c.Single(`select host from states where state_id=?`, stateId).String()
+									}
+								}
+							}
+							result.Time = utils.Time()
+							if len(host) > 0 {
+								if !strings.HasPrefix(host, `http`) {
+									host = `http://` + host
+								}
+								if !strings.HasSuffix(host, `/`) {
+									host += `/`
+								}
+								//					result.TypeName = `NewCitizen`
+								//					result.TypeId = utils.TypeInt(result.TypeName)
+							}*/
+			result.Host = `/` //host
 		}
+	} else {
+		result.Error = err.Error()
 	}
+	//	}
 	if err != nil {
 		result.Error = err.Error()
 	}

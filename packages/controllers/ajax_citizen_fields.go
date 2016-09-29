@@ -38,22 +38,18 @@ func init() {
 
 func (c *Controller) AjaxCitizenFields() interface{} {
 	var (
-		result        CitizenFieldsJson
-		err           error
-		amount, reqId int64
+		result CitizenFieldsJson
+		err    error
+		amount int64
 	)
 	stateId := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateId)
 	//	if err == nil {
-	fmt.Println(`Fields 0`)
-	if reqId, err = c.Single(`select request_id from `+utils.Int64ToStr(stateId)+`_citizenship_requests where dlt_wallet_id=? order by request_id desc`,
+	if req, err := c.OneRow(`select id, approved from `+utils.Int64ToStr(stateId)+`_citizenship_requests where dlt_wallet_id=? order by id desc`,
 		c.SessWalletId).Int64(); err == nil {
-		fmt.Println(`Fields 1`, reqId)
-		if reqId > 0 {
-			if approved, err := c.Single(`select approved from `+utils.Int64ToStr(stateId)+`_citizens_requests_private where request_id=? order by id desc`,
-				reqId).Int64(); err == nil {
-				result.Approved = approved
-			}
+		fmt.Println(`Fields 1`, req)
+		if len(req) > 0 && req[`id`] > 0 {
+			result.Approved = req[`approved`]
 		} else {
 			result.Fields, err = `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
 {"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},

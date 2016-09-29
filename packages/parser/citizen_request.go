@@ -28,8 +28,7 @@ func (p *Parser) CitizenRequestInit() error {
 			return p.ErrInfo(err)
 		}
 		p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])*/
-	//p.TxPtr.(*consts.CitizenRequest)
-	//p.TxVars[`state_code`] = data.StateId
+	p.TxVars[`state_code`] = utils.Int64ToStr(p.TxPtr.(*consts.CitizenRequest).StateId)
 	//	fmt.Println(data, p.States)
 	return nil
 }
@@ -44,7 +43,7 @@ func (p *Parser) CitizenRequestFront() error {
 	// есть ли сумма, которую просит гос-во за регистрацию гражданства в DLT
 	// Проверка подписи перенесена в generalCheckStruct
 
-	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE parameter = ?`, "citizen_dlt_price").Int64()
+	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -76,7 +75,7 @@ func (p *Parser) CitizenRequest() error {
 	}
 
 	// вычитаем
-	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE parameter = ?`, "citizen_dlt_price").Int64()
+	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

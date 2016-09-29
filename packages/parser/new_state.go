@@ -19,6 +19,7 @@ package parser
 import (
 	//"encoding/json"
 	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -198,6 +199,7 @@ func (p *Parser) NewState() error {
 				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
 				"approved" int  NOT NULL DEFAULT '0',
+				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_citizenship_requests_id_seq" owned by "` + id + `_citizenship_requests".id;

@@ -89,7 +89,7 @@
 		msg.hide();
 		container.html("");
 		$("#refresh").click();
-		
+		id = 1;
 		$.ajax({
 			type: 'GET',
 			url: 'ajax?json=ajax_citizen_fields',
@@ -101,7 +101,6 @@
 			success: function(data) {
 				showFields();
 				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
-				
 				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
 					if (data.approved == 0) {
 						//alert('The request is in the queue.');
@@ -214,7 +213,7 @@
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
 				'walletId' : '{{.Data.WalletId}}',
-				'stateId': $("#countries").val(),
+				'stateId': 1,//$("#countries").val(),
 				'pubkey' : GKey.Public,
 				'signature1': $('#signature1').val(),
 				'signature2': $('#signature2').val(),
@@ -246,7 +245,7 @@
 									if (key.length > 128) {
 										key = key.substr( 2 );
 									}
-									var stateId = $("#countries").val();
+									var stateId = 1;// $("#countries").val();
 									var formdata = new FormData();
 									var predata = {
 //										'type' : data.type_name,

@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"bytes"
+	//	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -57,7 +57,12 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	defer formdata.RemoveAll()
 
 	//	fmt.Println(`FORM START`, formdata)
-	field, err := c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateCode) + `_state_parameters where parameter='citizen_fields'`).String()
+	//field, err := c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateCode) + `_state_parameters where name='citizen_fields'`).String()
+	field, err := `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
+{"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
+{"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
+{"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
+]`, nil
 	vals := make(map[string]string)
 	time := c.r.FormValue(`time`)
 	walletId := c.r.FormValue(`walletId`)
@@ -92,11 +97,11 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		}
 	}
 	if err == nil {
-		data, err = c.OneRow(`SELECT * FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests WHERE dlt_wallet_id = ? order by request_id desc`, walletId).String()
+		data, err = c.OneRow(`SELECT * FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests WHERE dlt_wallet_id = ? order by id desc`, walletId).String()
 		if err != nil || data == nil || len(data) == 0 {
 			err = fmt.Errorf(`unknown request for wallet %s`, walletId)
 		} else {
-			var (
+			/*var (
 				fval []byte
 			)
 			buf := new(bytes.Buffer)
@@ -107,10 +112,10 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 					src.Close()
 				}
 			}
-			if fval, err = json.Marshal(vals); err == nil {
-				err = c.ExecSql(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
-					data[`request_id`], fval, hex.EncodeToString(buf.Bytes()), c.r.FormValue(`publicKey`))
-			}
+						if fval, err = json.Marshal(vals); err == nil {
+						err = c.ExecSql(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
+						data[`request_id`], fval, hex.EncodeToString(buf.Bytes()), c.r.FormValue(`publicKey`))
+					}*/
 		}
 	}
 	if err != nil {
