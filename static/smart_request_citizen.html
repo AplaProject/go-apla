@@ -1,0 +1,357 @@
+<style>
+	#message {
+		display:none;
+	}
+</style>
+<script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .anonym_request_citizen").addClass("active");
+	
+	var arr = [];
+	var selectbox = $("#countries");
+	var container = $("#fields");
+	var msg = $("#message");
+	var btn = $("#send");
+	var btns = $("#buttons");
+	var test = 65000;
+	console.log( test.toString(16));
+	
+	$.ajax({
+		type: 'GET',
+		url: 'static/countries/countries.json',
+		dataType: 'json',
+		crossDomain: true,
+		success: function(data) {
+			var j = 0;
+			for (i = 0; i < data.length; i++ ) {
+				selectbox.append('<option value="' + data[i][0] + '" data-id="' + i + '">' + data[i][1] + '</option>');
+			}
+			selectbox.select2({
+				templateResult: formatState,
+				templateSelection: formatState,
+				theme: 'bootstrap'
+			});
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
+	
+	function formatState(state) {
+		if (!state.id) { return state.text; }
+		var $state = $(
+			'<span class="state_' + state.id + '">' +
+				'<i style="background-position:0px ' + selectbox.find("option[value=" + state.id + "]").attr("data-id") * (-9) + 'px"></i>' +
+				state.text +
+			'</span>'
+		);
+		return $state;
+	};
+	
+	function Message(text) {
+		if (!text) {
+			msg.html('').hide();
+		} else {
+			msg.html(text).show();
+		}
+	}
+	
+	function showFields() {
+		arr = [];
+		msg.hide();
+		btns.show();
+		btn.prop("disabled", false);
+		$('[data-sweet-alert]').removeClass("whirl standard");
+	}
+	
+	function hideFields(text) {
+		Message(text);
+		btns.hide();
+		container.html("");
+		btn.prop("disabled", true);
+	}
+	
+	function changeCountry(elem) {
+		var id = elem.value;
+		if (id != "dl") {
+			hideFields('Coming soon');
+		} else {
+			Country(id);
+		}
+	}
+	
+	function Country(id) {
+		if (!id) {
+			id = 'dl';
+		}
+		
+		msg.hide();
+		container.html("");
+		$("#refresh").click();
+		id = 1;
+		$.ajax({
+			type: 'GET',
+			url: 'ajax?json=ajax_smart_fields',
+			data: {
+				'state_id' : id,
+				'contract_name': 'TXCitizenRequest'
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) {
+				showFields();
+				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
+				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
+					if (data.approved == 0) {
+						//alert('The request is in the queue.');
+						hideFields();
+						Notify('The request is in the queue.', 'warning');
+					}
+					if (data.approved < 0) {
+						//alert('The request has been rejected.');
+						hideFields('The request has been rejected.');
+					}
+					if (data.approved == 1) {
+						//alert('The request has been accepted. Wait for a moment.');
+						hideFields();
+						Notify('The request has been accepted. Wait for a moment.', 'success');
+					}
+					if (data.approved > 1) {
+						var idz = id.toString(16);
+						if (idz.length & 1)
+							idz = '0' + idz;
+						var ciz = data.approved.toString(16);
+						if (ciz.length & 1)
+							ciz = '0' + ciz;
+							
+						//alert('Your Private key: ' + localStorage.getItem('reqPrv') + idz + ciz);
+						Alert("Citizenship Registration completed successfully!<br />Please accept our sincere congratulations!<br />Now you are a citizen of DayLight!", 'Your Private key: ' + localStorage.getItem('reqPrv') + idz + ciz, "success");
+					}
+//					return
+				}
+				
+				if (data.valid == false) {
+					$("#sorry").click();
+					btn.prop("disabled", true);
+				}
+				
+				if (data.fields.length) {
+					var fields = JSON.parse(data.fields);
+					
+					for (i = 0; i < fields.length; i++ ) {
+						if (fields[i].htmlType == "textinput") {
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" name="' + fields[i].name + '" type="text" class="form-control"></div>'
+						}
+						if (fields[i].htmlType == "calendar") {
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><div class="input-group date datetimepicker"><input id="' + fields[i].name + '" type="text" class="form-control"><span class="input-group-addon"><span class="fa fa-calendar"></span></span></div></div>'
+						}
+						if (fields[i].htmlType == "file") {
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle"></div>'
+						}
+						container.append(el);
+						arr.push(fields[i].name);
+					}
+					$(".datetimepicker").datetimepicker({
+						icons: {
+							time: 'fa fa-clock-o',
+							date: 'fa fa-calendar',
+							up: 'fa fa-chevron-up',
+							down: 'fa fa-chevron-down',
+							previous: 'fa fa-chevron-left',
+							next: 'fa fa-chevron-right',
+							today: 'fa fa-crosshairs',
+							clear: 'fa fa-trash'
+						},
+						minDate: moment("01/01/1950"),
+						maxDate: 'now',
+						format: 'DD MMMM, YYYY'
+					});
+					$(".filestyle").filestyle();
+					
+					console.log(fields)
+					console.log(arr)
+				}
+			},
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	}
+	
+	Country();
+	// Example of ajax_citizen_fields
+	/*$.get( 'ajax?json=ajax_citizen_fields',{state_id: 1}, function(data) {
+		console.log(data);
+		if (data.fields.length) {
+			var fields = JSON.parse(data.data);
+			alert(fields[0].name +', ' + fields[0].title + ', ' + 
+			fields[0].txType +', ' + fields[0].htmlType	 );
+			console.log( fields );
+		}
+	},'json')*/
+
+	var serverTime;
+	
+	$('#send').bind('click', function () {
+		if (!$("#phrase").val()) {
+			alert('Generate seed');
+			return;
+		}
+		$.get( 'ajax?controllerName=GetServerTime', function (data) {
+			serverTime = data.time;
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}}');
+			doSign();
+			$("#send_to_net").trigger("click");
+		}, "json" );
+	} );
+
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+				'walletId' : '{{.Data.WalletId}}',
+				'stateId': 1,//$("#countries").val(),
+				'pubkey' : GKey.Public,
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(result) {
+				if (typeof result.error != "undefined" && result.error.length > 0 ) {
+					Alert("Error", result.error, "error");
+				} else {
+					interval = setInterval(function() {
+						$.ajax({
+							type: 'POST',
+							url: 'ajax?json=ajax_citizen_request',
+							data: {state_id: $("#countries").val()},
+							dataType: 'json',
+							crossDomain: true,
+							success: function(data){
+								if (typeof data.error != "undefined" && data.error.length > 0) {
+									Alert("Error", data.error, "error");
+									clearInterval(interval);
+								} else if (data.host.length > 0) {
+									clearInterval(interval);
+									$("#for-signature").val( 'CitizenInfo,'+data.time+',{{.Data.WalletId}}');
+									doSign();
+									do_generate();
+									var key = $("#pubkey").val();
+									if (key.length > 128) {
+										key = key.substr( 2 );
+									}
+									var stateId = 1;// $("#countries").val();
+									var formdata = new FormData();
+									var predata = {
+//										'type' : data.type_name,
+										'time' : data.time,
+										'walletId' : '{{.Data.WalletId}}',
+										'stateId': stateId,
+										'price': parseInt($("#price").val()),
+										'publicKey': key,
+										'pubkey' : GKey.Public,
+										'signature1': $('#signature1').val(),
+										'signature2': $('#signature2').val(),
+										'signature3': $('#signature3').val()
+									};
+									for (key in predata) {
+										formdata.append(key, predata[key]);
+									}
+									for (i = 0; i < arr.length; i++ ) {
+										var field = arr[i];
+										if ($("#" + field).attr("type") == "file") {
+											$.each($('#'+field)[0].files, function(i, file) {
+    											formdata.append(field +'-'+i, file);
+											});
+										} else {
+											formdata.append(field, $("#" + field).val());
+										}
+									}
+									
+									console.log(data);
+									$.ajax({
+										type: 'POST',
+										url: data.host + 'ajax?json=ajax_citizen_info',
+										data: formdata,
+										crossDomain: true,
+										contentType: false,
+                						processData: false,
+										success: function(status){
+											localStorage.setItem('reqPrv', $("#prvkey").val());
+											localStorage.setItem('reqState', stateId );
+											localStorage.setItem('reqHost', data.host );
+											if (typeof status.error != "undefined" && status.error.length > 0 ) {
+												Alert("Error", status.error, "error");
+											} else {
+												Alert("Success", "", "success");
+											}
+										},
+										error: function(xhr, status, error) {
+											Alert("Error", error, "error");
+										},
+									});
+								}
+							},
+							error: function(xhr, status, error) {
+								clearInterval(interval);
+								Alert("Error", error, "error");
+							},
+						});
+					}, 2000)
+				}
+			},
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );	
+	$(document).ready(function(){
+		do_phrase();
+	});
+		
+</script>
+
+<div class="content-heading">
+   Request for citizen status
+</div>
+<ol class="breadcrumb">
+   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
+   <li class="active">Request for citizen status</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label for="countries">Country</label>
+		  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
+	   </div>
+	   <div id="message" class="alert alert-danger"></div>
+	   <div id="fields"></div>
+		   <div class="form-group" style="display:none;">
+			  <label for="phrase">GENERATE AND REMEMBER SEED</label>
+			  <textarea id="phrase" class="form-control"></textarea>
+			 <!--button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button-->
+			<input type="hidden" id="prvkey" value="" />
+			<input type="hidden" id="pubkey" value="" />
+			
+		   </div>
+	</form>
+ </div>
+ <div id="buttons" class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
+		 <button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
+{{template "signatures".}}

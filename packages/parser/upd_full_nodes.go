@@ -18,6 +18,7 @@ package parser
 
 import (
 	"encoding/json"
+
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -35,7 +36,7 @@ func (p *Parser) UpdFullNodesFront() error {
 
 func (p *Parser) UpdFullNodes() error {
 
-	err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "upd_full_nodes", nil, nil, false)
+	err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "upd_full_nodes", []string{`update`}, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

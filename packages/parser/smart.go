@@ -30,7 +30,7 @@ type Contract struct {
 	Name   string
 	Called uint32
 	parser *Parser //interface{}
-	block  *script.Block
+	Block  *script.Block
 }
 
 const (
@@ -52,7 +52,18 @@ func init() {
 		`*parser.Parser`: `parser`,
 	})
 
-	contract := `contract TXNewCitizen {
+	contract := `
+contract TXCitizenRequest {
+	tx {
+		PublicKey  bytes
+		StateId    int
+		FirstName  string
+		MiddleName string "optional"
+		LastName   string
+	}
+}
+
+contract TXNewCitizen {
 			func front {
 				Println("NewCitizen Front", $citizen, $state, $PublicKey )
 			}
@@ -76,13 +87,13 @@ func GetContract(name string, p *Parser /*data interface{}*/) *Contract {
 	obj, ok := smartVM.Objects[name]
 	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
 	if ok && obj.Type == script.OBJ_CONTRACT {
-		return &Contract{Name: name, parser: p, block: obj.Value.(*script.Block)}
+		return &Contract{Name: name, parser: p, Block: obj.Value.(*script.Block)}
 	}
 	return nil
 }
 
 func (contract *Contract) getFunc(name string) *script.Block {
-	if block, ok := (*contract).block.Objects[name]; ok && block.Type == script.OBJ_FUNC {
+	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.OBJ_FUNC {
 		return block.Value.(*script.Block)
 	}
 	return nil

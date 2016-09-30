@@ -18,13 +18,16 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/DayLightProject/go-daylight/packages/parser"
+	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-const ACitizenFields = `ajax_citizen_fields`
+const ASmartFields = `ajax_smart_fields`
 
-type CitizenFieldsJson struct {
+type SmartFieldsJson struct {
 	Fields   string `json:"fields"`
 	Price    int64  `json:"price"`
 	Valid    bool   `json:"valid"`
@@ -33,35 +36,46 @@ type CitizenFieldsJson struct {
 }
 
 func init() {
-	newPage(ACitizenFields, `json`)
+	newPage(ASmartFields, `json`)
 }
 
-func (c *Controller) AjaxCitizenFields() interface{} {
+func (c *Controller) AjaxSmartFields() interface{} {
 	var (
-		result CitizenFieldsJson
+		result SmartFieldsJson
 		err    error
 		amount int64
+		req    map[string]int64
 	)
 	stateId := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateId)
 	//	if err == nil {
-	if req, err := c.OneRow(`select id, approved from `+utils.Int64ToStr(stateId)+`_citizenship_requests where dlt_wallet_id=? order by id desc`,
+	if req, err = c.OneRow(`select id, approved from `+utils.Int64ToStr(stateId)+`_citizenship_requests where dlt_wallet_id=? order by id desc`,
 		c.SessWalletId).Int64(); err == nil {
 		if len(req) > 0 && req[`id`] > 0 {
 			result.Approved = req[`approved`]
 		} else {
-			result.Fields, err = `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
-{"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
-{"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
-{"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
-]`, nil
-			//				c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
-			if err == nil {
-				result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where name='citizenship_price'`).Int64()
-				if err == nil {
-					amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
-					result.Valid = (err == nil && amount >= result.Price)
+			cntname := c.r.FormValue(`contract_name`)
+			contract := parser.GetContract(cntname, nil)
+			if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
+				err = fmt.Errorf(`there is not %s contract`, cntname)
+			} else {
+				fields := make([]string, 0)
+				for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+					if fitem.Type.String() == `string` {
+						fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"textinput", "txType":"%s", "title":"%s"}`,
+							fitem.Name, fitem.Type.String(), fitem.Name))
+					}
 				}
+				result.Fields = fmt.Sprintf(`[%s]`, strings.Join(fields, `,`))
+
+				if err == nil {
+					result.Price, err = c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where name='citizenship_price'`).Int64()
+					if err == nil {
+						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
+						result.Valid = (err == nil && amount >= result.Price)
+					}
+				}
+
 			}
 		}
 	}
