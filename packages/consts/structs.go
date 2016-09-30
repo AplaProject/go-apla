@@ -37,7 +37,7 @@ type TxHeader struct {
 }
 
 type TXHeader struct {
-	Type    byte
+	Type    uint32
 	Time    uint32
 	UserId  int64
 	StateId uint32

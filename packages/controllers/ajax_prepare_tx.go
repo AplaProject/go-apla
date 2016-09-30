@@ -65,8 +65,6 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		}
 		result.ForSign = forsign
 	}
-	fmt.Println(`Error`, err)
-	//	}
 	if err != nil {
 		result.Error = err.Error()
 	}

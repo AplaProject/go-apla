@@ -103,7 +103,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		if stateId > 0 {
 			userId = citizenId
 		}
-		TXHead := consts.TXHeader{Type: uint8(txType), Time: uint32(txTime),
+		TXHead := consts.TXHeader{Type: uint32(txType), Time: uint32(txTime),
 			UserId: userId, StateId: stateId, Sign: sign}
 		// ---
 		if stateId == 0 {

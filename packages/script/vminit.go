@@ -53,7 +53,7 @@ type FieldInfo struct {
 }
 
 type ContractInfo struct {
-	Id int64
+	Id uint32
 	Tx *[]*FieldInfo
 }
 
