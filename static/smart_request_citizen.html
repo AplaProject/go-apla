@@ -192,41 +192,65 @@
 	},'json')*/
 
 	var serverTime;
+	var predata;
 	
 	$('#send').bind('click', function () {
 		if (!$("#phrase").val()) {
 			alert('Generate seed');
 			return;
 		}
-		$.get( 'ajax?controllerName=GetServerTime', function (data) {
-			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.WalletId}}');
-			doSign();
-			$("#send_to_net").trigger("click");
+		do_generate();
+		var key = $("#pubkey").val();
+		if (key.length > 128) {
+			key = key.substr( 2 );
+		}
+		predata = {
+			'TxName' : '{{.TxType}}',
+			'StateId': 1,	
+			'PublicKey': key,
+		};
+		for (i = 0; i < arr.length; i++ ) {
+			var field = arr[i];
+			if ($("#" + field).attr("type") == "file") {
+/*				$.each($('#'+field)[0].files, function(i, file) {
+					formdata.append(field +'-'+i, file);
+				});*/
+			} else {
+				predata[field] = $("#" + field).val();
+			}
+		}
+									
+		$.get( 'ajax?json=ajax_prepare_tx', predata,
+			 function (data) {
+				if (data.error.length > 0 ) {
+					Alert("Error", data.error, "error");
+				} else {
+					console.log(data);
+					predata.time = data.time;
+					Alert("Success", "", "success");
+					$("#for-signature").val(data.forsign);
+					doSign();
+					predata.signature1 = $('#signature1').val();
+					predata.signature2 = $('#signature2').val();
+					predata.signature3 = $('#signature3').val();
+
+					$("#send_to_net").trigger("click");
+				}
 		}, "json" );
 	} );
 
 	$('#send_to_net').bind('click', function () {
 		$.ajax({
 			type: 'POST',
-			url: 'ajax?controllerName=saveQueue',
-			data: {
-				'type' : '{{.TxType}}',
-				'time' : serverTime,
-				'walletId' : '{{.Data.WalletId}}',
-				'stateId': 1,//$("#countries").val(),
-				'pubkey' : GKey.Public,
-				'signature1': $('#signature1').val(),
-				'signature2': $('#signature2').val(),
-				'signature3': $('#signature3').val()
-			},
+			url: 'ajax?json=send_tx',
+			data: predata,
 			dataType: 'json',
 			crossDomain: true,
 			success: function(result) {
 				if (typeof result.error != "undefined" && result.error.length > 0 ) {
 					Alert("Error", result.error, "error");
 				} else {
-					interval = setInterval(function() {
+/*					interval = setInterval(function() {
 						$.ajax({
 							type: 'POST',
 							url: 'ajax?json=ajax_citizen_request',
@@ -303,7 +327,7 @@
 								Alert("Error", error, "error");
 							},
 						});
-					}, 2000)
+					}, 2000)*/
 				}
 			},
 			error: function(xhr, status, error) {

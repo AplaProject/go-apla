@@ -367,7 +367,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	switch state {
 	case STATE_BLOCK:
 		itype = OBJ_CONTRACT
-		fblock.Info = &ContractInfo{}
+		fblock.Info = &ContractInfo{Id: int64(len(*buf) - 1)}
 	default:
 		itype = OBJ_FUNC
 		fblock.Info = &FuncInfo{}
