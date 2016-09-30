@@ -40,6 +40,9 @@ func BytesToAddress(address []byte) string {
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
 // encoded with EncodeLengthPlusInt64.
 func DecodeLenInt64(data *[]byte) (int64, error) {
+	if len(*data) == 0 {
+		return 0, nil
+	}
 	length := int((*data)[0]) + 1
 	if len(*data) < length {
 		return 0, fmt.Errorf(`length of data %d < %d`, len(*data), length)
