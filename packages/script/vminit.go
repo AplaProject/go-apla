@@ -39,16 +39,26 @@ const (
 )
 
 type ExtFuncInfo struct {
-	Params   []reflect.Kind
-	Results  []reflect.Kind
+	Params   []reflect.Type
+	Results  []reflect.Type
 	Auto     []string
 	Variadic bool
 	Func     interface{}
 }
 
+type FieldInfo struct {
+	Name string
+	Type reflect.Type
+	Tags string
+}
+
+type ContractInfo struct {
+	Tx *[]*FieldInfo
+}
+
 type FuncInfo struct {
-	Params   []reflect.Kind
-	Results  []reflect.Kind
+	Params   []reflect.Type
+	Results  []reflect.Type
 	Variadic bool
 }
 
@@ -66,7 +76,7 @@ type Block struct {
 	Objects  map[string]*ObjInfo
 	Type     int
 	Info     interface{}
-	Vars     []reflect.Kind
+	Vars     []reflect.Type
 	Code     ByteCodes
 	Children Blocks
 }
@@ -85,17 +95,17 @@ func VMInit(obj map[string]interface{}, autopar map[string]string) *VM {
 		fobj := reflect.ValueOf(item).Type()
 		switch fobj.Kind() {
 		case reflect.Func:
-			data := ExtFuncInfo{make([]reflect.Kind, fobj.NumIn()),
-				make([]reflect.Kind, fobj.NumOut()), make([]string, fobj.NumIn()),
+			data := ExtFuncInfo{make([]reflect.Type, fobj.NumIn()),
+				make([]reflect.Type, fobj.NumOut()), make([]string, fobj.NumIn()),
 				fobj.IsVariadic(), item}
 			for i := 0; i < fobj.NumIn(); i++ {
 				if isauto, ok := autopar[fobj.In(i).String()]; ok {
 					data.Auto[i] = isauto
 				}
-				data.Params[i] = fobj.In(i).Kind()
+				data.Params[i] = fobj.In(i)
 			}
 			for i := 0; i < fobj.NumOut(); i++ {
-				data.Results[i] = fobj.Out(i).Kind()
+				data.Results[i] = fobj.Out(i)
 			}
 			vm.Objects[key] = &ObjInfo{OBJ_EXTFUNC, data}
 		}

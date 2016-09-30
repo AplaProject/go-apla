@@ -50,6 +50,8 @@ const (
 	STATE_VAR
 	STATE_ASSIGNEVAL
 	STATE_ASSIGN
+	STATE_TX
+	STATE_FIELDS
 
 	STATE_EVAL
 
@@ -85,6 +87,10 @@ const (
 	CF_FTYPE
 	CF_ASSIGNVAR
 	CF_ASSIGN
+	CF_TX
+	CF_FIELD
+	CF_FIELDTYPE
+	CF_FIELDTAG
 	CF_EVAL
 )
 
@@ -106,6 +112,10 @@ var (
 		fFtype,
 		fAssignVar,
 		fAssign,
+		fTx,
+		fField,
+		fFieldType,
+		fFieldTag,
 	}
 	states = States{
 		{ // STATE_ROOT
@@ -121,6 +131,7 @@ var (
 			LEX_KEYWORD | (KEY_IF << 8):     {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK, CF_IF},
 			LEX_KEYWORD | (KEY_ELSE << 8):   {STATE_BLOCK | STATE_PUSH, CF_ELSE},
 			LEX_KEYWORD | (KEY_VAR << 8):    {STATE_VAR, 0},
+			LEX_KEYWORD | (KEY_TX << 8):     {STATE_TX, CF_TX},
 			LEX_COMMENT:                     {STATE_BODY, 0},
 			LEX_IDENT:                       {STATE_ASSIGNEVAL | STATE_FORK, 0},
 			LEX_EXTEND:                      {STATE_ASSIGNEVAL | STATE_FORK, 0},
@@ -182,6 +193,21 @@ var (
 			IS_EQ:      {STATE_EVAL | STATE_TOBODY, CF_ASSIGN},
 			0:          {ERR_ASSIGN, CF_ERROR},
 		},
+		{ // STATE_TX
+			LEX_NEWLINE: {STATE_TX, 0},
+			IS_LCURLY:   {STATE_FIELDS, 0},
+			0:           {ERR_MUSTLCURLY, CF_ERROR},
+		},
+		{ // STATE_FIELDS
+			LEX_NEWLINE: {STATE_FIELDS, 0},
+			LEX_COMMENT: {STATE_FIELDS, 0},
+			IS_COMMA:    {STATE_FIELDS, 0},
+			LEX_IDENT:   {STATE_FIELDS, CF_FIELD},
+			LEX_TYPE:    {STATE_FIELDS, CF_FIELDTYPE},
+			LEX_STRING:  {STATE_FIELDS, CF_FIELDTAG},
+			IS_RCURLY:   {STATE_TOBODY, 0},
+			0:           {ERR_MUSTRCURLY, CF_ERROR},
+		},
 	}
 )
 
@@ -201,7 +227,7 @@ func fError(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
-	(*fblock).Results = append((*fblock).Results, lexem.Value.(reflect.Kind))
+	(*fblock).Results = append((*fblock).Results, lexem.Value.(reflect.Type))
 	return nil
 }
 
@@ -215,13 +241,13 @@ func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 	if block.Type == OBJ_FUNC && state == STATE_FPARAM {
 		fblock := block.Info.(*FuncInfo)
-		fblock.Params = append(fblock.Params, reflect.Invalid)
+		fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
 	}
 	if block.Objects == nil {
 		block.Objects = make(map[string]*ObjInfo)
 	}
 	block.Objects[lexem.Value.(string)] = &ObjInfo{Type: OBJ_VAR, Value: len(block.Vars)}
-	block.Vars = append(block.Vars, reflect.Invalid)
+	block.Vars = append(block.Vars, reflect.TypeOf(nil))
 	return nil
 }
 
@@ -230,14 +256,14 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 	if block.Type == OBJ_FUNC && state == STATE_FPARAM {
 		fblock := block.Info.(*FuncInfo)
 		for pkey, param := range fblock.Params {
-			if param == reflect.Invalid {
-				fblock.Params[pkey] = lexem.Value.(reflect.Kind)
+			if param == reflect.TypeOf(nil) {
+				fblock.Params[pkey] = lexem.Value.(reflect.Type)
 			}
 		}
 	}
 	for vkey, ivar := range block.Vars {
-		if ivar == reflect.Invalid {
-			block.Vars[vkey] = lexem.Value.(reflect.Kind)
+		if ivar == reflect.TypeOf(nil) {
+			block.Vars[vkey] = lexem.Value.(reflect.Type)
 		}
 	}
 	//	fmt.Println(`VARS`, block.Vars)
@@ -245,16 +271,11 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fIf(buf *[]*Block, state int, lexem *Lexem) error {
-	//	last := (*(*buf)[len(*buf)-2]).Code[len((*(*buf)[len(*buf)-2]).Code)-1]
-	//	fmt.Println(`IF Condition`, (*(*buf)[len(*buf)-2]).Code )
 	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_IF, (*buf)[len(*buf)-1]})
-	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
-	//	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
 	return nil
 }
 
 func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
-	//	fmt.Println(`Assign Var`, state, lexem)
 	block := (*buf)[len(*buf)-1]
 	var (
 		prev []*VarInfo
@@ -280,16 +301,47 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 	} else {
 		(*(*buf)[len(*buf)-1]).Code[len(block.Code)-1] = &ByteCode{CMD_ASSIGNVAR, prev}
 	}
-	//	fmt.Println(`Prev`, prev)
-	//	cmd = &ByteCode{CMD_ASSIGNVAR, &VarInfo{objInfo, tobj}}
-	//	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_IF, (*buf)[len(*buf)-1]})
 	return nil
 }
 
 func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
-	//	fmt.Println(`Assign`)
-
 	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_ASSIGN, 0})
+	return nil
+}
+
+func fTx(buf *[]*Block, state int, lexem *Lexem) error {
+	contract := (*buf)[len(*buf)-1]
+	fmt.Println(contract.Type, *contract)
+	if contract.Type != OBJ_CONTRACT {
+		return fmt.Errorf(`tx can be only in contract`)
+	}
+	(*contract).Info.(*ContractInfo).Tx = new([]*FieldInfo)
+	return nil
+}
+
+func fField(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	*tx = append(*tx, &FieldInfo{Name: lexem.Value.(string), Type: reflect.TypeOf(nil)})
+	return nil
+}
+
+func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	for i, field := range *tx {
+		if field.Type == reflect.TypeOf(nil) {
+			(*tx)[i].Type = lexem.Value.(reflect.Type)
+		}
+	}
+	return nil
+}
+
+func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	for i := len(*tx) - 1; i > 0; i-- {
+		if len((*tx)[i].Tags) == 0 {
+			(*tx)[i].Tags = lexem.Value.(string)
+		}
+	}
 	return nil
 }
 
@@ -307,14 +359,17 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
-	itype := OBJ_FUNC
+	var itype int
+
+	prev := (*buf)[len(*buf)-2]
+	fblock := (*buf)[len(*buf)-1]
+
 	switch state {
 	case STATE_BLOCK:
 		itype = OBJ_CONTRACT
-	}
-	prev := (*buf)[len(*buf)-2]
-	fblock := (*buf)[len(*buf)-1]
-	if itype == OBJ_FUNC {
+		fblock.Info = &ContractInfo{}
+	default:
+		itype = OBJ_FUNC
 		fblock.Info = &FuncInfo{}
 	}
 	fblock.Type = itype

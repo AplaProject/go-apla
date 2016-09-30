@@ -63,6 +63,18 @@ func (block *Block) String() (ret string) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
+		{`contract my {
+			tx {
+				PublicKey  bytes  
+				FirstName  string
+				MiddleName string "optional"
+				LastName   string 
+			}
+			func init string {
+				return "OK"
+			}
+		}`, `my.init`, `OK`},
+
 		{`func temp3 string {
 			var i1 i2 int, s1 string, s2 string
 			i2, i1 = 348, 7

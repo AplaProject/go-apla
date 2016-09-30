@@ -77,12 +77,15 @@ const (
 	KEY_TRUE
 	KEY_FALSE
 	KEY_VAR
+	KEY_TX
 )
 
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
-		`if`: KEY_IF, `else`: KEY_ELSE, `while`: KEY_WHILE, `true`: KEY_TRUE, `false`: KEY_FALSE, `var`: KEY_VAR}
-	TYPES = map[string]reflect.Kind{`bool`: reflect.Bool, `int`: reflect.Int64, `string`: reflect.String}
+		`if`: KEY_IF, `else`: KEY_ELSE, `while`: KEY_WHILE, `tx`: KEY_TX, `true`: KEY_TRUE, `false`: KEY_FALSE,
+		`var`: KEY_VAR}
+	TYPES = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
+		`int`: reflect.TypeOf(int64(0)), `string`: reflect.TypeOf(``)}
 )
 
 type Lexem struct {

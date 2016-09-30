@@ -170,16 +170,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		if block.Type == OBJ_FUNC && vkey < len(block.Info.(*FuncInfo).Params) {
 			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
 		} else {
-			var vtype reflect.Type
-			switch vpar {
-			case reflect.Int64:
-				vtype = reflect.TypeOf(int64(0))
-			case reflect.String:
-				vtype = reflect.TypeOf(``)
-			case reflect.Bool:
-				vtype = reflect.TypeOf(true)
-			}
-			value = reflect.New(vtype).Elem().Interface()
+			value = reflect.New(vpar).Elem().Interface()
 		}
 		rt.vars = append(rt.vars, value)
 	}
