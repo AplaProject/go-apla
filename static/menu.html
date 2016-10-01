@@ -468,18 +468,7 @@
 
 				<li class="sidebar-subnav-header">Citizen</li>
 
-				<div id="u_menu"></div>
-				<script>
-					x = ('{{.Menu}}'.replace(/\[([\w\s]*)\]\(([\w\s.]*)\)/g,
-							function(str, p1, p2, offset, s){
-								var page = 'template';
-								if (p2.substr(0, 4) == 'sys.') {
-									p2 = p2.substr(4);
-									page = 'page';
-								}
-								return "<a href='#'  onclick=\"load_"+page+"('"+p2+"'); HideMenu();\">"+p1+"</a>"}));
-					$("#u_menu").html(x);
-				</script>
+				 {{noescape .Menu}}
 
 				 <!--
 				 Tables

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
-	"github.com/microcosm-cc/bluemonday"
+	//"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"regexp"
@@ -63,16 +63,17 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	}
 
 	qrx := regexp.MustCompile(`(?i)\{\{table\.([\w\d_]*)\[([^\].]*)\]\.([\w\d_]*)\}\}`)
-	ret := qrx.ReplaceAllString(data, "SELECT $3 FROM $1 WHERE $2")
-	fmt.Println(ret)
+	data = qrx.ReplaceAllString(data, "SELECT $3 FROM $1 WHERE $2")
 
-	htmlFlags := blackfriday.HTML_SKIP_HTML
-	renderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
+	qrx = regexp.MustCompile(`\[([\w\s]*)\]\(([\w\s]*)\)`)
+	data = qrx.ReplaceAllString(data, "<a href='#'  onclick=\"load_template('$2'); HideMenu();\">$1</a>")
+	qrx = regexp.MustCompile(`\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
+	data = qrx.ReplaceAllString(data, "<a href='#'  onclick=\"load_page('$2'); HideMenu();\">$1</a>")
 
-	unsafe := blackfriday.Markdown([]byte(data), renderer, 0)
-	html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
+	unsafe := blackfriday.MarkdownCommon([]byte(data))
+	//html := string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 
-	w.Write([]byte(html))
+	w.Write([]byte(unsafe))
 	return
 
 }

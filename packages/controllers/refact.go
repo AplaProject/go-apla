@@ -260,6 +260,9 @@ func proceedTemplate(c *Controller, html string, data interface{}) (string, erro
 		"sum": func(a, b interface{}) float64 {
 			return utils.InterfaceToFloat64(a) + utils.InterfaceToFloat64(b)
 		},
+		"noescape": func(s string) template.HTML {
+			return template.HTML(s)
+		},
 	}
 	sign, err := static.Asset("static/signatures_new.html")
 	if err != nil {
