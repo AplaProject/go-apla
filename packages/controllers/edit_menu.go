@@ -18,44 +18,45 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	//"encoding/json"
+	//"fmt"
 )
 
-type changeStateParametersPage struct {
+type editMenuPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	WalletId int64
+	WalletId  int64
 	CitizenId int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	StateParameters map[string]string
-	AllStateParameters []string
+	DataMenu map[string]string
+	StateId int64
 }
 
-func (c *Controller) ChangeStateParameters() (string, error) {
+func (c *Controller) EditMenu() (string, error) {
 
-	var err error
-
-	txType := "ChangeStateParameters"
+	txType := "EditMenu"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	parameter := c.r.FormValue(`parameter`)
+	var err error
 
-	stateParameters, err := c.OneRow(`SELECT * FROM `+c.StateIdStr+`_state_parameters WHERE name = ?`, parameter).String()
+	var name string
+	if utils.CheckInputData(c.r.FormValue("name"), "string") {
+		name = c.r.FormValue("name")
+	}
+
+	dataMenu, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, name).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	allStateParameters, err := c.GetList(`SELECT name FROM `+c.StateIdStr+`_state_parameters`).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}
 
-	TemplateStr, err := makeTemplate("change_state_parameters", "changeStateParameters", &changeStateParametersPage{
+	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
@@ -63,11 +64,11 @@ func (c *Controller) ChangeStateParameters() (string, error) {
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		StateParameters : stateParameters,
-		AllStateParameters : allStateParameters,
 		TimeNow:      timeNow,
 		TxType:       txType,
-		TxTypeId:     txTypeId})
+		TxTypeId:     txTypeId,
+		StateId: c.SessStateId,
+		DataMenu : dataMenu})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -1,0 +1,75 @@
+{{ define "editMenu" }}
+<script>
+	var serverTime;
+
+	$('#send').bind('click', function () {
+
+		$.get( 'ajax?controllerName=GetServerTime', function (data) {
+			serverTime = data.time;
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#menu_name").val()+','+$("#menu_value").val()+','+$("#menu_conditions").val());
+			doSign();
+			$("#send_to_net").trigger("click");
+		}, "json" );
+	} );
+
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'name' : $("#menu_name").val(),
+				'value' : $("#menu_value").val(),
+				'conditions' : $("#menu_conditions").val(),
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+				'citizenId' : '{{.CitizenId}}',
+				'stateId' : '{{.StateId}}',
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) { send_to_net_success(data) },
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );
+</script>
+	<div class="content-heading">
+		editMenu
+	</div>
+	<ol class="breadcrumb">
+	   <li><a href="#">Dashboard</a></li>
+	   <li class="active">editMenu</li>
+	</ol>
+
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<div class="panel-title">
+			Menu
+		</div>
+	</div>
+	<div class="panel-body">
+
+		<div class="table-responsive">
+			<table class="table table-striped table-bordered table-hover">
+				<tbody>
+				<tr><td>Name<br>{{if .DataMenu.name}} {{.DataMenu.name}} <input type="hidden" id="menu_name" value="{{.DataMenu.name}}"> {{else}} <input type="text" id="menu_name"> {{end}} </td>
+				</tr>
+				<tr><td>Value<br><textarea style="width: 100%" id="menu_value">{{.DataMenu.value}}</textarea></td></tr>
+				<tr><td>Conditions<br><textarea style="width: 100%" id="menu_conditions">{{.DataMenu.conditions}}</textarea> </td></tr>
+				</tbody>
+			</table>
+		</div>
+		<button type="button" class="btn btn-primary" id="send">Save</button>
+
+	</div>
+</div>
+	<!-- END panel-->
+
+{{template "signatures".}}
+
+
+{{end}}

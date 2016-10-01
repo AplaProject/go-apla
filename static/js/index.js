@@ -176,6 +176,20 @@ function load_page(page, parameters) {
     }, "html");
 }
 
+
+function load_template(page, parameters) {
+	clearAllTimeouts();
+	NProgress.set(1.0);
+	$.post("template?page="+page, parameters ? parameters : {},
+		function(data) {
+			$(".sweet-overlay, .sweet-alert").remove();
+			$('#dl_content').html( data );
+			window.scrollTo(0,0);
+			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
+				$('.sidebar-collapse').collapse('toggle');
+		}, "html");
+}
+
 function Demo() {
 	var id = $("#demo");
 	var val = id.val();

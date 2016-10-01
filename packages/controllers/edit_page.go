@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	//"encoding/json"
+	//"fmt"
 )
 
-type stateTablePage struct {
+type editPagePage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
@@ -31,20 +33,42 @@ type stateTablePage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	Tables []map[string]string
+	DataMenu map[string]string
+	DataPage map[string]string
+	AllMenu []map[string]string
+	StateId int64
 }
 
-func (c *Controller) StateTables() (string, error) {
+func (c *Controller) EditPage() (string, error) {
+
+
+	txType := "EditPage"
+	txTypeId := utils.TypeInt(txType)
+	timeNow := utils.Time()
 
 	var err error
 
+	var name string
+	if utils.CheckInputData(c.r.FormValue("name"), "string") {
+		name = c.r.FormValue("name")
+	}
 
-	tables, err := c.GetAll(`SELECT * FROM `+utils.Int64ToStr(c.StateId)+`_tables`, -1)
+	dataPage, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_pages" WHERE name = ?`, name).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("state_tables", "stateTables", &stateTablePage {
+	dataMenu, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, dataPage["menu"]).String()
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	allMenu, err := c.GetAll(`SELECT * FROM "`+c.StateIdStr+`_menu"`, -1)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
@@ -52,7 +76,13 @@ func (c *Controller) StateTables() (string, error) {
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		Tables : tables})
+		TimeNow:      timeNow,
+		TxType:       txType,
+		TxTypeId:     txTypeId,
+		StateId: c.SessStateId,
+		AllMenu : allMenu,
+		DataMenu : dataMenu,
+		DataPage : dataPage})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

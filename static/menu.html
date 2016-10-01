@@ -297,11 +297,11 @@
 	<div class="navbar-header">
 	   <a href="#" class="navbar-brand" onclick="dl_navigate('beta'); HideMenu();">
 		  <div class="brand-logo">
-			 <span class="beta">Beta</span>
+			 <span class="beta">Testing</span>
 			 <img src="static/img/logo.svg" alt="App Logo" class="img-responsive">
 		  </div>
 		  <div class="brand-logo-collapsed">
-			 <span class="beta">Beta</span>
+			 <span class="beta">Testing</span>
 			 <img src="static/img/logo-single.svg" alt="App Logo" class="img-responsive">
 		  </div>
 	   </a>
@@ -428,8 +428,8 @@
 				   </a>
 				</li>
 				<li class="anonym_block_generation">
-				   <a href="#"  onclick="dl_navigate0('blockGeneration'); HideMenu();" title="Block generation">
-					  <span>Block generation</span>
+				   <a href="#"  onclick="dl_navigate0('blockGeneration'); HideMenu();" title="Forging">
+					  <span>Forging</span>
 				   </a>
 				</li>
 				<li class="anonym_backup">
@@ -457,6 +457,8 @@
 
 			 </ul>
 		  </li>
+
+		  {{if .Menu}}
 		  <li class="citizen">
 			 <a href="#dc" title="Citizen" data-toggle="collapse" class="toggle-hover">
 				<em class="icon-home"></em>
@@ -466,8 +468,20 @@
 
 				<li class="sidebar-subnav-header">Citizen</li>
 
+				<div id="u_menu"></div>
+				<script>
+					x = ('{{.Menu}}'.replace(/\[([\w\s]*)\]\(([\w\s.]*)\)/g,
+							function(str, p1, p2, offset, s){
+								var page = 'template';
+								if (p2.substr(0, 4) == 'sys.') {
+									p2 = p2.substr(4);
+									page = 'page';
+								}
+								return "<a href='#'  onclick=\"load_"+page+"('"+p2+"'); HideMenu();\">"+p1+"</a>"}));
+					$("#u_menu").html(x);
+				</script>
 
-
+				 <!--
 				 Tables
 				 <li class="state_parameters">
 					 <a href="#" title="state_name" onClick="load_page('stateTables');HideMenu();">
@@ -593,6 +607,7 @@
                 </li-->
 			 </ul>
 		  </li>
+		  {{end}}
 		  <li class="company Demo">
 			 <a href="#dco" title="Company" data-toggle="collapse" class="toggle-hover">
 				<em class="fa fa-building-o"></em>

@@ -92,7 +92,7 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	id := utils.Int64ToStr(id_)
+	id := id_
 	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "system_states", id)
 	if err != nil {
 		return err
@@ -167,6 +167,49 @@ func (p *Parser) NewState() error {
 		(?, ?, ?)`,
 		id+`_citizens`, `{"general_update":"`+id+`_citizens.id=1", "update": {"public_key_0": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`,
 		id+`_accounts`, `{"general_update":"`+id+`_citizens.id=1", "update": {"amount": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	err = p.ExecSql(`CREATE TABLE "` + id + `_pages" (
+				"name" varchar(255)  NOT NULL DEFAULT '',
+				"value" text  NOT NULL DEFAULT '',
+				"menu" varchar(255)  NOT NULL DEFAULT '',
+				"conditions" bytea  NOT NULL DEFAULT '',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER TABLE ONLY "` + id + `_pages" ADD CONSTRAINT ` + id + `_pages_pkey PRIMARY KEY (name);
+				`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
+		(?, ?, ?, ?)`,
+		`dashboard_default`, `# Citizen dashboard
+		![Flag](https://upload.wikimedia.org/wikipedia/commons/1/10/Flag_of_Finland.png)
+		# Your balance
+		{{table.1_accounts.amount where id=AccountId}} {{table.1_state_parameters.value where name=currency}}
+[goverment](goverment)`, `menu_default`, id+`_citizens.id=1`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	err = p.ExecSql(`CREATE TABLE "` + id + `_menu" (
+				"name" varchar(255)  NOT NULL DEFAULT '',
+				"value" text  NOT NULL DEFAULT '',
+				"conditions" bytea  NOT NULL DEFAULT '',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER TABLE ONLY "` + id + `_menu" ADD CONSTRAINT ` + id + `_menu_pkey PRIMARY KEY (name);
+				`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
+		(?, ?, ?)`,
+		`menu_default`, `[State tables](sys.stateTables)
+		[Interface](sys.interface)`, id+`_citizens.id=1`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

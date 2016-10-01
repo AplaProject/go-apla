@@ -22,6 +22,7 @@ const NMenu = `menu`
 
 type menuPage struct {
 	Data *CommonPage
+	Menu string
 }
 
 func init() {
@@ -29,6 +30,14 @@ func init() {
 }
 
 func (c *Controller) Menu() (string, error) {
+	var err error
+	menu := ""
+	if c.StateIdStr != "" {
+		menu, err = c.Single(`SELECT value FROM `+c.StateIdStr+`_menu WHERE name = ?`, "menu_default").String()
+		if err != nil {
+			return "", err
+		}
 
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data})
+	}
+	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu})
 }

@@ -17,6 +17,8 @@
 // static/countries/mm.png
 // static/css/style.css
 // static/dashboard_anonym.html
+// static/edit_menu.html
+// static/edit_page.html
 // static/edit_table.html
 // static/fonts/glyphicons-filetypes-regular.eot
 // static/fonts/glyphicons-filetypes-regular.svg
@@ -78,6 +80,7 @@
 // static/index.html
 // static/install_step_0.html
 // static/install_step_1.html
+// static/interface.html
 // static/js/app.js
 // static/js/clipboard.js
 // static/js/crypto/asn1-1.0.min.js
@@ -134,6 +137,7 @@
 // static/show_table.html
 // static/signatures.html
 // static/signatures_new.html
+// static/smart_request_citizen.html
 // static/state_laws.html
 // static/state_parameters.html
 // static/state_smart_laws.html
@@ -511,6 +515,42 @@ func staticCssStyleCss() (*asset, error) {
 func staticDashboard_anonymHtml() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/dashboard_anonym.html"
 	name := "static/dashboard_anonym.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEdit_menuHtml reads file data from disk. It returns an error on failure.
+func staticEdit_menuHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_menu.html"
+	name := "static/edit_menu.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEdit_pageHtml reads file data from disk. It returns an error on failure.
+func staticEdit_pageHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_page.html"
+	name := "static/edit_page.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1623,6 +1663,24 @@ func staticInstall_step_1Html() (*asset, error) {
 	return a, err
 }
 
+// staticInterfaceHtml reads file data from disk. It returns an error on failure.
+func staticInterfaceHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/interface.html"
+	name := "static/interface.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsAppJs reads file data from disk. It returns an error on failure.
 func staticJsAppJs() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/app.js"
@@ -2617,6 +2675,24 @@ func staticSignaturesHtml() (*asset, error) {
 func staticSignatures_newHtml() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/signatures_new.html"
 	name := "static/signatures_new.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticSmart_request_citizenHtml reads file data from disk. It returns an error on failure.
+func staticSmart_request_citizenHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/smart_request_citizen.html"
+	name := "static/smart_request_citizen.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3762,6 +3838,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/countries/mm.png": staticCountriesMmPng,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
+	"static/edit_menu.html": staticEdit_menuHtml,
+	"static/edit_page.html": staticEdit_pageHtml,
 	"static/edit_table.html": staticEdit_tableHtml,
 	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
 	"static/fonts/glyphicons-filetypes-regular.svg": staticFontsGlyphiconsFiletypesRegularSvg,
@@ -3823,6 +3901,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/index.html": staticIndexHtml,
 	"static/install_step_0.html": staticInstall_step_0Html,
 	"static/install_step_1.html": staticInstall_step_1Html,
+	"static/interface.html": staticInterfaceHtml,
 	"static/js/app.js": staticJsAppJs,
 	"static/js/clipboard.js": staticJsClipboardJs,
 	"static/js/crypto/asn1-1.0.min.js": staticJsCryptoAsn110MinJs,
@@ -3879,6 +3958,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/show_table.html": staticShow_tableHtml,
 	"static/signatures.html": staticSignaturesHtml,
 	"static/signatures_new.html": staticSignatures_newHtml,
+	"static/smart_request_citizen.html": staticSmart_request_citizenHtml,
 	"static/state_laws.html": staticState_lawsHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
 	"static/state_smart_laws.html": staticState_smart_lawsHtml,
@@ -4019,6 +4099,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{
 		}},
+		"edit_menu.html": &bintree{staticEdit_menuHtml, map[string]*bintree{
+		}},
+		"edit_page.html": &bintree{staticEdit_pageHtml, map[string]*bintree{
+		}},
 		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{
 		}},
 		"fonts": &bintree{nil, map[string]*bintree{
@@ -4147,6 +4231,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"install_step_1.html": &bintree{staticInstall_step_1Html, map[string]*bintree{
 		}},
+		"interface.html": &bintree{staticInterfaceHtml, map[string]*bintree{
+		}},
 		"js": &bintree{nil, map[string]*bintree{
 			"app.js": &bintree{staticJsAppJs, map[string]*bintree{
 			}},
@@ -4270,6 +4356,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{
 		}},
 		"signatures_new.html": &bintree{staticSignatures_newHtml, map[string]*bintree{
+		}},
+		"smart_request_citizen.html": &bintree{staticSmart_request_citizenHtml, map[string]*bintree{
 		}},
 		"state_laws.html": &bintree{staticState_lawsHtml, map[string]*bintree{
 		}},

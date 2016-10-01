@@ -20,42 +20,38 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-type changeStateParametersPage struct {
+type stateTablesPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	WalletId int64
+	WalletId  int64
 	CitizenId int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	StateParameters map[string]string
-	AllStateParameters []string
+	Tables []map[string]string
 }
 
-func (c *Controller) ChangeStateParameters() (string, error) {
+func (c *Controller) StateTables() (string, error) {
 
 	var err error
 
-	txType := "ChangeStateParameters"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
 
-	parameter := c.r.FormValue(`parameter`)
-
-	stateParameters, err := c.OneRow(`SELECT * FROM `+c.StateIdStr+`_state_parameters WHERE name = ?`, parameter).String()
+	tables, err := c.GetAll(`SELECT * FROM `+utils.Int64ToStr(c.StateId)+`_tables`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-
-	allStateParameters, err := c.GetList(`SELECT name FROM `+c.StateIdStr+`_state_parameters`).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
+	for i, data := range tables {
+		count, err := c.Single(`SELECT count(id) FROM "`+data["name"]+`"`).Int64()
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+		tables[i]["count"] = utils.Int64ToStr(count)
 	}
 
-	TemplateStr, err := makeTemplate("change_state_parameters", "changeStateParameters", &changeStateParametersPage{
+	TemplateStr, err := makeTemplate("state_tables", "stateTables", &stateTablesPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
@@ -63,11 +59,7 @@ func (c *Controller) ChangeStateParameters() (string, error) {
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		StateParameters : stateParameters,
-		AllStateParameters : allStateParameters,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Tables : tables})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

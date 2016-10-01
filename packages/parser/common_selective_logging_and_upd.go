@@ -27,7 +27,7 @@ import (
 // не использовать для комментов
 func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) error {
 
-	var tableId int64
+	var tableId string
 
 	values := utils.InterfaceSliceToStr(values_)
 
@@ -42,7 +42,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	addSqlWhere := ""
 	if whereFields != nil && whereValues != nil {
 		for i := 0; i < len(whereFields); i++ {
-			addSqlWhere += whereFields[i] + "=" + whereValues[i] + " AND "
+			addSqlWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
 		}
 	}
 	if len(addSqlWhere) > 0 {
@@ -107,7 +107,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		if err != nil {
 			return err
 		}
-		tableId = utils.StrToInt64(logData[p.AllPkeys[table]])
+		tableId = logData[p.AllPkeys[table]]
 	} else {
 		addSqlIns0 := ""
 		addSqlIns1 := ""

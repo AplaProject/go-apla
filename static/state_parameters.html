@@ -45,21 +45,15 @@
 			  <tr>
 				  <td>parameter</td>
 				  <td>value</td>
-				  <td>conditions_parameter</td>
-				  <td>text_description</td>
-				  <td>last_update</td>
-				  <td>parent</td>
+				  <td>conditions</td>
 				  <td></td>
 			  </tr>
 			  {{ range $value := .StateParameters }}
 				 <tr>
-					<td class="thead">{{$value.parameter}}</td>
+					<td class="thead">{{$value.name}}</td>
 					 <td><strong>{{$value.value}}</strong></td>
-					 <td><strong>{{$value.conditions_parameter}}</strong></td>
-					 <td><strong>{{$value.text_description}}</strong></td>
-					 <td><strong>{{$value.last_update}}</strong></td>
-					 <td><strong>{{$value.parent}}</strong></td>
-					<td><button type="button" class="btn btn-primary" onclick="load_page('changeStateParameters', {parameter: {{$value.parameter}}} )">Change</button></td>
+					 <td><strong>{{$value.conditions}}</strong></td>
+					<td><button type="button" class="btn btn-primary" onclick="load_page('changeStateParameters', {parameter: {{$value.name}}} )">Change</button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>

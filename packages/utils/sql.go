@@ -535,72 +535,45 @@ func (db *DCDB) QueryRows(query string, args ...interface{}) (*sql.Rows, error) 
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	return db.Query(newQuery, newArgs...)
 }
-func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{}) (int64, error) {
-	var lastId int64
-	var res sql.Result
+func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{}) (string, error) {
+	var lastId_ interface{}
+	var lastId string
 	var err error
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
-	if db.ConfigIni["db_type"] == "postgresql" {
-		colName, err := db.GetFirstColumnNamesPg(table)
+	colName, err := db.GetFirstColumnNamesPg(table)
 		if err != nil {
-			return 0, fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
+			return "", fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
 		}
 		newQuery = newQuery + " RETURNING " + colName
 		for {
-			err := db.QueryRow(newQuery, newArgs...).Scan(&lastId)
+			err := db.QueryRow(newQuery, newArgs...).Scan(&lastId_)
 			if err != nil {
 				if ok, _ := regexp.MatchString(`(?i)database is locked`, fmt.Sprintf("%s", err)); ok {
 					log.Error("database is locked %s / %s / %s", newQuery, newArgs, GetParent())
 					time.Sleep(250 * time.Millisecond)
 					continue
 				} else {
-					return 0, fmt.Errorf("%s in query %s %s %s", err, newQuery, newArgs, GetParent())
+					return "", fmt.Errorf("%s in query %s %s %s", err, newQuery, newArgs, GetParent())
 				}
 			} else {
+				switch lastId_.(type) {
+					case int:
+					lastId = IntToStr(lastId_.(int))
+					case int64:
+					lastId = Int64ToStr(lastId_.(int64))
+					case float64:
+					lastId = Float64ToStr(lastId_.(float64))
+					case string:
+					lastId = lastId_.(string)
+					case []byte:
+					lastId = string(lastId_.([]byte))
+				}
 				break
 			}
 		}
 
-		if db.ConfigIni["sql_log"] == "1" {
-			log.Debug("SQL: %s / LastInsertId=%d / %s", newQuery, lastId, newArgs)
-		}
-		/*r, _ := regexp.Compile(`(?i)insert into (\w+)`)
-		find := r.FindStringSubmatch(newQuery)
-		err =  db.ExecSql("SELECT setval('"+find[1]+"_"+returning+"_seq', max("+returning+")) FROM   "+find[1]+";")
-		if err != nil {
-			return 0, fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
-		}*/
-
-	} else {
-		/*res, err := db.Exec(newQuery, newArgs...)
-		if err != nil {
-			return 0, fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
-		}*/
-		for {
-			res, err = db.Exec(newQuery, newArgs...)
-			if err != nil {
-				if ok, _ := regexp.MatchString(`(?i)database is locked`, fmt.Sprintf("%s", err)); ok {
-					log.Error("database is locked %s / %s / %s", newQuery, newArgs, GetParent())
-					time.Sleep(250 * time.Millisecond)
-					continue
-				} else {
-					return 0, fmt.Errorf("%s in query %s %s %s", err, newQuery, newArgs, GetParent())
-				}
-			} else {
-				break
-			}
-		}
-		affect, err := res.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
-		}
-		lastId, err = res.LastInsertId()
-		if err != nil {
-			return 0, fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
-		}
-		if db.ConfigIni["sql_log"] == "1" {
-			log.Debug("SQL: %s / RowsAffected=%d / LastInsertId=%d / %s", newQuery, affect, lastId, newArgs)
-		}
+	if db.ConfigIni["sql_log"] == "1" {
+		log.Debug("SQL: %s / LastInsertId=%d / %s", newQuery, lastId, newArgs)
 	}
 	return lastId, nil
 }

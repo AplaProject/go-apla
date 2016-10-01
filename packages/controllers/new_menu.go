@@ -18,44 +18,19 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	//"encoding/json"
+	//"fmt"
 )
 
-type changeStateParametersPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId int64
-	CitizenId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	StateParameters map[string]string
-	AllStateParameters []string
-}
 
-func (c *Controller) ChangeStateParameters() (string, error) {
+func (c *Controller) NewMenu() (string, error) {
 
-	var err error
-
-	txType := "ChangeStateParameters"
+	txType := "EditMenu"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	parameter := c.r.FormValue(`parameter`)
 
-	stateParameters, err := c.OneRow(`SELECT * FROM `+c.StateIdStr+`_state_parameters WHERE name = ?`, parameter).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}
-
-	allStateParameters, err := c.GetList(`SELECT name FROM `+c.StateIdStr+`_state_parameters`).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}
-
-	TemplateStr, err := makeTemplate("change_state_parameters", "changeStateParameters", &changeStateParametersPage{
+	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
@@ -63,11 +38,11 @@ func (c *Controller) ChangeStateParameters() (string, error) {
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		StateParameters : stateParameters,
-		AllStateParameters : allStateParameters,
 		TimeNow:      timeNow,
 		TxType:       txType,
-		TxTypeId:     txTypeId})
+		TxTypeId:     txTypeId,
+		StateId: c.SessStateId,
+		DataMenu : map[string]string{}})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
