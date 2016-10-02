@@ -97,6 +97,7 @@ var TxTypes = map[int]string{
 	13: "EditMenu",
 	14: "EditContract",
 	15: "NewContract",
+	16: "EditColumn",
 }
 
 func init() {

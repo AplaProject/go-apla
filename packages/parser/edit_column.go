@@ -23,7 +23,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-func (p *Parser) NewColumnInit() error {
+func (p *Parser) EditColumnInit() error {
 
 	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -33,7 +33,7 @@ func (p *Parser) NewColumnInit() error {
 	return nil
 }
 
-func (p *Parser) NewColumnFront() error {
+func (p *Parser) EditColumnFront() error {
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -66,12 +66,11 @@ func (p *Parser) NewColumnFront() error {
 
 	table := p.TxStateIDStr + `_tables`
 	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
-	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if exists > 0 {
-		return p.ErrInfo(`column exists`)
+	if exists == 0 {
+		return p.ErrInfo(`column not exists`)
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"])
@@ -86,7 +85,7 @@ func (p *Parser) NewColumnFront() error {
 	return nil
 }
 
-func (p *Parser) NewColumn() error {
+func (p *Parser) EditColumn() error {
 
 	table := p.TxStateIDStr + `_tables`
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
@@ -122,28 +121,18 @@ func (p *Parser) NewColumn() error {
 		return err
 	}
 
-	err = p.ExecSql(`ALTER TABLE `+p.TxMaps.String["table_name"]+` ADD COLUMN `+p.TxMaps.String["column_name"]+` varchar(512)`)
-	if err != nil {
-		return err
-	}
-
-
 	return nil
 }
 
-func (p *Parser) NewColumnRollback() error {
+func (p *Parser) EditColumnRollback() error {
 	err := p.autoRollback()
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`ALTER TABLE `+p.TxMaps.String["table_name"]+` DROP COLUMN `+p.TxMaps.String["column_name"]+``)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
-func (p *Parser) NewColumnRollbackFront() error {
+func (p *Parser) EditColumnRollbackFront() error {
 
 	return nil
 }

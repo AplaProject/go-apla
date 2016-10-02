@@ -20,27 +20,50 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-func (c *Controller) NewColumn() (string, error) {
+type editColumnPage struct {
+	Alert        string
+	SignData     string
+	ShowSignData bool
+	CountSignArr []int
+	Lang         map[string]string
+	WalletId  int64
+	CitizenId int64
+	TxType       string
+	TxTypeId     int64
+	TimeNow      int64
+	TableName string
+	StateId int64
+	ColumnPermission string
+	ColumnName string
+}
+
+func (c *Controller) EditColumn() (string, error) {
 
 	var err error
 
-	txType := "NewColumn"
+	txType := "EditColumn"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	tableName := c.r.FormValue("tableName")
+	columnName := c.r.FormValue("columnName")
+
+	columns, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
 
 	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		TableName: tableName,
+		ColumnName: columnName,
+		ColumnPermission: columns[columnName],
 		SignData:     "",
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		StateId: c.SessStateId,
-		ColumnName: "",
-		ColumnPermission: "",
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,

@@ -103,8 +103,8 @@ func (c *Controller) SaveQueue() (string, error) {
 		if stateId > 0 {
 			userId = citizenId
 		}
-		TXHead := consts.TXHeader{Type: uint32(txType), Time: uint32(txTime),
-			UserId: userId, StateId: stateId, Sign: sign}
+		TXHead := consts.TXHeader{Type: int32(txType), Time: uint32(txTime),
+			UserId: userId, StateId: int64(stateId), Sign: sign}
 		// ---
 		if stateId == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
@@ -182,6 +182,30 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
 		data = append(data, binSignatures...)
 
+
+	case "EditColumn":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		tableName := []byte(c.r.FormValue("table_name"))
+		columnName := []byte(c.r.FormValue("column_name"))
+		permissions := []byte(c.r.FormValue("permissions"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(tableName)...)
+		data = append(data, utils.EncodeLengthPlusData(columnName)...)
+		data = append(data, utils.EncodeLengthPlusData(permissions)...)
+		data = append(data, binSignatures...)
 
 	case "EditPage":
 

@@ -12,11 +12,13 @@
 // static/change_state_parameters.html
 // static/change_state_smart_laws.html
 // static/check_citizen_status.html
+// static/contracts.html
 // static/countries/countries.json
 // static/countries/flags.png
 // static/countries/mm.png
 // static/css/style.css
 // static/dashboard_anonym.html
+// static/edit_column.html
 // static/edit_contract.html
 // static/edit_menu.html
 // static/edit_page.html
@@ -129,7 +131,6 @@
 // static/login.html
 // static/menu.html
 // static/modal_anonym.html
-// static/new_column.html
 // static/new_state.html
 // static/new_table.html
 // static/pass.html
@@ -141,7 +142,6 @@
 // static/smart_request_citizen.html
 // static/state_laws.html
 // static/state_parameters.html
-// static/state_smart_laws.html
 // static/state_tables.html
 // static/test.html
 // static/updating_blockchain.html
@@ -226,7 +226,7 @@ type asset struct {
 
 // static1block reads file data from disk. It returns an error on failure.
 func static1block() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/1block"
+	path := "static/1block"
 	name := "static/1block"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -244,7 +244,7 @@ func static1block() (*asset, error) {
 
 // static1blockLocal reads file data from disk. It returns an error on failure.
 func static1blockLocal() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/1block-local"
+	path := "static/1block-local"
 	name := "static/1block-local"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -262,7 +262,7 @@ func static1blockLocal() (*asset, error) {
 
 // staticAlert_successHtml reads file data from disk. It returns an error on failure.
 func staticAlert_successHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/alert_success.html"
+	path := "static/alert_success.html"
 	name := "static/alert_success.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -280,7 +280,7 @@ func staticAlert_successHtml() (*asset, error) {
 
 // staticAnonym_money_transferHtml reads file data from disk. It returns an error on failure.
 func staticAnonym_money_transferHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/anonym_money_transfer.html"
+	path := "static/anonym_money_transfer.html"
 	name := "static/anonym_money_transfer.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -298,7 +298,7 @@ func staticAnonym_money_transferHtml() (*asset, error) {
 
 // staticBackupHtml reads file data from disk. It returns an error on failure.
 func staticBackupHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/backup.html"
+	path := "static/backup.html"
 	name := "static/backup.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -316,7 +316,7 @@ func staticBackupHtml() (*asset, error) {
 
 // staticBetaHtml reads file data from disk. It returns an error on failure.
 func staticBetaHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/beta.html"
+	path := "static/beta.html"
 	name := "static/beta.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -334,7 +334,7 @@ func staticBetaHtml() (*asset, error) {
 
 // staticBlock_explorerHtml reads file data from disk. It returns an error on failure.
 func staticBlock_explorerHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/block_explorer.html"
+	path := "static/block_explorer.html"
 	name := "static/block_explorer.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -352,7 +352,7 @@ func staticBlock_explorerHtml() (*asset, error) {
 
 // staticBlock_generationHtml reads file data from disk. It returns an error on failure.
 func staticBlock_generationHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/block_generation.html"
+	path := "static/block_generation.html"
 	name := "static/block_generation.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -370,7 +370,7 @@ func staticBlock_generationHtml() (*asset, error) {
 
 // staticChange_node_keyHtml reads file data from disk. It returns an error on failure.
 func staticChange_node_keyHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/change_node_key.html"
+	path := "static/change_node_key.html"
 	name := "static/change_node_key.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -388,7 +388,7 @@ func staticChange_node_keyHtml() (*asset, error) {
 
 // staticChange_state_parametersHtml reads file data from disk. It returns an error on failure.
 func staticChange_state_parametersHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/change_state_parameters.html"
+	path := "static/change_state_parameters.html"
 	name := "static/change_state_parameters.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -406,7 +406,7 @@ func staticChange_state_parametersHtml() (*asset, error) {
 
 // staticChange_state_smart_lawsHtml reads file data from disk. It returns an error on failure.
 func staticChange_state_smart_lawsHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/change_state_smart_laws.html"
+	path := "static/change_state_smart_laws.html"
 	name := "static/change_state_smart_laws.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -424,8 +424,26 @@ func staticChange_state_smart_lawsHtml() (*asset, error) {
 
 // staticCheck_citizen_statusHtml reads file data from disk. It returns an error on failure.
 func staticCheck_citizen_statusHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/check_citizen_status.html"
+	path := "static/check_citizen_status.html"
 	name := "static/check_citizen_status.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticContractsHtml reads file data from disk. It returns an error on failure.
+func staticContractsHtml() (*asset, error) {
+	path := "static/contracts.html"
+	name := "static/contracts.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -442,7 +460,7 @@ func staticCheck_citizen_statusHtml() (*asset, error) {
 
 // staticCountriesCountriesJson reads file data from disk. It returns an error on failure.
 func staticCountriesCountriesJson() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/countries/countries.json"
+	path := "static/countries/countries.json"
 	name := "static/countries/countries.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -460,7 +478,7 @@ func staticCountriesCountriesJson() (*asset, error) {
 
 // staticCountriesFlagsPng reads file data from disk. It returns an error on failure.
 func staticCountriesFlagsPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/countries/flags.png"
+	path := "static/countries/flags.png"
 	name := "static/countries/flags.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -478,7 +496,7 @@ func staticCountriesFlagsPng() (*asset, error) {
 
 // staticCountriesMmPng reads file data from disk. It returns an error on failure.
 func staticCountriesMmPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/countries/mm.png"
+	path := "static/countries/mm.png"
 	name := "static/countries/mm.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -496,7 +514,7 @@ func staticCountriesMmPng() (*asset, error) {
 
 // staticCssStyleCss reads file data from disk. It returns an error on failure.
 func staticCssStyleCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/css/style.css"
+	path := "static/css/style.css"
 	name := "static/css/style.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -514,8 +532,26 @@ func staticCssStyleCss() (*asset, error) {
 
 // staticDashboard_anonymHtml reads file data from disk. It returns an error on failure.
 func staticDashboard_anonymHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/dashboard_anonym.html"
+	path := "static/dashboard_anonym.html"
 	name := "static/dashboard_anonym.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEdit_columnHtml reads file data from disk. It returns an error on failure.
+func staticEdit_columnHtml() (*asset, error) {
+	path := "static/edit_column.html"
+	name := "static/edit_column.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -532,7 +568,7 @@ func staticDashboard_anonymHtml() (*asset, error) {
 
 // staticEdit_contractHtml reads file data from disk. It returns an error on failure.
 func staticEdit_contractHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_contract.html"
+	path := "static/edit_contract.html"
 	name := "static/edit_contract.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -550,7 +586,7 @@ func staticEdit_contractHtml() (*asset, error) {
 
 // staticEdit_menuHtml reads file data from disk. It returns an error on failure.
 func staticEdit_menuHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_menu.html"
+	path := "static/edit_menu.html"
 	name := "static/edit_menu.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -568,7 +604,7 @@ func staticEdit_menuHtml() (*asset, error) {
 
 // staticEdit_pageHtml reads file data from disk. It returns an error on failure.
 func staticEdit_pageHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_page.html"
+	path := "static/edit_page.html"
 	name := "static/edit_page.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -586,7 +622,7 @@ func staticEdit_pageHtml() (*asset, error) {
 
 // staticEdit_tableHtml reads file data from disk. It returns an error on failure.
 func staticEdit_tableHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_table.html"
+	path := "static/edit_table.html"
 	name := "static/edit_table.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -604,7 +640,7 @@ func staticEdit_tableHtml() (*asset, error) {
 
 // staticFontsGlyphiconsFiletypesRegularEot reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsFiletypesRegularEot() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-filetypes-regular.eot"
+	path := "static/fonts/glyphicons-filetypes-regular.eot"
 	name := "static/fonts/glyphicons-filetypes-regular.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -622,7 +658,7 @@ func staticFontsGlyphiconsFiletypesRegularEot() (*asset, error) {
 
 // staticFontsGlyphiconsFiletypesRegularSvg reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsFiletypesRegularSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-filetypes-regular.svg"
+	path := "static/fonts/glyphicons-filetypes-regular.svg"
 	name := "static/fonts/glyphicons-filetypes-regular.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -640,7 +676,7 @@ func staticFontsGlyphiconsFiletypesRegularSvg() (*asset, error) {
 
 // staticFontsGlyphiconsFiletypesRegularTtf reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsFiletypesRegularTtf() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-filetypes-regular.ttf"
+	path := "static/fonts/glyphicons-filetypes-regular.ttf"
 	name := "static/fonts/glyphicons-filetypes-regular.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -658,7 +694,7 @@ func staticFontsGlyphiconsFiletypesRegularTtf() (*asset, error) {
 
 // staticFontsGlyphiconsFiletypesRegularWoff reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsFiletypesRegularWoff() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-filetypes-regular.woff"
+	path := "static/fonts/glyphicons-filetypes-regular.woff"
 	name := "static/fonts/glyphicons-filetypes-regular.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -676,7 +712,7 @@ func staticFontsGlyphiconsFiletypesRegularWoff() (*asset, error) {
 
 // staticFontsGlyphiconsFiletypesRegularWoff2 reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsFiletypesRegularWoff2() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-filetypes-regular.woff2"
+	path := "static/fonts/glyphicons-filetypes-regular.woff2"
 	name := "static/fonts/glyphicons-filetypes-regular.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -694,7 +730,7 @@ func staticFontsGlyphiconsFiletypesRegularWoff2() (*asset, error) {
 
 // staticFontsGlyphiconsHalflingsRegularEot reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsHalflingsRegularEot() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-halflings-regular.eot"
+	path := "static/fonts/glyphicons-halflings-regular.eot"
 	name := "static/fonts/glyphicons-halflings-regular.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -712,7 +748,7 @@ func staticFontsGlyphiconsHalflingsRegularEot() (*asset, error) {
 
 // staticFontsGlyphiconsHalflingsRegularSvg reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsHalflingsRegularSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-halflings-regular.svg"
+	path := "static/fonts/glyphicons-halflings-regular.svg"
 	name := "static/fonts/glyphicons-halflings-regular.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -730,7 +766,7 @@ func staticFontsGlyphiconsHalflingsRegularSvg() (*asset, error) {
 
 // staticFontsGlyphiconsHalflingsRegularTtf reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsHalflingsRegularTtf() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-halflings-regular.ttf"
+	path := "static/fonts/glyphicons-halflings-regular.ttf"
 	name := "static/fonts/glyphicons-halflings-regular.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -748,7 +784,7 @@ func staticFontsGlyphiconsHalflingsRegularTtf() (*asset, error) {
 
 // staticFontsGlyphiconsHalflingsRegularWoff reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsHalflingsRegularWoff() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-halflings-regular.woff"
+	path := "static/fonts/glyphicons-halflings-regular.woff"
 	name := "static/fonts/glyphicons-halflings-regular.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -766,7 +802,7 @@ func staticFontsGlyphiconsHalflingsRegularWoff() (*asset, error) {
 
 // staticFontsGlyphiconsHalflingsRegularWoff2 reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsHalflingsRegularWoff2() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-halflings-regular.woff2"
+	path := "static/fonts/glyphicons-halflings-regular.woff2"
 	name := "static/fonts/glyphicons-halflings-regular.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -784,7 +820,7 @@ func staticFontsGlyphiconsHalflingsRegularWoff2() (*asset, error) {
 
 // staticFontsGlyphiconsRegularEot reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsRegularEot() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-regular.eot"
+	path := "static/fonts/glyphicons-regular.eot"
 	name := "static/fonts/glyphicons-regular.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -802,7 +838,7 @@ func staticFontsGlyphiconsRegularEot() (*asset, error) {
 
 // staticFontsGlyphiconsRegularSvg reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsRegularSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-regular.svg"
+	path := "static/fonts/glyphicons-regular.svg"
 	name := "static/fonts/glyphicons-regular.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -820,7 +856,7 @@ func staticFontsGlyphiconsRegularSvg() (*asset, error) {
 
 // staticFontsGlyphiconsRegularTtf reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsRegularTtf() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-regular.ttf"
+	path := "static/fonts/glyphicons-regular.ttf"
 	name := "static/fonts/glyphicons-regular.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -838,7 +874,7 @@ func staticFontsGlyphiconsRegularTtf() (*asset, error) {
 
 // staticFontsGlyphiconsRegularWoff reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsRegularWoff() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-regular.woff"
+	path := "static/fonts/glyphicons-regular.woff"
 	name := "static/fonts/glyphicons-regular.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -856,7 +892,7 @@ func staticFontsGlyphiconsRegularWoff() (*asset, error) {
 
 // staticFontsGlyphiconsRegularWoff2 reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsRegularWoff2() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-regular.woff2"
+	path := "static/fonts/glyphicons-regular.woff2"
 	name := "static/fonts/glyphicons-regular.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -874,7 +910,7 @@ func staticFontsGlyphiconsRegularWoff2() (*asset, error) {
 
 // staticFontsGlyphiconsSocialRegularEot reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsSocialRegularEot() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-social-regular.eot"
+	path := "static/fonts/glyphicons-social-regular.eot"
 	name := "static/fonts/glyphicons-social-regular.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -892,7 +928,7 @@ func staticFontsGlyphiconsSocialRegularEot() (*asset, error) {
 
 // staticFontsGlyphiconsSocialRegularSvg reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsSocialRegularSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-social-regular.svg"
+	path := "static/fonts/glyphicons-social-regular.svg"
 	name := "static/fonts/glyphicons-social-regular.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -910,7 +946,7 @@ func staticFontsGlyphiconsSocialRegularSvg() (*asset, error) {
 
 // staticFontsGlyphiconsSocialRegularTtf reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsSocialRegularTtf() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-social-regular.ttf"
+	path := "static/fonts/glyphicons-social-regular.ttf"
 	name := "static/fonts/glyphicons-social-regular.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -928,7 +964,7 @@ func staticFontsGlyphiconsSocialRegularTtf() (*asset, error) {
 
 // staticFontsGlyphiconsSocialRegularWoff reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsSocialRegularWoff() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-social-regular.woff"
+	path := "static/fonts/glyphicons-social-regular.woff"
 	name := "static/fonts/glyphicons-social-regular.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -946,7 +982,7 @@ func staticFontsGlyphiconsSocialRegularWoff() (*asset, error) {
 
 // staticFontsGlyphiconsSocialRegularWoff2 reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsSocialRegularWoff2() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/fonts/glyphicons-social-regular.woff2"
+	path := "static/fonts/glyphicons-social-regular.woff2"
 	name := "static/fonts/glyphicons-social-regular.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -964,7 +1000,7 @@ func staticFontsGlyphiconsSocialRegularWoff2() (*asset, error) {
 
 // staticHistoryHtml reads file data from disk. It returns an error on failure.
 func staticHistoryHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/history.html"
+	path := "static/history.html"
 	name := "static/history.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -982,7 +1018,7 @@ func staticHistoryHtml() (*asset, error) {
 
 // staticImgUsSvg reads file data from disk. It returns an error on failure.
 func staticImgUsSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/US.svg"
+	path := "static/img/US.svg"
 	name := "static/img/US.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1000,7 +1036,7 @@ func staticImgUsSvg() (*asset, error) {
 
 // staticImgBg1Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg1Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg1.jpg"
+	path := "static/img/bg1.jpg"
 	name := "static/img/bg1.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1018,7 +1054,7 @@ func staticImgBg1Jpg() (*asset, error) {
 
 // staticImgBg10Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg10Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg10.jpg"
+	path := "static/img/bg10.jpg"
 	name := "static/img/bg10.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1036,7 +1072,7 @@ func staticImgBg10Jpg() (*asset, error) {
 
 // staticImgBg2Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg2Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg2.jpg"
+	path := "static/img/bg2.jpg"
 	name := "static/img/bg2.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1054,7 +1090,7 @@ func staticImgBg2Jpg() (*asset, error) {
 
 // staticImgBg3Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg3Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg3.jpg"
+	path := "static/img/bg3.jpg"
 	name := "static/img/bg3.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1072,7 +1108,7 @@ func staticImgBg3Jpg() (*asset, error) {
 
 // staticImgBg4Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg4Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg4.jpg"
+	path := "static/img/bg4.jpg"
 	name := "static/img/bg4.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1090,7 +1126,7 @@ func staticImgBg4Jpg() (*asset, error) {
 
 // staticImgBg5Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg5Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg5.jpg"
+	path := "static/img/bg5.jpg"
 	name := "static/img/bg5.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1108,7 +1144,7 @@ func staticImgBg5Jpg() (*asset, error) {
 
 // staticImgBg6Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg6Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg6.jpg"
+	path := "static/img/bg6.jpg"
 	name := "static/img/bg6.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1126,7 +1162,7 @@ func staticImgBg6Jpg() (*asset, error) {
 
 // staticImgBg7Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg7Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg7.jpg"
+	path := "static/img/bg7.jpg"
 	name := "static/img/bg7.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1144,7 +1180,7 @@ func staticImgBg7Jpg() (*asset, error) {
 
 // staticImgBg8Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg8Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg8.jpg"
+	path := "static/img/bg8.jpg"
 	name := "static/img/bg8.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1162,7 +1198,7 @@ func staticImgBg8Jpg() (*asset, error) {
 
 // staticImgBg9Jpg reads file data from disk. It returns an error on failure.
 func staticImgBg9Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/bg9.jpg"
+	path := "static/img/bg9.jpg"
 	name := "static/img/bg9.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1180,7 +1216,7 @@ func staticImgBg9Jpg() (*asset, error) {
 
 // staticImgDummyPng reads file data from disk. It returns an error on failure.
 func staticImgDummyPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/dummy.png"
+	path := "static/img/dummy.png"
 	name := "static/img/dummy.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1198,7 +1234,7 @@ func staticImgDummyPng() (*asset, error) {
 
 // staticImgFaviconIco reads file data from disk. It returns an error on failure.
 func staticImgFaviconIco() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/favicon.ico"
+	path := "static/img/favicon.ico"
 	name := "static/img/favicon.ico"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1216,7 +1252,7 @@ func staticImgFaviconIco() (*asset, error) {
 
 // staticImgLockBgJpg reads file data from disk. It returns an error on failure.
 func staticImgLockBgJpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/lock-bg.jpg"
+	path := "static/img/lock-bg.jpg"
 	name := "static/img/lock-bg.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1234,7 +1270,7 @@ func staticImgLockBgJpg() (*asset, error) {
 
 // staticImgLogoSingleSvg reads file data from disk. It returns an error on failure.
 func staticImgLogoSingleSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/logo-single.svg"
+	path := "static/img/logo-single.svg"
 	name := "static/img/logo-single.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1252,7 +1288,7 @@ func staticImgLogoSingleSvg() (*asset, error) {
 
 // staticImgLogoSvg reads file data from disk. It returns an error on failure.
 func staticImgLogoSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/logo.svg"
+	path := "static/img/logo.svg"
 	name := "static/img/logo.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1270,7 +1306,7 @@ func staticImgLogoSvg() (*asset, error) {
 
 // staticImgLogo_nullSvg reads file data from disk. It returns an error on failure.
 func staticImgLogo_nullSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/logo_null.svg"
+	path := "static/img/logo_null.svg"
 	name := "static/img/logo_null.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1288,7 +1324,7 @@ func staticImgLogo_nullSvg() (*asset, error) {
 
 // staticImgLogo_okSvg reads file data from disk. It returns an error on failure.
 func staticImgLogo_okSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/logo_ok.svg"
+	path := "static/img/logo_ok.svg"
 	name := "static/img/logo_ok.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1306,7 +1342,7 @@ func staticImgLogo_okSvg() (*asset, error) {
 
 // staticImgMbSampleJpg reads file data from disk. It returns an error on failure.
 func staticImgMbSampleJpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/mb-sample.jpg"
+	path := "static/img/mb-sample.jpg"
 	name := "static/img/mb-sample.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1324,7 +1360,7 @@ func staticImgMbSampleJpg() (*asset, error) {
 
 // staticImgMockupPng reads file data from disk. It returns an error on failure.
 func staticImgMockupPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/mockup.png"
+	path := "static/img/mockup.png"
 	name := "static/img/mockup.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1342,7 +1378,7 @@ func staticImgMockupPng() (*asset, error) {
 
 // staticImgProfileBgJpg reads file data from disk. It returns an error on failure.
 func staticImgProfileBgJpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/profile-bg.jpg"
+	path := "static/img/profile-bg.jpg"
 	name := "static/img/profile-bg.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1360,7 +1396,7 @@ func staticImgProfileBgJpg() (*asset, error) {
 
 // staticImgRadio_iconPng reads file data from disk. It returns an error on failure.
 func staticImgRadio_iconPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/radio_icon.png"
+	path := "static/img/radio_icon.png"
 	name := "static/img/radio_icon.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1378,7 +1414,7 @@ func staticImgRadio_iconPng() (*asset, error) {
 
 // staticImgSquaresGif reads file data from disk. It returns an error on failure.
 func staticImgSquaresGif() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/squares.gif"
+	path := "static/img/squares.gif"
 	name := "static/img/squares.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1396,7 +1432,7 @@ func staticImgSquaresGif() (*asset, error) {
 
 // staticImgUser01Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser01Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/01.jpg"
+	path := "static/img/user/01.jpg"
 	name := "static/img/user/01.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1414,7 +1450,7 @@ func staticImgUser01Jpg() (*asset, error) {
 
 // staticImgUser02Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser02Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/02.jpg"
+	path := "static/img/user/02.jpg"
 	name := "static/img/user/02.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1432,7 +1468,7 @@ func staticImgUser02Jpg() (*asset, error) {
 
 // staticImgUser03Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser03Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/03.jpg"
+	path := "static/img/user/03.jpg"
 	name := "static/img/user/03.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1450,7 +1486,7 @@ func staticImgUser03Jpg() (*asset, error) {
 
 // staticImgUser04Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser04Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/04.jpg"
+	path := "static/img/user/04.jpg"
 	name := "static/img/user/04.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1468,7 +1504,7 @@ func staticImgUser04Jpg() (*asset, error) {
 
 // staticImgUser05Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser05Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/05.jpg"
+	path := "static/img/user/05.jpg"
 	name := "static/img/user/05.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1486,7 +1522,7 @@ func staticImgUser05Jpg() (*asset, error) {
 
 // staticImgUser06Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser06Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/06.jpg"
+	path := "static/img/user/06.jpg"
 	name := "static/img/user/06.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1504,7 +1540,7 @@ func staticImgUser06Jpg() (*asset, error) {
 
 // staticImgUser07Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser07Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/07.jpg"
+	path := "static/img/user/07.jpg"
 	name := "static/img/user/07.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1522,7 +1558,7 @@ func staticImgUser07Jpg() (*asset, error) {
 
 // staticImgUser08Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser08Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/08.jpg"
+	path := "static/img/user/08.jpg"
 	name := "static/img/user/08.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1540,7 +1576,7 @@ func staticImgUser08Jpg() (*asset, error) {
 
 // staticImgUser09Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser09Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/09.jpg"
+	path := "static/img/user/09.jpg"
 	name := "static/img/user/09.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1558,7 +1594,7 @@ func staticImgUser09Jpg() (*asset, error) {
 
 // staticImgUser10Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser10Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/10.jpg"
+	path := "static/img/user/10.jpg"
 	name := "static/img/user/10.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1576,7 +1612,7 @@ func staticImgUser10Jpg() (*asset, error) {
 
 // staticImgUser11Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser11Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/11.jpg"
+	path := "static/img/user/11.jpg"
 	name := "static/img/user/11.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1594,7 +1630,7 @@ func staticImgUser11Jpg() (*asset, error) {
 
 // staticImgUser12Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser12Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/12.jpg"
+	path := "static/img/user/12.jpg"
 	name := "static/img/user/12.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1612,7 +1648,7 @@ func staticImgUser12Jpg() (*asset, error) {
 
 // staticImgUser13Jpg reads file data from disk. It returns an error on failure.
 func staticImgUser13Jpg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/img/user/13.jpg"
+	path := "static/img/user/13.jpg"
 	name := "static/img/user/13.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1630,7 +1666,7 @@ func staticImgUser13Jpg() (*asset, error) {
 
 // staticIndexHtml reads file data from disk. It returns an error on failure.
 func staticIndexHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/index.html"
+	path := "static/index.html"
 	name := "static/index.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1648,7 +1684,7 @@ func staticIndexHtml() (*asset, error) {
 
 // staticInstall_step_0Html reads file data from disk. It returns an error on failure.
 func staticInstall_step_0Html() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/install_step_0.html"
+	path := "static/install_step_0.html"
 	name := "static/install_step_0.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1666,7 +1702,7 @@ func staticInstall_step_0Html() (*asset, error) {
 
 // staticInstall_step_1Html reads file data from disk. It returns an error on failure.
 func staticInstall_step_1Html() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/install_step_1.html"
+	path := "static/install_step_1.html"
 	name := "static/install_step_1.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1684,7 +1720,7 @@ func staticInstall_step_1Html() (*asset, error) {
 
 // staticInterfaceHtml reads file data from disk. It returns an error on failure.
 func staticInterfaceHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/interface.html"
+	path := "static/interface.html"
 	name := "static/interface.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1702,7 +1738,7 @@ func staticInterfaceHtml() (*asset, error) {
 
 // staticJsAppJs reads file data from disk. It returns an error on failure.
 func staticJsAppJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/app.js"
+	path := "static/js/app.js"
 	name := "static/js/app.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1720,7 +1756,7 @@ func staticJsAppJs() (*asset, error) {
 
 // staticJsClipboardJs reads file data from disk. It returns an error on failure.
 func staticJsClipboardJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/clipboard.js"
+	path := "static/js/clipboard.js"
 	name := "static/js/clipboard.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1738,7 +1774,7 @@ func staticJsClipboardJs() (*asset, error) {
 
 // staticJsCryptoAsn110MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoAsn110MinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/asn1-1.0.min.js"
+	path := "static/js/crypto/asn1-1.0.min.js"
 	name := "static/js/crypto/asn1-1.0.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1756,7 +1792,7 @@ func staticJsCryptoAsn110MinJs() (*asset, error) {
 
 // staticJsCryptoAsn1hex11MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoAsn1hex11MinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/asn1hex-1.1.min.js"
+	path := "static/js/crypto/asn1hex-1.1.min.js"
 	name := "static/js/crypto/asn1hex-1.1.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1774,7 +1810,7 @@ func staticJsCryptoAsn1hex11MinJs() (*asset, error) {
 
 // staticJsCryptoCrypto11MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoCrypto11MinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/crypto-1.1.min.js"
+	path := "static/js/crypto/crypto-1.1.min.js"
 	name := "static/js/crypto/crypto-1.1.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1792,7 +1828,7 @@ func staticJsCryptoCrypto11MinJs() (*asset, error) {
 
 // staticJsCryptoEcdsaModified10MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoEcdsaModified10MinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ecdsa-modified-1.0.min.js"
+	path := "static/js/crypto/ecdsa-modified-1.0.min.js"
 	name := "static/js/crypto/ecdsa-modified-1.0.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1810,7 +1846,7 @@ func staticJsCryptoEcdsaModified10MinJs() (*asset, error) {
 
 // staticJsCryptoEcparam10MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoEcparam10MinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ecparam-1.0.min.js"
+	path := "static/js/crypto/ecparam-1.0.min.js"
 	name := "static/js/crypto/ecparam-1.0.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1828,7 +1864,7 @@ func staticJsCryptoEcparam10MinJs() (*asset, error) {
 
 // staticJsCryptoExtCjAesJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtCjAesJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/cj/aes.js"
+	path := "static/js/crypto/ext/cj/aes.js"
 	name := "static/js/crypto/ext/cj/aes.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1846,7 +1882,7 @@ func staticJsCryptoExtCjAesJs() (*asset, error) {
 
 // staticJsCryptoExtCjCryptojs312CoreFixMinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtCjCryptojs312CoreFixMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js"
+	path := "static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js"
 	name := "static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1864,7 +1900,7 @@ func staticJsCryptoExtCjCryptojs312CoreFixMinJs() (*asset, error) {
 
 // staticJsCryptoExtCjEcPatchMinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtCjEcPatchMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/cj/ec-patch-min.js"
+	path := "static/js/crypto/ext/cj/ec-patch-min.js"
 	name := "static/js/crypto/ext/cj/ec-patch-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1882,7 +1918,7 @@ func staticJsCryptoExtCjEcPatchMinJs() (*asset, error) {
 
 // staticJsCryptoExtCjMd5_minJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtCjMd5_minJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/cj/md5_min.js"
+	path := "static/js/crypto/ext/cj/md5_min.js"
 	name := "static/js/crypto/ext/cj/md5_min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1900,7 +1936,7 @@ func staticJsCryptoExtCjMd5_minJs() (*asset, error) {
 
 // staticJsCryptoExtCjSha1_minJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtCjSha1_minJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/cj/sha1_min.js"
+	path := "static/js/crypto/ext/cj/sha1_min.js"
 	name := "static/js/crypto/ext/cj/sha1_min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1918,7 +1954,7 @@ func staticJsCryptoExtCjSha1_minJs() (*asset, error) {
 
 // staticJsCryptoExtCjSha256_minJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtCjSha256_minJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/cj/sha256_min.js"
+	path := "static/js/crypto/ext/cj/sha256_min.js"
 	name := "static/js/crypto/ext/cj/sha256_min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1936,7 +1972,7 @@ func staticJsCryptoExtCjSha256_minJs() (*asset, error) {
 
 // staticJsCryptoExtCjX64Core_minJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtCjX64Core_minJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/cj/x64-core_min.js"
+	path := "static/js/crypto/ext/cj/x64-core_min.js"
 	name := "static/js/crypto/ext/cj/x64-core_min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1954,7 +1990,7 @@ func staticJsCryptoExtCjX64Core_minJs() (*asset, error) {
 
 // staticJsCryptoExtEcMinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtEcMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/ec-min.js"
+	path := "static/js/crypto/ext/ec-min.js"
 	name := "static/js/crypto/ext/ec-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1972,7 +2008,7 @@ func staticJsCryptoExtEcMinJs() (*asset, error) {
 
 // staticJsCryptoExtEcPatchMinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtEcPatchMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/ec-patch-min.js"
+	path := "static/js/crypto/ext/ec-patch-min.js"
 	name := "static/js/crypto/ext/ec-patch-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -1990,7 +2026,7 @@ func staticJsCryptoExtEcPatchMinJs() (*asset, error) {
 
 // staticJsCryptoExtJsbnMinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtJsbnMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/jsbn-min.js"
+	path := "static/js/crypto/ext/jsbn-min.js"
 	name := "static/js/crypto/ext/jsbn-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2008,7 +2044,7 @@ func staticJsCryptoExtJsbnMinJs() (*asset, error) {
 
 // staticJsCryptoExtJsbn2MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtJsbn2MinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/jsbn2-min.js"
+	path := "static/js/crypto/ext/jsbn2-min.js"
 	name := "static/js/crypto/ext/jsbn2-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2026,7 +2062,7 @@ func staticJsCryptoExtJsbn2MinJs() (*asset, error) {
 
 // staticJsCryptoExtPrng4MinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtPrng4MinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/prng4-min.js"
+	path := "static/js/crypto/ext/prng4-min.js"
 	name := "static/js/crypto/ext/prng4-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2044,7 +2080,7 @@ func staticJsCryptoExtPrng4MinJs() (*asset, error) {
 
 // staticJsCryptoExtRngMinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtRngMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/rng-min.js"
+	path := "static/js/crypto/ext/rng-min.js"
 	name := "static/js/crypto/ext/rng-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2062,7 +2098,7 @@ func staticJsCryptoExtRngMinJs() (*asset, error) {
 
 // staticJsCryptoExtYahooMinJs reads file data from disk. It returns an error on failure.
 func staticJsCryptoExtYahooMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/crypto/ext/yahoo-min.js"
+	path := "static/js/crypto/ext/yahoo-min.js"
 	name := "static/js/crypto/ext/yahoo-min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2080,7 +2116,7 @@ func staticJsCryptoExtYahooMinJs() (*asset, error) {
 
 // staticJsDatetimeJs reads file data from disk. It returns an error on failure.
 func staticJsDatetimeJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/datetime.js"
+	path := "static/js/datetime.js"
 	name := "static/js/datetime.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2098,7 +2134,7 @@ func staticJsDatetimeJs() (*asset, error) {
 
 // staticJsDemoDemoDatatableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoDatatableJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-datatable.js"
+	path := "static/js/demo/demo-datatable.js"
 	name := "static/js/demo/demo-datatable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2116,7 +2152,7 @@ func staticJsDemoDemoDatatableJs() (*asset, error) {
 
 // staticJsDemoDemoFlotJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoFlotJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-flot.js"
+	path := "static/js/demo/demo-flot.js"
 	name := "static/js/demo/demo-flot.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2134,7 +2170,7 @@ func staticJsDemoDemoFlotJs() (*asset, error) {
 
 // staticJsDemoDemoFormsJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoFormsJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-forms.js"
+	path := "static/js/demo/demo-forms.js"
 	name := "static/js/demo/demo-forms.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2152,7 +2188,7 @@ func staticJsDemoDemoFormsJs() (*asset, error) {
 
 // staticJsDemoDemoJqcloudJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoJqcloudJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-jqcloud.js"
+	path := "static/js/demo/demo-jqcloud.js"
 	name := "static/js/demo/demo-jqcloud.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2170,7 +2206,7 @@ func staticJsDemoDemoJqcloudJs() (*asset, error) {
 
 // staticJsDemoDemoJqgridJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoJqgridJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-jqgrid.js"
+	path := "static/js/demo/demo-jqgrid.js"
 	name := "static/js/demo/demo-jqgrid.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2188,7 +2224,7 @@ func staticJsDemoDemoJqgridJs() (*asset, error) {
 
 // staticJsDemoDemoNestableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoNestableJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-nestable.js"
+	path := "static/js/demo/demo-nestable.js"
 	name := "static/js/demo/demo-nestable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2206,7 +2242,7 @@ func staticJsDemoDemoNestableJs() (*asset, error) {
 
 // staticJsDemoDemoPanelsJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoPanelsJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-panels.js"
+	path := "static/js/demo/demo-panels.js"
 	name := "static/js/demo/demo-panels.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2224,7 +2260,7 @@ func staticJsDemoDemoPanelsJs() (*asset, error) {
 
 // staticJsDemoDemoRtlJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoRtlJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-rtl.js"
+	path := "static/js/demo/demo-rtl.js"
 	name := "static/js/demo/demo-rtl.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2242,7 +2278,7 @@ func staticJsDemoDemoRtlJs() (*asset, error) {
 
 // staticJsDemoDemoSearchJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoSearchJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-search.js"
+	path := "static/js/demo/demo-search.js"
 	name := "static/js/demo/demo-search.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2260,7 +2296,7 @@ func staticJsDemoDemoSearchJs() (*asset, error) {
 
 // staticJsDemoDemoSortableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoSortableJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-sortable.js"
+	path := "static/js/demo/demo-sortable.js"
 	name := "static/js/demo/demo-sortable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2278,7 +2314,7 @@ func staticJsDemoDemoSortableJs() (*asset, error) {
 
 // staticJsDemoDemoUploadJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoUploadJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-upload.js"
+	path := "static/js/demo/demo-upload.js"
 	name := "static/js/demo/demo-upload.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2296,7 +2332,7 @@ func staticJsDemoDemoUploadJs() (*asset, error) {
 
 // staticJsDemoDemoVectorMapJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoVectorMapJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-vector-map.js"
+	path := "static/js/demo/demo-vector-map.js"
 	name := "static/js/demo/demo-vector-map.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2314,7 +2350,7 @@ func staticJsDemoDemoVectorMapJs() (*asset, error) {
 
 // staticJsDemoDemoWizardJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoWizardJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-wizard.js"
+	path := "static/js/demo/demo-wizard.js"
 	name := "static/js/demo/demo-wizard.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2332,7 +2368,7 @@ func staticJsDemoDemoWizardJs() (*asset, error) {
 
 // staticJsDemoDemoXeditableJs reads file data from disk. It returns an error on failure.
 func staticJsDemoDemoXeditableJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/demo/demo-xeditable.js"
+	path := "static/js/demo/demo-xeditable.js"
 	name := "static/js/demo/demo-xeditable.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2350,7 +2386,7 @@ func staticJsDemoDemoXeditableJs() (*asset, error) {
 
 // staticJsIndexJs reads file data from disk. It returns an error on failure.
 func staticJsIndexJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/index.js"
+	path := "static/js/index.js"
 	name := "static/js/index.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2368,7 +2404,7 @@ func staticJsIndexJs() (*asset, error) {
 
 // staticJsKeysJs reads file data from disk. It returns an error on failure.
 func staticJsKeysJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/keys.js"
+	path := "static/js/keys.js"
 	name := "static/js/keys.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2386,7 +2422,7 @@ func staticJsKeysJs() (*asset, error) {
 
 // staticJsNprogressJs reads file data from disk. It returns an error on failure.
 func staticJsNprogressJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/js/nprogress.js"
+	path := "static/js/nprogress.js"
 	name := "static/js/nprogress.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2404,7 +2440,7 @@ func staticJsNprogressJs() (*asset, error) {
 
 // staticLang1Ini reads file data from disk. It returns an error on failure.
 func staticLang1Ini() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/lang/1.ini"
+	path := "static/lang/1.ini"
 	name := "static/lang/1.ini"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2422,7 +2458,7 @@ func staticLang1Ini() (*asset, error) {
 
 // staticLang42Ini reads file data from disk. It returns an error on failure.
 func staticLang42Ini() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/lang/42.ini"
+	path := "static/lang/42.ini"
 	name := "static/lang/42.ini"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2440,7 +2476,7 @@ func staticLang42Ini() (*asset, error) {
 
 // staticLangEnUsAllJson reads file data from disk. It returns an error on failure.
 func staticLangEnUsAllJson() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/lang/en-us.all.json"
+	path := "static/lang/en-us.all.json"
 	name := "static/lang/en-us.all.json"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2458,7 +2494,7 @@ func staticLangEnUsAllJson() (*asset, error) {
 
 // staticLangLocale_enUsIni reads file data from disk. It returns an error on failure.
 func staticLangLocale_enUsIni() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/lang/locale_en-US.ini"
+	path := "static/lang/locale_en-US.ini"
 	name := "static/lang/locale_en-US.ini"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2476,7 +2512,7 @@ func staticLangLocale_enUsIni() (*asset, error) {
 
 // staticLangLocale_ruRuIni reads file data from disk. It returns an error on failure.
 func staticLangLocale_ruRuIni() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/lang/locale_ru-RU.ini"
+	path := "static/lang/locale_ru-RU.ini"
 	name := "static/lang/locale_ru-RU.ini"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2494,7 +2530,7 @@ func staticLangLocale_ruRuIni() (*asset, error) {
 
 // staticLoginHtml reads file data from disk. It returns an error on failure.
 func staticLoginHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/login.html"
+	path := "static/login.html"
 	name := "static/login.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2512,7 +2548,7 @@ func staticLoginHtml() (*asset, error) {
 
 // staticMenuHtml reads file data from disk. It returns an error on failure.
 func staticMenuHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/menu.html"
+	path := "static/menu.html"
 	name := "static/menu.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2530,26 +2566,8 @@ func staticMenuHtml() (*asset, error) {
 
 // staticModal_anonymHtml reads file data from disk. It returns an error on failure.
 func staticModal_anonymHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/modal_anonym.html"
+	path := "static/modal_anonym.html"
 	name := "static/modal_anonym.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticNew_columnHtml reads file data from disk. It returns an error on failure.
-func staticNew_columnHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/new_column.html"
-	name := "static/new_column.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2566,7 +2584,7 @@ func staticNew_columnHtml() (*asset, error) {
 
 // staticNew_stateHtml reads file data from disk. It returns an error on failure.
 func staticNew_stateHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/new_state.html"
+	path := "static/new_state.html"
 	name := "static/new_state.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2584,7 +2602,7 @@ func staticNew_stateHtml() (*asset, error) {
 
 // staticNew_tableHtml reads file data from disk. It returns an error on failure.
 func staticNew_tableHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/new_table.html"
+	path := "static/new_table.html"
 	name := "static/new_table.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2602,7 +2620,7 @@ func staticNew_tableHtml() (*asset, error) {
 
 // staticPassHtml reads file data from disk. It returns an error on failure.
 func staticPassHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/pass.html"
+	path := "static/pass.html"
 	name := "static/pass.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2620,7 +2638,7 @@ func staticPassHtml() (*asset, error) {
 
 // staticPswHtml reads file data from disk. It returns an error on failure.
 func staticPswHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/psw.html"
+	path := "static/psw.html"
 	name := "static/psw.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2638,7 +2656,7 @@ func staticPswHtml() (*asset, error) {
 
 // staticRequest_citizen_statusHtml reads file data from disk. It returns an error on failure.
 func staticRequest_citizen_statusHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/request_citizen_status.html"
+	path := "static/request_citizen_status.html"
 	name := "static/request_citizen_status.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2656,7 +2674,7 @@ func staticRequest_citizen_statusHtml() (*asset, error) {
 
 // staticShow_tableHtml reads file data from disk. It returns an error on failure.
 func staticShow_tableHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/show_table.html"
+	path := "static/show_table.html"
 	name := "static/show_table.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2674,7 +2692,7 @@ func staticShow_tableHtml() (*asset, error) {
 
 // staticSignaturesHtml reads file data from disk. It returns an error on failure.
 func staticSignaturesHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/signatures.html"
+	path := "static/signatures.html"
 	name := "static/signatures.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2692,7 +2710,7 @@ func staticSignaturesHtml() (*asset, error) {
 
 // staticSignatures_newHtml reads file data from disk. It returns an error on failure.
 func staticSignatures_newHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/signatures_new.html"
+	path := "static/signatures_new.html"
 	name := "static/signatures_new.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2710,7 +2728,7 @@ func staticSignatures_newHtml() (*asset, error) {
 
 // staticSmart_request_citizenHtml reads file data from disk. It returns an error on failure.
 func staticSmart_request_citizenHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/smart_request_citizen.html"
+	path := "static/smart_request_citizen.html"
 	name := "static/smart_request_citizen.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2728,7 +2746,7 @@ func staticSmart_request_citizenHtml() (*asset, error) {
 
 // staticState_lawsHtml reads file data from disk. It returns an error on failure.
 func staticState_lawsHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/state_laws.html"
+	path := "static/state_laws.html"
 	name := "static/state_laws.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2746,26 +2764,8 @@ func staticState_lawsHtml() (*asset, error) {
 
 // staticState_parametersHtml reads file data from disk. It returns an error on failure.
 func staticState_parametersHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/state_parameters.html"
+	path := "static/state_parameters.html"
 	name := "static/state_parameters.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticState_smart_lawsHtml reads file data from disk. It returns an error on failure.
-func staticState_smart_lawsHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/state_smart_laws.html"
-	name := "static/state_smart_laws.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2782,7 +2782,7 @@ func staticState_smart_lawsHtml() (*asset, error) {
 
 // staticState_tablesHtml reads file data from disk. It returns an error on failure.
 func staticState_tablesHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/state_tables.html"
+	path := "static/state_tables.html"
 	name := "static/state_tables.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2800,7 +2800,7 @@ func staticState_tablesHtml() (*asset, error) {
 
 // staticTestHtml reads file data from disk. It returns an error on failure.
 func staticTestHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/test.html"
+	path := "static/test.html"
 	name := "static/test.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2818,7 +2818,7 @@ func staticTestHtml() (*asset, error) {
 
 // staticUpdating_blockchainHtml reads file data from disk. It returns an error on failure.
 func staticUpdating_blockchainHtml() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/updating_blockchain.html"
+	path := "static/updating_blockchain.html"
 	name := "static/updating_blockchain.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2836,7 +2836,7 @@ func staticUpdating_blockchainHtml() (*asset, error) {
 
 // staticVendorAnimateCssAnimateMinCss reads file data from disk. It returns an error on failure.
 func staticVendorAnimateCssAnimateMinCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/animate.css/animate.min.css"
+	path := "static/vendor/animate.css/animate.min.css"
 	name := "static/vendor/animate.css/animate.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2854,7 +2854,7 @@ func staticVendorAnimateCssAnimateMinCss() (*asset, error) {
 
 // staticVendorBootstrapDistCssBootstrapCss reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapDistCssBootstrapCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/bootstrap/dist/css/bootstrap.css"
+	path := "static/vendor/bootstrap/dist/css/bootstrap.css"
 	name := "static/vendor/bootstrap/dist/css/bootstrap.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2872,7 +2872,7 @@ func staticVendorBootstrapDistCssBootstrapCss() (*asset, error) {
 
 // staticVendorBootstrapDistJsBootstrapJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapDistJsBootstrapJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/bootstrap/dist/js/bootstrap.js"
+	path := "static/vendor/bootstrap/dist/js/bootstrap.js"
 	name := "static/vendor/bootstrap/dist/js/bootstrap.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2890,7 +2890,7 @@ func staticVendorBootstrapDistJsBootstrapJs() (*asset, error) {
 
 // staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs reads file data from disk. It returns an error on failure.
 func staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
+	path := "static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
 	name := "static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2908,7 +2908,7 @@ func staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs() (*asset, error) {
 
 // staticVendorDatatablesFontawesomeIndexCss reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesFontawesomeIndexCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/dataTables.fontAwesome/index.css"
+	path := "static/vendor/dataTables.fontAwesome/index.css"
 	name := "static/vendor/dataTables.fontAwesome/index.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2926,7 +2926,7 @@ func staticVendorDatatablesFontawesomeIndexCss() (*asset, error) {
 
 // staticVendorDatatablesMediaCssDatatablesBootstrapCss reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaCssDatatablesBootstrapCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/css/dataTables.bootstrap.css"
+	path := "static/vendor/datatables/media/css/dataTables.bootstrap.css"
 	name := "static/vendor/datatables/media/css/dataTables.bootstrap.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2944,7 +2944,7 @@ func staticVendorDatatablesMediaCssDatatablesBootstrapCss() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSortingIconsPsd reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSortingIconsPsd() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/images/Sorting icons.psd"
+	path := "static/vendor/datatables/media/images/Sorting icons.psd"
 	name := "static/vendor/datatables/media/images/Sorting icons.psd"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2962,7 +2962,7 @@ func staticVendorDatatablesMediaImagesSortingIconsPsd() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesFaviconIco reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesFaviconIco() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/images/favicon.ico"
+	path := "static/vendor/datatables/media/images/favicon.ico"
 	name := "static/vendor/datatables/media/images/favicon.ico"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2980,7 +2980,7 @@ func staticVendorDatatablesMediaImagesFaviconIco() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_ascPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_ascPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/images/sort_asc.png"
+	path := "static/vendor/datatables/media/images/sort_asc.png"
 	name := "static/vendor/datatables/media/images/sort_asc.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -2998,7 +2998,7 @@ func staticVendorDatatablesMediaImagesSort_ascPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_asc_disabledPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_asc_disabledPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/images/sort_asc_disabled.png"
+	path := "static/vendor/datatables/media/images/sort_asc_disabled.png"
 	name := "static/vendor/datatables/media/images/sort_asc_disabled.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3016,7 +3016,7 @@ func staticVendorDatatablesMediaImagesSort_asc_disabledPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_bothPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_bothPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/images/sort_both.png"
+	path := "static/vendor/datatables/media/images/sort_both.png"
 	name := "static/vendor/datatables/media/images/sort_both.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3034,7 +3034,7 @@ func staticVendorDatatablesMediaImagesSort_bothPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_descPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_descPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/images/sort_desc.png"
+	path := "static/vendor/datatables/media/images/sort_desc.png"
 	name := "static/vendor/datatables/media/images/sort_desc.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3052,7 +3052,7 @@ func staticVendorDatatablesMediaImagesSort_descPng() (*asset, error) {
 
 // staticVendorDatatablesMediaImagesSort_desc_disabledPng reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaImagesSort_desc_disabledPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/images/sort_desc_disabled.png"
+	path := "static/vendor/datatables/media/images/sort_desc_disabled.png"
 	name := "static/vendor/datatables/media/images/sort_desc_disabled.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3070,7 +3070,7 @@ func staticVendorDatatablesMediaImagesSort_desc_disabledPng() (*asset, error) {
 
 // staticVendorDatatablesMediaJsDatatablesBootstrapJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsDatatablesBootstrapJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/js/dataTables.bootstrap.js"
+	path := "static/vendor/datatables/media/js/dataTables.bootstrap.js"
 	name := "static/vendor/datatables/media/js/dataTables.bootstrap.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3088,7 +3088,7 @@ func staticVendorDatatablesMediaJsDatatablesBootstrapJs() (*asset, error) {
 
 // staticVendorDatatablesMediaJsDatatablesButtonsMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsDatatablesButtonsMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/js/dataTables.buttons.min.js"
+	path := "static/vendor/datatables/media/js/dataTables.buttons.min.js"
 	name := "static/vendor/datatables/media/js/dataTables.buttons.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3106,7 +3106,7 @@ func staticVendorDatatablesMediaJsDatatablesButtonsMinJs() (*asset, error) {
 
 // staticVendorDatatablesMediaJsDatatablesColreorderMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsDatatablesColreorderMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/js/dataTables.colReorder.min.js"
+	path := "static/vendor/datatables/media/js/dataTables.colReorder.min.js"
 	name := "static/vendor/datatables/media/js/dataTables.colReorder.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3124,7 +3124,7 @@ func staticVendorDatatablesMediaJsDatatablesColreorderMinJs() (*asset, error) {
 
 // staticVendorDatatablesMediaJsDatatablesEditorMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsDatatablesEditorMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/js/dataTables.editor.min.js"
+	path := "static/vendor/datatables/media/js/dataTables.editor.min.js"
 	name := "static/vendor/datatables/media/js/dataTables.editor.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3142,7 +3142,7 @@ func staticVendorDatatablesMediaJsDatatablesEditorMinJs() (*asset, error) {
 
 // staticVendorDatatablesMediaJsDatatablesKeytableMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsDatatablesKeytableMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/js/dataTables.keyTable.min.js"
+	path := "static/vendor/datatables/media/js/dataTables.keyTable.min.js"
 	name := "static/vendor/datatables/media/js/dataTables.keyTable.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3160,7 +3160,7 @@ func staticVendorDatatablesMediaJsDatatablesKeytableMinJs() (*asset, error) {
 
 // staticVendorDatatablesMediaJsDatatablesSelectMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsDatatablesSelectMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/js/dataTables.select.min.js"
+	path := "static/vendor/datatables/media/js/dataTables.select.min.js"
 	name := "static/vendor/datatables/media/js/dataTables.select.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3178,7 +3178,7 @@ func staticVendorDatatablesMediaJsDatatablesSelectMinJs() (*asset, error) {
 
 // staticVendorDatatablesMediaJsJqueryDatatablesMinJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesMediaJsJqueryDatatablesMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables/media/js/jquery.dataTables.min.js"
+	path := "static/vendor/datatables/media/js/jquery.dataTables.min.js"
 	name := "static/vendor/datatables/media/js/jquery.dataTables.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3196,7 +3196,7 @@ func staticVendorDatatablesMediaJsJqueryDatatablesMinJs() (*asset, error) {
 
 // staticVendorDatatablesColvisCssDatatablesColvisCss reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesColvisCssDatatablesColvisCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables-colvis/css/dataTables.colVis.css"
+	path := "static/vendor/datatables-colvis/css/dataTables.colVis.css"
 	name := "static/vendor/datatables-colvis/css/dataTables.colVis.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3214,7 +3214,7 @@ func staticVendorDatatablesColvisCssDatatablesColvisCss() (*asset, error) {
 
 // staticVendorDatatablesColvisJsDatatablesColvisJs reads file data from disk. It returns an error on failure.
 func staticVendorDatatablesColvisJsDatatablesColvisJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/datatables-colvis/js/dataTables.colVis.js"
+	path := "static/vendor/datatables-colvis/js/dataTables.colVis.js"
 	name := "static/vendor/datatables-colvis/js/dataTables.colVis.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3232,7 +3232,7 @@ func staticVendorDatatablesColvisJsDatatablesColvisJs() (*asset, error) {
 
 // staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss reads file data from disk. It returns an error on failure.
 func staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
+	path := "static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
 	name := "static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3250,7 +3250,7 @@ func staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerM
 
 // staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs reads file data from disk. It returns an error on failure.
 func staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
+	path := "static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
 	name := "static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3268,7 +3268,7 @@ func staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMi
 
 // staticVendorFontawesomeCssFontAwesomeMinCss reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeCssFontAwesomeMinCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/fontawesome/css/font-awesome.min.css"
+	path := "static/vendor/fontawesome/css/font-awesome.min.css"
 	name := "static/vendor/fontawesome/css/font-awesome.min.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3286,7 +3286,7 @@ func staticVendorFontawesomeCssFontAwesomeMinCss() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeOtf reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeOtf() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/fontawesome/fonts/FontAwesome.otf"
+	path := "static/vendor/fontawesome/fonts/FontAwesome.otf"
 	name := "static/vendor/fontawesome/fonts/FontAwesome.otf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3304,7 +3304,7 @@ func staticVendorFontawesomeFontsFontawesomeOtf() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontEot reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontEot() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3322,7 +3322,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontEot() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontSvg reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3340,7 +3340,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontSvg() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontTtf reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontTtf() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3358,7 +3358,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontTtf() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontWoff reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontWoff() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3376,7 +3376,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontWoff() (*asset, error) {
 
 // staticVendorFontawesomeFontsFontawesomeWebfontWoff2 reads file data from disk. It returns an error on failure.
 func staticVendorFontawesomeFontsFontawesomeWebfontWoff2() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
+	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
 	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3394,7 +3394,7 @@ func staticVendorFontawesomeFontsFontawesomeWebfontWoff2() (*asset, error) {
 
 // staticVendorJqueryStorageApiJqueryStorageapiJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryStorageApiJqueryStorageapiJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/jQuery-Storage-API/jquery.storageapi.js"
+	path := "static/vendor/jQuery-Storage-API/jquery.storageapi.js"
 	name := "static/vendor/jQuery-Storage-API/jquery.storageapi.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3412,7 +3412,7 @@ func staticVendorJqueryStorageApiJqueryStorageapiJs() (*asset, error) {
 
 // staticVendorJqueryDistJqueryJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryDistJqueryJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/jquery/dist/jquery.js"
+	path := "static/vendor/jquery/dist/jquery.js"
 	name := "static/vendor/jquery/dist/jquery.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3430,7 +3430,7 @@ func staticVendorJqueryDistJqueryJs() (*asset, error) {
 
 // staticVendorLoadersCssLoadersCss reads file data from disk. It returns an error on failure.
 func staticVendorLoadersCssLoadersCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/loaders.css/loaders.css"
+	path := "static/vendor/loaders.css/loaders.css"
 	name := "static/vendor/loaders.css/loaders.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3448,7 +3448,7 @@ func staticVendorLoadersCssLoadersCss() (*asset, error) {
 
 // staticVendorModernizrModernizrCustomJs reads file data from disk. It returns an error on failure.
 func staticVendorModernizrModernizrCustomJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/modernizr/modernizr.custom.js"
+	path := "static/vendor/modernizr/modernizr.custom.js"
 	name := "static/vendor/modernizr/modernizr.custom.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3466,7 +3466,7 @@ func staticVendorModernizrModernizrCustomJs() (*asset, error) {
 
 // staticVendorMomentMinMomentWithLocalesMinJs reads file data from disk. It returns an error on failure.
 func staticVendorMomentMinMomentWithLocalesMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/moment/min/moment-with-locales.min.js"
+	path := "static/vendor/moment/min/moment-with-locales.min.js"
 	name := "static/vendor/moment/min/moment-with-locales.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3484,7 +3484,7 @@ func staticVendorMomentMinMomentWithLocalesMinJs() (*asset, error) {
 
 // staticVendorSelect2DistCssSelect2Css reads file data from disk. It returns an error on failure.
 func staticVendorSelect2DistCssSelect2Css() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/select2/dist/css/select2.css"
+	path := "static/vendor/select2/dist/css/select2.css"
 	name := "static/vendor/select2/dist/css/select2.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3502,7 +3502,7 @@ func staticVendorSelect2DistCssSelect2Css() (*asset, error) {
 
 // staticVendorSelect2DistJsSelect2Js reads file data from disk. It returns an error on failure.
 func staticVendorSelect2DistJsSelect2Js() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/select2/dist/js/select2.js"
+	path := "static/vendor/select2/dist/js/select2.js"
 	name := "static/vendor/select2/dist/js/select2.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3520,7 +3520,7 @@ func staticVendorSelect2DistJsSelect2Js() (*asset, error) {
 
 // staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss reads file data from disk. It returns an error on failure.
 func staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
+	path := "static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
 	name := "static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3538,7 +3538,7 @@ func staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss() (*asset, error) 
 
 // staticVendorSimpleLineIconsCssSimpleLineIconsCss reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsCssSimpleLineIconsCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/simple-line-icons/css/simple-line-icons.css"
+	path := "static/vendor/simple-line-icons/css/simple-line-icons.css"
 	name := "static/vendor/simple-line-icons/css/simple-line-icons.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3556,7 +3556,7 @@ func staticVendorSimpleLineIconsCssSimpleLineIconsCss() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsEot reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsEot() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3574,7 +3574,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsEot() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsSvg reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsSvg() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3592,7 +3592,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsSvg() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsTtf reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsTtf() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3610,7 +3610,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsTtf() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsWoff reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3628,7 +3628,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff() (*asset, error) {
 
 // staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2 reads file data from disk. It returns an error on failure.
 func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
+	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
 	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3646,7 +3646,7 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2() (*asset, error) {
 
 // staticVendorSpinkitCssSpinkitCss reads file data from disk. It returns an error on failure.
 func staticVendorSpinkitCssSpinkitCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/spinkit/css/spinkit.css"
+	path := "static/vendor/spinkit/css/spinkit.css"
 	name := "static/vendor/spinkit/css/spinkit.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3664,7 +3664,7 @@ func staticVendorSpinkitCssSpinkitCss() (*asset, error) {
 
 // staticVendorSweetalertDistSweetalertCss reads file data from disk. It returns an error on failure.
 func staticVendorSweetalertDistSweetalertCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/sweetalert/dist/sweetalert.css"
+	path := "static/vendor/sweetalert/dist/sweetalert.css"
 	name := "static/vendor/sweetalert/dist/sweetalert.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3682,7 +3682,7 @@ func staticVendorSweetalertDistSweetalertCss() (*asset, error) {
 
 // staticVendorSweetalertDistSweetalertMinJs reads file data from disk. It returns an error on failure.
 func staticVendorSweetalertDistSweetalertMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/sweetalert/dist/sweetalert.min.js"
+	path := "static/vendor/sweetalert/dist/sweetalert.min.js"
 	name := "static/vendor/sweetalert/dist/sweetalert.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3700,7 +3700,7 @@ func staticVendorSweetalertDistSweetalertMinJs() (*asset, error) {
 
 // staticVendorWhirlDistWhirlCss reads file data from disk. It returns an error on failure.
 func staticVendorWhirlDistWhirlCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/whirl/dist/whirl.css"
+	path := "static/vendor/whirl/dist/whirl.css"
 	name := "static/vendor/whirl/dist/whirl.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3718,7 +3718,7 @@ func staticVendorWhirlDistWhirlCss() (*asset, error) {
 
 // staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3736,7 +3736,7 @@ func staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss() (*asse
 
 // staticVendorXEditableDistBootstrap3EditableImgClearPng reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableImgClearPng() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3754,7 +3754,7 @@ func staticVendorXEditableDistBootstrap3EditableImgClearPng() (*asset, error) {
 
 // staticVendorXEditableDistBootstrap3EditableImgLoadingGif reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableImgLoadingGif() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3772,7 +3772,7 @@ func staticVendorXEditableDistBootstrap3EditableImgLoadingGif() (*asset, error) 
 
 // staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs reads file data from disk. It returns an error on failure.
 func staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs() (*asset, error) {
-	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
+	path := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
 	name := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -3852,11 +3852,13 @@ var _bindata = map[string]func() (*asset, error){
 	"static/change_state_parameters.html": staticChange_state_parametersHtml,
 	"static/change_state_smart_laws.html": staticChange_state_smart_lawsHtml,
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
+	"static/contracts.html": staticContractsHtml,
 	"static/countries/countries.json": staticCountriesCountriesJson,
 	"static/countries/flags.png": staticCountriesFlagsPng,
 	"static/countries/mm.png": staticCountriesMmPng,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
+	"static/edit_column.html": staticEdit_columnHtml,
 	"static/edit_contract.html": staticEdit_contractHtml,
 	"static/edit_menu.html": staticEdit_menuHtml,
 	"static/edit_page.html": staticEdit_pageHtml,
@@ -3969,7 +3971,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
-	"static/new_column.html": staticNew_columnHtml,
 	"static/new_state.html": staticNew_stateHtml,
 	"static/new_table.html": staticNew_tableHtml,
 	"static/pass.html": staticPassHtml,
@@ -3981,7 +3982,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/smart_request_citizen.html": staticSmart_request_citizenHtml,
 	"static/state_laws.html": staticState_lawsHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
-	"static/state_smart_laws.html": staticState_smart_lawsHtml,
 	"static/state_tables.html": staticState_tablesHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
@@ -4105,6 +4105,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{
 		}},
+		"contracts.html": &bintree{staticContractsHtml, map[string]*bintree{
+		}},
 		"countries": &bintree{nil, map[string]*bintree{
 			"countries.json": &bintree{staticCountriesCountriesJson, map[string]*bintree{
 			}},
@@ -4118,6 +4120,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			}},
 		}},
 		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{
+		}},
+		"edit_column.html": &bintree{staticEdit_columnHtml, map[string]*bintree{
 		}},
 		"edit_contract.html": &bintree{staticEdit_contractHtml, map[string]*bintree{
 		}},
@@ -4361,8 +4365,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{
 		}},
-		"new_column.html": &bintree{staticNew_columnHtml, map[string]*bintree{
-		}},
 		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{
 		}},
 		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{
@@ -4384,8 +4386,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"state_laws.html": &bintree{staticState_lawsHtml, map[string]*bintree{
 		}},
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{
-		}},
-		"state_smart_laws.html": &bintree{staticState_smart_lawsHtml, map[string]*bintree{
 		}},
 		"state_tables.html": &bintree{staticState_tablesHtml, map[string]*bintree{
 		}},
