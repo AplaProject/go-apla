@@ -340,6 +340,7 @@ func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 	for i := len(*tx) - 1; i > 0; i-- {
 		if len((*tx)[i].Tags) == 0 {
 			(*tx)[i].Tags = lexem.Value.(string)
+			break
 		}
 	}
 	return nil

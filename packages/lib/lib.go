@@ -240,10 +240,27 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 	switch t.Kind() {
 	case reflect.Uint8, reflect.Int8:
 		*out = append(*out, uint8(t.Uint()))
-	case reflect.Uint32, reflect.Int32:
+	case reflect.Uint32:
 		tmp := make([]byte, 4)
 		binary.BigEndian.PutUint32(tmp, uint32(t.Uint()))
 		*out = append(*out, tmp...)
+	case reflect.Int32:
+		if uint32(t.Int()) < 128 {
+			*out = append(*out, uint8(t.Int()))
+		} else {
+			var i uint8
+			tmp := make([]byte, 4)
+			binary.BigEndian.PutUint32(tmp, uint32(t.Int()))
+			for ; i < 4; i++ {
+				if tmp[i] != uint8(0) {
+					break
+				}
+			}
+			*out = append(*out, uint8(128+4-i))
+			if i < 4 {
+				*out = append(*out, tmp[i:]...)
+			}
+		}
 	case reflect.Int64, reflect.Uint64:
 		EncodeLenInt64(out, t.Int())
 	case reflect.String:
