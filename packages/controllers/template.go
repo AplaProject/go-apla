@@ -20,11 +20,9 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
-	//"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"regexp"
 )
+
 
 
 func Template(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +44,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	sessWalletId := GetSessWalletId(sess)
 	sessCitizenId := GetSessCitizenId(sess)
 	sessStateId := GetSessInt64("state_id", sess)
+	sessAccountId := GetSessInt64("account_id", sess)
 	//sessAddress := GetSessString(sess, "address")
 	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
 
@@ -56,24 +55,11 @@ func Template(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := utils.DB.Single(`SELECT value FROM `+utils.Int64ToStr(sessStateId)+`_pages WHERE name = ?`, page).String()
+	tpl, err := utils.CreateHtmlFromTemplate(page, sessCitizenId, sessAccountId, sessStateId)
 	if err != nil {
 		log.Error("%v", err)
 		return
 	}
-
-	qrx := regexp.MustCompile(`(?i)\{\{table\.([\w\d_]*)\[([^\].]*)\]\.([\w\d_]*)\}\}`)
-	data = qrx.ReplaceAllString(data, "SELECT $3 FROM $1 WHERE $2")
-
-	qrx = regexp.MustCompile(`\[([\w\s]*)\]\(([\w\s]*)\)`)
-	data = qrx.ReplaceAllString(data, "<a href='#'  onclick=\"load_template('$2'); HideMenu();\">$1</a>")
-	qrx = regexp.MustCompile(`\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
-	data = qrx.ReplaceAllString(data, "<a href='#'  onclick=\"load_page('$2'); HideMenu();\">$1</a>")
-
-	unsafe := blackfriday.MarkdownCommon([]byte(data))
-	//html := string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
-
-	w.Write([]byte(unsafe))
+	w.Write([]byte(tpl))
 	return
-
 }

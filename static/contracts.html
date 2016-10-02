@@ -1,0 +1,55 @@
+{{ define "contracts" }}
+
+	<div class="content-heading">
+		contracts
+	</div>
+	<ol class="breadcrumb">
+	   <li><a href="#">Dashboard</a></li>
+	   <li class="active">contracts</li>
+	</ol>
+	<!-- START panel-->
+	<div class="panel panel-default">
+	 <div class="panel-heading">
+	 	<div class="panel-title">
+			contracts
+		</div>
+	 </div>
+	 <div class="panel-body">
+		<div class="table-responsive">
+		   <table class="table table-striped table-bordered table-hover">
+			  <tbody>
+			  <tr>
+				  <td>id</td>
+				  <td>name</td>
+				  <td>value</td>
+				  <td>conditions</td>
+				  <td>variables</td>
+				  <td></td>
+			  </tr>
+			  {{ range $data := .StateSmartLaws }}
+				 <tr>
+					 <td class="thead"><strong>{{$data.id}}</strong></td>
+					 <td><strong>{{$data.name}}</strong></td>
+					 <td><strong>{{$data.value}}</strong></td>
+					 <td><strong>{{$data.conditions}}</strong></td>
+					 <td><strong>{{$data.variables}}</strong></td>
+					 <td><button type="button" class="btn btn-primary" onclick="load_page('editContract', {id: {{$data.id}}} )">Change</button></td>
+				 </tr>
+			  {{end}}
+			  </tbody>
+		   </table>
+		</div>
+	 </div>
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-left">
+
+		  </div>
+		  <div class="pull-left">
+			 <button type="button" class="btn btn-primary" onclick="load_page('newContract')">Add new</button>
+		  </div>
+	   </div>
+	  </div>
+	</div>
+	<!-- END panel-->
+{{end}}

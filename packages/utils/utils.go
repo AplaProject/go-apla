@@ -65,6 +65,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/russross/blackfriday"
+
 )
 
 type BlockData struct {
@@ -2392,4 +2394,63 @@ func DecodeLenInt64(data *[]byte) (int64,error) {
 
 func FillLeft(slice []byte) []byte {
 	return lib.FillLeft(slice)
+}
+
+func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (string, error) {
+	data, err := DB.Single(`SELECT value FROM `+Int64ToStr(stateId)+`_pages WHERE name = ?`, page).String()
+	if err != nil {
+		return "", err
+	}
+
+	qrx := regexp.MustCompile(`CitizenId`)
+	data = qrx.ReplaceAllString(data, Int64ToStr(citizenId))
+	qrx = regexp.MustCompile(`AccountId`)
+	data = qrx.ReplaceAllString(data, Int64ToStr(accountId))
+
+	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\[([^\].]*)\]\.([\w\d_]*)\}\}.*`)
+	sql := qrx.ReplaceAllString(data, `SELECT $3 FROM "$1" WHERE $2`)
+	singleData, err := DB.Single(sql).String()
+	if err != nil {
+		log.Error("%v", err)
+	}
+	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\[[^\].]*\]\.[\w\d_]*\}\}`)
+	data = qrx.ReplaceAllString(data, singleData)
+
+	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\}\}.*`)
+	sql = qrx.ReplaceAllString(data, `SELECT * FROM "$1"`)
+	dataTable, err := DB.GetAll(sql, 1000)
+	if err != nil {
+		log.Error("%v", err)
+	}
+	table := `<table>`
+	for _, row := range dataTable {
+		table+=`<tr>`
+		for _, cell := range row {
+			table+=`<td>`+cell+`</td>`
+		}
+		table +=`</tr>`
+	}
+	table += `</table>`
+
+	qrx = regexp.MustCompile(`(?is)\{\{table.*?\}\}`)
+	data = qrx.ReplaceAllString(data, table)
+
+	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\)`)
+	data = qrx.ReplaceAllString(data, "<li><a href='#' onclick=\"load_template('$2'); HideMenu();\"><span>$1</span></a></li>")
+	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
+	data = qrx.ReplaceAllString(data, "<li><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
+
+	qrx = regexp.MustCompile(`(?is)\{\{Title=([\w\s]+)\}\}`)
+	data = qrx.ReplaceAllString(data, `<div class="content-heading">$1</div>`)
+	qrx = regexp.MustCompile(`(?is)\{\{Navigation=(.*?)\}\}`)
+	data = qrx.ReplaceAllString(data, `<ol class="breadcrumb"><span class="pull-right"><a href='#' onclick="load_page('editPage', {name: '`+page+`'} )">Edit</a></span>$1</ol>`)
+	qrx = regexp.MustCompile(`(?is)\{\{PageTitle=([\w\s]+)\}\}`)
+	data = qrx.ReplaceAllString(data, `<div class="panel panel-default"><div class="panel-heading"><div class="panel-title">$1</div></div><div class="panel-body">`)
+
+	unsafe := string(blackfriday.MarkdownCommon([]byte(data)))
+	//html := string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
+
+	// removing <p></p>
+	unsafe = unsafe[3:len(unsafe)-5]
+	return unsafe, nil
 }

@@ -17,6 +17,7 @@
 // static/countries/mm.png
 // static/css/style.css
 // static/dashboard_anonym.html
+// static/edit_contract.html
 // static/edit_menu.html
 // static/edit_page.html
 // static/edit_table.html
@@ -515,6 +516,24 @@ func staticCssStyleCss() (*asset, error) {
 func staticDashboard_anonymHtml() (*asset, error) {
 	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/dashboard_anonym.html"
 	name := "static/dashboard_anonym.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEdit_contractHtml reads file data from disk. It returns an error on failure.
+func staticEdit_contractHtml() (*asset, error) {
+	path := "/home/z/go-projects/src/github.com/DayLightProject/go-daylight/static/edit_contract.html"
+	name := "static/edit_contract.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3838,6 +3857,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/countries/mm.png": staticCountriesMmPng,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
+	"static/edit_contract.html": staticEdit_contractHtml,
 	"static/edit_menu.html": staticEdit_menuHtml,
 	"static/edit_page.html": staticEdit_pageHtml,
 	"static/edit_table.html": staticEdit_tableHtml,
@@ -4098,6 +4118,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			}},
 		}},
 		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{
+		}},
+		"edit_contract.html": &bintree{staticEdit_contractHtml, map[string]*bintree{
 		}},
 		"edit_menu.html": &bintree{staticEdit_menuHtml, map[string]*bintree{
 		}},

@@ -38,10 +38,12 @@ func (c *Controller) Menu() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		qrx := regexp.MustCompile(`\[([\w\s]*)\]\(([\w\s]*)\)`)
-		menu = qrx.ReplaceAllString(menu, "<a href='#'  onclick=\"load_template('$2'); HideMenu();\">$1</a>")
-		qrx = regexp.MustCompile(`\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
-		menu = qrx.ReplaceAllString(menu, "<a href='#'  onclick=\"load_page('$2'); HideMenu();\">$1</a>")
+
+		qrx := regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\)`)
+		menu = qrx.ReplaceAllString(menu, "<li><a href='#' onclick=\"load_template('$2'); HideMenu();\"><span>$1</span></a></li>")
+		qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
+		menu = qrx.ReplaceAllString(menu, "<li><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
+
 	}
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu})
 }

@@ -20,52 +20,34 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-type stateSmartLawsPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
+type contractsPage struct {
 	Lang         map[string]string
 	WalletId int64
 	CitizenId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
 	AllStateParameters []string
 	StateSmartLaws []map[string]string
 }
 
-func (c *Controller) StateSmartLaws() (string, error) {
+func (c *Controller) Contracts() (string, error) {
 
 	var err error
 
-	txType := "StateParameters"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
-
-	stateSmartLaws, err := c.GetAll(`SELECT * FROM ea_state_smart_laws`, -1)
+	stateSmartLaws, err := c.GetAll(`SELECT * FROM `+c.StateIdStr+`_smart_contracts`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	allStateParameters, err := c.GetList(`SELECT parameter FROM ea_state_parameters`).String()
+	allStateParameters, err := c.GetList(`SELECT name FROM `+c.StateIdStr+`_state_parameters`).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("state_smart_laws", "stateSmartLaws", &stateSmartLawsPage {
-		Alert:        c.Alert,
+	TemplateStr, err := makeTemplate("contracts", "contracts", &contractsPage {
 		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		StateSmartLaws : stateSmartLaws,
-		AllStateParameters : allStateParameters,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		AllStateParameters : allStateParameters})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

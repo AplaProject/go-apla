@@ -186,11 +186,10 @@ func (p *Parser) NewState() error {
 
 	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
 		(?, ?, ?, ?)`,
-		`dashboard_default`, `# Citizen dashboard
-		![Flag](https://upload.wikimedia.org/wikipedia/commons/1/10/Flag_of_Finland.png)
-		# Your balance
-		{{table.1_accounts.amount where id=AccountId}} {{table.1_state_parameters.value where name=currency}}
-[goverment](goverment)`, `menu_default`, id+`_citizens.id=1`)
+		`dashboard_default`, `{{Title=Best country}}{{Navigation=[goverment](goverment) / non-link text}}{{PageTitle=Dashboard}}
+![Flag](http://davutlarhamami.com/images/indir%20%281%29.jpg)
+{{table.1_citizens[id=CitizenId].id}}
+{{table.1_citizens}}`, `menu_default`, id+`_citizens.id=1`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -208,8 +207,10 @@ func (p *Parser) NewState() error {
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
 		(?, ?, ?)`,
-		`menu_default`, `[State tables](sys.stateTables)
-		[Interface](sys.interface)`, id+`_citizens.id=1`)
+		`menu_default`, `[Tables](sys.stateTables)
+[Smart contracts](sys.contracts)
+[Interface](sys.interface)
+[test](dashboard_default)`, id+`_citizens.id=1`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

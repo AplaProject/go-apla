@@ -210,6 +210,54 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, binSignatures...)
 
 
+	case "NewContract":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		name := []byte(c.r.FormValue("name"))
+		value := []byte(c.r.FormValue("value"))
+		conditions := []byte(c.r.FormValue("conditions"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(name)...)
+		data = append(data, utils.EncodeLengthPlusData(value)...)
+		data = append(data, utils.EncodeLengthPlusData(conditions)...)
+		data = append(data, binSignatures...)
+
+	case "EditContract":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		id := []byte(c.r.FormValue("id"))
+		value := []byte(c.r.FormValue("value"))
+		conditions := []byte(c.r.FormValue("conditions"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(id)...)
+		data = append(data, utils.EncodeLengthPlusData(value)...)
+		data = append(data, utils.EncodeLengthPlusData(conditions)...)
+		data = append(data, binSignatures...)
+
 	case "EditMenu":
 
 		userId := walletId
