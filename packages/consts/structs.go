@@ -37,10 +37,10 @@ type TxHeader struct {
 }
 
 type TXHeader struct {
-	Type    uint32
+	Type    int32 // byte < 128 system tx 129 - 1 byte 130 - 2 bytes 131 - 3 - bytes 132 - 4 bytes
 	Time    uint32
 	UserId  int64
-	StateId uint32
+	StateId int64
 	Sign    []byte
 }
 

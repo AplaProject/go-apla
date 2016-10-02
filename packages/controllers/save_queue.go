@@ -103,8 +103,8 @@ func (c *Controller) SaveQueue() (string, error) {
 		if stateId > 0 {
 			userId = citizenId
 		}
-		TXHead := consts.TXHeader{Type: uint32(txType), Time: uint32(txTime),
-			UserId: userId, StateId: stateId, Sign: sign}
+		TXHead := consts.TXHeader{Type: int32(txType), Time: uint32(txTime),
+			UserId: userId, StateId: int64(stateId), Sign: sign}
 		// ---
 		if stateId == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
@@ -182,7 +182,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
 		data = append(data, binSignatures...)
 
-
 	case "EditPage":
 
 		userId := walletId
@@ -208,7 +207,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(menu)...)
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
-
 
 	case "EditMenu":
 

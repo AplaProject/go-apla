@@ -48,7 +48,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			p.TxVars = make(map[string]string)
 			if int(txType) == 4 { // TXNewCitizen
 				head := consts.HeaderNew(p.TxPtr)
-				p.TxStateID = head.StateId
+				p.TxStateID = uint32(head.StateId)
 				p.TxStateIDStr = utils.UInt32ToStr(p.TxStateID)
 				if head.StateId > 0 {
 					p.TxCitizenID = head.UserId
