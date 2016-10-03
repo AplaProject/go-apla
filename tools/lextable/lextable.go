@@ -89,7 +89,7 @@ var (
 			"d": ["main", "oper", "pop"]
 		},
 	"number": {
-			"01": ["number", "", "next"],
+			"01.": ["number", "", "next"],
 			"a_r": ["error", "", ""],
 			"d": ["main", "number", "pop"]
 		},

@@ -219,6 +219,7 @@ func (p *Parser) NewState() error {
 				CREATE TABLE "` + id + `_citizens" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizens_id_seq'),
 				"public_key_0" bytea  NOT NULL DEFAULT '',
+				"data" text,
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
@@ -244,6 +245,7 @@ func (p *Parser) NewState() error {
 				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
 				"approved" int  NOT NULL DEFAULT '0',
+				"data" text,
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);

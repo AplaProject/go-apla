@@ -23,7 +23,7 @@ import (
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/script"
-	//	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 type Contract struct {
@@ -47,9 +47,11 @@ var (
 
 func init() {
 	smartVM = script.VMInit(map[string]interface{}{
-		"Println":  fmt.Println,
-		"Sprintf":  fmt.Sprintf,
-		"DBInsert": DBInsert,
+		"Println":    fmt.Println,
+		"Sprintf":    fmt.Sprintf,
+		"DBInsert":   DBInsert,
+		"Balance":    Balance,
+		"StateParam": StateParam,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	})
@@ -64,12 +66,16 @@ contract TXCitizenRequest {
 		LastName   string
 	}
 	func init {
-		Println("TXCitizenRequest init" + $FirstName)
+		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
 	}
 	func front {
-		Println("TXCitizenRequest front" + $MiddleName)
+		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
+/*		if Balance($wallet) < 10000.0 {
+			// error "not enough money"
+		}*/
 	}
 	func main {
+		
 		Println("TXCitizenRequest main" + $LastName)
 	}
 
@@ -168,8 +174,43 @@ func (contract *Contract) Call(flags int) (err error) {
 	return
 }
 
+// Pre-defined functions
+
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	fmt.Println(`DBInsert`, tblname, params, val, len(val))
 	err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
 	return
 }
+
+func Balance(wallet_id int64) (float64, error) {
+	return utils.DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Float64()
+}
+
+func StateParam(idstate int64, name string) (string, error) {
+	return utils.DB.Single(`SELECT value FROM `+utils.Int64ToStr(idstate)+`_state_parameters WHERE name = ?`,
+		name).String()
+}
+
+/*
+func CheckAmount() {
+	amount, err := p.Single(`SELECT value FROM `+utils.Int64ToStr().TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	amountAndCommission, err := p.checkSenderDLT(amount, consts.COMMISSION)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if amount > amountAndCommission {
+		return p.ErrInfo("incorrect amount")
+	}
+	// вычитаем из wallets_buffer
+	// amount_and_commission взято из check_sender_money()
+	err = p.updateWalletsBuffer(amountAndCommission)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+}
+*/
