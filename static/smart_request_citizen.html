@@ -19,13 +19,12 @@
 	
 	$.ajax({
 		type: 'GET',
-		url: 'static/countries/countries.json',
+		url: '/ajax?controllerName=AjaxStatesList',
 		dataType: 'json',
 		crossDomain: true,
 		success: function(data) {
-			var j = 0;
-			for (i = 0; i < data.length; i++ ) {
-				selectbox.append('<option value="' + data[i][0] + '" data-id="' + i + '">' + data[i][1] + '</option>');
+			for (var i in data) {
+					selectbox.append('<option value="' + i + '" data-id="' + i + '">' + data[i] + '</option>');
 			}
 			selectbox.select2({
 				templateResult: formatState,

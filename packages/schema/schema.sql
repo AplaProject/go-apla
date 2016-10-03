@@ -451,6 +451,14 @@ CREATE TABLE "system_parameters" (
 ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
 
+CREATE TABLE "global_tables" (
+"name" bytea  NOT NULL DEFAULT '',
+"columns_and_permissions" jsonb,
+"conditions" bytea  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "global_tables" ADD CONSTRAINT global_tables_pkey PRIMARY KEY (name);
+
 DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
 DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (

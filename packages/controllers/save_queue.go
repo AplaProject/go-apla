@@ -391,6 +391,7 @@ func (c *Controller) SaveQueue() (string, error) {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
+		global := []byte(c.r.FormValue("global"))
 		tableName := []byte(c.r.FormValue("table_name"))
 		columns := []byte(c.r.FormValue("columns"))
 
@@ -398,6 +399,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.DecToBin(txTime, 4)...)
 		data = append(data, utils.EncodeLengthPlusData(userId)...)
 		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(tableName)...)
 		data = append(data, utils.EncodeLengthPlusData(columns)...)
 		data = append(data, binSignatures...)

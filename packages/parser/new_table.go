@@ -28,7 +28,7 @@ Adding state tables should be spelled out in state settings
 
 func (p *Parser) NewTableInit() error {
 
-	fields := []map[string]string{{"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "int64"},{"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -75,7 +75,7 @@ func (p *Parser) NewTableFront() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["columns"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["table_name"], p.TxMap["columns"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -89,7 +89,10 @@ func (p *Parser) NewTableFront() error {
 
 func (p *Parser) NewTable() error {
 
-	tableName := p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
+	tableName := `global_`+p.TxMaps.String["table_name"]
+	if p.TxMaps.Int64["global"] == 0 {
+		tableName = p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
+	}
 	var cols []string
 	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
 
@@ -97,7 +100,7 @@ func (p *Parser) NewTable() error {
 	colsSql := ""
 	colsSql2 := ""
 	for _,name := range cols {
-		colsSql += `"`+name+"\" varchar(255) NOT NULL DEFAULT '',\n"
+		colsSql += `"`+name+"\" varchar NOT NULL DEFAULT '',\n"
 		colsSql2 += `"`+name+`": "`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`",`
 	}
 	colsSql2 = colsSql2[:len(colsSql2)-1]
@@ -116,7 +119,11 @@ func (p *Parser) NewTable() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`INSERT INTO `+p.TxStateIDStr+`_tables ( name, columns_and_permissions ) VALUES ( ?, ? )`,
+	prefix := `global`
+	if p.TxMaps.Int64["global"] == 0 {
+		prefix = p.TxStateIDStr
+	}
+	err = p.ExecSql(`INSERT INTO `+prefix+`_tables ( name, columns_and_permissions ) VALUES ( ?, ? )`,
 		tableName, `{"general_update":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "update": {`+colsSql2+`}, "insert": "`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "new_column":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`"}`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -127,12 +134,17 @@ func (p *Parser) NewTable() error {
 
 func (p *Parser) NewTableRollback() error {
 
-	tableName := p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
-
+	tableName := `global_`+p.TxMaps.String["table_name"]
+	if p.TxMaps.Int64["global"] == 0 {
+		tableName = p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
+	}
 	err := p.ExecSql(`DROP TABLE "`+tableName+`"`)
 
-	err = p.ExecSql(`DELETE FROM `+p.TxVars[`state_code`]+
-	`_state_tables WHERE name = ?`, tableName)
+	prefix := `global`
+	if p.TxMaps.Int64["global"] == 0 {
+		prefix = p.TxStateIDStr
+	}
+	err = p.ExecSql(`DELETE FROM `+prefix+`_tables WHERE name = ?`, tableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

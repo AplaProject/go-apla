@@ -20,7 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-type stateTablesPage struct {
+type listOfTablesPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
@@ -34,12 +34,16 @@ type stateTablesPage struct {
 	Tables []map[string]string
 }
 
-func (c *Controller) StateTables() (string, error) {
+func (c *Controller) ListOfTables() (string, error) {
 
 	var err error
 
-
-	tables, err := c.GetAll(`SELECT * FROM `+utils.Int64ToStr(c.StateId)+`_tables`, -1)
+	global := c.r.FormValue("global")
+	prefix := c.StateIdStr
+	if global == "1" {
+		prefix = "global"
+	}
+	tables, err := c.GetAll(`SELECT * FROM `+prefix+`_tables`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -51,7 +55,7 @@ func (c *Controller) StateTables() (string, error) {
 		tables[i]["count"] = utils.Int64ToStr(count)
 	}
 
-	TemplateStr, err := makeTemplate("state_tables", "stateTables", &stateTablesPage {
+	TemplateStr, err := makeTemplate("list_of_tables", "listOfTables", &listOfTablesPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,

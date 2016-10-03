@@ -128,6 +128,7 @@
 // static/lang/en-us.all.json
 // static/lang/locale_en-US.ini
 // static/lang/locale_ru-RU.ini
+// static/list_of_tables.html
 // static/login.html
 // static/menu.html
 // static/modal_anonym.html
@@ -142,7 +143,6 @@
 // static/smart_request_citizen.html
 // static/state_laws.html
 // static/state_parameters.html
-// static/state_tables.html
 // static/test.html
 // static/updating_blockchain.html
 // static/vendor/animate.css/animate.min.css
@@ -2528,6 +2528,24 @@ func staticLangLocale_ruRuIni() (*asset, error) {
 	return a, err
 }
 
+// staticList_of_tablesHtml reads file data from disk. It returns an error on failure.
+func staticList_of_tablesHtml() (*asset, error) {
+	path := "static/list_of_tables.html"
+	name := "static/list_of_tables.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticLoginHtml reads file data from disk. It returns an error on failure.
 func staticLoginHtml() (*asset, error) {
 	path := "static/login.html"
@@ -2766,24 +2784,6 @@ func staticState_lawsHtml() (*asset, error) {
 func staticState_parametersHtml() (*asset, error) {
 	path := "static/state_parameters.html"
 	name := "static/state_parameters.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticState_tablesHtml reads file data from disk. It returns an error on failure.
-func staticState_tablesHtml() (*asset, error) {
-	path := "static/state_tables.html"
-	name := "static/state_tables.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3968,6 +3968,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
 	"static/lang/locale_en-US.ini": staticLangLocale_enUsIni,
 	"static/lang/locale_ru-RU.ini": staticLangLocale_ruRuIni,
+	"static/list_of_tables.html": staticList_of_tablesHtml,
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
@@ -3982,7 +3983,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/smart_request_citizen.html": staticSmart_request_citizenHtml,
 	"static/state_laws.html": staticState_lawsHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
-	"static/state_tables.html": staticState_tablesHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
@@ -4359,6 +4359,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{
 			}},
 		}},
+		"list_of_tables.html": &bintree{staticList_of_tablesHtml, map[string]*bintree{
+		}},
 		"login.html": &bintree{staticLoginHtml, map[string]*bintree{
 		}},
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{
@@ -4386,8 +4388,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"state_laws.html": &bintree{staticState_lawsHtml, map[string]*bintree{
 		}},
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{
-		}},
-		"state_tables.html": &bintree{staticState_tablesHtml, map[string]*bintree{
 		}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{
 		}},
