@@ -13,39 +13,27 @@
 			$('#extended_div').css("display", "block")
 			$("#settings_extended").prop("checked", true)
 			
-			if ($('body').width() < 768) {
-				var mh = 604;
-				var dmh = 270;
-			} else {
-				var mh = 506;
-				var dmh = 196;
-			}
-			
-			if ($('.db_settings').is(':hidden')) {
-				$('html, body').css("min-height", mh + "px")
-			} else {
-				$('html, body').css("min-height", mh + dmh + "px")
-			}
+			$('#first_load').select2({
+				minimumResultsForSearch: Infinity,
+				theme: 'bootstrap'
+			});
 		});
 		$('#standard').bind('click', function () {
 			$('#extended_div').css("display", "none")
 			$("#settings_standard").prop("checked", true)
-			$('html, body').css("min-height", "100%")
 		});
 		$('#first_load').on('change', function() {
 			if (this.value=="nodes") {
-				$('#url').css("display", "none")
+				$('#url').css("display", "none");
+				$('.db_settings').show();
 			} else {
-				$('#url').css("display", "block")
+				$('#url').css("display", "block");
+				$('.db_settings').hide();
 			}
-			$('.db_settings').show();
-			$('html, body').css("min-height", mh + dmh + "px")
 		});
 
 		$('#next').bind('click', function () {
 			$('#next').prop('disabled', true);
-			//$('#loader').spin();
-			//NProgressStart.set(1);
 			NProgressStart.start();
 			$.post( 'content', {
 				'tpl_name' : 'installStep1',
@@ -71,16 +59,10 @@
 		<label id="extended" class="settings"><input id="settings_extended" type="radio" name="settings" id="extended" value="extended"> Extended</label>
 		<div id="extended_div" style="display: none">
 			<form class="extended_form">
-				<fieldset class="form-group user_id">
-					<label class="col-sm-3 control-label" for="user_id">Your user ID</label>
-					<div class="col-sm-9">
-						<input id="user_id" class="form-control" type="text">
-					</div>
-				</fieldset>
 				<fieldset class="form-group">
 					<label class="col-sm-3 control-label" for="first_load">First load</label>
 					<div class="col-sm-9">
-						<select id="first_load" class="form-control c-select">
+						<select id="first_load" class="form-control">
 							<option value="file">Url</option>
 							<option value="nodes">Nodes</option>
 						</select>

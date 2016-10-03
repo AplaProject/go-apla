@@ -28,6 +28,8 @@ import (
 const (
 	STATUS_NORMAL = iota
 	STATUS_RETURN
+
+//	STATUS_ERROR
 )
 
 type BlockStack struct {
@@ -41,6 +43,7 @@ type RunTime struct {
 	vars   []interface{}
 	extend *map[string]interface{}
 	vm     *VM
+	err    error
 	//	vars  *map[string]interface{}
 }
 
@@ -97,9 +100,16 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 			result = foo.Call(pars)
 		}
 		rt.stack = rt.stack[:shift]
+
 		//	fmt.Println(`Result`, result)
-		for _, iret := range result {
-			rt.stack = append(rt.stack, iret.Interface())
+		for i, iret := range result {
+			if finfo.Results[i].String() == `error` {
+				if iret.Interface() != nil {
+					return iret.Interface().(error)
+				}
+			} else {
+				rt.stack = append(rt.stack, iret.Interface())
+			}
 		}
 	}
 	/*	if
@@ -133,8 +143,14 @@ func (rt *RunTime) extendFunc(name string) error {
 		return result[len(result)-1].Interface().(error)
 	}*/
 	rt.stack = rt.stack[:size-count]
-	for _, iret := range result {
-		rt.stack = append(rt.stack, iret.Interface())
+	for i, iret := range result {
+		if foo.Type().Out(i).String() == `error` {
+			if iret.Interface() != nil {
+				return iret.Interface().(error)
+			}
+		} else {
+			rt.stack = append(rt.stack, iret.Interface())
+		}
 	}
 	return nil
 }
@@ -224,25 +240,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			//			fmt.Println(`CMD ASSIGN`, count, rt.stack, rt.vars)
 		case CMD_RETURN:
 			status = STATUS_RETURN
-			/*			for count := cmd.Value.(int); count > 0; count-- {
-						rt.stack[start] = rt.stack[len(rt.stack)-count]
-						start++
-					}*/
+		case CMD_ERROR:
+			err = fmt.Errorf(`%v`, rt.stack[len(rt.stack)-1])
 		case CMD_CALLVARI, CMD_CALL:
 			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
 
-			/*			if err != nil {
-						return fmt.Errorf(`%s [%d:%d]`, err.Error(), last.Lex.Line, last.Lex.Column)
-					}*/
-
-			//		case CMD_CALL:
-			/*			if cmd.Cmd == CMD_CALL {
-							funcname = cmd.Value.(string)
-						}
-						VMFunc(&vm, funcname)*/
-			/*			if err != nil {
-						return fmt.Errorf(`%s [%d:%d]`, err.Error(), last.Lex.Line, last.Lex.Column)
-					}*/
 		case CMD_VAR:
 			ivar := cmd.Value.(*VarInfo)
 			var i int
@@ -272,7 +274,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					rt.stack = append(rt.stack, val)
 				}
 			} else {
-				return 0, fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
+				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
 		case CMD_NOT:
 			rt.stack[size-1] = !ValueToBool(top[0])
@@ -318,10 +320,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = !bin.(bool)
 			}
 		default:
-			return 0, fmt.Errorf(`Unknown command %d`, cmd.Cmd)
+			err = fmt.Errorf(`Unknown command %d`, cmd.Cmd)
 		}
 		if err != nil {
-			return 0, err
+			rt.err = err
+			//			status = STATUS_ERROR
+			break
 		}
 		if status == STATUS_RETURN {
 			break

@@ -116,6 +116,7 @@ var (
 		fField,
 		fFieldType,
 		fFieldTag,
+		fError,
 	}
 	states = States{
 		{ // STATE_ROOT
@@ -132,6 +133,7 @@ var (
 			LEX_KEYWORD | (KEY_ELSE << 8):   {STATE_BLOCK | STATE_PUSH, CF_ELSE},
 			LEX_KEYWORD | (KEY_VAR << 8):    {STATE_VAR, 0},
 			LEX_KEYWORD | (KEY_TX << 8):     {STATE_TX, CF_TX},
+			LEX_KEYWORD | (KEY_ERROR << 8):  {STATE_EVAL, CF_ERROR},
 			LEX_COMMENT:                     {STATE_BODY, 0},
 			LEX_IDENT:                       {STATE_ASSIGNEVAL | STATE_FORK, 0},
 			LEX_EXTEND:                      {STATE_ASSIGNEVAL | STATE_FORK, 0},
@@ -311,7 +313,6 @@ func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fTx(buf *[]*Block, state int, lexem *Lexem) error {
 	contract := (*buf)[len(*buf)-1]
-	fmt.Println(contract.Type, *contract)
 	if contract.Type != OBJ_CONTRACT {
 		return fmt.Errorf(`tx can be only in contract`)
 	}

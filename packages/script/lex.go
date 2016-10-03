@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -78,14 +79,15 @@ const (
 	KEY_FALSE
 	KEY_VAR
 	KEY_TX
+	KEY_ERROR
 )
 
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
-		`if`: KEY_IF, `else`: KEY_ELSE, `while`: KEY_WHILE, `tx`: KEY_TX, `true`: KEY_TRUE, `false`: KEY_FALSE,
+		`if`: KEY_IF, `else`: KEY_ELSE, `error`: KEY_ERROR, `while`: KEY_WHILE, `tx`: KEY_TX, `true`: KEY_TRUE, `false`: KEY_FALSE,
 		`var`: KEY_VAR}
 	TYPES = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
-		`int`: reflect.TypeOf(int64(0)), `string`: reflect.TypeOf(``)}
+		`int`: reflect.TypeOf(int64(0)), `float`: reflect.TypeOf(float64(0.0)), `string`: reflect.TypeOf(``)}
 )
 
 type Lexem struct {
@@ -164,7 +166,14 @@ func LexParser(input []rune) (Lexems, error) {
 				value = binary.BigEndian.Uint32(append(make([]byte, 4-len(oper)), oper...))
 			case LEX_NUMBER:
 				name := string(input[lexOff:right])
-				if val, err := strconv.ParseInt(name, 10, 64); err == nil {
+
+				if strings.IndexAny(name, `.`) >= 0 {
+					if val, err := strconv.ParseFloat(name, 64); err == nil {
+						return nil, fmt.Errorf(`%v %s [Ln:%d Col:%d]`, err, name, line, off-offline+1)
+					} else {
+						value = val
+					}
+				} else if val, err := strconv.ParseInt(name, 10, 64); err == nil {
 					value = val
 				} else {
 					return nil, fmt.Errorf(`%v %s [Ln:%d Col:%d]`, err, name, line, off-offline+1)

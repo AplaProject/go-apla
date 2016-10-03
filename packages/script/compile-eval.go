@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	CMD_ERROR      = iota // error
+	CMD_UNKNOWN    = iota // error
 	CMD_PUSH              // Push value to stack
 	CMD_VAR               // Push variable to stack
 	CMD_EXTEND            // Push extend variable to stack
@@ -36,6 +36,7 @@ const (
 	CMD_ELSE              // run block if Value is false
 	CMD_ASSIGNVAR         // list of assigned var
 	CMD_ASSIGN            // assign
+	CMD_ERROR             // error command
 )
 
 const (
