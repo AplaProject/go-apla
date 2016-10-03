@@ -246,7 +246,6 @@ func (p *Parser) NewState() error {
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
 				"data" text,
 				"approved" int  NOT NULL DEFAULT '0',
-				"data" text,
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
