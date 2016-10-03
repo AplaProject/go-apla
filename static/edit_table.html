@@ -1,5 +1,43 @@
 {{ define "editTable" }}
+<script>
+	var serverTime;
 
+	$('#send').bind('click', function () {
+
+		$.get( 'ajax?controllerName=GetServerTime', function (data) {
+			serverTime = data.time;
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+$("#general_update").val()+','+$("#insert").val()+','+$("#new_column").val());
+			doSign();
+			$("#send_to_net").trigger("click");
+		}, "json" );
+	} );
+
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'table_name' : '{{.TableName}}',
+				'general_update' : $("#general_update").val(),
+				'insert' : $("#insert").val(),
+				'new_column' : $("#new_column").val(),
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+				'citizenId' : '{{.CitizenId}}',
+				'stateId' : '{{.StateId}}',
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) { send_to_net_success(data) },
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );
+</script>
 	<div class="content-heading">
 		editTable
 	</div>
@@ -33,6 +71,7 @@
 		   </table>
 		</div>
 	 </div>
+
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
@@ -44,12 +83,18 @@
 	   </div>
 	  </div>
 	</div>
-	<!-- END panel-->
-<script type="text/javascript">
-	$(document).ready(function() {
-		$(".edit").editable({
-            type: 'text'
-		})
-	});
-</script>
+
+
+<p>Table permission</p>
+<p>update</p>
+<textarea id="general_update">{{.TablePermission.general_update}}</textarea>
+<p>insert</p>
+<textarea id="insert">{{.TablePermission.insert}}</textarea>
+<p>new_column</p>
+<textarea id="new_column">{{.TablePermission.new_column}}</textarea>
+<br>
+<button type="button" class="btn btn-primary" id="send">Save</button>
+
+{{template "signatures".}}
+
 {{end}}

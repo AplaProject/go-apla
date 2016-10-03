@@ -30,17 +30,24 @@ type editTablePage struct {
 	Lang         map[string]string
 	WalletId  int64
 	CitizenId int64
+	TableName string
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
 	TableData map[string]string
 	Columns map[string]string
 	ColumnsAndPermissions map[string]string
+	StateId int64
+	TablePermission map[string]string
 }
 
 func (c *Controller) EditTable() (string, error) {
 
 	var err error
+
+	txType := "EditTable"
+	txTypeId := utils.TypeInt(txType)
+	timeNow := utils.Time()
 
 	var tableName string
 	if utils.CheckInputData(c.r.FormValue("name"), "string") {
@@ -52,8 +59,11 @@ func (c *Controller) EditTable() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	var columns map[string]string
-	columns, err = c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	//tablePermission, err = c.OneRow(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables" jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, tableName).String()
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+	tablePermission, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -66,7 +76,12 @@ func (c *Controller) EditTable() (string, error) {
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		Columns : columns,
+		TableName: tableName,
+		TimeNow:      timeNow,
+		TxType:       txType,
+		TxTypeId:     txTypeId,
+		StateId: c.SessStateId,
+		TablePermission : tablePermission,
 		//ColumnsAndPermissions : columnsAndPermissions,
 		TableData : tableData})
 	if err != nil {

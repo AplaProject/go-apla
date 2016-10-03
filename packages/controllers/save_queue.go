@@ -234,6 +234,32 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, binSignatures...)
 
 
+	case "EditTable":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		table_name := []byte(c.r.FormValue("table_name"))
+		general_update := []byte(c.r.FormValue("general_update"))
+		insert := []byte(c.r.FormValue("insert"))
+		new_column := []byte(c.r.FormValue("new_column"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(table_name)...)
+		data = append(data, utils.EncodeLengthPlusData(general_update)...)
+		data = append(data, utils.EncodeLengthPlusData(insert)...)
+		data = append(data, utils.EncodeLengthPlusData(new_column)...)
+		data = append(data, binSignatures...)
+
 	case "NewContract":
 
 		userId := walletId
