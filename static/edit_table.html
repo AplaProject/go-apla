@@ -43,7 +43,7 @@
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href="#" onclick="load_page('stateTables')">State tables</a></li>
-	   <li class="active">editTable</li>
+		<li class="active">{{if .TableName}}Edit{{else}}New{{end}} table</li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">

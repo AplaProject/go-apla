@@ -9,7 +9,6 @@
 // static/block_explorer.html
 // static/block_generation.html
 // static/change_node_key.html
-// static/change_state_parameters.html
 // static/change_state_smart_laws.html
 // static/check_citizen_status.html
 // static/contracts.html
@@ -22,6 +21,7 @@
 // static/edit_contract.html
 // static/edit_menu.html
 // static/edit_page.html
+// static/edit_state_parameters.html
 // static/edit_table.html
 // static/fonts/glyphicons-filetypes-regular.eot
 // static/fonts/glyphicons-filetypes-regular.svg
@@ -386,24 +386,6 @@ func staticChange_node_keyHtml() (*asset, error) {
 	return a, err
 }
 
-// staticChange_state_parametersHtml reads file data from disk. It returns an error on failure.
-func staticChange_state_parametersHtml() (*asset, error) {
-	path := "static/change_state_parameters.html"
-	name := "static/change_state_parameters.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticChange_state_smart_lawsHtml reads file data from disk. It returns an error on failure.
 func staticChange_state_smart_lawsHtml() (*asset, error) {
 	path := "static/change_state_smart_laws.html"
@@ -606,6 +588,24 @@ func staticEdit_menuHtml() (*asset, error) {
 func staticEdit_pageHtml() (*asset, error) {
 	path := "static/edit_page.html"
 	name := "static/edit_page.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEdit_state_parametersHtml reads file data from disk. It returns an error on failure.
+func staticEdit_state_parametersHtml() (*asset, error) {
+	path := "static/edit_state_parameters.html"
+	name := "static/edit_state_parameters.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3849,7 +3849,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/block_explorer.html": staticBlock_explorerHtml,
 	"static/block_generation.html": staticBlock_generationHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
-	"static/change_state_parameters.html": staticChange_state_parametersHtml,
 	"static/change_state_smart_laws.html": staticChange_state_smart_lawsHtml,
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
 	"static/contracts.html": staticContractsHtml,
@@ -3862,6 +3861,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/edit_contract.html": staticEdit_contractHtml,
 	"static/edit_menu.html": staticEdit_menuHtml,
 	"static/edit_page.html": staticEdit_pageHtml,
+	"static/edit_state_parameters.html": staticEdit_state_parametersHtml,
 	"static/edit_table.html": staticEdit_tableHtml,
 	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
 	"static/fonts/glyphicons-filetypes-regular.svg": staticFontsGlyphiconsFiletypesRegularSvg,
@@ -4099,8 +4099,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{
 		}},
-		"change_state_parameters.html": &bintree{staticChange_state_parametersHtml, map[string]*bintree{
-		}},
 		"change_state_smart_laws.html": &bintree{staticChange_state_smart_lawsHtml, map[string]*bintree{
 		}},
 		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{
@@ -4128,6 +4126,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"edit_menu.html": &bintree{staticEdit_menuHtml, map[string]*bintree{
 		}},
 		"edit_page.html": &bintree{staticEdit_pageHtml, map[string]*bintree{
+		}},
+		"edit_state_parameters.html": &bintree{staticEdit_state_parametersHtml, map[string]*bintree{
 		}},
 		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{
 		}},

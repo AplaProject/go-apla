@@ -19,16 +19,15 @@ package parser
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/script"
 )
 
 /*
 Adding state tables should be spelled out in state settings
 */
 
-func (p *Parser) ChangeStateSettingsConditionsInit() error {
+func (p *Parser) NewStateParametersInit() error {
 
-	fields := []map[string]string{{"state_id": "int64"}, {"parameter": "string"}, {"value": "string"}}
+	fields := []map[string]string{{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -38,7 +37,7 @@ func (p *Parser) ChangeStateSettingsConditionsInit() error {
 
 
 
-func (p *Parser) ChangeStateSettingsConditionsFront() error {
+func (p *Parser) NewStateParametersFront() error {
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -48,19 +47,18 @@ func (p *Parser) ChangeStateSettingsConditionsFront() error {
 	// ...
 
 
-
+/*
 	// Check InputData
 	verifyData := map[string]string{}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	// New state table can only add a citizen of the same country
-	// ...
+*/
 
 
-	// Check the condition that must be met to complete this transaction
+
+	/*// Check the condition that must be met to complete this transaction
 	conditions, err := p.Single(`SELECT change FROM `+utils.Int64ToStr(p.TxMaps.Int64["state_id"])+`_state_parameters WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -92,9 +90,9 @@ func (p *Parser) ChangeStateSettingsConditionsFront() error {
 	if !out {
 		return p.ErrInfo("conditions false")
 	}
-	
+	*/
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxMap["state_id"], p.TxCitizenID)
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -106,19 +104,20 @@ func (p *Parser) ChangeStateSettingsConditionsFront() error {
 	return nil
 }
 
-func (p *Parser) ChangeStateSettingsConditions() error {
-	err := p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{p.TxMaps.String["value"]}, utils.Int64ToStr(p.TxMaps.Int64["state_id"])+"_state_parameters", []string{"parameter"}, []string{p.TxMaps.String["parameter"]}, true)
+func (p *Parser) NewStateParameters() error {
+
+	err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"],p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-func (p *Parser) ChangeStateSettingsConditionsRollback() error {
+func (p *Parser) NewStateParametersRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) ChangeStateSettingsConditionsRollbackFront() error {
+func (p *Parser) NewStateParametersRollbackFront() error {
 
 	return nil
 }
