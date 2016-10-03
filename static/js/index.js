@@ -566,7 +566,7 @@ function send_to_net_success(data){
 				},
 				error: function(xhr, status, error) {
 					clearInterval(interval);
-					Alert("Error Money transfer", error, "error");
+					Alert("Error", error, "error");
 				},
 			});
 		}, 1000)

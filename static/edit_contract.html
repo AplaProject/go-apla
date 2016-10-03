@@ -48,7 +48,7 @@
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href='#' onclick="load_page('contracts')">Contracts</a></li>
-	   <li class="active">editContract</li>
+		<li class="active">{{if .Data.name}}Edit{{else}}New{{end}} contract</li>
 	</ol>
 
 	<!-- START panel-->

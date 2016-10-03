@@ -53,8 +53,9 @@ type FieldInfo struct {
 }
 
 type ContractInfo struct {
-	Id uint32
-	Tx *[]*FieldInfo
+	Id   uint32
+	Name string
+	Tx   *[]*FieldInfo
 }
 
 type FuncInfo struct {
