@@ -50,6 +50,11 @@
 		  </div>
 	   </div>
 	  </div>
+
+		{{if not .Global}}
+		<button type="button" class="btn btn-primary" onclick="load_page('contracts', {global: 1})">Global</button>
+		{{end}}
+
 	</div>
 	<!-- END panel-->
 {{end}}

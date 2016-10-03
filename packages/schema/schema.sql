@@ -451,6 +451,37 @@ CREATE TABLE "system_parameters" (
 ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
 
+CREATE TABLE "global_menu" (
+"name" varchar(255)  NOT NULL DEFAULT '',
+"value" text  NOT NULL DEFAULT '',
+"conditions" bytea  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "global_menu" ADD CONSTRAINT global_menu_pkey PRIMARY KEY (name);
+
+
+CREATE TABLE "global_pages" (
+"name" varchar(255)  NOT NULL DEFAULT '',
+"value" text  NOT NULL DEFAULT '',
+"menu" varchar(255)  NOT NULL DEFAULT '',
+"conditions" bytea  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "global_pages" ADD CONSTRAINT global_pages_pkey PRIMARY KEY (name);
+
+
+CREATE SEQUENCE global_smart_contracts_id_seq START WITH 1;
+CREATE TABLE "global_smart_contracts" (
+"id" bigint NOT NULL  default nextval('global_smart_contracts_id_seq'),
+"name" varchar(100)  NOT NULL DEFAULT '',
+"value" bytea  NOT NULL DEFAULT '',
+"conditions" bytea  NOT NULL DEFAULT '',
+"variables" bytea  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE "global_smart_contracts_id_seq" owned by "global_smart_contracts".id;
+ALTER TABLE ONLY "global_smart_contracts" ADD CONSTRAINT global_smart_contracts_pkey PRIMARY KEY (id);
+
 CREATE TABLE "global_tables" (
 "name" bytea  NOT NULL DEFAULT '',
 "columns_and_permissions" jsonb,
