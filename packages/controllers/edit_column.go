@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"strings"
 )
 
 type editColumnPage struct {
@@ -48,7 +49,16 @@ func (c *Controller) EditColumn() (string, error) {
 	tableName := c.r.FormValue("tableName")
 	columnName := c.r.FormValue("columnName")
 
-	columns, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	s := strings.Split(tableName, "_")
+	if len(s) < 2 {
+		return "", utils.ErrInfo("incorrect table name")
+	}
+	prefix := s[0]
+	if prefix != "global" && prefix != c.StateIdStr {
+		return "", utils.ErrInfo("incorrect table name")
+	}
+
+	columns, err := c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

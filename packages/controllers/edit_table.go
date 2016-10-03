@@ -20,6 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	//"encoding/json"
 	//"fmt"
+	"strings"
 )
 
 type editTablePage struct {
@@ -39,6 +40,7 @@ type editTablePage struct {
 	ColumnsAndPermissions map[string]string
 	StateId int64
 	TablePermission map[string]string
+	Global string
 }
 
 func (c *Controller) EditTable() (string, error) {
@@ -54,17 +56,31 @@ func (c *Controller) EditTable() (string, error) {
 		tableName = c.r.FormValue("name")
 	}
 
-	tableData, err := c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(c.StateId)+`_tables" WHERE name = ? `, tableName).String()
+	s := strings.Split(tableName, "_")
+	if len(s) < 2 {
+		return "", utils.ErrInfo("incorrect table name")
+	}
+	prefix := s[0]
+	if prefix != "global" && prefix != c.StateIdStr {
+		return "", utils.ErrInfo("incorrect table name")
+	}
+
+	global := ""
+	if prefix == "global" {
+		global = "1"
+	}
+
+	tableData, err := c.OneRow(`SELECT * FROM "`+prefix+`_tables" WHERE name = ?`, tableName).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	tablePermission, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", tableName)
+	tablePermission, err := c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	columnsAndPermissions, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	columnsAndPermissions, err := c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -82,6 +98,7 @@ func (c *Controller) EditTable() (string, error) {
 		TxType:       txType,
 		TxTypeId:     txTypeId,
 		StateId: c.SessStateId,
+		Global: global,
 		TablePermission : tablePermission,
 		ColumnsAndPermissions : columnsAndPermissions,
 		TableData : tableData})

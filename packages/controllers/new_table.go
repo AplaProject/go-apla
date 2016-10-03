@@ -31,11 +31,17 @@ type newTablePage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
+	Global string
 }
 
 func (c *Controller) NewTable() (string, error) {
 
 	var err error
+
+	global := c.r.FormValue("global")
+	if global == "" {
+		global = "0"
+	}
 
 	txType := "NewTable"
 	txTypeId := utils.TypeInt(txType)
@@ -49,6 +55,7 @@ func (c *Controller) NewTable() (string, error) {
 		SignData:     "",
 		CitizenId: c.SessCitizenId,
 		StateId: c.StateId,
+		Global: global,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,

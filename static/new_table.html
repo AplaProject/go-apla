@@ -78,20 +78,11 @@
 		New table
 	</div>
 	<ol class="breadcrumb">
-		<li><a href="#" onclick="load_page('stateTables')">State tables</a></li>
+		<li><a href="#" onclick="load_page('listOfTables')">State tables</a></li>
 	   <li class="active">New table</li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
-		<div class="panel-heading">
-			<div class="panel-title">
-				Global:
-				<select id="global">
-					<option value="1">Yes</option>
-					<option value="0" selected>No</option>
-				</select>
-			</div>
-		</div>
 		<div class="panel-heading">
 			<div class="panel-title">
 				<input id="tableName" class="form-control" type="text" value="" placeholder="Table name">
@@ -115,6 +106,9 @@
 	   </div>
 	  </div>
 	</div>
+
+	<input id="global" type="hidden" value="{{.Global}}">
+
 	<!-- END panel-->
 	
 	{{template "signatures".}}

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"strings"
 )
 
 func (p *Parser) EditTableInit() error {
@@ -37,6 +38,15 @@ func (p *Parser) EditTableFront() error {
 	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+
+	s := strings.Split(p.TxMaps.String["table_name"], "_")
+	if len(s) < 2 {
+		return p.ErrInfo("incorrect table name")
+	}
+	prefix := s[0]
+	if prefix!="global" && prefix != p.TxStateIDStr {
+		return p.ErrInfo("incorrect table name")
 	}
 
 	// Check InputData
@@ -64,7 +74,7 @@ func (p *Parser) EditTableFront() error {
 		return p.ErrInfo(err)
 	}
 
-	table := p.TxStateIDStr + `_tables`
+	table := prefix + `_tables`
 	exists, err := p.Single(`select count(*) from "`+table+`" where name = ?`, p.TxMaps.String["table_name"]).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -87,7 +97,16 @@ func (p *Parser) EditTableFront() error {
 
 func (p *Parser) EditTable() error {
 
-	table := p.TxStateIDStr + `_tables`
+	s := strings.Split(p.TxMaps.String["table_name"], "_")
+	if len(s) < 2 {
+		return p.ErrInfo("incorrect table name")
+	}
+	prefix := s[0]
+	if prefix!="global" && prefix != p.TxStateIDStr {
+		return p.ErrInfo("incorrect table name")
+	}
+
+	table := prefix + `_tables`
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
 	if err != nil {
 		return err

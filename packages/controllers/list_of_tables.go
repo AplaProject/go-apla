@@ -31,6 +31,7 @@ type listOfTablesPage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
+	Global      string
 	Tables []map[string]string
 }
 
@@ -59,6 +60,7 @@ func (c *Controller) ListOfTables() (string, error) {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
+		Global: global,
 		SignData:     "",
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,

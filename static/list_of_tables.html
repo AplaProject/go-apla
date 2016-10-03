@@ -1,16 +1,16 @@
 {{ define "listOfTables" }}
 	<div class="content-heading">
-		stateTables
+		listOfTables
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href="#">Dashboard</a></li>
-	   <li class="active">stateTables</li>
+	   <li class="active">listOfTables</li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
-			stateTables
+			listOfTables
 		</div>
 	 </div>
 	 <div class="panel-body">
@@ -42,13 +42,17 @@
 
 		  </div>
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary" onclick="load_page('newTable')">Add new</button>
+			 <button type="button" class="btn btn-primary" onclick="load_page('newTable', {global: {{.Global}} })">Add new</button>
 		  </div>
 	   </div>
 	  </div>
+		{{if not .Global}}
 		<button type="button" class="btn btn-primary" onclick="load_page('stateParameters')">stateParameters</button>
+		{{end}}
 	</div>
 
-<button type="button" class="btn btn-primary" onclick="load_page('listOfTables', {global: 1})">Global</button>
+	{{if not .Global}}
+	<button type="button" class="btn btn-primary" onclick="load_page('listOfTables', {global: 1})">Global</button>
+	{{end}}
 
 {{end}}
