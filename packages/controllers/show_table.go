@@ -59,16 +59,6 @@ func (c *Controller) ShowTable() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	/*
-	err = json.Unmarshal([]byte(tableData["columns_and_permissions"]), &columnsAndPermissions)
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}
-	var columns map[string]string
-	err = json.Unmarshal([]byte(columnsAndPermissions["update"]), &columns)
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}*/
 
 	TemplateStr, err := makeTemplate("show_table", "showTable", &showTablePage {
 		Alert:        c.Alert,

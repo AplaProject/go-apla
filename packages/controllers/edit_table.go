@@ -59,11 +59,12 @@ func (c *Controller) EditTable() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	//tablePermission, err = c.OneRow(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables" jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, tableName).String()
+	tablePermission, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	tablePermission, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", tableName)
+
+	columnsAndPermissions, err := c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -82,7 +83,7 @@ func (c *Controller) EditTable() (string, error) {
 		TxTypeId:     txTypeId,
 		StateId: c.SessStateId,
 		TablePermission : tablePermission,
-		//ColumnsAndPermissions : columnsAndPermissions,
+		ColumnsAndPermissions : columnsAndPermissions,
 		TableData : tableData})
 	if err != nil {
 		return "", utils.ErrInfo(err)

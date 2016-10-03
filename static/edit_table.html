@@ -60,7 +60,7 @@
 				  <td>name</td>
 				  <td>permissions</td>
 			  </tr>
-			  {{ range $name, $permissions := .Columns }}
+			  {{ range $name, $permissions := .ColumnsAndPermissions }}
 				 <tr>
 					 <td class="thead"><strong>{{$name}}</strong></td>
 					 <td><strong>{{$permissions}}</strong></td>
@@ -93,7 +93,7 @@
 <p>new_column</p>
 <textarea id="new_column">{{.TablePermission.new_column}}</textarea>
 <br>
-<button type="button" class="btn btn-primary" id="send">Save</button>
+<button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" >Save</button>
 
 {{template "signatures".}}
 
