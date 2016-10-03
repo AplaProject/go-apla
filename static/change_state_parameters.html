@@ -31,7 +31,7 @@
 		State parameters
 	</div>
 	<ol class="breadcrumb">
-	   <li><a href="#">Dashboard</a></li>
+		<li><a href="#" onclick="load_page('stateTables')">State tables</a></li>
 	   <li class="active">State parameters</li>
 	</ol>
 	<!-- START panel-->
@@ -67,7 +67,7 @@
 
 		  </div>
 		  <div class="pull-right">
-			 <button type="button" class="btn btn-primary">Save</button>
+			  <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Send</button>
 		  </div>
 	   </div>
 	  </div>
