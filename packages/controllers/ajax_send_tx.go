@@ -83,12 +83,13 @@ func (c *Controller) AjaxSendTx() interface{} {
 			data := make([]byte, 0)
 			//			)
 			header := consts.TXHeader{
-				Type:    int32(contract.Block.Info.(*script.ContractInfo).Id),
+				Type:    int32(contract.Block.Info.(*script.ContractInfo).Id) + parser.CNTOFF,
 				Time:    uint32(utils.StrToInt64(c.r.FormValue(`time`))),
 				UserId:  userId,
 				StateId: int64(c.SessStateId),
 				Sign:    sign,
 			}
+			fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
 			_, err = lib.BinMarshal(&data, &header)
 			if err == nil {
 			fields:
@@ -123,8 +124,6 @@ func (c *Controller) AjaxSendTx() interface{} {
 					}
 				}
 			}
-			/*			consts.CitizenRequest{TxHeader: txHead,
-						StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign})*/
 			fmt.Printf("Data %v %d %x", err, len(data), data)
 		}
 	}

@@ -81,22 +81,22 @@ func (p *Parser) ParseDataFront() error {
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
-
-				// txSlice[4] могут подсунуть пустой
-				if len(p.TxSlice) > 4 {
-					if !utils.CheckInputData(p.TxSlice[3], "int64") || !utils.CheckInputData(p.TxSlice[4], "int64") {
-						return utils.ErrInfo(fmt.Errorf("empty wallet_id or citizen_id"))
+				if p.TxContract == nil {
+					// txSlice[4] могут подсунуть пустой
+					if len(p.TxSlice) > 4 {
+						if !utils.CheckInputData(p.TxSlice[3], "int64") || !utils.CheckInputData(p.TxSlice[4], "int64") {
+							return utils.ErrInfo(fmt.Errorf("empty wallet_id or citizen_id"))
+						}
+					} else {
+						return utils.ErrInfo(fmt.Errorf("empty user_id"))
 					}
-				} else {
-					return utils.ErrInfo(fmt.Errorf("empty user_id"))
-				}
 
-				// проверим, есть ли такой тип тр-ий
-				_, ok := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				if !ok {
-					return utils.ErrInfo(fmt.Errorf("nonexistent type"))
+					// проверим, есть ли такой тип тр-ий
+					_, ok := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
+					if !ok {
+						return utils.ErrInfo(fmt.Errorf("nonexistent type"))
+					}
 				}
-
 				p.TxMap = map[string][]byte{}
 
 				// для статы
@@ -104,8 +104,8 @@ func (p *Parser) ParseDataFront() error {
 
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 
-				if contract := GetContract(MethodName, p); contract != nil {
-					if err := contract.Call(CALL_INIT | CALL_MAIN); err != nil {
+				if p.TxContract != nil {
+					if err := p.TxContract.Call(CALL_INIT | CALL_MAIN); err != nil {
 						return utils.ErrInfo(err)
 					}
 				} else {

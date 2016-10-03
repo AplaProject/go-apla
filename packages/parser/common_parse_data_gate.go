@@ -44,7 +44,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 		// проверим, есть ли такой тип тр-ий
 		// check if the transaction's type exist
-		if len(consts.TxTypes[p.dataType]) == 0 {
+		if p.dataType < 128 && len(consts.TxTypes[p.dataType]) == 0 {
 			return p.ErrInfo("Incorrect tx type " + utils.IntToStr(p.dataType))
 		}
 
@@ -82,12 +82,18 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// A node can use wrong time
 		// Time of a transaction used only for fighting off attacks of yesterday transactions
 		curTime := utils.Time()
-		if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > curTime || utils.BytesToInt64(p.TxSlice[2]) < curTime-consts.MAX_TX_BACK {
-			return p.ErrInfo(errors.New("incorrect tx time"))
-		}
-		// $this->transaction_array[3] могут подсунуть пустой
-		if !utils.CheckInputData(p.TxSlice[3], "bigint") {
-			return p.ErrInfo(errors.New("incorrect user id"))
+		if p.TxContract != nil {
+			if int64(p.TxPtr.(*consts.TXHeader).Time)-consts.MAX_TX_FORW > curTime || int64(p.TxPtr.(*consts.TXHeader).Time) < curTime-consts.MAX_TX_BACK {
+				return p.ErrInfo(errors.New("incorrect tx time"))
+			}
+		} else {
+			if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > curTime || utils.BytesToInt64(p.TxSlice[2]) < curTime-consts.MAX_TX_BACK {
+				return p.ErrInfo(errors.New("incorrect tx time"))
+			}
+			// $this->transaction_array[3] могут подсунуть пустой
+			if !utils.CheckInputData(p.TxSlice[3], "bigint") {
+				return p.ErrInfo(errors.New("incorrect user id"))
+			}
 		}
 	}
 
@@ -187,8 +193,8 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 				p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				if contract := GetContract(MethodName, p); contract != nil {
-					if err := contract.Call(CALL_INIT | CALL_FRONT); err != nil {
+				if p.TxContract != nil {
+					if err := p.TxContract.Call(CALL_INIT | CALL_FRONT); err != nil {
 						p.RollbackTo(txForRollbackTo, true, true)
 						return utils.ErrInfo(err)
 					}
@@ -226,8 +232,8 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// Оперативные транзакции
 		// Operative transactions
 		MethodName := consts.TxTypes[p.dataType]
-		if contract := GetContract(MethodName, p); contract != nil {
-			if err := contract.Call(CALL_INIT | CALL_FRONT); err != nil {
+		if p.TxContract != nil {
+			if err := p.TxContract.Call(CALL_INIT | CALL_FRONT); err != nil {
 				return utils.ErrInfo(err)
 			}
 		} else {
