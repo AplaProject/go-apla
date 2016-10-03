@@ -18,7 +18,7 @@ package parser
 
 import (
 	"fmt"
-	"reflect"
+	//	"reflect"
 	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
@@ -37,6 +37,8 @@ const (
 	CALL_INIT  = 0x01
 	CALL_FRONT = 0x02
 	CALL_MAIN  = 0x04
+
+	CNTOFF = 128 // offset of contract id
 )
 
 var (
@@ -61,6 +63,16 @@ contract TXCitizenRequest {
 		MiddleName string "optional"
 		LastName   string
 	}
+	func init {
+		Println("TXCitizenRequest init" + $FirstName)
+	}
+	func front {
+		Println("TXCitizenRequest front" + $MiddleName)
+	}
+	func main {
+		Println("TXCitizenRequest main" + $LastName)
+	}
+
 }
 
 contract TXNewCitizen {
@@ -92,6 +104,16 @@ func GetContract(name string, p *Parser /*data interface{}*/) *Contract {
 	return nil
 }
 
+// Returns true if the contract exists
+func GetContractById(id int32, p *Parser) *Contract {
+	idcont := id - CNTOFF
+	if len(smartVM.Children) <= int(idcont) || smartVM.Children[idcont].Type != script.OBJ_CONTRACT {
+		return nil
+	}
+	return &Contract{Name: smartVM.Children[idcont].Info.(*script.ContractInfo).Name,
+		parser: p, Block: smartVM.Children[idcont]}
+}
+
 func (contract *Contract) getFunc(name string) *script.Block {
 	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.OBJ_FUNC {
 		return block.Value.(*script.Block)
@@ -100,7 +122,7 @@ func (contract *Contract) getFunc(name string) *script.Block {
 }
 
 func (contract *Contract) getExtend() *map[string]interface{} {
-	head := consts.HeaderNew(contract.parser.TxPtr)
+	head := contract.parser.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
 	var citizenId, walletId int64
 	if head.StateId > 0 {
 		citizenId = head.UserId
@@ -114,12 +136,15 @@ func (contract *Contract) getExtend() *map[string]interface{} {
 	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: head.StateId,
 		`block`: block, `citizen`: citizenId, `wallet`: walletId,
 		`parser`: contract.parser}
-	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
-	t := v.Type()
-	for i := 1; i < t.NumField(); i++ {
-		extend[t.Field(i).Name] = v.Field(i).Interface()
+	for key, val := range contract.parser.TxData {
+		extend[key] = val
 	}
-	//	fmt.Println(`Extend`, extend)
+	/*	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
+		t := v.Type()
+		for i := 1; i < t.NumField(); i++ {
+			extend[t.Field(i).Name] = v.Field(i).Interface()
+		}*/
+	//fmt.Println(`Extend`, extend)
 	return &extend
 }
 

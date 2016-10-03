@@ -22,6 +22,7 @@ import (
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -40,7 +41,53 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		// первый байт - тип транзакции
 		txType := utils.BinToDecBytesShift(transactionBinaryData, 1)
 		isStruct := consts.IsStruct(int(txType))
-		if isStruct {
+		if txType > 127 { // транзакция с контрактом
+			var err error
+			p.TxPtr = &consts.TXHeader{}
+			if err = lib.BinUnmarshal(&input, p.TxPtr); err != nil {
+				return nil, err
+			}
+			isStruct = false
+			p.TxStateID = uint32(p.TxPtr.(*consts.TXHeader).StateId)
+			p.TxStateIDStr = utils.UInt32ToStr(p.TxStateID)
+			if p.TxStateID > 0 {
+				p.TxCitizenID = p.TxPtr.(*consts.TXHeader).UserId
+				p.TxWalletID = 0
+			} else {
+				p.TxCitizenID = 0
+				p.TxWalletID = p.TxPtr.(*consts.TXHeader).UserId
+			}
+			contract := GetContractById(p.TxPtr.(*consts.TXHeader).Type, p)
+			if contract == nil {
+				return nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
+			}
+			p.TxContract = contract
+			p.TxData = make(map[string]interface{})
+			for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
+				var v interface{}
+				switch fitem.Type.String() {
+				case `int64`:
+					v, err = lib.DecodeLenInt64(&input)
+				case `string`:
+					var s string
+					if err = lib.BinUnmarshal(&input, &s); err != nil {
+						return nil, err
+					}
+					v = s
+				case `[]uint8`:
+					var b []byte
+					if err = lib.BinUnmarshal(&input, &b); err != nil {
+						return nil, err
+					}
+					v = b
+				}
+				p.TxData[fitem.Name] = v
+				if err != nil {
+					return nil, err
+				}
+			}
+			fmt.Println(`Contract data`, p.TxData)
+		} else if isStruct {
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 			if err := lib.BinUnmarshal(&input, p.TxPtr); err != nil {
 				return nil, err
@@ -64,7 +111,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				p.TxWalletID = head.WalletId
 				p.TxTime = int64(head.Time)
 			}
-
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)
 		}
 		transSlice = append(transSlice, utils.Int64ToByte(txType))
@@ -78,7 +124,9 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		}
 		log.Debug("%s", transSlice)
 		// преобразуем бинарные данные транзакции в массив
-		if isStruct {
+		if txType > 127 {
+			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
+		} else if isStruct {
 			t := reflect.ValueOf(p.TxPtr).Elem()
 
 			//walletId & citizenId

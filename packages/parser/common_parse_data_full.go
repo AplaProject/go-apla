@@ -165,9 +165,9 @@ func (p *Parser) ParseDataFull() error {
 			p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-			if contract := GetContract(MethodName, p); contract != nil {
-				if err := contract.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
-					if contract.Called == CALL_FRONT {
+			if p.TxContract != nil {
+				if err := p.TxContract.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
+					if p.TxContract.Called == CALL_FRONT {
 						err0 := p.RollbackTo(txForRollbackTo, true, false)
 						if err0 != nil {
 							log.Error("error: %v", err0)

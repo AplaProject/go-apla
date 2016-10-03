@@ -53,7 +53,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		if c.SessStateId > 0 {
 			userId = c.SessCitizenId
 		}
-		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id, result.Time, userId, c.SessStateId)
+		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id+parser.CNTOFF, result.Time, userId, c.SessStateId)
 
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			val := c.r.FormValue(fitem.Name)
