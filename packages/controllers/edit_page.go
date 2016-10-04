@@ -37,10 +37,10 @@ type editPagePage struct {
 	DataPage map[string]string
 	AllMenu []map[string]string
 	StateId int64
+	Global string
 }
 
 func (c *Controller) EditPage() (string, error) {
-
 
 	txType := "EditPage"
 	txTypeId := utils.TypeInt(txType)
@@ -48,22 +48,30 @@ func (c *Controller) EditPage() (string, error) {
 
 	var err error
 
+	global := c.r.FormValue("global")
+	prefix := c.StateIdStr
+	if global == "1" {
+		prefix = "global"
+	} else {
+		global = "1"
+	}
+
 	var name string
 	if utils.CheckInputData(c.r.FormValue("name"), "string") {
 		name = c.r.FormValue("name")
 	}
 
-	dataPage, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_pages" WHERE name = ?`, name).String()
+	dataPage, err := c.OneRow(`SELECT * FROM "`+prefix+`_pages" WHERE name = ?`, name).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	dataMenu, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, dataPage["menu"]).String()
+	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, dataPage["menu"]).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	allMenu, err := c.GetAll(`SELECT * FROM "`+c.StateIdStr+`_menu"`, -1)
+	allMenu, err := c.GetAll(`SELECT * FROM "`+prefix+`_menu"`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -72,6 +80,7 @@ func (c *Controller) EditPage() (string, error) {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
+		Global: global,
 		SignData:     "",
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,

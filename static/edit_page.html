@@ -24,7 +24,7 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#page_name").val()+','+$("#page_value").val()+','+$("#page_menu").val()+','+$("#page_conditions").val());
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#global").val()+','+$("#page_name").val()+','+$("#page_value").val()+','+$("#page_menu").val()+','+$("#page_conditions").val());
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -36,6 +36,7 @@
 			type: 'POST',
 			url: 'ajax?controllerName=saveQueue',
 			data: {
+				'global' : $("#global").val(),
 				'name' : $("#page_name").val(),
 				'value' : $("#page_value").val(),
 				'menu' : $("#page_menu").val(),
@@ -147,6 +148,7 @@
 	</div>
 </div>
 
+<input type="hidden" id="global" value="{{.Global}}">
 
 {{template "signatures".}}
 

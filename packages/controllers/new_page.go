@@ -29,8 +29,13 @@ func (c *Controller) NewPage() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
+	global := c.r.FormValue("global")
+	prefix := c.StateIdStr
+	if global == "1" {
+		prefix = "global"
+	}
 
-	allMenu, err := c.GetAll(`SELECT * FROM "`+c.StateIdStr+`_menu"`, -1)
+	allMenu, err := c.GetAll(`SELECT * FROM "`+prefix+`_menu"`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -38,6 +43,7 @@ func (c *Controller) NewPage() (string, error) {
 	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
+		Global: global,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
 		WalletId: c.SessWalletId,
