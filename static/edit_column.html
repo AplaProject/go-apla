@@ -54,14 +54,16 @@
 		</div>
 	 </div>
 	 <div class="panel-body">
-		<div class="table-responsive">
-			<table class="table table-striped table-bordered table-hover">
-			  <tbody>
-			  <tr><td>Name<br>{{if .ColumnName}} {{.ColumnName}} <input type="hidden" id="column_name" value="{{.ColumnName}}"> {{else}} <input type="text" id="column_name"> {{end}} </td></tr>
-			  <tr><td>Permissions<br><textarea id="permissions">{{.ColumnPermission}}</textarea></td></tr>
-			  </tbody>
-		   </table>
-		</div>
+	 	<form role="form">
+		   <div class="form-group">
+			   <label>Name</label>
+			   {{if .ColumnName}} <p class="form-control-static">{{.ColumnName}}</p> <input type="hidden" class="form-control" id="column_name" value="{{.ColumnName}}"> {{else}} <input type="text" class="form-control" id="column_name"> {{end}}
+		   </div>
+		   <div class="form-group">
+			   <label>Permissions</label>
+			   <textarea class="form-control" id="permissions">{{.ColumnPermission}}</textarea>
+		   </div>
+		</form>
 	 </div>
 	 <div class="panel-footer">
 	   <div class="clearfix">

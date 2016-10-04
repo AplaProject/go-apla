@@ -20,9 +20,8 @@
 			  <tr>
 				  <td>table name</td>
 				  <td>count</td>
-				  <td>show</td>
-				  <td>edit</td>
-				  <td></td>
+				  <td width="50">show</td>
+				  <td width="50">edit</td>
 			  </tr>
 			  {{ range $value := .Tables }}
 				 <tr>
@@ -39,20 +38,17 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-
+			{{if not .Global}}
+			<button type="button" class="btn btn-info" onclick="load_page('listOfTables', {global: 1})">Global</button>
+			{{end}}
 		  </div>
-		  <div class="pull-left">
+		  <div class="pull-right">
+			{{if not .Global}}
+			<button type="button" class="btn btn-primary" onclick="load_page('stateParameters')">stateParameters</button>
+			{{end}}
 			 <button type="button" class="btn btn-primary" onclick="load_page('newTable', {global: {{.Global}} })">Add new</button>
 		  </div>
 	   </div>
 	  </div>
-		{{if not .Global}}
-		<button type="button" class="btn btn-primary" onclick="load_page('stateParameters')">stateParameters</button>
-		{{end}}
 	</div>
-
-	{{if not .Global}}
-	<button type="button" class="btn btn-primary" onclick="load_page('listOfTables', {global: 1})">Global</button>
-	{{end}}
-
 {{end}}

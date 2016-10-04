@@ -1,7 +1,12 @@
 {{ define "editStateParameters" }}
 <script>
 	var serverTime;
-
+	
+	$('.selectbox').select2({
+		minimumResultsForSearch: Infinity,
+		theme: 'bootstrap'
+	});
+	
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -59,26 +64,22 @@
 		</div>
 	 </div>
 	 <div class="panel-body">
-		<div class="table-responsive">
-		   <table class="table table-striped table-bordered table-hover">
-			  <tbody>
-			  <tr>
-				  <td>Name<br>{{if .StateParameters.name}} {{.StateParameters.name}} <input type="hidden" id="name" value="{{.StateParameters.name}}"> {{else}} <input type="text" id="name"> {{end}} </td>
-			  </tr>
-
-			  <tr>
-				  <td class="thead">Value<br><textarea class="form-control" id="value">{{.StateParameters.value}}</textarea></td>
-			  </tr>
-			  <tr>
-				  <td class="thead">conditions<br>
-					  <select class="selectbox form-control" id="conditions">
-						{{ range $param := .AllStateParameters }} <option {{if eq (index $.StateParameters "conditions") $param}} selected {{end}}>{{$param}}</option> {{end}}
-					  </select>
-				  </td>
-			  </tr>
-			  </tbody>
-		   </table>
-		</div>
+	 	<form role="form">
+		   <div class="form-group">
+			   <label>Name</label>
+			   {{if .StateParameters.name}} <p class="form-control-static">{{.StateParameters.name}}</p> <input type="hidden" class="form-control" id="name" value="{{.StateParameters.name}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
+		   </div>
+		   <div class="form-group">
+			   <label>Value</label>
+			   <textarea class="form-control" id="value">{{.StateParameters.value}}</textarea>
+		   </div>
+		   <div class="form-group">
+			   <label>conditions</label>
+			   <select class="selectbox form-control" id="conditions">
+				 {{ range $param := .AllStateParameters }} <option {{if eq (index $.StateParameters "conditions") $param}} selected {{end}}>{{$param}}</option> {{end}}
+			   </select>
+		   </div>
+		</form>
 	 </div>
 	 <div class="panel-footer">
 	   <div class="clearfix">
