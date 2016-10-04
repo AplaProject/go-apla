@@ -60,21 +60,31 @@
 		</div>
 	 </div>
 	 <div class="panel-body">
-
-		 <div class="table-responsive">
-			 <table class="table table-striped table-bordered table-hover">
-				 <tbody>
-				 <tr><td>Name<br>{{if .Data.name}} {{.Data.name}} <input type="hidden" id="id" value="{{.Data.id}}"> {{else}} <input type="text" id="name"> {{end}} </td></tr>
-				 <tr><td>Value<br><textarea id="value" style="width: 100%; height: 500px">{{.Data.value}}</textarea></td></tr>
-				 <tr><td>Conditions<br><textarea id="conditions">{{.Data.conditions}}</textarea></td></tr>
-				 </tbody>
-			 </table>
-			 <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Send</button>
-		 </div>
+		<form role="form">
+		   <div class="form-group">
+			   <label>Name</label>
+			   {{if .Data.name}} <p class="form-control-static">{{.Data.name}}</p> <input type="hidden" class="form-control" id="id" value="{{.Data.id}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
+		   </div>
+		   <div class="form-group">
+			   <label>Value</label>
+			   <textarea id="value" class="form-control" style="height: 500px">{{.Data.value}}</textarea>
+		   </div>
+		   <div class="form-group">
+			   <label>Conditions</label>
+			   <textarea class="form-control" id="conditions">{{.Data.conditions}}</textarea>
+		   </div>
+		</form>
 	 </div>
-
-
-
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-left">
+		  	
+		  </div>
+		  <div class="pull-right">
+			 <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Send</button>
+		  </div>
+	   </div>
+	  </div>
 	</div>
 
 
