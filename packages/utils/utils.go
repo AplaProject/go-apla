@@ -2444,33 +2444,34 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\.\(([\w\d_\,]*)\)\.([\w\d_]*)\(([\w\d_\s=\,)]*)\)\}\}.*`)
 	sql = qrx.ReplaceAllString(data, `SELECT $2 FROM "$1"|$3|$4`)
 	pars := strings.Split(sql, `|`)
-	nav := strings.Split(pars[2], `,`)
-	dataTable, err := DB.GetAll(pars[0], 1000)
+	if len(pars) == 3 {
+		nav := strings.Split(pars[2], `,`)
+		dataTable, err := DB.GetAll(pars[0], 1000)
+		if err != nil {
+			log.Error("%v", err)
+		}
+		table := `<table>`
+		for _, row := range dataTable {
+			table += `<tr>`
+			switch pars[1] {
+			case `sys_navigate`:
+				table += sys_navigate(row, nav)
+			case `navigate`:
+				table += navigate(row, nav)
+			}
+			table += `</tr>`
+		}
+		table += `</table>`
+		qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\.\(([\w\d_\,]*)\)\.([\w\d_]*)\(([\w\d_\s=\,)]*)\)\}\}`)
+		data = qrx.ReplaceAllString(data, table)
+	}
+	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\}\}.*`)
+	sql = qrx.ReplaceAllString(data, `SELECT * FROM "$1"`)
+	dataTable, err := DB.GetAll(sql, 1000)
 	if err != nil {
 		log.Error("%v", err)
 	}
 	table := `<table>`
-	for _, row := range dataTable {
-		table += `<tr>`
-		switch pars[1] {
-		case `sys_navigate`:
-			table += sys_navigate(row, nav)
-		case `navigate`:
-			table += navigate(row, nav)
-		}
-		table += `</tr>`
-	}
-	table += `</table>`
-	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\.\(([\w\d_\,]*)\)\.([\w\d_]*)\(([\w\d_\s=\,)]*)\)\}\}`)
-	data = qrx.ReplaceAllString(data, table)
-
-	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\}\}.*`)
-	sql = qrx.ReplaceAllString(data, `SELECT * FROM "$1"`)
-	dataTable, err = DB.GetAll(sql, 1000)
-	if err != nil {
-		log.Error("%v", err)
-	}
-	table = `<table>`
 	for _, row := range dataTable {
 		table += `<tr>`
 		for _, cell := range row {
