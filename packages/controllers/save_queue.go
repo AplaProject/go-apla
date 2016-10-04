@@ -236,6 +236,35 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, binSignatures...)
 
 
+	case "NewPage":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		global := []byte(c.r.FormValue("global"))
+		name := []byte(c.r.FormValue("name"))
+		value := []byte(c.r.FormValue("value"))
+		menu := []byte(c.r.FormValue("menu"))
+		conditions := []byte(c.r.FormValue("conditions"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(global)...)
+		data = append(data, utils.EncodeLengthPlusData(name)...)
+		data = append(data, utils.EncodeLengthPlusData(value)...)
+		data = append(data, utils.EncodeLengthPlusData(menu)...)
+		data = append(data, utils.EncodeLengthPlusData(conditions)...)
+		data = append(data, binSignatures...)
+
+
 	case "EditTable":
 
 		userId := walletId
@@ -361,6 +390,34 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(value)...)
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
+
+
+	case "NewMenu":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		global := []byte(c.r.FormValue("global"))
+		name := []byte(c.r.FormValue("name"))
+		value := []byte(c.r.FormValue("value"))
+		conditions := []byte(c.r.FormValue("conditions"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(global)...)
+		data = append(data, utils.EncodeLengthPlusData(name)...)
+		data = append(data, utils.EncodeLengthPlusData(value)...)
+		data = append(data, utils.EncodeLengthPlusData(conditions)...)
+		data = append(data, binSignatures...)
+
 
 	case "EditMenu":
 

@@ -30,7 +30,7 @@
 					 <td><strong>{{$value.value}}</strong></td>
 					 <td><strong>{{$value.menu}}</strong></td>
 					 <td><strong>{{$value.conditions}}</strong></td>
-					 <td><button type="button" class="btn btn-primary" onclick="load_page('editPage', {name: {{$value.name}}, global: {{.Global}} } )">edit</button></td>
+					 <td><button type="button" class="btn btn-primary" onclick="load_page('editPage', {name: {{$value.name}}, global: {{$.Global}} } )">edit</button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>
@@ -68,7 +68,7 @@
 						<td class="thead"><strong>{{$value.name}}</strong></td>
 						<td><strong>{{$value.value}}</strong></td>
 						<td><strong>{{$value.conditions}}</strong></td>
-						<td><button type="button" class="btn btn-primary" onclick="load_page('editMenu', {name: {{$value.name}}, global: {{.Global}} } )">edit</button></td>
+						<td><button type="button" class="btn btn-primary" onclick="load_page('editMenu', {name: {{$value.name}}, global: {{$.Global}} } )">edit</button></td>
 					</tr>
 					{{end}}
 					</tbody>

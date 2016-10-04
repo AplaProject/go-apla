@@ -51,7 +51,7 @@ func (c *Controller) EditMenu() (string, error) {
 	if global == "1" {
 		prefix = "global"
 	} else {
-		global = "1"
+		global = "0"
 	}
 
 	var name string

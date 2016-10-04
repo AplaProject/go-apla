@@ -21,7 +21,7 @@ import (
 	"fmt"
 )
 
-func (p *Parser) EditPageInit() error {
+func (p *Parser) NewPageInit() error {
 
 	fields := []map[string]string{{"global": "string"},{"name": "string"}, {"value": "string"}, {"menu": "string"},  {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -31,7 +31,7 @@ func (p *Parser) EditPageInit() error {
 	return nil
 }
 
-func (p *Parser) EditPageFront() error {
+func (p *Parser) NewPageFront() error {
 
 	err := p.generalCheck()
 	if err != nil {
@@ -63,13 +63,13 @@ func (p *Parser) EditPageFront() error {
 	return nil
 }
 
-func (p *Parser) EditPage() error {
+func (p *Parser) NewPage() error {
 
 	prefix := p.TxStateIDStr
 	if p.TxMaps.String["global"]=="1" {
 		prefix = "global"
 	}
-	err := p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	err := p.selectiveLoggingAndUpd([]string{"name", "value", "menu", "conditions"}, []interface{}{p.TxMaps.String["name"],p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -77,10 +77,10 @@ func (p *Parser) EditPage() error {
 	return nil
 }
 
-func (p *Parser) EditPageRollback() error {
+func (p *Parser) NewPageRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) EditPageRollbackFront() error {
+func (p *Parser) NewPageRollbackFront() error {
 	return nil
 }

@@ -25,11 +25,15 @@ import (
 
 func (c *Controller) NewMenu() (string, error) {
 
-	txType := "EditMenu"
+	txType := "NewMenu"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	global := c.r.FormValue("global")
+	if global != "1" {
+		global = "0"
+	}
+
 
 	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage {
 		Alert:        c.Alert,
