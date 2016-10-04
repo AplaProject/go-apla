@@ -82,12 +82,11 @@
 		  </div>
 	   </div>
 	  </div>
-
-		{{if not .Global}}
-		<button type="button" class="btn btn-info" onclick="load_page('interface', {global: 1})">Global</button>
-		{{end}}
-
 	</div>
 	<!-- END panel-->
-
+	{{if not .Global}}
+	<div class="text-center">
+		<button type="button" class="btn btn-info" onclick="load_page('interface', {global: 1})">Global</button>
+	</div>
+	{{end}}
 {{end}}
