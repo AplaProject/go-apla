@@ -21,7 +21,31 @@ import (
 
 
 func (c *Controller) AjaxStatesList() (string, error) {
-	data,_ := c.GetMap(`SELECT id, name FROM system_states`, "id", "name")
-	jsondata, _ := json.Marshal(data)
+
+	result := make(map[string]map[string]string)
+	data,err := c.GetList(`SELECT id FROM system_states`).String()
+	if err!=nil {
+		return ``, err
+	}
+	for _, id := range data {
+		state_name, err := c.Single(`SELECT value FROM "`+id+`_state_parameters" WHERE name = 'state_name'`).String()
+		if err!=nil {
+			return ``, err
+		}
+		state_flag,err := c.Single(`SELECT value FROM "`+id+`_state_parameters" WHERE name = 'state_flag'`).String()
+		if err!=nil {
+			return ``, err
+		}
+		state_coords,err := c.Single(`SELECT value FROM "`+id+`_state_parameters" WHERE name = 'state_coords'`).String()
+		if err!=nil {
+			return ``, err
+		}
+		result[id] = make(map[string]string)
+		result[id]["state_name"] = state_name
+		result[id]["state_flag"] = state_flag
+		result[id]["state_coords"] = state_coords
+
+	}
+	jsondata, _ := json.Marshal(result)
 	return string(jsondata), nil
 }
