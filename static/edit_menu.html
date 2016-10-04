@@ -52,17 +52,20 @@
 		</div>
 	</div>
 	<div class="panel-body">
-
-		<div class="table-responsive">
-			<table class="table table-striped table-bordered table-hover">
-				<tbody>
-				<tr><td>Name<br>{{if .DataMenu.name}} {{.DataMenu.name}} <input type="hidden" class="form-control" id="menu_name" value="{{.DataMenu.name}}"> {{else}} <input type="text" class="form-control" id="menu_name"> {{end}} </td>
-				</tr>
-				<tr><td>Value<br><textarea class="form-control" id="menu_value">{{.DataMenu.value}}</textarea></td></tr>
-				<tr><td>Conditions<br><textarea class="form-control" id="menu_conditions">{{.DataMenu.conditions}}</textarea> </td></tr>
-				</tbody>
-			</table>
-		</div>
+		<form role="form">
+		   <div class="form-group">
+			   <label>Name</label>
+			   {{if .DataMenu.name}} <p class="form-control-static">{{.DataMenu.name}}</p> <input type="hidden" class="form-control" id="menu_name" value="{{.DataMenu.name}}"> {{else}} <input type="text" class="form-control" id="menu_name"> {{end}}
+		   </div>
+		   <div class="form-group">
+			   <label>Value</label>
+			   <textarea class="form-control" id="menu_value">{{.DataMenu.value}}</textarea>
+		   </div>
+		   <div class="form-group">
+			   <label>Conditions</label>
+			   <textarea class="form-control" id="menu_conditions">{{.DataMenu.conditions}}</textarea>
+		   </div>
+		</form>
 	</div>
 	<div class="panel-footer">
    <div class="clearfix">

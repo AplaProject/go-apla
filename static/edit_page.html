@@ -76,34 +76,36 @@
 			</div>
 		 </div>
 		 <div class="panel-body">
-	
-			 <div class="table-responsive">
-				 <table class="table table-striped table-bordered table-hover">
-					 <tbody>
-					 <tr><td>Name<br>{{if .DataPage.name}} {{.DataPage.name}} <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name"> {{end}} </td></tr>
-					 <tr><td>Value<br><textarea class="form-control" id="page_value" style="height: 500px">{{.DataPage.value}}</textarea></td></tr>
-					 <tr><td>Menu<br>
-	
-						 <select class="form-control" id="page_menu">
-						 {{range $data := .AllMenu }}
-							 <option value="{{index $data "name"}}"
-								{{if and $data $.DataPage.menu}}
-									{{if eq (index $data "name") $.DataPage.menu}}
-										selected
-									{{end}}
+			<form role="form">
+			   <div class="form-group">
+				   <label>Name</label>
+				   {{if .DataPage.name}} <p class="form-control-static">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name"> {{end}}
+			   </div>
+			   <div class="form-group">
+				   <label>Value</label>
+				   <textarea class="form-control" id="page_value" style="height: 500px">{{.DataPage.value}}</textarea>
+			   </div>
+			   <div class="form-group">
+				   <label>Menu</label>
+				   <select class="form-control" id="page_menu">
+					 {{range $data := .AllMenu }}
+						 <option value="{{index $data "name"}}"
+							{{if and $data $.DataPage.menu}}
+								{{if eq (index $data "name") $.DataPage.menu}}
+									selected
 								{{end}}
-							 >
-							 {{index $data "name"}}
-							 </option>
-						 {{end}}
-						 </select>
-	
-	
-					 </td></tr>
-					 <tr><td>Conditions<br><textarea class="form-control" id="page_conditions">{{.DataPage.conditions}}</textarea></td></tr>
-					 </tbody>
-				 </table>
-			 </div>
+							{{end}}
+						 >
+						 {{index $data "name"}}
+						 </option>
+					 {{end}}
+					</select>
+			   </div>
+			   <div class="form-group">
+				   <label>Conditions</label>
+				   <textarea class="form-control" id="page_conditions">{{.DataPage.conditions}}</textarea>
+			   </div>
+			</form>
 		 </div>
 		 <div class="panel-footer">
 		   <div class="clearfix">
@@ -126,9 +128,9 @@
 				<div class="table-responsive">
 					<table class="table table-striped table-bordered table-hover">
 						<tbody>
-						<tr><td>Name<br>{{.DataMenu.name}}</td></tr>
-						<tr><td>Value<br>{{.DataMenu.value}}</td></tr>
-						<tr><td>Conditions<br>{{.DataMenu.conditions}}</td></tr>
+						<tr><td><strong>Name</strong><br>{{.DataMenu.name}}</td></tr>
+						<tr><td><strong>Value</strong><br>{{.DataMenu.value}}</td></tr>
+						<tr><td><strong>Conditions</strong><br>{{.DataMenu.conditions}}</td></tr>
 						</tbody>
 					</table>
 				</div>
