@@ -28,6 +28,11 @@ func (c *Controller) NewContract() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
+	global := c.r.FormValue("global")
+	if global == "" || global == "0"  {
+		global = "0"
+	}
+
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
@@ -39,6 +44,7 @@ func (c *Controller) NewContract() (string, error) {
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
+		Global: global,
 		Data : map[string]string{},
 		StateId: c.SessStateId})
 	if err != nil {

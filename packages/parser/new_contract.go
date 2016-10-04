@@ -23,7 +23,7 @@ import (
 
 func (p *Parser) NewContractInit() error {
 
-	fields := []map[string]string{{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "int64"},{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -53,7 +53,7 @@ func (p *Parser) NewContractFront() error {
 
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"],p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -67,7 +67,11 @@ func (p *Parser) NewContractFront() error {
 
 func (p *Parser) NewContract() error {
 
-	err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_smart_contracts", nil, nil, true)
+	prefix := `global`
+	if p.TxMaps.Int64["global"] == 0 {
+		prefix = p.TxStateIDStr
+	}
+	err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

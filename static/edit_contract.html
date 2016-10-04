@@ -7,9 +7,9 @@
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
 			if ($("#id").val()) {
-				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#id").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#global").val() + ',' + $("#id").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
 			} else {
-				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#global").val()+','+$("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
 			}
 			doSign();
 			$("#send_to_net").trigger("click");
@@ -22,6 +22,7 @@
 			type: 'POST',
 			url: 'ajax?controllerName=saveQueue',
 			data: {
+				'global' : $("#global").val(),
 				'id' : $("#id").val(),
 				'name' : $("#name").val(),
 				'value' : $("#value").val(),
@@ -73,6 +74,7 @@
 		 </div>
 	 </div>
 
+		<input type="hidden" id="global" value="{{.Global}}">
 
 
 	</div>

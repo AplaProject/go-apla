@@ -34,6 +34,7 @@ type editContractPage struct {
 	TimeNow      int64
 	TableName string
 	StateId int64
+	Global string
 }
 
 func (c *Controller) EditContract() (string, error) {
@@ -42,8 +43,15 @@ func (c *Controller) EditContract() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
+	global := c.r.FormValue("global")
+	prefix := "global"
+	if global == "" || global == "0"  {
+		prefix = c.StateIdStr
+		global = "0"
+	}
+
 	id :=  utils.StrToInt64(c.r.FormValue("id"))
-	data, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_smart_contracts" WHERE id = ?`, id).String()
+	data, err := c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -55,6 +63,7 @@ func (c *Controller) EditContract() (string, error) {
 		SignData:     "",
 		WalletId: c.SessWalletId,
 		Data: data,
+		Global: global,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,

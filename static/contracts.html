@@ -33,7 +33,7 @@
 					 <td><strong>{{$data.value}}</strong></td>
 					 <td><strong>{{$data.conditions}}</strong></td>
 					 <td><strong>{{$data.variables}}</strong></td>
-					 <td><button type="button" class="btn btn-primary" onclick="load_page('editContract', {id: {{$data.id}}} )">Change</button></td>
+					 <td><button type="button" class="btn btn-primary" onclick="load_page('editContract', {id: {{$data.id}} , global: {{$.Global}} } )">Change</button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>
@@ -46,12 +46,12 @@
 
 		  </div>
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary" onclick="load_page('newContract')">Add new</button>
+			 <button type="button" class="btn btn-primary" onclick="load_page('newContract', {global: {{.Global}} })">Add new</button>
 		  </div>
 	   </div>
 	  </div>
 
-		{{if not .Global}}
+		{{if ne .Global "1"}}
 		<button type="button" class="btn btn-primary" onclick="load_page('contracts', {global: 1})">Global</button>
 		{{end}}
 

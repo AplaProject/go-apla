@@ -34,9 +34,10 @@ func (c *Controller) Contracts() (string, error) {
 	var err error
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
-	if global == "1" {
-		prefix = "global"
+	prefix := "global"
+	if global == "" || global == "0"  {
+		prefix = c.StateIdStr
+		global = "0"
 	}
 
 	stateSmartLaws, err := c.GetAll(`SELECT * FROM `+prefix+`_smart_contracts`, -1)
@@ -45,7 +46,7 @@ func (c *Controller) Contracts() (string, error) {
 	}
 
 	var allStateParameters []string
-	if global == "" {
+	if global == "0" {
 		allStateParameters, err = c.GetList(`SELECT name FROM `+prefix+`_state_parameters`).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
