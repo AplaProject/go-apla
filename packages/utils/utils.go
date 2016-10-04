@@ -22,12 +22,12 @@ import (
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	crand "crypto/rand"
- 	"crypto/ecdsa"
- 	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/sha256"
-//	"crypto/tls"
+	//	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
@@ -36,14 +36,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/kardianos/osext"
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/mcuadros/go-version"
-	b58 "github.com/jbenet/go-base58"
 	"image"
 	"io"
 	"io/ioutil"
@@ -52,8 +44,17 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-//	"net/mail"
-//  "net/smtp"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/static"
+	b58 "github.com/jbenet/go-base58"
+	"github.com/kardianos/osext"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/mcuadros/go-version"
+	//	"net/mail"
+	//  "net/smtp"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -65,8 +66,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/russross/blackfriday"
 
+	"github.com/russross/blackfriday"
 )
 
 type BlockData struct {
@@ -88,26 +89,28 @@ type prevBlockType struct {
 }
 type DaemonsChansType struct {
 	ChBreaker chan bool
-	ChAnswer chan string
+	ChAnswer  chan string
 }
+
 var (
-	TcpHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
-	ListenHttpPort = flag.String("listenHttpPort", "7079", "ListenHttpPort")
+	TcpHost            = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
+	ListenHttpPort     = flag.String("listenHttpPort", "7079", "ListenHttpPort")
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
-	OldVersion = flag.String("oldVersion", "", "")
-	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
-	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
-	OldFileName = flag.String("oldFileName", "", "")
-	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
-	Console = flag.Int64("console", 0, "Start from console")
-	SqliteDbUrl string
-	StartBlockId = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
-	EndBlockId = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
-	RollbackToBlockId = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
-	Tls = flag.String("tls", "", "Support https. Specify directory for .well-known")
-	DaemonsChans []*DaemonsChansType
-	eWallets = &sync.Mutex{}
+	OldVersion         = flag.String("oldVersion", "", "")
+	TestRollBack       = flag.Int64("testRollBack", 0, "testRollBack")
+	Dir                = flag.String("dir", GetCurrentDir(), "DayLight directory")
+	OldFileName        = flag.String("oldFileName", "", "")
+	LogLevel           = flag.String("logLevel", "", "DayLight LogLevel")
+	Console            = flag.Int64("console", 0, "Start from console")
+	SqliteDbUrl        string
+	StartBlockId       = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
+	EndBlockId         = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
+	RollbackToBlockId  = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
+	Tls                = flag.String("tls", "", "Support https. Specify directory for .well-known")
+	DaemonsChans       []*DaemonsChansType
+	eWallets           = &sync.Mutex{}
 )
+
 func init() {
 	flag.Parse()
 }
@@ -125,7 +128,7 @@ func Desktop() bool {
 	} else if runtime.GOOS == "darwin" {
 		thrust_shell = "ThrustShell"
 	}
-	if _, err := os.Stat(*Dir+"/"+thrust_shell); err == nil {
+	if _, err := os.Stat(*Dir + "/" + thrust_shell); err == nil {
 		return true
 	}
 	return false
@@ -202,9 +205,9 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId,_ = DecodeLenInt64(binaryBlock)//BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+	result.WalletId, _ = DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	// Delete after re-build blocks
-/*	if result.WalletId == 0x31 {
+	/*	if result.WalletId == 0x31 {
 		result.WalletId = 1
 	}*/
 	result.CBID = BinToDecBytesShift(binaryBlock, 1)
@@ -324,7 +327,6 @@ type pctAmount struct {
 	amount float64
 }
 
-
 func round(num float64) int64 {
 	//log.Debug("num", num)
 	//num += ROUND_FIX
@@ -434,7 +436,7 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 	case "system_commission":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if StrToInt(data) <= 15 && StrToInt(data) >=5 {
+			if StrToInt(data) <= 15 && StrToInt(data) >= 5 {
 				return true
 			}
 		}
@@ -972,7 +974,6 @@ func Caller(steps int) string {
 	return name
 }
 
-
 func SliceInt64ToString(int64 []int64) []string {
 	result := make([]string, len(int64))
 	for i, v := range int64 {
@@ -1015,12 +1016,12 @@ func InSliceString(search string, slice []string) bool {
 func EncodeLengthPlusData(data_ interface{}) []byte {
 	var data []byte
 	switch data_.(type) {
-		case int64:
-			data = Int64ToByte(data_.(int64))
-		case string:
-			data = []byte(data_.(string))
-		case []byte:
-			data = data_.([]byte)
+	case int64:
+		data = Int64ToByte(data_.(int64))
+	case string:
+		data = []byte(data_.(string))
+	case []byte:
+		data = data_.([]byte)
 	}
 	//log.Debug("data: %x", data)
 	//log.Debug("len data: %d", len(data))
@@ -1051,7 +1052,6 @@ func DecToHexBig(hex string) string {
 	}
 	return hex
 }
-
 
 func UInt32ToStr(num uint32) string {
 	return strconv.FormatInt(int64(num), 10)
@@ -1354,77 +1354,77 @@ func BinToRsaPubKey(publicKey []byte) (*rsa.PublicKey, error) {
 
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 
-/*	log.Debug("forSign", forSign)
-	//fmt.Println("publicKeys", publicKeys)
-	var signsSlice [][]byte
-	// у нода всегда 1 подпись
-	if nodeKeyOrLogin {
-		signsSlice = append(signsSlice, signs)
-	} else {
-		// в 1 signs может быть от 1 до 3-х подписей
-		for {
-			if len(signs) == 0 {
-				break
+	/*	log.Debug("forSign", forSign)
+		//fmt.Println("publicKeys", publicKeys)
+		var signsSlice [][]byte
+		// у нода всегда 1 подпись
+		if nodeKeyOrLogin {
+			signsSlice = append(signsSlice, signs)
+		} else {
+			// в 1 signs может быть от 1 до 3-х подписей
+			for {
+				if len(signs) == 0 {
+					break
+				}
+				length := DecodeLength(&signs)
+				//fmt.Println("length", length)
+				//fmt.Printf("signs %x", signs)
+				signsSlice = append(signsSlice, BytesShift(&signs, length))
 			}
-			length := DecodeLength(&signs)
-			//fmt.Println("length", length)
-			//fmt.Printf("signs %x", signs)
-			signsSlice = append(signsSlice, BytesShift(&signs, length))
+			if len(publicKeys) != len(signsSlice) {
+				log.Debug("signsSlice", signsSlice)
+				log.Debug("publicKeys", publicKeys)
+				return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
+			}
 		}
-		if len(publicKeys) != len(signsSlice) {
-			log.Debug("signsSlice", signsSlice)
-			log.Debug("publicKeys", publicKeys)
-			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
-		}
-	}
 
-	for i := 0; i < len(publicKeys); i++ {
-		pub, err := BinToRsaPubKey(publicKeys[i])
-		if err != nil {
-			return false, ErrInfo(err)
+		for i := 0; i < len(publicKeys); i++ {
+			pub, err := BinToRsaPubKey(publicKeys[i])
+			if err != nil {
+				return false, ErrInfo(err)
+			}
+			err = rsa.VerifyPKCS1v15(pub, crypto.SHA1, HashSha1(forSign), signsSlice[i])
+			if err != nil {
+				log.Error("pub %v", pub)
+				log.Error("publicKeys[i] %x", publicKeys[i])
+				log.Error("crypto.SHA1", crypto.SHA1)
+				log.Error("HashSha1(forSign)", HashSha1(forSign))
+				log.Error("HashSha1(forSign)", string(HashSha1(forSign)))
+				log.Error("forSign", forSign)
+				log.Error("sign: %x\n", signsSlice[i])
+				return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x", HashSha1(forSign), forSign, publicKeys[i], signsSlice[i])
+			}
 		}
-		err = rsa.VerifyPKCS1v15(pub, crypto.SHA1, HashSha1(forSign), signsSlice[i])
-		if err != nil {
-			log.Error("pub %v", pub)
-			log.Error("publicKeys[i] %x", publicKeys[i])
-			log.Error("crypto.SHA1", crypto.SHA1)
-			log.Error("HashSha1(forSign)", HashSha1(forSign))
-			log.Error("HashSha1(forSign)", string(HashSha1(forSign)))
-			log.Error("forSign", forSign)
-			log.Error("sign: %x\n", signsSlice[i])
-			return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x", HashSha1(forSign), forSign, publicKeys[i], signsSlice[i])
-		}
-	}
-	return true, nil*/
+		return true, nil*/
 	return CheckECDSA(publicKeys, forSign, signs, nodeKeyOrLogin)
 }
 
 func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
- 	pubkeyCurve := elliptic.P256()
+	pubkeyCurve := elliptic.P256()
 
 	b, err := hex.DecodeString(privateKey)
 	if err != nil {
 		log.Error("SignECDSA 0 %v", err)
-		return 
+		return
 	}
 	bi := new(big.Int).SetBytes(b)
 	priv := new(ecdsa.PrivateKey)
-   	priv.PublicKey.Curve = pubkeyCurve
-   	priv.D = bi
-   	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
+	priv.PublicKey.Curve = pubkeyCurve
+	priv.D = bi
+	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
 
 	signhash := sha256.Sum256([]byte(forSign))
- 	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash[:])
- 	if err != nil {
+	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash[:])
+	if err != nil {
 		log.Error("SignECDSA 0 %v", err)
- 		return
- 	}
+		return
+	}
 	ret = FillLeft(r.Bytes())
- 	ret = append(ret, FillLeft(s.Bytes())...)
+	ret = append(ret, FillLeft(s.Bytes())...)
 	return
 }
 
-func ParseSign(sign string) (r,s *big.Int) {
+func ParseSign(sign string) (r, s *big.Int) {
 	var off int
 	if len(sign) > 128 {
 		off = 8
@@ -1440,15 +1440,15 @@ func ParseSign(sign string) (r,s *big.Int) {
 	}
 	r = new(big.Int).SetBytes(all[:32])
 	s = new(big.Int).SetBytes(all[len(all)-32:])
-	return 
+	return
 }
 
 func ConvertJSSign(in string) string {
 	if len(in) == 0 {
 		return ``
 	}
-	r,s := ParseSign(in)
-	return hex.EncodeToString( append( FillLeft(r.Bytes()), FillLeft(s.Bytes())... ))
+	r, s := ParseSign(in)
+	return hex.EncodeToString(append(FillLeft(r.Bytes()), FillLeft(s.Bytes())...))
 }
 
 func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
@@ -1475,7 +1475,7 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	log.Debug("publicKeys %v", publicKeys)
 	pubkeyCurve := elliptic.P256()
 	signhash := sha256.Sum256([]byte(forSign))
-	
+
 	for i := 0; i < len(publicKeys); i++ {
 		/*public, err := hex.DecodeString(string(publicKeys[i]))
 		if err != nil {
@@ -1483,16 +1483,16 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 		}*/
 		public := publicKeys[i]
 		pubkey := new(ecdsa.PublicKey)
-   		pubkey.Curve = pubkeyCurve
-	   	pubkey.X = new(big.Int).SetBytes(public[0:32])
-	   	pubkey.Y = new(big.Int).SetBytes(public[32:])
-		
-		r,s := ParseSign(hex.EncodeToString(signsSlice[i]))
+		pubkey.Curve = pubkeyCurve
+		pubkey.X = new(big.Int).SetBytes(public[0:32])
+		pubkey.Y = new(big.Int).SetBytes(public[32:])
+
+		r, s := ParseSign(hex.EncodeToString(signsSlice[i]))
 		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
 		if !verifystatus {
 			log.Error("Check sign: %i %s\n", i, signsSlice[i])
-			return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x", 
-			       signhash, forSign, publicKeys[i], signsSlice[i])
+			return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x",
+				signhash, forSign, publicKeys[i], signsSlice[i])
 		}
 
 	}
@@ -1502,9 +1502,9 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 func B54Decode(b54_ interface{}) string {
 	var b54 string
 	switch b54_.(type) {
-		case string:
+	case string:
 		b54 = b54_.(string)
-		case []byte:
+	case []byte:
 		b54 = string(b54_.([]byte))
 	}
 	return string(b58.Decode(b54))
@@ -1670,14 +1670,12 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 	return []byte(result_[0])
 }
 
-
 func DbClose(c *DCDB) {
 	err := c.Close()
 	if err != nil {
 		log.Debug("%v", err)
 	}
 }
-
 
 func MaxInMap(m map[int64]int64) (int64, int64) {
 	var max int64
@@ -1807,7 +1805,6 @@ func TimeLeft(sec int64, lang map[string]string) string {
 	}
 	return result
 }
-
 
 func MakeLastTx(lastTx []map[string]string, lng map[string]string) (string, map[int64]int64) {
 	pendingTx := make(map[int64]int64)
@@ -1985,7 +1982,6 @@ func GetNetworkTime() (*time.Time, error) {
 	return nil, errors.New("unable connect to NTP")
 
 }
-
 
 func SortMap(m map[int64]string) []map[int64]string {
 
@@ -2218,25 +2214,24 @@ func ClearNull(str string, n int) string {
 	return new
 }
 
-
 func WriteSelectiveLog(text interface{}) {
 	if *LogLevel == "DEBUG" {
 		var text_ string
 		switch text.(type) {
-			case string:
+		case string:
 			text_ = text.(string)
-			case []byte:
+		case []byte:
 			text_ = string(text.([]byte))
-			case error:
+		case error:
 			text_ = fmt.Sprintf("%v", text)
 		}
 		allTransactionsStr := ""
 		allTransactions, _ := DB.GetAll("SELECT hex(hash) as hex_hash, verified, used, high_rate, for_self_use, user_id, third_var, counter, sent FROM transactions", 100)
 		for _, data := range allTransactions {
-			allTransactionsStr+=data["hex_hash"]+"|"+data["verified"]+"|"+data["used"]+"|"+data["high_rate"]+"|"+data["for_self_use"]+"|"+consts.TxTypes[StrToInt(data["type"])]+"|"+data["user_id"]+"|"+data["third_var"]+"|"+data["counter"]+"|"+data["sent"]+"\n"
+			allTransactionsStr += data["hex_hash"] + "|" + data["verified"] + "|" + data["used"] + "|" + data["high_rate"] + "|" + data["for_self_use"] + "|" + consts.TxTypes[StrToInt(data["type"])] + "|" + data["user_id"] + "|" + data["third_var"] + "|" + data["counter"] + "|" + data["sent"] + "\n"
 		}
 		t := time.Now()
-		data := allTransactionsStr + GetParent() + " ### "+ t.Format(time.StampMicro)+" ### "+text_+"\n\n"
+		data := allTransactionsStr + GetParent() + " ### " + t.Format(time.StampMicro) + " ### " + text_ + "\n\n"
 		//ioutil.WriteFile(*Dir+"/SelectiveLog.txt", []byte(data), 0644)
 		f, err := os.OpenFile(*Dir+"/SelectiveLog.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
@@ -2261,7 +2256,7 @@ func IPwoPort(ipport string) string {
 }
 
 func DcoinUpd(url string) error {
-	zipfile := filepath.Join(*Dir, "dc.zip" )
+	zipfile := filepath.Join(*Dir, "dc.zip")
 	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
 	if err != nil {
 		return ErrInfo(err)
@@ -2272,15 +2267,15 @@ func DcoinUpd(url string) error {
 		return ErrInfo(err)
 	}
 	appname := filepath.Base(os.Args[0])
-	tmpname := filepath.Join(*Dir, `tmp_`+appname )
-	
+	tmpname := filepath.Join(*Dir, `tmp_`+appname)
+
 	f_ := reader.Reader.File
 	f := f_[0]
 	zipped, err := f.Open()
 	if err != nil {
 		return ErrInfo(err)
 	}
-	writer, err := os.OpenFile( tmpname, os.O_WRONLY|os.O_CREATE, f.Mode())
+	writer, err := os.OpenFile(tmpname, os.O_WRONLY|os.O_CREATE, f.Mode())
 	if err != nil {
 		return ErrInfo(err)
 	}
@@ -2306,13 +2301,13 @@ func DcoinUpd(url string) error {
 	old := ""
 	if _, err := os.Stat(os.Args[0]); err == nil {
 		old = os.Args[0]
-	} else if _, err := os.Stat( filepath.Join( folderPath, appname )); err == nil {
-		old = filepath.Join( folderPath, appname )
+	} else if _, err := os.Stat(filepath.Join(folderPath, appname)); err == nil {
+		old = filepath.Join(folderPath, appname)
 	} else {
-		old = filepath.Join( *Dir, appname )
+		old = filepath.Join(*Dir, appname)
 	}
-	log.Debug( tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION)
-	err = exec.Command( tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION).Start()
+	log.Debug(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION)
+	err = exec.Command(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION).Start()
 	if err != nil {
 		return ErrInfo(err)
 	}
@@ -2359,36 +2354,35 @@ func GetUpdVerAndUrl(host string) (string, string, error) {
 	return "", "", nil
 }
 
-
 type updateType struct {
 	Message   map[string]string
 	Signature string
 }
 
-func ShellExecute( cmdline string ) {
+func ShellExecute(cmdline string) {
 	time.Sleep(500 * time.Millisecond)
 	switch runtime.GOOS {
-		case "linux":
-			exec.Command("xdg-open", cmdline).Start()
-		case "windows":
-			exec.Command(`rundll32.exe`, `url.dll,FileProtocolHandler`,	cmdline).Start()
-		case "darwin":
-			exec.Command("open", cmdline).Start()
+	case "linux":
+		exec.Command("xdg-open", cmdline).Start()
+	case "windows":
+		exec.Command(`rundll32.exe`, `url.dll,FileProtocolHandler`, cmdline).Start()
+	case "darwin":
+		exec.Command("open", cmdline).Start()
 	}
 }
 
-// temporary 
+// temporary
 
 func EncodeLength(length int64) []byte {
 	return lib.EncodeLength(length)
 }
 
 func DecodeLength(buf *[]byte) (ret int64) {
-	ret,_ = lib.DecodeLength(buf)
-	return 
+	ret, _ = lib.DecodeLength(buf)
+	return
 }
 
-func DecodeLenInt64(data *[]byte) (int64,error) {
+func DecodeLenInt64(data *[]byte) (int64, error) {
 	return lib.DecodeLenInt64(data)
 }
 
@@ -2416,23 +2410,77 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\[[^\].]*\]\.[\w\d_]*\}\}`)
 	data = qrx.ReplaceAllString(data, singleData)
 
-	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\}\}.*`)
-	sql = qrx.ReplaceAllString(data, `SELECT * FROM "$1"`)
-	dataTable, err := DB.GetAll(sql, 1000)
+	sys_navigate := func(row map[string]string, nav []string) string {
+		if len(nav) != 3 {
+			return fmt.Sprintf(`<td>%s</td><td>%s</td>`, row[`id`], strings.Join(nav, `,`))
+		}
+		pars := strings.Split(nav[2], `&`)
+		parsout := make([]string, 0)
+		for _, ipar := range pars {
+			lr := strings.Split(ipar, `=`)
+			if len(lr) == 2 {
+				value := lr[1]
+				if val, ok := row[value]; ok {
+					value = val
+				}
+				parsout = append(parsout, lr[0]+`:`+value)
+			}
+		}
+		return fmt.Sprintf(`<td>%s</td><td><a href="#" onclick="load_page('%s', {%s} )">%s</a></td>`,
+			row[`id`], nav[1], strings.Join(parsout, `,`), nav[0])
+	}
+	navigate := func(row map[string]string, nav []string) string {
+		if len(nav) != 2 {
+			return fmt.Sprintf(`<td>%s</td><td>%s</td>`, row[`id`], strings.Join(nav, `,`))
+		}
+		value := nav[1]
+		if val, ok := row[value]; ok {
+			value = val
+		}
+		return fmt.Sprintf(`<td>%s</td><td><a href="#" onclick="load_template('%s')">%s</a></td>`,
+			row[`id`], value, nav[0])
+	}
+
+	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\.\(([\w\d_\,]*)\)\.([\w\d_]*)\(([\w\d_\s=\,)]*)\)\}\}.*`)
+	sql = qrx.ReplaceAllString(data, `SELECT $2 FROM "$1"|$3|$4`)
+	pars := strings.Split(sql, `|`)
+	nav := strings.Split(pars[2], `,`)
+	dataTable, err := DB.GetAll(pars[0], 1000)
 	if err != nil {
 		log.Error("%v", err)
 	}
 	table := `<table>`
 	for _, row := range dataTable {
-		table+=`<tr>`
-		for _, cell := range row {
-			table+=`<td>`+cell+`</td>`
+		table += `<tr>`
+		switch pars[1] {
+		case `sys_navigate`:
+			table += sys_navigate(row, nav)
+		case `navigate`:
+			table += navigate(row, nav)
 		}
-		table +=`</tr>`
+		table += `</tr>`
+	}
+	table += `</table>`
+	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\.\(([\w\d_\,]*)\)\.([\w\d_]*)\(([\w\d_\s=\,)]*)\)\}\}`)
+	data = qrx.ReplaceAllString(data, table)
+
+	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\}\}.*`)
+	sql = qrx.ReplaceAllString(data, `SELECT * FROM "$1"`)
+	dataTable, err = DB.GetAll(sql, 1000)
+	if err != nil {
+		log.Error("%v", err)
+	}
+	table = `<table>`
+	for _, row := range dataTable {
+		table += `<tr>`
+		for _, cell := range row {
+			table += `<td>` + cell + `</td>`
+		}
+		table += `</tr>`
 	}
 	table += `</table>`
 
-	qrx = regexp.MustCompile(`(?is)\{\{table.*?\}\}`)
+	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)
 	data = qrx.ReplaceAllString(data, table)
 
 	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\)`)
@@ -2451,6 +2499,6 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	//html := string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 
 	// removing <p></p>
-	unsafe = unsafe[3:len(unsafe)-5]
+	unsafe = unsafe[3 : len(unsafe)-5]
 	return unsafe, nil
 }
