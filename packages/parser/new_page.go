@@ -69,7 +69,7 @@ func (p *Parser) NewPage() error {
 	if p.TxMaps.String["global"]=="1" {
 		prefix = "global"
 	}
-	err := p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", nil, nil, true)
+	err := p.selectiveLoggingAndUpd([]string{"name", "value", "menu", "conditions"}, []interface{}{p.TxMaps.String["name"],p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

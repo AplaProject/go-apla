@@ -66,7 +66,7 @@ func (p *Parser) EditPageFront() error {
 func (p *Parser) EditPage() error {
 
 	prefix := p.TxStateIDStr
-	if p.TxMaps.String["global"]!="1" {
+	if p.TxMaps.String["global"]=="1" {
 		prefix = "global"
 	}
 	err := p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
