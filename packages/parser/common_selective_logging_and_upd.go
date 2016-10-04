@@ -49,11 +49,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlWhere = " WHERE " + addSqlWhere[0:len(addSqlWhere)-5]
 	}
 	// если есть, что логировать
-	logData, err := p.OneRow("SELECT " + addSqlFields + " rb_id FROM " + table + " " + addSqlWhere).String()
+	logData, err := p.OneRow(`SELECT ` + addSqlFields + ` rb_id FROM "` + table + `" ` + addSqlWhere).String()
 	if err != nil {
 		return err
 	}
-	log.Debug("SELECT " + addSqlFields + " rb_id FROM " + table + " " + addSqlWhere)
+	log.Debug(`SELECT ` + addSqlFields + ` rb_id FROM "` + table + `" ` + addSqlWhere)
 	if whereFields != nil && len(logData) > 0 {
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
@@ -101,8 +101,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlUpdate += fields[i] + `='` + values[i] + `',`
 			}
 		}
-		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+addSqlWhere, rbId)
-		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+addSqlWhere)
+		err = p.ExecSql(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere, rbId)
+		//log.Debug(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
 			return err
@@ -135,7 +135,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlIns0 = addSqlIns0[0 : len(addSqlIns0)-1]
 		addSqlIns1 = addSqlIns1[0 : len(addSqlIns1)-1]
 		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")")
-		tableId, err = p.ExecSqlGetLastInsertId("INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")", table)
+		tableId, err = p.ExecSqlGetLastInsertId(`INSERT INTO "`+table+`" (`+addSqlIns0+`) VALUES (`+addSqlIns1+`)`, table)
 		if err != nil {
 			fmt.Println(`Sel Log Err`, tableId, err)
 			return err

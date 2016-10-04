@@ -69,6 +69,7 @@ func (p *Parser) EditPage() error {
 	if p.TxMaps.String["global"]=="1" {
 		prefix = "global"
 	}
+	log.Debug("value page", p.TxMaps.String["value"])
 	err := p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
