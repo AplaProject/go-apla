@@ -9,7 +9,7 @@
 		}
 		$.ajax({
 			type: 'POST',
-			url: 'ajax?json=ajax_get_menu&name=' +  menu + '&global=0',
+			url: 'ajax?json=ajax_get_menu&name=' +  menu + '&global=' + $("#global").val(),
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
