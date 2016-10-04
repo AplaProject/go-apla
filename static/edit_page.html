@@ -1,4 +1,13 @@
 {{ define "editPage" }}
+<style>
+	#DataMenuBtn {
+		visibility:hidden;
+		position:absolute;
+		left:-100000px;
+		top:-100000px;
+	}
+</style>
+
 <script>
 	var serverTime;
 	var menu = null;
@@ -7,19 +16,19 @@
 		if (!menu) {
 			menu = $("#page_menu").val();
 		}
+		$("#DataMenuBtn").click();
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?json=ajax_get_menu&name=' +  menu + '&global=' + $("#global").val(),
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
-				console.log(data)
-				
 				$("#DataMenu").html("").append(
 					'<tr><td><strong>Name</strong><br>' + data.name + '</td></tr>' +
 					'<tr><td><strong>Value</strong><br>' + data.value + '</td></tr>' +
 					'<tr><td><strong>Conditions</strong><br>' + data.conditions + '</td></tr>'
 				);
+				obj.removeClass("whirl standard");
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
@@ -148,7 +157,6 @@
 				</div>
 			</div>
 			<div class="panel-body">
-		
 				<div class="table-responsive">
 					<table class="table table-striped table-bordered table-hover">
 						<tbody id="DataMenu"></tbody>
@@ -157,8 +165,9 @@
 			</div>
 			<div class="panel-footer">
 			   <div class="clearfix">
-				  <div class="pull-left" id="DataMenuBtn">
+				  <div class="pull-left">
 					 <button type="button" class="btn btn-primary" onclick="EditMenu();">edit</button>
+					 <button type="button" id="DataMenuBtn" data-tool="panel-refresh" onClick="preloader(this);">edit</button>
 				  </div>
 			   </div>
 		  	</div>
