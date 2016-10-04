@@ -21,15 +21,17 @@ package daylight
 import (
 	//"fmt"
 	//"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/tcpserver"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/system"
-	_ "github.com/mattn/go-sqlite3"
 	"net"
 	"net/http"
+
+	"github.com/DayLightProject/go-daylight/packages/system"
+	"github.com/DayLightProject/go-daylight/packages/tcpserver"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	_ "github.com/mattn/go-sqlite3"
 	//"os"
 	//"regexp"
 	"time"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
@@ -67,7 +69,30 @@ func (l *boundConn) Close() error {
 }
 
 func httpListener(ListenHttpHost, BrowserHttpHost string) {
-	l, err := net.Listen("tcp", ListenHttpHost)
+	l, err := net.Listen("tcp4", ListenHttpHost)
+	if err != nil {
+		log.Error(err.Error())
+		// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
+		if *utils.Console == 0 {
+			openBrowser(BrowserHttpHost)
+		}
+		log.Error(utils.ErrInfo(err).Error())
+		system.Finish(1)
+	}
+
+	go func() {
+		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
+		if err != nil {
+			log.Error("Error listening:", err, ListenHttpHost)
+			panic(err)
+			//os.Exit(1)
+		}
+	}()
+}
+
+// For ipv6 on the server
+func httpListenerV6(ListenHttpHost, BrowserHttpHost string) {
+	l, err := net.Listen("tcp6", ":"+*utils.ListenHttpPort)
 	if err != nil {
 		log.Error(err.Error())
 		// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке

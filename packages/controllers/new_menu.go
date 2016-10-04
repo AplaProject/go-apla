@@ -29,12 +29,14 @@ func (c *Controller) NewMenu() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
+	global := c.r.FormValue("global")
 
 	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
+		Global: global,
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,

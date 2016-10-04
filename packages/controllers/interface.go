@@ -30,15 +30,22 @@ type interfacePage struct {
 	CitizenId int64
 	InterfacePages []map[string]string
 	InterfaceMenu []map[string]string
+	Global string
 }
 
 func (c *Controller) Interface() (string, error) {
 
-	interface_pages, err := c.GetAll(`SELECT * FROM `+c.StateIdStr+`_pages`, -1)
+	global := c.r.FormValue("global")
+	prefix := c.StateIdStr
+	if global == "1" {
+		prefix = "global"
+	}
+
+	interface_pages, err := c.GetAll(`SELECT * FROM `+prefix+`_pages`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	interface_menu, err := c.GetAll(`SELECT * FROM `+c.StateIdStr+`_menu`, -1)
+	interface_menu, err := c.GetAll(`SELECT * FROM `+prefix+`_menu`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -52,6 +59,7 @@ func (c *Controller) Interface() (string, error) {
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		InterfacePages : interface_pages,
+		Global: global,
 		InterfaceMenu : interface_menu})
 	if err != nil {
 		return "", utils.ErrInfo(err)

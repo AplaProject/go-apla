@@ -30,7 +30,7 @@
 					 <td><strong>{{$value.value}}</strong></td>
 					 <td><strong>{{$value.menu}}</strong></td>
 					 <td><strong>{{$value.conditions}}</strong></td>
-					 <td><button type="button" class="btn btn-primary" onclick="load_page('editPage', {name: {{$value.name}}} )">edit</button></td>
+					 <td><button type="button" class="btn btn-primary" onclick="load_page('editPage', {name: {{$value.name}}, global: {{.Global}} } )">edit</button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>
@@ -40,7 +40,7 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary" onclick="load_page('newPage')">Add page</button>
+			 <button type="button" class="btn btn-primary" onclick="load_page('newPage', {global: {{.Global}} } )">Add page</button>
 		  </div>
 	   </div>
 	  </div>
@@ -68,7 +68,7 @@
 						<td class="thead"><strong>{{$value.name}}</strong></td>
 						<td><strong>{{$value.value}}</strong></td>
 						<td><strong>{{$value.conditions}}</strong></td>
-						<td><button type="button" class="btn btn-primary" onclick="load_page('editMenu', {name: {{$value.name}}} )">edit</button></td>
+						<td><button type="button" class="btn btn-primary" onclick="load_page('editMenu', {name: {{$value.name}}, global: {{.Global}} } )">edit</button></td>
 					</tr>
 					{{end}}
 					</tbody>
@@ -78,17 +78,16 @@
 		<div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary" onclick="load_page('newMenu')">Add menu</button>
+			 <button type="button" class="btn btn-primary" onclick="load_page('newMenu', {global: {{.Global}}} )">Add menu</button>
 		  </div>
 	   </div>
 	  </div>
+
+		{{if not .Global}}
+		<button type="button" class="btn btn-info" onclick="load_page('interface', {global: 1})">Global</button>
+		{{end}}
+
 	</div>
 	<!-- END panel-->
-<script type="text/javascript">
-	$(document).ready(function() {
-		$(".edit").editable({
-            type: 'text'
-		})
-	});
-</script>
+
 {{end}}

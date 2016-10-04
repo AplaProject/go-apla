@@ -35,6 +35,7 @@ type editMenuPage struct {
 	TimeNow      int64
 	DataMenu map[string]string
 	StateId int64
+	Global string
 }
 
 func (c *Controller) EditMenu() (string, error) {
@@ -45,22 +46,30 @@ func (c *Controller) EditMenu() (string, error) {
 
 	var err error
 
+	global := c.r.FormValue("global")
+	prefix := c.StateIdStr
+	if global == "1" {
+		prefix = "global"
+	} else {
+		global = "1"
+	}
+
 	var name string
 	if utils.CheckInputData(c.r.FormValue("name"), "string") {
 		name = c.r.FormValue("name")
 	}
 
-	dataMenu, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, name).String()
+	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, name).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-
 
 	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage {
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
+		Global: global,
 		WalletId: c.SessWalletId,
 		CitizenId: c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
