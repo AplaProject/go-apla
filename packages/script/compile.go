@@ -116,7 +116,7 @@ var (
 		fField,
 		fFieldType,
 		fFieldTag,
-		fError,
+		fCmdError,
 	}
 	states = States{
 		{ // STATE_ROOT
@@ -239,6 +239,11 @@ func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
+func fCmdError(buf *[]*Block, state int, lexem *Lexem) error {
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_ERROR, 0})
+	return nil
+}
+
 func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 	if block.Type == OBJ_FUNC && state == STATE_FPARAM {
@@ -348,15 +353,11 @@ func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fElse(buf *[]*Block, state int, lexem *Lexem) error {
-	//	last := (*(*buf)[len(*buf)-2]).Code[len((*(*buf)[len(*buf)-2]).Code)-1]
-	//	fmt.Println(`IF Condition`, (*(*buf)[len(*buf)-2]).Code )
 	code := (*(*buf)[len(*buf)-2]).Code
 	if code[len(code)-1].Cmd != CMD_IF {
 		return fmt.Errorf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column)
 	}
 	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{CMD_ELSE, (*buf)[len(*buf)-1]})
-	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
-	//	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, len(fblock.Results)})
 	return nil
 }
 
@@ -422,15 +423,6 @@ func (vm *VM) Compile(input []rune) error {
 			i--
 			continue
 		}
-		/*		if (newState.NewState & STATE_PREV) > 0 {
-				i--
-				lexem = lexems[i]
-				if nextState != STATE_EVAL {
-					i--
-					curState = nextState
-					continue
-				}
-			}*/
 		if nextState == STATE_EVAL {
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
 				return err
