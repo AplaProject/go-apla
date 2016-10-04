@@ -120,6 +120,8 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		"main_conditions", id+`_citizens.id=1`, "", "",
 		"new_table", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
