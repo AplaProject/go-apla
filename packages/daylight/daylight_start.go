@@ -19,21 +19,6 @@ package daylight
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/astaxie/beego/config"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/controllers"
-	"github.com/DayLightProject/go-daylight/packages/daemons"
-	"github.com/DayLightProject/go-daylight/packages/parser"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/stopdaemons"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/system"
-	"github.com/DayLightProject/go-daylight/packages/schema"
-	"github.com/go-bindata-assetfs"
-	"github.com/go-thrust/lib/bindings/window"
-	"github.com/go-thrust/lib/commands"
-	"github.com/go-thrust/thrust"
-	"github.com/op/go-logging"
 	_ "image/png"
 	"io/ioutil"
 	"math/rand"
@@ -43,6 +28,22 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/controllers"
+	"github.com/DayLightProject/go-daylight/packages/daemons"
+	"github.com/DayLightProject/go-daylight/packages/parser"
+	"github.com/DayLightProject/go-daylight/packages/schema"
+	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/stopdaemons"
+	"github.com/DayLightProject/go-daylight/packages/system"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/astaxie/beego/config"
+	"github.com/go-bindata-assetfs"
+	"github.com/go-thrust/lib/bindings/window"
+	"github.com/go-thrust/lib/commands"
+	"github.com/go-thrust/thrust"
+	"github.com/op/go-logging"
 )
 
 func Start(dir string, thrustWindowLoder *window.Window) {
@@ -86,14 +87,14 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	} else {
 		configIni, err = configIni_.GetSection("default")
 	}
-	
-/*	outfile, err := os.Create("./out.txt")
-    if err != nil {
-        panic(err)
-    }
-    defer outfile.Close()
-	os.Stdout = outfile*/
-	
+
+	/*	outfile, err := os.Create("./out.txt")
+	    if err != nil {
+	        panic(err)
+	    }
+	    defer outfile.Close()
+		os.Stdout = outfile*/
+
 	// убьем ранее запущенный daylight
 	if !utils.Mobile() {
 		fmt.Println("kill daylight.pid")
@@ -317,7 +318,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// мониторим сигнал из БД о том, что демонам надо завершаться
 	go stopdaemons.WaitStopTime()
 
-	BrowserHttpHost := "http://localhost:"+ *utils.ListenHttpPort
+	BrowserHttpHost := "http://localhost:" + *utils.ListenHttpPort
 	HandleHttpHost := ""
 	ListenHttpHost := *utils.TcpHost + ":" + *utils.ListenHttpPort
 	go func() {
@@ -349,23 +350,24 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
 		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
 		if len(*utils.Tls) > 0 {
-			http.Handle(HandleHttpHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))			
+			http.Handle(HandleHttpHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))
 			httpsMux := http.NewServeMux()
 			httpsMux.HandleFunc(HandleHttpHost+"/", controllers.Index)
 			httpsMux.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 			httpsMux.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
-			go http.ListenAndServeTLS(":443", *utils.Tls + `/fullchain.pem`, *utils.Tls + `/privkey.pem`, httpsMux)
+			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
 		}
-		
+
 		log.Debug("ListenHttpHost", ListenHttpHost)
 
 		IosLog(fmt.Sprintf("ListenHttpHost: %v", ListenHttpHost))
 
 		fmt.Println("ListenHttpHost", ListenHttpHost)
-		 
 
 		httpListener(ListenHttpHost, BrowserHttpHost)
+		// for ipv6 server
+		httpListenerV6(ListenHttpHost, BrowserHttpHost)
 
 		if *utils.Console == 0 && !utils.Mobile() {
 			utils.Sleep(1)
@@ -382,7 +384,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 					fmt.Println("RemoteMessage Recieved:", er.Message.Payload)
 					if len(er.Message.Payload) > 7 && er.Message.Payload[:7] == `mailto:` && runtime.GOOS == `windows` {
 						utils.ShellExecute(er.Message.Payload)
-					} else if len(er.Message.Payload) >= 7 && er.Message.Payload[:7]==`USERID=` {
+					} else if len(er.Message.Payload) >= 7 && er.Message.Payload[:7] == `USERID=` {
 						// for Lite version - do nothing
 					} else {
 						openBrowser(er.Message.Payload)
