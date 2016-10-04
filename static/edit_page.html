@@ -6,6 +6,19 @@
 		minimumResultsForSearch: Infinity,
 		theme: 'bootstrap'
 	});
+	
+	$.ajax({
+		type: 'POST',
+		url: 'ajax?controllerName=getMenu&name=' + {{.DataMenu.name}},
+		dataType: 'json',
+		crossDomain: true,
+		success: function(data) {
+			console.log(data)
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
 
 	$('#send').bind('click', function () {
 
@@ -55,7 +68,7 @@
 <div class="row">
 	<div class="col-md-8">
 		<!-- START panel-->
-		<div class="panel panel-default">
+		<div class="panel panel-default" data-sweet-alert>
 	
 		 <div class="panel-heading">
 			<div class="panel-title">
@@ -102,7 +115,7 @@
 		</div>
 	</div>
 	<div class="col-md-4">
-		<div class="panel panel-default">
+		<div class="panel panel-default" data-sweet-alert>
 			<div class="panel-heading">
 				<div class="panel-title">
 					Menu
