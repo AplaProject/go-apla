@@ -1,4 +1,12 @@
 <style>
+	.tab-content {
+		border:0px;
+		padding:0px;
+	}
+	.panel.panel-default {
+		border-top:0px;
+		border-radius:0px 0px 4px 4px;
+	}
 	#message {
 		display:none;
 	}
@@ -24,7 +32,7 @@
 		crossDomain: true,
 		success: function(data) {
 			for (var i in data) {
-					selectbox.append('<option value="' + i + '" data-id="' + i + '">' + data[i] + '</option>');
+				selectbox.append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
 			}
 			selectbox.select2({
 				templateResult: formatState,
@@ -41,7 +49,7 @@
 		if (!state.id) { return state.text; }
 		var $state = $(
 			'<span class="state_' + state.id + '">' +
-				'<i style="background-position:0px ' + selectbox.find("option[value=" + state.id + "]").attr("data-id") * (-9) + 'px"></i>' +
+				'<i style="background-image:url(' + selectbox.find("option[value=" + state.id + "]").attr("data-flag") + '); background-size:16px auto; background-position:0px 0px;"></i>' +
 				state.text +
 			'</span>'
 		);
@@ -73,16 +81,12 @@
 	
 	function changeCountry(elem) {
 		var id = elem.value;
-		if (id != "dl") {
-			hideFields('Coming soon');
-		} else {
-			Country(id);
-		}
+		Country(id);
 	}
 	
 	function Country(id) {
 		if (!id) {
-			id = 'dl';
+			id = 1;
 		}
 		
 		msg.hide();
@@ -337,7 +341,13 @@
 	$(document).ready(function(){
 		do_phrase();
 	});
-		
+	
+	$('a[href="#tab2"]').on('shown.bs.tab', function () {
+		$(".selectbox").select2({
+			minimumResultsForSearch: 6,
+			theme: 'bootstrap'
+		});
+	})
 </script>
 
 <div class="content-heading">
@@ -347,34 +357,64 @@
    <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
    <li class="active">Request for citizen status</li>
 </ol>
-<!-- START panel-->
-<div class="panel panel-default" data-sweet-alert>
- <div class="panel-body">
-	<form role="form">
-	   <div class="form-group">
-		  <label for="countries">Country</label>
-		  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
+<div role="tabpanel">
+	<!-- Nav tabs-->
+   <ul role="tablist" class="nav nav-tabs">
+	  <li role="presentation" class="active"><a href="#tab1" aria-controls="home" role="tab" data-toggle="tab">Virtual and not recognized</a></li>
+	  <li role="presentation"><a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab">Real</a></li>
+   </ul>
+   <!-- Tab panes-->
+   <div class="tab-content">
+		<!-- START panel-->
+		<div id="tab1" role="tabpanel" class="panel panel-default tab-pane active" data-sweet-alert>
+			 <div class="panel-body">
+				<form role="form">
+				   <div class="form-group">
+					  <label for="countries">Country</label>
+					  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
+				   </div>
+				   <div id="message" class="alert alert-danger"></div>
+				   <div id="fields"></div>
+					   <div class="form-group" style="display:none;">
+						  <label for="phrase">GENERATE AND REMEMBER SEED</label>
+						  <textarea id="phrase" class="form-control"></textarea>
+						 <!--button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button-->
+						<input type="hidden" id="prvkey" value="" />
+						<input type="hidden" id="pubkey" value="" />
+						
+					   </div>
+				</form>
+			 </div>
+			 <div id="buttons" class="panel-footer">
+			   <div class="clearfix">
+				  <div class="pull-right">
+					 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
+					 <button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
+				  </div>
+			   </div>
+			  </div>
+			</div>
+			<!-- END panel-->
+		  <!-- START panel-->
+			<div id="tab2" role="tabpanel" class="panel panel-default tab-pane" data-sweet-alert>
+			 <div class="panel-body">
+				<form role="form">
+				   <div class="form-group">
+					  <label for="countries">Country</label>
+					  <select class="selectbox form-control">
+					  </select>
+				   </div>
+				</form>
+			 </div>
+			 <div class="panel-footer">
+			   <div class="clearfix">
+				  <div class="pull-right">
+					 <button type="button" class="btn btn-primary">Request</button>
+				  </div>
+			   </div>
+			  </div>
+			</div>
+			<!-- END panel-->
 	   </div>
-	   <div id="message" class="alert alert-danger"></div>
-	   <div id="fields"></div>
-		   <div class="form-group" style="display:none;">
-			  <label for="phrase">GENERATE AND REMEMBER SEED</label>
-			  <textarea id="phrase" class="form-control"></textarea>
-			 <!--button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button-->
-			<input type="hidden" id="prvkey" value="" />
-			<input type="hidden" id="pubkey" value="" />
-			
-		   </div>
-	</form>
- </div>
- <div id="buttons" class="panel-footer">
-   <div class="clearfix">
-	  <div class="pull-right">
-		 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
-		 <button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
-	  </div>
-   </div>
-  </div>
 </div>
-<!-- END panel-->
 {{template "signatures".}}
