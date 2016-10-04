@@ -4,7 +4,12 @@
 		Interface
 	</div>
 	<ol class="breadcrumb">
-	   <li class="active">Interface</li>
+	   {{if not .Global}}
+			<li class="active">Interface</li>
+	   {{else}}
+		   <li><a href="#" onclick="load_page('interface')">Interface</a></li>
+		   <li class="active">Global</li>
+	   {{end}}
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">

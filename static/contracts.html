@@ -4,8 +4,12 @@
 		contracts
 	</div>
 	<ol class="breadcrumb">
-	   <li><a href="#">Dashboard</a></li>
-	   <li class="active">contracts</li>
+	   {{if not .Global}}
+			<li class="active">Smart contracts</li>
+	   {{else}}
+		   <li><a href="#" onclick="load_page('contracts')">Smart contracts</a></li>
+		   <li class="active">Global</li>
+	   {{end}}
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
@@ -47,17 +51,11 @@
 			<button type="button" class="btn btn-info" onclick="load_page('contracts', {global: 1})">Global</button>
 			{{end}}
 		  </div>
-
 		  <div class="pull-right">
 			 <button type="button" class="btn btn-primary" onclick="load_page('newContract')">Add new</button>
 		  </div>
 	   </div>
 	  </div>
-
-		{{if ne .Global "1"}}
-		<button type="button" class="btn btn-primary" onclick="load_page('contracts', {global: 1})">Global</button>
-		{{end}}
-
 	</div>
 	<!-- END panel-->
 {{end}}
