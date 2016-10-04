@@ -2,6 +2,9 @@
 <script>
 
 	var serverTime;
+	
+	$(".aside .nav li").removeClass("active");
+	$(".anonym, .newState").addClass("active");
 
 	$('#send').bind('click', function () {
 
@@ -40,11 +43,11 @@
 		addState
 	</div>
 	<ol class="breadcrumb">
-	   <li><a href="#">Dashboard</a></li>
+	   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
 	   <li class="active">addState</li>
 	</ol>
 	<!-- START panel-->
-	<div class="panel panel-default">
+	<div class="panel panel-default" data-sweet-alert>
 	 <div class="panel-heading">
 	 	<div class="panel-title">
 			addState
@@ -55,16 +58,24 @@
 		   <table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
-				  <td>State name</td><td><input type="text" id="state_name"></td>
+				  <td width="150">State name</td>
+				  <td><input class="form-control" type="text" id="state_name"></td>
 			  </tr>
 			  <tr>
-				  <td>Currency name</td><td><input type="text" id="currency_name"></td>
+				  <td width="150">Currency name</td>
+				  <td><input class="form-control" type="text" id="currency_name"></td>
 			  </tr>
 			  </tbody>
 		   </table>
-			<button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Next</button>
 		</div>
 	 </div>
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-right">
+			 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Next</button>
+		  </div>
+	   </div>
+	  </div>
 	</div>
 
 
