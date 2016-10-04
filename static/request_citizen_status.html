@@ -1,4 +1,12 @@
 <style>
+	.tab-content {
+		border:0px;
+		padding:0px;
+	}
+	.panel.panel-default {
+		border-top:0px;
+		border-radius:0px 0px 4px 4px;
+	}
 	#message {
 		display:none;
 	}
@@ -28,6 +36,7 @@
 				selectbox.append('<option value="' + data[i][0] + '" data-id="' + i + '">' + data[i][1] + '</option>');
 			}
 			selectbox.select2({
+				minimumResultsForSearch: 6,
 				templateResult: formatState,
 				templateSelection: formatState,
 				theme: 'bootstrap'
@@ -313,7 +322,13 @@
 	$(document).ready(function(){
 		do_phrase();
 	});
-		
+	
+	$('a[href="#tab2"]').on('shown.bs.tab', function () {
+		$(".selectbox").select2({
+			minimumResultsForSearch: 6,
+			theme: 'bootstrap'
+		});
+	})
 </script>
 
 <div class="content-heading">
@@ -323,34 +338,63 @@
    <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
    <li class="active">Request for citizen status</li>
 </ol>
-<!-- START panel-->
-<div class="panel panel-default" data-sweet-alert>
- <div class="panel-body">
-	<form role="form">
-	   <div class="form-group">
-		  <label for="countries">Country</label>
-		  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
-	   </div>
-	   <div id="message" class="alert alert-danger"></div>
-	   <div id="fields"></div>
-		   <div class="form-group" style="display:none;">
-			  <label for="phrase">GENERATE AND REMEMBER SEED</label>
-			  <textarea id="phrase" class="form-control"></textarea>
-			 <!--button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button-->
-			<input type="hidden" id="prvkey" value="" />
-			<input type="hidden" id="pubkey" value="" />
-			
+<div role="tabpanel">
+	<!-- Nav tabs-->
+   <ul role="tablist" class="nav nav-tabs">
+	  <li role="presentation" class="active"><a href="#tab1" aria-controls="home" role="tab" data-toggle="tab">List of states of the UN</a></li>
+	  <li role="presentation"><a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab">List other states</a></li>
+   </ul>
+   <!-- Tab panes-->
+   <div class="tab-content">
+		<!-- START panel-->
+		<div id="tab1" role="tabpanel" class="panel panel-default tab-pane active" data-sweet-alert>
+		 <div class="panel-body">
+			<form role="form">
+			   <div class="form-group">
+				  <label for="countries">Country</label>
+				  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
+			   </div>
+			   <div id="message" class="alert alert-danger"></div>
+			   <div id="fields"></div>
+			   <div class="form-group" style="display:none;">
+					<label for="phrase">GENERATE AND REMEMBER SEED</label>
+					<textarea id="phrase" class="form-control"></textarea>
+					<!--button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button-->
+					<input type="hidden" id="prvkey" value="" />
+					<input type="hidden" id="pubkey" value="" />
+			   </div>
+			</form>
+		 </div>
+		 <div id="buttons" class="panel-footer">
+		   <div class="clearfix">
+			  <div class="pull-right">
+				 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
+				 <button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
+			  </div>
 		   </div>
-	</form>
- </div>
- <div id="buttons" class="panel-footer">
-   <div class="clearfix">
-	  <div class="pull-right">
-		 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
-		 <button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
-	  </div>
+		  </div>
+		</div>
+		<!-- END panel-->
+	  <!-- START panel-->
+		<div id="tab2" role="tabpanel" class="panel panel-default tab-pane" data-sweet-alert>
+		 <div class="panel-body">
+			<form role="form">
+			   <div class="form-group">
+				  <label for="countries">Country</label>
+				  <select class="selectbox form-control">
+				  </select>
+			   </div>
+			</form>
+		 </div>
+		 <div class="panel-footer">
+		   <div class="clearfix">
+			  <div class="pull-right">
+				 <button type="button" class="btn btn-primary">Request</button>
+			  </div>
+		   </div>
+		  </div>
+		</div>
+		<!-- END panel-->
    </div>
-  </div>
 </div>
-<!-- END panel-->
 {{template "signatures".}}
