@@ -205,9 +205,9 @@ package static
 import (
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // bindataRead reads the given file from disk. It returns an error on failure.
@@ -3807,7 +3807,7 @@ func Asset(name string) ([]byte, error) {
 // It simplifies safe initialization of global variables.
 func MustAsset(name string) []byte {
 	a, err := Asset(name)
-	if err != nil {
+	if (err != nil) {
 		panic("asset: Asset(" + name + "): " + err.Error())
 	}
 
@@ -4076,330 +4076,528 @@ func AssetDir(name string) ([]string, error) {
 }
 
 type bintree struct {
-	Func     func() (*asset, error)
+	Func func() (*asset, error)
 	Children map[string]*bintree
 }
 var _bintree = &bintree{nil, map[string]*bintree{
 	"static": &bintree{nil, map[string]*bintree{
-		"1block": &bintree{static1block, map[string]*bintree{}},
-		"1block-local": &bintree{static1blockLocal, map[string]*bintree{}},
-		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
-		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
-		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
-		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{}},
-		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
-		"block_generation.html": &bintree{staticBlock_generationHtml, map[string]*bintree{}},
-		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{}},
-		"change_state_smart_laws.html": &bintree{staticChange_state_smart_lawsHtml, map[string]*bintree{}},
-		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{}},
-		"contracts.html": &bintree{staticContractsHtml, map[string]*bintree{}},
+		"1block": &bintree{static1block, map[string]*bintree{
+		}},
+		"1block-local": &bintree{static1blockLocal, map[string]*bintree{
+		}},
+		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{
+		}},
+		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{
+		}},
+		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{
+		}},
+		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{
+		}},
+		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{
+		}},
+		"block_generation.html": &bintree{staticBlock_generationHtml, map[string]*bintree{
+		}},
+		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{
+		}},
+		"change_state_smart_laws.html": &bintree{staticChange_state_smart_lawsHtml, map[string]*bintree{
+		}},
+		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{
+		}},
+		"contracts.html": &bintree{staticContractsHtml, map[string]*bintree{
+		}},
 		"countries": &bintree{nil, map[string]*bintree{
-			"countries.json": &bintree{staticCountriesCountriesJson, map[string]*bintree{}},
-			"flags.png": &bintree{staticCountriesFlagsPng, map[string]*bintree{}},
-			"mm.png": &bintree{staticCountriesMmPng, map[string]*bintree{}},
+			"countries.json": &bintree{staticCountriesCountriesJson, map[string]*bintree{
+			}},
+			"flags.png": &bintree{staticCountriesFlagsPng, map[string]*bintree{
+			}},
+			"mm.png": &bintree{staticCountriesMmPng, map[string]*bintree{
+			}},
 		}},
 		"css": &bintree{nil, map[string]*bintree{
-			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
-		}},
-		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{}},
-		"edit_column.html": &bintree{staticEdit_columnHtml, map[string]*bintree{}},
-		"edit_contract.html": &bintree{staticEdit_contractHtml, map[string]*bintree{}},
-		"edit_menu.html": &bintree{staticEdit_menuHtml, map[string]*bintree{}},
-		"edit_page.html": &bintree{staticEdit_pageHtml, map[string]*bintree{}},
-		"edit_state_parameters.html": &bintree{staticEdit_state_parametersHtml, map[string]*bintree{}},
-		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{}},
-		"fonts": &bintree{nil, map[string]*bintree{
-			"glyphicons-filetypes-regular.eot": &bintree{staticFontsGlyphiconsFiletypesRegularEot, map[string]*bintree{}},
-			"glyphicons-filetypes-regular.svg": &bintree{staticFontsGlyphiconsFiletypesRegularSvg, map[string]*bintree{}},
-			"glyphicons-filetypes-regular.ttf": &bintree{staticFontsGlyphiconsFiletypesRegularTtf, map[string]*bintree{}},
-			"glyphicons-filetypes-regular.woff": &bintree{staticFontsGlyphiconsFiletypesRegularWoff, map[string]*bintree{}},
-			"glyphicons-filetypes-regular.woff2": &bintree{staticFontsGlyphiconsFiletypesRegularWoff2, map[string]*bintree{}},
-			"glyphicons-halflings-regular.eot": &bintree{staticFontsGlyphiconsHalflingsRegularEot, map[string]*bintree{}},
-			"glyphicons-halflings-regular.svg": &bintree{staticFontsGlyphiconsHalflingsRegularSvg, map[string]*bintree{}},
-			"glyphicons-halflings-regular.ttf": &bintree{staticFontsGlyphiconsHalflingsRegularTtf, map[string]*bintree{}},
-			"glyphicons-halflings-regular.woff": &bintree{staticFontsGlyphiconsHalflingsRegularWoff, map[string]*bintree{}},
-			"glyphicons-halflings-regular.woff2": &bintree{staticFontsGlyphiconsHalflingsRegularWoff2, map[string]*bintree{}},
-			"glyphicons-regular.eot": &bintree{staticFontsGlyphiconsRegularEot, map[string]*bintree{}},
-			"glyphicons-regular.svg": &bintree{staticFontsGlyphiconsRegularSvg, map[string]*bintree{}},
-			"glyphicons-regular.ttf": &bintree{staticFontsGlyphiconsRegularTtf, map[string]*bintree{}},
-			"glyphicons-regular.woff": &bintree{staticFontsGlyphiconsRegularWoff, map[string]*bintree{}},
-			"glyphicons-regular.woff2": &bintree{staticFontsGlyphiconsRegularWoff2, map[string]*bintree{}},
-			"glyphicons-social-regular.eot": &bintree{staticFontsGlyphiconsSocialRegularEot, map[string]*bintree{}},
-			"glyphicons-social-regular.svg": &bintree{staticFontsGlyphiconsSocialRegularSvg, map[string]*bintree{}},
-			"glyphicons-social-regular.ttf": &bintree{staticFontsGlyphiconsSocialRegularTtf, map[string]*bintree{}},
-			"glyphicons-social-regular.woff": &bintree{staticFontsGlyphiconsSocialRegularWoff, map[string]*bintree{}},
-			"glyphicons-social-regular.woff2": &bintree{staticFontsGlyphiconsSocialRegularWoff2, map[string]*bintree{}},
-		}},
-		"history.html": &bintree{staticHistoryHtml, map[string]*bintree{}},
-		"img": &bintree{nil, map[string]*bintree{
-			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
-			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
-			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{}},
-			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{}},
-			"bg3.jpg": &bintree{staticImgBg3Jpg, map[string]*bintree{}},
-			"bg4.jpg": &bintree{staticImgBg4Jpg, map[string]*bintree{}},
-			"bg5.jpg": &bintree{staticImgBg5Jpg, map[string]*bintree{}},
-			"bg6.jpg": &bintree{staticImgBg6Jpg, map[string]*bintree{}},
-			"bg7.jpg": &bintree{staticImgBg7Jpg, map[string]*bintree{}},
-			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{}},
-			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{}},
-			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{}},
-			"favicon.ico": &bintree{staticImgFaviconIco, map[string]*bintree{}},
-			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{}},
-			"logo-single.svg": &bintree{staticImgLogoSingleSvg, map[string]*bintree{}},
-			"logo.svg": &bintree{staticImgLogoSvg, map[string]*bintree{}},
-			"logo_null.svg": &bintree{staticImgLogo_nullSvg, map[string]*bintree{}},
-			"logo_ok.svg": &bintree{staticImgLogo_okSvg, map[string]*bintree{}},
-			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{}},
-			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
-			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{}},
-			"radio_icon.png": &bintree{staticImgRadio_iconPng, map[string]*bintree{}},
-			"squares.gif": &bintree{staticImgSquaresGif, map[string]*bintree{}},
-			"user": &bintree{nil, map[string]*bintree{
-				"01.jpg": &bintree{staticImgUser01Jpg, map[string]*bintree{}},
-				"02.jpg": &bintree{staticImgUser02Jpg, map[string]*bintree{}},
-				"03.jpg": &bintree{staticImgUser03Jpg, map[string]*bintree{}},
-				"04.jpg": &bintree{staticImgUser04Jpg, map[string]*bintree{}},
-				"05.jpg": &bintree{staticImgUser05Jpg, map[string]*bintree{}},
-				"06.jpg": &bintree{staticImgUser06Jpg, map[string]*bintree{}},
-				"07.jpg": &bintree{staticImgUser07Jpg, map[string]*bintree{}},
-				"08.jpg": &bintree{staticImgUser08Jpg, map[string]*bintree{}},
-				"09.jpg": &bintree{staticImgUser09Jpg, map[string]*bintree{}},
-				"10.jpg": &bintree{staticImgUser10Jpg, map[string]*bintree{}},
-				"11.jpg": &bintree{staticImgUser11Jpg, map[string]*bintree{}},
-				"12.jpg": &bintree{staticImgUser12Jpg, map[string]*bintree{}},
-				"13.jpg": &bintree{staticImgUser13Jpg, map[string]*bintree{}},
+			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{
 			}},
 		}},
-		"index.html": &bintree{staticIndexHtml, map[string]*bintree{}},
-		"install_step_0.html": &bintree{staticInstall_step_0Html, map[string]*bintree{}},
-		"install_step_1.html": &bintree{staticInstall_step_1Html, map[string]*bintree{}},
-		"interface.html": &bintree{staticInterfaceHtml, map[string]*bintree{}},
-		"js": &bintree{nil, map[string]*bintree{
-			"app.js": &bintree{staticJsAppJs, map[string]*bintree{}},
-			"clipboard.js": &bintree{staticJsClipboardJs, map[string]*bintree{}},
-			"crypto": &bintree{nil, map[string]*bintree{
-				"asn1-1.0.min.js": &bintree{staticJsCryptoAsn110MinJs, map[string]*bintree{}},
-				"asn1hex-1.1.min.js": &bintree{staticJsCryptoAsn1hex11MinJs, map[string]*bintree{}},
-				"crypto-1.1.min.js": &bintree{staticJsCryptoCrypto11MinJs, map[string]*bintree{}},
-				"ecdsa-modified-1.0.min.js": &bintree{staticJsCryptoEcdsaModified10MinJs, map[string]*bintree{}},
-				"ecparam-1.0.min.js": &bintree{staticJsCryptoEcparam10MinJs, map[string]*bintree{}},
-				"ext": &bintree{nil, map[string]*bintree{
-					"cj": &bintree{nil, map[string]*bintree{
-						"aes.js": &bintree{staticJsCryptoExtCjAesJs, map[string]*bintree{}},
-						"cryptojs-312-core-fix-min.js": &bintree{staticJsCryptoExtCjCryptojs312CoreFixMinJs, map[string]*bintree{}},
-						"ec-patch-min.js": &bintree{staticJsCryptoExtCjEcPatchMinJs, map[string]*bintree{}},
-						"md5_min.js": &bintree{staticJsCryptoExtCjMd5_minJs, map[string]*bintree{}},
-						"sha1_min.js": &bintree{staticJsCryptoExtCjSha1_minJs, map[string]*bintree{}},
-						"sha256_min.js": &bintree{staticJsCryptoExtCjSha256_minJs, map[string]*bintree{}},
-						"x64-core_min.js": &bintree{staticJsCryptoExtCjX64Core_minJs, map[string]*bintree{}},
-					}},
-					"ec-min.js": &bintree{staticJsCryptoExtEcMinJs, map[string]*bintree{}},
-					"ec-patch-min.js": &bintree{staticJsCryptoExtEcPatchMinJs, map[string]*bintree{}},
-					"jsbn-min.js": &bintree{staticJsCryptoExtJsbnMinJs, map[string]*bintree{}},
-					"jsbn2-min.js": &bintree{staticJsCryptoExtJsbn2MinJs, map[string]*bintree{}},
-					"prng4-min.js": &bintree{staticJsCryptoExtPrng4MinJs, map[string]*bintree{}},
-					"rng-min.js": &bintree{staticJsCryptoExtRngMinJs, map[string]*bintree{}},
-					"yahoo-min.js": &bintree{staticJsCryptoExtYahooMinJs, map[string]*bintree{}},
+		"dashboard_anonym.html": &bintree{staticDashboard_anonymHtml, map[string]*bintree{
+		}},
+		"edit_column.html": &bintree{staticEdit_columnHtml, map[string]*bintree{
+		}},
+		"edit_contract.html": &bintree{staticEdit_contractHtml, map[string]*bintree{
+		}},
+		"edit_menu.html": &bintree{staticEdit_menuHtml, map[string]*bintree{
+		}},
+		"edit_page.html": &bintree{staticEdit_pageHtml, map[string]*bintree{
+		}},
+		"edit_state_parameters.html": &bintree{staticEdit_state_parametersHtml, map[string]*bintree{
+		}},
+		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{
+		}},
+		"fonts": &bintree{nil, map[string]*bintree{
+			"glyphicons-filetypes-regular.eot": &bintree{staticFontsGlyphiconsFiletypesRegularEot, map[string]*bintree{
+			}},
+			"glyphicons-filetypes-regular.svg": &bintree{staticFontsGlyphiconsFiletypesRegularSvg, map[string]*bintree{
+			}},
+			"glyphicons-filetypes-regular.ttf": &bintree{staticFontsGlyphiconsFiletypesRegularTtf, map[string]*bintree{
+			}},
+			"glyphicons-filetypes-regular.woff": &bintree{staticFontsGlyphiconsFiletypesRegularWoff, map[string]*bintree{
+			}},
+			"glyphicons-filetypes-regular.woff2": &bintree{staticFontsGlyphiconsFiletypesRegularWoff2, map[string]*bintree{
+			}},
+			"glyphicons-halflings-regular.eot": &bintree{staticFontsGlyphiconsHalflingsRegularEot, map[string]*bintree{
+			}},
+			"glyphicons-halflings-regular.svg": &bintree{staticFontsGlyphiconsHalflingsRegularSvg, map[string]*bintree{
+			}},
+			"glyphicons-halflings-regular.ttf": &bintree{staticFontsGlyphiconsHalflingsRegularTtf, map[string]*bintree{
+			}},
+			"glyphicons-halflings-regular.woff": &bintree{staticFontsGlyphiconsHalflingsRegularWoff, map[string]*bintree{
+			}},
+			"glyphicons-halflings-regular.woff2": &bintree{staticFontsGlyphiconsHalflingsRegularWoff2, map[string]*bintree{
+			}},
+			"glyphicons-regular.eot": &bintree{staticFontsGlyphiconsRegularEot, map[string]*bintree{
+			}},
+			"glyphicons-regular.svg": &bintree{staticFontsGlyphiconsRegularSvg, map[string]*bintree{
+			}},
+			"glyphicons-regular.ttf": &bintree{staticFontsGlyphiconsRegularTtf, map[string]*bintree{
+			}},
+			"glyphicons-regular.woff": &bintree{staticFontsGlyphiconsRegularWoff, map[string]*bintree{
+			}},
+			"glyphicons-regular.woff2": &bintree{staticFontsGlyphiconsRegularWoff2, map[string]*bintree{
+			}},
+			"glyphicons-social-regular.eot": &bintree{staticFontsGlyphiconsSocialRegularEot, map[string]*bintree{
+			}},
+			"glyphicons-social-regular.svg": &bintree{staticFontsGlyphiconsSocialRegularSvg, map[string]*bintree{
+			}},
+			"glyphicons-social-regular.ttf": &bintree{staticFontsGlyphiconsSocialRegularTtf, map[string]*bintree{
+			}},
+			"glyphicons-social-regular.woff": &bintree{staticFontsGlyphiconsSocialRegularWoff, map[string]*bintree{
+			}},
+			"glyphicons-social-regular.woff2": &bintree{staticFontsGlyphiconsSocialRegularWoff2, map[string]*bintree{
+			}},
+		}},
+		"history.html": &bintree{staticHistoryHtml, map[string]*bintree{
+		}},
+		"img": &bintree{nil, map[string]*bintree{
+			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{
+			}},
+			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{
+			}},
+			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{
+			}},
+			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{
+			}},
+			"bg3.jpg": &bintree{staticImgBg3Jpg, map[string]*bintree{
+			}},
+			"bg4.jpg": &bintree{staticImgBg4Jpg, map[string]*bintree{
+			}},
+			"bg5.jpg": &bintree{staticImgBg5Jpg, map[string]*bintree{
+			}},
+			"bg6.jpg": &bintree{staticImgBg6Jpg, map[string]*bintree{
+			}},
+			"bg7.jpg": &bintree{staticImgBg7Jpg, map[string]*bintree{
+			}},
+			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{
+			}},
+			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{
+			}},
+			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{
+			}},
+			"favicon.ico": &bintree{staticImgFaviconIco, map[string]*bintree{
+			}},
+			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{
+			}},
+			"logo-single.svg": &bintree{staticImgLogoSingleSvg, map[string]*bintree{
+			}},
+			"logo.svg": &bintree{staticImgLogoSvg, map[string]*bintree{
+			}},
+			"logo_null.svg": &bintree{staticImgLogo_nullSvg, map[string]*bintree{
+			}},
+			"logo_ok.svg": &bintree{staticImgLogo_okSvg, map[string]*bintree{
+			}},
+			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{
+			}},
+			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{
+			}},
+			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{
+			}},
+			"radio_icon.png": &bintree{staticImgRadio_iconPng, map[string]*bintree{
+			}},
+			"squares.gif": &bintree{staticImgSquaresGif, map[string]*bintree{
+			}},
+			"user": &bintree{nil, map[string]*bintree{
+				"01.jpg": &bintree{staticImgUser01Jpg, map[string]*bintree{
+				}},
+				"02.jpg": &bintree{staticImgUser02Jpg, map[string]*bintree{
+				}},
+				"03.jpg": &bintree{staticImgUser03Jpg, map[string]*bintree{
+				}},
+				"04.jpg": &bintree{staticImgUser04Jpg, map[string]*bintree{
+				}},
+				"05.jpg": &bintree{staticImgUser05Jpg, map[string]*bintree{
+				}},
+				"06.jpg": &bintree{staticImgUser06Jpg, map[string]*bintree{
+				}},
+				"07.jpg": &bintree{staticImgUser07Jpg, map[string]*bintree{
+				}},
+				"08.jpg": &bintree{staticImgUser08Jpg, map[string]*bintree{
+				}},
+				"09.jpg": &bintree{staticImgUser09Jpg, map[string]*bintree{
+				}},
+				"10.jpg": &bintree{staticImgUser10Jpg, map[string]*bintree{
+				}},
+				"11.jpg": &bintree{staticImgUser11Jpg, map[string]*bintree{
+				}},
+				"12.jpg": &bintree{staticImgUser12Jpg, map[string]*bintree{
+				}},
+				"13.jpg": &bintree{staticImgUser13Jpg, map[string]*bintree{
 				}},
 			}},
-			"datetime.js": &bintree{staticJsDatetimeJs, map[string]*bintree{}},
-			"demo": &bintree{nil, map[string]*bintree{
-				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{}},
-				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{}},
-				"demo-forms.js": &bintree{staticJsDemoDemoFormsJs, map[string]*bintree{}},
-				"demo-jqcloud.js": &bintree{staticJsDemoDemoJqcloudJs, map[string]*bintree{}},
-				"demo-jqgrid.js": &bintree{staticJsDemoDemoJqgridJs, map[string]*bintree{}},
-				"demo-nestable.js": &bintree{staticJsDemoDemoNestableJs, map[string]*bintree{}},
-				"demo-panels.js": &bintree{staticJsDemoDemoPanelsJs, map[string]*bintree{}},
-				"demo-rtl.js": &bintree{staticJsDemoDemoRtlJs, map[string]*bintree{}},
-				"demo-search.js": &bintree{staticJsDemoDemoSearchJs, map[string]*bintree{}},
-				"demo-sortable.js": &bintree{staticJsDemoDemoSortableJs, map[string]*bintree{}},
-				"demo-upload.js": &bintree{staticJsDemoDemoUploadJs, map[string]*bintree{}},
-				"demo-vector-map.js": &bintree{staticJsDemoDemoVectorMapJs, map[string]*bintree{}},
-				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
-				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
+		}},
+		"index.html": &bintree{staticIndexHtml, map[string]*bintree{
+		}},
+		"install_step_0.html": &bintree{staticInstall_step_0Html, map[string]*bintree{
+		}},
+		"install_step_1.html": &bintree{staticInstall_step_1Html, map[string]*bintree{
+		}},
+		"interface.html": &bintree{staticInterfaceHtml, map[string]*bintree{
+		}},
+		"js": &bintree{nil, map[string]*bintree{
+			"app.js": &bintree{staticJsAppJs, map[string]*bintree{
 			}},
-			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
-			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
-			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{}},
+			"clipboard.js": &bintree{staticJsClipboardJs, map[string]*bintree{
+			}},
+			"crypto": &bintree{nil, map[string]*bintree{
+				"asn1-1.0.min.js": &bintree{staticJsCryptoAsn110MinJs, map[string]*bintree{
+				}},
+				"asn1hex-1.1.min.js": &bintree{staticJsCryptoAsn1hex11MinJs, map[string]*bintree{
+				}},
+				"crypto-1.1.min.js": &bintree{staticJsCryptoCrypto11MinJs, map[string]*bintree{
+				}},
+				"ecdsa-modified-1.0.min.js": &bintree{staticJsCryptoEcdsaModified10MinJs, map[string]*bintree{
+				}},
+				"ecparam-1.0.min.js": &bintree{staticJsCryptoEcparam10MinJs, map[string]*bintree{
+				}},
+				"ext": &bintree{nil, map[string]*bintree{
+					"cj": &bintree{nil, map[string]*bintree{
+						"aes.js": &bintree{staticJsCryptoExtCjAesJs, map[string]*bintree{
+						}},
+						"cryptojs-312-core-fix-min.js": &bintree{staticJsCryptoExtCjCryptojs312CoreFixMinJs, map[string]*bintree{
+						}},
+						"ec-patch-min.js": &bintree{staticJsCryptoExtCjEcPatchMinJs, map[string]*bintree{
+						}},
+						"md5_min.js": &bintree{staticJsCryptoExtCjMd5_minJs, map[string]*bintree{
+						}},
+						"sha1_min.js": &bintree{staticJsCryptoExtCjSha1_minJs, map[string]*bintree{
+						}},
+						"sha256_min.js": &bintree{staticJsCryptoExtCjSha256_minJs, map[string]*bintree{
+						}},
+						"x64-core_min.js": &bintree{staticJsCryptoExtCjX64Core_minJs, map[string]*bintree{
+						}},
+					}},
+					"ec-min.js": &bintree{staticJsCryptoExtEcMinJs, map[string]*bintree{
+					}},
+					"ec-patch-min.js": &bintree{staticJsCryptoExtEcPatchMinJs, map[string]*bintree{
+					}},
+					"jsbn-min.js": &bintree{staticJsCryptoExtJsbnMinJs, map[string]*bintree{
+					}},
+					"jsbn2-min.js": &bintree{staticJsCryptoExtJsbn2MinJs, map[string]*bintree{
+					}},
+					"prng4-min.js": &bintree{staticJsCryptoExtPrng4MinJs, map[string]*bintree{
+					}},
+					"rng-min.js": &bintree{staticJsCryptoExtRngMinJs, map[string]*bintree{
+					}},
+					"yahoo-min.js": &bintree{staticJsCryptoExtYahooMinJs, map[string]*bintree{
+					}},
+				}},
+			}},
+			"datetime.js": &bintree{staticJsDatetimeJs, map[string]*bintree{
+			}},
+			"demo": &bintree{nil, map[string]*bintree{
+				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{
+				}},
+				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{
+				}},
+				"demo-forms.js": &bintree{staticJsDemoDemoFormsJs, map[string]*bintree{
+				}},
+				"demo-jqcloud.js": &bintree{staticJsDemoDemoJqcloudJs, map[string]*bintree{
+				}},
+				"demo-jqgrid.js": &bintree{staticJsDemoDemoJqgridJs, map[string]*bintree{
+				}},
+				"demo-nestable.js": &bintree{staticJsDemoDemoNestableJs, map[string]*bintree{
+				}},
+				"demo-panels.js": &bintree{staticJsDemoDemoPanelsJs, map[string]*bintree{
+				}},
+				"demo-rtl.js": &bintree{staticJsDemoDemoRtlJs, map[string]*bintree{
+				}},
+				"demo-search.js": &bintree{staticJsDemoDemoSearchJs, map[string]*bintree{
+				}},
+				"demo-sortable.js": &bintree{staticJsDemoDemoSortableJs, map[string]*bintree{
+				}},
+				"demo-upload.js": &bintree{staticJsDemoDemoUploadJs, map[string]*bintree{
+				}},
+				"demo-vector-map.js": &bintree{staticJsDemoDemoVectorMapJs, map[string]*bintree{
+				}},
+				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{
+				}},
+				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{
+				}},
+			}},
+			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{
+			}},
+			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{
+			}},
+			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{
+			}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
-			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
-			"42.ini": &bintree{staticLang42Ini, map[string]*bintree{}},
-			"en-us.all.json": &bintree{staticLangEnUsAllJson, map[string]*bintree{}},
-			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{}},
-			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{}},
+			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{
+			}},
+			"42.ini": &bintree{staticLang42Ini, map[string]*bintree{
+			}},
+			"en-us.all.json": &bintree{staticLangEnUsAllJson, map[string]*bintree{
+			}},
+			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{
+			}},
+			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{
+			}},
 		}},
-		"list_of_tables.html": &bintree{staticList_of_tablesHtml, map[string]*bintree{}},
-		"login.html": &bintree{staticLoginHtml, map[string]*bintree{}},
-		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
-		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{}},
-		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{}},
-		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{}},
-		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
-		"psw.html": &bintree{staticPswHtml, map[string]*bintree{}},
-		"request_citizen_status.html": &bintree{staticRequest_citizen_statusHtml, map[string]*bintree{}},
-		"show_table.html": &bintree{staticShow_tableHtml, map[string]*bintree{}},
-		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{}},
-		"signatures_new.html": &bintree{staticSignatures_newHtml, map[string]*bintree{}},
-		"smart_request_citizen.html": &bintree{staticSmart_request_citizenHtml, map[string]*bintree{}},
-		"state_laws.html": &bintree{staticState_lawsHtml, map[string]*bintree{}},
-		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{}},
-		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
-		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
+		"list_of_tables.html": &bintree{staticList_of_tablesHtml, map[string]*bintree{
+		}},
+		"login.html": &bintree{staticLoginHtml, map[string]*bintree{
+		}},
+		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{
+		}},
+		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{
+		}},
+		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{
+		}},
+		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{
+		}},
+		"pass.html": &bintree{staticPassHtml, map[string]*bintree{
+		}},
+		"psw.html": &bintree{staticPswHtml, map[string]*bintree{
+		}},
+		"request_citizen_status.html": &bintree{staticRequest_citizen_statusHtml, map[string]*bintree{
+		}},
+		"show_table.html": &bintree{staticShow_tableHtml, map[string]*bintree{
+		}},
+		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{
+		}},
+		"signatures_new.html": &bintree{staticSignatures_newHtml, map[string]*bintree{
+		}},
+		"smart_request_citizen.html": &bintree{staticSmart_request_citizenHtml, map[string]*bintree{
+		}},
+		"state_laws.html": &bintree{staticState_lawsHtml, map[string]*bintree{
+		}},
+		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{
+		}},
+		"test.html": &bintree{staticTestHtml, map[string]*bintree{
+		}},
+		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{
+		}},
 		"vendor": &bintree{nil, map[string]*bintree{
 			"animate.css": &bintree{nil, map[string]*bintree{
-				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{}},
+				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{
+				}},
 			}},
 			"bootstrap": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap.css": &bintree{staticVendorBootstrapDistCssBootstrapCss, map[string]*bintree{}},
+						"bootstrap.css": &bintree{staticVendorBootstrapDistCssBootstrapCss, map[string]*bintree{
+						}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap.js": &bintree{staticVendorBootstrapDistJsBootstrapJs, map[string]*bintree{}},
+						"bootstrap.js": &bintree{staticVendorBootstrapDistJsBootstrapJs, map[string]*bintree{
+						}},
 					}},
 				}},
 			}},
 			"bootstrap-filestyle": &bintree{nil, map[string]*bintree{
 				"src": &bintree{nil, map[string]*bintree{
-					"bootstrap-filestyle.js": &bintree{staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs, map[string]*bintree{}},
+					"bootstrap-filestyle.js": &bintree{staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs, map[string]*bintree{
+					}},
 				}},
 			}},
 			"dataTables.fontAwesome": &bintree{nil, map[string]*bintree{
-				"index.css": &bintree{staticVendorDatatablesFontawesomeIndexCss, map[string]*bintree{}},
+				"index.css": &bintree{staticVendorDatatablesFontawesomeIndexCss, map[string]*bintree{
+				}},
 			}},
 			"datatables": &bintree{nil, map[string]*bintree{
 				"media": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.css": &bintree{staticVendorDatatablesMediaCssDatatablesBootstrapCss, map[string]*bintree{}},
+						"dataTables.bootstrap.css": &bintree{staticVendorDatatablesMediaCssDatatablesBootstrapCss, map[string]*bintree{
+						}},
 					}},
 					"images": &bintree{nil, map[string]*bintree{
-						"Sorting icons.psd": &bintree{staticVendorDatatablesMediaImagesSortingIconsPsd, map[string]*bintree{}},
-						"favicon.ico": &bintree{staticVendorDatatablesMediaImagesFaviconIco, map[string]*bintree{}},
-						"sort_asc.png": &bintree{staticVendorDatatablesMediaImagesSort_ascPng, map[string]*bintree{}},
-						"sort_asc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_asc_disabledPng, map[string]*bintree{}},
-						"sort_both.png": &bintree{staticVendorDatatablesMediaImagesSort_bothPng, map[string]*bintree{}},
-						"sort_desc.png": &bintree{staticVendorDatatablesMediaImagesSort_descPng, map[string]*bintree{}},
-						"sort_desc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_desc_disabledPng, map[string]*bintree{}},
+						"Sorting icons.psd": &bintree{staticVendorDatatablesMediaImagesSortingIconsPsd, map[string]*bintree{
+						}},
+						"favicon.ico": &bintree{staticVendorDatatablesMediaImagesFaviconIco, map[string]*bintree{
+						}},
+						"sort_asc.png": &bintree{staticVendorDatatablesMediaImagesSort_ascPng, map[string]*bintree{
+						}},
+						"sort_asc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_asc_disabledPng, map[string]*bintree{
+						}},
+						"sort_both.png": &bintree{staticVendorDatatablesMediaImagesSort_bothPng, map[string]*bintree{
+						}},
+						"sort_desc.png": &bintree{staticVendorDatatablesMediaImagesSort_descPng, map[string]*bintree{
+						}},
+						"sort_desc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_desc_disabledPng, map[string]*bintree{
+						}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{}},
-						"dataTables.buttons.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesButtonsMinJs, map[string]*bintree{}},
-						"dataTables.colReorder.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesColreorderMinJs, map[string]*bintree{}},
-						"dataTables.editor.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesEditorMinJs, map[string]*bintree{}},
-						"dataTables.keyTable.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesKeytableMinJs, map[string]*bintree{}},
-						"dataTables.select.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesSelectMinJs, map[string]*bintree{}},
-						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{}},
+						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{
+						}},
+						"dataTables.buttons.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesButtonsMinJs, map[string]*bintree{
+						}},
+						"dataTables.colReorder.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesColreorderMinJs, map[string]*bintree{
+						}},
+						"dataTables.editor.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesEditorMinJs, map[string]*bintree{
+						}},
+						"dataTables.keyTable.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesKeytableMinJs, map[string]*bintree{
+						}},
+						"dataTables.select.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesSelectMinJs, map[string]*bintree{
+						}},
+						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{
+						}},
 					}},
 				}},
 			}},
 			"datatables-colvis": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.css": &bintree{staticVendorDatatablesColvisCssDatatablesColvisCss, map[string]*bintree{}},
+					"dataTables.colVis.css": &bintree{staticVendorDatatablesColvisCssDatatablesColvisCss, map[string]*bintree{
+					}},
 				}},
 				"js": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.js": &bintree{staticVendorDatatablesColvisJsDatatablesColvisJs, map[string]*bintree{}},
+					"dataTables.colVis.js": &bintree{staticVendorDatatablesColvisJsDatatablesColvisJs, map[string]*bintree{
+					}},
 				}},
 			}},
 			"eonasdan-bootstrap-datetimepicker": &bintree{nil, map[string]*bintree{
 				"build": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.css": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss, map[string]*bintree{}},
+						"bootstrap-datetimepicker.min.css": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss, map[string]*bintree{
+						}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.js": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs, map[string]*bintree{}},
+						"bootstrap-datetimepicker.min.js": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs, map[string]*bintree{
+						}},
 					}},
 				}},
 			}},
 			"fontawesome": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"font-awesome.min.css": &bintree{staticVendorFontawesomeCssFontAwesomeMinCss, map[string]*bintree{}},
+					"font-awesome.min.css": &bintree{staticVendorFontawesomeCssFontAwesomeMinCss, map[string]*bintree{
+					}},
 				}},
 				"fonts": &bintree{nil, map[string]*bintree{
-					"FontAwesome.otf": &bintree{staticVendorFontawesomeFontsFontawesomeOtf, map[string]*bintree{}},
-					"fontawesome-webfont.eot": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontEot, map[string]*bintree{}},
-					"fontawesome-webfont.svg": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontSvg, map[string]*bintree{}},
-					"fontawesome-webfont.ttf": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontTtf, map[string]*bintree{}},
-					"fontawesome-webfont.woff": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff, map[string]*bintree{}},
-					"fontawesome-webfont.woff2": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff2, map[string]*bintree{}},
+					"FontAwesome.otf": &bintree{staticVendorFontawesomeFontsFontawesomeOtf, map[string]*bintree{
+					}},
+					"fontawesome-webfont.eot": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontEot, map[string]*bintree{
+					}},
+					"fontawesome-webfont.svg": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontSvg, map[string]*bintree{
+					}},
+					"fontawesome-webfont.ttf": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontTtf, map[string]*bintree{
+					}},
+					"fontawesome-webfont.woff": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff, map[string]*bintree{
+					}},
+					"fontawesome-webfont.woff2": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff2, map[string]*bintree{
+					}},
 				}},
 			}},
 			"jQuery-Storage-API": &bintree{nil, map[string]*bintree{
-				"jquery.storageapi.js": &bintree{staticVendorJqueryStorageApiJqueryStorageapiJs, map[string]*bintree{}},
+				"jquery.storageapi.js": &bintree{staticVendorJqueryStorageApiJqueryStorageapiJs, map[string]*bintree{
+				}},
 			}},
 			"jquery": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{}},
+					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{
+					}},
 				}},
 			}},
 			"loaders.css": &bintree{nil, map[string]*bintree{
-				"loaders.css": &bintree{staticVendorLoadersCssLoadersCss, map[string]*bintree{}},
+				"loaders.css": &bintree{staticVendorLoadersCssLoadersCss, map[string]*bintree{
+				}},
 			}},
 			"modernizr": &bintree{nil, map[string]*bintree{
-				"modernizr.custom.js": &bintree{staticVendorModernizrModernizrCustomJs, map[string]*bintree{}},
+				"modernizr.custom.js": &bintree{staticVendorModernizrModernizrCustomJs, map[string]*bintree{
+				}},
 			}},
 			"moment": &bintree{nil, map[string]*bintree{
 				"min": &bintree{nil, map[string]*bintree{
-					"moment-with-locales.min.js": &bintree{staticVendorMomentMinMomentWithLocalesMinJs, map[string]*bintree{}},
+					"moment-with-locales.min.js": &bintree{staticVendorMomentMinMomentWithLocalesMinJs, map[string]*bintree{
+					}},
 				}},
 			}},
 			"select2": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"css": &bintree{nil, map[string]*bintree{
-						"select2.css": &bintree{staticVendorSelect2DistCssSelect2Css, map[string]*bintree{}},
+						"select2.css": &bintree{staticVendorSelect2DistCssSelect2Css, map[string]*bintree{
+						}},
 					}},
 					"js": &bintree{nil, map[string]*bintree{
-						"select2.js": &bintree{staticVendorSelect2DistJsSelect2Js, map[string]*bintree{}},
+						"select2.js": &bintree{staticVendorSelect2DistJsSelect2Js, map[string]*bintree{
+						}},
 					}},
 				}},
 			}},
 			"select2-bootstrap-theme": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"select2-bootstrap.css": &bintree{staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss, map[string]*bintree{}},
+					"select2-bootstrap.css": &bintree{staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss, map[string]*bintree{
+					}},
 				}},
 			}},
 			"simple-line-icons": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"simple-line-icons.css": &bintree{staticVendorSimpleLineIconsCssSimpleLineIconsCss, map[string]*bintree{}},
+					"simple-line-icons.css": &bintree{staticVendorSimpleLineIconsCssSimpleLineIconsCss, map[string]*bintree{
+					}},
 				}},
 				"fonts": &bintree{nil, map[string]*bintree{
-					"Simple-Line-Icons.eot": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsEot, map[string]*bintree{}},
-					"Simple-Line-Icons.svg": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsSvg, map[string]*bintree{}},
-					"Simple-Line-Icons.ttf": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsTtf, map[string]*bintree{}},
-					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{}},
-					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{}},
+					"Simple-Line-Icons.eot": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsEot, map[string]*bintree{
+					}},
+					"Simple-Line-Icons.svg": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsSvg, map[string]*bintree{
+					}},
+					"Simple-Line-Icons.ttf": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsTtf, map[string]*bintree{
+					}},
+					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{
+					}},
+					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{
+					}},
 				}},
 			}},
 			"spinkit": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
-					"spinkit.css": &bintree{staticVendorSpinkitCssSpinkitCss, map[string]*bintree{}},
+					"spinkit.css": &bintree{staticVendorSpinkitCssSpinkitCss, map[string]*bintree{
+					}},
 				}},
 			}},
 			"sweetalert": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"sweetalert.css": &bintree{staticVendorSweetalertDistSweetalertCss, map[string]*bintree{}},
-					"sweetalert.min.js": &bintree{staticVendorSweetalertDistSweetalertMinJs, map[string]*bintree{}},
+					"sweetalert.css": &bintree{staticVendorSweetalertDistSweetalertCss, map[string]*bintree{
+					}},
+					"sweetalert.min.js": &bintree{staticVendorSweetalertDistSweetalertMinJs, map[string]*bintree{
+					}},
 				}},
 			}},
 			"whirl": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
-					"whirl.css": &bintree{staticVendorWhirlDistWhirlCss, map[string]*bintree{}},
+					"whirl.css": &bintree{staticVendorWhirlDistWhirlCss, map[string]*bintree{
+					}},
 				}},
 			}},
 			"x-editable": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"bootstrap3-editable": &bintree{nil, map[string]*bintree{
 						"css": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.css": &bintree{staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss, map[string]*bintree{}},
+							"bootstrap-editable.css": &bintree{staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss, map[string]*bintree{
+							}},
 						}},
 						"img": &bintree{nil, map[string]*bintree{
-							"clear.png": &bintree{staticVendorXEditableDistBootstrap3EditableImgClearPng, map[string]*bintree{}},
-							"loading.gif": &bintree{staticVendorXEditableDistBootstrap3EditableImgLoadingGif, map[string]*bintree{}},
+							"clear.png": &bintree{staticVendorXEditableDistBootstrap3EditableImgClearPng, map[string]*bintree{
+							}},
+							"loading.gif": &bintree{staticVendorXEditableDistBootstrap3EditableImgLoadingGif, map[string]*bintree{
+							}},
 						}},
 						"js": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.min.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs, map[string]*bintree{}},
+							"bootstrap-editable.min.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs, map[string]*bintree{
+							}},
 						}},
 					}},
 				}},
@@ -4410,48 +4608,48 @@ var _bintree = &bintree{nil, map[string]*bintree{
 
 // RestoreAsset restores an asset under the given directory
 func RestoreAsset(dir, name string) error {
-	data, err := Asset(name)
-	if err != nil {
-		return err
-	}
-	info, err := AssetInfo(name)
-	if err != nil {
-		return err
-	}
-	err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
-	if err != nil {
-		return err
-	}
-	err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
-	if err != nil {
-		return err
-	}
-	return nil
+        data, err := Asset(name)
+        if err != nil {
+                return err
+        }
+        info, err := AssetInfo(name)
+        if err != nil {
+                return err
+        }
+        err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
+        if err != nil {
+                return err
+        }
+        err = ioutil.WriteFile(_filePath(dir, name), data, info.Mode())
+        if err != nil {
+                return err
+        }
+        err = os.Chtimes(_filePath(dir, name), info.ModTime(), info.ModTime())
+        if err != nil {
+                return err
+        }
+        return nil
 }
 
 // RestoreAssets restores an asset under the given directory recursively
 func RestoreAssets(dir, name string) error {
-	children, err := AssetDir(name)
-	// File
-	if err != nil {
-		return RestoreAsset(dir, name)
-	}
-	// Dir
-	for _, child := range children {
-		err = RestoreAssets(dir, filepath.Join(name, child))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+        children, err := AssetDir(name)
+        // File
+        if err != nil {
+                return RestoreAsset(dir, name)
+        }
+        // Dir
+        for _, child := range children {
+                err = RestoreAssets(dir, filepath.Join(name, child))
+                if err != nil {
+                        return err
+                }
+        }
+        return nil
 }
 
 func _filePath(dir, name string) string {
-	cannonicalName := strings.Replace(name, "\\", "/", -1)
-	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
+        cannonicalName := strings.Replace(name, "\\", "/", -1)
+        return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
 

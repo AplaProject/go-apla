@@ -25,7 +25,7 @@ import (
 
 func (c *Controller) NewPage() (string, error) {
 
-	txType := "EditPage"
+	txType := "NewPage"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
@@ -33,6 +33,8 @@ func (c *Controller) NewPage() (string, error) {
 	prefix := c.StateIdStr
 	if global == "1" {
 		prefix = "global"
+	} else {
+		global = "0"
 	}
 
 	allMenu, err := c.GetAll(`SELECT * FROM "`+prefix+`_menu"`, -1)
