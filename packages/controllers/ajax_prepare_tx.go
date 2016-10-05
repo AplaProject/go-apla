@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/script"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 )
 
 const APrepareTx = `ajax_prepare_tx`
@@ -43,7 +43,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		err    error
 	)
 	cntname := c.r.FormValue(`TxName`)
-	contract := parser.GetContract(cntname, nil)
+	contract := smart.GetContract(cntname)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		err = fmt.Errorf(`there is not %s contract`, cntname)
 	} else {
@@ -53,7 +53,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		if c.SessStateId > 0 {
 			userId = c.SessCitizenId
 		}
-		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id+parser.CNTOFF, result.Time, userId, c.SessStateId)
+		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id+smart.CNTOFF, result.Time, userId, c.SessStateId)
 
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			val := c.r.FormValue(fitem.Name)

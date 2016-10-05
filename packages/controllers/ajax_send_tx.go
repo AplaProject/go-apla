@@ -24,8 +24,8 @@ import (
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/script"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -46,7 +46,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 	)
 	fmt.Println(`TXSend 0`)
 	cntname := c.r.FormValue(`TxName`)
-	contract := parser.GetContract(cntname, nil)
+	contract := smart.GetContract(cntname)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		err = fmt.Errorf(`there is not %s contract`, cntname)
 	} else {
@@ -83,7 +83,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 			data := make([]byte, 0)
 			//			)
 			header := consts.TXHeader{
-				Type:    int32(contract.Block.Info.(*script.ContractInfo).Id) + parser.CNTOFF,
+				Type:    int32(contract.Block.Info.(*script.ContractInfo).Id) + smart.CNTOFF,
 				Time:    uint32(utils.StrToInt64(c.r.FormValue(`time`))),
 				UserId:  userId,
 				StateId: int64(c.SessStateId),

@@ -25,6 +25,7 @@ import (
 	"reflect"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/op/go-logging"
 )
@@ -77,7 +78,7 @@ type Parser struct {
 	newPublicKeysHex [3][]byte
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
 	TxData           map[string]interface{}
-	TxContract       *Contract
+	TxContract       *smart.Contract
 	TxVars           map[string]string
 	AllPkeys         map[string]string
 	States           map[int64]string

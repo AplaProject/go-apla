@@ -14,23 +14,23 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package parser
+package smart
 
 import (
 	"fmt"
 	//	"reflect"
-	"strings"
+	//	"strings"
 
-	"github.com/DayLightProject/go-daylight/packages/consts"
+	//"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/script"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	//"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 type Contract struct {
 	Name   string
 	Called uint32
-	parser *Parser //interface{}
-	Block  *script.Block
+	//	parser *Parser //interface{}
+	Block *script.Block
 }
 
 const (
@@ -47,11 +47,11 @@ var (
 
 func init() {
 	smartVM = script.VMInit(map[string]interface{}{
-		"Println":    fmt.Println,
-		"Sprintf":    fmt.Sprintf,
-		"DBInsert":   DBInsert,
-		"Balance":    Balance,
-		"StateParam": StateParam,
+		"Println": fmt.Println,
+		"Sprintf": fmt.Sprintf,
+		/*		"DBInsert":   DBInsert,
+				"Balance":    Balance,
+				"StateParam": StateParam,*/
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	})
@@ -66,28 +66,28 @@ contract TXCitizenRequest {
 		LastName   string
 	}
 	func init {
-		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
+//		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
 	}
 	func front {
-		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
-/*		if Balance($wallet) < 10000.0 {
-			// error "not enough money"
-		}*/
+//		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
+		if 10000 {
+			error "not enough money"
+		}
 	}
 	func main {
 		
-		Println("TXCitizenRequest main" + $LastName)
+//		Println("TXCitizenRequest main" + $LastName)
 	}
 
 }
 
 contract TXNewCitizen {
 			func front {
-				Println("NewCitizen Front", $citizen, $state, $PublicKey )
+//				Println("NewCitizen Front", $citizen, $state, $PublicKey )
 			}
 			func main {
-				Println("NewCitizen Main", $type, $citizen, $block )
-				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
+//				Println("NewCitizen Main", $type, $citizen, $block )
+//				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
 			}
 }`
 	if err := Compile(contract); err != nil {
@@ -101,23 +101,23 @@ func Compile(src string) error {
 }
 
 // Returns true if the contract exists
-func GetContract(name string, p *Parser /*data interface{}*/) *Contract {
+func GetContract(name string /*, data interface{}*/) *Contract {
 	obj, ok := smartVM.Objects[name]
 	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
 	if ok && obj.Type == script.OBJ_CONTRACT {
-		return &Contract{Name: name, parser: p, Block: obj.Value.(*script.Block)}
+		return &Contract{Name: name /*parser: p,*/, Block: obj.Value.(*script.Block)}
 	}
 	return nil
 }
 
 // Returns true if the contract exists
-func GetContractById(id int32, p *Parser) *Contract {
+func GetContractById(id int32 /*, p *Parser*/) *Contract {
 	idcont := id - CNTOFF
 	if len(smartVM.Children) <= int(idcont) || smartVM.Children[idcont].Type != script.OBJ_CONTRACT {
 		return nil
 	}
 	return &Contract{Name: smartVM.Children[idcont].Info.(*script.ContractInfo).Name,
-		parser: p, Block: smartVM.Children[idcont]}
+		/*parser: p,*/ Block: smartVM.Children[idcont]}
 }
 
 func (contract *Contract) getFunc(name string) *script.Block {
@@ -128,23 +128,24 @@ func (contract *Contract) getFunc(name string) *script.Block {
 }
 
 func (contract *Contract) getExtend() *map[string]interface{} {
-	head := contract.parser.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
-	var citizenId, walletId int64
-	if head.StateId > 0 {
-		citizenId = head.UserId
-	} else {
-		walletId = head.UserId
-	}
-	block := int64(0)
-	if contract.parser.BlockData != nil {
-		block = contract.parser.BlockData.BlockId
-	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: head.StateId,
-		`block`: block, `citizen`: citizenId, `wallet`: walletId,
-		`parser`: contract.parser}
-	for key, val := range contract.parser.TxData {
+	/*	head := contract.parser.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
+		var citizenId, walletId int64
+		if head.StateId > 0 {
+			citizenId = head.UserId
+		} else {
+			walletId = head.UserId
+		}
+		block := int64(0)
+		if contract.parser.BlockData != nil {
+			block = contract.parser.BlockData.BlockId
+		}
+		extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: head.StateId,
+			`block`: block, `citizen`: citizenId, `wallet`: walletId,
+			`parser`: contract.parser}*/
+	extend := map[string]interface{}{}
+	/*	for key, val := range contract.parser.TxData {
 		extend[key] = val
-	}
+	}*/
 	/*	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
 		t := v.Type()
 		for i := 1; i < t.NumField(); i++ {
@@ -175,7 +176,7 @@ func (contract *Contract) Call(flags int) (err error) {
 }
 
 // Pre-defined functions
-
+/*
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	fmt.Println(`DBInsert`, tblname, params, val, len(val))
 	err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
@@ -191,7 +192,7 @@ func StateParam(idstate int64, name string) (string, error) {
 		name).String()
 }
 
-/*
+
 func CheckAmount() {
 	amount, err := p.Single(`SELECT value FROM `+utils.Int64ToStr().TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
 	if err != nil {

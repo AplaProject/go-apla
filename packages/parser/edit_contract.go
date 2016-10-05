@@ -17,8 +17,10 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/smart"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) EditContractInit() error {
@@ -31,8 +33,6 @@ func (p *Parser) EditContractInit() error {
 	return nil
 }
 
-
-
 func (p *Parser) EditContractFront() error {
 
 	err := p.generalCheck()
@@ -43,14 +43,12 @@ func (p *Parser) EditContractFront() error {
 	// Check the system limits. You can not send more than X time a day this TX
 	// ...
 
-
 	// Check InputData
 	verifyData := map[string]string{}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
 
 	// must be supplemented
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["id"], p.TxMap["value"], p.TxMap["conditions"])
@@ -75,7 +73,10 @@ func (p *Parser) EditContract() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	if err := smart.Compile(p.TxMaps.String["value"]); err != nil {
+		fmt.Println(`Edit Contract`, err)
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
