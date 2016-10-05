@@ -105,7 +105,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT ` + id + `_state_parameters_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT "` + id + `_state_parameters_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -138,18 +138,54 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_smart_contracts_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_smart_contracts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
 				"name" varchar(100)  NOT NULL DEFAULT '',
-				"value" bytea  NOT NULL DEFAULT '',
+				"value" text  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"variables" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_smart_contracts_id_seq" owned by "` + id + `_smart_contracts".id;
-				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT ` + id + `_smart_contracts_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT "` + id + `_smart_contracts_pkey" PRIMARY KEY (id);
 				`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
+		(?, ?),(?, ?)`,
+		`TXCitizenRequest`, `contract TXCitizenRequest {
+	tx {
+		PublicKey  bytes
+		StateId    int
+		FirstName  string
+		MiddleName string "optional"
+		LastName   string
+	}
+	func init {
+		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
+	}
+	func front {
+		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
+		if Balance($wallet) < 10000.0 {
+			error "not enough money"
+		}
+	}
+	func main {
+		
+		Println("TXCitizenRequest main" + $LastName)
+	}
+
+}`, `TXNewCitizen`, `contract TXNewCitizen {
+			func front {
+				Println("NewCitizen Front", $citizen, $state, $PublicKey )
+			}
+			func main {
+				Println("NewCitizen Main", $type, $citizen, $block )
+//				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
+			}
+}`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -160,7 +196,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT ` + id + `_tables_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT "` + id + `_tables_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -169,7 +205,8 @@ func (p *Parser) NewState() error {
 	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+id+`_citizens.id=1", "update": {"public_key_0": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`,
+		id+`_citizens`, `{"general_update":"`+id+`_citizens.id=1", "update": {"public_key_0": "`+
+			id+`_citizens.id=1","data":"`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`,
 		id+`_accounts`, `{"general_update":"`+id+`_citizens.id=1", "update": {"amount": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -182,7 +219,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_pages" ADD CONSTRAINT ` + id + `_pages_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_pages" ADD CONSTRAINT "` + id + `_pages_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -204,7 +241,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_menu" ADD CONSTRAINT ` + id + `_menu_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_menu" ADD CONSTRAINT "` + id + `_menu_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -219,16 +256,16 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_citizens_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizens_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_citizens" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizens_id_seq'),
 				"public_key_0" bytea  NOT NULL DEFAULT '',
-				"data" text,
+				"data" text NOT NULL DEFAULT '',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_citizens_id_seq" owned by "` + id + `_citizens".id;
-				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT ` + id + `_citizens_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT "` + id + `_citizens_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -244,43 +281,43 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_citizenship_requests_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizenship_requests_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_citizenship_requests" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
-				"data" text,
+				"data" text NOT NULL DEFAULT '',
 				"approved" int  NOT NULL DEFAULT '0',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_citizenship_requests_id_seq" owned by "` + id + `_citizenship_requests".id;
-				ALTER TABLE ONLY "` + id + `_citizenship_requests" ADD CONSTRAINT ` + id + `_citizenship_requests_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_citizenship_requests" ADD CONSTRAINT "` + id + `_citizenship_requests_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_accounts_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_accounts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_accounts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
 				"amount" bigint  NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_accounts_id_seq" owned by "` + id + `_accounts".id;
-				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT ` + id + `_accounts_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT "` + id + `_accounts_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_state_details_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_state_details_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_state_details" (
 				"id" bigint NOT NULL  default nextval('` + id + `_state_details_id_seq'),
 				"coords" varchar NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_state_details_id_seq" owned by "` + id + `_state_details".id;
-				ALTER TABLE ONLY "` + id + `_state_details" ADD CONSTRAINT ` + id + `_state_details_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_state_details" ADD CONSTRAINT "` + id + `_state_details_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
