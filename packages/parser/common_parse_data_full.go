@@ -84,7 +84,7 @@ func (p *Parser) ParseDataFull() error {
 			//log.Debug("transactionBinaryData: %x\n", transactionBinaryData)
 			//log.Debug("txForRollbackTo: %x\n", txForRollbackTo)
 
-			err = p.CheckLogTx(transactionBinaryDataFull)
+			err = p.CheckLogTx(transactionBinaryDataFull, false)
 			if err != nil {
 				err0 := p.RollbackTo(txForRollbackTo, true, false)
 				if err0 != nil {

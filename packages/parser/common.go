@@ -140,7 +140,7 @@ func (p *Parser) dataPre() {
 
 // Это защита от dos, когда одну транзакцию можно было бы послать миллион раз,
 // и она каждый раз успешно проходила бы фронтальную проверку
-func (p *Parser) CheckLogTx(tx_binary []byte) error {
+func (p *Parser) CheckLogTx(tx_binary []byte, all bool) error {
 	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, utils.Md5(tx_binary)).String()
 	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", utils.Md5(tx_binary))
 	if err != nil {
@@ -149,8 +149,31 @@ func (p *Parser) CheckLogTx(tx_binary []byte) error {
 	}
 	log.Debug("hash %x", hash)
 	if len(hash) > 0 {
-		return utils.ErrInfo(fmt.Errorf("double log_transactions %s", utils.Md5(tx_binary)))
+		return utils.ErrInfo(fmt.Errorf("double tx %s", utils.Md5(tx_binary)))
 	}
+
+	if all {
+		// проверим, нет ли у нас такой тр-ии
+		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
+		if err != nil {
+			log.Error("%s", utils.ErrInfo(err))
+			return utils.ErrInfo(err)
+		}
+		if exists > 0 {
+			return utils.ErrInfo(fmt.Errorf("double tx %s", utils.Md5(tx_binary)))
+		}
+
+		// проверим, нет ли у нас такой тр-ии
+		exists, err = p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
+		if err != nil {
+			log.Error("%s", utils.ErrInfo(err))
+			return utils.ErrInfo(err)
+		}
+		if exists > 0 {
+			return utils.ErrInfo(fmt.Errorf("double tx %s", utils.Md5(tx_binary)))
+		}
+	}
+
 	return nil
 }
 

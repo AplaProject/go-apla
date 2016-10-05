@@ -68,11 +68,11 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 			}
 			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 		}
-		affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
+		/*affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
 		log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 		if err != nil {
 			return p.ErrInfo(err)
-		}
+		}*/
 		p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
 		if err != nil {
 			return p.ErrInfo(err)

@@ -147,6 +147,28 @@ func (t *TcpServer) Type1() {
 				log.Debug("exists")
 				continue
 			}
+
+			// проверим, нет ли у нас такой тр-ии
+			exists, err = t.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ?", newDataTxHash).Int64()
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				return
+			}
+			if exists > 0 {
+				log.Debug("exists")
+				continue
+			}
+
+			// проверим, нет ли у нас такой тр-ии
+			exists, err = t.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", newDataTxHash).Int64()
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				return
+			}
+			if exists > 0 {
+				log.Debug("exists")
+				continue
+			}
 			needTx = append(needTx, utils.HexToBin(newDataTxHash)...)
 			if len(binaryData) == 0 {
 				break

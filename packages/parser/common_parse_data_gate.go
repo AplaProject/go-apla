@@ -18,7 +18,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/smart"
@@ -55,7 +54,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 		// нет ли хэша этой тр-ии у нас в БД?
 		// Does the transaction's hash exist?
-		err = p.CheckLogTx(transactionBinaryDataFull)
+		err = p.CheckLogTx(transactionBinaryDataFull, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -100,7 +99,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 	// если это блок
 	// if it's a block
-	if p.dataType == 0 {
+	/*if p.dataType == 0 {
 
 		txCounter := make(map[int64]int64)
 
@@ -229,7 +228,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 			}
 		}
 	} else {
-
+*/
 		// Оперативные транзакции
 		// Operative transactions
 		MethodName := consts.TxTypes[p.dataType]
@@ -254,11 +253,11 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		}
 		// пишем хэш тр-ии в лог
 		// write the hash of the transaction to logs
-		err = p.InsertInLogTx(transactionBinaryDataFull, utils.BytesToInt64(p.TxMap["time"]))
+		/*err = p.InsertInLogTx(transactionBinaryDataFull, utils.BytesToInt64(p.TxMap["time"]))
 		if err != nil {
 			return utils.ErrInfo(err)
-		}
-	}
+		}*/
+	/*}*/
 
 	return nil
 }
