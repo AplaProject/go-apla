@@ -160,6 +160,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 
 	return nil
 }
-func (p *Parser) UpdFullNodesRollbackFront() error {
+/*func (p *Parser) UpdFullNodesRollbackFront() error {
 	return nil
 }
+*/

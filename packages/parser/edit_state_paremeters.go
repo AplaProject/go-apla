@@ -117,7 +117,8 @@ func (p *Parser) EditStateParametersRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) EditStateParametersRollbackFront() error {
+/*func (p *Parser) EditStateParametersRollbackFront() error {
 
 	return nil
 }
+*/

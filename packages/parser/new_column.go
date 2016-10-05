@@ -143,7 +143,8 @@ func (p *Parser) NewColumnRollback() error {
 	return nil
 }
 
-func (p *Parser) NewColumnRollbackFront() error {
+/*func (p *Parser) NewColumnRollbackFront() error {
 
 	return nil
 }
+*/

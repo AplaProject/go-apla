@@ -89,8 +89,9 @@ func (p *Parser) CompositeTxRollback() error {
 	return nil
 }
 
-func (p *Parser) CompositeTxRollbackFront() error {
+/*func (p *Parser) CompositeTxRollbackFront() error {
 
 	return nil
 
 }
+*/

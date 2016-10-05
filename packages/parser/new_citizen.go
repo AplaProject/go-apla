@@ -135,8 +135,8 @@ func (p *Parser) NewCitizenRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) NewCitizenRollbackFront() error {
+/*func (p *Parser) NewCitizenRollbackFront() error {
 
 	return nil
 
-}
+}*/

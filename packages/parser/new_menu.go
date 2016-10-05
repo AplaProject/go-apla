@@ -83,6 +83,6 @@ func (p *Parser) NewMenuRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) NewMenuRollbackFront() error {
+/*func (p *Parser) NewMenuRollbackFront() error {
 	return nil
-}
+}*/

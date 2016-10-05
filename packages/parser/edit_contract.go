@@ -84,6 +84,6 @@ func (p *Parser) EditContractRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) EditContractRollbackFront() error {
+/*func (p *Parser) EditContractRollbackFront() error {
 	return nil
-}
+}*/

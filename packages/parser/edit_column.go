@@ -132,7 +132,8 @@ func (p *Parser) EditColumnRollback() error {
 	return nil
 }
 
-func (p *Parser) EditColumnRollbackFront() error {
+/*func (p *Parser) EditColumnRollbackFront() error {
 
 	return nil
 }
+*/

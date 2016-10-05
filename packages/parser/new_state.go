@@ -363,7 +363,8 @@ func (p *Parser) NewStateRollback() error {
 	return nil
 }
 
-func (p *Parser) NewStateRollbackFront() error {
+/*func (p *Parser) NewStateRollbackFront() error {
 
 	return nil
 }
+*/

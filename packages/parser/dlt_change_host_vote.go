@@ -91,6 +91,7 @@ func (p *Parser) DLTChangeHostVoteRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) DLTChangeHostVoteRollbackFront() error {
+/*func (p *Parser) DLTChangeHostVoteRollbackFront() error {
 	return nil
 }
+*/

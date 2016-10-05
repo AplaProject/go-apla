@@ -83,6 +83,7 @@ func (p *Parser) NewContractRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) NewContractRollbackFront() error {
+/*func (p *Parser) NewContractRollbackFront() error {
 	return nil
 }
+*/

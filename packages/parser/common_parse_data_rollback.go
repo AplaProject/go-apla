@@ -181,10 +181,10 @@ func (p *Parser) ParseDataRollback() error {
 			if _, ok := err_.(error); ok {
 				return p.ErrInfo(err_.(error))
 			}
-			err_ = utils.CallMethod(p, MethodName+"RollbackFront")
+			/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
 			if _, ok := err_.(error); ok {
 				return p.ErrInfo(err_.(error))
-			}
+			}*/
 		}
 	}
 	return nil

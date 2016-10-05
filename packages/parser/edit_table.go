@@ -161,7 +161,7 @@ func (p *Parser) EditTableRollback() error {
 	return nil
 }
 
-func (p *Parser) EditTableRollbackFront() error {
+/*func (p *Parser) EditTableRollbackFront() error {
 
 	return nil
-}
+}*/

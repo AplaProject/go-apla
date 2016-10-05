@@ -82,6 +82,6 @@ func (p *Parser) EditPageRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) EditPageRollbackFront() error {
+/*func (p *Parser) EditPageRollbackFront() error {
 	return nil
-}
+}*/

@@ -228,11 +228,11 @@ func MakeFrontTest(transactionArray [][]byte, time int64, dataForSign string, tx
 		fmt.Println(err0.(error), i)
 		return err0.(error)
 	}
-	err0 = utils.CallMethod(parser, txType+"RollbackFront")
+	/*err0 = utils.CallMethod(parser, txType+"RollbackFront")
 	if i, ok := err0.(error); ok {
 		fmt.Println(err0.(error), i)
 		return err0.(error)
-	}
+	}*/
 	return nil
 }
 

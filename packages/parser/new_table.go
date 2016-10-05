@@ -151,6 +151,6 @@ func (p *Parser) NewTableRollback() error {
 	return nil
 }
 
-func (p *Parser) NewTableRollbackFront() error {
+/*func (p *Parser) NewTableRollbackFront() error {
 	return nil
-}
+}*/

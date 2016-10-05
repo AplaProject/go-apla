@@ -151,8 +151,9 @@ func (p *Parser) DLTTransferRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) DLTTransferRollbackFront() error {
+/*func (p *Parser) DLTTransferRollbackFront() error {
 
 	return nil
 
 }
+*/

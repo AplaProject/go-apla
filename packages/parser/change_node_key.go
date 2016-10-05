@@ -104,6 +104,7 @@ func (p *Parser) ChangeNodeKeyRollback() error {
 	return p.autoRollback()
 }
 
-func (p *Parser) ChangeNodeKeyRollbackFront() error {
+/*func (p *Parser) ChangeNodeKeyRollbackFront() error {
 	return nil
 }
+*/
