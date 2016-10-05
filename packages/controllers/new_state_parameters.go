@@ -29,7 +29,7 @@ func (c *Controller) NewStateParameters() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	allStateParameters, err := c.GetList(`SELECT name FROM `+c.StateIdStr+`_state_parameters`).String()
+	allStateParameters, err := c.GetList(`SELECT name FROM "`+c.StateIdStr+`_state_parameters"`).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -8,20 +8,15 @@
 		g_menuShow = false;  // hide menu
 
 		$('.db_settings').hide();
-	
-		$('#extended').bind('click', function () {
+
 			$('#extended_div').css("display", "block")
 			$("#settings_extended").prop("checked", true)
-			
+
 			$('#first_load').select2({
 				minimumResultsForSearch: Infinity,
 				theme: 'bootstrap'
 			});
-		});
-		$('#standard').bind('click', function () {
-			$('#extended_div').css("display", "none")
-			$("#settings_standard").prop("checked", true)
-		});
+
 		$('#first_load').on('change', function() {
 			if (this.value=="nodes") {
 				$('#url').css("display", "none");
@@ -54,10 +49,8 @@
 	</script>
 	
 	<div class="start_type">
-		<h1>Settings</h1>
-		<label id="standard" class="settings"><input id="settings_standard" type="radio" name="settings" value="standard" checked> Standard</label><br />
-		<label id="extended" class="settings"><input id="settings_extended" type="radio" name="settings" id="extended" value="extended"> Extended</label>
-		<div id="extended_div" style="display: none">
+		<h1>installation</h1><br>
+		<div id="extended_div">
 			<form class="extended_form">
 				<fieldset class="form-group">
 					<label class="col-sm-3 control-label" for="first_load">First load</label>

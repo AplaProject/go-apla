@@ -582,62 +582,23 @@ func FormatQueryArgs(q, dbType string, args ...interface{}) (string, []interface
 	var newArgs []interface{}
 	newQ := q
 	if ok, _ := regexp.MatchString(`CREATE TABLE`, newQ); !ok {
-		switch dbType {
-		case "sqlite":
-			//log.Debug(q)
-			r, _ := regexp.Compile(`(\[hex\]|\?)`)
-			indexArr := r.FindAllStringSubmatchIndex(q, -1)
-			//log.Debug("indexArr %v", indexArr)
-			for i := 0; i < len(indexArr); i++ {
-				str := q[indexArr[i][0]:indexArr[i][1]]
-				//log.Debug("i: %v, len: %v str: %v, q: %v", i, len(args), str, q)
-				if str != "[hex]" {
-					switch args[i].(type) {
-					case []byte:
-						newArgs = append(newArgs, string(args[i].([]byte)))
-					default:
-						newArgs = append(newArgs, args[i])
-					}
-				} else {
-					switch args[i].(type) {
-					case string:
-						newQ = strings.Replace(newQ, "[hex]", "x'"+args[i].(string)+"'", 1)
-					case []byte:
-						newQ = strings.Replace(newQ, "[hex]", "x'"+string(args[i].([]byte))+"'", 1)
-					}
-				}
-			}
-			newQ = strings.Replace(newQ, "[hex]", "?", -1)
-		//log.Debug("%v", "newQ", newQ)
-		case "postgresql":
-			newQ = strings.Replace(newQ, "[hex]", "decode(?,'HEX')", -1)
-			newQ = strings.Replace(newQ, " authorization", ` "authorization"`, -1)
-			newQ = strings.Replace(newQ, "user,", `"user",`, -1)
-			newQ = ReplQ(newQ)
-			newArgs = args
-		case "mysql":
-			newQ = strings.Replace(newQ, "[hex]", "UNHEX(?)", -1)
-			newQ = strings.Replace(newQ, "lock,", "`lock`,", -1)
-			newQ = strings.Replace(newQ, " lock ", " `lock` ", -1)
-			newArgs = args
-		}
+		newQ = strings.Replace(newQ, "[hex]", "decode(?,'HEX')", -1)
+		newQ = strings.Replace(newQ, " authorization", ` "authorization"`, -1)
+		newQ = strings.Replace(newQ, "user,", `"user",`, -1)
+		newQ = ReplQ(newQ)
+		newArgs = args
 	}
-	if dbType == "postgresql" || dbType == "sqlite" {
-		r, _ := regexp.Compile(`\s*([0-9]+_[\w]+)(?:\.|\s|\)|$)`)
-		indexArr := r.FindAllStringSubmatchIndex(newQ, -1)
-		for i := len(indexArr) - 1; i >= 0; i-- {
-			newQ = newQ[:indexArr[i][2]] + `"` + newQ[indexArr[i][2]:indexArr[i][3]] + `"` + newQ[indexArr[i][3]:]
-		}
-	}
+
+	/*r, _ := regexp.Compile(`\s*([0-9]+_[\w]+)(?:\.|\s|\)|$)`)
+	indexArr := r.FindAllStringSubmatchIndex(newQ, -1)
+	for i := len(indexArr) - 1; i >= 0; i-- {
+		newQ = newQ[:indexArr[i][2]] + `"` + newQ[indexArr[i][2]:indexArr[i][3]] + `"` + newQ[indexArr[i][3]:]
+	}*/
 
 	r, _ := regexp.Compile(`hex\(([\w]+)\)`)
 	indexArr := r.FindAllStringSubmatchIndex(newQ, -1)
 	for i := len(indexArr) - 1; i >= 0; i-- {
-		if dbType == "mysql" || dbType == "sqlite" {
-			newQ = newQ[:indexArr[i][0]] + `LOWER(HEX(` + newQ[indexArr[i][2]:indexArr[i][3]] + `))` + newQ[indexArr[i][1]:]
-		} else {
-			newQ = newQ[:indexArr[i][0]] + `LOWER(encode(` + newQ[indexArr[i][2]:indexArr[i][3]] + `, 'hex'))` + newQ[indexArr[i][1]:]
-		}
+		newQ = newQ[:indexArr[i][0]] + `LOWER(encode(` + newQ[indexArr[i][2]:indexArr[i][3]] + `, 'hex'))` + newQ[indexArr[i][1]:]
 	}
 
 	return newQ, newArgs
@@ -686,6 +647,7 @@ func (db *DCDB) ExecSql(query string, args ...interface{}) error {
 	var res sql.Result
 	var err error
 	for {
+		log.Debug("newQuery: ", newQuery)
 		res, err = db.Exec(newQuery, newArgs...)
 		if err != nil {
 			if ok, _ := regexp.MatchString(`(?i)database is locked`, fmt.Sprintf("%s", err)); ok {
@@ -1600,11 +1562,30 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 }
 
 func (db *DCDB) GetStateName(stateId int64) (string, error) {
-	stateName, err := db.Single(`SELECT name FROM system_states WHERE id = ?`, stateId).String()
+	var err error
+	stateId_, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateId).String()
 	if err != nil {
 		return ``, err
 	}
+	stateName := ""
+	if stateId_!="0" {
+		stateName, err = db.Single(`SELECT value FROM "`+stateId_+`_state_parameters" WHERE name = 'state_name'`).String()
+		if err != nil {
+			return ``, err
+		}
+	}
 	return stateName, nil
+}
+
+func (db *DCDB) CheckStateName(stateId int64) (bool, error) {
+	stateId, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateId).Int64()
+	if err != nil {
+		return false, err
+	}
+	if stateId > 0 {
+		return true, nil
+	}
+	return false, fmt.Errorf("null stateId")
 }
 
 

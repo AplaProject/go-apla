@@ -1,5 +1,5 @@
-DROP SEQUENCE IF EXISTS dlt_transactions_id_seq CASCADE;
-CREATE SEQUENCE dlt_transactions_id_seq START WITH 1;
+DROP SEQUENCE IF EXISTS "dlt_transactions_id_seq" CASCADE;
+CREATE SEQUENCE "dlt_transactions_id_seq" START WITH 1;
 DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 "id" bigint NOT NULL  default nextval('dlt_transactions_id_seq'),
 "sender_wallet_id" bigint NOT NULL DEFAULT '0',
@@ -11,8 +11,8 @@ DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 "comment" text NOT NULL DEFAULT '',
 "block_id" int  NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE dlt_transactions_id_seq owned by dlt_transactions.id;
-ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT dlt_transactions_pkey PRIMARY KEY (id);
+ALTER SEQUENCE "dlt_transactions_id_seq" owned by "dlt_transactions".id;
+ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMARY KEY (id);
 
 
 
@@ -493,9 +493,7 @@ ALTER TABLE ONLY "global_tables" ADD CONSTRAINT global_tables_pkey PRIMARY KEY (
 DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
 DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
-"id" bigint NOT NULL default nextval('system_states_id_seq'),
-"name" varchar(255) NOT NULL DEFAULT '',
-"rb_id" bigint NOT NULL DEFAULT '0'
+"id" bigint NOT NULL default nextval('system_states_id_seq')
 );
 ALTER SEQUENCE system_states_id_seq owned by system_states.id;
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);

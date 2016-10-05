@@ -46,7 +46,7 @@ func (c *Controller) AjaxCitizenRequest() interface{} {
 	stateCode := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateCode)
 	//	if err == nil {
-	request, err := c.Single(`SELECT block_id FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests where dlt_wallet_id=?`, c.SessWalletId).Int64()
+	request, err := c.Single(`SELECT block_id FROM "`+utils.Int64ToStr(stateCode)+`_citizenship_requests" where dlt_wallet_id=?`, c.SessWalletId).Int64()
 	if err == nil {
 		if request > 0 {
 			/*				var state map[string]string

@@ -44,7 +44,7 @@ func (c *Controller) ListOfTables() (string, error) {
 	if global == "1" {
 		prefix = "global"
 	}
-	tables, err := c.GetAll(`SELECT * FROM `+prefix+`_tables`, -1)
+	tables, err := c.GetAll(`SELECT * FROM "`+prefix+`_tables"`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

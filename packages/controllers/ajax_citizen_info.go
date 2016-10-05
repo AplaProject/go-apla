@@ -51,7 +51,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	)
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
 	stateCode := utils.StrToInt64(c.r.FormValue(`stateId`))
-	_, err = c.GetStateName(stateCode)
+	_, err = c.CheckStateName(stateCode)
 	c.r.ParseMultipartForm(16 << 20) // Max memory 16 MiB
 	formdata := c.r.MultipartForm
 	defer formdata.RemoveAll()
@@ -97,7 +97,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		}
 	}
 	if err == nil {
-		data, err = c.OneRow(`SELECT * FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests WHERE dlt_wallet_id = ? order by id desc`, walletId).String()
+		data, err = c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(stateCode)+`_citizenship_requests" WHERE dlt_wallet_id = ? order by id desc`, walletId).String()
 		if err != nil || data == nil || len(data) == 0 {
 			err = fmt.Errorf(`unknown request for wallet %s`, walletId)
 		} else {

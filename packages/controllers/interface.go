@@ -41,11 +41,11 @@ func (c *Controller) Interface() (string, error) {
 		prefix = "global"
 	}
 
-	interface_pages, err := c.GetAll(`SELECT * FROM `+prefix+`_pages`, -1)
+	interface_pages, err := c.GetAll(`SELECT * FROM "`+prefix+`_pages"`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	interface_menu, err := c.GetAll(`SELECT * FROM `+prefix+`_menu`, -1)
+	interface_menu, err := c.GetAll(`SELECT * FROM "`+prefix+`_menu"`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

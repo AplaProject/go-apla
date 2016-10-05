@@ -2391,7 +2391,7 @@ func FillLeft(slice []byte) []byte {
 }
 
 func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (string, error) {
-	data, err := DB.Single(`SELECT value FROM `+Int64ToStr(stateId)+`_pages WHERE name = ?`, page).String()
+	data, err := DB.Single(`SELECT value FROM "`+Int64ToStr(stateId)+`_pages" WHERE name = ?`, page).String()
 	if err != nil {
 		return "", err
 	}
@@ -2500,6 +2500,6 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	//html := string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 
 	// removing <p></p>
-	unsafe = unsafe[3 : len(unsafe)-5]
+	//unsafe = unsafe[3 : len(unsafe)-5]
 	return unsafe, nil
 }
