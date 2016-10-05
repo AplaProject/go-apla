@@ -15,6 +15,7 @@
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
 package controllers
+
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
@@ -22,7 +23,7 @@ import (
 const AStateCoords = `ajax_state_coords`
 
 type StateDetails struct {
-	Coords   string `json:"coords"`
+	Coords string `json:"coords"`
 }
 
 func init() {
@@ -33,6 +34,6 @@ func (c *Controller) AjaxStateCoords() interface{} {
 
 	var stateDetails StateDetails
 	stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-	stateDetails.Coords,_ = c.Single(`SELECT coords FROM `+utils.Int64ToStr(stateId)+`_state_details`).String()
+	stateDetails.Coords, _ = c.Single(`SELECT coords FROM "` + utils.Int64ToStr(stateId) + `_state_details"`).String()
 	return stateDetails
 }

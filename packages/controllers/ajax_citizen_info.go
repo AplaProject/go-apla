@@ -97,7 +97,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		}
 	}
 	if err == nil {
-		data, err = c.OneRow(`SELECT * FROM `+utils.Int64ToStr(stateCode)+`_citizenship_requests WHERE dlt_wallet_id = ? order by id desc`, walletId).String()
+		data, err = c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(stateCode)+`_citizenship_requests" WHERE dlt_wallet_id = ? order by id desc`, walletId).String()
 		if err != nil || data == nil || len(data) == 0 {
 			err = fmt.Errorf(`unknown request for wallet %s`, walletId)
 		} else {

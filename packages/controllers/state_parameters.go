@@ -21,16 +21,16 @@ import (
 )
 
 type stateParametersPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId int64
-	CitizenId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
+	Alert           string
+	SignData        string
+	ShowSignData    bool
+	CountSignArr    []int
+	Lang            map[string]string
+	WalletId        int64
+	CitizenId       int64
+	TxType          string
+	TxTypeId        int64
+	TimeNow         int64
 	StateParameters []map[string]string
 }
 
@@ -48,17 +48,17 @@ func (c *Controller) StateParameters() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("state_parameters", "stateParameters", &stateParametersPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
-		StateParameters : stateParameters,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Alert:           c.Alert,
+		Lang:            c.Lang,
+		ShowSignData:    c.ShowSignData,
+		SignData:        "",
+		WalletId:        c.SessWalletId,
+		CitizenId:       c.SessCitizenId,
+		CountSignArr:    c.CountSignArr,
+		StateParameters: stateParameters,
+		TimeNow:         timeNow,
+		TxType:          txType,
+		TxTypeId:        txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -21,17 +21,17 @@ import (
 )
 
 type changeStateSmartLawsPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId int64
-	CitizenId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	StateSmartLaws map[string]string
+	Alert              string
+	SignData           string
+	ShowSignData       bool
+	CountSignArr       []int
+	Lang               map[string]string
+	WalletId           int64
+	CitizenId          int64
+	TxType             string
+	TxTypeId           int64
+	TimeNow            int64
+	StateSmartLaws     map[string]string
 	AllStateParameters []string
 }
 
@@ -45,7 +45,7 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 
 	parameter := c.r.FormValue(`parameter`)
 
-	StateSmartLaws, err := c.OneRow(`SELECT * FROM `+c.StateIdStr+`_state_parameters WHERE parameter = ?`, parameter).String()
+	StateSmartLaws, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_state_parameters" WHERE parameter = ?`, parameter).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -56,18 +56,18 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("change_state_smart_laws", "changeStateSmartLaws", &changeStateSmartLawsPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
-		StateSmartLaws : StateSmartLaws,
-		AllStateParameters : allStateParameters,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Alert:              c.Alert,
+		Lang:               c.Lang,
+		ShowSignData:       c.ShowSignData,
+		SignData:           "",
+		WalletId:           c.SessWalletId,
+		CitizenId:          c.SessCitizenId,
+		CountSignArr:       c.CountSignArr,
+		StateSmartLaws:     StateSmartLaws,
+		AllStateParameters: allStateParameters,
+		TimeNow:            timeNow,
+		TxType:             txType,
+		TxTypeId:           txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
