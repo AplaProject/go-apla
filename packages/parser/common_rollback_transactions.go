@@ -17,12 +17,19 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	//"github.com/DayLightProject/go-daylight/packages/utils"
 )
+
 
 func (p *Parser) RollbackTransactions() error {
 
-	var blockBody []byte
+	/*err := p.ExecSql("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	if err != nil {
+		utils.WriteSelectiveLog(err)
+		return p.ErrInfo(err)
+	}*/
+
+	/*var blockBody []byte
 
 	utils.WriteSelectiveLog("SELECT data, hash FROM transactions WHERE verified = 1 AND used = 0")
 	rows, err := p.Query("SELECT data, hash FROM transactions WHERE verified = 1 AND used = 0")
@@ -47,10 +54,10 @@ func (p *Parser) RollbackTransactions() error {
 			return p.ErrInfo(err)
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-	}
+	}*/
 
 	// нужно откатить наши транзакции
-	if len(blockBody) > 0 {
+	/*if len(blockBody) > 0 {
 		parser := new(Parser)
 		parser.DCDB = p.DCDB
 		parser.BinaryData = blockBody
@@ -58,7 +65,7 @@ func (p *Parser) RollbackTransactions() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-	}
+	}*/
 	return nil
 }
 

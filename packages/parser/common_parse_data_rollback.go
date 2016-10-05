@@ -25,6 +25,7 @@ import (
 /**
  * Откат таблиц rb_time_, которые были изменены транзакциями
  */
+/*
 func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 
 	// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
@@ -73,6 +74,7 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}*/
+/*
 		p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
 		if err != nil {
 			return p.ErrInfo(err)
@@ -92,7 +94,7 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 
 	return nil
 }
-
+*/
 
 /**
  * Откат БД по блокам

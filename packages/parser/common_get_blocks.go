@@ -194,12 +194,12 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 		// откатываем по фронту все свежие тр-ии
-		parser.GoroutineName = goroutineName
+		/*parser.GoroutineName = goroutineName
 		parser.BinaryData = transactions
 		err = parser.ParseDataRollbackFront(false)
 		if err != nil {
 			return utils.ErrInfo(err)
-		}
+		}*/
 	}
 
 

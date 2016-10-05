@@ -31,8 +31,13 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}*/
-	err := p.RollbackTransactions()
+	/*err := p.RollbackTransactions()
 	if err != nil {
+		return p.ErrInfo(err)
+	}*/
+	err := p.ExecSql("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	if err != nil {
+		utils.WriteSelectiveLog(err)
 		return p.ErrInfo(err)
 	}
 

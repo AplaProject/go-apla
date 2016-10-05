@@ -582,12 +582,12 @@ BEGIN:
 					}
 					utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 					// откатываем по фронту все свежие тр-ии
-					parser.BinaryData = transactions
+					/*parser.BinaryData = transactions
 					err = parser.ParseDataRollbackFront(false)
 					if err != nil {
 						utils.Sleep(1)
 						continue BEGIN
-					}
+					}*/
 				}
 
 			}
