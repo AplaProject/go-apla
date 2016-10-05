@@ -17,21 +17,21 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/smart"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) NewContractInit() error {
 
-	fields := []map[string]string{{"global": "int64"},{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
-
-
 
 func (p *Parser) NewContractFront() error {
 
@@ -43,7 +43,6 @@ func (p *Parser) NewContractFront() error {
 	// Check the system limits. You can not send more than X time a day this TX
 	// ...
 
-
 	// Check InputData
 	verifyData := map[string]string{}
 	err = p.CheckInputData(verifyData)
@@ -51,9 +50,8 @@ func (p *Parser) NewContractFront() error {
 		return p.ErrInfo(err)
 	}
 
-
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"],p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -75,7 +73,9 @@ func (p *Parser) NewContract() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	if err := smart.Compile(p.TxMaps.String["value"]); err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 

@@ -166,12 +166,11 @@ func LexParser(input []rune) (Lexems, error) {
 				value = binary.BigEndian.Uint32(append(make([]byte, 4-len(oper)), oper...))
 			case LEX_NUMBER:
 				name := string(input[lexOff:right])
-
 				if strings.IndexAny(name, `.`) >= 0 {
 					if val, err := strconv.ParseFloat(name, 64); err == nil {
-						return nil, fmt.Errorf(`%v %s [Ln:%d Col:%d]`, err, name, line, off-offline+1)
-					} else {
 						value = val
+					} else {
+						return nil, fmt.Errorf(`%v %s [Ln:%d Col:%d]`, err, name, line, off-offline+1)
 					}
 				} else if val, err := strconv.ParseInt(name, 10, 64); err == nil {
 					value = val

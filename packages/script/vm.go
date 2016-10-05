@@ -165,6 +165,10 @@ func valueToBool(v interface{}) bool {
 		if val != 0 {
 			return true
 		}
+	case float64:
+		if val != 0.0 {
+			return true
+		}
 	case bool:
 		return val
 	}
@@ -210,11 +214,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case CMD_PUSHSTR:
 			rt.stack = append(rt.stack, cmd.Value.(string))
 		case CMD_IF:
-			if ValueToBool(rt.stack[len(rt.stack)-1]) {
+			if valueToBool(rt.stack[len(rt.stack)-1]) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
 		case CMD_ELSE:
-			if !ValueToBool(rt.stack[len(rt.stack)-1]) {
+			if !valueToBool(rt.stack[len(rt.stack)-1]) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
 		case CMD_ASSIGNVAR:
@@ -277,7 +281,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
 		case CMD_NOT:
-			rt.stack[size-1] = !ValueToBool(top[0])
+			rt.stack[size-1] = !valueToBool(top[0])
 
 		case CMD_ADD:
 			/*			fmt.Println(`Stack`)
@@ -288,34 +292,72 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			switch top[1].(type) {
 			case string:
 				bin = top[1].(string) + top[0].(string)
+			case float64:
+				bin = top[1].(float64) + top[0].(float64)
 			default:
 				bin = top[1].(int64) + top[0].(int64)
 			}
 		case CMD_SUB:
-			bin = top[1].(int64) - top[0].(int64)
-		case CMD_MUL:
-			bin = top[1].(int64) * top[0].(int64)
-		case CMD_DIV:
-			if top[0].(int64) == 0 {
-				return 0, fmt.Errorf(`divided by zero`)
+			switch top[1].(type) {
+			case float64:
+				bin = top[1].(float64) - top[0].(float64)
+			default:
+				bin = top[1].(int64) - top[0].(int64)
 			}
-			bin = top[1].(int64) / top[0].(int64)
+		case CMD_MUL:
+			switch top[1].(type) {
+			case float64:
+				bin = top[1].(float64) * top[0].(float64)
+			default:
+				bin = top[1].(int64) * top[0].(int64)
+			}
+		case CMD_DIV:
+			switch top[1].(type) {
+			case float64:
+				bin = top[1].(float64) / top[0].(float64)
+			default:
+				if top[0].(int64) == 0 {
+					return 0, fmt.Errorf(`divided by zero`)
+				}
+				bin = top[1].(int64) / top[0].(int64)
+			}
 		case CMD_AND:
-			bin = ValueToBool(top[1]) && ValueToBool(top[0])
+			bin = valueToBool(top[1]) && valueToBool(top[0])
 		case CMD_OR:
-			bin = ValueToBool(top[1]) || ValueToBool(top[0])
+			bin = valueToBool(top[1]) || valueToBool(top[0])
 		case CMD_EQUAL, CMD_NOTEQ:
-			bin = top[1].(int64) == top[0].(int64)
+			switch top[1].(type) {
+			case string:
+				bin = top[1].(string) == top[0].(string)
+			case float64:
+				bin = top[1].(float64) == top[0].(float64)
+			default:
+				bin = top[1].(int64) == top[0].(int64)
+			}
 			if cmd.Cmd == CMD_NOTEQ {
 				bin = !bin.(bool)
 			}
 		case CMD_LESS, CMD_NOTLESS:
-			bin = top[1].(int64) < top[0].(int64)
+			switch top[1].(type) {
+			case string:
+				bin = top[1].(string) < top[0].(string)
+			case float64:
+				bin = top[1].(float64) < top[0].(float64)
+			default:
+				bin = top[1].(int64) < top[0].(int64)
+			}
 			if cmd.Cmd == CMD_NOTLESS {
 				bin = !bin.(bool)
 			}
 		case CMD_GREAT, CMD_NOTGREAT:
-			bin = top[1].(int64) > top[0].(int64)
+			switch top[1].(type) {
+			case string:
+				bin = top[1].(string) > top[0].(string)
+			case float64:
+				bin = top[1].(float64) > top[0].(float64)
+			default:
+				bin = top[1].(int64) > top[0].(int64)
+			}
 			if cmd.Cmd == CMD_NOTGREAT {
 				bin = !bin.(bool)
 			}

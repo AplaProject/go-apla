@@ -70,9 +70,9 @@ contract TXCitizenRequest {
 	}
 	func front {
 //		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
-/*		if Balance($wallet) < 10000.0 {
-			// error "not enough money"
-		}*/
+		if 10000 {
+			error "not enough money"
+		}
 	}
 	func main {
 		

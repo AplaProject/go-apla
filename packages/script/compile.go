@@ -91,6 +91,7 @@ const (
 	CF_FIELD
 	CF_FIELDTYPE
 	CF_FIELDTAG
+	CF_CMDERROR
 	CF_EVAL
 )
 
@@ -133,7 +134,7 @@ var (
 			LEX_KEYWORD | (KEY_ELSE << 8):   {STATE_BLOCK | STATE_PUSH, CF_ELSE},
 			LEX_KEYWORD | (KEY_VAR << 8):    {STATE_VAR, 0},
 			LEX_KEYWORD | (KEY_TX << 8):     {STATE_TX, CF_TX},
-			LEX_KEYWORD | (KEY_ERROR << 8):  {STATE_EVAL, CF_ERROR},
+			LEX_KEYWORD | (KEY_ERROR << 8):  {STATE_EVAL, CF_CMDERROR},
 			LEX_COMMENT:                     {STATE_BODY, 0},
 			LEX_IDENT:                       {STATE_ASSIGNEVAL | STATE_FORK, 0},
 			LEX_EXTEND:                      {STATE_ASSIGNEVAL | STATE_FORK, 0},
