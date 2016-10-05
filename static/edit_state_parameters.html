@@ -71,6 +71,9 @@
 		   </div>
 		   <div class="form-group">
 			   <label>Value</label>
+
+			   {{if eq .StateParameters.name "state_flag"}}<img src="data:image/png;base64,{{.StateParameters.value}}">{{end}}
+
 			   <textarea class="form-control" id="value">{{.StateParameters.value}}</textarea>
 		   </div>
 		   <div class="form-group">
