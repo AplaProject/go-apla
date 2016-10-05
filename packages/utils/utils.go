@@ -47,6 +47,8 @@ import (
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/script"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	b58 "github.com/jbenet/go-base58"
 	"github.com/kardianos/osext"
@@ -2450,7 +2452,7 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 		if err != nil {
 			log.Error("%v", err)
 		}
-		table := `<table class="table table-striped table-bordered table-hover">`
+		table := `<table  class="table table-striped table-bordered table-hover">`
 		for _, row := range dataTable {
 			table += `<tr>`
 			switch pars[1] {
@@ -2480,6 +2482,29 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 		table += `</tr>`
 	}
 	table += `</table>`
+
+	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)
+	data = qrx.ReplaceAllString(data, table)
+
+	qrx = regexp.MustCompile(`(?is)\{\{contract\.([\w\d_]*)\}\}`)
+	data = qrx.ReplaceAllStringFunc(data, func(match string) string {
+		name := match[strings.Index(match, `.`)+1 : len(match)-2]
+		contract := smart.GetContract(name)
+		out := `<form role="form">` + name + `<div id="fields">`
+		if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
+			err = fmt.Errorf(`there is not %s contract or parameters`, name)
+		} else {
+			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+				if fitem.Type.String() == `string` {
+					out += fmt.Sprintf(`<div class="form-group"><label for="%s">%s</label>
+					<input id="%s" name="%s" type="text" class="form-control"></div>`,
+						fitem.Name, fitem.Name, fitem.Name)
+				}
+			}
+		}
+		fmt.Println(`Name Contract`, name, contract)
+		return out + `</div></form>`
+	})
 
 	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)
 	data = qrx.ReplaceAllString(data, table)

@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/script"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -55,7 +55,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 			result.Approved = req[`approved`]
 		} else {
 			cntname := c.r.FormValue(`contract_name`)
-			contract := parser.GetContract(cntname, nil)
+			contract := smart.GetContract(cntname)
 			if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 				err = fmt.Errorf(`there is not %s contract`, cntname)
 			} else {

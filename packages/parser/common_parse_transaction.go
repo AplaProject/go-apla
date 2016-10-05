@@ -23,6 +23,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/script"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -57,7 +58,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				p.TxCitizenID = 0
 				p.TxWalletID = p.TxPtr.(*consts.TXHeader).UserId
 			}
-			contract := GetContractById(p.TxPtr.(*consts.TXHeader).Type, p)
+			contract := smart.GetContractById(p.TxPtr.(*consts.TXHeader).Type)
 			if contract == nil {
 				return nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
 			}

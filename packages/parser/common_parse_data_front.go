@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -105,7 +106,7 @@ func (p *Parser) ParseDataFront() error {
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 
 				if p.TxContract != nil {
-					if err := p.TxContract.Call(CALL_INIT | CALL_MAIN); err != nil {
+					if err := p.TxContract.Call(smart.CALL_INIT | smart.CALL_MAIN); err != nil {
 						return utils.ErrInfo(err)
 					}
 				} else {
