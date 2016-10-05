@@ -49,7 +49,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		if c.r.FormValue(`accept`) == `true` {
 			approved = 1
 		}
-		if err := c.ExecSql(`update `+c.StateIdStr+`_citizenship_requests set approved=? where id=?`,
+		if err := c.ExecSql(`update "`+c.StateIdStr+`_citizenship_requests" set approved=? where id=?`,
 			approved, requestId); err != nil {
 			return ``, err
 		}
@@ -67,7 +67,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if err = json.Unmarshal([]byte(field), &fields); err != nil {
 		return ``, err
 	}
-	vals, err := c.OneRow(`select * from ` + c.StateIdStr + `_citizenship_requests where approved=0 order by id`).String()
+	vals, err := c.OneRow(`select * from "` + c.StateIdStr + `_citizenship_requests" where approved=0 order by id`).String()
 	if err != nil {
 		return ``, err
 	}

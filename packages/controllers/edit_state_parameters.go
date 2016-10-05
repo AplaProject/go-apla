@@ -21,18 +21,18 @@ import (
 )
 
 type editStateParametersPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId int64
-	CitizenId int64
-	StateId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	StateParameters map[string]string
+	Alert              string
+	SignData           string
+	ShowSignData       bool
+	CountSignArr       []int
+	Lang               map[string]string
+	WalletId           int64
+	CitizenId          int64
+	StateId            int64
+	TxType             string
+	TxTypeId           int64
+	TimeNow            int64
+	StateParameters    map[string]string
 	AllStateParameters []string
 }
 
@@ -46,30 +46,30 @@ func (c *Controller) EditStateParameters() (string, error) {
 
 	name := c.r.FormValue(`name`)
 
-	stateParameters, err := c.OneRow(`SELECT * FROM `+c.StateIdStr+`_state_parameters WHERE name = ?`, name).String()
+	stateParameters, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, name).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	allStateParameters, err := c.GetList(`SELECT name FROM `+c.StateIdStr+`_state_parameters`).String()
+	allStateParameters, err := c.GetList(`SELECT name FROM "` + c.StateIdStr + `_state_parameters"`).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
 	TemplateStr, err := makeTemplate("edit_state_parameters", "editStateParameters", &editStateParametersPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		StateId: c.StateId,
-		CountSignArr: c.CountSignArr,
-		StateParameters : stateParameters,
-		AllStateParameters : allStateParameters,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Alert:              c.Alert,
+		Lang:               c.Lang,
+		ShowSignData:       c.ShowSignData,
+		SignData:           "",
+		WalletId:           c.SessWalletId,
+		CitizenId:          c.SessCitizenId,
+		StateId:            c.StateId,
+		CountSignArr:       c.CountSignArr,
+		StateParameters:    stateParameters,
+		AllStateParameters: allStateParameters,
+		TimeNow:            timeNow,
+		TxType:             txType,
+		TxTypeId:           txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

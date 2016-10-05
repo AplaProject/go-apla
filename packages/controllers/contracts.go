@@ -21,12 +21,12 @@ import (
 )
 
 type contractsPage struct {
-	Lang         map[string]string
-	WalletId int64
-	CitizenId int64
+	Lang               map[string]string
+	WalletId           int64
+	CitizenId          int64
 	AllStateParameters []string
-	StateSmartLaws []map[string]string
-	Global string
+	StateSmartLaws     []map[string]string
+	Global             string
 }
 
 func (c *Controller) Contracts() (string, error) {
@@ -35,31 +35,31 @@ func (c *Controller) Contracts() (string, error) {
 
 	global := c.r.FormValue("global")
 	prefix := "global"
-	if global == "" || global == "0"  {
+	if global == "" || global == "0" {
 		prefix = c.StateIdStr
 		global = "0"
 	}
 
-	stateSmartLaws, err := c.GetAll(`SELECT * FROM `+prefix+`_smart_contracts`, -1)
+	stateSmartLaws, err := c.GetAll(`SELECT * FROM "`+prefix+`_smart_contracts"`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
 	var allStateParameters []string
 	if global == "0" {
-		allStateParameters, err = c.GetList(`SELECT name FROM `+prefix+`_state_parameters`).String()
+		allStateParameters, err = c.GetList(`SELECT name FROM "` + prefix + `_state_parameters"`).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 	}
 
-	TemplateStr, err := makeTemplate("contracts", "contracts", &contractsPage {
-		Lang:         c.Lang,
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		StateSmartLaws : stateSmartLaws,
-		Global: global,
-		AllStateParameters : allStateParameters})
+	TemplateStr, err := makeTemplate("contracts", "contracts", &contractsPage{
+		Lang:               c.Lang,
+		WalletId:           c.SessWalletId,
+		CitizenId:          c.SessCitizenId,
+		StateSmartLaws:     stateSmartLaws,
+		Global:             global,
+		AllStateParameters: allStateParameters})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
