@@ -140,7 +140,7 @@ func (p *Parser) dataPre() {
 
 // Это защита от dos, когда одну транзакцию можно было бы послать миллион раз,
 // и она каждый раз успешно проходила бы фронтальную проверку
-func (p *Parser) CheckLogTx(tx_binary []byte, all bool) error {
+func (p *Parser) CheckLogTx(tx_binary []byte, transactions, queue_tx bool) error {
 	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, utils.Md5(tx_binary)).String()
 	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", utils.Md5(tx_binary))
 	if err != nil {
@@ -149,10 +149,10 @@ func (p *Parser) CheckLogTx(tx_binary []byte, all bool) error {
 	}
 	log.Debug("hash %x", hash)
 	if len(hash) > 0 {
-		return utils.ErrInfo(fmt.Errorf("double tx %s", utils.Md5(tx_binary)))
+		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %s", utils.Md5(tx_binary)))
 	}
 
-	if all {
+	if transactions {
 		// проверим, нет ли у нас такой тр-ии
 		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
 		if err != nil {
@@ -160,17 +160,19 @@ func (p *Parser) CheckLogTx(tx_binary []byte, all bool) error {
 			return utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx %s", utils.Md5(tx_binary)))
+			return utils.ErrInfo(fmt.Errorf("double tx in transactions %s", utils.Md5(tx_binary)))
 		}
+	}
 
+	if queue_tx {
 		// проверим, нет ли у нас такой тр-ии
-		exists, err = p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
+		exists, err := p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx %s", utils.Md5(tx_binary)))
+			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %s", utils.Md5(tx_binary)))
 		}
 	}
 

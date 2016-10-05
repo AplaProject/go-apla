@@ -54,7 +54,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 		// нет ли хэша этой тр-ии у нас в БД?
 		// Does the transaction's hash exist?
-		err = p.CheckLogTx(transactionBinaryDataFull, true)
+		err = p.CheckLogTx(transactionBinaryDataFull, true, false)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
