@@ -159,6 +159,8 @@ function clearAllTimeouts(){
 	for(var i=0; i < maxId; i+=1) { 
 		clearTimeout(i);
 	}
+	
+	$(".wrapper").removeClass("map");
 }
 
 function load_page(page, parameters) {
