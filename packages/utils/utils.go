@@ -2450,7 +2450,7 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 		if err != nil {
 			log.Error("%v", err)
 		}
-		table := `<table>`
+		table := `<table class="table table-striped table-bordered table-hover">`
 		for _, row := range dataTable {
 			table += `<tr>`
 			switch pars[1] {
@@ -2471,7 +2471,7 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	if err != nil {
 		log.Error("%v", err)
 	}
-	table := `<table>`
+	table := `<table class="table table-striped table-bordered table-hover">`
 	for _, row := range dataTable {
 		table += `<tr>`
 		for _, cell := range row {
