@@ -199,7 +199,7 @@ func (p *Parser) ParseDataFull() error {
 				err_ = utils.CallMethod(p, MethodName)
 				if _, ok := err_.(error); ok {
 					log.Error("error: %v", err)
-					return utils.ErrInfo(err_.(error))
+					//return utils.ErrInfo(err_.(error))
 				}
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
