@@ -1,0 +1,107 @@
+<style>
+	#coords1 {
+		padding: 5px;
+		font-weight: bold;
+	}
+	#map_canvas {
+		height: 1000px;
+	}
+	#top {
+		width: 100%;
+		background-color: #ffffff;
+		margin: 2px 2px 2px 2px;
+		position: absolute;
+		top: 25px;
+		left: 90px;
+	}
+	#heading {
+		width: 100%;
+		float: left;
+		margin: 2px 2px 2px 2px;
+	}
+</style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".anonym, .anonym_map").addClass("active");
+</script>
+
+<div id="map_canvas"></div>
+<div id="top">
+	<div id="heading">
+		<div id="title">
+			<h1>Google maps v3 tool, large map</h1>
+		</div>
+		<div class="choice">
+			<form id="tools" style="float:left;text-align:right;padding:10px 0px 0px 10px;" action="./" method="post" onsubmit="return false">
+			<select id="toolchoice" name="toolchoice" style="border:1px solid #000000;" onchange="toolID=parseInt(this.options[this.selectedIndex].value);setTool();">
+			<option selected="selected" value="1">Polyline</option>
+			<option value="2">Polygon</option>
+			<option value="3">Rectangle</option>
+			<option value="4">Circle</option>
+			<option value="5">Marker</option>
+			<option value="6">Directions</option>
+			</select>
+			</form>
+		</div>
+		<div class="choice">
+			<form id="codes" style="float:left;text-align:right;padding-top:10px;" action="./" method="post" onsubmit="return false">
+			<select id="codechoice" name="codechoice" style="border:1px solid #000000;" onchange="codeID=parseInt(this.options[this.selectedIndex].value);setCode();">
+			<option selected="selected" value="1">KML</option>
+			<option value="2">Javascript</option>
+			</select>
+			</form>
+		</div>
+		<div id="middlerow">
+			<form style="float:left;text-align:right;padding-top:10px;" action="#">
+				<select id="over" style="width:180px; border:1px solid #000000;">
+				<option>LngLat mousemove</option>
+				<option selected="selected">LatLng mousemove</option>
+				</select>
+				<input type="button" onclick="mapcenter();" value="Mapcenter"/>
+				<input type="text" style="width:140px; border: 1px solid #000000;" id="centerofmap" />
+				Zoom level:
+				<input type="text" size="5" name="myzoom" id="myzoom" value="7" style="width:15px; border: 1px solid #000000;" />
+			</form>
+			<div>
+				<div class="topbutton">
+					<input type="button" onclick="nextshape();" value="Next shape"/>
+				</div>
+				<div class="topbutton">
+					<input type="button" onclick="clearMap();" value="Clear Map"/>
+				</div>
+				<div class="topbutton">
+					<input type="button" onclick="deleteLastPoint();" value="Delete Last Point"/>
+				</div>
+				<div class="topbutton">
+					<input type="button" onclick="styleprep();" value="Style Options"/>
+				</div>
+				<div class="topbutton">
+					<input type="button" onclick="editlines();" value="Edit lines" id="EditButton"/>
+				</div>
+				<div class="topbutton">
+					<input type="button" onclick="docudetails();" value="KML input"/>
+				</div>
+				<div class="topbutton">
+					<input type="button" onclick="showKML();" value="Show KML"/>
+				</div>
+				<div class="topbutton">
+					<input style="width:150px" type="button" onclick="copyTextarea();" value="Select and copy text"/>
+				</div>
+			</div>
+			<div class="topbutton">
+				<form style="margin-right:5px" action="#" onsubmit="showAddress(this.address.value); return false">
+				<input type="text" style="border: 1px solid #000000;" size="50" name="address" value="Karl Johans gate 37, 0162 Oslo, Norge" />
+				<input type="submit" value="Search" />
+				</form>
+			</div>
+			<div class="topbutton">
+				<input type="button" id="textareabutton" onclick="toggletext();" value="Show/Hide textareabox"/>
+			</div>
+			<div class="topbutton">
+				<input type="button" onclick="regret();" value="Regret deleted point" id="RegretButton"/>
+			</div>
+		</div>
+	</div>
+</div>
+<textarea id="coords1" cols="65" rows="30"></textarea>
