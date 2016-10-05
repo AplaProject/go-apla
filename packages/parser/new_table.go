@@ -123,7 +123,7 @@ func (p *Parser) NewTable() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-	err = p.ExecSql(`INSERT INTO `+prefix+`_tables ( name, columns_and_permissions ) VALUES ( ?, ? )`,
+	err = p.ExecSql(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
 		tableName, `{"general_update":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "update": {`+colsSql2+`}, "insert": "`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "new_column":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`"}`)
 	if err != nil {
 		return p.ErrInfo(err)
