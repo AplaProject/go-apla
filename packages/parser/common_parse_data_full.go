@@ -27,7 +27,7 @@ import (
 /**
 фронт. проверка + занесение данных из блока в таблицы и info_block
 */
-func (p *Parser) ParseDataFull() error {
+func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 	p.TxIds = []string{}
 	p.dataPre()
@@ -39,6 +39,13 @@ func (p *Parser) ParseDataFull() error {
 	//if len(p.BinaryData) > 500000 {
 	//	ioutil.WriteFile("block-"+string(utils.DSha256(p.BinaryData)), p.BinaryData, 0644)
 	//}
+
+	if blockGenerator {
+		err = p.GetInfoBlock()
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	}
 
 	err = p.ParseBlock()
 	if err != nil {
@@ -86,7 +93,7 @@ func (p *Parser) ParseDataFull() error {
 
 			err = p.CheckLogTx(transactionBinaryDataFull, false, false)
 			if err != nil {
-				err0 := p.RollbackTo(txForRollbackTo, true, false)
+				err0 := p.RollbackTo(txForRollbackTo, true)
 				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
@@ -98,7 +105,7 @@ func (p *Parser) ParseDataFull() error {
 			if err != nil {
 				utils.WriteSelectiveLog(err)
 				utils.WriteSelectiveLog("RollbackTo")
-				err0 := p.RollbackTo(txForRollbackTo, true, false)
+				err0 := p.RollbackTo(txForRollbackTo, true)
 				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
@@ -111,7 +118,7 @@ func (p *Parser) ParseDataFull() error {
 			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
 			log.Debug("p.TxSlice %v", p.TxSlice)
 			if err != nil {
-				err0 := p.RollbackTo(txForRollbackTo, true, false)
+				err0 := p.RollbackTo(txForRollbackTo, true)
 				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
@@ -136,7 +143,7 @@ func (p *Parser) ParseDataFull() error {
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
 				if txCounter[userId] > consts.MAX_BLOCK_USER_TXS {
-					err0 := p.RollbackTo(txForRollbackTo, true, false)
+					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
 						log.Error("error: %v", err0)
 					}
@@ -147,7 +154,7 @@ func (p *Parser) ParseDataFull() error {
 			// время в транзакции не может быть больше, чем на MAX_TX_FORW сек времени блока
 			// и  время в транзакции не может быть меньше времени блока -24ч.
 			if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > p.BlockData.Time || utils.BytesToInt64(p.TxSlice[2]) < p.BlockData.Time-consts.MAX_TX_BACK {
-				err0 := p.RollbackTo(txForRollbackTo, true, false)
+				err0 := p.RollbackTo(txForRollbackTo, true)
 				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
@@ -169,7 +176,7 @@ func (p *Parser) ParseDataFull() error {
 			if p.TxContract != nil {
 				if err := p.TxContract.Call(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
 					if p.TxContract.Called == smart.CALL_FRONT {
-						err0 := p.RollbackTo(txForRollbackTo, true, false)
+						err0 := p.RollbackTo(txForRollbackTo, true)
 						if err0 != nil {
 							log.Error("error: %v", err0)
 						}
@@ -188,7 +195,7 @@ func (p *Parser) ParseDataFull() error {
 				err_ = utils.CallMethod(p, MethodName+"Front")
 				if _, ok := err_.(error); ok {
 					log.Error("error: %v", err_)
-					err0 := p.RollbackTo(txForRollbackTo, true, false)
+					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
 						log.Error("error: %v", err0)
 					}
@@ -198,8 +205,12 @@ func (p *Parser) ParseDataFull() error {
 				log.Debug("MethodName", MethodName)
 				err_ = utils.CallMethod(p, MethodName)
 				if _, ok := err_.(error); ok {
-					log.Error("error: %v", err)
-					//return utils.ErrInfo(err_.(error))
+					log.Error("error: %v", err_)
+					err0 := p.RollbackTo(txForRollbackTo, false)
+					if err0 != nil {
+						log.Error("error: %v", err0)
+					}
+					return utils.ErrInfo(err_.(error))
 				}
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
@@ -216,8 +227,9 @@ func (p *Parser) ParseDataFull() error {
 			}
 		}
 	}
-
-	p.UpdBlockInfo()
-
+	if blockGenerator {
+		p.UpdBlockInfo()
+		p.InsertIntoBlockchain()
+	}
 	return nil
 }

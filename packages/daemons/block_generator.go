@@ -284,68 +284,71 @@ BEGIN:
 			continue
 		}
 
-		var mrklArray [][]byte
-		var usedTransactions string
-		var mrklRoot []byte
-		var blockDataTx []byte
-		// берем все данные из очереди. Они уже были проверены ранее, и можно их не проверять, а просто брать
-		rows, err := d.Query(d.FormatQuery("SELECT data, hex(hash), type, wallet_id, citizen_id, third_var FROM transactions WHERE used = 0 AND verified = 1"))
-		if err != nil {
-			utils.WriteSelectiveLog(err)
-			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-		for rows.Next() {
-			var data []byte
-			var hash string
-			var txType string
-			var txWalletId string
-			var txCitizenId string
-			var thirdVar string
-			err = rows.Scan(&data, &hash, &txType, &txWalletId, &txCitizenId, &thirdVar)
+		okBlock := false
+		for !okBlock {
+
+			var mrklArray [][]byte
+			var usedTransactions string
+			var mrklRoot []byte
+			var blockDataTx []byte
+			// берем все данные из очереди. Они уже были проверены ранее, и можно их не проверять, а просто брать
+			rows, err := d.Query(d.FormatQuery("SELECT data, hex(hash), type, wallet_id, citizen_id, third_var FROM transactions WHERE used = 0 AND verified = 1"))
 			if err != nil {
-				rows.Close()
+				utils.WriteSelectiveLog(err)
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
-				continue BEGIN
+				continue
 			}
-			utils.WriteSelectiveLog("hash: " + string(hash))
-			logger.Debug("data %v", data)
-			logger.Debug("hash %v", hash)
-			transactionType := data[1:2]
-			logger.Debug("%v", transactionType)
-			logger.Debug("%x", transactionType)
-			mrklArray = append(mrklArray, utils.DSha256(data))
-			logger.Debug("mrklArray %v", mrklArray)
+			for rows.Next() {
+				var data []byte
+				var hash string
+				var txType string
+				var txWalletId string
+				var txCitizenId string
+				var thirdVar string
+				err = rows.Scan(&data, &hash, &txType, &txWalletId, &txCitizenId, &thirdVar)
+				if err != nil {
+					rows.Close()
+					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+						break BEGIN
+					}
+					continue BEGIN
+				}
+				utils.WriteSelectiveLog("hash: " + string(hash))
+				logger.Debug("data %v", data)
+				logger.Debug("hash %v", hash)
+				transactionType := data[1:2]
+				logger.Debug("%v", transactionType)
+				logger.Debug("%x", transactionType)
+				mrklArray = append(mrklArray, utils.DSha256(data))
+				logger.Debug("mrklArray %v", mrklArray)
 
-			hashMd5 := utils.Md5(data)
-			logger.Debug("hashMd5: %s", hashMd5)
+				hashMd5 := utils.Md5(data)
+				logger.Debug("hashMd5: %s", hashMd5)
 
-			dataHex := fmt.Sprintf("%x", data)
-			logger.Debug("dataHex %v", dataHex)
+				dataHex := fmt.Sprintf("%x", data)
+				logger.Debug("dataHex %v", dataHex)
 
-			blockDataTx = append(blockDataTx, utils.EncodeLengthPlusData([]byte(data))...)
+				blockDataTx = append(blockDataTx, utils.EncodeLengthPlusData([]byte(data))...)
 
-			if configIni["db_type"] == "postgresql" {
-				usedTransactions += "decode('" + hash + "', 'hex'),"
-			} else {
-				usedTransactions += "x'" + hash + "',"
+				if configIni["db_type"] == "postgresql" {
+					usedTransactions += "decode('" + hash + "', 'hex'),"
+				} else {
+					usedTransactions += "x'" + hash + "',"
+				}
 			}
-		}
-		rows.Close()
+			rows.Close()
 
-		if len(mrklArray) == 0 {
-			mrklArray = append(mrklArray, []byte("0"))
-		}
-		mrklRoot = utils.MerkleTreeRoot(mrklArray)
-		logger.Debug("mrklRoot: %s", mrklRoot)
+			if len(mrklArray) == 0 {
+				mrklArray = append(mrklArray, []byte("0"))
+			}
+			mrklRoot = utils.MerkleTreeRoot(mrklArray)
+			logger.Debug("mrklRoot: %s", mrklRoot)
 
 
-		// подписываем нашим нод-ключем заголовок блока
-/*		block, _ := pem.Decode([]byte(nodePrivateKey))
+			// подписываем нашим нод-ключем заголовок блока
+			/*		block, _ := pem.Decode([]byte(nodePrivateKey))
 		if block == nil {
 			logger.Error("bad key data %v ", utils.GetParent())
 			utils.Sleep(1)
@@ -364,53 +367,57 @@ BEGIN:
 			}
 			continue BEGIN
 		}*/
-		var forSign string
-		forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID,  string(mrklRoot))
-		logger.Debug("forSign: %v", forSign)
-//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
-		bytes, err := utils.SignECDSA(nodePrivateKey, forSign)
-		if err != nil {
-			if d.dPrintSleep(fmt.Sprintf("err %v %v", err, utils.GetParent()), d.sleepTime) {
-				break BEGIN
+			var forSign string
+			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID, string(mrklRoot))
+			logger.Debug("forSign: %v", forSign)
+			//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
+			bytes, err := utils.SignECDSA(nodePrivateKey, forSign)
+			if err != nil {
+				if d.dPrintSleep(fmt.Sprintf("err %v %v", err, utils.GetParent()), d.sleepTime) {
+					break BEGIN
+				}
+				continue BEGIN
 			}
-			continue BEGIN
-		}
-		logger.Debug("SignECDSA %x", bytes)
+			logger.Debug("SignECDSA %x", bytes)
 
-		signatureBin := bytes
+			signatureBin := bytes
 
-		// готовим заголовок
-		newBlockIdBinary := utils.DecToBin(newBlockId, 4)
-		timeBinary := utils.DecToBin(Time, 4)
-		cbIdBinary := utils.DecToBin(myCBID, 1)
+			// готовим заголовок
+			newBlockIdBinary := utils.DecToBin(newBlockId, 4)
+			timeBinary := utils.DecToBin(Time, 4)
+			cbIdBinary := utils.DecToBin(myCBID, 1)
 
-		// заголовок
-		blockHeader := utils.DecToBin(0, 1)
-		blockHeader = append(blockHeader, newBlockIdBinary...)
-		blockHeader = append(blockHeader, timeBinary...)
-		lib.EncodeLenInt64(&blockHeader, myWalletId)
-		blockHeader = append(blockHeader, cbIdBinary...)
-		blockHeader = append(blockHeader, utils.EncodeLengthPlusData(signatureBin)...)
+			// заголовок
+			blockHeader := utils.DecToBin(0, 1)
+			blockHeader = append(blockHeader, newBlockIdBinary...)
+			blockHeader = append(blockHeader, timeBinary...)
+			lib.EncodeLenInt64(&blockHeader, myWalletId)
+			blockHeader = append(blockHeader, cbIdBinary...)
+			blockHeader = append(blockHeader, utils.EncodeLengthPlusData(signatureBin)...)
 
-		// сам блок
-		blockBin := append(blockHeader, blockDataTx...)
-		logger.Debug("block %x", blockBin)
+			// сам блок
+			blockBin := append(blockHeader, blockDataTx...)
+			logger.Debug("block %x", blockBin)
 
-		// теперь нужно разнести блок по таблицам и после этого мы будем его слать всем нодам демоном disseminator
-		p.BinaryData = blockBin
-		err = p.ParseDataFront()
-		if err != nil {
-			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
+			// теперь нужно разнести блок по таблицам и после этого мы будем его слать всем нодам демоном disseminator
+			p.BinaryData = blockBin
+			err = p.ParseDataFull(true)
+			if err != nil {
+				/*if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+					break BEGIN
+				}
+				continue BEGIN*/
+				logger.Error("ParseDataFull error ", err)
 			}
-			continue BEGIN
-		}
+			okBlock = true
 
+
+		}
 		/// #######################################
 		// Отмечаем транзакции, которые попали в блок
 		// Пока для эксперимента
 		// если не отмечать, то получается, что и в transactions_candidate_block и в transactions будут провернные тр-ии, которые откатятся дважды
-		if len(usedTransactions) > 0 {
+		/*if len(usedTransactions) > 0 {
 			usedTransactions := usedTransactions[:len(usedTransactions)-1]
 			logger.Debug("usedTransactions %v", usedTransactions)
 			utils.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hash IN (" + usedTransactions + ")")
@@ -428,7 +435,7 @@ BEGIN:
 			DELETE FROM `".DB_PREFIX."transactions`
 			WHERE `hash` IN ({$used_transactions})
 			");*/
-		}
+	/*	}*/
 		// ############################################
 
 		d.dbUnlock()

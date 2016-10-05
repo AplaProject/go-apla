@@ -17,17 +17,19 @@
 package parser
 
 import (
-	"fmt"
-
+	/*"fmt"
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/smart"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/utils"*/
 )
 
 /**
  * Занесение данных из блока в БД
  * используется только в candidateBlock_is_ready
  */
+
+
+/*
 func (p *Parser) ParseDataFront() error {
 
 	p.TxIds = []string{}
@@ -152,3 +154,4 @@ func (p *Parser) ParseDataFront() error {
 
 	return nil
 }
+*/

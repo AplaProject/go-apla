@@ -22,7 +22,7 @@ import (
 )
 
 //  если в ходе проверки тр-ий возникает ошибка, то вызываем откатчик всех занесенных тр-ий
-func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool, onlyFront bool) error {
+func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 	var err error
 	if len(binaryData) > 0 {
 		// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
@@ -87,17 +87,19 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool, onlyFront bool)
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
 				}*/
+			if i == 0 && !skipCurrent {
 				err_ = utils.CallMethod(p, MethodName+"Rollback")
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
 				}
 				err = p.DelLogTx(transactionBinaryData_)
-				if err!=nil{
+				if err!=nil {
 					log.Error("error: %v", err)
 				}
+			}
 			/*}*/
 			// =================== ради эксперимента =========
-			if onlyFront {
+			/*if onlyFront {
 				utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE hex(hash) = " + string(p.TxHash))
 				affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE hex(hash) = ?", p.TxHash)
 				if err != nil {
@@ -105,15 +107,15 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool, onlyFront bool)
 					return utils.ErrInfo(err)
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			} else { // ====================================
-				utils.WriteSelectiveLog("UPDATE transactions SET used = 0 WHERE hex(hash) = " + string(p.TxHash))
-				affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used = 0 WHERE hex(hash) = ?", p.TxHash)
+			} else { // ====================================*/
+				utils.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
+				affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
 				if err != nil {
 					utils.WriteSelectiveLog(err)
 					return utils.ErrInfo(err)
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			}
+			/*}*/
 		}
 	}
 	return err

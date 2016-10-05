@@ -254,7 +254,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 
 			// если вернулась ошибка, значит переданный блок уже откатился
 			// info_block и config.my_block_id обновляются только если ошибки не было
-			err = parser.ParseDataFull()
+			err = parser.ParseDataFull(false)
 			// для последующей обработки получим хэши и time
 			if err == nil {
 				prevBlock[intBlockId] = parser.GetBlockInfo()
@@ -309,7 +309,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 					log.Debug("blockId", blockId, "intBlockId", intBlockId)
 					parser.GoroutineName = goroutineName
 					parser.BinaryData = data
-					err = parser.ParseDataFull()
+					err = parser.ParseDataFull(false)
 					if err != nil {
 						return utils.ErrInfo(err)
 					}

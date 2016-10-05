@@ -238,7 +238,7 @@ BEGIN:
 								parser.CurrentVersion = consts.VERSION
 								first = false
 							}
-							if err = parser.ParseDataFull(); err != nil {
+							if err = parser.ParseDataFull(false); err != nil {
 								if d.dPrintSleep(err, d.sleepTime) {
 									break BEGIN
 								}
@@ -292,7 +292,7 @@ BEGIN:
 				parser.BinaryData = newBlock
 				parser.CurrentVersion = consts.VERSION
 
-				if err = parser.ParseDataFull(); err != nil {
+				if err = parser.ParseDataFull(false); err != nil {
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN
 					}
@@ -595,7 +595,7 @@ BEGIN:
 			// теперь у нас в таблицах всё тоже самое, что у нода, у которого качаем блок
 			// и можем этот блок проверить и занести в нашу БД
 			parser.BinaryData = binaryBlockFull
-			err = parser.ParseDataFull()
+			err = parser.ParseDataFull(false)
 			if err == nil {
 				err = parser.InsertIntoBlockchain()
 				if err != nil {
