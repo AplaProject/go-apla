@@ -66,36 +66,36 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool, onlyFront bool)
 			}
 
 			// если дошли до тр-ии, которая вызвала ошибку, то откатываем только фронтальную проверку
-			if i == 0 {
-				if skipCurrent { // тр-ия, которая вызвала ошибку закончилась еще до фронт. проверки, т.е. откатывать по ней вообще нечего
+			/*if i == 0 {
+				/*if skipCurrent { // тр-ия, которая вызвала ошибку закончилась еще до фронт. проверки, т.е. откатывать по ней вообще нечего
 					continue
-				}
-				// если успели дойти только до половины фронтальной функции
+				}*/
+				/*// если успели дойти только до половины фронтальной функции
 				MethodNameRollbackFront := MethodName + "RollbackFront"
 				// откатываем только фронтальную проверку
 				err_ = utils.CallMethod(p, MethodNameRollbackFront)
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
-				}
-			} else if onlyFront {
-				err_ = utils.CallMethod(p, MethodName+"RollbackFront")
+				}*/
+			/*} else if onlyFront {*/
+				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
-				}
-			} else {
-				err_ = utils.CallMethod(p, MethodName+"RollbackFront")
+				}*/
+			/*} else {*/
+				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
-				}
+				}*/
 				err_ = utils.CallMethod(p, MethodName+"Rollback")
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
 				}
-			}
-			err = p.DelLogTx(transactionBinaryData_)
-			if err!=nil{
-				log.Error("error: %v", err)
-			}
+				err = p.DelLogTx(transactionBinaryData_)
+				if err!=nil{
+					log.Error("error: %v", err)
+				}
+			/*}*/
 			// =================== ради эксперимента =========
 			if onlyFront {
 				utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE hex(hash) = " + string(p.TxHash))
