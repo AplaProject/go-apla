@@ -94,7 +94,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 	}
 	return b.String(), nil*/
 
-	states, err := c.GetAll(`SELECT * FROM system_states ORDER BY name DESC`, -1)
+	states, err := c.GetAll(`SELECT * FROM system_states`, -1)
 	if err != nil {
 		return "", err
 	}

@@ -88,7 +88,7 @@ func (p *Parser) NewStateFront() error {
 
 func (p *Parser) NewState() error {
 
-	id_, err := p.ExecSqlGetLastInsertId(`INSERT INTO system_states ( name ) VALUES ( ? )`, "system_states", p.TxMaps.String["state_name"])
+	id_, err := p.ExecSqlGetLastInsertId(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -105,7 +105,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT ` + id + `_state_parameters_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT "` + id + `_state_parameters_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -138,7 +138,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_smart_contracts_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_smart_contracts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
 				"name" varchar(100)  NOT NULL DEFAULT '',
@@ -148,7 +148,7 @@ func (p *Parser) NewState() error {
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_smart_contracts_id_seq" owned by "` + id + `_smart_contracts".id;
-				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT ` + id + `_smart_contracts_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT "` + id + `_smart_contracts_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -160,7 +160,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT ` + id + `_tables_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT "` + id + `_tables_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -182,7 +182,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_pages" ADD CONSTRAINT ` + id + `_pages_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_pages" ADD CONSTRAINT "` + id + `_pages_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -204,7 +204,7 @@ func (p *Parser) NewState() error {
 				"conditions" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER TABLE ONLY "` + id + `_menu" ADD CONSTRAINT ` + id + `_menu_pkey PRIMARY KEY (name);
+				ALTER TABLE ONLY "` + id + `_menu" ADD CONSTRAINT "` + id + `_menu_pkey" PRIMARY KEY (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -219,7 +219,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_citizens_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizens_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_citizens" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizens_id_seq'),
 				"public_key_0" bytea  NOT NULL DEFAULT '',
@@ -228,7 +228,7 @@ func (p *Parser) NewState() error {
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_citizens_id_seq" owned by "` + id + `_citizens".id;
-				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT ` + id + `_citizens_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT "` + id + `_citizens_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -244,7 +244,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_citizenship_requests_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizenship_requests_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_citizenship_requests" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
@@ -254,38 +254,24 @@ func (p *Parser) NewState() error {
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_citizenship_requests_id_seq" owned by "` + id + `_citizenship_requests".id;
-				ALTER TABLE ONLY "` + id + `_citizenship_requests" ADD CONSTRAINT ` + id + `_citizenship_requests_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_citizenship_requests" ADD CONSTRAINT "` + id + `_citizenship_requests_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_accounts_id_seq START WITH 1;
+	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_accounts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_accounts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
 				"amount" bigint  NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_accounts_id_seq" owned by "` + id + `_accounts".id;
-				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT ` + id + `_accounts_pkey PRIMARY KEY (id);
+				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT "` + id + `_accounts_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	err = p.ExecSql(`CREATE SEQUENCE ` + id + `_state_details_id_seq START WITH 1;
-				CREATE TABLE "` + id + `_state_details" (
-				"id" bigint NOT NULL  default nextval('` + id + `_state_details_id_seq'),
-				"coords" varchar NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER SEQUENCE "` + id + `_state_details_id_seq" owned by "` + id + `_state_details".id;
-				ALTER TABLE ONLY "` + id + `_state_details" ADD CONSTRAINT ` + id + `_state_details_pkey PRIMARY KEY (id);
-				`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	return nil
 }
 
@@ -327,6 +313,15 @@ func (p *Parser) NewStateRollback() error {
 		return p.ErrInfo(err)
 	}
 
+	maxId, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	// обновляем AI
+	err = p.SetAI("system_states", maxId+1)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	err = p.ExecSql(`DELETE FROM "system_states" WHERE id = ?`, id)
 	if err != nil {
 		return p.ErrInfo(err)

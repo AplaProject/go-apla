@@ -1562,11 +1562,30 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 }
 
 func (db *DCDB) GetStateName(stateId int64) (string, error) {
-	stateName, err := db.Single(`SELECT name FROM system_states WHERE id = ?`, stateId).String()
+	var err error
+	stateId_, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateId).String()
 	if err != nil {
 		return ``, err
 	}
+	stateName := ""
+	if stateId_!="0" {
+		stateName, err = db.Single(`SELECT value FROM "`+stateId_+`_state_parameters" WHERE name = 'state_name'`).String()
+		if err != nil {
+			return ``, err
+		}
+	}
 	return stateName, nil
+}
+
+func (db *DCDB) CheckStateName(stateId int64) (bool, error) {
+	stateId, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateId).Int64()
+	if err != nil {
+		return false, err
+	}
+	if stateId > 0 {
+		return true, nil
+	}
+	return false, fmt.Errorf("null stateId")
 }
 
 

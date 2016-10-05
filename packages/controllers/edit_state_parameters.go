@@ -46,12 +46,12 @@ func (c *Controller) EditStateParameters() (string, error) {
 
 	name := c.r.FormValue(`name`)
 
-	stateParameters, err := c.OneRow(`SELECT * FROM `+c.StateIdStr+`_state_parameters WHERE name = ?`, name).String()
+	stateParameters, err := c.OneRow(`SELECT * FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, name).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	allStateParameters, err := c.GetList(`SELECT name FROM `+c.StateIdStr+`_state_parameters`).String()
+	allStateParameters, err := c.GetList(`SELECT name FROM "`+c.StateIdStr+`_state_parameters"`).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
