@@ -125,7 +125,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				return err
 			}
 
-			if p.BlockData.BlockId > 1 {
+			if p.BlockData.BlockId > 1 && p.TxContract == nil {
 				var userId int64
 				// txSlice[3] могут подсунуть пустой
 				if len(p.TxSlice) > 3 {
@@ -150,29 +150,34 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(fmt.Errorf("max_block_user_transactions"))
 				}
 			}
-
-			// время в транзакции не может быть больше, чем на MAX_TX_FORW сек времени блока
-			// и  время в транзакции не может быть меньше времени блока -24ч.
-			if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > p.BlockData.Time || utils.BytesToInt64(p.TxSlice[2]) < p.BlockData.Time-consts.MAX_TX_BACK {
-				err0 := p.RollbackTo(txForRollbackTo, true)
-				if err0 != nil {
-					log.Error("error: %v", err0)
+			if p.TxContract == nil {
+				// время в транзакции не может быть больше, чем на MAX_TX_FORW сек времени блока
+				// и  время в транзакции не может быть меньше времени блока -24ч.
+				if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > p.BlockData.Time || utils.BytesToInt64(p.TxSlice[2]) < p.BlockData.Time-consts.MAX_TX_BACK {
+					err0 := p.RollbackTo(txForRollbackTo, true)
+					if err0 != nil {
+						log.Error("error: %v", err0)
+					}
+					return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 				}
-				return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
-			}
 
-			// проверим, есть ли такой тип тр-ий
-			_, ok := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-			if !ok {
-				return utils.ErrInfo(fmt.Errorf("nonexistent type"))
-			}
+				// проверим, есть ли такой тип тр-ий
+				_, ok := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
+				if !ok {
+					return utils.ErrInfo(fmt.Errorf("nonexistent type"))
+				}
+			} else {
+				if int64(p.TxPtr.(*consts.TXHeader).Time)-consts.MAX_TX_FORW > p.BlockData.Time || int64(p.TxPtr.(*consts.TXHeader).Time) < p.BlockData.Time-consts.MAX_TX_BACK {
+					return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
+				}
 
+			}
 			p.TxMap = map[string][]byte{}
 
-			// для статы
-			p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
-
-			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
+			if p.TxContract == nil {
+				// для статы
+				p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
+			}
 			if p.TxContract != nil {
 				if err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
 					if p.TxContract.Called == smart.CALL_FRONT {
@@ -184,6 +189,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(err)
 				}
 			} else {
+				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 				log.Debug("MethodName", MethodName+"Init")
 				err_ := utils.CallMethod(p, MethodName+"Init")
 				if _, ok := err_.(error); ok {

@@ -19,7 +19,7 @@ package smart
 import (
 	"encoding/hex"
 	"fmt"
-	//	"reflect"
+	"strconv"
 	"strings"
 
 	//"github.com/DayLightProject/go-daylight/packages/consts"
@@ -93,8 +93,9 @@ func init() {
 		"Println": fmt.Println,
 		"Sprintf": fmt.Sprintf,
 		"TxJson":  TxJson,
+		"Float":   Float,
 	}, map[string]string{
-		`*Contract`: `contract`,
+		`*smart.Contract`: `contract`,
 	}})
 }
 
@@ -115,9 +116,9 @@ func Extend(ext *script.ExtendData) {
 	smartVM.Extend(ext)
 }
 
-func Run(block *script.Block, params *[]interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
+func Run(block *script.Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	rt := smartVM.RunInit()
-	return rt.Run(block, nil, extend)
+	return rt.Run(block, params, extend)
 }
 
 // Returns true if the contract exists
@@ -125,7 +126,7 @@ func GetContract(name string /*, data interface{}*/) *Contract {
 	obj, ok := smartVM.Objects[name]
 	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
 	if ok && obj.Type == script.OBJ_CONTRACT {
-		return &Contract{Name: name /*parser: p,*/, Block: obj.Value.(*script.Block)}
+		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
 	return nil
 }
@@ -147,7 +148,7 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
-func TxJson(contract *Contract) (out string) {
+func TxJson(contract *Contract) string {
 	lines := make([]string, 0)
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		switch fitem.Type.String() {
@@ -160,9 +161,19 @@ func TxJson(contract *Contract) (out string) {
 				hex.EncodeToString((*(*contract).Extend)[fitem.Name].([]byte))))
 		}
 	}
-	out = `{` + strings.Join(lines, ",\r\n")
-	fmt.Println(`TxJson`, out)
-	return out + `}`
+	return `{` + strings.Join(lines, ",\r\n") + `}`
+}
+
+func Float(v interface{}) (ret float64) {
+	switch value := v.(type) {
+	case int64:
+		ret = float64(value)
+	case string:
+		if val, err := strconv.ParseFloat(value, 64); err == nil {
+			ret = val
+		}
+	}
+	return
 }
 
 // Pre-defined functions

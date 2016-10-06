@@ -257,9 +257,7 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 				}
 			}
 			*out = append(*out, uint8(128+4-i))
-			//			if i < 4 {
 			*out = append(*out, tmp[i:]...)
-			//			}
 		}
 	case reflect.Int64, reflect.Uint64:
 		EncodeLenInt64(out, t.Int())
@@ -305,7 +303,7 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			size := val - 128
 			tmp := make([]byte, 4)
 			for ; i < size; i++ {
-				tmp[3-i] = (*out)[i+1]
+				tmp[4-size+i] = (*out)[i+1]
 			}
 			t.SetInt(int64(binary.BigEndian.Uint32(tmp)))
 			*out = (*out)[size+1:]

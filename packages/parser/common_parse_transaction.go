@@ -87,7 +87,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					return nil, err
 				}
 			}
-			fmt.Println(`Contract data`, p.TxData)
+			//			fmt.Println(`Contract data`, p.TxData)
 		} else if isStruct {
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 			if err := lib.BinUnmarshal(&input, p.TxPtr); err != nil {

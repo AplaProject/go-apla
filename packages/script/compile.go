@@ -480,7 +480,11 @@ func (vm *VM) FlushBlock(root *Block) {
 	for key, item := range root.Objects {
 		vm.Objects[key] = item
 	}
+	shift := len(vm.Children)
 	for _, item := range root.Children {
+		if item.Type == OBJ_CONTRACT {
+			item.Info.(*ContractInfo).Id += uint32(shift)
+		}
 		vm.Children = append(vm.Children, item)
 	}
 }

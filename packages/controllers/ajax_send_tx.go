@@ -88,8 +88,8 @@ func (c *Controller) AjaxSendTx() interface{} {
 				StateId: int64(c.SessStateId),
 				Sign:    sign,
 			}
-			fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
-			fmt.Println(`Header`, header)
+			//fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
+			//			fmt.Println(`Header`, header)
 			_, err = lib.BinMarshal(&data, &header)
 			if err == nil {
 			fields:
@@ -99,7 +99,6 @@ func (c *Controller) AjaxSendTx() interface{} {
 						err = fmt.Errorf(`%s is empty`, fitem.Name)
 						break
 					}
-					fmt.Println(fitem, fitem.Type.Name(), fitem.Type.String())
 					switch fitem.Type.String() {
 					case `int64`:
 						lib.EncodeLenInt64(&data, utils.StrToInt64(val))

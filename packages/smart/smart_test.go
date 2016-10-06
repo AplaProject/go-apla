@@ -18,7 +18,7 @@ package smart
 
 import (
 	//	"encoding/hex"
-	_ "fmt"
+	"fmt"
 	"testing"
 	//	"time"
 
@@ -40,7 +40,7 @@ func TestNewContract(t *testing.T) {
 				MyVal  string
 			}
 			func front {
-				Println( TxJson())
+				Println( "Front")//TxJson())
 				//$tmp = "Test string"
 //				Println("NewCitizen Front", $tmp, $citizen, $state, $PublicKey )
 			}
@@ -57,6 +57,10 @@ func TestNewContract(t *testing.T) {
 		}
 	}
 	cnt := GetContract(`NewCitizen`)
+	cfunc := cnt.GetFunc(`front`)
+	_, err := Run(cfunc, nil, nil)
+	fmt.Println(`Err`, err)
+	//
 	/*	if err = cnt.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
 			t.Error(err.Error())
 	}*/
