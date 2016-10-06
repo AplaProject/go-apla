@@ -470,6 +470,14 @@
 
 				 {{noescape .Menu}}
 
+                {{if or (eq .Data.CitizenId 1) (eq .Data.WalletId 1)}}
+                <li class="check_citizen_status">
+                   <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
+                      <span>Check citizen status</span>
+                   </a>
+                </li>
+                {{end}}
+				
 				 <!--
 				 Tables
 				 <li class="state_parameters">
@@ -508,14 +516,7 @@
 		   <br>
 
 
-                {{if eq .Data.CitizenId 1}}
-                <li class="check_citizen_status">
-                   <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
-                      <span>Check citizen status</span>
-                   </a>
-                </li>
-                {{end}}
-				 <!--
+
                  <li class="state_parameters">
                      <a href="#" title="state_parameters" onClick="load_page('stateParameters');HideMenu();">
                          <span>state_parameters</span>
