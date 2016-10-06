@@ -35,7 +35,7 @@ type CommonPage struct {
 	WalletId     int64
 	CitizenId    int64
 	StateId      int64
-	StateName      string
+	StateName    string
 	CountSignArr []byte
 }
 

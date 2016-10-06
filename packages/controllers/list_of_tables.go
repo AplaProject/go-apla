@@ -26,13 +26,13 @@ type listOfTablesPage struct {
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletId     int64
+	CitizenId    int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	Global      string
-	Tables []map[string]string
+	Global       string
+	Tables       []map[string]string
 }
 
 func (c *Controller) ListOfTables() (string, error) {
@@ -49,23 +49,23 @@ func (c *Controller) ListOfTables() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 	for i, data := range tables {
-		count, err := c.Single(`SELECT count(id) FROM "`+data["name"]+`"`).Int64()
+		count, err := c.Single(`SELECT count(id) FROM "` + data["name"] + `"`).Int64()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		tables[i]["count"] = utils.Int64ToStr(count)
 	}
 
-	TemplateStr, err := makeTemplate("list_of_tables", "listOfTables", &listOfTablesPage {
+	TemplateStr, err := makeTemplate("list_of_tables", "listOfTables", &listOfTablesPage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
-		Global: global,
+		Global:       global,
 		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		Tables : tables})
+		Tables:       tables})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

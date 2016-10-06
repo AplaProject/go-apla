@@ -23,7 +23,7 @@ import (
 const ASetState = `set_state`
 
 type SetStateJson struct {
-	Error   string `json:"error"`
+	Error string `json:"error"`
 }
 
 func init() {

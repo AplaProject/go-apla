@@ -20,8 +20,6 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-
-
 func (c *Controller) NewContract() (string, error) {
 
 	txType := "NewContract"
@@ -29,24 +27,24 @@ func (c *Controller) NewContract() (string, error) {
 	timeNow := utils.Time()
 
 	global := c.r.FormValue("global")
-	if global == "" || global == "0"  {
+	if global == "" || global == "0" {
 		global = "0"
 	}
 
-	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage {
+	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
-		Global: global,
-		Data : map[string]string{},
-		StateId: c.SessStateId})
+		Global:       global,
+		Data:         map[string]string{},
+		StateId:      c.SessStateId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

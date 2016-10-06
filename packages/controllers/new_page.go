@@ -22,7 +22,6 @@ import (
 	//"fmt"
 )
 
-
 func (c *Controller) NewPage() (string, error) {
 
 	txType := "NewPage"
@@ -42,22 +41,22 @@ func (c *Controller) NewPage() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage {
+	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
-		Global: global,
+		Global:       global,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
-		StateId: c.SessStateId,
-		AllMenu : allMenu,
-		DataMenu : map[string]string{},
-		DataPage : map[string]string{}})
+		StateId:      c.SessStateId,
+		AllMenu:      allMenu,
+		DataMenu:     map[string]string{},
+		DataPage:     map[string]string{}})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -28,14 +28,14 @@ import (
 )
 
 type index struct {
-	DbOk              bool
-	Lang              map[string]string
-	Key               string
-	SetLang           string
-	IOS               bool
-	Android           bool
-	Mobile            bool
-	ShowIOSMenu       bool
+	DbOk        bool
+	Lang        map[string]string
+	Key         string
+	SetLang     string
+	IOS         bool
+	Android     bool
+	Mobile      bool
+	ShowIOSMenu bool
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +126,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	setLang := r.FormValue("lang")
 
-
 	funcMap := template.FuncMap{
 		"noescape": func(s string) template.HTML {
 			return template.HTML(s)
@@ -147,9 +146,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		Key:         key,
 		SetLang:     setLang,
 		ShowIOSMenu: showIOSMenu,
-		IOS:               ios,
-		Android:           android,
-		Mobile:            mobile})
+		IOS:         ios,
+		Android:     android,
+		Mobile:      mobile})
 	if err != nil {
 		log.Error("%v", err)
 	}

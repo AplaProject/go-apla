@@ -19,7 +19,7 @@ package controllers
 const NBackup = `backup`
 
 type backupPage struct {
-	Data        *CommonPage
+	Data *CommonPage
 }
 
 func init() {
@@ -27,5 +27,5 @@ func init() {
 }
 
 func (c *Controller) Backup() (string, error) {
-	return proceedTemplate( c, NBackup, &backupPage{c.Data})
+	return proceedTemplate(c, NBackup, &backupPage{c.Data})
 }

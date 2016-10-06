@@ -21,16 +21,16 @@ import (
 )
 
 type interfacePage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId  int64
-	CitizenId int64
+	Alert          string
+	SignData       string
+	ShowSignData   bool
+	CountSignArr   []int
+	Lang           map[string]string
+	WalletId       int64
+	CitizenId      int64
 	InterfacePages []map[string]string
-	InterfaceMenu []map[string]string
-	Global string
+	InterfaceMenu  []map[string]string
+	Global         string
 }
 
 func (c *Controller) Interface() (string, error) {
@@ -50,17 +50,17 @@ func (c *Controller) Interface() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("interface", "interface", &interfacePage {
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
-		InterfacePages : interface_pages,
-		Global: global,
-		InterfaceMenu : interface_menu})
+	TemplateStr, err := makeTemplate("interface", "interface", &interfacePage{
+		Alert:          c.Alert,
+		Lang:           c.Lang,
+		ShowSignData:   c.ShowSignData,
+		SignData:       "",
+		WalletId:       c.SessWalletId,
+		CitizenId:      c.SessCitizenId,
+		CountSignArr:   c.CountSignArr,
+		InterfacePages: interface_pages,
+		Global:         global,
+		InterfaceMenu:  interface_menu})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -28,14 +28,14 @@ type editMenuPage struct {
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletId     int64
+	CitizenId    int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	DataMenu map[string]string
-	StateId int64
-	Global string
+	DataMenu     map[string]string
+	StateId      int64
+	Global       string
 }
 
 func (c *Controller) EditMenu() (string, error) {
@@ -64,20 +64,20 @@ func (c *Controller) EditMenu() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage {
+	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		Global: global,
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		Global:       global,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
-		StateId: c.SessStateId,
-		DataMenu : dataMenu})
+		StateId:      c.SessStateId,
+		DataMenu:     dataMenu})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

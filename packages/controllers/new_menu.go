@@ -22,7 +22,6 @@ import (
 	//"fmt"
 )
 
-
 func (c *Controller) NewMenu() (string, error) {
 
 	txType := "NewMenu"
@@ -34,21 +33,20 @@ func (c *Controller) NewMenu() (string, error) {
 		global = "0"
 	}
 
-
-	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage {
+	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		Global: global,
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		Global:       global,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
-		StateId: c.SessStateId,
-		DataMenu : map[string]string{}})
+		StateId:      c.SessStateId,
+		DataMenu:     map[string]string{}})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

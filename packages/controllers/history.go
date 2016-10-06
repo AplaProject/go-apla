@@ -19,7 +19,7 @@ package controllers
 const NHistory = `history`
 
 type historyPage struct {
-	Data       *CommonPage
+	Data *CommonPage
 }
 
 func init() {
@@ -27,6 +27,6 @@ func init() {
 }
 
 func (c *Controller) History() (string, error) {
-	pageData := historyPage{Data:c.Data}
-	return proceedTemplate( c, NHistory, &pageData )
+	pageData := historyPage{Data: c.Data}
+	return proceedTemplate(c, NHistory, &pageData)
 }

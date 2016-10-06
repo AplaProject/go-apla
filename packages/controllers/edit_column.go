@@ -22,20 +22,20 @@ import (
 )
 
 type editColumnPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId  int64
-	CitizenId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	TableName string
-	StateId int64
+	Alert            string
+	SignData         string
+	ShowSignData     bool
+	CountSignArr     []int
+	Lang             map[string]string
+	WalletId         int64
+	CitizenId        int64
+	TxType           string
+	TxTypeId         int64
+	TimeNow          int64
+	TableName        string
+	StateId          int64
 	ColumnPermission string
-	ColumnName string
+	ColumnName       string
 }
 
 func (c *Controller) EditColumn() (string, error) {
@@ -63,21 +63,21 @@ func (c *Controller) EditColumn() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage {
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		TableName: tableName,
-		ColumnName: columnName,
+	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage{
+		Alert:            c.Alert,
+		Lang:             c.Lang,
+		ShowSignData:     c.ShowSignData,
+		TableName:        tableName,
+		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		StateId: c.SessStateId,
-		CountSignArr: c.CountSignArr,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		SignData:         "",
+		WalletId:         c.SessWalletId,
+		CitizenId:        c.SessCitizenId,
+		StateId:          c.SessStateId,
+		CountSignArr:     c.CountSignArr,
+		TimeNow:          timeNow,
+		TxType:           txType,
+		TxTypeId:         txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

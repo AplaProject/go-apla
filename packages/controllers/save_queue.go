@@ -182,7 +182,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
 		data = append(data, binSignatures...)
 
-
 	case "EditColumn":
 
 		userId := walletId
@@ -235,7 +234,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
 
-
 	case "NewPage":
 
 		userId := walletId
@@ -263,7 +261,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(menu)...)
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
-
 
 	case "EditTable":
 
@@ -391,7 +388,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
 
-
 	case "NewMenu":
 
 		userId := walletId
@@ -417,7 +413,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(value)...)
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
-
 
 	case "EditMenu":
 

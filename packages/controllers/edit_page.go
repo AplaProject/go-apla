@@ -28,16 +28,16 @@ type editPagePage struct {
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletId     int64
+	CitizenId    int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	DataMenu map[string]string
-	DataPage map[string]string
-	AllMenu []map[string]string
-	StateId int64
-	Global string
+	DataMenu     map[string]string
+	DataPage     map[string]string
+	AllMenu      []map[string]string
+	StateId      int64
+	Global       string
 }
 
 func (c *Controller) EditPage() (string, error) {
@@ -76,22 +76,22 @@ func (c *Controller) EditPage() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage {
+	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
-		Global: global,
+		Global:       global,
 		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
-		StateId: c.SessStateId,
-		AllMenu : allMenu,
-		DataMenu : dataMenu,
-		DataPage : dataPage})
+		StateId:      c.SessStateId,
+		AllMenu:      allMenu,
+		DataMenu:     dataMenu,
+		DataPage:     dataPage})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

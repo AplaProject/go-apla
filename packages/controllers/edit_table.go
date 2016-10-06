@@ -24,23 +24,23 @@ import (
 )
 
 type editTablePage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId  int64
-	CitizenId int64
-	TableName string
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	TableData map[string]string
-	Columns map[string]string
+	Alert                 string
+	SignData              string
+	ShowSignData          bool
+	CountSignArr          []int
+	Lang                  map[string]string
+	WalletId              int64
+	CitizenId             int64
+	TableName             string
+	TxType                string
+	TxTypeId              int64
+	TimeNow               int64
+	TableData             map[string]string
+	Columns               map[string]string
 	ColumnsAndPermissions map[string]string
-	StateId int64
-	TablePermission map[string]string
-	Global string
+	StateId               int64
+	TablePermission       map[string]string
+	Global                string
 }
 
 func (c *Controller) EditTable() (string, error) {
@@ -85,23 +85,23 @@ func (c *Controller) EditTable() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("edit_table", "editTable", &editTablePage {
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
-		TableName: tableName,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId,
-		StateId: c.SessStateId,
-		Global: global,
-		TablePermission : tablePermission,
-		ColumnsAndPermissions : columnsAndPermissions,
-		TableData : tableData})
+	TemplateStr, err := makeTemplate("edit_table", "editTable", &editTablePage{
+		Alert:                 c.Alert,
+		Lang:                  c.Lang,
+		ShowSignData:          c.ShowSignData,
+		SignData:              "",
+		WalletId:              c.SessWalletId,
+		CitizenId:             c.SessCitizenId,
+		CountSignArr:          c.CountSignArr,
+		TableName:             tableName,
+		TimeNow:               timeNow,
+		TxType:                txType,
+		TxTypeId:              txTypeId,
+		StateId:               c.SessStateId,
+		Global:                global,
+		TablePermission:       tablePermission,
+		ColumnsAndPermissions: columnsAndPermissions,
+		TableData:             tableData})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

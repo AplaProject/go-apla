@@ -20,7 +20,6 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-
 func (c *Controller) NewStateParameters() (string, error) {
 
 	var err error
@@ -29,25 +28,25 @@ func (c *Controller) NewStateParameters() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	allStateParameters, err := c.GetList(`SELECT name FROM "`+c.StateIdStr+`_state_parameters"`).String()
+	allStateParameters, err := c.GetList(`SELECT name FROM "` + c.StateIdStr + `_state_parameters"`).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
 	TemplateStr, err := makeTemplate("edit_state_parameters", "editStateParameters", &editStateParametersPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		StateId: c.StateId,
-		CountSignArr: c.CountSignArr,
-		StateParameters : map[string]string{},
-		AllStateParameters : allStateParameters,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Alert:              c.Alert,
+		Lang:               c.Lang,
+		ShowSignData:       c.ShowSignData,
+		SignData:           "",
+		WalletId:           c.SessWalletId,
+		CitizenId:          c.SessCitizenId,
+		StateId:            c.StateId,
+		CountSignArr:       c.CountSignArr,
+		StateParameters:    map[string]string{},
+		AllStateParameters: allStateParameters,
+		TimeNow:            timeNow,
+		TxType:             txType,
+		TxTypeId:           txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -23,20 +23,20 @@ import (
 )
 
 type showTablePage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId  int64
-	CitizenId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	TableData []map[string]string
-	Columns map[string]string
+	Alert                 string
+	SignData              string
+	ShowSignData          bool
+	CountSignArr          []int
+	Lang                  map[string]string
+	WalletId              int64
+	CitizenId             int64
+	TxType                string
+	TxTypeId              int64
+	TimeNow               int64
+	TableData             []map[string]string
+	Columns               map[string]string
 	ColumnsAndPermissions map[string]string
-	TableName string
+	TableName             string
 }
 
 func (c *Controller) ShowTable() (string, error) {
@@ -59,19 +59,18 @@ func (c *Controller) ShowTable() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-
-	TemplateStr, err := makeTemplate("show_table", "showTable", &showTablePage {
+	TemplateStr, err := makeTemplate("show_table", "showTable", &showTablePage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		Columns : columns,
+		Columns:      columns,
 		//tableData : columnsAndPermissions,
-		TableName : tableName,
-		TableData : tableData})
+		TableName: tableName,
+		TableData: tableData})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

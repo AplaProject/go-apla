@@ -21,5 +21,5 @@ import (
 )
 
 func (c *Controller) GetServerTime() (string, error) {
-	return `{"time":"`+utils.Int64ToStr(utils.Time())+`"}`, nil
+	return `{"time":"` + utils.Int64ToStr(utils.Time()) + `"}`, nil
 }

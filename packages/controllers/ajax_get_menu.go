@@ -15,6 +15,7 @@
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
 package controllers
+
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
@@ -22,9 +23,9 @@ import (
 const AGetMenu = `ajax_get_menu`
 
 type InterfaceMenu struct {
-	Name   string `json:"name"`
-	Value   string `json:"value"`
-	Conditions   string `json:"conditions"`
+	Name       string `json:"name"`
+	Value      string `json:"value"`
+	Conditions string `json:"conditions"`
 }
 
 func init() {
@@ -38,7 +39,7 @@ func (c *Controller) AjaxGetMenu() interface{} {
 
 	global := c.r.FormValue("global")
 	prefix := "global"
-	if global == "" || global == "0"  {
+	if global == "" || global == "0" {
 		prefix = c.StateIdStr
 	}
 

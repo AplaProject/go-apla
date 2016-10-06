@@ -30,21 +30,21 @@ func (c *Controller) NewColumn() (string, error) {
 
 	tableName := c.r.FormValue("tableName")
 
-	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage {
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		TableName: tableName,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		StateId: c.SessStateId,
-		ColumnName: "",
+	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage{
+		Alert:            c.Alert,
+		Lang:             c.Lang,
+		ShowSignData:     c.ShowSignData,
+		TableName:        tableName,
+		SignData:         "",
+		WalletId:         c.SessWalletId,
+		CitizenId:        c.SessCitizenId,
+		StateId:          c.SessStateId,
+		ColumnName:       "",
 		ColumnPermission: "",
-		CountSignArr: c.CountSignArr,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		CountSignArr:     c.CountSignArr,
+		TimeNow:          timeNow,
+		TxType:           txType,
+		TxTypeId:         txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

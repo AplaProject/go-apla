@@ -21,18 +21,18 @@ import (
 )
 
 type stateLawsPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	WalletId int64
-	CitizenId int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
+	Alert              string
+	SignData           string
+	ShowSignData       bool
+	CountSignArr       []int
+	Lang               map[string]string
+	WalletId           int64
+	CitizenId          int64
+	TxType             string
+	TxTypeId           int64
+	TimeNow            int64
 	AllStateParameters []string
-	StateLaws []map[string]string
+	StateLaws          []map[string]string
 }
 
 func (c *Controller) StateLaws() (string, error) {
@@ -53,19 +53,19 @@ func (c *Controller) StateLaws() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("state_laws", "stateLaws", &stateLawsPage {
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
-		StateLaws : stateLaws,
-		AllStateParameters : allStateParameters,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+	TemplateStr, err := makeTemplate("state_laws", "stateLaws", &stateLawsPage{
+		Alert:              c.Alert,
+		Lang:               c.Lang,
+		ShowSignData:       c.ShowSignData,
+		SignData:           "",
+		WalletId:           c.SessWalletId,
+		CitizenId:          c.SessCitizenId,
+		CountSignArr:       c.CountSignArr,
+		StateLaws:          stateLaws,
+		AllStateParameters: allStateParameters,
+		TimeNow:            timeNow,
+		TxType:             txType,
+		TxTypeId:           txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

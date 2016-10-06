@@ -18,12 +18,10 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 	"net/http"
 	"runtime/debug"
-	"github.com/DayLightProject/go-daylight/packages/utils"
 )
-
-
 
 func Template(w http.ResponseWriter, r *http.Request) {
 	defer func() {

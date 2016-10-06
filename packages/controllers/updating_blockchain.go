@@ -27,17 +27,17 @@ import (
 )
 
 type updatingBlockchainStruct struct {
-	Lang           map[string]string
-	WaitText       string
-	BlockTime      int64
-	BlockId        int64
-	StartDaemons   string
-	BlockMeter     int64
-	CheckTime      string
-	LastBlock      int64
-	BlockChainSize int64
-	Mobile         bool
-	AlertTime      string
+	Lang            map[string]string
+	WaitText        string
+	BlockTime       int64
+	BlockId         int64
+	StartDaemons    string
+	BlockMeter      int64
+	CheckTime       string
+	LastBlock       int64
+	BlockChainSize  int64
+	Mobile          bool
+	AlertTime       string
 	RestartDb       bool
 	StandardInstall bool
 	SleepTime       int64
@@ -115,13 +115,13 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 
 	sleepTime := int64(1500)
 	var newVersion string
-	
+
 	if c.dbInit {
 		if c.NodeAdmin {
 			if ver, _, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL); err == nil {
 				if len(ver) > 0 {
 					newVersion = strings.Replace(c.Lang["new_version"], "[ver]", ver, -1)
-				}	
+				}
 			}
 		}
 	}
@@ -143,10 +143,10 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	b := new(bytes.Buffer)
 	standardInstall = configIni[`install_type`] == `standard`
 
-	t.Execute(b, &updatingBlockchainStruct{SleepTime: sleepTime, StandardInstall: standardInstall, RestartDb: restartDb, Lang: c.Lang, 
-	WaitText: waitText, BlockId: blockId, BlockTime: blockTime, StartDaemons: startDaemons, 
-	BlockMeter: blockMeter, CheckTime: checkTime, LastBlock: consts.LAST_BLOCK, 
-	BlockChainSize: consts.BLOCKCHAIN_SIZE, Mobile: mobile, AlertTime: alertTime, NewVersion: newVersion })
-	
+	t.Execute(b, &updatingBlockchainStruct{SleepTime: sleepTime, StandardInstall: standardInstall, RestartDb: restartDb, Lang: c.Lang,
+		WaitText: waitText, BlockId: blockId, BlockTime: blockTime, StartDaemons: startDaemons,
+		BlockMeter: blockMeter, CheckTime: checkTime, LastBlock: consts.LAST_BLOCK,
+		BlockChainSize: consts.BLOCKCHAIN_SIZE, Mobile: mobile, AlertTime: alertTime, NewVersion: newVersion})
+
 	return b.String(), nil
 }

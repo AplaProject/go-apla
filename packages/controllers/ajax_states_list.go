@@ -15,29 +15,29 @@
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
 package controllers
+
 import (
 	"encoding/json"
 )
 
-
 func (c *Controller) AjaxStatesList() (string, error) {
 
 	result := make(map[string]map[string]string)
-	data,err := c.GetList(`SELECT id FROM system_states`).String()
-	if err!=nil {
+	data, err := c.GetList(`SELECT id FROM system_states`).String()
+	if err != nil {
 		return ``, err
 	}
 	for _, id := range data {
-		state_name, err := c.Single(`SELECT value FROM "`+id+`_state_parameters" WHERE name = 'state_name'`).String()
-		if err!=nil {
+		state_name, err := c.Single(`SELECT value FROM "` + id + `_state_parameters" WHERE name = 'state_name'`).String()
+		if err != nil {
 			return ``, err
 		}
-		state_flag,err := c.Single(`SELECT value FROM "`+id+`_state_parameters" WHERE name = 'state_flag'`).String()
-		if err!=nil {
+		state_flag, err := c.Single(`SELECT value FROM "` + id + `_state_parameters" WHERE name = 'state_flag'`).String()
+		if err != nil {
 			return ``, err
 		}
-		state_coords,err := c.Single(`SELECT value FROM "`+id+`_state_parameters" WHERE name = 'state_coords'`).String()
-		if err!=nil {
+		state_coords, err := c.Single(`SELECT value FROM "` + id + `_state_parameters" WHERE name = 'state_coords'`).String()
+		if err != nil {
 			return ``, err
 		}
 		result[id] = make(map[string]string)

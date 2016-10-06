@@ -26,12 +26,12 @@ type newTablePage struct {
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	CitizenId int64
-	StateId int64
+	CitizenId    int64
+	StateId      int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	Global string
+	Global       string
 }
 
 func (c *Controller) NewTable() (string, error) {
@@ -47,15 +47,14 @@ func (c *Controller) NewTable() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-
-	TemplateStr, err := makeTemplate("new_table", "newTable", &newTablePage {
+	TemplateStr, err := makeTemplate("new_table", "newTable", &newTablePage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		CitizenId: c.SessCitizenId,
-		StateId: c.StateId,
-		Global: global,
+		CitizenId:    c.SessCitizenId,
+		StateId:      c.StateId,
+		Global:       global,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,

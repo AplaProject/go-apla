@@ -26,15 +26,15 @@ type editContractPage struct {
 	ShowSignData bool
 	CountSignArr []int
 	Lang         map[string]string
-	Data map[string]string
-	WalletId  int64
-	CitizenId int64
+	Data         map[string]string
+	WalletId     int64
+	CitizenId    int64
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	TableName string
-	StateId int64
-	Global string
+	TableName    string
+	StateId      int64
+	Global       string
 }
 
 func (c *Controller) EditContract() (string, error) {
@@ -45,31 +45,31 @@ func (c *Controller) EditContract() (string, error) {
 
 	global := c.r.FormValue("global")
 	prefix := "global"
-	if global == "" || global == "0"  {
+	if global == "" || global == "0" {
 		prefix = c.StateIdStr
 		global = "0"
 	}
 
-	id :=  utils.StrToInt64(c.r.FormValue("id"))
+	id := utils.StrToInt64(c.r.FormValue("id"))
 	data, err := c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage {
+	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:        c.Alert,
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		WalletId: c.SessWalletId,
-		Data: data,
-		Global: global,
-		CitizenId: c.SessCitizenId,
+		WalletId:     c.SessWalletId,
+		Data:         data,
+		Global:       global,
+		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
-		StateId: c.SessStateId})
+		StateId:      c.SessStateId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

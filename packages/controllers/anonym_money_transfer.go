@@ -21,17 +21,17 @@ import (
 )
 
 type anonymMoneyTransferPage struct {
-	Lang                  map[string]string
-	Title                 string
-	CountSign             int
-	CountSignArr          []int
-	SignData              string
-	ShowSignData          bool
+	Lang         map[string]string
+	Title        string
+	CountSign    int
+	CountSignArr []int
+	SignData     string
+	ShowSignData bool
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
-	WalletId int64
-	CitizenId int64
+	WalletId     int64
+	CitizenId    int64
 }
 
 func (c *Controller) AnonymMoneyTransfer() (string, error) {
@@ -41,14 +41,14 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	timeNow := utils.Time()
 
 	TemplateStr, err := makeTemplate("anonym_money_transfer", "anonymMoneyTransfer", &anonymMoneyTransferPage{
-		CountSignArr:          c.CountSignArr,
-		CountSign:             c.CountSign,
-		Lang:                  c.Lang,
-		Title:                 "anonymMoneyTransfer",
-		ShowSignData:          c.ShowSignData,
-		SignData:              "",
-		WalletId: c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		CountSignArr: c.CountSignArr,
+		CountSign:    c.CountSign,
+		Lang:         c.Lang,
+		Title:        "anonymMoneyTransfer",
+		ShowSignData: c.ShowSignData,
+		SignData:     "",
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId})

@@ -41,8 +41,9 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 
-		var ( downloadFile, blockUrl string
-			fileSize int64
+		var (
+			downloadFile, blockUrl string
+			fileSize               int64
 		)
 		if len(utils.SqliteDbUrl) > 0 {
 			downloadFile = *utils.Dir + "/litedb.db"
@@ -123,26 +124,26 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		currentLoadBlockchain = c.NodeConfig["first_load_blockchain_url"]
 	}
 	var needReload string
-	iBlock := utils.StrToInt64( blockId )
-	if ( timeSynchro == 0 ) {
+	iBlock := utils.StrToInt64(blockId)
+	if timeSynchro == 0 {
 		timeSynchro = utils.Time()
 		lastSBlock = iBlock
 		lastSTime = utils.Time()
-	} else if utils.Time() - timeSynchro > 300 { // Тут можно поставить минут 20 или меньше
+	} else if utils.Time()-timeSynchro > 300 { // Тут можно поставить минут 20 или меньше
 		if lastSBlock != iBlock {
 			lastSBlock = iBlock
 			lastSTime = utils.Time()
-		} else if utils.Time() - lastSTime > 60 { // Ставим timeout на очередной блок в 60 секунд
+		} else if utils.Time()-lastSTime > 60 { // Ставим timeout на очередной блок в 60 секунд
 			// Имеет смысл проверять последний блок
-			if utils.Time() - utils.StrToInt64( blockTime ) > 3600 {
+			if utils.Time()-utils.StrToInt64(blockTime) > 3600 {
 				needReload = `1`
 			}
 		}
 	}
 
-	result := map[string]string{"block_id": blockId, "confirmed_block_id": utils.Int64ToStr(confirmedBlockId), 
-	     "block_time": blockTime, "current_load_blockchain": currentLoadBlockchain,
-		 "need_reload": needReload}
+	result := map[string]string{"block_id": blockId, "confirmed_block_id": utils.Int64ToStr(confirmedBlockId),
+		"block_time": blockTime, "current_load_blockchain": currentLoadBlockchain,
+		"need_reload": needReload}
 	resultJ, _ := json.Marshal(result)
 
 	return string(resultJ), nil
