@@ -334,6 +334,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				}
 			}
 			fmt.Println("GET http host")
+			if err := utils.LoadContracts(); err != nil {
+				log.Error(`Load Contracts`, err)
+			}
 			BrowserHttpHost, HandleHttpHost, ListenHttpHost = GetHttpHost()
 			// для ноды тоже нужна БД
 			tcpListener()

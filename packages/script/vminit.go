@@ -89,11 +89,21 @@ type VM struct {
 	Block
 }
 
-func VMInit(obj map[string]interface{}, autopar map[string]string) *VM {
+type ExtendData struct {
+	Objects  map[string]interface{}
+	AutoPars map[string]string
+}
+
+func NewVM() *VM {
 	vm := VM{}
 	vm.Objects = make(map[string]*ObjInfo)
+	// Reserved 256 indexes for system purposes
+	vm.Children = make(Blocks, 256, 1024)
+	return &vm
+}
 
-	for key, item := range obj {
+func (vm *VM) Extend(ext *ExtendData) {
+	for key, item := range ext.Objects {
 		fobj := reflect.ValueOf(item).Type()
 		switch fobj.Kind() {
 		case reflect.Func:
@@ -101,7 +111,7 @@ func VMInit(obj map[string]interface{}, autopar map[string]string) *VM {
 				make([]reflect.Type, fobj.NumOut()), make([]string, fobj.NumIn()),
 				fobj.IsVariadic(), item}
 			for i := 0; i < fobj.NumIn(); i++ {
-				if isauto, ok := autopar[fobj.In(i).String()]; ok {
+				if isauto, ok := ext.AutoPars[fobj.In(i).String()]; ok {
 					data.Auto[i] = isauto
 				}
 				data.Params[i] = fobj.In(i)
@@ -112,7 +122,6 @@ func VMInit(obj map[string]interface{}, autopar map[string]string) *VM {
 			vm.Objects[key] = &ObjInfo{OBJ_EXTFUNC, data}
 		}
 	}
-	return &vm
 }
 
 func (vm *VM) getObjByName(name string) (ret *ObjInfo) {

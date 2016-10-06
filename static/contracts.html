@@ -4,7 +4,7 @@
 		contracts
 	</div>
 	<ol class="breadcrumb">
-	   {{if not .Global}}
+		{{if ne .Global "1"}}
 			<li class="active">Smart contracts</li>
 	   {{else}}
 		   <li><a href="#" onclick="load_page('contracts')">Smart contracts</a></li>
@@ -47,7 +47,7 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			{{if not .Global}}
+			{{if ne .Global "1"}}
 			<button type="button" class="btn btn-info" onclick="load_page('contracts', {global: 1})">Global</button>
 			{{end}}
 		  </div>

@@ -83,7 +83,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 			data := make([]byte, 0)
 			//			)
 			header := consts.TXHeader{
-				Type:    int32(contract.Block.Info.(*script.ContractInfo).Id) + smart.CNTOFF,
+				Type:    int32(contract.Block.Info.(*script.ContractInfo).Id), /* + smart.CNTOFF*/
 				Time:    uint32(utils.StrToInt64(c.r.FormValue(`time`))),
 				UserId:  userId,
 				StateId: int64(c.SessStateId),

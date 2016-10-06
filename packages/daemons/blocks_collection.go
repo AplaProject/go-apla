@@ -298,12 +298,14 @@ BEGIN:
 					}
 					continue BEGIN
 				}
+				logger.Debug("ParseDataFull ok")
 				if err = parser.InsertIntoBlockchain(); err != nil {
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN
 					}
 					continue BEGIN
 				}
+				logger.Debug("InsertIntoBlockchain ok")
 			}
 			utils.Sleep(1)
 			d.dbUnlock()
@@ -311,6 +313,7 @@ BEGIN:
 		}
 		d.dbUnlock()
 
+		logger.Debug("UPDATE config SET current_load_blockchain = 'nodes'")
 		err = d.ExecSql(`UPDATE config SET current_load_blockchain = 'nodes'`)
 		if err != nil {
 //!!!			d.unlockPrintSleep(err, d.sleepTime) unlock был выше
