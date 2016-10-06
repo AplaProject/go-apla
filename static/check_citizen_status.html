@@ -15,17 +15,17 @@
 			load_page('check_citizen_status', {accept: accept, request_id: {{.Values.id}}});
 		else {
 			console.log('Approve');
-			$.get( 'ajax?controllerName=GetServerTime', function (data) {
+/*			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;
 				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.Data.CitizenId}},{{.Data.StateId}}');
 				doSign();
 				$("#send_to_net").trigger("click");
-			}, "json" );
+			}, "json" );*/
 		}
 		return false;
 	}
 	$('#send_to_net').bind('click', function () {
-		$.ajax({
+/*		$.ajax({
 			type: 'POST',
 			url: 'ajax?controllerName=saveQueue',
 			data: {
@@ -52,7 +52,7 @@
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
-		});
+		});*/
 	} );	
 	
 	$(".aside .nav li").removeClass("active");

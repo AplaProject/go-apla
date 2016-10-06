@@ -377,7 +377,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			tplName = "dashboard_anonym"
 		}
 
-
 		/*		if tplName == "home" && c.Parameters["first_select"] != "1" {
 				data, err := c.OneRow(`SELECT first_select, miner_id from ` + c.MyPrefix + `my_table`).Int64()
 				if err != nil {
