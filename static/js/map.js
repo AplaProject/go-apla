@@ -2426,40 +2426,39 @@ function circleintroduction() {
 }
 
 function regMap(coords) {
-	var StateZoom = Number(coords.zoom);
-	var StateCenterX = Number(coords.center_point[0]);
-	var StateCenterY = Number(coords.center_point[1]);
-	var StatePoints = coords.cords;
-	var StateCoords = [];
-	var latlng = {};
+	var container = $("#map_canvas").parent();
 	
-	for (var i in StatePoints) {
-		latlng = {lat: Number(StatePoints[i][0]), lng: Number(StatePoints[i][1])};
-		StateCoords.push(latlng);
+	if (coords != "") {
+		container.show();
+		
+		var StateZoom = Number(coords.zoom);
+		var StateCenterX = Number(coords.center_point[0]);
+		var StateCenterY = Number(coords.center_point[1]);
+		var StatePoints = coords.cords;
+		var StateCoords = [];
+		var latlng = {};
+		
+		for (var i in StatePoints) {
+			latlng = {lat: Number(StatePoints[i][0]), lng: Number(StatePoints[i][1])};
+			StateCoords.push(latlng);
+		}
+		
+		var map = new google.maps.Map(document.getElementById('map_canvas'), {
+			zoom: StateZoom,
+			center: {lat: StateCenterX, lng: StateCenterY},
+			mapTypeId: google.maps.MapTypeId.TERRAIN
+		});
+		
+		var State = new google.maps.Polygon({
+			paths: StateCoords,
+			strokeColor: '#FF0000',
+			strokeOpacity: 0.8,
+			strokeWeight: 2,
+			fillColor: '#0000FF',
+			fillOpacity: 0.6
+		});
+		State.setMap(map);
+	} else {
+		container.hide();
 	}
-	
-	var map = new google.maps.Map(document.getElementById('map_canvas'), {
-		zoom: StateZoom,
-		center: {lat: StateCenterX, lng: StateCenterY},
-		mapTypeId: google.maps.MapTypeId.TERRAIN
-	});
-	
-	// Define the LatLng coordinates for the polygon's path.
-	/*var StateCoords = [
-		{lat: 25.774, lng: -80.190},
-		{lat: 18.466, lng: -66.118},
-		{lat: 32.321, lng: -64.757},
-		{lat: 25.774, lng: -80.190}
-	];*/
-	
-	// Construct the polygon.
-	var State = new google.maps.Polygon({
-		paths: StateCoords,
-		strokeColor: '#FF0000',
-		strokeOpacity: 0.8,
-		strokeWeight: 2,
-		fillColor: '#0000FF',
-		fillOpacity: 0.6
-	});
-	State.setMap(map);
 }
