@@ -33,7 +33,7 @@ import (
 )
 
 const (
-//	GITPATH = `github.com/democratic-coin/dcoin-go`
+//	GITPATH = `github.com/DayLightProject/go-daylight`
 	GITPATH = `github.com/DayLightProject/go-daylight`
 )
 
@@ -43,9 +43,9 @@ var (
 
 type Settings struct {
 	Branch    string   // Branch name 
-	GitRoot   string   // https://github.com/democratic-coin/dcoin-go
+	GitRoot   string   // https://github.com/DayLightProject/go-daylight
 	TempPath  string   // Temporary path
-	OutFile   string   // Output dcoin executable file
+	OutFile   string   // Output daylight executable file
 	GoPath    string   // GOPATH
 	BinData   string   // Full path to go-bindata 
 	BinDebug  string   // Specify "true" for debug option
@@ -185,7 +185,7 @@ func main() {
 			exit( err )
 		}
 		defer z.Close()
-		if _, err := os.Stat( filepath.Join( srcPath, "dcoinwindows.go")); err == nil {
+		if _, err := os.Stat( filepath.Join( srcPath, "daylightwindows.go")); err == nil {
 			fmt.Println(`Removing `, srcPath )		
 			if err = os.RemoveAll( srcPath); err!=nil {
 				exit(err)
@@ -230,7 +230,7 @@ func main() {
 	}
 	
 	if strings.IndexRune( options.Skip, 'b' ) < 0 {
-		fmt.Println(`Compiling dcoin.go`)
+		fmt.Println(`Compiling daylight.go`)
 		if err = os.MkdirAll( filepath.Dir(options.OutFile), 0755); err != nil {
 			exit(err)
 		}

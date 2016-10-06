@@ -2257,7 +2257,7 @@ func IPwoPort(ipport string) string {
 	return match[1]
 }
 
-func DcoinUpd(url string) error {
+func daylightUpd(url string) error {
 	zipfile := filepath.Join(*Dir, "dc.zip")
 	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
 	if err != nil {

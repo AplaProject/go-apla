@@ -7,13 +7,13 @@ then
   ARCH1="amd64"
 fi
 
-rm -rf dcoin-go
+rm -rf daylight-go
 git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
 go get -u github.com/jteeuwen/go-bindata/...
 rm packages/static/static.go
 git stash
-go get -u -f github.com/democratic-coin/dcoin-go
+go get -u -f github.com/DayLightProject/go-daylight
 go-bindata -o="packages/static/static.go" -pkg="static" static/...
-GOARCH=$ARCH1  CGO_ENABLED=1  go build -o make_deb/dcoin$ARCH0/usr/share/dcoin/dcoin
+GOARCH=$ARCH1  CGO_ENABLED=1  go build -o make_deb/daylight$ARCH0/usr/share/daylight/daylight
 cd make_deb

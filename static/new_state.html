@@ -46,7 +46,7 @@
 
 
 	$('#go_to_the_state').bind('click', function () {
-		$.get( 'ajax?json=set_state&state_id=1', function (data) {
+		$.get( 'ajax?json=set_state&state_id=1&citizen_id=1', function (data) {
 			load_page("listOfTables");
 		}, "json" );
 	});

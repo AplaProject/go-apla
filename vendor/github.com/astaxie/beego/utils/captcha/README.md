@@ -6,9 +6,9 @@ an example for use captcha
 package controllers
 
 import (
-	"github.com/democratic-coin/dcoin-go/vendor/src/github.com/astaxie/beego"
-	"github.com/democratic-coin/dcoin-go/vendor/src/github.com/astaxie/beego/cache"
-	"github.com/democratic-coin/dcoin-go/vendor/src/github.com/astaxie/beego/utils/captcha"
+	"github.com/DayLightProject/go-daylight/vendor/src/github.com/astaxie/beego"
+	"github.com/DayLightProject/go-daylight/vendor/src/github.com/astaxie/beego/cache"
+	"github.com/DayLightProject/go-daylight/vendor/src/github.com/astaxie/beego/utils/captcha"
 )
 
 var cpt *captcha.Captcha
