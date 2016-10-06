@@ -15,8 +15,10 @@
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .anonym_request_citizen").addClass("active");
+	$(".wrapper").addClass("map");
 	
 	var arr = [];
+	var coords = [];
 	var selectbox = $("#countries");
 	var container = $("#fields");
 	var msg = $("#message");
@@ -31,15 +33,19 @@
 		dataType: 'json',
 		crossDomain: true,
 		success: function(data) {
-			//console.log(data);
+			console.log(data);
 			for (var i in data) {
 				selectbox.append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
+				console.log(data[i].state_coords);
+				coords += data[i].state_coords;
 			}
 			selectbox.select2({
 				templateResult: formatState,
 				templateSelection: formatState,
 				theme: 'bootstrap'
 			});
+			console.log(coords);
+			regMap(coords);
 		},
 		error: function(xhr, status, error) {
 			Alert("Error", error, "error");
@@ -418,4 +424,9 @@
 			<!-- END panel-->
 	   </div>
 </div>
+
+<div class="map_canvas">
+	<div id="map_canvas"></div>
+</div>
+
 {{template "signatures".}}
