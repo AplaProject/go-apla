@@ -230,6 +230,9 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 	if blockGenerator {
 		p.UpdBlockInfo()
 		p.InsertIntoBlockchain()
+	} else {
+		p.UpdBlockInfo()
+
 	}
 	return nil
 }
