@@ -35,7 +35,12 @@ func TestNewContract(t *testing.T) {
 	//	var err error
 	test := []TestSmart{
 		{`contract NewCitizen {
+			tx {
+				Public bytes
+				MyVal  string
+			}
 			func front {
+				Println( TxJson())
 				//$tmp = "Test string"
 //				Println("NewCitizen Front", $tmp, $citizen, $state, $PublicKey )
 			}
@@ -51,6 +56,10 @@ func TestNewContract(t *testing.T) {
 			t.Error(err)
 		}
 	}
+	cnt := GetContract(`NewCitizen`)
+	/*	if err = cnt.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
+			t.Error(err.Error())
+	}*/
 	//	sign, _ := hex.DecodeString(`3276233276237115`)
 	//	public, _ := hex.DecodeString(`12456788999900087676`)
 	//	p := Parser{BlockData: &utils.BlockData{BlockId: 133}}
