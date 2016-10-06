@@ -164,7 +164,7 @@ func (p *Parser) NewState() error {
 		LastName   string
 	}
 	func init {
-		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
+		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet), TxJson())
 	}
 	func front {
 		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
@@ -175,6 +175,7 @@ func (p *Parser) NewState() error {
 	func main {
 
 		Println("TXCitizenRequest main" + $LastName)
+		DBInsert(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id,data,block_id", $wallet, TxJson(), $block)
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
 			func front {

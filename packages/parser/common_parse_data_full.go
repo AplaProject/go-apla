@@ -174,7 +174,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 			if p.TxContract != nil {
-				if err := p.TxContract.Call(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
+				if err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
 					if p.TxContract.Called == smart.CALL_FRONT {
 						err0 := p.RollbackTo(txForRollbackTo, true)
 						if err0 != nil {

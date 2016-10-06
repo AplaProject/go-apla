@@ -44,7 +44,6 @@ func (c *Controller) AjaxSendTx() interface{} {
 		result SendTxJson
 		err    error
 	)
-	fmt.Println(`TXSend 0`)
 	cntname := c.r.FormValue(`TxName`)
 	contract := smart.GetContract(cntname)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
@@ -90,6 +89,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 				Sign:    sign,
 			}
 			fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
+			fmt.Println(`Header`, header)
 			_, err = lib.BinMarshal(&data, &header)
 			if err == nil {
 			fields:

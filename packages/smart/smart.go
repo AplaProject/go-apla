@@ -17,9 +17,10 @@
 package smart
 
 import (
+	"encoding/hex"
 	"fmt"
 	//	"reflect"
-	//	"strings"
+	"strings"
 
 	//"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/script"
@@ -29,8 +30,8 @@ import (
 type Contract struct {
 	Name   string
 	Called uint32
-	//	parser *Parser //interface{}
-	Block *script.Block
+	Extend *map[string]interface{}
+	Block  *script.Block
 }
 
 const (
@@ -91,7 +92,10 @@ func init() {
 	smartVM.Extend(&script.ExtendData{map[string]interface{}{
 		"Println": fmt.Println,
 		"Sprintf": fmt.Sprintf,
-	}, nil})
+		"TxJson":  TxJson,
+	}, map[string]string{
+		`*Contract`: `contract`,
+	}})
 }
 
 // Compiles contract source code
@@ -109,6 +113,11 @@ func FlushBlock(root *script.Block) {
 
 func Extend(ext *script.ExtendData) {
 	smartVM.Extend(ext)
+}
+
+func Run(block *script.Block, params *[]interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
+	rt := smartVM.RunInit()
+	return rt.Run(block, nil, extend)
 }
 
 // Returns true if the contract exists
@@ -131,59 +140,29 @@ func GetContractById(id int32 /*, p *Parser*/) *Contract {
 		/*parser: p,*/ Block: smartVM.Children[idcont]}
 }
 
-func (contract *Contract) getFunc(name string) *script.Block {
+func (contract *Contract) GetFunc(name string) *script.Block {
 	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.OBJ_FUNC {
 		return block.Value.(*script.Block)
 	}
 	return nil
 }
 
-func (contract *Contract) getExtend() *map[string]interface{} {
-	/*	head := contract.parser.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
-		var citizenId, walletId int64
-		if head.StateId > 0 {
-			citizenId = head.UserId
-		} else {
-			walletId = head.UserId
-		}
-		block := int64(0)
-		if contract.parser.BlockData != nil {
-			block = contract.parser.BlockData.BlockId
-		}
-		extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: head.StateId,
-			`block`: block, `citizen`: citizenId, `wallet`: walletId,
-			`parser`: contract.parser}*/
-	extend := map[string]interface{}{}
-	/*	for key, val := range contract.parser.TxData {
-		extend[key] = val
-	}*/
-	/*	v := reflect.ValueOf(contract.parser.TxPtr).Elem()
-		t := v.Type()
-		for i := 1; i < t.NumField(); i++ {
-			extend[t.Field(i).Name] = v.Field(i).Interface()
-		}*/
-	//fmt.Println(`Extend`, extend)
-	return &extend
-}
-
-func (contract *Contract) Call(flags int) (err error) {
-	methods := []string{`init`, `front`, `main`}
-	extend := contract.getExtend()
-	for i := uint32(0); i < 3; i++ {
-		if (flags & (1 << i)) > 0 {
-			cfunc := contract.getFunc(methods[i])
-			if cfunc == nil {
-				continue
-			}
-			rt := smartVM.RunInit()
-			contract.Called = 1 << i
-			_, err = rt.Run(cfunc, nil, extend)
-			if err != nil {
-				return
-			}
+func TxJson(contract *Contract) (out string) {
+	lines := make([]string, 0)
+	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		switch fitem.Type.String() {
+		case `string`:
+			lines = append(lines, fmt.Sprintf(`"%s": "%s"`, fitem.Name, (*(*contract).Extend)[fitem.Name]))
+		case `int64`:
+			lines = append(lines, fmt.Sprintf(`"%s": %d`, fitem.Name, (*(*contract).Extend)[fitem.Name]))
+		case `[]uint8`:
+			lines = append(lines, fmt.Sprintf(`"%s": "%s"`, fitem.Name,
+				hex.EncodeToString((*(*contract).Extend)[fitem.Name].([]byte))))
 		}
 	}
-	return
+	out = `{` + strings.Join(lines, ",\r\n")
+	fmt.Println(`TxJson`, out)
+	return out + `}`
 }
 
 // Pre-defined functions
