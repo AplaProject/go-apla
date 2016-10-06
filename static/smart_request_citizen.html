@@ -33,19 +33,17 @@
 		dataType: 'json',
 		crossDomain: true,
 		success: function(data) {
-			console.log(data);
 			for (var i in data) {
 				selectbox.append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
-				console.log(data[i].state_coords);
-				coords += data[i].state_coords;
 			}
+			
 			selectbox.select2({
 				templateResult: formatState,
 				templateSelection: formatState,
 				theme: 'bootstrap'
 			});
-			console.log(coords);
-			regMap(coords);
+			
+			regMap(JSON.parse(data[1].state_coords));
 		},
 		error: function(xhr, status, error) {
 			Alert("Error", error, "error");
@@ -89,7 +87,20 @@
 	function changeCountry(elem) {
 		var id = elem.value;
 		Country(id);
-	}
+		
+		$.ajax({
+			type: 'GET',
+			url: '/ajax?controllerName=AjaxStatesList',
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) {
+				regMap(JSON.parse(data[id].state_coords));
+			},
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+}
 	
 	function Country(id) {
 		if (!id) {
