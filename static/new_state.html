@@ -32,12 +32,24 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(data) {
+				send_to_net_success(data);
+				$("#new_state_request").css("display", "none");
+				$("#my_state").css("display", "block");
+
+			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
 		});
 	} );
+
+
+	$('#go_to_the_state').bind('click', function () {
+		$.get( 'ajax?json=set_state&state_id=1', function (data) {
+			load_page("listOfTables");
+		}, "json" );
+	});
 </script>
 	<div class="content-heading">
 		addState
@@ -47,38 +59,41 @@
 	   <li class="active">addState</li>
 	</ol>
 	<!-- START panel-->
-	<div class="panel panel-default" data-sweet-alert>
-	 <div class="panel-heading">
-	 	<div class="panel-title">
-			addState
+
+	 <div style="display: none" id="my_state"><button type="button" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" id="go_to_the_state">Go to the my state</button></div>
+
+	<div id="new_state_request">
+		<div class="panel panel-default" data-sweet-alert>
+			<div class="panel-heading">
+				<div class="panel-title">
+					addState
+				</div>
+			</div>
+			<div class="panel-body">
+				<div class="table-responsive">
+				   <table class="table table-striped table-bordered table-hover">
+					  <tbody>
+					  <tr>
+						  <td width="150">State name</td>
+						  <td><input class="form-control" type="text" id="state_name"></td>
+					  </tr>
+					  <tr>
+						  <td width="150">Currency name</td>
+						  <td><input class="form-control" type="text" id="currency_name"></td>
+					  </tr>
+					  </tbody>
+				   </table>
+				</div>
+			</div>
+			<div class="panel-footer">
+			   <div class="clearfix">
+				  <div class="pull-right">
+					 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Next</button>
+				  </div>
+			   </div>
+			</div>
 		</div>
-	 </div>
-	 <div class="panel-body">
-		<div class="table-responsive">
-		   <table class="table table-striped table-bordered table-hover">
-			  <tbody>
-			  <tr>
-				  <td width="150">State name</td>
-				  <td><input class="form-control" type="text" id="state_name"></td>
-			  </tr>
-			  <tr>
-				  <td width="150">Currency name</td>
-				  <td><input class="form-control" type="text" id="currency_name"></td>
-			  </tr>
-			  </tbody>
-		   </table>
-		</div>
-	 </div>
-	 <div class="panel-footer">
-	   <div class="clearfix">
-		  <div class="pull-right">
-			 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Next</button>
-		  </div>
-	   </div>
-	  </div>
 	</div>
-
-
 
 {{template "signatures".}}
 
