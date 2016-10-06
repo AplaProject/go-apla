@@ -69,14 +69,15 @@ func (p *Parser) EditContract() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-	err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", []string{"id"}, []string{p.TxMaps.String["id"]}, true)
+	root, err := smart.CompileBlock(p.TxMaps.String["value"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if err := smart.Compile(p.TxMaps.String["value"]); err != nil {
-		fmt.Println(`Edit Contract`, err)
+	err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", []string{"id"}, []string{p.TxMaps.String["id"]}, true)
+	if err != nil {
 		return p.ErrInfo(err)
 	}
+	smart.FlushBlock(root)
 	return nil
 }
 

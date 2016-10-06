@@ -124,7 +124,8 @@ var (
 			LEX_NEWLINE:                       {STATE_ROOT, 0},
 			LEX_KEYWORD | (KEY_CONTRACT << 8): {STATE_CONTRACT | STATE_PUSH, 0},
 			LEX_KEYWORD | (KEY_FUNC << 8):     {STATE_FUNC | STATE_PUSH, 0},
-			0: {ERR_UNKNOWNCMD, CF_ERROR},
+			LEX_COMMENT:                       {STATE_ROOT, 0},
+			0:                                 {ERR_UNKNOWNCMD, CF_ERROR},
 		},
 		{ // STATE_BODY
 			LEX_NEWLINE:                     {STATE_BODY, 0},
@@ -381,17 +382,16 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
-func (vm *VM) Compile(input []rune) error {
-
+func (vm *VM) CompileBlock(input []rune) (*Block, error) {
+	root := &Block{}
 	lexems, err := LexParser(input)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(lexems) == 0 {
-		return nil
+		return root, nil
 	}
 	curState := 0
-	root := &Block{}
 	stack := make([]int, 0, 64)
 	blockstack := make([]*Block, 1, 64)
 	blockstack[0] = root
@@ -426,7 +426,7 @@ func (vm *VM) Compile(input []rune) error {
 		}
 		if nextState == STATE_EVAL {
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
-				return err
+				return nil, err
 			}
 			nextState = curState
 			//			fmt.Println(`Block`, *blockstack[len(blockstack)-1], len(blockstack)-1)
@@ -444,7 +444,7 @@ func (vm *VM) Compile(input []rune) error {
 		}
 		if (newState.NewState & STATE_POP) > 0 {
 			if len(stack) == 0 {
-				return fError(&blockstack, ERR_MUSTLCURLY, lexem)
+				return nil, fError(&blockstack, ERR_MUSTLCURLY, lexem)
 			}
 			nextState = stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
@@ -461,29 +461,36 @@ func (vm *VM) Compile(input []rune) error {
 		//fmt.Println(`LEX`, curState, lexem, stack)
 		if newState.Func > 0 {
 			if err := funcs[newState.Func](&blockstack, nextState, lexem); err != nil {
-				return err
+				return nil, err
 			}
 			//		fmt.Println(`Block Func`, *blockstack[len(blockstack)-1], len(blockstack)-1)
 		}
 		curState = nextState
 	}
 	if len(stack) > 0 {
-		return fError(&blockstack, ERR_MUSTRCURLY, lexems[len(lexems)-1])
+		return nil, fError(&blockstack, ERR_MUSTRCURLY, lexems[len(lexems)-1])
 	}
 	//	shift := len(vm.Children)
+	//	fmt.Println(`Root`, blockstack[0])
+	//	fmt.Println(`VM`, vm)
+	return root, nil
+}
+
+func (vm *VM) FlushBlock(root *Block) {
 	for key, item := range root.Objects {
-		/*		if item.Type == OBJ_CONTRACT || item.Type == OBJ_FUNC {
-				item.Value = item.Value.(int) + shift
-			}*/
 		vm.Objects[key] = item
 	}
 	for _, item := range root.Children {
 		vm.Children = append(vm.Children, item)
 	}
+}
 
-	//	fmt.Println(`Root`, blockstack[0])
-	//	fmt.Println(`VM`, vm)
-	return nil
+func (vm *VM) Compile(input []rune) error {
+	root, err := vm.CompileBlock(input)
+	if err == nil {
+		vm.FlushBlock(root)
+	}
+	return err
 }
 
 func findVar(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {

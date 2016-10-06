@@ -37,26 +37,13 @@ const (
 	CALL_INIT  = 0x01
 	CALL_FRONT = 0x02
 	CALL_MAIN  = 0x04
-
-	CNTOFF = 128 // offset of contract id
 )
 
 var (
 	smartVM *script.VM
 )
 
-func init() {
-	smartVM = script.VMInit(map[string]interface{}{
-		"Println": fmt.Println,
-		"Sprintf": fmt.Sprintf,
-		/*		"DBInsert":   DBInsert,
-				"Balance":    Balance,
-				"StateParam": StateParam,*/
-	}, map[string]string{
-		`*parser.Parser`: `parser`,
-	})
-
-	contract := `
+/*
 contract TXCitizenRequest {
 	tx {
 		PublicKey  bytes
@@ -75,7 +62,7 @@ contract TXCitizenRequest {
 		}
 	}
 	func main {
-		
+
 //		Println("TXCitizenRequest main" + $LastName)
 	}
 
@@ -89,15 +76,39 @@ contract TXNewCitizen {
 //				Println("NewCitizen Main", $type, $citizen, $block )
 //				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
 			}
-}`
-	if err := Compile(contract); err != nil {
-		fmt.Println(`SMART ERROR`, err)
-	}
+}
+		 map[string]string{
+	//		`*parser.Parser`: `parser`,
+	})
+
+				"DBInsert":   DBInsert,
+				"Balance":    Balance,
+				"StateParam": StateParam,*/
+
+func init() {
+	smartVM = script.NewVM()
+
+	smartVM.Extend(&script.ExtendData{map[string]interface{}{
+		"Println": fmt.Println,
+		"Sprintf": fmt.Sprintf,
+	}, nil})
 }
 
 // Compiles contract source code
 func Compile(src string) error {
 	return smartVM.Compile([]rune(src))
+}
+
+func CompileBlock(src string) (*script.Block, error) {
+	return smartVM.CompileBlock([]rune(src))
+}
+
+func FlushBlock(root *script.Block) {
+	smartVM.FlushBlock(root)
+}
+
+func Extend(ext *script.ExtendData) {
+	smartVM.Extend(ext)
 }
 
 // Returns true if the contract exists
@@ -112,7 +123,7 @@ func GetContract(name string /*, data interface{}*/) *Contract {
 
 // Returns true if the contract exists
 func GetContractById(id int32 /*, p *Parser*/) *Contract {
-	idcont := id - CNTOFF
+	idcont := id // - CNTOFF
 	if len(smartVM.Children) <= int(idcont) || smartVM.Children[idcont].Type != script.OBJ_CONTRACT {
 		return nil
 	}
@@ -177,22 +188,6 @@ func (contract *Contract) Call(flags int) (err error) {
 
 // Pre-defined functions
 /*
-func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (err error) { // map[string]interface{}) {
-	fmt.Println(`DBInsert`, tblname, params, val, len(val))
-	err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
-	return
-}
-
-func Balance(wallet_id int64) (float64, error) {
-	return utils.DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Float64()
-}
-
-func StateParam(idstate int64, name string) (string, error) {
-	return utils.DB.Single(`SELECT value FROM `+utils.Int64ToStr(idstate)+`_state_parameters WHERE name = ?`,
-		name).String()
-}
-
-
 func CheckAmount() {
 	amount, err := p.Single(`SELECT value FROM `+utils.Int64ToStr().TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
 	if err != nil {
