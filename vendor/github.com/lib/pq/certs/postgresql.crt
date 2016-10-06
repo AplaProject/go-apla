@@ -3,11 +3,11 @@ Certificate:
         Version: 3 (0x2)
         Serial Number: 2 (0x2)
         Signature Algorithm: sha256WithRSAEncryption
-        Issuer: C=US, ST=Nevada, L=Las Vegas, O=github.com/democratic-coin/dcoin-go/vendor/src/github.com/lib/pq, CN=pq CA
+        Issuer: C=US, ST=Nevada, L=Las Vegas, O=github.com/DayLightProject/go-daylight/vendor/src/github.com/lib/pq, CN=pq CA
         Validity
             Not Before: Oct 11 15:10:11 2014 GMT
             Not After : Oct  8 15:10:11 2024 GMT
-        Subject: C=US, ST=Nevada, L=Las Vegas, O=github.com/democratic-coin/dcoin-go/vendor/src/github.com/lib/pq, CN=pqgosslcert
+        Subject: C=US, ST=Nevada, L=Las Vegas, O=github.com/DayLightProject/go-daylight/vendor/src/github.com/lib/pq, CN=pqgosslcert
         Subject Public Key Info:
             Public Key Algorithm: rsaEncryption
             RSA Public Key: (1024 bit)

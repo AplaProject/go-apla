@@ -7,10 +7,10 @@ then
   ARCH1="64"
 fi
 cd make_deb
-chown root dcoin$ARCH0/usr/share/dcoin/dcoin
-chgrp root dcoin$ARCH0/usr/share/dcoin/dcoin
-chmod 0777 dcoin$ARCH0/usr/share/dcoin/dcoin
-dpkg-deb --build dcoin$ARCH0
-zip -j dcoin_linux$ARCH1.zip dcoin$ARCH0/usr/share/dcoin/dcoin
-mv dcoin$ARCH0.deb dcoin_linux$ARCH1.deb
-rm -rf dcoin$ARCH0/usr/share/dcoin/dcoin
+chown root daylight$ARCH0/usr/share/daylight/daylight
+chgrp root daylight$ARCH0/usr/share/daylight/daylight
+chmod 0777 daylight$ARCH0/usr/share/daylight/daylight
+dpkg-deb --build daylight$ARCH0
+zip -j daylight_linux$ARCH1.zip daylight$ARCH0/usr/share/daylight/daylight
+mv daylight$ARCH0.deb daylight_linux$ARCH1.deb
+rm -rf daylight$ARCH0/usr/share/daylight/daylight

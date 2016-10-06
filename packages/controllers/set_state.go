@@ -36,6 +36,7 @@ func (c *Controller) SetState() interface{} {
 
 	c.r.ParseForm()
 	c.sess.Set("state_id", utils.StrToInt64(c.r.FormValue("state_id")))
+	c.sess.Set("citizen_id", utils.StrToInt64(c.r.FormValue("citizen_id")))
 	result.Error = ""
 	return result //`{"result":1,"address": "` + address + `"}`, nil
 }
