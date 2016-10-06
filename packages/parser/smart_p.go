@@ -66,7 +66,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 
 func (p *Parser) CallContract(flags int) (err error) {
 	methods := []string{`init`, `front`, `main`}
-	extend := p.getExtend()
+	p.TxContract.Extend = p.getExtend()
 	for i := uint32(0); i < 3; i++ {
 		if (flags & (1 << i)) > 0 {
 			cfunc := p.TxContract.GetFunc(methods[i])
@@ -74,7 +74,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 				continue
 			}
 			p.TxContract.Called = 1 << i
-			_, err = smart.Run(cfunc, nil, extend)
+			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
 				return
 			}

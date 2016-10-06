@@ -164,17 +164,16 @@ func (p *Parser) NewState() error {
 		LastName   string
 	}
 	func init {
-		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet), TxJson())
+		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
 	}
 	func front {
 		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
-		if Balance($wallet) < 10000.0 {
+		if Balance($wallet) < Float(StateParam($StateId, "citizenship_price")) {
 			error "not enough money"
 		}
 	}
 	func main {
-
-		Println("TXCitizenRequest main" + $LastName)
+		Println("TXCitizenRequest main")
 		DBInsert(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id,data,block_id", $wallet, TxJson(), $block)
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {

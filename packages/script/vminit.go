@@ -119,6 +119,7 @@ func (vm *VM) Extend(ext *ExtendData) {
 			for i := 0; i < fobj.NumOut(); i++ {
 				data.Results[i] = fobj.Out(i)
 			}
+			//			fmt.Println(`Extend`, data)
 			vm.Objects[key] = &ObjInfo{OBJ_EXTFUNC, data}
 		}
 	}
