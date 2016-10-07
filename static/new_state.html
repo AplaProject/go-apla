@@ -10,7 +10,8 @@
 	function StateOK() {
 		$("#new_state_request").css("display", "none");
 		$("#my_state").css("display", "block");
-		preloader("go_to_the_state");
+		preloader(document.getElementById('go_to_the_state'));
+		obj.addClass("whirl standard");
 		
 		$.get( '/ajax?controllerName=AjaxStatesList', function (data) {
 			selectboxState(data);
