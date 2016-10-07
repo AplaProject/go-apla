@@ -7,8 +7,13 @@
 	$(".anonym, .newState").addClass("active");
 
 	function StateOK() {
-		$("#new_state_request").css("display", "none");
-		$("#my_state").css("display", "block");
+		$.get( '/ajax?controllerName=AjaxStatesList', function (data) {
+			for (var i in data) {
+				$("#countries").append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
+			}
+			$("#new_state_request").css("display", "none");
+			$("#my_state").css("display", "block");
+		}, "json" );
 	}
 	
 	$('#send').bind('click', function () {
@@ -38,7 +43,8 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
-				send_to_net_success(data, StateOK);
+				send_to_net_success(data, StateOK);		
+
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
@@ -46,9 +52,13 @@
 		});
 	} );
 
+
 	$('#go_to_the_state').bind('click', function () {
 		$.get( 'ajax?json=set_state&state_id=1&citizen_id=1', function (data) {
 			load_page("listOfTables");
+
+			// надо перезагрузить меню
+			
 		}, "json" );
 	});
 </script>
@@ -61,7 +71,10 @@
 	</ol>
 	<!-- START panel-->
 
-	 <div style="display: none" id="my_state"><button type="button" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" id="go_to_the_state">Go to the my state</button></div>
+	 <div style="display: none" id="my_state">
+		 <select id="countries" class="form-control"></select>
+		 <button type="button" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" id="go_to_the_state">Go to the my state</button>
+	 </div>
 
 	<div id="new_state_request">
 		<div class="panel panel-default" data-sweet-alert>

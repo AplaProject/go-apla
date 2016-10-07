@@ -27,7 +27,7 @@ import (
 type loginECDSAPage struct {
 	Lang   map[string]string
 	Title  string
-	States []map[string]string
+	States map[string]string
 	/*	MyModalIdName string
 		UserID        int64
 		PoolTechWorks int
@@ -94,9 +94,18 @@ func (c *Controller) LoginECDSA() (string, error) {
 		}
 		return b.String(), nil*/
 
-	states, err := c.GetAll(`SELECT * FROM system_states`, -1)
+
+	states := make(map[string]string)
+	data, err := c.GetList(`SELECT id FROM system_states`).String()
 	if err != nil {
-		return "", err
+		return ``, err
+	}
+	for _, id := range data {
+		state_name, err := c.Single(`SELECT value FROM "` + id + `_state_parameters" WHERE name = 'state_name'`).String()
+		if err != nil {
+			return ``, err
+		}
+		states[id] = state_name
 	}
 
 	TemplateStr, err := makeTemplate("login", "loginECDSA", &loginECDSAPage{
