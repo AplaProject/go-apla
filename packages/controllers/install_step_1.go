@@ -80,7 +80,7 @@ func (c *Controller) InstallStep1() (string, error) {
 			os.Exit(1)
 		}
 
-		schema, err := static.Asset("static/1block")
+		schema, err := static.Asset("static/schema.sql")
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			panic(err)

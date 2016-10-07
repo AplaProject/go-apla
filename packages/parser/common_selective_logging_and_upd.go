@@ -85,14 +85,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			if utils.InSliceString(fields[i], []string{"address", "hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
-				query := ""
-				switch p.ConfigIni["db_type"] {
-				case "sqlite":
-					query = fields[i] + `=x'` + values[i] + `',`
-				case "postgresql":
-					query = fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
-				}
-				addSqlUpdate += query
+				addSqlUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
 			} else if fields[i][:1] == "-" {
@@ -102,7 +95,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			}
 		}
 		err = p.ExecSql(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere, rbId)
-		//log.Debug(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere)
+		log.Debug(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
 			return err
@@ -112,16 +105,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlIns0 := ""
 		addSqlIns1 := ""
 		for i := 0; i < len(fields); i++ {
-			addSqlIns0 += `` + fields[i] + `,`
+			if fields[i][:1] == "+" || fields[i][:1] == "-" {
+				addSqlIns0 += fields[i][1:len(fields[i])] + `,`
+			} else {
+				addSqlIns0 += fields[i] + `,`
+			}
 			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
-				query := ""
-				switch p.ConfigIni["db_type"] {
-				case "sqlite":
-					query = `x'` + values[i] + `',`
-				case "postgresql":
-					query = `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
-				}
-				addSqlIns1 += query
+				addSqlIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else {
 				addSqlIns1 += `'` + values[i] + `',`
 			}
