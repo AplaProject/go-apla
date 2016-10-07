@@ -198,6 +198,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		start -= len(block.Info.(*FuncInfo).Params)
 	}
 	var assign []*VarInfo
+
 	//main:
 	for _, cmd := range block.Code {
 		var bin interface{}
@@ -279,6 +280,13 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 			} else {
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
+			}
+		case CMD_SIGN:
+			switch top[0].(type) {
+			case float64:
+				rt.stack[size-1] = -top[0].(float64)
+			default:
+				rt.stack[size-1] = -top[0].(int64)
 			}
 		case CMD_NOT:
 			rt.stack[size-1] = !valueToBool(top[0])

@@ -17,13 +17,13 @@
 package controllers
 
 import (
-	"encoding/hex"
 	"encoding/json"
+	//	"fmt"
 
+	"github.com/DayLightProject/go-daylight/packages/script"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
-
-//	"fmt"
 
 const NCheckCitizen = `check_citizen_status`
 
@@ -40,9 +40,9 @@ func init() {
 }
 
 func (c *Controller) CheckCitizenStatus() (string, error) {
-	var fields []FieldInfo
 	var err error
 
+	//test
 	if len(c.r.FormValue(`accept`)) > 0 {
 		requestId := utils.StrToInt64(c.r.FormValue(`request_id`))
 		approved := -1
@@ -54,27 +54,31 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 			return ``, err
 		}
 	}
-	//	field, err := c.Single(`SELECT value FROM ` + c.StateIdStr + `_state_parameters where parameter='citizen_fields'`).String()
-	field, err := `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
-{"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
-{"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
-{"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
-]`, nil
 
-	if err != nil {
-		return ``, err
-	}
-	if err = json.Unmarshal([]byte(field), &fields); err != nil {
-		return ``, err
-	}
+	//	field, err := c.Single(`SELECT value FROM ` + c.StateIdStr + `_state_parameters where parameter='citizen_fields'`).String()
 	vals, err := c.OneRow(`select * from "` + c.StateIdStr + `_citizenship_requests" where approved=0 order by id`).String()
 	if err != nil {
 		return ``, err
 	}
+	fields := make([]FieldInfo, 0)
 	if len(vals) > 0 {
 		//		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
-		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
-		vals[`publicKey`] = hex.EncodeToString(pubkey)
+		//		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
+		//		vals[`publicKey`] = hex.EncodeToString(pubkey)
+		var data map[string]interface{}
+		if err = json.Unmarshal([]byte(vals[`data`]), &data); err != nil {
+			return ``, err
+		}
+		contract := smart.GetContract(`TXCitizenRequest`)
+		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+			if fitem.Type.String() == `string` {
+				value := data[fitem.Name].(string)
+				fields = append(fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
+					TxType: fitem.Type.String(), Title: fitem.Name,
+					Value: value})
+			}
+		}
+		vals[`publicKey`] = data[`PublicKey`].(string)
 	}
 	txType := "TXNewCitizen"
 	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals,

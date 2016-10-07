@@ -154,7 +154,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?),(?, ?)`,
+		(?, ?),(?, ?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
 	tx {
 		PublicKey  bytes
@@ -164,10 +164,10 @@ func (p *Parser) NewState() error {
 		LastName   string
 	}
 	func init {
-		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
+//		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
 	}
 	func front {
-		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
+//		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
 		if Balance($wallet) < Float(StateParam($StateId, "citizenship_price")) {
 			error "not enough money"
 		}
@@ -178,12 +178,20 @@ func (p *Parser) NewState() error {
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
 			func front {
-				Println("NewCitizen Front", $citizen, $state, $PublicKey )
+//				Println("NewCitizen Front", $citizen, $state, $PublicKey )
 			}
 			func main {
 				Println("NewCitizen Main", $type, $citizen, $block )
 //				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
 			}
+}`, `TXNewCitizen`, `contract TXRejectCitizen {
+   tx { 
+        RequestId int
+   }
+   func main { 
+  //    Println("TXRejectCitizen main", $RequestId  )
+	  DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", -1)
+   }
 }`)
 	if err != nil {
 		return p.ErrInfo(err)

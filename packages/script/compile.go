@@ -100,7 +100,7 @@ var (
 		IS_OR: {CMD_OR, 10}, IS_AND: {CMD_AND, 15}, IS_EQEQ: {CMD_EQUAL, 20}, IS_NOTEQ: {CMD_NOTEQ, 20},
 		IS_LESS: {CMD_LESS, 22}, IS_GREQ: {CMD_NOTLESS, 22}, IS_GREAT: {CMD_GREAT, 22}, IS_LESSEQ: {CMD_NOTGREAT, 22},
 		IS_PLUS: {CMD_ADD, 25}, IS_MINUS: {CMD_SUB, 25}, IS_ASTERISK: {CMD_MUL, 30},
-		IS_SOLIDUS: {CMD_DIV, 30}, IS_NOT: {CMD_NOT, UNARY}, IS_LPAR: {CMD_SYS, 0xff}, IS_RPAR: {CMD_SYS, 0},
+		IS_SOLIDUS: {CMD_DIV, 30}, IS_SIGN: {CMD_SIGN, UNARY}, IS_NOT: {CMD_NOT, UNARY}, IS_LPAR: {CMD_SYS, 0xff}, IS_RPAR: {CMD_SYS, 0},
 	}
 	funcs = []FuncCompile{nil,
 		fError,
@@ -579,6 +579,11 @@ main:
 			}
 		case LEX_OPER:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
+				if oper.Cmd == CMD_SUB && (i == 0 || ((*lexems)[i-1].Type != LEX_NUMBER && (*lexems)[i-1].Type != LEX_IDENT &&
+					(*lexems)[i-1].Type != LEX_STRING && (*lexems)[i-1].Type != IS_RCURLY)) {
+					oper.Cmd = CMD_SIGN
+					oper.Priority = UNARY
+				}
 				byteOper := &ByteCode{oper.Cmd, oper.Priority}
 				for {
 					if len(buffer) == 0 {

@@ -89,10 +89,10 @@ func TestVMCompile(t *testing.T) {
 					i5 = 26788
 					s1 = "s1 string"
 					i2 = (i1+2)*i5+i2
-					s2 = Sprintf("temp 3 function %s", Sprintf("%s + %d", s1, i2))
+					s2 = Sprintf("temp 3 function %s %d", Sprintf("%s + %d", s1, i2), -1 )
 				}
 				return s2
-			}`, `temp3`, `temp 3 function s1 string + 241440`},
+			}`, `temp3`, `temp 3 function s1 string + 241440 -1`},
 		{`func params2(myval int, mystr string ) string {
 				if 101>myval {
 					if myval == 90 {

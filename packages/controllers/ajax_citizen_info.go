@@ -32,6 +32,7 @@ type FieldInfo struct {
 	HtmlType string `json:"htmlType"`
 	TxType   string `json:"txType"`
 	Title    string `json:"title"`
+	Value    string `json:"value"`
 }
 
 type CitizenInfoJson struct {

@@ -55,6 +55,7 @@ const (
 	IS_ASTERISK = 0x002a // *
 	IS_PLUS     = 0x002b // +
 	IS_MINUS    = 0x002d // -
+	IS_SIGN     = 0x012d // - unary
 	IS_SOLIDUS  = 0x002f // /
 	IS_LESS     = 0x003c // <
 	IS_GREAT    = 0x003e // >

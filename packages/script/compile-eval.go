@@ -41,6 +41,7 @@ const (
 
 const (
 	CMD_NOT = iota | 0x0100
+	CMD_SIGN
 )
 
 const (
