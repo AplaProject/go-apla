@@ -121,6 +121,7 @@
 // static/js/demo/demo-vector-map.js
 // static/js/demo/demo-wizard.js
 // static/js/demo/demo-xeditable.js
+// static/js/highlight.pack.js
 // static/js/index.js
 // static/js/keys.js
 // static/js/map.js
@@ -2405,6 +2406,24 @@ func staticJsDemoDemoXeditableJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsHighlightPackJs reads file data from disk. It returns an error on failure.
+func staticJsHighlightPackJs() (*asset, error) {
+	path := "static/js/highlight.pack.js"
+	name := "static/js/highlight.pack.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsIndexJs reads file data from disk. It returns an error on failure.
 func staticJsIndexJs() (*asset, error) {
 	path := "static/js/index.js"
@@ -4018,6 +4037,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-vector-map.js": staticJsDemoDemoVectorMapJs,
 	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
+	"static/js/highlight.pack.js": staticJsHighlightPackJs,
 	"static/js/index.js": staticJsIndexJs,
 	"static/js/keys.js": staticJsKeysJs,
 	"static/js/map.js": staticJsMapJs,
@@ -4281,6 +4301,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
 				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
+			"highlight.pack.js": &bintree{staticJsHighlightPackJs, map[string]*bintree{}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
 			"map.js": &bintree{staticJsMapJs, map[string]*bintree{}},
