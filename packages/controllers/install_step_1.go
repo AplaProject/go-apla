@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/astaxie/beego/config"
@@ -79,7 +80,7 @@ func (c *Controller) InstallStep1() (string, error) {
 			os.Exit(1)
 		}
 
-		schema, err := ioutil.ReadFile("packages/schema/schema.sql")
+		schema, err := static.Asset("static/schema.sql")
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			panic(err)

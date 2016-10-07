@@ -47,19 +47,24 @@ func (c *Controller) AjaxHistory() interface{} {
 	if length == -1 {
 		length = 20
 	}
-	limit := fmt.Sprintf(`%d,%d`, utils.StrToInt(c.r.FormValue("start")), length)
+	limit := fmt.Sprintf(`LIMIT %d OFFSET %d`, length, utils.StrToInt(c.r.FormValue("start")))
 	if walletId > 0 {
 		total, _ := c.Single(`SELECT count(id) FROM dlt_transactions where sender_wallet_id=? OR 
 		                       recipient_wallet_id=?`, walletId, walletId).Int64()
 		result.Total = int(total)
 		result.Filtered = int(total)
 		if length != 0 {
+			fmt.Println(`SELECT d.*, w.address as sw, wr.address as rw FROM dlt_transactions as d
+		        left join dlt_wallets as w on w.wallet_id=d.sender_wallet_id
+		        left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id
+				where sender_wallet_id=? OR
+		        recipient_wallet_id=? order by d.id desc  `+limit)
+
 			history, err = c.GetAll(`SELECT d.*, w.address as sw, wr.address as rw FROM dlt_transactions as d
 		        left join dlt_wallets as w on w.wallet_id=d.sender_wallet_id
 		        left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id
 				where sender_wallet_id=? OR 
-		        recipient_wallet_id=? order by d.id desc limit `+limit, -1, walletId, walletId)
-
+		        recipient_wallet_id=? order by d.id desc  `+limit, -1, walletId, walletId)
 			for ind := range history {
 				max, _ := c.Single(`select max(id) from block_chain order by id desc`).Int64()
 				history[ind][`confirm`] = utils.Int64ToStr(max - utils.StrToInt64(history[ind][`block_id`]))
