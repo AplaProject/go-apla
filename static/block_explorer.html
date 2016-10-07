@@ -66,7 +66,7 @@
 				 </tr>
 				 <tr>
 					<td class="thead">Transactions</td>
-					<td>{{.BlockData.tx}}</td>
+					<td>{{.BlockData.tx_list}}</td>
 				 </tr>
 				 <tr>
 					<td class="thead">Size</td>
@@ -122,7 +122,7 @@
 					<td class="unixtime">{{.time}}</td>
 					<!--td>.state_id</td-->
 					<td>{{.wallet_address}}</td>
-					<td>{{.tx_count}}</td>
+					<td>{{.tx}}</td>
 				 </tr>
 				{{end}}
 			  </tbody>
@@ -139,7 +139,7 @@
 					'</td>'+
 					'<td class="addtime">'+item.time+'</td>'+
 					'<td>'+item.wallet_address+'</td>'+
-					'<td>'+item.tx_count+'</td>'+
+					'<td>'+item.tx+'</td>'+
 				 '</tr>';			
 		id.prepend(el);
 	}

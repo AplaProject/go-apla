@@ -18,7 +18,6 @@ package parser
 
 import (
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -50,7 +49,7 @@ type Parser struct {
 	TxMaps           *txMapsType
 	TxMap            map[string][]byte
 	TxMapS           map[string]string
-	TxIds            []string
+	TxIds            int // count of transactions
 	TxMapArr         []map[string][]byte
 	TxMapsArr        []*txMapsType
 	BlockData        *utils.BlockData
@@ -205,9 +204,6 @@ func (p *Parser) InsertIntoBlockchain() error {
 			p.BlockData.BlockId = *utils.StartBlockId
 		}
 	}
-
-	TxIdsJson, _ := json.Marshal(p.TxIds)
-
 	//mutex.Lock()
 	// пишем в цепочку блоков
 	err := p.ExecSql("DELETE FROM block_chain WHERE id = ?", p.BlockData.BlockId)
@@ -215,7 +211,7 @@ func (p *Parser) InsertIntoBlockchain() error {
 		return err
 	}
 	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, state_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
-		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.CBID, p.BlockData.WalletId, p.BlockData.Time, TxIdsJson)
+		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.CBID, p.BlockData.WalletId, p.BlockData.Time, p.TxIds)
 	if err != nil {
 		fmt.Println(err)
 		return err
