@@ -17,8 +17,9 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 /*
@@ -35,8 +36,6 @@ func (p *Parser) NewStateParametersInit() error {
 	return nil
 }
 
-
-
 func (p *Parser) NewStateParametersFront() error {
 	err := p.generalCheck()
 	if err != nil {
@@ -46,17 +45,14 @@ func (p *Parser) NewStateParametersFront() error {
 	// Check the system limits. You can not send more than X time a day this TX
 	// ...
 
-
-/*
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-*/
-
-
+	/*
+		// Check InputData
+		verifyData := map[string]string{}
+		err = p.CheckInputData(verifyData)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	*/
 
 	/*// Check the condition that must be met to complete this transaction
 	conditions, err := p.Single(`SELECT change FROM `+utils.Int64ToStr(p.TxMaps.Int64["state_id"])+`_state_parameters WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
@@ -106,7 +102,7 @@ func (p *Parser) NewStateParametersFront() error {
 
 func (p *Parser) NewStateParameters() error {
 
-	err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"],p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", nil, nil, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

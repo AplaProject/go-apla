@@ -47,16 +47,16 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 		return p.ErrInfo(err)
 	}*/
 
-/*
-	forSign := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["walletAddress"], p.TxMap["sell_currency_id"], p.TxMap["sell_rate"], p.TxMap["amount"], p.TxMap["buy_currency_id"], p.TxMap["commission"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	if !CheckSignResult {
-		return p.ErrInfo("incorrect sign")
-	}
-*/
+	/*
+		forSign := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["walletAddress"], p.TxMap["sell_currency_id"], p.TxMap["sell_rate"], p.TxMap["amount"], p.TxMap["buy_currency_id"], p.TxMap["commission"])
+		CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		if !CheckSignResult {
+			return p.ErrInfo("incorrect sign")
+		}
+	*/
 	return nil
 }
 
@@ -66,9 +66,9 @@ func (p *Parser) DLTChangeHostVote() error {
 	log.Debug("p.TxMaps.String[addressVote] %s", p.TxMaps.String["addressVote"])
 
 	if len(p.TxMaps.Bytes["public_key"]) > 0 {
-		err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.String["addressVote"]), p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.String["addressVote"]), p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		err = p.selectiveLoggingAndUpd([]string{"host", "address_vote"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)

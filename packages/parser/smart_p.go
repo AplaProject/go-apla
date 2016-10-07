@@ -18,9 +18,11 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
@@ -30,6 +32,7 @@ func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		"DBInsert": DBInsert,
 		"DBUpdate": DBUpdate,
+		"DBString": DBString,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -85,14 +88,28 @@ func (p *Parser) CallContract(flags int) (err error) {
 	return
 }
 
-func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (err error) { // map[string]interface{}) {
+func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) { // map[string]interface{}) {
 	//	fmt.Println(`DBInsert`, tblname, params, val, len(val))
-	err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	var lastId string
+	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	if err != nil {
+		fmt.Println(`DBInsert Error`, err)
+	}
+	ret, _ = strconv.ParseInt(lastId, 10, 64)
 	return
 }
 
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (err error) { // map[string]interface{}) {
-	fmt.Println(`DBUpdate`, tblname, id, params, val, len(val))
-	err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, []string{`id`}, []string{utils.Int64ToStr(id)}, true)
+	//	fmt.Println(`DBUpdate`, tblname, id, params, val, len(val))
+	_, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, []string{`id`}, []string{utils.Int64ToStr(id)}, true)
 	return
+}
+
+func DBString(tblname string, name string, id int64) (string, error) {
+	//	fmt.Println(`DBString`, `select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`)
+	ret, err := utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
+	if err != nil {
+		fmt.Println(`DBString Error`, err)
+	}
+	return ret, err
 }

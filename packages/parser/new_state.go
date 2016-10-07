@@ -182,14 +182,16 @@ func (p *Parser) NewState() error {
         PublicKey bytes
     }
 
-			func front {
-//				Println("NewCitizen Front", $citizen, $state, $PublicKey )
-			}
-			func main {
-				Println("NewCitizen Main", $type, $citizen, $block )
-//				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
-			}
-}`, `TXNewCitizen`, `contract TXRejectCitizen {
+	func front {
+//		Println("NewCitizen Front", $citizen, $state, $PublicKey )
+	}
+	func main {
+		var citizenId int
+		Println("NewCitizen Main", $type, $citizen, $block )
+		citizenId = DBInsert(Sprintf( "%d_citizens", $state), "public_key_0,block_id,data", $PublicKey, $block, DBString(Sprintf( "%d_citizenship_requests", $state), "data", $RequestId ) )
+        DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", citizenId)
+	}
+}`, `TXRejectCitizen`, `contract TXRejectCitizen {
    tx { 
         RequestId int
    }

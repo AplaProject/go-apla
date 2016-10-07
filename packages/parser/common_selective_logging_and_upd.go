@@ -25,7 +25,7 @@ import (
 )
 
 // не использовать для комментов
-func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) error {
+func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (string, error) {
 
 	var tableId string
 
@@ -51,7 +51,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	// если есть, что логировать
 	logData, err := p.OneRow(`SELECT ` + addSqlFields + ` rb_id FROM "` + table + `" ` + addSqlWhere).String()
 	if err != nil {
-		return err
+		return tableId, err
 	}
 	log.Debug(`SELECT ` + addSqlFields + ` rb_id FROM "` + table + `" ` + addSqlWhere)
 	if whereFields != nil && len(logData) > 0 {
@@ -76,11 +76,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		jsonData, _ := json.Marshal(jsonMap)
 		if err != nil {
-			return err
+			return tableId, err
 		}
 		rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
 		if err != nil {
-			return err
+			return tableId, err
 		}
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
@@ -95,10 +95,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			}
 		}
 		err = p.ExecSql(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere, rbId)
-		log.Debug(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere)
+		log.Debug(`UPDATE "` + table + `" SET ` + addSqlUpdate + ` rb_id = ? ` + addSqlWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
-			return err
+			return tableId, err
 		}
 		tableId = logData[p.AllPkeys[table]]
 	} else {
@@ -128,14 +128,14 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		tableId, err = p.ExecSqlGetLastInsertId(`INSERT INTO "`+table+`" (`+addSqlIns0+`) VALUES (`+addSqlIns1+`)`, table)
 		if err != nil {
 			fmt.Println(`Sel Log Err`, tableId, err)
-			return err
+			return tableId, err
 		}
 	}
 	if generalRollback {
 		err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tableId)
 		if err != nil {
-			return err
+			return tableId, err
 		}
 	}
-	return nil
+	return tableId, nil
 }

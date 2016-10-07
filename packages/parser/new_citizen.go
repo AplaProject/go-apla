@@ -18,6 +18,7 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
@@ -98,7 +99,7 @@ func (p *Parser) NewCitizen() error {
 
 	data := p.TxPtr.(*consts.NewCitizen)
 
-	err := p.selectiveLoggingAndUpd([]string{"public_key_0", "block_id"}, []interface{}{data.PublicKey,  p.BlockData.BlockId}, "dlt_wallets", nil, nil, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0", "block_id"}, []interface{}{data.PublicKey, p.BlockData.BlockId}, "dlt_wallets", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -116,11 +117,11 @@ func (p *Parser) NewCitizen() error {
 				return err
 			}
 			if len(req[`binary`]) > 0 {
-				if err = p.ExecSql(`insert into `+p.States[data.StateId]+`_citizens_private (citizen_id, fields, binary) 
+				if err = p.ExecSql(`insert into `+p.States[data.StateId]+`_citizens_private (citizen_id, fields, binary)
 				    values(?, ?, [hex])`, citizenId, req[`fields`], hex.EncodeToString([]byte(req[`binary`]))); err != nil {
 					return err
 				}
-			} else if err = p.ExecSql(`insert into `+p.States[data.StateId]+`_citizens_private (citizen_id, fields) 
+			} else if err = p.ExecSql(`insert into `+p.States[data.StateId]+`_citizens_private (citizen_id, fields)
 				    values(?, ?, [hex])`, citizenId, req[`fields`]); err != nil {
 				return err
 			}
