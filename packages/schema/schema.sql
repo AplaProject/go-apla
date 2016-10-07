@@ -290,11 +290,6 @@ DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 
 
 
-
-DROP TYPE IF EXISTS "config_enum_first_load_blockchain" CASCADE;
-CREATE TYPE "config_enum_first_load_blockchain" AS ENUM ('nodes','file','null');
-DROP TYPE IF EXISTS "config_enum_current_load_blockchain" CASCADE;
-CREATE TYPE "config_enum_current_load_blockchain" AS ENUM ('nodes','file','null');
 DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
 "my_block_id" int NOT NULL DEFAULT '0',
 "dlt_wallet_id" int NOT NULL DEFAULT '0',
@@ -306,8 +301,8 @@ DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
 "setup_password" varchar(255)  NOT NULL DEFAULT '',
 "sqlite_db_url" varchar(255)  NOT NULL DEFAULT '',
 "first_load_blockchain_url" varchar(255)  NOT NULL DEFAULT '',
-"first_load_blockchain" config_enum_first_load_blockchain  DEFAULT 'null',
-"current_load_blockchain" config_enum_current_load_blockchain  DEFAULT 'null',
+"first_load_blockchain"  varchar(255)  NOT NULL DEFAULT '',
+"current_load_blockchain"  varchar(255)  NOT NULL DEFAULT '',
 "http_host" varchar(255) NOT NULL DEFAULT '',
 "auto_update" smallint NOT NULL DEFAULT '0',
 "auto_update_url" varchar(255) NOT NULL DEFAULT '',
