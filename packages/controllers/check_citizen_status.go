@@ -41,22 +41,15 @@ func init() {
 
 func (c *Controller) CheckCitizenStatus() (string, error) {
 	var err error
+	var lastId int64
 
 	//test
-	if len(c.r.FormValue(`accept`)) > 0 {
-		requestId := utils.StrToInt64(c.r.FormValue(`request_id`))
-		approved := -1
-		if c.r.FormValue(`accept`) == `true` {
-			approved = 1
-		}
-		if err := c.ExecSql(`update "`+c.StateIdStr+`_citizenship_requests" set approved=? where id=?`,
-			approved, requestId); err != nil {
-			return ``, err
-		}
+	if len(c.r.FormValue(`last_id`)) > 0 {
+		lastId = utils.StrToInt64(c.r.FormValue(`last_id`))
 	}
 
 	//	field, err := c.Single(`SELECT value FROM ` + c.StateIdStr + `_state_parameters where parameter='citizen_fields'`).String()
-	vals, err := c.OneRow(`select * from "` + c.StateIdStr + `_citizenship_requests" where approved=0 order by id`).String()
+	vals, err := c.OneRow(`select * from "`+c.StateIdStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastId).String()
 	if err != nil {
 		return ``, err
 	}
