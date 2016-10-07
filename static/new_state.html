@@ -2,17 +2,19 @@
 <script>
 
 	var serverTime;
+	var selectbox = $("#countries");
 	
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .newState").addClass("active");
 
 	function StateOK() {
+		$("#new_state_request").css("display", "none");
+		$("#my_state").css("display", "block");
+		preloader("go_to_the_state");
+		
 		$.get( '/ajax?controllerName=AjaxStatesList', function (data) {
-			for (var i in data) {
-				$("#countries").append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
-			}
-			$("#new_state_request").css("display", "none");
-			$("#my_state").css("display", "block");
+			selectboxState(data);
+			obj.removeClass("whirl standard");
 		}, "json" );
 	}
 	
@@ -56,9 +58,7 @@
 	$('#go_to_the_state').bind('click', function () {
 		$.get( 'ajax?json=set_state&state_id=1&citizen_id=1', function (data) {
 			load_page("listOfTables");
-
-			// надо перезагрузить меню
-			
+			load_menu();
 		}, "json" );
 	});
 </script>
@@ -69,12 +69,28 @@
 	   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
 	   <li class="active">addState</li>
 	</ol>
+	 
 	<!-- START panel-->
-
-	 <div style="display: none" id="my_state">
-		 <select id="countries" class="form-control"></select>
-		 <button type="button" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" id="go_to_the_state">Go to the my state</button>
-	 </div>
+	<div id="my_state" class="panel panel-default" data-sweet-alert style="display:none;">
+		<div class="panel-body">
+			<form role="form">
+				<div class="form-group">
+					<label for="countries">Country</label>
+					<select id="countries" class="form-control"></select>
+				</div>
+			</form>
+		</div>
+		<div id="buttons" class="panel-footer">
+			<div class="clearfix">
+				<div class="pull-right">
+					<!--<button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
+					<button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>-->
+					<button type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="go_to_the_state">Go to the my state</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- END panel-->
 
 	<div id="new_state_request">
 		<div class="panel panel-default" data-sweet-alert>

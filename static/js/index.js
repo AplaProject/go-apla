@@ -580,3 +580,26 @@ function send_to_net_success(data, ReadyFunction){
 		}, 1000)
 	}
 }
+
+function selectboxState(data) {
+	for (var i in data) {
+		selectbox.append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
+	}
+	
+	selectbox.select2({
+		templateResult: formatState,
+		templateSelection: formatState,
+		theme: 'bootstrap'
+	});
+};
+
+function formatState(state) {
+	if (!state.id) { return state.text; }
+	var $state = $(
+		'<span class="state_' + state.id + '">' +
+			'<i style="background-image:url(data:image/png;base64,' + selectbox.find("option[value=" + state.id + "]").attr("data-flag") + '); background-size:16px auto; background-position:0px 0px;"></i>' +
+			state.text +
+		'</span>'
+	);
+	return $state;
+};
