@@ -36,7 +36,7 @@ func (p *Parser) UpdFullNodesFront() error {
 
 func (p *Parser) UpdFullNodes() error {
 
-	err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "upd_full_nodes", []string{`update`}, nil, false)
+	_, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "upd_full_nodes", []string{`update`}, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -160,6 +160,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 
 	return nil
 }
+
 /*func (p *Parser) UpdFullNodesRollbackFront() error {
 	return nil
 }

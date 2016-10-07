@@ -17,21 +17,20 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) NewMenuInit() error {
 
-	fields := []map[string]string{{"global": "string"},{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
-
-
 
 func (p *Parser) NewMenuFront() error {
 
@@ -48,12 +47,12 @@ func (p *Parser) NewMenuFront() error {
 	}*/
 
 	/*
-	Check conditions
-	...
+		Check conditions
+		...
 	*/
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"],  p.TxMap["conditions"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -68,10 +67,10 @@ func (p *Parser) NewMenuFront() error {
 func (p *Parser) NewMenu() error {
 
 	prefix := p.TxStateIDStr
-	if p.TxMaps.String["global"]=="1" {
+	if p.TxMaps.String["global"] == "1" {
 		prefix = "global"
 	}
-	err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"],p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_menu", nil, nil, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_menu", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

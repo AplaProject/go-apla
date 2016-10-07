@@ -79,7 +79,7 @@ func (p *Parser) CitizenRequest() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amount}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amount}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
