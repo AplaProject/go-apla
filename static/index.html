@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -89,8 +88,10 @@
    <script src="static/js/clipboard.js"></script>
    <!-- Preloader-->
    <script src="static/js/nprogress.js"></script>
-   <!-- Highlight-->
-   <script src="static/js/highlight.pack.js"></script>
+   <!-- Editor-->
+   <script type="text/javascript" src="static/js/editor/ace.js"></script>
+   <script type="text/javascript" src="static/js/editor/theme-chrome.js"></script>
+   <script type="text/javascript" src="static/js/editor/mode-c_cpp.js"></script>
    
    <script>
 		$( document ).ready(function() {
@@ -170,7 +171,7 @@
 		<canvas  id="canvas_key"></canvas>
 	</div>
 	<button id="notify" class="hidden" type="button" data-notify="" data-message="" data-options=""></button>
-
+   
    <!-- =============== APP SCRIPTS ===============-->
    <script src="static/js/app.js"></script>
    <script src="static/js/index.js"></script>

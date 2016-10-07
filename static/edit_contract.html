@@ -1,6 +1,41 @@
 {{ define "editContract" }}
+<style>
+	.editor {
+		position:relative;
+		font-size:0px;
+		padding-bottom:5px;
+	}
+	.editor code  {
+		position:relative;
+		font: 12px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
+		line-height:14px;
+		z-index:1;
+    }
+	.editor section  {
+		position:absolute;
+		left:0px;
+		top:0px;
+		width:100%;
+        height:100%;
+		z-index:2;
+    }
+</style>
 <script>
 	var serverTime;
+	
+	var editor = ace.edit("editor");
+	var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
+	$(".editor code").html(editor.getValue());
+	$("#value").val(editor.getValue());
+	editor.setTheme("ace/theme/chrome");
+    editor.session.setMode(new JavaScriptMode());
+	editor.setShowPrintMargin(false);
+	editor.getSession().setUseWrapMode(true);
+	editor.getSession().on('change', function(e) {
+		$(".editor code").html(editor.getValue());
+		$("#value").val(editor.getValue());
+		editor.resize();
+	});
 
 	$('#send').bind('click', function () {
 
@@ -68,7 +103,11 @@
 		   </div>
 		   <div class="form-group">
 			   <label>Value</label>
-			   <textarea id="value" class="form-control" style="height: 500px">{{.Data.value}}</textarea>
+			   <pre class="editor">
+					<code></code>
+					<section id="editor">{{.Data.value}}</section>
+				</pre>
+			   <textarea id="value" class="form-control hidden"></textarea>
 		   </div>
 		   <div class="form-group">
 			   <label>Conditions</label>
