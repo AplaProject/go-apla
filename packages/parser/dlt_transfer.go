@@ -86,6 +86,8 @@ func (p *Parser) DLTTransferFront() error {
 }
 
 func (p *Parser) DLTTransfer() error {
+	log.Debug("wallet address %s", p.TxMaps.Bytes["walletAddress"])
+	log.Debug("wallet address hex %x", utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
 	hexAddress := utils.BinToHex(utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
 	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
 	if err != nil {
