@@ -70,18 +70,18 @@ func (p *Parser) DLTTransferFront() error {
 	}
 
 	// есть ли нужная сумма на кошельке
-	amountAndCommission, err := p.checkSenderDLT(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
+	/*amountAndCommission, err := p.checkSenderDLT(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
 	if err != nil {
 		return p.ErrInfo(err)
-	}
+	}*/
 
-	// вычитаем из wallets_buffer
+	/*// вычитаем из wallets_buffer
 	// amount_and_commission взято из check_sender_money()
 	err = p.updateWalletsBuffer(amountAndCommission)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+*/
 	return nil
 }
 
@@ -93,15 +93,22 @@ func (p *Parser) DLTTransfer() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	log.Debug("walletId %d", walletId)
 	//if walletId > 0 {
-		if len(p.TxMaps.Bytes["public_key"]) > 0 {
-			err = p.selectiveLoggingAndUpd([]string{"+amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
-		} else {
-			err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
-		}
-		if err != nil {
-			return p.ErrInfo(err)
-		}
+
+	err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	if len(p.TxMaps.Bytes["public_key"]) > 0 {
+		err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	} else {
+		err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	}
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	// пишем в общую историю тр-ий
 	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions", p.TxWalletID, walletId, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {

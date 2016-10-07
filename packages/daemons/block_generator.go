@@ -301,6 +301,10 @@ BEGIN:
 				continue
 			}
 			for rows.Next() {
+				// проверим, не нужно ли нам выйти из цикла
+				if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
+					break BEGIN
+				}
 				var data []byte
 				var hash string
 				var txType string
