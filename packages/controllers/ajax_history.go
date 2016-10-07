@@ -54,12 +54,6 @@ func (c *Controller) AjaxHistory() interface{} {
 		result.Total = int(total)
 		result.Filtered = int(total)
 		if length != 0 {
-			fmt.Println(`SELECT d.*, w.address as sw, wr.address as rw FROM dlt_transactions as d
-		        left join dlt_wallets as w on w.wallet_id=d.sender_wallet_id
-		        left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id
-				where sender_wallet_id=? OR
-		        recipient_wallet_id=? order by d.id desc  `+limit)
-
 			history, err = c.GetAll(`SELECT d.*, w.address as sw, wr.address as rw FROM dlt_transactions as d
 		        left join dlt_wallets as w on w.wallet_id=d.sender_wallet_id
 		        left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id
