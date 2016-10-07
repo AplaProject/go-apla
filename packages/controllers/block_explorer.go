@@ -80,7 +80,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 			}
 			txlist := make([]string, 0)
 			block := ([]byte(blockInfo[`data`]))[1:]
-			pblock := utils.ParseBlockHeader(&block)
+			utils.ParseBlockHeader(&block)
 			//			fmt.Printf("Block OK %v sign=%d %d %x", *pblock, len((*pblock).Sign), len(block), block)
 			for len(block) > 0 {
 				size := int(utils.DecodeLength(&block))
