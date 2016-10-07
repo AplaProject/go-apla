@@ -17,9 +17,13 @@
 package controllers
 
 import (
+	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
+	"fmt"
+	"strings"
+
 	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -66,7 +70,6 @@ func (c *Controller) BlockExplorer() (string, error) {
 					out += ` `
 				}
 			}
-			blockInfo[`data`] = out
 			if blockId > 1 {
 				parent, err := c.Single("SELECT hash FROM block_chain where id=?", blockId-1).String()
 				if err == nil {
@@ -75,6 +78,38 @@ func (c *Controller) BlockExplorer() (string, error) {
 					blockInfo[`parent`] = err.Error()
 				}
 			}
+			txlist := make([]string, 0)
+			block := ([]byte(blockInfo[`data`]))[1:]
+			utils.ParseBlockHeader(&block)
+			//			fmt.Printf("Block OK %v sign=%d %d %x", *pblock, len((*pblock).Sign), len(block), block)
+			for len(block) > 0 {
+				size := int(utils.DecodeLength(&block))
+				if size == 0 || len(block) < size {
+					break
+				}
+				var name string
+				itype := int(block[0])
+				if itype < 128 {
+					name = fmt.Sprintf("%d", itype)
+				} else {
+					itype -= 128
+					tmp := make([]byte, 4)
+					for i := 0; i < itype; i++ {
+						tmp[4-itype+i] = block[i+1]
+					}
+					idc := int32(binary.BigEndian.Uint32(tmp))
+					contract := smart.GetContractById(idc)
+					if contract != nil {
+						name = contract.Name
+					} else {
+						name = fmt.Sprintf(`Unknown=%d`, idc)
+					}
+				}
+				txlist = append(txlist, name)
+				block = block[size:]
+			}
+			blockInfo[`data`] = out
+			blockInfo[`tx_list`] = strings.Join(txlist, `, `)
 		}
 		pageData.BlockData = blockInfo
 	} else {
@@ -98,15 +133,15 @@ func (c *Controller) BlockExplorer() (string, error) {
 			} else {
 				blockExplorer[ind][`wallet_address`] = ``
 			}
-			if blockExplorer[ind][`tx`] == `[]` {
-				blockExplorer[ind][`tx_count`] = `0`
-			} else {
-				var tx []string
-				json.Unmarshal([]byte(blockExplorer[ind][`tx`]), &tx)
-				if tx != nil && len(tx) > 0 {
-					blockExplorer[ind][`tx_count`] = utils.IntToStr(len(tx))
-				}
-			}
+			/*			if blockExplorer[ind][`tx`] == `[]` {
+							blockExplorer[ind][`tx_count`] = `0`
+						} else {
+							var tx []string
+							json.Unmarshal([]byte(blockExplorer[ind][`tx`]), &tx)
+							if tx != nil && len(tx) > 0 {
+								blockExplorer[ind][`tx_count`] = utils.IntToStr(len(tx))
+							}
+						}*/
 		}
 		pageData.List = blockExplorer
 		if blockExplorer != nil && len(blockExplorer) > 0 {
