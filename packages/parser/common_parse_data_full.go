@@ -29,7 +29,6 @@ import (
 */
 func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
-	p.TxIds = []string{}
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
@@ -174,10 +173,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			p.TxMap = map[string][]byte{}
 
-			if p.TxContract == nil {
-				// для статы
-				p.TxIds = append(p.TxIds, string(p.TxSlice[1]))
-			}
+			p.TxIds++
+
 			if p.TxContract != nil {
 				if err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
 					if p.TxContract.Called == smart.CALL_FRONT {

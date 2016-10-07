@@ -91,7 +91,7 @@ DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 "state_id" int  NOT NULL DEFAULT '0',
 "wallet_id" int  NOT NULL DEFAULT '0',
 "time" int NOT NULL DEFAULT '0',
-"tx" text NOT NULL DEFAULT '',
+"tx" int NOT NULL DEFAULT '0',
 "cur_0l_miner_id" int NOT NULL DEFAULT '0',
 "max_miner_id" int NOT NULL DEFAULT '0'
 );
