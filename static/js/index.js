@@ -217,8 +217,9 @@ function Notify(message, options) {
 
 function Alert(title, text, type, Confirm) {
 	if (obj) {
-		obj.css({"position":"relative"});
 		var id = obj.parents(".modal").attr("id");
+		var minHeight = obj.css("min-height");
+		obj.css({"position":"relative", "min-height":"300px"});
 		swal({
 			title : title,
 			text : text,
@@ -228,7 +229,7 @@ function Alert(title, text, type, Confirm) {
 		}, function (isConfirm) {
 			if (isConfirm) {
 				$("#" + id).modal("hide");
-				obj.removeClass("whirl standard");
+				obj.css({"min-height":minHeight}).removeClass("whirl standard");
 				if (type == "success") {
 					if (Confirm) {
 						Confirm();
