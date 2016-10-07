@@ -121,7 +121,9 @@
 // static/js/demo/demo-vector-map.js
 // static/js/demo/demo-wizard.js
 // static/js/demo/demo-xeditable.js
-// static/js/highlight.pack.js
+// static/js/editor/ace.js
+// static/js/editor/mode-c_cpp.js
+// static/js/editor/theme-chrome.js
 // static/js/index.js
 // static/js/keys.js
 // static/js/map.js
@@ -141,7 +143,6 @@
 // static/pass.html
 // static/psw.html
 // static/request_citizen_status.html
-// static/schema.sql
 // static/show_table.html
 // static/signatures.html
 // static/signatures_new.html
@@ -2407,10 +2408,46 @@ func staticJsDemoDemoXeditableJs() (*asset, error) {
 	return a, err
 }
 
-// staticJsHighlightPackJs reads file data from disk. It returns an error on failure.
-func staticJsHighlightPackJs() (*asset, error) {
-	path := "static/js/highlight.pack.js"
-	name := "static/js/highlight.pack.js"
+// staticJsEditorAceJs reads file data from disk. It returns an error on failure.
+func staticJsEditorAceJs() (*asset, error) {
+	path := "static/js/editor/ace.js"
+	name := "static/js/editor/ace.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsEditorModeC_cppJs reads file data from disk. It returns an error on failure.
+func staticJsEditorModeC_cppJs() (*asset, error) {
+	path := "static/js/editor/mode-c_cpp.js"
+	name := "static/js/editor/mode-c_cpp.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsEditorThemeChromeJs reads file data from disk. It returns an error on failure.
+func staticJsEditorThemeChromeJs() (*asset, error) {
+	path := "static/js/editor/theme-chrome.js"
+	name := "static/js/editor/theme-chrome.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2753,24 +2790,6 @@ func staticPswHtml() (*asset, error) {
 func staticRequest_citizen_statusHtml() (*asset, error) {
 	path := "static/request_citizen_status.html"
 	name := "static/request_citizen_status.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticSchemaSql reads file data from disk. It returns an error on failure.
-func staticSchemaSql() (*asset, error) {
-	path := "static/schema.sql"
-	name := "static/schema.sql"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4056,7 +4075,9 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-vector-map.js": staticJsDemoDemoVectorMapJs,
 	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
-	"static/js/highlight.pack.js": staticJsHighlightPackJs,
+	"static/js/editor/ace.js": staticJsEditorAceJs,
+	"static/js/editor/mode-c_cpp.js": staticJsEditorModeC_cppJs,
+	"static/js/editor/theme-chrome.js": staticJsEditorThemeChromeJs,
 	"static/js/index.js": staticJsIndexJs,
 	"static/js/keys.js": staticJsKeysJs,
 	"static/js/map.js": staticJsMapJs,
@@ -4076,7 +4097,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/pass.html": staticPassHtml,
 	"static/psw.html": staticPswHtml,
 	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
-	"static/schema.sql": staticSchemaSql,
 	"static/show_table.html": staticShow_tableHtml,
 	"static/signatures.html": staticSignaturesHtml,
 	"static/signatures_new.html": staticSignatures_newHtml,
@@ -4321,7 +4341,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
 				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
-			"highlight.pack.js": &bintree{staticJsHighlightPackJs, map[string]*bintree{}},
+			"editor": &bintree{nil, map[string]*bintree{
+				"ace.js": &bintree{staticJsEditorAceJs, map[string]*bintree{}},
+				"mode-c_cpp.js": &bintree{staticJsEditorModeC_cppJs, map[string]*bintree{}},
+				"theme-chrome.js": &bintree{staticJsEditorThemeChromeJs, map[string]*bintree{}},
+			}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
 			"map.js": &bintree{staticJsMapJs, map[string]*bintree{}},
@@ -4344,7 +4368,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
 		"psw.html": &bintree{staticPswHtml, map[string]*bintree{}},
 		"request_citizen_status.html": &bintree{staticRequest_citizen_statusHtml, map[string]*bintree{}},
-		"schema.sql": &bintree{staticSchemaSql, map[string]*bintree{}},
 		"show_table.html": &bintree{staticShow_tableHtml, map[string]*bintree{}},
 		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{}},
 		"signatures_new.html": &bintree{staticSignatures_newHtml, map[string]*bintree{}},
