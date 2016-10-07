@@ -46,8 +46,8 @@
 					<div class="col-sm-9">
 						<select id="state_id">
 							<!--<option value="0">-----</option>-->
-							{{ range $data := .States }}
-							<option value="{{index $data "id"}}">{{index $data "name"}}</option>
+							{{ range $id, $name := .States }}
+							<option value="{{$id}}">{{$name}}</option>
 							{{end}}
 						</select>
 					</div>

@@ -46,7 +46,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 		amount int64
 		req    map[string]int64
 	)
-	stateId := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
+	stateId := utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateId)
 	//	if err == nil {
 	if req, err = c.OneRow(`select id, approved from "`+utils.Int64ToStr(stateId)+`_citizenship_requests" where dlt_wallet_id=? order by id desc`,

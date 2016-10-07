@@ -85,9 +85,9 @@
 	}
 	
 	function changeCountry(elem) {
-		var id = elem.value;
+		console.log("elem", elem);
+		var id = $("#countries").val();
 		Country(id);
-		
 		$.ajax({
 			type: 'GET',
 			url: '/ajax?controllerName=AjaxStatesList',
@@ -110,7 +110,6 @@
 		msg.hide();
 		container.html("");
 		$("#refresh").click();
-		id = 1;
 		$.ajax({
 			type: 'GET',
 			url: 'ajax?json=ajax_smart_fields',
