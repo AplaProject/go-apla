@@ -177,6 +177,11 @@ func (p *Parser) NewState() error {
 		DBInsert(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id,data,block_id", $wallet, TxJson(), $block)
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
+	tx {
+        RequestId int
+        PublicKey bytes
+    }
+
 			func front {
 //				Println("NewCitizen Front", $citizen, $state, $PublicKey )
 			}
