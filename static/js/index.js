@@ -215,7 +215,7 @@ function Notify(message, options) {
 	btn_notify.click();
 }
 
-function Alert(title, text, type) {
+function Alert(title, text, type, Confirm) {
 	if (obj) {
 		obj.css({"position":"relative"});
 		var id = obj.parents(".modal").attr("id");
@@ -229,6 +229,11 @@ function Alert(title, text, type) {
 			if (isConfirm) {
 				$("#" + id).modal("hide");
 				obj.removeClass("whirl standard");
+				if (type == "success") {
+					if (Confirm) {
+						Confirm();
+					}
+				}
 			}
 		});
 		$(".sweet-alert").appendTo(obj);
@@ -539,7 +544,7 @@ function unixtime(target) {
     }
 }
 
-function send_to_net_success(data){
+function send_to_net_success(data, ReadyFunction){
 	if (typeof data.error != "undefined") {
 		Alert("Error", data.error, "error");
 	} else {
@@ -563,7 +568,7 @@ function send_to_net_success(data){
 						clearInterval(interval);
 					} else {
 						clearInterval(interval);
-						Alert("Success", "", "success");
+						Alert("Success", "", "success", ReadyFunction);
 					}
 				},
 				error: function(xhr, status, error) {

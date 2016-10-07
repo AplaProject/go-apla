@@ -6,6 +6,11 @@
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .newState").addClass("active");
 
+	function StateOK() {
+		$("#new_state_request").css("display", "none");
+		$("#my_state").css("display", "block");
+	}
+	
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -33,17 +38,13 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
-				send_to_net_success(data);
-				$("#new_state_request").css("display", "none");
-				$("#my_state").css("display", "block");
-
+				send_to_net_success(data, StateOK);
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
 		});
 	} );
-
 
 	$('#go_to_the_state').bind('click', function () {
 		$.get( 'ajax?json=set_state&state_id=1&citizen_id=1', function (data) {
