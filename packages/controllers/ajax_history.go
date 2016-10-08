@@ -59,7 +59,7 @@ func (c *Controller) AjaxHistory() interface{} {
 				where sender_wallet_id=? OR 
 		        recipient_wallet_id=? order by d.id desc  `+limit, -1, walletId, walletId)
 			for ind := range history {
-				max, _ := c.Single(`select max(id) from block_chain order by id desc`).Int64()
+				max, _ := c.Single(`select max(id) from block_chain`).Int64()
 				history[ind][`confirm`] = utils.Int64ToStr(max - utils.StrToInt64(history[ind][`block_id`]))
 				history[ind][`sender_address`] = history[ind][`sw`]
 				history[ind][`recipient_address`] = history[ind][`rw`]

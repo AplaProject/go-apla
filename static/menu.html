@@ -324,9 +324,11 @@
 		  <!-- START User avatar toggle-->
 		  <li>
 			 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
-			 <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
+			 {{if gt .Data.CitizenId 0}}
+			  <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
 				<em class="icon-user"></em>
 			 </a>
+			 {{end}}
 		  </li>
 		  <!-- END User avatar toggle-->
 	   </ul>
@@ -448,7 +450,7 @@
 						 <span>Request for citizenship</span>
 					 </a>
 				 </li>
-				 <li class="anonym_map">
+				 <!--<li class="anonym_map">
 					 <a href="#" title="Map" onClick="dl_navigate('map'); HideMenu();">
 						 <span>Map</span>
 					 </a>
@@ -457,7 +459,7 @@
 					 <a href="#" title="Avatar" onClick="dl_navigate('avatar'); HideMenu();">
 						 <span>Avatar</span>
 					 </a>
-				 </li>
+				 </li>-->
 			 </ul>
 		  </li>
 
@@ -473,7 +475,7 @@
 
 				 {{noescape .Menu}}
 
-                {{if or (eq .Data.CitizenId 1) (eq .Data.WalletId 1)}}
+                {{if or (gt .Data.CitizenId 0) (gt .Data.WalletId 0)}}
                 <li class="check_citizen_status">
                    <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
                       <span>Check citizen status</span>
