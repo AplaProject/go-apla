@@ -4,6 +4,7 @@
 // static/1block-local
 // static/alert_success.html
 // static/anonym_money_transfer.html
+// static/avatar.html
 // static/backup.html
 // static/beta.html
 // static/block_explorer.html
@@ -293,6 +294,24 @@ func staticAlert_successHtml() (*asset, error) {
 func staticAnonym_money_transferHtml() (*asset, error) {
 	path := "static/anonym_money_transfer.html"
 	name := "static/anonym_money_transfer.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticAvatarHtml reads file data from disk. It returns an error on failure.
+func staticAvatarHtml() (*asset, error) {
+	path := "static/avatar.html"
+	name := "static/avatar.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4053,6 +4072,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/1block-local": static1blockLocal,
 	"static/alert_success.html": staticAlert_successHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
+	"static/avatar.html": staticAvatarHtml,
 	"static/backup.html": staticBackupHtml,
 	"static/beta.html": staticBetaHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
@@ -4305,6 +4325,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"1block-local": &bintree{static1blockLocal, map[string]*bintree{}},
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
+		"avatar.html": &bintree{staticAvatarHtml, map[string]*bintree{}},
 		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
 		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
