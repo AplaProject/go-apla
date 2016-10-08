@@ -143,6 +143,8 @@
 // static/map.html
 // static/menu.html
 // static/modal_anonym.html
+// static/modal_avatar.html
+// static/modal_map.html
 // static/new_state.html
 // static/new_table.html
 // static/pass.html
@@ -2810,6 +2812,42 @@ func staticModal_anonymHtml() (*asset, error) {
 	return a, err
 }
 
+// staticModal_avatarHtml reads file data from disk. It returns an error on failure.
+func staticModal_avatarHtml() (*asset, error) {
+	path := "static/modal_avatar.html"
+	name := "static/modal_avatar.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticModal_mapHtml reads file data from disk. It returns an error on failure.
+func staticModal_mapHtml() (*asset, error) {
+	path := "static/modal_map.html"
+	name := "static/modal_map.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticNew_stateHtml reads file data from disk. It returns an error on failure.
 func staticNew_stateHtml() (*asset, error) {
 	path := "static/new_state.html"
@@ -4211,6 +4249,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/map.html": staticMapHtml,
 	"static/menu.html": staticMenuHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
+	"static/modal_avatar.html": staticModal_avatarHtml,
+	"static/modal_map.html": staticModal_mapHtml,
 	"static/new_state.html": staticNew_stateHtml,
 	"static/new_table.html": staticNew_tableHtml,
 	"static/pass.html": staticPassHtml,
@@ -4490,6 +4530,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"map.html": &bintree{staticMapHtml, map[string]*bintree{}},
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
 		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{}},
+		"modal_avatar.html": &bintree{staticModal_avatarHtml, map[string]*bintree{}},
+		"modal_map.html": &bintree{staticModal_mapHtml, map[string]*bintree{}},
 		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{}},
 		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},

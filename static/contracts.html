@@ -36,6 +36,21 @@
 		editor.renderer.setShowGutter(false);
 		editor.setReadOnly(true);
 	});
+	
+	$(".map").on('click', function(){
+		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
+			$("#modal_map").on('show.bs.modal', function(e) {
+				initmap();
+				clearMap();
+				$("#toolchoice, #codechoice").change();
+			})
+		});
+	});
+	$(".avatar").on('click', function(){
+		$("#dl_modal").load("content?controllerHTML=modal_avatar", { }, function() {
+			$("#modal_avatar").modal("show");
+		});
+	});
 </script>
 	
 	<div class="content-heading">
@@ -63,7 +78,7 @@
 			  <tr>
 				  <td>id</td>
 				  <td>Contract</td>
-				  <td>Action</td>
+				  <td width="50">Action</td>
 			  </tr>
 			  {{ range $data := .StateSmartLaws }}
 				 <tr>
@@ -80,7 +95,11 @@
 							<section>{{$data.for}}</section>
 						 </pre>
 					 </td>
-					 <td><a type="button" class="btn btn-primary" onclick="load_page('editContract', {id: {{$data.id}} , global: {{$.Global}} } )"><i class="fa fa-cog"></i></a></td>
+					 <td>
+					 	<a type="button" class="btn btn-primary btn-block" onclick="load_page('editContract', {id: {{$data.id}} , global: {{$.Global}} } )"><i class="fa fa-cog"></i></a>
+						<button type="button" class="map btn btn-primary btn-block"><i class="fa fa-map-marker"></i></button>
+						<button type="button" class="avatar btn btn-primary btn-block"><i class="fa fa-file-image-o"></i></button>
+					</td>
 				 </tr>
 			  {{end}}
 			  </tbody>

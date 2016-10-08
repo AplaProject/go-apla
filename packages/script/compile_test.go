@@ -63,6 +63,13 @@ func (block *Block) String() (ret string) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
+		{`func line_test string {
+			return "Start " + 
+			Sprintf( "My String %s %d %d", 
+			      "Param 1", 24, 
+				345 + 789)
+		}`, `line_test`, `Start My String Param 1 24 1134`},
+
 		{`func err_test string {
 			if 1001.02 {
 				error "Error message err_test"
