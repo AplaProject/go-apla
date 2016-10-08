@@ -19,8 +19,11 @@ package schema
 import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/op/go-logging"
 )
-
+var (
+	log = logging.MustGetLogger("daemons")
+)
 func Migration() {
 	oldDbVersion, err := utils.DB.Single(`SELECT version FROM migration_history ORDER BY id DESC LIMIT 1`).String()
 	if err != nil {

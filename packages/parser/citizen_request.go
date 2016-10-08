@@ -43,12 +43,12 @@ func (p *Parser) CitizenRequestFront() error {
 	// есть ли сумма, которую просит гос-во за регистрацию гражданства в DLT
 	// Проверка подписи перенесена в generalCheckStruct
 
-	amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
+	/*amount, err := p.Single(`SELECT value FROM `+p.TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
-	}
+	}*/
 
-	amountAndCommission, err := p.checkSenderDLT(amount, consts.COMMISSION)
+	/*amountAndCommission, err := p.checkSenderDLT(amount, consts.COMMISSION)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -60,7 +60,7 @@ func (p *Parser) CitizenRequestFront() error {
 	err = p.updateWalletsBuffer(amountAndCommission)
 	if err != nil {
 		return p.ErrInfo(err)
-	}
+	}*/
 	return nil
 }
 

@@ -47,8 +47,8 @@ func (p *Parser) FirstBlock() error {
 		return p.ErrInfo(err)
 	}
 	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
-	err = p.ExecSql(`INSERT INTO dlt_wallets (wallet_id, address, host, address_vote, public_key_0, node_public_key, amount) VALUES (?, ?, ?, ?, [hex], [hex], ?)`,
-	    1, myAddress, data.Host, myAddress, hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_DLT )
+	err = p.ExecSql(`INSERT INTO dlt_wallets (address, host, address_vote, public_key_0, node_public_key, amount) VALUES (?, ?, ?, [hex], [hex], ?)`,
+	    myAddress, data.Host, myAddress, hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_DLT )
 		//p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"], consts.FIRST_DLT)
 	if err != nil {
 		return p.ErrInfo(err)

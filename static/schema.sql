@@ -343,16 +343,6 @@ ALTER TABLE ONLY "migration_history" ADD CONSTRAINT migration_history_pkey PRIMA
 
 
 
-DROP TABLE IF EXISTS "dlt_wallets_buffer"; CREATE TABLE "dlt_wallets_buffer" (
-"hash" bytea  NOT NULL DEFAULT '',
-"del_block_id" bigint NOT NULL DEFAULT '0',
-"wallet_id" bigint NOT NULL DEFAULT '0',
-"amount" decimal(15,2)  NOT NULL DEFAULT '0',
-"block_id" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "dlt_wallets_buffer" ADD CONSTRAINT dlt_wallets_buffer_pkey PRIMARY KEY (hash);
-
-
 
 
 DROP SEQUENCE IF EXISTS president_id_seq CASCADE;
