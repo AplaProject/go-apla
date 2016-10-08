@@ -7,6 +7,22 @@
 		theme: 'bootstrap'
 	});
 	
+	$(".map").on('click', function(){
+		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
+			$("#modal_map").modal("show");
+			$("#modal_map").on('shown.bs.modal', function(e) {
+				initmap();
+				clearMap();
+				$("#toolchoice, #codechoice").change();
+			})
+		});
+	});
+	$(".avatar").on('click', function(){
+		$("#dl_modal").load("content?controllerHTML=modal_avatar", { }, function() {
+			$("#modal_avatar").modal("show");
+		});
+	});
+	
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -72,7 +88,7 @@
 		   <div class="form-group">
 			   <label>Value</label>
 
-			   {{if eq .StateParameters.name "state_flag"}}<img src="data:image/png;base64,{{.StateParameters.value}}">{{end}}
+			   {{if eq .StateParameters.name "state_flag"}}<p><img src="data:image/png;base64,{{.StateParameters.value}}"></p>{{end}}
 
 			   <textarea class="form-control" id="value">{{.StateParameters.value}}</textarea>
 		   </div>
@@ -87,7 +103,11 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-
+			  {{if eq .StateParameters.name "state_flag"}}
+			  	<button type="button" class="avatar btn btn-primary"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+			  {{else}}
+				<button type="button" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+			  {{end}}
 		  </div>
 		  <div class="pull-right">
 			  <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Send</button>

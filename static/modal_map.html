@@ -1,11 +1,14 @@
 <style>
+	.modal-body {
+		padding:0px;
+	}
 	#map_canvas {
 		height:500px;
 	}
 </style>
 
 <div class="modal fade" id="modal_map" role="dialog" aria-labelledby="modal_map_label">
-	<div class="modal-dialog" role="document">
+	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content" data-sweet-alert>
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -13,20 +16,60 @@
 			</div>
 			<div class="modal-body">
 				<div id="map_canvas"></div>
-				<div class="clearfix" style="padding-top:20px;">
-					<div class="pull-left">
-						<input class="btn btn-primary" type="button" onclick="deleteLastPoint();" value="Delete Last Point"/>
-						<input class="btn btn-primary" type="button" onclick="clearMap();" value="Clear Map"/>
-					</div>
-					<div class="pull-right">
-						
-					</div>
-				</div>
+				<textarea id="coords" class="form-control hidden"></textarea>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary" onClick="preloader(this);" id="save">Save</button>
+				<div class="pull-left">
+					<input class="btn btn-primary" type="button" onclick="deleteLastPoint();" value="Delete Last Point"/>
+					<input class="btn btn-primary" type="button" onclick="clearMap();" value="Clear Map"/>
+				</div>
+				<div class="pull-right">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary" onClick="preloader(this);" id="save">Save</button>
+				</div>
 			</div>
 		</div>
 	</div>
+</div>
+
+<div class="hidden">
+	<form id="tools" action="./" method="post" onsubmit="return false">
+		<select id="toolchoice" name="toolchoice" style="border:1px solid #000000;" onchange="toolID=parseInt(this.options[this.selectedIndex].value);setTool();">
+			<option value="1">Polyline</option>
+			<option selected="selected" value="2">Polygon</option>
+			<option value="3">Rectangle</option>
+			<option value="4">Circle</option>
+			<option value="5">Marker</option>
+			<option value="6">Directions</option>
+		</select>
+	</form>
+	<form id="codes" action="./" method="post" onsubmit="return false">
+		<select id="codechoice" name="codechoice" style="border:1px solid #000000;" onchange="codeID=parseInt(this.options[this.selectedIndex].value);setCode();">
+			<option value="1">KML</option>
+			<option selected="selected" value="2">Javascript</option>
+		</select>
+	</form>
+	<form action="#">
+		<select id="over" style="width:180px; border:1px solid #000000;">
+			<option>LngLat mousemove</option>
+			<option selected="selected">LatLng mousemove</option>
+		</select>
+		<input type="button" onclick="mapcenter();" value="Mapcenter"/>
+		<input type="text" style="width:140px; border: 1px solid #000000;" id="centerofmap" />
+		Zoom level:
+		<input type="text" size="5" name="myzoom" id="myzoom" value="7" />
+	</form>
+	<input type="button" onclick="nextshape();" value="Next shape"/>
+	<input type="button" onclick="deleteLastPoint();" value="Delete Last Point"/>
+	<input type="button" onclick="styleprep();" value="Style Options"/>
+	<input type="button" onclick="editlines();" value="Edit lines" id="EditButton"/>
+	<input type="button" onclick="docudetails();" value="KML input"/>
+	<input type="button" onclick="showKML();" value="Show KML"/>
+	<input style="width:150px" type="button" onclick="copyTextarea();" value="Select and copy text"/>
+	<form style="margin-right:5px" action="#" onsubmit="showAddress(this.address.value); return false">
+		<input type="text" style="border: 1px solid #000000;" size="50" name="address" value="" />
+		<input type="submit" value="Search" />
+	</form>
+	<input type="button" id="textareabutton" onclick="toggletext();" value="Show/Hide textareabox"/>
+	<input type="button" onclick="regret();" value="Regret deleted point" id="RegretButton"/>
 </div>
