@@ -25,6 +25,9 @@ const NMenu = `menu`
 type menuPage struct {
 	Data *CommonPage
 	Menu string
+	StateName string
+	StateFlag string
+	CitizenName string
 }
 
 func init() {
@@ -34,10 +37,27 @@ func init() {
 func (c *Controller) Menu() (string, error) {
 	var err error
 	menu := ""
+	stateName := ""
+	stateFlag := ""
+	citizenName := ""
 	if c.StateIdStr != "" {
 		menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
 		if err != nil {
 			return "", err
+		}
+
+		stateName, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_name").String()
+		if err != nil {
+			return "", err
+		}
+		stateFlag, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_flag").String()
+		if err != nil {
+			return "", err
+		}
+
+		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenId).String()
+		if err != nil {
+			log.Error("%v", err)
 		}
 
 		qrx := regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\)`)
@@ -46,5 +66,5 @@ func (c *Controller) Menu() (string, error) {
 		menu = qrx.ReplaceAllString(menu, "<li><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
 
 	}
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu})
+	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName})
 }
