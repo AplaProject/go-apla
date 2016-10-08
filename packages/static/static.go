@@ -121,13 +121,17 @@
 // static/js/demo/demo-vector-map.js
 // static/js/demo/demo-wizard.js
 // static/js/demo/demo-xeditable.js
-// static/js/editor/ace.js
-// static/js/editor/mode-c_cpp.js
-// static/js/editor/theme-chrome.js
 // static/js/index.js
 // static/js/keys.js
 // static/js/map.js
 // static/js/nprogress.js
+// static/js/photoEditor/cropper.min.js
+// static/js/photoEditor/editor.js
+// static/js/photoEditor/vue.min.js
+// static/js/textEditor/ace.js
+// static/js/textEditor/mode-c_cpp.js
+// static/js/textEditor/mode-markdown.js
+// static/js/textEditor/theme-chrome.js
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
@@ -2409,60 +2413,6 @@ func staticJsDemoDemoXeditableJs() (*asset, error) {
 	return a, err
 }
 
-// staticJsEditorAceJs reads file data from disk. It returns an error on failure.
-func staticJsEditorAceJs() (*asset, error) {
-	path := "static/js/editor/ace.js"
-	name := "static/js/editor/ace.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsEditorModeC_cppJs reads file data from disk. It returns an error on failure.
-func staticJsEditorModeC_cppJs() (*asset, error) {
-	path := "static/js/editor/mode-c_cpp.js"
-	name := "static/js/editor/mode-c_cpp.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsEditorThemeChromeJs reads file data from disk. It returns an error on failure.
-func staticJsEditorThemeChromeJs() (*asset, error) {
-	path := "static/js/editor/theme-chrome.js"
-	name := "static/js/editor/theme-chrome.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticJsIndexJs reads file data from disk. It returns an error on failure.
 func staticJsIndexJs() (*asset, error) {
 	path := "static/js/index.js"
@@ -2521,6 +2471,132 @@ func staticJsMapJs() (*asset, error) {
 func staticJsNprogressJs() (*asset, error) {
 	path := "static/js/nprogress.js"
 	name := "static/js/nprogress.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsPhotoeditorCropperMinJs reads file data from disk. It returns an error on failure.
+func staticJsPhotoeditorCropperMinJs() (*asset, error) {
+	path := "static/js/photoEditor/cropper.min.js"
+	name := "static/js/photoEditor/cropper.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsPhotoeditorEditorJs reads file data from disk. It returns an error on failure.
+func staticJsPhotoeditorEditorJs() (*asset, error) {
+	path := "static/js/photoEditor/editor.js"
+	name := "static/js/photoEditor/editor.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsPhotoeditorVueMinJs reads file data from disk. It returns an error on failure.
+func staticJsPhotoeditorVueMinJs() (*asset, error) {
+	path := "static/js/photoEditor/vue.min.js"
+	name := "static/js/photoEditor/vue.min.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsTexteditorAceJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorAceJs() (*asset, error) {
+	path := "static/js/textEditor/ace.js"
+	name := "static/js/textEditor/ace.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsTexteditorModeC_cppJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorModeC_cppJs() (*asset, error) {
+	path := "static/js/textEditor/mode-c_cpp.js"
+	name := "static/js/textEditor/mode-c_cpp.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsTexteditorModeMarkdownJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorModeMarkdownJs() (*asset, error) {
+	path := "static/js/textEditor/mode-markdown.js"
+	name := "static/js/textEditor/mode-markdown.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsTexteditorThemeChromeJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorThemeChromeJs() (*asset, error) {
+	path := "static/js/textEditor/theme-chrome.js"
+	name := "static/js/textEditor/theme-chrome.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4094,13 +4170,17 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-vector-map.js": staticJsDemoDemoVectorMapJs,
 	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
-	"static/js/editor/ace.js": staticJsEditorAceJs,
-	"static/js/editor/mode-c_cpp.js": staticJsEditorModeC_cppJs,
-	"static/js/editor/theme-chrome.js": staticJsEditorThemeChromeJs,
 	"static/js/index.js": staticJsIndexJs,
 	"static/js/keys.js": staticJsKeysJs,
 	"static/js/map.js": staticJsMapJs,
 	"static/js/nprogress.js": staticJsNprogressJs,
+	"static/js/photoEditor/cropper.min.js": staticJsPhotoeditorCropperMinJs,
+	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
+	"static/js/photoEditor/vue.min.js": staticJsPhotoeditorVueMinJs,
+	"static/js/textEditor/ace.js": staticJsTexteditorAceJs,
+	"static/js/textEditor/mode-c_cpp.js": staticJsTexteditorModeC_cppJs,
+	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
+	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
@@ -4361,15 +4441,21 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
 				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
-			"editor": &bintree{nil, map[string]*bintree{
-				"ace.js": &bintree{staticJsEditorAceJs, map[string]*bintree{}},
-				"mode-c_cpp.js": &bintree{staticJsEditorModeC_cppJs, map[string]*bintree{}},
-				"theme-chrome.js": &bintree{staticJsEditorThemeChromeJs, map[string]*bintree{}},
-			}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
 			"map.js": &bintree{staticJsMapJs, map[string]*bintree{}},
 			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{}},
+			"photoEditor": &bintree{nil, map[string]*bintree{
+				"cropper.min.js": &bintree{staticJsPhotoeditorCropperMinJs, map[string]*bintree{}},
+				"editor.js": &bintree{staticJsPhotoeditorEditorJs, map[string]*bintree{}},
+				"vue.min.js": &bintree{staticJsPhotoeditorVueMinJs, map[string]*bintree{}},
+			}},
+			"textEditor": &bintree{nil, map[string]*bintree{
+				"ace.js": &bintree{staticJsTexteditorAceJs, map[string]*bintree{}},
+				"mode-c_cpp.js": &bintree{staticJsTexteditorModeC_cppJs, map[string]*bintree{}},
+				"mode-markdown.js": &bintree{staticJsTexteditorModeMarkdownJs, map[string]*bintree{}},
+				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
+			}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
 			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
