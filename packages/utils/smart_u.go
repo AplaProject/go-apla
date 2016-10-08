@@ -34,7 +34,7 @@ func init() {
 
 // Reading and compiling contracts from smart_contracts tables
 func LoadContracts() (err error) {
-	var contracts, states []map[string]string
+	var states []map[string]string
 	prefix := []string{`global`}
 	states, err = DB.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
@@ -44,14 +44,23 @@ func LoadContracts() (err error) {
 		prefix = append(prefix, istate[`id`])
 	}
 	for _, ipref := range prefix {
-		contracts, err = DB.GetAll(`select * from "`+ipref+`_smart_contracts" order by id`, -1)
-		if err != nil {
+		if err = LoadContract(ipref); err != nil {
 			return err
 		}
-		for _, item := range contracts {
-			if err = smart.Compile(item[`value`]); err != nil {
-				return
-			}
+	}
+	return
+}
+
+// Reading and compiling contract of new state
+func LoadContract(prefix string) (err error) {
+	var contracts []map[string]string
+	contracts, err = DB.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
+	if err != nil {
+		return err
+	}
+	for _, item := range contracts {
+		if err = smart.Compile(item[`value`]); err != nil {
+			return
 		}
 	}
 	return

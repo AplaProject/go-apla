@@ -170,7 +170,7 @@ func (p *Parser) NewState() error {
 	}
 	func main {
 		Println("TXCitizenRequest main")
-		DBInsert(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id,public_key_0,name,block_id", $wallet, $PublicKey, $FullName, $block)
+		DBInsert(Sprintf( "%d_citizenship_requests", $StateId), "dlt_wallet_id,public_key_0,name,block_id", $wallet, $PublicKey, $FullName, $block)
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
 	tx {
@@ -332,6 +332,9 @@ func (p *Parser) NewState() error {
 				ALTER TABLE ONLY "` + id + `_accounts" ADD CONSTRAINT "` + id + `_accounts_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if err = utils.LoadContract(id); err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
