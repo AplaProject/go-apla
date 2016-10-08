@@ -1,17 +1,17 @@
 {{ define "editContract" }}
 <style>
-	.editor {
+	.textEditor {
 		position:relative;
 		font-size:0px;
 		padding-bottom:5px;
 	}
-	.editor code  {
+	.textEditor code  {
 		position:relative;
 		font: 12px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
 		line-height:14px;
 		z-index:1;
     }
-	.editor section  {
+	.textEditor section  {
 		position:absolute;
 		left:0px;
 		top:0px;
@@ -23,16 +23,16 @@
 <script>
 	var serverTime;
 	
-	var editor = ace.edit("editor");
+	var editor = ace.edit("textEditor");
 	var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
-	$(".editor code").html(editor.getValue());
+	$(".textEditor code").html(editor.getValue());
 	$("#value").val(editor.getValue());
 	editor.setTheme("ace/theme/chrome");
     editor.session.setMode(new JavaScriptMode());
 	editor.setShowPrintMargin(false);
 	editor.getSession().setUseWrapMode(true);
 	editor.getSession().on('change', function(e) {
-		$(".editor code").html(editor.getValue());
+		$(".textEditor code").html(editor.getValue());
 		$("#value").val(editor.getValue());
 		editor.resize();
 	});
@@ -103,9 +103,9 @@
 		   </div>
 		   <div class="form-group">
 			   <label>Value</label>
-			   <pre class="editor">
+			   <pre class="textEditor">
 					<code></code>
-					<section id="editor">{{.Data.value}}</section>
+					<section id="textEditor">{{.Data.value}}</section>
 				</pre>
 			   <textarea id="value" class="form-control hidden"></textarea>
 		   </div>
