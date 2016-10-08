@@ -532,9 +532,17 @@ main:
 		lexem := (*lexems)[i]
 		//		fmt.Println(i, parcount, lexem)
 		switch lexem.Type {
-		case IS_RCURLY, IS_LCURLY, LEX_NEWLINE:
-			if lexem.Type != LEX_NEWLINE {
-				i--
+		case IS_RCURLY, IS_LCURLY:
+			i--
+			break main
+		case LEX_NEWLINE:
+			if i > 0 && ((*lexems)[i-1].Type == IS_COMMA || (*lexems)[i-1].Type == LEX_OPER) {
+				continue main
+			}
+			for k := len(buffer) - 1; k >= 0; k-- {
+				if buffer[k].Cmd == CMD_SYS {
+					continue main
+				}
 			}
 			break main
 		case IS_LPAR:
