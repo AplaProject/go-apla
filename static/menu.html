@@ -388,13 +388,13 @@
 					  <div class="user-block-status">
 
 						 <img src="static/img/user/02.jpg" alt="Avatar" width="60" height="60" class="img-thumbnail img-circle">
-						 <div class="circle circle-success circle-lg"></div>
 					  </div>
 				   </div>
 				   <!-- Name and Job-->
 				   <div class="user-block-info">
-					  <span class="user-block-name">Hello, Mike</span>
-					  <span class="user-block-role">Designer</span>
+					  <span class="user-block-name">{{.CitizenName}} <a href="#" onclick="load_template('citizen_profile'); HideMenu();"><i class="fa fa-angle-down"></i></a></span>
+					   <img src="data:image/png;base64,{{.StateFlag}}" height="15">
+					   <span class="user-block-role">{{.StateName}}</span>
 				   </div>
 				</div>
 			 </div>
