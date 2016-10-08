@@ -62,25 +62,26 @@
 			  <tbody>
 			  <tr>
 				  <td>id</td>
-				  <td>name</td>
-				  <td>value</td>
-				  <td>conditions</td>
-				  <td>variables</td>
-				  <td></td>
+				  <td>Contract</td>
+				  <td>Action</td>
 			  </tr>
 			  {{ range $data := .StateSmartLaws }}
 				 <tr>
 					 <td class="thead"><strong>{{$data.id}}</strong></td>
-					 <td><strong>{{$data.name}}</strong></td>
 					 <td>
+						 <strong>{{$data.name}}</strong>
 					 	<pre class="editor">
 							<code>{{$data.value}}</code>
 							<section>{{$data.value}}</section>
 						</pre>
-					</td>
-					 <td><strong>{{$data.conditions}}</strong></td>
-					 <td><strong>{{$data.variables}}</strong></td>
-					 <td><button type="button" class="btn btn-primary" onclick="load_page('editContract', {id: {{$data.id}} , global: {{$.Global}} } )">Change</button></td>
+						 <strong>Conditions for change</strong>
+
+					 	<pre class="editor">
+							<code>{{$data.conditions}}</code>
+							<section>{{$data.conditions}}</section>
+						</pre>
+					 </td>
+					 <td><a type="button" class="btn btn-primary" onclick="load_page('editContract', {id: {{$data.id}} , global: {{$.Global}} } )"><i class="fa fa-cog"></i></a></td>
 				 </tr>
 			  {{end}}
 			  </tbody>
