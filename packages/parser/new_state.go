@@ -159,22 +159,18 @@ func (p *Parser) NewState() error {
 	tx {
 		PublicKey  bytes
 		StateId    int
-		FirstName  string
-		MiddleName string "optional"
-		LastName   string
-	}
-	func init {
-//		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
+		FullName   string
+//		MiddleName string "optional"
+//		LastName   string
 	}
 	func front {
-//		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
 		if Balance($wallet) < Float(StateParam($StateId, "citizenship_price")) {
 			error "not enough money"
 		}
 	}
 	func main {
 		Println("TXCitizenRequest main")
-		DBInsert(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id,data,block_id", $wallet, TxJson(), $block)
+		DBInsert(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id,public_key_0,name,block_id", $wallet, $PublicKey, $FullName, $block)
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
 	tx {
@@ -182,13 +178,10 @@ func (p *Parser) NewState() error {
         PublicKey bytes
     }
 
-	func front {
-//		Println("NewCitizen Front", $citizen, $state, $PublicKey )
-	}
 	func main {
 		var citizenId int
 		Println("NewCitizen Main", $type, $citizen, $block )
-		citizenId = DBInsert(Sprintf( "%d_citizens", $state), "public_key_0,block_id,data", $PublicKey, $block, DBString(Sprintf( "%d_citizenship_requests", $state), "data", $RequestId ) )
+		citizenId = DBInsert(Sprintf( "%d_citizens", $state), "public_key_0,block_id,name", $PublicKey, $block, DBString(Sprintf( "%d_citizenship_requests", $state), "name", $RequestId ) )
         DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", citizenId)
 	}
 }`, `TXRejectCitizen`, `contract TXRejectCitizen {
@@ -274,7 +267,7 @@ func (p *Parser) NewState() error {
 				CREATE TABLE "` + id + `_citizens" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizens_id_seq'),
 				"public_key_0" bytea  NOT NULL DEFAULT '',
-				"data" text NOT NULL DEFAULT '',
+				"name" varchar(100) NOT NULL DEFAULT '',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
@@ -299,7 +292,8 @@ func (p *Parser) NewState() error {
 				CREATE TABLE "` + id + `_citizenship_requests" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
-				"data" text NOT NULL DEFAULT '',
+				"public_key_0" bytea  NOT NULL DEFAULT '',				
+				"name" varchar(100) NOT NULL DEFAULT '',
 				"approved" int  NOT NULL DEFAULT '0',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'

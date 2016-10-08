@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"encoding/json"
+	"encoding/hex"
 	//	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/script"
@@ -58,20 +58,20 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		//		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
 		//		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
 		//		vals[`publicKey`] = hex.EncodeToString(pubkey)
-		var data map[string]interface{}
-		if err = json.Unmarshal([]byte(vals[`data`]), &data); err != nil {
-			return ``, err
-		}
+		//var data map[string]interface{}
+		/*		if err = json.Unmarshal([]byte(vals[`data`]), &data); err != nil {
+				return ``, err
+			}*/
 		contract := smart.GetContract(`TXCitizenRequest`)
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if fitem.Type.String() == `string` {
-				value := data[fitem.Name].(string)
+				value := vals[`name`] //fitem.Name] //.(string)
 				fields = append(fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 					TxType: fitem.Type.String(), Title: fitem.Name,
 					Value: value})
 			}
 		}
-		vals[`publicKey`] = data[`PublicKey`].(string)
+		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public_key_0`])) //.(string)
 	}
 	txType := "TXNewCitizen"
 	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals,

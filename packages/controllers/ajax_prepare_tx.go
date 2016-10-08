@@ -45,7 +45,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 	cntname := c.r.FormValue(`TxName`)
 	contract := smart.GetContract(cntname)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
-		err = fmt.Errorf(`there is not %s contract`, cntname)
+		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
 	} else {
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		result.Time = lib.Time32()
