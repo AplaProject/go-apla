@@ -154,7 +154,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?),(?, ?),(?,?)`,
+		(?, ?),(?, ?),(?,?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
 	tx {
 		PublicKey  bytes
@@ -192,6 +192,19 @@ func (p *Parser) NewState() error {
   //    Println("TXRejectCitizen main", $RequestId  )
 	  DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", -1)
    }
+}`, `TXEditProfile`, `contract TXEditProfile {
+	tx {
+		FirstName  string
+		Image string
+	}
+	func init {
+	}
+	func front {
+
+	}
+	func main {
+		Println("TXEditProfile main")
+	}
 }`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -231,13 +244,17 @@ func (p *Parser) NewState() error {
 	}
 
 	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `{{Title=Best country}}{{Navigation=[goverment](goverment) / non-link text}}{{PageTitle=Dashboard}}
 ![Flag](http://davutlarhamami.com/images/indir%20%281%29.jpg)
 {{table.1_citizens[id=CitizenId].id}}
 {{table.1_citizens}}
 {{table.1_citizens.(id).sys_navigate(some text,editContract,id=id)}}
-{{contract.TXCitizenRequest}}`, `menu_default`, id+`_citizens.id=1`)
+{{contract.TXCitizenRequest}}`, `menu_default`, id+`_citizens.id=1`,
+		`citizen_profile`, `{{Title=Profile}}{{Navigation=[Citizen](Citizen) / Editing profile}}
+{{PageTitle=Editing profile}}
+{{contract.TXEditProfile}}`, `menu_default`, id+`_citizens.id=1`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
