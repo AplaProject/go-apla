@@ -1,16 +1,43 @@
 {{ define "editPage" }}
 <style>
-	#DataMenuBtn {
-		visibility:hidden;
-		position:absolute;
-		left:-100000px;
-		top:-100000px;
+	.textEditor, .textEditorMenu {
+		position:relative;
+		font-size:0px;
+		padding-bottom:5px;
 	}
+	.textEditor code, .textEditorMenu code  {
+		position:relative;
+		font: 12px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
+		line-height:14px;
+		z-index:1;
+    }
+	.textEditor section, .textEditorMenu section  {
+		position:absolute;
+		left:0px;
+		top:0px;
+		width:100%;
+        height:100%;
+		z-index:2;
+    }
 </style>
 
 <script>
 	var serverTime;
 	var menu = null;
+	
+	var editor = ace.edit("textEditor");
+	var JavaScriptMode = ace.require("ace/mode/markdown").Mode;
+	$(".textEditor code").html(editor.getValue());
+	$("#page_value").val(editor.getValue());
+	editor.setTheme("ace/theme/chrome");
+    editor.session.setMode(new JavaScriptMode());
+	editor.setShowPrintMargin(false);
+	editor.getSession().setUseWrapMode(true);
+	editor.getSession().on('change', function(e) {
+		$(".textEditor code").html(editor.getValue());
+		$("#page_value").val(editor.getValue());
+		editor.resize();
+	});
 	
 	function SetMenu() {
 		if (!menu) {
@@ -25,9 +52,24 @@
 			success: function(data) {
 				$("#DataMenu").html("").append(
 					'<tr><td><strong>Name</strong><br>' + data.name + '</td></tr>' +
-					'<tr><td><strong>Value</strong><br>' + data.value + '</td></tr>' +
+					'<tr><td>' +
+							'<pre class="textEditorMenu">' +
+								'<code>' + data.value + '</code>' +
+								'<section id="textEditorMenu">' + data.value + '</section>' +
+							'</pre>' +
+					'</td></tr>' +
 					'<tr><td><strong>Conditions</strong><br>' + data.conditions + '</td></tr>'
 				);
+				
+				var editor = ace.edit("textEditorMenu");
+				var JavaScriptMode = ace.require("ace/mode/markdown").Mode;
+				editor.setTheme("ace/theme/chrome");
+				editor.session.setMode(new JavaScriptMode());
+				editor.setShowPrintMargin(false);
+				editor.getSession().setUseWrapMode(true);
+				editor.renderer.setShowGutter(false);
+				editor.setReadOnly(true);
+				
 				obj.removeClass("whirl standard");
 			},
 			error: function(xhr, status, error) {
@@ -116,7 +158,11 @@
 			   </div>
 			   <div class="form-group">
 				   <label>Value</label>
-				   <textarea class="form-control" id="page_value" style="height: 500px">{{.DataPage.value}}</textarea>
+				   <pre class="textEditor">
+						<code></code>
+						<section id="textEditor">{{.DataPage.value}}</section>
+					</pre>
+				   <textarea id="page_value" class="form-control hidden"></textarea>
 			   </div>
 			   <div class="form-group">
 				   <label>Menu</label>
@@ -167,7 +213,7 @@
 			   <div class="clearfix">
 				  <div class="pull-left">
 					 <button type="button" class="btn btn-primary" onclick="EditMenu();">edit</button>
-					 <button type="button" id="DataMenuBtn" data-tool="panel-refresh" onClick="preloader(this);">edit</button>
+					 <button type="button" id="DataMenuBtn" class="hidden" data-tool="panel-refresh" onClick="preloader(this);">edit</button>
 				  </div>
 			   </div>
 		  	</div>

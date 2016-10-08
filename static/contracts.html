@@ -1,17 +1,17 @@
 {{ define "contracts" }}
 <style>
-	.editor {
+	.textEditor {
 		position:relative;
 		font-size:0px;
 		padding-bottom:5px;
 	}
-	.editor code  {
+	.textEditor code  {
 		position:relative;
 		font: 12px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
 		line-height:14px;
 		z-index:1;
     }
-	.editor section  {
+	.textEditor section  {
 		position:absolute;
 		left:0px;
 		top:0px;
@@ -24,9 +24,9 @@
 <script>
 	var i = 0;
 	
-	$(".editor").each(function() {
+	$(".textEditor").each(function() {
 		i += 1;
-		$(this).find("section").attr("id", "editor_" + i);
+		$(this).find("section").attr("id", "textEditor_" + i);
 		var editor = ace.edit($(this).find("section").attr("id"));
 		var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
 		editor.setTheme("ace/theme/chrome");
@@ -63,17 +63,17 @@
 			  <tr>
 				  <td>id</td>
 				  <td>name</td>
-				  <td>value</td>
+				  <td width="450" style="min-width:275px;">value</td>
 				  <td>conditions</td>
 				  <td>variables</td>
-				  <td></td>
+				  <td width="50"></td>
 			  </tr>
 			  {{ range $data := .StateSmartLaws }}
 				 <tr>
 					 <td class="thead"><strong>{{$data.id}}</strong></td>
 					 <td><strong>{{$data.name}}</strong></td>
 					 <td>
-					 	<pre class="editor">
+					 	<pre class="textEditor">
 							<code>{{$data.value}}</code>
 							<section>{{$data.value}}</section>
 						</pre>

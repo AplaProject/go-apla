@@ -1,4 +1,42 @@
 {{ define "interface" }}
+<style>
+	.textEditor {
+		position:relative;
+		font-size:0px;
+		padding-bottom:5px;
+	}
+	.textEditor code  {
+		position:relative;
+		font: 12px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
+		line-height:14px;
+		z-index:1;
+    }
+	.textEditor section  {
+		position:absolute;
+		left:0px;
+		top:0px;
+		width:100%;
+        height:100%;
+		z-index:2;
+    }
+</style>
+
+<script>
+	var i = 0;
+	
+	$(".textEditor").each(function() {
+		i += 1;
+		$(this).find("section").attr("id", "textEditor_" + i);
+		var editor = ace.edit($(this).find("section").attr("id"));
+		var JavaScriptMode = ace.require("ace/mode/markdown").Mode;
+		editor.setTheme("ace/theme/chrome");
+		editor.session.setMode(new JavaScriptMode());
+		editor.setShowPrintMargin(false);
+		editor.getSession().setUseWrapMode(true);
+		editor.renderer.setShowGutter(false);
+		editor.setReadOnly(true);
+	});
+</script>
 
 	<div class="content-heading">
 		Interface
@@ -23,16 +61,21 @@
 		   <table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
-				  <td>Name</td>
-				  <td>Value</td>
+				  <td width="150">Name</td>
+				  <td width="450" style="min-width:275px;">Value</td>
 				  <td>Menu</td>
 				  <td>Conditions</td>
-				  <td></td>
+				  <td width="50"></td>
 			  </tr>
 			  {{ range $value := .InterfacePages }}
 				 <tr>
 					 <td class="thead"><strong>{{$value.name}}</strong></td>
-					 <td><strong>{{$value.value}}</strong></td>
+					 <td>
+					 	<pre class="textEditor">
+							<code>{{$value.value}}</code>
+							<section>{{$value.value}}</section>
+						</pre>
+					 </td>
 					 <td><strong>{{$value.menu}}</strong></td>
 					 <td><strong>{{$value.conditions}}</strong></td>
 					 <td><button type="button" class="btn btn-primary" onclick="load_page('editPage', {name: {{$value.name}}, global: {{$.Global}} } )">edit</button></td>
@@ -63,15 +106,20 @@
 				<table class="table table-striped table-bordered table-hover">
 					<tbody>
 					<tr>
-						<td>Name</td>
-						<td>Value</td>
+						<td width="150">Name</td>
+						<td width="450" style="min-width:275px;">Value</td>
 						<td>Conditions</td>
-						<td></td>
+						<td width="50"></td>
 					</tr>
 					{{ range $value := .InterfaceMenu }}
 					<tr>
 						<td class="thead"><strong>{{$value.name}}</strong></td>
-						<td><strong>{{$value.value}}</strong></td>
+						<td>
+							<pre class="textEditor">
+								<code>{{$value.value}}</code>
+								<section>{{$value.value}}</section>
+							</pre>
+						</td>
 						<td><strong>{{$value.conditions}}</strong></td>
 						<td><button type="button" class="btn btn-primary" onclick="load_page('editMenu', {name: {{$value.name}}, global: {{$.Global}} } )">edit</button></td>
 					</tr>
