@@ -102,7 +102,7 @@ func (p *Parser) DLTTransfer() error {
 	}
 	log.Debug("pkey %x", pkey)
 	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
 		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}

@@ -48,22 +48,28 @@ func (p *Parser) generalCheck() error {
 				return utils.ErrInfoFmt("incorrect public_key")
 			}
 			// возможно юзер послал ключ с тр-ией
-			log.Debug("lower(hex(address) %s", string(utils.HashSha1Hex([]byte(p.TxMap["public_key"]))))
-			walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, string(utils.HashSha1Hex([]byte(p.TxMap["public_key"])))).Int64()
+			log.Debug("pubkey %s", p.TxMap["public_key"])
+			log.Debug("pubkey %x", p.TxMap["public_key"])
+			walletId, err := p.GetWalletIdByPublicKey(p.TxMap["public_key"])
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
+			log.Debug("walletId %d", walletId)
 			if walletId == 0 {
 				return utils.ErrInfoFmt("incorrect wallet_id or public_key")
 			}
-			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key"]))
-		}
-		p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
-		if len(data["public_key_1"]) > 10 {
-			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
-		}
-		if len(data["public_key_2"]) > 10 {
-			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
+			p.PublicKeys = append(p.PublicKeys, utils.HexToBin(p.TxMap["public_key"]))
+		} else {
+			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
+			log.Debug("data[public_key_0]", data["public_key_0"])
+			if len(data["public_key_1"]) > 10 {
+				log.Debug("data[public_key_1]", data["public_key_1"])
+				p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
+			}
+			if len(data["public_key_2"]) > 10 {
+				log.Debug("data[public_key_2]", data["public_key_2"])
+				p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
+			}
 		}
 	} else {
 		data, err := p.OneRow(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = ?`, utils.Int64ToStr(p.TxCitizenID)).String()

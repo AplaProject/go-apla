@@ -40,6 +40,9 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
+
+	log.Debug("sessCitizenId %d SessWalletId %d SessStateId %d", c.SessCitizenId, c.SessWalletId, c.SessStateId)
+
 	TemplateStr, err := makeTemplate("anonym_money_transfer", "anonymMoneyTransfer", &anonymMoneyTransferPage{
 		CountSignArr: c.CountSignArr,
 		CountSign:    c.CountSign,

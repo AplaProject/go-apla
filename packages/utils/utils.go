@@ -1473,11 +1473,13 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
-	log.Debug("publicKeys %v", publicKeys)
+	log.Debug("publicKeys %x", publicKeys)
 	pubkeyCurve := elliptic.P256()
 	signhash := sha256.Sum256([]byte(forSign))
 
 	for i := 0; i < len(publicKeys); i++ {
+
+		log.Debug("pubkey %x", publicKeys[i])
 		/*public, err := hex.DecodeString(string(publicKeys[i]))
 		if err != nil {
 			return false, ErrInfo(err)

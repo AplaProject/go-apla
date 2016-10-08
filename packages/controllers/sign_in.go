@@ -64,6 +64,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 	result.Result = true
 	result.Address = lib.KeyToAddress(bkey)
 	c.sess.Set("address", result.Address)
+	log.Debug("address : %s", result.Address)
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
@@ -79,9 +80,10 @@ func (c *Controller) AjaxSignIn() interface{} {
 			return result
 		}*/
 	c.sess.Set("wallet_id", walletId)
+	log.Debug("wallet_id : %d", walletId)
 	var citizenId int64
 	if stateId > 0 {
-		result = SignInJson{}
+		//result = SignInJson{}
 		log.Debug("stateId %v", stateId)
 		if _, err := c.CheckStateName(stateId); err == nil {
 			citizenId, err = c.Single(`SELECT id FROM "`+utils.Int64ToStr(stateId)+`_citizens" WHERE hex(public_key_0) = ?`,
@@ -93,11 +95,12 @@ func (c *Controller) AjaxSignIn() interface{} {
 			log.Debug("citizenId %v", citizenId)
 			if citizenId == 0 {
 				stateId = 0
-				result.Error = "not a citizen"
+				log.Debug("not a citizen")
+				//result.Error = "not a citizen"
 			} else {
-				result.Result = true
 				result.Address = lib.KeyToAddress(bkey)
 			}
+			result.Result = true
 		} else {
 			result.Error = err.Error()
 			return result
@@ -111,5 +114,6 @@ func (c *Controller) AjaxSignIn() interface{} {
 		}*/
 	c.sess.Set("citizen_id", citizenId)
 	c.sess.Set("state_id", stateId)
+	log.Debug("citizen_id %d state_id %d", citizenId, stateId)
 	return result //`{"result":1,"address": "` + address + `"}`, nil
 }

@@ -963,8 +963,10 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
 	log.Debug("publicKey %s", publicKey)
 	key, _ := hex.DecodeString(string(publicKey))
-	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`,
-		string( /*HashSha1Hex*/ b58.Encode(lib.Address(key)))).Int64()
+	log.Debug("key %s", key)
+	log.Debug("b58 %s", b58.Encode(lib.Address(key)))
+	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ? or address = ?`,
+		string(`D`+b58.Encode(lib.Address(key))), string(b58.Encode(lib.Address(key)))).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
