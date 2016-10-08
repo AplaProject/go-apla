@@ -33,6 +33,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	b58 "github.com/jbenet/go-base58"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
@@ -962,8 +963,8 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
 	log.Debug("publicKey %s", publicKey)
 	key, _ := hex.DecodeString(string(publicKey))
-	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE lower(hex(address)) = ?`,
-		string( /*HashSha1Hex*/ hex.EncodeToString(lib.Address(key)))).Int64()
+	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`,
+		string( /*HashSha1Hex*/ b58.Encode(lib.Address(key)))).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}

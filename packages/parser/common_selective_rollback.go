@@ -46,17 +46,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		addSqlUpdate := ""
 		for k, v := range jsonMap {
 			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(v) != 0 {
-				query := ""
-				v = string(utils.BinToHex([]byte(v)))
-				switch p.ConfigIni["db_type"] {
-				case "sqlite":
-					query = k + `=x'` + v + `',`
-				case "postgresql":
-					query = k + `=decode('` + v + `','HEX'),`
-				case "mysql":
-					query = k + `=UNHEX("` + v + `"),`
-				}
-				addSqlUpdate += query
+				addSqlUpdate += k + `=decode('` + string(utils.BinToHex([]byte(v))) + `','HEX'),`
 			} else {
 				addSqlUpdate += k + `='` + v + `',`
 			}
@@ -64,7 +54,8 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		//log.Debug("%v", logData)
 		//log.Debug("%v", logData["prev_rb_id"])
 		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where)
-		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where, jsonMap["prev_rb_id"])
+		addSqlUpdate = addSqlUpdate[0 : len(addSqlUpdate)-1]
+		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" "+where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

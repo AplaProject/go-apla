@@ -36,7 +36,9 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlFields += `,`
 	}
 	for _, field := range fields {
-		addSqlFields += field + ","
+		if field[:1] == "+" || field[:1] == "-" {
+			addSqlFields += field[1:len(field)] + ","
+		}
 	}
 
 	addSqlWhere := ""
@@ -60,7 +62,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			if k == p.AllPkeys[table] {
 				continue
 			}
-			if utils.InSliceString(k, []string{"address", "hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && v != "" {
+			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && v != "" {
 				jsonMap[k] = string(utils.BinToHex([]byte(v)))
 			} else {
 				jsonMap[k] = v
@@ -84,7 +86,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
-			if utils.InSliceString(fields[i], []string{"address", "hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
+			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
 				addSqlUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`

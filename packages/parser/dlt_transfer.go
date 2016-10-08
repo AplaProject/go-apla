@@ -24,7 +24,7 @@ import (
 
 func (p *Parser) DLTTransferInit() error {
 
-	fields := []map[string]string{{"walletAddress": "bytes"}, {"amount": "int64"},  {"commission": "int64"}, {"comment": "bytes"},{"public_key": "bytes"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"walletAddress": "string"}, {"amount": "int64"},  {"commission": "int64"}, {"comment": "bytes"},{"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -86,22 +86,22 @@ func (p *Parser) DLTTransferFront() error {
 }
 
 func (p *Parser) DLTTransfer() error {
-	log.Debug("wallet address %s", p.TxMaps.Bytes["walletAddress"])
-	log.Debug("wallet address hex %x", utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
-	hexAddress := utils.BinToHex(utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
+	log.Debug("wallet address %s", p.TxMaps.String["walletAddress"])
+	log.Debug("wallet address hex %x", utils.B54Decode(p.TxMaps.String["walletAddress"]))
+	//hexAddress := utils.BinToHex(utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`, p.TxMaps.String["walletAddress"]).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	log.Debug("walletId %d", walletId)
 	//if walletId > 0 {
 
-	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE public_key_0 = [hex]`, p.TxMaps.Bytes["public_key"]).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	if len(p.TxMaps.Bytes["public_key"]) > 0 {
+	log.Debug("pkey %x", pkey)
+	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
 		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], p.TxMaps.Bytes["public_key"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
 		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
@@ -109,8 +109,19 @@ func (p *Parser) DLTTransfer() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
+	if walletId == 0 {
+			log.Debug("walletId == 0");
+			log.Debug("%s", string(p.TxMaps.String["walletAddress"]));
+			_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"address"}, []string{p.TxMaps.String["walletAddress"]}, true)
+	} else {
+			_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+	}
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	// пишем в общую историю тр-ий
-	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions", p.TxWalletID, walletId, p.TxMaps.Bytes["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions", p.TxWalletID, walletId, p.TxMaps.String["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

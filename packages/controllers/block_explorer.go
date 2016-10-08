@@ -129,7 +129,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		for ind := range blockExplorer {
 			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
 			if len(blockExplorer[ind][`address`]) > 0 && blockExplorer[ind][`address`] != `NULL` {
-				blockExplorer[ind][`wallet_address`] = lib.BytesToAddress([]byte(blockExplorer[ind][`address`]))
+				blockExplorer[ind][`wallet_address`] = blockExplorer[ind][`address`]
 			} else {
 				blockExplorer[ind][`wallet_address`] = ``
 			}

@@ -18,8 +18,6 @@ package parser
 
 import (
 	"encoding/json"
-
-	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) UpdFullNodesInit() error {
@@ -86,7 +84,7 @@ func (p *Parser) UpdFullNodes() error {
 		return p.ErrInfo(err)
 	}
 	for _, address_vote := range all {
-		dlt_wallets, err := p.OneRow(`SELECT host, wallet_id FROM dlt_wallets WHERE address = [hex]`, utils.BinToHex(address_vote)).String()
+		dlt_wallets, err := p.OneRow(`SELECT host, wallet_id FROM dlt_wallets WHERE address = ?`, address_vote).String()
 		if err != nil {
 			return p.ErrInfo(err)
 		}
