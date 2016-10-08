@@ -68,7 +68,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	"github.com/russross/blackfriday"
 )
 
