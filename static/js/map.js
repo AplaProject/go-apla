@@ -344,8 +344,8 @@ function addLatLng(point){
     if(polyPoints.length == 2 && toolID == 3) createrectangle(point);
     if(polyPoints.length == 2 && toolID == 4) createcircle(point);
     if(toolID == 1 || toolID == 2) { // if polyline or polygon
-        var stringtobesaved = point.latLng.lat().toFixed(6) + ',' + point.latLng.lng().toFixed(6);
-        var kmlstringtobesaved = point.latLng.lng().toFixed(6) + ',' + point.latLng.lat().toFixed(6);
+        var stringtobesaved = '"' + point.latLng.lat().toFixed(6) + '","' + point.latLng.lng().toFixed(6)+ '"';
+        var kmlstringtobesaved = '"' + point.latLng.lng().toFixed(6) + '","' + point.latLng.lat().toFixed(6)+ '"';
         //Cursor position, when inside polyShape, is registered with this listener
         cursorposition(polyShape);
         if(adder == 0) { //shape with no hole
@@ -411,21 +411,21 @@ function drawRectangle() {
     polyPoints.push(northWest);
     polyPoints.push(northEast);
     polyPoints.push(southEast);*/
-    var stringtobesaved = southWest.lng().toFixed(6)+','+southWest.lat().toFixed(6);
+    var stringtobesaved = '"' + southWest.lng().toFixed(6)+'","'+southWest.lat().toFixed(6) + '"';
     pointsArrayKml.push(stringtobesaved);
-    stringtobesaved = southWest.lng().toFixed(6)+','+northEast.lat().toFixed(6);
+    stringtobesaved = '"' + southWest.lng().toFixed(6)+'","'+northEast.lat().toFixed(6) + '"';
     pointsArrayKml.push(stringtobesaved);
-    stringtobesaved = northEast.lng().toFixed(6)+','+northEast.lat().toFixed(6);
+    stringtobesaved = '"' + northEast.lng().toFixed(6)+'","'+northEast.lat().toFixed(6) + '"';
     pointsArrayKml.push(stringtobesaved);
-    stringtobesaved = northEast.lng().toFixed(6)+','+southWest.lat().toFixed(6);
+    stringtobesaved = '"' + northEast.lng().toFixed(6)+'","'+southWest.lat().toFixed(6) + '"';
     pointsArrayKml.push(stringtobesaved);
-    stringtobesaved = southWest.lat().toFixed(6)+','+southWest.lng().toFixed(6);
+    stringtobesaved = '"' + southWest.lat().toFixed(6)+'","'+southWest.lng().toFixed(6) + '"';
     pointsArray.push(stringtobesaved);
-    stringtobesaved = northEast.lat().toFixed(6)+','+southWest.lng().toFixed(6);
+    stringtobesaved = '"' + northEast.lat().toFixed(6)+'","'+southWest.lng().toFixed(6) + '"';
     pointsArray.push(stringtobesaved);
-    stringtobesaved = northEast.lat().toFixed(6)+','+northEast.lng().toFixed(6);
+    stringtobesaved = '"' + northEast.lat().toFixed(6)+'","'+northEast.lng().toFixed(6) + '"';
     pointsArray.push(stringtobesaved);
-    stringtobesaved = southWest.lat().toFixed(6)+','+northEast.lng().toFixed(6);
+    stringtobesaved = '"' + southWest.lat().toFixed(6)+'","'+northEast.lng().toFixed(6) + '"';
     pointsArray.push(stringtobesaved);
     southWest = northEast = null;
     if(codeID == 2) logCode6();
@@ -1380,8 +1380,8 @@ function setmarkers(point) {
             }
         }
         polyPoints = polyShape.getPath();
-        var stringtobesaved = marker.getPosition().lat().toFixed(6) + ',' + marker.getPosition().lng().toFixed(6);
-        var kmlstringtobesaved = marker.getPosition().lng().toFixed(6) + ',' + marker.getPosition().lat().toFixed(6);
+        var stringtobesaved = '"' + marker.getPosition().lat().toFixed(6) + '","' + marker.getPosition().lng().toFixed(6) + '"';
+        var kmlstringtobesaved = '"' + marker.getPosition().lng().toFixed(6) + '","' + marker.getPosition().lat().toFixed(6) + '"';
         pointsArray.splice(i,1,stringtobesaved);
         pointsArrayKml.splice(i,1,kmlstringtobesaved);
         logCode1();
@@ -1480,8 +1480,8 @@ function setmidmarkers(point,prevpoint) {
     		}
     	}
         polyPoints = polyShape.getPath();
-        var stringtobesaved = newpos.lat().toFixed(6) + ',' + newpos.lng().toFixed(6);
-        var kmlstringtobesaved = newpos.lng().toFixed(6) + ',' + newpos.lat().toFixed(6);
+        var stringtobesaved = '"' + newpos.lat().toFixed(6) + '","' + newpos.lng().toFixed(6) + '"';
+        var kmlstringtobesaved = '"' + newpos.lng().toFixed(6) + '","' + newpos.lat().toFixed(6) + '"';
         pointsArray.splice(i+1,0,stringtobesaved);
         pointsArrayKml.splice(i+1,0,kmlstringtobesaved);
         logCode1();
@@ -1648,7 +1648,7 @@ function mapzoom(){
 function mapcenter(){
     var mapCenter = map.getCenter();
     var wrapped = new google.maps.LatLng(mapCenter.lat(), mapCenter.lng());
-    var latLngStr = wrapped.lat().toFixed(6) + ', ' + wrapped.lng().toFixed(6);
+    var latLngStr = '"' + wrapped.lat().toFixed(6) + '","' + wrapped.lng().toFixed(6) + '"';
     //var latLngStr = mapCenter.lat().toFixed(6) + ', ' + mapCenter.lng().toFixed(6);
     gob("centerofmap").value = latLngStr;
 }
@@ -2235,7 +2235,7 @@ function logCode4(){
 			gob('coords').value += '[' + pointsArray[i] + ']';
         }else{
             //gob('coords').value += 'new google.maps.LatLng('+pointsArray[i] + '),\n';
-			gob('coords').value += '[' + pointsArray[i] + '], ';
+			gob('coords').value += '[' + pointsArray[i] + '],';
         }
     }
     if(toolID == 1){
