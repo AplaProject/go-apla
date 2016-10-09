@@ -823,7 +823,7 @@ func (db *DCDB) GetMyPrivateKey(myPrefix string) (string, error) {
 
 func (db *DCDB) GetNodePrivateKey() (string, error) {
 	var key string
-	key, err := db.Single("SELECT private_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
+	key, err := db.Single("SELECT private_key FROM my_node_keys WHERE time = (SELECT max(time) FROM my_node_keys)").String()
 	if err != nil {
 		return "", ErrInfo(err)
 	}
@@ -832,7 +832,7 @@ func (db *DCDB) GetNodePrivateKey() (string, error) {
 
 func (db *DCDB) GetMyNodePublicKey(myPrefix string) (string, error) {
 	var key string
-	key, err := db.Single("SELECT public_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
+	key, err := db.Single("SELECT public_key FROM my_node_keys WHERE time = (SELECT max(time) FROM my_node_keys)").String()
 	if err != nil {
 		return "", ErrInfo(err)
 	}

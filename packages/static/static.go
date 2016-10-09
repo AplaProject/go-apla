@@ -8,7 +8,6 @@
 // static/backup.html
 // static/beta.html
 // static/block_explorer.html
-// static/block_generation.html
 // static/change_node_key.html
 // static/change_state_smart_laws.html
 // static/check_citizen_status.html
@@ -44,6 +43,7 @@
 // static/fonts/glyphicons-social-regular.ttf
 // static/fonts/glyphicons-social-regular.woff
 // static/fonts/glyphicons-social-regular.woff2
+// static/forging.html
 // static/history.html
 // static/img/US.svg
 // static/img/bg1.jpg
@@ -368,24 +368,6 @@ func staticBetaHtml() (*asset, error) {
 func staticBlock_explorerHtml() (*asset, error) {
 	path := "static/block_explorer.html"
 	name := "static/block_explorer.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticBlock_generationHtml reads file data from disk. It returns an error on failure.
-func staticBlock_generationHtml() (*asset, error) {
-	path := "static/block_generation.html"
-	name := "static/block_generation.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1016,6 +998,24 @@ func staticFontsGlyphiconsSocialRegularWoff() (*asset, error) {
 func staticFontsGlyphiconsSocialRegularWoff2() (*asset, error) {
 	path := "static/fonts/glyphicons-social-regular.woff2"
 	name := "static/fonts/glyphicons-social-regular.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticForgingHtml reads file data from disk. It returns an error on failure.
+func staticForgingHtml() (*asset, error) {
+	path := "static/forging.html"
+	name := "static/forging.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4114,7 +4114,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/backup.html": staticBackupHtml,
 	"static/beta.html": staticBetaHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
-	"static/block_generation.html": staticBlock_generationHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
 	"static/change_state_smart_laws.html": staticChange_state_smart_lawsHtml,
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
@@ -4150,6 +4149,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/fonts/glyphicons-social-regular.ttf": staticFontsGlyphiconsSocialRegularTtf,
 	"static/fonts/glyphicons-social-regular.woff": staticFontsGlyphiconsSocialRegularWoff,
 	"static/fonts/glyphicons-social-regular.woff2": staticFontsGlyphiconsSocialRegularWoff2,
+	"static/forging.html": staticForgingHtml,
 	"static/history.html": staticHistoryHtml,
 	"static/img/US.svg": staticImgUsSvg,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
@@ -4369,7 +4369,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
 		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
-		"block_generation.html": &bintree{staticBlock_generationHtml, map[string]*bintree{}},
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{}},
 		"change_state_smart_laws.html": &bintree{staticChange_state_smart_lawsHtml, map[string]*bintree{}},
 		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{}},
@@ -4411,6 +4410,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"glyphicons-social-regular.woff": &bintree{staticFontsGlyphiconsSocialRegularWoff, map[string]*bintree{}},
 			"glyphicons-social-regular.woff2": &bintree{staticFontsGlyphiconsSocialRegularWoff2, map[string]*bintree{}},
 		}},
+		"forging.html": &bintree{staticForgingHtml, map[string]*bintree{}},
 		"history.html": &bintree{staticHistoryHtml, map[string]*bintree{}},
 		"img": &bintree{nil, map[string]*bintree{
 			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
