@@ -31,8 +31,11 @@ func (c *Controller) SaveQueue() (string, error) {
 	var err error
 	c.r.ParseForm()
 
-	citizenId := utils.BytesToInt64([]byte(c.r.FormValue("citizenId")))
-	walletId := utils.BytesToInt64([]byte(c.r.FormValue("walletId")))
+	/*citizenId := utils.BytesToInt64([]byte(c.r.FormValue("citizenId")))
+	walletId := utils.BytesToInt64([]byte(c.r.FormValue("walletId")))*/
+
+	citizenId := c.SessCitizenId
+	walletId := c.SessWalletId
 
 	if citizenId <= 0 && walletId <= 0 {
 		return `{"result":"incorrect citizenId || walletId"}`, nil
@@ -474,7 +477,12 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		err = c.ExecSql(`INSERT INTO my_node_keys (
+		myWalletId, err := c.GetMyWalletId()
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+		if myWalletId == walletId {
+			err = c.ExecSql(`INSERT INTO my_node_keys (
 									public_key,
 									private_key
 								)
@@ -482,8 +490,9 @@ func (c *Controller) SaveQueue() (string, error) {
 									[hex],
 									?
 								)`, publicKey, privateKey)
-		if err != nil {
-			return "", utils.ErrInfo(err)
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
 		}
 
 		data = utils.DecToBin(txType, 1)

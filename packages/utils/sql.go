@@ -932,7 +932,7 @@ func (db *DCDB) GetHosts() ([]string, error) {
 }
 
 func (db *DCDB) CheckDelegateCB(myCBID int64) (bool, error) {
-	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_state_id FROM central_banks WHERE state_id = ?", myCBID).Int64()
+	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_state_id FROM system_recognized_states WHERE state_id = ?", myCBID).Int64()
 	if err != nil {
 		return false, err
 	}
@@ -944,7 +944,17 @@ func (db *DCDB) CheckDelegateCB(myCBID int64) (bool, error) {
 }
 
 func (db *DCDB) GetMyWalletId() (int64, error) {
-	return db.Single("SELECT dlt_wallet_id FROM config").Int64()
+	walletId, err := db.Single("SELECT dlt_wallet_id FROM config").Int64()
+	if err != nil {
+		return 0, err
+	}
+	if walletId == 0 {
+		walletId, err = db.Single("SELECT wallet_id FROM dlt_wallets WHERE address = ?", *WalletAddress).Int64()
+		if err != nil {
+			return 0, err
+		}
+	}
+	return walletId, nil
 }
 
 func (db *DCDB) GetMyCBID() (int64, error) {
@@ -1010,7 +1020,7 @@ func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, state_id int64) ([]byte, e
 			return []byte(""), err
 		}
 	} else {
-		result, err = db.Single("SELECT node_public_key FROM central_banks WHERE state_id = ?", state_id).Bytes()
+		result, err = db.Single("SELECT node_public_key FROM system_recognized_states WHERE state_id = ?", state_id).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}

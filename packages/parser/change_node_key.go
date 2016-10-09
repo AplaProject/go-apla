@@ -77,7 +77,7 @@ func (p *Parser) ChangeNodeKey() error {
 			return p.ErrInfo(err)
 		}
 	} else {
-		_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "central_banks", []string{"head_citizen_id"}, []string{utils.Int64ToStr(p.TxCitizenID)}, true)
+		_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"head_citizen_id"}, []string{utils.Int64ToStr(p.TxCitizenID)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

@@ -30,6 +30,7 @@ type systemInfoPage struct {
 	UpdFullNodes []map[string]string
 	MainLock []map[string]string
 	Rollback []map[string]string
+	FullNodes []map[string]string
 }
 
 func init() {
@@ -54,5 +55,11 @@ func (c *Controller) SystemInfo() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+
+	pageData.FullNodes, err = c.GetAll(`SELECT * FROM full_nodes`, -1)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
 	return proceedTemplate(c, NSystemInfo, &pageData)
 }

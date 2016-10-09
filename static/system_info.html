@@ -10,6 +10,7 @@
 	<div class="panel panel-default">
 	 <div class="panel-body">
 		 UpdFullNodes
+		 {{if .UpdFullNodes}}
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 
@@ -28,12 +29,14 @@
 				{{end}}
 			</table>
 		</div>
+		 {{end}}
 	 </div>
 	</div>
 
 	<div class="panel panel-default">
 		<div class="panel-body">
 			MainLock
+			{{if .MainLock}}
 			<div class="table-responsive">
 				<table class="table table-striped table-hover">
 					<tr>
@@ -51,10 +54,31 @@
 					{{end}}
 				</table>
 			</div>
+			{{end}}
 		</div>
 	</div>
 
-
+	<div class="panel panel-default">
+		<div class="panel-body">
+			FullNodes
+			<div class="table-responsive">
+				<table class="table table-striped table-hover">
+					<tr>
+						{{range $i, $data1 := (index .FullNodes 0)}}
+						<td>{{$i}}</td>
+						{{end}}
+					</tr>
+					{{range $i, $data := .FullNodes}}
+					<tr>
+						{{range $i, $data1 := $data}}
+						<td>{{$data1}}</td>
+						{{end}}
+					</tr>
+					{{end}}
+				</table>
+			</div>
+		</div>
+	</div>
 
 	<div class="panel panel-default">
 		<div class="panel-body">
