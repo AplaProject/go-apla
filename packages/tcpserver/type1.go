@@ -89,11 +89,6 @@ func (t *TcpServer) Type1() {
 			// нет смысла принимать старые блоки
 			if newDataBlockId >= blockId {
 				newDataHash := utils.BinToHex(utils.BytesShift(&binaryData, 32))
-				err = t.ExecSql(`DELETE FROM queue_blocks WHERE hex(hash) = ?`, newDataHash)
-				if err != nil {
-					log.Error("%v", utils.ErrInfo(err))
-					return
-				}
 				err = t.ExecSql(`
 						INSERT INTO queue_blocks (
 							hash,
@@ -103,7 +98,7 @@ func (t *TcpServer) Type1() {
 							[hex],
 							?,
 							?
-						)`, newDataHash, fullNodeId, newDataBlockId)
+						) ON CONFLICT DO NOTHING`, newDataHash, fullNodeId, newDataBlockId)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
 					return

@@ -20,7 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-type blockGenerationPage struct {
+type forgingPage struct {
 	Lang         map[string]string
 	Title        string
 	CountSign    int
@@ -35,7 +35,7 @@ type blockGenerationPage struct {
 	TimeNow      int64
 }
 
-func (c *Controller) BlockGeneration() (string, error) {
+func (c *Controller) Forging() (string, error) {
 
 	txType := "DLTChangeHostVote"
 	txTypeId := utils.TypeInt(txType)
@@ -47,7 +47,7 @@ func (c *Controller) BlockGeneration() (string, error) {
 	}
 	log.Debug("MyWalletData %v", MyWalletData)
 
-	TemplateStr, err := makeTemplate("block_generation", "blockGeneration", &blockGenerationPage{
+	TemplateStr, err := makeTemplate("forging", "forging", &forgingPage{
 		Lang:         c.Lang,
 		MyWalletData: MyWalletData,
 		Title:        "modalAnonym",
