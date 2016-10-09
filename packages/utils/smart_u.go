@@ -17,9 +17,38 @@
 package utils
 
 import (
+	"bytes"
+	"fmt"
+	"html/template"
+
 	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/smart"
+	"github.com/DayLightProject/go-daylight/packages/static"
 )
+
+type FieldInfo struct {
+	Name     string `json:"name"`
+	HtmlType string `json:"htmlType"`
+	TxType   string `json:"txType"`
+	Title    string `json:"title"`
+	Value    string `json:"value"`
+}
+
+type FormCommon struct {
+	//Lang   map[string]string
+	/*	Address      string
+		WalletId     int64
+		CitizenId    int64
+		StateId      int64
+		StateName    string*/
+	CountSignArr []byte
+}
+
+type FormInfo struct {
+	TxName string
+	Fields []FieldInfo
+	Data   FormCommon
+}
 
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
@@ -72,4 +101,47 @@ func Balance(wallet_id int64) (float64, error) {
 
 func StateParam(idstate int64, name string) (string, error) {
 	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
+}
+
+func TxForm(name string) string {
+	contract := smart.GetContract(name)
+	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
+		return fmt.Sprintf(`there is not %s contract or parameters`, name)
+	}
+	funcMap := template.FuncMap{
+		"sum": func(a, b interface{}) float64 {
+			return InterfaceToFloat64(a) + InterfaceToFloat64(b)
+		},
+		"noescape": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+	}
+	data, err := static.Asset("static/tx_form.html")
+
+	sign, err := static.Asset("static/signatures_new.html")
+	if err != nil {
+		return fmt.Sprint(err.Error())
+	}
+
+	t := template.New("template").Funcs(funcMap)
+	t, err = t.Parse(string(data))
+	if err != nil {
+		return fmt.Sprintf("Error: %v", err)
+	}
+	t = template.Must(t.Parse(string(sign)))
+
+	b := new(bytes.Buffer)
+	finfo := FormInfo{TxName: name, Fields: make([]FieldInfo, 0), Data: FormCommon{
+		CountSignArr: []byte{1}}}
+	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		if fitem.Type.String() == `string` {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
+				TxType: fitem.Type.String(), Title: fitem.Name})
+		}
+	}
+
+	if err = t.Execute(b, finfo); err != nil {
+		return fmt.Sprintf("Error: %v", err)
+	}
+	return b.String()
 }

@@ -47,8 +47,6 @@ import (
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/script"
-	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	b58 "github.com/jbenet/go-base58"
 	"github.com/kardianos/osext"
@@ -68,6 +66,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+
 	"github.com/russross/blackfriday"
 )
 
@@ -94,7 +93,7 @@ type DaemonsChansType struct {
 }
 
 var (
-	WalletAddress            = flag.String("walletAddress", "", "walletAddress for forging ")
+	WalletAddress      = flag.String("walletAddress", "", "walletAddress for forging ")
 	TcpHost            = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
 	ListenHttpPort     = flag.String("listenHttpPort", "7079", "ListenHttpPort")
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
@@ -2491,21 +2490,7 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	qrx = regexp.MustCompile(`(?is)\{\{contract\.([\w\d_]*)\}\}`)
 	data = qrx.ReplaceAllStringFunc(data, func(match string) string {
 		name := match[strings.Index(match, `.`)+1 : len(match)-2]
-		contract := smart.GetContract(name)
-		out := `<form role="form">` + name + `<div id="fields">`
-		if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
-			err = fmt.Errorf(`there is not %s contract or parameters`, name)
-		} else {
-			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-				if fitem.Type.String() == `string` {
-					out += fmt.Sprintf(`<div class="form-group"><label for="%s">%s</label>
-					<input id="%s" name="%s" type="text" class="form-control"></div>`,
-						fitem.Name, fitem.Name, fitem.Name)
-				}
-			}
-		}
-		fmt.Println(`Name Contract`, name, contract)
-		return out + `</div></form>`
+		return TxForm(name)
 	})
 
 	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)

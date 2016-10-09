@@ -30,11 +30,11 @@ import (
 const NBlockExplorer = `block_explorer`
 
 type blockExplorerPage struct {
-	Data      *CommonPage
-	List      []map[string]string
-	Latest    int64
-	BlockId   int64
-	BlockData map[string]string
+	Data       *CommonPage
+	List       []map[string]string
+	Latest     int64
+	BlockId    int64
+	BlockData  map[string]string
 	SinglePage string
 }
 
@@ -46,7 +46,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 	pageData := blockExplorerPage{Data: c.Data}
 
 	blockId := utils.StrToInt64(c.r.FormValue("blockId"))
-	pageData.SinglePage = utils.StrToInt64(c.r.FormValue("singlePage"))
+	pageData.SinglePage = c.r.FormValue("singlePage")
 
 	if blockId > 0 {
 		pageData.BlockId = blockId
