@@ -35,7 +35,7 @@ type blockExplorerPage struct {
 	Latest    int64
 	BlockId   int64
 	BlockData map[string]string
-	SinglePage int64
+	SinglePage string
 }
 
 func init() {
