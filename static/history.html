@@ -6,6 +6,8 @@
 	}
 	#history {
 		display:none;
+		white-space:nowrap;
+		margin-bottom:0px !important;
 	}
 	.dataTables_length, .dataTables_info {
 		padding-left:15px;
@@ -15,6 +17,9 @@
 	}
 	.dataTables_length, .dataTables_filter {
 		padding-top:15px;
+	}
+	.Ellipsis {
+		max-width:125px;
 	}
 </style>
 
@@ -52,7 +57,18 @@
 					columnDefs: [{
 						targets: 1,
 						render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
-					}]
+					}],
+					createdRow: function (row, data, index) {
+						$("td", row).eq(3).addClass("Ellipsis");
+						$("td", row).eq(4).addClass("Ellipsis");
+					},
+					initComplete: function(settings, json) {
+						TooltipEllipsis("Ellipsis");
+					}
+				});
+				
+				$("#history").on('draw.dt', function (e, settings, len) {
+					TooltipEllipsis("Ellipsis");
 				});
 			}
 		},
