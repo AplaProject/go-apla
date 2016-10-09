@@ -476,14 +476,12 @@ func (c *Controller) SaveQueue() (string, error) {
 		}
 		err = c.ExecSql(`INSERT INTO my_node_keys (
 									public_key,
-									private_key,
-									time
+									private_key
 								)
 								VALUES (
 									[hex],
-									?,
 									?
-								)`, publicKey, privateKey, utils.Time())
+								)`, publicKey, privateKey)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}

@@ -34,7 +34,7 @@ import (
 
 // Converts binary address to DayLight address.
 func BytesToAddress(address []byte) string {
-	return `D` + b58.Encode(address)
+	return /*`D` +*/ b58.Encode(address)
 }
 
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
@@ -199,10 +199,10 @@ func GenKeys() (privKey string, pubKey string) {
 
 // Function IsValidAddress checks if the specified address is DayLight address.
 func IsValidAddress(address string) bool {
-	if address[0] != 'D' {
+	/*if address[0] != 'D' {
 		return false
-	}
-	key := b58.Decode(address[1:])
+	}*/
+	key := b58.Decode(address[0:])
 	checksum := key[len(key)-4:]
 	finger := key[:len(key)-4]
 	h256 := sha256.Sum256(finger)

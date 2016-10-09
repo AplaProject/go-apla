@@ -823,7 +823,7 @@ func (db *DCDB) GetMyPrivateKey(myPrefix string) (string, error) {
 
 func (db *DCDB) GetNodePrivateKey() (string, error) {
 	var key string
-	key, err := db.Single("SELECT private_key FROM my_node_keys WHERE time = (SELECT max(time) FROM my_node_keys)").String()
+	key, err := db.Single("SELECT private_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
 	if err != nil {
 		return "", ErrInfo(err)
 	}
@@ -832,7 +832,7 @@ func (db *DCDB) GetNodePrivateKey() (string, error) {
 
 func (db *DCDB) GetMyNodePublicKey(myPrefix string) (string, error) {
 	var key string
-	key, err := db.Single("SELECT public_key FROM my_node_keys WHERE time = (SELECT max(time) FROM my_node_keys)").String()
+	key, err := db.Single("SELECT public_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
 	if err != nil {
 		return "", ErrInfo(err)
 	}
@@ -965,8 +965,8 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 	key, _ := hex.DecodeString(string(publicKey))
 	log.Debug("key %s", key)
 	log.Debug("b58 %s", b58.Encode(lib.Address(key)))
-	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ? or address = ?`,
-		string(`D`+b58.Encode(lib.Address(key))), string(b58.Encode(lib.Address(key)))).Int64()
+	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`,
+		string(b58.Encode(lib.Address(key)))).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}

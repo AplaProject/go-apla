@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 "id" bigint NOT NULL  default nextval('dlt_transactions_id_seq'),
 "sender_wallet_id" bigint NOT NULL DEFAULT '0',
 "recipient_wallet_id" bigint NOT NULL DEFAULT '0',
-"recipient_wallet_address" text NOT NULL DEFAULT '',
+"recipient_wallet_address" bytea  NOT NULL DEFAULT '',
 "amount" decimal(15,2) NOT NULL DEFAULT '0',
 "commission" decimal(15,2) NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
@@ -51,7 +51,8 @@ DROP TABLE IF EXISTS "my_node_keys"; CREATE TABLE "my_node_keys" (
 "status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
 "my_time" int NOT NULL DEFAULT '0',
 "time" bigint NOT NULL DEFAULT '0',
-"block_id" int NOT NULL DEFAULT '0'
+"block_id" int NOT NULL DEFAULT '0',
+"rb_id" int NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
 ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);
@@ -249,7 +250,7 @@ DROP SEQUENCE IF EXISTS dlt_wallets_wallet_id_seq CASCADE;
 CREATE SEQUENCE dlt_wallets_wallet_id_seq START WITH 1;
 DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "wallet_id" bigint  NOT NULL  default nextval('dlt_wallets_wallet_id_seq'),
-"address" varchar(255) NOT NULL DEFAULT '',
+"address" bytea  NOT NULL DEFAULT '',
 "public_key_0" bytea  NOT NULL DEFAULT '',
 "public_key_1" bytea  NOT NULL DEFAULT '',
 "public_key_2" bytea  NOT NULL DEFAULT '',
@@ -343,6 +344,16 @@ ALTER TABLE ONLY "migration_history" ADD CONSTRAINT migration_history_pkey PRIMA
 
 
 
+DROP TABLE IF EXISTS "dlt_wallets_buffer"; CREATE TABLE "dlt_wallets_buffer" (
+"hash" bytea  NOT NULL DEFAULT '',
+"del_block_id" bigint NOT NULL DEFAULT '0',
+"wallet_id" bigint NOT NULL DEFAULT '0',
+"amount" decimal(15,2)  NOT NULL DEFAULT '0',
+"block_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "dlt_wallets_buffer" ADD CONSTRAINT dlt_wallets_buffer_pkey PRIMARY KEY (hash);
+
+
 
 
 DROP SEQUENCE IF EXISTS president_id_seq CASCADE;
@@ -389,14 +400,15 @@ ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
 
 
 
-DROP SEQUENCE IF EXISTS upd_full_nodes_rb_id_seq CASCADE;
-CREATE SEQUENCE upd_full_nodes_rb_id_seq START WITH 1;
+DROP SEQUENCE IF EXISTS upd_full_nodes_id_seq CASCADE;
+CREATE SEQUENCE upd_full_nodes_id_seq START WITH 1;
 DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
+"id" bigint NOT NULL  default nextval('upd_full_nodes_id_seq'),
 "time" int NOT NULL DEFAULT '0',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE upd_full_nodes_rb_id_seq owned by upd_full_nodes.rb_id;
-ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (rb_id);
+ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
+ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);
 
 
 
