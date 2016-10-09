@@ -9,7 +9,8 @@ DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 "commission" decimal(15,2) NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
 "comment" text NOT NULL DEFAULT '',
-"block_id" int  NOT NULL DEFAULT '0'
+"block_id" int  NOT NULL DEFAULT '0',
+"rb_id" int  NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE "dlt_transactions_id_seq" owned by "dlt_transactions".id;
 ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMARY KEY (id);

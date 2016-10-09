@@ -37,6 +37,8 @@ func (c *Controller) SaveQueue() (string, error) {
 	citizenId := c.SessCitizenId
 	walletId := c.SessWalletId
 
+	log.Debug("citizenId %d / walletId %d ", citizenId, walletId)
+
 	if citizenId <= 0 && walletId <= 0 {
 		return `{"result":"incorrect citizenId || walletId"}`, nil
 	}
@@ -83,6 +85,15 @@ func (c *Controller) SaveQueue() (string, error) {
 	log.Debug("txType_", txType_)
 	log.Debug("txType", txType)
 
+	userId := walletId
+	stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+	if stateId > 0 {
+		userId = citizenId
+	}
+	/*if stateId == 0 {
+		return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+	}*/
+
 	var (
 		data []byte
 		key  []byte
@@ -118,6 +129,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		}
 	case "DLTTransfer":
 
+		stateId = 0
 		walletAddress := []byte(c.r.FormValue("walletAddress"))
 		amount := []byte(c.r.FormValue("amount"))
 		commission := []byte(c.r.FormValue("commission"))
@@ -125,8 +137,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(walletId)...)
-		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
 		data = append(data, utils.EncodeLengthPlusData(walletAddress)...)
 		data = append(data, utils.EncodeLengthPlusData(amount)...)
 		data = append(data, utils.EncodeLengthPlusData(commission)...)
@@ -136,13 +148,14 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "DLTChangeHostVote":
 
+		stateId = 0
 		host := []byte(c.r.FormValue("host"))
 		addressVote := []byte(c.r.FormValue("addressVote"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(walletId)...)
-		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
 		data = append(data, utils.EncodeLengthPlusData(host)...)
 		data = append(data, utils.EncodeLengthPlusData(addressVote)...)
 		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
@@ -187,14 +200,6 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "EditColumn":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
 
 		tableName := []byte(c.r.FormValue("table_name"))
 		columnName := []byte(c.r.FormValue("column_name"))
