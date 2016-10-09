@@ -7,6 +7,20 @@
 	}
 </style>
 
+<script>
+	Vue.config.delimiters = ['${', '}']
+	
+	$("#save").on('click', function(){
+		mapcenter();
+		
+		var center = '{"center_point":[' + $("#centerofmap").val() + '], ';
+		var zoom = '"zoom":"' + $("#myzoom").val() + '", ';
+		var points = '"cords":[' + $("#coords").val() + ']}';
+		
+		$("#value").val(center + zoom + points);
+	})
+</script>
+
 <div class="modal fade" id="modal_map" role="dialog" aria-labelledby="modal_map_label">
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content" data-sweet-alert>
@@ -25,7 +39,7 @@
 				</div>
 				<div class="pull-right">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-primary" onClick="preloader(this);" id="save">Save</button>
+					<button type="button" class="btn btn-primary" data-dismiss="modal" id="save">Save</button>
 				</div>
 			</div>
 		</div>

@@ -10,6 +10,13 @@
 
 <script>
 	Vue.config.delimiters = ['${', '}']
+	
+	$("#save").on('click', function(){
+		var re = "data:image/jpeg;base64,";
+		var img = $("#photoEditor img").attr("src");
+		$("#flag").attr("src", img);
+		$("#value").val(img.replace(re, ""));
+	})
 </script>
 <script type="text/javascript" src="static/js/photoEditor/editor.js"></script>
 
@@ -69,7 +76,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary" onClick="preloader(this);" id="save">Save</button>
+				<button type="button" class="btn btn-primary" data-dismiss="modal" id="save">Save</button>
 			</div>
 		</div>
 	</div>

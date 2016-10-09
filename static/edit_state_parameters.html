@@ -73,7 +73,7 @@
 		<li class="active">{{if .StateParameters.name}}Edit{{else}}New{{end}} parameter</li>
 	</ol>
 	<!-- START panel-->
-	<div class="panel panel-default">
+	<div class="panel panel-default" data-sweet-alert>
 	 <div class="panel-heading">
 	 	<div class="panel-title">
 			{{.StateParameters.parameter}}
@@ -88,7 +88,7 @@
 		   <div class="form-group">
 			   <label>Value</label>
 
-			   {{if eq .StateParameters.name "state_flag"}}<p><img src="data:image/png;base64,{{.StateParameters.value}}"></p>{{end}}
+			   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}"></p>{{end}}
 
 			   <textarea class="form-control" id="value">{{.StateParameters.value}}</textarea>
 		   </div>
@@ -110,7 +110,7 @@
 			  {{end}}
 		  </div>
 		  <div class="pull-right">
-			  <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Send</button>
+			  <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
 		  </div>
 	   </div>
 	  </div>
