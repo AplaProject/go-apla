@@ -28,31 +28,6 @@
 	
 	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {});
 
-	/*$('#history').dataTable({
-        paging:   false,
-        ordering: false,
-		searching: false,
-//		order: 	[[ 0, "desc" ]],
-        info:     false,
-		"processing": true,
-        "serverSide": true,
-		"ajax": "ajax?json=ajax_history",
-        "columns": [
-          { "data": 'block_id' },
-          { "data": 'time' },
-          { "data": 'amount' },
-          { "data": 'sender_address' },
-          { "data": 'recipient_address' },
-          { "data": 'comment' },
-          { "data": 'confirm' }
-        ],
-		columnDefs: [{
-			targets: 1,
-			render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
-		}]
-    });*/
-	
-	
 	$.ajax({
 		type: 'POST',
 		url: 'ajax?json=ajax_history',

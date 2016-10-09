@@ -1,4 +1,29 @@
 <script>
+	var latestBlock = 1;
+	var BlockNumberID = $("#BlockNumber");
+	
+	function updateBlockNumber(){
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?json=ajax_explorer',
+			data: {
+				latest: latestBlock
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) {
+				latestBlock = data.latest;
+				BlockNumberID.text(latestBlock);
+				IgnoreTimer = setTimeout(updateBlockNumber, 1000);
+			},
+			error: function(xhr, status, error) {
+				IgnoreTimer = setTimeout(updateBlockNumber, 1000);
+			}
+		});
+	}
+	
+	updateBlockNumber();
+	
 	// TOGGLE STATE
 	// -----------------------------------
 	
@@ -335,6 +360,9 @@
 	   <!-- END Left navbar-->
 	   <!-- START Right Navbar-->
 	   <ul class="nav navbar-nav navbar-right">
+		  <li class="dropdown dropdown-list">
+			 <a id="BlockNumber" href="#" onClick="dl_navigate('block_explorer'); HideMenu();">0</a>
+		  </li>
 		  <!-- START Alert menu-->
 		  <li class="dropdown dropdown-list">
 			 <a href="#" data-toggle="dropdown">

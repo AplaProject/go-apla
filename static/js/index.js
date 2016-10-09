@@ -153,11 +153,16 @@ function logout() {
 	return false;
 }
 
-function clearAllTimeouts(){
-	var maxId = setTimeout(function(){}, 0);
+var AllTimer;
+var IgnoreTimer;
 
-	for(var i=0; i < maxId; i+=1) { 
-		clearTimeout(i);
+function clearAllTimeouts(){
+	AllTimer = setTimeout(function(){}, 0);
+	
+	for(var i=0; i < AllTimer; i+=1) { 
+		if (IgnoreTimer != i) {
+			clearTimeout(i);
+		}
 	}
 	
 	$(".wrapper").removeClass("map");
