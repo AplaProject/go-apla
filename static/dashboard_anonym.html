@@ -58,8 +58,13 @@
 					columnDefs: [{
 						targets: 1,
 						render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
-					}]
+					}],
+					createdRow: function (row, data, index) {
+						$("td", row).eq(3).addClass("Ellipsis");
+						$("td", row).eq(4).addClass("Ellipsis");
+					}
 				});
+				TooltipEllipsis("Ellipsis");
 			}
 		},
 		error: function(xhr, status, error) {
