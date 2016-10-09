@@ -8,6 +8,8 @@
 	}
 	#history {
 		display:none;
+		white-space:nowrap;
+		margin-bottom:0px !important;
 	}
 	.dataTables_length, .dataTables_info {
 		padding-left:15px;
@@ -17,6 +19,12 @@
 	}
 	.dataTables_length, .dataTables_filter {
 		padding-top:15px;
+	}
+	div.dataTables_wrapper div.dataTables_paginate ul.pagination {
+		margin-bottom:15px;
+	}
+	.Ellipsis {
+		max-width:125px;
 	}
 </style>
 
@@ -38,7 +46,7 @@
 				$('#nodata').show();
 			} else {
 				$('#history').show().dataTable({
-					paging:   false,
+					paging:   true,
 					ordering: false,
 					searching: false,
 					order: 	[[ 0, "desc" ]],
@@ -62,9 +70,15 @@
 					createdRow: function (row, data, index) {
 						$("td", row).eq(3).addClass("Ellipsis");
 						$("td", row).eq(4).addClass("Ellipsis");
+					},
+					initComplete: function(settings, json) {
+						TooltipEllipsis("Ellipsis");
 					}
 				});
-				TooltipEllipsis("Ellipsis");
+				
+				$("#history").on('draw.dt', function (e, settings, len) {
+					TooltipEllipsis("Ellipsis");
+				});
 			}
 		},
 		error: function(xhr, status, error) {

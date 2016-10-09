@@ -10,12 +10,13 @@ function TooltipEllipsis(element) {
 		var text = $(this).html();
 		var l = parseInt($(this).css("padding-left"));
 		var t = parseInt($(this).css("padding-top"));
-		if (w > 200) {
+		if (w >= 125) {
 			$(this).html('<div class="tooltipEllipsis" style="padding:' + t + 'px ' + l + 'px; margin:-' + t + 'px -' + l + 'px">' + text + '</div>');
 		}
 	});
 	
 	if (el) {
+		$(".tooltipEllipsisView").remove();
 		$("body").append('<div class="tooltipEllipsisView"></div>');
 		el.find(".tooltipEllipsis").on('mouseenter', function() {
 			var elem = $(this);

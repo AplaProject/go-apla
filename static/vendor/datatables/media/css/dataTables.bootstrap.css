@@ -51,8 +51,10 @@ div.dataTables_wrapper div.dataTables_paginate {
   text-align: right;
 }
 div.dataTables_wrapper div.dataTables_paginate ul.pagination {
-  margin: 2px 0;
+  margin:0px;
+  margin-top:15px;
   white-space: nowrap;
+  vertical-align:top;
 }
 div.dataTables_wrapper div.dataTables_processing {
   position: absolute;
