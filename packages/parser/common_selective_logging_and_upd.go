@@ -35,11 +35,18 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	if len(addSqlFields) > 0 {
 		addSqlFields += `,`
 	}
+	log.Debug("addSqlFields %s", addSqlFields)
 	for _, field := range fields {
+		/*if p.AllPkeys[table] == field {
+			continue
+		}*/
 		if field[:1] == "+" || field[:1] == "-" {
 			addSqlFields += field[1:len(field)] + ","
+		} else {
+			addSqlFields += field + ","
 		}
 	}
+	log.Debug("addSqlFields %s", addSqlFields)
 
 	addSqlWhere := ""
 	if whereFields != nil && whereValues != nil {
@@ -84,6 +91,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		if err != nil {
 			return tableId, err
 		}
+		log.Debug("string(jsonData) %s / rbId %d", string(jsonData), rbId)
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {

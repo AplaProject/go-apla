@@ -96,18 +96,14 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				if err!=nil {
 					log.Error("error: %v", err)
 				}
-			}
-			/*}*/
-			// =================== ради эксперимента =========
-			/*if onlyFront {
-				utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-				affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE hex(hash) = ?", p.TxHash)
+				affect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE hex(hash) = ?", p.TxHash)
 				if err != nil {
 					utils.WriteSelectiveLog(err)
 					return utils.ErrInfo(err)
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			} else { // ====================================*/
+			}
+
 				utils.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
 				affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
 				if err != nil {
@@ -115,7 +111,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 					return utils.ErrInfo(err)
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			/*}*/
+
 		}
 	}
 	return err
