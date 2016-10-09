@@ -361,7 +361,7 @@
 	   <!-- START Right Navbar-->
 	   <ul class="nav navbar-nav navbar-right">
 		  <li class="dropdown dropdown-list">
-			 <a id="BlockNumber" href="#" onClick="dl_navigate('block_explorer'); HideMenu();">0</a>
+			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer'); HideMenu();">0</a>
 		  </li>
 		  <!-- START Alert menu-->
 		  <li class="dropdown dropdown-list">
@@ -631,6 +631,13 @@
 			 </ul>
 		  </li>
 		  {{end}}
+
+		   <li class="Demo">
+			   <a href="#" href="#" onClick="load_page('system_info'); HideMenu();" title="Government" data-toggle="collapse" class="toggle-hover">
+				   <em class="icon-map"></em>
+				   <span>System</span>
+			   </a>
+		   </li>
 		  <li class="company Demo">
 			 <a href="#dco" title="Company" data-toggle="collapse" class="toggle-hover">
 				<em class="fa fa-building-o"></em>
@@ -850,6 +857,7 @@
 				</li>
 			 </ul>
 		  </li>
+
 		  <li id="DemoButton"><button class="btn btn-default btn-demo" type="button" onClick="Demo();"><span class="fa fa-eye"></span><em> Show opportunities</em></button><input id="demo" type="hidden" value="0"></li>
 	   </ul>
 	   <!-- END sidebar nav-->

@@ -158,6 +158,7 @@
 // static/smart_request_citizen.html
 // static/state_laws.html
 // static/state_parameters.html
+// static/system_info.html
 // static/test.html
 // static/updating_blockchain.html
 // static/vendor/animate.css/animate.min.css
@@ -3083,6 +3084,24 @@ func staticState_parametersHtml() (*asset, error) {
 	return a, err
 }
 
+// staticSystem_infoHtml reads file data from disk. It returns an error on failure.
+func staticSystem_infoHtml() (*asset, error) {
+	path := "static/system_info.html"
+	name := "static/system_info.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticTestHtml reads file data from disk. It returns an error on failure.
 func staticTestHtml() (*asset, error) {
 	path := "static/test.html"
@@ -4283,6 +4302,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/smart_request_citizen.html": staticSmart_request_citizenHtml,
 	"static/state_laws.html": staticState_lawsHtml,
 	"static/state_parameters.html": staticState_parametersHtml,
+	"static/system_info.html": staticSystem_infoHtml,
 	"static/test.html": staticTestHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
@@ -4565,6 +4585,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"smart_request_citizen.html": &bintree{staticSmart_request_citizenHtml, map[string]*bintree{}},
 		"state_laws.html": &bintree{staticState_lawsHtml, map[string]*bintree{}},
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{}},
+		"system_info.html": &bintree{staticSystem_infoHtml, map[string]*bintree{}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"vendor": &bintree{nil, map[string]*bintree{
