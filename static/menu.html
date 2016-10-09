@@ -1,5 +1,5 @@
 <script>
-	var latestBlock = 1;
+	var lastBlock = 1;
 	var BlockNumberID = $("#BlockNumber");
 	
 	function updateBlockNumber(){
@@ -7,13 +7,13 @@
 			type: 'POST',
 			url: 'ajax?json=ajax_explorer',
 			data: {
-				latest: latestBlock
+				latest: lastBlock
 			},
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
-				latestBlock = data.latest;
-				BlockNumberID.text(latestBlock);
+				lastBlock = data.latest;
+				BlockNumberID.text(lastBlock);
 				IgnoreTimer = setTimeout(updateBlockNumber, 1000);
 			},
 			error: function(xhr, status, error) {
