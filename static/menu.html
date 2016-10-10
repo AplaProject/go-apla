@@ -3,6 +3,7 @@
 	var BlockNumberID = $("#BlockNumber");
 	
 	function updateBlockNumber(){
+		console.log('update');
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?json=ajax_explorer',
@@ -14,10 +15,10 @@
 			success: function(data) {
 				lastBlock = data.latest;
 				BlockNumberID.text(lastBlock);
-				IgnoreTimer = setTimeout(updateBlockNumber, 1000);
+				IgnoreTimer = setTimeout(updateBlockNumber, 4000);
 			},
 			error: function(xhr, status, error) {
-				IgnoreTimer = setTimeout(updateBlockNumber, 1000);
+				IgnoreTimer = setTimeout(updateBlockNumber, 4000);
 			}
 		});
 	}
