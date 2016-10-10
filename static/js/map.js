@@ -2462,3 +2462,30 @@ function regMap(coords) {
 		container.hide();
 	}
 }
+
+var newCoordsContainer;
+
+function openMap(container) {
+	newCoordsContainer = $("#" + container);
+	
+	$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
+		var modal = $("#modal_map");
+		
+		modal.modal("show");
+		modal.on('shown.bs.modal', function(e) {
+			initmap();
+			clearMap();
+			$("#toolchoice, #codechoice").change();
+		})
+	});
+}
+
+function saveMap() {
+	mapcenter();
+	
+	var center = '{"center_point":[' + $("#centerofmap").val() + '], ';
+	var zoom = '"zoom":"' + $("#myzoom").val() + '", ';
+	var points = '"cords":[' + $("#coords").val() + ']}';
+	
+	newCoordsContainer.val(center + zoom + points);
+}
