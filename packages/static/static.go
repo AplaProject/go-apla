@@ -8,6 +8,7 @@
 // static/backup.html
 // static/beta.html
 // static/block_explorer.html
+// static/block_explorer_page.html
 // static/change_node_key.html
 // static/change_state_smart_laws.html
 // static/check_citizen_status.html
@@ -160,6 +161,7 @@
 // static/state_parameters.html
 // static/system_info.html
 // static/test.html
+// static/tx_form.html
 // static/updating_blockchain.html
 // static/vendor/animate.css/animate.min.css
 // static/vendor/bootstrap/dist/css/bootstrap.css
@@ -370,6 +372,24 @@ func staticBetaHtml() (*asset, error) {
 func staticBlock_explorerHtml() (*asset, error) {
 	path := "static/block_explorer.html"
 	name := "static/block_explorer.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticBlock_explorer_pageHtml reads file data from disk. It returns an error on failure.
+func staticBlock_explorer_pageHtml() (*asset, error) {
+	path := "static/block_explorer_page.html"
+	name := "static/block_explorer_page.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3120,6 +3140,24 @@ func staticTestHtml() (*asset, error) {
 	return a, err
 }
 
+// staticTx_formHtml reads file data from disk. It returns an error on failure.
+func staticTx_formHtml() (*asset, error) {
+	path := "static/tx_form.html"
+	name := "static/tx_form.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticUpdating_blockchainHtml reads file data from disk. It returns an error on failure.
 func staticUpdating_blockchainHtml() (*asset, error) {
 	path := "static/updating_blockchain.html"
@@ -4152,6 +4190,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/backup.html": staticBackupHtml,
 	"static/beta.html": staticBetaHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
+	"static/block_explorer_page.html": staticBlock_explorer_pageHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
 	"static/change_state_smart_laws.html": staticChange_state_smart_lawsHtml,
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
@@ -4304,6 +4343,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/state_parameters.html": staticState_parametersHtml,
 	"static/system_info.html": staticSystem_infoHtml,
 	"static/test.html": staticTestHtml,
+	"static/tx_form.html": staticTx_formHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
 	"static/vendor/bootstrap/dist/css/bootstrap.css": staticVendorBootstrapDistCssBootstrapCss,
@@ -4409,6 +4449,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
 		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
+		"block_explorer_page.html": &bintree{staticBlock_explorer_pageHtml, map[string]*bintree{}},
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{}},
 		"change_state_smart_laws.html": &bintree{staticChange_state_smart_lawsHtml, map[string]*bintree{}},
 		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{}},
@@ -4587,6 +4628,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{}},
 		"system_info.html": &bintree{staticSystem_infoHtml, map[string]*bintree{}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
+		"tx_form.html": &bintree{staticTx_formHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"vendor": &bintree{nil, map[string]*bintree{
 			"animate.css": &bintree{nil, map[string]*bintree{

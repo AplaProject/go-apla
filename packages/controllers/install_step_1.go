@@ -113,7 +113,7 @@ func (c *Controller) InstallStep1() (string, error) {
 		if _, err := os.Stat(*utils.Dir + "/NodePrivateKey"); err == nil {
 
 			NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
-			err = c.DCDB.ExecSql(`INSERT INTO my_node_keys (private_key) VALUES (?)`, NodePrivateKey)
+			err = c.DCDB.ExecSql(`INSERT INTO my_node_keys (private_key, block_id) VALUES (?, ?)`, NodePrivateKey, 1)
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				panic(err)

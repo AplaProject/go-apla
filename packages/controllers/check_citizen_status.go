@@ -32,7 +32,7 @@ type checkPage struct {
 	TxType   string
 	TxTypeId int64
 	Values   map[string]string
-	Fields   []FieldInfo
+	Fields   []utils.FieldInfo
 }
 
 func init() {
@@ -53,7 +53,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if err != nil {
 		return ``, err
 	}
-	fields := make([]FieldInfo, 0)
+	fields := make([]utils.FieldInfo, 0)
 	if len(vals) > 0 {
 		//		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
 		//		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
@@ -66,7 +66,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if fitem.Type.String() == `string` {
 				value := vals[`name`] //fitem.Name] //.(string)
-				fields = append(fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
+				fields = append(fields, utils.FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 					TxType: fitem.Type.String(), Title: fitem.Name,
 					Value: value})
 			}

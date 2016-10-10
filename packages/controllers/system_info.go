@@ -30,6 +30,8 @@ type systemInfoPage struct {
 	UpdFullNodes []map[string]string
 	MainLock []map[string]string
 	Rollback []map[string]string
+	FullNodes []map[string]string
+	Votes []map[string]string
 }
 
 func init() {
@@ -54,5 +56,17 @@ func (c *Controller) SystemInfo() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+
+	pageData.FullNodes, err = c.GetAll(`SELECT * FROM full_nodes`, -1)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	pageData.Votes, err = c.GetAll(`SELECT address_vote, sum(amount) as sum FROM dlt_wallets WHERE address_vote !='' GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 10`, -1)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+
 	return proceedTemplate(c, NSystemInfo, &pageData)
 }

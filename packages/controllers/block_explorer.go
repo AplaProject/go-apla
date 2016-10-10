@@ -35,6 +35,7 @@ type blockExplorerPage struct {
 	Latest    int64
 	BlockId   int64
 	BlockData map[string]string
+	SinglePage int64
 }
 
 func init() {
@@ -45,6 +46,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 	pageData := blockExplorerPage{Data: c.Data}
 
 	blockId := utils.StrToInt64(c.r.FormValue("blockId"))
+	pageData.SinglePage = utils.StrToInt64(c.r.FormValue("singlePage"))
 
 	if blockId > 0 {
 		pageData.BlockId = blockId

@@ -27,13 +27,14 @@ import (
 
 const ACitizenInfo = `ajax_citizen_info`
 
+/*
 type FieldInfo struct {
 	Name     string `json:"name"`
 	HtmlType string `json:"htmlType"`
 	TxType   string `json:"txType"`
 	Title    string `json:"title"`
 	Value    string `json:"value"`
-}
+}*/
 
 type CitizenInfoJson struct {
 	Result bool   `json:"result"`
@@ -70,7 +71,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 
 	if err == nil {
 		var (
-			fields    []FieldInfo
+			fields    []utils.FieldInfo
 			sign      []byte
 			checkSign bool
 		)
