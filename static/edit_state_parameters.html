@@ -7,22 +7,6 @@
 		theme: 'bootstrap'
 	});
 	
-	$(".map").on('click', function(){
-		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
-			$("#modal_map").modal("show");
-			$("#modal_map").on('shown.bs.modal', function(e) {
-				initmap();
-				clearMap();
-				$("#toolchoice, #codechoice").change();
-			})
-		});
-	});
-	$(".avatar").on('click', function(){
-		$("#dl_modal").load("content?controllerHTML=modal_avatar", { }, function() {
-			$("#modal_avatar").modal("show");
-		});
-	});
-	
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -104,7 +88,7 @@
 	   <div class="clearfix">
 		  <div class="pull-left">
 			  {{if eq .StateParameters.name "state_flag"}}
-			  	<button type="button" class="avatar btn btn-primary"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+			  	<button type="button" class="btn btn-primary" onClick="openImageEditor('flag', 'value');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
 			  {{else}}
 				<button type="button" class="btn btn-primary" onClick="openMap('value');"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
 			  {{end}}

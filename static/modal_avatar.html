@@ -10,13 +10,6 @@
 
 <script>
 	Vue.config.delimiters = ['${', '}']
-	
-	$("#save").on('click', function(){
-		var re = "data:image/jpeg;base64,";
-		var img = $("#photoEditor img").attr("src");
-		$("#flag").attr("src", img);
-		$("#value").val(img.replace(re, ""));
-	})
 </script>
 <script type="text/javascript" src="static/js/photoEditor/editor.js"></script>
 
@@ -58,7 +51,7 @@
 					<script id="canvas-box" type="text/x-template">
 						<div v-show="editable" class="canvas">
 							<div @dblclick="dblclick" class="editor">
-								<template v-if="url"><img src="${ url }" alt="${ name }" @load="load"></template>
+								<template v-if="url"><img id="cropped" src="${ url }" alt="${ name }" @load="load"></template>
 							</div>
 							<div @click="click" v-show="cropper" class="toolbar">
 								<button data-action="move" title="Move (M)" class="toolbar__button"><span class="fa fa-arrows"></span></button>
@@ -76,7 +69,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary" data-dismiss="modal" id="save">Save</button>
+				<button type="button" class="btn btn-primary" onClick="saveImage();">Save</button>
 			</div>
 		</div>
 	</div>

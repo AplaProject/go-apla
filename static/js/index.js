@@ -608,3 +608,29 @@ function formatState(state) {
 	);
 	return $state;
 };
+
+var newImage;
+var newImageData;
+
+function openImageEditor(img, container) {
+	newImage = $("#" + img);
+	newImageData = $("#" + container);
+	
+	$("#dl_modal").load("content?controllerHTML=modal_avatar", { }, function() {
+		var modal = $("#modal_avatar");
+		
+		modal.modal("show");
+	});
+}
+
+function saveImage() {
+	var el = $("#photoEditor #cropped");
+	if (!el.hasClass("cropper-hidden")) {
+		var img = el.attr("src");
+		newImage.attr("src", img);
+		newImageData.val(img);
+		$("#modal_avatar").modal("hide");
+	} else {
+		alert("Please, crop the photo!");
+	}
+}
