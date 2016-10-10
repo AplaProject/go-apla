@@ -20,6 +20,8 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io/ioutil"
+	"strings"
 
 	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/smart"
@@ -134,14 +136,30 @@ func TxForm(name string) string {
 	finfo := FormInfo{TxName: name, Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-		if fitem.Type.String() == `string` {
+		if strings.Index(fitem.Tags, `map`) >= 0 {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "map",
+				TxType: fitem.Type.String(), Title: fitem.Name})
+		} else if strings.Index(fitem.Tags, `image`) >= 0 {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "image",
+				TxType: fitem.Type.String(), Title: fitem.Name})
+		} else if fitem.Type.String() == `string` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: fitem.Name})
 		}
+
 	}
 
 	if err = t.Execute(b, finfo); err != nil {
 		return fmt.Sprintf("Error: %v", err)
 	}
-	return b.String()
+	lines := strings.Split(b.String(), "\n")
+	out := ``
+	for _, line := range lines {
+		if value := strings.TrimSpace(line); len(value) > 0 {
+			out += value + "\r\n"
+		}
+	}
+	//	out := strings.Replace(b.String(), "\r\n\r\n", "\r\n", -1)
+	ioutil.WriteFile(`c:\temp\out.html`, []byte(out), 644)
+	return out
 }

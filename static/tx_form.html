@@ -15,7 +15,7 @@
 <script>
 	$(".aside .nav li").removeClass("active");
 //	$(".citizen, .anonym_request_citizen").addClass("active");
-	$(".wrapper").addClass("map");
+//	$(".wrapper").addClass("map");
 	
 	var arr = [];
 	var coords = [];
@@ -63,7 +63,7 @@
 		container.html("");
 		btn.prop("disabled", true);
 	}
-	
+{{if eq .TxName "TXCitizenRequest"}}	
 	function changeCountry(elem) {
 		console.log("elem", elem);
 		var id = $("#countries").val();
@@ -80,8 +80,8 @@
 				Alert("Error", error, "error");
 			}
 		});
-}
-/*	
+	}
+	
 	function Country(id) {
 		if (!id) {
 			id = 1;
@@ -180,25 +180,31 @@
 	}
 	
 	Country();
-*/
+	$(document).ready(function(){
+		do_phrase();
+	});
+
+{{end}}
 	var serverTime;
 	var predata;
 	
 	$('#send').bind('click', function () {
-		if (!$("#phrase").val()) {
-			alert('Generate seed');
-			return;
-		}
-		do_generate();
-		var key = $("#pubkey").val();
-		if (key.length > 128) {
-			key = key.substr( 2 );
-		}
 		predata = {
 			'TxName' : '{{.TxName}}',
-			'StateId': 1,	
-			'PublicKey': key,
 		};
+		{{if eq .TxName "TXCitizenRequest"}}
+			if (!$("#phrase").val()) {
+				alert('Generate seed');
+				return;
+			}
+			do_generate();
+			var key = $("#pubkey").val();
+			if (key.length > 128) {
+				key = key.substr( 2 );
+			}
+			predata.StateId = 1
+			predata.PublicKey = key
+		{{end}}
 		for (i = 0; i < arr.length; i++ ) {
 			var field = arr[i];
 			if ($("#" + field).attr("type") == "file") {
@@ -248,10 +254,17 @@
 			}
 		});
 	} );	
-	$(document).ready(function(){
-		do_phrase();
-	});
 	
+	$(".map").on('click', function(){
+		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
+			$("#modal_map").modal("show");
+			$("#modal_map").on('shown.bs.modal', function(e) {
+				initmap();
+				clearMap();
+				$("#toolchoice, #codechoice").change();
+			})
+		});
+	});
 /*	$('a[href="#tab2"]').on('shown.bs.tab', function () {
 		$(".selectbox").select2({
 			minimumResultsForSearch: 6,
@@ -259,36 +272,41 @@
 		});
 	})*/
 </script>
-
-		<!-- START panel-->
 			 <div class="panel-body">
 				<form role="form">
-				   <!--div class="form-group">
+					{{.TxName}}
+				   {{if eq .TxName "TXCitizenRequest"}}	<div class="form-group">
 					  <label for="countries">Country</label>
 					  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
-				   </div-->
-				   <div id="message" class="alert alert-danger"></div>
-				   <div id="fields">
-					{{range .Fields}}
-						<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-						<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>{{end}}
-					</div>
-					   <div class="form-group" style="display:none;">
+				   </div>
+				   <div class="form-group" style="display:none;">
+					 	<textarea id="phrase" class="form-control"></textarea>
 						<input type="hidden" id="prvkey" value="" />
 						<input type="hidden" id="pubkey" value="" />
-					   </div>
+					   </div>{{end}}
+				   <div id="message" class="alert alert-danger"></div>
+				   <div id="fields">
+				    {{range .Fields}}
+						{{if eq .HtmlType "textinput"}}				   
+							<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
+							<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
+						{{end}}
+						{{if eq .HtmlType "map"}}
+							<div class="form-group"> <label>{{.Title}}</label>
+							   <textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+						   </div>						
+							<div class="pull-left">
+			  				<button type="button" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+							</div>
+						{{end}}
+					{{end}}
+					</div>
 				   <div class="clearfix">
 					  <div class="pull-right">
 						 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
-						 <!--button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button-->
 					  </div>
 				   </div>
 				</form>
 			 </div>
-			<!-- END panel-->
-
-<!--div class="map_canvas">
-	<div id="map_canvas"></div>
-</div-->
 
 {{template "signatures".}}
