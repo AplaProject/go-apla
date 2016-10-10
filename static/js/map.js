@@ -214,13 +214,13 @@ function preparePolyline(){
 }
 
 function preparePolygon(){
-    var polyOptions = {
-        path: polyPoints,
-        strokeColor: polygonstyles[pcur].color,
-        strokeOpacity: polygonstyles[pcur].lineopac,
-        strokeWeight: polygonstyles[pcur].width,
-        fillColor: polygonstyles[pcur].fill,
-        fillOpacity: polygonstyles[pcur].fillopac};
+	var polyOptions = {
+		path: polyPoints,
+		strokeColor: polygonstyles[pcur].color,
+		strokeOpacity: polygonstyles[pcur].lineopac,
+		strokeWeight: polygonstyles[pcur].width,
+		fillColor: polygonstyles[pcur].fill,
+		fillOpacity: polygonstyles[pcur].fillopac};
     polyShape = new google.maps.Polygon(polyOptions);
     polyShape.setMap(map);
 }
@@ -251,8 +251,17 @@ function activateMarker() {
     });
 }
 function initmap(){
+	if (StateZoom && StateCenterX && StateCenterY) {
+		StateZoom = StateZoom;
+		StateCenterX = StateCenterX;
+		StateCenterY = StateCenterY;
+	} else {
+		StateZoom = 7;
+		StateCenterX = 55.758032;
+		StateCenterY = 37.633667;
+	}
     geocoder = new google.maps.Geocoder();
-    var latlng = new google.maps.LatLng(55.758032, 37.633667);//(45.0,7.0);//45.074723, 7.656433
+    var latlng = new google.maps.LatLng(StateCenterX, StateCenterY);//(45.0,7.0);//45.074723, 7.656433
     var mapTypeIds = [];
     for(var type in google.maps.MapTypeId) {
         mapTypeIds.push(google.maps.MapTypeId[type]);
@@ -266,7 +275,7 @@ function initmap(){
     copyrightNode.style.whiteSpace = 'nowrap';
     //copyrightNode.index = 0;
     var myOptions = {
-        zoom: 7,
+        zoom: StateZoom,
         center: latlng,
         draggableCursor: 'default',
         draggingCursor: 'pointer',
@@ -991,7 +1000,7 @@ function addpolyShapelistener() {
     }
 }
 // Clear current Map
-function clearMap(){
+function clearMap(full){
     if(editing == true) stopediting();
     if(polyShape) polyShape.setMap(null); // polyline or polygon
     if(outerShape) outerShape.setMap(null);
@@ -1004,15 +1013,26 @@ function clearMap(){
     }
     plmcur = 0;
     dirmarknum = 1;
-    newstart();
+    newstart(full);
     placemarks = [];
     createplacemarkobject();
 	gob('coords').value = '';
 }
-function newstart() {
-    polyPoints = [];
+function newstart(full) {
+	if (!full && StateCoords) {
+		polyPoints = [];
+    	pointsArray = [];
+		gob('coords').value = '';
+		polyPoints = StateCoords;
+		for(var i=0; i<StateCoords.length; i++){
+			var point = '"' + StateCoords[i].lat + '","' + StateCoords[i].lng + '"';
+			pointsArray.push(point);
+		}
+	} else {
+		polyPoints = [];
+    	pointsArray = [];
+	}
     outerPoints = [];
-    pointsArray = [];
     markersArray = [];
     pointsArrayKml = [];
     markersArrayKml = [];
@@ -2425,18 +2445,24 @@ function circleintroduction() {
     gob('coords').value;
 }
 
+var StateCoords = [];
+var StateCenterX = 0;
+var StateCenterY = 0;
+var StateZoom = 0;
+
 function regMap(coords) {
 	var container = $("#map_canvas").parent();
 	
 	if (coords != "") {
 		container.show();
 		
-		var StateZoom = Number(coords.zoom);
-		var StateCenterX = Number(coords.center_point[0]);
-		var StateCenterY = Number(coords.center_point[1]);
 		var StatePoints = coords.cords;
-		var StateCoords = [];
 		var latlng = {};
+		
+		StateZoom = Number(coords.zoom);
+		StateCenterX = Number(coords.center_point[0]);
+		StateCenterY = Number(coords.center_point[1]);
+		StateCoords = [];
 		
 		for (var i in StatePoints) {
 			latlng = {lat: Number(StatePoints[i][0]), lng: Number(StatePoints[i][1])};
@@ -2473,6 +2499,7 @@ function openMap(container) {
 		
 		modal.modal("show");
 		modal.on('shown.bs.modal', function(e) {
+			regMap(JSON.parse(newCoordsContainer.val()));
 			initmap();
 			clearMap();
 			$("#toolchoice, #codechoice").change();
@@ -2482,6 +2509,7 @@ function openMap(container) {
 
 function saveMap() {
 	mapcenter();
+	mapzoom();
 	
 	var center = '{"center_point":[' + $("#centerofmap").val() + '], ';
 	var zoom = '"zoom":"' + $("#myzoom").val() + '", ';
