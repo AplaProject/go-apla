@@ -205,17 +205,25 @@
 			predata.StateId = 1
 			predata.PublicKey = key
 		{{end}}
-		for (i = 0; i < arr.length; i++ ) {
-			var field = arr[i];
-			if ($("#" + field).attr("type") == "file") {
+		{{range .Fields}}
+			{{if eq .HtmlType "textinput"}}
+				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
+			{{end}}
+			{{if eq .HtmlType "map"}}
+				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
+			{{end}}
+		{{end}}
+//		for (i = 0; i < arr.length; i++ ) {
+//			var field = arr[i];
+//			if ($("#" + field).attr("type") == "file") {
 /*				$.each($('#'+field)[0].files, function(i, file) {
 					formdata.append(field +'-'+i, file);
 				});*/
-			} else {
-				predata[field] = $("#" + field).val();
-			}
-		}
-									
+//			} else {
+//				predata[field] = $("#" + field).val();
+//			}
+//		}
+											
 		$.get( 'ajax?json=ajax_prepare_tx', predata,
 			 function (data) {
 				if (data.error.length > 0 ) {
@@ -236,6 +244,12 @@
 	} );
 
 	$('#send_to_net').bind('click', function () {
+		{{range .Fields}}
+			{{if eq .HtmlType "image"}}
+				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
+			{{end}}
+		{{end}}
+
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?json=ajax_send_tx',
@@ -255,7 +269,7 @@
 		});
 	} );	
 	
-	$(".map").on('click', function(){
+/*	$(".map").on('click', function(){
 		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
 			$("#modal_map").modal("show");
 			$("#modal_map").on('shown.bs.modal', function(e) {
@@ -264,7 +278,7 @@
 				$("#toolchoice, #codechoice").change();
 			})
 		});
-	});
+	});*/
 /*	$('a[href="#tab2"]').on('shown.bs.tab', function () {
 		$(".selectbox").select2({
 			minimumResultsForSearch: 6,
@@ -294,11 +308,24 @@
 						{{if eq .HtmlType "map"}}
 							<div class="form-group"> <label>{{.Title}}</label>
 							   <textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
-						   </div>						
+						   </div>		
+							<div class="clearfix">				
 							<div class="pull-left">
-			  				<button type="button" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+			  				<button type="button" onClick="openMap('{{.Name}}');" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+							</div>
 							</div>
 						{{end}}
+						{{if eq .HtmlType "image"}}
+							<img id="img{{.Name}}" src="{{.Value}}">
+							<div class="form-group"> <label>{{.Title}}</label>
+							   <textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+						   </div>
+							<div class="clearfix">						
+							<div class="pull-left">
+							<button type="button" class="btn btn-primary" onclick="openImageEditor('img{{.Name}}', '{{.Name}}');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+							</div>
+							</div>
+						{{end}}						
 					{{end}}
 					</div>
 				   <div class="clearfix">
