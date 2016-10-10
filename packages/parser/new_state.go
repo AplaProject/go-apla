@@ -209,7 +209,7 @@ func (p *Parser) NewState() error {
 	tx {
 		Name string 
 		Company string "optional"
-		Coordinates bytes "map"
+		Coordinates string "map"
 		Photo bytes "image"
 	}
 	func main {

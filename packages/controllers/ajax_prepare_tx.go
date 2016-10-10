@@ -56,6 +56,9 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id /*+smart.CNTOFF*/, result.Time, userId, c.SessStateId)
 
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+			if strings.Index(fitem.Tags, `image`) >= 0 {
+				continue
+			}
 			val := c.r.FormValue(fitem.Name)
 			if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
 				err = fmt.Errorf(`%s is empty`, fitem.Name)
