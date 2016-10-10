@@ -251,7 +251,7 @@ DROP SEQUENCE IF EXISTS dlt_wallets_wallet_id_seq CASCADE;
 CREATE SEQUENCE dlt_wallets_wallet_id_seq START WITH 1;
 DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "wallet_id" bigint  NOT NULL  default nextval('dlt_wallets_wallet_id_seq'),
-"address" bytea  NOT NULL DEFAULT '',
+"address" varchar(255) NOT NULL DEFAULT '',
 "public_key_0" bytea  NOT NULL DEFAULT '',
 "public_key_1" bytea  NOT NULL DEFAULT '',
 "public_key_2" bytea  NOT NULL DEFAULT '',
