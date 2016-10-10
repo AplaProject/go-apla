@@ -2441,7 +2441,7 @@ var StateCenterX = 0;
 var StateCenterY = 0;
 var StateZoom = 0;
 
-function regMap(coords) {
+function regMap(coords, render) {
 	var container = $("#map_canvas").parent();
 	
 	if (coords != "") {
@@ -2459,21 +2459,23 @@ function regMap(coords) {
 			StateCoords.push(latlng);
 		}
 		
-		var map = new google.maps.Map(document.getElementById('map_canvas'), {
-			zoom: StateZoom,
-			center: {lat: StateCenterX, lng: StateCenterY},
-			mapTypeId: google.maps.MapTypeId.TERRAIN
-		});
-		
-		var State = new google.maps.Polygon({
-			paths: StateCoords,
-			strokeColor: '#FF0000',
-			strokeOpacity: 0.8,
-			strokeWeight: 2,
-			fillColor: '#0000FF',
-			fillOpacity: 0.6
-		});
-		State.setMap(map);
+		if (render != false) {
+			var map = new google.maps.Map(document.getElementById('map_canvas'), {
+				zoom: StateZoom,
+				center: {lat: StateCenterX, lng: StateCenterY},
+				mapTypeId: google.maps.MapTypeId.TERRAIN
+			});
+			
+			var State = new google.maps.Polygon({
+				paths: StateCoords,
+				strokeColor: '#FF0000',
+				strokeOpacity: 0.8,
+				strokeWeight: 2,
+				fillColor: '#0000FF',
+				fillOpacity: 0.6
+			});
+			State.setMap(map);
+		}
 	} else {
 		container.hide();
 	}
@@ -2483,25 +2485,37 @@ var newCoordsContainer;
 
 function openMap(container) {
 	newCoordsContainer = $("#" + container);
+	StateCoords = [];
 	
 	$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
 		var modal = $("#modal_map");
 		
-		modal.modal("show");
-		modal.on('shown.bs.modal', function(e) {
+		if (!newCoordsContainer.val() == "") {
+			try {
+				regMap(JSON.parse(newCoordsContainer.val()), false);
+			} catch(e) {
+				Alert(e.name, e.message, "error");
+				return false;
+			}
+			
+			modal.modal("show");
+			modal.on('shown.bs.modal', function(e) {
+				initmap();
+				clearMap();
+				$("#toolchoice, #codechoice").change();
+			})
+		} else {
 			StateZoom = 7;
 			StateCenterX = 55.758032;
 			StateCenterY = 37.633667;
-			StateCoords = [];
 			
-			if (!newCoordsContainer.val() == "") {
-				regMap(JSON.parse(newCoordsContainer.val()));
-			}
-			
-			initmap();
-			clearMap();
-			$("#toolchoice, #codechoice").change();
-		})
+			modal.modal("show");
+			modal.on('shown.bs.modal', function(e) {
+				initmap();
+				clearMap();
+				$("#toolchoice, #codechoice").change();
+			})
+		}
 	});
 }
 
