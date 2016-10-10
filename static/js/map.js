@@ -251,15 +251,6 @@ function activateMarker() {
     });
 }
 function initmap(){
-	if (StateZoom && StateCenterX && StateCenterY) {
-		StateZoom = StateZoom;
-		StateCenterX = StateCenterX;
-		StateCenterY = StateCenterY;
-	} else {
-		StateZoom = 7;
-		StateCenterX = 55.758032;
-		StateCenterY = 37.633667;
-	}
     geocoder = new google.maps.Geocoder();
     var latlng = new google.maps.LatLng(StateCenterX, StateCenterY);//(45.0,7.0);//45.074723, 7.656433
     var mapTypeIds = [];
@@ -2462,7 +2453,6 @@ function regMap(coords) {
 		StateZoom = Number(coords.zoom);
 		StateCenterX = Number(coords.center_point[0]);
 		StateCenterY = Number(coords.center_point[1]);
-		StateCoords = [];
 		
 		for (var i in StatePoints) {
 			latlng = {lat: Number(StatePoints[i][0]), lng: Number(StatePoints[i][1])};
@@ -2499,7 +2489,15 @@ function openMap(container) {
 		
 		modal.modal("show");
 		modal.on('shown.bs.modal', function(e) {
-			regMap(JSON.parse(newCoordsContainer.val()));
+			StateZoom = 7;
+			StateCenterX = 55.758032;
+			StateCenterY = 37.633667;
+			StateCoords = [];
+			
+			if (!newCoordsContainer.val() == "") {
+				regMap(JSON.parse(newCoordsContainer.val()));
+			}
+			
 			initmap();
 			clearMap();
 			$("#toolchoice, #codechoice").change();
