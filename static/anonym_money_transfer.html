@@ -114,7 +114,7 @@ $("#anonymMoneyTransfer").on('input', function () {
 	var amount = $("#amount");
 	var i = 0;
 	
-	if (wallet.val().length != 33) {
+	if (wallet.val().length != 24) {
 		wallet.addClass("parsley-error");
 		wallet.next(".parsley-errors-list").addClass("filled");
 	} else {
