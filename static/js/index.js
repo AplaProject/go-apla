@@ -608,8 +608,8 @@ function selectboxState(data) {
 function formatState(state) {
 	if (!state.id) { return state.text; }
 	var $state = $(
-		'<span class="state_' + state.id + '">' +
-			'<i class="virtual" style="background-image:url(' + selectbox.find("option[value=" + state.id + "]").attr("data-flag") + '); background-size:16px auto; background-position:0px 0px;"></i>' +
+		'<span class="virtual state_' + state.id + '">' +
+			'<i style="background-image:url(' + selectbox.find("option[value=" + state.id + "]").attr("data-flag") + ');"></i>' +
 			state.text +
 		'</span>'
 	);
