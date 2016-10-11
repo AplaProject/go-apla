@@ -564,7 +564,7 @@ function send_to_net_success(data, ReadyFunction){
 				dataType: 'json',
 				crossDomain: true,
 				success: function(txStatus){
-
+					
 					console.log("txStatus", txStatus);
 
 					if (typeof txStatus.wait != "undefined") {
@@ -574,7 +574,8 @@ function send_to_net_success(data, ReadyFunction){
 						clearInterval(interval);
 					} else {
 						clearInterval(interval);
-						Alert("Success", "", "success", ReadyFunction);
+						block_explorer = 'block_explorer';
+						Alert('Sealed in block', 'Block number: <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>', 'info', ReadyFunction);
 					}
 				},
 				error: function(xhr, status, error) {
