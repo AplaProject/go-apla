@@ -279,7 +279,8 @@ DROP TABLE IF EXISTS "system_recognized_states"; CREATE TABLE "system_recognized
 "host" varchar(255) NOT NULL DEFAULT '',
 "node_public_key" bytea  NOT NULL DEFAULT '',
 "delegate_wallet_id" bigint NOT NULL DEFAULT '0',
-"delegate_state_id" int NOT NULL DEFAULT '0'
+"delegate_state_id" int NOT NULL DEFAULT '0',
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "system_recognized_states" ADD CONSTRAINT system_recognized_states_pkey PRIMARY KEY (state_id);
 

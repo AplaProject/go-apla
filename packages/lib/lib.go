@@ -17,24 +17,35 @@
 package lib
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	crand "crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"hash/crc64"
 	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
-	b58 "github.com/jbenet/go-base58"
-	"golang.org/x/crypto/ripemd160"
+	//	b58 "github.com/jbenet/go-base58"
+	//	"golang.org/x/crypto/ripemd160"
 )
 
 // Converts binary address to DayLight address.
-func BytesToAddress(address []byte) string {
-	return /*`D` +*/ b58.Encode(address)
+func AddressToString(address uint64) (ret string) {
+	num := strconv.FormatUint(address, 10)
+	val := []byte(strings.Repeat("0", 20-len(num)) + num)
+
+	for i := 0; i < 4; i++ {
+		ret += string(val[i*4:(i+1)*4]) + `-`
+	}
+	ret += string(val[16:])
+	//	return /*`D` +*/ b58.Encode(address)
+	return
 }
 
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
@@ -199,31 +210,73 @@ func GenKeys() (privKey string, pubKey string) {
 
 // Function IsValidAddress checks if the specified address is DayLight address.
 func IsValidAddress(address string) bool {
+	val := []byte(strings.Replace(address, `-`, ``, -1))
+	if len(val) != 20 {
+		return false
+	}
+	if _, err := strconv.ParseUint(string(val), 10, 64); err != nil {
+		return false
+	}
+	var all, one, two int
+	for i, ch := range val[:len(val)-1] {
+		digit := int(ch - '0')
+		all += digit
+		if i&1 == 1 {
+			one += digit
+		} else {
+			two += digit
+		}
+	}
+	checksum := (two + 3*one) % 10
+	if checksum > 0 {
+		checksum = 10 - checksum
+	}
+	return int(val[len(val)-1]-'0') == checksum
+
 	/*if address[0] != 'D' {
 		return false
 	}*/
-	key := b58.Decode(address[0:])
-	checksum := key[len(key)-4:]
-	finger := key[:len(key)-4]
-	h256 := sha256.Sum256(finger)
-	h256 = sha256.Sum256(h256[:])
-	return bytes.Compare(checksum, h256[:4]) == 0
+	/*	key := b58.Decode(address[0:])
+		checksum := key[len(key)-4:]
+		finger := key[:len(key)-4]
+		h256 := sha256.Sum256(finger)
+		h256 = sha256.Sum256(h256[:])
+		return bytes.Compare(checksum, h256[:4]) == 0*/
+	return true
 }
 
-func Address(pubKey []byte) []byte {
+func Address(pubKey []byte) uint64 {
 	h256 := sha256.Sum256(pubKey)
-	h := ripemd160.New()
-	h.Write(h256[:])
-	finger := h.Sum(nil)
-	h256 = sha256.Sum256(finger)
-	h256 = sha256.Sum256(h256[:])
-	checksum := h256[:4]
-	return append(finger, checksum...)
+	h512 := sha512.Sum512(h256[:])
+	crc := crc64.Checksum(h512[:], crc64.MakeTable(crc64.ECMA))
+	// replace the last digit by checksum
+	num := strconv.FormatUint(crc, 10)
+	val := []byte(strings.Repeat("0", 20-len(num)) + num)
+	var all, one, two int
+	for i, ch := range val[:len(val)-1] {
+		digit := int(ch - '0')
+		all += digit
+		if i&1 == 1 {
+			one += digit
+		} else {
+			two += digit
+		}
+	}
+	checksum := (two + 3*one) % 10
+	if checksum > 0 {
+		checksum = 10 - checksum
+	}
+	return crc - (crc % 10) + uint64(checksum)
+	/*	h := ripemd160.New()
+		h.Write(h256[:])
+		finger := h.Sum(nil)
+		h256 = sha256.Sum256(finger)
+		h256 = sha256.Sum256(h256[:])*/
 }
 
 // Converts a public key to DayLight address.
 func KeyToAddress(pubKey []byte) string {
-	return BytesToAddress(Address(pubKey))
+	return AddressToString(Address(pubKey))
 }
 
 // Tiem gets the current time in UNIX format.
