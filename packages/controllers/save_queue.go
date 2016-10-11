@@ -163,13 +163,15 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewState":
 
+
+		stateId = 0
 		stateName := []byte(c.r.FormValue("state_name"))
 		currencyName := []byte(c.r.FormValue("currency_name"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(walletId)...)
-		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
 		data = append(data, utils.EncodeLengthPlusData(stateName)...)
 		data = append(data, utils.EncodeLengthPlusData(currencyName)...)
 		data = append(data, binSignatures...)
