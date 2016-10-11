@@ -581,7 +581,7 @@ function send_to_net_success(data, ReadyFunction){
 					} else {
 						clearInterval(interval);
 						block_explorer = 'block_explorer';
-						Alert('Success', 'Sealed in block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>', 'success', ReadyFunction);
+						Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>', 'success', ReadyFunction);
 					}
 				},
 				error: function(xhr, status, error) {
