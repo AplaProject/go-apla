@@ -612,10 +612,13 @@ function formatState(state) {
 
 var newImage;
 var newImageData;
+var PhotoRatio;
 
-function openImageEditor(img, container) {
+function openImageEditor(img, container, ratio) {
 	newImage = $("#" + img);
 	newImageData = $("#" + container);
+	PhotoRatio = ratio.split('/');
+	PhotoRatio = PhotoRatio[0] / PhotoRatio[1];
 	
 	$("#dl_modal").load("content?controllerHTML=modal_avatar", { }, function() {
 		var modal = $("#modal_avatar");
