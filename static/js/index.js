@@ -233,12 +233,18 @@ function Alert(title, text, type, Confirm) {
 			html: true
 		}, function (isConfirm) {
 			if (isConfirm) {
-				$("#" + id).modal("hide");
-				obj.css({"min-height":minHeight}).removeClass("whirl standard");
 				if (type == "success") {
 					if (Confirm) {
-						Confirm();
+						if (Confirm == false) {
+							return false;
+						} else {
+							Confirm();
+						}
 					}
+				}
+				if (Confirm != false) {
+					$("#" + id).modal("hide");
+					obj.css({"min-height":minHeight}).removeClass("whirl standard");
 				}
 			}
 		});
@@ -575,7 +581,7 @@ function send_to_net_success(data, ReadyFunction){
 					} else {
 						clearInterval(interval);
 						block_explorer = 'block_explorer';
-						Alert('Sealed in block', 'Block number: <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>', 'info', ReadyFunction);
+						Alert('Success', 'Sealed in block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>', 'success', ReadyFunction);
 					}
 				},
 				error: function(xhr, status, error) {
@@ -613,12 +619,16 @@ function formatState(state) {
 var newImage;
 var newImageData;
 var PhotoRatio;
+var PhotoWidth;
+var PhotoHeight;
 
-function openImageEditor(img, container, ratio) {
+function openImageEditor(img, container, ratio, width, height) {
 	newImage = $("#" + img);
 	newImageData = $("#" + container);
 	PhotoRatio = ratio.split('/');
 	PhotoRatio = PhotoRatio[0] / PhotoRatio[1];
+	PhotoWidth = width;
+	PhotoHeight = height;
 	
 	$("#dl_modal").load("content?controllerHTML=modal_avatar", { }, function() {
 		var modal = $("#modal_avatar");
@@ -629,12 +639,17 @@ function openImageEditor(img, container, ratio) {
 
 function saveImage() {
 	var el = $("#photoEditor #cropped");
+	var pts = $("#photoEditor img").length;
 	if (!el.hasClass("cropper-hidden")) {
-		var img = el.attr("src");
-		newImage.attr("src", img);
-		newImageData.val(img);
-		$("#modal_avatar").modal("hide");
+		if (pts > 0) {
+			var img = el.attr("src");
+			newImage.attr("src", img);
+			newImageData.val(img);
+			$("#modal_avatar").modal("hide");
+		} else {
+			Alert("Warning", "Please, choose image!", "warning", false);
+		}
 	} else {
-		alert("Please, crop the photo!");
+		Alert("Warning", "Please, crop the photo!", "warning", false);
 	}
 }

@@ -8,18 +8,24 @@
 	});
 	
 	$('#send').bind('click', function () {
-
-		$.get( 'ajax?controllerName=GetServerTime', function (data) {
-			serverTime = data.time;
-			if ($("#name").val()) {
-				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
-			} else {
-				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
-			}
-			doSign();
-			$("#send_to_net").trigger("click");
-		}, "json" );
-	} );
+		var size = $("#value").val().length;
+		console.log(size);
+		if (size > 5120) {
+			var kb = (size / 1024).toFixed(2);
+			Alert('Image size should not exceed 5kb.', 'Size your image ' + kb + 'kb', 'error');
+		} else {
+			$.get( 'ajax?controllerName=GetServerTime', function (data) {
+				serverTime = data.time;
+				if ($("#name").val()) {
+					$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+				} else {
+					$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+				}
+				doSign();
+				$("#send_to_net").trigger("click");
+			}, "json" );
+		}
+	});
 
 
 	$('#send_to_net').bind('click', function () {
@@ -88,7 +94,7 @@
 	   <div class="clearfix">
 		  <div class="pull-left">
 			  {{if eq .StateParameters.name "state_flag"}}
-			  	<button type="button" class="btn btn-primary" onClick="openImageEditor('flag', 'value', '2/1');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+			  	<button type="button" class="btn btn-primary" onClick="openImageEditor('flag', 'value', '2/1', '100', '50');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
 			  {{else}}
 				<button type="button" class="btn btn-primary" onClick="preloader(this); openMap('value');" id="openMap"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
 			  {{end}}
