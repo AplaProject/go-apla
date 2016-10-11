@@ -22,7 +22,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"database/sql"
-	"encoding/hex"
+	//	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -33,7 +33,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	b58 "github.com/jbenet/go-base58"
+
+	//	b58 "github.com/jbenet/go-base58"
 
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
@@ -542,36 +543,36 @@ func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{})
 	var err error
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	colName, err := db.GetFirstColumnNamesPg(table)
+	if err != nil {
+		return "", fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
+	}
+	newQuery = newQuery + " RETURNING " + colName
+	for {
+		err := db.QueryRow(newQuery, newArgs...).Scan(&lastId_)
 		if err != nil {
-			return "", fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
-		}
-		newQuery = newQuery + " RETURNING " + colName
-		for {
-			err := db.QueryRow(newQuery, newArgs...).Scan(&lastId_)
-			if err != nil {
-				if ok, _ := regexp.MatchString(`(?i)database is locked`, fmt.Sprintf("%s", err)); ok {
-					log.Error("database is locked %s / %s / %s", newQuery, newArgs, GetParent())
-					time.Sleep(250 * time.Millisecond)
-					continue
-				} else {
-					return "", fmt.Errorf("%s in query %s %s %s", err, newQuery, newArgs, GetParent())
-				}
+			if ok, _ := regexp.MatchString(`(?i)database is locked`, fmt.Sprintf("%s", err)); ok {
+				log.Error("database is locked %s / %s / %s", newQuery, newArgs, GetParent())
+				time.Sleep(250 * time.Millisecond)
+				continue
 			} else {
-				switch lastId_.(type) {
-					case int:
-					lastId = IntToStr(lastId_.(int))
-					case int64:
-					lastId = Int64ToStr(lastId_.(int64))
-					case float64:
-					lastId = Float64ToStr(lastId_.(float64))
-					case string:
-					lastId = lastId_.(string)
-					case []byte:
-					lastId = string(lastId_.([]byte))
-				}
-				break
+				return "", fmt.Errorf("%s in query %s %s %s", err, newQuery, newArgs, GetParent())
 			}
+		} else {
+			switch lastId_.(type) {
+			case int:
+				lastId = IntToStr(lastId_.(int))
+			case int64:
+				lastId = Int64ToStr(lastId_.(int64))
+			case float64:
+				lastId = Float64ToStr(lastId_.(float64))
+			case string:
+				lastId = lastId_.(string)
+			case []byte:
+				lastId = string(lastId_.([]byte))
+			}
+			break
 		}
+	}
 
 	if db.ConfigIni["sql_log"] == "1" {
 		log.Debug("SQL: %s / LastInsertId=%d / %s", newQuery, lastId, newArgs)
@@ -970,17 +971,18 @@ func (db *DCDB) GetMyBlockId() (int64, error) {
 }
 
 func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
-	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
-	log.Debug("publicKey %s", publicKey)
-	key, _ := hex.DecodeString(string(publicKey))
-	log.Debug("key %s", key)
-	log.Debug("b58 %s", b58.Encode(lib.Address(key)))
-	walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`,
-		string(b58.Encode(lib.Address(key)))).Int64()
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	return walletId, nil
+	/*	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
+		log.Debug("publicKey %s", publicKey)
+		key, _ := hex.DecodeString(string(publicKey))
+		log.Debug("key %s", key)
+		log.Debug("b58 %s", b58.Encode(lib.Address(key)))
+		walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`,
+			string(b58.Encode(lib.Address(key)))).Int64()
+		if err != nil {
+			return 0, ErrInfo(err)
+		}
+		return walletId, nil*/
+	return 1, nil
 }
 
 func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
@@ -1581,8 +1583,8 @@ func (db *DCDB) GetStateName(stateId int64) (string, error) {
 		return ``, err
 	}
 	stateName := ""
-	if stateId_!="0" {
-		stateName, err = db.Single(`SELECT value FROM "`+stateId_+`_state_parameters" WHERE name = 'state_name'`).String()
+	if stateId_ != "0" {
+		stateName, err = db.Single(`SELECT value FROM "` + stateId_ + `_state_parameters" WHERE name = 'state_name'`).String()
 		if err != nil {
 			return ``, err
 		}
@@ -1600,5 +1602,3 @@ func (db *DCDB) CheckStateName(stateId int64) (bool, error) {
 	}
 	return false, fmt.Errorf("null stateId")
 }
-
-

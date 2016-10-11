@@ -30,11 +30,11 @@ import (
 const NBlockExplorer = `block_explorer`
 
 type blockExplorerPage struct {
-	Data      *CommonPage
-	List      []map[string]string
-	Latest    int64
-	BlockId   int64
-	BlockData map[string]string
+	Data       *CommonPage
+	List       []map[string]string
+	Latest     int64
+	BlockId    int64
+	BlockData  map[string]string
 	SinglePage int64
 }
 
@@ -60,7 +60,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 			blockInfo[`hash`] = hex.EncodeToString([]byte(blockInfo[`hash`]))
 			blockInfo[`size`] = utils.IntToStr(len(blockInfo[`data`]))
 			if len(blockInfo[`address`]) > 0 && blockInfo[`address`] != `NULL` {
-				blockInfo[`wallet_address`] = lib.BytesToAddress([]byte(blockInfo[`address`]))
+				blockInfo[`wallet_address`] = lib.KeyToAddress([]byte(blockInfo[`address`]))
 			} else {
 				blockInfo[`wallet_address`] = ``
 			}

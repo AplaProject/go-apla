@@ -19,12 +19,13 @@ package lib
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/DayLightProject/go-daylight/packages/test"
-	"github.com/DayLightProject/go-daylight/packages/consts"
+	"fmt"
 	"math/rand"
-	"testing"
 	"reflect"
-		"fmt"
+	"testing"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/test"
 )
 
 type ByteTest struct {
@@ -35,6 +36,11 @@ type ByteTest struct {
 type EncodeType struct {
 	value int64
 	data  []byte
+}
+
+type AddressTest struct {
+	src  []byte
+	want string
 }
 
 var testList = []EncodeType{
@@ -81,6 +87,30 @@ func TestAddress(t *testing.T) {
 			}
 		} else if !IsValidAddress(address) {
 			t.Errorf("not valid address %s for %x seed: %d", address, key, seed)
+		}
+	}
+}
+
+func TestCRCAddress(t *testing.T) {
+	input := []AddressTest{
+		{[]byte{23, 45, 67, 126, 64, 255, 0, 2, 1, 128}, `0035-2003-0310-5692-6089`},
+		{[]byte{123, 245, 167, 26, 164, 55, 10, 12, 12, 120}, `0816-0005-5015-4925-6715`},
+		{[]byte{23, 45, 67, 126, 64, 255, 0, 2, 1, 129}, `1409-9962-9733-1591-2620`},
+	}
+	for i, item := range input {
+		address := KeyToAddress(item.src)
+		if address != item.want {
+			fmt.Println(`Address`, item.src, item.want)
+			t.Errorf("wrong address %s != %s", item.want, address)
+		}
+		if !IsValidAddress(address) {
+			t.Errorf("not valid address %s != %s", item.want, address)
+		}
+		mod := []byte(address)
+		mod[len(address)-1-i] = '0' + byte(((mod[len(address)-1-i]-'0')+1)%10)
+		//		fmt.Println(address, string(mod))
+		if IsValidAddress(string(mod)) {
+			t.Errorf("not crc %s != %s", string(mod), address)
 		}
 	}
 }
@@ -187,8 +217,8 @@ func TestHeader(t *testing.T) {
 	var tx []byte
 	now := Time32()
 	sign := test.HexToBytes(`0056575879`)
-	_, err := BinMarshal(&tx, &consts.CitizenRequest{ TxHeader: consts.TxHeader{Type: 45, Time: now, 
-	        WalletId: 123, CitizenId: 456}, StateId: 78, Sign: sign})
+	_, err := BinMarshal(&tx, &consts.CitizenRequest{TxHeader: consts.TxHeader{Type: 45, Time: now,
+		WalletId: 123, CitizenId: 456}, StateId: 78, Sign: sign})
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -199,28 +229,27 @@ func TestHeader(t *testing.T) {
 	}
 	p := inter.(*consts.CitizenRequest)
 	header := reflect.ValueOf(p).Elem().Field(0)
-	data := FieldToBytes( header.Interface(), 2)
-	if bytes.Compare( data, test.HexToBytes(`313233`)) != 0 {
+	data := FieldToBytes(header.Interface(), 2)
+	if bytes.Compare(data, test.HexToBytes(`313233`)) != 0 {
 		t.Errorf(`wrong wallet_id`)
 	}
-	data = FieldToBytes( header.Interface(), 3)
-	if bytes.Compare( data, test.HexToBytes(`343536`)) != 0 {
+	data = FieldToBytes(header.Interface(), 3)
+	if bytes.Compare(data, test.HexToBytes(`343536`)) != 0 {
 		t.Errorf(`wrong citizen_id`)
 	}
-	if bytes.Compare( consts.Sign(p), sign) != 0 {
+	if bytes.Compare(consts.Sign(p), sign) != 0 {
 		t.Errorf(`wrong sign`)
 	}
 }
 
-
 func TestFieldToBytes(t *testing.T) {
-    first := consts.FirstBlock{ TxHeader: consts.TxHeader{Type: 1, Time: 2345, 
-	    WalletId: 67, CitizenId: 89},
+	first := consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1, Time: 2345,
+		WalletId: 67, CitizenId: 89},
 		PublicKey:     []byte(`010203`),
 		NodePublicKey: []byte(`040506`),
 		Host:          `070809`}
 	out := ``
-	for i:=1; i< 7; i++ {
+	for i := 1; i < 7; i++ {
 		out += string(FieldToBytes(first, i))
 	}
 	if out != `010203040506070809` {
