@@ -112,11 +112,12 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		c.NodeConfig = config
 
 	}
-
 	r.ParseForm()
 	if jsonName := r.FormValue(`json`); len(jsonName) > 0 && isPage(jsonName, TJson) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Write(CallJson(c, jsonName))
+		if dbInit {
+			w.Write(CallJson(c, jsonName))
+		}
 		return
 	}
 
@@ -154,6 +155,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	w.Write([]byte(html))
 
 }

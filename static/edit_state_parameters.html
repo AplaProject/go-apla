@@ -78,7 +78,10 @@
 		   <div class="form-group">
 			   <label>Value</label>
 
-			   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}"></p>{{end}}
+			   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}">
+			<script>
+				document.getElementById('flag').setAttribute( 'src', '{{.StateParameters.value}}' );
+			</script></p>{{end}}
 
 			   <textarea class="form-control" id="value">{{.StateParameters.value}}</textarea>
 		   </div>
