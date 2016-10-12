@@ -17,17 +17,18 @@
 package textproc
 
 import (
-	//	"fmt"
+	"fmt"
+	"strings"
 	"unicode/utf8"
 )
 
-type TextFunc func(args ...string) string
-type JsonFunc func(json string) string
+type TextFunc func(*map[string]string, ...string) string
+type MapFunc func(*map[string]string, *map[string]string) string
 
 type TextProc struct {
 	syschar rune
 	funcs   map[string]TextFunc
-	jsons   map[string]JsonFunc
+	maps    map[string]MapFunc
 }
 
 var (
@@ -35,7 +36,11 @@ var (
 )
 
 func init() {
-	engine = TextProc{'#', make(map[string]TextFunc), make(map[string]JsonFunc)}
+	engine = TextProc{syschar: '#', maps: make(map[string]MapFunc)}
+	engine.funcs = map[string]TextFunc{
+		`Link`: Link,
+		`Tag`:  Tag,
+	}
 }
 
 func replace(input string, level int, vars *map[string]string) string {
@@ -80,6 +85,214 @@ func replace(input string, level int, vars *map[string]string) string {
 	return string(result)
 }
 
-func Do(input string, vars *map[string]string) string {
+func AddMaps(funcs *map[string]MapFunc) {
+	for key, ifunc := range *funcs {
+		engine.maps[key] = ifunc
+	}
+}
+
+func AddFuncs(funcs *map[string]TextFunc) {
+	for key, ifunc := range *funcs {
+		engine.funcs[key] = ifunc
+	}
+}
+
+func Macro(input string, vars *map[string]string) string {
 	return replace(input, 0, vars)
+}
+
+func Split(input string) *[][]string {
+	var isArray int
+	ret := make([][]string, 0)
+	value := make([]rune, 0)
+	list := make([]string, 0)
+	for _, ch := range input {
+		if ch == '[' {
+			isArray++
+			continue
+		}
+		if isArray == 2 {
+			if ch == ',' || ch == ']' {
+				list = append(list, string(value))
+				value = value[:0]
+			} else {
+				value = append(value, ch)
+			}
+		}
+		if ch == ']' {
+			if isArray == 2 {
+				ret = append(ret, list)
+				list = make([]string, 0) //list[:0]
+			}
+			isArray--
+			continue
+		}
+	}
+	return &ret
+}
+
+func funcProcess(name string, params [][]rune, vars *map[string]string) string {
+	pars := make([]string, 0)
+	for _, item := range params {
+		ipar := strings.TrimSpace(string(item))
+		val := Process(ipar, vars)
+		if len(val) == 0 {
+			val = Macro(ipar, vars)
+		}
+		pars = append(pars, val)
+	}
+	return engine.funcs[name](vars, pars...)
+}
+
+func mapProcess(name string, params *map[string]string, vars *map[string]string) string {
+	pars := make(map[string]string, 0)
+	for key, item := range *params {
+		var val string
+		//		ipar := strings.TrimSpace(string(item))
+		if len(item) > 0 && item[0] != '[' {
+			val = Process(item, vars)
+			if len(val) == 0 {
+				val = Macro(item, vars)
+			}
+		} else {
+			val = string(item)
+		}
+		pars[key] = val
+	}
+	return engine.maps[name](vars, &pars)
+}
+
+func Process(input string, vars *map[string]string) (out string) {
+	var (
+		isFunc, isMap, isArr int
+		params               [][]rune
+		pmap                 map[string]string
+		isKey                bool
+		pair                 rune
+	)
+
+	name := make([]rune, 0, 128)
+	key := make([]rune, 0, 128)
+	value := make([]rune, 0, 128)
+	for _, ch := range input {
+		if isMap > 0 {
+			if pair > 0 {
+				if ch != pair {
+					value = append(value, ch)
+				} else {
+					pair = 0
+				}
+				continue
+			}
+			if !isKey && len(value) == 0 {
+				if ch >= '!' {
+					if ch == '"' || ch == '`' {
+						pair = ch
+					} else {
+						if ch == '[' {
+							isArr++
+						}
+						value = append(value, ch)
+					}
+				}
+				continue
+			}
+			if ch == '}' {
+				isMap--
+				//				if isFunc == 0 {
+				pmap[strings.TrimSpace(string(key))] = strings.TrimSpace(string(value))
+				out += mapProcess(string(name), &pmap, vars)
+				fmt.Println(`OUT`, out)
+				name = name[:0]
+				//				}
+			}
+			if isKey {
+				if ch < '!' {
+					continue
+				}
+				if isKey && ch == ':' {
+					isKey = false
+					value = value[:0]
+					continue
+				}
+				key = append(key, ch)
+				continue
+			}
+			if isArr == 0 && (ch == 0xa || ch == ',') {
+				pmap[strings.TrimSpace(string(key))] = strings.TrimSpace(string(value))
+				isKey = true
+				key = key[:0]
+				value = value[:0]
+			}
+			if ch == '[' {
+				isArr++
+			}
+			if ch == ']' {
+				isArr--
+			}
+			value = append(value, ch)
+			continue
+		}
+		if isFunc > 0 {
+			if pair > 0 {
+				if ch != pair {
+					params[len(params)-1] = append(params[len(params)-1], ch)
+				} else {
+					pair = 0
+				}
+				continue
+			}
+			if len(params[len(params)-1]) == 0 {
+				if ch >= '!' {
+					if ch == '"' || ch == '`' {
+						pair = ch
+					} else {
+						params[len(params)-1] = append(params[len(params)-1], ch)
+					}
+				}
+				continue
+			}
+			if ch == ')' {
+				isFunc--
+				if isFunc == 0 {
+					out += funcProcess(string(name), params, vars)
+					name = name[:0]
+				}
+			}
+			if ch == '(' {
+				isFunc++
+			}
+			if ch == ',' && isFunc == 1 {
+				params = append(params, make([]rune, 0))
+			} else {
+				params[len(params)-1] = append(params[len(params)-1], ch)
+			}
+			continue
+		}
+		if ch < '!' {
+			continue
+		}
+		if ch == '(' {
+			if _, ok := engine.funcs[string(name)]; !ok {
+				return
+			}
+			params = make([][]rune, 1)
+			params[0] = make([]rune, 0)
+			isFunc++
+		} else if ch == '{' {
+			if _, ok := engine.maps[string(name)]; !ok {
+				return
+			}
+			pmap = make(map[string]string)
+			isKey = true
+			key = key[:0]
+			isMap++
+		} else {
+			name = append(name, ch)
+			if len(name) > 64 {
+				return
+			}
+		}
+	}
+	return
 }

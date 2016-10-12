@@ -26,6 +26,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/textproc"
 )
 
 type FieldInfo struct {
@@ -61,6 +62,10 @@ func init() {
 	}, map[string]string{
 	//		`*parser.Parser`: `parser`,
 	}})
+
+	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table})
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`LiTemplate`: LiTemplate,
+		`Title`: Title, `Navigation`: Navigation})
 }
 
 // Reading and compiling contracts from smart_contracts tables
@@ -103,6 +108,45 @@ func Balance(wallet_id int64) (float64, error) {
 
 func StateParam(idstate int64, name string) (string, error) {
 	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
+}
+
+func Table(vars *map[string]string, pars *map[string]string) string {
+	out := `<table  class="table table-striped table-bordered table-hover">`
+
+	return out + `</table>`
+}
+
+func LiTemplate(vars *map[string]string, pars ...string) string {
+	if len(pars) == 0 {
+		return ``
+	}
+	name := pars[0]
+	title := name
+	if len(pars) > 1 {
+		title = pars[1]
+	}
+	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a></li>`,
+		name, title)
+}
+
+func Navigation(vars *map[string]string, pars ...string) string {
+	li := make([]string, 0)
+	if len(pars) == 0 {
+		return ``
+	}
+	for _, ipar := range pars {
+		li = append(li, ipar)
+	}
+	return textproc.Macro(fmt.Sprintf(`<ol class="breadcrumb"><span class="pull-right">
+	<a href='#' onclick="load_page('editPage', {name: '#page#'} )">Edit</a></span>%s</ol>`,
+		strings.Join(li, `&nbsp;/&nbsp;`)), vars)
+}
+
+func Title(vars *map[string]string, pars ...string) string {
+	if len(pars) == 0 {
+		return ``
+	}
+	return fmt.Sprintf(`<div class="content-heading">%s</div>`, pars[0])
 }
 
 func TxForm(name string) string {
