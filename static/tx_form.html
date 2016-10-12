@@ -316,13 +316,13 @@
 							</div>
 						{{end}}
 						{{if eq .HtmlType "image"}}
-							<img id="img{{.Name}}" src="{{.Value}}">
+							<img id="img{{.Name}}" style="margin: 10px 0px;" src="{{.Value}}">
 							<div class="form-group"> <label>{{.Title}}</label>
 							   <textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
 						   </div>
 							<div class="clearfix">						
 							<div class="pull-left">
-							<button type="button" class="btn btn-primary" onclick="openImageEditor('img{{.Name}}', '{{.Name}}');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+							<button type="button" class="btn btn-primary" onClick="openImageEditor('img{{.Name}}', '{{.Name}}', '2/1', '100', '50');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
 							</div>
 							</div>
 						{{end}}						

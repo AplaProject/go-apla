@@ -155,7 +155,7 @@ function circstyle() {
 }
 function markerstyleobject() {
     this.name = "markerstyle";
-    this.icon = "http://maps.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png";
+    this.icon = "//maps.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png";
 }
 function placemarkobject() {
     this.name = "NAME";
@@ -687,7 +687,7 @@ function setDirectionsMarker(point) {
         map: map,
         icon: image
     });
-    var shadow = new google.maps.MarkerImage('http://maps.google.com/intl/en_us/mapfiles/ms/micons/msmarker.shadow.png',
+    var shadow = new google.maps.MarkerImage('//maps.google.com/intl/en_us/mapfiles/ms/micons/msmarker.shadow.png',
         new google.maps.Size(37,32),
         new google.maps.Point(16,0),
         new google.maps.Point(0,32));
