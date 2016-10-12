@@ -599,6 +599,7 @@ function selectboxState(data) {
 	}
 	
 	selectbox.select2({
+		minimumResultsForSearch: 10,
 		templateResult: formatState,
 		templateSelection: formatState,
 		theme: 'bootstrap'

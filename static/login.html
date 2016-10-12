@@ -31,15 +31,32 @@
 	}
 </style>
 
+<script>
+	var selectbox = $("#state_id");
+	
+	$.ajax({
+		type: 'GET',
+		url: '/ajax?controllerName=AjaxStatesList',
+		dataType: 'json',
+		crossDomain: true,
+		success: function(data) {
+			selectboxState(data);
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
+</script>
+
 <div class="start_type">
 	<fieldset class="form-group phrase">
 		<label class="col-sm-3 control-label" for="phrase">Country</label>
 		<div class="col-sm-9">
-			<select id="state_id">
+			<select id="state_id" class="form-control">
 				<!--<option value="0">-----</option>-->
-				{{ range $id, $name := .States }}
+				<!--{{ range $id, $name := .States }}
 				<option value="{{$id}}">{{$name}}</option>
-				{{end}}
+				{{end}}-->
 			</select>
 		</div>
 	</fieldset>
