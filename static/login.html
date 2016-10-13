@@ -20,6 +20,9 @@
 		flex-flow:row nowrap;
 		justify-content:space-between;
 	}
+	h1 {
+		margin-top:0px;
+	}
 	.accounts {
 		text-align:left;
 		padding: 0em;
@@ -46,10 +49,20 @@
 			Alert("Error", error, "error");
 		}
 	});
+	
+	function WatchForm() {
+		var el = $(".start_form");
+		var list = $("#countries");
+		el.each(function() {
+			if ($(this).is(":visible")) {
+				list.insertBefore($(this).find(".s-box"));
+			}
+		});
+	}
 </script>
 
 <div class="start_type">
-	<fieldset class="form-group phrase">
+	<fieldset id="countries" class="form-group phrase">
 		<label class="col-sm-3 control-label" for="phrase">Country</label>
 		<div class="col-sm-9">
 			<select id="state_id" class="form-control">
@@ -63,38 +76,30 @@
 
 	<input type="hidden" id="prvkey" value="" />
 	<input type="hidden" id="pubkey" value="" />
-	<div id="register_form" style="display:none;">
+	<div id="register_form" class="start_form" style="display:none;">
 		<h1 style="padding-bottom: 10px;" class="noimport">Create account</h1>
 		<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
-		<div id="extended_div" >
-			<form class="extended_form">
-
-
-
-
-
-				<fieldset class="form-group phrase">
-					<label class="col-sm-3 control-label" for="phrase">Wallet seed or <br>Private key</label>
-					<div class="col-sm-9">
-						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
-						<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
-					</div>
-				</fieldset>
-
-				<fieldset class="form-group pass">
-					<label class="col-sm-3 control-label" for="pass">Password</label>
-					<div class="col-sm-9">
-						<input id="pass" class="form-control" type="password">
-					</div>
-				</fieldset>
-				<fieldset class="form-group rep_pass">
-					<label class="col-sm-3 control-label" for="rep_pass">Repeat password</label>
-					<div class="col-sm-9">
-						<input id="rep_pass" class="form-control" type="password">
-					</div>
-				</fieldset>
-			</form>
-		</div>
+		<form>
+			<fieldset class="s-box form-group phrase">
+				<label class="col-sm-3 control-label" for="phrase">Wallet seed or <br>Private key</label>
+				<div class="col-sm-9 text-right">
+					<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
+					<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
+				</div>
+			</fieldset>
+			<fieldset class="form-group pass">
+				<label class="col-sm-3 control-label" for="pass">Password</label>
+				<div class="col-sm-9">
+					<input id="pass" class="form-control" type="password">
+				</div>
+			</fieldset>
+			<fieldset class="form-group rep_pass">
+				<label class="col-sm-3 control-label" for="rep_pass">Repeat password</label>
+				<div class="col-sm-9">
+					<input id="rep_pass" class="form-control" type="password">
+				</div>
+			</fieldset>
+		</form>
 		<div style="padding-top: 10px; text-align:left;" class="noimport">
 			<div class="col-sm-3"></div>
 			<div class="flex">
@@ -113,33 +118,29 @@
 		</div>
 	</div>
 	
-	<div id="login_form" style="display:none;">
+	<div id="login_form" class="start_form" style="display:none;">
 		<h1 style="padding-bottom: 10px;">Login</h1>
-		<div id="extended_div" >
-			<form class="extended_form">
-				<fieldset class="form-group" id="field-list">
-					<label class="col-sm-3 control-label" for="list"></label>
-					<div class="col-sm-9">
-						<ul class="accounts" id="accounts">
-						</ul>
-					</div>
-				</fieldset>
-
-				<fieldset class="form-group" id="field-address">
-					<label class="col-sm-3 control-label" for="address">Address</label>
-					<div class="col-sm-9">
-						<input id="address" class="form-control" type="text" disabled/>
-					</div>
-				</fieldset>
-
-				<fieldset class="form-group decpass">
-					<label class="col-sm-3 control-label" for="decpass">Password</label>
-					<div class="col-sm-9">
-						<input id="decpass" class="form-control" type="password"/>
-					</div>
-				</fieldset>
-			</form>
-		</div>
+		<form>
+			<fieldset class="form-group" id="field-list">
+				<label class="col-sm-3 control-label" for="list"></label>
+				<div class="col-sm-9">
+					<ul class="accounts" id="accounts">
+					</ul>
+				</div>
+			</fieldset>
+			<fieldset class="s-box form-group" id="field-address">
+				<label class="col-sm-3 control-label" for="address">Address</label>
+				<div class="col-sm-9">
+					<input id="address" class="form-control" type="text" disabled/>
+				</div>
+			</fieldset>
+			<fieldset class="form-group decpass">
+				<label class="col-sm-3 control-label" for="decpass">Password</label>
+				<div class="col-sm-9">
+					<input id="decpass" class="form-control" type="password"/>
+				</div>
+			</fieldset>
+		</form>
 		<div style="padding-top:10px; text-align:left;">
 			<div class="col-sm-3"></div>
 			<div class="flex">
@@ -201,6 +202,7 @@ function login_form() {
 	$("#register_form").hide();
 	$("#login_form").show();
 	$("#address").val(GKey.Address ? GKey.Address : '');
+	WatchForm();
 	return false;
 }
 
@@ -210,6 +212,7 @@ function register_form() {
 	$("#register_form").show();
 	$(".noimport").show();
 	$("#state_id").val("");
+	WatchForm();
 	return false;
 }
 
@@ -218,6 +221,7 @@ function import_form() {
 	$(".noimport").hide();
 	$("#register_form").show();
 	$(".noregister").show();
+	WatchForm();
 	return false;
 }
 
@@ -302,6 +306,7 @@ $(document).ready(function(){
 	if (GKey.Private) {
 		do_sign();
 	}
+	WatchForm();
 });
 	
 </script>
