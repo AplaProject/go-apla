@@ -20,12 +20,14 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"strings"
 
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/textproc"
+	"github.com/russross/blackfriday"
 )
 
 type FieldInfo struct {
@@ -61,6 +63,12 @@ func init() {
 	}, map[string]string{
 	//		`*parser.Parser`: `parser`,
 	}})
+
+	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit,
+		`LiTemplate`: LiTemplate,
+		`Title`:      Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
+		`PageEnd`: PageEnd})
 }
 
 // Reading and compiling contracts from smart_contracts tables
@@ -105,7 +113,93 @@ func StateParam(idstate int64, name string) (string, error) {
 	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
 }
 
-func TxForm(name string) string {
+func BtnEdit(vars *map[string]string, pars ...string) string {
+	if len(pars) != 2 {
+		return ``
+	}
+	return fmt.Sprintf(`<a type="button" class="btn btn-primary btn-block" 
+	            onclick="load_page('%s', {id: %d, global: 0 } )"><i class="fa fa-cog"></i></a>`,
+		pars[0], StrToInt64(pars[1]))
+}
+
+func Table(vars *map[string]string, pars *map[string]string) string {
+	fields := `*`
+	order := ``
+	if val, ok := (*pars)[`Order`]; ok {
+		order = `order by ` + lib.Escape(val)
+	}
+	if val, ok := (*pars)[`Fields`]; ok {
+		fields = lib.Escape(val)
+	}
+	list, err := DB.GetAll(fmt.Sprintf(`select %s from %s %s`, fields,
+		lib.EscapeName((*pars)[`Table`]), order), -1)
+	if err != nil {
+		return err.Error()
+	}
+	columns := textproc.Split((*pars)[`Columns`])
+	out := `<table  class="table table-striped table-bordered table-hover"><tr>`
+	for _, th := range *columns {
+		out += `<th>` + th[0] + `</th>`
+	}
+	out += `</tr>`
+	for _, item := range list {
+		out += `<tr>`
+		for key, value := range item {
+			(*vars)[key] = value
+		}
+		for _, th := range *columns {
+			val := textproc.Process(th[1], vars)
+			if len(val) == 0 {
+				val = textproc.Macro(th[1], vars)
+			}
+			out += `<td>` + val + `</td>`
+		}
+		out += `</tr>`
+	}
+	return out + `</table>`
+}
+
+func TxForm(vars *map[string]string, pars *map[string]string) string {
+	return TXForm((*pars)[`Contract`])
+}
+
+func LiTemplate(vars *map[string]string, pars ...string) string {
+	name := pars[0]
+	title := name
+	if len(pars) > 1 {
+		title = pars[1]
+	}
+	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a></li>`,
+		name, title)
+}
+
+func Navigation(vars *map[string]string, pars ...string) string {
+	li := make([]string, 0)
+	for _, ipar := range pars {
+		li = append(li, ipar)
+	}
+	return textproc.Macro(fmt.Sprintf(`<ol class="breadcrumb"><span class="pull-right">
+	<a href='#' onclick="load_page('editPage', {name: '#page#'} )">Edit</a></span>%s</ol>`,
+		strings.Join(li, `&nbsp;/&nbsp;`)), vars)
+}
+
+func MarkDown(vars *map[string]string, pars ...string) string {
+	return string(blackfriday.MarkdownCommon([]byte(pars[0])))
+}
+
+func Title(vars *map[string]string, pars ...string) string {
+	return fmt.Sprintf(`<div class="content-heading">%s</div>`, pars[0])
+}
+
+func PageTitle(vars *map[string]string, pars ...string) string {
+	return fmt.Sprintf(`<div class="panel panel-default"><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body">`, pars[0])
+}
+
+func PageEnd(vars *map[string]string, pars ...string) string {
+	return `</div></div>`
+}
+
+func TXForm(name string) string {
 	contract := smart.GetContract(name)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		return fmt.Sprintf(`there is not %s contract or parameters`, name)
@@ -159,7 +253,5 @@ func TxForm(name string) string {
 			out += value + "\r\n"
 		}
 	}
-	//	out := strings.Replace(b.String(), "\r\n\r\n", "\r\n", -1)
-	ioutil.WriteFile(`c:\temp\out.html`, []byte(out), 644)
 	return out
 }

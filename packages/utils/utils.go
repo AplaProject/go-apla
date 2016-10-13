@@ -48,6 +48,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/textproc"
 	b58 "github.com/jbenet/go-base58"
 	"github.com/kardianos/osext"
 	_ "github.com/lib/pq"
@@ -2403,7 +2404,9 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	data = qrx.ReplaceAllString(data, Int64ToStr(citizenId))
 	qrx = regexp.MustCompile(`AccountId`)
 	data = qrx.ReplaceAllString(data, Int64ToStr(accountId))
-
+	if len(data) > 0 && data[0] == '*' {
+		return textproc.Process(data[1:], &map[string]string{`page`: page}), nil
+	}
 	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\[([^\].]*)\]\.([\w\d_]*)\}\}.*`)
 	sql := qrx.ReplaceAllString(data, `SELECT $3 FROM "$1" WHERE $2`)
 	singleData, err := DB.Single(sql).String()
@@ -2490,7 +2493,7 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	qrx = regexp.MustCompile(`(?is)\{\{contract\.([\w\d_]*)\}\}`)
 	data = qrx.ReplaceAllStringFunc(data, func(match string) string {
 		name := match[strings.Index(match, `.`)+1 : len(match)-2]
-		return TxForm(name)
+		return TXForm(name)
 	})
 
 	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)
