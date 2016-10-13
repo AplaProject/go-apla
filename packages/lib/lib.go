@@ -438,3 +438,14 @@ func EscapeName(name string) string {
 	}
 	return string(append(out, '"'))
 }
+
+func Escape(data string) string {
+	out := make([]byte, 0, len(data)+2)
+	for _, ch := range []byte(data) {
+		if (ch >= '0' && ch <= '9') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
+			(ch >= 'A' && ch <= 'Z') || ch == ' ' || ch == ',' {
+			out = append(out, ch)
+		}
+	}
+	return string(out)
+}

@@ -256,13 +256,18 @@ func (p *Parser) NewState() error {
 	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
-		`dashboard_default`, `{{Title=Best country}}{{Navigation=[goverment](goverment) / non-link text}}{{PageTitle=Dashboard}}
-![Flag](http://davutlarhamami.com/images/indir%20%281%29.jpg)
-{{table.1_citizens[id=CitizenId].id}}
-{{table.1_citizens}}
-{{table.1_citizens.(id).sys_navigate(some text,editContract,id=id)}}
-{{contract.TXCitizenRequest}}
-{{contract.TXTest}}`, `menu_default`, id+`_citizens.id=1`,
+		`dashboard_default`, `*Title : Best country
+Navigation( LiTemplate(goverment),non-link text)
+PageTitle : Dashboard
+MarkDown : ![Flag](http://davutlarhamami.com/images/indir%20%281%29.jpg)
+Table{
+    Table: 1_smart_contracts
+    Order: name
+    Columns: [[ID, #id#], [Name, #name#], [Conditions, #conditions#], [Action, BtnEdit(editContract, #id#)]]
+}
+TxForm { Contract: TXTest }
+PageEnd:
+`, `menu_default`, id+`_citizens.id=1`,
 		`citizen_profile`, `{{Title=Profile}}{{Navigation=[Citizen](Citizen) / Editing profile}}
 {{PageTitle=Editing profile}}
 {{contract.TXEditProfile}}`, `menu_default`, id+`_citizens.id=1`)

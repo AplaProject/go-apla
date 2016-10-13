@@ -2493,7 +2493,7 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	qrx = regexp.MustCompile(`(?is)\{\{contract\.([\w\d_]*)\}\}`)
 	data = qrx.ReplaceAllStringFunc(data, func(match string) string {
 		name := match[strings.Index(match, `.`)+1 : len(match)-2]
-		return TxForm(name)
+		return TXForm(name)
 	})
 
 	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)

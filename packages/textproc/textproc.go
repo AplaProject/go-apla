@@ -17,7 +17,7 @@
 package textproc
 
 import (
-	"fmt"
+	//	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -102,7 +102,8 @@ func Macro(input string, vars *map[string]string) string {
 }
 
 func Split(input string) *[][]string {
-	var isArray int
+	var isArray, Par int
+
 	ret := make([][]string, 0)
 	value := make([]rune, 0)
 	list := make([]string, 0)
@@ -112,10 +113,15 @@ func Split(input string) *[][]string {
 			continue
 		}
 		if isArray == 2 {
-			if ch == ',' || ch == ']' {
+			if (Par == 0 && ch == ',') || ch == ']' {
 				list = append(list, string(value))
 				value = value[:0]
 			} else {
+				if ch == '(' {
+					Par++
+				} else if ch == ')' {
+					Par--
+				}
 				value = append(value, ch)
 			}
 		}
@@ -167,7 +173,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		isFunc, isMap, isArr int
 		params               [][]rune
 		pmap                 map[string]string
-		isKey                bool
+		isKey, toLine        bool
 		pair                 rune
 	)
 
@@ -202,7 +208,6 @@ func Process(input string, vars *map[string]string) (out string) {
 				//				if isFunc == 0 {
 				pmap[strings.TrimSpace(string(key))] = strings.TrimSpace(string(value))
 				out += mapProcess(string(name), &pmap, vars)
-				fmt.Println(`OUT`, out)
 				name = name[:0]
 				//				}
 			}
@@ -252,33 +257,44 @@ func Process(input string, vars *map[string]string) (out string) {
 				}
 				continue
 			}
-			if ch == ')' {
-				isFunc--
-				if isFunc == 0 {
+			if toLine {
+				if ch == 0xa {
 					out += funcProcess(string(name), params, vars)
 					name = name[:0]
+					isFunc = 0
+				} else {
+					params[0] = append(params[0], ch)
 				}
-			}
-			if ch == '(' {
-				isFunc++
-			}
-			if ch == ',' && isFunc == 1 {
-				params = append(params, make([]rune, 0))
 			} else {
-				params[len(params)-1] = append(params[len(params)-1], ch)
+				if ch == ')' {
+					isFunc--
+					if isFunc == 0 {
+						out += funcProcess(string(name), params, vars)
+						name = name[:0]
+					}
+				}
+				if ch == '(' {
+					isFunc++
+				}
+				if ch == ',' && isFunc == 1 {
+					params = append(params, make([]rune, 0))
+				} else {
+					params[len(params)-1] = append(params[len(params)-1], ch)
+				}
 			}
 			continue
 		}
 		if ch < '!' {
 			continue
 		}
-		if ch == '(' {
+		if ch == '(' || ch == ':' {
 			if _, ok := engine.funcs[string(name)]; !ok {
 				return
 			}
 			params = make([][]rune, 1)
 			params[0] = make([]rune, 0)
 			isFunc++
+			toLine = ch == ':'
 		} else if ch == '{' {
 			if _, ok := engine.maps[string(name)]; !ok {
 				return
@@ -293,6 +309,9 @@ func Process(input string, vars *map[string]string) (out string) {
 				return
 			}
 		}
+	}
+	if toLine && isFunc > 0 {
+		out += funcProcess(string(name), params, vars)
 	}
 	return
 }
