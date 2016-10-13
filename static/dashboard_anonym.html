@@ -46,11 +46,11 @@
 				$('#nodata').show();
 			} else {
 				$('#history').show().dataTable({
-					paging:   true,
+					paging:   false,
 					ordering: false,
 					searching: false,
-					order: 	[[ 0, "desc" ]],
 					info:     false,
+					"pageLength": 10,
 					"processing": true,
 					"serverSide": true,
 					"ajax": "ajax?json=ajax_history",
@@ -73,6 +73,14 @@
 					},
 					initComplete: function(settings, json) {
 						TooltipEllipsis("Ellipsis");
+						
+						var tr = $("#history tbody tr").length;
+						for (i = 1; i <= tr; i++) {
+							console.log(tr)
+							if (i > 10) {
+								$("#history tr:last").remove();
+							}
+						}
 					}
 				});
 				

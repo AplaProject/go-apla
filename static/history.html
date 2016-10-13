@@ -37,11 +37,14 @@
 				$('#nodata').show();
 			} else {
 				$('#history').show().dataTable({
-					paging:   true,
-					ordering: false,
-					searching: false,
-					order: 	[[ 0, "desc" ]],
-					info:     true,
+					"paging":   true,
+					"ordering": true,
+					"searching": true,
+					"order": 	[[ 0, "desc" ]],
+					"info":     true,
+					"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
+					"bLengthChange": true,
+					"bFilter": true,
 					"processing": true,
 					"serverSide": true,
 					"ajax": "ajax?json=ajax_history",
@@ -66,9 +69,13 @@
 						TooltipEllipsis("Ellipsis");
 					}
 				});
-				
 				$("#history").on('draw.dt', function (e, settings, len) {
 					TooltipEllipsis("Ellipsis");
+				});
+				
+				$(".dataTables_length select").select2({
+					minimumResultsForSearch: Infinity,
+					theme: 'bootstrap'
 				});
 			}
 		},
