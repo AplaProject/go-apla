@@ -39,7 +39,7 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	log.Debug("citizenId %d / walletId %d ", citizenId, walletId)
 
-	if citizenId <= 0 && walletId <= 0 {
+	if citizenId <= 0 && walletId == 0 {
 		return `{"result":"incorrect citizenId || walletId"}`, nil
 	}
 
@@ -163,7 +163,6 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewState":
 
-
 		stateId = 0
 		stateName := []byte(c.r.FormValue("state_name"))
 		currencyName := []byte(c.r.FormValue("currency_name"))
@@ -201,7 +200,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, binSignatures...)
 
 	case "EditColumn":
-
 
 		tableName := []byte(c.r.FormValue("table_name"))
 		columnName := []byte(c.r.FormValue("column_name"))

@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -42,7 +43,8 @@ func (c *Controller) ModalAnonym() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	MyWalletData, err := c.OneRow("SELECT address, host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	MyWalletData, err := c.OneRow("SELECT host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	MyWalletData[`address`] = lib.AddressToString(uint64(c.SessWalletId))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

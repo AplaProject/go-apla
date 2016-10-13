@@ -18,9 +18,10 @@ package parser
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"time"
 )
 
 func (p *Parser) CheckBlockHeader() error {
@@ -66,7 +67,6 @@ func (p *Parser) CheckBlockHeader() error {
 		return utils.ErrInfo(fmt.Errorf("incorrect time"))
 	}
 
-
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	if !first {
 
@@ -77,7 +77,7 @@ func (p *Parser) CheckBlockHeader() error {
 
 		log.Debug("p.PrevBlock.Time %v + sleepTime %v - p.BlockData.Time %v > consts.ERROR_TIME %v", p.PrevBlock.Time, sleepTime, p.BlockData.Time, consts.ERROR_TIME)
 		if p.PrevBlock.Time+sleepTime-p.BlockData.Time > consts.ERROR_TIME {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, consts.GAPS_BETWEEN_BLOCKS,  p.BlockData.Time, consts.ERROR_TIME))
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, consts.GAPS_BETWEEN_BLOCKS, p.BlockData.Time, consts.ERROR_TIME))
 		}
 	}
 
@@ -97,13 +97,11 @@ func (p *Parser) CheckBlockHeader() error {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", p.BlockData.BlockId, p.PrevBlock.BlockId))
 		}
 	}
-
 	// проверим, есть ли такой майнер и заодно получим public_key
 	nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(p.BlockData.WalletId, p.BlockData.CBID)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-
 	if !first {
 		if len(nodePublicKey) == 0 {
 			return utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
