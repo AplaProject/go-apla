@@ -41,15 +41,15 @@ func (p *Parser) FirstBlockFront() error {
 func (p *Parser) FirstBlock() error {
 
 	data := p.TxPtr.(*consts.FirstBlock)
-	err := p.ExecSql(`INSERT INTO full_nodes (wallet_id, host) VALUES (1,?)`, data.Host) //p.TxMaps.String["host"])
+	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
+	myAddress := int64(lib.Address(data.PublicKey))
+	err := p.ExecSql(`INSERT INTO dlt_wallets (wallet_id, host, address_vote, public_key_0, node_public_key, amount) VALUES (?, ?, ?, [hex], [hex], ?)`,
+		myAddress, data.Host, lib.AddressToString(uint64(myAddress)), hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_DLT)
+	//p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"], consts.FIRST_DLT)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
-	myAddress := lib.KeyToAddress(data.PublicKey)
-	err = p.ExecSql(`INSERT INTO dlt_wallets (address, host, address_vote, public_key_0, node_public_key, amount) VALUES (?, ?, ?, [hex], [hex], ?)`,
-		myAddress, data.Host, myAddress, hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_DLT)
-	//p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"], consts.FIRST_DLT)
+	err = p.ExecSql(`INSERT INTO full_nodes (wallet_id, host) VALUES (?,?)`, myAddress, data.Host) //p.TxMaps.String["host"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -17,12 +17,8 @@
 package daylight
 
 import (
+	"encoding/hex"
 	"fmt"
-	"github.com/astaxie/beego/session"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/op/go-logging"
 	_ "image/png"
 	"io/ioutil"
 	"net/http"
@@ -31,7 +27,12 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"encoding/hex"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/astaxie/beego/session"
+	"github.com/op/go-logging"
 )
 
 var (
@@ -44,51 +45,52 @@ var (
 func firstBlock() {
 	if *utils.GenerateFirstBlock == 1 {
 		PublicKey, _ := ioutil.ReadFile(*utils.Dir + "/PublicKey")
-//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
-		PublicKeyBytes,_ := hex.DecodeString(string(PublicKey))
+		//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
+		PublicKeyBytes, _ := hex.DecodeString(string(PublicKey))
 
 		NodePublicKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePublicKey")
-//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
-		NodePublicKeyBytes,_ := hex.DecodeString(string(NodePublicKey))
+		//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
+		NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
 		Host, _ := ioutil.ReadFile(*utils.Dir + "/Host")
 
 		var block, tx []byte
+		iAddress := int64(lib.Address(PublicKeyBytes))
 		now := lib.Time32()
-		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: 1})
+		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: iAddress})
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{ Type: 1, 
-		       	Time: now, WalletId: 1, CitizenId: 0},
-				PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
+		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
+			Time: now, WalletId: iAddress, CitizenId: 0},
+			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
 		lib.EncodeLenByte(&block, tx)
 		/*tx := utils.DecToBin(1, 1)
-		tx = append(tx, utils.DecToBin(utils.Time(), 4)...)
-		tx = append(tx, utils.EncodeLengthPlusData("1")...) // wallet_id
-		tx = append(tx, utils.EncodeLengthPlusData("0")...) // citizen_id
-		tx = append(tx, utils.EncodeLengthPlusData(PublicKeyBytes)...)
-		tx = append(tx, utils.EncodeLengthPlusData(NodePublicKeyBytes)...)
-		tx = append(tx, utils.EncodeLengthPlusData(Host)...)
-		lib.EncodeBinary(&tx, `14iisss`, 1, now, 1, 0, PublicKeyBytes, NodePublicKeyBytes, Host)
-		lib.EncodeBinary(&block, `144i1s`, 0, 1, now, 1, 0, tx)
-		block := utils.DecToBin(0, 1)
-		block = append(block, utils.DecToBin(1, 4)...)
-		block = append(block, utils.DecToBin(utils.Time(), 4)...)
-		lib.EncodeLenInt64(&block, 1) //wallet_id
-//		block = append(block, utils.EncodeLengthPlusData("1")...) // wallet_id
-		block = append(block, utils.DecToBin(0, 1)...) // state_id
-		block = append(block, utils.EncodeLengthPlusData(tx)...)*/
+				tx = append(tx, utils.DecToBin(utils.Time(), 4)...)
+				tx = append(tx, utils.EncodeLengthPlusData("1")...) // wallet_id
+				tx = append(tx, utils.EncodeLengthPlusData("0")...) // citizen_id
+				tx = append(tx, utils.EncodeLengthPlusData(PublicKeyBytes)...)
+				tx = append(tx, utils.EncodeLengthPlusData(NodePublicKeyBytes)...)
+				tx = append(tx, utils.EncodeLengthPlusData(Host)...)
+				lib.EncodeBinary(&tx, `14iisss`, 1, now, 1, 0, PublicKeyBytes, NodePublicKeyBytes, Host)
+				lib.EncodeBinary(&block, `144i1s`, 0, 1, now, 1, 0, tx)
+				block := utils.DecToBin(0, 1)
+				block = append(block, utils.DecToBin(1, 4)...)
+				block = append(block, utils.DecToBin(utils.Time(), 4)...)
+				lib.EncodeLenInt64(&block, 1) //wallet_id
+		//		block = append(block, utils.EncodeLengthPlusData("1")...) // wallet_id
+				block = append(block, utils.DecToBin(0, 1)...) // state_id
+				block = append(block, utils.EncodeLengthPlusData(tx)...)*/
 
 		static := filepath.Join("", "static")
 		if _, err := os.Stat(static); os.IsNotExist(err) {
 			if err = os.Mkdir(static, 0755); err != nil {
 				log.Error("%v", utils.ErrInfo(err))
-			} 
+			}
 		}
-		ioutil.WriteFile( filepath.Join( static, "1block"), block, 0644)
+		ioutil.WriteFile(filepath.Join(static, "1block"), block, 0644)
 		os.Exit(0)
 	}
 
@@ -125,11 +127,11 @@ func openBrowser(BrowserHttpHost string) {
 }
 
 func GetHttpHost() (string, string, string) {
-	BrowserHttpHost := "http://localhost:"+*utils.ListenHttpPort
+	BrowserHttpHost := "http://localhost:" + *utils.ListenHttpPort
 	HandleHttpHost := ""
-	ListenHttpHost := ":"+*utils.ListenHttpPort
+	ListenHttpHost := ":" + *utils.ListenHttpPort
 	if len(*utils.TcpHost) > 0 {
-		ListenHttpHost = *utils.TcpHost+":"+*utils.ListenHttpPort
+		ListenHttpHost = *utils.TcpHost + ":" + *utils.ListenHttpPort
 	}
 	return BrowserHttpHost, HandleHttpHost, ListenHttpHost
 }
