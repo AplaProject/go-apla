@@ -109,7 +109,7 @@
 	} );	
 	
 	$(".aside .nav li").removeClass("active");
-	$(".anonym, .check_citizen_status").addClass("active");
+	$(".citizen, .check_citizen_status").addClass("active");
 	var fields = JSON.parse({{.Values.fields}});
 	$(document).ready(function(){
 		for (var key in fields)
