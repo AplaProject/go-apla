@@ -61,7 +61,6 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result.Error = "incorrect signature"
 		return result
 	}
-	result.Result = true
 	result.Address = lib.KeyToAddress(bkey)
 	c.sess.Set("address", result.Address)
 	log.Debug("address : %s", result.Address)
@@ -97,15 +96,13 @@ func (c *Controller) AjaxSignIn() interface{} {
 				stateId = 0
 				log.Debug("not a citizen")
 				//result.Error = "not a citizen"
-			} else {
-				result.Address = lib.KeyToAddress(bkey)
 			}
-			result.Result = true
 		} else {
 			result.Error = err.Error()
 			return result
 		}
 	}
+	result.Result = true
 	/*	citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
 		err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
 		if err != nil {
