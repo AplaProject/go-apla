@@ -18,6 +18,8 @@ package parser
 
 import (
 	"encoding/json"
+
+	"github.com/DayLightProject/go-daylight/packages/lib"
 )
 
 func (p *Parser) UpdFullNodesInit() error {
@@ -40,7 +42,7 @@ func (p *Parser) UpdFullNodes() error {
 	}
 
 	// выбирем ноды, где wallet_id
-	data, err := p.GetAll(`SELECT * FROM full_nodes WHERE wallet_id > 0`, -1)
+	data, err := p.GetAll(`SELECT * FROM full_nodes WHERE wallet_id != 0`, -1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -59,7 +61,7 @@ func (p *Parser) UpdFullNodes() error {
 	}
 
 	// удаляем где wallet_id
-	err = p.ExecSql(`DELETE FROM full_nodes WHERE wallet_id > 0`)
+	err = p.ExecSql(`DELETE FROM full_nodes WHERE wallet_id != 0`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -84,7 +86,7 @@ func (p *Parser) UpdFullNodes() error {
 		return p.ErrInfo(err)
 	}
 	for _, address_vote := range all {
-		dlt_wallets, err := p.OneRow(`SELECT host, wallet_id FROM dlt_wallets WHERE address = ?`, address_vote).String()
+		dlt_wallets, err := p.OneRow(`SELECT host, wallet_id FROM dlt_wallets WHERE wallet_id = ?`, int64(lib.StringToAddress(address_vote))).String()
 		if err != nil {
 			return p.ErrInfo(err)
 		}

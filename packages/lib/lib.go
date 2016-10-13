@@ -48,6 +48,25 @@ func AddressToString(address uint64) (ret string) {
 	return
 }
 
+func StringToAddress(address string) (result int64) {
+	var (
+		err error
+		ret uint64
+	)
+	val := []byte(strings.Replace(address, `-`, ``, -1))
+	if len(val) != 20 {
+		return
+	}
+	if ret, err = strconv.ParseUint(string(val), 10, 64); err != nil {
+		return 0
+	}
+	if !CheckSum(val) {
+		return 0
+	}
+	result = int64(ret)
+	return
+}
+
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
 // encoded with EncodeLengthPlusInt64.
 func DecodeLenInt64(data *[]byte) (int64, error) {
@@ -208,15 +227,7 @@ func GenKeys() (privKey string, pubKey string) {
 	return
 }
 
-// Function IsValidAddress checks if the specified address is DayLight address.
-func IsValidAddress(address string) bool {
-	val := []byte(strings.Replace(address, `-`, ``, -1))
-	if len(val) != 20 {
-		return false
-	}
-	if _, err := strconv.ParseUint(string(val), 10, 64); err != nil {
-		return false
-	}
+func CheckSum(val []byte) bool {
 	var all, one, two int
 	for i, ch := range val[:len(val)-1] {
 		digit := int(ch - '0')
@@ -232,6 +243,18 @@ func IsValidAddress(address string) bool {
 		checksum = 10 - checksum
 	}
 	return int(val[len(val)-1]-'0') == checksum
+}
+
+// Function IsValidAddress checks if the specified address is DayLight address.
+func IsValidAddress(address string) bool {
+	val := []byte(strings.Replace(address, `-`, ``, -1))
+	if len(val) != 20 {
+		return false
+	}
+	if _, err := strconv.ParseUint(string(val), 10, 64); err != nil {
+		return false
+	}
+	return CheckSum(val)
 
 	/*if address[0] != 'D' {
 		return false
@@ -242,7 +265,6 @@ func IsValidAddress(address string) bool {
 		h256 := sha256.Sum256(finger)
 		h256 = sha256.Sum256(h256[:])
 		return bytes.Compare(checksum, h256[:4]) == 0*/
-	return true
 }
 
 func Address(pubKey []byte) uint64 {

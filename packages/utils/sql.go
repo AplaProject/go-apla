@@ -22,7 +22,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"database/sql"
-	//	"encoding/hex"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -950,10 +950,8 @@ func (db *DCDB) GetMyWalletId() (int64, error) {
 		return 0, err
 	}
 	if walletId == 0 {
-		walletId, err = db.Single("SELECT wallet_id FROM dlt_wallets WHERE address = ?", *WalletAddress).Int64()
-		if err != nil {
-			return 0, err
-		}
+		//		walletId, err = db.Single("SELECT wallet_id FROM dlt_wallets WHERE address = ?", *WalletAddress).Int64()
+		walletId = lib.StringToAddress(*WalletAddress)
 	}
 	return walletId, nil
 }
@@ -973,7 +971,6 @@ func (db *DCDB) GetMyBlockId() (int64, error) {
 func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 	/*	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
 		log.Debug("publicKey %s", publicKey)
-		key, _ := hex.DecodeString(string(publicKey))
 		log.Debug("key %s", key)
 		log.Debug("b58 %s", b58.Encode(lib.Address(key)))
 		walletId, err := db.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`,
@@ -982,7 +979,8 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 			return 0, ErrInfo(err)
 		}
 		return walletId, nil*/
-	return 1, nil
+	key, _ := hex.DecodeString(string(publicKey))
+	return int64(lib.Address(key)), nil
 }
 
 func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
@@ -1015,7 +1013,7 @@ func (db *DCDB) GetNodePublicKey(userId int64) ([]byte, error) {
 func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, state_id int64) ([]byte, error) {
 	var result []byte
 	var err error
-	if wallet_id > 0 {
+	if wallet_id != 0 {
 		log.Debug("wallet_id %v state_id %v", wallet_id, state_id)
 		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
 		if err != nil {
@@ -1033,7 +1031,7 @@ func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, state_id int64) ([]byte, e
 func (db *DCDB) GetPublicKeyWalletOrCitizen(wallet_id, citizen_id int64) ([]byte, error) {
 	var result []byte
 	var err error
-	if wallet_id > 0 {
+	if wallet_id != 0 {
 		result, err = db.Single("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
 		if err != nil {
 			return []byte(""), err

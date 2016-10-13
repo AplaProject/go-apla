@@ -673,7 +673,7 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 			return true
 		}
 	case "int64", "bigint", "user_id":
-		if ok, _ := regexp.MatchString("^[0-9]{1,15}$", data); ok {
+		if ok, _ := regexp.MatchString("^-?[0-9]{1,20}$", data); ok {
 			return true
 		}
 	case "level":

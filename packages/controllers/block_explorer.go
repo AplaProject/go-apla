@@ -50,8 +50,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 
 	if blockId > 0 {
 		pageData.BlockId = blockId
-		blockInfo, err := c.OneRow(`SELECT b.*, w.address FROM block_chain as b
-		left join dlt_wallets as w on b.wallet_id=w.wallet_id
+		blockInfo, err := c.OneRow(`SELECT b.* FROM block_chain as b
 		where b.id=?`, blockId).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
@@ -59,8 +58,8 @@ func (c *Controller) BlockExplorer() (string, error) {
 		if len(blockInfo) > 0 {
 			blockInfo[`hash`] = hex.EncodeToString([]byte(blockInfo[`hash`]))
 			blockInfo[`size`] = utils.IntToStr(len(blockInfo[`data`]))
-			if len(blockInfo[`address`]) > 0 && blockInfo[`address`] != `NULL` {
-				blockInfo[`wallet_address`] = lib.KeyToAddress([]byte(blockInfo[`address`]))
+			if len(blockInfo[`wallet_id`]) > 0 {
+				blockInfo[`wallet_address`] = lib.AddressToString(uint64(utils.StrToInt64(blockInfo[`wallet_id`])))
 			} else {
 				blockInfo[`wallet_address`] = ``
 			}
@@ -122,16 +121,15 @@ func (c *Controller) BlockExplorer() (string, error) {
 				return ``, nil
 			}
 		}
-		blockExplorer, err := c.GetAll(`SELECT  w.address, b.hash, b.state_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
-		left join dlt_wallets as w on b.wallet_id=w.wallet_id
+		blockExplorer, err := c.GetAll(`SELECT  b.hash, b.state_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
 		order by b.id desc limit 30 offset 0`, -1)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		for ind := range blockExplorer {
 			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
-			if len(blockExplorer[ind][`address`]) > 0 && blockExplorer[ind][`address`] != `NULL` {
-				blockExplorer[ind][`wallet_address`] = blockExplorer[ind][`address`]
+			if len(blockExplorer[ind][`wallet_id`]) > 0 {
+				blockExplorer[ind][`wallet_address`] = lib.AddressToString(uint64(utils.StrToInt64(blockExplorer[ind][`wallet_id`])))
 			} else {
 				blockExplorer[ind][`wallet_address`] = ``
 			}
