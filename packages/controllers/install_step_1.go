@@ -17,13 +17,16 @@
 package controllers
 
 import (
+	"encoding/hex"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/astaxie/beego/config"
 	"io/ioutil"
 	"os"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/DayLightProject/go-daylight/packages/static"
+	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/astaxie/beego/config"
 )
 
 type installStep1Struct struct {
@@ -108,7 +111,6 @@ func (c *Controller) InstallStep1() (string, error) {
 			os.Exit(1)
 		}
 
-
 		// если есть значит это тестовый запуск с генерацией 1block
 		if _, err := os.Stat(*utils.Dir + "/NodePrivateKey"); err == nil {
 
@@ -119,7 +121,10 @@ func (c *Controller) InstallStep1() (string, error) {
 				panic(err)
 				os.Exit(1)
 			}
-			err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, 1)
+			NodePublicKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePublicKey")
+			NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
+
+			err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, int64(lib.Address(NodePublicKeyBytes)))
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				panic(err)

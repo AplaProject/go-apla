@@ -65,7 +65,7 @@ DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
 "hash" bytea  NOT NULL DEFAULT '',
 "time" int NOT NULL DEFAULT '0',
 "type" int NOT NULL DEFAULT '0',
-"wallet_id" int NOT NULL DEFAULT '0',
+"wallet_id" bigint NOT NULL DEFAULT '0',
 "citizen_id" int NOT NULL DEFAULT '0',
 "block_id" int NOT NULL DEFAULT '0',
 "error" varchar(255) NOT NULL DEFAULT ''
@@ -91,7 +91,7 @@ DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 "hash" bytea  NOT NULL DEFAULT '',
 "data" bytea NOT NULL DEFAULT '',
 "state_id" int  NOT NULL DEFAULT '0',
-"wallet_id" int  NOT NULL DEFAULT '0',
+"wallet_id" bigint  NOT NULL DEFAULT '0',
 "time" int NOT NULL DEFAULT '0',
 "tx" int NOT NULL DEFAULT '0',
 "cur_0l_miner_id" int NOT NULL DEFAULT '0',
@@ -122,7 +122,7 @@ DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 "hash" bytea  NOT NULL DEFAULT '',
 "block_id" int  NOT NULL DEFAULT '0',
 "state_id" int  NOT NULL DEFAULT '0',
-"wallet_id" int  NOT NULL DEFAULT '0',
+"wallet_id" bigint  NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
 "level" smallint  NOT NULL DEFAULT '0',
 "current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
@@ -236,7 +236,7 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "high_rate" smallint NOT NULL DEFAULT '0',
 "for_self_use" smallint NOT NULL DEFAULT '0',
 "type" smallint NOT NULL DEFAULT '0',
-"wallet_id" int NOT NULL DEFAULT '0',
+"wallet_id" bigint NOT NULL DEFAULT '0',
 "citizen_id" int NOT NULL DEFAULT '0',
 "third_var" int NOT NULL DEFAULT '0',
 "counter" smallint NOT NULL DEFAULT '0',
@@ -247,11 +247,8 @@ ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (ha
 
 
 
-DROP SEQUENCE IF EXISTS dlt_wallets_wallet_id_seq CASCADE;
-CREATE SEQUENCE dlt_wallets_wallet_id_seq START WITH 1;
 DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
-"wallet_id" bigint  NOT NULL  default nextval('dlt_wallets_wallet_id_seq'),
-"address" varchar(255) NOT NULL DEFAULT '',
+"wallet_id" bigint  NOT NULL DEFAULT '0',
 "public_key_0" bytea  NOT NULL DEFAULT '',
 "public_key_1" bytea  NOT NULL DEFAULT '',
 "public_key_2" bytea  NOT NULL DEFAULT '',
@@ -261,7 +258,6 @@ DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "address_vote" varchar(255) NOT NULL DEFAULT '',
 "rb_id" bigint  NOT NULL DEFAULT '0'
 );
-ALTER SEQUENCE dlt_wallets_wallet_id_seq owned by dlt_wallets.wallet_id;
 ALTER TABLE ONLY "dlt_wallets" ADD CONSTRAINT dlt_wallets_pkey PRIMARY KEY (wallet_id);
 
 
@@ -295,9 +291,9 @@ DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 
 DROP TABLE IF EXISTS "config"; CREATE TABLE "config" (
 "my_block_id" int NOT NULL DEFAULT '0',
-"dlt_wallet_id" int NOT NULL DEFAULT '0',
+"dlt_wallet_id" bigint NOT NULL DEFAULT '0',
 "state_id" int NOT NULL DEFAULT '0',
-"citizen_id" int NOT NULL DEFAULT '0',
+"citizen_id" bigint NOT NULL DEFAULT '0',
 "bad_blocks" text NOT NULL DEFAULT '',
 "pool_tech_works" smallint NOT NULL DEFAULT '0',
 "auto_reload" int NOT NULL DEFAULT '0',
