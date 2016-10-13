@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 )
 
 type forgingPage struct {
@@ -41,7 +42,8 @@ func (c *Controller) Forging() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	MyWalletData, err := c.OneRow("SELECT address, host, address_vote FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	MyWalletData, err := c.OneRow("SELECT host, address_vote FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	MyWalletData[`address`] = lib.AddressToString(uint64(c.SessWalletId))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
