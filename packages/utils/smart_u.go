@@ -203,7 +203,7 @@ func Title(vars *map[string]string, pars ...string) string {
 }
 
 func PageTitle(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<div class="panel panel-default"><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body">`, pars[0])
+	return fmt.Sprintf(`<div class="panel panel-default" data-sweet-alert><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body">`, pars[0])
 }
 
 func PageEnd(vars *map[string]string, pars ...string) string {
