@@ -47,7 +47,7 @@
 	   <li class="active">{{if .ColumnName}}Edit{{else}}New{{end}} column</li>
 	</ol>
 	<!-- START panel-->
-	<div class="panel panel-default">
+	<div class="panel panel-default" data-sweet-alert>
 	 <div class="panel-heading">
 	 	<div class="panel-title">
 			{{.TableName}}
@@ -71,7 +71,7 @@
 
 		  </div>
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Send</button>
+			 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
 		  </div>
 	   </div>
 	  </div>
