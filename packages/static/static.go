@@ -24,6 +24,26 @@
 // static/edit_page.html
 // static/edit_state_parameters.html
 // static/edit_table.html
+// static/fonts/PFSquareSansPro-Bold.eot
+// static/fonts/PFSquareSansPro-Bold.svg
+// static/fonts/PFSquareSansPro-Bold.ttf
+// static/fonts/PFSquareSansPro-Bold.woff
+// static/fonts/PFSquareSansPro-Bold.woff2
+// static/fonts/PFSquareSansPro-Light.eot
+// static/fonts/PFSquareSansPro-Light.svg
+// static/fonts/PFSquareSansPro-Light.ttf
+// static/fonts/PFSquareSansPro-Light.woff
+// static/fonts/PFSquareSansPro-Light.woff2
+// static/fonts/PFSquareSansPro-Medium.eot
+// static/fonts/PFSquareSansPro-Medium.svg
+// static/fonts/PFSquareSansPro-Medium.ttf
+// static/fonts/PFSquareSansPro-Medium.woff
+// static/fonts/PFSquareSansPro-Medium.woff2
+// static/fonts/PFSquareSansPro-Regular.eot
+// static/fonts/PFSquareSansPro-Regular.svg
+// static/fonts/PFSquareSansPro-Regular.ttf
+// static/fonts/PFSquareSansPro-Regular.woff
+// static/fonts/PFSquareSansPro-Regular.woff2
 // static/fonts/glyphicons-filetypes-regular.eot
 // static/fonts/glyphicons-filetypes-regular.svg
 // static/fonts/glyphicons-filetypes-regular.ttf
@@ -47,6 +67,7 @@
 // static/forging.html
 // static/history.html
 // static/img/US.svg
+// static/img/bg.png
 // static/img/bg1.jpg
 // static/img/bg10.jpg
 // static/img/bg2.jpg
@@ -675,6 +696,366 @@ func staticEdit_tableHtml() (*asset, error) {
 	return a, err
 }
 
+// staticFontsPfsquaresansproBoldEot reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproBoldEot() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Bold.eot"
+	name := "static/fonts/PFSquareSansPro-Bold.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproBoldSvg reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproBoldSvg() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Bold.svg"
+	name := "static/fonts/PFSquareSansPro-Bold.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproBoldTtf reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproBoldTtf() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Bold.ttf"
+	name := "static/fonts/PFSquareSansPro-Bold.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproBoldWoff reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproBoldWoff() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Bold.woff"
+	name := "static/fonts/PFSquareSansPro-Bold.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproBoldWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproBoldWoff2() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Bold.woff2"
+	name := "static/fonts/PFSquareSansPro-Bold.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproLightEot reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproLightEot() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Light.eot"
+	name := "static/fonts/PFSquareSansPro-Light.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproLightSvg reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproLightSvg() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Light.svg"
+	name := "static/fonts/PFSquareSansPro-Light.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproLightTtf reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproLightTtf() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Light.ttf"
+	name := "static/fonts/PFSquareSansPro-Light.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproLightWoff reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproLightWoff() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Light.woff"
+	name := "static/fonts/PFSquareSansPro-Light.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproLightWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproLightWoff2() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Light.woff2"
+	name := "static/fonts/PFSquareSansPro-Light.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproMediumEot reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproMediumEot() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Medium.eot"
+	name := "static/fonts/PFSquareSansPro-Medium.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproMediumSvg reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproMediumSvg() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Medium.svg"
+	name := "static/fonts/PFSquareSansPro-Medium.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproMediumTtf reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproMediumTtf() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Medium.ttf"
+	name := "static/fonts/PFSquareSansPro-Medium.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproMediumWoff reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproMediumWoff() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Medium.woff"
+	name := "static/fonts/PFSquareSansPro-Medium.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproMediumWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproMediumWoff2() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Medium.woff2"
+	name := "static/fonts/PFSquareSansPro-Medium.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproRegularEot reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproRegularEot() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Regular.eot"
+	name := "static/fonts/PFSquareSansPro-Regular.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproRegularSvg reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproRegularSvg() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Regular.svg"
+	name := "static/fonts/PFSquareSansPro-Regular.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproRegularTtf reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproRegularTtf() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Regular.ttf"
+	name := "static/fonts/PFSquareSansPro-Regular.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproRegularWoff reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproRegularWoff() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Regular.woff"
+	name := "static/fonts/PFSquareSansPro-Regular.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsPfsquaresansproRegularWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsPfsquaresansproRegularWoff2() (*asset, error) {
+	path := "static/fonts/PFSquareSansPro-Regular.woff2"
+	name := "static/fonts/PFSquareSansPro-Regular.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticFontsGlyphiconsFiletypesRegularEot reads file data from disk. It returns an error on failure.
 func staticFontsGlyphiconsFiletypesRegularEot() (*asset, error) {
 	path := "static/fonts/glyphicons-filetypes-regular.eot"
@@ -1075,6 +1456,24 @@ func staticHistoryHtml() (*asset, error) {
 func staticImgUsSvg() (*asset, error) {
 	path := "static/img/US.svg"
 	name := "static/img/US.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgBgPng reads file data from disk. It returns an error on failure.
+func staticImgBgPng() (*asset, error) {
+	path := "static/img/bg.png"
+	name := "static/img/bg.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4225,6 +4624,26 @@ var _bindata = map[string]func() (*asset, error){
 	"static/edit_page.html": staticEdit_pageHtml,
 	"static/edit_state_parameters.html": staticEdit_state_parametersHtml,
 	"static/edit_table.html": staticEdit_tableHtml,
+	"static/fonts/PFSquareSansPro-Bold.eot": staticFontsPfsquaresansproBoldEot,
+	"static/fonts/PFSquareSansPro-Bold.svg": staticFontsPfsquaresansproBoldSvg,
+	"static/fonts/PFSquareSansPro-Bold.ttf": staticFontsPfsquaresansproBoldTtf,
+	"static/fonts/PFSquareSansPro-Bold.woff": staticFontsPfsquaresansproBoldWoff,
+	"static/fonts/PFSquareSansPro-Bold.woff2": staticFontsPfsquaresansproBoldWoff2,
+	"static/fonts/PFSquareSansPro-Light.eot": staticFontsPfsquaresansproLightEot,
+	"static/fonts/PFSquareSansPro-Light.svg": staticFontsPfsquaresansproLightSvg,
+	"static/fonts/PFSquareSansPro-Light.ttf": staticFontsPfsquaresansproLightTtf,
+	"static/fonts/PFSquareSansPro-Light.woff": staticFontsPfsquaresansproLightWoff,
+	"static/fonts/PFSquareSansPro-Light.woff2": staticFontsPfsquaresansproLightWoff2,
+	"static/fonts/PFSquareSansPro-Medium.eot": staticFontsPfsquaresansproMediumEot,
+	"static/fonts/PFSquareSansPro-Medium.svg": staticFontsPfsquaresansproMediumSvg,
+	"static/fonts/PFSquareSansPro-Medium.ttf": staticFontsPfsquaresansproMediumTtf,
+	"static/fonts/PFSquareSansPro-Medium.woff": staticFontsPfsquaresansproMediumWoff,
+	"static/fonts/PFSquareSansPro-Medium.woff2": staticFontsPfsquaresansproMediumWoff2,
+	"static/fonts/PFSquareSansPro-Regular.eot": staticFontsPfsquaresansproRegularEot,
+	"static/fonts/PFSquareSansPro-Regular.svg": staticFontsPfsquaresansproRegularSvg,
+	"static/fonts/PFSquareSansPro-Regular.ttf": staticFontsPfsquaresansproRegularTtf,
+	"static/fonts/PFSquareSansPro-Regular.woff": staticFontsPfsquaresansproRegularWoff,
+	"static/fonts/PFSquareSansPro-Regular.woff2": staticFontsPfsquaresansproRegularWoff2,
 	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
 	"static/fonts/glyphicons-filetypes-regular.svg": staticFontsGlyphiconsFiletypesRegularSvg,
 	"static/fonts/glyphicons-filetypes-regular.ttf": staticFontsGlyphiconsFiletypesRegularTtf,
@@ -4248,6 +4667,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/forging.html": staticForgingHtml,
 	"static/history.html": staticHistoryHtml,
 	"static/img/US.svg": staticImgUsSvg,
+	"static/img/bg.png": staticImgBgPng,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
 	"static/img/bg10.jpg": staticImgBg10Jpg,
 	"static/img/bg2.jpg": staticImgBg2Jpg,
@@ -4490,6 +4910,26 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"edit_state_parameters.html": &bintree{staticEdit_state_parametersHtml, map[string]*bintree{}},
 		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{}},
 		"fonts": &bintree{nil, map[string]*bintree{
+			"PFSquareSansPro-Bold.eot": &bintree{staticFontsPfsquaresansproBoldEot, map[string]*bintree{}},
+			"PFSquareSansPro-Bold.svg": &bintree{staticFontsPfsquaresansproBoldSvg, map[string]*bintree{}},
+			"PFSquareSansPro-Bold.ttf": &bintree{staticFontsPfsquaresansproBoldTtf, map[string]*bintree{}},
+			"PFSquareSansPro-Bold.woff": &bintree{staticFontsPfsquaresansproBoldWoff, map[string]*bintree{}},
+			"PFSquareSansPro-Bold.woff2": &bintree{staticFontsPfsquaresansproBoldWoff2, map[string]*bintree{}},
+			"PFSquareSansPro-Light.eot": &bintree{staticFontsPfsquaresansproLightEot, map[string]*bintree{}},
+			"PFSquareSansPro-Light.svg": &bintree{staticFontsPfsquaresansproLightSvg, map[string]*bintree{}},
+			"PFSquareSansPro-Light.ttf": &bintree{staticFontsPfsquaresansproLightTtf, map[string]*bintree{}},
+			"PFSquareSansPro-Light.woff": &bintree{staticFontsPfsquaresansproLightWoff, map[string]*bintree{}},
+			"PFSquareSansPro-Light.woff2": &bintree{staticFontsPfsquaresansproLightWoff2, map[string]*bintree{}},
+			"PFSquareSansPro-Medium.eot": &bintree{staticFontsPfsquaresansproMediumEot, map[string]*bintree{}},
+			"PFSquareSansPro-Medium.svg": &bintree{staticFontsPfsquaresansproMediumSvg, map[string]*bintree{}},
+			"PFSquareSansPro-Medium.ttf": &bintree{staticFontsPfsquaresansproMediumTtf, map[string]*bintree{}},
+			"PFSquareSansPro-Medium.woff": &bintree{staticFontsPfsquaresansproMediumWoff, map[string]*bintree{}},
+			"PFSquareSansPro-Medium.woff2": &bintree{staticFontsPfsquaresansproMediumWoff2, map[string]*bintree{}},
+			"PFSquareSansPro-Regular.eot": &bintree{staticFontsPfsquaresansproRegularEot, map[string]*bintree{}},
+			"PFSquareSansPro-Regular.svg": &bintree{staticFontsPfsquaresansproRegularSvg, map[string]*bintree{}},
+			"PFSquareSansPro-Regular.ttf": &bintree{staticFontsPfsquaresansproRegularTtf, map[string]*bintree{}},
+			"PFSquareSansPro-Regular.woff": &bintree{staticFontsPfsquaresansproRegularWoff, map[string]*bintree{}},
+			"PFSquareSansPro-Regular.woff2": &bintree{staticFontsPfsquaresansproRegularWoff2, map[string]*bintree{}},
 			"glyphicons-filetypes-regular.eot": &bintree{staticFontsGlyphiconsFiletypesRegularEot, map[string]*bintree{}},
 			"glyphicons-filetypes-regular.svg": &bintree{staticFontsGlyphiconsFiletypesRegularSvg, map[string]*bintree{}},
 			"glyphicons-filetypes-regular.ttf": &bintree{staticFontsGlyphiconsFiletypesRegularTtf, map[string]*bintree{}},
@@ -4515,6 +4955,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"history.html": &bintree{staticHistoryHtml, map[string]*bintree{}},
 		"img": &bintree{nil, map[string]*bintree{
 			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
+			"bg.png": &bintree{staticImgBgPng, map[string]*bintree{}},
 			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
 			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{}},
 			"bg2.jpg": &bintree{staticImgBg2Jpg, map[string]*bintree{}},
