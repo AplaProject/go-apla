@@ -195,7 +195,7 @@ func (p *Parser) NewState() error {
 }`, `TXEditProfile`, `contract TXEditProfile {
 	tx {
 		FirstName  string
-		Image string
+		Image bytes "image"
 	}
 	func init {
 	}
@@ -203,7 +203,8 @@ func (p *Parser) NewState() error {
 
 	}
 	func main {
-		Println("TXEditProfile main")
+	  DBUpdate(Sprintf( "%d_citizens", $state), $citizen, "name,image", $FirstName, $Image)
+  	  Println("TXEditProfile main")
 	}
 }`, `TXTest`, `contract TXTest {
 	tx {
