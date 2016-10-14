@@ -424,7 +424,7 @@
 				   <!-- Name and Job-->
 				   <div class="user-block-info">
 					  <span class="user-block-name">{{.CitizenName}} <a href="#" onclick="load_template('citizen_profile'); HideMenu();"><i class="fa fa-angle-down"></i></a></span>
-					   <img src="{{.StateFlag}}" height="15">
+					   <img id="menu-flag" height="15"><script>document.getElementById('menu-flag').setAttribute( 'src', '{{.StateFlag}}' ); </script>
 					   <span class="user-block-role">{{.StateName}}</span>
 				   </div>
 				</div>
