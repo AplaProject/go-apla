@@ -67,6 +67,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit,
 		`LiTemplate`: LiTemplate,
+		`TemplateNav` : TemplateNav,
 		`Title`:      Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd})
 }
@@ -170,6 +171,16 @@ func LiTemplate(vars *map[string]string, pars ...string) string {
 		title = pars[1]
 	}
 	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a></li>`,
+		name, title)
+}
+
+func TemplateNav(vars *map[string]string, pars ...string) string {
+	name := pars[0]
+	title := name
+	if len(pars) > 1 {
+		title = pars[1]
+	}
+	return fmt.Sprintf(`<a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a>`,
 		name, title)
 }
 
