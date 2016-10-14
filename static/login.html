@@ -1,10 +1,18 @@
 {{ define "loginECDSA" }}
 
 <style>
+	#triangles {
+		display:block;
+	}
 	.wrapper {
 		display:flex;
 		flex-flow:row wrap;
 		align-items:flex-start;
+		max-width:600px;
+		overflow-x:visible;
+		border:0px;
+		box-shadow:none;
+		background-color:transparent;
 	}
 	.wrapper > section {
 		flex:1 100%;
@@ -14,11 +22,20 @@
 	}
 	.content-wrapper {
 		border-top:0px;
+		margin:0px;
+	}
+	@media only screen and (min-width: 768px) {
+		.content-wrapper {
+			padding:0px;
+		}
 	}
 	.flex {
 		display:flex;
 		flex-flow:row nowrap;
 		justify-content:space-between;
+	}
+	.panel {
+		margin:0px;
 	}
 	h1 {
 		margin-top:0px;
@@ -34,129 +51,102 @@
 	}
 </style>
 
-<script>
-	var selectbox = $("#state_id");
-	
-	$.ajax({
-		type: 'GET',
-		url: '/ajax?controllerName=AjaxStatesList',
-		dataType: 'json',
-		crossDomain: true,
-		success: function(data) {
-			selectboxState(data);
-		},
-		error: function(xhr, status, error) {
-			Alert("Error", error, "error");
-		}
-	});
-	
-	function WatchForm() {
-		var el = $(".start_form");
-		var list = $("#countries");
-		el.each(function() {
-			if ($(this).is(":visible")) {
-				list.insertBefore($(this).find(".s-box"));
-			}
-		});
-	}
-</script>
-
-<div class="start_type">
-	<fieldset id="countries" class="form-group phrase">
-		<label class="col-sm-3 control-label" for="phrase">Country</label>
-		<div class="col-sm-9">
-			<select id="state_id" class="form-control">
-				<!--<option value="0">-----</option>-->
-				<!--{{ range $id, $name := .States }}
-				<option value="{{$id}}">{{$name}}</option>
-				{{end}}-->
-			</select>
-		</div>
-	</fieldset>
-
+<!-- START panel-->
+<div class="brand panel panel-default">
 	<input type="hidden" id="prvkey" value="" />
 	<input type="hidden" id="pubkey" value="" />
+	
+	<div id="login_form" class="start_form" style="display:none;">
+		<div class="panel-body">
+			<h1>Login</h1>
+			<form>
+				<fieldset class="form-group" id="field-list">
+					<label class="col-sm-3 control-label" for="list"></label>
+					<div class="col-sm-9">
+						<ul class="accounts" id="accounts">
+						</ul>
+					</div>
+				</fieldset>
+				<fieldset id="countries" class="form-group phrase">
+					<label class="col-sm-3 control-label" for="phrase">Country</label>
+					<div class="col-sm-9">
+						<select id="state_id" class="form-control">
+							<!--<option value="0">-----</option>-->
+							<!--{{ range $id, $name := .States }}
+							<option value="{{$id}}">{{$name}}</option>
+							{{end}}-->
+						</select>
+					</div>
+				</fieldset>
+				<fieldset class="s-box form-group" id="field-address">
+					<label class="col-sm-3 control-label" for="address">Address</label>
+					<div class="col-sm-9">
+						<input id="address" class="form-control" type="text" disabled/>
+					</div>
+				</fieldset>
+				<fieldset class="form-group decpass">
+					<label class="col-sm-3 control-label" for="decpass">Password</label>
+					<div class="col-sm-9">
+						<input id="decpass" class="form-control" type="password"/>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+		<div class="panel-footer flex">
+			<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_login()">Login</button>
+			<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
+			<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
+		</div>
+	</div>
 	<div id="register_form" class="start_form" style="display:none;">
-		<h1 style="padding-bottom: 10px;" class="noimport">Create account</h1>
-		<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
-		<form>
-			<fieldset class="s-box form-group phrase">
-				<label class="col-sm-3 control-label" for="phrase">Wallet seed or <br>Private key</label>
-				<div class="col-sm-9 text-right">
-					<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
-					<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
-				</div>
-			</fieldset>
-			<fieldset class="form-group pass">
-				<label class="col-sm-3 control-label" for="pass">Password</label>
-				<div class="col-sm-9">
-					<input id="pass" class="form-control" type="password">
-				</div>
-			</fieldset>
-			<fieldset class="form-group rep_pass">
-				<label class="col-sm-3 control-label" for="rep_pass">Repeat password</label>
-				<div class="col-sm-9">
-					<input id="rep_pass" class="form-control" type="password">
-				</div>
-			</fieldset>
-		</form>
-		<div style="padding-top: 10px; text-align:left;" class="noimport">
-			<div class="col-sm-3"></div>
-			<div class="flex">
+		<div class="panel-body">
+			<h1 style="padding-bottom: 10px;" class="noimport">Create account</h1>
+			<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
+			<form>
+				<fieldset class="s-box form-group phrase">
+					<label class="col-sm-3 control-label" for="phrase">Wallet seed or <br>Private key</label>
+					<div class="col-sm-9 text-right">
+						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
+						<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
+					</div>
+				</fieldset>
+				<fieldset class="form-group pass">
+					<label class="col-sm-3 control-label" for="pass">Password</label>
+					<div class="col-sm-9">
+						<input id="pass" class="form-control" type="password">
+					</div>
+				</fieldset>
+				<fieldset class="form-group rep_pass">
+					<label class="col-sm-3 control-label" for="rep_pass">Repeat password</label>
+					<div class="col-sm-9">
+						<input id="rep_pass" class="form-control" type="password">
+					</div>
+				</fieldset>
+			</form>
+		</div>
+		<div class="panel-footer">
+			<div class="noimport flex">
 				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Create account</button>
 				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
 			</div>
-		</div>
-		<div style="padding-top: 10px; text-align:left; display:none;" class="noregister">
-			<div class="col-sm-3"></div>
-			<div class="flex">
+			<div class="noregister flex" style="display:none;">
 				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Import account</button>
 				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
 			</div>
 		</div>
 	</div>
-	
-	<div id="login_form" class="start_form" style="display:none;">
-		<h1 style="padding-bottom: 10px;">Login</h1>
-		<form>
-			<fieldset class="form-group" id="field-list">
-				<label class="col-sm-3 control-label" for="list"></label>
-				<div class="col-sm-9">
-					<ul class="accounts" id="accounts">
-					</ul>
-				</div>
-			</fieldset>
-			<fieldset class="s-box form-group" id="field-address">
-				<label class="col-sm-3 control-label" for="address">Address</label>
-				<div class="col-sm-9">
-					<input id="address" class="form-control" type="text" disabled/>
-				</div>
-			</fieldset>
-			<fieldset class="form-group decpass">
-				<label class="col-sm-3 control-label" for="decpass">Password</label>
-				<div class="col-sm-9">
-					<input id="decpass" class="form-control" type="password"/>
-				</div>
-			</fieldset>
-		</form>
-		<div style="padding-top:10px; text-align:left;">
-			<div class="col-sm-3"></div>
-			<div class="flex">
-				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_login()">Login</button>
-				<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
-				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
-			</div>
-		</div>
-	</div>
 </div>
+<!-- END panel-->
+
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
 <script language="JavaScript" type="text/javascript">
 g_menuShow = false;  // hide menu
 
 function do_register() {
 	var pass = $("#pass").val();
+	NProgressStart.start();
 	if (pass.length < 6) {
 		alert('Password is too week. The length is less than 6.');
 		return false;
@@ -193,6 +183,7 @@ function do_sign() {
 					GKey.add(data.address);
 				}
 				login_ok( data.result );
+				NProgressStart.done();
 			}, 'JSON'
 		)
 	}, 'JSON');
@@ -230,7 +221,7 @@ var loginAttempts = 0;
 
 function do_login() {
 	// Check encKey
-	
+	NProgressStart.start();
 	var pass = $("#decpass").val();
 	if (GKey.decrypt(encKey, pass)) {
 		GKey.save();
@@ -285,6 +276,17 @@ function del_account(obj, ind) {
 	return false;
 }
 
+var selectbox = $("#state_id");
+
+function WatchForm() {
+	var el = $(".start_form");
+	var list = $("#countries");
+	el.each(function() {
+		if ($(this).is(":visible")) {
+			list.insertBefore($(this).find(".s-box"));
+		}
+	});
+}
 
 $(document).ready(function(){
 /*	if (pubkey) {
@@ -306,8 +308,21 @@ $(document).ready(function(){
 	if (GKey.Private) {
 		do_sign();
 	}
-	WatchForm();
+	
+	$.ajax({
+		type: 'GET',
+		url: '/ajax?controllerName=AjaxStatesList',
+		dataType: 'json',
+		crossDomain: true,
+		success: function(data) {
+			selectboxState(data);
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
 });
 	
 </script>
+<script type="text/javascript" src="static/js/triangles.js"></script>
 {{end}}

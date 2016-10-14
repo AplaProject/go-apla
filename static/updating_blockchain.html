@@ -1,6 +1,39 @@
 <style>
-	section {
+	#triangles {
+		display:block;
+	}
+	.wrapper {
+		display:flex;
+		flex-flow:row wrap;
+		align-items:flex-start;
+		max-width:400px;
+		overflow-x:visible;
+		border:0px;
+		box-shadow:none;
+		background-color:transparent;
+	}
+	.wrapper > section {
+		flex:1 100%;
+		border:0px;
 		margin:0px !important;
+		transition:none !important;
+	}
+	.content-wrapper {
+		border-top:0px;
+		margin:0px;
+	}
+	@media only screen and (min-width: 768px) {
+		.content-wrapper {
+			padding:0px;
+		}
+	}
+	.flex {
+		display:flex;
+		flex-flow:row nowrap;
+		justify-content:space-between;
+	}
+	.panel {
+		margin:0px;
 	}
 /*------------------------------------------*/
 
@@ -201,101 +234,109 @@
 		}, {{.SleepTime}});
 	});
 </script>
-<div id="blockchain_loading" class="synchronization" style="display:{{if .WaitText}} block {{else}} none {{end}}">
-	<div class="blockchain_loader" >Loading...</div>
-	<p>{{.WaitText}}</p>
-	<div class="meter1">
-		<span style="width:0%; height:20px; color:#fff" id="meter0">{{.BlockMeter}}%</span>
-	</div>
-</div>
-<div id="blocks_counter" class="synchronization" style="display:{{if .WaitText}} none {{else}} block {{end}}">
-	<h2>{{.Lang.synchronization_blockchain}}</h2>
-	<p id="current_load_blockchain" class="connections">Connections: 0</p>
-	<div id="cur_block_id" class="block_id">{{.BlockId}}</div>
-	<div class="loader">
-		<div id="confirmed_block_id" class="block_id">0</div>
-		<div class="logo">
-			<div class="null"></div>
-			<div id="meter" class="ok" style="height:{{.BlockMeter}}%;"></div>
-		</div>
-		<div id="AlertMessage" class="alerts">
-			<div class="alert alert-danger alert-dismissable">
-				<p></p>
-			</div>
-		</div>
-		{{if .NewVersion}}
-		<div id="UpdateMessage" class="UpdateMessage">
-			<div class="alert alert-info alert-dismissable">{{noescape .NewVersion}}</div>
-		</div>
-		{{end}}
-		<div id="reload_db" class="alerts">
-			<div class="alert alert-danger" style="display:{{if .RestartDb}}block{{else}}none{{end}};">
-				<strong>Error!</strong>
-				<button id="reloadBlockchain" class="btn btn-info">Reload blockchain</button>
-			</div>
-		</div>
-	</div>
-	<textarea class="form-control debug" readonly></textarea>
-	{{if not .Mobile}}
-	<p id="check_time" class="time">{{.AlertTime}} {{noescape .CheckTime}}</p>
-	{{else}}
-	<p id="check_time" class="time">{{.AlertTime}}</p>
-	{{end}}
-	<p class="help"><a href="mailto:darwin@daylight.world" onclick='THRUST.remote.send("mailto: darwin@daylight.world")'>Help</a></p>
-</div>
 
-<div style="max-width: 600px; margin: auto; text-align: center; display:none !important;">
-	<div id="blockchain_loading" style="display: {{if .WaitText}} block {{else}} none {{end}}"><div class="blockchain_loader" >Loading...</div>
-	<br>
-	{{.WaitText}}
-		<div class="meter1">
-			<span style="width: 0%; height: 20px; color: #fff" id="meter0">{{.BlockMeter}}%</span>
+<!-- START panel-->
+<div class="brand panel panel-default">
+	<div class="panel-body">
+		<div id="blockchain_loading" class="synchronization" style="display:{{if .WaitText}} block {{else}} none {{end}}">
+			<!--<div class="blockchain_loader text-center" >Loading...</div>-->
+			<p class="text-center">{{.WaitText}}</p>
+			<div class="meter1">
+				<span style="width:0%; height:20px; color:#fff" id="meter0">{{.BlockMeter}}%</span>
+			</div>
 		</div>
-	</div>
-	<div id="blocks_counter" style="display: {{if .WaitText}} none {{else}} block {{end}}">
-		<h3 style="margin-bottom: 20px">{{.Lang.synchronization_blockchain}}</h3>
-		<div style="display: none" class="alert alert-danger alert-dismissable" id="AlertMessage"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p></p></div>
-		<p id="current_load_blockchain">Connections: 0</p>
-		<div style="text-align:center; position:relative; width:225px; margin:auto; margin-bottom: 10px">
-			<div class="example example-hole">
-				<div class="ui-spinner">
-                <span class="side side-left">
-                    <span class="fill"></span>
-                </span>
-                <span class="side side-right">
-                    <span class="fill"></span>
-                </span>
+		
+		<div id="blocks_counter" class="synchronization" style="display:{{if .WaitText}} none {{else}} block {{end}}">
+			<h2>{{.Lang.synchronization_blockchain}}</h2>
+			<p id="current_load_blockchain" class="connections">Connections: 0</p>
+			<div id="cur_block_id" class="block_id">{{.BlockId}}</div>
+			<div class="loader">
+				<div id="confirmed_block_id" class="block_id">0</div>
+				<div class="logo">
+					<div class="null"></div>
+					<div id="meter" class="ok" style="height:{{.BlockMeter}}%;"></div>
+				</div>
+				<div id="AlertMessage" class="alerts">
+					<div class="alert alert-danger alert-dismissable">
+						<p></p>
+					</div>
+				</div>
+				{{if .NewVersion}}
+				<div id="UpdateMessage" class="UpdateMessage">
+					<div class="alert alert-info alert-dismissable">{{noescape .NewVersion}}</div>
+				</div>
+				{{end}}
+				<div id="reload_db" class="alerts">
+					<div class="alert alert-danger" style="display:{{if .RestartDb}}block{{else}}none{{end}};">
+						<strong>Error!</strong>
+						<button id="reloadBlockchain" class="btn btn-info">Reload blockchain</button>
+					</div>
 				</div>
 			</div>
-			<div style="top:100px; left:50%; margin-left:-50px;position:absolute;text-align:center; width:100px; font-size: 20px" id="cur_block_id">{{.BlockId}}</div>
-			<div style="top:130px; left:50%; margin-left:-50px;position:absolute;text-align:center; width:100px; font-size: 10px" id="confirmed_block_id">0</div>
-			</div>
-		<div class="meter1">
-			<span style="width: {{.BlockMeter}}%; height: 20px; color: #fff" id="meter">{{.BlockMeter}}%</span>
+			<textarea class="form-control debug" readonly></textarea>
+			{{if not .Mobile}}
+			<p id="check_time" class="time">{{.AlertTime}} {{noescape .CheckTime}}</p>
+			{{else}}
+			<p id="check_time" class="time">{{.AlertTime}}</p>
+			{{end}}
+			<p class="help"><a href="mailto:darwin@daylight.world" onclick='THRUST.remote.send("mailto: darwin@daylight.world")'>Help</a></p>
 		</div>
-		<div class="meter_wait" style="padding-bottom:20px;">{{.Lang.meter_wait}}</div>
+		
+		<div style="max-width: 600px; margin: auto; text-align: center; display:none !important;">
+			<div id="blockchain_loading" style="display: {{if .WaitText}} block {{else}} none {{end}}"><div class="blockchain_loader" >Loading...</div>
+			<br>
+			{{.WaitText}}
+				<div class="meter1">
+					<span style="width: 0%; height: 20px; color: #fff" id="meter0">{{.BlockMeter}}%</span>
+				</div>
+			</div>
+			<div id="blocks_counter" style="display: {{if .WaitText}} none {{else}} block {{end}}">
+				<h3 style="margin-bottom: 20px">{{.Lang.synchronization_blockchain}}</h3>
+				<div style="display: none" class="alert alert-danger alert-dismissable" id="AlertMessage"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p></p></div>
+				<p id="current_load_blockchain">Connections: 0</p>
+				<div style="text-align:center; position:relative; width:225px; margin:auto; margin-bottom: 10px">
+					<div class="example example-hole">
+						<div class="ui-spinner">
+						<span class="side side-left">
+							<span class="fill"></span>
+						</span>
+						<span class="side side-right">
+							<span class="fill"></span>
+						</span>
+						</div>
+					</div>
+					<div style="top:100px; left:50%; margin-left:-50px;position:absolute;text-align:center; width:100px; font-size: 20px" id="cur_block_id">{{.BlockId}}</div>
+					<div style="top:130px; left:50%; margin-left:-50px;position:absolute;text-align:center; width:100px; font-size: 10px" id="confirmed_block_id">0</div>
+					</div>
+				<div class="meter1">
+					<span style="width: {{.BlockMeter}}%; height: 20px; color: #fff" id="meter">{{.BlockMeter}}%</span>
+				</div>
+				<div class="meter_wait" style="padding-bottom:20px;">{{.Lang.meter_wait}}</div>
+			</div>
+			{{if .NewVersion}}
+			<div id="UpdateMessage" class="UpdateMessage">
+				<div class="alert alert-info alert-dismissable"><p>{{noescape .NewVersion}}</p></div>
+			</div>
+			{{end}}
+		
+			<div id="reload_db" class="alert alert-danger" style="display:{{if .RestartDb}}block{{else}}none{{end}};">
+				<strong>Error!</strong> <button id="reloadBlockchain" class="btn btn-info">Reload blockchain</button>
+			</div>
+			<a hrep="#" id="debug">Debug</a>
+			<div id="debugDiv"></div>
+		
+			{{if not .Mobile}}
+			<div id="check_time" style="margin-top: 50px">{{.AlertTime}} {{noescape .CheckTime}}</div>
+			{{else}}
+			<div id="check_time" style="margin-top: 50px">{{.AlertTime}}</div>
+			{{end}}
+		
+			<div id="help" style="margin-top: 10px"><a href="mailto:darwin@daylight.world" onclick='THRUST.remote.send("mailto: darwin@daylight.world")'>help</a></div>
+		
+		</div>
 	</div>
-	{{if .NewVersion}}
-	<div id="UpdateMessage" class="UpdateMessage">
-		<div class="alert alert-info alert-dismissable"><p>{{noescape .NewVersion}}</p></div>
-	</div>
-	{{end}}
-
-	<div id="reload_db" class="alert alert-danger" style="display:{{if .RestartDb}}block{{else}}none{{end}};">
-		<strong>Error!</strong> <button id="reloadBlockchain" class="btn btn-info">Reload blockchain</button>
-	</div>
-	<a hrep="#" id="debug">Debug</a>
-	<div id="debugDiv"></div>
-
-	{{if not .Mobile}}
-	<div id="check_time" style="margin-top: 50px">{{.AlertTime}} {{noescape .CheckTime}}</div>
-	{{else}}
-	<div id="check_time" style="margin-top: 50px">{{.AlertTime}}</div>
-	{{end}}
-
-	<div id="help" style="margin-top: 10px"><a href="mailto:darwin@daylight.world" onclick='THRUST.remote.send("mailto: darwin@daylight.world")'>help</a></div>
-
 </div>
+<!-- END panel-->
 <script>
 	$('#reloadBlockchain').bind('click', function () {
 		$('#reloadBlockchain').html('<img src="/static/img/squares.gif" style="width:20px; margin:0px">');
@@ -330,3 +371,5 @@
 		}
 	});
 </script>
+
+<script type="text/javascript" src="static/js/triangles.js"></script>
