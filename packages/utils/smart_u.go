@@ -67,6 +67,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit,
 		`LiTemplate`: LiTemplate,
+		`TemplateNav` : TemplateNav,
 		`Title`:      Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd})
 }
@@ -173,6 +174,16 @@ func LiTemplate(vars *map[string]string, pars ...string) string {
 		name, title)
 }
 
+func TemplateNav(vars *map[string]string, pars ...string) string {
+	name := pars[0]
+	title := name
+	if len(pars) > 1 {
+		title = pars[1]
+	}
+	return fmt.Sprintf(`<a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a>`,
+		name, title)
+}
+
 func Navigation(vars *map[string]string, pars ...string) string {
 	li := make([]string, 0)
 	for _, ipar := range pars {
@@ -192,7 +203,7 @@ func Title(vars *map[string]string, pars ...string) string {
 }
 
 func PageTitle(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<div class="panel panel-default"><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body">`, pars[0])
+	return fmt.Sprintf(`<div class="panel panel-default" data-sweet-alert><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body">`, pars[0])
 }
 
 func PageEnd(vars *map[string]string, pars ...string) string {
