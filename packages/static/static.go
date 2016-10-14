@@ -135,6 +135,7 @@
 // static/js/textEditor/mode-markdown.js
 // static/js/textEditor/theme-chrome.js
 // static/js/tooltip.js
+// static/js/triangles.js
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
@@ -2672,6 +2673,24 @@ func staticJsTooltipJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsTrianglesJs reads file data from disk. It returns an error on failure.
+func staticJsTrianglesJs() (*asset, error) {
+	path := "static/js/triangles.js"
+	name := "static/js/triangles.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticLang1Ini reads file data from disk. It returns an error on failure.
 func staticLang1Ini() (*asset, error) {
 	path := "static/lang/1.ini"
@@ -4317,6 +4336,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
 	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
 	"static/js/tooltip.js": staticJsTooltipJs,
+	"static/js/triangles.js": staticJsTrianglesJs,
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
@@ -4599,6 +4619,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
 			}},
 			"tooltip.js": &bintree{staticJsTooltipJs, map[string]*bintree{}},
+			"triangles.js": &bintree{staticJsTrianglesJs, map[string]*bintree{}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
 			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
