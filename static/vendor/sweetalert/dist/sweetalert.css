@@ -374,7 +374,7 @@
     -webkit-transform: scale(0.7); }
   45% {
     transform: scale(1.05);
-    -webkit-transform: scale(1.05); }
+    -webkit-transform: scale(1); }
   80% {
     transform: scale(0.95);
     -webkit-transform: scale(0.95); }
@@ -388,7 +388,7 @@
     -webkit-transform: scale(0.7); }
   45% {
     transform: scale(1.05);
-    -webkit-transform: scale(1.05); }
+    -webkit-transform: scale(1); }
   80% {
     transform: scale(0.95);
     -webkit-transform: scale(0.95); }
