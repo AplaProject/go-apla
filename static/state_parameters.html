@@ -51,7 +51,7 @@
 			  {{ range $value := .StateParameters }}
 				 <tr>
 					<td class="thead">{{$value.name}}</td>
-					 <td>{{if eq $value.name "state_flag"}}<img id="flag"><script> document.getElementById('flag').setAttribute( 'src', '{{.StateParameters.value}}' ); </script>{{else}}<strong>{{$value.value}}</strong>{{end}}</td>
+					 <td>{{if eq $value.name "state_flag"}}<img id="flag"><script> document.getElementById('flag').setAttribute( 'src', '{{$value.value}}' ); </script>{{else}}<strong>{{$value.value}}</strong>{{end}}</td>
 					 <td><strong>{{$value.conditions}}</strong></td>
 					<td><button type="button" class="btn btn-primary" onclick="load_page('editStateParameters', {name: {{$value.name}}} )">Change</button></td>
 				 </tr>

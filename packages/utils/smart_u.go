@@ -177,11 +177,24 @@ func LiTemplate(vars *map[string]string, pars ...string) string {
 func TemplateNav(vars *map[string]string, pars ...string) string {
 	name := pars[0]
 	title := name
+	par1 := ""
+	val1 := ""
 	if len(pars) > 1 {
-		title = pars[1]
+		par1 = pars[1]
 	}
-	return fmt.Sprintf(`<a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a>`,
-		name, title)
+	if len(pars) > 2 {
+		val1 = pars[2]
+	}
+	result := ""
+	if len(par1)>0 && len(val1)>0 {
+		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s', {%s: '%s'}); HideMenu();"><span>%s</span></a>`,
+			name, par1, val1, title)
+	} else {
+		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a>`,
+			name, title)
+	}
+	return result
+
 }
 
 func Navigation(vars *map[string]string, pars ...string) string {
