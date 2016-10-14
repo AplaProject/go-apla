@@ -25,9 +25,11 @@
 			  </tr>
 
 			  {{ range $name, $permissions := .Columns }}
+			  <tr>
 				  {{ range $data := $.TableData }}
 				  <td class="thead"><strong>{{index $data $name}}</strong></td>
 				  {{end}}
+			  </tr>
 			  {{end}}
 
 
