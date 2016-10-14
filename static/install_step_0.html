@@ -1,7 +1,43 @@
 {{ define "installStep0" }}
 	<style>
-		section {
+		#triangles {
+			display:block;
+		}
+		.wrapper {
+			display:flex;
+			flex-flow:row wrap;
+			align-items:flex-start;
+			max-width:400px;
+			overflow-x:visible;
+			border:0px;
+			box-shadow:none;
+			background-color:transparent;
+		}
+		.wrapper > section {
+			flex:1 100%;
+			border:0px;
 			margin:0px !important;
+			transition:none !important;
+		}
+		.content-wrapper {
+			border-top:0px;
+			margin:0px;
+		}
+		@media only screen and (min-width: 768px) {
+			.content-wrapper {
+				padding:0px;
+			}
+		}
+		.flex {
+			display:flex;
+			flex-flow:row nowrap;
+			justify-content:space-between;
+		}
+		.panel {
+			margin:0px;
+		}
+		h1 {
+			margin-top:0px;
 		}
 	</style>
 	<script>
@@ -41,53 +77,63 @@
 	
 	</script>
 	
-	<div class="start_type">
-		<h1>installation</h1><br>
-		<div id="extended_div">
-			<form class="extended_form">
-				<fieldset class="form-group">
-					<label class="col-sm-3 control-label" for="first_load">Mode</label>
-					<div class="col-sm-9">
-						<select id="first_load" class="form-control">
-							<option value="Private-net">Private-net</option>
-						</select>
-						<div>
-							<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
-						</div>
-					</div>
-				</fieldset>
-				<fieldset class="form-group db_settings">
-					<label class="col-sm-3 control-label" for="host">Host</label>
-					<div class="col-sm-9">
-						<input id="host" class="form-control" type="text" value="localhost">
-					</div>
-				</fieldset>
-				<fieldset class="form-group db_settings">
-					<label class="col-sm-3 control-label" for="port">Port</label>
-					<div class="col-sm-9">
-						<input id="port" class="form-control" type="text" value="5433">
-					</div>
-				</fieldset>
-				<fieldset class="form-group db_settings">
-					<label class="col-sm-3 control-label" for="db_name">DB name</label>
-					<div class="col-sm-9">
-						<input id="db_name" class="form-control" type="text" value="dl">
-					</div>
-				</fieldset>
-				<fieldset class="form-group db_settings">
-					<label class="col-sm-3 control-label" for="username">Username</label>
-					<div class="col-sm-9">
-						<input id="username" class="form-control" type="text" value="postgres">
-					</div>
-				</fieldset>
-				<fieldset class="form-group db_settings">
-					<label class="col-sm-3 control-label" for="password">Password</label>
-					<div class="col-sm-9">
-						<input id="password" class="form-control" type="password" value="postgres">
-					</div>
-				</fieldset>
-			</form>
+	<!-- START panel-->
+	<div class="brand panel panel-default">
+		<div class="panel-body">
+			<div class="start_type">
+				<h1>Installation</h1>
+				<div id="extended_div">
+					<form class="extended_form">
+						<fieldset class="form-group">
+							<label class="col-sm-3 control-label" for="first_load">Mode</label>
+							<div class="col-sm-9">
+								<select id="first_load" class="form-control">
+									<option value="Private-net">Private-net</option>
+								</select>
+								<div>
+									<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
+								</div>
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="host">Host</label>
+							<div class="col-sm-9">
+								<input id="host" class="form-control" type="text" value="localhost">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="port">Port</label>
+							<div class="col-sm-9">
+								<input id="port" class="form-control" type="text" value="5433">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="db_name">DB name</label>
+							<div class="col-sm-9">
+								<input id="db_name" class="form-control" type="text" value="dl">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="username">Username</label>
+							<div class="col-sm-9">
+								<input id="username" class="form-control" type="text" value="postgres">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="password">Password</label>
+							<div class="col-sm-9">
+								<input id="password" class="form-control" type="password" value="postgres">
+							</div>
+						</fieldset>
+					</form>
+				</div>
+			</div>
 		</div>
-		<button class="btn btn-info btn-block" id="next">Next</button>
+		<div class="panel-footer text-right">
+			<button class="btn btn-primary" id="next">Next</button>
+		</div>
 	</div>
+	<!-- END panel-->
+	
+	<script type="text/javascript" src="static/js/triangles.js"></script>
 {{end}}
