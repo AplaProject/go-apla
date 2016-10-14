@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 "id" bigint NOT NULL  default nextval('dlt_transactions_id_seq'),
 "sender_wallet_id" bigint NOT NULL DEFAULT '0',
 "recipient_wallet_id" bigint NOT NULL DEFAULT '0',
-"recipient_wallet_address" bytea  NOT NULL DEFAULT '',
+"recipient_wallet_address" varchar(32) NOT NULL DEFAULT '',
 "amount" decimal(15,2) NOT NULL DEFAULT '0',
 "commission" decimal(15,2) NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',

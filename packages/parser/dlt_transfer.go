@@ -20,6 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 )
 
 func (p *Parser) DLTTransferInit() error {
@@ -89,7 +90,8 @@ func (p *Parser) DLTTransfer() error {
 	log.Debug("wallet address %s", p.TxMaps.String["walletAddress"])
 	log.Debug("wallet address hex %x", utils.B54Decode(p.TxMaps.String["walletAddress"]))
 	//hexAddress := utils.BinToHex(utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = ?`, p.TxMaps.String["walletAddress"]).Int64()
+	address := lib.StringToAddress(p.TxMaps.String["walletAddress"])
+	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE wallet_id = ?`, address).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

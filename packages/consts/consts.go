@@ -103,6 +103,7 @@ var TxTypes = map[int]string{
 	19: "NewStateParameters",
 	20: "NewPage",
 	21: "NewMenu",
+	22: "ChangeNodeKeyAnonym",
 }
 
 func init() {

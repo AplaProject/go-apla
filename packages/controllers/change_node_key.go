@@ -37,7 +37,7 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 
 	var err error
 
-	txType := "ChangeNodeKey"
+	txType := "ChangeNodeKeyAnonym"
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 

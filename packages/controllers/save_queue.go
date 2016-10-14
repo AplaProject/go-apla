@@ -472,6 +472,43 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(columns)...)
 		data = append(data, binSignatures...)
 
+	case "ChangeNodeKeyAnonym":
+
+		stateId = 0
+
+		publicKey := []byte(c.r.FormValue("publicKey"))
+		privateKey := []byte(c.r.FormValue("privateKey"))
+
+		verifyData := map[string]string{c.r.FormValue("publicKey"): "public_key", c.r.FormValue("privateKey"): "private_key"}
+		err := CheckInputData(verifyData)
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+		myWalletId, err := c.GetMyWalletId()
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+		if myWalletId == walletId {
+			err = c.ExecSql(`INSERT INTO my_node_keys (
+									public_key,
+									private_key
+								)
+								VALUES (
+									[hex],
+									?
+								)`, publicKey, privateKey)
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
+		}
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
+		data = append(data, binSignatures...)
+
 	case "ChangeNodeKey":
 
 		publicKey := []byte(c.r.FormValue("publicKey"))
@@ -507,6 +544,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
 		data = append(data, binSignatures...)
 	}
+
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
