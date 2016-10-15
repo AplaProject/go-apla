@@ -352,25 +352,6 @@ BEGIN:
 
 
 			// подписываем нашим нод-ключем заголовок блока
-			/*		block, _ := pem.Decode([]byte(nodePrivateKey))
-		if block == nil {
-			logger.Error("bad key data %v ", utils.GetParent())
-			utils.Sleep(1)
-			continue BEGIN
-		}
-		if got, want := block.Type, "RSA PRIVATE KEY"; got != want {
-			if d.dPrintSleep(fmt.Sprintf("unknown key type %v, want %v / %v ", got, want, utils.GetParent()), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-		if err != nil {
-			if d.dPrintSleep(fmt.Sprintf("err %v %v", err, utils.GetParent()), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}*/
 			var forSign string
 			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID, string(mrklRoot))
 			logger.Debug("forSign: %v", forSign)
@@ -407,41 +388,14 @@ BEGIN:
 			p.BinaryData = blockBin
 			err = p.ParseDataFull(true)
 			if err != nil {
-				/*if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
-				continue BEGIN*/
+				continue
 				logger.Error("ParseDataFull error ", err)
 			}
 			okBlock = true
-
-
 		}
-		/// #######################################
-		// Отмечаем транзакции, которые попали в блок
-		// Пока для эксперимента
-		// если не отмечать, то получается, что и в transactions_candidate_block и в transactions будут провернные тр-ии, которые откатятся дважды
-		/*if len(usedTransactions) > 0 {
-			usedTransactions := usedTransactions[:len(usedTransactions)-1]
-			logger.Debug("usedTransactions %v", usedTransactions)
-			utils.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hash IN (" + usedTransactions + ")")
-			affect, err := d.ExecSqlGetAffect("UPDATE transactions SET used=1 WHERE hash IN (" + usedTransactions + ")")
-			if err != nil {
-				utils.WriteSelectiveLog(err)
-				if d.dPrintSleep(err, d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			// для теста удаляем, т.к. она уже есть в transactions_candidate_block
-			/*  $db->query( __FILE__, __LINE__,  __FUNCTION__,  __CLASS__, __METHOD__, "
-			DELETE FROM `".DB_PREFIX."transactions`
-			WHERE `hash` IN ({$used_transactions})
-			");*/
-	/*	}*/
-		// ############################################
-
 		d.dbUnlock()
 
 		if d.dSleep(d.sleepTime) {

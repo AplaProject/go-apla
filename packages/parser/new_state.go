@@ -155,7 +155,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?),(?, ?),(?,?),(?,?),(?,?)`,
+		(?, ?),(?, ?),(?,?),(?,?),(?,?),(?,?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
 	tx {
 		PublicKey  bytes
@@ -180,10 +180,9 @@ func (p *Parser) NewState() error {
     }
 
 	func main {
-		var citizenId int
 		Println("NewCitizen Main", $type, $citizen, $block )
-		citizenId = DBInsert(Sprintf( "%d_citizens", $state), "public_key_0,block_id,name", $PublicKey, $block, DBString(Sprintf( "%d_citizenship_requests", $state), "name", $RequestId ) )
-        DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", citizenId)
+		DBInsert(Sprintf( "%d_citizens", $state), "id,public_key_0,block_id,name", DBString(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id", $RequestId ), $PublicKey, $block, DBString(Sprintf( "%d_citizenship_requests", $state), "name", $RequestId ) )
+        DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", DBString(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id", $RequestId ))
 	}
 }`, `TXRejectCitizen`, `contract TXRejectCitizen {
    tx { 
@@ -216,6 +215,25 @@ func (p *Parser) NewState() error {
 	}
 	func main {
 		Println("TXTest main")
+	}
+}`,
+	`AddAccount`,
+	`contract AddAccount {
+	tx {
+    }
+	func main {
+       DBInsert(Sprintf( "%d_accounts", $state), "citizen_id", $citizen)
+	}
+}`,
+		`UpdAmount`,
+		`contract UpdAmount {
+	tx {
+        AccountId int
+        Amount string
+    }
+
+	func main {
+        DBUpdate(Sprintf( "%d_accounts", $state), $AccountId, "amount", $Amount)
 	}
 }`)
 	if err != nil {
@@ -257,6 +275,8 @@ func (p *Parser) NewState() error {
 
 	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `*Title : Best country
 Navigation( LiTemplate(goverment),non-link text)
@@ -270,9 +290,25 @@ Table{
 TxForm { Contract: TXTest }
 PageEnd:
 `, `menu_default`, sid,
+
 		`citizen_profile`, `{{Title=Profile}}{{Navigation=[Citizen](Citizen) / Editing profile}}
 {{PageTitle=Editing profile}}
-{{contract.TXEditProfile}}`, `menu_default`, sid)
+{{contract.TXEditProfile}}`, `menu_default`, id+`_citizens.id=1`,
+
+		`AddAccount`, `*Title : Best country
+Navigation( LiTemplate(goverment),non-link text)
+PageTitle : Dashboard
+TxForm { Contract: AddAccount }
+PageEnd:`, `menu_default`, sid,
+
+		`UpdAmount`, `*Title : Best country
+Navigation( LiTemplate(goverment),non-link text)
+PageTitle : Dashboard
+TxForm { Contract: UpdAmount }
+PageEnd:`, `menu_default`, sid,
+
+
+	)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -293,7 +329,9 @@ PageEnd:
 		`menu_default`, `[Tables](sys.listOfTables)
 [Smart contracts](sys.contracts)
 [Interface](sys.interface)
-[test](dashboard_default)`, sid)
+[test](dashboard_default)
+[AddAccount](AddAccount)
+[UpdAmount](UpdAmount)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -327,7 +365,7 @@ PageEnd:
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"name" varchar(100) NOT NULL DEFAULT '',
-				"approved" int  NOT NULL DEFAULT '0',
+				"approved" bigint  NOT NULL DEFAULT '0',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
