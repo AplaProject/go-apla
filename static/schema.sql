@@ -66,7 +66,7 @@ DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
 "time" int NOT NULL DEFAULT '0',
 "type" int NOT NULL DEFAULT '0',
 "wallet_id" bigint NOT NULL DEFAULT '0',
-"citizen_id" int NOT NULL DEFAULT '0',
+"citizen_id" bigint NOT NULL DEFAULT '0',
 "block_id" int NOT NULL DEFAULT '0',
 "error" varchar(255) NOT NULL DEFAULT ''
 );

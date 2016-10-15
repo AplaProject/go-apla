@@ -25,6 +25,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	_ "github.com/lib/pq"
 	"os"
+	"io/ioutil"
 )
 
 func BlocksCollection(chBreaker chan bool, chAnswer chan string) {
@@ -282,12 +283,17 @@ BEGIN:
 				file = nil
 			} else {
 
-				newBlock, err := static.Asset("static/1block")
-				if err != nil {
-					if d.dPrintSleep(err, d.sleepTime) {
-						break BEGIN
+				var newBlock []byte
+				if len(*utils.FirstBlockDir) > 0 {
+					newBlock, _ = ioutil.ReadFile(*utils.FirstBlockDir + "/1block")
+				} else {
+					newBlock, err = static.Asset("static/1block")
+					if err != nil {
+						if d.dPrintSleep(err, d.sleepTime) {
+							break BEGIN
+						}
+						continue BEGIN
 					}
-					continue BEGIN
 				}
 				parser.BinaryData = newBlock
 				parser.CurrentVersion = consts.VERSION

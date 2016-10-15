@@ -115,7 +115,7 @@ func (p *Parser) DLTTransfer() error {
 	if walletId == 0 {
 			log.Debug("walletId == 0");
 			log.Debug("%s", string(p.TxMaps.String["walletAddress"]));
-			_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"address"}, []string{p.TxMaps.String["walletAddress"]}, true)
+			_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(lib.StringToAddress(p.TxMaps.String["walletAddress"]))}, true)
 	} else {
 			_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
 	}

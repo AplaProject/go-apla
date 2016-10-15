@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"encoding/hex"
+	//"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,6 +27,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/astaxie/beego/config"
+	"encoding/hex"
 )
 
 type installStep1Struct struct {
@@ -121,10 +122,12 @@ func (c *Controller) InstallStep1() (string, error) {
 				panic(err)
 				os.Exit(1)
 			}
-			NodePublicKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePublicKey")
-			NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
+			PrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/PrivateKey")
+			PrivateHex, _ := hex.DecodeString(string(PrivateKey))
+			PublicKeyBytes2 := lib.PrivateToPublic(PrivateHex)
+			log.Debug("dlt_wallet_id %d", int64(lib.Address(PublicKeyBytes2)))
 
-			err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, int64(lib.Address(NodePublicKeyBytes)))
+			err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, int64(lib.Address(PublicKeyBytes2)))
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 				panic(err)

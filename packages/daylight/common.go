@@ -44,14 +44,32 @@ var (
 
 func firstBlock() {
 	if *utils.GenerateFirstBlock == 1 {
-		PublicKey, _ := ioutil.ReadFile(*utils.Dir + "/PublicKey")
+
+		if len(*utils.FirstBlockPublicKey) == 0 {
+			priv, pub := lib.GenKeys()
+			err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+			}
+			*utils.FirstBlockPublicKey = pub
+		}
+		if len(*utils.FirstBlockNodePublicKey) == 0 {
+			priv, pub := lib.GenKeys()
+			err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+			}
+			*utils.FirstBlockNodePublicKey = pub
+		}
+
+		PublicKey := *utils.FirstBlockPublicKey
 		//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
 		PublicKeyBytes, _ := hex.DecodeString(string(PublicKey))
 
-		NodePublicKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePublicKey")
+		NodePublicKey := *utils.FirstBlockNodePublicKey
 		//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
 		NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
-		Host, _ := ioutil.ReadFile(*utils.Dir + "/Host")
+		Host := *utils.FirstBlockHost
 
 		var block, tx []byte
 		iAddress := int64(lib.Address(PublicKeyBytes))
@@ -67,30 +85,19 @@ func firstBlock() {
 			log.Error("%v", utils.ErrInfo(err))
 		}
 		lib.EncodeLenByte(&block, tx)
-		/*tx := utils.DecToBin(1, 1)
-				tx = append(tx, utils.DecToBin(utils.Time(), 4)...)
-				tx = append(tx, utils.EncodeLengthPlusData("1")...) // wallet_id
-				tx = append(tx, utils.EncodeLengthPlusData("0")...) // citizen_id
-				tx = append(tx, utils.EncodeLengthPlusData(PublicKeyBytes)...)
-				tx = append(tx, utils.EncodeLengthPlusData(NodePublicKeyBytes)...)
-				tx = append(tx, utils.EncodeLengthPlusData(Host)...)
-				lib.EncodeBinary(&tx, `14iisss`, 1, now, 1, 0, PublicKeyBytes, NodePublicKeyBytes, Host)
-				lib.EncodeBinary(&block, `144i1s`, 0, 1, now, 1, 0, tx)
-				block := utils.DecToBin(0, 1)
-				block = append(block, utils.DecToBin(1, 4)...)
-				block = append(block, utils.DecToBin(utils.Time(), 4)...)
-				lib.EncodeLenInt64(&block, 1) //wallet_id
-		//		block = append(block, utils.EncodeLengthPlusData("1")...) // wallet_id
-				block = append(block, utils.DecToBin(0, 1)...) // state_id
-				block = append(block, utils.EncodeLengthPlusData(tx)...)*/
 
-		static := filepath.Join("", "static")
-		if _, err := os.Stat(static); os.IsNotExist(err) {
-			if err = os.Mkdir(static, 0755); err != nil {
-				log.Error("%v", utils.ErrInfo(err))
+		FirstBlockDir := ""
+		if len(*utils.FirstBlockDir) == 0 {
+			FirstBlockDir = *utils.Dir
+		} else {
+			FirstBlockDir = filepath.Join("", *utils.FirstBlockDir)
+			if _, err := os.Stat(FirstBlockDir); os.IsNotExist(err) {
+				if err = os.Mkdir(FirstBlockDir, 0755); err != nil {
+					log.Error("%v", utils.ErrInfo(err))
+				}
 			}
 		}
-		ioutil.WriteFile(filepath.Join(static, "1block"), block, 0644)
+		ioutil.WriteFile(filepath.Join(FirstBlockDir, "1block"), block, 0644)
 		os.Exit(0)
 	}
 
@@ -132,6 +139,7 @@ func GetHttpHost() (string, string, string) {
 	ListenHttpHost := ":" + *utils.ListenHttpPort
 	if len(*utils.TcpHost) > 0 {
 		ListenHttpHost = *utils.TcpHost + ":" + *utils.ListenHttpPort
+		BrowserHttpHost = "http://"+*utils.TcpHost+":"+*utils.ListenHttpPort
 	}
 	return BrowserHttpHost, HandleHttpHost, ListenHttpHost
 }
