@@ -52,9 +52,9 @@ func (c *Controller) AjaxSendTx() interface{} {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
 
 		userId := c.SessWalletId
-		if c.SessStateId > 0 {
-			userId = c.SessCitizenId
-		}
+		/*		if c.SessStateId > 0 {
+				userId = c.SessCitizenId
+			}*/
 
 		/*		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id, c.r.FormValue(`time`), userId, c.SessStateId)
 

@@ -350,7 +350,7 @@
 		  <!-- START User avatar toggle-->
 		  <li>
 			 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
-			 {{if gt .Data.CitizenId 0}}
+			 {{if ne .Data.CitizenId 0}}
 			  <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
 				<em class="icon-user"></em>
 			 </a>
@@ -504,7 +504,7 @@
 
 				 {{noescape .Menu}}
 
-                {{if or (gt .Data.CitizenId 0) (gt .Data.WalletId 0)}}
+                {{if or (ne .Data.CitizenId 0) (ne .Data.WalletId 0)}}
                 <li class="check_citizen_status">
                    <a href="#" title="Check citizen status" onClick="load_page('check_citizen_status');HideMenu();">
                       <span>Check citizen status</span>

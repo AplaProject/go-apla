@@ -41,15 +41,9 @@ func init() {
 func (p *Parser) getExtend() *map[string]interface{} {
 	head := p.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
 	var citizenId, walletId int64
-	if head.StateId > 0 {
-		citizenId = head.UserId
-	} else {
-		walletId = head.UserId
-	}
+	citizenId = head.UserId
+	walletId = head.UserId
 	// test
-	if citizenId == 1 {
-		walletId = 1
-	}
 	block := int64(0)
 	if p.BlockData != nil {
 		block = p.BlockData.BlockId
@@ -65,7 +59,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		for i := 1; i < t.NumField(); i++ {
 			extend[t.Field(i).Name] = v.Field(i).Interface()
 		}*/
-	//fmt.Println(`Extend`, extend)
+	fmt.Println(`Extend`, extend)
 	return &extend
 }
 

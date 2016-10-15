@@ -50,9 +50,10 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		result.Time = lib.Time32()
 		userId := c.SessWalletId
-		if c.SessStateId > 0 {
-			userId = c.SessCitizenId
-		}
+		fmt.Println(`Prepare`, c.SessWalletId, c.SessCitizenId, c.SessStateId)
+		/*		if c.SessStateId > 0 {
+				userId = c.SessCitizenId
+			}*/
 		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id /*+smart.CNTOFF*/, result.Time, userId, c.SessStateId)
 
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
