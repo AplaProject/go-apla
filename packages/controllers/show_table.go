@@ -53,6 +53,7 @@ func (c *Controller) ShowTable() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	columns["id"] = ""
 
 	tableData, err := c.GetAll(`SELECT * FROM "`+tableName+`"`, 1000)
 	if err != nil {

@@ -16,7 +16,6 @@
 	 </div>
 	 <div class="panel-body">
 		<div class="table-responsive">
-			{{.TableData}}
 			<table class="table table-striped table-bordered table-hover">
 			  <tbody>
 			  <tr>
@@ -25,15 +24,13 @@
 			  {{end}}
 			  </tr>
 
-			  {{ range $name, $permissions := .Columns }}
+			  {{ range $data := .TableData }}
 			  <tr>
-				  {{ range $data := $.TableData }}
+				  {{ range $name, $permissions := $.Columns }}
 				  <td class="thead"><strong>{{index $data $name}}</strong></td>
 				  {{end}}
 			  </tr>
 			  {{end}}
-
-
 
 			  </tbody>
 		   </table>

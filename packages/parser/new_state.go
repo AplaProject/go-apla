@@ -155,7 +155,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?),(?, ?),(?,?),(?,?),(?,?),(?,?),(?,?)`,
+		(?, ?),(?, ?),(?,?),(?,?),(?,?),(?,?),(?,?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
 	tx {
 		PublicKey  bytes
@@ -225,6 +225,20 @@ func (p *Parser) NewState() error {
        DBInsert(Sprintf( "%d_accounts", $state), "citizen_id", $citizen)
 	}
 }`,
+
+		`SendMoney`,`contract SendMoney {
+	tx {
+        RecipientAccountId int
+        Amount string
+    }
+
+	func main {
+	    var cur_amount int
+	    cur_amount = DBString(Sprintf( "%d_accounts", $state), "amount", $RecipientAccountId )
+        DBUpdate(Sprintf( "%d_accounts", $state), $RecipientAccountId, "amount", cur_amount + $Amount)
+	}
+}`,
+
 		`UpdAmount`,
 		`contract UpdAmount {
 	tx {
@@ -277,6 +291,7 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `*Title : Best country
 Navigation( LiTemplate(goverment),non-link text)
@@ -307,8 +322,11 @@ PageTitle : Dashboard
 TxForm { Contract: UpdAmount }
 PageEnd:`, `menu_default`, sid,
 
-
-	)
+		`SendMoney`, `*Title : Best country
+Navigation( LiTemplate(goverment),non-link text)
+PageTitle : Dashboard
+TxForm { Contract: SendMoney }
+PageEnd:`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

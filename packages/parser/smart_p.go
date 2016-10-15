@@ -33,6 +33,7 @@ func init() {
 		"DBInsert": DBInsert,
 		"DBUpdate": DBUpdate,
 		"DBString": DBString,
+		"DBInt" : DBInt,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -100,8 +101,14 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 }
 
 func DBString(tblname string, name string, id int64) (string, error) {
-	//	fmt.Println(`DBString`, `select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`)
 	ret, err := utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
+	if err != nil {
+		fmt.Println(`DBString Error`, err)
+	}
+	return ret, err
+}
+func DBInt(tblname string, name string, id int64) (int64, error) {
+	ret, err := utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
 	if err != nil {
 		fmt.Println(`DBString Error`, err)
 	}
