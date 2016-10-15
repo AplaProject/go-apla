@@ -117,7 +117,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 					md5 := utils.Md5(data)
 					err = c.ExecSql(`INSERT INTO transactions_status (
 						hash, time,	type, wallet_id, citizen_id	) VALUES (
-						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, userId, c.SessStateId)
+						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, userId, userId) //c.SessStateId)
 					if err == nil {
 						err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
 					}

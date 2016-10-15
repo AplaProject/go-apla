@@ -66,9 +66,9 @@ func init() {
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit,
-		`LiTemplate`: LiTemplate,
-		`TemplateNav` : TemplateNav,
-		`Title`:      Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
+		`LiTemplate`:  LiTemplate,
+		`TemplateNav`: TemplateNav,
+		`Title`:       Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd})
 }
 
@@ -186,7 +186,7 @@ func TemplateNav(vars *map[string]string, pars ...string) string {
 		val1 = pars[2]
 	}
 	result := ""
-	if len(par1)>0 && len(val1)>0 {
+	if len(par1) > 0 && len(val1) > 0 {
 		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s', {%s: '%s'}); HideMenu();"><span>%s</span></a>`,
 			name, par1, val1, title)
 	} else {
@@ -260,7 +260,7 @@ func TXForm(name string) string {
 		} else if strings.Index(fitem.Tags, `image`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "image",
 				TxType: fitem.Type.String(), Title: fitem.Name})
-		} else if fitem.Type.String() == `string` {
+		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: fitem.Name})
 		}

@@ -237,7 +237,7 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "for_self_use" smallint NOT NULL DEFAULT '0',
 "type" smallint NOT NULL DEFAULT '0',
 "wallet_id" bigint NOT NULL DEFAULT '0',
-"citizen_id" int NOT NULL DEFAULT '0',
+"citizen_id" bigint NOT NULL DEFAULT '0',
 "third_var" int NOT NULL DEFAULT '0',
 "counter" smallint NOT NULL DEFAULT '0',
 "sent" smallint NOT NULL DEFAULT '0'
@@ -359,7 +359,7 @@ CREATE SEQUENCE president_id_seq START WITH 1;
 DROP TABLE IF EXISTS "president"; CREATE TABLE "president" (
 "id" int NOT NULL  default nextval('president_id_seq'),
 "state_id" int NOT NULL DEFAULT '0',
-"citizen_id" int NOT NULL DEFAULT '0',
+"citizen_id" bigint NOT NULL DEFAULT '0',
 "start_time" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE president_id_seq owned by president.id;
@@ -373,7 +373,7 @@ CREATE SEQUENCE cb_head_id_seq START WITH 1;
 DROP TABLE IF EXISTS "cb_head"; CREATE TABLE "cb_head" (
 "id" int NOT NULL  default nextval('cb_head_id_seq'),
 "state_code" varchar(2) NOT NULL DEFAULT '',
-"citizen_id" int NOT NULL DEFAULT '0'
+"citizen_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE cb_head_id_seq owned by cb_head.id;
 ALTER TABLE ONLY "cb_head" ADD CONSTRAINT cb_head_pkey PRIMARY KEY (id);
