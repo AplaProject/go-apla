@@ -26,6 +26,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/crc64"
+	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
@@ -225,6 +226,24 @@ func GenKeys() (privKey string, pubKey string) {
 	privKey = hex.EncodeToString(private.D.Bytes())
 	pubKey = hex.EncodeToString(append(FillLeft(private.PublicKey.X.Bytes()), FillLeft(private.PublicKey.Y.Bytes())...))
 	return
+}
+
+func PrivateToPublic(key []byte) []byte {
+	pubkeyCurve := elliptic.P256()
+	bi := new(big.Int).SetBytes(key)
+	priv := new(ecdsa.PrivateKey)
+	priv.PublicKey.Curve = pubkeyCurve
+	priv.D = bi
+	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
+	return append(FillLeft(priv.PublicKey.X.Bytes()), FillLeft(priv.PublicKey.Y.Bytes())...)
+}
+
+func PrivateToPublicHex(hexkey string) string {
+	key, err := hex.DecodeString(hexkey)
+	if err != nil {
+		return ``
+	}
+	return hex.EncodeToString(PrivateToPublic(key))
 }
 
 func CheckSum(val []byte) bool {
