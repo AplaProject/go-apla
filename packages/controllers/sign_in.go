@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/utils"
@@ -46,6 +47,13 @@ func (c *Controller) AjaxSignIn() interface{} {
 	if err != nil {
 		result.Error = err.Error()
 		return result
+	}
+	//Test
+	if stateId == 0 {
+		citizen, err := c.Single(`SELECT count(id) FROM "1_citizens"`).Int64()
+		if err == nil && citizen > 0 {
+			stateId = 1
+		}
 	}
 	sign, _ := hex.DecodeString(c.r.FormValue("sign"))
 	var msg string
@@ -81,12 +89,13 @@ func (c *Controller) AjaxSignIn() interface{} {
 	c.sess.Set("wallet_id", walletId)
 	log.Debug("wallet_id : %d", walletId)
 	var citizenId int64
+	fmt.Println(`SingIN`, stateId)
 	if stateId > 0 {
 		//result = SignInJson{}
 		log.Debug("stateId %v", stateId)
 		if _, err := c.CheckStateName(stateId); err == nil {
-			citizenId, err = c.Single(`SELECT id FROM "`+utils.Int64ToStr(stateId)+`_citizens" WHERE hex(public_key_0) = ?`,
-				string(publicKey)).Int64()
+			citizenId, err = c.Single(`SELECT id FROM "`+utils.Int64ToStr(stateId)+`_citizens" WHERE id = ?`,
+				walletId).Int64()
 			if err != nil {
 				result.Error = err.Error()
 				return result
@@ -111,6 +120,6 @@ func (c *Controller) AjaxSignIn() interface{} {
 		}*/
 	c.sess.Set("citizen_id", citizenId)
 	c.sess.Set("state_id", stateId)
-	log.Debug("citizen_id %d state_id %d", citizenId, stateId)
+	log.Debug("wallet_id %d citizen_id %d state_id %d", walletId, citizenId, stateId)
 	return result //`{"result":1,"address": "` + address + `"}`, nil
 }

@@ -110,6 +110,7 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	sid := id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 
 	err = p.ExecSql(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
@@ -123,11 +124,11 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
-		"main_conditions", id+`_citizens.id=1`, "", "",
-		"new_table", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
-		"new_column", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
-		"changing_tables", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
-		"changing_smart_contracts", id+`_citizens.id=1`, "", id+`_state_parameters.main_conditions`,
+		"main_conditions", sid, "", "",
+		"new_table", sid, "", id+`_state_parameters.main_conditions`,
+		"new_column", sid, "", id+`_state_parameters.main_conditions`,
+		"changing_tables", sid, "", id+`_state_parameters.main_conditions`,
+		"changing_smart_contracts", sid, "", id+`_state_parameters.main_conditions`,
 		"currency_name", p.TxMap["currency_name"], "", id+`_state_parameters.main_conditions`,
 		"state_name", p.TxMap["state_name"], "", id+`_state_parameters.main_conditions`,
 		"dlt_spending", p.TxWalletID, "", id+`_state_parameters.main_conditions`,
@@ -211,7 +212,7 @@ func (p *Parser) NewState() error {
 		Name string 
 		Company string "optional"
 		Coordinates string "map"
-		Photo bytes "image"
+		Photo string "image"
 	}
 	func main {
 		Println("TXTest main")
@@ -235,8 +236,8 @@ func (p *Parser) NewState() error {
 	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+id+`_citizens.id=1", "update": {"public_key_0": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`,
-		id+`_accounts`, `{"general_update":"`+id+`_citizens.id=1", "update": {"amount": "`+id+`_citizens.id=1"}, "insert": "`+id+`_citizens.id=1", "new_column":"`+id+`_citizens.id=1"}`, id+`_state_parameters.main_conditions`)
+		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, id+`_state_parameters.main_conditions`,
+		id+`_accounts`, `{"general_update":"`+sid+`", "update": {"amount": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, id+`_state_parameters.main_conditions`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -268,10 +269,10 @@ Table{
 }
 TxForm { Contract: TXTest }
 PageEnd:
-`, `menu_default`, id+`_citizens.id=1`,
+`, `menu_default`, sid,
 		`citizen_profile`, `{{Title=Profile}}{{Navigation=[Citizen](Citizen) / Editing profile}}
 {{PageTitle=Editing profile}}
-{{contract.TXEditProfile}}`, `menu_default`, id+`_citizens.id=1`)
+{{contract.TXEditProfile}}`, `menu_default`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -292,20 +293,18 @@ PageEnd:
 		`menu_default`, `[Tables](sys.listOfTables)
 [Smart contracts](sys.contracts)
 [Interface](sys.interface)
-[test](dashboard_default)`, id+`_citizens.id=1`)
+[test](dashboard_default)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizens_id_seq" START WITH 1;
-				CREATE TABLE "` + id + `_citizens" (
-				"id" bigint NOT NULL  default nextval('` + id + `_citizens_id_seq'),
-				"public_key_0" bytea  NOT NULL DEFAULT '',
+	err = p.ExecSql(`CREATE TABLE "` + id + `_citizens" (
+				"id" bigint NOT NULL DEFAULT '0',
+				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"name" varchar(100) NOT NULL DEFAULT '',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE "` + id + `_citizens_id_seq" owned by "` + id + `_citizens".id;
 				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT "` + id + `_citizens_pkey" PRIMARY KEY (id);
 				`)
 	if err != nil {
@@ -317,7 +316,7 @@ PageEnd:
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_citizens" (public_key_0) VALUES ([hex])`, utils.BinToHex(pKey))
+	err = p.ExecSql(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, utils.BinToHex(pKey))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
