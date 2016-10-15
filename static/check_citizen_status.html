@@ -117,7 +117,7 @@
 		$("#fullname").html(fields['name'] + ' ' + fields['lastname']);
 	});
 </script>
-{{if eq .Data.CitizenId 1}}
+{{if ne .Data.CitizenId 0}}
 <div class="content-heading">
    Check citizen status
 </div>

@@ -47,7 +47,6 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if len(c.r.FormValue(`last_id`)) > 0 {
 		lastId = utils.StrToInt64(c.r.FormValue(`last_id`))
 	}
-
 	//	field, err := c.Single(`SELECT value FROM ` + c.StateIdStr + `_state_parameters where parameter='citizen_fields'`).String()
 	vals, err := c.OneRow(`select * from "`+c.StateIdStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastId).String()
 	if err != nil {
