@@ -10,9 +10,9 @@
 	$('#send').bind('click', function () {
 		var size = $("#value").val().length;
 		console.log(size);
-		if (size > 5120) {
+		if (size > 10240) {
 			var kb = (size / 1024).toFixed(2);
-			Alert('Image size should not exceed 5kb.', 'Size your image ' + kb + 'kb', 'error');
+			Alert('Image size should not exceed 10kb.', 'Size your image ' + kb + 'kb', 'error');
 		} else {
 			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;

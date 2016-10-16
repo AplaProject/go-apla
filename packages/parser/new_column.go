@@ -122,7 +122,7 @@ func (p *Parser) NewColumn() error {
 		return err
 	}
 
-	err = p.ExecSql(`ALTER TABLE "`+p.TxMaps.String["table_name"]+`" ADD COLUMN `+p.TxMaps.String["column_name"]+` varchar(512)`)
+	err = p.ExecSql(`ALTER TABLE "`+p.TxMaps.String["table_name"]+`" ADD COLUMN `+p.TxMaps.String["column_name"]+` varchar(10240)`)
 	if err != nil {
 		return err
 	}

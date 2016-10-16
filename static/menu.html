@@ -417,8 +417,9 @@
 				   <!-- User picture-->
 				   <div class="user-block-picture">
 					  <div class="user-block-status">
-
-						 <img src="static/img/user/02.jpg" alt="Avatar" width="60" height="60" class="img-thumbnail img-circle">
+						 {{if .CitizenAvatar}}<img id="Avatar" alt="Avatar" style="width: 60px; height: 60px" class="img-thumbnail img-circle">
+						 <script>document.getElementById('Avatar').setAttribute( 'src', '{{.CitizenAvatar}}' ); </script>
+						 {{end}}
 					  </div>
 				   </div>
 				   <!-- Name and Job-->
