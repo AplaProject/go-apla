@@ -304,11 +304,24 @@ PageEnd:
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
-		`dashboard_default`, `*Title : Best country
+		`dashboard_default`, `*Title : My country
 Navigation( Dashboard )
-PageTitle : Dashboard
+PageTitle : StateValue(state_name)
 MarkDown : # Welcome, citizen!
+Image(StateValue(state_flag))
+TemplateNav(citizens)
+PageEnd:
+`, `menu_default`, sid,
+
+		`citizens`, `*Title : Citizens
+Navigation( Citizens )
+PageTitle : Citizens
+Table{
+    Table: 1_citizens
+    Columns: [[Avatar,Image(#avatar#)], [ID, #id#], [Name, #name#]]
+}
 PageEnd:
 `, `menu_default`, sid,
 
