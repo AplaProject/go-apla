@@ -422,6 +422,12 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 				return true
 			}
 		}
+	case "currency_name", "state_name":
+		if ok, _ := regexp.MatchString(`^[\pL0-9\,\s\.\-\:\=\;\?\!\%\)\(\@\/\n\r]{1,20}$`, data); ok {
+			if StrToInt(data) <= 1024 {
+				return true
+			}
+		}
 	case "string":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
 			if StrToInt(data) <= 1024 {
@@ -508,10 +514,6 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		if ok, _ := regexp.MatchString(`^((\d{1,3}\,){0,9}\d{1,3}|ALL)$`, data); ok {
 			return true
 		}
-	case "cf_currency_name":
-		if ok, _ := regexp.MatchString(`^[A-Z0-9]{7}$`, data); ok {
-			return true
-		}
 	case "users_ids":
 		if ok, _ := regexp.MatchString(`^([0-9]{1,12},){0,1000}[0-9]{1,12}$`, data); ok {
 			return true
@@ -522,10 +524,6 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 	case "soft_type":
 		if ok, _ := regexp.MatchString(`^[a-z]{3,10}$`, data); ok {
-			return true
-		}
-	case "currency_name":
-		if ok, _ := regexp.MatchString(`^[A-Z]{3}$`, data); ok {
 			return true
 		}
 	case "currency_full_name":
