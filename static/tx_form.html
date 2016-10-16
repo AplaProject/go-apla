@@ -315,7 +315,7 @@
 							</div>
 						{{end}}
 						{{if eq .HtmlType "image"}}
-							<img id="img{{.Name}}" style="margin: 10px 0px;" src="{{.Value}}">
+							{{if .Value}}<img id="img{{.Name}}" style="margin: 10px 0px;" src="{{.Value}}">{{end}}
 							<div class="form-group"> <label>{{.Title}}</label>
 							   <textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
 						   </div>
