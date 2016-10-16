@@ -65,11 +65,11 @@ func init() {
 	}})
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
-	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit,
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit, `Image`: Image,
 		`LiTemplate`:  LiTemplate,
 		`TemplateNav`: TemplateNav,
 		`Title`:       Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
-		`PageEnd`: PageEnd})
+		`PageEnd`: PageEnd, `StateValue`: StateValue})
 }
 
 // Reading and compiling contracts from smart_contracts tables
@@ -162,6 +162,19 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 
 func TxForm(vars *map[string]string, pars *map[string]string) string {
 	return TXForm((*pars)[`Contract`])
+}
+
+func Image(vars *map[string]string, pars ...string) string {
+	alt := ``
+	if len(pars) > 1 {
+		alt = pars[1]
+	}
+	return fmt.Sprintf(`<img src="%s" alt="%s">`, pars[0], alt)
+}
+
+func StateValue(vars *map[string]string, pars ...string) string {
+	val, _ := StateParam(StrToInt64((*vars)[`state_id`]), pars[0])
+	return val
 }
 
 func LiTemplate(vars *map[string]string, pars ...string) string {

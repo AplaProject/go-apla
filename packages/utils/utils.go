@@ -94,27 +94,27 @@ type DaemonsChansType struct {
 }
 
 var (
-	FirstBlockDir      = flag.String("firstBlockDir", "", "FirstBlockDir")
-	FirstBlockPublicKey      = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
-	FirstBlockNodePublicKey      = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
-	FirstBlockHost      = flag.String("firstBlockHost", "", "FirstBlockHost")
-	WalletAddress      = flag.String("walletAddress", "", "walletAddress for forging ")
-	TcpHost            = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
-	ListenHttpPort     = flag.String("listenHttpPort", "7079", "ListenHttpPort")
-	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
-	OldVersion         = flag.String("oldVersion", "", "")
-	TestRollBack       = flag.Int64("testRollBack", 0, "testRollBack")
-	Dir                = flag.String("dir", GetCurrentDir(), "DayLight directory")
-	OldFileName        = flag.String("oldFileName", "", "")
-	LogLevel           = flag.String("logLevel", "", "DayLight LogLevel")
-	Console            = flag.Int64("console", 0, "Start from console")
-	SqliteDbUrl        string
-	StartBlockId       = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
-	EndBlockId         = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
-	RollbackToBlockId  = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
-	Tls                = flag.String("tls", "", "Support https. Specify directory for .well-known")
-	DaemonsChans       []*DaemonsChansType
-	eWallets           = &sync.Mutex{}
+	FirstBlockDir           = flag.String("firstBlockDir", "", "FirstBlockDir")
+	FirstBlockPublicKey     = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
+	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
+	FirstBlockHost          = flag.String("firstBlockHost", "", "FirstBlockHost")
+	WalletAddress           = flag.String("walletAddress", "", "walletAddress for forging ")
+	TcpHost                 = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
+	ListenHttpPort          = flag.String("listenHttpPort", "7079", "ListenHttpPort")
+	GenerateFirstBlock      = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+	OldVersion              = flag.String("oldVersion", "", "")
+	TestRollBack            = flag.Int64("testRollBack", 0, "testRollBack")
+	Dir                     = flag.String("dir", GetCurrentDir(), "DayLight directory")
+	OldFileName             = flag.String("oldFileName", "", "")
+	LogLevel                = flag.String("logLevel", "", "DayLight LogLevel")
+	Console                 = flag.Int64("console", 0, "Start from console")
+	SqliteDbUrl             string
+	StartBlockId            = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
+	EndBlockId              = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
+	RollbackToBlockId       = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
+	Tls                     = flag.String("tls", "", "Support https. Specify directory for .well-known")
+	DaemonsChans            []*DaemonsChansType
+	eWallets                = &sync.Mutex{}
 )
 
 func init() {
@@ -2407,7 +2407,7 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	qrx = regexp.MustCompile(`AccountId`)
 	data = qrx.ReplaceAllString(data, Int64ToStr(accountId))
 	if len(data) > 0 && data[0] == '*' {
-		return textproc.Process(data[1:], &map[string]string{`page`: page}), nil
+		return textproc.Process(data[1:], &map[string]string{`page`: page, `state_id`: Int64ToStr(stateId)}), nil
 	}
 	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\[([^\].]*)\]\.([\w\d_]*)\}\}.*`)
 	sql := qrx.ReplaceAllString(data, `SELECT $3 FROM "$1" WHERE $2`)
