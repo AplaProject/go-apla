@@ -61,6 +61,9 @@ func (c *Controller) AjaxSmartFields() interface{} {
 			} else {
 				fields := make([]string, 0)
 				for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+					if strings.Index(fitem.Tags, `hidden`) >= 0 {
+						continue
+					}
 					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` {
 						fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"textinput", "txType":"%s", "title":"%s"}`,
 							fitem.Name, fitem.Type.String(), fitem.Name))

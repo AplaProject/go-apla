@@ -158,8 +158,8 @@ func (p *Parser) NewState() error {
 		(?, ?),(?, ?),(?,?),(?,?),(?,?),(?,?),(?,?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
 	tx {
-		PublicKey  bytes
-		StateId    int
+		PublicKey  bytes  "hidden"
+		StateId    int    "hidden"
 		FullName   string
 //		MiddleName string "optional"
 //		LastName   string
@@ -195,7 +195,7 @@ func (p *Parser) NewState() error {
 }`, `TXEditProfile`, `contract TXEditProfile {
 	tx {
 		FirstName  string
-		Image bytes "image"
+		Image string "image"
 	}
 	func init {
 	}
@@ -217,8 +217,8 @@ func (p *Parser) NewState() error {
 		Println("TXTest main")
 	}
 }`,
-	`AddAccount`,
-	`contract AddAccount {
+		`AddAccount`,
+		`contract AddAccount {
 	tx {
     }
 	func main {
@@ -226,7 +226,7 @@ func (p *Parser) NewState() error {
 	}
 }`,
 
-		`SendMoney`,`contract SendMoney {
+		`SendMoney`, `contract SendMoney {
 	tx {
         RecipientAccountId int
         Amount string
