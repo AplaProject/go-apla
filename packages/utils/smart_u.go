@@ -254,6 +254,9 @@ func TXForm(name string) string {
 	finfo := FormInfo{TxName: name, Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		if strings.Index(fitem.Tags, `hidden`) >= 0 {
+			continue
+		}
 		if strings.Index(fitem.Tags, `map`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "map",
 				TxType: fitem.Type.String(), Title: fitem.Name})
