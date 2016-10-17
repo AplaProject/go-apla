@@ -233,7 +233,7 @@ function Alert(title, text, type, Confirm) {
 			html: true
 		}, function (isConfirm) {
 			if (isConfirm) {
-				if (type == "success") {
+				//if (type == "success") {
 					if (Confirm) {
 						if (Confirm == false) {
 							return false;
@@ -241,7 +241,7 @@ function Alert(title, text, type, Confirm) {
 							Confirm();
 						}
 					}
-				}
+				//}
 				if (Confirm != false) {
 					$("#" + id).modal("hide");
 					obj.css({"min-height":minHeight}).removeClass("whirl standard");

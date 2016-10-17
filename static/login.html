@@ -37,6 +37,9 @@
 	.panel {
 		margin:0px;
 	}
+	.brand .sweet-alert {
+		padding-top:17px;
+	}
 	h1 {
 		margin-top:0px;
 	}
@@ -56,7 +59,7 @@
 	<input type="hidden" id="prvkey" value="" />
 	<input type="hidden" id="pubkey" value="" />
 	
-	<div id="login_form" class="start_form" style="display:none;">
+	<div id="login_form" class="start_form" style="display:none;" data-sweet-alert>
 		<div class="panel-body">
 			<h1>Login</h1>
 			<form>
@@ -93,7 +96,7 @@
 			</form>
 		</div>
 		<div class="panel-footer flex">
-			<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_login()">Login</button>
+			<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn">Login</button>
 			<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
 			<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
 		</div>
@@ -193,6 +196,7 @@ function login_form() {
 	$("#register_form").hide();
 	$("#login_form").show();
 	$("#address").val(GKey.Address ? GKey.Address : '');
+	$("#login_form").removeClass("whirl standard");
 	WatchForm();
 	return false;
 }
@@ -221,20 +225,23 @@ var loginAttempts = 0;
 
 function do_login() {
 	// Check encKey
-	NProgressStart.start();
 	var pass = $("#decpass").val();
 	if (GKey.decrypt(encKey, pass)) {
+		NProgressStart.start();
 		GKey.save();
 		do_sign();
 	} else {
 		loginAttempts++;
-		alert('Login Fail ' + loginAttempts + '/3');
-		if (loginAttempts > 3) {
+		//alert('Login Fail ' + loginAttempts + '/3');
+		if (loginAttempts >= 3) {
+			Alert("Login Fail", "Attempts - " + loginAttempts + "/3", "error", import_form);
 			loginAttempts = 0;
 			localStorage.removeItem('EncKey');
 			localStorage.removeItem('PubKey');
 //			$("#address").html('');
-			import_form();
+			//import_form();
+		} else {
+			Alert("Login Fail", "Attempts - " + loginAttempts + "/3", "error");
 		}
 	}
 }
