@@ -17,7 +17,6 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/lib"
@@ -52,8 +51,20 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo("amount=0")
 	}
 
+	fPrice, err := p.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	dltPrice := int64(fPrice * fuelRate) // 500 * 1 = 500 mDLT
+
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
-	if p.TxMaps.Int64["commission"] < consts.COMMISSION {
+	if p.TxMaps.Int64["commission"] < dltPrice {
 		return p.ErrInfo("commission")
 	}
 
@@ -76,18 +87,10 @@ func (p *Parser) DLTTransferFront() error {
 	}
 
 	// есть ли нужная сумма на кошельке
-	/*amountAndCommission, err := p.checkSenderDLT(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	/*// вычитаем из wallets_buffer
-	// amount_and_commission взято из check_sender_money()
-	err = p.updateWalletsBuffer(amountAndCommission)
+	err = p.checkSenderDLT(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-*/
 	return nil
 }
 
@@ -118,11 +121,11 @@ func (p *Parser) DLTTransfer() error {
 	}
 
 	if walletId == 0 {
-			log.Debug("walletId == 0");
-			log.Debug("%s", string(p.TxMaps.String["walletAddress"]));
-			_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(lib.StringToAddress(p.TxMaps.String["walletAddress"]))}, true)
+		log.Debug("walletId == 0");
+		log.Debug("%s", string(p.TxMaps.String["walletAddress"]));
+		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(lib.StringToAddress(p.TxMaps.String["walletAddress"]))}, true)
 	} else {
-			_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)

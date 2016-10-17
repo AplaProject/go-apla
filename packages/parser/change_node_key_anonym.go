@@ -20,7 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
-func (p *Parser) ChangeNodeKeyAnonymInit() error {
+func (p *Parser) ChangeNodeKeyDLTInit() error {
 
 	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -32,7 +32,7 @@ func (p *Parser) ChangeNodeKeyAnonymInit() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyAnonymFront() error {
+func (p *Parser) ChangeNodeKeyDLTFront() error {
 
 	/*err := p.generalCheck()
 	if err != nil {
@@ -69,7 +69,7 @@ func (p *Parser) ChangeNodeKeyAnonymFront() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyAnonym() error {
+func (p *Parser) ChangeNodeKeyDLT() error {
 
 		_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 		if err != nil {
@@ -90,6 +90,6 @@ func (p *Parser) ChangeNodeKeyAnonym() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyAnonymRollback() error {
+func (p *Parser) ChangeNodeKeyDLTRollback() error {
 	return p.autoRollback()
 }

@@ -59,7 +59,7 @@ func (p *Parser) NewColumnFront() error {
 	dltPrice := int64(fPrice / fuelRate)
 
 	// есть ли нужная сумма на кошельке
-	_, err = p.checkSenderDLT(0, dltPrice)
+	err = p.checkSenderDLT(dltPrice, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

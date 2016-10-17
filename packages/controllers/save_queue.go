@@ -472,7 +472,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(columns)...)
 		data = append(data, binSignatures...)
 
-	case "ChangeNodeKeyAnonym":
+	case "ChangeNodeKeyDLT":
 
 		stateId = 0
 

@@ -334,26 +334,19 @@ func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (
 
 }
 
-func (p *Parser) checkSenderDLT(amount, commission int64) (int64, error) {
-
-	// получим все списания (табла wallets_buffer), которые еще не попали в блок и стоят в очереди
-	/*walletsBufferAmount, err := p.getWalletsBufferAmount()
-	if err != nil {
-		return 0, p.ErrInfo(err)
-	}*/
+func (p *Parser) checkSenderDLT(amount, commission int64) (error) {
 
 	// получим сумму на кошельке юзера
 	totalAmount, err := p.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
 	if err != nil {
-		return 0, p.ErrInfo(err)
+		return p.ErrInfo(err)
 	}
 
 	amountAndCommission := amount + commission
-	all := totalAmount /*- walletsBufferAmount*/
-	if all < amountAndCommission {
-		return 0, p.ErrInfo(fmt.Sprintf("%f < %f)", all, amountAndCommission))
+	if totalAmount < amountAndCommission {
+		return p.ErrInfo(fmt.Sprintf("%f < %f)", totalAmount, amountAndCommission))
 	}
-	return amountAndCommission, nil
+	return nil
 }
 
 func (p *Parser) MyTable(table, id_column string, id int64, ret_column string) (int64, error) {
