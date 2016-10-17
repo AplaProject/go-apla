@@ -96,12 +96,12 @@
 			</form>
 		</div>
 		<div class="panel-footer flex">
-			<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn">Login</button>
 			<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
 			<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
+			<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn">Login</button>
 		</div>
 	</div>
-	<div id="register_form" class="start_form" style="display:none;">
+	<div id="register_form" class="start_form" style="display:none;" data-sweet-alert>
 		<div class="panel-body">
 			<h1 style="padding-bottom: 10px;" class="noimport">Create account</h1>
 			<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
@@ -129,14 +129,14 @@
 		</div>
 		<div class="panel-footer">
 			<div class="noimport flex">
-				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Create account</button>
 				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
+				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="create_btn">Create account</button>
 			</div>
 			<div class="noregister flex" style="display:none;">
-				<button type="button" class="btn btn-primary" style="vertical-align:top;" onclick="return do_register()">Import account</button>
 				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
+				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="import_btn">Import account</button>
 			</div>
 		</div>
 	</div>
@@ -149,13 +149,13 @@ g_menuShow = false;  // hide menu
 
 function do_register() {
 	var pass = $("#pass").val();
-	NProgressStart.start();
+	
 	if (pass.length < 6) {
-		alert('Password is too week. The length is less than 6.');
+		Alert("Warning", "Password is too week. The length is less than 6.", "warning");
 		return false;
 	} 
 	if (pass != $("#rep_pass").val()) {
-		alert('Passwords do not match');
+		Alert("Warning", "Passwords do not match.", "warning");
 		return false;
 	} 
 	do_generate();
@@ -169,6 +169,7 @@ function do_register() {
 }
 
 function do_sign() {
+	NProgressStart.start();
 	$.get( 'ajax?json=ajax_get_uid',{}, function(data) {
 		console.log(data);
 		var key = GKey.Public;
@@ -197,6 +198,15 @@ function login_form() {
 	$("#login_form").show();
 	$("#address").val(GKey.Address ? GKey.Address : '');
 	$("#login_form").removeClass("whirl standard");
+	if ($("#accounts li").length) {
+		$("#accounts li a").each(function() {
+			if ($("#address").val() == $(this).html()) {
+				$(this).click();
+			} else {
+				$("#accounts li:last a:first").click();
+			}
+		});
+	}
 	WatchForm();
 	return false;
 }
@@ -207,6 +217,9 @@ function register_form() {
 	$("#register_form").show();
 	$(".noimport").show();
 	$("#state_id").val("");
+	if (!$("#accounts li").length) {
+		$(".islogin").hide();
+	}
 	WatchForm();
 	return false;
 }
@@ -216,6 +229,9 @@ function import_form() {
 	$(".noimport").hide();
 	$("#register_form").show();
 	$(".noregister").show();
+	if (!$("#accounts li").length) {
+		$(".islogin").hide();
+	}
 	WatchForm();
 	return false;
 }
@@ -226,8 +242,13 @@ var loginAttempts = 0;
 function do_login() {
 	// Check encKey
 	var pass = $("#decpass").val();
+	
+	if ($("#address").val() == "") {
+		Alert("Warning", "Enter the wallet address, please", "warning");
+		return false;
+	}
+	
 	if (GKey.decrypt(encKey, pass)) {
-		NProgressStart.start();
 		GKey.save();
 		do_sign();
 	} else {
