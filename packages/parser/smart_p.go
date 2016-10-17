@@ -33,7 +33,7 @@ func init() {
 		"DBInsert": DBInsert,
 		"DBUpdate": DBUpdate,
 		"DBString": DBString,
-		"DBInt" : DBInt,
+		"DBInt":    DBInt,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -42,8 +42,8 @@ func init() {
 func (p *Parser) getExtend() *map[string]interface{} {
 	head := p.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
 	var citizenId, walletId int64
-	citizenId = head.UserId
-	walletId = head.UserId
+	citizenId = int64(head.WalletId)
+	walletId = int64(head.WalletId)
 	// test
 	block := int64(0)
 	if p.BlockData != nil {

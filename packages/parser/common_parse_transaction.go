@@ -52,11 +52,11 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			p.TxStateID = uint32(p.TxPtr.(*consts.TXHeader).StateId)
 			p.TxStateIDStr = utils.UInt32ToStr(p.TxStateID)
 			if p.TxStateID > 0 {
-				p.TxCitizenID = p.TxPtr.(*consts.TXHeader).UserId
+				p.TxCitizenID = int64(p.TxPtr.(*consts.TXHeader).WalletId)
 				p.TxWalletID = 0
 			} else {
 				p.TxCitizenID = 0
-				p.TxWalletID = p.TxPtr.(*consts.TXHeader).UserId
+				p.TxWalletID = int64(p.TxPtr.(*consts.TXHeader).WalletId)
 			}
 			contract := smart.GetContractById(p.TxPtr.(*consts.TXHeader).Type)
 			if contract == nil {
@@ -99,11 +99,11 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				p.TxStateID = uint32(head.StateId)
 				p.TxStateIDStr = utils.UInt32ToStr(p.TxStateID)
 				if head.StateId > 0 {
-					p.TxCitizenID = head.UserId
+					p.TxCitizenID = int64(head.WalletId)
 					p.TxWalletID = 0
 				} else {
 					p.TxCitizenID = 0
-					p.TxWalletID = head.UserId
+					p.TxWalletID = int64(head.WalletId)
 				}
 				p.TxTime = int64(head.Time)
 			} else {

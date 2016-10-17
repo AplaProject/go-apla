@@ -353,8 +353,12 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 			*out = append(*out, uint8(128+4-i))
 			*out = append(*out, tmp[i:]...)
 		}
-	case reflect.Int64, reflect.Uint64:
+	case reflect.Int64:
 		EncodeLenInt64(out, t.Int())
+	case reflect.Uint64:
+		tmp := make([]byte, 8)
+		binary.BigEndian.PutUint64(tmp, t.Uint())
+		*out = append(*out, tmp...)
 	case reflect.String:
 		*out = append(append(*out, EncodeLength(int64(t.Len()))...), []byte(t.String())...)
 	case reflect.Struct:
@@ -402,12 +406,15 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			t.SetInt(int64(binary.BigEndian.Uint32(tmp)))
 			*out = (*out)[size+1:]
 		}
-	case reflect.Int64, reflect.Uint64:
+	case reflect.Int64:
 		if val, err := DecodeLenInt64(out); err != nil {
 			return err
 		} else {
 			t.SetInt(val)
 		}
+	case reflect.Uint64:
+		t.SetUint(binary.BigEndian.Uint64((*out)[:8]))
+		*out = (*out)[8:]
 	case reflect.String:
 		if val, err := DecodeLength(out); err != nil {
 			return err

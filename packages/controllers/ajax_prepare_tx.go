@@ -47,15 +47,15 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
 	} else {
+		var flags uint8
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		result.Time = lib.Time32()
-		userId := c.SessWalletId
+		userId := uint64(c.SessWalletId)
 		fmt.Println(`Prepare`, c.SessWalletId, c.SessCitizenId, c.SessStateId)
 		/*		if c.SessStateId > 0 {
 				userId = c.SessCitizenId
 			}*/
-		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id /*+smart.CNTOFF*/, result.Time, userId, c.SessStateId)
-
+		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.Id, result.Time, userId, c.SessStateId, flags)
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if strings.Index(fitem.Tags, `image`) >= 0 {
 				continue

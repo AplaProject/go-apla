@@ -345,7 +345,7 @@ func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
-	for i := len(*tx) - 1; i > 0; i-- {
+	for i := len(*tx) - 1; i >= 0; i-- {
 		if len((*tx)[i].Tags) == 0 {
 			(*tx)[i].Tags = lexem.Value.(string)
 			break
