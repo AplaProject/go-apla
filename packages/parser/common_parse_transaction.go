@@ -145,15 +145,18 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			i := 0
 			for {
 				length := utils.DecodeLength(transactionBinaryData)
-				log.Debug("length: %d\n", length)
+				i++
 				if length > 0 && length < consts.MAX_TX_SIZE {
 					data := utils.BytesShift(transactionBinaryData, length)
 					returnSlice = append(returnSlice, data)
 					merkleSlice = append(merkleSlice, utils.DSha256(data))
 					log.Debug("%x", data)
 					log.Debug("%s", data)
+				} else if length == 0 && len(*transactionBinaryData) > 0 {
+					returnSlice = append(returnSlice, []byte{})
+					merkleSlice = append(merkleSlice, utils.DSha256([]byte{}))
+					continue
 				}
-				i++
 				if length == 0 || i >= 20 { // у нас нет тр-ий с более чем 20 элементами
 					break
 				}
