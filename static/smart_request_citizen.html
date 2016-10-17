@@ -345,6 +345,13 @@
 			theme: 'bootstrap'
 		});
 	})
+	
+	$('a[href="#tab1"]').on('click', function () {
+		$(".map_canvas").show();
+	})
+	$('a[href="#tab2"]').on('click', function () {
+		$(".map_canvas").hide();
+	})
 </script>
 
 <div class="content-heading">
