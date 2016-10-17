@@ -95,7 +95,7 @@
 				</fieldset>
 			</form>
 		</div>
-		<div class="panel-footer flex">
+		<div class="panel-footer flex buttons">
 			<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
 			<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
 			<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn">Login</button>
@@ -128,12 +128,12 @@
 			</form>
 		</div>
 		<div class="panel-footer">
-			<div class="noimport flex">
+			<div class="noimport flex buttons">
 				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
 				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="create_btn">Create account</button>
 			</div>
-			<div class="noregister flex" style="display:none;">
+			<div class="noregister flex buttons" style="display:none;">
 				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
 				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="import_btn">Import account</button>
@@ -349,6 +349,12 @@ $(document).ready(function(){
 			Alert("Error", error, "error");
 		}
 	});
+});
+
+$(document).on('keydown', function(e){
+	if (e.keyCode == 13) {
+		$(".start_form:visible").find(".buttons:visible button").click();
+	}
 });
 	
 </script>
