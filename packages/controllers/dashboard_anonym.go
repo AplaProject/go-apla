@@ -44,6 +44,9 @@ func (c *Controller) DashboardAnonym() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
+		if amount == "" {
+			amount = "0"
+		}
 	}
 
 	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonym", &dashboardAnonymPage{
