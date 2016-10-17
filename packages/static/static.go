@@ -171,9 +171,9 @@
 // static/modal_map.html
 // static/new_state.html
 // static/new_table.html
+// static/page_template.html
 // static/pass.html
 // static/psw.html
-// static/request_citizen_status.html
 // static/schema.sql
 // static/show_table.html
 // static/signatures.html
@@ -3342,6 +3342,24 @@ func staticNew_tableHtml() (*asset, error) {
 	return a, err
 }
 
+// staticPage_templateHtml reads file data from disk. It returns an error on failure.
+func staticPage_templateHtml() (*asset, error) {
+	path := "static/page_template.html"
+	name := "static/page_template.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticPassHtml reads file data from disk. It returns an error on failure.
 func staticPassHtml() (*asset, error) {
 	path := "static/pass.html"
@@ -3364,24 +3382,6 @@ func staticPassHtml() (*asset, error) {
 func staticPswHtml() (*asset, error) {
 	path := "static/psw.html"
 	name := "static/psw.html"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticRequest_citizen_statusHtml reads file data from disk. It returns an error on failure.
-func staticRequest_citizen_statusHtml() (*asset, error) {
-	path := "static/request_citizen_status.html"
-	name := "static/request_citizen_status.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4771,9 +4771,9 @@ var _bindata = map[string]func() (*asset, error){
 	"static/modal_map.html": staticModal_mapHtml,
 	"static/new_state.html": staticNew_stateHtml,
 	"static/new_table.html": staticNew_tableHtml,
+	"static/page_template.html": staticPage_templateHtml,
 	"static/pass.html": staticPassHtml,
 	"static/psw.html": staticPswHtml,
-	"static/request_citizen_status.html": staticRequest_citizen_statusHtml,
 	"static/schema.sql": staticSchemaSql,
 	"static/show_table.html": staticShow_tableHtml,
 	"static/signatures.html": staticSignaturesHtml,
@@ -5078,9 +5078,9 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"modal_map.html": &bintree{staticModal_mapHtml, map[string]*bintree{}},
 		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{}},
 		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{}},
+		"page_template.html": &bintree{staticPage_templateHtml, map[string]*bintree{}},
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
 		"psw.html": &bintree{staticPswHtml, map[string]*bintree{}},
-		"request_citizen_status.html": &bintree{staticRequest_citizen_statusHtml, map[string]*bintree{}},
 		"schema.sql": &bintree{staticSchemaSql, map[string]*bintree{}},
 		"show_table.html": &bintree{staticShow_tableHtml, map[string]*bintree{}},
 		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{}},
