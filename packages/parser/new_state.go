@@ -203,7 +203,7 @@ func (p *Parser) NewState() error {
 
 	}
 	func main {
-	  DBUpdate(Sprintf( "%d_citizens", $state), $citizen, "name,image", $FirstName, $Image)
+	  DBUpdate(Sprintf( "%d_citizens", $state), $citizen, "name,avatar", $FirstName, $Image)
   	  Println("TXEditProfile main")
 	}
 }`, `TXTest`, `contract TXTest {
