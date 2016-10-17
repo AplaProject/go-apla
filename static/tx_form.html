@@ -103,18 +103,15 @@
 				//container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
 				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
 					if (data.approved == 0) {
-						//alert('The request is in the queue.');
 						hideFields();
 						Notify('The request is in the queue.', 'warning');
 					}
 					if (data.approved < 0) {
-						//alert('The request has been rejected.');
 						hideFields('The request has been rejected.');
 					}
 					if (data.approved == 1) {
-						//alert('The request has been accepted. Wait for a moment.');
 						hideFields();
-						Notify('The request has been accepted. Wait for a moment.', 'success');
+						Notify('The request has been accepted.', 'success');
 					}
 					if (data.approved > 1) {
 						var idz = id.toString(16);
@@ -179,11 +176,11 @@
 	}
 	
 	Country();
-	$(document).ready(function(){
-		do_phrase();
-	});
 
 {{end}}
+	function SendTxOK() {
+		
+	}
 	var serverTime;
 	var predata;
 	
@@ -191,19 +188,6 @@
 		predata = {
 			'TxName' : '{{.TxName}}',
 		};
-		{{if eq .TxName "TXCitizenRequest"}}
-			if (!$("#phrase").val()) {
-				alert('Generate seed');
-				return;
-			}
-			do_generate();
-			var key = $("#pubkey").val();
-			if (key.length > 128) {
-				key = key.substr( 2 );
-			}
-			predata.StateId = 1
-			predata.PublicKey = key
-		{{end}}
 		{{range .Fields}}
 			{{if eq .HtmlType "textinput"}}
 				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
@@ -256,11 +240,7 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(result) {
-				if (typeof result.error != "undefined" && result.error.length > 0 ) {
-					Alert("Error", result.error, "error");
-				} else {
-					Alert("Success", result.error, "success");
-				}
+				send_to_net_success(result, SendTxOK);
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
@@ -292,11 +272,7 @@
 					  <label for="countries">Country</label>
 					  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
 				   </div>
-				   <div class="form-group" style="display:none;">
-					 	<textarea id="phrase" class="form-control"></textarea>
-						<input type="hidden" id="prvkey" value="" />
-						<input type="hidden" id="pubkey" value="" />
-					   </div>{{end}}
+				   {{end}}
 				   <div id="message" class="alert alert-danger"></div>
 				   <div id="fields">
 				    {{range .Fields}}

@@ -33,6 +33,7 @@ const ASendTx = `ajax_send_tx`
 
 type SendTxJson struct {
 	Error string `json:"error"`
+	Hash  string `json:"hash"`
 }
 
 func init() {
@@ -42,6 +43,7 @@ func init() {
 func (c *Controller) AjaxSendTx() interface{} {
 	var (
 		result SendTxJson
+		flags  uint8
 		err    error
 	)
 	cntname := c.r.FormValue(`TxName`)
@@ -51,7 +53,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 	} else {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
 
-		userId := c.SessWalletId
+		userId := uint64(c.SessWalletId)
 		/*		if c.SessStateId > 0 {
 				userId = c.SessCitizenId
 			}*/
@@ -82,11 +84,12 @@ func (c *Controller) AjaxSendTx() interface{} {
 			data := make([]byte, 0)
 			//			)
 			header := consts.TXHeader{
-				Type:    int32(contract.Block.Info.(*script.ContractInfo).Id), /* + smart.CNTOFF*/
-				Time:    uint32(utils.StrToInt64(c.r.FormValue(`time`))),
-				UserId:  userId,
-				StateId: int64(c.SessStateId),
-				Sign:    sign,
+				Type:     int32(contract.Block.Info.(*script.ContractInfo).Id), /* + smart.CNTOFF*/
+				Time:     uint32(utils.StrToInt64(c.r.FormValue(`time`))),
+				WalletId: userId,
+				StateId:  int32(c.SessStateId),
+				Flags:    flags,
+				Sign:     sign,
 			}
 			//fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
 			//			fmt.Println(`Header`, header)
@@ -117,13 +120,16 @@ func (c *Controller) AjaxSendTx() interface{} {
 					md5 := utils.Md5(data)
 					err = c.ExecSql(`INSERT INTO transactions_status (
 						hash, time,	type, wallet_id, citizen_id	) VALUES (
-						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, userId, userId) //c.SessStateId)
+						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(userId), int64(userId)) //c.SessStateId)
 					if err == nil {
 						err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+						if err == nil {
+							result.Hash = string(md5)
+						}
 					}
 				}
 			}
-			fmt.Printf("Data %v %d %x", err, len(data), data)
+			fmt.Printf("Data error: %v lendata: %d hash: %s", err, len(data), result.Hash)
 		}
 	}
 	if err != nil {

@@ -112,13 +112,10 @@ func (c *Controller) SaveQueue() (string, error) {
 		}
 	case "TXNewCitizen":
 		// This will be common part
-		userId := walletId
+		userId := uint64(walletId)
 		stateId := uint32(utils.StrToInt64(c.r.FormValue("stateId")))
-		if stateId > 0 {
-			userId = citizenId
-		}
 		TXHead := consts.TXHeader{Type: int32(txType), Time: uint32(txTime),
-			UserId: userId, StateId: int64(stateId), Sign: sign}
+			WalletId: userId, StateId: int32(stateId), Sign: sign}
 		// ---
 		if stateId == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))

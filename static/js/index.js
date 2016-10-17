@@ -557,7 +557,7 @@ function unixtime(target) {
 }
 
 function send_to_net_success(data, ReadyFunction){
-	if (typeof data.error != "undefined") {
+	if (typeof data.error != "undefined" && data.error.length > 0 ) {
 		Alert("Error", data.error, "error");
 	} else if (data.hash == "undefined") {
 		Alert("Error", data.result, "error");
