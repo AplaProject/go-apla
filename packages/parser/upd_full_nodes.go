@@ -31,9 +31,6 @@ func (p *Parser) UpdFullNodesInit() error {
 }
 
 func (p *Parser) UpdFullNodesFront() error {
-
-
-
 	return nil
 }
 

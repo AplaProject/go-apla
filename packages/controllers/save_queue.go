@@ -130,8 +130,11 @@ func (c *Controller) SaveQueue() (string, error) {
 		walletAddress := []byte(c.r.FormValue("walletAddress"))
 		amount := []byte(c.r.FormValue("amount"))
 		commission := []byte(c.r.FormValue("commission"))
-		comment := []byte(c.r.FormValue("comment"))
-
+		comment_ := c.r.FormValue("comment")
+		if len (comment_) == 0 {
+			comment_ = "null"
+		}
+		comment := []byte(comment_)
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
 		data = append(data, utils.EncodeLengthPlusData(userId)...)

@@ -228,7 +228,7 @@ func (p *Parser) NewState() error {
 		`SendMoney`, `contract SendMoney {
 	tx {
         RecipientAccountId int
-        Amount string
+        Amount int
     }
 
 	func main {
@@ -242,7 +242,7 @@ func (p *Parser) NewState() error {
 		`contract UpdAmount {
 	tx {
         AccountId int
-        Amount string
+        Amount int
     }
 
 	func main {
@@ -311,6 +311,9 @@ PageTitle : StateValue(state_name)
 MarkDown : # Welcome, citizen!
 Image(StateValue(state_flag))
 TemplateNav(citizens)
+TemplateNav(AddAccount)
+TemplateNav(UpdAmount)
+TemplateNav(SendMoney)
 PageEnd:
 `, `menu_default`, sid,
 

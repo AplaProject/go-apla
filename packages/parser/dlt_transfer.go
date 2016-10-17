@@ -61,6 +61,11 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo("amount<=0")
 	}
 
+	if string(p.TxMap["comment"]) == "null" {
+		p.TxMap["comment"] = []byte("")
+		p.TxMaps.Bytes["comment"] = []byte("")
+	}
+
 	forSign := fmt.Sprintf("%s,%s,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["walletAddress"], p.TxMap["amount"], p.TxMap["commission"], p.TxMap["comment"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
@@ -136,46 +141,5 @@ func (p *Parser) DLTTransfer() error {
 }
 
 func (p *Parser) DLTTransferRollback() error {
-	/*hexAddress := utils.BinToHex(utils.B54Decode(p.TxMaps.Bytes["walletAddress"]))
-
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	rbId, err := p.Single(`SELECT rb_id FROM dlt_wallets WHERE address = [hex]`, hexAddress).Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	// Если это не первая запись, а обновление
-	if rbId > 0 {
-		if len(p.TxMaps.Bytes["public_key"]) > 0 {
-			err := p.selectiveRollback([]string{"public_key_0", "amount"}, "dlt_wallets", "wallet_id="+utils.Int64ToStr(walletId), false)
-			if err != nil {
-				return p.ErrInfo(err)
-			}
-		} else {
-			err := p.selectiveRollback([]string{"amount"}, "dlt_wallets", "wallet_id="+utils.Int64ToStr(walletId), false)
-			if err != nil {
-				return p.ErrInfo(err)
-			}
-		}
-	} else {
-		err = p.ExecSql(`DELETE FROM dlt_wallets WHERE wallet_id = ?`, walletId)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-	}
-	err = p.ExecSql(`DELETE FROM dlt_transactions WHERE block_id = ?`, p.BlockData.BlockId)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	return nil*/
 	return p.autoRollback()
 }
-
-/*func (p *Parser) DLTTransferRollbackFront() error {
-
-	return nil
-
-}
-*/
