@@ -113,11 +113,11 @@
 						hideFields('The request has been rejected.');
 					}
 					if (data.approved == 1) {
-						//alert('The request has been accepted. Wait for a moment.');
+						//alert('The request has been accepted.');
 						hideFields();
-						Notify('The request has been accepted. Wait for a moment.', 'success');
+						Notify('The request has been accepted.', 'success');
 					}
-					if (data.approved > 1) {
+/*					if (data.approved > 1) {
 						var idz = id.toString(16);
 						if (idz.length & 1)
 							idz = '0' + idz;
@@ -127,7 +127,7 @@
 							
 						//alert('Your Private key: ' + localStorage.getItem('reqPrv') + idz + ciz);
 						Alert("Citizenship Registration completed successfully!<br />Please accept our sincere congratulations!<br />Now you are a citizen of DayLight!", 'Your Private key: ' + localStorage.getItem('reqPrv') + idz + ciz, "success");
-					}
+					}*/
 //					return
 				}
 				
@@ -191,23 +191,16 @@
 		}
 	},'json')*/
 
+	function RequestOK() {
+	}
+
 	var serverTime;
 	var predata;
 	
 	$('#send').bind('click', function () {
-		if (!$("#phrase").val()) {
-			alert('Generate seed');
-			return;
-		}
-		do_generate();
-		var key = $("#pubkey").val();
-		if (key.length > 128) {
-			key = key.substr( 2 );
-		}
 		predata = {
 			'TxName' : '{{.TxType}}',
 			'StateId': 1,	
-			'PublicKey': key,
 		};
 		for (i = 0; i < arr.length; i++ ) {
 			var field = arr[i];
@@ -227,7 +220,7 @@
 				} else {
 					console.log(data);
 					predata.time = data.time;
-					Alert("Success", "", "success");
+//					Alert("Success", "", "success");
 					$("#for-signature").val(data.forsign);
 					doSign();
 					predata.signature1 = $('#signature1').val();
@@ -238,7 +231,7 @@
 				}
 		}, "json" );
 	} );
-
+	
 	$('#send_to_net').bind('click', function () {
 		$.ajax({
 			type: 'POST',
@@ -247,98 +240,13 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(result) {
-				if (typeof result.error != "undefined" && result.error.length > 0 ) {
-					Alert("Error", result.error, "error");
-				} else {
-/*					interval = setInterval(function() {
-						$.ajax({
-							type: 'POST',
-							url: 'ajax?json=ajax_citizen_request',
-							data: {state_id: $("#countries").val()},
-							dataType: 'json',
-							crossDomain: true,
-							success: function(data){
-								if (typeof data.error != "undefined" && data.error.length > 0) {
-									Alert("Error", data.error, "error");
-									clearInterval(interval);
-								} else if (data.host.length > 0) {
-									clearInterval(interval);
-									$("#for-signature").val( 'CitizenInfo,'+data.time+',{{.Data.WalletId}}');
-									doSign();
-									do_generate();
-									var key = $("#pubkey").val();
-									if (key.length > 128) {
-										key = key.substr( 2 );
-									}
-									var stateId = 1;// $("#countries").val();
-									var formdata = new FormData();
-									var predata = {
-//										'type' : data.type_name,
-										'time' : data.time,
-										'walletId' : '{{.Data.WalletId}}',
-										'stateId': stateId,
-										'price': parseInt($("#price").val()),
-										'publicKey': key,
-										'pubkey' : GKey.Public,
-										'signature1': $('#signature1').val(),
-										'signature2': $('#signature2').val(),
-										'signature3': $('#signature3').val()
-									};
-									for (key in predata) {
-										formdata.append(key, predata[key]);
-									}
-									for (i = 0; i < arr.length; i++ ) {
-										var field = arr[i];
-										if ($("#" + field).attr("type") == "file") {
-											$.each($('#'+field)[0].files, function(i, file) {
-    											formdata.append(field +'-'+i, file);
-											});
-										} else {
-											formdata.append(field, $("#" + field).val());
-										}
-									}
-									
-									console.log(data);
-									$.ajax({
-										type: 'POST',
-										url: data.host + 'ajax?json=ajax_citizen_info',
-										data: formdata,
-										crossDomain: true,
-										contentType: false,
-                						processData: false,
-										success: function(status){
-											localStorage.setItem('reqPrv', $("#prvkey").val());
-											localStorage.setItem('reqState', stateId );
-											localStorage.setItem('reqHost', data.host );
-											if (typeof status.error != "undefined" && status.error.length > 0 ) {
-												Alert("Error", status.error, "error");
-											} else {
-												Alert("Success", "", "success");
-											}
-										},
-										error: function(xhr, status, error) {
-											Alert("Error", error, "error");
-										},
-									});
-								}
-							},
-							error: function(xhr, status, error) {
-								clearInterval(interval);
-								Alert("Error", error, "error");
-							},
-						});
-					}, 2000)*/
-				}
+				send_to_net_success(result, RequestOK);
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
 		});
 	} );	
-	$(document).ready(function(){
-		do_phrase();
-	});
-	
 	$('a[href="#tab2"]').on('shown.bs.tab', function () {
 		$(".selectbox").select2({
 			minimumResultsForSearch: 6,
@@ -379,14 +287,6 @@
 				   </div>
 				   <div id="message" class="alert alert-danger"></div>
 				   <div id="fields"></div>
-					   <div class="form-group" style="display:none;">
-						  <label for="phrase">GENERATE AND REMEMBER SEED</label>
-						  <textarea id="phrase" class="form-control"></textarea>
-						 <!--button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button-->
-						<input type="hidden" id="prvkey" value="" />
-						<input type="hidden" id="pubkey" value="" />
-						
-					   </div>
 				</form>
 			 </div>
 			 <div id="buttons" class="panel-footer">
@@ -422,8 +322,8 @@
 	   </div>
 </div>
 
-<div class="map_canvas">
+<!--div class="map_canvas">
 	<div id="map_canvas"></div>
-</div>
+</div-->
 
 {{template "signatures".}}

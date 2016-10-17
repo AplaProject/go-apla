@@ -23,11 +23,12 @@ import "regexp"
 const NMenu = `menu`
 
 type menuPage struct {
-	Data *CommonPage
-	Menu string
-	StateName string
-	StateFlag string
-	CitizenName string
+	Data          *CommonPage
+	Menu          string
+	CanCitizen    bool
+	StateName     string
+	StateFlag     string
+	CitizenName   string
 	CitizenAvatar string
 }
 
@@ -42,6 +43,7 @@ func (c *Controller) Menu() (string, error) {
 	stateFlag := ""
 	citizenName := ""
 	citizenAvatar := ""
+	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
 	if c.StateIdStr != "" {
 		menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
 		if err != nil {
@@ -73,5 +75,5 @@ func (c *Controller) Menu() (string, error) {
 		menu = qrx.ReplaceAllString(menu, "<li><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
 
 	}
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, CitizenAvatar: citizenAvatar})
+	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, CanCitizen: canCitizen > 0, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, CitizenAvatar: citizenAvatar})
 }
