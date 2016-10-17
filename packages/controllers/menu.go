@@ -70,9 +70,9 @@ func (c *Controller) Menu() (string, error) {
 		}
 
 		qrx := regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\)`)
-		menu = qrx.ReplaceAllString(menu, "<li><a href='#' onclick=\"load_template('$2'); HideMenu();\"><span>$1</span></a></li>")
+		menu = qrx.ReplaceAllString(menu, "<li><a class='citizen_$2' href='#' onclick=\"load_template('$2'); HideMenu();\"><span>$1</span></a></li>")
 		qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
-		menu = qrx.ReplaceAllString(menu, "<li><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
+		menu = qrx.ReplaceAllString(menu, "<li><a class='citizen_$2' href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
 
 	}
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, CanCitizen: canCitizen > 0, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, CitizenAvatar: citizenAvatar})
