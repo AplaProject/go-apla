@@ -207,7 +207,7 @@ func Process(input string, vars *map[string]string) (out string) {
 				isMap--
 				//				if isFunc == 0 {
 				pmap[strings.TrimSpace(string(key))] = strings.TrimSpace(string(value))
-				out += mapProcess(string(name), &pmap, vars)
+				out += mapProcess(string(name), &pmap, vars) + "\r\n"
 				name = name[:0]
 				//				}
 			}
@@ -259,7 +259,7 @@ func Process(input string, vars *map[string]string) (out string) {
 			}
 			if toLine {
 				if ch == 0xa {
-					out += funcProcess(string(name), params, vars)
+					out += funcProcess(string(name), params, vars) + "\r\n"
 					name = name[:0]
 					isFunc = 0
 				} else {
@@ -269,7 +269,7 @@ func Process(input string, vars *map[string]string) (out string) {
 				if ch == ')' {
 					isFunc--
 					if isFunc == 0 {
-						out += funcProcess(string(name), params, vars)
+						out += funcProcess(string(name), params, vars) + "\r\n"
 						name = name[:0]
 					}
 				}
@@ -311,7 +311,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		}
 	}
 	if toLine && isFunc > 0 {
-		out += funcProcess(string(name), params, vars)
+		out += funcProcess(string(name), params, vars) + "\r\n"
 	}
 	return
 }
