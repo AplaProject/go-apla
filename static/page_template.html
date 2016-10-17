@@ -1,0 +1,11 @@
+<script language="JavaScript" type="text/javascript">
+
+$(".aside .nav li").removeClass("active");
+$(".citizen, .citizen_{{.Page}}").addClass("active");
+if ($(".citizen a:first").hasClass("collapsed")) {
+    $(".citizen a:first").click();
+}
+</script>
+
+{{noescape .Template}}
+

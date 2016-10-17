@@ -2407,7 +2407,8 @@ func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (s
 	qrx = regexp.MustCompile(`AccountId`)
 	data = qrx.ReplaceAllString(data, Int64ToStr(accountId))
 	if len(data) > 0 && data[0] == '*' {
-		return textproc.Process(data[1:], &map[string]string{`page`: page, `state_id`: Int64ToStr(stateId)}), nil
+		template := textproc.Process(data[1:], &map[string]string{`page`: page, `state_id`: Int64ToStr(stateId)})
+		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: template})
 	}
 	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\[([^\].]*)\]\.([\w\d_]*)\}\}.*`)
 	sql := qrx.ReplaceAllString(data, `SELECT $3 FROM "$1" WHERE $2`)
