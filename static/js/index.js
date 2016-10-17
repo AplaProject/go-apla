@@ -27,7 +27,7 @@ var GKey = {
 		GKey.Address = address;
 		var data = {
 			EncKey: localStorage.getItem('EncKey'),
-			Encrypt: localStorage.getItem('Encrypt'),
+//			Encrypt: localStorage.getItem('Encrypt'),
 			Public: GKey.Public,
 			Address: address,
 			StateId: GKey.StateId,
@@ -71,8 +71,8 @@ var GKey = {
 		localStorage.setItem('PubKey', GKey.Public );
 		localStorage.setItem('CitizenId', GKey.CitizenId );
 		localStorage.setItem('StateId', GKey.StateId );
-		if (seed)
-			localStorage.setItem('Encrypt', CryptoJS.AES.encrypt(seed, this.Password));
+//		if (seed)
+//			localStorage.setItem('Encrypt', CryptoJS.AES.encrypt(seed, this.Password));
 		setCookie('psw', this.Password);
 	},
 	sign: function(msg,prvkey) {
