@@ -60,7 +60,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		for i := 1; i < t.NumField(); i++ {
 			extend[t.Field(i).Name] = v.Field(i).Interface()
 		}*/
-	fmt.Println(`Extend`, extend)
+	//	fmt.Println(`Extend`, extend)
 	return &extend
 }
 
@@ -76,6 +76,13 @@ func (p *Parser) CallContract(flags int) (err error) {
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
+				fmt.Println(`Contract Error`, err)
+				errText := err.Error()
+				if len(errText) > 255 {
+					errText = errText[:255]
+				}
+				p.DeleteQueueTx([]byte(p.TxHash))
+				p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
 				return
 			}
 		}
@@ -87,10 +94,9 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 	//	fmt.Println(`DBInsert`, tblname, params, val, len(val))
 	var lastId string
 	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
-	if err != nil {
-		fmt.Println(`DBInsert Error`, err)
+	if err == nil {
+		ret, _ = strconv.ParseInt(lastId, 10, 64)
 	}
-	ret, _ = strconv.ParseInt(lastId, 10, 64)
 	return
 }
 
@@ -101,16 +107,9 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 }
 
 func DBString(tblname string, name string, id int64) (string, error) {
-	ret, err := utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
-	if err != nil {
-		fmt.Println(`DBString Error`, err)
-	}
-	return ret, err
+	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
 }
+
 func DBInt(tblname string, name string, id int64) (int64, error) {
-	ret, err := utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
-	if err != nil {
-		fmt.Println(`DBString Error`, err)
-	}
-	return ret, err
+	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
 }

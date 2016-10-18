@@ -177,7 +177,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 			if p.TxContract != nil {
 				if err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
-					if p.TxContract.Called == smart.CALL_FRONT {
+					if p.TxContract.Called == smart.CALL_FRONT || p.TxContract.Called == smart.CALL_MAIN {
 						err0 := p.RollbackTo(txForRollbackTo, true)
 						if err0 != nil {
 							log.Error("error: %v", err0)

@@ -137,7 +137,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")")
 		tableId, err = p.ExecSqlGetLastInsertId(`INSERT INTO "`+table+`" (`+addSqlIns0+`) VALUES (`+addSqlIns1+`)`, table)
 		if err != nil {
-			fmt.Println(`Sel Log Err`, tableId, err)
 			return tableId, err
 		}
 	}
