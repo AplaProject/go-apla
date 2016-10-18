@@ -495,6 +495,6 @@ ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (
 
 
 INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');
-INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000');
+INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000000000000000');
 INSERT INTO system_parameters ("name", "value") VALUES ('max_columns', '20');
 INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"insert":100, "update":"200", "new_column":500,"new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1}');

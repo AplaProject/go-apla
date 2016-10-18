@@ -32,6 +32,7 @@ type anonymMoneyTransferPage struct {
 	TimeNow      int64
 	WalletId     int64
 	CitizenId    int64
+	Commission   int64
 }
 
 func (c *Controller) AnonymMoneyTransfer() (string, error) {
@@ -40,6 +41,17 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
+	fPrice, err := c.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").Int64()
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	fuelRate, err := c.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	commission := int64(fPrice * fuelRate)
 
 	log.Debug("sessCitizenId %d SessWalletId %d SessStateId %d", c.SessCitizenId, c.SessWalletId, c.SessStateId)
 
@@ -52,6 +64,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
+		Commission : commission,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId})

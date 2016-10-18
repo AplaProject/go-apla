@@ -42,7 +42,7 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"walletAddress": "walletAddress", "amount": "int64", "commission": "int64", "comment": "comment"}
+	verifyData := map[string]string{"walletAddress": "walletAddress", "amount": "decimal", "commission": "int64", "comment": "comment"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -63,8 +63,6 @@ func (p *Parser) DLTTransferFront() error {
 		}
 	}
 
-
-
 	if p.TxMaps.Int64["amount"] == 0 {
 		return p.ErrInfo("amount=0")
 	}
@@ -79,7 +77,10 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	dltPrice := int64(fPrice * fuelRate) // 500 * 1 = 500 mDLT
+	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
+	// fuelRate = 1 000 000 000 000 000
+	//
+	dltPrice := int64(fPrice * fuelRate)
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
 	if p.TxMaps.Int64["commission"] < dltPrice {

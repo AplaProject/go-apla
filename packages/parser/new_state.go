@@ -351,7 +351,7 @@ Table{
     Table: 1_citizenship_requests
 	Order: id
 	Where: approved=0
-	Columns: [[ID, #id#],[Name, #name#],[Accept,LinkTemplate(NewCitizen,Accept,"RequestId:#id#")],[Reject,LinkTemplate(RejectCitizen,Reject,"RequestId:#id#")]]
+	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnTemplate(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnTemplate(RejectCitizen,Reject,"RequestId:#id#")]]
 }
 PageEnd:
 `, `menu_default`, sid,
