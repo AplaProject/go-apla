@@ -175,13 +175,13 @@ func (p *Parser) NewState() error {
 }`, `TXNewCitizen`, `contract TXNewCitizen {
 	tx {
         RequestId int
-        PublicKey bytes
     }
 
 	func main {
 		Println("NewCitizen Main", $type, $citizen, $block )
-		DBInsert(Sprintf( "%d_citizens", $state), "id,public_key_0,block_id,name", DBString(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id", $RequestId ), $PublicKey, $block, DBString(Sprintf( "%d_citizenship_requests", $state), "name", $RequestId ) )
-        DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", DBString(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id", $RequestId ))
+		DBInsert(Sprintf( "%d_citizens", $state), "id,block_id,name", DBString(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id", $RequestId ), 
+		          $block, DBString(Sprintf( "%d_citizenship_requests", $state), "name", $RequestId ) )
+        DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", 1)
 	}
 }`, `TXRejectCitizen`, `contract TXRejectCitizen {
    tx { 
@@ -304,8 +304,11 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
+		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
-		`dashboard_default`, `*Title : My country
+		`dashboard_default`, `Title : My country
 Navigation( Dashboard )
 PageTitle : StateValue(state_name)
 MarkDown : # Welcome, citizen!
@@ -317,7 +320,7 @@ TemplateNav(SendMoney)
 PageEnd:
 `, `menu_default`, sid,
 
-		`citizens`, `*Title : Citizens
+		`citizens`, `Title : Citizens
 Navigation( Citizens )
 PageTitle : Citizens
 Table{
@@ -327,23 +330,51 @@ Table{
 PageEnd:
 `, `menu_default`, sid,
 
-		`citizen_profile`, `{{Title=Profile}}{{Navigation=[Citizen](Citizen) / Editing profile}}
-{{PageTitle=Editing profile}}
-{{contract.TXEditProfile}}`, `menu_default`, id+`_citizens.id=1`,
+		`NewCitizen`, `Title : New Citizen
+Navigation( Citizens )
+PageTitle : New Citizen 
+TxForm{ Contract: TXNewCitizen}
+PageEnd:
+`, `menu_default`, sid,
 
-		`AddAccount`, `*Title : Best country
+		`RejectCitizen`, `Title : Reject Citizen
+Navigation( Citizens )
+PageTitle : Reject Citizen 
+TxForm{ Contract: TXRejectCitizen}
+PageEnd:
+`, `menu_default`, sid,
+
+		`CheckCitizens`, `Title : Check citizens requests
+Navigation( Citizens )
+PageTitle : Citizens requests
+Table{
+    Table: 1_citizenship_requests
+	Order: id
+	Where: approved=0
+	Columns: [[ID, #id#],[Name, #name#],[Accept,LinkTemplate(NewCitizen,Accept,"RequestId:#id#")],[Reject,LinkTemplate(RejectCitizen,Reject,"RequestId:#id#")]]
+}
+PageEnd:
+`, `menu_default`, sid,
+
+		`citizen_profile`, `Title:Profile
+Navigation(LiTemplate(Citizen),Editing profile)
+PageTitle: Editing profile
+TxForm{ Contract: TXEditProfile}
+PageEnd:`, `menu_default`, sid,
+
+		`AddAccount`, `Title : Best country
 Navigation( LiTemplate(goverment),non-link text)
 PageTitle : Dashboard
 TxForm { Contract: AddAccount }
 PageEnd:`, `menu_default`, sid,
 
-		`UpdAmount`, `*Title : Best country
+		`UpdAmount`, `Title : Best country
 Navigation( LiTemplate(goverment),non-link text)
 PageTitle : Dashboard
 TxForm { Contract: UpdAmount }
 PageEnd:`, `menu_default`, sid,
 
-		`SendMoney`, `*Title : Best country
+		`SendMoney`, `Title : Best country
 Navigation( LiTemplate(goverment),non-link text)
 PageTitle : Dashboard
 TxForm { Contract: SendMoney }

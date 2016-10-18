@@ -102,7 +102,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	sessCitizenId := GetSessCitizenId(sess)
 	sessStateId := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
-	sessAccountId := GetSessInt64("account_id", sess)
+	//	sessAccountId := GetSessInt64("account_id", sess)
 	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
 
 	c := new(Controller)
@@ -364,7 +364,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			CitizenId:    c.SessCitizenId,
 			StateId:      c.SessStateId,
 			StateName:    stateName,
-			CountSignArr: []int{1}, // !!! Добавить вычисление
+			CountSignArr: []int{0}, // !!! Добавить вычисление
 		}
 		w.Write([]byte(CallPage(c, pageName)))
 		return
@@ -426,7 +426,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		skipRestrictedUsers := []string{"cashRequestIn", "cashRequestOut", "upgrade", "notifications"}
 
 		if c.StateId > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
-			tpl, err := utils.CreateHtmlFromTemplate("dashboard_default", sessCitizenId, sessAccountId, sessStateId)
+			tpl, err := utils.CreateHtmlFromTemplate("dashboard_default", sessCitizenId, sessStateId, &map[string]string{})
 			if err != nil {
 				log.Error("%v", err)
 				return

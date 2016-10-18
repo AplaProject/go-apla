@@ -431,6 +431,7 @@ function doSign_(type) {
 
 	}
 	else {
+		console.log('Signature', signature);
 		$("#signature1").val(signature);
 	}
 }

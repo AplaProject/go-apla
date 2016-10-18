@@ -67,8 +67,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/russross/blackfriday"
 )
 
 type BlockData struct {
@@ -2396,128 +2394,20 @@ func FillLeft(slice []byte) []byte {
 	return lib.FillLeft(slice)
 }
 
-func CreateHtmlFromTemplate(page string, citizenId, accountId, stateId int64) (string, error) {
+func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[string]string) (string, error) {
 	data, err := DB.Single(`SELECT value FROM "`+Int64ToStr(stateId)+`_pages" WHERE name = ?`, page).String()
 	if err != nil {
 		return "", err
 	}
-
-	qrx := regexp.MustCompile(`CitizenId`)
-	data = qrx.ReplaceAllString(data, Int64ToStr(citizenId))
-	qrx = regexp.MustCompile(`AccountId`)
-	data = qrx.ReplaceAllString(data, Int64ToStr(accountId))
-	if len(data) > 0 && data[0] == '*' {
-		template := textproc.Process(data[1:], &map[string]string{`page`: page, `state_id`: Int64ToStr(stateId)})
+	/*	qrx := regexp.MustCompile(`CitizenId`)
+		data = qrx.ReplaceAllString(data, Int64ToStr(citizenId))
+		qrx = regexp.MustCompile(`AccountId`)
+		data = qrx.ReplaceAllString(data, Int64ToStr(accountId))*/
+	(*params)[`page`] = page
+	(*params)[`state_id`] = Int64ToStr(stateId)
+	if len(data) > 0 {
+		template := textproc.Process(data, params)
 		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: template})
 	}
-	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\[([^\].]*)\]\.([\w\d_]*)\}\}.*`)
-	sql := qrx.ReplaceAllString(data, `SELECT $3 FROM "$1" WHERE $2`)
-	singleData, err := DB.Single(sql).String()
-	if err != nil {
-		log.Error("%v", err)
-	}
-	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\[[^\].]*\]\.[\w\d_]*\}\}`)
-	data = qrx.ReplaceAllString(data, singleData)
-
-	sys_navigate := func(row map[string]string, nav []string) string {
-		if len(nav) != 3 {
-			return fmt.Sprintf(`<td>%s</td><td>%s</td>`, row[`id`], strings.Join(nav, `,`))
-		}
-		pars := strings.Split(nav[2], `&`)
-		parsout := make([]string, 0)
-		for _, ipar := range pars {
-			lr := strings.Split(ipar, `=`)
-			if len(lr) == 2 {
-				value := lr[1]
-				if val, ok := row[value]; ok {
-					value = val
-				}
-				parsout = append(parsout, lr[0]+`:`+value)
-			}
-		}
-		return fmt.Sprintf(`<td>%s</td><td><a href="#" onclick="load_page('%s', {%s} )">%s</a></td>`,
-			row[`id`], nav[1], strings.Join(parsout, `,`), nav[0])
-	}
-	navigate := func(row map[string]string, nav []string) string {
-		if len(nav) != 2 {
-			return fmt.Sprintf(`<td>%s</td><td>%s</td>`, row[`id`], strings.Join(nav, `,`))
-		}
-		value := nav[1]
-		if val, ok := row[value]; ok {
-			value = val
-		}
-		return fmt.Sprintf(`<td>%s</td><td><a href="#" onclick="load_template('%s')">%s</a></td>`,
-			row[`id`], value, nav[0])
-	}
-
-	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\.\(([\w\d_\,]*)\)\.([\w\d_]*)\(([\w\d_\s=\,)]*)\)\}\}.*`)
-	sql = qrx.ReplaceAllString(data, `SELECT $2 FROM "$1"|$3|$4`)
-	pars := strings.Split(sql, `|`)
-	if len(pars) == 3 {
-		nav := strings.Split(pars[2], `,`)
-		dataTable, err := DB.GetAll(pars[0], 1000)
-		if err != nil {
-			log.Error("%v", err)
-		}
-		table := `<table  class="table table-striped table-bordered table-hover">`
-		for _, row := range dataTable {
-			table += `<tr>`
-			switch pars[1] {
-			case `sys_navigate`:
-				table += sys_navigate(row, nav)
-			case `navigate`:
-				table += navigate(row, nav)
-			}
-			table += `</tr>`
-		}
-		table += `</table>`
-		qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\.\(([\w\d_\,]*)\)\.([\w\d_]*)\(([\w\d_\s=\,)]*)\)\}\}`)
-		data = qrx.ReplaceAllString(data, table)
-	}
-	qrx = regexp.MustCompile(`(?is).*\{\{table\.([\w\d_]*)\}\}.*`)
-	sql = qrx.ReplaceAllString(data, `SELECT * FROM "$1"`)
-	dataTable, err := DB.GetAll(sql, 1000)
-	if err != nil {
-		log.Error("%v", err)
-	}
-	table := `<table class="table table-striped table-bordered table-hover">`
-	for _, row := range dataTable {
-		table += `<tr>`
-		for _, cell := range row {
-			table += `<td>` + cell + `</td>`
-		}
-		table += `</tr>`
-	}
-	table += `</table>`
-
-	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)
-	data = qrx.ReplaceAllString(data, table)
-
-	qrx = regexp.MustCompile(`(?is)\{\{contract\.([\w\d_]*)\}\}`)
-	data = qrx.ReplaceAllStringFunc(data, func(match string) string {
-		name := match[strings.Index(match, `.`)+1 : len(match)-2]
-		return TXForm(name)
-	})
-
-	qrx = regexp.MustCompile(`(?is)\{\{table\.([\w\d_]*)\}\}`)
-	data = qrx.ReplaceAllString(data, table)
-
-	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\)`)
-	data = qrx.ReplaceAllString(data, "<li><a href='#' onclick=\"load_template('$2'); HideMenu();\"><span>$1</span></a></li>")
-	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
-	data = qrx.ReplaceAllString(data, "<li><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
-
-	qrx = regexp.MustCompile(`(?is)\{\{Title=([\w\s]+)\}\}`)
-	data = qrx.ReplaceAllString(data, `<div class="content-heading">$1</div>`)
-	qrx = regexp.MustCompile(`(?is)\{\{Navigation=(.*?)\}\}`)
-	data = qrx.ReplaceAllString(data, `<ol class="breadcrumb"><span class="pull-right"><a href='#' onclick="load_page('editPage', {name: '`+page+`'} )">Edit</a></span>$1</ol>`)
-	qrx = regexp.MustCompile(`(?is)\{\{PageTitle=([\w\s]+)\}\}`)
-	data = qrx.ReplaceAllString(data, `<div class="panel panel-default"><div class="panel-heading"><div class="panel-title">$1</div></div><div class="panel-body">`)
-
-	unsafe := string(blackfriday.MarkdownCommon([]byte(data)))
-	//html := string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
-
-	// removing <p></p>
-	//unsafe = unsafe[3 : len(unsafe)-5]
-	return unsafe, nil
+	return ``, nil
 }

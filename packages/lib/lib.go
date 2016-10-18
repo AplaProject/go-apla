@@ -489,9 +489,10 @@ func EscapeName(name string) string {
 
 func Escape(data string) string {
 	out := make([]byte, 0, len(data)+2)
+	available := `_ ,=`
 	for _, ch := range []byte(data) {
-		if (ch >= '0' && ch <= '9') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') || ch == ' ' || ch == ',' {
+		if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
+			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
 			out = append(out, ch)
 		}
 	}

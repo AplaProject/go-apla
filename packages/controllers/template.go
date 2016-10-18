@@ -18,9 +18,10 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func Template(w http.ResponseWriter, r *http.Request) {
@@ -42,18 +43,22 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	sessWalletId := GetSessWalletId(sess)
 	sessCitizenId := GetSessCitizenId(sess)
 	sessStateId := GetSessInt64("state_id", sess)
-	sessAccountId := GetSessInt64("account_id", sess)
+	//	sessAccountId := GetSessInt64("account_id", sess)
 	//sessAddress := GetSessString(sess, "address")
 	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
 
 	r.ParseForm()
 	page := r.FormValue("page")
+	params := make(map[string]string)
 	if len(page) == 0 {
 		log.Error("%v", len(page) == 0)
 		return
 	}
+	for name := range r.Form {
+		params[name] = r.FormValue(name)
+	}
 
-	tpl, err := utils.CreateHtmlFromTemplate(page, sessCitizenId, sessAccountId, sessStateId)
+	tpl, err := utils.CreateHtmlFromTemplate(page, sessCitizenId, sessStateId, &params)
 	if err != nil {
 		log.Error("%v", err)
 		return

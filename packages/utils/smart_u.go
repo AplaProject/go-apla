@@ -72,7 +72,7 @@ func init() {
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit, `Image`: Image,
-		`LiTemplate`:  LiTemplate,
+		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate,
 		`TemplateNav`: TemplateNav,
 		`Title`:       Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue})
@@ -129,17 +129,32 @@ func BtnEdit(vars *map[string]string, pars ...string) string {
 		pars[0], StrToInt64(pars[1]))
 }
 
+func LinkTemplate(vars *map[string]string, pars ...string) string {
+	params := ``
+	if len(pars) < 2 {
+		return ``
+	}
+	if len(pars) >= 3 {
+		params = pars[2]
+	}
+	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
+}
+
 func Table(vars *map[string]string, pars *map[string]string) string {
 	fields := `*`
 	order := ``
+	where := ``
 	if val, ok := (*pars)[`Order`]; ok {
 		order = `order by ` + lib.Escape(val)
+	}
+	if val, ok := (*pars)[`Where`]; ok {
+		where = `where ` + lib.Escape(val)
 	}
 	if val, ok := (*pars)[`Fields`]; ok {
 		fields = lib.Escape(val)
 	}
-	list, err := DB.GetAll(fmt.Sprintf(`select %s from %s %s`, fields,
-		lib.EscapeName((*pars)[`Table`]), order), -1)
+	list, err := DB.GetAll(fmt.Sprintf(`select %s from %s %s %s`, fields,
+		lib.EscapeName((*pars)[`Table`]), where, order), -1)
 	if err != nil {
 		return err.Error()
 	}
@@ -167,7 +182,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 }
 
 func TxForm(vars *map[string]string, pars *map[string]string) string {
-	return TXForm((*pars)[`Contract`])
+	return TXForm(vars, pars)
 }
 
 func Image(vars *map[string]string, pars ...string) string {
@@ -242,7 +257,9 @@ func PageEnd(vars *map[string]string, pars ...string) string {
 	return `</div></div>`
 }
 
-func TXForm(name string) string {
+func TXForm(vars *map[string]string, pars *map[string]string) string {
+
+	name := (*pars)[`Contract`]
 	contract := smart.GetContract(name)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		return fmt.Sprintf(`there is not %s contract or parameters`, name)
@@ -273,18 +290,22 @@ func TXForm(name string) string {
 	finfo := FormInfo{TxName: name, Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		var value string
+		if val, ok := (*vars)[fitem.Name]; ok {
+			value = val
+		}
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
 			continue
 		}
 		if strings.Index(fitem.Tags, `map`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "map",
-				TxType: fitem.Type.String(), Title: fitem.Name})
+				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		} else if strings.Index(fitem.Tags, `image`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "image",
-				TxType: fitem.Type.String(), Title: fitem.Name})
+				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
-				TxType: fitem.Type.String(), Title: fitem.Name})
+				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		}
 
 	}
