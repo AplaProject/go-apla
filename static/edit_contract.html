@@ -81,11 +81,10 @@
 	} );
 </script>
 	<div class="content-heading">
-		editContract
+		{{if .Data.name}}Edit{{else}}New{{end}} Contract
 	</div>
 	<ol class="breadcrumb">
-	   <li><a href='#' onclick="load_page('contracts')">Contracts</a></li>
-		<li class="active">{{if .Data.name}}Edit{{else}}New{{end}} contract</li>
+	   <li><a href="#" onclick="load_page('contracts')">Smart Contracts</a></li>
 	</ol>
 
 	<!-- START panel-->

@@ -76,11 +76,10 @@
 	} );
 </script>
 	<div class="content-heading">
-		editMenu
+		{{if .DataMenu.name}}Edit{{else}}New{{end}} Menu
 	</div>
 	<ol class="breadcrumb">
 		<li><a href='#' onclick="load_page('interface')">Interface</a></li>
-		<li class="active">{{if .DataMenu.name}}Edit{{else}}New{{end}} menu</li>
 	</ol>
 
 <div class="panel panel-default" data-sweet-alert>

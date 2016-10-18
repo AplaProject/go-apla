@@ -39,17 +39,18 @@
 	});
 </script>
 	
-	<div class="content-heading">
-		contracts
-	</div>
-	<ol class="breadcrumb">
-		{{if ne .Global "1"}}
-			<li class="active">Smart contracts</li>
-	   {{else}}
-		   <li><a href="#" onclick="load_page('contracts')">Smart contracts</a></li>
-		   <li class="active">Global</li>
-	   {{end}}
-	</ol>
+    {{if ne .Global "1"}}
+		<div class="content-heading">
+			Smart Contracts
+		</div>
+    {{else}}
+		<div class="content-heading">
+			Global
+		</div>
+		<ol class="breadcrumb">
+		   <li><a href="#" onclick="load_page('contracts')">Smart Contracts</a></li>
+	   </ol>
+    {{end}}
 	<!-- START panel-->
 	<div class="panel panel-default">
 	 <div class="panel-heading">

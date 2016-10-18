@@ -134,11 +134,10 @@
 	} );
 </script>
 	<div class="content-heading">
-		editPage
+		{{if .DataPage.name}}Edit{{else}}New{{end}} Page
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href='#' onclick="load_page('interface')">Interface</a></li>
-		<li class="active">{{if .DataPage.name}}Edit{{else}}New{{end}} page</li>
 	</ol>
 
 <div class="row">

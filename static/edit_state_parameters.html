@@ -55,12 +55,11 @@
 </script>
 
 	<div class="content-heading">
-		State parameters
+		{{if .StateParameters.name}}Edit{{else}}New{{end}} Parameter
 	</div>
 	<ol class="breadcrumb">
-		<li><a href="#" onclick="load_page('listOfTables')">State tables</a></li>
+		<li><a href="#" onclick="load_page('listOfTables')">List Of Tables</a></li>
 		<li><a href="#" onclick="load_page('stateParameters')">State parameters</a></li>
-		<li class="active">{{if .StateParameters.name}}Edit{{else}}New{{end}} parameter</li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default" data-sweet-alert>
