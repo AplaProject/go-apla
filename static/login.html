@@ -442,6 +442,7 @@ $(document).on('keydown', function(e){
 				$(".start_form:visible").find(".buttons:visible .submit").click();
 			} else {
 				$(".start_form:visible").find(".sweet-alert:visible .confirm").click();
+				$("[data-sweet-alert]").removeClass("whirl standard");
 			}
 			return false;
 		}
