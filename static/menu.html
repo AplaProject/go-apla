@@ -436,16 +436,16 @@
 		  <!--<li class="nav-heading ">
 			 <span data-localize="sidebar.heading.HEADER">Main Navigation</span>
 		  </li>-->
-		  <li class="anonym active">
+		  <li class="anonym {{if not .Menu}}active{{end}}">
 			 <a href="#da" title="DLT-wallet" data-toggle="collapse" class="toggle-hover">
 				<!--<div class="pull-right label label-info">2</div>-->
 				<em class="icon-user"></em>
 				<span>DLT-wallet</span>
 			 </a>
-			 <ul id="da" class="nav sidebar-subnav collapse in">
+			 <ul id="da" class="nav sidebar-subnav collapse{{if not .Menu}} in{{end}}">
 				<li class="sidebar-subnav-header">DLT-wallet</li>
 				<li class="dashboard_anonym">
-				   <a class="active" href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym'); HideMenu();">
+				   <a {{if not .Menu}}class="active"{{end}} href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym'); HideMenu();">
 					  <span>Dashboard</span>
 				   </a>
 				</li>
@@ -490,12 +490,12 @@
 		  </li>
 
 		  {{if .Menu}}
-		  <li class="citizen">
+		  <li class="citizen active">
 			 <a href="#dc" title="Citizen" data-toggle="collapse" class="toggle-hover">
 				<em class="icon-home"></em>
 				<span>Citizen</span>
 			 </a>
-			 <ul id="dc" class="nav sidebar-subnav collapse">
+			 <ul id="dc" class="nav sidebar-subnav collapse in">
 
 				<li class="sidebar-subnav-header">Citizen</li>
 

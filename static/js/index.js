@@ -18,7 +18,6 @@ var GKey = {
 		var citizenId = localStorage.getItem('CitizenId');
 		if (citizenId)
 			this.CitizenId = citizenId;
-			
 		if (localStorage.getItem('Accounts')) 
 			this.Accounts = JSON.parse(localStorage.getItem('Accounts'));
 	}, 
@@ -295,25 +294,6 @@ function load_menu(lang) {
 function login_ok (result) {
 
     if (result) {
-//        $('#myModal').modal('hide');
-//        $('#myModalLogin').modal('hide');
-//        $('.modal-backdrop').remove();
-//        $('.modal-backdrop').css('display', 'none');
-
-/*        if (typeof(get_key_and_sign)==='undefined' || get_key_and_sign=='null') {
-
-            var tpl_name = $('#tpl_name').val();
-            if (!tpl_name || typeof(tpl_name)==='undefined' || tpl_name=='installStep0' || tpl_name=='installStep6')
-                tpl_name = 'home';
-
-            console.log('tpl_name = ', tpl_name);
-
-            if ($("#mobileos").val() == "1") {
-                $("#page-wrapper").css('padding-bottom', '40px');
-                $(".navbar-default").css('border-color', '#ccc');
-                $("#ios_menu").css('display', 'block');
-            }
-*/
         $( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
 //			$("#main-login").html('');
 			//$("#loader").spin(false);
@@ -322,14 +302,6 @@ function login_ok (result) {
 		g_menuShow = true;
 		load_menu();
     }
-/*    else if (result=='not_available') {
-        $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#pool_is_full').val()+'</p></div>');
-        //$("#loader").spin(false);
-    }
-    else {
-        $("#modal_alert").html('<div id="alertModalPull" class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button><p>'+$('#incorrect_key_or_password').val()+'</p></div>');
-        //$("#loader").spin(false);
-    }*/
 }
 
 function doSign_(type) {
