@@ -20,17 +20,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"io/ioutil"
 	"os"
+
+	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 /*
  * $get_block_script_name, $add_node_host используется только при работе в защищенном режиме и только из blocks_collection.php
  * */
-func (p *Parser) GetOldBlocks(walletId,CBID, blockId int64, host string, goroutineName string, dataTypeBlockBody int64) error {
-	log.Debug("walletId", walletId,"CBID", CBID, "blockId", blockId)
+func (p *Parser) GetOldBlocks(walletId, CBID, blockId int64, host string, goroutineName string, dataTypeBlockBody int64) error {
+	log.Debug("walletId", walletId, "CBID", CBID, "blockId", blockId)
 	err := p.GetBlocks(blockId, host, "rollback_blocks_2", goroutineName, dataTypeBlockBody)
 	if err != nil {
 		log.Error("v", err)
@@ -202,7 +203,6 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		}*/
 	}
 
-
 	// откатываем наши блоки до начала вилки
 	rows, err := p.Query(p.FormatQuery(`
 			SELECT data
@@ -262,6 +262,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			}
 			// если есть ошибка, то откатываем все предыдущие блоки из новой цепочки
 			if err != nil {
+				parser.BlockError(err)
 				log.Debug("there is an error is rolled back all previous blocks of a new chain: %v", err)
 
 				// баним на 1 час хост, который дал нам ложную цепочку

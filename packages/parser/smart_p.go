@@ -77,12 +77,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
 				fmt.Println(`Contract Error`, err)
-				errText := err.Error()
-				if len(errText) > 255 {
-					errText = errText[:255]
-				}
-				p.DeleteQueueTx([]byte(p.TxHash))
-				p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
 				return
 			}
 		}

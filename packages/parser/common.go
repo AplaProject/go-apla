@@ -334,7 +334,7 @@ func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (
 
 }
 
-func (p *Parser) checkSenderDLT(amount, commission int64) (error) {
+func (p *Parser) checkSenderDLT(amount, commission int64) error {
 
 	// получим сумму на кошельке юзера
 	totalAmount, err := p.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
@@ -386,4 +386,16 @@ func (p *Parser) CheckTableExists(table string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (p *Parser) BlockError(err error) {
+	if len(p.TxHash) == 0 {
+		return
+	}
+	errText := err.Error()
+	if len(errText) > 255 {
+		errText = errText[:255]
+	}
+	p.DeleteQueueTx([]byte(p.TxHash))
+	p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
 }

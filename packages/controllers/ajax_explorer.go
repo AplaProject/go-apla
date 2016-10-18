@@ -19,6 +19,8 @@ package controllers
 import (
 	"encoding/hex"
 	"encoding/json"
+
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -42,17 +44,17 @@ func (c *Controller) AjaxExplorer() interface{} {
 	if latest > 0 {
 		result.Latest, _ = c.Single("select max(id) from block_chain").Int64()
 		if result.Latest > latest {
-			explorer, err := c.GetAll(`SELECT  w.address, b.hash, b.state_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
-		left join dlt_wallets as w on b.wallet_id=w.wallet_id
+			explorer, err := c.GetAll(`SELECT  b.hash, b.state_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
 		where b.id > $1	order by b.id desc limit 30 offset 0`, -1, latest)
 			if err == nil {
 				for ind := range explorer {
 					explorer[ind][`hash`] = hex.EncodeToString([]byte(explorer[ind][`hash`]))
-					if len(explorer[ind][`address`]) > 0 && explorer[ind][`address`] != `NULL` {
-						explorer[ind][`wallet_address`] = explorer[ind][`address`]
+					if len(explorer[ind][`wallet_id`]) > 0 {
+						explorer[ind][`wallet_address`] = lib.AddressToString(uint64(utils.StrToInt64(explorer[ind][`wallet_id`])))
 					} else {
 						explorer[ind][`wallet_address`] = ``
 					}
+
 					if explorer[ind][`tx`] == `[]` {
 						explorer[ind][`tx_count`] = `0`
 					} else {

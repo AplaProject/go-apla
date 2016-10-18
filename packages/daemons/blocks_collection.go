@@ -19,13 +19,14 @@ package daemons
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	_ "github.com/lib/pq"
-	"os"
-	"io/ioutil"
 )
 
 func BlocksCollection(chBreaker chan bool, chAnswer chan string) {
@@ -82,8 +83,8 @@ BEGIN:
 		if *utils.StartBlockId > 0 {
 			del := []string{"queue_tx", "my_notifications", "main_lock"}
 			for _, table := range del {
-				err := utils.DB.ExecSql(`DELETE FROM `+table)
-				fmt.Println(`DELETE FROM `+table)
+				err := utils.DB.ExecSql(`DELETE FROM ` + table)
+				fmt.Println(`DELETE FROM ` + table)
 				if err != nil {
 					fmt.Println(err)
 					panic(err)
@@ -122,8 +123,6 @@ BEGIN:
 		    currentBlockId = 0
 		    cur = true
 		}*/
-
-
 
 		parser := new(parser.Parser)
 		parser.DCDB = d.DCDB
@@ -217,7 +216,7 @@ BEGIN:
 						//logger.Debug("data %x\n", data)
 						blockId := utils.BinToDec(data[0:5])
 						if *utils.EndBlockId > 0 && blockId == *utils.EndBlockId {
-							if d.dPrintSleep(err, d.sleepTime ) {
+							if d.dPrintSleep(err, d.sleepTime) {
 								break BEGIN
 							}
 							continue BEGIN
@@ -239,7 +238,9 @@ BEGIN:
 								parser.CurrentVersion = consts.VERSION
 								first = false
 							}
+
 							if err = parser.ParseDataFull(false); err != nil {
+								parser.BlockError(err)
 								if d.dPrintSleep(err, d.sleepTime) {
 									break BEGIN
 								}
@@ -260,19 +261,19 @@ BEGIN:
 								continue BEGIN
 							}
 							if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-								d.unlockPrintSleep(nil, 0) 
-/*!!!								if d.dPrintSleep(err, d.sleepTime) {
+								d.unlockPrintSleep(nil, 0)
+								/*!!!								if d.dPrintSleep(err, d.sleepTime) {
 									break BEGIN
 								}*/
 								break BEGIN
-//!!!   						continue BEGIN
+								//!!!   						continue BEGIN
 							}
 						}
 						// ненужный тут размер в конце блока данных
 						data = make([]byte, 5)
 						file.Read(data)
 					} else {
-						if d.unlockPrintSleep( nil, d.sleepTime) {
+						if d.unlockPrintSleep(nil, d.sleepTime) {
 							break BEGIN
 						}
 						continue BEGIN
@@ -299,6 +300,7 @@ BEGIN:
 				parser.CurrentVersion = consts.VERSION
 
 				if err = parser.ParseDataFull(false); err != nil {
+					parser.BlockError(err)
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN
 					}
@@ -322,7 +324,7 @@ BEGIN:
 		logger.Debug("UPDATE config SET current_load_blockchain = 'nodes'")
 		err = d.ExecSql(`UPDATE config SET current_load_blockchain = 'nodes'`)
 		if err != nil {
-//!!!			d.unlockPrintSleep(err, d.sleepTime) unlock был выше
+			//!!!			d.unlockPrintSleep(err, d.sleepTime) unlock был выше
 			if d.dPrintSleep(err, d.sleepTime) {
 				break
 			}
@@ -334,7 +336,6 @@ BEGIN:
 			logger.Error("%v", err)
 		}
 
-
 		logger.Info("%v", hosts)
 		if len(hosts) == 0 {
 			if d.dPrintSleep(err, 1) {
@@ -342,7 +343,7 @@ BEGIN:
 			}
 			continue
 		}
-		
+
 		maxBlockId := int64(1)
 		maxBlockIdHost := ""
 		// получим максимальный номер блока
@@ -350,7 +351,7 @@ BEGIN:
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				break BEGIN
 			}
-			conn, err := utils.TcpConn(hosts[i]+":"+consts.TCP_PORT)
+			conn, err := utils.TcpConn(hosts[i] + ":" + consts.TCP_PORT)
 			if err != nil {
 				if d.dPrintSleep(err, 1) {
 					break BEGIN
@@ -387,7 +388,7 @@ BEGIN:
 			id := utils.BinToDec(blockIdBin)
 			if id > maxBlockId || i == 0 {
 				maxBlockId = id
-				maxBlockIdHost = hosts[i]+":"+consts.TCP_PORT
+				maxBlockIdHost = hosts[i] + ":" + consts.TCP_PORT
 			}
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				utils.Sleep(1)
@@ -423,14 +424,14 @@ BEGIN:
 			continue
 		}
 
-		fmt.Printf("\nnode: %s curid=%d maxid=%d\n", maxBlockIdHost, currentBlockId, maxBlockId )
+		fmt.Printf("\nnode: %s curid=%d maxid=%d\n", maxBlockIdHost, currentBlockId, maxBlockId)
 
 		/////----///////
 		// в цикле собираем блоки, пока не дойдем до максимального
 		for blockId := currentBlockId + 1; blockId < maxBlockId+1; blockId++ {
 			d.UpdMainLock()
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-				d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime ) 
+				d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime)
 				break BEGIN
 			}
 
@@ -492,7 +493,7 @@ BEGIN:
 			logger.Debug("prevBlockHash %x", prevBlockHash)
 
 			first :=
-			false
+				false
 			if blockId == 1 {
 				first = true
 			}
@@ -604,6 +605,7 @@ BEGIN:
 			// теперь у нас в таблицах всё тоже самое, что у нода, у которого качаем блок
 			// и можем этот блок проверить и занести в нашу БД
 			parser.BinaryData = binaryBlockFull
+
 			err = parser.ParseDataFull(false)
 			if err == nil {
 				err = parser.InsertIntoBlockchain()
@@ -616,6 +618,7 @@ BEGIN:
 			}
 			// начинаем всё с начала уже с другими нодами. Но у нас уже могут быть новые блоки до $block_id, взятые от нода, которого с в итоге мы баним
 			if err != nil {
+				parser.BlockError(err)
 				d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -623,7 +626,6 @@ BEGIN:
 				continue BEGIN
 			}
 		}
-
 
 		d.dbUnlock()
 

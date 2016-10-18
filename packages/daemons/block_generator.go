@@ -17,22 +17,21 @@
 package daemons
 
 import (
-//	"crypto"
-//	"crypto/rand"
-//	"crypto/rsa"
-//	"crypto/x509"
-//	"encoding/pem"
+	//	"crypto"
+	//	"crypto/rand"
+	//	"crypto/rsa"
+	//	"crypto/x509"
+	//	"encoding/pem"
 	"fmt"
+	"time"
+
+	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/parser"
 	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/lib"
 	_ "github.com/lib/pq"
-	"time"
 )
 
-
 var err error
-
 
 func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
@@ -51,7 +50,6 @@ func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-
 
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
@@ -96,7 +94,7 @@ BEGIN:
 		newBlockId := blockId + 1
 		logger.Debug("newBlockId: %v", newBlockId)
 
-		myCBID, myWalletId, err := d.GetMyCBIDAndWalletId();
+		myCBID, myWalletId, err := d.GetMyCBIDAndWalletId()
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()
@@ -130,7 +128,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		my_full_node_id, err:= d.FindInFullNodes(myCBID, myWalletId)
+		my_full_node_id, err := d.FindInFullNodes(myCBID, myWalletId)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -350,7 +348,6 @@ BEGIN:
 			mrklRoot = utils.MerkleTreeRoot(mrklArray)
 			logger.Debug("mrklRoot: %s", mrklRoot)
 
-
 			// подписываем нашим нод-ключем заголовок блока
 			var forSign string
 			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID, string(mrklRoot))
@@ -388,6 +385,7 @@ BEGIN:
 			p.BinaryData = blockBin
 			err = p.ParseDataFull(true)
 			if err != nil {
+				p.BlockError(err)
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
