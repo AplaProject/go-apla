@@ -1,3 +1,17 @@
+<script>
+	$(".aside .nav .sidebar-subnav li").removeClass("active");
+	
+	// Font Awesome support
+	$.fn.editableform.buttons =
+	  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
+		'<i class="fa fa-fw fa-check"></i>'+
+	  '</button>'+
+	  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
+		'<i class="fa fa-fw fa-times"></i>'+
+	  '</button>';
+	  
+</script>
+
 {{if .BlockId}}
 	<style>
 		.thead {
@@ -6,23 +20,6 @@
 			white-space:nowrap;
 		}
 	</style>
-	
-	<script>
-		$(".aside .nav li").removeClass("active");
-		$(".anonym").addClass("active");
-		
-//		$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
-		
-		// Font Awesome support
-		$.fn.editableform.buttons =
-		  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
-			'<i class="fa fa-fw fa-check"></i>'+
-		  '</button>'+
-		  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
-			'<i class="fa fa-fw fa-times"></i>'+
-		  '</button>';
-		  
-	</script>
 	
 	<div class="content-heading">
 	   Block Information
