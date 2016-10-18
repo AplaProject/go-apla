@@ -98,7 +98,7 @@
 		<div class="panel-footer flex buttons">
 			<a href="" onclick="return import_form()" class="btn btn-link">Import account</a>
 			<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
-			<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn">Login</button>
+			<button type="button" class="submit btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn">Login</button>
 		</div>
 	</div>
 	<div id="register_form" class="start_form" style="display:none;" data-sweet-alert>
@@ -131,12 +131,12 @@
 			<div class="noimport flex buttons">
 				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
-				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="create_btn">Create account</button>
+				<button type="button" class="submit btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="create_btn">Create account</button>
 			</div>
 			<div class="noregister flex buttons" style="display:none;">
 				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
-				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="import_btn">Import account</button>
+				<button type="button" class="submit btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="import_btn">Import account</button>
 			</div>
 		</div>
 	</div>
@@ -246,8 +246,16 @@ function do_login() {
 	// Check encKey
 	var pass = $("#decpass").val();
 	
+	if ($("#address").val() == "" && $("#decpass").val() == "") {
+		Alert("Warning", "Enter the wallet address and the password, please", "warning");
+		return false;
+	}
 	if ($("#address").val() == "") {
 		Alert("Warning", "Enter the wallet address, please", "warning");
+		return false;
+	}
+	if ($("#decpass").val() == "") {
+		Alert("Warning", "Enter the password, please", "warning");
 		return false;
 	}
 	
@@ -258,7 +266,7 @@ function do_login() {
 		loginAttempts++;
 		//alert('Login Fail ' + loginAttempts + '/3');
 		if (loginAttempts >= 3) {
-			Alert("Login Fail", "Attempts - " + loginAttempts + "/3", "error", import_form);
+			Alert("Login Fail", "Attempts - " + loginAttempts + "/3", "error", del_fail_address);
 			loginAttempts = 0;
 			localStorage.removeItem('EncKey');
 			localStorage.removeItem('PubKey');
@@ -268,6 +276,20 @@ function do_login() {
 			Alert("Login Fail", "Attempts - " + loginAttempts + "/3", "error");
 		}
 	}
+}
+
+function del_fail_address() {
+	var wallet;
+	var number;
+	if ($("#accounts li").length) {
+		$("#accounts li a").each(function() {
+			if ($("#address").val() == $(this).html()) {
+				wallet = $(this);
+				number = $(this).attr("data-ind");
+			}
+		});
+	}
+	del_account(wallet, number);
 }
 
 function sel_account(ind) {
@@ -290,7 +312,7 @@ function sel_account(ind) {
 function load_accounts() {
 	var accounts = '';
 	for (i=0;i<GKey.Accounts.length;i++) {
-		accounts += '<li><a href="" onclick="return sel_account(' + i + ');">' + GKey.Accounts[i].Address + 
+		accounts += '<li><a href="" onclick="return sel_account(' + i + ');" data-ind="' + i + '">' + GKey.Accounts[i].Address + 
 		 '</a>&nbsp;&nbsp;&nbsp;<a class="atimes" href="" onclick="return del_account( this, ' + i + ');"><i class="fa fa-fw fa-times"></i></a></li>';
 	}
 	$("#accounts").html(accounts);
@@ -301,8 +323,19 @@ function del_account(obj, ind) {
 	GKey.Accounts.splice(ind, 1);
 	localStorage.setItem('Accounts', JSON.stringify(GKey.Accounts));
 	load_accounts();
+	if ($("#accounts li").length) {
+		$("#accounts li a").each(function() {
+			
+			if ($("#address").val() == $(this).html()) {
+				$(this).click();
+			} else {
+				$("#accounts li:last a:first").click();
+			}
+		});
+	}
 	if (!GKey.Accounts.length) {
 		import_form();
+		$("#address").val("");
 	}
 	return false;
 }
@@ -369,7 +402,14 @@ $(document).ready(function(){
 
 $(document).on('keydown', function(e){
 	if (e.keyCode == 13) {
-		$(".start_form:visible").find(".buttons:visible button").click();
+		if (!$(".select2-container--focus").length) {
+			if (!$(".sweet-alert").is(":visible")) {
+				$(".start_form:visible").find(".buttons:visible .submit").click();
+			} else {
+				$(".start_form:visible").find(".sweet-alert:visible .confirm").click();
+			}
+			return false;
+		}
 	}
 });
 	
