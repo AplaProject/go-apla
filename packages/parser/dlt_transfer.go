@@ -20,6 +20,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/lib"
+	"encoding/hex"
 )
 
 func (p *Parser) DLTTransferInit() error {
@@ -47,6 +48,23 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
+	// public key need only when we don't have public_key in the dlt_wallets table
+	public_key_0, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if len(public_key_0) == 0 {
+		bkey, err := hex.DecodeString(string(p.TxMaps.Bytes["public_key"]))
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		if lib.KeyToAddress(bkey) != p.TxMaps.String["walletAddress"] {
+			return p.ErrInfo("incorrect public_key")
+		}
+	}
+
+
+
 	if p.TxMaps.Int64["amount"] == 0 {
 		return p.ErrInfo("amount=0")
 	}
@@ -65,7 +83,7 @@ func (p *Parser) DLTTransferFront() error {
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
 	if p.TxMaps.Int64["commission"] < dltPrice {
-		return p.ErrInfo("commission")
+		return p.ErrInfo(fmt.Sprintf("commission %d < dltPrice %d", p.TxMaps.Int64["commission"], dltPrice))
 	}
 
 	if p.TxMaps.Int64["amount"] <= 0 {

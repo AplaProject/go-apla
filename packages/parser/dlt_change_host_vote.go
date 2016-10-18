@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -36,27 +37,26 @@ func (p *Parser) DLTChangeHostVoteInit() error {
 
 func (p *Parser) DLTChangeHostVoteFront() error {
 
-	/*err := p.generalCheck()
+	err := p.generalCheck()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"host": "host", "addressVote": "sha1"}
+	verifyData := map[string]string{"host": "host", "addressVote": "walletAddress", "public_key": "public_key"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
-	}*/
+	}
 
-	/*
-		forSign := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["walletAddress"], p.TxMap["sell_currency_id"], p.TxMap["sell_rate"], p.TxMap["amount"], p.TxMap["buy_currency_id"], p.TxMap["commission"])
-		CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		if !CheckSignResult {
-			return p.ErrInfo("incorrect sign")
-		}
-	*/
+	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["host"], p.TxMap["addressVote"])
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if !CheckSignResult {
+		return p.ErrInfo("incorrect sign")
+	}
+
 	return nil
 }
 
@@ -82,21 +82,5 @@ func (p *Parser) DLTChangeHostVote() error {
 }
 
 func (p *Parser) DLTChangeHostVoteRollback() error {
-
-	/*var err error
-	if len(p.TxMaps.Bytes["public_key"]) > 0 {
-		err = p.selectiveRollback([]string{"host", "addressVote", "public_key_0"}, "dlt_wallets", "", false)
-	} else {
-		err = p.selectiveRollback([]string{"host", "addressVote"}, "dlt_wallets", "", false)
-	}
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	return nil*/
 	return p.autoRollback()
 }
-
-/*func (p *Parser) DLTChangeHostVoteRollbackFront() error {
-	return nil
-}
-*/
