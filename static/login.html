@@ -107,36 +107,39 @@
 			<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
 			<form>
 				<fieldset class="s-box form-group phrase">
-					<label class="col-sm-3 control-label" for="phrase">Wallet seed or <br>Private key</label>
+					<label id="lseed" class="col-sm-3 control-label" for="phrase">Account seed</label>
 					<div class="col-sm-9 text-right">
 						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
+						<input type="hidden" id="rep_phrase" value="">
 						<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
 					</div>
 				</fieldset>
 				<fieldset class="form-group pass">
-					<label class="col-sm-3 control-label" for="pass">Password</label>
+					<label id="lpass" class="col-sm-3 control-label" for="pass">Password</label>
 					<div class="col-sm-9">
 						<input id="pass" class="form-control" type="password">
 					</div>
 				</fieldset>
-				<fieldset class="form-group rep_pass">
+				<fieldset class="form-group rep_pass noregister">
 					<label class="col-sm-3 control-label" for="rep_pass">Repeat password</label>
 					<div class="col-sm-9">
 						<input id="rep_pass" class="form-control" type="password">
 					</div>
 				</fieldset>
 			</form>
+			<p class="noimport" id="notice" style="font-weight: bold;">Make sure that you keep the passphrase (account seed) safe and remember the password. 
+			You will be asked to re-type them for confirmation.</p>
 		</div>
 		<div class="panel-footer">
 			<div class="noimport flex buttons">
 				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
-				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="create_btn">Create account</button>
+				<button type="button" class="btn btn-primary" datax-tool="panel-refresh" onclick="return do_register(this, true)" id="create_btn">Create account</button>
 			</div>
 			<div class="noregister flex buttons" style="display:none;">
 				<a href="" onclick="return register_form()" class="btn btn-link">Create account</a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
-				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_register()" id="import_btn">Import account</button>
+				<button type="button" class="btn btn-primary" data-tool="panel-refresh" onclick="return do_register(this, false)" id="import_btn">Import account</button>
 			</div>
 		</div>
 	</div>
@@ -146,24 +149,48 @@
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
 <script language="JavaScript" type="text/javascript">
 g_menuShow = false;  // hide menu
+var repeat_step = false;
 
-function do_register() {
+function do_register(obj, is_register) {
 	var pass = $("#pass").val();
-	
+	var phrase = $("#phrase").val();
+
 	if (pass.length < 6) {
+		preloader(obj);
 		Alert("Warning", "Password is too week. The length is less than 6.", "warning");
 		return false;
 	} 
+	if (is_register && !repeat_step) {
+		$("#rep_pass").val( pass );
+		$("#rep_phrase").val( phrase);
+		$("#pass").val('');
+		$("#phrase").val('');
+		$("#genseed").hide();
+		$("#lseed").html('Repeat account seed');
+		$("#lpass").html('Repeat password');
+		$("#notice").hide();
+		repeat_step = true;
+/*		setTimeout(function(){
+			$("#register_form").removeClass("whirl");
+			$("#register_form").removeClass("standard");
+		}, 2000);*/
+		return false;
+	}
+	preloader(obj);
 	if (pass != $("#rep_pass").val()) {
 		Alert("Warning", "Passwords do not match.", "warning");
 		return false;
 	} 
+	if (is_register && repeat_step && phrase != $("#rep_phrase").val()) {
+		Alert("Warning", "Account seeds do not match.", "warning");
+		return false;
+	}
 	do_generate();
 	GKey.Public = $("#pubkey").val();
 //	address = hex_sha1( GKey.Public ).toLowerCase();
 	GKey.Private = $("#prvkey").val();
 	GKey.Password = pass;
-	GKey.save($("#phrase").val());
+	GKey.save(phrase);
 	do_sign();
 	return false;
 }
@@ -215,6 +242,11 @@ function login_form() {
 }
 
 function register_form() {
+	repeat_step = false;
+	$("#notice").show();
+	$("#genseed").show();
+	$("#lseed").html('Account seed');
+	$("#lpass").html('Password');
 	$("#login_form").hide();
 	$(".noregister").hide();
 	$("#register_form").show();
@@ -228,6 +260,9 @@ function register_form() {
 }
 
 function import_form() {
+	$("#lseed").html('Account seed');
+	$("#lpass").html('Password');
+	$("#rep_pass").val('');
 	$("#login_form").hide();
 	$(".noimport").hide();
 	$("#register_form").show();
