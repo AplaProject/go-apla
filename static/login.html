@@ -183,7 +183,9 @@ function do_sign() {
 				'state_id': $( "#state_id" ).val(),
 				'citizen_id': GKey.CitizenId,
 			}, function (data) {
+				console.log('DATA', data, $( "#state_id" ).val());
 				if (data.address) {
+//					GKey.StateId = $( "#state_id" ).val();
 					GKey.add(data.address);
 				}
 				login_ok( data.result );
@@ -198,15 +200,16 @@ function login_form() {
 	$("#login_form").show();
 	$("#address").val(GKey.Address ? GKey.Address : '');
 	$("#login_form").removeClass("whirl standard");
-	if ($("#accounts li").length) {
+/*	if ($("#accounts li").length) {
 		$("#accounts li a").each(function() {
+			
 			if ($("#address").val() == $(this).html()) {
 				$(this).click();
 			} else {
 				$("#accounts li:last a:first").click();
 			}
 		});
-	}
+	}*/
 	WatchForm();
 	return false;
 }
@@ -334,7 +337,20 @@ $(document).ready(function(){
 	}
 	encKey = localStorage.getItem('EncKey');
 	if (GKey.Private) {
+		GKey.StateId = $( "#state_id" ).val();
+		GKey.save();
 		do_sign();
+	} else {
+		if ($("#accounts li").length) {
+			$("#accounts li a").each(function() {
+				
+				if ($("#address").val() == $(this).html()) {
+					$(this).click();
+				} else {
+					$("#accounts li:last a:first").click();
+				}
+			});
+		}
 	}
 	
 	$.ajax({
