@@ -97,6 +97,11 @@ func (p *Parser) EditStateParametersFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
+	if len(p.TxMap["conditions"]) > 0 {
+		if err := smart.CompileEval(string(p.TxMap["conditions"])); err != nil {
+			return p.ErrInfo(err)
+		}
+	}
 	conditions, err := p.Single(`SELECT conditions FROM "`+utils.Int64ToStr(int64(p.TxStateID))+`_state_parameters" WHERE name = ?`,
 		p.TxMaps.String["name"]).String()
 	if err != nil {
