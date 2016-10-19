@@ -36,6 +36,14 @@ import (
 	//	"golang.org/x/crypto/ripemd160"
 )
 
+var (
+	Table64 *crc64.Table
+)
+
+func init() {
+	Table64 = crc64.MakeTable(crc64.ECMA)
+}
+
 // Converts binary address to DayLight address.
 func AddressToString(address uint64) (ret string) {
 	num := strconv.FormatUint(address, 10)
@@ -289,7 +297,7 @@ func IsValidAddress(address string) bool {
 func Address(pubKey []byte) uint64 {
 	h256 := sha256.Sum256(pubKey)
 	h512 := sha512.Sum512(h256[:])
-	crc := crc64.Checksum(h512[:], crc64.MakeTable(crc64.ECMA))
+	crc := crc64.Checksum(h512[:], Table64)
 	// replace the last digit by checksum
 	num := strconv.FormatUint(crc, 10)
 	val := []byte(strings.Repeat("0", 20-len(num)) + num)

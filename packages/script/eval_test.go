@@ -21,6 +21,12 @@ import (
 	"testing"
 )
 
+type TestComp struct {
+	Input  string
+	Output string
+}
+
+/*
 func TestEval(t *testing.T) {
 	test := []TestComp{
 		{"789 63", "63"},
@@ -88,28 +94,35 @@ func TestEvalVar(t *testing.T) {
 		//		fmt.Println(out)
 	}
 }
-
+*/
 func TestEvalIf(t *testing.T) {
 	test := []TestComp{
-		{"citizenId == 56780 + 9", `true`},
-		{"qwerty(45)", `unknown function qwerty [1:1]`},
-		{"Multi(2, 5) > 36", "false"},
+		{"5 + 9 > 10", `true`},
+		{"34 == 45", `false`},
+		{"1345", `true`},
+		{"13/13-1", `false`},
+		{"$citizenId == 56780 + 9", `true`},
+		{"qwerty(45)", `unknown identifier qwerty`},
+		/*{"Multi(2, 5) > 36", "false"},*/
 	}
 	vars := map[string]interface{}{
 		`citizenId`: 56789,
 		`wallet_id`: 893451,
-		`Multi`:     Multi,
-		`Table`:     MyTable,
+		//		`Multi`:     Multi,
+		//		`Table`:     MyTable,
 	}
-	for _, item := range test {
-		out, err := EvalIf(item.Input, &vars)
-		if err != nil {
-			if err.Error() != item.Output {
-				t.Error(`error of ifeval ` + item.Input)
-			}
-		} else {
-			if fmt.Sprint(out) != item.Output {
-				t.Error(`error of ifeval ` + item.Input)
+	vm := NewVM()
+	for i := 0; i < 2; i++ {
+		for _, item := range test {
+			out, err := vm.EvalIf(item.Input, &vars)
+			if err != nil {
+				if err.Error() != item.Output {
+					t.Error(`error of ifeval ` + item.Input + err.Error())
+				}
+			} else {
+				if fmt.Sprint(out) != item.Output {
+					t.Error(`error of ifeval ` + item.Input)
+				}
 			}
 		}
 	}

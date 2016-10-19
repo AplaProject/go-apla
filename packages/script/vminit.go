@@ -99,6 +99,7 @@ func NewVM() *VM {
 	vm.Objects = make(map[string]*ObjInfo)
 	// Reserved 256 indexes for system purposes
 	vm.Children = make(Blocks, 256, 1024)
+	//	vm.Extend(&ExtendData{map[string]interface{}{"Bool": valueToBool}, nil})
 	return &vm
 }
 
