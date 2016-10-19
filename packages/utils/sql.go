@@ -1003,8 +1003,8 @@ func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetNodePublicKey(userId int64) ([]byte, error) {
-	result, err := db.Single("SELECT node_public_key FROM miners_data WHERE user_id = ?", userId).Bytes()
+func (db *DCDB) GetNodePublicKey(waletId int64) ([]byte, error) {
+	result, err := db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", waletId).Bytes()
 	if err != nil {
 		return []byte(""), err
 	}

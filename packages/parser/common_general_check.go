@@ -37,7 +37,7 @@ func (p *Parser) generalCheck() error {
 	}
 
 	// проверим, есть ли такой юзер и заодно получим public_key
-	if p.TxMaps.Int64["type"] == utils.TypeInt("DLTTransfer") || p.TxMaps.Int64["type"] == utils.TypeInt("NewState") || p.TxMaps.Int64["type"] == utils.TypeInt("DLTChangeHostVote") || p.TxMaps.Int64["type"] == utils.TypeInt("CitizenRequest") {
+	if p.TxMaps.Int64["type"] == utils.TypeInt("DLTTransfer") || p.TxMaps.Int64["type"] == utils.TypeInt("NewState") || p.TxMaps.Int64["type"] == utils.TypeInt("DLTChangeHostVote") || p.TxMaps.Int64["type"] == utils.TypeInt("CitizenRequest") || p.TxMaps.Int64["type"] == utils.TypeInt("UpdFullNodes") {
 		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
 		if err != nil {
 			return utils.ErrInfo(err)
