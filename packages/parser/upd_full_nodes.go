@@ -18,8 +18,9 @@ package parser
 
 import (
 	"encoding/json"
-
 	"github.com/DayLightProject/go-daylight/packages/lib"
+	"fmt"
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) UpdFullNodesInit() error {
@@ -31,12 +32,29 @@ func (p *Parser) UpdFullNodesInit() error {
 }
 
 func (p *Parser) UpdFullNodesFront() error {
+	err := p.generalCheck()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	p.nodePublicKey, err = p.GetNodePublicKey(p.TxWalletID)
+	if len(p.nodePublicKey) == 0 {
+		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
+	}
+	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, 0)
+	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, forSign, p.TxMap["sign"], true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if !CheckSignResult {
+		return p.ErrInfo("incorrect sign")
+	}
+
 	return nil
 }
 
 func (p *Parser) UpdFullNodes() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.TxTime}, "upd_full_nodes", []string{`update`}, nil, false)
+	_, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.BlockData.Time}, "upd_full_nodes", []string{`update`}, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

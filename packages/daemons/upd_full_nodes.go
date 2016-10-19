@@ -137,7 +137,7 @@ BEGIN:
 			continue BEGIN
 		}
 
-		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletId, myCBID)
+		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletId, 0)
 		binSign, err := d.GetBinSign(forSign)
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -148,7 +148,7 @@ BEGIN:
 		data := utils.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
 		data = append(data, utils.DecToBin(curTime, 4)...)
 		data = append(data, utils.EncodeLengthPlusData(myWalletId)...)
-		data = append(data, utils.EncodeLengthPlusData(myCBID)...)
+		data = append(data, utils.EncodeLengthPlusData(0)...)
 		data = append(data, utils.EncodeLengthPlusData([]byte(binSign))...)
 
 		err = d.InsertReplaceTxInQueue(data)

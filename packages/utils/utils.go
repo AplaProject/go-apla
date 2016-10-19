@@ -1359,49 +1359,6 @@ func BinToRsaPubKey(publicKey []byte) (*rsa.PublicKey, error) {
 }
 
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
-
-	/*	log.Debug("forSign", forSign)
-		//fmt.Println("publicKeys", publicKeys)
-		var signsSlice [][]byte
-		// у нода всегда 1 подпись
-		if nodeKeyOrLogin {
-			signsSlice = append(signsSlice, signs)
-		} else {
-			// в 1 signs может быть от 1 до 3-х подписей
-			for {
-				if len(signs) == 0 {
-					break
-				}
-				length := DecodeLength(&signs)
-				//fmt.Println("length", length)
-				//fmt.Printf("signs %x", signs)
-				signsSlice = append(signsSlice, BytesShift(&signs, length))
-			}
-			if len(publicKeys) != len(signsSlice) {
-				log.Debug("signsSlice", signsSlice)
-				log.Debug("publicKeys", publicKeys)
-				return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
-			}
-		}
-
-		for i := 0; i < len(publicKeys); i++ {
-			pub, err := BinToRsaPubKey(publicKeys[i])
-			if err != nil {
-				return false, ErrInfo(err)
-			}
-			err = rsa.VerifyPKCS1v15(pub, crypto.SHA1, HashSha1(forSign), signsSlice[i])
-			if err != nil {
-				log.Error("pub %v", pub)
-				log.Error("publicKeys[i] %x", publicKeys[i])
-				log.Error("crypto.SHA1", crypto.SHA1)
-				log.Error("HashSha1(forSign)", HashSha1(forSign))
-				log.Error("HashSha1(forSign)", string(HashSha1(forSign)))
-				log.Error("forSign", forSign)
-				log.Error("sign: %x\n", signsSlice[i])
-				return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x", HashSha1(forSign), forSign, publicKeys[i], signsSlice[i])
-			}
-		}
-		return true, nil*/
 	return CheckECDSA(publicKeys, forSign, signs, nodeKeyOrLogin)
 }
 
@@ -1458,7 +1415,22 @@ func ConvertJSSign(in string) string {
 }
 
 func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("Panic CheckECDSA %v", r)
+		}
+	}()
+
 	var signsSlice [][]byte
+	if len(forSign) == 0 {
+		return false, ErrInfoFmt("len(forSign) == 0")
+	}
+	if len(publicKeys) == 0 {
+		return false, ErrInfoFmt("len(publicKeys) == 0")
+	}
+	if len(signs) == 0 {
+		return false, ErrInfoFmt("len(signs) == 0")
+	}
 	// у нода всегда 1 подпись
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
@@ -1466,13 +1438,21 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 
 		log.Debug("signs %x", signs)
 		// в 1 signs может быть от 1 до 3-х подписей
+		i := 0
 		for {
+			if  i > 2 {
+				return false, ErrInfoFmt("i > 3")
+			}
 			if len(signs) == 0 {
 				break
 			}
 			length := DecodeLength(&signs)
 			log.Debug("length %d", length)
+			if length == 0 {
+				break
+			}
 			signsSlice = append(signsSlice, BytesShift(&signs, length))
+			i++
 		}
 		if len(publicKeys) != len(signsSlice) {
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
@@ -1482,7 +1462,14 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	pubkeyCurve := elliptic.P256()
 	signhash := sha256.Sum256([]byte(forSign))
 
+
+	log.Debug("len(signsSlice) %d len(publicKeys) %d", len(signsSlice), len(publicKeys))
+
 	for i := 0; i < len(publicKeys); i++ {
+
+		if len(signsSlice[i]) == 0 {
+			return false, fmt.Errorf("len(signsSlice[i]) == 0")
+		}
 
 		log.Debug("pubkey %x", publicKeys[i])
 		/*public, err := hex.DecodeString(string(publicKeys[i]))
@@ -1494,8 +1481,15 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 		pubkey.Curve = pubkeyCurve
 		pubkey.X = new(big.Int).SetBytes(public[0:32])
 		pubkey.Y = new(big.Int).SetBytes(public[32:])
-
+		log.Debug("pubkey %v", pubkey)
+		log.Debug("signhash %x", signhash)
+		log.Debug("signsSlice[i] %x", signsSlice[i])
 		r, s := ParseSign(hex.EncodeToString(signsSlice[i]))
+		if r == nil || s == nil {
+			log.Debug("r == nil || s == nil")
+			return false, fmt.Errorf("r == nil || s == nil")
+		}
+		log.Debug("r = %v  s = %v", r, s)
 		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
 		if !verifystatus {
 			log.Error("Check sign: %i %s\n", i, signsSlice[i])
@@ -1504,6 +1498,7 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 		}
 
 	}
+
 	return true, nil
 }
 
