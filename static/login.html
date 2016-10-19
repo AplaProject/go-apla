@@ -43,6 +43,9 @@
 	h1 {
 		margin-top:0px;
 	}
+	.state_0 i {
+		background-image:url(../countries/no_citizenship.png) !important;
+	}
 	.accounts {
 		text-align:left;
 		padding: 0em;
@@ -74,6 +77,7 @@
 					<label class="col-sm-3 control-label" for="phrase">Country</label>
 					<div class="col-sm-9">
 						<select id="state_id" class="form-control">
+							<option value="0" class="no_citizenship">No citizenship</option>
 							<!--<option value="0">-----</option>-->
 							<!--{{ range $id, $name := .States }}
 							<option value="{{$id}}">{{$name}}</option>
