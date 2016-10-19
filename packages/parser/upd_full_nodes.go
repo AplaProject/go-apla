@@ -21,6 +21,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/lib"
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/DayLightProject/go-daylight/packages/consts"
 )
 
 func (p *Parser) UpdFullNodesInit() error {
@@ -36,6 +37,20 @@ func (p *Parser) UpdFullNodesFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
+	// We check to see if the time elapsed since the last update
+	upd_full_nodes, err := p.Single("SELECT time FROM upd_full_nodes").Int64()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	txTime := p.TxTime
+	if p.BlockData!= nil {
+		txTime = p.BlockData.Time
+	}
+	if txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD {
+		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
+	}
+
 	p.nodePublicKey, err = p.GetNodePublicKey(p.TxWalletID)
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
@@ -178,8 +193,3 @@ func (p *Parser) UpdFullNodesRollback() error {
 
 	return nil
 }
-
-/*func (p *Parser) UpdFullNodesRollbackFront() error {
-	return nil
-}
-*/

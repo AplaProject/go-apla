@@ -40,11 +40,7 @@ func UpdFullNodes(chBreaker chan bool, chAnswer chan string) {
 	d.goRoutineName = GoroutineName
 	d.chAnswer = chAnswer
 	d.chBreaker = chBreaker
-	if utils.Mobile() {
-		d.sleepTime = 3600
-	} else {
-		d.sleepTime = 60
-	}
+	d.sleepTime = 60
 	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
 		return
 	}
