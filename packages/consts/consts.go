@@ -19,7 +19,7 @@ package consts
 // текущая версия
 const VERSION = "0.1.1b3"
 
-const FIRST_DLT = 100000000
+const FIRST_QDLT = 1e+26
 
 // используется в confirmations
 const COUNT_CONFIRMED_NODES = 5

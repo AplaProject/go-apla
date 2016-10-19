@@ -46,7 +46,7 @@ func (p *Parser) FirstBlock() error {
 	log.Debug("data.PublicKey %s", data.PublicKey)
 	log.Debug("data.PublicKey %x", data.PublicKey)
 	err := p.ExecSql(`INSERT INTO dlt_wallets (wallet_id, host, address_vote, public_key_0, node_public_key, amount) VALUES (?, ?, ?, [hex], [hex], ?)`,
-		myAddress, data.Host, lib.AddressToString(uint64(myAddress)), hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_DLT)
+		myAddress, data.Host, lib.AddressToString(uint64(myAddress)), hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_QDLT)
 	//p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"], consts.FIRST_DLT)
 	if err != nil {
 		return p.ErrInfo(err)
