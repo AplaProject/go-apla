@@ -42,7 +42,7 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"walletAddress": "walletAddress", "amount": "decimal", "commission": "int64", "comment": "comment"}
+	verifyData := map[string]string{"walletAddress": "walletAddress", "amount": "decimal", "commission": "decimal", "comment": "comment"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -58,7 +58,7 @@ func (p *Parser) DLTTransferFront() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if lib.KeyToAddress(bkey) != p.TxMaps.String["walletAddress"] {
+		if lib.KeyToAddress(bkey) != lib.AddressToString(uint64(p.TxWalletID)) {
 			return p.ErrInfo("incorrect public_key")
 		}
 	}

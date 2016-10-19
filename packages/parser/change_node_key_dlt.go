@@ -50,9 +50,9 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 	if p.BlockData!= nil {
 		txTime = p.BlockData.Time
 	}
-	last_node_public_key_upd, err := p.Single(`SELECT last_node_public_key_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
-	if err != nil || txTime - last_node_public_key_upd < 600 {
-		return p.ErrInfo("txTime - last_node_public_key_upd < 600 sec")
+	last_forging_data_upd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
+	if err != nil || txTime - last_forging_data_upd < 600 {
+		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["new_node_public_key"])
@@ -65,7 +65,7 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 
 func (p *Parser) ChangeNodeKeyDLT() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

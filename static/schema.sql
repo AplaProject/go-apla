@@ -253,7 +253,7 @@ DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "public_key_1" bytea  NOT NULL DEFAULT '',
 "public_key_2" bytea  NOT NULL DEFAULT '',
 "node_public_key" bytea  NOT NULL DEFAULT '',
-"last_node_public_key_upd" bigint NOT NULL DEFAULT '0',
+"last_forging_data_upd" bigint NOT NULL DEFAULT '0',
 "amount" decimal(30) NOT NULL DEFAULT '0',
 "host" varchar(50) NOT NULL DEFAULT '',
 "address_vote" varchar(255) NOT NULL DEFAULT '',
