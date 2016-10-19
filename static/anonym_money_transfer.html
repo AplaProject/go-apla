@@ -1,15 +1,12 @@
 {{ define "anonymMoneyTransfer" }}
 
 <script>
-	var interval;
 	var serverTime;
-
-	clearInterval(interval);
+	var commission = {{.Commission}} / qDLT;
+	$("#commission").val(commission);
 	
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_money_transfer").addClass("active");
-	
-	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
 
 	$('#next').bind('click', function () {
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -30,8 +27,8 @@
 				'walletId' : '{{.WalletId}}',
 				'citizenId' : '0',
 				'walletAddress' : $('#walletAddress').val(),
-				'amount' : parseFloat($('#amount').val()) * 100000,
-				'commission' : parseFloat($('#commission').val()) * 100000,
+				'amount' : parseFloat($('#amount').val()) * qDLT,
+				'commission' : parseFloat($('#commission').val()) * qDLT,
 				'comment' : $('#comment').val(),
 				'pubkey' : GKey.Public,
 				'signature1': $('#signature1').val(),
@@ -79,7 +76,7 @@
 	   </div>
 	   <div class="form-group">
 		   <label>Commission <strong class="text-danger">*</strong></label>
-		   <input type="text" placeholder="0.01" class="form-control" id="commission" value="{{.Commission}}" disabled="">
+		   <input type="text" placeholder="0.01" class="form-control" id="commission" disabled="">
 	   </div>
 	</form>
  </div>
