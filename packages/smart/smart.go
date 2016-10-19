@@ -108,6 +108,14 @@ func CompileBlock(src string) (*script.Block, error) {
 	return smartVM.CompileBlock([]rune(src))
 }
 
+func CompileEval(src string) error {
+	return smartVM.CompileEval(src)
+}
+
+func EvalIf(src string, extend *map[string]interface{}) (bool, error) {
+	return smartVM.EvalIf(src, extend)
+}
+
 func FlushBlock(root *script.Block) {
 	smartVM.FlushBlock(root)
 }

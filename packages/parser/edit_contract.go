@@ -59,6 +59,25 @@ func (p *Parser) EditContractFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
+	if len(p.TxMap["conditions"]) > 0 {
+		if err := smart.CompileEval(string(p.TxMap["conditions"])); err != nil {
+			return p.ErrInfo(err)
+		}
+	}
+	conditions, err := p.Single(`SELECT conditions FROM "`+utils.Int64ToStr(int64(p.TxStateID))+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if len(conditions) > 0 {
+		ret, err := smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
+			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		if !ret {
+			return fmt.Errorf(`Access denied`)
+		}
+	}
 
 	return nil
 }
@@ -73,6 +92,7 @@ func (p *Parser) EditContract() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
 	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", []string{"id"}, []string{p.TxMaps.String["id"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)

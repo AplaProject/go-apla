@@ -86,9 +86,10 @@
 		   </div>
 		   <div class="form-group">
 			   <label>Conditions for change</label>
-			   <select class="selectbox form-control" id="conditions">
+				<textarea class="form-control" id="conditions">{{.StateParameters.conditions}}</textarea>
+			   <!--select class="selectbox form-control" id="conditions">
 				 {{ range $param := .AllStateParameters }} <option {{if eq (index $.StateParameters "conditions") $param}} selected {{end}}>{{$param}}</option> {{end}}
-			   </select>
+			   </select-->
 		   </div>
 		</form>
 	 </div>
