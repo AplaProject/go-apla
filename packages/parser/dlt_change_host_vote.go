@@ -19,6 +19,8 @@ package parser
 import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"encoding/hex"
+	"github.com/DayLightProject/go-daylight/packages/lib"
 )
 
 func (p *Parser) DLTChangeHostVoteInit() error {
@@ -48,6 +50,30 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 		return p.ErrInfo(err)
 	}
 
+	// public key need only when we don't have public_key in the dlt_wallets table
+	public_key_0, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if len(public_key_0) == 0 {
+		bkey, err := hex.DecodeString(string(p.TxMaps.Bytes["public_key"]))
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		if lib.KeyToAddress(bkey) != lib.AddressToString(uint64(p.TxWalletID)) {
+			return p.ErrInfo("incorrect public_key")
+		}
+	}
+
+	txTime := p.TxTime
+	if p.BlockData!= nil {
+		txTime = p.BlockData.Time
+	}
+	last_forging_data_upd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
+	if err != nil || txTime - last_forging_data_upd < 600 {
+		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
+	}
+
 	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["host"], p.TxMap["addressVote"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
@@ -71,9 +97,9 @@ func (p *Parser) DLTChangeHostVote() error {
 	}
 
 	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "public_key_0"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.String["addressVote"]), utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "public_key_0", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.String["addressVote"]), utils.HexToBin(p.TxMaps.Bytes["public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"], p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)

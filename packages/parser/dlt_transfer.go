@@ -42,7 +42,7 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"walletAddress": "walletAddress", "amount": "decimal", "commission": "int64", "comment": "comment"}
+	verifyData := map[string]string{"walletAddress": "walletAddress", "amount": "decimal", "commission": "decimal", "comment": "comment"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -58,7 +58,7 @@ func (p *Parser) DLTTransferFront() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if lib.KeyToAddress(bkey) != p.TxMaps.String["walletAddress"] {
+		if lib.KeyToAddress(bkey) != lib.AddressToString(uint64(p.TxWalletID)) {
 			return p.ErrInfo("incorrect public_key")
 		}
 	}
@@ -80,11 +80,11 @@ func (p *Parser) DLTTransferFront() error {
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
 	// fuelRate = 1 000 000 000 000 000
 	//
-	dltPrice := int64(fPrice * fuelRate)
+	commission := int64(fPrice * fuelRate)
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
-	if p.TxMaps.Int64["commission"] < dltPrice {
-		return p.ErrInfo(fmt.Sprintf("commission %d < dltPrice %d", p.TxMaps.Int64["commission"], dltPrice))
+	if p.TxMaps.Int64["commission"] < commission {
+		return p.ErrInfo(fmt.Sprintf("commission %d < dltPrice %d", p.TxMaps.Int64["commission"], commission))
 	}
 
 	if p.TxMaps.Int64["amount"] <= 0 {
