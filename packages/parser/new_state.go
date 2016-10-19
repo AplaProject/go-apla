@@ -102,7 +102,7 @@ func (p *Parser) NewState() error {
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"bytecode" bytea  NOT NULL DEFAULT '',
-				"conditions" bytea  NOT NULL DEFAULT '',
+				"conditions" text  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT "` + id + `_state_parameters_pkey" PRIMARY KEY (name);
@@ -110,8 +110,8 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	sid := id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
-
+	sid := `$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
+	psid := sid                                            //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
 	err = p.ExecSql(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
@@ -125,16 +125,16 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		"main_conditions", sid, "", "",
-		"new_table", sid, "", id+`_state_parameters.main_conditions`,
-		"new_column", sid, "", id+`_state_parameters.main_conditions`,
-		"changing_tables", sid, "", id+`_state_parameters.main_conditions`,
-		"changing_smart_contracts", sid, "", id+`_state_parameters.main_conditions`,
-		"currency_name", p.TxMap["currency_name"], "", id+`_state_parameters.main_conditions`,
-		"state_name", p.TxMap["state_name"], "", id+`_state_parameters.main_conditions`,
-		"dlt_spending", p.TxWalletID, "", id+`_state_parameters.main_conditions`,
-		"state_flag", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyCAYAAACqNX6+AAAAwElEQVR4Xu3TQREAAAiEQK9/aWvsAxMw4O06ysAommCuINgTFKQgmAEMp4UUBDOA4bSQgmAGMJwWUhDMAIbTQgqCGcBwWkhBMAMYTgspCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBaSEEwAxhOCykIZgDDaSEFwQxgOC2kIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LKQhmAMNpIViQBxv1ADO4LcKOAAAAAElFTkSuQmCC", "", id+`_state_parameters.main_conditions`,
-		"state_coords", ``, "", id+`_state_parameters.main_conditions`,
-		"citizenship_price", "1000000", "", id+`_state_parameters.main_conditions`)
+		"new_table", sid, "", psid,
+		"new_column", sid, "", psid,
+		"changing_tables", sid, "", psid,
+		"changing_smart_contracts", sid, "", psid,
+		"currency_name", p.TxMap["currency_name"], "", psid,
+		"state_name", p.TxMap["state_name"], "", psid,
+		"dlt_spending", p.TxWalletID, "", psid,
+		"state_flag", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyCAYAAACqNX6+AAAAwElEQVR4Xu3TQREAAAiEQK9/aWvsAxMw4O06ysAommCuINgTFKQgmAEMp4UUBDOA4bSQgmAGMJwWUhDMAIbTQgqCGcBwWkhBMAMYTgspCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBaSEEwAxhOCykIZgDDaSEFwQxgOC2kIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LKQhmAMNpIViQBxv1ADO4LcKOAAAAAElFTkSuQmCC", "", psid,
+		"state_coords", ``, "", psid,
+		"citizenship_price", "1000000", "", psid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -144,7 +144,7 @@ func (p *Parser) NewState() error {
 				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
-				"conditions" bytea  NOT NULL DEFAULT '',
+				"conditions" text  NOT NULL DEFAULT '',
 				"variables" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
@@ -252,10 +252,15 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	err = p.ExecSql(`UPDATE "`+id+`_smart_contracts" SET conditions = ?`, sid)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	err = p.ExecSql(`CREATE TABLE "` + id + `_tables" (
 				"name" bytea  NOT NULL DEFAULT '',
 				"columns_and_permissions" jsonb,
-				"conditions" bytea  NOT NULL DEFAULT '',
+				"conditions" text  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT "` + id + `_tables_pkey" PRIMARY KEY (name);

@@ -40,7 +40,7 @@ func (c *Controller) Contracts() (string, error) {
 		global = "0"
 	}
 
-	stateSmartLaws, err := c.GetAll(`SELECT * FROM "`+prefix+`_smart_contracts"`, -1)
+	stateSmartLaws, err := c.GetAll(`SELECT * FROM "`+prefix+`_smart_contracts" order by id`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
