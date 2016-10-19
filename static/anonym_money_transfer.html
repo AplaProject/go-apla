@@ -11,7 +11,7 @@
 	$('#next').bind('click', function () {
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#walletAddress').val()+','+parseFloat($('#amount').val()) * 100000+','+parseFloat($('#commission').val()) * 100000+','+$('#comment').val());
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#walletAddress').val()+','+parseFloat($('#amount').val()) * qDLT+','+parseFloat($('#commission').val()) * qDLT+','+$('#comment').val());
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
