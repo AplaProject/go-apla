@@ -57,10 +57,19 @@
 					  { "data": 'comment' },
 					  { "data": 'confirm' }
 					],
-					columnDefs: [{
-						targets: 1,
-						render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
-					}],
+					columnDefs: [
+						{
+							targets: 1,
+							render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
+						},
+						{
+							targets: 2,
+							data: 'amount',
+							render: function (data) {
+								return data / qDLT + ' DLT';
+							}
+						}
+					],
 					createdRow: function (row, data, index) {
 						$("td", row).eq(3).addClass("Ellipsis");
 						$("td", row).eq(4).addClass("Ellipsis");

@@ -35,6 +35,9 @@
 	$(".anonym, .dashboard_anonym").addClass("active");
 	
 	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {});
+	
+	var amount = {{.Amount}} / qDLT;
+	$("#balance").text(amount + " DLT");
 
 	$.ajax({
 		type: 'POST',
@@ -63,10 +66,19 @@
 					  { "data": 'comment' },
 					  { "data": 'confirm' }
 					],
-					columnDefs: [{
-						targets: 1,
-						render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
-					}],
+					columnDefs: [
+						{
+							targets: 1,
+							render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
+						},
+						{
+							targets: 2,
+							data: 'amount',
+							render: function (data) {
+								return data / qDLT + ' DLT';
+							}
+						}
+					],
 					createdRow: function (row, data, index) {
 						$("td", row).eq(3).addClass("Ellipsis");
 						$("td", row).eq(4).addClass("Ellipsis");
@@ -113,7 +125,7 @@
 	   <em class="glyphicons glyphicons-coins x2"></em>
 	</div>
 	<div class="col-xs-9 pv-lg text">
-	   <div class="h1 m0 text-bold">{{.Amount}} DLT</div>
+	   <div id="balance" class="h1 m0 text-bold"></div>
 	   <div class="text-uppercase">Available balance</div>
 	</div>
  </div>
