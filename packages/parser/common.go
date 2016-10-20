@@ -436,12 +436,35 @@ func (p *Parser) AccessTable(table, action string) error {
 	if len(tablePermission[action]) > 0 {
 		ret, err := smart.EvalIf(tablePermission[action], &map[string]interface{}{`state`: p.TxStateID,
 			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
-		fmt.Println(`EVAL`, ret, err)
 		if err != nil {
 			return err
 		}
 		if !ret {
 			return fmt.Errorf(`Access denied`)
+		}
+	}
+	return nil
+}
+
+func (p *Parser) AccessColumns(table string, columns []string) error {
+
+	prefix := utils.Int64ToStr(int64(p.TxStateID))
+
+	columnsAndPermissions, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
+		"key", "value", table)
+	if err != nil {
+		return err
+	}
+	for _, col := range columns {
+		if cond, ok := columnsAndPermissions[col]; ok && len(cond) > 0 {
+			ret, err := smart.EvalIf(cond, &map[string]interface{}{`state`: p.TxStateID,
+				`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+			if err != nil {
+				return err
+			}
+			if !ret {
+				return fmt.Errorf(`Access denied`)
+			}
 		}
 	}
 	return nil
