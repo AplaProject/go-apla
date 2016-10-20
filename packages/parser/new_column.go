@@ -26,7 +26,7 @@ import (
 
 func (p *Parser) NewColumnInit() error {
 
-	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"index": "int64"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -75,7 +75,7 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(`column exists`)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["index"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -130,6 +130,12 @@ func (p *Parser) NewColumn() error {
 		return err
 	}
 
+	err = p.ExecSql(`CREATE INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + p.TxMaps.String["table_name"] + `" (` + p.TxMaps.String["column_name"] + `)`)
+	if err != nil {
+		return err
+	}
+
+
 	return nil
 }
 
@@ -142,11 +148,9 @@ func (p *Parser) NewColumnRollback() error {
 	if err != nil {
 		return err
 	}
+	err = p.ExecSql(`DROP INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index"`)
+	if err != nil {
+		return err
+	}
 	return nil
 }
-
-/*func (p *Parser) NewColumnRollbackFront() error {
-
-	return nil
-}
-*/

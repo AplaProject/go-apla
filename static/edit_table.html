@@ -85,29 +85,50 @@
 	</div>
 
 
+
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+	<div class="panel-heading">
+		<div class="panel-title">
+			Table permission
+		</div>
+	</div>
+	<div class="panel-body">
+		<form role="form">
+			<div class="form-group">
+				<label>insert</label>
+				<textarea class="form-control" id="insert">{{.TablePermission.insert}}</textarea>
+			</div>
+			<div class="form-group">
+				<label>new_column</label>
+				<textarea class="form-control" id="new_column">{{.TablePermission.new_column}}</textarea>
+			</div>
+		</form>
+	</div>
+	<div class="panel-footer">
+		<div class="clearfix">
+			<div class="pull-right">
+				<button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" >Save</button>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- END panel-->
+
 <!-- START panel-->
 <div class="panel panel-default" data-sweet-alert>
  <div class="panel-heading">
 	<div class="panel-title">
-		Table permission
+		Conditions for changing permissions
 	</div>
  </div>
- <div class="panel-body">
-	<form role="form">
-	   <div class="form-group">
-		   <label>update</label>
-		   <textarea class="form-control" id="general_update">{{.TablePermission.general_update}}</textarea>
-	   </div>
-	   <div class="form-group">
-		   <label>insert</label>
-		   <textarea class="form-control" id="insert">{{.TablePermission.insert}}</textarea>
-	   </div>
-	   <div class="form-group">
-		   <label>new_column</label>
-		   <textarea class="form-control" id="new_column">{{.TablePermission.new_column}}</textarea>
-	   </div>
-	</form>
- </div>
+	<div class="panel-body">
+		<form role="form">
+			<div class="form-group">
+				<textarea class="form-control" id="general_update">{{.TablePermission.general_update}}</textarea>
+			</div>
+		</form>
+	</div>
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">

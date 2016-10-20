@@ -7,7 +7,7 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+$('#column_name').val()+','+$('#permissions').val());
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+$('#column_name').val()+','+$('#permissions').val()+','+($("#index").is(":checked") ? "1" : "0"));
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -21,6 +21,7 @@
 				'table_name' : '{{.TableName}}',
 				'column_name' : $('#column_name').val(),
 				'permissions' : $('#permissions').val(),
+				'index' : ($("#index").is(":checked") ? "1" : "0"),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
 				'citizenId' : '{{.CitizenId}}',
@@ -58,10 +59,14 @@
 			   <label>Name</label>
 			   {{if .ColumnName}} <p class="form-control-static">{{.ColumnName}}</p> <input type="hidden" class="form-control" id="column_name" value="{{.ColumnName}}"> {{else}} <input type="text" class="form-control" id="column_name"> {{end}}
 		   </div>
-		   <div class="form-group">
-			   <label>Permissions</label>
-			   <textarea class="form-control" id="permissions">{{.ColumnPermission}}</textarea>
-		   </div>
+			<div class="form-group">
+				<label>Index</label>
+				<input type="checkbox" id="index">
+			</div>
+			<div class="form-group">
+				<label>Permissions</label>
+				<textarea class="form-control" id="permissions">{{.ColumnPermission}}</textarea>
+			</div>
 		</form>
 	 </div>
 	 <div class="panel-footer">
