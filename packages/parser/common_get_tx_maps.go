@@ -17,11 +17,9 @@
 package parser
 
 import (
-	//	"encoding/json"
 	"fmt"
-
-	//	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/shopspring/decimal"
 )
 
 func (p *Parser) GetTxMaps(fields []map[string]string) error {
@@ -35,6 +33,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	p.TxMaps.Int64 = make(map[string]int64)
 	p.TxMaps.Bytes = make(map[string][]byte)
 	p.TxMaps.String = make(map[string]string)
+	p.TxMaps.Decimal = make(map[string]decimal.Decimal)
 	p.TxMaps.Bytes["hash"] = p.TxSlice[0]
 	p.TxMaps.Int64["type"] = utils.BytesToInt64(p.TxSlice[1])
 	p.TxMaps.Int64["time"] = utils.BytesToInt64(p.TxSlice[2])
@@ -111,6 +110,12 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 				p.TxMaps.Bytes[field] = p.TxSlice[i+5]
 			case "string":
 				p.TxMaps.String[field] = string(p.TxSlice[i+5])
+			case "decimal":
+				dec, err := decimal.NewFromString(string(p.TxSlice[i+5]))
+				if err!=nil {
+					return err
+				}
+				p.TxMaps.Decimal[field] = dec
 			}
 		}
 	}

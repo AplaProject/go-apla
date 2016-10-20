@@ -27,6 +27,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/op/go-logging"
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -43,6 +44,7 @@ type txMapsType struct {
 	Bytes   map[string][]byte
 	Float64 map[string]float64
 	Money   map[string]float64
+	Decimal map[string]decimal.Decimal
 }
 type Parser struct {
 	*utils.DCDB
