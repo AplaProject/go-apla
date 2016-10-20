@@ -40,7 +40,7 @@
 				{{if .BlockData}}
 				 <tr>
 					<td class="thead">Time</td>
-					<td>{{.BlockData.time}}</td>
+					<td class="unixtime">{{.BlockData.time}}</td>
 				 </tr>
 				 <tr>
 					<td class="thead">Hash</td>
@@ -193,8 +193,11 @@
 //				clearTimeout(latestTime);
 				for (i=data.data.length-1; i>=0; i-- )
 					addRow( data.data[i]);
-				unixtime('.addtime');
-				$('.addtime').removeClass('addtime');
+				//unixtime('.addtime');
+				$(".addtime").each(function() {
+					$(this).text(moment.unix($(this).text()).format('D MMMM YYYY, hh:mm:ss', 'en'));
+					$(this).removeClass('addtime');
+				});
 	            //$('#tab2').html( data );
 				latestBlock = data.latest;
 			} 
@@ -204,5 +207,9 @@
 	
 	latestTime = setTimeout( block_reload, 2000 );
 {{end}}	
-	$(document).ready( function(){ unixtime(); });
+
+	//unixtime('.unixtime');
+	$(".unixtime").each(function() {
+		$(this).text(moment.unix($(this).text()).format('D MMMM YYYY, hh:mm:ss', 'en'));
+	});
 </script>
