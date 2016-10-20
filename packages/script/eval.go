@@ -46,6 +46,9 @@ func (vm *VM) CompileEval(input string) error {
 }
 
 func (vm *VM) EvalIf(input string, vars *map[string]interface{}) (bool, error) {
+	if len(input) == 0 {
+		return true, nil
+	}
 	crc := crc64.Checksum([]byte(input), lib.Table64)
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
 		if err := vm.CompileEval(input); err != nil {

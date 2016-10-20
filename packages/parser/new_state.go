@@ -258,7 +258,7 @@ func (p *Parser) NewState() error {
 	}
 
 	err = p.ExecSql(`CREATE TABLE "` + id + `_tables" (
-				"name" bytea  NOT NULL DEFAULT '',
+				"name" varchar(100)  NOT NULL DEFAULT '',
 				"columns_and_permissions" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
@@ -272,8 +272,8 @@ func (p *Parser) NewState() error {
 	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, id+`_state_parameters.main_conditions`,
-		id+`_accounts`, `{"general_update":"`+sid+`", "update": {"amount": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, id+`_state_parameters.main_conditions`)
+		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid,
+		id+`_accounts`, `{"general_update":"`+sid+`", "update": {"amount": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -399,3 +399,48 @@ func (p *Parser) BlockError(err error) {
 	p.DeleteQueueTx([]byte(p.TxHash))
 	p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
 }
+
+func (p *Parser) AccessRights(condition string, iscondition bool) error {
+	param := `value`
+	if iscondition {
+		param = `conditions`
+	}
+	conditions, err := p.Single(`SELECT `+param+` FROM "`+utils.Int64ToStr(int64(p.TxStateID))+`_state_parameters" WHERE name = ?`,
+		condition).String()
+	if err != nil {
+		return err
+	}
+	if len(conditions) > 0 {
+		ret, err := smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
+			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+		if err != nil {
+			return err
+		}
+		if !ret {
+			return fmt.Errorf(`Access denied`)
+		}
+	}
+	return nil
+}
+
+func (p *Parser) AccessTable(table, action string) error {
+
+	prefix := utils.Int64ToStr(int64(p.TxStateID))
+
+	tablePermission, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", table)
+	if err != nil {
+		return err
+	}
+	if len(tablePermission[action]) > 0 {
+		ret, err := smart.EvalIf(tablePermission[action], &map[string]interface{}{`state`: p.TxStateID,
+			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+		fmt.Println(`EVAL`, ret, err)
+		if err != nil {
+			return err
+		}
+		if !ret {
+			return fmt.Errorf(`Access denied`)
+		}
+	}
+	return nil
+}

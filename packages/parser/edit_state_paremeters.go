@@ -102,22 +102,9 @@ func (p *Parser) EditStateParametersFront() error {
 			return p.ErrInfo(err)
 		}
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+utils.Int64ToStr(int64(p.TxStateID))+`_state_parameters" WHERE name = ?`,
-		p.TxMaps.String["name"]).String()
-	if err != nil {
+	if err := p.AccessRights(p.TxMaps.String["name"], true); err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(conditions) > 0 {
-		ret, err := smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
-			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		if !ret {
-			return fmt.Errorf(`Access denied`)
-		}
-	}
-
 	return nil
 }
 

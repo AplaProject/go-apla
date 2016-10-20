@@ -20,6 +20,7 @@ import (
 	//"encoding/json"
 	"encoding/json"
 	"fmt"
+
 	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
@@ -82,7 +83,9 @@ func (p *Parser) NewColumnFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-
+	if err := p.AccessTable(p.TxMaps.String["table_name"], "new_column"); err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
@@ -122,11 +125,10 @@ func (p *Parser) NewColumn() error {
 		return err
 	}
 
-	err = p.ExecSql(`ALTER TABLE "`+p.TxMaps.String["table_name"]+`" ADD COLUMN `+p.TxMaps.String["column_name"]+` varchar(10240)`)
+	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` varchar(10240)`)
 	if err != nil {
 		return err
 	}
-
 
 	return nil
 }
@@ -136,7 +138,7 @@ func (p *Parser) NewColumnRollback() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`ALTER TABLE "`+p.TxMaps.String["table_name"]+`" DROP COLUMN `+p.TxMaps.String["column_name"]+``)
+	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" DROP COLUMN ` + p.TxMaps.String["column_name"] + ``)
 	if err != nil {
 		return err
 	}
