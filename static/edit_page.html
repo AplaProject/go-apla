@@ -52,14 +52,21 @@
 			crossDomain: true,
 			success: function(data) {
 				$("#DataMenu").html("").append(
-					'<tr><td><strong>Name</strong><br>' + data.name + '</td></tr>' +
-					'<tr><td>' +
-							'<pre class="textEditorMenu">' +
-								'<code>' + data.value + '</code>' +
-								'<section id="textEditorMenu">' + data.value + '</section>' +
-							'</pre>' +
-					'</td></tr>' +
-					'<tr><td><strong>Conditions</strong><br>' + data.conditions + '</td></tr>'
+					'<div class="form-group">' +
+					   '<label>Name</label>' +
+					   '<p class="form-control-static">' + data.name + '</p>' +
+				   '</div>' +
+				   '<div class="form-group">' +
+					   '<label>Value</label>' +
+					   '<pre class="textEditorMenu">' +
+							'<code>' + data.value + '</code>' +
+							'<section id="textEditorMenu">' + data.value + '</section>' +
+						'</pre>' +
+				    '</div>' +
+					'<div class="form-group">' +
+					   '<label>Conditions</label>' +
+					   '<p class="form-control-static">' + data.conditions + '</p>' +
+				   '</div>'
 				);
 				
 				var editor = ace.edit("textEditorMenu");
@@ -203,11 +210,7 @@
 				</div>
 			</div>
 			<div class="panel-body">
-				<div class="table-responsive">
-					<table class="table table-striped table-bordered table-hover">
-						<tbody id="DataMenu"></tbody>
-					</table>
-				</div>
+				<form id="DataMenu" role="form"></form>
 			</div>
 			<div class="panel-footer">
 			   <div class="clearfix">

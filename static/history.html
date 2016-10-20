@@ -59,14 +59,20 @@
 					],
 					columnDefs: [
 						{
+							targets: 0,
+							render: function (data) {
+								block_explorer = 'block_explorer';
+								return '<a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + data + '});">' + data + '</a>';
+							}
+						},
+						{
 							targets: 1,
-							render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm', 'en')
+							render: $.fn.dataTable.render.moment('X', 'D MMMM YYYY, hh:mm:ss', 'en')
 						},
 						{
 							targets: 2,
-							data: 'amount',
 							render: function (data) {
-								return data / qDLT + ' DLT';
+								return (data / qDLT).toString().bold() + " DLT";
 							}
 						}
 					],

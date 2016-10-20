@@ -17,9 +17,10 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"fmt"
 	"encoding/json"
+	"fmt"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 /*
@@ -28,15 +29,13 @@ Adding state tables should be spelled out in state settings
 
 func (p *Parser) NewTableInit() error {
 
-	fields := []map[string]string{{"global": "int64"},{"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "int64"}, {"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
-
-
 
 func (p *Parser) NewTableFront() error {
 
@@ -48,8 +47,6 @@ func (p *Parser) NewTableFront() error {
 	// Check the system limits. You can not send more than X time a day this TX
 	// ...
 
-
-
 	// Check InputData
 	verifyData := map[string]string{}
 	err = p.CheckInputData(verifyData)
@@ -59,7 +56,6 @@ func (p *Parser) NewTableFront() error {
 
 	// New state table can only add a citizen of the same country
 	// ...
-
 
 	// Check the condition that must be met to complete this transaction
 	// select value from ea_state_parameters where name = "new_state_table"
@@ -83,15 +79,18 @@ func (p *Parser) NewTableFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
+	if err := p.AccessRights("new_table", false); err != nil {
+		return p.ErrInfo(err)
+	}
 
 	return nil
 }
 
 func (p *Parser) NewTable() error {
 
-	tableName := `global_`+p.TxMaps.String["table_name"]
+	tableName := `global_` + p.TxMaps.String["table_name"]
 	if p.TxMaps.Int64["global"] == 0 {
-		tableName = p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
+		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
 	}
 	var cols []string
 	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
@@ -99,20 +98,20 @@ func (p *Parser) NewTable() error {
 	citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
 	colsSql := ""
 	colsSql2 := ""
-	for _,name := range cols {
-		colsSql += `"`+name+"\" varchar NOT NULL DEFAULT '',\n"
-		colsSql2 += `"`+name+`": "`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`",`
+	for _, name := range cols {
+		colsSql += `"` + name + "\" varchar NOT NULL DEFAULT '',\n"
+		colsSql2 += `"` + name + `": "$citizen==` + citizenIdStr + `",`
 	}
 	colsSql2 = colsSql2[:len(colsSql2)-1]
 
-	sql := `CREATE SEQUENCE "`+tableName+`_id_seq" START WITH 1;
-				CREATE TABLE "`+tableName+`" (
-				"id" bigint NOT NULL  default nextval('`+tableName+`_id_seq'),
-				`+colsSql+`
+	sql := `CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
+				CREATE TABLE "` + tableName + `" (
+				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
+				` + colsSql + `
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
-				ALTER SEQUENCE "`+tableName+`_id_seq" owned by "`+tableName+`".id;
-				ALTER TABLE ONLY "`+tableName+`" ADD CONSTRAINT "`+tableName+`_pkey" PRIMARY KEY (id);`
+				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
+				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
 	fmt.Println(sql)
 	err := p.ExecSql(sql)
 	if err != nil {
@@ -124,7 +123,8 @@ func (p *Parser) NewTable() error {
 		prefix = p.TxStateIDStr
 	}
 	err = p.ExecSql(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
-		tableName, `{"general_update":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "update": {`+colsSql2+`}, "insert": "`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`", "new_column":"`+p.TxStateIDStr+`_citizens.id=`+citizenIdStr+`"}`)
+		tableName, `{"general_update":"$citizen==`+citizenIdStr+`", "update": {`+colsSql2+`}, 
+		"insert": "$citizen==`+citizenIdStr+`", "new_column":"$citizen==`+citizenIdStr+`"}`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -134,11 +134,11 @@ func (p *Parser) NewTable() error {
 
 func (p *Parser) NewTableRollback() error {
 
-	tableName := `global_`+p.TxMaps.String["table_name"]
+	tableName := `global_` + p.TxMaps.String["table_name"]
 	if p.TxMaps.Int64["global"] == 0 {
-		tableName = p.TxStateIDStr+`_`+p.TxMaps.String["table_name"]
+		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
 	}
-	err := p.ExecSql(`DROP TABLE "`+tableName+`"`)
+	err := p.ExecSql(`DROP TABLE "` + tableName + `"`)
 
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {

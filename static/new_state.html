@@ -95,26 +95,17 @@
 
 	<div id="new_state_request">
 		<div class="panel panel-default" data-sweet-alert>
-			<div class="panel-heading">
-				<div class="panel-title">
-					Create a new state or community
-				</div>
-			</div>
 			<div class="panel-body">
-				<div class="table-responsive">
-				   <table class="table table-striped table-bordered table-hover">
-					  <tbody>
-					  <tr>
-						  <td width="150">State or community name</td>
-						  <td><input class="form-control" type="text" id="state_name"></td>
-					  </tr>
-					  <tr>
-						  <td width="150">Currency name</td>
-						  <td><input class="form-control" type="text" id="currency_name"></td>
-					  </tr>
-					  </tbody>
-				   </table>
-				</div>
+				<form role="form">
+				   <div class="form-group">
+					   <label for="state_name">State or community name</label>
+					   <input class="form-control" type="text" id="state_name">
+				   </div>
+				   <div class="form-group">
+					   <label for="currency_name">Currency name</label>
+					   <input class="form-control" type="text" id="currency_name">
+				   </div>
+				</form>
 			</div>
 			<div class="panel-footer">
 			   <div class="clearfix">
