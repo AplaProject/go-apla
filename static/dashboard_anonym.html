@@ -83,6 +83,12 @@
 							render: function (data) {
 								return (data / qDLT).toString().bold() + " DLT";
 							}
+						},
+						{
+							targets: 5,
+							render: function (data) {
+								return safe_tags_replace(data);
+							}
 						}
 					],
 					createdRow: function (row, data, index) {
