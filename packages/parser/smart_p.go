@@ -34,6 +34,8 @@ func init() {
 		"DBUpdate": DBUpdate,
 		"DBString": DBString,
 		"DBInt":    DBInt,
+		"Table":    StateTable,
+		"TableTx":  StateTableTx,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -116,4 +118,12 @@ func DBString(tblname string, name string, id int64) (string, error) {
 
 func DBInt(tblname string, name string, id int64) (int64, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
+}
+
+func StateTable(p *Parser, tblname string) string {
+	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
+}
+
+func StateTableTx(p *Parser, tblname string) string {
+	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
 }
