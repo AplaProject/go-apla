@@ -23,7 +23,7 @@ import (
 
 func (c *Controller) AjaxGetMenuHtml() (string, error) {
 
-	name := c.r.FormValue("name")
+	pageName := c.r.FormValue("page")
 
 	global := c.r.FormValue("global")
 	prefix := "global"
@@ -31,7 +31,7 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 		prefix = c.StateIdStr
 	}
 
-	menuName, err := c.Single(`SELECT menu FROM "`+prefix+`_pages" WHERE name = ?`, name).String()
+	menuName, err := c.Single(`SELECT menu FROM "`+prefix+`_pages" WHERE name = ?`, pageName).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
