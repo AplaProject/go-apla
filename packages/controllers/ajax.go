@@ -45,13 +45,12 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
 		log.Error("%v", err)
-		return
 	}
 	defer sess.SessionRelease(w)
 	sessWalletId := GetSessWalletId(sess)
 	sessCitizenId := GetSessCitizenId(sess)
-	sessAddress := GetSessString(sess, "address")
 	sessStateId := GetSessInt64("state_id", sess)
+	sessAddress := GetSessString(sess, "address")
 
 	log.Debug("sessWalletId", sessWalletId)
 	log.Debug("sessCitizenId", sessCitizenId)
@@ -80,6 +79,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			dbInit = false
 		}
 	}
+	log.Debug("sessStateId", sessStateId)
 	if sessStateId > 0 {
 		stateName, err := c.GetStateName(sessStateId)
 		if err != nil {
@@ -130,7 +130,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 
 	//w.Header().Set("Access-Control-Allow-Origin", "*")
 	// Общие контролы для двух проверок
-	pages := "AjaxStatesList|SignIn|Updatedaylight|AlertFromAdmin|FreecoinProcess|RestartDb|ReloadDb|DebugInfo|CheckSetupPassword|AcceptNewKeyStatus|availableKeys|CfCatalog|CfPagePreview|CfStart|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SynchronizationBlockchain|UpdatingBlockchain|Menu|SignUpInPool|SignLogin"
+	pages := "AjaxGetMenuHtml|AjaxStatesList|SignIn|Updatedaylight|AlertFromAdmin|FreecoinProcess|RestartDb|ReloadDb|DebugInfo|CheckSetupPassword|AcceptNewKeyStatus|availableKeys|CfCatalog|CfPagePreview|CfStart|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SynchronizationBlockchain|UpdatingBlockchain|Menu|SignUpInPool|SignLogin"
 	// Почему CfCatalog,CfPagePreview,CfStart,Index,IndexCf,InstallStep0,InstallStep1,
 	// InstallStep2,Login,UpdatingBlockchain были только во втором случае? Похоже не нужны больше.
 

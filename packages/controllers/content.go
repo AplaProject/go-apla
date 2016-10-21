@@ -93,6 +93,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-type", "text/html")
 
+	log.Debug("Content")
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
 		log.Error("%v", err)
@@ -103,7 +104,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	sessStateId := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 	//	sessAccountId := GetSessInt64("account_id", sess)
-	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
+	log.Debug("sessWalletId %v / sessCitizenId %v / sessStateId %v", sessWalletId, sessCitizenId, sessStateId)
 
 	c := new(Controller)
 	c.r = r
