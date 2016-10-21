@@ -580,6 +580,8 @@ function selectboxState(data) {
 		templateSelection: formatState,
 		theme: 'bootstrap'
 	});
+	
+	selectbox.val(selectbox.find("option:first-child").val()).trigger('change');
 };
 
 function formatState(state) {
