@@ -82,7 +82,7 @@
 		<div class="start_type">
 			<h1>Installation</h1>
 			<div id="extended_div">
-				<form class="extended_form">
+				<form class="extended_form keyCode_13">
 					<fieldset class="form-group">
 						<label class="col-sm-3 control-label" for="first_load">Mode</label>
 						<div class="col-sm-9">
@@ -136,7 +136,7 @@
 
 <script>
 	$(document).on('keydown', function(e){
-		if (e.keyCode == 13) {
+		if (e.keyCode == 13 && $(".keyCode_13").length) {
 			if (!$(".select2-container--focus").length) {
 				$(".submit").click();
 				return false;

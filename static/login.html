@@ -67,7 +67,7 @@
 	<div id="login_form" class="start_form" style="display:none;" data-sweet-alert>
 		<div class="panel-body">
 			<h1>Login</h1>
-			<form>
+			<form class="keyCode_13">
 				<fieldset class="form-group" id="field-list">
 					<label class="col-sm-3 control-label" for="list"></label>
 					<div class="col-sm-9">
@@ -111,7 +111,7 @@
 		<div class="panel-body">
 			<h1 style="padding-bottom: 10px;" class="noimport">Create account</h1>
 			<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
-			<form>
+			<form class="keyCode_13">
 				<fieldset class="s-box form-group phrase">
 					<label id="lseed" class="col-sm-3 control-label" for="phrase">Account seed</label>
 					<div class="col-sm-9 text-right">
@@ -442,7 +442,7 @@ $(document).ready(function(){
 });
 
 $(document).on('keydown', function(e){
-	if (e.keyCode == 13) {
+	if (e.keyCode == 13 && $(".keyCode_13").length) {
 		if (!$(".select2-container--focus").length) {
 			if (!$(".sweet-alert").is(":visible")) {
 				$(".start_form:visible").find(".buttons:visible .submit").click();
