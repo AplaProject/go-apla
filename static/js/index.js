@@ -220,31 +220,76 @@ function Notify(message, options) {
 	btn_notify.click();
 }
 
+function CopyToClipboard(elem, text) {
+	if (clipboard) {
+		clipboard.destroy();
+	} else {
+		var clipboard = new Clipboard(elem);
+	}
+	
+	if (text) {
+		$(elem).attr("data-clipboard-text", text);
+	}
+	
+	clipboard.on('success', function(e) {
+		e.clearSelection();
+		Alert("Copied to clipboard", "", "success");
+		if (text) {
+			$(elem).attr("data-clipboard-text", "");
+		}
+	});
+	clipboard.on('error', function(e) {
+		Alert("Error copying to clipboard", "", "error");
+	});
+}
+
 function Alert(title, text, type, Confirm) {
 	if (obj) {
+		var color;
+		var btnText = "OK";
+		var _close = true;
 		var id = obj.parents(".modal").attr("id");
 		var minHeight = obj.css("min-height");
 		obj.css({"position":"relative", "min-height":"300px"});
+		
+		if (type == "success") {
+			color = "#23b7e5";
+		} else if (type == "error") {
+			color = "#f05050";
+			if (text.toLowerCase().indexOf("[error]") != -1) {
+				btnText = "Copy text error to clipboard";
+				_close = false;
+			}
+		} else if (type == "warning") {
+			color = "#ff902b";
+		} else {
+			color = "#c1c1c1";
+		}
+		
 		swal({
 			title : title,
 			text : text,
 			allowEscapeKey : false,
 			type : type,
-			html: true
+			html: true,
+			confirmButtonColor: color,
+			confirmButtonText: btnText,
+			closeOnConfirm: _close
 		}, function (isConfirm) {
+			if (text.toLowerCase().indexOf("[error]") != -1) {
+				CopyToClipboard(".sweet-alert .confirm", text);
+			}
 			if (isConfirm) {
-				//if (type == "success") {
-					if (Confirm) {
-						if (Confirm == false) {
-							return false;
-						} else {
-							Confirm();
-						}
+				if (Confirm) {
+					if (Confirm == false) {
+						return false;
+					} else {
+						Confirm();
 					}
-				//}
+				}
 				if (Confirm != false) {
-					$("#" + id).modal("hide");
 					obj.css({"min-height":minHeight}).removeClass("whirl standard");
+					$("#" + id).modal("hide");
 				}
 			}
 		});

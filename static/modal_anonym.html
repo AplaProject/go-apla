@@ -2,13 +2,7 @@
 
 <script>
 $(document).ready(function() {
-	var clipboard = new Clipboard("#clipboard");
-
-	clipboard.on('success', function(e) {
-		e.clearSelection();
-		//clipboard.destroy();
-		Alert("Success", "", "success");
-	});
+	CopyToClipboard("#clipboard");
 });
 </script>
 <div class="modal fade" id="modal_wallet_address" role="dialog" aria-labelledby="modal_wallet_address_label">
