@@ -75,7 +75,9 @@ func (p *Parser) EditContractFront() error {
 			return p.ErrInfo(err)
 		}
 		if !ret {
-			return fmt.Errorf(`Access denied`)
+			if err = p.AccessRights(`changing_smart_contracts`, false); err != nil {
+				return p.ErrInfo(err)
+			}
 		}
 	}
 
