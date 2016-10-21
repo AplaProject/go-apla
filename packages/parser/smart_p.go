@@ -86,6 +86,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) { // map[string]interface{}) {
 	//	fmt.Println(`DBInsert`, tblname, params, val, len(val))
+	if err = p.AccessTable(tblname, "insert"); err != nil {
+		return
+	}
 	var lastId string
 	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
 	if err == nil {
@@ -96,7 +99,14 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	//	fmt.Println(`DBUpdate`, tblname, id, params, val, len(val))
-	_, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, []string{`id`}, []string{utils.Int64ToStr(id)}, true)
+	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
+		return
+	}*/
+	columns := strings.Split(params, `,`)
+	if err = p.AccessColumns(tblname, columns); err != nil {
+		return
+	}
+	_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{utils.Int64ToStr(id)}, true)
 	return
 }
 

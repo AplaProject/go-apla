@@ -20,8 +20,9 @@ import (
 	//"encoding/json"
 	"encoding/json"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
 	"strings"
+
+	"github.com/DayLightProject/go-daylight/packages/utils"
 )
 
 func (p *Parser) EditTableInit() error {
@@ -45,7 +46,7 @@ func (p *Parser) EditTableFront() error {
 		return p.ErrInfo("incorrect table name")
 	}
 	prefix := s[0]
-	if prefix!="global" && prefix != p.TxStateIDStr {
+	if prefix != "global" && prefix != p.TxStateIDStr {
 		return p.ErrInfo("incorrect table name")
 	}
 
@@ -91,6 +92,9 @@ func (p *Parser) EditTableFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
+	if err = p.AccessTable(p.TxMaps.String["table_name"], `general_update`); err != nil {
+		return p.ErrInfo(err)
+	}
 
 	return nil
 }
@@ -102,7 +106,7 @@ func (p *Parser) EditTable() error {
 		return p.ErrInfo("incorrect table name")
 	}
 	prefix := s[0]
-	if prefix!="global" && prefix != p.TxStateIDStr {
+	if prefix != "global" && prefix != p.TxStateIDStr {
 		return p.ErrInfo("incorrect table name")
 	}
 

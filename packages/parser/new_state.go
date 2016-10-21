@@ -258,7 +258,7 @@ func (p *Parser) NewState() error {
 	}
 
 	err = p.ExecSql(`CREATE TABLE "` + id + `_tables" (
-				"name" bytea  NOT NULL DEFAULT '',
+				"name" varchar(100)  NOT NULL DEFAULT '',
 				"columns_and_permissions" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
@@ -272,8 +272,8 @@ func (p *Parser) NewState() error {
 	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, id+`_state_parameters.main_conditions`,
-		id+`_accounts`, `{"general_update":"`+sid+`", "update": {"amount": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, id+`_state_parameters.main_conditions`)
+		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid,
+		id+`_accounts`, `{"general_update":"`+sid+`", "update": {"amount": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -292,7 +292,7 @@ func (p *Parser) NewState() error {
 	}
 	/*
 	   *Title : Best country
-	   Navigation( LiTemplate(goverment),non-link text)
+	   Navigation( LiTemplate(government),non-link text)
 	   PageTitle : Dashboard
 	   MarkDown : ![Flag](http://davutlarhamami.com/images/indir%20%281%29.jpg)
 	   Table{
@@ -312,18 +312,32 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `Title : My country
 Navigation( Dashboard )
 PageTitle : StateValue(state_name)
 MarkDown : # Welcome, citizen!
 Image(StateValue(state_flag))
+TemplateNav(government)
+PageEnd:
+`, `menu_default`, sid,
+
+		`government`, `Title : My country
+Navigation( LiTemplate(dashboard_default, Citizen), Government dashboard)
+PageTitle : StateValue(state_name)
+MarkDown : # Welcome, government!
+Image(StateValue(state_flag))
+SysLink(listOfTables, listOfTables)
+SysLink(contracts, contracts)
+SysLink(interface, Interface)
+TemplateNav(CheckCitizens)
 TemplateNav(citizens)
 TemplateNav(AddAccount)
 TemplateNav(UpdAmount)
 TemplateNav(SendMoney)
 PageEnd:
-`, `menu_default`, sid,
+`, `government`, sid,
 
 		`citizens`, `Title : Citizens
 Navigation( Citizens )
@@ -368,19 +382,19 @@ TxForm{ Contract: TXEditProfile}
 PageEnd:`, `menu_default`, sid,
 
 		`AddAccount`, `Title : Best country
-Navigation( LiTemplate(goverment),non-link text)
+Navigation( LiTemplate(government),non-link text)
 PageTitle : Dashboard
 TxForm { Contract: AddAccount }
 PageEnd:`, `menu_default`, sid,
 
 		`UpdAmount`, `Title : Best country
-Navigation( LiTemplate(goverment),non-link text)
+Navigation( LiTemplate(government),non-link text)
 PageTitle : Dashboard
 TxForm { Contract: UpdAmount }
 PageEnd:`, `menu_default`, sid,
 
 		`SendMoney`, `Title : Best country
-Navigation( LiTemplate(goverment),non-link text)
+Navigation( LiTemplate(government),non-link text)
 PageTitle : Dashboard
 TxForm { Contract: SendMoney }
 PageEnd:`, `menu_default`, sid)
@@ -400,11 +414,15 @@ PageEnd:`, `menu_default`, sid)
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
+		(?, ?, ?),
 		(?, ?, ?)`,
-		`menu_default`, `[Tables](sys.listOfTables)
+		`menu_default`, `[dashboard](dashboard_default)`, sid,
+		`government`, `
+[Dashboard](dashboard_default)
+[Tables](sys.listOfTables)
 [Smart contracts](sys.contracts)
 [Interface](sys.interface)
-[dashboard](dashboard_default)`, sid)
+[Checking citizens](CheckCitizens)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

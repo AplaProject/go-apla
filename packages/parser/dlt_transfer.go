@@ -21,11 +21,12 @@ import (
 	"fmt"
 	"github.com/DayLightProject/go-daylight/packages/lib"
 	"encoding/hex"
+	"github.com/shopspring/decimal"
 )
 
 func (p *Parser) DLTTransferInit() error {
 
-	fields := []map[string]string{{"walletAddress": "string"}, {"amount": "int64"},  {"commission": "int64"}, {"comment": "bytes"},{"public_key": "bytes"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"walletAddress": "string"}, {"amount": "decimal"},  {"commission": "decimal"}, {"comment": "bytes"},{"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -63,16 +64,17 @@ func (p *Parser) DLTTransferFront() error {
 		}
 	}
 
-	if p.TxMaps.Int64["amount"] == 0 {
-		return p.ErrInfo("amount=0")
+	zero, _ := decimal.NewFromString("0")
+	if p.TxMaps.Decimal["amount"].Cmp(zero) <= 0  {
+		return p.ErrInfo("amount<=0")
 	}
 
-	fPrice, err := p.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").Int64()
+	fPrice, err := p.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -80,15 +82,19 @@ func (p *Parser) DLTTransferFront() error {
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
 	// fuelRate = 1 000 000 000 000 000
 	//
-	commission := int64(fPrice * fuelRate)
+	fPriceDecemal, err := decimal.NewFromString(fPrice)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	fuelRateDecemal, err := decimal.NewFromString(fuelRate)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	commission := fPriceDecemal.Mul(fuelRateDecemal)
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
-	if p.TxMaps.Int64["commission"] < commission {
-		return p.ErrInfo(fmt.Sprintf("commission %d < dltPrice %d", p.TxMaps.Int64["commission"], commission))
-	}
-
-	if p.TxMaps.Int64["amount"] <= 0 {
-		return p.ErrInfo("amount<=0")
+	if p.TxMaps.Decimal["commission"].Cmp(commission) < 0 {
+		return p.ErrInfo(fmt.Sprintf("commission %s < dltPrice %d", p.TxMaps.Decimal["commission"].String(), commission))
 	}
 
 	if string(p.TxMap["comment"]) == "null" {
@@ -105,10 +111,16 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo("incorrect sign")
 	}
 
-	// есть ли нужная сумма на кошельке
-	err = p.checkSenderDLT(p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"])
+	totalAmount, err := p.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+	totalAmountDecimal, err := decimal.NewFromString(totalAmount)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if totalAmountDecimal.Cmp(p.TxMaps.Decimal["amount"].Add(p.TxMaps.Decimal["commission"])) < 0 {
+		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", p.TxMaps.Decimal["amount"], p.TxMaps.Decimal["commission"], totalAmount))
 	}
 	return nil
 }
@@ -130,10 +142,15 @@ func (p *Parser) DLTTransfer() error {
 		return p.ErrInfo(err)
 	}
 	log.Debug("pkey %x", pkey)
+
+	amountAndCommission:= p.TxMaps.Decimal["amount"].Add(p.TxMaps.Decimal["commission"])
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{p.TxMaps.Int64["amount"], utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amountAndCommission.String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)
@@ -142,15 +159,32 @@ func (p *Parser) DLTTransfer() error {
 	if walletId == 0 {
 		log.Debug("walletId == 0");
 		log.Debug("%s", string(p.TxMaps.String["walletAddress"]));
-		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(lib.StringToAddress(p.TxMaps.String["walletAddress"]))}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(lib.StringToAddress(p.TxMaps.String["walletAddress"]))}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Int64["amount"]}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
+	// node commission
+	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.BlockData.WalletId)}, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	// пишем в общую историю тр-ий
-	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions", p.TxWalletID, walletId, p.TxMaps.String["walletAddress"], p.TxMaps.Int64["amount"], p.TxMaps.Int64["commission"],p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions", p.TxWalletID, walletId, p.TxMaps.String["walletAddress"], p.TxMaps.Decimal["amount"].String(), p.TxMaps.Decimal["commission"].String(),p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "dlt_transactions", dlt_transactions_id)
+	if err != nil {
+		return err
+	}
+
+
+	dlt_transactions_id, err = p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions", p.TxWalletID, p.BlockData.WalletId, lib.AddressToString(uint64(p.BlockData.WalletId)), p.TxMaps.Decimal["commission"].String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

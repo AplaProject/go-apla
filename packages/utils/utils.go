@@ -676,8 +676,8 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		if ok, _ := regexp.MatchString("^-?[0-9]{1,20}$", data); ok {
 			return true
 		}
-	case "decimal":
-		if ok, _ := regexp.MatchString("^[0-9]{1,30}$", data); ok {
+	case "decimal": // 1.2345678e+25
+		if ok, _ := regexp.MatchString(`^([0-9]{1,30})|([0-9]+\.[0-9]+[e]\+\[0-9]+)$`, data); ok {
 			return true
 		}
 	case "level":

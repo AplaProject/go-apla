@@ -73,7 +73,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit, `Image`: Image,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
-		`TemplateNav`: TemplateNav,
+		`TemplateNav`: TemplateNav, `SysLink`: SysLink,
 		`Title`:       Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue})
 }
@@ -250,6 +250,17 @@ func Navigation(vars *map[string]string, pars ...string) string {
 	return textproc.Macro(fmt.Sprintf(`<ol class="breadcrumb"><span class="pull-right">
 	<a href='#' onclick="load_page('editPage', {name: '#page#'} )">Edit</a></span>%s</ol>`,
 		strings.Join(li, `&nbsp;/&nbsp;`)), vars)
+}
+
+func SysLink(vars *map[string]string, pars ...string) string {
+	params := ``
+	if len(pars) < 2 {
+		return ``
+	}
+	if len(pars) >= 3 {
+		params = pars[2]
+	}
+	return fmt.Sprintf(`<a onclick="load_page('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
 }
 
 func MarkDown(vars *map[string]string, pars ...string) string {
