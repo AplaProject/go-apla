@@ -324,18 +324,14 @@ PageEnd:
 `, `menu_default`, sid,
 
 		`government`, `Title : My country
-Navigation( LiTemplate(dashboard_default, Citizen), Government dashboard)
+Navigation( LiTemplate(dashboard_default, citizen),goverment)
 PageTitle : StateValue(state_name)
 MarkDown : # Welcome, government!
-Image(StateValue(state_flag))
-SysLink(listOfTables, listOfTables)
-SysLink(contracts, contracts)
-SysLink(interface, Interface)
-TemplateNav(CheckCitizens)
-TemplateNav(citizens)
-TemplateNav(AddAccount)
-TemplateNav(UpdAmount)
-TemplateNav(SendMoney)
+SysLink(listOfTables, Tables) BR()
+SysLink(contracts, Contracts) BR()
+SysLink(interface, Interface) BR()
+TemplateNav(CheckCitizens, Check citizens)BR()
+TemplateNav(citizens, Citizens) BR()
 PageEnd:
 `, `government`, sid,
 

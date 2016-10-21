@@ -260,7 +260,7 @@ func SysLink(vars *map[string]string, pars ...string) string {
 	if len(pars) >= 3 {
 		params = pars[2]
 	}
-	return fmt.Sprintf(`<a onclick="load_page('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
+	return fmt.Sprintf(`<a href='#'onclick="load_page('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
 }
 
 func MarkDown(vars *map[string]string, pars ...string) string {
