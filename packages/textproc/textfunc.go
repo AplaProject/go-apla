@@ -39,8 +39,12 @@ func Link(vars *map[string]string, pars ...string) string {
 }
 
 func Tag(vars *map[string]string, pars ...string) string {
-	if len(pars) != 2 {
+	if len(pars) != 2 || pars[0] == `script` {
 		return ``
 	}
 	return fmt.Sprintf(`<%s>%s</%[1]s>`, pars[0], pars[1])
+}
+
+func Break(vars *map[string]string, pars ...string) string {
+	return `<br>`
 }

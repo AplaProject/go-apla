@@ -59,18 +59,19 @@ func TestFunc(t *testing.T) {
 	AddFuncs(&map[string]TextFunc{`AsIs`: AsIs})
 	input := []TestText{
 		{`AsIs : span, ("строка")`, `span, ("строка")`},
-		{`Link(http://google.com, "test, quote")`, `<a href="http://google.com" title="">test, quote</a>`},
+		{`Link(http://google.com, "test, quote")BR()`, `<a href="http://google.com" title="">test, quote</a><br>`},
 		{`Link(http://google.com, Google)`, `<a href="http://google.com" title="">Google</a>`},
 		{`Link(http://#value2#, Tag(b, Site #val1#)), Title)`, `<a href="http://test строка 1 test" title=""><b>Site строка 1</b></a>`},
 		{`Link(http://google.com, Google)
-Tag(div, Text1 
-Text 2)`, `<a href="http://google.com" title="">Google</a><div>Text1 
+Tag(div, Text1
+Text 2)`, `<a href="http://google.com" title="">Google</a>
+<div>Text1
 Text 2</div>`},
 	}
 	for _, item := range input {
 		get := Process(item.src, &vars)
 		if get != item.want {
-			t.Errorf(`wrong result %s != %s`, get, item.want)
+			t.Errorf(`wrong result [%s] != [%s]`, get, item.want)
 		}
 	}
 }
@@ -88,11 +89,12 @@ func TestMap(t *testing.T) {
 	AddMaps(&map[string]MapFunc{`Map1`: Map1, `Table1`: Table1})
 	input := []TestText{
 		{`Map1{ href: http://google.com, Name: "test, quote"}
-			Map1{ href: #val1#,
-			Name: #value2# }`, `(http://google.com:test, quote)(строка 1:test строка 1 test)`},
+		Map1{ href: #val1#,
+			Name: #value2# }`, `(http://google.com:test, quote)
+(строка 1:test строка 1 test)`},
 		{`Table1{ Table: #val1#_table
-Column: [[ID, #value2#], [Name, #val1# ooops], [Name, Call(#val1#, ooops) ]]}
-`, `Table(строка 1_table:[[ID  #value2#] [Name  #val1# ooops] [Name  Call(#val1#, ooops) ]])`},
+				Column: [[ID, #value2#], [Name, #val1# ooops], [Name, Call(#val1#, ooops) ]]}`,
+			`Table(строка 1_table:[[ID  #value2#] [Name  #val1# ooops] [Name  Call(#val1#, ooops) ]])`},
 	}
 	for _, item := range input {
 		get := Process(item.src, &vars)

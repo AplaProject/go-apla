@@ -93,7 +93,9 @@ func (p *Parser) EditTableFront() error {
 		return p.ErrInfo("incorrect sign")
 	}
 	if err = p.AccessTable(p.TxMaps.String["table_name"], `general_update`); err != nil {
-		return p.ErrInfo(err)
+		if err = p.AccessRights(`changing_tables`, false); err != nil {
+			return p.ErrInfo(err)
+		}
 	}
 
 	return nil
