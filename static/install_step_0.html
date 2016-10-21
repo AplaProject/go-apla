@@ -1,139 +1,148 @@
 {{ define "installStep0" }}
-	<style>
-		#triangles {
-			display:block;
-		}
-		.wrapper {
-			display:flex;
-			flex-flow:row wrap;
-			align-items:flex-start;
-			max-width:400px;
-			overflow-x:visible;
-			border:0px;
-			box-shadow:none;
-			background-color:transparent;
-		}
-		.wrapper > section {
-			flex:1 100%;
-			border:0px;
-			margin:0px !important;
-			transition:none !important;
-		}
+<style>
+	#triangles {
+		display:block;
+	}
+	.wrapper {
+		display:flex;
+		flex-flow:row wrap;
+		align-items:flex-start;
+		max-width:400px;
+		overflow-x:visible;
+		border:0px;
+		box-shadow:none;
+		background-color:transparent;
+	}
+	.wrapper > section {
+		flex:1 100%;
+		border:0px;
+		margin:0px !important;
+		transition:none !important;
+	}
+	.content-wrapper {
+		border-top:0px;
+		margin:0px;
+	}
+	@media only screen and (min-width: 768px) {
 		.content-wrapper {
-			border-top:0px;
-			margin:0px;
+			padding:0px;
 		}
-		@media only screen and (min-width: 768px) {
-			.content-wrapper {
-				padding:0px;
-			}
-		}
-		.flex {
-			display:flex;
-			flex-flow:row nowrap;
-			justify-content:space-between;
-		}
-		.panel {
-			margin:0px;
-		}
-		h1 {
-			margin-top:0px;
-		}
-	</style>
-	<script>
-		g_menuShow = false;  // hide menu
+	}
+	.flex {
+		display:flex;
+		flex-flow:row nowrap;
+		justify-content:space-between;
+	}
+	.panel {
+		margin:0px;
+	}
+	h1 {
+		margin-top:0px;
+	}
+</style>
+<script>
+	g_menuShow = false;  // hide menu
 
-		$('.db_settings').hide();
+	$('.db_settings').hide();
 
-			$('#extended_div').css("display", "block")
-			$("#settings_extended").prop("checked", true)
+	$('#extended_div').css("display", "block")
+	$("#settings_extended").prop("checked", true)
 
-			$('#first_load').select2({
-				minimumResultsForSearch: Infinity,
-				theme: 'bootstrap'
-			});
+	$('#first_load').select2({
+		minimumResultsForSearch: Infinity,
+		theme: 'bootstrap'
+	});
 
-				$('#url').css("display", "none");
-				$('.db_settings').show();
+	$('#url').css("display", "none");
+	$('.db_settings').show();
 
-		$('#next').bind('click', function () {
-			$('#next').prop('disabled', true);
-			NProgressStart.start();
-			$.post( 'content', {
-				'tpl_name' : 'installStep1',
-				'type' : $('input[name=settings]:checked').val(),
-				'url' : $('#url').val(),
-				'sqlite_db_url' : $('#sqlite_db_url').val(),
-				'first_load' : $('#first_load').val(),
-				'db_type' : "postgresql",
-				'host' : $('#host').val(),
-				'port' : $('#port').val(),
-				'db_name' : $('#db_name').val(),
-				'username' : $('#username').val(),
-				'password' : $('#password').val(),
-				'key_password' : $('#key_password').val()
-			}, function (data) { $('#dl_content').html( data );  NProgressStart.done(); }, 'html' );
-		} );
-	
-	</script>
-	
-	<!-- START panel-->
-	<div class="brand panel panel-default">
-		<div class="panel-body">
-			<div class="start_type">
-				<h1>Installation</h1>
-				<div id="extended_div">
-					<form class="extended_form">
-						<fieldset class="form-group">
-							<label class="col-sm-3 control-label" for="first_load">Mode</label>
-							<div class="col-sm-9">
-								<select id="first_load" class="form-control">
-									<option value="Private-net">Private-net</option>
-								</select>
-								<div>
-									<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
-								</div>
+	$('#next').bind('click', function () {
+		$('#next').prop('disabled', true);
+		NProgressStart.start();
+		$.post( 'content', {
+			'tpl_name' : 'installStep1',
+			'type' : $('input[name=settings]:checked').val(),
+			'url' : $('#url').val(),
+			'sqlite_db_url' : $('#sqlite_db_url').val(),
+			'first_load' : $('#first_load').val(),
+			'db_type' : "postgresql",
+			'host' : $('#host').val(),
+			'port' : $('#port').val(),
+			'db_name' : $('#db_name').val(),
+			'username' : $('#username').val(),
+			'password' : $('#password').val(),
+			'key_password' : $('#key_password').val()
+		}, function (data) { $('#dl_content').html( data );  NProgressStart.done(); }, 'html' );
+	} );
+</script>
+
+<!-- START panel-->
+<div class="brand panel panel-default">
+	<div class="panel-body">
+		<div class="start_type">
+			<h1>Installation</h1>
+			<div id="extended_div">
+				<form class="extended_form">
+					<fieldset class="form-group">
+						<label class="col-sm-3 control-label" for="first_load">Mode</label>
+						<div class="col-sm-9">
+							<select id="first_load" class="form-control">
+								<option value="Private-net">Private-net</option>
+							</select>
+							<div>
+								<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
 							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="host">Host</label>
-							<div class="col-sm-9">
-								<input id="host" class="form-control" type="text" value="localhost">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="port">Port</label>
-							<div class="col-sm-9">
-								<input id="port" class="form-control" type="text" value="5433">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="db_name">DB name</label>
-							<div class="col-sm-9">
-								<input id="db_name" class="form-control" type="text" value="dl">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="username">Username</label>
-							<div class="col-sm-9">
-								<input id="username" class="form-control" type="text" value="postgres">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="password">Password</label>
-							<div class="col-sm-9">
-								<input id="password" class="form-control" type="password" value="postgres">
-							</div>
-						</fieldset>
-					</form>
-				</div>
+						</div>
+					</fieldset>
+					<fieldset class="form-group db_settings">
+						<label class="col-sm-3 control-label" for="host">Host</label>
+						<div class="col-sm-9">
+							<input id="host" class="form-control" type="text" value="localhost">
+						</div>
+					</fieldset>
+					<fieldset class="form-group db_settings">
+						<label class="col-sm-3 control-label" for="port">Port</label>
+						<div class="col-sm-9">
+							<input id="port" class="form-control" type="text" value="5433">
+						</div>
+					</fieldset>
+					<fieldset class="form-group db_settings">
+						<label class="col-sm-3 control-label" for="db_name">DB name</label>
+						<div class="col-sm-9">
+							<input id="db_name" class="form-control" type="text" value="dl">
+						</div>
+					</fieldset>
+					<fieldset class="form-group db_settings">
+						<label class="col-sm-3 control-label" for="username">Username</label>
+						<div class="col-sm-9">
+							<input id="username" class="form-control" type="text" value="postgres">
+						</div>
+					</fieldset>
+					<fieldset class="form-group db_settings">
+						<label class="col-sm-3 control-label" for="password">Password</label>
+						<div class="col-sm-9">
+							<input id="password" class="form-control" type="password" value="postgres">
+						</div>
+					</fieldset>
+				</form>
 			</div>
 		</div>
-		<div class="panel-footer text-right">
-			<button class="btn btn-primary" id="next">Next</button>
-		</div>
 	</div>
-	<!-- END panel-->
-	
-	<script type="text/javascript" src="static/js/triangles.js"></script>
+	<div class="panel-footer text-right">
+		<button class="submit btn btn-primary" id="next">Next</button>
+	</div>
+</div>
+<!-- END panel-->
+
+<script>
+	$(document).on('keydown', function(e){
+		if (e.keyCode == 13) {
+			if (!$(".select2-container--focus").length) {
+				$(".submit").click();
+				return false;
+			}
+		}
+	});
+</script>
+<script type="text/javascript" src="static/js/triangles.js"></script>
 {{end}}
