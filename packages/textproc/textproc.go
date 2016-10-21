@@ -38,6 +38,7 @@ var (
 func init() {
 	engine = TextProc{syschar: '#', maps: make(map[string]MapFunc)}
 	engine.funcs = map[string]TextFunc{
+		`BR`:   Break,
 		`Link`: Link,
 		`Tag`:  Tag,
 	}
@@ -207,7 +208,7 @@ func Process(input string, vars *map[string]string) (out string) {
 				isMap--
 				//				if isFunc == 0 {
 				pmap[strings.TrimSpace(string(key))] = strings.TrimSpace(string(value))
-				out += mapProcess(string(name), &pmap, vars) + "\r\n"
+				out += mapProcess(string(name), &pmap, vars) //+ "\r\n"
 				name = name[:0]
 				//				}
 			}
@@ -247,7 +248,7 @@ func Process(input string, vars *map[string]string) (out string) {
 				}
 				continue
 			}
-			if len(params[len(params)-1]) == 0 {
+			if len(params[len(params)-1]) == 0 && ch != ')' {
 				if ch >= '!' {
 					if ch == '"' || ch == '`' {
 						pair = ch
@@ -259,7 +260,7 @@ func Process(input string, vars *map[string]string) (out string) {
 			}
 			if toLine {
 				if ch == 0xa {
-					out += funcProcess(string(name), params, vars) + "\r\n"
+					out += funcProcess(string(name), params, vars) //+ "\r\n"
 					name = name[:0]
 					isFunc = 0
 				} else {
@@ -269,7 +270,7 @@ func Process(input string, vars *map[string]string) (out string) {
 				if ch == ')' {
 					isFunc--
 					if isFunc == 0 {
-						out += funcProcess(string(name), params, vars) + "\r\n"
+						out += funcProcess(string(name), params, vars) //+ "\r\n"
 						name = name[:0]
 					}
 				}
@@ -284,6 +285,12 @@ func Process(input string, vars *map[string]string) (out string) {
 			}
 			continue
 		}
+		if ch == 0xa && len(out) > 0 {
+			out += "\n"
+		}
+		/*		if ch == 0xd && len(out) > 0 {
+				out += "\r"
+			}*/
 		if ch < '!' {
 			continue
 		}
@@ -311,7 +318,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		}
 	}
 	if toLine && isFunc > 0 {
-		out += funcProcess(string(name), params, vars) + "\r\n"
+		out += funcProcess(string(name), params, vars) //+ "\r\n"
 	}
 	return
 }
