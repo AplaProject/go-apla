@@ -60,6 +60,9 @@ func (p *Parser) EditMenuFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
+	if err = p.AccessChange(`menu`, p.TxMaps.String["name"]); err != nil {
+		return p.ErrInfo(err)
+	}
 
 	return nil
 }

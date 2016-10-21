@@ -469,3 +469,24 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	}
 	return nil
 }
+
+func (p *Parser) AccessChange(table, name string) error {
+	prefix := utils.Int64ToStr(int64(p.TxStateID))
+
+	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
+	if err != nil {
+		return err
+	}
+
+	if len(conditions) > 0 {
+		ret, err := smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
+			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+		if err != nil {
+			return err
+		}
+		if !ret {
+			return fmt.Errorf(`Access denied`)
+		}
+	}
+	return nil
+}
