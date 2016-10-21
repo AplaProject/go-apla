@@ -99,9 +99,9 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	//	fmt.Println(`DBUpdate`, tblname, id, params, val, len(val))
-	if err = p.AccessTable(tblname, "general_update"); err != nil {
+	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
 		return
-	}
+	}*/
 	columns := strings.Split(params, `,`)
 	if err = p.AccessColumns(tblname, columns); err != nil {
 		return

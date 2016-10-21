@@ -2,7 +2,7 @@
 <script>
 	var serverTime;
 
-	$('#send').bind('click', function () {
+	$('#send, #sendperm').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
@@ -132,7 +132,7 @@
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">
-		 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" >Save</button>
+		 <button type="button" class="btn btn-primary" id="sendperm" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" >Save</button>
 	  </div>
    </div>
   </div>
