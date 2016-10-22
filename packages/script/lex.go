@@ -22,6 +22,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -88,7 +90,9 @@ var (
 		`if`: KEY_IF, `else`: KEY_ELSE, `error`: KEY_ERROR, `while`: KEY_WHILE, `tx`: KEY_TX, `true`: KEY_TRUE, `false`: KEY_FALSE,
 		`var`: KEY_VAR}
 	TYPES = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
-		`int`: reflect.TypeOf(int64(0)), `float`: reflect.TypeOf(float64(0.0)), `string`: reflect.TypeOf(``)}
+		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
+		`money`: reflect.TypeOf(decimal.New(0, 0)),
+		`float`: reflect.TypeOf(float64(0.0)), `string`: reflect.TypeOf(``)}
 )
 
 type Lexem struct {

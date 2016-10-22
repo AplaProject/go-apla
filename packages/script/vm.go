@@ -19,6 +19,8 @@ package script
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/shopspring/decimal"
 )
 
 /*type ValStack struct {
@@ -175,6 +177,20 @@ func valueToBool(v interface{}) bool {
 	return false
 }
 
+func valueToDecimal(v interface{}) (ret decimal.Decimal) {
+	switch val := v.(type) {
+	case float64:
+		ret = decimal.NewFromFloat(val)
+	case string:
+		ret, _ = decimal.NewFromString(val)
+	case int64:
+		ret = decimal.New(val, 0)
+	default:
+		ret = val.(decimal.Decimal)
+	}
+	return
+}
+
 func (vm *VM) RunInit() *RunTime {
 	rt := RunTime{stack: make([]interface{}, 0, 1024), vm: vm}
 	return &rt
@@ -233,10 +249,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					}
 				} else {
 					var i int
-					//				fmt.Println(`Var`, ivar, item.Obj.Value.(int))
 					for i = len(rt.blocks) - 1; i >= 0; i-- {
 						if item.Owner == rt.blocks[i].Block {
-							rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
+							//							fmt.Println(`Var`, item.Obj.Type, item.Obj.Value, rt.blocks[i].Block.Vars[item.Obj.Value.(int)])
+
+							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
+							case `decimal.Decimal`:
+								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = valueToDecimal(rt.stack[len(rt.stack)-count+ivar])
+							default:
+								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
+							}
 							break
 						}
 					}
@@ -302,32 +324,60 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) + top[0].(string)
 			case float64:
 				bin = top[1].(float64) + top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) + top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Add(valueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) + top[0].(int64)
+				}
 			}
 		case CMD_SUB:
 			switch top[1].(type) {
 			case float64:
 				bin = top[1].(float64) - top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) - top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Sub(valueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) - top[0].(int64)
+				}
 			}
 		case CMD_MUL:
 			switch top[1].(type) {
 			case float64:
 				bin = top[1].(float64) * top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) * top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Mul(valueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) * top[0].(int64)
+				}
 			}
 		case CMD_DIV:
 			switch top[1].(type) {
 			case float64:
 				bin = top[1].(float64) / top[0].(float64)
-			default:
+			case int64:
 				if top[0].(int64) == 0 {
 					return 0, fmt.Errorf(`divided by zero`)
 				}
 				bin = top[1].(int64) / top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Div(valueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) / top[0].(int64)
+				}
 			}
 		case CMD_AND:
 			bin = valueToBool(top[1]) && valueToBool(top[0])

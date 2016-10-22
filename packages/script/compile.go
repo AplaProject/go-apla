@@ -297,6 +297,7 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 		if objInfo == nil || objInfo.Type != OBJ_VAR {
 			return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 		}
+		//		fmt.Println(`Assign Var`, lexem.Value.(string), objInfo, objInfo.Type, reflect.TypeOf(objInfo.Value), tobj)
 		ivar = VarInfo{objInfo, tobj}
 	}
 	if len(block.Code) > 0 {
