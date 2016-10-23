@@ -451,6 +451,9 @@ func (p *Parser) AccessTable(table, action string) error {
 
 func (p *Parser) AccessColumns(table string, columns []string) error {
 
+	if p.TxStateID == 0 {
+		return nil
+	}
 	prefix := utils.Int64ToStr(int64(p.TxStateID))
 
 	columnsAndPermissions, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
@@ -474,6 +477,10 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 }
 
 func (p *Parser) AccessChange(table, name string) error {
+	if p.TxStateID == 0 {
+		return nil
+	}
+
 	prefix := utils.Int64ToStr(int64(p.TxStateID))
 
 	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
