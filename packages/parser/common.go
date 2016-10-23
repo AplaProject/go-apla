@@ -427,6 +427,9 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 func (p *Parser) AccessTable(table, action string) error {
 
+	if p.TxStateID == 0 {
+		return nil
+	}
 	prefix := utils.Int64ToStr(int64(p.TxStateID))
 
 	tablePermission, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", table)
