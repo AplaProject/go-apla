@@ -19,6 +19,8 @@ package script
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/shopspring/decimal"
 )
 
 /*type ValStack struct {
@@ -171,8 +173,24 @@ func valueToBool(v interface{}) bool {
 		}
 	case bool:
 		return val
+	default:
+		return val.(decimal.Decimal).Cmp(decimal.New(0, 0)) != 0
 	}
 	return false
+}
+
+func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
+	switch val := v.(type) {
+	case float64:
+		ret = decimal.NewFromFloat(val)
+	case string:
+		ret, _ = decimal.NewFromString(val)
+	case int64:
+		ret = decimal.New(val, 0)
+	default:
+		ret = val.(decimal.Decimal)
+	}
+	return
 }
 
 func (vm *VM) RunInit() *RunTime {
@@ -233,10 +251,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					}
 				} else {
 					var i int
-					//				fmt.Println(`Var`, ivar, item.Obj.Value.(int))
 					for i = len(rt.blocks) - 1; i >= 0; i-- {
 						if item.Owner == rt.blocks[i].Block {
-							rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
+							//							fmt.Println(`Var`, item.Obj.Type, item.Obj.Value, rt.blocks[i].Block.Vars[item.Obj.Value.(int)])
+
+							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
+							case `decimal.Decimal`:
+								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
+							default:
+								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
+							}
 							break
 						}
 					}
@@ -302,32 +326,60 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) + top[0].(string)
 			case float64:
 				bin = top[1].(float64) + top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) + top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Add(ValueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) + top[0].(int64)
+				}
 			}
 		case CMD_SUB:
 			switch top[1].(type) {
 			case float64:
 				bin = top[1].(float64) - top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) - top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Sub(ValueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) - top[0].(int64)
+				}
 			}
 		case CMD_MUL:
 			switch top[1].(type) {
 			case float64:
 				bin = top[1].(float64) * top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) * top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Mul(ValueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) * top[0].(int64)
+				}
 			}
 		case CMD_DIV:
 			switch top[1].(type) {
 			case float64:
 				bin = top[1].(float64) / top[0].(float64)
-			default:
+			case int64:
 				if top[0].(int64) == 0 {
 					return 0, fmt.Errorf(`divided by zero`)
 				}
 				bin = top[1].(int64) / top[0].(int64)
+			default:
+				switch reflect.TypeOf(top[1]).String() {
+				case `decimal.Decimal`:
+					bin = top[1].(decimal.Decimal).Div(ValueToDecimal(top[0]))
+				default:
+					bin = top[1].(int64) / top[0].(int64)
+				}
 			}
 		case CMD_AND:
 			bin = valueToBool(top[1]) && valueToBool(top[0])
@@ -339,8 +391,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) == top[0].(string)
 			case float64:
 				bin = top[1].(float64) == top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) == top[0].(int64)
+			default:
+				bin = top[1].(decimal.Decimal).Cmp(top[0].(decimal.Decimal)) == 0
 			}
 			if cmd.Cmd == CMD_NOTEQ {
 				bin = !bin.(bool)
@@ -351,8 +405,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) < top[0].(string)
 			case float64:
 				bin = top[1].(float64) < top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) < top[0].(int64)
+			default:
+				bin = top[1].(decimal.Decimal).Cmp(top[0].(decimal.Decimal)) < 0
 			}
 			if cmd.Cmd == CMD_NOTLESS {
 				bin = !bin.(bool)
@@ -363,8 +419,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) > top[0].(string)
 			case float64:
 				bin = top[1].(float64) > top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) > top[0].(int64)
+			default:
+				bin = top[1].(decimal.Decimal).Cmp(top[0].(decimal.Decimal)) > 0
 			}
 			if cmd.Cmd == CMD_NOTGREAT {
 				bin = !bin.(bool)
