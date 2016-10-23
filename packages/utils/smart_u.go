@@ -29,6 +29,7 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/textproc"
 	"github.com/russross/blackfriday"
+	"github.com/shopspring/decimal"
 )
 
 type FieldInfo struct {
@@ -74,7 +75,7 @@ func init() {
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit, `Image`: Image,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
 		`TemplateNav`: TemplateNav, `SysLink`: SysLink,
-		`Title`:       Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
+		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue})
 }
 
@@ -112,8 +113,12 @@ func LoadContract(prefix string) (err error) {
 	return
 }
 
-func Balance(wallet_id int64) (float64, error) {
-	return DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Float64()
+func Balance(wallet_id int64) (decimal.Decimal, error) {
+	balance, err := DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", wallet_id).String()
+	if err != nil {
+		return decimal.New(0, 0), err
+	}
+	return decimal.NewFromString(balance)
 }
 
 func StateParam(idstate int64, name string) (string, error) {
@@ -325,7 +330,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		} else if strings.Index(fitem.Tags, `image`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "image",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
-		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` {
+		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		}

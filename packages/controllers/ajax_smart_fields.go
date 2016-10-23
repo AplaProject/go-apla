@@ -64,7 +64,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 					if strings.Index(fitem.Tags, `hidden`) >= 0 {
 						continue
 					}
-					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` {
+					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
 						fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"textinput", "txType":"%s", "title":"%s"}`,
 							fitem.Name, fitem.Type.String(), fitem.Name))
 					}

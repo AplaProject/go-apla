@@ -94,6 +94,7 @@ func init() {
 		"Sprintf": fmt.Sprintf,
 		"TxJson":  TxJson,
 		"Float":   Float,
+		"Money":   script.ValueToDecimal,
 	}, map[string]string{
 		`*smart.Contract`: `contract`,
 	}})

@@ -173,11 +173,13 @@ func valueToBool(v interface{}) bool {
 		}
 	case bool:
 		return val
+	default:
+		return val.(decimal.Decimal).Cmp(decimal.New(0, 0)) != 0
 	}
 	return false
 }
 
-func valueToDecimal(v interface{}) (ret decimal.Decimal) {
+func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
 	switch val := v.(type) {
 	case float64:
 		ret = decimal.NewFromFloat(val)
@@ -255,7 +257,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 
 							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
 							case `decimal.Decimal`:
-								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = valueToDecimal(rt.stack[len(rt.stack)-count+ivar])
+								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
 							default:
 								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
 							}
@@ -329,7 +331,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case `decimal.Decimal`:
-					bin = top[1].(decimal.Decimal).Add(valueToDecimal(top[0]))
+					bin = top[1].(decimal.Decimal).Add(ValueToDecimal(top[0]))
 				default:
 					bin = top[1].(int64) + top[0].(int64)
 				}
@@ -343,7 +345,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case `decimal.Decimal`:
-					bin = top[1].(decimal.Decimal).Sub(valueToDecimal(top[0]))
+					bin = top[1].(decimal.Decimal).Sub(ValueToDecimal(top[0]))
 				default:
 					bin = top[1].(int64) - top[0].(int64)
 				}
@@ -357,7 +359,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case `decimal.Decimal`:
-					bin = top[1].(decimal.Decimal).Mul(valueToDecimal(top[0]))
+					bin = top[1].(decimal.Decimal).Mul(ValueToDecimal(top[0]))
 				default:
 					bin = top[1].(int64) * top[0].(int64)
 				}
@@ -374,7 +376,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case `decimal.Decimal`:
-					bin = top[1].(decimal.Decimal).Div(valueToDecimal(top[0]))
+					bin = top[1].(decimal.Decimal).Div(ValueToDecimal(top[0]))
 				default:
 					bin = top[1].(int64) / top[0].(int64)
 				}
@@ -389,8 +391,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) == top[0].(string)
 			case float64:
 				bin = top[1].(float64) == top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) == top[0].(int64)
+			default:
+				bin = top[1].(decimal.Decimal).Cmp(top[0].(decimal.Decimal)) == 0
 			}
 			if cmd.Cmd == CMD_NOTEQ {
 				bin = !bin.(bool)
@@ -401,8 +405,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) < top[0].(string)
 			case float64:
 				bin = top[1].(float64) < top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) < top[0].(int64)
+			default:
+				bin = top[1].(decimal.Decimal).Cmp(top[0].(decimal.Decimal)) < 0
 			}
 			if cmd.Cmd == CMD_NOTLESS {
 				bin = !bin.(bool)
@@ -413,8 +419,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(string) > top[0].(string)
 			case float64:
 				bin = top[1].(float64) > top[0].(float64)
-			default:
+			case int64:
 				bin = top[1].(int64) > top[0].(int64)
+			default:
+				bin = top[1].(decimal.Decimal).Cmp(top[0].(decimal.Decimal)) > 0
 			}
 			if cmd.Cmd == CMD_NOTGREAT {
 				bin = !bin.(bool)

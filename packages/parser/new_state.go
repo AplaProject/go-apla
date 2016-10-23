@@ -164,13 +164,13 @@ func (p *Parser) NewState() error {
 //		LastName   string
 	}
 	func front {
-		if Balance($wallet) < Float(StateParam($StateId, "citizenship_price")) {
+		if Balance($wallet) < Money(StateParam($StateId, "citizenship_price")) {
 			error "not enough money"
 		}
 	}
 	func main {
 		Println("TXCitizenRequest main")
-		DBInsert(Sprintf( "%d_citizenship_requests", $StateId), "dlt_wallet_id,name,block_id", $wallet, $FullName, $block)
+		DBInsert(TableTx( "citizenship_requests"), "dlt_wallet_id,name,block_id", $wallet, $FullName, $block)
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
 	tx {
@@ -179,9 +179,9 @@ func (p *Parser) NewState() error {
 
 	func main {
 		Println("NewCitizen Main", $type, $citizen, $block )
-		DBInsert(Sprintf( "%d_citizens", $state), "id,block_id,name", DBString(Sprintf( "%d_citizenship_requests", $state), "dlt_wallet_id", $RequestId ), 
-		          $block, DBString(Sprintf( "%d_citizenship_requests", $state), "name", $RequestId ) )
-        DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", 1)
+		DBInsert(Table( "citizens"), "id,block_id,name", DBString(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId ), 
+		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
+        DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
 	}
 }`, `TXRejectCitizen`, `contract TXRejectCitizen {
    tx { 
@@ -189,7 +189,7 @@ func (p *Parser) NewState() error {
    }
    func main { 
   //    Println("TXRejectCitizen main", $RequestId  )
-	  DBUpdate(Sprintf( "%d_citizenship_requests", $state), $RequestId, "approved", -1)
+	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
    }
 }`, `TXEditProfile`, `contract TXEditProfile {
 	tx {
@@ -202,7 +202,7 @@ func (p *Parser) NewState() error {
 
 	}
 	func main {
-	  DBUpdate(Sprintf( "%d_citizens", $state), $citizen, "name,avatar", $FirstName, $Image)
+	  DBUpdate(Table( "citizens"), $citizen, "name,avatar", $FirstName, $Image)
   	  Println("TXEditProfile main")
 	}
 }`, `TXTest`, `contract TXTest {
@@ -221,20 +221,20 @@ func (p *Parser) NewState() error {
 	tx {
     }
 	func main {
-       DBInsert(Sprintf( "%d_accounts", $state), "citizen_id", $citizen)
+       DBInsert(Table( "accounts"), "citizen_id", $citizen)
 	}
 }`,
 
 		`SendMoney`, `contract SendMoney {
 	tx {
         RecipientAccountId int
-        Amount int
+        Amount money
     }
 
 	func main {
-	    var cur_amount int
-	    cur_amount = DBString(Sprintf( "%d_accounts", $state), "amount", $RecipientAccountId )
-        DBUpdate(Sprintf( "%d_accounts", $state), $RecipientAccountId, "amount", cur_amount + $Amount)
+	    var cur_amount money
+	    cur_amount = Money(DBString(Table("accounts"), "amount", $RecipientAccountId ))
+        DBUpdate(Table( "accounts"), $RecipientAccountId, "amount", cur_amount + $Amount)
 	}
 }`,
 
@@ -242,11 +242,11 @@ func (p *Parser) NewState() error {
 		`contract UpdAmount {
 	tx {
         AccountId int
-        Amount int
+        Amount money
     }
 
 	func main {
-        DBUpdate(Sprintf( "%d_accounts", $state), $AccountId, "amount", $Amount)
+        DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
 	}
 }`)
 	if err != nil {
@@ -470,7 +470,7 @@ PageEnd:`, `menu_default`, sid)
 	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_accounts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_accounts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
-				"amount" bigint  NOT NULL DEFAULT '0',
+				"amount" decimal(30)  NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + id + `_accounts_id_seq" owned by "` + id + `_accounts".id;
