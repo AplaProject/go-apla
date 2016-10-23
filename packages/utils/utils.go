@@ -2317,6 +2317,15 @@ func daylightUpd(url string) error {
 	return nil
 }
 
+func DaylightRestart() error {
+	log.Debug("os.Args[0]", os.Args[0])
+	err := exec.Command(os.Args[0]).Start()
+	if err != nil {
+		return ErrInfo(err)
+	}
+	return nil
+}
+
 func GetUpdVerAndUrl(host string) (string, string, error) {
 
 	update, err := GetHttpTextAnswer(host + "/update.json")
@@ -2409,4 +2418,79 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: template})
 	}
 	return ``, nil
+}
+
+
+func FirstBlock(exit bool) {
+
+	log.Debug("FirstBlock")
+
+	if *GenerateFirstBlock == 1 {
+
+		log.Debug("GenerateFirstBlock == 1")
+
+		if len(*FirstBlockPublicKey) == 0 {
+			log.Debug("len(*FirstBlockPublicKey) == 0")
+			priv, pub := lib.GenKeys()
+			err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
+			if err != nil {
+				log.Error("%v", ErrInfo(err))
+			}
+			*FirstBlockPublicKey = pub
+		}
+		if len(*FirstBlockNodePublicKey) == 0 {
+			log.Debug("len(*FirstBlockNodePublicKey) == 0")
+			priv, pub := lib.GenKeys()
+			err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
+			if err != nil {
+				log.Error("%v", ErrInfo(err))
+			}
+			*FirstBlockNodePublicKey = pub
+		}
+
+		PublicKey := *FirstBlockPublicKey
+		log.Debug("PublicKey", PublicKey)
+		//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
+		PublicKeyBytes, _ := hex.DecodeString(string(PublicKey))
+
+		NodePublicKey := *FirstBlockNodePublicKey
+		log.Debug("NodePublicKey", NodePublicKey)
+		//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
+		NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
+		Host := *FirstBlockHost
+		if len(Host) == 0 {
+			Host = "127.0.0.1"
+		}
+
+		var block, tx []byte
+		iAddress := int64(lib.Address(PublicKeyBytes))
+		now := lib.Time32()
+		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: iAddress})
+		if err != nil {
+			log.Error("%v", ErrInfo(err))
+		}
+		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
+			Time: now, WalletId: iAddress, CitizenId: 0},
+			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
+		if err != nil {
+			log.Error("%v", ErrInfo(err))
+		}
+		lib.EncodeLenByte(&block, tx)
+
+		firstBlockDir := ""
+		if len(*FirstBlockDir) == 0 {
+			firstBlockDir = *Dir
+		} else {
+			firstBlockDir = filepath.Join("", *FirstBlockDir)
+			if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
+				if err = os.Mkdir(firstBlockDir, 0755); err != nil {
+					log.Error("%v", ErrInfo(err))
+				}
+			}
+		}
+		ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
+		if exit {
+			os.Exit(0)
+		}
+	}
 }

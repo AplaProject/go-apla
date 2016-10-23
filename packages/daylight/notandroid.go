@@ -24,7 +24,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/DayLightProject/go-daylight/packages/system"
 	"github.com/DayLightProject/go-daylight/packages/tcpserver"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	_ "github.com/mattn/go-sqlite3"
@@ -68,16 +67,34 @@ func (l *boundConn) Close() error {
 	return err
 }
 
-func httpListener(ListenHttpHost, BrowserHttpHost string) {
-	l, err := net.Listen("tcp4", ListenHttpHost)
-	if err != nil {
-		log.Error(err.Error())
-		// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
-		if *utils.Console == 0 {
-			openBrowser(BrowserHttpHost)
+func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
+
+	i:=0
+	host := ListenHttpHost
+	var l net.Listener
+	var err error
+	for {
+		i++
+		if i > 7 {
+			log.Error("Error listening %d",  host)
+			panic("Error listening ")
 		}
-		log.Error(utils.ErrInfo(err).Error())
-		system.Finish(1)
+		if i > 1 {
+			host = "127.0.0."+utils.IntToStr(i)+":7"+utils.IntToStr(i)+"79"
+			*BrowserHttpHost = "http://"+host
+		}
+		log.Debug("host", host)
+		l, err = net.Listen("tcp4", host)
+		log.Debug("l", l)
+		if err == nil {
+			// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
+			/*if *utils.Console == 0 {
+				openBrowser(browser)
+			}*/
+			break
+		} else {
+			log.Error(utils.ErrInfo(err).Error())
+		}
 	}
 
 	go func() {
@@ -91,22 +108,32 @@ func httpListener(ListenHttpHost, BrowserHttpHost string) {
 }
 
 // For ipv6 on the server
-func httpListenerV6(ListenHttpHost, BrowserHttpHost string) {
-	l, err := net.Listen("tcp6", ":"+*utils.ListenHttpPort)
-	if err != nil {
-		log.Error(err.Error())
-		// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
-		if *utils.Console == 0 {
-			openBrowser(BrowserHttpHost)
+func httpListenerV6() {
+	i:=0
+	port := *utils.ListenHttpPort
+	var l net.Listener
+	var err error
+	for {
+		if i > 7 {
+			log.Error("Error listening ipv6 %d", port)
+			panic("Error listening ")
 		}
-		log.Error(utils.ErrInfo(err).Error())
-		system.Finish(1)
+		if i > 0 {
+			port = "7"+utils.IntToStr(i)+"79"
+		}
+		i++
+		l, err = net.Listen("tcp6", ":"+port)
+		if err == nil {
+			break
+		} else {
+			log.Error(utils.ErrInfo(err).Error())
+		}
 	}
 
 	go func() {
 		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
-			log.Error("Error listening:", err, ListenHttpHost)
+			log.Error("Error listening:", err)
 			panic(err)
 			//os.Exit(1)
 		}
@@ -129,32 +156,33 @@ func tcpListener() {
 		}
 
 		log.Debug("*utils.tcpHost: %v", *utils.TcpHost+":"+consts.TCP_PORT)
-		if len(*utils.TcpHost) > 0 {
+		//if len(*utils.TcpHost) > 0 {
 			// включаем листинг TCP-сервером и обработку входящих запросов
-			l, err := net.Listen("tcp", *utils.TcpHost+":"+consts.TCP_PORT)
+			l, err := net.Listen("tcp4", *utils.TcpHost+":"+consts.TCP_PORT)
 			if err != nil {
 				log.Error("Error listening:", err)
-				panic(err)
-			}
-			//defer l.Close()
-			go func() {
-				for {
-					conn, err := l.Accept()
-					if err != nil {
-						log.Error("Error accepting:", err)
-						utils.Sleep(1)
-						//panic(err)
-						//os.Exit(1)
-					} else {
-						go func(conn net.Conn) {
-							t := new(tcpserver.TcpServer)
-							t.DCDB = db
-							t.Conn = conn
-							t.HandleTcpRequest()
-						}(conn)
+				//panic(err)
+			} else {
+				//defer l.Close()
+				go func() {
+					for {
+						conn, err := l.Accept()
+						if err != nil {
+							log.Error("Error accepting:", err)
+							utils.Sleep(1)
+							//panic(err)
+							//os.Exit(1)
+						} else {
+							go func(conn net.Conn) {
+								t := new(tcpserver.TcpServer)
+								t.DCDB = db
+								t.Conn = conn
+								t.HandleTcpRequest()
+							}(conn)
+						}
 					}
-				}
-			}()
-		}
+				}()
+			}
+		//}
 	}()
 }

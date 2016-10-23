@@ -57,14 +57,20 @@
 	$('.db_settings').show();
 
 	$('#next').bind('click', function () {
+
 		$('#next').prop('disabled', true);
 		NProgressStart.start();
 		$.post( 'content', {
+			'generate_first_block' : $('input[id=generate_first_block]:checked').val(),
+			'dir' : $('#dir').val(),
+			'first_block_dir' : $('#first_block_dir').val(),
+			'tcp_host' : $('#tcp_host').val(),
+			'http_port' : $('#http_port').val(),
 			'tpl_name' : 'installStep1',
 			'type' : $('input[name=settings]:checked').val(),
 			'url' : $('#url').val(),
-			'sqlite_db_url' : $('#sqlite_db_url').val(),
 			'first_load' : $('#first_load').val(),
+			'log_level' : $('#log_level').val(),
 			'db_type' : "postgresql",
 			'host' : $('#host').val(),
 			'port' : $('#port').val(),
@@ -94,6 +100,54 @@
 							</div>
 						</div>
 					</fieldset>
+
+					<fieldset class="form-group">
+						<label class="col-sm-3 control-label" for="generate_first_block">generate_first_block</label>
+						<div class="col-sm-9">
+							<input id="generate_first_block" class="form-control" type="checkbox" value="1">
+						</div>
+					</fieldset>
+
+					<fieldset class="form-group">
+						<label class="col-sm-3 control-label" for="dir">dir</label>
+						<div class="col-sm-9">
+							<input id="dir" class="form-control" type="text" value="">
+						</div>
+					</fieldset>
+
+					<fieldset class="form-group">
+						<label class="col-sm-3 control-label" for="first_block_dir">first_block_dir</label>
+						<div class="col-sm-9">
+							<input id="first_block_dir" class="form-control" type="text" value="">
+						</div>
+					</fieldset>
+
+					<fieldset class="form-group">
+						<label class="col-sm-3 control-label" for="tcp_host">tcp_host</label>
+						<div class="col-sm-9">
+							<input id="tcp_host" class="form-control" type="text" value="">
+						</div>
+					</fieldset>
+
+					<fieldset class="form-group">
+						<label class="col-sm-3 control-label" for="http_port">http_port</label>
+						<div class="col-sm-9">
+							<input id="http_port" class="form-control" type="text" value="">
+						</div>
+					</fieldset>
+
+
+					<fieldset class="form-group">
+						<label class="col-sm-3 control-label" for="dir">log_level</label>
+						<div class="col-sm-9">
+
+							<select id="log_level" class="form-control">
+								<option value="ERROR">ERROR</option>
+								<option value="DEBUG" selected>DEBUG</option>
+							</select>
+						</div>
+					</fieldset>
+
 					<fieldset class="form-group db_settings">
 						<label class="col-sm-3 control-label" for="host">Host</label>
 						<div class="col-sm-9">

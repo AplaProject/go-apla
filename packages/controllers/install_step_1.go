@@ -22,12 +22,12 @@ import (
 	"io/ioutil"
 	"os"
 
+	"encoding/hex"
 	"github.com/DayLightProject/go-daylight/packages/consts"
 	"github.com/DayLightProject/go-daylight/packages/lib"
 	"github.com/DayLightProject/go-daylight/packages/static"
 	"github.com/DayLightProject/go-daylight/packages/utils"
 	"github.com/astaxie/beego/config"
-	"encoding/hex"
 )
 
 type installStep1Struct struct {
@@ -38,7 +38,32 @@ type installStep1Struct struct {
 func (c *Controller) InstallStep1() (string, error) {
 
 	c.r.ParseForm()
+	dir := c.r.FormValue("dir")
+	if dir != "" {
+		*utils.Dir = dir
+	}
+	generateFirstBlock := c.r.FormValue("generate_first_block")
+	if generateFirstBlock != "" {
+		*utils.GenerateFirstBlock = utils.StrToInt64(generateFirstBlock)
+	}
+	firstBlockDir := c.r.FormValue("first_block_dir")
+	*utils.FirstBlockDir = *utils.Dir
+	if firstBlockDir != "" {
+		*utils.FirstBlockDir = firstBlockDir
+	}
 	installType := c.r.FormValue("type")
+	tcpHost := c.r.FormValue("tcp_host")
+	if tcpHost != "" {
+		*utils.TcpHost = tcpHost
+	}
+	httpPort := c.r.FormValue("http_port")
+	if httpPort != "" {
+		*utils.ListenHttpPort = httpPort
+	}
+	logLevel := c.r.FormValue("log_level")
+	if logLevel != "DEBUG" {
+		logLevel = "ERROR"
+	}
 	url := c.r.FormValue("url")
 	firstLoad := c.r.FormValue("first_load")
 	dbType := c.r.FormValue("db_type")
@@ -56,8 +81,12 @@ func (c *Controller) InstallStep1() (string, error) {
 		ioutil.WriteFile(*utils.Dir+"/config.ini", []byte(``), 0644)
 	}
 	confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-	confIni.Set("log_level", "ERROR")
+	confIni.Set("log_level", logLevel)
 	confIni.Set("install_type", installType)
+	confIni.Set("dir", *utils.Dir)
+	confIni.Set("tcp_host", *utils.TcpHost)
+	confIni.Set("http_port", *utils.ListenHttpPort)
+	confIni.Set("first_block_dir", *utils.FirstBlockDir)
 	confIni.Set("db_type", dbType)
 	confIni.Set("db_user", dbUsername)
 	confIni.Set("db_host", dbHost)
@@ -82,6 +111,18 @@ func (c *Controller) InstallStep1() (string, error) {
 			log.Error("%v", utils.ErrInfo(err))
 			panic(err)
 			os.Exit(1)
+		}
+
+		err = c.DCDB.ExecSql(`DROP SCHEMA public CASCADE`)
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+			panic(err)
+		}
+
+		err = c.DCDB.ExecSql(`CREATE SCHEMA public`)
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+			panic(err)
 		}
 
 		schema, err := static.Asset("static/schema.sql")
@@ -112,8 +153,35 @@ func (c *Controller) InstallStep1() (string, error) {
 			os.Exit(1)
 		}
 
-		// если есть значит это тестовый запуск с генерацией 1block
-		if _, err := os.Stat(*utils.Dir + "/NodePrivateKey"); err == nil {
+
+		log.Debug("GenerateFirstBlock", *utils.GenerateFirstBlock)
+
+		if _, err := os.Stat(*utils.FirstBlockDir + "/1block"); os.IsNotExist(err) {
+
+			// If there is no key, this is the first run and the need to create them in the working directory.
+			if _, err := os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
+
+				if len(*utils.FirstBlockPublicKey) == 0 {
+					priv, pub := lib.GenKeys()
+					err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
+					if err != nil {
+						log.Error("%v", utils.ErrInfo(err))
+					}
+					*utils.FirstBlockPublicKey = pub
+				}
+				if len(*utils.FirstBlockNodePublicKey) == 0 {
+					priv, pub := lib.GenKeys()
+					err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
+					if err != nil {
+						log.Error("%v", utils.ErrInfo(err))
+					}
+					*utils.FirstBlockNodePublicKey = pub
+				}
+			}
+
+			utils.FirstBlock(false)
+
+			log.Debug("1block")
 
 			NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
 			err = c.DCDB.ExecSql(`INSERT INTO my_node_keys (private_key, block_id) VALUES (?, ?)`, NodePrivateKey, 1)
@@ -133,6 +201,13 @@ func (c *Controller) InstallStep1() (string, error) {
 				panic(err)
 				os.Exit(1)
 			}
+			err = utils.DaylightRestart()
+			if err != nil {
+				log.Error("%v", utils.ErrInfo(err))
+				panic(err)
+				os.Exit(1)
+			}
+
 		}
 	}()
 

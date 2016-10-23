@@ -70,7 +70,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		*utils.Dir = dir
 	}
 
-	firstBlock()
+	utils.FirstBlock(true)
 
 	IosLog("dir:" + dir)
 	fmt.Println("utils.Dir", *utils.Dir)
@@ -88,6 +88,18 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		configIni, err = configIni_.GetSection("default")
 	}
 
+	if *utils.TcpHost == "" {
+		*utils.TcpHost = configIni["tcp_host"]
+	}
+	if *utils.FirstBlockDir == "" {
+		*utils.FirstBlockDir = configIni["first_block_dir"]
+	}
+	if *utils.ListenHttpPort == "" {
+		*utils.ListenHttpPort = configIni["http_port"]
+	}
+	if *utils.Dir == "" {
+		*utils.Dir = configIni["dir"]
+	}
 	/*	outfile, err := os.Create("./out.txt")
 	    if err != nil {
 	        panic(err)
@@ -323,7 +335,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	ListenHttpHost := *utils.TcpHost + ":" + *utils.ListenHttpPort
 	go func() {
 		// уже прошли процесс инсталяции, где юзер указал БД и был перезапуск кошелька
-		if len(configIni["db_type"]) > 0 && !utils.Mobile() {
+		if len(configIni["db_type"]) > 0 {
 			for {
 				// ждем, пока произойдет подключение к БД в другой гоурутине
 				if utils.DB == nil || utils.DB.DB == nil {
@@ -368,9 +380,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		fmt.Println("ListenHttpHost", ListenHttpHost)
 
-		httpListener(ListenHttpHost, BrowserHttpHost)
+		httpListener(ListenHttpHost, &BrowserHttpHost)
 		// for ipv6 server
-		httpListenerV6(ListenHttpHost, BrowserHttpHost)
+		httpListenerV6()
 
 		if *utils.Console == 0 && !utils.Mobile() {
 			utils.Sleep(1)
