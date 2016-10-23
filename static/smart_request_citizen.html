@@ -86,9 +86,7 @@
 		if (!id) {
 			id = 1;
 		}
-		
 		msg.hide();
-		container.html("");
 		$("#refresh").click();
 		$.ajax({
 			type: 'GET',
@@ -100,6 +98,7 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
+				container.html("");
 				showFields();
 				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
 				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
@@ -179,7 +178,7 @@
 		});
 	}
 	
-	Country();
+//	Country();
 	// Example of ajax_citizen_fields
 	/*$.get( 'ajax?json=ajax_citizen_fields',{state_id: 1}, function(data) {
 		console.log(data);
