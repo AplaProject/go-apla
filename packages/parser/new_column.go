@@ -130,9 +130,11 @@ func (p *Parser) NewColumn() error {
 		return err
 	}
 
-	err = p.ExecSql(`CREATE INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + p.TxMaps.String["table_name"] + `" (` + p.TxMaps.String["column_name"] + `)`)
-	if err != nil {
-		return err
+	if p.TxMaps.Int64["index"] == 1 {
+		err = p.ExecSql(`CREATE INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + p.TxMaps.String["table_name"] + `" (` + p.TxMaps.String["column_name"] + `)`)
+		if err != nil {
+			return err
+		}
 	}
 
 
@@ -148,9 +150,12 @@ func (p *Parser) NewColumnRollback() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`DROP INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index"`)
-	if err != nil {
-		return err
+
+	if p.TxMaps.Int64["index"] == 1 {
+		err = p.ExecSql(`DROP INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index"`)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

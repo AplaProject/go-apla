@@ -143,10 +143,14 @@ func (p *Parser) DLTTransfer() error {
 	}
 	log.Debug("pkey %x", pkey)
 
+	log.Debug("amount %s", p.TxMaps.Decimal["amount"])
+	log.Debug("commission %s", p.TxMaps.Decimal["commission"])
 	amountAndCommission:= p.TxMaps.Decimal["amount"].Add(p.TxMaps.Decimal["commission"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	log.Debug("amountAndCommission %s", amountAndCommission)
+	log.Debug("amountAndCommission %s", amountAndCommission.String())
 	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
 		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
@@ -168,7 +172,7 @@ func (p *Parser) DLTTransfer() error {
 	}
 
 	// node commission
-	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.BlockData.WalletId)}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["commission"].String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.BlockData.WalletId)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
