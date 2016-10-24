@@ -332,6 +332,7 @@ SysLink(contracts, Contracts) BR()
 SysLink(interface, Interface) BR()
 TemplateNav(CheckCitizens, Check citizens)BR()
 TemplateNav(citizens, Citizens) BR()
+AppNav(avatar, App Avatar) BR()
 PageEnd:
 `, `government`, sid,
 

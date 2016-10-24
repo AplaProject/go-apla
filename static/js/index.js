@@ -197,6 +197,20 @@ function load_template(page, parameters) {
 		}, "html");
 }
 
+function load_app(page) {
+	clearAllTimeouts();
+	NProgress.set(1.0);
+	$.post("app?name="+page,{},
+		function(data) {
+			$(".sweet-overlay, .sweet-alert").remove();
+			$('#dl_content').html( data );
+			window.scrollTo(0,0);
+			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
+				$('.sidebar-collapse').collapse('toggle');
+		}, "html");
+}
+
+
 function Demo() {
 	var id = $("#demo");
 	var val = id.val();

@@ -360,6 +360,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.HandleFunc(HandleHttpHost+"/", controllers.Index)
 		http.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 		http.HandleFunc(HandleHttpHost+"/template", controllers.Template)
+		http.HandleFunc(HandleHttpHost+"/app", controllers.App)
 		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
