@@ -67,6 +67,38 @@ func (p *Parser) getExtend() *map[string]interface{} {
 }
 
 func (p *Parser) CallContract(flags int) (err error) {
+
+	if len(p.PublicKeys) == 0 {
+		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?",
+			p.TxPtr.(*consts.TXHeader).WalletId).String()
+		//	fmt.Println(`HASH`, p.TxHash)
+		//	fmt.Println(`TX Call DATA`, p.TxPtr.(*consts.TXHeader).WalletId, err, data)
+
+		if err != nil {
+			return err
+		}
+		if len(data["public_key_0"]) == 0 {
+			return fmt.Errorf("unknown wallet id")
+		} else {
+			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
+			/*		if len(data["public_key_1"]) > 10 {
+						p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
+					}
+					if len(data["public_key_2"]) > 10 {
+						p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
+					}*/
+		}
+	}
+
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxPtr.(*consts.TXHeader).Sign, false)
+	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
+	if err != nil {
+		return err
+	}
+	if !CheckSignResult {
+		return fmt.Errorf("incorrect sign")
+	}
+
 	methods := []string{`init`, `front`, `main`}
 	p.TxContract.Extend = p.getExtend()
 	for i := uint32(0); i < 3; i++ {

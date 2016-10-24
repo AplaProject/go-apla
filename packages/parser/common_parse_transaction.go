@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/EGaaS/go-mvp/packages/consts"
 	"github.com/EGaaS/go-mvp/packages/lib"
@@ -64,6 +65,10 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			if contract == nil {
 				return nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
 			}
+			forsign := fmt.Sprintf("%d,%d,%d,%d,%d", p.TxPtr.(*consts.TXHeader).Type,
+				p.TxPtr.(*consts.TXHeader).Time, p.TxPtr.(*consts.TXHeader).WalletId,
+				p.TxPtr.(*consts.TXHeader).StateId, p.TxPtr.(*consts.TXHeader).Flags)
+
 			p.TxContract = contract
 			p.TxData = make(map[string]interface{})
 			for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
@@ -102,7 +107,13 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				if err != nil {
 					return nil, err
 				}
+				if strings.Index(fitem.Tags, `image`) >= 0 {
+					continue
+				}
+				forsign += fmt.Sprintf(",%v", v)
+
 			}
+			p.TxData[`forsign`] = forsign
 			//			fmt.Println(`Contract data`, p.TxData)
 		} else if isStruct {
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
