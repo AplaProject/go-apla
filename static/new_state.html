@@ -57,8 +57,8 @@
 
 
 	$('#go_to_the_state').bind('click', function () {
-		$.get( 'ajax?json=set_state&state_id='+$("#countries").val()+'&citizen_id=1', function (data) {
-			load_page("listOfTables");
+		$.get( 'ajax?json=set_state&state_id='+$("#countries").val()+'&citizen_id={{.WalletId}}', function (data) {
+			load_template("dashboard_default");
 			load_menu();
 		}, "json" );
 	});
