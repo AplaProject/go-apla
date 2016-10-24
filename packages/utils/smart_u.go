@@ -23,11 +23,11 @@ import (
 	//	"reflect"
 	"strings"
 
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/script"
-	"github.com/DayLightProject/go-daylight/packages/smart"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/textproc"
+	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/script"
+	"github.com/EGaaS/go-mvp/packages/smart"
+	"github.com/EGaaS/go-mvp/packages/static"
+	"github.com/EGaaS/go-mvp/packages/textproc"
 	"github.com/russross/blackfriday"
 	"github.com/shopspring/decimal"
 )

@@ -20,7 +20,7 @@ import (
 	//	"fmt"
 	"hash/crc64"
 
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/lib"
 )
 
 type EvalCode struct {

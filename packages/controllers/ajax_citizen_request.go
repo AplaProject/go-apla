@@ -19,7 +19,7 @@ package controllers
 import (
 	//	"strings"
 
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 const ACitizenRequest = `ajax_citizen_request`

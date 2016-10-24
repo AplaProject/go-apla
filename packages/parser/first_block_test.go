@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"testing"
 
-	//"github.com/DayLightProject/go-daylight/packages/utils"
+	//"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 type InputTest struct {

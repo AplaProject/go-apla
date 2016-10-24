@@ -19,7 +19,7 @@ package tcpserver
 import (
 	"flag"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"github.com/op/go-logging"
 	"net"
 	"runtime"

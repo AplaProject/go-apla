@@ -20,7 +20,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 const AGetUid = `ajax_get_uid`

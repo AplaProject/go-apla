@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/lib"
 )
 
 const AHistory = `ajax_history`

@@ -24,8 +24,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/test"
+	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/test"
 )
 
 type ByteTest struct {

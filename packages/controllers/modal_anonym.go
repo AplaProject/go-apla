@@ -17,8 +17,8 @@
 package controllers
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 type modalAnonymPage struct {

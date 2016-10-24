@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/script"
-	"github.com/DayLightProject/go-daylight/packages/smart"
+	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/script"
+	"github.com/EGaaS/go-mvp/packages/smart"
 )
 
 const APrepareTx = `ajax_prepare_tx`

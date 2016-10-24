@@ -22,7 +22,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"testing"
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/lib"
 )
 
 

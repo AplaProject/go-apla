@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"errors"
-	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/consts"
 )
 
 func getLocation() (*coordinates, error) {

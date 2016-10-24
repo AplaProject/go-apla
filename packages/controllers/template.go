@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 func Template(w http.ResponseWriter, r *http.Request) {

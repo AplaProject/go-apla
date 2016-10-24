@@ -23,10 +23,10 @@ import (
 	"os"
 
 	"encoding/hex"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/static"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
 )
 

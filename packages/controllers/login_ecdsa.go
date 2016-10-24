@@ -18,8 +18,8 @@ package controllers
 
 import (
 	//	"bytes"
-	//	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	//	"github.com/EGaaS/go-mvp/packages/static"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	//	"html/template"
 	//	"fmt"
 )

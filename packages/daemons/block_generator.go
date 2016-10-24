@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/parser"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/parser"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	_ "github.com/lib/pq"
 )
 

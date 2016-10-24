@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"math/big"
 	"flag"
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/lib"
 	"io/ioutil"
 )
 

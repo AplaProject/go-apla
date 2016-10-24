@@ -21,8 +21,8 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/DayLightProject/go-daylight/packages/lib"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	qrcode "github.com/skip2/go-qrcode"
 )
 

@@ -20,18 +20,18 @@ package daylight
 
 import (
 	//"fmt"
-	//"github.com/DayLightProject/go-daylight/packages/consts"
+	//"github.com/EGaaS/go-mvp/packages/consts"
 	"net"
 	"net/http"
 
-	"github.com/DayLightProject/go-daylight/packages/tcpserver"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/tcpserver"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	_ "github.com/mattn/go-sqlite3"
 	//"os"
 	//"regexp"
 	"time"
 
-	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/consts"
 )
 
 func IosLog(text string) {

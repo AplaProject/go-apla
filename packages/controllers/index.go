@@ -19,8 +19,8 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/static"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"html/template"
 	"net/http"
 	"regexp"

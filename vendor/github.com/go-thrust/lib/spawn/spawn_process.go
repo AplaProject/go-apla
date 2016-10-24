@@ -10,7 +10,7 @@ import (
 	"runtime"
 	. "github.com/go-thrust/lib/common"
 	"github.com/go-thrust/lib/connection"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 const (

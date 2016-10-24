@@ -1,6 +1,6 @@
 ## Golang logging library
 
-[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/DayLightProject/go-daylight/vendor/src/github.com/op/go-logging) [![build](https://img.shields.io/travis/op/go-logging.svg?style=flat)](https://travis-ci.org/op/go-logging)
+[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/EGaaS/go-mvp/vendor/src/github.com/op/go-logging) [![build](https://img.shields.io/travis/op/go-logging.svg?style=flat)](https://travis-ci.org/op/go-logging)
 
 Package logging implements a logging infrastructure for Go. Its output format
 is customizable and supports different logging backends like syslog, file and
@@ -20,7 +20,7 @@ package main
 import (
 	"os"
 
-	"github.com/DayLightProject/go-daylight/vendor/src/github.com/op/go-logging"
+	"github.com/EGaaS/go-mvp/vendor/src/github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("example")
@@ -70,19 +70,19 @@ func main() {
 
 ### Using *go get*
 
-    $ go get github.com/DayLightProject/go-daylight/vendor/src/github.com/op/go-logging
+    $ go get github.com/EGaaS/go-mvp/vendor/src/github.com/op/go-logging
 
 After this command *go-logging* is ready to use. Its source will be in:
 
-    $GOROOT/src/pkg/github.com/DayLightProject/go-daylight/vendor/src/github.com/op/go-logging
+    $GOROOT/src/pkg/github.com/EGaaS/go-mvp/vendor/src/github.com/op/go-logging
 
 You can use `go get -u` to update the package.
 
 ## Documentation
 
-For docs, see http://godoc.org/github.com/DayLightProject/go-daylight/vendor/src/github.com/op/go-logging or run:
+For docs, see http://godoc.org/github.com/EGaaS/go-mvp/vendor/src/github.com/op/go-logging or run:
 
-    $ godoc github.com/DayLightProject/go-daylight/vendor/src/github.com/op/go-logging
+    $ godoc github.com/EGaaS/go-mvp/vendor/src/github.com/op/go-logging
 
 ## Additional resources
 

@@ -1,7 +1,7 @@
 {
 	"default" : {
 		"Branch" : "pre-ylomakin",
-		"GitRoot" : "https://github.com/DayLightProject/go-daylight",
+		"GitRoot" : "https://github.com/EGaaS/go-mvp",
 		"TempPath" : "c:\\tmp",
 		"GoPath" : "c:\\go-projects",
 		"BinData" : "c:\\go-projects\\bin\\go-bindata.exe",

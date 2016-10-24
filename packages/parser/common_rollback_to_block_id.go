@@ -18,7 +18,7 @@ package parser
 
 import (
 	"database/sql"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 func (p *Parser) RollbackToBlockId(blockId int64) error {

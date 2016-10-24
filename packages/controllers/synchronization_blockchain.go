@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"net/http"
 	"os"
 	"time"

@@ -22,10 +22,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/parser"
-	"github.com/DayLightProject/go-daylight/packages/static"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/parser"
+	"github.com/EGaaS/go-mvp/packages/static"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	_ "github.com/lib/pq"
 )
 

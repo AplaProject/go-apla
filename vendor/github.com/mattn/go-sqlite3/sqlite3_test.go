@@ -824,7 +824,7 @@ func TestSuite(t *testing.T) {
 }
 
 // TODO: Execer & Queryer currently disabled
-// https://github.com/DayLightProject/go-daylight/vendor/src/github.com/mattn/go-sqlite3/issues/82
+// https://github.com/EGaaS/go-mvp/vendor/src/github.com/mattn/go-sqlite3/issues/82
 func TestExecer(t *testing.T) {
 	tempFilename := TempFilename(t)
 	defer os.Remove(tempFilename)

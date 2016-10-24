@@ -23,9 +23,9 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/smart"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/smart"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
 )

@@ -19,8 +19,8 @@ package parser
 import (
 	"encoding/hex"
 
-	"github.com/DayLightProject/go-daylight/packages/consts"
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/lib"
 	//	b58 "github.com/jbenet/go-base58"
 )
 

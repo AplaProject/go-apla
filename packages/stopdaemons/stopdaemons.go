@@ -18,10 +18,10 @@ package stopdaemons
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"github.com/op/go-logging"
 	"os"
-	"github.com/DayLightProject/go-daylight/packages/system"
+	"github.com/EGaaS/go-mvp/packages/system"
 )
 
 var log = logging.MustGetLogger("stop_daemons")

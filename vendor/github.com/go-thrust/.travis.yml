@@ -2,7 +2,7 @@ language: go
 go:
   - tip
 before_install:
-  - go get github.com/DayLightProject/go-daylight/vendor/src/github.com/mattn/gom
+  - go get github.com/EGaaS/go-mvp/vendor/src/github.com/mattn/gom
 script:
   - $HOME/gopath/bin/gom install
   - $HOME/gopath/bin/gom test ./_vendor/src/github.com/go-thrust/

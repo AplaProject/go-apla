@@ -17,9 +17,9 @@
 package parser
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/lib"
 	"encoding/hex"
 	"github.com/shopspring/decimal"
 )

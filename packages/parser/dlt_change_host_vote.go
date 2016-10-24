@@ -18,9 +18,9 @@ package parser
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"encoding/hex"
-	"github.com/DayLightProject/go-daylight/packages/lib"
+	"github.com/EGaaS/go-mvp/packages/lib"
 )
 
 func (p *Parser) DLTChangeHostVoteInit() error {

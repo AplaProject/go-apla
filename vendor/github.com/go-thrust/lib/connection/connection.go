@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-thrust/lib/commands"
 	. "github.com/go-thrust/lib/common"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 const (

@@ -19,8 +19,8 @@ package parser
 import (
 	"fmt"
 
-	"github.com/DayLightProject/go-daylight/packages/smart"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/smart"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 func (p *Parser) EditContractInit() error {

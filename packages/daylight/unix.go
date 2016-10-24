@@ -20,7 +20,7 @@
 package daylight
 
 import (
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"syscall"
 )
 

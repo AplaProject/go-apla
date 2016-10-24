@@ -33,8 +33,8 @@ import (
 )
 
 const (
-//	GITPATH = `github.com/DayLightProject/go-daylight`
-	GITPATH = `github.com/DayLightProject/go-daylight`
+//	GITPATH = `github.com/EGaaS/go-mvp`
+	GITPATH = `github.com/EGaaS/go-mvp`
 )
 
 var (
@@ -43,7 +43,7 @@ var (
 
 type Settings struct {
 	Branch    string   // Branch name 
-	GitRoot   string   // https://github.com/DayLightProject/go-daylight
+	GitRoot   string   // https://github.com/EGaaS/go-mvp
 	TempPath  string   // Temporary path
 	OutFile   string   // Output daylight executable file
 	GoPath    string   // GOPATH

@@ -19,7 +19,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/DayLightProject/go-daylight/packages/consts"
+	"github.com/EGaaS/go-mvp/packages/consts"
 )
 
 func (p *Parser) NewCitizenInit() error {

@@ -21,10 +21,10 @@ package stopdaemons
 import (
 	"os"
 	"syscall"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 	"fmt"
 	"os/signal"
-	"github.com/DayLightProject/go-daylight/packages/system"
+	"github.com/EGaaS/go-mvp/packages/system"
 )
 
 /*

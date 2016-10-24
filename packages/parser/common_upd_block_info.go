@@ -18,7 +18,7 @@ package parser
 
 import (
 	"fmt"
-	"github.com/DayLightProject/go-daylight/packages/utils"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 func (p *Parser) UpdBlockInfo() {

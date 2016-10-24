@@ -56,9 +56,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DayLightProject/go-daylight/vendor/src/github.com/astaxie/beego/session"
+	"github.com/EGaaS/go-mvp/vendor/src/github.com/astaxie/beego/session"
 
-	_ "github.com/DayLightProject/go-daylight/vendor/src/github.com/lib/pq"
+	_ "github.com/EGaaS/go-mvp/vendor/src/github.com/lib/pq"
 )
 
 var postgresqlpder = &PostgresqlProvider{}
