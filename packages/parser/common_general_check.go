@@ -72,6 +72,7 @@ func (p *Parser) generalCheck() error {
 			}
 		}
 	} else {
+		log.Debug(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = %d`, p.TxCitizenID)
 		data, err := p.OneRow(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = ?`, utils.Int64ToStr(p.TxCitizenID)).String()
 		if err != nil {
 			return utils.ErrInfo(err)
