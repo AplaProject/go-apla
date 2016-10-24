@@ -55,10 +55,10 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["new_node_public_key"])
+	forSign := fmt.Sprintf("%s,%s,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["new_node_public_key"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil || !CheckSignResult {
-		return p.ErrInfo("incorrect sign")
+		return p.ErrInfo("incorrect sign "+forSign)
 	}
 	return nil
 }

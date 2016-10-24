@@ -185,6 +185,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	logLevel_ := "DEBUG"
 	if *utils.LogLevel == "" {
 		logLevel_ = configIni["log_level"]
+		*utils.LogLevel = logLevel_
 	} else {
 		logLevel_ = *utils.LogLevel
 	}
@@ -194,7 +195,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		log.Error("%v", utils.ErrInfo(err))
 	}
 
-	log.Debug("logLevel: %v", logLevel)
+	log.Error("logLevel: %v", logLevel)
 	backendLeveled.SetLevel(logLevel, "")
 	logging.SetBackend(backendLeveled)
 

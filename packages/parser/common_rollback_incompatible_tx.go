@@ -56,10 +56,12 @@ func (p *Parser) RollbackIncompatibleTx(typesArr []string) error {
 
 
 		// создаем тр-ию, которую потом заново проверим
+		log.Debug("DELETE FROM queue_tx  WHERE hex(hash) = %s", md5)
 		err = p.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", md5)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
+		log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", md5, utils.BinToHex([]byte(txData)))
 		err = p.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, utils.BinToHex([]byte(txData)))
 		if err != nil {
 			return utils.ErrInfo(err)

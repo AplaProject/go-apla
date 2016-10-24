@@ -221,6 +221,7 @@ ALTER TABLE ONLY "queue_blocks" ADD CONSTRAINT queue_blocks_pkey PRIMARY KEY (ha
 DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
 "hash" bytea  NOT NULL DEFAULT '',
 "data" bytea NOT NULL DEFAULT '',
+"from_gate" int NOT NULL DEFAULT '0',
 "_tmp_node_user_id" VARCHAR(255) DEFAULT ''
 );
 ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);

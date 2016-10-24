@@ -155,7 +155,7 @@ func (p *Parser) CheckLogTx(tx_binary []byte, transactions, queue_tx bool) error
 
 	if transactions {
 		// проверим, нет ли у нас такой тр-ии
-		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
+		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ? and verified = 1", utils.Md5(tx_binary)).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
@@ -399,6 +399,7 @@ func (p *Parser) BlockError(err error) {
 		errText = errText[:255]
 	}
 	p.DeleteQueueTx([]byte(p.TxHash))
+	log.Debug("UPDATE transactions_status SET error = %s WHERE hex(hash) = %x", errText, p.TxHash)
 	p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
 }
 

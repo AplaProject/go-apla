@@ -153,15 +153,18 @@ func (p *Parser) ParseDataRollback() error {
 			}
 			// даем юзеру понять, что его тр-ия не в блоке
 			err = p.ExecSql("UPDATE transactions_status SET block_id = 0 WHERE hex(hash) = ?", p.TxHash)
+			log.Debug("UPDATE transactions_status SET block_id = 0 WHERE hex(hash) = %s", p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 			// пишем тр-ию в очередь на проверку, авось пригодится
 			dataHex := utils.BinToHex(transactionBinaryData)
+			log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", p.TxHash)
 			err = p.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
+			log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", p.TxHash, dataHex)
 			err = p.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", p.TxHash, dataHex)
 			if err != nil {
 				return p.ErrInfo(err)

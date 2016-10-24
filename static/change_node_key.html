@@ -15,7 +15,7 @@
 				//$("#sign").css("display", "block");
 				$("#public_key").val( keys.public_key );
 				$("#private_key").val( keys.private_key );
-				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},{{.CitizenId}},'+$("#public_key").val() );
+				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$("#public_key").val() );
 				doSign();
 				$("#send_to_net").trigger("click");
 

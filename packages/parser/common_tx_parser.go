@@ -51,9 +51,17 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		if len(errText) > 255 {
 			errText = errText[:255]
 		}
-		err = p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, hashHex)
+		fromGate, err := p.Single("SELECT from_gate FROM queue_tx WHERE hex(hash) = ?", hashHex).Int64()
 		if err != nil {
 			return utils.ErrInfo(err)
+		}
+		log.Debug("fromGate %d", fromGate)
+		if fromGate == 0 {
+			log.Debug("UPDATE transactions_status SET error = %s WHERE hex(hash) = %s", errText, hashHex)
+			err = p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, hashHex)
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
 		}
 	} else {
 
@@ -96,6 +104,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 
+	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", hashHex)
 	err := p.ExecSql("DELETE FROM queue_tx WHERE hex(hash) = ?", hashHex)
 	if err != nil {
 		return utils.ErrInfo(err)

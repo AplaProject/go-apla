@@ -1507,10 +1507,12 @@ func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
 
 func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 
-	err := db.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", Md5(data))
+	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", Md5(data))
+	err := db.ExecSql("DELETE FROM queue_tx WHERE hex(hash) = ?", Md5(data))
 	if err != nil {
 		return ErrInfo(err)
 	}
+	log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", Md5(data), BinToHex(data))
 	err = db.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", Md5(data), BinToHex(data))
 	if err != nil {
 		return ErrInfo(err)

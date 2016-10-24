@@ -233,8 +233,8 @@ func (t *TcpServer) Type1() {
 					return
 				}
 
-				log.Debug("INSERT INTO queue_tx (hash, data) %s, %d, %s", utils.Md5(txBinData), txHex)
-				err = t.ExecSql(`INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])`, utils.Md5(txBinData), txHex)
+				log.Debug("INSERT INTO queue_tx (hash, data, from_gate) %s, %s, 1", utils.Md5(txBinData), txHex)
+				err = t.ExecSql(`INSERT INTO queue_tx (hash, data, from_gate) VALUES ([hex], [hex], 1)`, utils.Md5(txBinData), txHex)
 				if len(txBinData) == 0 {
 					log.Error("%v", utils.ErrInfo(err))
 					return
