@@ -25,6 +25,8 @@ import (
 	"github.com/DayLightProject/go-daylight/packages/script"
 	"github.com/DayLightProject/go-daylight/packages/smart"
 	"github.com/DayLightProject/go-daylight/packages/utils"
+
+	"github.com/shopspring/decimal"
 )
 
 func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, error) {
@@ -67,8 +69,22 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
 				var v interface{}
 				switch fitem.Type.String() {
+				case `uint64`:
+					var val uint64
+					lib.BinUnmarshal(&input, &val)
+					v = val
+					/*				case `float64`:
+									var val float64
+									lib.BinUnmarshal(&input, &val)
+									v = val*/
 				case `int64`:
 					v, err = lib.DecodeLenInt64(&input)
+				case `decimal.Decimal`:
+					var s string
+					if err = lib.BinUnmarshal(&input, &s); err != nil {
+						return nil, err
+					}
+					v, err = decimal.NewFromString(s)
 				case `string`:
 					var s string
 					if err = lib.BinUnmarshal(&input, &s); err != nil {
