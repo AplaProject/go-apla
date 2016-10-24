@@ -7,7 +7,7 @@
 		display:flex;
 		flex-flow:row wrap;
 		align-items:flex-start;
-		max-width:400px;
+		max-width:500px;
 		overflow-x:visible;
 		border:0px;
 		box-shadow:none;
@@ -48,16 +48,23 @@
 	$('#extended_div').css("display", "block")
 	$("#settings_extended").prop("checked", true)
 
-	$('#first_load').select2({
+	$('#first_load, #log_level').select2({
 		minimumResultsForSearch: Infinity,
 		theme: 'bootstrap'
 	});
 
 	$('#url').css("display", "none");
 	$('.db_settings').show();
-
+	
+	$("#generate_first_block").bind('click', function () {
+		if ($(this).is(":checked")) {
+			$("#first_block").hide();
+		} else {
+			$("#first_block").show();
+		}
+	});
+	
 	$('#next').bind('click', function () {
-
 		$('#next').prop('disabled', true);
 		NProgressStart.start();
 		$.post( 'content', {
@@ -102,24 +109,25 @@
 					</fieldset>
 
 					<fieldset class="form-group">
-						<label class="col-sm-3 control-label" for="generate_first_block">generate_first_block</label>
+						<label class="col-sm-3 control-label" for="generate_first_block"></label>
 						<div class="col-sm-9">
-							<input id="generate_first_block" class="form-control" type="checkbox" value="1">
+							<div class="checkbox c-checkbox">
+								<label>
+								   <input id="generate_first_block" type="checkbox" value="1">
+								   		<span class="fa fa-check"></span><strong>Generate first block</strong>
+								   </label>
+							 </div>
 						</div>
 					</fieldset>
-					or
-					<fieldset class="form-group">
-						<label class="col-sm-3 control-label" for="first_block_dir">first_block_dir</label>
+					<fieldset id="first_block" class="form-group">
+						<label class="col-sm-3 control-label" for="first_block_dir">First block dir</label>
 						<div class="col-sm-9">
 							<input id="first_block_dir" class="form-control" type="text" value="">
 						</div>
 					</fieldset>
-
-
 					<fieldset class="form-group">
 						<label class="col-sm-3 control-label" for="dir">log_level</label>
 						<div class="col-sm-9">
-
 							<select id="log_level" class="form-control">
 								<option value="ERROR">ERROR</option>
 								<option value="DEBUG" selected>DEBUG</option>
