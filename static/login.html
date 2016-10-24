@@ -58,6 +58,15 @@
 		margin-left: 20px;
 		padding:0;
 	}
+	#back {
+		display:none;
+		position:absolute;
+		left:0px;
+		top:15px;
+	}
+	#back span {
+		font-size:26px;
+	}
 </style>
 
 <!-- START panel-->
@@ -110,6 +119,7 @@
 	</div>
 	<div id="register_form" class="start_form" style="display:none;" data-sweet-alert>
 		<div class="panel-body">
+			<button type="button" class="btn btn-link" onclick="return do_register_back()" id="back" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></button>
 			<h1 style="padding-bottom: 10px;" class="noimport">Create account</h1>
 			<h1 style="padding-bottom: 10px;display:none;" class="noregister">Import account</h1>
 			<form class="keyCode_13">
@@ -168,6 +178,7 @@ function do_register(obj, is_register) {
 		return false;
 	} 
 	if (is_register && !repeat_step) {
+		$("#back").show();
 		$("#rep_pass").val( pass );
 		$("#rep_phrase").val( phrase);
 		$("#pass").val('');
@@ -199,6 +210,21 @@ function do_register(obj, is_register) {
 	GKey.Password = pass;
 	GKey.save(phrase);
 	do_sign();
+	return false;
+}
+
+function do_register_back() {
+	var pass = $("#rep_pass").val();
+	var phrase = $("#rep_phrase").val();
+	
+	$("#back").hide();
+	$("#pass").val(pass);
+	$("#phrase").val(phrase);
+	$("#genseed").show();
+	$("#lseed").html('Account seed');
+	$("#lpass").html('Password');
+	$("#notice").show();
+	repeat_step = false;
 	return false;
 }
 
