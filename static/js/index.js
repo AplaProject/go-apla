@@ -233,9 +233,10 @@ function CopyToClipboard(elem, text) {
 	
 	clipboard.on('success', function(e) {
 		e.clearSelection();
-		Alert("Copied to clipboard", "", "success");
 		if (text) {
 			$(elem).attr("data-clipboard-text", "");
+		} else {
+			Alert("Copied to clipboard", "", "success");
 		}
 	});
 	clipboard.on('error', function(e) {
@@ -247,7 +248,6 @@ function Alert(title, text, type, Confirm) {
 	if (obj) {
 		var color;
 		var btnText = "OK";
-		var _close = true;
 		var id = obj.parents(".modal").attr("id");
 		var minHeight = obj.css("min-height");
 		obj.css({"position":"relative", "min-height":"300px"});
@@ -258,7 +258,6 @@ function Alert(title, text, type, Confirm) {
 			color = "#f05050";
 			if (text.toLowerCase().indexOf("[error]") != -1) {
 				btnText = "Copy text error to clipboard";
-				_close = false;
 			}
 		} else if (type == "warning") {
 			color = "#ff902b";
@@ -273,8 +272,7 @@ function Alert(title, text, type, Confirm) {
 			type : type,
 			html: true,
 			confirmButtonColor: color,
-			confirmButtonText: btnText,
-			closeOnConfirm: _close
+			confirmButtonText: btnText
 		}, function (isConfirm) {
 			if (text.toLowerCase().indexOf("[error]") != -1) {
 				CopyToClipboard(".sweet-alert .confirm", text);
