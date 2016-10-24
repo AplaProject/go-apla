@@ -65,9 +65,10 @@
 	});
 	
 	$('#next').bind('click', function () {
-		$('#next').prop('disabled', true);
-		NProgressStart.start();
-		$.post( 'content', {
+		//$('#next').prop('disabled', true);
+		//NProgressStart.start();
+
+		$.post( 'ajax?controllerName=install', {
 			'generate_first_block' : $('input[id=generate_first_block]:checked').val(),
 			'dir' : $('#dir').val(),
 			'first_block_dir' : $('#first_block_dir').val(),
@@ -85,7 +86,34 @@
 			'username' : $('#username').val(),
 			'password' : $('#password').val(),
 			'key_password' : $('#key_password').val()
-		}, function (data) { $('#dl_content').html( data );  NProgressStart.done(); }, 'html' );
+		}, function (data) {
+			if (data.error.length > 0 ) {
+				alert(data.error)
+			} else {
+				window.close();
+			}
+
+		}, "json" );
+
+		/*$.post( 'content', {
+			'generate_first_block' : $('input[id=generate_first_block]:checked').val(),
+			'dir' : $('#dir').val(),
+			'first_block_dir' : $('#first_block_dir').val(),
+			'tcp_host' : $('#tcp_host').val(),
+			'http_port' : $('#http_port').val(),
+			'tpl_name' : 'installStep1',
+			'type' : $('input[name=settings]:checked').val(),
+			'url' : $('#url').val(),
+			'first_load' : $('#first_load').val(),
+			'log_level' : $('#log_level').val(),
+			'db_type' : "postgresql",
+			'host' : $('#host').val(),
+			'port' : $('#port').val(),
+			'db_name' : $('#db_name').val(),
+			'username' : $('#username').val(),
+			'password' : $('#password').val(),
+			'key_password' : $('#key_password').val()
+		}, function (data) { $('#dl_content').html( data );  NProgressStart.done(); }, 'html' );*/
 	} );
 </script>
 
