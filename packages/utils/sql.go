@@ -70,40 +70,10 @@ func ReplQ(q string) string {
 func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	var db *sql.DB
 	var err error
-	switch ConfigIni["db_type"] {
-	case "sqlite":
-
-		log.Debug("sqlite connect")
-		db, err = sql.Open("sqlite3", *Dir+"/litedb.db")
-		log.Debug("%v", db)
-		if err != nil {
-			log.Debug("%v", err)
-			return &DCDB{}, err
-		}
-		ddl := `
-				PRAGMA synchronous = NORMAL;
-				PRAGMA journal_mode = WAL;
-				PRAGMA encoding = "UTF-8";
-				`
-		log.Debug("Exec ddl0")
-		_, err = db.Exec(ddl)
-		log.Debug("Exec ddl")
-		if err != nil {
-			log.Debug("%v", ErrInfo(err))
-			db.Close()
-			return &DCDB{}, err
-		}
-	case "postgresql":
 		db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable port=%s", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"], ConfigIni["db_port"]))
 		if err != nil {
 			return &DCDB{}, err
 		}
-	case "mysql":
-		db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@/%s", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"]))
-		if err != nil {
-			return &DCDB{}, err
-		}
-	}
 	log.Debug("return")
 	return &DCDB{db, ConfigIni}, err
 }

@@ -52,7 +52,6 @@ import (
 	b58 "github.com/jbenet/go-base58"
 	"github.com/kardianos/osext"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/mcuadros/go-version"
 	//	"net/mail"
 	//  "net/smtp"
@@ -2318,10 +2317,8 @@ func daylightUpd(url string) error {
 }
 
 func DaylightRestart() error {
-	appname := filepath.Base(os.Args[0])
-	exec_ := filepath.Join(*Dir, appname)
-	log.Debug("exec", exec_)
-	err := exec.Command(exec_).Start()
+	log.Debug("exec", os.Args[0])
+	err := exec.Command(os.Args[0]).Start()
 	if err != nil {
 		return ErrInfo(err)
 	}

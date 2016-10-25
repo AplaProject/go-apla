@@ -26,7 +26,6 @@ import (
 
 	"github.com/EGaaS/go-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-mvp/packages/utils"
-	_ "github.com/mattn/go-sqlite3"
 	//"os"
 	//"regexp"
 	"time"
