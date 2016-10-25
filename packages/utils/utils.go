@@ -2318,8 +2318,9 @@ func daylightUpd(url string) error {
 }
 
 func DaylightRestart() error {
-	log.Debug("os.Args[0]", os.Args[0])
-	err := exec.Command(os.Args[0]).Start()
+	exec_ := filepath.Join(*Dir, os.Args[0])
+	log.Debug("exec", exec_)
+	err := exec.Command(exec_).Start()
 	if err != nil {
 		return ErrInfo(err)
 	}
