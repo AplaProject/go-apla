@@ -128,6 +128,7 @@
 					<div class="col-sm-9 text-right">
 						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 						<input type="hidden" id="rep_phrase" value="">
+						<button id="saveseed" class="btn btn-default noimport" onclick="return save_phrase();">Save passphrase</button>
 						<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
 					</div>
 				</fieldset>
@@ -167,6 +168,23 @@
 <script language="JavaScript" type="text/javascript">
 g_menuShow = false;  // hide menu
 var repeat_step = false;
+var backup = '';
+
+function save_phrase() {
+	backup = $( repeat_step ? "#rep_phrase" : "#phrase").val();
+	var Data = new Blob([backup], {type: 'text/plain;charset=utf-8;'});
+	if (navigator.msSaveBlob) {
+	    navigator.msSaveBlob(Data, 'egaas.txt');
+	} else {
+	    var link = document.createElement('a');
+	    link.href = window.URL.createObjectURL(Data);
+	    link.setAttribute('download', 'egaas.txt');
+	    document.body.appendChild(link);    
+	    link.click();
+	    document.body.removeChild(link);    
+	}
+	return false;
+}
 
 function do_register(obj, is_register) {
 	var pass = $("#pass").val();
@@ -221,6 +239,7 @@ function do_register_back() {
 	$("#pass").val(pass);
 	$("#phrase").val(phrase);
 	$("#genseed").show();
+	$("#saveseed").show();
 	$("#lseed").html('Account seed');
 	$("#lpass").html('Password');
 	$("#notice").show();
@@ -278,6 +297,7 @@ function register_form() {
 	repeat_step = false;
 	$("#notice").show();
 	$("#genseed").show();
+	$("#saveseed").show();
 	$("#lseed").html('Account seed');
 	$("#lpass").html('Password');
 	$("#login_form").hide();
