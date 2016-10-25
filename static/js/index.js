@@ -350,16 +350,16 @@ function load_menu(lang) {
 }
 
 function login_ok (result) {
-
-    if (result) {
-        $( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
-//			$("#main-login").html('');
-			//$("#loader").spin(false);
-        });
-//        }
-		g_menuShow = true;
-		load_menu();
-    }
+	g_menuShow = true;
+	load_menu();
+	
+	setTimeout(function(){
+		if (result) {
+			$( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
+				NProgressStart.done();
+			});
+		}
+	}, 100);
 }
 
 function doSign_(type) {

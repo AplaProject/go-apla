@@ -115,10 +115,16 @@
 				})
 				load_menu({{if .SetLang}}{{.SetLang}}{{end}});
 			{{else}}
+				//g_menuShow = false;
 				NProgressStart.set(1);
-				$("#dl_content").load( "content", function() {
-					load_menu();
-				});
+				//load_menu();
+				
+				//setTimeout(function(){
+					$( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
+						load_menu();
+						NProgressStart.done();
+					});
+				//}, 100);
 			{{end}}
 		});
 	</script>
