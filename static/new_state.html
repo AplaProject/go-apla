@@ -58,18 +58,14 @@
 
 	$('#go_to_the_state').bind('click', function () {
 		$.get( 'ajax?json=set_state&state_id='+$("#countries").val()+'&citizen_id={{.WalletId}}', function (data) {
-			load_template("dashboard_default");
 			load_menu();
+			load_template("dashboard_default");
 		}, "json" );
 	});
 </script>
 	<div class="content-heading">
 		Create a new state or community
 	</div>
-	<!--<ol class="breadcrumb">
-	   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
-	   <li class="active">Create a new state or community</li>
-	</ol>-->
 	 
 	<!-- START panel-->
 	<div id="my_state" class="panel panel-default" data-sweet-alert style="display:none;">
@@ -84,8 +80,6 @@
 		<div id="buttons" class="panel-footer">
 			<div class="clearfix">
 				<div class="pull-right">
-					<!--<button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
-					<button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>-->
 					<button type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="go_to_the_state">Go to the my state</button>
 				</div>
 			</div>
@@ -110,7 +104,7 @@
 			<div class="panel-footer">
 			   <div class="clearfix">
 				  <div class="pull-right">
-					 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Next</button>
+					 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" onClick="preloader(this);">Next</button>
 				  </div>
 			   </div>
 			</div>
