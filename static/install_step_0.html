@@ -65,7 +65,6 @@
 	});
 	
 	$('#next').bind('click', function () {
-
 		$.post( 'ajax?controllerName=install', {
 			'generate_first_block' : $('input[id=generate_first_block]:checked').val(),
 			'dir' : $('#dir').val(),
@@ -86,14 +85,17 @@
 			'key_password' : $('#key_password').val()
 		}, function (data) {
 			if (typeof data.error !== 'undefined') {
-				alert(data.error)
+				Alert("Error", data.error, "error");
 			} else {
 				console.log(data);
-				$('#next').prop('disabled', true);
-				NProgressStart.start();
+				$(".appStart").removeClass("hidden").addClass("showAppStart");
 			}
 
 		}, "json" );
+		
+		$('#start').bind('click', function () {
+			location.reload();
+		});
 
 		/*$.post( 'content', {
 			'generate_first_block' : $('input[id=generate_first_block]:checked').val(),
@@ -119,86 +121,91 @@
 
 <!-- START panel-->
 <div class="brand panel panel-default">
-	<div class="panel-body">
-		<div class="start_type">
-			<h1>Installation</h1>
-			<div id="extended_div">
-				<form class="extended_form keyCode_13">
-					<fieldset class="form-group">
-						<label class="col-sm-3 control-label" for="first_load">Mode</label>
-						<div class="col-sm-9">
-							<select id="first_load" class="form-control">
-								<option value="Private-net">Private-net</option>
-							</select>
-							<div>
-								<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
+	<div data-sweet-alert>
+		<div class="panel-body">
+			<div class="start_type">
+				<h1>Installation</h1>
+				<div id="extended_div">
+					<form class="extended_form keyCode_13">
+						<fieldset class="form-group">
+							<label class="col-sm-3 control-label" for="first_load">Mode</label>
+							<div class="col-sm-9">
+								<select id="first_load" class="form-control">
+									<option value="Private-net">Private-net</option>
+								</select>
+								<div>
+									<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
+								</div>
 							</div>
-						</div>
-					</fieldset>
-
-					<fieldset class="form-group">
-						<label class="col-sm-3 control-label" for="generate_first_block"></label>
-						<div class="col-sm-9">
-							<div class="checkbox c-checkbox">
-								<label>
-								   <input id="generate_first_block" type="checkbox" value="1">
-								   		<span class="fa fa-check"></span><strong>Generate first block</strong>
-								   </label>
-							 </div>
-						</div>
-					</fieldset>
-					<fieldset id="first_block" class="form-group">
-						<label class="col-sm-3 control-label" for="first_block_dir">First block dir</label>
-						<div class="col-sm-9">
-							<input id="first_block_dir" class="form-control" type="text" value="">
-						</div>
-					</fieldset>
-					<fieldset class="form-group">
-						<label class="col-sm-3 control-label" for="dir">log_level</label>
-						<div class="col-sm-9">
-							<select id="log_level" class="form-control">
-								<option value="ERROR">ERROR</option>
-								<option value="DEBUG" selected>DEBUG</option>
-							</select>
-						</div>
-					</fieldset>
-
-					<fieldset class="form-group db_settings">
-						<label class="col-sm-3 control-label" for="host">Host</label>
-						<div class="col-sm-9">
-							<input id="host" class="form-control" type="text" value="localhost">
-						</div>
-					</fieldset>
-					<fieldset class="form-group db_settings">
-						<label class="col-sm-3 control-label" for="port">Port</label>
-						<div class="col-sm-9">
-							<input id="port" class="form-control" type="text" value="5432">
-						</div>
-					</fieldset>
-					<fieldset class="form-group db_settings">
-						<label class="col-sm-3 control-label" for="db_name">DB name</label>
-						<div class="col-sm-9">
-							<input id="db_name" class="form-control" type="text" value="">
-						</div>
-					</fieldset>
-					<fieldset class="form-group db_settings">
-						<label class="col-sm-3 control-label" for="username">Username</label>
-						<div class="col-sm-9">
-							<input id="username" class="form-control" type="text" value="postgres">
-						</div>
-					</fieldset>
-					<fieldset class="form-group db_settings">
-						<label class="col-sm-3 control-label" for="password">Password</label>
-						<div class="col-sm-9">
-							<input id="password" class="form-control" type="password" value="">
-						</div>
-					</fieldset>
-				</form>
+						</fieldset>
+	
+						<fieldset class="form-group">
+							<label class="col-sm-3 control-label" for="generate_first_block"></label>
+							<div class="col-sm-9">
+								<div class="checkbox c-checkbox">
+									<label>
+									   <input id="generate_first_block" type="checkbox" value="1" checked>
+											<span class="fa fa-check"></span><strong>Generate first block</strong>
+									   </label>
+								 </div>
+							</div>
+						</fieldset>
+						<fieldset id="first_block" class="form-group" style="display:none;">
+							<label class="col-sm-3 control-label" for="first_block_dir">First block dir</label>
+							<div class="col-sm-9">
+								<input id="first_block_dir" class="form-control" type="text" value="">
+							</div>
+						</fieldset>
+						<fieldset class="form-group">
+							<label class="col-sm-3 control-label" for="dir">log_level</label>
+							<div class="col-sm-9">
+								<select id="log_level" class="form-control">
+									<option value="ERROR">ERROR</option>
+									<option value="DEBUG" selected>DEBUG</option>
+								</select>
+							</div>
+						</fieldset>
+	
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="host">Host</label>
+							<div class="col-sm-9">
+								<input id="host" class="form-control" type="text" value="localhost">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="port">Port</label>
+							<div class="col-sm-9">
+								<input id="port" class="form-control" type="text" value="5432">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="db_name">DB name</label>
+							<div class="col-sm-9">
+								<input id="db_name" class="form-control" type="text" value="">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="username">Username</label>
+							<div class="col-sm-9">
+								<input id="username" class="form-control" type="text" value="postgres">
+							</div>
+						</fieldset>
+						<fieldset class="form-group db_settings">
+							<label class="col-sm-3 control-label" for="password">Password</label>
+							<div class="col-sm-9">
+								<input id="password" class="form-control" type="password" value="">
+							</div>
+						</fieldset>
+					</form>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div class="panel-footer text-right">
-		<button class="submit btn btn-primary" id="next">Next</button>
+		<div class="panel-footer text-right">
+			<button class="submit btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="next">Next</button>
+		</div>
+		<div class="appStart hidden">
+			<button class="btn btn-info btn-lg" id="start">Launch Application</button>
+		</div>
 	</div>
 </div>
 <!-- END panel-->
