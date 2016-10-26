@@ -20,13 +20,6 @@ $desktop: 1516px;
 	text-rendering: optimizeLegibility;
 	text-size-adjust: none;
 }
-body {
-	background-attachment: fixed;
-	background-image: url(../img/bg.png);
-	background-repeat: no-repeat;
-	background-position: center center;
-	background-size: cover;
-}
 .wrapper {
 	background-color: #f5f7fa;
 }
@@ -208,10 +201,10 @@ textarea {
 	top:0px;
 	width:100%;
 	height:100%;
-	/*background-image:url(../img/bg.png);
+	background-image:url(../img/bg.png);
 	background-repeat:no-repeat;
 	background-position:center center;
-	background-size:cover;*/
+	background-size:cover;
 	.controls {
 		visibility:hidden;
 		position:absolute;
