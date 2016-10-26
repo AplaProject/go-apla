@@ -20,6 +20,16 @@ $desktop: 1516px;
 	text-rendering: optimizeLegibility;
 	text-size-adjust: none;
 }
+body {
+	background-attachment: fixed;
+	background-image: url(../img/bg.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: cover;
+}
+.wrapper {
+	background-color: #f5f7fa;
+}
 b {
 	font-family:$med !important;
 	font-weight:normal !important;
@@ -27,6 +37,47 @@ b {
 strong {
 	font-family:$med !important;
 	font-weight:normal !important;
+}
+.appStart {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    align-content: space-between;
+    justify-content: center;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color:$white;
+    border-radius: 5px;
+    z-index: 11;
+	span {
+		font-family: "PFSquareSansPro-Medium";
+		font-size: 30px;
+		color: #23b7e5;
+	}
+}
+@keyframes showAppStart {
+    0% {
+        -webkit-transform: scale(0.7);
+        transform: scale(0.7);
+    }
+    45% {
+        -webkit-transform: scale(1);
+        transform: scale(1);
+    }
+    80% {
+        -webkit-transform: scale(0.95);
+        transform: scale(0.95);
+    }
+    100% {
+        -webkit-transform: scale(1);
+        transform: scale(1);
+    }
+}
+.showAppStart {
+    animation: showAppStart 0.3s;
 }
 #dl_menu {
 	position:absolute;
@@ -157,10 +208,10 @@ textarea {
 	top:0px;
 	width:100%;
 	height:100%;
-	background-image:url(../img/bg.png);
+	/*background-image:url(../img/bg.png);
 	background-repeat:no-repeat;
 	background-position:center center;
-	background-size:cover;
+	background-size:cover;*/
 	.controls {
 		visibility:hidden;
 		position:absolute;
@@ -203,7 +254,7 @@ textarea {
 		background-image:url(../img/logo.svg);
 		background-repeat:no-repeat;
 		background-position:center center;
-		background-size:197px 40px;
+		background-size:225px 50px;
 		z-index:100001;
 	}
 	.close {
@@ -363,31 +414,31 @@ textarea {
 		left:50%;
 		top:50%;
 		width:200px;
-		height:200px;
+		height:196px;
 		margin-left:-100px;
-		margin-top:-100px;
+		margin-top:-98px;
 		z-index:10;
 		.null {
 			position:absolute;
 			left:0px;
 			top:0px;
 			width:200px;
-			height:200px;
+			height:196px;
 			background-image:url(../img/logo_null.svg);
 			background-repeat:no-repeat;
 			background-position:center top;
-			background-size:200px 200px;
+			background-size:200px 196px;
 		}
 		.ok {
 			position:absolute;
 			left:0px;
 			bottom:0px;
 			width:200px;
-			max-height:200px;
+			max-height:196px;
 			background-image:url(../img/logo_ok.svg);
 			background-repeat:no-repeat;
 			background-position:center bottom;
-			background-size:200px 200px;
+			background-size:200px 196px;
 		}
 	}
 }
