@@ -100,7 +100,7 @@
 			success: function(data) {
 				container.html("");
 				showFields();
-				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' DLT" disabled></div>');
+				container.prepend('<div class="form-group"><label for="price">Price</label><input id="price" type="text" class="form-control" value="' + data.price + ' EGS" disabled></div>');
 				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
 					if (data.approved == 0) {
 						//alert('The request is in the queue.');

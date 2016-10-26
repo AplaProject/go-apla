@@ -37,7 +37,7 @@
 	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {});
 	
 	var amount = {{.Amount}} / qDLT;
-	$("#balance").text(amount + " DLT");
+	$("#balance").text(amount + " EGS");
 
 	$.ajax({
 		type: 'POST',
@@ -81,7 +81,7 @@
 						{
 							targets: 2,
 							render: function (data) {
-								return (data / qDLT).toString().bold() + " DLT";
+								return (data / qDLT).toString().bold() + " EGS";
 							}
 						},
 						{
@@ -152,7 +152,7 @@
 				  <em class="glyphicons glyphicons-wallet x3"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">DLT</div>
+				  <div class="text-lg">EGS</div>
 				  <p class="m0">Your wallet</p>
 			   </div>
 			</div>
