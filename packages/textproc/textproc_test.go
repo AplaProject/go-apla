@@ -55,18 +55,31 @@ func AsIs(vars *map[string]string, pars ...string) string {
 	return pars[0]
 }
 
+func Json(vars *map[string]string, pars ...string) string {
+	fmt.Println(`JSON`, pars)
+	if len(pars) == 0 {
+		return ``
+	}
+	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+	var jdata = { 
+%s 
+}
+</script>`, pars[0])
+}
+
 func TestFunc(t *testing.T) {
-	AddFuncs(&map[string]TextFunc{`AsIs`: AsIs})
+	AddFuncs(&map[string]TextFunc{`AsIs`: AsIs, `Json`: Json})
+
 	input := []TestText{
 		{`AsIs : span, ("строка")`, `span, ("строка")`},
 		{`Link(http://google.com, "test, quote")BR()`, `<a href="http://google.com" title="">test, quote</a><br>`},
 		{`Link(http://google.com, Google)`, `<a href="http://google.com" title="">Google</a>`},
 		{`Link(http://#value2#, Tag(b, Site #val1#)), Title)`, `<a href="http://test строка 1 test" title=""><b>Site строка 1</b></a>`},
 		{`Link(http://google.com, Google)
-Tag(div, Text1
-Text 2)`, `<a href="http://google.com" title="">Google</a>
-<div>Text1
-Text 2</div>`},
+				Tag(div, Text1
+				Text 2)`, `<a href="http://google.com" title="">Google</a>
+				<div>Text1
+		Text 2</div>`},
 	}
 	for _, item := range input {
 		get := Process(item.src, &vars)

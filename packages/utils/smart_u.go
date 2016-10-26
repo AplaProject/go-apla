@@ -56,9 +56,19 @@ type FormInfo struct {
 	Data   FormCommon
 }
 
+type CommonPage struct {
+	Address      string
+	WalletId     int64
+	CitizenId    int64
+	StateId      int64
+	StateName    string
+	CountSignArr []int
+}
+
 type PageTpl struct {
 	Page     string
 	Template string
+	Data     *CommonPage
 }
 
 func init() {
@@ -76,7 +86,9 @@ func init() {
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
-		`PageEnd`: PageEnd, `StateValue`: StateValue})
+		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
+		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `TextHidden`: TextHidden,
+	})
 }
 
 // Reading and compiling contracts from smart_contracts tables
@@ -132,6 +144,60 @@ func BtnEdit(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<a type="button" class="btn btn-primary btn-block" 
 	            onclick="load_page('%s', {id: %d, global: 0 } )"><i class="fa fa-cog"></i></a>`,
 		pars[0], StrToInt64(pars[1]))
+}
+
+func JsonScript(vars *map[string]string, pars ...string) string {
+	if len(pars) == 0 {
+		return ``
+	}
+	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+	var jdata = { 
+%s 
+}
+</script>`, pars[0])
+}
+
+func GetRowVars(vars *map[string]string, pars ...string) string {
+	if len(pars) != 4 {
+		return ``
+	}
+	value, err := DB.OneRow(`select * from ` + lib.EscapeName(pars[1]) + ` where ` + lib.EscapeName(pars[2]) + `='` + lib.Escape(pars[3]) + `'`).String()
+	if err != nil {
+		return err.Error()
+	}
+	for key, val := range value {
+		(*vars)[pars[0]+`_`+key] = val
+	}
+	return ``
+}
+
+func SetVar(vars *map[string]string, pars ...string) string {
+	for _, item := range pars {
+		lr := strings.SplitN(item, `=`, 2)
+		if len(lr) != 2 {
+			continue
+		}
+		val := textproc.Process(lr[1], vars)
+		if len(val) == 0 {
+			val = textproc.Macro(lr[1], vars)
+		}
+		(*vars)[strings.TrimSpace(lr[0])] = strings.Trim(val, " `\"")
+	}
+	return ``
+}
+
+func TextHidden(vars *map[string]string, pars ...string) (out string) {
+	for _, item := range pars {
+		out += fmt.Sprintf(`<textarea style="display:none;" id="%s">%s</textarea>`, item, (*vars)[item])
+	}
+	return
+}
+
+func TxId(vars *map[string]string, pars ...string) string {
+	if len(pars) == 0 {
+		return `0`
+	}
+	return Int64ToStr(TypeInt(pars[0]))
 }
 
 func LinkTemplate(vars *map[string]string, pars ...string) string {
@@ -503,8 +569,10 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 
 	t := template.Must(template.New("template").Funcs(funcMap).Parse(string(pattern)))
 	t = template.Must(t.Parse(string(sign)))
+
 	b := new(bytes.Buffer)
 	err = t.Execute(b, data)
+	//	fmt.Println(`PROC`, err)
 	if err != nil {
 		return "", err
 	}

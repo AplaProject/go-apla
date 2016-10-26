@@ -63,9 +63,15 @@ func App(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		out = err.Error()
 	}
+
 	if len(data) > 0 {
 		out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
-			Template: textproc.Process(string(data), &params)})
+			Template: textproc.Process(string(data), &params),
+			Data: &utils.CommonPage{
+				WalletId:     GetSessWalletId(sess),
+				CitizenId:    GetSessCitizenId(sess),
+				StateId:      GetSessInt64("state_id", sess),
+				CountSignArr: []int{0}}})
 	}
 
 	w.Write([]byte(out))
