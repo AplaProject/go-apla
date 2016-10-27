@@ -195,20 +195,17 @@ function load_template(page, parameters) {
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
 				$('.sidebar-collapse').collapse('toggle');
 			}
-			if (page == "government") {
-				$.ajax({
-					url: 'ajax?controllerName=ajaxGetMenuHtml&page=government',
-					type: 'POST',
-					success: function (data) {
-						console.log(data)
-						if ($("#dc li").length <= 2) {
-							var li = $("#dc li:first").html();
-							$("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
-							$("#dc li:first").next().addClass("active");
-						}
-					}
-				});
-			}
+			console.log(page);
+			$.ajax({
+				url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
+				type: 'POST',
+				success: function (data) {
+					console.log(data);
+					var li = $("#dc li:first").html();
+					$("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
+					$("#dc li:first").next().addClass("active");
+				}
+			});
 		}, "html");
 }
 
