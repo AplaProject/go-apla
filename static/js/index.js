@@ -200,6 +200,7 @@ function load_template(page, parameters) {
 					url: 'ajax?controllerName=ajaxGetMenuHtml&page=government',
 					type: 'POST',
 					success: function (data) {
+						console.log(data)
 						if ($("#dc li").length <= 2) {
 							var li = $("#dc li:first").html();
 							$("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
