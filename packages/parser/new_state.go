@@ -194,7 +194,6 @@ func (p *Parser) NewState() error {
 }`, `TXEditProfile`, `contract TXEditProfile {
 	tx {
 		FirstName  string
-		Image string "image"
 	}
 	func init {
 	}
@@ -202,7 +201,7 @@ func (p *Parser) NewState() error {
 
 	}
 	func main {
-	  DBUpdate(Table( "citizens"), $citizen, "name,avatar", $FirstName, $Image)
+	  DBUpdate(Table( "citizens"), $citizen, "name", $FirstName)
   	  Println("TXEditProfile main")
 	}
 }`, `TXTest`, `contract TXTest {
@@ -210,7 +209,6 @@ func (p *Parser) NewState() error {
 		Name string 
 		Company string "optional"
 		Coordinates string "map"
-		Photo string "image"
 	}
 	func main {
 		Println("TXTest main")
@@ -290,19 +288,7 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	/*
-	   *Title : Best country
-	   Navigation( LiTemplate(government),non-link text)
-	   PageTitle : Dashboard
-	   MarkDown : ![Flag](http://davutlarhamami.com/images/indir%20%281%29.jpg)
-	   Table{
-	       Table: 1_smart_contracts
-	       Order: name
-	       Columns: [[ID, #id#], [Name, #name#], [Conditions, #conditions#], [Action, BtnEdit(editContract, #id#)]]
-	   }
-	   TxForm { Contract: TXTest }
-	   PageEnd:
-	*/
+
 	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
@@ -340,7 +326,7 @@ PageEnd:
 Navigation( Citizens )
 PageTitle : Citizens
 Table{
-    Table: 1_citizens
+    Table: `+id+`_citizens
     Columns: [[Avatar,Image(#avatar#)], [ID, #id#], [Name, #name#]]
 }
 PageEnd:
@@ -364,7 +350,7 @@ PageEnd:
 Navigation( Citizens )
 PageTitle : Citizens requests
 Table{
-    Table: 1_citizenship_requests
+    Table: `+id+`_citizenship_requests
 	Order: id
 	Where: approved=0
 	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnTemplate(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnTemplate(RejectCitizen,Reject,"RequestId:#id#")]]
