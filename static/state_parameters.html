@@ -9,7 +9,7 @@
 	
 	<script>
 		$(".aside .nav li").removeClass("active");
-		$(".citizen, .ds_state_parameters").addClass("active");
+		$(".citizen, .citizen_listOfTables").addClass("active");
 		
 //		$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
 		
@@ -40,13 +40,15 @@
 	 <div class="panel-body">
 		<div class="table-responsive">
 		   <table class="table table-striped table-bordered table-hover">
+			  <thead>
+				  <tr>
+					  <td>Parameter</td>
+					  <td>Value</td>
+					  <td>Conditions for change</td>
+					  <td width="50"></td>
+				  </tr>
+			  </thead>
 			  <tbody>
-			  <tr>
-				  <td>Parameter</td>
-				  <td>Value</td>
-				  <td>Conditions for change</td>
-				  <td></td>
-			  </tr>
 			  {{ range $value := .StateParameters }}
 				 <tr>
 					<td class="thead">{{$value.name}}</td>
@@ -71,11 +73,4 @@
 	  </div>
 	</div>
 	<!-- END panel-->
-<script type="text/javascript">
-	$(document).ready(function() {
-		$(".edit").editable({
-            type: 'text'
-		})
-	});
-</script>
 {{end}}

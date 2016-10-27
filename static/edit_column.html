@@ -1,7 +1,9 @@
 {{ define "editColumn" }}
 <script>
-
 	var serverTime;
+	
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .citizen_listOfTables").addClass("active");
 
 	$('#send').bind('click', function () {
 
