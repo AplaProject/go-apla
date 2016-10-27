@@ -192,8 +192,26 @@ function load_template(page, parameters) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html( data );
 			window.scrollTo(0,0);
-			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
+			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
 				$('.sidebar-collapse').collapse('toggle');
+			}
+			if (page == "government") {
+				$.ajax({
+					url: 'ajax?controllerName=ajaxGetMenuHtml&page=government',
+					type: 'POST',
+					success: function (data) {
+						if ($("#dg li").length <= 1) {
+							$("#dg").append(data);
+							$(".aside .nav li").removeClass("active");
+							$(".aside .nav li .sidebar-subnav").removeClass("in");
+							$(".sidebar > .nav > li.gov").show();
+							$(".gov").addClass("active");
+							$(".gov .toggle-hover:first").next().addClass("in");
+							$(".gov .toggle-hover:first").next().find(":first").next().addClass("active");
+						}
+					}
+				});
+			}
 		}, "html");
 }
 
