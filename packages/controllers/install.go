@@ -19,13 +19,14 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/EGaaS/go-mvp/packages/consts"
 	"github.com/EGaaS/go-mvp/packages/lib"
 	"github.com/EGaaS/go-mvp/packages/static"
 	"github.com/EGaaS/go-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
-	"io/ioutil"
-	"os"
 )
 
 func (c *Controller) Install() (string, error) {
@@ -202,12 +203,12 @@ func (c *Controller) Install() (string, error) {
 			dropConfig()
 			return "", utils.ErrInfo(err)
 		}
-		err = utils.DaylightRestart()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			dropConfig()
-			return "", utils.ErrInfo(err)
-		}
+		/*		err = utils.DaylightRestart()
+				if err != nil {
+					log.Error("%v", utils.ErrInfo(err))
+					dropConfig()
+					return "", utils.ErrInfo(err)
+				}*/
 
 	}
 	return `{"success":1}`, nil
