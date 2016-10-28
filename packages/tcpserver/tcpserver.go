@@ -18,12 +18,13 @@ package tcpserver
 
 import (
 	"flag"
-	"fmt"
+	//	"fmt"
+	"net"
+	//	"runtime"
+	"sync"
+
 	"github.com/EGaaS/go-mvp/packages/utils"
 	"github.com/op/go-logging"
-	"net"
-	"runtime"
-	"sync"
 )
 
 var (
@@ -38,23 +39,23 @@ func init() {
 
 type TcpServer struct {
 	*utils.DCDB
-	Conn      net.Conn
+	Conn net.Conn
 }
 
 func (t *TcpServer) deferClose() {
 	t.Conn.Close()
 	mutex.Lock()
 	counter--
-	fmt.Println("--", counter)
+	//	fmt.Println("--", counter)
 	mutex.Unlock()
 }
 
 func (t *TcpServer) HandleTcpRequest() {
 
-	fmt.Println("NumCPU:", runtime.NumCPU(),
+	/*	fmt.Println("NumCPU:", runtime.NumCPU(),
 		" NumGoRoutine:", runtime.NumGoroutine(),
 		" t.counter:", counter)
-
+	*/
 	var err error
 
 	log.Debug("HandleTcpRequest from %v", t.Conn.RemoteAddr())
@@ -67,7 +68,7 @@ func (t *TcpServer) HandleTcpRequest() {
 		return
 	} else {
 		counter++
-		fmt.Println("++", counter)
+		//		fmt.Println("++", counter)
 	}
 	mutex.Unlock()
 
