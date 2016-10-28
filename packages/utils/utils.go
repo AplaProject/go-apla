@@ -2317,6 +2317,7 @@ func daylightUpd(url string) error {
 	return nil
 }
 
+/*
 func DaylightRestart() error {
 	log.Debug("exec", os.Args[0])
 	err := exec.Command(os.Args[0]).Start()
@@ -2324,7 +2325,7 @@ func DaylightRestart() error {
 		return ErrInfo(err)
 	}
 	return nil
-}
+}*/
 
 func GetUpdVerAndUrl(host string) (string, string, error) {
 
