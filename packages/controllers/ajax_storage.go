@@ -1,5 +1,3 @@
-// +build windows
-
 // Copyright 2016 The go-daylight Authors
 // This file is part of the go-daylight library.
 //
@@ -16,41 +14,30 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package controllers
 
 import (
-	"github.com/trayhost"
+	"io/ioutil"
+	"path/filepath"
+
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
-/*
-#include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-int w_ver() {
-	DWORD dwMajorVersion = 0;
-	DWORD dwVersion = 0;
-	dwVersion = GetVersion();
-	//dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
-	//return dwMajorVersion;
-	return dwVersion;
-}*/
-import "C"
+const AStorage = `ajax_storage`
 
-func winVer() int {
-	ver := int(C.w_ver())
-	if ver&0xff == 6 && (ver&0xff00)>>8 <= 1 {
-		return 6
+type LocStorage struct {
+	Accounts string `json:"accounts"`
+	Error    string `json:"error"`
+}
+
+func init() {
+	newPage(AStorage, `json`)
+}
+
+func (c *Controller) AjaxStorage() interface{} {
+	var result LocStorage
+	if accounts := c.r.FormValue(`accounts`); len(accounts) > 0 {
+		ioutil.WriteFile(filepath.Join(*utils.Dir, `accounts.txt`), []byte(accounts), 0644)
 	}
-	return 7
-}
-
-func tray() {
-	go func() {
-		// Be sure to call this to link the tray icon to the target url
-		trayhost.SetUrl("http://localhost:7079")
-	}()
-}
-
-func enterLoop() {
-	trayhost.EnterLoop("EGaaS", iconData)
+	return result
 }

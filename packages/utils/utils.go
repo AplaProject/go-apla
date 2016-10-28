@@ -110,8 +110,10 @@ var (
 	EndBlockId              = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
 	RollbackToBlockId       = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
 	Tls                     = flag.String("tls", "", "Support https. Specify directory for .well-known")
+	DevTools                = flag.Int64("devtools", 0, "Devtools in thrust-shell")
 	DaemonsChans            []*DaemonsChansType
 	eWallets                = &sync.Mutex{}
+	Thrust                  bool
 )
 
 func init() {
@@ -1439,7 +1441,7 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 		// в 1 signs может быть от 1 до 3-х подписей
 		i := 0
 		for {
-			if  i > 2 {
+			if i > 2 {
 				return false, ErrInfoFmt("i > 3")
 			}
 			if len(signs) == 0 {
@@ -1460,7 +1462,6 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	log.Debug("publicKeys %x", publicKeys)
 	pubkeyCurve := elliptic.P256()
 	signhash := sha256.Sum256([]byte(forSign))
-
 
 	log.Debug("len(signsSlice) %d len(publicKeys) %d", len(signsSlice), len(publicKeys))
 
@@ -2418,7 +2419,6 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 	}
 	return ``, nil
 }
-
 
 func FirstBlock(exit bool) {
 

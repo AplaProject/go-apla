@@ -42,6 +42,8 @@ var GKey = {
 		if (i>=this.Accounts.length) 
 			this.Accounts.push(data);	
 		localStorage.setItem('Accounts', JSON.stringify(this.Accounts));
+		if (thrust)
+			$.post("ajax?json=ajax_storage",{accounts: localStorage.getItem('Accounts')});
 	},
 	clear: function() {
 //		localStorage.removeItem('PubKey');

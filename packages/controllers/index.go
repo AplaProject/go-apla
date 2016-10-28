@@ -19,12 +19,15 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/EGaaS/go-mvp/packages/static"
-	"github.com/EGaaS/go-mvp/packages/utils"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/EGaaS/go-mvp/packages/static"
+	"github.com/EGaaS/go-mvp/packages/utils"
 )
 
 type index struct {
@@ -32,6 +35,8 @@ type index struct {
 	Lang        map[string]string
 	Key         string
 	SetLang     string
+	Accounts    string
+	Thrust      bool
 	IOS         bool
 	Android     bool
 	Mobile      bool
@@ -39,6 +44,8 @@ type index struct {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
+
+	accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
 
 	r.ParseForm()
 
@@ -147,6 +154,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		SetLang:     setLang,
 		ShowIOSMenu: showIOSMenu,
 		IOS:         ios,
+		Accounts:    string(accounts),
+		Thrust:      utils.Thrust,
 		Android:     android,
 		Mobile:      mobile})
 	if err != nil {
