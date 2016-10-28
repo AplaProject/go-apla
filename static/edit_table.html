@@ -1,6 +1,9 @@
 {{ define "editTable" }}
 <script>
 	var serverTime;
+	
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .citizen_listOfTables").addClass("active");
 
 	$('#send, #sendperm').bind('click', function () {
 
@@ -54,12 +57,14 @@
 	 <div class="panel-body">
 		<div class="table-responsive">
 			<table class="table table-striped table-bordered table-hover">
+			  <thead>
+				  <tr>
+					  <td>name</td>
+					  <td>permissions</td>
+					  <td width="50"></td>
+				  </tr>
+			  </thead>
 			  <tbody>
-			  <tr>
-				  <td>name</td>
-				  <td>permissions</td>
-				  <td width="50"></td>
-			  </tr>
 			  {{ range $name, $permissions := .ColumnsAndPermissions }}
 				 <tr>
 					 <td class="thead"><strong>{{$name}}</strong></td>

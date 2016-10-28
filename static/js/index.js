@@ -42,6 +42,8 @@ var GKey = {
 		if (i>=this.Accounts.length) 
 			this.Accounts.push(data);	
 		localStorage.setItem('Accounts', JSON.stringify(this.Accounts));
+		if (thrust)
+			$.post("ajax?json=ajax_storage",{accounts: localStorage.getItem('Accounts')});
 	},
 	clear: function() {
 //		localStorage.removeItem('PubKey');
@@ -192,8 +194,20 @@ function load_template(page, parameters) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html( data );
 			window.scrollTo(0,0);
-			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
+			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
 				$('.sidebar-collapse').collapse('toggle');
+			}
+			console.log(page);
+			$.ajax({
+				url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
+				type: 'POST',
+				success: function (data) {
+					console.log(data);
+					var li = $("#dc li:first").html();
+					$("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
+					$("#dc li:first").next().addClass("active");
+				}
+			});
 		}, "html");
 }
 
@@ -234,12 +248,13 @@ function Notify(message, options) {
 	btn_notify.click();
 }
 
+var clipboard;
+
 function CopyToClipboard(elem, text) {
 	if (clipboard) {
 		clipboard.destroy();
-	} else {
-		var clipboard = new Clipboard(elem);
 	}
+	clipboard = new Clipboard(elem);
 	
 	if (text) {
 		$(elem).attr("data-clipboard-text", text);

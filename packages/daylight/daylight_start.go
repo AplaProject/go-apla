@@ -278,7 +278,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			panic(err)
 		}
 
-		startData := map[string]int64{"install":1,"config":1,"queue_tx":99999,"log_transactions":1,"transactions_status":99999, "block_chain": 1, "info_block": 1, "dlt_wallets":1, "confirmations": 9999999, "full_nodes":1, "system_parameters":4, "my_node_keys":99999, "transactions":999999}
+		startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
 		for _, table := range allTable {
 			count, err := utils.DB.Single(`SELECT count(*) FROM ` + table).Int64()
 			if err != nil {
@@ -392,8 +392,11 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				thrustWindowLoder.Close()
 				thrustWindow := thrust.NewWindow(thrust.WindowOptions{
 					RootUrl: BrowserHttpHost,
-					Size:    commands.SizeHW{Width: 1024, Height: 600},
+					Size:    commands.SizeHW{Width: 1024, Height: 800},
 				})
+				if *utils.DevTools != 0 {
+					thrustWindow.OpenDevtools()
+				}
 				thrustWindow.HandleEvent("*", func(cr commands.EventResult) {
 					fmt.Println("HandleEvent", cr)
 				})

@@ -24,6 +24,9 @@
 <script>
 	var serverTime;
 	
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .citizen_contracts").addClass("active");
+	
 	var editor = ace.edit("textEditor");
 	var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
 	$(".textEditor code").html(editor.getValue());

@@ -476,16 +476,11 @@
 					 </a>
 				 </li>
 				{{end}}
-				 <!--<li class="anonym_map">
-					 <a href="#" title="Map" onClick="dl_navigate('map'); HideMenu();">
-						 <span>Map</span>
-					 </a>
-				 </li>
-				 <li class="anonym_avatar">
-					 <a href="#" title="Avatar" onClick="dl_navigate('avatar'); HideMenu();">
-						 <span>Avatar</span>
-					 </a>
-				 </li>-->
+				<li class="anonym_apps_list">
+				   <a href="#"  onclick="dl_navigate('apps_list'); HideMenu();" title="Apps List">
+					  <span>Apps List</span>
+				   </a>
+				</li>
 			 </ul>
 		  </li>
 
@@ -496,12 +491,8 @@
 				<span>Citizen</span>
 			 </a>
 			 <ul id="dc" class="nav sidebar-subnav collapse in">
-
 				<li class="sidebar-subnav-header">Citizen</li>
-
 				 {{noescape .Menu}}
-
-				
 				 <!--
 				 Tables
 				 <li class="state_parameters">
@@ -622,7 +613,7 @@
 			 </ul>
 		  </li>
 		  {{end}}
-
+		  
 		   <li id="DemoButton">
 			   <a href="#" href="#" onClick="load_page('system_info'); HideMenu();" title="Government" data-toggle="collapse" class="toggle-hover">
 				   <em class="icon-map"></em>

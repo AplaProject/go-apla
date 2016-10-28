@@ -128,8 +128,10 @@
 					<div class="col-sm-9 text-right">
 						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 						<input type="hidden" id="rep_phrase" value="">
-						<button id="saveseed" class="btn btn-default noimport" onclick="return save_phrase();">Save passphrase</button>
-						<button id="genseed" class="btn btn-default noimport" onclick="return do_phrase();">Generate new seed</button>
+						<div class="clearfix">
+							<button id="genseed" class="btn btn-default noimport pull-left" type="button" onclick="return do_phrase();">Generate new seed</button>
+							<button id="saveseed" class="btn btn-default noimport pull-right" type="button" data-clipboard-action="copy" data-clipboard-target="#phrase" onclick="return save_phrase(this);"></button>
+						</div>
 					</div>
 				</fieldset>
 				<fieldset class="form-group pass">
@@ -170,18 +172,39 @@ g_menuShow = false;  // hide menu
 var repeat_step = false;
 var backup = '';
 
-function save_phrase() {
-	backup = $( repeat_step ? "#rep_phrase" : "#phrase").val();
-	var Data = new Blob([backup], {type: 'text/plain;charset=utf-8;'});
-	if (navigator.msSaveBlob) {
-	    navigator.msSaveBlob(Data, 'egaas.txt');
+//var copied = 0;
+var passphraseText;
+var passphraseTextCopy = 'Copy passphrase';
+var passphraseTextSave = 'Save passphrase';
+
+if (!isMobile) {
+	passphraseText = passphraseTextSave;
+} else {
+	passphraseText = passphraseTextCopy;
+}
+
+$("#saveseed").text(passphraseText);
+
+function save_phrase(el) {
+	if (!isMobile/* || copied == 1*/) {
+		/*if (clipboard) {
+			clipboard.destroy();
+		}*/
+		backup = $( repeat_step ? "#rep_phrase" : "#phrase").val();
+		var Data = new Blob([backup], {type: 'text/plain;charset=utf-8;'});
+		if (navigator.msSaveBlob) {
+			navigator.msSaveBlob(Data, 'egaas.txt');
+		} else {
+			var link = document.createElement('a');
+			link.href = window.URL.createObjectURL(Data);
+			link.setAttribute('download', 'egaas.txt');
+			document.body.appendChild(link);    
+			link.click();
+			document.body.removeChild(link);    
+		}
 	} else {
-	    var link = document.createElement('a');
-	    link.href = window.URL.createObjectURL(Data);
-	    link.setAttribute('download', 'egaas.txt');
-	    document.body.appendChild(link);    
-	    link.click();
-	    document.body.removeChild(link);    
+		preloader(el);
+		CopyToClipboard("#saveseed");
 	}
 	return false;
 }
@@ -206,10 +229,10 @@ function do_register(obj, is_register) {
 		$("#lpass").html('Repeat password');
 		$("#notice").hide();
 		repeat_step = true;
-/*		setTimeout(function(){
-			$("#register_form").removeClass("whirl");
-			$("#register_form").removeClass("standard");
-		}, 2000);*/
+		/*if (isMobile) {
+			copied = 1;
+			$("#saveseed").text(passphraseTextSave);
+		}*/
 		return false;
 	}
 	preloader(obj);
@@ -244,6 +267,10 @@ function do_register_back() {
 	$("#lpass").html('Password');
 	$("#notice").show();
 	repeat_step = false;
+	/*if (isMobile) {
+		copied = 0;
+		$("#saveseed").text(passphraseTextCopy);
+	}*/
 	return false;
 }
 
@@ -498,6 +525,9 @@ $(document).on('keydown', function(e){
 			}
 			return false;
 		}
+	}
+	if (e.keyCode == 8 && $("#back:visible").length && !$("#register_form .form-control:focus").length) {
+		do_register_back();
 	}
 });
 	

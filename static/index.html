@@ -100,6 +100,13 @@
    <script type="text/javascript" src="static/js/photoEditor/cropper.min.js"></script>
    
    <script>
+   		var isMobile = {{.Mobile}};
+	    var accounts = '{{.Accounts}}';
+		var thrust = {{.Thrust}};
+		if (accounts.length > 0 && thrust) {
+			localStorage.setItem('Accounts', accounts);
+		}
+		
 		$( document ).ready(function() {
 			{{if not .DbOk}}
 				NProgressStart.set(1);

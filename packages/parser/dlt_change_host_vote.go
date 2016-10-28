@@ -74,7 +74,7 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["host"], p.TxMap["addressVote"])
+	forSign := fmt.Sprintf("%s,%s,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["host"], p.TxMap["addressVote"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)

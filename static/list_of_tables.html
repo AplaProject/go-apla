@@ -1,4 +1,9 @@
 {{ define "listOfTables" }}
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .citizen_listOfTables").addClass("active");
+</script>
+
 	<div class="content-heading">
 		{{if not .Global}}
 			listOfTables
@@ -22,13 +27,15 @@
 	 <div class="panel-body">
 		<div class="table-responsive">
 		   <table class="table table-striped table-bordered table-hover">
+			  <thead>
+				  <tr>
+					  <td>table name</td>
+					  <td width="100">count</td>
+					  <td width="50" align="center">show</td>
+					  <td width="50" align="center">edit</td>
+				  </tr>
+			  </thead>
 			  <tbody>
-			  <tr>
-				  <td>table name</td>
-				  <td>count</td>
-				  <td width="50">show</td>
-				  <td width="50">edit</td>
-			  </tr>
 			  {{ range $value := .Tables }}
 				 <tr>
 					 <td class="thead"><strong>{{$value.name}}</strong></td>

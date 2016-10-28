@@ -18,6 +18,10 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+	"runtime"
+
 	"github.com/EGaaS/go-mvp/packages/daylight"
 	"github.com/EGaaS/go-mvp/packages/static"
 	"github.com/EGaaS/go-mvp/packages/system"
@@ -25,9 +29,6 @@ import (
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
-	"net/http"
-	"os"
-	"runtime"
 )
 
 func main_loader(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func main_loader(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(data))
 }
 func main_loader_html(w http.ResponseWriter, r *http.Request) {
-	html := `<html><title>DayLight</title><body style="margin:0;padding:0;overflow:hidden;"><img src="static/img/main_loader.gif"/></body></html>`
+	html := `<html><title>EgaaS</title><body style="margin:0;padding:0;overflow:hidden;"><img src="static/img/main_loader.gif"/></body></html>`
 	fmt.Fprint(w, html)
 }
 func main() {
@@ -48,11 +49,12 @@ func main() {
 		height = 578
 	}
 	if utils.Desktop() && (winVer() >= 6 || winVer() == 0) {
+		utils.Thrust = true
 		thrust.Start()
 		thrustWindow = thrust.NewWindow(thrust.WindowOptions{
-			RootUrl:  "http://localhost:8989/loader.html",
+			RootUrl:  "http://localhost:7079/loader.html",
 			HasFrame: winVer() != 6,
-			Title:    "DayLight",
+			Title:    "EGaaS",
 			Size:     commands.SizeHW{Width: width, Height: height},
 		})
 
@@ -72,7 +74,7 @@ func main() {
 		go func() {
 			http.HandleFunc("/static/img/main_loader.gif", main_loader)
 			http.HandleFunc("/loader.html", main_loader_html)
-			http.ListenAndServe(":8989", nil)
+			http.ListenAndServe(":7079", nil)
 		}()
 	}
 	tray()
