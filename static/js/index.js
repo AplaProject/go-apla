@@ -248,12 +248,13 @@ function Notify(message, options) {
 	btn_notify.click();
 }
 
+var clipboard;
+
 function CopyToClipboard(elem, text) {
 	if (clipboard) {
 		clipboard.destroy();
-	} else {
-		var clipboard = new Clipboard(elem);
 	}
+	clipboard = new Clipboard(elem);
 	
 	if (text) {
 		$(elem).attr("data-clipboard-text", text);
