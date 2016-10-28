@@ -172,7 +172,7 @@ g_menuShow = false;  // hide menu
 var repeat_step = false;
 var backup = '';
 
-var copied = 0;
+//var copied = 0;
 var passphraseText;
 var passphraseTextCopy = 'Copy passphrase';
 var passphraseTextSave = 'Save passphrase';
@@ -186,10 +186,10 @@ if (!isMobile) {
 $("#saveseed").text(passphraseText);
 
 function save_phrase(el) {
-	if (!isMobile || copied == 1) {
-		if (clipboard) {
+	if (!isMobile/* || copied == 1*/) {
+		/*if (clipboard) {
 			clipboard.destroy();
-		}
+		}*/
 		backup = $( repeat_step ? "#rep_phrase" : "#phrase").val();
 		var Data = new Blob([backup], {type: 'text/plain;charset=utf-8;'});
 		if (navigator.msSaveBlob) {
@@ -229,10 +229,10 @@ function do_register(obj, is_register) {
 		$("#lpass").html('Repeat password');
 		$("#notice").hide();
 		repeat_step = true;
-		if (isMobile) {
+		/*if (isMobile) {
 			copied = 1;
 			$("#saveseed").text(passphraseTextSave);
-		}
+		}*/
 		return false;
 	}
 	preloader(obj);
@@ -267,10 +267,10 @@ function do_register_back() {
 	$("#lpass").html('Password');
 	$("#notice").show();
 	repeat_step = false;
-	if (isMobile) {
+	/*if (isMobile) {
 		copied = 0;
 		$("#saveseed").text(passphraseTextCopy);
-	}
+	}*/
 	return false;
 }
 
