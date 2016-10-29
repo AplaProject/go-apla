@@ -70,7 +70,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 	if len(p.PublicKeys) == 0 {
 		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?",
-			p.TxPtr.(*consts.TXHeader).WalletId).String()
+			int64(p.TxPtr.(*consts.TXHeader).WalletId)).String()
 		//	fmt.Println(`HASH`, p.TxHash)
 		//	fmt.Println(`TX Call DATA`, p.TxPtr.(*consts.TXHeader).WalletId, err, data)
 
