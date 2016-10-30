@@ -8,8 +8,8 @@ import (
 )
 func main() {
         dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-        fmt.Println(dir+"/daylightbin")
-        cmd := exec.Command(dir+"/daylightbin")
+        fmt.Println(dir+"/egaasbin")
+        cmd := exec.Command(dir+"/egaasbin")
         err := cmd.Run()
         if err != nil {
             fmt.Println("err=",err)
