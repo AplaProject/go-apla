@@ -1,5 +1,3 @@
-// +build !android,!ios
-
 // Copyright 2016 The go-daylight Authors
 // This file is part of the go-daylight library.
 //
