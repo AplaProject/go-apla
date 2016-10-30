@@ -272,7 +272,11 @@ func Image(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		alt = pars[1]
 	}
-	return fmt.Sprintf(`<img src="%s" alt="%s" style="display:block;">`, pars[0], alt)
+	rez := ""
+	if len(pars[0]) > 0 {
+		rez = fmt.Sprintf(`<img src="%s" alt="%s" style="display:block;">`, pars[0], alt)
+	}
+	return rez
 }
 
 func StateValue(vars *map[string]string, pars ...string) string {
