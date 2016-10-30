@@ -413,7 +413,7 @@
 		  <!-- START user info-->
 		  <li class="has-user-block">
 			 <div id="user-block" class="collapse">
-				<div class="item user-block">
+				<div class="item user-block" onclick="load_template('citizen_profile'); HideMenu();">
 				   <!-- User picture-->
 				   <div class="user-block-picture">
 					  <div class="user-block-status">
@@ -424,7 +424,7 @@
 				   </div>
 				   <!-- Name and Job-->
 				   <div class="user-block-info">
-					  <span class="user-block-name">{{.CitizenName}} <a href="#" onclick="load_template('citizen_profile'); HideMenu();"><i class="fa fa-angle-down"></i></a></span>
+					  <span class="user-block-name">{{.CitizenName}}<i class="fa fa-angle-down"></i></span>
 					   <img id="menu-flag" height="15"><script>document.getElementById('menu-flag').setAttribute( 'src', '{{.StateFlag}}' ); </script>
 					   <span class="user-block-role">{{.StateName}}</span>
 				   </div>
