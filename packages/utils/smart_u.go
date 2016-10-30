@@ -23,11 +23,11 @@ import (
 	//	"reflect"
 	"strings"
 
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/script"
-	"github.com/EGaaS/go-mvp/packages/smart"
-	"github.com/EGaaS/go-mvp/packages/static"
-	"github.com/EGaaS/go-mvp/packages/textproc"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/russross/blackfriday"
 	"github.com/shopspring/decimal"
 )

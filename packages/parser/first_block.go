@@ -19,8 +19,8 @@ package parser
 import (
 	"encoding/hex"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	//	b58 "github.com/jbenet/go-base58"
 )
 

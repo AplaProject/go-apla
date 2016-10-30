@@ -18,8 +18,8 @@ package controllers
 
 import (
 	//	"bytes"
-	//	"github.com/EGaaS/go-mvp/packages/static"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//	"html/template"
 	//	"fmt"
 )

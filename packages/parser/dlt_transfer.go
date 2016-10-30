@@ -17,9 +17,9 @@
 package parser
 
 import (
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"fmt"
-	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"encoding/hex"
 	"github.com/shopspring/decimal"
 )

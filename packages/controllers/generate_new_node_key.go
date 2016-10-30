@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (c *Controller) GenerateNewNodeKey() (string, error) {

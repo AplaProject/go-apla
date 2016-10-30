@@ -21,10 +21,10 @@ package stopdaemons
 import (
 	"os"
 	"syscall"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"fmt"
 	"os/signal"
-	"github.com/EGaaS/go-mvp/packages/system"
+	"github.com/EGaaS/go-egaas-mvp/packages/system"
 )
 
 /*

@@ -20,17 +20,17 @@ package daylight
 
 import (
 	//"fmt"
-	//"github.com/EGaaS/go-mvp/packages/consts"
+	//"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"net"
 	"net/http"
 
-	"github.com/EGaaS/go-mvp/packages/tcpserver"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"os"
 	//"regexp"
 	"time"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 func IosLog(text string) {

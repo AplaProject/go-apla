@@ -17,8 +17,8 @@
 package parser
 
 import (
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 //  если в ходе проверки тр-ий возникает ошибка, то вызываем откатчик всех занесенных тр-ий

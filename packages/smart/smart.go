@@ -22,9 +22,9 @@ import (
 	"strconv"
 	"strings"
 
-	//"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/script"
-	//"github.com/EGaaS/go-mvp/packages/utils"
+	//"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	//"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type Contract struct {

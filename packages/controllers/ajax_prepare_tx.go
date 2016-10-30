@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/script"
-	"github.com/EGaaS/go-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 )
 
 const APrepareTx = `ajax_prepare_tx`

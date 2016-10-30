@@ -24,8 +24,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/test"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/test"
 )
 
 type ByteTest struct {

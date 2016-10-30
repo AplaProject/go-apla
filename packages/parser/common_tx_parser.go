@@ -19,7 +19,7 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {

@@ -20,8 +20,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const AExplorer = `ajax_explorer`

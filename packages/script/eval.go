@@ -20,7 +20,7 @@ import (
 	//	"fmt"
 	"hash/crc64"
 
-	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 )
 
 type EvalCode struct {

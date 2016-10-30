@@ -4,12 +4,12 @@
 
 ## Install
 
-	go get github.com/EGaaS/go-mvp/vendor/src/github.com/lib/pq
+	go get github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/lib/pq
 
 ## Docs
 
 For detailed documentation and basic usage examples, please see the package
-documentation at <http://godoc.org/github.com/EGaaS/go-mvp/vendor/src/github.com/lib/pq>.
+documentation at <http://godoc.org/github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/lib/pq>.
 
 ## Tests
 
@@ -20,7 +20,7 @@ variables.
 
 Example:
 
-	PGHOST=/var/run/postgresql go test github.com/EGaaS/go-mvp/vendor/src/github.com/lib/pq
+	PGHOST=/var/run/postgresql go test github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/lib/pq
 
 Optionally, a benchmark suite can be run as part of the tests:
 

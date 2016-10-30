@@ -19,7 +19,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 func (p *Parser) NewCitizenInit() error {

@@ -20,12 +20,12 @@ import (
 	"errors"
 	"flag"
 	"github.com/astaxie/beego/config"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/op/go-logging"
 	"os"
 	"strings"
 	"regexp"
-	"github.com/EGaaS/go-mvp/packages/stopdaemons"
+	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
 	"fmt"
 )
 

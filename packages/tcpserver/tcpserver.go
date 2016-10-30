@@ -23,7 +23,7 @@ import (
 	//	"runtime"
 	"sync"
 
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/op/go-logging"
 )
 
