@@ -91,7 +91,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 	}
 
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxPtr.(*consts.TXHeader).Sign, false)
-	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
+	//	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
-				fmt.Println(`Contract Error`, err)
+				//			fmt.Println(`Contract Error`, err)
 				return
 			}
 		}

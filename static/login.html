@@ -128,6 +128,10 @@
 					<div class="col-sm-9 text-right">
 						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 						<input type="hidden" id="rep_phrase" value="">
+						<div id="key_btn" style="margin-top:0px;position:relative;"  class="btn btn-default noregister pull-right" onclick="document.getElementById('upload_key').click();" type="button">
+							Select PrivateKey file in EGaaS folder
+							<input type="file"  id="upload_key" value="" style="visibility:hidden;position:absolute;">
+						</div>
 						<div class="clearfix">
 							<button id="genseed" class="btn btn-default noimport pull-left" type="button" onclick="return do_phrase();">Generate new seed</button>
 							<button id="saveseed" class="btn btn-default noimport pull-right" type="button" data-clipboard-action="copy" data-clipboard-target="#phrase" onclick="return save_phrase(this);"></button>
@@ -530,7 +534,29 @@ $(document).on('keydown', function(e){
 		do_register_back();
 	}
 });
-	
+
+function handleFileSelect(evt) {
+//    $('#key_file_name').html(this.value);
+	var f = evt.target.files[0];
+
+//	 $('#key_file_name').html(f.name);
+    var reader = new FileReader();
+    reader.onload = (function(theFile) {
+        return function(e) {
+            console.log(e.target.result);
+			$('#phrase').val(e.target.result);
+        };
+    })(f);
+    reader.readAsText(f);
+};
+
+$( document ).ready(function() {
+	var upload = document.getElementById('upload_key');
+	if (upload)
+		upload.addEventListener('change', handleFileSelect, false);
+});
+
+		
 </script>
 <script type="text/javascript" src="static/js/triangles.js"></script>
 {{end}}

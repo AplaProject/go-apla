@@ -19,7 +19,7 @@ package parser
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	//	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -134,7 +134,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		addSqlIns0 = addSqlIns0[0 : len(addSqlIns0)-1]
 		addSqlIns1 = addSqlIns1[0 : len(addSqlIns1)-1]
-		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")")
+		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")")
 		tableId, err = p.ExecSqlGetLastInsertId(`INSERT INTO "`+table+`" (`+addSqlIns0+`) VALUES (`+addSqlIns1+`)`, table)
 		if err != nil {
 			return tableId, err
