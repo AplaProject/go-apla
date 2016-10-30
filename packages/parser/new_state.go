@@ -169,7 +169,6 @@ func (p *Parser) NewState() error {
 		}
 	}
 	func main {
-		Println("TXCitizenRequest main")
 		DBInsert(TableTx( "citizenship_requests"), "dlt_wallet_id,name,block_id", $wallet, $FullName, $block)
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
@@ -178,7 +177,6 @@ func (p *Parser) NewState() error {
     }
 
 	func main {
-		Println("NewCitizen Main", $type, $citizen, $block )
 		DBInsert(Table( "citizens"), "id,block_id,name", DBString(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId ), 
 		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
         DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
@@ -188,7 +186,6 @@ func (p *Parser) NewState() error {
         RequestId int
    }
    func main { 
-  //    Println("TXRejectCitizen main", $RequestId  )
 	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
    }
 }`, `TXEditProfile`, `contract TXEditProfile {
@@ -202,7 +199,6 @@ func (p *Parser) NewState() error {
 	}
 	func main {
 	  DBUpdate(Table( "citizens"), $citizen, "name", $FirstName)
-  	  Println("TXEditProfile main")
 	}
 }`, `TXTest`, `contract TXTest {
 	tx {
