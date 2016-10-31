@@ -175,6 +175,7 @@
 g_menuShow = false;  // hide menu
 var repeat_step = false;
 var backup = '';
+var private = '{{.Private}}';
 
 //var copied = 0;
 var passphraseText;
@@ -325,6 +326,7 @@ function login_form() {
 
 function register_form() {
 	repeat_step = false;
+	do_phrase();
 	$("#notice").show();
 	$("#genseed").show();
 	$("#saveseed").show();
@@ -343,6 +345,7 @@ function register_form() {
 }
 
 function import_form() {
+	
 	$("#lseed").html('Account seed');
 	$("#lpass").html('Password');
 	$("#rep_pass").val('');
@@ -477,7 +480,11 @@ $(document).ready(function(){
 	do_phrase();
 	load_accounts();
 	if (!GKey.Public && !GKey.Accounts.length) {
-		register_form();
+		if (private.length)	{
+			$("#phrase").val(private);
+			import_form();
+		} else 
+			register_form();
 	} else if (localStorage.getItem('EncKey') || GKey.Accounts.length) {
 		login_form();
 	} else {

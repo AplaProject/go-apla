@@ -17,17 +17,20 @@
 package controllers
 
 import (
+	"io/ioutil"
+	"strings"
 	//	"bytes"
 	//	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//	"html/template"
-	//	"fmt"
+	"path/filepath"
 )
 
 type loginECDSAPage struct {
-	Lang   map[string]string
-	Title  string
-	States map[string]string
+	Lang    map[string]string
+	Title   string
+	States  map[string]string
+	Private string
 	/*	MyModalIdName string
 		UserID        int64
 		PoolTechWorks int
@@ -94,6 +97,10 @@ func (c *Controller) LoginECDSA() (string, error) {
 		}
 		return b.String(), nil*/
 
+	var private []byte
+	if strings.HasPrefix(c.r.Host, `localhost`) {
+		private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
+	}
 
 	states := make(map[string]string)
 	data, err := c.GetList(`SELECT id FROM system_states`).String()
@@ -109,9 +116,10 @@ func (c *Controller) LoginECDSA() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("login", "loginECDSA", &loginECDSAPage{
-		Lang:   c.Lang,
-		Title:  "Login",
-		States: states,
+		Lang:    c.Lang,
+		Title:   "Login",
+		States:  states,
+		Private: string(private),
 		/*		MyWalletData:          MyWalletData,
 				Title:                 "modalAnonym",
 		*/})
