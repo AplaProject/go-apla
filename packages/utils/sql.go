@@ -36,8 +36,8 @@ import (
 
 	//	b58 "github.com/jbenet/go-base58"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"

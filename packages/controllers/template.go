@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func Template(w http.ResponseWriter, r *http.Request) {

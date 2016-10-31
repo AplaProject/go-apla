@@ -21,11 +21,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/script"
-	"github.com/EGaaS/go-mvp/packages/smart"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func init() {
@@ -70,7 +70,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 	if len(p.PublicKeys) == 0 {
 		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?",
-			p.TxPtr.(*consts.TXHeader).WalletId).String()
+			int64(p.TxPtr.(*consts.TXHeader).WalletId)).String()
 		//	fmt.Println(`HASH`, p.TxHash)
 		//	fmt.Println(`TX Call DATA`, p.TxPtr.(*consts.TXHeader).WalletId, err, data)
 
@@ -91,7 +91,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 	}
 
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxPtr.(*consts.TXHeader).Sign, false)
-	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
+	//	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
-				fmt.Println(`Contract Error`, err)
+				//			fmt.Println(`Contract Error`, err)
 				return
 			}
 		}

@@ -18,9 +18,9 @@ package daemons
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-mvp/packages/parser"
-	"github.com/EGaaS/go-mvp/packages/utils"
-	"github.com/EGaaS/go-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/parser"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 /* Берем блок. Если блок имеет лучший хэш, то ищем, в каком блоке у нас пошла вилка

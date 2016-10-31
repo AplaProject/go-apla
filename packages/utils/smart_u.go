@@ -23,11 +23,11 @@ import (
 	//	"reflect"
 	"strings"
 
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/script"
-	"github.com/EGaaS/go-mvp/packages/smart"
-	"github.com/EGaaS/go-mvp/packages/static"
-	"github.com/EGaaS/go-mvp/packages/textproc"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/russross/blackfriday"
 	"github.com/shopspring/decimal"
 )
@@ -51,9 +51,10 @@ type FormCommon struct {
 }
 
 type FormInfo struct {
-	TxName string
-	Fields []FieldInfo
-	Data   FormCommon
+	TxName    string
+	OnSuccess template.JS
+	Fields    []FieldInfo
+	Data      FormCommon
 }
 
 type CommonPage struct {
@@ -272,7 +273,11 @@ func Image(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		alt = pars[1]
 	}
-	return fmt.Sprintf(`<img src="%s" alt="%s" style="display:block;">`, pars[0], alt)
+	rez := ""
+	if len(pars[0]) > 0 {
+		rez = fmt.Sprintf(`<img src="%s" alt="%s" style="display:block;">`, pars[0], alt)
+	}
+	return rez
 }
 
 func StateValue(vars *map[string]string, pars ...string) string {
@@ -362,6 +367,7 @@ func PageEnd(vars *map[string]string, pars ...string) string {
 func TXForm(vars *map[string]string, pars *map[string]string) string {
 
 	name := (*pars)[`Contract`]
+	onsuccess := (*pars)[`OnSuccess`]
 	contract := smart.GetContract(name)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		return fmt.Sprintf(`there is not %s contract or parameters`, name)
@@ -388,8 +394,21 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	}
 	t = template.Must(t.Parse(string(sign)))
 
+	if len(onsuccess) > 0 {
+		pars := strings.SplitN(onsuccess, `,`, 3)
+		onsuccess = ``
+		if len(pars) >= 2 {
+			onsuccess = fmt.Sprintf(`load_%s('%s'`, pars[0], pars[1])
+			if len(pars) == 3 {
+				onsuccess += `,{` + pars[2] + `}`
+			}
+
+			onsuccess += `);`
+		}
+	}
+
 	b := new(bytes.Buffer)
-	finfo := FormInfo{TxName: name, Fields: make([]FieldInfo, 0), Data: FormCommon{
+	finfo := FormInfo{TxName: name, OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		var value string

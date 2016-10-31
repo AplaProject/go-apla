@@ -5,13 +5,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>daylight</string>
+	<string>Egaas</string>
 	<key>CFBundleExecutable</key>
 	<string>starter</string>
 	<key>CFBundleIconFile</key>
-	<string>daylight.icns</string>
+	<string>egaas.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>club.daylight</string>
+	<string>org.egaas</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

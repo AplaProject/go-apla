@@ -42,8 +42,11 @@ var GKey = {
 		if (i>=this.Accounts.length) 
 			this.Accounts.push(data);	
 		localStorage.setItem('Accounts', JSON.stringify(this.Accounts));
-		if (thrust)
-			$.post("ajax?json=ajax_storage",{accounts: localStorage.getItem('Accounts')});
+//		if (thrust)
+//			$.post("ajax?json=ajax_storage",{accounts: localStorage.getItem('Accounts')});
+		if ( typeof THRUST != "undefined" )
+			THRUST.remote.send(localStorage.getItem('Accounts'));
+
 	},
 	clear: function() {
 //		localStorage.removeItem('PubKey');
@@ -214,7 +217,7 @@ function load_template(page, parameters) {
 function load_app(page) {
 	clearAllTimeouts();
 	NProgress.set(1.0);
-	$.post("app?name="+page,{},
+	$.post("app?page="+page,{},
 		function(data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html( data );

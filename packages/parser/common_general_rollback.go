@@ -18,7 +18,7 @@ package parser
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (p *Parser) generalRollback(table string, whereUserId_ interface{}, addWhere string, AI bool) error {

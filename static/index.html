@@ -101,12 +101,20 @@
    
    <script>
    		var isMobile = {{.Mobile}};
-	    var accounts = '{{.Accounts}}';
+//	    var accounts = '{{.Accounts}}';
 		var thrust = {{.Thrust}};
-		if (accounts.length > 0 && thrust) {
-			localStorage.setItem('Accounts', accounts);
+		if ( typeof THRUST != "undefined" )
+		{
+			THRUST.remote.send('ACCOUNTS');
+			THRUST.remote.listen(function(answer) {
+				localStorage.setItem('Accounts', answer.payload );
+				GKey.init();
+    		});
 		}
-		
+/*		if (accounts.length > 0 && thrust) {
+			localStorage.setItem('Accounts', accounts);
+		}*/
+				
 		$( document ).ready(function() {
 			{{if not .DbOk}}
 				NProgressStart.set(1);

@@ -43,7 +43,7 @@ func RegisterDial(net string, dial DialFunc) {
 }
 
 // Open new Connection.
-// See https://github.com/EGaaS/go-mvp/vendor/src/github.com/go-sql-driver/mysql#dsn-data-source-name for how
+// See https://github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/go-sql-driver/mysql#dsn-data-source-name for how
 // the DSN string is formated
 func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 	var err error
@@ -139,7 +139,7 @@ func handleAuthResult(mc *mysqlConn, cipher []byte) error {
 	if mc.cfg.allowOldPasswords && err == ErrOldPassword {
 		// Retry with old authentication method. Note: there are edge cases
 		// where this should work but doesn't; this is currently "wontfix":
-		// https://github.com/EGaaS/go-mvp/vendor/src/github.com/go-sql-driver/mysql/issues/184
+		// https://github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/go-sql-driver/mysql/issues/184
 		if err = mc.writeOldAuthPacket(cipher); err != nil {
 			return err
 		}

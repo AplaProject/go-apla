@@ -17,8 +17,8 @@
 package daemons
 
 import (
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"time"
 	"net"
 )

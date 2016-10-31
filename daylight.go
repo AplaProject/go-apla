@@ -22,10 +22,10 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/EGaaS/go-mvp/packages/daylight"
-	"github.com/EGaaS/go-mvp/packages/static"
-	"github.com/EGaaS/go-mvp/packages/system"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/daylight"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/system"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
@@ -52,7 +52,7 @@ func main() {
 		utils.Thrust = true
 		thrust.Start()
 		thrustWindow = thrust.NewWindow(thrust.WindowOptions{
-			RootUrl:  "http://localhost:7079/loader.html",
+			RootUrl:  "http://localhost:7979/loader.html",
 			HasFrame: winVer() != 6,
 			Title:    "EGaaS",
 			Size:     commands.SizeHW{Width: width, Height: height},
@@ -74,7 +74,7 @@ func main() {
 		go func() {
 			http.HandleFunc("/static/img/main_loader.gif", main_loader)
 			http.HandleFunc("/loader.html", main_loader_html)
-			http.ListenAndServe(":7079", nil)
+			http.ListenAndServe(":7979", nil)
 		}()
 	}
 	tray()

@@ -1,4 +1,4 @@
-go-version [![Build Status](https://travis-ci.org/mcuadros/go-version.png?branch=master)](https://travis-ci.org/mcuadros/go-version) [![GoDoc](https://godoc.org/github.com/EGaaS/go-mvp/vendor/src/github.com/mcuadros/go-version?status.png)](http://godoc.org/github.com/EGaaS/go-mvp/vendor/src/github.com/mcuadros/go-version)
+go-version [![Build Status](https://travis-ci.org/mcuadros/go-version.png?branch=master)](https://travis-ci.org/mcuadros/go-version) [![GoDoc](https://godoc.org/github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/mcuadros/go-version?status.png)](http://godoc.org/github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/mcuadros/go-version)
 ==============================
 
 Version normalizer and comparison library for go, heavy based on PHP version_compare function and Version comparsion libs from [Composer](https://github.com/composer/composer) PHP project
@@ -9,7 +9,7 @@ Installation
 The recommended way to install go-version
 
 ```
-go get github.com/EGaaS/go-mvp/vendor/src/github.com/mcuadros/go-version
+go get github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/mcuadros/go-version
 ```
 
 Examples
@@ -19,7 +19,7 @@ How import the package
 
 ```go
 import (
-    "github.com/EGaaS/go-mvp/vendor/src/github.com/mcuadros/go-version"
+    "github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/mcuadros/go-version"
 )
 ```
 

@@ -28,9 +28,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
 )

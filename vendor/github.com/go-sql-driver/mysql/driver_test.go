@@ -48,7 +48,7 @@ var (
 	sDateTime0 = "0000-00-00 00:00:00"
 )
 
-// See https://github.com/EGaaS/go-mvp/vendor/src/github.com/go-sql-driver/mysql/wiki/Testing
+// See https://github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/go-sql-driver/mysql/wiki/Testing
 func init() {
 	// get environment variables
 	env := func(key, defaultValue string) string {

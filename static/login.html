@@ -128,6 +128,10 @@
 					<div class="col-sm-9 text-right">
 						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 						<input type="hidden" id="rep_phrase" value="">
+						<div id="key_btn" style="margin-top:0px;position:relative;"  class="btn btn-default noregister pull-right" onclick="document.getElementById('upload_key').click();" type="button">
+							Select PrivateKey file in EGaaS folder
+							<input type="file"  id="upload_key" value="" style="visibility:hidden;position:absolute;">
+						</div>
 						<div class="clearfix">
 							<button id="genseed" class="btn btn-default noimport pull-left" type="button" onclick="return do_phrase();">Generate new seed</button>
 							<button id="saveseed" class="btn btn-default noimport pull-right" type="button" data-clipboard-action="copy" data-clipboard-target="#phrase" onclick="return save_phrase(this);"></button>
@@ -171,6 +175,7 @@
 g_menuShow = false;  // hide menu
 var repeat_step = false;
 var backup = '';
+var private = '{{.Private}}';
 
 //var copied = 0;
 var passphraseText;
@@ -321,6 +326,7 @@ function login_form() {
 
 function register_form() {
 	repeat_step = false;
+	do_phrase();
 	$("#notice").show();
 	$("#genseed").show();
 	$("#saveseed").show();
@@ -339,6 +345,7 @@ function register_form() {
 }
 
 function import_form() {
+	
 	$("#lseed").html('Account seed');
 	$("#lpass").html('Password');
 	$("#rep_pass").val('');
@@ -457,13 +464,13 @@ function del_account(obj, ind) {
 var selectbox = $("#state_id");
 
 function WatchForm() {
-	var el = $(".start_form");
+	/*var el = $(".start_form");
 	var list = $("#countries");
 	el.each(function() {
 		if ($(this).is(":visible")) {
 			list.insertBefore($(this).find(".s-box"));
 		}
-	});
+	});*/
 }
 
 $(document).ready(function(){
@@ -473,7 +480,11 @@ $(document).ready(function(){
 	do_phrase();
 	load_accounts();
 	if (!GKey.Public && !GKey.Accounts.length) {
-		register_form();
+		if (private.length)	{
+			$("#phrase").val(private);
+			import_form();
+		} else 
+			register_form();
 	} else if (localStorage.getItem('EncKey') || GKey.Accounts.length) {
 		login_form();
 	} else {
@@ -530,7 +541,29 @@ $(document).on('keydown', function(e){
 		do_register_back();
 	}
 });
-	
+
+function handleFileSelect(evt) {
+//    $('#key_file_name').html(this.value);
+	var f = evt.target.files[0];
+
+//	 $('#key_file_name').html(f.name);
+    var reader = new FileReader();
+    reader.onload = (function(theFile) {
+        return function(e) {
+            console.log(e.target.result);
+			$('#phrase').val(e.target.result);
+        };
+    })(f);
+    reader.readAsText(f);
+};
+
+$( document ).ready(function() {
+	var upload = document.getElementById('upload_key');
+	if (upload)
+		upload.addEventListener('change', handleFileSelect, false);
+});
+
+		
 </script>
 <script type="text/javascript" src="static/js/triangles.js"></script>
 {{end}}

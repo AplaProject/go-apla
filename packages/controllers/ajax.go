@@ -21,8 +21,8 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	qrcode "github.com/skip2/go-qrcode"
 )
 

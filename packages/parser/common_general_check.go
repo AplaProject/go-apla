@@ -19,8 +19,8 @@ package parser
 import (
 	"fmt"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // общая проверка для всех _front

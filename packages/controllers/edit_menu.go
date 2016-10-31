@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"encoding/json"
 	//"fmt"
 )

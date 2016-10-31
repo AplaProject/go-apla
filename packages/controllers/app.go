@@ -21,9 +21,9 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/EGaaS/go-mvp/packages/static"
-	"github.com/EGaaS/go-mvp/packages/textproc"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func App(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sess.SessionRelease(w)
 	r.ParseForm()
-	page := r.FormValue("name")
+	page := r.FormValue("page")
 	params := make(map[string]string)
 	if len(page) == 0 {
 		log.Error("%v", len(page) == 0)

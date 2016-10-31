@@ -5,7 +5,7 @@ session is a Go session manager. It can use many session providers. Just like th
 
 ## How to install?
 
-	go get github.com/EGaaS/go-mvp/vendor/src/github.com/astaxie/beego/session
+	go get github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/session
 
 
 ## What providers are supported?
@@ -18,7 +18,7 @@ As of now this session manager support memory, file, Redis and MySQL.
 First you must import it
 
 	import (
-		"github.com/EGaaS/go-mvp/vendor/src/github.com/astaxie/beego/session"
+		"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/session"
 	)
 
 Then in you web app init the global session manager
@@ -46,7 +46,7 @@ Then in you web app init the global session manager
 			go globalSessions.GC()
 		}
 		
-* Use **MySQL** as provider, the last param is the DSN, learn more from [mysql](https://github.com/EGaaS/go-mvp/vendor/src/github.com/go-sql-driver/mysql#dsn-data-source-name):
+* Use **MySQL** as provider, the last param is the DSN, learn more from [mysql](https://github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/go-sql-driver/mysql#dsn-data-source-name):
 
 		func init() {
 			globalSessions, _ = session.NewManager(

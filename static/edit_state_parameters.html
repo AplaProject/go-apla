@@ -80,10 +80,13 @@
 		   <div class="form-group">
 			   <label>Value</label>
 
-			   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}">
-			<script>
-				document.getElementById('flag').setAttribute( 'src', '{{.StateParameters.value}}' );
-			</script></p>{{end}}
+			   {{if .StateParameters.name}}
+				   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}">
+					<script>
+						document.getElementById('flag').setAttribute( 'src', '{{.StateParameters.value}}' );
+					</script></p>
+				   {{end}}
+			   {{end}}
 
 			   <textarea class="form-control" id="value">{{.StateParameters.value}}</textarea>
 		   </div>
@@ -99,10 +102,12 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			  {{if eq .StateParameters.name "state_flag"}}
-			  	<button type="button" class="btn btn-primary" onClick="openImageEditor('flag', 'value', '2/1', '100', '50');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
-			  {{else}}
-				<button type="button" class="btn btn-primary" onClick="preloader(this); openMap('value');" id="openMap"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+			  {{if .StateParameters.name}}
+				  {{if eq .StateParameters.name "state_flag"}}
+					<button type="button" class="btn btn-primary" onClick="openImageEditor('flag', 'value', '2/1', '100', '50');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+				  {{else}}
+					<button type="button" class="btn btn-primary" onClick="preloader(this); openMap('value');" id="openMap"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+				  {{end}}
 			  {{end}}
 		  </div>
 		  <div class="pull-right">

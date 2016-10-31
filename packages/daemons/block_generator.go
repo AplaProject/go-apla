@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EGaaS/go-mvp/packages/lib"
-	"github.com/EGaaS/go-mvp/packages/parser"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/parser"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	_ "github.com/lib/pq"
 )
 

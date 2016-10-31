@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"math/big"
 	"flag"
-	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"io/ioutil"
 )
 

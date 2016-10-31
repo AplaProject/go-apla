@@ -29,15 +29,15 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/EGaaS/go-mvp/packages/consts"
-	"github.com/EGaaS/go-mvp/packages/controllers"
-	"github.com/EGaaS/go-mvp/packages/daemons"
-	"github.com/EGaaS/go-mvp/packages/parser"
-	"github.com/EGaaS/go-mvp/packages/schema"
-	"github.com/EGaaS/go-mvp/packages/static"
-	"github.com/EGaaS/go-mvp/packages/stopdaemons"
-	"github.com/EGaaS/go-mvp/packages/system"
-	"github.com/EGaaS/go-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
+	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
+	"github.com/EGaaS/go-egaas-mvp/packages/parser"
+	"github.com/EGaaS/go-egaas-mvp/packages/schema"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
+	"github.com/EGaaS/go-egaas-mvp/packages/system"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
@@ -401,18 +401,23 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 					fmt.Println("HandleEvent", cr)
 				})
 				thrustWindow.HandleRemote(func(er commands.EventResult, this *window.Window) {
-					fmt.Println("RemoteMessage Recieved:", er.Message.Payload)
+					//					fmt.Println("RemoteMessage Recieved:", er.Message.Payload)
 					if len(er.Message.Payload) > 7 && er.Message.Payload[:7] == `mailto:` && runtime.GOOS == `windows` {
 						utils.ShellExecute(er.Message.Payload)
-					} else if len(er.Message.Payload) >= 7 && er.Message.Payload[:7] == `USERID=` {
+					} else if len(er.Message.Payload) > 7 && er.Message.Payload[:2] == `[{` {
+						ioutil.WriteFile(filepath.Join(*utils.Dir, `accounts.txt`), []byte(er.Message.Payload), 0644)
+						//					} else if len(er.Message.Payload) >= 7 && er.Message.Payload[:7] == `USERID=` {
 						// for Lite version - do nothing
+					} else if er.Message.Payload == `ACCOUNTS` {
+						accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
+						this.SendRemoteMessage(string(accounts))
 					} else {
 						openBrowser(er.Message.Payload)
 					}
 					// Keep in mind once we have the message, lets say its json of some new type we made,
 					// We can unmarshal it to that type.
 					// Same goes for the other way around.
-					this.SendRemoteMessage("boop")
+					//					this.SendRemoteMessage("boop")
 				})
 				thrustWindow.Show()
 				thrustWindow.Focus()

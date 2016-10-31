@@ -17,8 +17,8 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-mvp/packages/utils"
-	"github.com/EGaaS/go-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 )
 
 type forgingPage struct {

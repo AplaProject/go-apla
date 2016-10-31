@@ -38,7 +38,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/EGaaS/go-mvp/vendor/src/github.com/astaxie/beego/session"
+	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/session"
 
 	"github.com/garyburd/redigo/redis"
 )
