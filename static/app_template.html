@@ -24,6 +24,14 @@
 		if (txcurrent < jdata.TX.length - 1) {
 			txcurrent++;	
 			$("#send").trigger("click");
+		} else if (jdata.OnSuccess) {
+			var load = load_page
+			if (jdata.OnSuccess.script == 'template') 
+			   load = load_template;
+			else if (jdata.OnSuccess.script == 'app') 
+			   load = load_app;
+			load(jdata.OnSuccess.page, jdata.OnSuccess.parameters);
+			HideMenu();
 		}
 	}
 	

@@ -179,7 +179,10 @@
 
 {{end}}
 	function SendTxOK() {
-		
+		{{if .OnSuccess}}
+			{{.OnSuccess}}
+			HideMenu();	
+		{{end}}
 	}
 	var serverTime;
 	var predata;

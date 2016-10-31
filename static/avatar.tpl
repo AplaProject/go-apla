@@ -17,6 +17,11 @@ SetVar(
 TextHidden( sc_value, sc_conditions )
 Json(`Head: "Adding avatar column",
 	Desc: "This application adds avatar column into citizens table.",
+	OnSuccess: {
+		script: 'template',
+		page: 'government',
+		parameters: {}
+	},
 	TX: [
 		{ 
 		Forsign: 'global,id,value,conditions',
