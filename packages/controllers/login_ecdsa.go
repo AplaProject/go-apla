@@ -18,7 +18,7 @@ package controllers
 
 import (
 	"io/ioutil"
-	"strings"
+	//"strings"
 	//	"bytes"
 	//	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -98,9 +98,9 @@ func (c *Controller) LoginECDSA() (string, error) {
 		return b.String(), nil*/
 
 	var private []byte
-	if strings.HasPrefix(c.r.Host, `localhost`) {
+	//if strings.HasPrefix(c.r.Host, `localhost`) {
 		private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
-	}
+	//}
 
 	states := make(map[string]string)
 	data, err := c.GetList(`SELECT id FROM system_states`).String()
