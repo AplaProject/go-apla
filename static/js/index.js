@@ -217,7 +217,7 @@ function load_template(page, parameters) {
 function load_app(page) {
 	clearAllTimeouts();
 	NProgress.set(1.0);
-	$.post("app?name="+page,{},
+	$.post("app?page="+page,{},
 		function(data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html( data );
