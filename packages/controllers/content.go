@@ -370,9 +370,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(CallPage(c, pageName)))
 		return
 	}
-	if ok, _ := regexp.MatchString(`^(?i)listOfTables|editStateParameters|editColumn|contracts|newContract|editContract|editMenu|newMenu|newPage|editPage|editMenu|newColumn|editTable|showTable|stateTable|newState|tableList|newTable|stateLaws|stateSmartLaws|changeStateParameters|stateParameters|forging|LoginECDSA|AnonymMoneyTransfer|ModalAnonym|DashBoardAnonym|Transactions|NotificationList|Map|PromisedAmountRestricted|PromisedAmountRestrictedList|upgradeUser|miningSn|changePool|delPoolUser|delAutoPayment|newAutoPayment|autoPayments|holidaysList|adminVariables|adminSpots|exchangeAdmin|exchangeSupport|exchangeUser|votesExchange|chat|firstSelect|PoolAdminLogin|CfPagePreview|CfCatalog|AddCfProjectData|CfProjectChangeCategory|NewCfProject|MyCfProjects|DelCfProject|DelCfFunding|CfStart|PoolAdminControl|Credits|Home|WalletsList|Information|Notifications|Interface|MiningMenu|Upgrade5|NodeConfigControl|Upgrade7|Upgrade6|Upgrade5|Upgrade4|Upgrade3|Upgrade2|Upgrade1|Upgrade0|StatisticVoting|ProgressBar|MiningPromisedAmount|CurrencyExchangeDelete|CurrencyExchange|ChangeCreditor|ChangeCommission|CashRequestOut|ArbitrationSeller|ArbitrationBuyer|ArbitrationArbitrator|Arbitration|InstallStep2|InstallStep1|InstallStep0|DbInfo|ChangeHost|Assignments|NewUser|NewPhoto|Voting|VoteForMe|RepaymentCredit|PromisedAmountList|PromisedAmountActualization|NewPromisedAmount|Login|ForRepaidFix|DelPromisedAmount|DelCredit|ChangePromisedAmount|ChangePrimaryKey|ChangeNodeKey|ChangeAvatar|BugReporting|Abuse|UpgradeResend|UpdatingBlockchain|Statistic|RewritePrimaryKey|RestoringAccess|PoolTechWorks|Points|NewHolidays|NewCredit|MoneyBackRequest|MoneyBack|ChangeMoneyBack|ChangeKeyRequest|ChangeKeyClose|ChangeGeolocation|ChangeCountryRace|ChangeArbitratorConditions|CashRequestIn|BlockExplorer$`, tplName); !ok {
-		w.Write([]byte("Access denied 0"))
-	} else if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId != 0 || len(sessAddress) > 0) && installProgress == "complete" {
+	if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId != 0 || len(sessAddress) > 0) && installProgress == "complete" {
 
 		if tplName == "login" {
 			tplName = "dashboard_anonym"
@@ -452,9 +450,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("tplName", tplName)
 		html := ""
-		if ok, _ := regexp.MatchString(`^(?i)LoginECDSA|blockExplorer|CfCatalog|CfPagePreview|CfStart|Check_sign|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SignLogin|SynchronizationBlockchain|UpdatingBlockchain|Menu$`, tplName); !ok && c.SessCitizenId <= 0 && c.SessWalletId == 0 && len(c.SessAddress) == 0 {
-			html = "Access denied 1"
-		} else {
 			// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
 			if len(r.FormValue("tpl_name")) > 0 && tplName == "login" {
 				log.Debug("window.location.href = /")
@@ -466,7 +461,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Error("%v", err)
 			}
-		}
 		w.Write([]byte(html))
 	} else {
 		html, err := CallController(c, "LoginECDSA")
