@@ -140,7 +140,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 	}
 
 	// получим rb_id чтобы восстановить оттуда данные
-	rbId, err := p.Single(`SELECT rb_id FROM full_nodes WHERE wallet_id > 0`).Int64()
+	rbId, err := p.Single(`SELECT rb_id FROM full_nodes WHERE wallet_id != 0`).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -156,7 +156,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 	}
 
 	// удаляем новые данные
-	err = p.ExecSql(`DELETE FROM full_nodes WHERE wallet_id > 0`)
+	err = p.ExecSql(`DELETE FROM full_nodes WHERE wallet_id != 0`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
