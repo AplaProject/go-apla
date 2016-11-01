@@ -111,9 +111,12 @@ var (
 	RollbackToBlockId       = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
 	Tls                     = flag.String("tls", "", "Support https. Specify directory for .well-known")
 	DevTools                = flag.Int64("devtools", 0, "Devtools in thrust-shell")
-	DaemonsChans            []*DaemonsChansType
-	eWallets                = &sync.Mutex{}
-	Thrust                  bool
+	Upd                     = flag.Bool("update", false, "Update")
+	OutFile                 *os.File
+
+	DaemonsChans []*DaemonsChansType
+	eWallets     = &sync.Mutex{}
+	Thrust       bool
 )
 
 func init() {
@@ -2258,65 +2261,6 @@ func IPwoPort(ipport string) string {
 	return match[1]
 }
 
-func daylightUpd(url string) error {
-	zipfile := filepath.Join(*Dir, "dc.zip")
-	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
-	if err != nil {
-		return ErrInfo(err)
-	}
-	fmt.Println(zipfile)
-	reader, err := zip.OpenReader(zipfile)
-	if err != nil {
-		return ErrInfo(err)
-	}
-	appname := filepath.Base(os.Args[0])
-	tmpname := filepath.Join(*Dir, `tmp_`+appname)
-
-	f_ := reader.Reader.File
-	f := f_[0]
-	zipped, err := f.Open()
-	if err != nil {
-		return ErrInfo(err)
-	}
-	writer, err := os.OpenFile(tmpname, os.O_WRONLY|os.O_CREATE, f.Mode())
-	if err != nil {
-		return ErrInfo(err)
-	}
-
-	if _, err = io.Copy(writer, zipped); err != nil {
-		return ErrInfo(err)
-	}
-	reader.Close()
-	zipped.Close()
-	writer.Close()
-
-	pwd, err := os.Getwd()
-	if err != nil {
-		return ErrInfo(err)
-	}
-	fmt.Print(pwd)
-
-	folderPath, err := osext.ExecutableFolder()
-	if err != nil {
-		return ErrInfo(err)
-	}
-
-	old := ""
-	if _, err := os.Stat(os.Args[0]); err == nil {
-		old = os.Args[0]
-	} else if _, err := os.Stat(filepath.Join(folderPath, appname)); err == nil {
-		old = filepath.Join(folderPath, appname)
-	} else {
-		old = filepath.Join(*Dir, appname)
-	}
-	log.Debug(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION)
-	err = exec.Command(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION).Start()
-	if err != nil {
-		return ErrInfo(err)
-	}
-	return nil
-}
-
 /*
 func DaylightRestart() error {
 	log.Debug("exec", os.Args[0])
@@ -2493,4 +2437,76 @@ func FirstBlock(exit bool) {
 			os.Exit(0)
 		}
 	}
+}
+
+func EgaasUpdate(url string) error {
+	zipfile := filepath.Join(*Dir, "egaas.zip")
+
+	/*	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
+		if err != nil {
+			return ErrInfo(err)
+		}
+		fmt.Println(zipfile)*/
+
+	reader, err := zip.OpenReader(zipfile)
+	if err != nil {
+		return ErrInfo(err)
+	}
+	appname := filepath.Base(os.Args[0])
+	tmpname := filepath.Join(*Dir, `tmp_`+appname)
+
+	f_ := reader.Reader.File
+	f := f_[0]
+	zipped, err := f.Open()
+	if err != nil {
+		return ErrInfo(err)
+	}
+
+	writer, err := os.OpenFile(tmpname, os.O_WRONLY|os.O_CREATE, f.Mode())
+	if err != nil {
+		return ErrInfo(err)
+	}
+
+	if _, err = io.Copy(writer, zipped); err != nil {
+		return ErrInfo(err)
+	}
+	reader.Close()
+	zipped.Close()
+	writer.Close()
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return ErrInfo(err)
+	}
+	fmt.Print(pwd)
+
+	folderPath, err := osext.ExecutableFolder()
+	if err != nil {
+		return ErrInfo(err)
+	}
+
+	old := ""
+	if _, err := os.Stat(os.Args[0]); err == nil {
+		old = os.Args[0]
+	} else if _, err := os.Stat(filepath.Join(folderPath, appname)); err == nil {
+		old = filepath.Join(folderPath, appname)
+	} else {
+		old = filepath.Join(*Dir, appname)
+	}
+	//	log.Debug(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION)
+	err = exec.Command(tmpname, "-oldFileName", old, "-dir", *Dir, "-oldVersion", consts.VERSION).Start()
+	if err != nil {
+		return ErrInfo(err)
+	}
+	return nil
+}
+
+func OutInit() {
+	odir, _ := filepath.Abs(os.Args[0])
+	OutFile, _ = os.OpenFile(odir+`.txt`, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	//	defer utils.OutFile.Close()
+}
+
+func Out(pars ...interface{}) {
+	OutFile.WriteString(fmt.Sprint(pars...) + "\r\n")
 }
