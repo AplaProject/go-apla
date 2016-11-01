@@ -128,8 +128,8 @@
 					<div class="col-sm-9 text-right">
 						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 						<input type="hidden" id="rep_phrase" value="">
-						<div id="key_btn" style="margin-top:0px;position:relative;"  class="btn btn-default noregister pull-right" onclick="document.getElementById('upload_key').click();" type="button">
-							Select PrivateKey file in EGaaS folder
+						<div id="key_btn" style="margin-top:0px;position:relative;"  class="btn btn-default pull-right" onclick="document.getElementById('upload_key').click();" type="button">
+							Select PrivateKey file
 							<input type="file"  id="upload_key" value="" style="visibility:hidden;position:absolute;">
 						</div>
 						<div class="clearfix">
@@ -224,6 +224,7 @@ function do_register(obj, is_register) {
 		return false;
 	} 
 	if (is_register && !repeat_step) {
+		$("#key_btn").show();
 		$("#back").show();
 		$("#rep_pass").val( pass );
 		$("#rep_phrase").val( phrase);
@@ -264,6 +265,7 @@ function do_register_back() {
 	var phrase = $("#rep_phrase").val();
 	
 	$("#back").hide();
+	$("#key_btn").hide();
 	$("#pass").val(pass);
 	$("#phrase").val(phrase);
 	$("#genseed").show();
@@ -327,6 +329,7 @@ function login_form() {
 function register_form() {
 	repeat_step = false;
 	do_phrase();
+	$("#key_btn").hide();
 	$("#notice").show();
 	$("#genseed").show();
 	$("#saveseed").show();
@@ -346,6 +349,7 @@ function register_form() {
 
 function import_form() {
 	
+	$("#key_btn").show();
 	$("#lseed").html('Account seed');
 	$("#lpass").html('Password');
 	$("#rep_pass").val('');
