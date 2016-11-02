@@ -1366,31 +1366,6 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	return CheckECDSA(publicKeys, forSign, signs, nodeKeyOrLogin)
 }
 
-func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
-	pubkeyCurve := elliptic.P256()
-
-	b, err := hex.DecodeString(privateKey)
-	if err != nil {
-		log.Error("SignECDSA 0 %v", err)
-		return
-	}
-	bi := new(big.Int).SetBytes(b)
-	priv := new(ecdsa.PrivateKey)
-	priv.PublicKey.Curve = pubkeyCurve
-	priv.D = bi
-	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
-
-	signhash := sha256.Sum256([]byte(forSign))
-	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash[:])
-	if err != nil {
-		log.Error("SignECDSA 0 %v", err)
-		return
-	}
-	ret = FillLeft(r.Bytes())
-	ret = append(ret, FillLeft(s.Bytes())...)
-	return
-}
-
 func ParseSign(sign string) (r, s *big.Int) {
 	var off int
 	if len(sign) > 128 {
