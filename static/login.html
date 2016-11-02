@@ -70,7 +70,7 @@
 </style>
 
 <!-- START panel-->
-<div class="brand panel panel-default" data-version="v0.1">
+<div class="brand panel panel-default" data-version="">
 	<input type="hidden" id="prvkey" value="" />
 	<input type="hidden" id="pubkey" value="" />
 	
@@ -173,6 +173,8 @@
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
 <script language="JavaScript" type="text/javascript">
 g_menuShow = false;  // hide menu
+$(".brand").attr("data-version", "v" + Version);
+
 var repeat_step = false;
 var backup = '';
 var private = '{{.Private}}';
