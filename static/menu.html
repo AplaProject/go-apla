@@ -364,6 +364,11 @@
 	   <!-- END Left navbar-->
 	   <!-- START Right Navbar-->
 	   <ul class="nav navbar-nav navbar-right">
+		 {{if .UpdVer}}
+		  <li class="dropdown dropdown-list">
+			Version {{.UpdVer}} is available. <a href="#" onClick="load_page('upgrade'); HideMenu();">Upgrade</a>
+		  </li>
+		 {{end}}
 		  <li class="dropdown dropdown-list">
 			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1}); HideMenu();">0</a>
 		  </li>

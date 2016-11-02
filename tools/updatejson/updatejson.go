@@ -21,7 +21,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	//"io"
 	"io/ioutil"
 	//	"net/http"
 	"os"
@@ -40,18 +39,13 @@ var (
 )
 
 type Settings struct {
-	Version string
-	Domain  string
-	InPath  string
-	OutPath string
-	File    string
-	ZipFile string
-}
-
-type Update struct {
-	Version string
-	Hash    string
-	Sign    string
+	Version  string
+	Domain   string
+	InPath   string
+	OutPath  string
+	File     string
+	ZipFile  string
+	JsonPath string
 }
 
 func exit(err error) {
@@ -82,7 +76,7 @@ func main() {
 		settings map[string]Settings
 	)
 
-	out := make(map[string]Update)
+	out := make(map[string]lib.Update)
 
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -106,7 +100,7 @@ func main() {
 	//	fmt.Println(options)
 
 	for key, opt := range settings {
-		var upd Update
+		var upd lib.Update
 		if key == `default` {
 			continue
 		}
@@ -119,7 +113,8 @@ func main() {
 				ro.Elem().Field(i).SetString(val)
 			}
 		}
-		md5, err := lib.CalculateMd5(filepath.Join(set.InPath, set.File))
+		infile := filepath.Join(set.InPath, set.File)
+		md5, err := lib.CalculateMd5(infile)
 		if err != nil {
 			exit(err)
 		}
@@ -133,48 +128,35 @@ func main() {
 		if err = os.MkdirAll(set.OutPath, 0755); err != nil {
 			exit(err)
 		}
-
-		out[key] = upd
-	}
-	//	fmt.Println(`Set`, out)
-	if updjson, err := json.Marshal(out); err != nil {
-		exit(err)
-	} else if err = ioutil.WriteFile(filepath.Join(dir, `update.json`), updjson, 0644); err != nil {
-		exit(err)
-	}
-	/*
-
-		if err = os.Chdir(srcPath); err != nil {
-			exit(err)
-		}
-
-		zipfile := `daylight.zip`
-		switch runtime.GOOS {
-		case `windows`:
-			if runtime.GOARCH == `386` {
-				zipfile = `daylight_win32.zip`
-			} else {
-				zipfile = `daylight_win64.zip`
-			}
-		}
-		zipname := filepath.Join(filepath.Dir(filepath.Dir(options.OutFile)), zipfile)
+		zipname := filepath.Join(set.OutPath, set.ZipFile)
 		fmt.Println(`Compressing`, zipname)
-
 		zipf, err := os.Create(zipname)
 		if err != nil {
 			exit(err)
 		}
 		z := zip.NewWriter(zipf)
-		var out []byte
-		if out, err = ioutil.ReadFile(options.OutFile); err != nil {
+		var outzip []byte
+		if outzip, err = ioutil.ReadFile(infile); err != nil {
 			exit(err)
 		}
-		header, _ := BytesInfoHeader(len(out), filepath.Base(options.OutFile))
+		header, _ := BytesInfoHeader(len(outzip), filepath.Base(set.ZipFile))
 		f, _ := z.CreateHeader(header)
-		f.Write(out)
+		f.Write(outzip)
 		z.Close()
 		zipf.Close()
+		upd.Url = set.Domain + set.ZipFile
+		out[key] = upd
+	}
+	//	fmt.Println(`Set`, out)
 
-	*/
+	if updjson, err := json.Marshal(out); err != nil {
+		exit(err)
+	} else if err = ioutil.WriteFile(filepath.Join(options.JsonPath, `update.json`), updjson, 0644); err != nil {
+		exit(err)
+	}
+	/*		if err = os.Chdir(srcPath); err != nil {
+			exit(err)
+		}*/
+
 	exit(nil)
 }

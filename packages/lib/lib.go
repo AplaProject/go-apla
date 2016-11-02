@@ -39,6 +39,13 @@ import (
 	//	"golang.org/x/crypto/ripemd160"
 )
 
+type Update struct {
+	Version string
+	Hash    string
+	Sign    string
+	Url     string
+}
+
 var (
 	Table64 *crc64.Table
 )

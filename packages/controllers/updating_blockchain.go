@@ -18,12 +18,13 @@ package controllers
 
 import (
 	"bytes"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"html/template"
 	"math"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type updatingBlockchainStruct struct {
@@ -117,11 +118,9 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	var newVersion string
 
 	if c.dbInit {
-		if c.NodeAdmin {
-			if ver, _, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL); err == nil {
-				if len(ver) > 0 {
-					newVersion = strings.Replace(c.Lang["new_version"], "[ver]", ver, -1)
-				}
+		if strings.HasPrefix(c.r.Host, `localhost`) { //c.NodeAdmin
+			if updinfo, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL); err == nil && updinfo != nil {
+				newVersion = strings.Replace(c.Lang["new_version"], "[ver]", updinfo.Version, -1)
 			}
 		}
 	}
