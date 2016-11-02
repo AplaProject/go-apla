@@ -88,6 +88,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 					return utils.ErrInfo(err_.(error))
 				}*/
 			if (i == 0 && !skipCurrent) || i > 0 {
+				log.Debug(MethodName+"Rollback")
 				err_ = utils.CallMethod(p, MethodName+"Rollback")
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
