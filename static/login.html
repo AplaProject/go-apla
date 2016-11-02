@@ -70,7 +70,7 @@
 </style>
 
 <!-- START panel-->
-<div class="brand panel panel-default">
+<div class="brand panel panel-default" data-version="">
 	<input type="hidden" id="prvkey" value="" />
 	<input type="hidden" id="pubkey" value="" />
 	
@@ -173,6 +173,8 @@
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
 <script language="JavaScript" type="text/javascript">
 g_menuShow = false;  // hide menu
+$(".brand").attr("data-version", "v" + Version);
+
 var repeat_step = false;
 var backup = '';
 var private = '{{.Private}}';
@@ -348,8 +350,13 @@ function register_form() {
 }
 
 function import_form() {
-	
-	$("#key_btn").show();
+	if (!private.length)
+		$("#phrase").val('');
+	if (!private.length || private != $("#phrase").val()) {
+		$("#phrase").val('');
+		$("#key_btn").show();
+	} else
+		$("#key_btn").hide();
 	$("#lseed").html('Account seed');
 	$("#lpass").html('Password');
 	$("#rep_pass").val('');
@@ -481,14 +488,15 @@ $(document).ready(function(){
 /*	if (pubkey) {
 		$("#address").html( 'Address: ' +  hex_sha1( pubkey ).toLowerCase());
 	}*/
-	do_phrase();
 	load_accounts();
 	if (!GKey.Public && !GKey.Accounts.length) {
 		if (private.length)	{
 			$("#phrase").val(private);
 			import_form();
-		} else 
+		} else {
+			do_phrase();
 			register_form();
+		}
 	} else if (localStorage.getItem('EncKey') || GKey.Accounts.length) {
 		login_form();
 	} else {

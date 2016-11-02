@@ -13,12 +13,13 @@
 
 <script>
 	Vue.config.delimiters = ['${', '}']
+	$(".brand").attr("data-version", "v" + Version);
 </script>
 <script type="text/javascript" src="static/js/photoEditor/editor.js"></script>
 
 <div class="modal fade" id="modal_avatar" role="dialog" aria-labelledby="modal_avatar_label">
 	<div class="modal-dialog modal-lg" role="document">
-		<div class="brand modal-content" data-sweet-alert>
+		<div class="brand modal-content" data-sweet-alert data-version="">
 			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			<div class="modal-body">
 				<section id="photoEditor">

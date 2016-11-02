@@ -42,6 +42,7 @@
 </style>
 <script>
 	g_menuShow = false;  // hide menu
+	$(".brand").attr("data-version", "v" + Version);
 
 	$('.db_settings').hide();
 
@@ -120,7 +121,7 @@
 </script>
 
 <!-- START panel-->
-<div class="brand panel panel-default">
+<div class="brand panel panel-default" data-version="">
 	<div data-sweet-alert>
 		<div class="panel-body">
 			<div class="start_type">

@@ -19,6 +19,7 @@ package lib
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/md5"
 	crand "crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -26,7 +27,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/crc64"
+	"io"
 	"math/big"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -35,6 +38,13 @@ import (
 	//	b58 "github.com/jbenet/go-base58"
 	//	"golang.org/x/crypto/ripemd160"
 )
+
+type Update struct {
+	Version string
+	Hash    string
+	Sign    string
+	Url     string
+}
 
 var (
 	Table64 *crc64.Table
@@ -233,6 +243,29 @@ func GenKeys() (privKey string, pubKey string) {
 	private, _ := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
 	privKey = hex.EncodeToString(private.D.Bytes())
 	pubKey = hex.EncodeToString(append(FillLeft(private.PublicKey.X.Bytes()), FillLeft(private.PublicKey.Y.Bytes())...))
+	return
+}
+
+func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
+	pubkeyCurve := elliptic.P256()
+
+	b, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return
+	}
+	bi := new(big.Int).SetBytes(b)
+	priv := new(ecdsa.PrivateKey)
+	priv.PublicKey.Curve = pubkeyCurve
+	priv.D = bi
+	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
+
+	signhash := sha256.Sum256([]byte(forSign))
+	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash[:])
+	if err != nil {
+		return
+	}
+	ret = FillLeft(r.Bytes())
+	ret = append(ret, FillLeft(s.Bytes())...)
 	return
 }
 
@@ -505,4 +538,20 @@ func Escape(data string) string {
 		}
 	}
 	return string(out)
+}
+
+func CalculateMd5(filePath string) ([]byte, error) {
+	var result []byte
+	file, err := os.Open(filePath)
+	if err != nil {
+		return result, err
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return result, err
+	}
+
+	return hash.Sum(result), nil
 }

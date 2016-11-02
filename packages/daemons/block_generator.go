@@ -353,7 +353,7 @@ BEGIN:
 			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID, string(mrklRoot))
 			logger.Debug("forSign: %v", forSign)
 			//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
-			bytes, err := utils.SignECDSA(nodePrivateKey, forSign)
+			bytes, err := lib.SignECDSA(nodePrivateKey, forSign)
 			if err != nil {
 				if d.dPrintSleep(fmt.Sprintf("err %v %v", err, utils.GetParent()), d.sleepTime) {
 					break BEGIN

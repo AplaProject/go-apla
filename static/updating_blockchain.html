@@ -165,6 +165,8 @@
 </style>
 
 <script>
+	$(".brand").attr("data-version", "v" + Version);
+	
 	$('#start_daemons').bind('click', function () {
 		$.post( 'ajax?controllerName=start_daemons', { } ,
 			function () {
@@ -236,7 +238,7 @@
 </script>
 
 <!-- START panel-->
-<div class="brand panel panel-default">
+<div class="brand panel panel-default" data-version="">
 	<div class="panel-body">
 		<div id="blockchain_loading" class="synchronization" style="display:{{if .WaitText}} block {{else}} none {{end}}">
 			<!--<div class="blockchain_loader text-center" >Loading...</div>-->

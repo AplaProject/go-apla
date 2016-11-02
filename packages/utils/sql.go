@@ -70,10 +70,10 @@ func ReplQ(q string) string {
 func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	var db *sql.DB
 	var err error
-		db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable port=%s", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"], ConfigIni["db_port"]))
-		if err != nil {
-			return &DCDB{}, err
-		}
+	db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable port=%s", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"], ConfigIni["db_port"]))
+	if err != nil {
+		return &DCDB{}, err
+	}
 	log.Debug("return")
 	return &DCDB{db, ConfigIni}, err
 }
@@ -1472,7 +1472,7 @@ func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
 			return nil, ErrInfo(err)
 		}
 		return rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, HashSha1(forSign))*/
-	return SignECDSA(nodePrivateKey, forSign)
+	return lib.SignECDSA(nodePrivateKey, forSign)
 }
 
 func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {

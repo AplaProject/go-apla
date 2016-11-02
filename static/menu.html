@@ -1,6 +1,7 @@
 <script>
 	var lastBlock = 1;
 	var BlockNumberID = $("#BlockNumber");
+	$(".version").text("v" + Version);
 	
 	function updateBlockNumber(){
 		console.log('update');
@@ -324,10 +325,12 @@
 	   <a href="#" class="navbar-brand" onclick="dl_navigate('beta'); HideMenu();">
 		  <div class="brand-logo">
 			 <!--<span class="beta">Testing</span>-->
+			 <span class="version"></span>
 			 <img src="static/img/logo.svg" alt="App Logo" class="img-responsive">
 		  </div>
 		  <div class="brand-logo-collapsed">
 			 <!--<span class="beta">Testing</span>-->
+			 <span class="version"></span>
 			 <img src="static/img/logo_null.svg" alt="App Logo" class="img-responsive">
 		  </div>
 	   </a>
@@ -361,6 +364,11 @@
 	   <!-- END Left navbar-->
 	   <!-- START Right Navbar-->
 	   <ul class="nav navbar-nav navbar-right">
+		 {{if .UpdVer}}
+		  <li class="dropdown dropdown-list">
+			Version {{.UpdVer}} is available. <a href="#" onClick="load_page('upgrade'); HideMenu();">Upgrade</a>
+		  </li>
+		 {{end}}
 		  <li class="dropdown dropdown-list">
 			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1}); HideMenu();">0</a>
 		  </li>

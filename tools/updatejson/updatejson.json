@@ -1,0 +1,17 @@
+{
+	"default" : {
+		"Version" : "1.1",
+		"Domain" : "https://egaas.org/",
+		"InPath": "c:\\egaas",
+		"OutPath": "c:\\temp",
+		"JsonPath": "c:\\egaas"
+	},
+	"amd64" : {
+		"File": "egaas.exe",
+		"ZipFile": "egaas64.zip"
+	},
+	"386" : {
+		"File": "egaas.exe",
+		"ZipFile": "egaas32.zip"
+	}
+}

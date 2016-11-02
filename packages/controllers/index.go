@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -41,6 +42,7 @@ type index struct {
 	Android     bool
 	Mobile      bool
 	ShowIOSMenu bool
+	Version     string
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +159,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		Accounts:    string(accounts),
 		Thrust:      utils.Thrust,
 		Android:     android,
-		Mobile:      mobile})
+		Mobile:      mobile,
+		Version:     consts.VERSION})
 	if err != nil {
 		log.Error("%v", err)
 	}

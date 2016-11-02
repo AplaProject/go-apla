@@ -16,7 +16,13 @@
 
 package controllers
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+)
 
 //"fmt"
 
@@ -30,6 +36,7 @@ type menuPage struct {
 	StateFlag     string
 	CitizenName   string
 	CitizenAvatar string
+	UpdVer        string
 }
 
 func init() {
@@ -37,12 +44,18 @@ func init() {
 }
 
 func (c *Controller) Menu() (string, error) {
-	var err error
-	menu := ""
-	stateName := ""
-	stateFlag := ""
-	citizenName := ""
-	citizenAvatar := ""
+	var (
+		err                                                            error
+		updver, menu, stateName, stateFlag, citizenName, citizenAvatar string
+	)
+
+	if strings.HasPrefix(c.r.Host, `localhost`) {
+		updinfo, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL)
+		if err == nil && updinfo != nil {
+			updver = updinfo.Version
+		}
+	}
+
 	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
 	if c.StateIdStr != "" {
 		menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
@@ -75,5 +88,7 @@ func (c *Controller) Menu() (string, error) {
 		menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
 
 	}
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, CanCitizen: canCitizen > 0, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, CitizenAvatar: citizenAvatar})
+	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, CanCitizen: canCitizen > 0,
+		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName,
+		CitizenAvatar: citizenAvatar, UpdVer: updver})
 }

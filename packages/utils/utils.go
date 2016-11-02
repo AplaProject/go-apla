@@ -1366,31 +1366,6 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	return CheckECDSA(publicKeys, forSign, signs, nodeKeyOrLogin)
 }
 
-func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
-	pubkeyCurve := elliptic.P256()
-
-	b, err := hex.DecodeString(privateKey)
-	if err != nil {
-		log.Error("SignECDSA 0 %v", err)
-		return
-	}
-	bi := new(big.Int).SetBytes(b)
-	priv := new(ecdsa.PrivateKey)
-	priv.PublicKey.Curve = pubkeyCurve
-	priv.D = bi
-	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
-
-	signhash := sha256.Sum256([]byte(forSign))
-	r, s, err := ecdsa.Sign(crand.Reader, priv, signhash[:])
-	if err != nil {
-		log.Error("SignECDSA 0 %v", err)
-		return
-	}
-	ret = FillLeft(r.Bytes())
-	ret = append(ret, FillLeft(s.Bytes())...)
-	return
-}
-
 func ParseSign(sign string) (r, s *big.Int) {
 	var off int
 	if len(sign) > 128 {
@@ -2271,49 +2246,21 @@ func DaylightRestart() error {
 	return nil
 }*/
 
-func GetUpdVerAndUrl(host string) (string, string, error) {
+func GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error) {
 
 	update, err := GetHttpTextAnswer(host + "/update.json")
+	//update, err := ioutil.ReadFile(`c:\egaas\update.json`)
 	if len(update) > 0 {
-
-		updateData := new(updateType)
+		updateData := make(map[string]lib.Update)
 		err = json.Unmarshal([]byte(update), &updateData)
 		if err != nil {
-			return "", "", ErrInfo(err)
+			return
 		}
-
-		//fmt.Println(updateData)
-
-		dataJson, err := json.Marshal(updateData.Message)
-		if err != nil {
-			return "", "", ErrInfo(err)
-		}
-
-		pub, err := BinToRsaPubKey(HexToBin(consts.ALERT_KEY))
-		if err != nil {
-			return "", "", ErrInfo(err)
-		}
-		//fmt.Println(updateData.Signature)
-		//fmt.Println(string(dataJson))
-		err = rsa.VerifyPKCS1v15(pub, crypto.SHA1, HashSha1(string(dataJson)), []byte(HexToBin(updateData.Signature)))
-		if err != nil {
-			return "", "", ErrInfo(err)
-		}
-
-		//fmt.Println(runtime.GOOS+"_"+runtime.GOARCH)
-		//fmt.Println(updateData.Message)
-		//fmt.Println(updateData.Message[runtime.GOOS+"_"+runtime.GOARCH])
-		//fmt.Println(updateData.Message["version"], consts.VERSION)
-		if len(updateData.Message[runtime.GOOS+"_"+runtime.GOARCH]) > 0 && version.Compare(updateData.Message["version"], consts.VERSION, ">") {
-			return updateData.Message["version"], updateData.Message[runtime.GOOS+"_"+runtime.GOARCH], nil
+		if upd, ok := updateData[runtime.GOARCH]; ok && version.Compare(upd.Version, consts.VERSION, ">") {
+			updinfo = &upd
 		}
 	}
-	return "", "", nil
-}
-
-type updateType struct {
-	Message   map[string]string
-	Signature string
+	return
 }
 
 func ShellExecute(cmdline string) {
@@ -2440,6 +2387,9 @@ func FirstBlock(exit bool) {
 }
 
 func EgaasUpdate(url string) error {
+
+	//	GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error)
+
 	zipfile := filepath.Join(*Dir, "egaas.zip")
 
 	/*	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
@@ -2474,11 +2424,11 @@ func EgaasUpdate(url string) error {
 	zipped.Close()
 	writer.Close()
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		return ErrInfo(err)
-	}
-	fmt.Print(pwd)
+	/*	pwd, err := os.Getwd()
+		if err != nil {
+			return ErrInfo(err)
+		}
+		fmt.Print(pwd)*/
 
 	folderPath, err := osext.ExecutableFolder()
 	if err != nil {
