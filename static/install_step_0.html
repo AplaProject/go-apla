@@ -127,7 +127,7 @@
 			<div class="start_type">
 				<h1>Installation</h1>
 				<div id="extended_div">
-					<form class="extended_form keyCode_13">
+					<form id="installation" class="extended_form keyCode_13">
 						<fieldset class="form-group">
 							<label class="col-sm-3 control-label" for="first_load">Mode</label>
 							<div class="col-sm-9">
@@ -158,7 +158,7 @@
 							</div>
 						</fieldset>
 						<fieldset class="form-group">
-							<label class="col-sm-3 control-label" for="dir">log_level</label>
+							<label class="col-sm-3 control-label" for="dir">Log level</label>
 							<div class="col-sm-9">
 								<select id="log_level" class="form-control">
 									<option value="ERROR">ERROR</option>
@@ -182,19 +182,19 @@
 						<fieldset class="form-group db_settings">
 							<label class="col-sm-3 control-label" for="db_name">DB name</label>
 							<div class="col-sm-9">
-								<input id="db_name" class="form-control" type="text" value="">
+								<input id="db_name" class="form-control" type="text" value="" placeholder="Имя созданой БД в PostgreSQL">
 							</div>
 						</fieldset>
 						<fieldset class="form-group db_settings">
 							<label class="col-sm-3 control-label" for="username">Username</label>
 							<div class="col-sm-9">
-								<input id="username" class="form-control" type="text" value="postgres">
+								<input id="username" class="form-control" type="text" value="postgres" placeholder="Имя пользователя в PostgreSQL">
 							</div>
 						</fieldset>
 						<fieldset class="form-group db_settings">
 							<label class="col-sm-3 control-label" for="password">Password</label>
 							<div class="col-sm-9">
-								<input id="password" class="form-control" type="password" value="">
+								<input id="password" class="form-control" type="password" value="" placeholder="Пароль в PostgreSQL">
 							</div>
 						</fieldset>
 					</form>
@@ -212,14 +212,7 @@
 <!-- END panel-->
 
 <script>
-	$(document).on('keydown', function(e){
-		if (e.keyCode == 13 && $(".keyCode_13").length) {
-			if (!$(".select2-container--focus").length) {
-				$(".submit").click();
-				return false;
-			}
-		}
-	});
+	Validate("installation", "form-control", "next");
 </script>
 <script type="text/javascript" src="static/js/triangles.js"></script>
 {{end}}

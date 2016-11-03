@@ -721,3 +721,40 @@ function replaceTag(tag) {
 function safe_tags_replace(str) {
     return str.replace(/[&<>]/g, replaceTag);
 }
+
+function FormValidate(form, input, btn) {
+	var i = 0;
+	
+	form.find("." + input + ":visible").each(function() {
+		var val = $(this).val();
+		if (val == "") {
+			i += 1;
+		}
+	});
+	
+	if (i == 0) {
+		btn.prop("disabled", false);
+	} else {
+		btn.prop("disabled", true);
+	}
+}
+
+function Validate(form, input, btn) {
+	var form = $("#" + form);
+	var btn = $("#" + btn);
+	
+	FormValidate(form, input, btn);
+	
+	form.on('input', function () {
+		FormValidate(form, input, btn);
+	})
+}
+
+$(document).on('keydown', function(e){
+	if (e.keyCode == 13 && $(".keyCode_13").length) {
+		if (!$(".select2-container--focus").length) {
+			$(".submit:not(:disabled)").click();
+			return false;
+		}
+	}
+});
