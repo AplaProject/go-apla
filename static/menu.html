@@ -462,6 +462,13 @@
 					  <span>Money transfer</span>
 				   </a>
 				</li>
+				{{if .Btc}}
+				<li class="anonym_btc">
+				   <a href="#" title="{{.Btc}}" onclick="load_page('btc'); HideMenu();">
+					  <span>{{.Btc}}</span>
+				   </a>
+				</li>
+				{{end}}
 				<li class="anonym_history">
 				   <a href="#" title="History"  onclick="load_page('history'); HideMenu();">
 					  <span>History</span>

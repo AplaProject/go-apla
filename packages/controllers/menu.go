@@ -37,6 +37,7 @@ type menuPage struct {
 	CitizenName   string
 	CitizenAvatar string
 	UpdVer        string
+	Btc           string
 }
 
 func init() {
@@ -90,5 +91,5 @@ func (c *Controller) Menu() (string, error) {
 	}
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, CanCitizen: canCitizen > 0,
 		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName,
-		CitizenAvatar: citizenAvatar, UpdVer: updver})
+		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc()})
 }
