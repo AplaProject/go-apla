@@ -2,9 +2,10 @@
 // sources:
 // static/alert_success.html
 // static/anonym_money_transfer.html
+// static/app_catalog.html
 // static/app_template.html
-// static/apps_list.html
 // static/avatar.tpl
+// static/backup.html
 // static/beta.html
 // static/block_explorer.html
 // static/block_explorer_page.html
@@ -67,6 +68,7 @@
 // static/forging.html
 // static/history.html
 // static/img/US.svg
+// static/img/avatar.svg
 // static/img/bg.png
 // static/img/bg1.jpg
 // static/img/bg10.jpg
@@ -84,6 +86,7 @@
 // static/img/logo.svg
 // static/img/logo_null.svg
 // static/img/logo_ok.svg
+// static/img/main_loader.gif
 // static/img/marker_red.png
 // static/img/mb-sample.jpg
 // static/img/mockup.png
@@ -183,6 +186,7 @@
 // static/test.html
 // static/tx_form.html
 // static/updating_blockchain.html
+// static/upgrade.html
 // static/vendor/animate.css/animate.min.css
 // static/vendor/bootstrap/dist/css/bootstrap.css
 // static/vendor/bootstrap/dist/js/bootstrap.js
@@ -298,6 +302,24 @@ func staticAnonym_money_transferHtml() (*asset, error) {
 	return a, err
 }
 
+// staticApp_catalogHtml reads file data from disk. It returns an error on failure.
+func staticApp_catalogHtml() (*asset, error) {
+	path := "static/app_catalog.html"
+	name := "static/app_catalog.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticApp_templateHtml reads file data from disk. It returns an error on failure.
 func staticApp_templateHtml() (*asset, error) {
 	path := "static/app_template.html"
@@ -316,10 +338,10 @@ func staticApp_templateHtml() (*asset, error) {
 	return a, err
 }
 
-// staticApps_listHtml reads file data from disk. It returns an error on failure.
-func staticApps_listHtml() (*asset, error) {
-	path := "static/apps_list.html"
-	name := "static/apps_list.html"
+// staticAvatarTpl reads file data from disk. It returns an error on failure.
+func staticAvatarTpl() (*asset, error) {
+	path := "static/avatar.tpl"
+	name := "static/avatar.tpl"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -334,10 +356,10 @@ func staticApps_listHtml() (*asset, error) {
 	return a, err
 }
 
-// staticAvatarTpl reads file data from disk. It returns an error on failure.
-func staticAvatarTpl() (*asset, error) {
-	path := "static/avatar.tpl"
-	name := "static/avatar.tpl"
+// staticBackupHtml reads file data from disk. It returns an error on failure.
+func staticBackupHtml() (*asset, error) {
+	path := "static/backup.html"
+	name := "static/backup.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -1468,6 +1490,24 @@ func staticImgUsSvg() (*asset, error) {
 	return a, err
 }
 
+// staticImgAvatarSvg reads file data from disk. It returns an error on failure.
+func staticImgAvatarSvg() (*asset, error) {
+	path := "static/img/avatar.svg"
+	name := "static/img/avatar.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticImgBgPng reads file data from disk. It returns an error on failure.
 func staticImgBgPng() (*asset, error) {
 	path := "static/img/bg.png"
@@ -1760,6 +1800,24 @@ func staticImgLogo_nullSvg() (*asset, error) {
 func staticImgLogo_okSvg() (*asset, error) {
 	path := "static/img/logo_ok.svg"
 	name := "static/img/logo_ok.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgMain_loaderGif reads file data from disk. It returns an error on failure.
+func staticImgMain_loaderGif() (*asset, error) {
+	path := "static/img/main_loader.gif"
+	name := "static/img/main_loader.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3556,6 +3614,24 @@ func staticUpdating_blockchainHtml() (*asset, error) {
 	return a, err
 }
 
+// staticUpgradeHtml reads file data from disk. It returns an error on failure.
+func staticUpgradeHtml() (*asset, error) {
+	path := "static/upgrade.html"
+	name := "static/upgrade.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticVendorAnimateCssAnimateMinCss reads file data from disk. It returns an error on failure.
 func staticVendorAnimateCssAnimateMinCss() (*asset, error) {
 	path := "static/vendor/animate.css/animate.min.css"
@@ -4564,9 +4640,10 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"static/alert_success.html": staticAlert_successHtml,
 	"static/anonym_money_transfer.html": staticAnonym_money_transferHtml,
+	"static/app_catalog.html": staticApp_catalogHtml,
 	"static/app_template.html": staticApp_templateHtml,
-	"static/apps_list.html": staticApps_listHtml,
 	"static/avatar.tpl": staticAvatarTpl,
+	"static/backup.html": staticBackupHtml,
 	"static/beta.html": staticBetaHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
 	"static/block_explorer_page.html": staticBlock_explorer_pageHtml,
@@ -4629,6 +4706,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/forging.html": staticForgingHtml,
 	"static/history.html": staticHistoryHtml,
 	"static/img/US.svg": staticImgUsSvg,
+	"static/img/avatar.svg": staticImgAvatarSvg,
 	"static/img/bg.png": staticImgBgPng,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
 	"static/img/bg10.jpg": staticImgBg10Jpg,
@@ -4646,6 +4724,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/logo.svg": staticImgLogoSvg,
 	"static/img/logo_null.svg": staticImgLogo_nullSvg,
 	"static/img/logo_ok.svg": staticImgLogo_okSvg,
+	"static/img/main_loader.gif": staticImgMain_loaderGif,
 	"static/img/marker_red.png": staticImgMarker_redPng,
 	"static/img/mb-sample.jpg": staticImgMbSampleJpg,
 	"static/img/mockup.png": staticImgMockupPng,
@@ -4745,6 +4824,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/test.html": staticTestHtml,
 	"static/tx_form.html": staticTx_formHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
+	"static/upgrade.html": staticUpgradeHtml,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
 	"static/vendor/bootstrap/dist/css/bootstrap.css": staticVendorBootstrapDistCssBootstrapCss,
 	"static/vendor/bootstrap/dist/js/bootstrap.js": staticVendorBootstrapDistJsBootstrapJs,
@@ -4843,9 +4923,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"static": &bintree{nil, map[string]*bintree{
 		"alert_success.html": &bintree{staticAlert_successHtml, map[string]*bintree{}},
 		"anonym_money_transfer.html": &bintree{staticAnonym_money_transferHtml, map[string]*bintree{}},
+		"app_catalog.html": &bintree{staticApp_catalogHtml, map[string]*bintree{}},
 		"app_template.html": &bintree{staticApp_templateHtml, map[string]*bintree{}},
-		"apps_list.html": &bintree{staticApps_listHtml, map[string]*bintree{}},
 		"avatar.tpl": &bintree{staticAvatarTpl, map[string]*bintree{}},
+		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
 		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
 		"block_explorer_page.html": &bintree{staticBlock_explorer_pageHtml, map[string]*bintree{}},
@@ -4915,6 +4996,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"history.html": &bintree{staticHistoryHtml, map[string]*bintree{}},
 		"img": &bintree{nil, map[string]*bintree{
 			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
+			"avatar.svg": &bintree{staticImgAvatarSvg, map[string]*bintree{}},
 			"bg.png": &bintree{staticImgBgPng, map[string]*bintree{}},
 			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
 			"bg10.jpg": &bintree{staticImgBg10Jpg, map[string]*bintree{}},
@@ -4932,6 +5014,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"logo.svg": &bintree{staticImgLogoSvg, map[string]*bintree{}},
 			"logo_null.svg": &bintree{staticImgLogo_nullSvg, map[string]*bintree{}},
 			"logo_ok.svg": &bintree{staticImgLogo_okSvg, map[string]*bintree{}},
+			"main_loader.gif": &bintree{staticImgMain_loaderGif, map[string]*bintree{}},
 			"marker_red.png": &bintree{staticImgMarker_redPng, map[string]*bintree{}},
 			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{}},
 			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
@@ -5050,6 +5133,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
 		"tx_form.html": &bintree{staticTx_formHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
+		"upgrade.html": &bintree{staticUpgradeHtml, map[string]*bintree{}},
 		"vendor": &bintree{nil, map[string]*bintree{
 			"animate.css": &bintree{nil, map[string]*bintree{
 				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{}},
