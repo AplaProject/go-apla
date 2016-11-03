@@ -6,11 +6,11 @@
 		"OutPath": "c:\\temp",
 		"JsonPath": "c:\\egaas"
 	},
-	"amd64" : {
+	"windows_amd64" : {
 		"File": "egaas.exe",
 		"ZipFile": "egaas64.zip"
 	},
-	"386" : {
+	"windows_386" : {
 		"File": "egaas.exe",
 		"ZipFile": "egaas32.zip"
 	}

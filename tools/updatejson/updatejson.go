@@ -18,9 +18,12 @@ package main
 
 import (
 	"archive/zip"
+	"bufio"
+	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"io/ioutil"
 	//	"net/http"
 	"os"
@@ -28,10 +31,15 @@ import (
 	"path/filepath"
 	"reflect"
 	//	"runtime"
-	//  "strings"
+	"strings"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+)
+
+const (
+	KEY = `17a984259355caeaad8837f3fc0af12527b801c349677effdcbcaceb1398c54463d64d6cc7081bc94f0479013bf24521`
+	CRC = 3362054855
 )
 
 var (
@@ -82,10 +90,35 @@ func main() {
 	if err != nil {
 		exit(err)
 	}
-	privateKey, err := ioutil.ReadFile(filepath.Join(dir, `PrivateKey`))
+	/*	privateKey, publicKey := lib.GenKeys()
+		ioutil.WriteFile(filepath.Join(dir, `Private.txt`), []byte(privateKey), 0644)
+		ioutil.WriteFile(filepath.Join(dir, `Public.txt`), []byte(publicKey), 0644)*/
+
+	/* privKey, _ := ioutil.ReadFile(filepath.Join(dir, `Private.txt`))
+	key, err := hex.DecodeString(string(privKey))
+	if err != nil {
+		panic(err)
+	}
+	pass := md5.Sum([]byte(`******`))
+	cipherkey, err := Encrypt([]byte(pass[:]), key)
+	if err != nil {
+		panic(err)
+	}
+	ioutil.WriteFile(filepath.Join(dir, `Cipher.txt`), []byte(hex.EncodeToString(cipherkey)), 0644)*/
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter password: ")
+	psw, _ := reader.ReadString('\n')
+	if crc32.Checksum([]byte(strings.TrimSpace(psw)), crc32.MakeTable(0xD5828281)) != CRC {
+		exit(fmt.Errorf(`Wrong password`))
+	}
+
+	key, _ := hex.DecodeString(KEY)
+	pass := md5.Sum([]byte(psw))
+	privKey, err := Decrypt(pass[:], key)
 	if err != nil {
 		exit(err)
 	}
+	privateKey := hex.EncodeToString(privKey)
 	if len(privateKey) == 0 {
 		exit(fmt.Errorf(`PrivateKey is unknown`))
 	}

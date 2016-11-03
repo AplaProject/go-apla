@@ -2256,7 +2256,7 @@ func GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error) {
 		if err != nil {
 			return
 		}
-		if upd, ok := updateData[runtime.GOARCH]; ok && version.Compare(upd.Version, consts.VERSION, ">") {
+		if upd, ok := updateData[runtime.GOOS+`_`+runtime.GOARCH]; ok && version.Compare(upd.Version, consts.VERSION, ">") {
 			updinfo = &upd
 		}
 	}
