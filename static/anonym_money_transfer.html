@@ -2,20 +2,51 @@
 
 <script>
 	var serverTime;
+	var balance = {{.Amount}} / qDLT;
 	var commission = {{.Commission}} / qDLT;
 	$("#commission").val(commission);
 	
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_money_transfer").addClass("active");
+	
+	$("#walletAddress").inputmask("9999-9999-9999-9999-9999").focus();
 
-	$('#next').bind('click', function () {
+	$("#next").bind('click', function () {
+		$(".form-control").blur().each(function() {
+			var id = $(this).attr("id");
+			var val = $(this).val();
+			
+			if (id === "comment") {
+				if (val) {
+					$("#isComment").show();
+				} else {
+					$("#isComment").hide();
+				}
+			}
+			
+			$("[data-confirm=" + id + "]").text(val);
+		});
+		$("#next").prop("disabled", true);
+		$("#send").prop("disabled", false);
+		$("#Transfer").hide();
+		$("#ConfirmTransfer").show();
+	});
+	
+	$("#cancel").bind('click', function () {
+		$("#next").prop("disabled", false);
+		$("#send").prop("disabled", true);
+		$("#Transfer").show();
+		$("#ConfirmTransfer").hide();
+	});
+	
+	$('#send').bind('click', function () {
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
 			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#walletAddress').val()+','+parseFloat($('#amount').val()) * qDLT+','+parseFloat($('#commission').val()) * qDLT+','+$('#comment').val());
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
-	} );
+	});
 
 	$('#send_to_net').bind('click', function () {
 		$.ajax({
@@ -42,44 +73,78 @@
 				Alert("Error", error, "error");
 			}
 		});
-	} );	
+	});	
 </script>
 
 <div class="content-heading">
    Money transfer
 </div>
 <!-- START panel-->
-<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
+<div id="Transfer" class="panel panel-default" data-sweet-alert style="max-width:400px;">
  <div class="panel-body">
-	<form id="anonymMoneyTransfer" role="form">
+	<form id="anonymMoneyTransfer" class="keyCode_13">
 	   <div class="form-group">
-		   <label>Wallet address <strong class="text-danger">*</strong></label>
-		   <input type="text" placeholder="Enter wallet address" class="form-control" id="walletAddress">
+		   <label class="control-label" for="walletAddress">Wallet address <strong class="text-danger">*</strong></label>
+		   <input type="text" class="form-control" id="walletAddress">
 		   <ul class="parsley-errors-list">
 		       <li class="parsley-required">Please enter correct wallet addres</li>
 		   </ul>
 	   </div>
 	   <div class="form-group">
-		   <label>Amount <strong class="text-danger">*</strong></label>
-		   <input type="text" placeholder="Enter Amount" class="form-control" id="amount">
+		   <label class="control-label" for="amount">Amount <strong class="text-danger">*</strong></label>
+		   <input type="text" class="form-control" id="amount">
 		   <ul class="parsley-errors-list">
-		       <li class="parsley-required">Amount should be from 0.00001 to 100000000</li>
+		       <li class="parsley-required amount"></li>
 		   </ul>
 	   </div>
 	   <div class="form-group">
-		   <label>Comment</label>
-		   <input type="text" placeholder="Enter Comment" class="form-control" id="comment">
+		   <label class="control-label" for="comment">Comment</label>
+		   <input type="text" class="form-control" id="comment">
 	   </div>
 	   <div class="form-group">
-		   <label>Commission <strong class="text-danger">*</strong></label>
-		   <input type="text" placeholder="0.01" class="form-control" id="commission" disabled="">
+		   <label class="control-label" for="commission">Commission <strong class="text-danger">*</strong></label>
+		   <input type="text" class="form-control" id="commission" disabled="">
 	   </div>
 	</form>
  </div>
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">
-		 <button type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="next" disabled>Send</button>
+		 <button type="button" class="submit btn btn-primary" id="next" disabled>Send</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
+<!-- START panel-->
+<div id="ConfirmTransfer" class="panel panel-default" data-sweet-alert style="display:none; max-width:400px;">
+ <div class="panel-body">
+	<form class="keyCode_13">
+	   <div class="form-group">
+		   <label class="control-label">Wallet address</label>
+		   <p class="form-control-static" data-confirm="walletAddress"></p>
+	   </div>
+	   <div class="form-group">
+		   <label class="control-label">Amount</label>
+		   <p class="form-control-static" data-confirm="amount"></p>
+	   </div>
+	   <div id="isComment" class="form-group">
+		   <label class="control-label">Comment</label>
+		   <p class="form-control-static" data-confirm="comment"></p>
+	   </div>
+	   <div class="form-group">
+		   <label class="control-label">Commission</label>
+		   <p class="form-control-static" data-confirm="commission"></p>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-left">
+		 <button type="button" class="btn btn-default" id="cancel">Cancel</button>
+	  </div>
+	  <div class="pull-right">
+		 <button type="button" class="submit btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="send" disabled>Send</button>
 	  </div>
    </div>
   </div>
@@ -100,7 +165,7 @@ function floorFigure(figure, decimals){
     return (parseInt(figure*d)/d).toFixed(decimals);
 };
 
-var reg = /[^0-9\.]/g;
+var reg = /[^\d\.]/g;
 
 $("#anonymMoneyTransfer").on('input', function () {
 	var wallet = $("#walletAddress");
@@ -108,23 +173,51 @@ $("#anonymMoneyTransfer").on('input', function () {
 	var i = 0;
 	
 	if (wallet.val().length != 24) {
-		wallet.addClass("parsley-error");
-		wallet.next(".parsley-errors-list").addClass("filled");
+		if (wallet.val()) {
+			wallet.addClass("parsley-error");
+			wallet.next(".parsley-errors-list").addClass("filled");
+		} else {
+			wallet.removeClass("parsley-error");
+			wallet.next(".parsley-errors-list").removeClass("filled");
+		}
 	} else {
 		wallet.removeClass("parsley-error");
 		wallet.next(".parsley-errors-list").removeClass("filled");
 		i += 1;
 	}
 	
+	if (amount.val() === ".") {
+		amount.val("0.");
+	}
+	
 	var str = amount.val().toString();
 	var newstr = str.replace(reg, "");
+	
+	if (newstr.indexOf(".") !== -1) {
+		if (newstr.match(/\./g).length > 1) {
+			newstr = newstr.substr(0, newstr.lastIndexOf("."));
+		}
+	}
 	
 	amount.val(newstr);
 	
 	if (!amount.val() || parseFloat(amount.val()) < 0.00001 || parseFloat(amount.val()) > 100000000) {
-		amount.addClass("parsley-error");
-		amount.next(".parsley-errors-list").addClass("filled");
+		if (amount.val()) {
+			amount.addClass("parsley-error");
+			amount.next(".parsley-errors-list").addClass("filled");
+			amount.next(".parsley-errors-list").find(".amount").text("Amount should be from 0.00001 to 100000000");
+		} else {
+			amount.removeClass("parsley-error");
+			amount.next(".parsley-errors-list").removeClass("filled");
+		}
 	} else {
+		if (parseFloat(amount.val()) + commission > balance) {
+			amount.addClass("parsley-error");
+			amount.next(".parsley-errors-list").addClass("filled");
+			amount.next(".parsley-errors-list").find(".amount").text("You don't have that much.");
+			$("#next").prop("disabled", true);
+			return false;
+		}
 		var val = Number(amount.val());
 		var decimal = Number(floorFigure(val, 5));
 		var str = getDecimal(val).toString();
@@ -145,6 +238,13 @@ $("#anonymMoneyTransfer").on('input', function () {
 		$("#next").prop("disabled", true);
 	}
 })
+
+$(document).on('keydown', function(e){
+	if (e.keyCode == 8 && $("#ConfirmTransfer:visible").length) {
+		$("#cancel").click();
+		return false;
+	}
+});
 </script>
 
 {{template "signatures".}}

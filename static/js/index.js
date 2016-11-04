@@ -751,7 +751,7 @@ function Validate(form, input, btn) {
 }
 
 $(document).on('keydown', function(e){
-	if (e.keyCode == 13 && $(".keyCode_13").length) {
+	if (e.keyCode == 13 && $(".keyCode_13:visible").length) {
 		if (!$(".select2-container--focus").length) {
 			$(".submit:not(:disabled)").click();
 			return false;
