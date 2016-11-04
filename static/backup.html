@@ -9,27 +9,20 @@
 	<div class="content-heading">
 	   Account Info Backup
 	</div>
-	<ol class="breadcrumb">
-	   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
-	   <li class="active">Account Info Backup</li>
-	</ol>
+	
 	<div class="panel panel-default" data-sweet-alert id="enterpass">
 	 <div class="panel-body">
-		<div class="table-responsive">
-		   <table class="table table-striped table-bordered table-hover">
-			  <tbody>
-				 <tr>
-					<td class="thead">Password</td>
-					<td ><input	type="password" class="form-control" id="pass"></td>
-				 </tr>
-			  </tbody>
-		   </table>
-		</div>
+		<form>
+		   <div class="form-group">
+			   <label>Password</label>
+			   <input type="password" class="form-control" id="pass">
+		   </div>
+		</form>
 	 </div>
 	 <div class="panel-footer">
 	   <div class="clearfix">
-		  <div >
-			<button id="btnpass" type="button" class="btn btn-primary" onClick="return check_pass()">Get backup</button>		
+		  <div class="pull-right">
+			<button id="btnpass" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this); return check_pass();">Get backup</button>		
 		  </div>
 	   </div>
 	  </div>
@@ -63,7 +56,7 @@
 	 </div>
 	 <div class="panel-footer">
 	   <div class="clearfix">
-		  <div >
+		  <div class="pull-right">
 			<button id="clipboard" type="button" class="btn btn-primary" data-clipboard-action="copy" data-clipboard-text="" onClick="preloader(this);">Copy to clipboard</button>		
 			<a id="dwn" href="" class="btn btn-primary" download="daylight.txt" onclick="return backup_download()">Download as File</a>		
 		  </div>
@@ -79,7 +72,8 @@
 			$("#backupform").show();
 			do_backup();
 		} else {
-			alert('Wrong password.');
+			//alert('Wrong password.');
+			Alert("Warning", "Wrong password", "warning");
 		}
 		return false;
 	}
