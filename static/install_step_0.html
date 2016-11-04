@@ -166,37 +166,42 @@
 								</select>
 							</div>
 						</fieldset>
-	
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="host">Host</label>
-							<div class="col-sm-9">
-								<input id="host" class="form-control" type="text" value="localhost">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="port">Port</label>
-							<div class="col-sm-9">
-								<input id="port" class="form-control" type="text" value="5432">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="db_name">DB name</label>
-							<div class="col-sm-9">
-								<input id="db_name" class="form-control" type="text" value="" placeholder="Имя созданой БД в PostgreSQL">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="username">Username</label>
-							<div class="col-sm-9">
-								<input id="username" class="form-control" type="text" value="postgres" placeholder="Имя пользователя в PostgreSQL">
-							</div>
-						</fieldset>
-						<fieldset class="form-group db_settings">
-							<label class="col-sm-3 control-label" for="password">Password</label>
-							<div class="col-sm-9">
-								<input id="password" class="form-control" type="password" value="" placeholder="Пароль в PostgreSQL">
-							</div>
-						</fieldset>
+						<div class="well box-placeholder">
+							<legend class="clearfix">
+								<a class="pull-right" href="https://github.com/EGaaS/go-egaas-mvp/wiki/eGaaS-app-installation-instruction" onclick='THRUST.remote.send("https://github.com/EGaaS/go-egaas-mvp/wiki/eGaaS-app-installation-instruction")' target="_blank">Instruction<i class="fa fa-external-link" aria-hidden="true"></i></a>
+								<span class="pull-left">PostgreSQL Settings</span>
+							</legend>
+							<fieldset class="form-group db_settings">
+								<label class="col-sm-3 control-label" for="host">Host</label>
+								<div class="col-sm-9">
+									<input id="host" class="form-control" type="text" value="localhost">
+								</div>
+							</fieldset>
+							<fieldset class="form-group db_settings">
+								<label class="col-sm-3 control-label" for="port">Port</label>
+								<div class="col-sm-9">
+									<input id="port" class="form-control" type="text" value="5432">
+								</div>
+							</fieldset>
+							<fieldset class="form-group db_settings">
+								<label class="col-sm-3 control-label" for="db_name">DB name</label>
+								<div class="col-sm-9">
+									<input id="db_name" class="form-control" type="text" value="">
+								</div>
+							</fieldset>
+							<fieldset class="form-group db_settings">
+								<label class="col-sm-3 control-label" for="username">Username</label>
+								<div class="col-sm-9">
+									<input id="username" class="form-control" type="text" value="postgres">
+								</div>
+							</fieldset>
+							<fieldset class="form-group db_settings">
+								<label class="col-sm-3 control-label" for="password">Password</label>
+								<div class="col-sm-9">
+									<input id="password" class="form-control" type="password" value="">
+								</div>
+							</fieldset>
+						</div>
 					</form>
 				</div>
 			</div>
