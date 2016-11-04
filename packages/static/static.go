@@ -9,6 +9,7 @@
 // static/beta.html
 // static/block_explorer.html
 // static/block_explorer_page.html
+// static/btc.html
 // static/change_node_key.html
 // static/change_state_smart_laws.html
 // static/check_citizen_status.html
@@ -147,6 +148,7 @@
 // static/js/demo/demo-wizard.js
 // static/js/demo/demo-xeditable.js
 // static/js/index.js
+// static/js/inputmask.js
 // static/js/keys.js
 // static/js/map.js
 // static/js/nprogress.js
@@ -414,6 +416,24 @@ func staticBlock_explorerHtml() (*asset, error) {
 func staticBlock_explorer_pageHtml() (*asset, error) {
 	path := "static/block_explorer_page.html"
 	name := "static/block_explorer_page.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticBtcHtml reads file data from disk. It returns an error on failure.
+func staticBtcHtml() (*asset, error) {
+	path := "static/btc.html"
+	name := "static/btc.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -2912,6 +2932,24 @@ func staticJsIndexJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsInputmaskJs reads file data from disk. It returns an error on failure.
+func staticJsInputmaskJs() (*asset, error) {
+	path := "static/js/inputmask.js"
+	name := "static/js/inputmask.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsKeysJs reads file data from disk. It returns an error on failure.
 func staticJsKeysJs() (*asset, error) {
 	path := "static/js/keys.js"
@@ -4647,6 +4685,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/beta.html": staticBetaHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
 	"static/block_explorer_page.html": staticBlock_explorer_pageHtml,
+	"static/btc.html": staticBtcHtml,
 	"static/change_node_key.html": staticChange_node_keyHtml,
 	"static/change_state_smart_laws.html": staticChange_state_smart_lawsHtml,
 	"static/check_citizen_status.html": staticCheck_citizen_statusHtml,
@@ -4785,6 +4824,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
 	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
 	"static/js/index.js": staticJsIndexJs,
+	"static/js/inputmask.js": staticJsInputmaskJs,
 	"static/js/keys.js": staticJsKeysJs,
 	"static/js/map.js": staticJsMapJs,
 	"static/js/nprogress.js": staticJsNprogressJs,
@@ -4930,6 +4970,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
 		"block_explorer_page.html": &bintree{staticBlock_explorer_pageHtml, map[string]*bintree{}},
+		"btc.html": &bintree{staticBtcHtml, map[string]*bintree{}},
 		"change_node_key.html": &bintree{staticChange_node_keyHtml, map[string]*bintree{}},
 		"change_state_smart_laws.html": &bintree{staticChange_state_smart_lawsHtml, map[string]*bintree{}},
 		"check_citizen_status.html": &bintree{staticCheck_citizen_statusHtml, map[string]*bintree{}},
@@ -5087,6 +5128,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
 			}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
+			"inputmask.js": &bintree{staticJsInputmaskJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
 			"map.js": &bintree{staticJsMapJs, map[string]*bintree{}},
 			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{}},
