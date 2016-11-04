@@ -350,16 +350,16 @@
 				<em class="fa fa-navicon"></em>
 			 </a>
 		  </li>
+		  {{if ne .Data.CitizenId 0}}
 		  <!-- START User avatar toggle-->
 		  <li>
 			 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
-			 {{if ne .Data.CitizenId 0}}
 			  <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
 				<em class="icon-user"></em>
 			 </a>
-			 {{end}}
 		  </li>
 		  <!-- END User avatar toggle-->
+		  {{end}}
 	   </ul>
 	   <!-- END Left navbar-->
 	   <!-- START Right Navbar-->
