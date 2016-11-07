@@ -362,47 +362,51 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 	log.Debug("maxBlockId", maxBlockId)
 
 	// проходимся по новым блокам
-	for blockId, tmpFileName := range blocks {
+	blocksSorted_ := utils.SortMap(blocks)
+	log.Debug("blocksSorted_", blocksSorted_)
+	for _, data := range blocksSorted_ {
+		for blockId, tmpFileName := range data {
 
-		block, err := ioutil.ReadFile(tmpFileName)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		blockHex := utils.BinToHex(block)
-
-		// пишем в цепочку блоков
-		err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].BlockId, prevBlock[blockId].Time, prevBlock[blockId].WalletId, prevBlock[blockId].CBID)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		err = p.ExecSql(`UPDATE config SET my_block_id = ?`, prevBlock[blockId].BlockId)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-
-		// т.к. эти данные создали мы сами, то пишем их сразу в таблицу проверенных данных, которые будут отправлены другим нодам
-		exists, err := p.Single("SELECT id FROM block_chain WHERE id = ?", blockId).Int64()
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		if exists == 0 {
-			affect, err := p.ExecSqlGetAffect("INSERT INTO block_chain (id, hash, state_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockId, prevBlock[blockId].Hash, prevBlock[blockId].CBID, prevBlock[blockId].WalletId, prevBlock[blockId].Time, blockHex)
+			block, err := ioutil.ReadFile(tmpFileName)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			log.Debug("affect", affect)
+			blockHex := utils.BinToHex(block)
+
+			// пишем в цепочку блоков
+			err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?, sent = 0", prevBlock[blockId].Hash, prevBlock[blockId].BlockId, prevBlock[blockId].Time, prevBlock[blockId].WalletId, prevBlock[blockId].CBID)
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
+			err = p.ExecSql(`UPDATE config SET my_block_id = ?`, prevBlock[blockId].BlockId)
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
+
+			// т.к. эти данные создали мы сами, то пишем их сразу в таблицу проверенных данных, которые будут отправлены другим нодам
+			exists, err := p.Single("SELECT id FROM block_chain WHERE id = ?", blockId).Int64()
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
+			if exists == 0 {
+				affect, err := p.ExecSqlGetAffect("INSERT INTO block_chain (id, hash, state_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockId, prevBlock[blockId].Hash, prevBlock[blockId].CBID, prevBlock[blockId].WalletId, prevBlock[blockId].Time, blockHex)
+				if err != nil {
+					return utils.ErrInfo(err)
+				}
+				log.Debug("affect", affect)
+			}
+			err = os.Remove(tmpFileName)
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
+			log.Debug("tmpFileName %v", tmpFileName)
+			// для поиска бага
+			maxBlockId, err := p.Single("SELECT id FROM block_chain ORDER BY id DESC LIMIT 1").Int64()
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
+			log.Debug("maxBlockId", maxBlockId)
 		}
-		err = os.Remove(tmpFileName)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		log.Debug("tmpFileName %v", tmpFileName)
-		// для поиска бага
-		maxBlockId, err := p.Single("SELECT id FROM block_chain ORDER BY id DESC LIMIT 1").Int64()
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		log.Debug("maxBlockId", maxBlockId)
 	}
 
 	log.Debug("HAPPY END")
