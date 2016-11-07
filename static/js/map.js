@@ -2443,8 +2443,10 @@ var StateZoom = 0;
 
 function regMap(coords, render) {
 	var container = $("#map_canvas").parent();
+	StateCoords = [];
 	
 	if (coords != "") {
+		coords = JSON.parse(coords);
 		container.show();
 		
 		var StatePoints = coords.cords;
@@ -2492,7 +2494,7 @@ function openMap(container) {
 		
 		if (!newCoordsContainer.val() == "") {
 			try {
-				regMap(JSON.parse(newCoordsContainer.val()), false);
+				regMap(newCoordsContainer.val(), false);
 			} catch(e) {
 				Alert(e.name, e.message, "error");
 				return false;

@@ -15,7 +15,7 @@
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_request_citizen").addClass("active");
-	//$(".wrapper").addClass("map");
+	$(".wrapper").addClass("map");
 	
 	var arr = [];
 	var coords = [];
@@ -34,7 +34,7 @@
 		crossDomain: true,
 		success: function(data) {
 			selectboxState(data);
-			regMap(JSON.parse(data[1].state_coords));
+			regMap(data[1].state_coords);
 		},
 		error: function(xhr, status, error) {
 			Alert("Error", error, "error");
@@ -74,7 +74,7 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
-				regMap(JSON.parse(data[id].state_coords));
+				regMap(data[id].state_coords);
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
@@ -320,8 +320,8 @@
 	   </div>
 </div>
 
-<!--div class="map_canvas">
+<div class="map_canvas">
 	<div id="map_canvas"></div>
-</div-->
+</div>
 
 {{template "signatures".}}
