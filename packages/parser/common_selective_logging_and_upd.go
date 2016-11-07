@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	//	"fmt"
+	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -101,7 +102,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			} else if fields[i][:1] == "-" {
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
 			} else {
-				addSqlUpdate += fields[i] + `='` + values[i] + `',`
+				addSqlUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
 		err = p.ExecSql(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere, rbId)
