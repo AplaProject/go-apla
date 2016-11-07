@@ -2305,6 +2305,7 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 		data = qrx.ReplaceAllString(data, Int64ToStr(accountId))*/
 	(*params)[`page`] = page
 	(*params)[`state_id`] = Int64ToStr(stateId)
+	(*params)[`citizen`] = Int64ToStr(citizenId)
 	if len(data) > 0 {
 		template := textproc.Process(data, params)
 		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: template})

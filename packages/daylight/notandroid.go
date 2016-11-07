@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"fmt"
 )
 
 func IosLog(text string) {
@@ -79,7 +80,7 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 			panic("Error listening ")
 		}
 		if i > 1 {
-			host = "127.0.0."+utils.IntToStr(i)+":7"+utils.IntToStr(i)+"79"
+			host = ":7"+utils.IntToStr(i)+"79"
 			*BrowserHttpHost = "http://"+host
 		}
 		log.Debug("host", host)
@@ -90,6 +91,7 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 			/*if *utils.Console == 0 {
 				openBrowser(browser)
 			}*/
+			fmt.Println("BrowserHttpHost", host)
 			break
 		} else {
 			log.Error(utils.ErrInfo(err).Error())
