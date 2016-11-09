@@ -1,0 +1,49 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".gov, .gov_citizens, .gov_settings").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_gov", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Government
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_gov">Dashboard</a></li>
+   <li class="active">Settings</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>The term of office of regional heads</label>
+		  <select name="account" class="form-control m-b">
+			 <option>1 Year</option>
+			 <option>2 Years</option>
+			 <option>3 Years</option>
+			 <option>4 Years</option>
+			 <option>5 Years</option>
+		  </select>
+	   </div>
+	   <div class="form-group">
+		  <label>The term of office of elected bodies</label>
+		  <select name="account" class="form-control m-b">
+			 <option>1 Year</option>
+			 <option>2 Years</option>
+			 <option>3 Years</option>
+			 <option>4 Years</option>
+			 <option>5 Years</option>
+		  </select>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Save</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

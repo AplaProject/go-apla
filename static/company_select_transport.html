@@ -1,0 +1,150 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_select_transport").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('#company, #payment').select2({
+		theme: 'bootstrap'
+	});
+	$('#datetimepicker1').datetimepicker({
+	  icons: {
+		  time: 'fa fa-clock-o',
+		  date: 'fa fa-calendar',
+		  up: 'fa fa-chevron-up',
+		  down: 'fa fa-chevron-down',
+		  previous: 'fa fa-chevron-left',
+		  next: 'fa fa-chevron-right',
+		  today: 'fa fa-crosshairs',
+		  clear: 'fa fa-trash'
+		},
+		format: 'DD MMMM, YYYY'
+	});
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">Select Transport Company</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Select Transport Company</label>
+				  <select id="company" class="form-control">
+					 <option value="">Company 1</option>
+					 <option value="">Company 2</option>
+					 <option value="">Company 3</option>
+					 <option value="">Company 4</option>
+					 <option value="">Company 5</option>
+				  </select>
+			   </div>
+			</div>
+		</div>
+	   <div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>ID Contract</label>
+				  <input type="text" class="form-control">
+			   </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Packaging Details</label>
+				  <input type="text" class="form-control">
+			   </div>
+			</div>
+		</div>
+	    <div class="row">
+			<div class="col-sm-4">
+				<div class="form-group">
+				  	<label>Quantity</label>
+		  			<input type="number" class="form-control">
+			   </div>
+			</div>
+			<div class="col-sm-4">
+				<div class="form-group">
+				  	<label>Gross weight</label>
+		  			<input type="text" class="form-control">
+			   </div>
+			</div>
+			<div class="col-sm-4">
+				<div class="form-group">
+				  	<label>Package volume</label>
+		  			<input type="text" class="form-control">
+			   </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+				  <label>Package markings and labels</label>
+				  <input type="text" class="form-control">
+			   </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Shipping Point</label>
+				  <input type="text" class="form-control">
+			   </div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Shipping Date</label>
+				  <div id="datetimepicker1" class="input-group date">
+					 <input type="text" class="form-control">
+					 <span class="input-group-addon">
+						<span class="fa fa-calendar"></span>
+					 </span>
+				  </div>
+			   </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Payment terms</label>
+				  <select id="payment" class="form-control">
+					 <option value="">Payment 1</option>
+					 <option value="">Payment 2</option>
+					 <option value="">Payment 3</option>
+					 <option value="">Payment 4</option>
+					 <option value="">Payment 5</option>
+				  </select>
+			   </div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>&nbsp;</label>
+				  <div class="checkbox c-checkbox">
+					<label>
+					   <input type="checkbox">
+					   <span class="fa fa-check"></span>
+					   not receive a marriage proposal
+					</label>
+				 </div>
+			   </div>
+			</div>
+		</div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Send</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
+<div class="text-center"><a class="btn btn-primary btn-lg" href="#company_offer_transport">How it will look at the transport company</a></div>

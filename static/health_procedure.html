@@ -1,0 +1,84 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".health, .health_patient, .health_procedure").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
+	
+	$('#datetimepicker3').datetimepicker({
+	  icons: {
+		  time: 'fa fa-clock-o',
+		  date: 'fa fa-calendar',
+		  up: 'fa fa-chevron-up',
+		  down: 'fa fa-chevron-down',
+		  previous: 'fa fa-chevron-left',
+		  next: 'fa fa-chevron-right',
+		  today: 'fa fa-crosshairs',
+		  clear: 'fa fa-trash'
+		},
+		minDate: moment("01/01/1950"),
+		maxDate: 'now',
+		format: 'DD MMMM, YYYY'
+	});
+	$('#procedure').select2({
+		theme: 'bootstrap'
+	});
+</script>
+
+<div class="content-heading">
+   Citizen
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_health">Dashboard</a></li>
+   <li><a href="#health_patient">Patient</a></li>
+   <li class="active">Add procedure</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Select Procedures or Exercise</label>
+		  <select id="procedure" class="form-control">
+			 <option value="">Procedure 1</option>
+			 <option value="">Procedure 2</option>
+			 <option value="">Procedure 3</option>
+			 <option value="">Procedure 4</option>
+			 <option value="">Procedure 5</option>
+		  </select>
+	   </div>
+	   <div class="row">
+		   <div class="col-sm-4">
+			   <div class="form-group">
+				  <label>Date</label>
+				  <div id="datetimepicker3" class="input-group date">
+					 <input type="text" class="form-control">
+					 <span class="input-group-addon">
+						<span class="fa fa-calendar"></span>
+					 </span>
+				  </div>
+			   </div>
+		   </div>
+		   <div class="col-sm-4">
+			   <div class="form-group">
+				  <label>Start time</label>
+				  <input type="text" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-sm-4">
+			   <div class="form-group">
+				  <label>Duration</label>
+				  <input type="text" class="form-control" value="">
+			   </div>
+		   </div>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Save</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

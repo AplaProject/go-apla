@@ -1,0 +1,105 @@
+<style>
+	#fields {
+		margin-bottom:-20px;
+	}
+	.sweet-alert p,
+	.sweet-alert fieldset,
+	.sweet-alert .sa-error-container {
+		display:none !important;
+	}
+	@media only screen and (max-width: 767px) {
+		fieldset .form-group {
+		  margin-bottom: 15px;
+		}
+	}
+</style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_new_order").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('#company').select2({
+		theme: 'bootstrap'
+	});
+	
+	$(document).ready(function() {
+		var user = $("#fields").html();
+		$("#add_fields").on('click', function () {
+			$("#fields").append(user);
+		});
+	});
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">New order</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Select you company</label>
+		  <select id="company" class="form-control">
+			 <option value="">Company 1</option>
+			 <option value="">Company 2</option>
+			 <option value="">Company 3</option>
+			 <option value="">Company 4</option>
+			 <option value="">Company 5</option>
+		  </select>
+	   </div>
+	   <div id="fields">
+		   <fieldset>
+			   <div class="row">
+				   <div class="col-sm-2">
+					   <div class="form-group">
+						  <label>Item id</label>
+						  <input type="text" class="form-control">
+					   </div>
+				   </div>
+				   <div class="col-sm-3">
+					   <div class="form-group">
+						  <label>Price</label>
+						  <input type="text" class="form-control">
+					   </div>
+				   </div>
+				   <div class="col-sm-2">
+					   <div class="form-group">
+						  <label>Qty</label>
+						  <input type="text" class="form-control">
+					   </div>
+				   </div>
+				   <div class="col-sm-2">
+					   <div class="form-group">
+						  <label>Total</label>
+						  <input type="text" class="form-control" value="10000" disabled>
+					   </div>
+				   </div>
+				   <div class="col-sm-3">
+					   <div class="form-group">
+						  <label>Discount</label>
+						  <input type="text" class="form-control">
+					   </div>
+				   </div>
+			   </div>
+		   </fieldset>
+	   </div>
+	   <fieldset style="padding-bottom:0px; margin-bottom:0px;">
+		   <button class="btn btn-primary btn-xs" type="button" id="add_fields">Add fields</button>
+	   </fieldset>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this); Alert('Order №26511691', '', 'success')" id="add">Add</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

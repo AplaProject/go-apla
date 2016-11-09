@@ -1,0 +1,137 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_application_purchase").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('#company, #goods, #delivery, #payment').select2({
+		theme: 'bootstrap'
+	});
+	$('#datetimepicker1').datetimepicker({
+	  icons: {
+		  time: 'fa fa-clock-o',
+		  date: 'fa fa-calendar',
+		  up: 'fa fa-chevron-up',
+		  down: 'fa fa-chevron-down',
+		  previous: 'fa fa-chevron-left',
+		  next: 'fa fa-chevron-right',
+		  today: 'fa fa-crosshairs',
+		  clear: 'fa fa-trash'
+		},
+		format: 'DD MMMM, YYYY'
+	});
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">Application for purchase</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Select selling company</label>
+				  <select id="company" class="form-control">
+					 <option value="">Company 1</option>
+					 <option value="">Company 2</option>
+					 <option value="">Company 3</option>
+					 <option value="">Company 4</option>
+					 <option value="">Company 5</option>
+				  </select>
+			   </div>
+			</div>
+		</div>
+	   <div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Select good's name</label>
+				  <select id="goods" class="form-control">
+					 <option value="">Good 1</option>
+					 <option value="">Good 2</option>
+					 <option value="">Good 3</option>
+					 <option value="">Good 4</option>
+					 <option value="">Good 5</option>
+				  </select>
+			   </div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>or ID</label>
+				  <input type="text" class="form-control">
+			   </div>
+			</div>
+		</div>
+	    <div class="row">
+			<div class="col-sm-4">
+				<div class="form-group">
+				  	<label>Quantity</label>
+		  			<input type="number" class="form-control">
+			   </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Delivery Point</label>
+				  <input type="text" class="form-control">
+			   </div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Delivery Date</label>
+				  <div id="datetimepicker1" class="input-group date">
+					 <input type="text" class="form-control">
+					 <span class="input-group-addon">
+						<span class="fa fa-calendar"></span>
+					 </span>
+				  </div>
+			   </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Delivery terms (Incoterms 2010)</label>
+				  <select id="delivery" class="form-control">
+					 <option value="">Delivery 1</option>
+					 <option value="">Delivery 2</option>
+					 <option value="">Delivery 3</option>
+					 <option value="">Delivery 4</option>
+					 <option value="">Delivery 5</option>
+				  </select>
+			   </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+				  <label>Payment terms</label>
+				  <select id="payment" class="form-control">
+					 <option value="">Payment 1</option>
+					 <option value="">Payment 2</option>
+					 <option value="">Payment 3</option>
+					 <option value="">Payment 4</option>
+					 <option value="">Payment 5</option>
+				  </select>
+			   </div>
+			</div>
+		</div>
+		<h3>Price: --- ---</h3>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Send</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
+<div class="text-center"><a class="btn btn-primary btn-lg" href="#company_offer_seller">How it will look at selling company</a></div>

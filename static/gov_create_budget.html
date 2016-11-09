@@ -1,0 +1,35 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".gov, .gov_citizens, .gov_create_budget").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_gov", { }, function() {});
+	
+	$('.filestyle').filestyle();
+</script>
+
+<div class="content-heading">
+   Government
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_gov">Dashboard</a></li>
+   <li class="active">Create budget</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Budget</label>
+		  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Create</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

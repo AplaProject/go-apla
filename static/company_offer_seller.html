@@ -1,0 +1,102 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_offer_seller").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('#delivery, #payment').select2({
+		theme: 'bootstrap'
+	});
+</script>
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">Offer to seller Company</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<!-- START table-responsive-->
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <thead>
+			 <tr>
+				<th style="width:50%;">Item</th>
+				<th>Value</th>
+			 </tr>
+		  </thead>
+		  <tbody>
+			 <tr>
+				<td>Buyer</td>
+				<td>BuyerCompany</td>
+			 </tr>
+			 <tr>
+				<td>Good</td>
+				<td>NameGood</td>
+			 </tr>
+			 <tr>
+				<td>Price</td>
+				<td>1000</td>
+			 </tr>
+			 <tr>
+				<td>Quantity</td>
+				<td>25</td>
+			 </tr>
+			 <tr>
+				<td>Delivery Point</td>
+				<td>BuyerCompany Address</td>
+			 </tr>
+			 <tr>
+				<td>Delivery Date</td>
+				<td>01.12.2016</td>
+			 </tr>
+			 <tr>
+				<td>Payment terms</td>
+				<td>
+					<div class="form-group">
+						<select id="payment" class="form-control">
+						 <option value="">Payment 1</option>
+						 <option value="">Payment 2</option>
+						 <option value="">Payment 3</option>
+						 <option value="">Payment 4</option>
+						 <option value="">Payment 5</option>
+					  </select>
+				  </div>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Delivery terms</td>
+				<td>
+					<select id="delivery" class="form-control">
+					 <option value="">Delivery 1</option>
+					 <option value="">Delivery 2</option>
+					 <option value="">Delivery 3</option>
+					 <option value="">Delivery 4</option>
+					 <option value="">Delivery 5</option>
+				  </select>
+				</td>
+			 </tr>
+			 <tr>
+				<td>Contracts Price</td>
+				<td>25 000</td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+	<!-- END table-responsive-->
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-left">
+		 <button type="button" class="btn btn-danger">Reject</button>
+	  </div>
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Accept</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->
+<div class="text-center"><a class="btn btn-primary btn-lg" href="#company_select_transport">Select transport company</a></div>

@@ -1,0 +1,27 @@
+[
+  {
+    "medicament": "HUMULIN",
+	"date": "1470906142",
+	"clinica": "Clinica A /Doctor1",
+	"status": [
+		"1",
+		"Started"
+	],
+    "dose": "20",
+    "times": "1",
+    "when": "after meals",
+	"left": "15"
+  }, {
+    "medicament": "PRINIVIL",
+	"date": "1470906142",
+	"clinica": "Clinica F /Doctor2",
+	"status": [
+		"0",
+		"Buy"
+	],
+    "dose": "50",
+    "times": "2",
+    "when": "after meals",
+	"left": "7"
+  }
+]

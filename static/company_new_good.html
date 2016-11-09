@@ -1,0 +1,104 @@
+<style>
+	#fields {
+		margin-bottom:-20px;
+	}
+</style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_new_good").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('#company, #category').select2({
+		theme: 'bootstrap'
+	});
+	$('.filestyle').filestyle();
+	
+	$(document).ready(function() {
+		var user = $("#fields").html();
+		$("#add_fields").on('click', function () {
+			$("#fields").append(user);
+		});
+	});
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">New good</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <label>Select you company</label>
+		  <select id="company" class="form-control">
+			 <option value="">Company 1</option>
+			 <option value="">Company 2</option>
+			 <option value="">Company 3</option>
+			 <option value="">Company 4</option>
+			 <option value="">Company 5</option>
+		  </select>
+	   </div>
+	   <div class="form-group">
+		  <label>Images</label>
+		  <input type="file" multiple data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
+	   </div>
+	   <div class="form-group">
+		  <label>Video</label>
+		  <input type="file" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle">
+	   </div>
+	   <div class="form-group">
+		  <label>Name</label>
+		  <input type="text" class="form-control">
+	   </div>
+	   <div class="form-group">
+		  <label>Category</label>
+		  <select id="category" class="form-control">
+			 <option value="">Category 1</option>
+			 <option value="">Category 2</option>
+			 <option value="">Category 3</option>
+			 <option value="">Category 4</option>
+			 <option value="">Category 5</option>
+		  </select>
+	   </div>
+	   <div id="fields">
+		   <fieldset>
+			   <div class="row">
+					<div class="col-xs-6">
+						<div class="form-group">
+						  <label>Parameter name</label>
+						  <input type="text" class="form-control">
+					   </div>
+					</div>
+					<div class="col-xs-6">
+						<div class="form-group">
+						  <label>Parameter value</label>
+						  <input type="text" class="form-control">
+					   </div>
+					</div>
+				</div>
+		   </fieldset>
+	   </div>
+	   <fieldset>
+		   <button class="btn btn-primary btn-xs" type="button" id="add_fields">Add fields</button>
+	   </fieldset>
+	   <div class="form-group">
+		  <label>Description</label>
+		  <textarea class="form-control"></textarea>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Add</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

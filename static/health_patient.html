@@ -1,0 +1,204 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".health, .health_patient, .health_patient_d").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
+
+	$('#entries_doctor').dataTable({
+        'paging':   true,
+        'ordering': true,
+		"order": 	[[ 2, "desc" ]],
+        'info':     true,
+		"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
+		"bLengthChange": false,
+		"bFilter": false,
+		"ajax": {
+            "url": "static/data/entries_doctor.json",
+            "dataSrc": ""
+        },
+        "columns": [
+		  { "data": "problem" },
+          { "data": 'last' },
+          { "data": 'next' },
+          { "data": 'clinica' }
+        ],
+		columnDefs: [{
+			targets: [1, 2],
+			render: $.fn.dataTable.render.moment('X', 'DD.MM.YYYY', 'en')
+		}]
+    });
+	$('#medication').dataTable({
+        'paging':   true,
+        'ordering': true,
+		"order": 	[[ 4, "desc" ]],
+        'info':     true,
+		"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
+		"bLengthChange": false,
+		"bFilter": false,
+		"ajax": {
+            "url": "static/data/medication.json",
+            "dataSrc": ""
+        },
+        "columns": [
+          { "data": 'medicament' },
+		  { "data": 'status[]' },
+          { "data": 'dose' },
+          { "data": 'times' },
+          { "data": 'when' },
+		  { "data": 'left' }
+        ],
+		columnDefs: [{
+			targets: 1,
+			render: function (data, type, full, meta) {
+						if (data[0] == 0) {
+							return '<a href="#health_buy_medicament" class="btn btn-success btn-block">' + data[1] + '</a>';
+						} else {
+							return '<button class="btn btn-info btn-block" type="button" disabled>' + data[1] + '</button>';
+						}
+					}
+		}]
+    });
+</script>
+
+<div class="content-heading">
+   Health
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_health">Dashboard</a></li>
+   <li class="active">Patient</li>
+</ol>
+<div class="row dashboard">
+   <div class="col-lg-3 col-sm-6 menu">
+	  <!-- START panel-->
+	  <div class="panel panel-danger">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-heartbeat fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#health_vital_signs" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Vital Signs</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-sm-6 menu">
+	  <!-- START panel-->
+	  <div class="panel panel-warning">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-user-md fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#health_symptom" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Add symptom</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-sm-6 menu">
+	  <!-- START panel-->
+	  <div class="panel panel-green">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-hospital-o fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#health_entries_clinic" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Write to the clinic</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-3 col-sm-6 menu">
+	  <!-- START panel-->
+	  <div class="panel panel-info">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-medkit fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#health_procedure" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Add procedure</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+</div>
+<h4 class="page-header">Entries to the doctor</h4>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<div class="table-responsive">
+	   <table id="entries_doctor" class="table table-striped table-hover">
+		  <thead>
+			 <tr>
+				<th>Problem</th>
+				<th>Last consult</th>
+				<th>Next consult</th>
+				<th>Clinica/Doctor</th>
+			 </tr>
+		  </thead>
+		  <tbody></tbody>
+	   </table>
+	</div>
+ </div>
+</div>
+<h4 class="page-header">Medication</h4>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<div class="table-responsive">
+	   <table id="medication" class="table table-striped table-hover">
+		  <thead>
+			 <tr>
+				<th>Medicament</th>
+				<th>Status</th>
+				<th>Dose (mg)</th>
+				<th>Times per day</th>
+				<th>When to take</th>
+				<th>Days left</th>
+			 </tr>
+		  </thead>
+		  <tbody></tbody>
+	   </table>
+	</div>
+ </div>
+</div>
+<!-- END panel-->

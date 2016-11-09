@@ -1,0 +1,139 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".health, .health_facility").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
+
+	$('#medication').dataTable({
+        'paging':   true,
+        'ordering': true,
+		"order": 	[[ 1, "desc" ]],
+        'info':     true,
+		"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
+		"bLengthChange": true,
+		"bFilter": true,
+		"ajax": {
+            "url": "static/data/medication.json",
+            "dataSrc": ""
+        },
+        "columns": [
+          { "data": "medicament" },
+		  { "data": "date" },
+		  { "data": "clinica" },
+		  { "data": "dose" },
+          { "data": 'times' },
+          { "data": 'when' },
+		  { "data": 'left' }
+        ],
+		columnDefs: [{
+			targets: 1,
+			render: $.fn.dataTable.render.moment('X', 'DD.MM.YYYY', 'en')
+		}]
+    });
+	
+	$('#medicament').select2({
+		theme: 'bootstrap'
+	});
+	$('#when').select2({
+		theme: 'bootstrap'
+	});
+</script>
+
+<div class="content-heading">
+   Health
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_health">Dashboard</a></li>
+   <li><a href="#health_facility">Health facility</a></li>
+   <li><a href="#health_medical_record">Medical Record</a></li>
+   <li class="active">Medication</li>
+</ol>
+<h4 class="page-header">Patient: Pacien1</h4>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<div class="table-responsive">
+	   <table id="medication" class="table table-striped table-hover">
+		  <thead>
+			 <tr>
+				<th>Medicament</th>
+				<th>Date</th>
+				<th>Clinica/Doctor</th>
+				<th>Dose (mg)</th>
+				<th>Times per day</th>
+				<th>When to take</th>
+				<th>Days left</th>
+			 </tr>
+		  </thead>
+		  <tbody></tbody>
+	   </table>
+	</div>
+ </div>
+</div>
+<!-- END panel-->
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="row">
+		   <div class="col-sm-8">
+			   <div class="form-group">
+				  <label>Select Medicament</label>
+				  <select id="medicament" class="form-control">
+					 <option value="">Medicament 1</option>
+					 <option value="">Medicament 2</option>
+					 <option value="">Medicament 3</option>
+					 <option value="">Medicament 4</option>
+					 <option value="">Medicament 5</option>
+				  </select>
+			   </div>
+		   </div>
+		   <div class="col-sm-4">
+			   <div class="form-group">
+				  <label>When to take</label>
+				  <select id="when" class="form-control">
+					 <option value="">after meals 1</option>
+					 <option value="">after meals 2</option>
+					 <option value="">after meals 3</option>
+					 <option value="">after meals 4</option>
+					 <option value="">after meals 5</option>
+				  </select>
+			   </div>
+		   </div>
+	   </div>
+	   <div class="row">
+		   <div class="col-md-2">
+			   <div class="form-group">
+				  <label>Dose, mg</label>
+				  <input type="text" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-md-3">
+			   <div class="form-group">
+				  <label>Times per day</label>
+				  <input type="text" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-md-3">
+			   <div class="form-group">
+				  <label>Times per week</label>
+				  <input type="text" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-md-3">
+			   <div class="form-group">
+				  <label>Course, days</label>
+				  <input type="text" class="form-control" value="">
+			   </div>
+		   </div>
+		   <div class="col-md-1">
+			   <div class="form-group">
+				  <label>&nbsp;</label>
+				  <button type="button" class="btn btn-primary btn-block" style="padding-left:0px; padding-right:0px;">ADD</button>
+			   </div>
+		   </div>
+	   </div>
+	</form>
+ </div>
+</div>
+<!-- END panel-->

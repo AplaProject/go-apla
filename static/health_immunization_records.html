@@ -1,0 +1,116 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".health, .health_facility").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
+
+	$('#immunizations').dataTable({
+        'paging':   true,
+        'ordering': true,
+		"order": 	[[ 1, "desc" ]],
+        'info':     true,
+		"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
+		"bLengthChange": true,
+		"bFilter": true,
+		"ajax": {
+            "url": "static/data/immunizations.json",
+            "dataSrc": ""
+        },
+        "columns": [
+          { "data": "immunization" },
+		  { "data": "date" },
+		  { "data": "facility" }
+        ],
+		columnDefs: [{
+			targets: 1,
+			render: $.fn.dataTable.render.moment('X', 'DD.MM.YYYY', 'en')
+		}]
+    });
+	
+	$('#immunization').select2({
+		theme: 'bootstrap'
+	});
+	$('#datetimepicker1').datetimepicker({
+	  icons: {
+		  time: 'fa fa-clock-o',
+		  date: 'fa fa-calendar',
+		  up: 'fa fa-chevron-up',
+		  down: 'fa fa-chevron-down',
+		  previous: 'fa fa-chevron-left',
+		  next: 'fa fa-chevron-right',
+		  today: 'fa fa-crosshairs',
+		  clear: 'fa fa-trash'
+		},
+		minDate: moment("01/01/1950"),
+		maxDate: 'now',
+		format: 'DD MMMM, YYYY'
+	});
+</script>
+
+<div class="content-heading">
+   Health
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_health">Dashboard</a></li>
+   <li><a href="#health_facility">Health facility</a></li>
+   <li><a href="#health_medical_record">Medical Record</a></li>
+   <li class="active">Immunization</li>
+</ol>
+<h4 class="page-header">Patient: Pacien1</h4>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<div class="table-responsive">
+	   <table id="immunizations" class="table table-striped table-hover">
+		  <thead>
+			 <tr>
+				<th>Immunization</th>
+				<th>Date</th>
+				<th>Health facility</th>
+			 </tr>
+		  </thead>
+		  <tbody></tbody>
+	   </table>
+	</div>
+ </div>
+</div>
+<!-- END panel-->
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="row">
+		   <div class="col-md-7">
+			   <div class="form-group">
+				  <label>Select Immunization</label>
+				  <select id="immunization" class="form-control">
+					 <option value="">Immunization 1</option>
+					 <option value="">Immunization 2</option>
+					 <option value="">Immunization 3</option>
+					 <option value="">Immunization 4</option>
+					 <option value="">Immunization 5</option>
+				  </select>
+			   </div>
+		   </div>
+		   <div class="col-md-4">
+			   <div class="form-group">
+				  <label>Date</label>
+				  <div id="datetimepicker1" class="input-group date">
+					 <input type="text" class="form-control">
+					 <span class="input-group-addon">
+						<span class="fa fa-calendar"></span>
+					 </span>
+				  </div>
+			   </div>
+		   </div>
+		   <div class="col-md-1">
+			   <div class="form-group">
+				  <label>&nbsp;</label>
+				  <button type="button" class="btn btn-primary btn-block" style="padding-left:0px; padding-right:0px;">ADD</button>
+			   </div>
+		   </div>
+	   </div>
+	</form>
+ </div>
+</div>
+<!-- END panel-->

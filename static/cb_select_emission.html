@@ -1,0 +1,66 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".cb, .cb_select_emission").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_cb", { }, function() {});
+	
+	$(".type").each(function() {
+		var id = $(this);
+		if (id.prop("checked") == true) {
+			$("#next").attr("href", "#" + id.val());
+		}
+	});
+	$(".radio").on('click', function() {
+		if ($(this).find("input").prop("disabled") != true) {
+			$("#next").attr("href", "#" + $(this).find("input").val());
+		}
+	});
+</script>
+
+<div class="content-heading">
+   Central Bank
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_cb">Dashboard</a></li>
+   <li class="active">Select emission</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" style="max-width:400px;">
+ <div class="panel-heading">Select method</div>
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+		  <div class="radio c-radio">
+			 <label>
+				<input class="type" type="radio" value="" name="a" disabled>
+				<span class="fa fa-circle"></span>The increase in the fixed amount on all credit accounts of citizens</label>
+		  </div>
+	   </div>
+	   <div class="form-group">
+		  <div class="radio c-radio">
+			 <label>
+				<input class="type" type="radio" value="cb_emission_proportional" name="a" checked>
+				<span class="fa fa-circle"></span>The proportional increase in the accounts of all citizens</label>
+		  </div>
+	   </div>
+	   <div class="form-group">
+		  <div class="radio c-radio">
+			 <label>
+				<input class="type" type="radio" value="cb_emission_fixed_amount" name="a">
+				<span class="fa fa-circle"></span>The increase in the fixed amount on all debit accounts of citizens</label>
+		  </div>
+	   </div>
+	   <div class="form-group">
+		  <div class="radio c-radio">
+			 <label>
+				<input class="type" type="radio" value="cb_emission_account" name="a">
+				<span class="fa fa-circle"></span>Creation of funds for a particular account</label>
+		  </div>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer text-right">
+	 <a href="#" class="btn btn-primary" id="next">NEXT</a>
+ </div>
+</div>
+<!-- END panel-->

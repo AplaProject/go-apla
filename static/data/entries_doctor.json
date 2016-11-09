@@ -1,0 +1,13 @@
+[
+  {
+    "problem": "DIABETES MELLITUS",
+    "last": "1470906142",
+    "next": "1471906142",
+    "clinica": "Clinica A /Doctor1"
+  }, {
+	"problem": "HYPERTENSION",
+    "last": "1470906142",
+    "next": "1475906142",
+    "clinica": "Clinica B /Doctor2"
+  }
+]

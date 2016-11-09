@@ -1,0 +1,207 @@
+<style>
+	#users {
+		margin-bottom:-20px;
+	}
+	.wizard > .steps > ul > li {
+		width:33.33%;
+	}
+	.wizard > .content {
+		min-height:500px;
+	}
+</style>
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_new_shares").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	
+	$('#select1, #select2, #select3').select2({
+		theme: 'bootstrap'
+	});
+	$('.filestyle').filestyle();
+	
+	$(document).ready(function() {
+		var user = $("#users").html();
+		$("#add_user").on('click', function () {
+			$("#users").append(user);
+		});
+		
+		$("#prev, .step").hide();
+		$(".step:first").show();
+		$(".s").on('click', function () {
+			var el = $(this);
+			if (!el.hasClass("disabled")) {
+				var id = el.find("a").attr("href").substr(1);
+				$(".steps li").removeClass("current");
+				el.addClass("current");
+				el.nextAll(".s").addClass("disabled");
+				$(".step").hide();
+				$("#" + id).show();
+				$("#next").html("Next");
+				if (!el.prev().hasClass("s")) {
+					$("#prev").hide();
+				}
+			}
+		});
+		$("#prev").on('click', function () {
+			var el = $(".steps .current");
+			if (el.prev().hasClass("s")) {
+				var id = el.prev().find("a").attr("href").substr(1);
+				$(".steps li").removeClass("current");
+				el.prev().addClass("current");
+				el.addClass("disabled");
+				$(".step").hide();
+				$("#" + id).show();
+			}
+			if (!el.prev().prev().hasClass("s")) {
+				$("#prev").hide();
+			}
+			if ($("#next").html() == "Add") {
+				$("#next").html("Next");
+			}
+		});
+		$("#next").on('click', function () {
+			var el = $(".steps .current");
+			if (el.next().hasClass("s")) {
+				var id = el.next().find("a").attr("href").substr(1);
+				$(".steps li").removeClass("current");
+				el.next().addClass("current");
+				el.next().removeClass("disabled");
+				$(".step").hide();
+				$("#" + id).show();
+				$("#prev").show();
+			}
+			if ($("#next").html() == "Add") {
+				alert("Submited!");
+			}
+			if (!el.next().next().hasClass("s")) {
+				$("#next").html("Add");
+			}
+		});
+	});
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">New shares</li>
+</ol>
+<div class="wizard">
+	<div class="steps">
+		<ul>
+			<li class="s first current"> <!-- add error class -->
+				<a href="#tab1"><span class="current-info audible">current step: </span><span class="number">1.</span> New shares</a>
+			</li>
+			<li class="s disabled">
+				<a href="#tab2"><span class="number">2.</span> Additional issue of shares</a>
+			</li>
+			<li class="s disabled last">
+				<a href="#tab3"><span class="number">3.</span> Dividend payment</a>
+			</li>
+		</ul>
+	</div>
+</div>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<form role="form">
+		<div id="tab1" class="step">
+		   <div class="form-group">
+			  <label>Select you company</label>
+			  <select id="select1" class="form-control">
+				 <option value="">Company 1</option>
+				 <option value="">Company 2</option>
+				 <option value="">Company 3</option>
+				 <option value="">Company 4</option>
+				 <option value="">Company 5</option>
+			  </select>
+		   </div>
+		   <div class="form-group">
+			  <label>Amount shares</label>
+			  <input type="text" class="form-control">
+		   </div>
+		   <legend>Stakes</legend>
+		   <div id="users">
+			   <fieldset>
+				   <div class="form-group form-horizontal">
+					  <div class="row">
+						  <div class="col-sm-1">
+							  <label class="control-label">UserId</label>
+						  </div>
+						  <div class="col-sm-3">
+							  <input type="text" class="form-control">
+						  </div>
+						  <div class="col-sm-1">
+							  <label class="control-label">Shares</label>
+						  </div>
+						  <div class="col-sm-3">
+							  <input type="text" class="form-control">
+						  </div>
+						  <div class="col-sm-1">
+							  <label class="control-label">privileges</label>
+						  </div>
+						  <div class="col-sm-3">
+							  <input type="text" class="form-control">
+						  </div>
+					  </div>
+				   </div>
+			   </fieldset>
+		   </div>
+		   <fieldset>
+			   <button type="button" class="btn btn-primary btn-xs" id="add_user">Add user</button>
+		   </fieldset>
+		   <div class="form-group">
+			  <label>Index for stock-exchange</label>
+			  <input type="text" class="form-control">
+		   </div>
+	   </div>
+	   <div id="tab2" class="step">
+		   <div class="form-group">
+			  <label>Select shares index</label>
+			  <select id="select2" class="form-control">
+				 <option value="">Index 1</option>
+				 <option value="">Index 2</option>
+				 <option value="">Index 3</option>
+				 <option value="">Index 4</option>
+				 <option value="">Index 5</option>
+			  </select>
+		   </div>
+		   <div class="form-group">
+			  <label>Amount of additional issue</label>
+			  <input type="text" class="form-control">
+		   </div>
+		   <div class="form-group">
+			  <label>Privileges</label>
+			  <input type="text" class="form-control">
+		   </div>
+	   </div>
+	   <div id="tab3" class="step">
+		   <div class="form-group">
+			  <label>Select shares index</label>
+			  <select id="select3" class="form-control">
+				 <option value="">Index 1</option>
+				 <option value="">Index 2</option>
+				 <option value="">Index 3</option>
+				 <option value="">Index 4</option>
+				 <option value="">Index 5</option>
+			  </select>
+		   </div>
+		   <div class="form-group">
+			  <label>Amount</label>
+			  <input type="text" class="form-control">
+		   </div>
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-default" id="prev">Previous</button>
+		 <button type="button" class="btn btn-primary" id="next">Next</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

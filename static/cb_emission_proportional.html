@@ -1,0 +1,30 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".cb, .cb_select_emission").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_cb", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Central Bank
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_cb">Dashboard</a></li>
+   <li><a href="#cb_select_emission">Select emission</a></li>
+   <li class="active">Emission proportional</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" style="max-width:400px;">
+ <div class="panel-body">
+	<form role="form">
+	   <div class="form-group">
+			<label>Percent</label>
+			<input type="text" class="form-control">
+		</div>
+	</form>
+ </div>
+ <div class="panel-footer text-right">
+	 <button class="btn btn-primary" type="button">NEXT</button>
+ </div>
+</div>
+<!-- END panel-->

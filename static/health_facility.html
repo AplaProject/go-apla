@@ -1,0 +1,63 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".health, .health_facility").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
+
+	$('#patients').dataTable({
+        'paging':   true,
+        'ordering': true,
+		"order": 	[[ 3, "desc" ]],
+        'info':     true,
+		"lengthMenu": [[10, 50, 100, -1], [10, 50, 100, "All"]],
+		"bLengthChange": true,
+		"bFilter": true,
+		"ajax": {
+            "url": "static/data/patients.json",
+            "dataSrc": ""
+        },
+        "columns": [
+          { "data": "patient[]" },
+		  { "data": "problem" },
+          { "data": 'last' },
+          { "data": 'next' }
+        ],
+		columnDefs: [{
+			targets: 0,
+			render: function (data, type, full, meta) {
+						return '<a href="#'+data[0]+'">' +data[1]+ '</a>';
+					}
+		}, {
+			targets: [2, 3],
+			render: $.fn.dataTable.render.moment('X', 'DD.MM.YYYY', 'en')
+		}]
+    });
+</script>
+
+<div class="content-heading">
+   Health
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_health">Dashboard</a></li>
+   <li class="active">Health facility</li>
+</ol>
+<h4 class="page-header">List of Patients</h4>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<div class="table-responsive">
+	   <table id="patients" class="table table-striped table-hover">
+		  <thead>
+			 <tr>
+				<th>Name</th>
+				<th>Last Problem</th>
+				<th>Last consult</th>
+				<th>Next consult</th>
+			 </tr>
+		  </thead>
+		  <tbody></tbody>
+	   </table>
+	</div>
+ </div>
+</div>
+<!-- END panel-->

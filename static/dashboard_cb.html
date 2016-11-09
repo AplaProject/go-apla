@@ -1,0 +1,411 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".cb").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_cb", { }, function() {});
+	// NOW TIMER
+	// ----------------------------------- 
+	
+	(function(window, document, $, undefined){
+	
+	  $(function(){
+	
+		$('[data-now]').each(function(){
+		  var element = $(this),
+			  format = element.data('format');
+	
+		  function updateTime() {
+			var dt = moment( new Date() ).format(format);
+			element.text(dt);
+		  }
+	
+		  updateTime();
+		  setInterval(updateTime, 1000);
+		
+		});
+	  });
+	
+	})(window, document, window.jQuery);
+	
+	// CLASSYLOADER
+	// ----------------------------------- 
+	
+	(function(window, document, $, undefined){
+	
+	  $(function(){
+	
+		var $scroller       = $(window),
+			inViewFlagClass = 'js-is-in-view'; // a classname to detect when a chart has been triggered after scroll
+	
+		$('[data-classyloader]').each(initClassyLoader);
+		
+		function initClassyLoader() {
+		
+		  var $element = $(this),
+			  options  = $element.data();
+		  
+		  // At lease we need a data-percentage attribute
+		  if(options) {
+			if( options.triggerInView ) {
+	
+			  $scroller.scroll(function() {
+				checkLoaderInVIew($element, options);
+			  });
+			  // if the element starts already in view
+			  checkLoaderInVIew($element, options);
+			}
+			else
+			  startLoader($element, options);
+		  }
+		}
+		function checkLoaderInVIew(element, options) {
+		  var offset = -20;
+		  if( ! element.hasClass(inViewFlagClass) &&
+			  $.Utils.isInView(element, {topoffset: offset}) ) {
+			startLoader(element, options);
+		  }
+		}
+		function startLoader(element, options) {
+		  element.ClassyLoader(options).addClass(inViewFlagClass);
+		}
+	
+	  });
+	
+	})(window, document, window.jQuery);
+	
+	// SPARKLINE
+	// ----------------------------------- 
+	
+	(function(window, document, $, undefined){
+	
+	  $(function(){
+	
+		$('[data-sparkline]').each(initSparkLine);
+	
+		function initSparkLine() {
+		  var $element = $(this),
+			  options = $element.data(),
+			  values  = options.values && options.values.split(',');
+	
+		  options.type = options.type || 'bar'; // default chart is bar
+		  options.disableHiddenCheck = true;
+	
+		  $element.sparkline(values, options);
+	
+		  if(options.resize) {
+			$(window).resize(function(){
+			  $element.sparkline(values, options);
+			});
+		  }
+		}
+	  });
+	
+	})(window, document, window.jQuery);
+	
+	// SLIMSCROLL
+	// ----------------------------------- 
+	
+	(function(window, document, $, undefined){
+	
+	  $(function(){
+	
+		$('[data-scrollable]').each(function(){
+	
+		  var element = $(this),
+			  defaultHeight = 250;
+		  
+		  element.slimScroll({
+			  height: (element.data('height') || defaultHeight)
+		  });
+		  
+		});
+	  });
+	
+	})(window, document, window.jQuery);
+</script>
+
+<div class="content-heading">
+   Central Bank
+</div>
+<ol class="breadcrumb">
+   <li class="active">Dashboard</li>
+</ol>
+<!-- START widgets box-->
+<div class="row">
+   <div class="col-md-9 col-sm-12">
+	<div class="panel widget" style="height:130px;">
+	   <div class="row row-table">
+		  <div class="col-md-2 col-sm-3 col-xs-6 text-center bg-info pv-xl">
+			 <em class="wi wi-day-sunny fa-4x"></em>
+		  </div>
+		  <div class="col-md-2 col-sm-3 col-xs-6 pv br">
+			 <div class="h1 m0 text-bold">32&deg;</div>
+			 <div class="text-uppercase">Clear</div>
+		  </div>
+		  <div class="col-md-2 col-sm-3 hidden-xs pv text-center br">
+			 <div class="text-info text-sm">10 AM</div>
+			 <div class="text-muted text-md">
+				<em class="wi wi-day-cloudy"></em>
+			 </div>
+			 <div class="text-info">
+				<em class="wi wi-sprinkles"></em>
+				<span class="text-muted">20%</span>
+			 </div>
+			 <div class="text-muted">27&deg;</div>
+		  </div>
+		  <div class="col-md-2 col-sm-3 hidden-xs pv text-center br">
+			 <div class="text-info text-sm">11 AM</div>
+			 <div class="text-muted text-md">
+				<em class="wi wi-day-cloudy"></em>
+			 </div>
+			 <div class="text-info">
+				<em class="wi wi-sprinkles"></em>
+				<span class="text-muted">30%</span>
+			 </div>
+			 <div class="text-muted">28&deg;</div>
+		  </div>
+		  <div class="col-md-2 hidden-sm hidden-xs pv text-center br">
+			 <div class="text-info text-sm">12 PM</div>
+			 <div class="text-muted text-md">
+				<em class="wi wi-day-cloudy"></em>
+			 </div>
+			 <div class="text-info">
+				<em class="wi wi-sprinkles"></em>
+				<span class="text-muted">20%</span>
+			 </div>
+			 <div class="text-muted">30&deg;</div>
+		  </div>
+		  <div class="col-md-2 hidden-sm hidden-xs pv text-center">
+			 <div class="text-info text-sm">1 PM</div>
+			 <div class="text-muted text-md">
+				<em class="wi wi-day-sunny-overcast"></em>
+			 </div>
+			 <div class="text-info">
+				<em class="wi wi-sprinkles"></em>
+				<span class="text-muted">0%</span>
+			 </div>
+			 <div class="text-muted">30&deg;</div>
+		  </div>
+	   </div>
+	</div>
+   </div>
+   <div class="col-md-3 col-sm-12">
+	  <!-- START date widget-->
+	  <div class="panel widget" style="height:130px;">
+		 <div class="row row-table">
+			<div class="col-xs-6 col-sm-3 col-md-6 text-center bg-green pv-lg">
+			   <!-- See formats: https://docs.angularjs.org/api/ng/filter/date-->
+			   <div data-now="" data-format="MMMM" class="text-sm"></div>
+			   <br>
+			   <div data-now="" data-format="D" class="h2 mt0"></div>
+			</div>
+			<div class="col-xs-6 col-sm-9 col-md-6 pv-lg">
+			   <div data-now="" data-format="dddd" class="text-uppercase"></div>
+			   <br>
+			   <div data-now="" data-format="h:mm" class="h2 mt0"></div>
+			   <div data-now="" data-format="a" class="text-muted text-sm"></div>
+			</div>
+		 </div>
+	  </div>
+	  <!-- END date widget    -->
+   </div>
+</div>
+<!-- END widgets box-->
+<div class="row dashboard">
+  <div class="col-lg-4 col-sm-6 menu">
+	 <div class="panel b">
+		<div class="panel-body text-center">
+		   <a href="#cb_citizens" class="link-unstyled text-info">
+			  <em class="fa fa-5x fa-users mb-lg"></em>
+			  <br>
+			  <span class="h4">Citizens</span>
+		   </a>
+		</div>
+	 </div>
+  </div>
+  <div class="col-lg-4 col-sm-6 menu">
+	 <div class="panel b">
+		<div class="panel-body text-center">
+		   <a href="#cb_representatives" class="link-unstyled text-purple">
+			  <em class="fa fa-5x fa-globe mb-lg"></em>
+			  <br>
+			  <span class="h4">Representatives</span>
+		   </a>
+		</div>
+	 </div>
+  </div>
+  <div class="col-lg-4 col-sm-6 menu">
+	 <div class="panel b">
+		<div class="panel-body text-center">
+		   <a href="#cb_delegate" class="link-unstyled text-primary">
+			  <em class="fa fa-5x fa-user mb-lg"></em>
+			  <br>
+			  <span class="h4">Delegate</span>
+		   </a>
+		</div>
+	 </div>
+  </div>
+  <div class="col-lg-4 col-sm-6 menu">
+	 <div class="panel b">
+		<div class="panel-body text-center">
+		   <a href="#cb_select_emission" class="link-unstyled text-success">
+			  <em class="fa fa-5x fa-list-alt mb-lg"></em>
+			  <br>
+			  <span class="h4">Emission</span>
+		   </a>
+		</div>
+	 </div>
+  </div>
+  <div class="col-lg-4 col-sm-6 menu">
+	 <div class="panel b">
+		<div class="panel-body text-center">
+		   <a href="#cb_currency_exchange" class="link-unstyled text-warning">
+			  <em class="fa fa-5x fa-exchange mb-lg"></em>
+			  <br>
+			  <span class="h4">Currency exchange</span>
+		   </a>
+		</div>
+	 </div>
+  </div>
+</div>
+<div class="row">
+   <!-- START dashboard main content-->
+   <div class="col-lg-12">
+	  <!-- START chart-->
+	  <div class="row">
+		 <div class="col-lg-12">
+			<!-- START widget-->
+			<div id="panelChart9" class="panel panel-default panel-demo">
+			   <div class="panel-heading">
+				  <a href="#" data-tool="panel-refresh" data-toggle="tooltip" title="Refresh Panel" class="pull-right">
+					 <em class="fa fa-refresh"></em>
+				  </a>
+				  <a href="#" data-tool="panel-collapse" data-toggle="tooltip" title="Collapse Panel" class="pull-right">
+					 <em class="fa fa-minus"></em>
+				  </a>
+				  <div class="panel-title">Inbound visitor statistics</div>
+			   </div>
+			   <div class="panel-body">
+				  <div class="chart-spline flot-chart"></div>
+			   </div>
+			</div>
+			<!-- END widget-->
+		 </div>
+	  </div>
+	  <!-- END chart-->
+	  <div class="row">
+		 <div class="col-lg-12">
+			<div class="panel panel-default">
+			   <div class="panel-heading">
+				  <div class="pull-right label label-danger">5</div>
+				  <div class="pull-right label label-success">12</div>
+				  <div class="panel-title">Team messages</div>
+			   </div>
+			   <!-- START list group-->
+			   <div data-height="180" data-scrollable="" class="list-group">
+				  <!-- START list group item-->
+				  <a href="#" class="list-group-item">
+					 <div class="media-box">
+						<div class="pull-left">
+						   <img src="static/img/user/02.jpg" alt="Image" class="media-box-object img-circle thumb32">
+						</div>
+						<div class="media-box-body clearfix">
+						   <small class="pull-right">2h</small>
+						   <strong class="media-box-heading text-primary">
+							  <span class="circle circle-success circle-lg text-left"></span>Catherine Ellis</strong>
+						   <p class="mb-sm">
+							  <small>Cras sit amet nibh libero, in gravida nulla. Nulla...</small>
+
+						   </p>
+						</div>
+					 </div>
+				  </a>
+				  <!-- END list group item-->
+				  <!-- START list group item-->
+				  <a href="#" class="list-group-item">
+					 <div class="media-box">
+						<div class="pull-left">
+						   <img src="static/img/user/03.jpg" alt="Image" class="media-box-object img-circle thumb32">
+						</div>
+						<div class="media-box-body clearfix">
+						   <small class="pull-right">3h</small>
+						   <strong class="media-box-heading text-primary">
+							  <span class="circle circle-success circle-lg text-left"></span>Jessica Silva</strong>
+						   <p class="mb-sm">
+							  <small>Cras sit amet nibh libero, in gravida nulla. Nulla facilisi.</small>
+						   </p>
+						</div>
+					 </div>
+				  </a>
+				  <!-- END list group item-->
+				  <!-- START list group item-->
+				  <a href="#" class="list-group-item">
+					 <div class="media-box">
+						<div class="pull-left">
+						   <img src="static/img/user/09.jpg" alt="Image" class="media-box-object img-circle thumb32">
+						</div>
+						<div class="media-box-body clearfix">
+						   <small class="pull-right">4h</small>
+						   <strong class="media-box-heading text-primary">
+							  <span class="circle circle-danger circle-lg text-left"></span>Jessie Wells</strong>
+						   <p class="mb-sm">
+							  <small>Cras sit amet nibh libero, in gravida nulla. Nulla...</small>
+						   </p>
+						</div>
+					 </div>
+				  </a>
+				  <!-- END list group item-->
+				  <!-- START list group item-->
+				  <a href="#" class="list-group-item">
+					 <div class="media-box">
+						<div class="pull-left">
+						   <img src="static/img/user/12.jpg" alt="Image" class="media-box-object img-circle thumb32">
+						</div>
+						<div class="media-box-body clearfix">
+						   <small class="pull-right">1d</small>
+						   <strong class="media-box-heading text-primary">
+							  <span class="circle circle-danger circle-lg text-left"></span>Rosa Burke</strong>
+						   <p class="mb-sm">
+							  <small>Cras sit amet nibh libero, in gravida nulla. Nulla...</small>
+						   </p>
+						</div>
+					 </div>
+				  </a>
+				  <!-- END list group item-->
+				  <!-- START list group item-->
+				  <a href="#" class="list-group-item">
+					 <div class="media-box">
+						<div class="pull-left">
+						   <img src="static/img/user/10.jpg" alt="Image" class="media-box-object img-circle thumb32">
+						</div>
+						<div class="media-box-body clearfix">
+						   <small class="pull-right">2d</small>
+						   <strong class="media-box-heading text-primary">
+							  <span class="circle circle-danger circle-lg text-left"></span>Michelle Lane</strong>
+						   <p class="mb-sm">
+							  <small>Mauris eleifend, libero nec cursus lacinia...</small>
+						   </p>
+						</div>
+					 </div>
+				  </a>
+				  <!-- END list group item-->
+			   </div>
+			   <!-- END list group-->
+			   <!-- START panel footer-->
+			   <div class="panel-footer clearfix">
+				  <div class="input-group">
+					 <input type="text" placeholder="Search message .." class="form-control input-sm">
+					 <span class="input-group-btn">
+						<button type="submit" class="btn btn-default btn-sm"><i class="fa fa-search"></i>
+						</button>
+					 </span>
+				  </div>
+			   </div>
+			   <!-- END panel-footer-->
+			</div>
+		 </div>
+	  </div>
+   </div>
+   <!-- END dashboard main content-->
+</div>
+<script src="static/js/demo/demo-flot.js"></script>

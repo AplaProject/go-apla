@@ -1,0 +1,37 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".health, .dashboard_health").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_health", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Health
+</div>
+<ol class="breadcrumb">
+   <li class="active">Dashboard</li>
+</ol>
+<div class="row dashboard">
+  <div class="col-sm-6 menu">
+	 <div class="panel b">
+		<div class="panel-body text-center">
+		   <a href="#health_patient" class="link-unstyled text-info">
+			  <em class="fa fa-5x fa-street-view mb-lg"></em>
+			  <br>
+			  <span class="h4">Patient</span>
+		   </a>
+		</div>
+	 </div>
+  </div>
+  <div class="col-sm-6 menu">
+	 <div class="panel b">
+		<div class="panel-body text-center">
+		   <a href="#health_facility" class="link-unstyled text-primary">
+			  <em class="fa fa-5x fa-hospital-o mb-lg"></em>
+			  <br>
+			  <span class="h4">Health facility</span>
+		   </a>
+		</div>
+	 </div>
+  </div>
+</div>

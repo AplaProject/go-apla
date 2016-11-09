@@ -1,0 +1,141 @@
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_contract").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+</script>
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">Contract</li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<!-- START table-responsive-->
+	<div class="table-responsive">
+	   <table class="table table-striped table-bordered table-hover">
+		  <thead>
+			 <tr>
+				<th style="width:50%;">Item</th>
+				<th style="width:50%;">Value</th>
+				<th width="100">Condition</th>
+			 </tr>
+		  </thead>
+		  <tbody>
+			 <tr>
+				<td>Buyer</td>
+				<td>BuyerCompanyName</td>
+				<td><button class="btn btn-danger btn-block" type="button">no</button></td>
+			 </tr>
+			 <tr>
+				<td>Seller</td>
+				<td>SellerCompanyName</td>
+				<td><button class="btn btn-info btn-block" type="button" disabled>signed</button></td>
+			 </tr>
+			 <tr>
+				<td>Transport Company</td>
+				<td>TransportCompanyName</td>
+				<td><button class="btn btn-info btn-block" type="button" disabled>signed</button></td>
+			 </tr>
+			 <tr>
+				<td>Good</td>
+				<td>NameGood</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Price</td>
+				<td>1000</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Quantity</td>
+				<td>25</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Delivery Point</td>
+				<td>BuyerCompany Address</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Delivery Date</td>
+				<td>01.12.2016</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Shipping Point</td>
+				<td>SellerCompany Address</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Shipping Date</td>
+				<td>01.09.2016</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Payment terms</td>
+				<td>prepay</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Delivery terms</td>
+				<td>EXW</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>№ semi trailer or container</td>
+				<td><input type="text" class="form-control"></td>
+				<td><button class="btn btn-danger btn-block" type="button">no</button></td>
+			 </tr>
+			 <tr>
+				<td>Certificat1</td>
+				<td>CertificationOffice1</td>
+				<td><button class="btn btn-success btn-block" type="button" disabled>Yes</button></td>
+			 </tr>
+			 <tr>
+				<td>Certificat2</td>
+				<td>CertificationOffice2</td>
+				<td><button class="btn btn-success btn-block" type="button" disabled>Yes</button></td>
+			 </tr>
+			 <tr>
+				<td>Certificat3</td>
+				<td>CertificationOffice3</td>
+				<td><button class="btn btn-danger btn-block" type="button">no</button></td>
+			 </tr>
+			 <tr>
+				<td><a href="#company_customhouse">Customhouse</a></td>
+				<td>CustomhouseName</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Contracts Price</td>
+				<td>25 000</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Transport costs</td>
+				<td>2000</td>
+				<td></td>
+			 </tr>
+			 <tr>
+				<td>Сustoms duties</td>
+				<td>350</td>
+				<td></td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+	<!-- END table-responsive-->
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="button" class="btn btn-primary">Accept</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<!-- END panel-->

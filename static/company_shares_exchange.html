@@ -1,0 +1,107 @@
+<style>
+	.orders-table{max-height: 500px; overflow: auto}
+	.table1 td{padding:10px}
+	#table2 td{padding-top: 1px; padding-bottom: 1px; }
+	table caption{font-weight:bold}
+</style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".company, .company_shares_exchange").addClass("active");
+	
+	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+</script>
+
+<div class="content-heading">
+   Company
+</div>
+<ol class="breadcrumb">
+   <li><a href="#dashboard_company">Dashboard</a></li>
+   <li class="active">Shares exchange</li>
+</ol>
+<div class="row">
+	<div class="row" style="max-width:750px; margin:0px auto;">
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-body text-center">
+					<button type="button" class="btn btn-default disabled">Google/USD</button>
+					<button type="button" class="btn btn-default">Facebook/USD</button>
+				</div>
+			</div>
+		</div>
+		<div style="clear: both"></div>
+		<div class="col-md-6">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-arrow-circle-down"></i> Buy Google</h3>
+				</div>
+				<div class="panel-body">
+					<table class="table1" align="center">
+						<tr><td>Lowest ask Price: </td><td style="width: 145px;">2000 USD</td></tr>
+						<tr><td>Amount Google:</td><td><input type="text" class="form-control" style="width: 90px" value="0"> </td></tr>
+						<tr><td>Price per dUSD:</td><td class="form-inline"><input type="text" class="form-control" style="width: 90px" value=""> USD</td></tr>
+						<tr><td>Total:</td><td><span>0</span> USD</td></tr>
+						<tr><td>Fee:</td><td><span>0</span> USD</td></tr>
+						<tr><td colspan="2"><button class="btn btn-success">Buy Google</button></td></tr>
+					</table>
+					<div class="orders-table">
+					<p><strong>Orders for sale Google</strong></p>
+					<table class=" table table-striped" id="table2">
+						<thead>
+						<tr>
+							<th>Price</th>
+							<th>Google</th>
+							<th>USD</th>
+						</tr>
+						</thead>
+						<tbody>
+							<tr><td>0.9</td><td>25097.174887</td><td>22587.457398</td></tr>
+							<tr><td>0.81</td><td>4989.87724</td><td>4041.800564</td></tr>
+							<tr><td>0.8</td><td>2993.999998</td><td>2395.199998</td></tr>
+							<tr><td>0.01</td><td>1.0978</td><td>0.010978</td></tr>
+							<tr><td>0.001</td><td>995.99402</td><td>0.995994</td></tr>
+						</tbody>
+					</table>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<div class="col-md-6">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-arrow-circle-up"></i> Sell Google</h3>
+				</div>
+				<div class="panel-body">
+					<table class="table1" align="center">
+						<tr><td>Highest Bid Price: </td><td style="width: 145px;">2500 USD</td></tr>
+						<tr><td>Amount Google:</td><td><input type="text" class="form-control" style="width: 90px" value="0"> </td></tr>
+						<tr><td>Price per Google:</td><td class="form-inline"><input type="text" class="form-control" style="width: 90px" value=""> USD</td></tr>
+						<tr><td>Total:</td><td><span>0</span> USD</td></tr>
+						<tr><td>Fee:</td><td><span>0</span> USD</td></tr>
+						<tr><td colspan="2"><button class="btn btn-primary">Sell Google</button></td></tr>
+					</table>
+					<div class="orders-table">
+					<p><strong>Orders for purchase Google</strong></p>
+					<table class=" table table-striped" id="table2">
+						<thead>
+						<tr>
+							<th>Price</th>
+							<th>Google</th>
+							<th>USD</th>
+						</tr>
+						</thead>
+						<tbody>
+							<tr><td>0.9</td><td>25097.174887</td><td>22587.457398</td></tr>
+							<tr><td>0.81</td><td>4989.87724</td><td>4041.800564</td></tr>
+							<tr><td>0.8</td><td>2993.999998</td><td>2395.199998</td></tr>
+							<tr><td>0.01</td><td>1.0978</td><td>0.010978</td></tr>
+							<tr><td>0.001</td><td>995.99402</td><td>0.995994</td></tr>
+						</tbody>
+					</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
