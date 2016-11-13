@@ -319,6 +319,7 @@ function Alert(title, text, type, Confirm) {
 				}
 				if (Confirm != false) {
 					obj.css({"min-height":minHeight}).removeClass("whirl standard");
+					minHeight = null;
 					$("#" + id).modal("hide");
 				}
 			}

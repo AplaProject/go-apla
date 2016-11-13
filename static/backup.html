@@ -103,12 +103,7 @@
 		return out;
 	}
 	
-	var clipboard = new Clipboard("#clipboard");
-
-	clipboard.on('success', function(e) {
-		e.clearSelection();
-		Alert("Success", "", "success");
-	});
+	CopyToClipboard("#clipboard");
 	
 		var address = '{{.Data.Address}}';
 		var backup = '';
