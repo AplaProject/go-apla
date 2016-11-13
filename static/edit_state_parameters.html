@@ -49,7 +49,9 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(data) {
+				send_to_net_success(data, MenuReload);
+			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}

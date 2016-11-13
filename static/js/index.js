@@ -366,6 +366,10 @@ function load_menu(lang) {
 		$("#dl_menu").html('');
 	}
 }
+	
+function MenuReload() {
+	load_menu();
+}
 
 function login_ok (result) {
 	g_menuShow = true;
