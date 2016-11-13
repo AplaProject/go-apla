@@ -9,6 +9,10 @@
 	$(".aside .nav li").removeClass("active");
 	$(".anonym, .anonym_money_transfer").addClass("active");
 	
+	function TransferOK() {
+		dl_navigate0('dashboardAnonym');
+	}
+	
 	$("#walletAddress").inputmask("9999-9999-9999-9999-9999").focus();
 
 	$("#next").bind('click', function () {
@@ -68,7 +72,9 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(data) {
+				send_to_net_success(data, TransferOK);
+			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
@@ -80,9 +86,9 @@
    Money transfer
 </div>
 <!-- START panel-->
-<div id="Transfer" class="panel panel-default" data-sweet-alert style="max-width:400px;">
+<div id="Transfer" class="panel panel-default keyCode_13" data-sweet-alert style="max-width:400px;">
  <div class="panel-body">
-	<form id="anonymMoneyTransfer" class="keyCode_13">
+	<form id="anonymMoneyTransfer">
 	   <div class="form-group">
 		   <label class="control-label" for="walletAddress">Wallet address <strong class="text-danger">*</strong></label>
 		   <input type="text" class="form-control" id="walletAddress">
@@ -117,9 +123,9 @@
 </div>
 <!-- END panel-->
 <!-- START panel-->
-<div id="ConfirmTransfer" class="panel panel-default" data-sweet-alert style="display:none; max-width:400px;">
+<div id="ConfirmTransfer" class="panel panel-default keyCode_13" data-sweet-alert style="display:none; max-width:400px;">
  <div class="panel-body">
-	<form class="keyCode_13">
+	<form>
 	   <div class="form-group">
 		   <label class="control-label">Wallet address</label>
 		   <p class="form-control-static" data-confirm="walletAddress"></p>
