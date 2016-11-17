@@ -357,6 +357,7 @@ PageEnd:
 		`citizen_profile`, `Title:Profile
 Navigation(LiTemplate(Citizen),Editing profile)
 PageTitle: Editing profile
+ValueById(#state_id#_citizens, #citizen#, "name,avatar", "FirstName,Image")
 TxForm{ Contract: TXEditProfile}
 PageEnd:`, `menu_default`, sid,
 

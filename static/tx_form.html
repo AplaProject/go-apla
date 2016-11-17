@@ -1,13 +1,15 @@
 <style>
 	.tab-content {
-		border:0px;
-		padding:0px;
+		border: 0px;
+		padding: 0px;
 	}
+	
 	.panel.panel-default {
-		border-radius:0px 0px 4px 4px;
+		border-radius: 0px 0px 4px 4px;
 	}
+	
 	#message {
-		display:none;
+		display: none;
 	}
 </style>
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
@@ -267,50 +269,47 @@
 		});
 	})*/
 </script>
-			 <div class="panel-body">
-				<form role="form">
-					{{.TxName}}
-				   {{if eq .TxName "TXCitizenRequest"}}	<div class="form-group">
-					  <label for="countries">Country</label>
-					  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
-				   </div>
-				   {{end}}
-				   <div id="message" class="alert alert-danger"></div>
-				   <div id="fields">
-				    {{range .Fields}}
-						{{if eq .HtmlType "textinput"}}				   
-							<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-							<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
-						{{end}}
-						{{if eq .HtmlType "map"}}
-							<div class="form-group"> <label>{{.Title}}</label>
-							   <textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
-						   </div>		
-							<div class="clearfix">				
-							<div class="pull-left">
-			  				<button type="button" onClick="openMap('{{.Name}}');" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
-							</div>
-							</div>
-						{{end}}
-						{{if eq .HtmlType "image"}}
-							{{if .Value}}<img id="img{{.Name}}" style="margin: 10px 0px;" src="{{.Value}}">{{end}}
-							<div class="form-group"> <label>{{.Title}}</label>
-							   <textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
-						   </div>
-							<div class="clearfix">						
-							<div class="pull-left">
-							<button type="button" class="btn btn-primary" onClick="openImageEditor('img{{.Name}}', '{{.Name}}', '1/1', '100', '100');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
-							</div>
-							</div>
-						{{end}}						
-					{{end}}
-					</div>
-				   <div class="clearfix">
-					  <div class="pull-right">
-						 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
-					  </div>
-				   </div>
-				</form>
-			 </div>
+<div class="panel-body">
+	<form role="form">
+		{{.TxName}} {{if eq .TxName "TXCitizenRequest"}}
+		<div class="form-group">
+			<label for="countries">Country</label>
+			<select id="countries" class="form-control" onChange="changeCountry(this);"></select>
+		</div>
+		{{end}}
+		<div id="message" class="alert alert-danger"></div>
+		<div id="fields">
+			{{range .Fields}} {{if eq .HtmlType "textinput"}}
+			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
+				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
+			{{end}} {{if eq .HtmlType "map"}}
+			<div class="form-group"> <label>{{.Title}}</label>
+				<textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+			</div>
+			<div class="clearfix">
+				<div class="pull-left">
+					<button type="button" onClick="openMap('{{.Name}}');" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+				</div>
+			</div>
+			{{end}} {{if eq .HtmlType "image"}} <img id="img{{.Name}}" style="margin: 10px 0px;" src=""> {{if .Value}}<script>
+						document.getElementById('img{{.Name}}').setAttribute( 'src', '{{.Value}}' );
+					</script>{{end}}
+			<div class="form-group"> <label>{{.Title}}</label>
+				<textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+			</div>
+			<div class="clearfix">
+				<div class="pull-left">
+					<button type="button" class="btn btn-primary" onClick="openImageEditor('img{{.Name}}', '{{.Name}}', '1/1', '100', '100');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+				</div>
+			</div>
+			{{end}} {{end}}
+		</div>
+		<div class="clearfix">
+			<div class="pull-right">
+				<button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+			</div>
+		</div>
+	</form>
+</div>
 
 {{template "signatures".}}

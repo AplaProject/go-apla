@@ -370,7 +370,7 @@ func ValueById(vars *map[string]string, pars ...string) string {
 	if len(pars) < 3 {
 		return ``
 	}
-	value, err := DB.OneRow(`select ` + lib.Escape(pars[2]) + ` from ` + lib.EscapeName(pars[0]) + ` where id='` + lib.Escape(pars[1]) + `'`).String()
+	value, err := DB.OneRow(`select * from ` + lib.EscapeName(pars[0]) + ` where id='` + lib.Escape(pars[1]) + `'`).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -384,7 +384,11 @@ func ValueById(vars *map[string]string, pars ...string) string {
 			}
 		}
 	}
-	for key, val := range value {
+	for _, key := range src {
+		val := value[key]
+		if val == `NULL` {
+			val = ``
+		}
 		if ikey, ok := keys[key]; ok {
 			(*vars)[ikey] = val
 		} else {
