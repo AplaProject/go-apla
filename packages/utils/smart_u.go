@@ -384,15 +384,17 @@ func ValueById(vars *map[string]string, pars ...string) string {
 			}
 		}
 	}
-	for _, key := range src {
-		val := value[key]
-		if val == `NULL` {
-			val = ``
-		}
-		if ikey, ok := keys[key]; ok {
-			(*vars)[ikey] = val
-		} else {
-			(*vars)[key] = val
+	if len(value) > 0 {
+		for _, key := range src {
+			val := value[key]
+			if val == `NULL` {
+				val = ``
+			}
+			if ikey, ok := keys[key]; ok {
+				(*vars)[ikey] = val
+			} else {
+				(*vars)[key] = val
+			}
 		}
 	}
 	return ``
