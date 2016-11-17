@@ -450,17 +450,17 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("tplName", tplName)
 		html := ""
-			// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
-			if len(r.FormValue("tpl_name")) > 0 && tplName == "login" {
-				log.Debug("window.location.href = /")
-				w.Write([]byte("<script language=\"javascript\">window.location.href = \"/\"</script>If you are not redirected automatically, follow the <a href=\"/\">/</a>"))
-				return
-			}
-			// вызываем контроллер в зависимости от шаблона
-			html, err = CallController(c, tplName)
-			if err != nil {
-				log.Error("%v", err)
-			}
+		// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
+		if len(r.FormValue("tpl_name")) > 0 && tplName == "login" {
+			log.Debug("window.location.href = /")
+			w.Write([]byte("<script language=\"javascript\">window.location.href = \"/\"</script>If you are not redirected automatically, follow the <a href=\"/\">/</a>"))
+			return
+		}
+		// вызываем контроллер в зависимости от шаблона
+		html, err = CallController(c, tplName)
+		if err != nil {
+			log.Error("%v", err)
+		}
 		w.Write([]byte(html))
 	} else {
 		html, err := CallController(c, "LoginECDSA")

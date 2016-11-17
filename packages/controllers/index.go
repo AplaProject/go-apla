@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
@@ -50,6 +51,10 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
 
 	r.ParseForm()
+	if _, ok := r.Form[``]; ok {
+		expiration := time.Now().Add(32 * 24 * time.Hour)
+		http.SetCookie(w, &http.Cookie{Name: "ref", Value: r.Form.Get(``), Expires: expiration})
+	}
 
 	parameters_ := make(map[string]interface{})
 	if len(r.PostFormValue("parameters")) > 0 {

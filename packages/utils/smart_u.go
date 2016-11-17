@@ -89,6 +89,7 @@ func init() {
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `TextHidden`: TextHidden,
+		`ValueById`: ValueById,
 	})
 }
 
@@ -364,9 +365,40 @@ func PageEnd(vars *map[string]string, pars ...string) string {
 	return `</div></div>`
 }
 
+func ValueById(vars *map[string]string, pars ...string) string {
+	// tablename, id of value, parameters
+	if len(pars) < 3 {
+		return ``
+	}
+	value, err := DB.OneRow(`select ` + lib.Escape(pars[2]) + ` from ` + lib.EscapeName(pars[0]) + ` where id='` + lib.Escape(pars[1]) + `'`).String()
+	if err != nil {
+		return err.Error()
+	}
+	keys := make(map[string]string)
+	src := strings.Split(lib.Escape(pars[2]), `,`)
+	if len(pars) == 4 {
+		dest := strings.Split(lib.Escape(pars[3]), `,`)
+		for i, val := range src {
+			if len(dest) > i {
+				keys[val] = dest[i]
+			}
+		}
+	}
+	for key, val := range value {
+		if ikey, ok := keys[key]; ok {
+			(*vars)[ikey] = val
+		} else {
+			(*vars)[key] = val
+		}
+	}
+	return ``
+}
+
 func TXForm(vars *map[string]string, pars *map[string]string) string {
 
 	name := (*pars)[`Contract`]
+	//	init := (*pars)[`Init`]
+	//	fmt.Println(`TXForm Init`, *vars)
 	onsuccess := (*pars)[`OnSuccess`]
 	contract := smart.GetContract(name)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
