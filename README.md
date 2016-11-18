@@ -1,1 +1,1 @@
-# go-daylight
+# go-egaas-mvp
