@@ -17,8 +17,9 @@
 package parser
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"encoding/json"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // откат не всех полей, а только указанных, либо 1 строку, если нет where
@@ -26,9 +27,9 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 	if len(where) > 0 {
 		where = " WHERE " + where
 	}
-
+	tblname := lib.EscapeName(table)
 	// получим rb_id, по которому можно найти данные, которые были до этого
-	rbId, err := p.Single("SELECT rb_id FROM " + table + " " + where).Int64()
+	rbId, err := p.Single("SELECT rb_id FROM " + tblname + " " + where).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -55,7 +56,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		//log.Debug("%v", logData["prev_rb_id"])
 		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where)
 		addSqlUpdate = addSqlUpdate[0 : len(addSqlUpdate)-1]
-		err = p.ExecSql("UPDATE "+table+" SET "+addSqlUpdate+" "+where)
+		err = p.ExecSql("UPDATE " + tblname + " SET " + addSqlUpdate + " " + where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -66,7 +67,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		}
 		p.rollbackAI("rollback", 1)
 	} else {
-		err = p.ExecSql("DELETE FROM " + table + " " + where)
+		err = p.ExecSql("DELETE FROM " + tblname + " " + where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

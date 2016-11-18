@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -31,9 +32,10 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
+	tblname := lib.EscapeName(table)
 	log.Debug("AiId: %s", AiId)
 	// если табла была очищена, то тут будет 0, поэтому нелья чистить таблы под нуль
-	current, err := p.Single("SELECT " + AiId + " FROM " + table + " ORDER BY " + AiId + " DESC LIMIT 1").Int64()
+	current, err := p.Single("SELECT " + AiId + " FROM " + tblname + " ORDER BY " + AiId + " DESC LIMIT 1").Int64()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -50,7 +52,7 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 			return utils.ErrInfo(err)
 		}
 	} else if p.ConfigIni["db_type"] == "mysql" {
-		err := p.ExecSql("ALTER TABLE " + table + " AUTO_INCREMENT = " + utils.Int64ToStr(NewAi))
+		err := p.ExecSql("ALTER TABLE " + tblname + " AUTO_INCREMENT = " + utils.Int64ToStr(NewAi))
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
