@@ -26,16 +26,18 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/shopspring/decimal"
 )
 
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
-		"DBInsert": DBInsert,
-		"DBUpdate": DBUpdate,
-		"DBString": DBString,
-		"DBInt":    DBInt,
-		"Table":    StateTable,
-		"TableTx":  StateTableTx,
+		"DBInsert":   DBInsert,
+		"DBUpdate":   DBUpdate,
+		"DBTransfer": DBTransfer,
+		"DBString":   DBString,
+		"DBInt":      DBInt,
+		"Table":      StateTable,
+		"TableTx":    StateTableTx,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -48,11 +50,14 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	walletId = int64(head.WalletId)
 	// test
 	block := int64(0)
+	walletBlock := int64(0)
 	if p.BlockData != nil {
 		block = p.BlockData.BlockId
+		walletBlock = p.BlockData.WalletId
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: head.StateId,
-		`block`: block, `citizen`: citizenId, `wallet`: walletId,
+
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: int64(head.StateId),
+		`block`: block, `citizen`: citizenId, `wallet`: walletId, `wallet_block`: walletBlock,
 		`parser`: p, `contract`: p.TxContract}
 	for key, val := range p.TxData {
 		extend[key] = val
@@ -141,6 +146,29 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 		return
 	}
 	_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{utils.Int64ToStr(id)}, true)
+	return
+}
+
+func DBTransfer(p *Parser, tblname, columns string, idFrom, idTo int64, amount decimal.Decimal) (err error) { // map[string]interface{}) {
+	cols := strings.Split(columns, `,`)
+	idname := `id`
+	if len(cols) == 2 {
+		idname = cols[1]
+	}
+	column := cols[0]
+	if err = p.AccessColumns(tblname, []string{column}); err != nil {
+		return
+	}
+	value := amount.String()
+
+	if _, err = p.selectiveLoggingAndUpd([]string{`-` + column}, []interface{}{value}, tblname, []string{idname},
+		[]string{utils.Int64ToStr(idFrom)}, true); err != nil {
+		return
+	}
+	if _, err = p.selectiveLoggingAndUpd([]string{`+` + column}, []interface{}{value}, tblname, []string{idname},
+		[]string{utils.Int64ToStr(idTo)}, true); err != nil {
+		return
+	}
 	return
 }
 

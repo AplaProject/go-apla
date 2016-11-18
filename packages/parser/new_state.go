@@ -175,12 +175,19 @@ func (p *Parser) NewState() error {
 	tx {
         RequestId int
     }
-
+ 	func front {
+		if Balance(DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )) < Money(StateParam($state, "citizenship_price")) {
+			error "not enough money"
+		}
+	}
 	func main {
-		DBInsert(Table( "citizens"), "id,block_id,name", DBString(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId ), 
+		var wallet int
+		wallet = DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )
+        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, $wallet_block, Money(StateParam($state, "citizenship_price")))
+		DBInsert(Table( "citizens"), "id,block_id,name", wallet, 
 		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
         DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
-	}
+	}	
 }`, `TXRejectCitizen`, `contract TXRejectCitizen {
    tx { 
         RequestId int
