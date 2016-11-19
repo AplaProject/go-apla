@@ -31,13 +31,15 @@ import (
 
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
-		"DBInsert":   DBInsert,
-		"DBUpdate":   DBUpdate,
-		"DBTransfer": DBTransfer,
-		"DBString":   DBString,
-		"DBInt":      DBInt,
-		"Table":      StateTable,
-		"TableTx":    StateTableTx,
+		"DBInsert":    DBInsert,
+		"DBUpdate":    DBUpdate,
+		"DBTransfer":  DBTransfer,
+		"DBString":    DBString,
+		"DBInt":       DBInt,
+		"DBStringExt": DBStringExt,
+		"DBIntExt":    DBIntExt,
+		"Table":       StateTable,
+		"TableTx":     StateTableTx,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -178,6 +180,16 @@ func DBString(tblname string, name string, id int64) (string, error) {
 
 func DBInt(tblname string, name string, id int64) (int64, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
+}
+
+func DBStringExt(tblname string, name string, id int64, idname string) (string, error) {
+	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
+		lib.EscapeName(idname)+`=?`, id).String()
+}
+
+func DBIntExt(tblname string, name string, id int64, idname string) (int64, error) {
+	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
+		lib.EscapeName(idname)+`=?`, id).Int64()
 }
 
 func StateTable(p *Parser, tblname string) string {
