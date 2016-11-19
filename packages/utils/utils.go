@@ -53,6 +53,7 @@ import (
 	"github.com/kardianos/osext"
 	_ "github.com/lib/pq"
 	"github.com/mcuadros/go-version"
+	"github.com/shopspring/decimal"
 	//	"net/mail"
 	//  "net/smtp"
 	"os"
@@ -1163,24 +1164,17 @@ func InterfaceToStr(v interface{}) string {
 		str = v.(string)
 	case []byte:
 		str = string(v.([]byte))
+	default:
+		if reflect.TypeOf(v).String() == `decimal.Decimal` {
+			str = v.(decimal.Decimal).String()
+		}
 	}
 	return str
 }
 func InterfaceSliceToStr(i []interface{}) []string {
 	var str []string
 	for _, v := range i {
-		switch v.(type) {
-		case int:
-			str = append(str, IntToStr(v.(int)))
-		case float64:
-			str = append(str, Float64ToStr(v.(float64)))
-		case int64:
-			str = append(str, Int64ToStr(v.(int64)))
-		case string:
-			str = append(str, v.(string))
-		case []byte:
-			str = append(str, string(v.([]byte)))
-		}
+		str = append(str, InterfaceToStr(v))
 	}
 	return str
 }
