@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"html/template"
 	//	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
@@ -83,7 +84,7 @@ func init() {
 	}})
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
-	textproc.AddFuncs(&map[string]textproc.TextFunc{`BtnEdit`: BtnEdit, `Image`: Image,
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit, `Image`: Image,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -480,6 +481,20 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		}
 	}
 	return out
+}
+
+func IdToAddress(vars *map[string]string, pars ...string) string {
+	var idval string
+	if len(pars) == 0 || len(pars[0]) == 0 {
+		idval = (*vars)[`citizen`]
+	} else {
+		idval = pars[0]
+	}
+	id, _ := strconv.ParseInt(idval, 10, 64)
+	if id == 0 {
+		return `unknown address`
+	}
+	return lib.AddressToString(uint64(id))
 }
 
 func ProceedTemplate(html string, data interface{}) (string, error) {
