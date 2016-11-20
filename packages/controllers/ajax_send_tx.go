@@ -54,20 +54,6 @@ func (c *Controller) AjaxSendTx() interface{} {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
 
 		userId := uint64(c.SessWalletId)
-		/*		if c.SessStateId > 0 {
-				userId = c.SessCitizenId
-			}*/
-
-		/*		forsign := fmt.Sprintf("%d,%d,%d,%d", info.Id, c.r.FormValue(`time`), userId, c.SessStateId)
-
-				for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-					val := c.r.FormValue(fitem.Name)
-					if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
-						err = fmt.Errorf(`%s is empty`, fitem.Name)
-						break
-					}
-					forsign += fmt.Sprintf(",%v", val)
-				}*/
 		sign := make([]byte, 0)
 		for i := 1; i <= 3; i++ {
 			signature := utils.ConvertJSSign(c.r.FormValue(fmt.Sprintf("signature%d", i)))
@@ -77,9 +63,19 @@ func (c *Controller) AjaxSendTx() interface{} {
 				lib.EncodeLenByte(&sign, bsign)
 			}
 		}
+		isPublic, err := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
+		if err == nil && len(sign) > 0 && len(isPublic) == 0 {
+			flags |= consts.TxfPublic
+			public, _ := hex.DecodeString(c.r.FormValue(`public`))
+			if len(public) == 0 {
+				err = fmt.Errorf(`empty public key`)
+			} else {
+				sign = append(sign, public[1:]...)
+			}
+		}
 		if len(sign) == 0 {
 			result.Error = `signature is empty`
-		} else {
+		} else if err == nil {
 			//			var (
 			data := make([]byte, 0)
 			//			)

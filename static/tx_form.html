@@ -236,7 +236,7 @@
 				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
 			{{end}}
 		{{end}}
-
+		predata['public'] = GKey.Public;
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?json=ajax_send_tx',

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -51,6 +52,10 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		result.Time = lib.Time32()
 		userId := uint64(c.SessWalletId)
+		isPublic, err := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
+		if err == nil && len(isPublic) == 0 {
+			flags |= consts.TxfPublic
+		}
 		fmt.Println(`Prepare`, c.SessWalletId, c.SessCitizenId, c.SessStateId)
 		/*		if c.SessStateId > 0 {
 				userId = c.SessCitizenId

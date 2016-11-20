@@ -20,6 +20,10 @@ import (
 	"reflect"
 )
 
+const (
+	TxfPublic = 0x01 // Append PublicKey to Sign in TXHeader
+)
+
 type BlockHeader struct {
 	Type     byte
 	BlockId  uint32

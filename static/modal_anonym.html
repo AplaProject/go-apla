@@ -1,6 +1,7 @@
 {{define "modalAnonym"}}
 
 <script>
+	var WalletId = {{.WalletId}};
 	$(".brand").attr("data-version", "v" + Version);
 	
 	$(document).ready(function() {
@@ -26,6 +27,4 @@
 	</div>
 </div>
 
-{{template "signatures".}}
-
-{{end}}
+{{template "signatures".}} {{end}}

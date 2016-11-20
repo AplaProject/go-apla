@@ -1,14 +1,16 @@
 <style>
 	.tab-content {
-		border:0px;
-		padding:0px;
+		border: 0px;
+		padding: 0px;
 	}
+	
 	.panel.panel-default {
-		border-top:0px;
-		border-radius:0px 0px 4px 4px;
+		border-top: 0px;
+		border-radius: 0px 0px 4px 4px;
 	}
+	
 	#message {
-		display:none;
+		display: none;
 	}
 </style>
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
@@ -231,6 +233,9 @@
 	} );
 	
 	$('#send_to_net').bind('click', function () {
+		predata['public'] = GKey.Public;
+//		predata['forsign'] = $("#for-signature").val();
+		
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?json=ajax_send_tx',
@@ -261,7 +266,7 @@
 </script>
 
 <div class="content-heading">
-   Request for citizenship
+	Request for citizenship
 </div>
 <!--<ol class="breadcrumb">
    <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
@@ -269,55 +274,55 @@
 </ol>-->
 <div role="tabpanel">
 	<!-- Nav tabs-->
-   <ul role="tablist" class="nav nav-tabs">
-	  <li role="presentation" class="active"><a href="#tab1" aria-controls="home" role="tab" data-toggle="tab">Virtual and not recognized</a></li>
-	  <li role="presentation"><a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab">Real</a></li>
-   </ul>
-   <!-- Tab panes-->
-   <div class="tab-content">
+	<ul role="tablist" class="nav nav-tabs">
+		<li role="presentation" class="active"><a href="#tab1" aria-controls="home" role="tab" data-toggle="tab">Virtual and not recognized</a></li>
+		<li role="presentation"><a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab">Real</a></li>
+	</ul>
+	<!-- Tab panes-->
+	<div class="tab-content">
 		<!-- START panel-->
 		<div id="tab1" role="tabpanel" class="panel panel-default tab-pane active" data-sweet-alert>
-			 <div class="panel-body">
+			<div class="panel-body">
 				<form role="form">
-				   <div class="form-group">
-					  <label for="countries">Country</label>
-					  <select id="countries" class="form-control" onChange="changeCountry(this);"></select>
-				   </div>
-				   <div id="message" class="alert alert-danger"></div>
-				   <div id="fields"></div>
+					<div class="form-group">
+						<label for="countries">Country</label>
+						<select id="countries" class="form-control" onChange="changeCountry(this);"></select>
+					</div>
+					<div id="message" class="alert alert-danger"></div>
+					<div id="fields"></div>
 				</form>
-			 </div>
-			 <div id="buttons" class="panel-footer">
-			   <div class="clearfix">
-				  <div class="pull-right">
-					 <button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
-					 <button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
-				  </div>
-			   </div>
-			  </div>
 			</div>
-			<!-- END panel-->
-		  <!-- START panel-->
-			<div id="tab2" role="tabpanel" class="panel panel-default tab-pane" data-sweet-alert>
-			 <div class="panel-body">
+			<div id="buttons" class="panel-footer">
+				<div class="clearfix">
+					<div class="pull-right">
+						<button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Request</button>
+						<button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- END panel-->
+		<!-- START panel-->
+		<div id="tab2" role="tabpanel" class="panel panel-default tab-pane" data-sweet-alert>
+			<div class="panel-body">
 				<form role="form">
-				   <div class="form-group">
-					  <label for="countries">Country</label>
-					  <select class="selectbox form-control">
+					<div class="form-group">
+						<label for="countries">Country</label>
+						<select class="selectbox form-control">
 					  </select>
-				   </div>
+					</div>
 				</form>
-			 </div>
-			 <div class="panel-footer">
-			   <div class="clearfix">
-				  <div class="pull-right">
-					 <button type="button" class="btn btn-primary">Request</button>
-				  </div>
-			   </div>
-			  </div>
 			</div>
-			<!-- END panel-->
-	   </div>
+			<div class="panel-footer">
+				<div class="clearfix">
+					<div class="pull-right">
+						<button type="button" class="btn btn-primary">Request</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- END panel-->
+	</div>
 </div>
 
 <div class="map_canvas">
