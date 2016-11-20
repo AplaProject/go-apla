@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"strings"
 )
 
 func (p *Parser) AppendPageInit() error {
@@ -77,7 +78,8 @@ func (p *Parser) AppendPage() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"]+page, p.TxMaps.String["conditions"]}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	new:= strings.Replace(page, "PageEnd:", p.TxMaps.String["value"], -1)+`PageEnd:`
+	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{new, p.TxMaps.String["conditions"]}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
