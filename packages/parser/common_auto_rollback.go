@@ -21,9 +21,9 @@ import (
 )
 
 type rollbackTxRowType struct {
-	tx_hash string
+	tx_hash    string
 	table_name string
-	table_id string
+	table_id   string
 }
 
 func (p *Parser) autoRollback() error {
@@ -38,7 +38,7 @@ func (p *Parser) autoRollback() error {
 		if err != nil {
 			return utils.ErrInfo("incorrect time")
 		}
-		err := p.selectiveRollback(rollbackTxRow.table_name, p.AllPkeys[rollbackTxRow.table_name]+"="+rollbackTxRow.table_id, true)
+		err := p.selectiveRollback(rollbackTxRow.table_name, p.AllPkeys[rollbackTxRow.table_name]+"='"+rollbackTxRow.table_id+`'`, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

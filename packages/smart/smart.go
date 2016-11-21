@@ -35,9 +35,10 @@ type Contract struct {
 }
 
 const (
-	CALL_INIT  = 0x01
-	CALL_FRONT = 0x02
-	CALL_MAIN  = 0x04
+	CALL_INIT     = 0x01
+	CALL_FRONT    = 0x02
+	CALL_MAIN     = 0x04
+	CALL_ROLLBACK = 0x08
 )
 
 var (

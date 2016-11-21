@@ -263,6 +263,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if *utils.RollbackToBlockId > 0 {
 		utils.DB, err = utils.NewDbConnect(configIni)
 
+		if err := utils.LoadContracts(); err != nil {
+			log.Error(`Load Contracts`, err)
+		}
 		parser := new(parser.Parser)
 		parser.DCDB = utils.DB
 		err = parser.RollbackToBlockId(*utils.RollbackToBlockId)

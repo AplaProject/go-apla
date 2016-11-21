@@ -17,9 +17,10 @@
 package parser
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 /**
@@ -174,20 +175,26 @@ func (p *Parser) ParseDataRollback() error {
 			if err != nil {
 				return p.ErrInfo(err)
 			}
-			p.dataType = utils.BytesToInt(p.TxSlice[1])
-			MethodName := consts.TxTypes[p.dataType]
-			err_ := utils.CallMethod(p, MethodName+"Init")
-			if _, ok := err_.(error); ok {
-				return p.ErrInfo(err_.(error))
+			if p.TxContract != nil {
+				if err := p.CallContract(smart.CALL_INIT | smart.CALL_ROLLBACK); err != nil {
+					return utils.ErrInfo(err)
+				}
+			} else {
+				p.dataType = utils.BytesToInt(p.TxSlice[1])
+				MethodName := consts.TxTypes[p.dataType]
+				err_ := utils.CallMethod(p, MethodName+"Init")
+				if _, ok := err_.(error); ok {
+					return p.ErrInfo(err_.(error))
+				}
+				err_ = utils.CallMethod(p, MethodName+"Rollback")
+				if _, ok := err_.(error); ok {
+					return p.ErrInfo(err_.(error))
+				}
+				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
+				if _, ok := err_.(error); ok {
+					return p.ErrInfo(err_.(error))
+				}*/
 			}
-			err_ = utils.CallMethod(p, MethodName+"Rollback")
-			if _, ok := err_.(error); ok {
-				return p.ErrInfo(err_.(error))
-			}
-			/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
-			if _, ok := err_.(error); ok {
-				return p.ErrInfo(err_.(error))
-			}*/
 		}
 	}
 	return nil
