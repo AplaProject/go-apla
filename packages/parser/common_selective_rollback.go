@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"strings"
 )
 
 // откат не всех полей, а только указанных, либо 1 строку, если нет where
@@ -49,7 +50,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(v) != 0 {
 				addSqlUpdate += k + `=decode('` + string(utils.BinToHex([]byte(v))) + `','HEX'),`
 			} else {
-				addSqlUpdate += k + `='` + v + `',`
+				addSqlUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`
 			}
 		}
 		//log.Debug("%v", logData)

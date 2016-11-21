@@ -75,45 +75,45 @@ func (p *Parser) getExtend() *map[string]interface{} {
 
 func (p *Parser) CallContract(flags int) (err error) {
 	var public []byte
-
-	if p.TxPtr.(*consts.TXHeader).Flags&consts.TxfPublic > 0 {
-		public = p.TxPtr.(*consts.TXHeader).Sign[len(p.TxPtr.(*consts.TXHeader).Sign)-64:]
-		p.TxPtr.(*consts.TXHeader).Sign = p.TxPtr.(*consts.TXHeader).Sign[:len(p.TxPtr.(*consts.TXHeader).Sign)-64]
-	}
-
-	if len(p.PublicKeys) == 0 {
-		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?",
-			int64(p.TxPtr.(*consts.TXHeader).WalletId)).String()
+	if flags&smart.CALL_ROLLBACK == 0 {
+		if p.TxPtr.(*consts.TXHeader).Flags&consts.TxfPublic > 0 {
+			public = p.TxPtr.(*consts.TXHeader).Sign[len(p.TxPtr.(*consts.TXHeader).Sign)-64:]
+			p.TxPtr.(*consts.TXHeader).Sign = p.TxPtr.(*consts.TXHeader).Sign[:len(p.TxPtr.(*consts.TXHeader).Sign)-64]
+		}
+		if len(p.PublicKeys) == 0 {
+			data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?",
+				int64(p.TxPtr.(*consts.TXHeader).WalletId)).String()
+			if err != nil {
+				return err
+			}
+			if len(data["public_key_0"]) == 0 {
+				if len(public) > 0 {
+					p.PublicKeys = append(p.PublicKeys, public)
+				} else {
+					return fmt.Errorf("unknown wallet id")
+				}
+			} else {
+				p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
+				/*		if len(data["public_key_1"]) > 10 {
+							p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
+						}
+						if len(data["public_key_2"]) > 10 {
+							p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
+						}*/
+			}
+		}
+		/*	fmt.Printf("TXPublic=%x %d\r\n", p.PublicKeys[0], len(p.PublicKeys[0]))
+			fmt.Printf("TXSign=%x %d\r\n", p.TxPtr.(*consts.TXHeader).Sign, len(p.TxPtr.(*consts.TXHeader).Sign))
+			fmt.Printf("TXForSign=%s %d\r\n", p.TxData[`forsign`].(string), len(p.TxData[`forsign`].(string)))
+		*/
+		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxPtr.(*consts.TXHeader).Sign, false)
+		//	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
 		if err != nil {
 			return err
 		}
-		if len(data["public_key_0"]) == 0 {
-			if len(public) > 0 {
-				p.PublicKeys = append(p.PublicKeys, public)
-			} else {
-				return fmt.Errorf("unknown wallet id")
-			}
-		} else {
-			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
-			/*		if len(data["public_key_1"]) > 10 {
-						p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
-					}
-					if len(data["public_key_2"]) > 10 {
-						p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
-					}*/
+		if !CheckSignResult {
+			return fmt.Errorf("incorrect sign")
 		}
-	}
-	/*	fmt.Printf("TXPublic=%x %d\r\n", p.PublicKeys[0], len(p.PublicKeys[0]))
-		fmt.Printf("TXSign=%x %d\r\n", p.TxPtr.(*consts.TXHeader).Sign, len(p.TxPtr.(*consts.TXHeader).Sign))
-		fmt.Printf("TXForSign=%s %d\r\n", p.TxData[`forsign`].(string), len(p.TxData[`forsign`].(string)))
-	*/
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxPtr.(*consts.TXHeader).Sign, false)
-	//	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
-	if err != nil {
-		return err
-	}
-	if !CheckSignResult {
-		return fmt.Errorf("incorrect sign")
 	}
 
 	methods := []string{`init`, `front`, `main`, `rollback`}
