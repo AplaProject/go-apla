@@ -365,7 +365,7 @@ PageEnd:
 Navigation(LiTemplate(Citizen),Editing profile)
 PageTitle: Editing profile
 ValueById(#state_id#_citizens, #citizen#, "name,avatar", "FirstName,Image")
-TxForm{ Contract: TXEditProfile}
+TxForm{ Contract: TXEditProfile, OnSuccess: MenuReload()}
 PageEnd:`, `menu_default`, sid,
 
 		`AddAccount`, `Title : Best country

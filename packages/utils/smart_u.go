@@ -442,7 +442,9 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 				onsuccess += `,{` + pars[2] + `}`
 			}
 
-			onsuccess += `);`
+			onsuccess += `)`
+		} else {
+			onsuccess = lib.Escape(pars[0])
 		}
 	}
 

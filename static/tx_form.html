@@ -182,7 +182,7 @@
 {{end}}
 	function SendTxOK() {
 		{{if .OnSuccess}}
-			{{.OnSuccess}}
+			{{.OnSuccess}};
 			HideMenu();	
 		{{end}}
 	}
