@@ -17,7 +17,7 @@
 package textproc
 
 import (
-	//"fmt"
+	//	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -51,15 +51,48 @@ func replace(input string, level int, vars *map[string]string) string {
 	length := utf8.RuneCountInString(input)
 	result := make([]rune, 0, length)
 	isName := false
+	isFunc := 0
+	isMap := 0
 	name := make([]rune, 0, 128)
+	clearname := func() {
+		result = append(append(result, engine.syschar), name...)
+		isName = false
+		name = name[:0]
+	}
 	for _, r := range input {
 		if r != engine.syschar {
 			if isName {
 				name = append(name, r)
-				if len(name) > 64 || r < ' ' {
-					result = append(append(result, engine.syschar), name...)
-					isName = false
-					name = name[:0]
+				if r == '(' && isMap == 0 {
+					if isFunc == 0 {
+						if _, ok := engine.funcs[string(name[:len(name)-1])]; !ok {
+							clearname()
+							continue
+						}
+					}
+					isFunc++
+				} else if r == '{' && isFunc == 0 {
+					if isMap == 0 {
+						if _, ok := engine.maps[string(name[:len(name)-1])]; !ok {
+							clearname()
+							continue
+						}
+					}
+					isMap++
+				} else if r == ')' && isFunc > 0 {
+					if isFunc--; isFunc == 0 {
+						result = append(result, []rune(Process(string(name), vars))...)
+						isName = false
+						name = name[:0]
+					}
+				} else if r == '}' && isMap > 0 {
+					if isMap--; isMap == 0 {
+						result = append(result, []rune(Process(string(name), vars))...)
+						isName = false
+						name = name[:0]
+					}
+				} else if len(name) > 64 || r < ' ' {
+					clearname()
 				}
 			} else {
 				result = append(result, r)

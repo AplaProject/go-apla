@@ -18,6 +18,7 @@ package textproc
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -33,8 +34,16 @@ var (
 	}
 )
 
+func FullName(vars *map[string]string, pars ...string) string {
+	return strings.Join(pars, ` `)
+}
+
 func TestDo(t *testing.T) {
+	AddFuncs(&map[string]TextFunc{`FullName`: FullName, `AsIs`: AsIs})
+	AddMaps(&map[string]MapFunc{`Map1`: Map1, `Table1`: Table1})
 	input := []TestText{
+		{`test #Map1{href: http://google.com, Name: "test, quote"} and #NoFunc()`, `test (http://google.com:test, quote) and #NoFunc()`},
+		{`test #FullName(First Name, Last Name) and #NoFunc() and #AsIs("(finish)")`, `test First Name Last Name and #NoFunc() and (finish)`},
 		{`test #string#`, `test #string#`},
 		{`test par#string`, `test par#string`},
 		{`#val1# строка`, `строка 1 строка`},

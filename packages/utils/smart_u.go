@@ -351,7 +351,7 @@ func SysLink(vars *map[string]string, pars ...string) string {
 }
 
 func MarkDown(vars *map[string]string, pars ...string) string {
-	return string(blackfriday.MarkdownCommon([]byte(pars[0])))
+	return textproc.Macro(string(blackfriday.MarkdownCommon([]byte(pars[0]))), vars)
 }
 
 func Title(vars *map[string]string, pars ...string) string {
