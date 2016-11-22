@@ -25,7 +25,7 @@ SetVar(
                  	        Name string
                  	}
                  	func main {
-                 	  DBUpdate(Table( "property"), $PropertyId, "coords,citizen_id,name", $Coords, $CitizenId, $Name)
+                 	  DBUpdate(Table( "property"), $PropertyId, "Coords,CitizenId,Name", $Coords, $CitizenId, $Name)
                  	}
                  }`,
 
@@ -42,14 +42,24 @@ SetVar(
                           TxForm{ Contract: EditProperty}
                           PageEnd:`
 
-    page_government = `TemplateNav(AddProperty, AddProperty) BR()
+    page_dashboard_default = `
+           MarkDown : ## My property
+           Table{
+               Table: #state_id#_property
+               Where: citizen_id='#citizen#'
+               Order: id
+               Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, #citizen_id#]]
+           }
+           PageEnd:`
 
-             MarkDown : ## Property
-             Table{
-                 Table: #state_id#_property
-                 Order: id
-                 Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, #citizen_id#], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
-             }`
+    page_government = `TemplateNav(AddProperty, AddProperty) BR()
+            MarkDown : ## Property
+            Table{
+                Table: #state_id#_property
+                Order: id
+                Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, #citizen_id#], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
+            }
+`
 
 )
 TextHidden( sc_value1, sc_value2, sc_conditions )
@@ -98,6 +108,16 @@ Json(`Head: "Adding account column",
            			typeid: #type_append_id#,
            			name : "goventment",
            			value: "#page_goventment#",
+           			global: #global#
+           		}
+           },
+           {
+           		Forsign: 'global,name,value',
+           		Data: {
+           			type: "AppendPage",
+           			typeid: #type_append_id#,
+           			name : "dashboard_default",
+           			value: "#page_dashboard_default#",
            			global: #global#
            		}
            },

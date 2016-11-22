@@ -6,53 +6,57 @@ SetVar(
 	type_new_column_id = TxId(NewColumn),
 	sc_conditions = "$citizen == #wallet_id#",
     sc_value1 = `contract SendMoney {
-            tx {
- RecipientAccountId int
- Amount money
-            }
-            func main {
-                   var cur_amount money
-                   var sender_id int
-                   var cur_amount_sender money
+                 tx {
+                         RecipientAccountId int
+                         Amount money
+                 }
 
-                   cur_amount = Money(DBString(Table("accounts"), "amount", $RecipientAccountId ))
-                   DBUpdate(Table( "accounts"), $RecipientAccountId, "amount", cur_amount + $Amount)
+                 	func main {
 
-                   sender_id  = DBIntExt( Table("accounts"), "id", $citizen, "citizen_id")
-                   cur_amount_sender  = Money(DBString(Table("accounts"), "amount", sender_id))
-                   DBUpdate(Table( "accounts"), sender_id, "amount", cur_amount_sender - $Amount)
-            }
-}`,
+                 	var cur_amount money
+                 	cur_amount = Money(DBString(Table("accounts"), "amount", $RecipientAccountId ))
+                         DBUpdate(Table( "accounts"), $RecipientAccountId, "amount", cur_amount + $Amount)
+
+                 	var sender_id int
+                 	var cur_amount_sender money
+                 	sender_id  = DBIntExt( Table("accounts"), "id", $citizen, "citizen_id")
+                 	cur_amount_sender  = Money(DBString(Table("accounts"), "amount", sender_id))
+                         DBUpdate(Table( "accounts"), sender_id, "amount", cur_amount_sender - $Amount)
+                 	}
+                 }
+`,
     sc_value2 = `contract AddAccount {
                  	tx {
                  	    Citizen string
-  }
+                     }
                  	func main {
-     DBInsert(Table( "accounts"), "citizen_id", $Citizen)
+                        DBInsert(Table( "accounts"), "citizen_id", $Citizen)
                  	}
-}`,
+                 }`,
     sc_value3 = `contract UpdAmount {
                  	tx {
-      AccountId int
-      Amount money
-  }
+                         AccountId int
+                         Amount money
+                     }
 
                  	func main {
-      DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
+                         DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
                  	}
-}`
+                 }`
     page_dashboard_default = `
-             Table{
-                 Table: #state_id#_accounts
-  Where: citizen_id='#citizen#'
-  Columns: [[amount, #amount#]]
-             }
+            MarkDown : ## My account
+            Table{
+                Table: #state_id#_accounts
+                    Where: citizen_id='#citizen#'
+                    Columns: [[amount, #amount#]]
+            }
 
-             Table{
-                 Table: #state_id#_accounts
-                 Order: id
-                 Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
-             }
+            MarkDown : ## Accounts
+            Table{
+                Table: #state_id#_accounts
+                Order: id
+                Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
+            }
 
              PageEnd:`
 
