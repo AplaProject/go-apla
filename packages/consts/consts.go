@@ -104,6 +104,7 @@ var TxTypes = map[int]string{
 	20: "NewPage",
 	21: "NewMenu",
 	22: "ChangeNodeKeyDLT",
+	23: "AppendPage",
 }
 
 func init() {
