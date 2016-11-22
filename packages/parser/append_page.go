@@ -25,7 +25,7 @@ import (
 
 func (p *Parser) AppendPageInit() error {
 
-	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -53,7 +53,7 @@ func (p *Parser) AppendPageFront() error {
 	*/
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -79,7 +79,7 @@ func (p *Parser) AppendPage() error {
 		return p.ErrInfo(err)
 	}
 	new:= strings.Replace(page, "PageEnd:", p.TxMaps.String["value"], -1)+`PageEnd:`
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{new, p.TxMaps.String["conditions"]}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
