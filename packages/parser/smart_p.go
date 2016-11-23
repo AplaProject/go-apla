@@ -40,9 +40,12 @@ func init() {
 		"DBIntExt":    DBIntExt,
 		"Table":       StateTable,
 		"TableTx":     StateTableTx,
+		"AddressToId": AddressToID,
+		"DBAmount":    DBAmount,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
+	//	smart.Compile( embedContracts)
 }
 
 func (p *Parser) getExtend() *map[string]interface{} {
@@ -208,4 +211,32 @@ func StateTable(p *Parser, tblname string) string {
 
 func StateTableTx(p *Parser, tblname string) string {
 	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
+}
+
+func AddressToID(input string) (addr int64) {
+	input = strings.TrimSpace(input)
+	if len(input) < 2 {
+		return 0
+	}
+	if input[0] == '-' {
+		addr, _ = strconv.ParseInt(input, 10, 64)
+	} else if strings.Count(input, `-`) == 4 {
+		addr = lib.StringToAddress(input)
+	} else {
+		uaddr, _ := strconv.ParseUint(input, 10, 64)
+		addr = int64(uaddr)
+	}
+	if !lib.IsValidAddress(lib.AddressToString(uint64(addr))) {
+		return 0
+	}
+	return
+}
+
+func DBAmount(tblname, column string, id int64) decimal.Decimal {
+	balance, err := utils.DB.Single("SELECT amount FROM "+lib.EscapeName(tblname)+" WHERE "+lib.EscapeName(column)+" = ?", id).String()
+	if err != nil {
+		return decimal.New(0, 0)
+	}
+	val, _ := decimal.NewFromString(balance)
+	return val
 }

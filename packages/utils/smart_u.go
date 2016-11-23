@@ -176,13 +176,23 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 
 func SetVar(vars *map[string]string, pars ...string) string {
 	for _, item := range pars {
-		lr := strings.SplitN(item, `=`, 2)
+		var proc bool
+		var val string
+		lr := strings.SplitN(item, `#=`, 2)
 		if len(lr) != 2 {
-			continue
+			lr = strings.SplitN(item, `=`, 2)
+			if len(lr) != 2 {
+				continue
+			}
+			proc = true
 		}
-		val := textproc.Process(lr[1], vars)
-		if len(val) == 0 {
-			val = textproc.Macro(lr[1], vars)
+		if proc {
+			val = textproc.Process(lr[1], vars)
+			if len(val) == 0 {
+				val = textproc.Macro(lr[1], vars)
+			}
+		} else {
+			val = lr[1]
 		}
 		(*vars)[strings.TrimSpace(lr[0])] = strings.Trim(val, " `\"")
 	}
