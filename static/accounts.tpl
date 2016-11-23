@@ -11,26 +11,28 @@ SetVar(
                          Amount money
                  }
 
-                 	func main {
-
-                 	var cur_amount money
-                 	cur_amount = Money(DBString(Table("accounts"), "amount", $RecipientAccountId ))
-                         DBUpdate(Table( "accounts"), $RecipientAccountId, "amount", cur_amount + $Amount)
-
-                 	var sender_id int
-                 	var cur_amount_sender money
+				 func front {
+				 	if DBAmount(Table("accounts"),"citizen_id", $citizen ) < $Amount {
+					 	error "not enough money"
+					}
+				 }
+               	func main {
+				    var sender_id int
                  	sender_id  = DBIntExt( Table("accounts"), "id", $citizen, "citizen_id")
-                 	cur_amount_sender  = Money(DBString(Table("accounts"), "amount", sender_id))
-                         DBUpdate(Table( "accounts"), sender_id, "amount", cur_amount_sender - $Amount)
-                 	}
+			        DBTransfer(Table("accounts"), "amount,id", sender_id, $RecipientAccountId, $Amount)
                  }
-`,
+}`,
     sc_value2 = `contract AddAccount {
                  	tx {
                  	    Citizen string
                      }
+					func front {
+						if AddressToId($Citizen)==0 {
+							error "not valid citizen id"
+						}
+					}
                  	func main {
-                        DBInsert(Table( "accounts"), "citizen_id", $Citizen)
+                        DBInsert(Table( "accounts"), "citizen_id", AddressToId($Citizen))
                  	}
                  }`,
     sc_value3 = `contract UpdAmount {
@@ -42,25 +44,22 @@ SetVar(
                  	func main {
                          DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
                  	}
-                 }`
-    page_dashboard_default = `
-            MarkDown : ## My account
-            Table{
-                Table: #state_id#_accounts
-                    Where: citizen_id='#citizen#'
-                    Columns: [[amount, #amount#]]
-            }
+                 }`,
+    `page_dashboard_default #= MarkDown : ## My account
+Table{
+	Table: #state_id#_accounts
+		Where: citizen_id='#citizen#'
+		Columns: [[amount, #amount#]]
+}
 
-            MarkDown : ## Accounts
-            Table{
-                Table: #state_id#_accounts
-                Order: id
-                Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
-            }
+MarkDown : ## Accounts
+Table{
+	Table: #state_id#_accounts
+	Order: id
+	Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
+}`,
 
-             PageEnd:`
-
-    page_government = `TemplateNav(AddAccount, AddAccount) BR()
+    `page_government #= TemplateNav(AddAccount, AddAccount) BR()
      TemplateNav(SendMoney, SendMoney) BR()
      TemplateNav(UpdAmount, UpdAmount) BR()
 
@@ -69,26 +68,23 @@ SetVar(
          Table: #state_id#_citizens
          Order: id
          Columns: [[Avatar,Image(#avatar#)], [ID, Address(#id#)], [Name, #name#]]
-     }
-     PageEnd:`
+     }`,
      page_send_money = `Title : Best country
                         Navigation( LiTemplate(government),non-link text)
                         PageTitle : Dashboard
-                        TxForm { Contract: SendMoney }
-                        PageEnd:`
+                        TxForm { Contract: SendMoney }`,
      page_add_account = `Title : Best country
                          Navigation( LiTemplate(government),non-link text)
                          PageTitle : Dashboard
-                         TxForm { Contract: AddAccount }
-                         PageEnd:`
+                         TxForm { Contract: AddAccount }`,
      page_upd_amount = `Title : Best country
                         Navigation( LiTemplate(government),non-link text)
                         PageTitle : Dashboard
-                        TxForm { Contract: UpdAmount }
-                        PageEnd:`
-
+                        TxForm { Contract: UpdAmount }`
 )
 TextHidden( sc_value1, sc_value2, sc_value3, sc_conditions )
+TextHidden( page_dashboard_default, page_dashboard_goventment, page_send_money, page_add_account, page_upd_amount )
+
 Json(`Head: "Adding account column",
 	Desc: "This application adds citizen_id column into account table.",
 	OnSuccess: {
@@ -98,33 +94,36 @@ Json(`Head: "Adding account column",
 	},
 	TX: [
 		{
-		Forsign: 'global,id,value,conditions',
+		Forsign: 'global,name,value,conditions',
 		Data: {
-			type: "AddContract",
+			type: "NewContract",
 			typeid: #type_new_contract_id#,
 			global: #global#,
+			name: "SendMoney",
 			value: $("#sc_value1").val(),
-			conditions: $("#sc_conditions1").val()
+			conditions: $("#sc_conditions").val()
 			}
 	   },
 		{
-		Forsign: 'global,id,value,conditions',
+		Forsign: 'global,name,value,conditions',
 		Data: {
-			type: "AddContract",
+			type: "NewContract",
 			typeid: #type_new_contract_id#,
 			global: #global#,
+			name: "AddAccount",
 			value: $("#sc_value2").val(),
-			conditions: $("#sc_conditions2").val()
+			conditions: $("#sc_conditions").val()
 			}
 	   },
 		{
-		Forsign: 'global,id,value,conditions',
+		Forsign: 'global,name,value,conditions',
 		Data: {
-			type: "AddContract",
+			type: "NewContract",
 			typeid: #type_new_contract_id#,
 			global: #global#,
+			name: "UpdAmount",
 			value: $("#sc_value3").val(),
-			conditions: $("#sc_conditions3").val()
+			conditions: $("#sc_conditions").val()
 			}
 	   },
         	   {
@@ -144,7 +143,7 @@ Json(`Head: "Adding account column",
                			type: "AppendPage",
                			typeid: #type_append_id#,
                			name : "dashboard_default",
-               			value: "#page_dashboard_default#",
+               			value: $("#page_dashboard_default").val(),
                			global: #global#
                		}
                },
@@ -154,7 +153,7 @@ Json(`Head: "Adding account column",
            			type: "AppendPage",
            			typeid: #type_append_id#,
            			name : "goventment",
-           			value: "#page_dashboard_goventment#",
+           			value: $("#page_dashboard_goventment").val(),
            			global: #global#
            		}
            },
@@ -164,7 +163,7 @@ Json(`Head: "Adding account column",
                    			type: "NewPage",
                    			typeid: #type_new_page_id#,
                    			name : "SendMoney",
-                   			value: "#page_send_money#",
+                   			value: $("#page_send_money").val(),
                    			global: #global#,
                     		conditions: "$citizen == #wallet_id#",
                    		}
@@ -175,7 +174,7 @@ Json(`Head: "Adding account column",
                            			type: "NewPage",
                            			typeid: #type_new_page_id#,
                            			name : "AddAccount",
-                           			value: "#page_add_account#",
+                           			value:  $("#page_add_account").val(),
                            			global: #global#,
                             		conditions: "$citizen == #wallet_id#",
                            		}
@@ -186,7 +185,7 @@ Json(`Head: "Adding account column",
                                    			type: "NewPage",
                                    			typeid: #type_new_page_id#,
                                    			name : "UpdAmount",
-                                   			value: "#page_upd_amount#",
+                                   			value: $("#page_upd_amount").val(),
                                    			global: #global#,
                                     		conditions: "$citizen == #wallet_id#",
                                    		}

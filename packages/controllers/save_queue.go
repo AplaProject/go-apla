@@ -131,7 +131,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		amount := []byte(c.r.FormValue("amount"))
 		commission := []byte(c.r.FormValue("commission"))
 		comment_ := c.r.FormValue("comment")
-		if len (comment_) == 0 {
+		if len(comment_) == 0 {
 			comment_ = "null"
 		}
 		comment := []byte(comment_)
@@ -214,6 +214,30 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(tableName)...)
 		data = append(data, utils.EncodeLengthPlusData(columnName)...)
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
+		data = append(data, binSignatures...)
+
+	case "AppendPage":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+		if stateId == 0 {
+			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+		}
+
+		global := []byte(c.r.FormValue("global"))
+		name := []byte(c.r.FormValue("name"))
+		value := []byte(c.r.FormValue("value"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(global)...)
+		data = append(data, utils.EncodeLengthPlusData(name)...)
+		data = append(data, utils.EncodeLengthPlusData(value)...)
 		data = append(data, binSignatures...)
 
 	case "EditPage":

@@ -45,48 +45,6 @@ var (
 	smartVM *script.VM
 )
 
-/*
-contract TXCitizenRequest {
-	tx {
-		PublicKey  bytes
-		StateId    int
-		FirstName  string
-		MiddleName string "optional"
-		LastName   string
-	}
-	func init {
-//		Println("TXCitizenRequest init" + $FirstName, $citizen, "/", $wallet,"=", Balance($wallet))
-	}
-	func front {
-//		Println("TXCitizenRequest front" + $MiddleName, StateParam($StateId, "citizenship_price"))
-		if 10000 {
-			error "not enough money"
-		}
-	}
-	func main {
-
-//		Println("TXCitizenRequest main" + $LastName)
-	}
-
-}
-
-contract TXNewCitizen {
-			func front {
-//				Println("NewCitizen Front", $citizen, $state, $PublicKey )
-			}
-			func main {
-//				Println("NewCitizen Main", $type, $citizen, $block )
-//				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
-			}
-}
-		 map[string]string{
-	//		`*parser.Parser`: `parser`,
-	})
-
-				"DBInsert":   DBInsert,
-				"Balance":    Balance,
-				"StateParam": StateParam,*/
-
 func init() {
 	smartVM = script.NewVM()
 

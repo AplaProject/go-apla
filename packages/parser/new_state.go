@@ -155,7 +155,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?),(?, ?),(?,?),(?,?),(?,?),(?,?),(?,?),(?,?)`,
+		(?, ?),(?, ?),(?,?),(?,?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
 	tx {
 		StateId    int    "hidden"
@@ -217,39 +217,8 @@ func (p *Parser) NewState() error {
 		Println("TXTest main")
 	}
 }`,
-		`AddAccount`,
-		`contract AddAccount {
-	tx {
-    }
-	func main {
-       DBInsert(Table( "accounts"), "citizen_id", $citizen)
-	}
-}`,
+	)
 
-		`SendMoney`, `contract SendMoney {
-	tx {
-        RecipientAccountId int
-        Amount money
-    }
-
-	func main {
-	    var cur_amount money
-	    cur_amount = Money(DBString(Table("accounts"), "amount", $RecipientAccountId ))
-        DBUpdate(Table( "accounts"), $RecipientAccountId, "amount", cur_amount + $Amount)
-	}
-}`,
-
-		`UpdAmount`,
-		`contract UpdAmount {
-	tx {
-        AccountId int
-        Amount money
-    }
-
-	func main {
-        DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
-	}
-}`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
