@@ -490,7 +490,8 @@ ALTER TABLE ONLY "global_tables" ADD CONSTRAINT global_tables_pkey PRIMARY KEY (
 DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
 DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
-"id" bigint NOT NULL default nextval('system_states_id_seq')
+"id" bigint NOT NULL default nextval('system_states_id_seq'),
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE system_states_id_seq owned by system_states.id;
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);

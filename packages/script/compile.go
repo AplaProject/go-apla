@@ -478,12 +478,21 @@ func (vm *VM) CompileBlock(input []rune) (*Block, error) {
 }
 
 func (vm *VM) FlushBlock(root *Block) {
+	shift := len(vm.Children)
 	for key, item := range root.Objects {
+		if cur, ok := vm.Objects[key]; ok && item.Type == OBJ_CONTRACT {
+			root.Objects[key].Value.(*Block).Info.(*ContractInfo).Id = cur.Value.(*Block).Info.(*ContractInfo).Id + 0xFFFF
+		}
 		vm.Objects[key] = item
 	}
-	shift := len(vm.Children)
 	for _, item := range root.Children {
 		if item.Type == OBJ_CONTRACT {
+			if item.Info.(*ContractInfo).Id > 0xFFFF {
+				item.Info.(*ContractInfo).Id -= 0xFFFF
+				vm.Children[item.Info.(*ContractInfo).Id] = item
+				shift--
+				continue
+			}
 			item.Info.(*ContractInfo).Id += uint32(shift)
 		}
 		vm.Children = append(vm.Children, item)

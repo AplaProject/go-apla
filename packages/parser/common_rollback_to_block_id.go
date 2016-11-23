@@ -18,6 +18,7 @@ package parser
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -41,38 +42,46 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 		return p.ErrInfo(err)
 	}
 
+	limit := 1000
+	blocks := make([]map[string][]byte, 0, limit)
+	//	var blocks []map[string][]byte
 	// откатываем наши блоки
-	var blocks []map[string][]byte
-	rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC"), blockId)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	parser := new(Parser)
-	parser.DCDB = p.DCDB
-	for rows.Next() {
-		var data, id []byte
-		err = rows.Scan(&id, &data)
-		if err != nil {
-			rows.Close()
-			return p.ErrInfo(err)
-		}
-		blocks = append(blocks, map[string][]byte{"id": id, "data": data})
-	}
-	rows.Close()
-	for _, block := range blocks {
-		// Откатываем наши блоки до блока blockId
-		parser.BinaryData = block["data"]
-		err = parser.ParseDataRollback()
+	for {
+		rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC LIMIT "+fmt.Sprintf(`%d`, limit)+` OFFSET 0`), blockId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
+		parser := new(Parser)
+		parser.DCDB = p.DCDB
+		for rows.Next() {
+			var data, id []byte
+			err = rows.Scan(&id, &data)
+			if err != nil {
+				rows.Close()
+				return p.ErrInfo(err)
+			}
+			blocks = append(blocks, map[string][]byte{"id": id, "data": data})
+		}
+		rows.Close()
+		if len(blocks) == 0 {
+			break
+		}
+		fmt.Printf(`%s `, blocks[0]["id"])
+		for _, block := range blocks {
+			// Откатываем наши блоки до блока blockId
+			parser.BinaryData = block["data"]
+			err = parser.ParseDataRollback()
+			if err != nil {
+				return p.ErrInfo(err)
+			}
 
-		err = p.ExecSql("DELETE FROM block_chain WHERE id = ?", block["id"])
-		if err != nil {
-			return p.ErrInfo(err)
+			err = p.ExecSql("DELETE FROM block_chain WHERE id = ?", block["id"])
+			if err != nil {
+				return p.ErrInfo(err)
+			}
 		}
+		blocks = blocks[:0]
 	}
-
 	var hash, data []byte
 	err = p.QueryRow(p.FormatQuery("SELECT hash, data FROM block_chain WHERE id  =  ?"), blockId).Scan(&hash, &data)
 	if err != nil && err != sql.ErrNoRows {

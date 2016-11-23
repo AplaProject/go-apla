@@ -179,6 +179,9 @@ func (p *Parser) ParseDataRollback() error {
 				if err := p.CallContract(smart.CALL_INIT | smart.CALL_ROLLBACK); err != nil {
 					return utils.ErrInfo(err)
 				}
+				if err = p.autoRollback(); err != nil {
+					return p.ErrInfo(err)
+				}
 			} else {
 				p.dataType = utils.BytesToInt(p.TxSlice[1])
 				MethodName := consts.TxTypes[p.dataType]
