@@ -428,8 +428,19 @@ func (p *Parser) NewStateRollback() error {
 		return p.ErrInfo(err)
 	}
 	id := utils.Int64ToStr(id_)
-
+	err = p.ExecSql(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	err = p.ExecSql(`DROP TABLE "` + id + `_accounts"`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.ExecSql(`DROP TABLE "` + id + `_menu"`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.ExecSql(`DROP TABLE "` + id + `_pages"`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
