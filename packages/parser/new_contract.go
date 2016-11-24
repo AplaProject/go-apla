@@ -59,7 +59,15 @@ func (p *Parser) NewContractFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-
+	prefix := `global`
+	if p.TxMaps.Int64["global"] == 0 {
+		prefix = p.TxStateIDStr
+	}
+	if exist, err := p.Single(`select id from "`+prefix+"_smart_contracts"+`" where name=?`, p.TxMap["name"]).Int64(); err != nil {
+		return p.ErrInfo(err)
+	} else if exist > 0 {
+		return p.ErrInfo(fmt.Sprintf("The contract %s already exists", p.TxMap["name"]))
+	}
 	return nil
 }
 
