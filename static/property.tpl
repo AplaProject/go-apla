@@ -25,46 +25,43 @@ SetVar(
                  	        Name string
                  	}
                  	func main {
-                 	  DBUpdate(Table( "property"), $PropertyId, "Coords,CitizenId,Name", $Coords, $CitizenId, $Name)
+                 	  DBUpdate(Table( "property"), $PropertyId, "coords,citizen_id,name", $Coords, $CitizenId, $Name)
                  	}
                  }`,
 
-    page_add_property = `
-            Navigation( Govenment )
+    page_add_property = `Navigation( LiTemplate(government),Add property )
             PageTitle : Add Property
             TxForm{ Contract: AddProperty}
-            PageEnd:`
+            PageEnd:`,
 
     page_edit_property = `Title:EditProperty
-                          Navigation(LiTemplate(Citizen),Editing property)
+                          Navigation(LiTemplate(government),Editing property)
                           PageTitle: Editing property
                           ValueById(#state_id#_property, #PropertyId#, "name,citizen_id,coords", "Name,CitizenId,Coords")
                           TxForm{ Contract: EditProperty}
-                          PageEnd:`
+                          PageEnd:`,
 
-    page_dashboard_default = `
-           MarkDown : ## My property
+    `page_dashboard_default #= MarkDown : ## My property
            Table{
                Table: #state_id#_property
                Where: citizen_id='#citizen#'
                Order: id
                Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, #citizen_id#]]
-           }
-           PageEnd:`
+           }`,
 
-    page_government = `TemplateNav(AddProperty, AddProperty) BR()
+    `page_government #= TemplateNav(AddProperty, AddProperty) BR()
             MarkDown : ## Property
             Table{
                 Table: #state_id#_property
                 Order: id
                 Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, #citizen_id#], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
-            }
-`
+            }`
 
 )
 TextHidden( sc_value1, sc_value2, sc_conditions )
-Json(`Head: "Adding account column",
-	Desc: "This application adds citizen_id column into account table.",
+TextHidden( page_add_property, page_edit_property, page_dashboard_default, page_government )
+Json(`Head: "Adding property table",
+	Desc: "This application adds property table.",
 	OnSuccess: {
 		script: 'template',
 		page: 'government',
@@ -72,76 +69,81 @@ Json(`Head: "Adding account column",
 	},
 	TX: [
 		{
-		Forsign: 'global,id,value,conditions',
+		Forsign: 'global,name,value,conditions',
 		Data: {
-			type: "AddContract",
+			type: "NewContract",
 			typeid: #type_new_contract_id#,
 			global: #global#,
+			name: "AddProperty",
 			value: $("#sc_value1").val(),
-			conditions: $("#sc_conditions1").val()
+			conditions: $("#sc_conditions").val()
 			}
 	   },
 		{
-		Forsign: 'global,id,value,conditions',
+		Forsign: 'global,name,value,conditions',
 		Data: {
-			type: "AddContract",
+			type: "NewContract",
 			typeid: #type_new_contract_id#,
 			global: #global#,
+			name: "EditProperty",
 			value: $("#sc_value2").val(),
-			conditions: $("#sc_conditions2").val()
+			conditions: $("#sc_conditions").val()
 			}
 	   },
-        	   {
-        		Forsign: 'table_name,columns,permissions',
-        		Data: {
-        			type: "NewTable",
-        			typeid: #type_new_table_id#,
-        			table_name : "#state_id#_property",
-        			columns: "{'citizen_id','coords','name'}",
-        			permissions: "$citizen == #wallet_id#"
-        		}
-        		},
-           {
-           		Forsign: 'global,name,value',
-           		Data: {
-           			type: "AppendPage",
-           			typeid: #type_append_id#,
-           			name : "goventment",
-           			value: "#page_goventment#",
-           			global: #global#
-           		}
-           },
-           {
-           		Forsign: 'global,name,value',
-           		Data: {
-           			type: "AppendPage",
-           			typeid: #type_append_id#,
-           			name : "dashboard_default",
-           			value: "#page_dashboard_default#",
-           			global: #global#
-           		}
-           },
-                   {
-                   		Forsign: 'global,name,value,conditions',
-                   		Data: {
-                   			type: "NewPage",
-                   			typeid: #type_new_page_id#,
-                   			name : "EditProperty",
-                   			value: "#page_edit_property#",
-                   			global: #global#,
-                    		conditions: "$citizen == #wallet_id#",
-                   		}
-                   },
-                           {
-                           		Forsign: 'global,name,value,conditions',
-                           		Data: {
-                           			type: "NewPage",
-                           			typeid: #type_new_page_id#,
-                           			name : "AddProperty",
-                           			value: "#page_add_property#",
-                           			global: #global#,
-                            		conditions: "$citizen == #wallet_id#",
-                           		}
-                           }
+		{
+		Forsign: 'global,table_name,columns',
+		Data: {
+			type: "NewTable",
+			typeid: #type_new_table_id#,
+			global: #global#,
+			table_name : "property",
+			columns: '["citizen_id","coords","name"]',
+			permissions: "$citizen == #wallet_id#"
+		}
+		},
+		{
+			Forsign: 'global,name,value',
+			Data: {
+				type: "AppendPage",
+				typeid: #type_append_id#,
+				name : "government",
+				value: $("#page_government").val(),
+				global: #global#
+			}
+		},
+		{
+			Forsign: 'global,name,value',
+			Data: {
+				type: "AppendPage",
+				typeid: #type_append_id#,
+				name : "dashboard_default",
+				value: $("#page_dashboard_default").val(),
+				global: #global#
+			}
+		},
+		{
+			Forsign: 'global,name,value,menu,conditions',
+			Data: {
+				type: "NewPage",
+				typeid: #type_new_page_id#,
+				name : "EditProperty",
+				value: $("#page_edit_property").val(),
+				menu: "menu_default",
+				global: #global#,
+				conditions: "$citizen == #wallet_id#",
+			}
+		},
+		{
+			Forsign: 'global,name,value,menu,conditions',
+			Data: {
+				type: "NewPage",
+				typeid: #type_new_page_id#,
+				name : "AddProperty",
+				value: $("#page_add_property").val(),
+				menu: "menu_default",									   
+				global: #global#,
+				conditions: "$citizen == #wallet_id#",
+			}
+		}
 	]
 `)
