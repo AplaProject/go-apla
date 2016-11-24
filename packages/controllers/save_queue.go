@@ -59,7 +59,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	} else if lenpub == 0 {
 		publicKey = []byte("null")
 	}
-	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
+	//	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
 	txType := utils.TypeInt(txType_)
 	sign := make([]byte, 0)
 	for i := 1; i <= 3; i++ {

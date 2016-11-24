@@ -268,9 +268,6 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `Title : My country
 Navigation( Dashboard )
@@ -336,24 +333,7 @@ PageTitle: Editing profile
 ValueById(#state_id#_citizens, #citizen#, "name,avatar", "FirstName,Image")
 TxForm{ Contract: TXEditProfile, OnSuccess: MenuReload()}
 PageEnd:`, `menu_default`, sid,
-
-		`AddAccount`, `Title : Best country
-Navigation( LiTemplate(government),non-link text)
-PageTitle : Dashboard
-TxForm { Contract: AddAccount }
-PageEnd:`, `menu_default`, sid,
-
-		`UpdAmount`, `Title : Best country
-Navigation( LiTemplate(government),non-link text)
-PageTitle : Dashboard
-TxForm { Contract: UpdAmount }
-PageEnd:`, `menu_default`, sid,
-
-		`SendMoney`, `Title : Best country
-Navigation( LiTemplate(government),non-link text)
-PageTitle : Dashboard
-TxForm { Contract: SendMoney }
-PageEnd:`, `menu_default`, sid)
+	)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

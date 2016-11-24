@@ -72,18 +72,21 @@ Table{
      page_send_money = `Title : Best country
                         Navigation( LiTemplate(government),non-link text)
                         PageTitle : Dashboard
-                        TxForm { Contract: SendMoney }`,
+                        TxForm { Contract: SendMoney }
+						PageEnd:`,
      page_add_account = `Title : Best country
                          Navigation( LiTemplate(government),non-link text)
                          PageTitle : Dashboard
-                         TxForm { Contract: AddAccount }`,
+                         TxForm { Contract: AddAccount }
+						 PageEnd:`,
      page_upd_amount = `Title : Best country
                         Navigation( LiTemplate(government),non-link text)
                         PageTitle : Dashboard
-                        TxForm { Contract: UpdAmount }`
+                        TxForm { Contract: UpdAmount }
+						PageEnd:`
 )
 TextHidden( sc_value1, sc_value2, sc_value3, sc_conditions )
-TextHidden( page_dashboard_default, page_dashboard_goventment, page_send_money, page_add_account, page_upd_amount )
+TextHidden( page_dashboard_default, page_government, page_send_money, page_add_account, page_upd_amount )
 
 Json(`Head: "Adding account column",
 	Desc: "This application adds citizen_id column into account table.",
@@ -126,69 +129,72 @@ Json(`Head: "Adding account column",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
-        	   {
-        		Forsign: 'table_name,column_name,permissions,index',
-        		Data: {
-        			type: "NewColumn",
-        			typeid: #type_new_column_id#,
-        			table_name : "#state_id#_accounts",
-        			column_name: "citizen_id",
-        			permissions: "$citizen == #wallet_id#",
-        			index: 1
-        		}
-        		},
-               {
-               		Forsign: 'global,name,value',
-               		Data: {
-               			type: "AppendPage",
-               			typeid: #type_append_id#,
-               			name : "dashboard_default",
-               			value: $("#page_dashboard_default").val(),
-               			global: #global#
-               		}
-               },
-           {
-           		Forsign: 'global,name,value',
-           		Data: {
-           			type: "AppendPage",
-           			typeid: #type_append_id#,
-           			name : "goventment",
-           			value: $("#page_dashboard_goventment").val(),
-           			global: #global#
-           		}
-           },
-                   {
-                   		Forsign: 'global,name,value,conditions',
-                   		Data: {
-                   			type: "NewPage",
-                   			typeid: #type_new_page_id#,
-                   			name : "SendMoney",
-                   			value: $("#page_send_money").val(),
-                   			global: #global#,
-                    		conditions: "$citizen == #wallet_id#",
-                   		}
-                   },
-                           {
-                           		Forsign: 'global,name,value,conditions',
-                           		Data: {
-                           			type: "NewPage",
-                           			typeid: #type_new_page_id#,
-                           			name : "AddAccount",
-                           			value:  $("#page_add_account").val(),
-                           			global: #global#,
-                            		conditions: "$citizen == #wallet_id#",
-                           		}
-                           },
-                                   {
-                                   		Forsign: 'global,name,value,conditions',
-                                   		Data: {
-                                   			type: "NewPage",
-                                   			typeid: #type_new_page_id#,
-                                   			name : "UpdAmount",
-                                   			value: $("#page_upd_amount").val(),
-                                   			global: #global#,
-                                    		conditions: "$citizen == #wallet_id#",
-                                   		}
-                                   }
+		{
+		Forsign: 'table_name,column_name,permissions,index',
+		Data: {
+			type: "NewColumn",
+			typeid: #type_new_column_id#,
+			table_name : "#state_id#_accounts",
+			column_name: "citizen_id",
+			permissions: "$citizen == #wallet_id#",
+			index: 1
+		}
+		},
+		{
+			Forsign: 'global,name,value',
+			Data: {
+				type: "AppendPage",
+				typeid: #type_append_id#,
+				name : "dashboard_default",
+				value: $("#page_dashboard_default").val(),
+				global: #global#
+			}
+		},
+	{
+		Forsign: 'global,name,value',
+		Data: {
+			type: "AppendPage",
+			typeid: #type_append_id#,
+			name : "government",
+			value: $("#page_government").val(),
+			global: #global#
+		}
+	},
+	{
+		Forsign: 'global,name,value,menu,conditions',
+		Data: {
+			type: "NewPage",
+			typeid: #type_new_page_id#,
+			name : "SendMoney",
+			menu: "menu_default",
+			value: $("#page_send_money").val(),
+			global: #global#,
+			conditions: "$citizen == #wallet_id#",
+		}
+	},
+	{
+		Forsign: 'global,name,value,menu,conditions',
+		Data: {
+			type: "NewPage",
+			typeid: #type_new_page_id#,
+			name : "AddAccount",
+			menu: "menu_default",
+			value:  $("#page_add_account").val(),
+			global: #global#,
+			conditions: "$citizen == #wallet_id#",
+		}
+	},
+	{
+		Forsign: 'global,name,value,menu,conditions',
+		Data: {
+			type: "NewPage",
+			typeid: #type_new_page_id#,
+			name : "UpdAmount",
+			menu: "menu_default",
+			value: $("#page_upd_amount").val(),
+			global: #global#,
+			conditions: "$citizen == #wallet_id#",
+		}
+	}
 	]
 `)
