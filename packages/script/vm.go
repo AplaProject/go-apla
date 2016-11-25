@@ -70,6 +70,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 		var result []reflect.Value
 		pars := make([]reflect.Value, in)
 		limit := 0
+		(*rt.extend)[`rt`] = rt
 		//	fmt.Println(`CALL`, count, i, in, limit)
 		auto := 0
 		for k := 0; k < in; k++ {
@@ -77,6 +78,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 				auto++
 			}
 		}
+		//		fmt.Println(`Extend`, auto, *rt.extend, finfo.Auto)
 		shift := size - count + auto
 		if finfo.Variadic {
 			shift = size - count
@@ -444,7 +446,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		}
 	}
 	if status == STATUS_RETURN {
-		//		fmt.Println(`Status`, rt.stack)
+		//		fmt.Println(`Status`, start, rt.stack)
 		if rt.blocks[len(rt.blocks)-1].Block.Type == OBJ_FUNC {
 			for count := len(rt.blocks[len(rt.blocks)-1].Block.Info.(*FuncInfo).Results); count > 0; count-- {
 				rt.stack[start] = rt.stack[len(rt.stack)-count]
@@ -453,7 +455,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			status = STATUS_NORMAL
 			rt.blocks = rt.blocks[:len(rt.blocks)-1]
 
-			//fmt.Println(`Ret function`, rt.stack)
+			//			fmt.Println(`Ret function`, start, rt.stack)
 		} else {
 			rt.blocks = rt.blocks[:len(rt.blocks)-1]
 			return

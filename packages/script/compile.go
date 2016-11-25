@@ -653,8 +653,14 @@ main:
 			}
 			if i < len(*lexems)-2 {
 				if (*lexems)[i+1].Type == IS_LPAR {
-					if objInfo == nil || (objInfo.Type != OBJ_EXTFUNC && objInfo.Type != OBJ_FUNC) {
+					var isContract bool
+					if objInfo == nil || (objInfo.Type != OBJ_EXTFUNC && objInfo.Type != OBJ_FUNC &&
+						objInfo.Type != OBJ_CONTRACT) {
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))
+					}
+					if objInfo.Type == OBJ_CONTRACT {
+						objInfo, tobj = vm.findObj(`ExecContract`, block)
+						isContract = true
 					}
 					cmdCall := uint16(CMD_CALL)
 					if objInfo.Type == OBJ_EXTFUNC && objInfo.Value.(ExtFuncInfo).Variadic { /*||
@@ -665,8 +671,12 @@ main:
 					if (*lexems)[i+2].Type != IS_RPAR {
 						count++
 					}
-					parcount = append(parcount, count)
 					buffer = append(buffer, &ByteCode{cmdCall, objInfo})
+					if isContract {
+						bytecode = append(bytecode, &ByteCode{CMD_PUSH, lexem.Value.(string)})
+						count++
+					}
+					parcount = append(parcount, count)
 					call = true
 				}
 			}

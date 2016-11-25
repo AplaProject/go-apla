@@ -94,11 +94,52 @@ type ExtendData struct {
 	AutoPars map[string]string
 }
 
+func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
+	//	fmt.Println(`ExecContract`, rt, name, txs, params)
+
+	contract, ok := rt.vm.Objects[name]
+	if !ok {
+		return fmt.Errorf(`unknown contract %s`, name)
+	}
+	cblock := contract.Value.(*Block)
+	parnames := make(map[string]bool)
+	pars := strings.Split(txs, `,`)
+	if len(pars) != len(params) {
+		return fmt.Errorf(`wrong contract parameters`)
+	}
+	for _, ipar := range pars {
+		parnames[ipar] = true
+	}
+	for _, tx := range *cblock.Info.(*ContractInfo).Tx {
+		if !parnames[tx.Name] {
+			return fmt.Errorf(`%s is not defined`, tx.Name)
+		}
+	}
+	for i, ipar := range pars {
+		(*rt.extend)[ipar] = params[i]
+	}
+	for _, method := range []string{`init`, `front`, `main`} {
+		if block, ok := (*cblock).Objects[method]; ok && block.Type == OBJ_FUNC {
+			rtemp := rt.vm.RunInit()
+			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func NewVM() *VM {
 	vm := VM{}
 	vm.Objects = make(map[string]*ObjInfo)
 	// Reserved 256 indexes for system purposes
 	vm.Children = make(Blocks, 256, 1024)
+	vm.Extend(&ExtendData{map[string]interface{}{"ExecContract": ExecContract},
+		map[string]string{
+			`*script.RunTime`: `rt`,
+		}})
 	//	vm.Extend(&ExtendData{map[string]interface{}{"Bool": valueToBool}, nil})
 	return &vm
 }
