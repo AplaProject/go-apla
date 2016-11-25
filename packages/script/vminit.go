@@ -95,7 +95,7 @@ type ExtendData struct {
 }
 
 func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
-	//	fmt.Println(`ExecContract`, rt, name, txs, params)
+	//fmt.Println(`ExecContract`, rt, name, txs, params)
 
 	contract, ok := rt.vm.Objects[name]
 	if !ok {
@@ -110,11 +110,19 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
-	for _, tx := range *cblock.Info.(*ContractInfo).Tx {
-		if !parnames[tx.Name] {
-			return fmt.Errorf(`%s is not defined`, tx.Name)
+	if cblock.Info.(*ContractInfo).Tx != nil {
+		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
+			if !parnames[tx.Name] {
+				return fmt.Errorf(`%s is not defined`, tx.Name)
+			}
 		}
 	}
+	if _, ok := (*rt.extend)[`loop_`+name]; ok {
+		return fmt.Errorf(`there is loop in %s contract`, name)
+	}
+	(*rt.extend)[`loop_`+name] = true
+	defer delete(*rt.extend, `loop_`+name)
+	//	fmt.Println(`ExecContract`, name, *rt.extend)
 	for i, ipar := range pars {
 		(*rt.extend)[ipar] = params[i]
 	}

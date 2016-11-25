@@ -97,7 +97,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 		if i > 0 {
 			pars[in-1] = reflect.ValueOf(rt.stack[size-i : size])
 		}
-		//		fmt.Println(`Pars`, shift, count, i, size, pars)
+		//		fmt.Println(`Pars`, shift, count, limit, i, size, pars, pars[in-1].String())
 		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {

@@ -70,14 +70,22 @@ func TestVMCompile(t *testing.T) {
 			}
 			func front {
 				Println("Front", $Par1)
+//				my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
 			}
 			func main {
 				Println("Main", $Par2, $ext)
 			}
 		}
+		contract empty {
+			func main {
+				Println("Empty")
+			}
+		}
 		contract mytest {
 			func init string {
 				my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
+				my("Par1,Par2,ext", 33123, "Parameter 332", "33extended" )
+				empty("test",10)
 				Println( "mytest")
 				return "OK"
 			}
