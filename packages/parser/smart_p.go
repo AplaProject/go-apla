@@ -196,13 +196,22 @@ func DBInt(tblname string, name string, id int64) (int64, error) {
 }
 
 func DBStringExt(tblname string, name string, id int64, idname string) (string, error) {
+	if isIndex, err := utils.DB.IsIndex(tblname, idname); err != nil {
+		return ``, err
+	} else if !isIndex {
+		return ``, fmt.Errorf(`there is not index on %s`, idname)
+	}
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
 		lib.EscapeName(idname)+`=?`, id).String()
 }
 
-func DBIntExt(tblname string, name string, id int64, idname string) (int64, error) {
-	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
-		lib.EscapeName(idname)+`=?`, id).Int64()
+func DBIntExt(tblname string, name string, id int64, idname string) (ret int64, err error) {
+	var val string
+	val, err = DBStringExt(tblname, name, id, idname)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseInt(val, 10, 64)
 }
 
 func StateTable(p *Parser, tblname string) string {

@@ -1572,3 +1572,18 @@ func (db *DCDB) CheckStateName(stateId int64) (bool, error) {
 	}
 	return false, fmt.Errorf("null stateId")
 }
+
+func (db *DCDB) IsIndex(tblname, column string) (bool, error) {
+	/* Short version if index name = tablename_columnname
+		indexes, err := db.GetAll(`SELECT 1 FROM  pg_class c JOIN  pg_namespace n ON n.oid = c.relnamespace
+	                 WHERE  c.relname = ?  AND  n.nspname = 'public'`, 1, tblname + `_` + column)*/
+	//	Full version
+	indexes, err := db.GetAll(`select t.relname as table_name, i.relname as index_name, a.attname as column_name 
+	 from pg_class t, pg_class i, pg_index ix, pg_attribute a 
+	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
+         and t.relkind = 'r'  and t.relname = ?  and a.attname = ?`, 1, tblname, column)
+	if err != nil {
+		return false, err
+	}
+	return len(indexes) > 0, nil
+}
