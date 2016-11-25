@@ -37,6 +37,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 	var merkleSlice [][]byte
 	log.Debug("transactionBinaryData: %x", *transactionBinaryData)
 	log.Debug("transactionBinaryData: %s", *transactionBinaryData)
+	p.TxContract = nil
 	if len(*transactionBinaryData) > 0 {
 
 		// хэш транзакции
