@@ -144,13 +144,9 @@ func (p *Parser) NewTableRollback() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-	err = p.ExecSql(`DELETE FROM `+prefix+`_tables WHERE name = ?`, tableName)
+	err = p.ExecSql(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
-
-/*func (p *Parser) NewTableRollbackFront() error {
-	return nil
-}*/
