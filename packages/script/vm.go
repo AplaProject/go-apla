@@ -30,6 +30,7 @@ import (
 const (
 	STATUS_NORMAL = iota
 	STATUS_RETURN
+	STATUS_CONTINUE
 
 //	STATUS_ERROR
 )
@@ -218,9 +219,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		start -= len(block.Info.(*FuncInfo).Params)
 	}
 	var assign []*VarInfo
-
+	labels := make([]int, 0)
 	//main:
-	for _, cmd := range block.Code {
+	for ci := 0; ci < len(block.Code); ci++ { //_, cmd := range block.Code {
+		cmd := block.Code[ci]
 		var bin interface{}
 		size := len(rt.stack)
 		if size < int(cmd.Cmd>>8) {
@@ -242,6 +244,21 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if !valueToBool(rt.stack[len(rt.stack)-1]) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
+		case CMD_WHILE:
+			if valueToBool(rt.stack[len(rt.stack)-1]) {
+				status, err = rt.RunCode(cmd.Value.(*Block))
+				newci := labels[len(labels)-1]
+				labels = labels[:len(labels)-1]
+				if status == STATUS_CONTINUE {
+					ci = newci - 1
+					status = STATUS_NORMAL
+					continue
+				}
+			}
+		case CMD_LABEL:
+			labels = append(labels, ci)
+		case CMD_CONTINUE:
+			status = STATUS_CONTINUE
 		case CMD_ASSIGNVAR:
 			assign = cmd.Value.([]*VarInfo)
 		case CMD_ASSIGN:
@@ -437,7 +454,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			//			status = STATUS_ERROR
 			break
 		}
-		if status == STATUS_RETURN {
+		if status == STATUS_RETURN || status == STATUS_CONTINUE {
 			break
 		}
 		if (cmd.Cmd >> 8) == 2 {

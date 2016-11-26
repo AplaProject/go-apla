@@ -63,34 +63,41 @@ func (block *Block) String() (ret string) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
-		{`contract my {
-			tx {
-				Par1 int
-				Par2 string
+		{`func loop string {
+			var i int
+			while i < 10 {
+				i=i+1
 			}
-			func front {
-				Println("Front", $Par1)
-//				my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
-			}
-			func main {
-				Println("Main", $Par2, $ext)
-			}
-		}
-		contract empty {
-			func main {
-				Println("Empty")
-			}
-		}
-		contract mytest {
-			func init string {
-				my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
-				my("Par1,Par2,ext", 33123, "Parameter 332", "33extended" )
-				empty("test",10)
-				Println( "mytest")
-				return "OK"
-			}
-		}
-		`, `mytest.init`, `OK`},
+			return Sprintf("val=%d", i)
+		}`, `loop`, `val=10`},
+		/*		{`contract my {
+							tx {
+								Par1 int
+								Par2 string
+							}
+							func front {
+								Println("Front", $Par1)
+				//				my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
+							}
+							func main {
+								Println("Main", $Par2, $ext)
+							}
+						}
+						contract empty {
+							func main {
+								Println("Empty")
+							}
+						}
+						contract mytest {
+							func init string {
+								my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
+								my("Par1,Par2,ext", 33123, "Parameter 332", "33extended" )
+								empty("test",10)
+								Println( "mytest")
+								return "OK"
+							}
+						}
+						`, `mytest.init`, `OK`},*/
 		{`func money_test string {
 					var my2, m1 money
 					my2 = 100

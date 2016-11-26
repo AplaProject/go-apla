@@ -34,6 +34,9 @@ const (
 	CMD_ELSE              // run block if Value is false
 	CMD_ASSIGNVAR         // list of assigned var
 	CMD_ASSIGN            // assign
+	CMD_LABEL             // label for continue
+	CMD_CONTINUE          // continue from label
+	CMD_WHILE             // while
 	CMD_ERROR             // error command
 )
 

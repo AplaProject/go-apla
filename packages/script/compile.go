@@ -46,7 +46,8 @@ const (
 	STATE_FPARAMS
 	STATE_FPARAM
 	STATE_FRESULT
-	STATE_IF
+	//	STATE_IF
+	//	STATE_WHILE
 	STATE_VAR
 	STATE_ASSIGNEVAL
 	STATE_ASSIGN
@@ -62,6 +63,7 @@ const (
 	STATE_TOBODY  = 0x1000
 	STATE_FORK    = 0x2000
 	STATE_TOFORK  = 0x4000
+	STATE_LABEL   = 0x8000
 )
 
 const (
@@ -91,6 +93,7 @@ const (
 	CF_FIELD
 	CF_FIELDTYPE
 	CF_FIELDTAG
+	CF_WHILE
 	CF_CMDERROR
 	CF_EVAL
 )
@@ -117,6 +120,7 @@ var (
 		fField,
 		fFieldType,
 		fFieldTag,
+		fWhile,
 		fCmdError,
 	}
 	states = States{
@@ -132,6 +136,7 @@ var (
 			LEX_KEYWORD | (KEY_FUNC << 8):   {STATE_FUNC | STATE_PUSH, 0},
 			LEX_KEYWORD | (KEY_RETURN << 8): {STATE_EVAL, CF_RETURN},
 			LEX_KEYWORD | (KEY_IF << 8):     {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK, CF_IF},
+			LEX_KEYWORD | (KEY_WHILE << 8):  {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK | STATE_LABEL, CF_WHILE},
 			LEX_KEYWORD | (KEY_ELSE << 8):   {STATE_BLOCK | STATE_PUSH, CF_ELSE},
 			LEX_KEYWORD | (KEY_VAR << 8):    {STATE_VAR, 0},
 			LEX_KEYWORD | (KEY_TX << 8):     {STATE_TX, CF_TX},
@@ -176,9 +181,12 @@ var (
 			IS_COMMA:    {STATE_FRESULT, 0},
 			0:           {STATE_BLOCK | STATE_STAY, 0},
 		},
-		{ // STATE_IF
-			0: {STATE_EVAL | STATE_TOBLOCK | STATE_PUSH, CF_IF},
-		},
+		/*		{ // STATE_IF
+					0: {STATE_EVAL | STATE_TOBLOCK | STATE_PUSH, CF_IF},
+				},
+				{ // STATE_WHILE
+					0: {STATE_EVAL | STATE_TOBLOCK | STATE_PUSH, CF_WHILE},
+				},*/
 		{ // STATE_VAR
 			LEX_NEWLINE: {STATE_BODY, 0},
 			LEX_IDENT:   {STATE_VAR, CF_FPARAM},
@@ -281,6 +289,12 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fIf(buf *[]*Block, state int, lexem *Lexem) error {
 	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_IF, (*buf)[len(*buf)-1]})
+	return nil
+}
+
+func fWhile(buf *[]*Block, state int, lexem *Lexem) error {
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_WHILE, (*buf)[len(*buf)-1]})
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_CONTINUE, 0})
 	return nil
 }
 
@@ -426,6 +440,9 @@ func (vm *VM) CompileBlock(input []rune) (*Block, error) {
 			continue
 		}
 		if nextState == STATE_EVAL {
+			if newState.NewState&STATE_LABEL > 0 {
+				(*blockstack[len(blockstack)-1]).Code = append((*blockstack[len(blockstack)-1]).Code, &ByteCode{CMD_LABEL, 0})
+			}
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
 				return nil, err
 			}
@@ -449,7 +466,17 @@ func (vm *VM) CompileBlock(input []rune) (*Block, error) {
 			}
 			nextState = stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
+
+			if len(blockstack) >= 2 {
+				prev := blockstack[len(blockstack)-2]
+				if len(prev.Code) > 0 && (*prev).Code[len((*prev).Code)-1].Cmd == CMD_CONTINUE {
+					(*prev).Code = (*prev).Code[:len((*prev).Code)-1]
+					prev = blockstack[len(blockstack)-1]
+					(*prev).Code = append((*prev).Code, &ByteCode{CMD_CONTINUE, 0})
+				}
+			}
 			blockstack = blockstack[:len(blockstack)-1]
+
 			//	fmt.Println(`POP`, stack, newState.NewState)
 			//			continue
 		}
