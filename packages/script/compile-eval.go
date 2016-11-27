@@ -37,6 +37,7 @@ const (
 	CMD_LABEL             // label for continue
 	CMD_CONTINUE          // continue from label
 	CMD_WHILE             // while
+	CMD_BREAK             // break
 	CMD_ERROR             // error command
 )
 

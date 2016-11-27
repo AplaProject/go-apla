@@ -56,14 +56,15 @@ const (
 
 	STATE_EVAL
 
-	STATE_PUSH    = 0x0100
-	STATE_POP     = 0x0200
-	STATE_STAY    = 0x0400
-	STATE_TOBLOCK = 0x0800
-	STATE_TOBODY  = 0x1000
-	STATE_FORK    = 0x2000
-	STATE_TOFORK  = 0x4000
-	STATE_LABEL   = 0x8000
+	STATE_PUSH     = 0x0100
+	STATE_POP      = 0x0200
+	STATE_STAY     = 0x0400
+	STATE_TOBLOCK  = 0x0800
+	STATE_TOBODY   = 0x1000
+	STATE_FORK     = 0x2000
+	STATE_TOFORK   = 0x4000
+	STATE_LABEL    = 0x8000
+	STATE_MUSTEVAL = 0x010000
 )
 
 const (
@@ -94,6 +95,8 @@ const (
 	CF_FIELDTYPE
 	CF_FIELDTAG
 	CF_WHILE
+	CF_CONTINUE
+	CF_BREAK
 	CF_CMDERROR
 	CF_EVAL
 )
@@ -121,6 +124,8 @@ var (
 		fFieldType,
 		fFieldTag,
 		fWhile,
+		fContinue,
+		fBreak,
 		fCmdError,
 	}
 	states = States{
@@ -132,20 +137,22 @@ var (
 			0:                                 {ERR_UNKNOWNCMD, CF_ERROR},
 		},
 		{ // STATE_BODY
-			LEX_NEWLINE:                     {STATE_BODY, 0},
-			LEX_KEYWORD | (KEY_FUNC << 8):   {STATE_FUNC | STATE_PUSH, 0},
-			LEX_KEYWORD | (KEY_RETURN << 8): {STATE_EVAL, CF_RETURN},
-			LEX_KEYWORD | (KEY_IF << 8):     {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK, CF_IF},
-			LEX_KEYWORD | (KEY_WHILE << 8):  {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK | STATE_LABEL, CF_WHILE},
-			LEX_KEYWORD | (KEY_ELSE << 8):   {STATE_BLOCK | STATE_PUSH, CF_ELSE},
-			LEX_KEYWORD | (KEY_VAR << 8):    {STATE_VAR, 0},
-			LEX_KEYWORD | (KEY_TX << 8):     {STATE_TX, CF_TX},
-			LEX_KEYWORD | (KEY_ERROR << 8):  {STATE_EVAL, CF_CMDERROR},
-			LEX_COMMENT:                     {STATE_BODY, 0},
-			LEX_IDENT:                       {STATE_ASSIGNEVAL | STATE_FORK, 0},
-			LEX_EXTEND:                      {STATE_ASSIGNEVAL | STATE_FORK, 0},
-			IS_RCURLY:                       {STATE_POP, 0},
-			0:                               {ERR_MUSTRCURLY, CF_ERROR},
+			LEX_NEWLINE:                       {STATE_BODY, 0},
+			LEX_KEYWORD | (KEY_FUNC << 8):     {STATE_FUNC | STATE_PUSH, 0},
+			LEX_KEYWORD | (KEY_RETURN << 8):   {STATE_EVAL, CF_RETURN},
+			LEX_KEYWORD | (KEY_CONTINUE << 8): {STATE_BODY, CF_CONTINUE},
+			LEX_KEYWORD | (KEY_BREAK << 8):    {STATE_BODY, CF_BREAK},
+			LEX_KEYWORD | (KEY_IF << 8):       {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK | STATE_MUSTEVAL, CF_IF},
+			LEX_KEYWORD | (KEY_WHILE << 8):    {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK | STATE_LABEL | STATE_MUSTEVAL, CF_WHILE},
+			LEX_KEYWORD | (KEY_ELSE << 8):     {STATE_BLOCK | STATE_PUSH, CF_ELSE},
+			LEX_KEYWORD | (KEY_VAR << 8):      {STATE_VAR, 0},
+			LEX_KEYWORD | (KEY_TX << 8):       {STATE_TX, CF_TX},
+			LEX_KEYWORD | (KEY_ERROR << 8):    {STATE_EVAL, CF_CMDERROR},
+			LEX_COMMENT:                       {STATE_BODY, 0},
+			LEX_IDENT:                         {STATE_ASSIGNEVAL | STATE_FORK, 0},
+			LEX_EXTEND:                        {STATE_ASSIGNEVAL | STATE_FORK, 0},
+			IS_RCURLY:                         {STATE_POP, 0},
+			0:                                 {ERR_MUSTRCURLY, CF_ERROR},
 		},
 		{ // STATE_BLOCK
 			LEX_NEWLINE: {STATE_BLOCK, 0},
@@ -298,6 +305,16 @@ func fWhile(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
+func fContinue(buf *[]*Block, state int, lexem *Lexem) error {
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_CONTINUE, 0})
+	return nil
+}
+
+func fBreak(buf *[]*Block, state int, lexem *Lexem) error {
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_BREAK, 0})
+	return nil
+}
+
 func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
 	var (
@@ -443,8 +460,12 @@ func (vm *VM) CompileBlock(input []rune) (*Block, error) {
 			if newState.NewState&STATE_LABEL > 0 {
 				(*blockstack[len(blockstack)-1]).Code = append((*blockstack[len(blockstack)-1]).Code, &ByteCode{CMD_LABEL, 0})
 			}
+			curlen := len((*blockstack[len(blockstack)-1]).Code)
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
 				return nil, err
+			}
+			if (newState.NewState&STATE_MUSTEVAL) > 0 && curlen == len((*blockstack[len(blockstack)-1]).Code) {
+				return nil, fmt.Errorf("there is not eval expression")
 			}
 			nextState = curState
 			//			fmt.Println(`Block`, *blockstack[len(blockstack)-1], len(blockstack)-1)

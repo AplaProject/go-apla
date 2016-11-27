@@ -82,13 +82,15 @@ const (
 	KEY_FALSE
 	KEY_VAR
 	KEY_TX
+	KEY_BREAK
+	KEY_CONTINUE
 	KEY_ERROR
 )
 
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
-		`if`: KEY_IF, `else`: KEY_ELSE, `error`: KEY_ERROR, `while`: KEY_WHILE, `tx`: KEY_TX, `true`: KEY_TRUE, `false`: KEY_FALSE,
-		`var`: KEY_VAR}
+		`if`: KEY_IF, `else`: KEY_ELSE, `error`: KEY_ERROR, `while`: KEY_WHILE, `tx`: KEY_TX,
+		`true`: KEY_TRUE, `false`: KEY_FALSE, `break`: KEY_BREAK, `continue`: KEY_CONTINUE, `var`: KEY_VAR}
 	TYPES = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
 		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
 		`money`: reflect.TypeOf(decimal.New(0, 0)),

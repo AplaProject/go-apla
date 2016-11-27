@@ -63,14 +63,26 @@ func (block *Block) String() (ret string) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
-		{`func loop string {
+		{`func nop {
+			return
+		}
+		
+		func loop string {
 			var i int
-			while i < 10 {
+			while true {//i < 10 {
 				i=i+1
+				if i==5 {
+					continue
+				}
+				if i == 121 {
+					i = i+ 4
+					break
+				}
 			}
+			nop()
 			return Sprintf("val=%d", i)
-		}`, `loop`, `val=10`},
-		/*		{`contract my {
+		}`, `loop`, `val=125`},
+		{`contract my {
 							tx {
 								Par1 int
 								Par2 string
@@ -97,7 +109,7 @@ func TestVMCompile(t *testing.T) {
 								return "OK"
 							}
 						}
-						`, `mytest.init`, `OK`},*/
+						`, `mytest.init`, `OK`},
 		{`func money_test string {
 					var my2, m1 money
 					my2 = 100

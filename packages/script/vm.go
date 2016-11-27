@@ -31,6 +31,7 @@ const (
 	STATUS_NORMAL = iota
 	STATUS_RETURN
 	STATUS_CONTINUE
+	STATUS_BREAK
 
 //	STATUS_ERROR
 )
@@ -254,11 +255,17 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					status = STATUS_NORMAL
 					continue
 				}
+				if status == STATUS_BREAK {
+					status = STATUS_NORMAL
+					break
+				}
 			}
 		case CMD_LABEL:
 			labels = append(labels, ci)
 		case CMD_CONTINUE:
 			status = STATUS_CONTINUE
+		case CMD_BREAK:
+			status = STATUS_BREAK
 		case CMD_ASSIGNVAR:
 			assign = cmd.Value.([]*VarInfo)
 		case CMD_ASSIGN:
@@ -454,7 +461,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			//			status = STATUS_ERROR
 			break
 		}
-		if status == STATUS_RETURN || status == STATUS_CONTINUE {
+		if status == STATUS_RETURN || status == STATUS_CONTINUE || status == STATUS_BREAK {
 			break
 		}
 		if (cmd.Cmd >> 8) == 2 {
@@ -462,6 +469,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack = rt.stack[:size-1]
 		}
 	}
+	/*	if status == STATUS_BREAK {
+		status = STATUS_NORMAL
+	}*/
 	if status == STATUS_RETURN {
 		//		fmt.Println(`Status`, start, rt.stack)
 		if rt.blocks[len(rt.blocks)-1].Block.Type == OBJ_FUNC {
