@@ -136,7 +136,9 @@ func (p *Parser) EditTable() error {
 	if err != nil {
 		return err
 	}
-
+	for _, action := range []string{"general_update", "new_column", "insert"} {
+		p.TxMaps.String[action] = strings.Replace(p.TxMaps.String[action], `"`, `\"`, -1)
+	}
 	//err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = columns_and_permissions || '{"general_update": ?, "new_column": ?, "insert": ?}', rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, `"`+p.TxMaps.String["insert"]+`"`, `"`+p.TxMaps.String["new_column"]+`"`, rbId, p.TxMaps.String["table_name"])
 	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{general_update}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, rbId, p.TxMaps.String["table_name"])
 	if err != nil {
