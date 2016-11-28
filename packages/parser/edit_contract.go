@@ -69,8 +69,7 @@ func (p *Parser) EditContractFront() error {
 		return p.ErrInfo(err)
 	}
 	if len(conditions) > 0 {
-		ret, err := smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
-			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+		ret, err := p.EvalIf(conditions)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
