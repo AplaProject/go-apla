@@ -211,6 +211,9 @@ func DBIntExt(tblname string, name string, id int64, idname string) (ret int64, 
 	if err != nil {
 		return 0, err
 	}
+	if len(val) == 0 {
+		return 0, nil
+	}
 	return strconv.ParseInt(val, 10, 64)
 }
 
@@ -248,4 +251,9 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 	}
 	val, _ := decimal.NewFromString(balance)
 	return val
+}
+
+func (p *Parser) EvalIf(conditions string) (bool, error) {
+	return smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
+		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
 }

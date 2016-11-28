@@ -414,8 +414,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 		return err
 	}
 	if len(conditions) > 0 {
-		ret, err := smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
-			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+		ret, err := p.EvalIf(conditions)
 		if err != nil {
 			return err
 		}
@@ -438,8 +437,7 @@ func (p *Parser) AccessTable(table, action string) error {
 		return err
 	}
 	if len(tablePermission[action]) > 0 {
-		ret, err := smart.EvalIf(tablePermission[action], &map[string]interface{}{`state`: p.TxStateID,
-			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
+		ret, err := p.EvalIf(tablePermission[action])
 		if err != nil {
 			return err
 		}
@@ -464,8 +462,7 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	}
 	for _, col := range columns {
 		if cond, ok := columnsAndPermissions[col]; ok && len(cond) > 0 {
-			ret, err := smart.EvalIf(cond, &map[string]interface{}{`state`: p.TxStateID,
-				`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+			ret, err := p.EvalIf(cond)
 			if err != nil {
 				return err
 			}
@@ -490,8 +487,7 @@ func (p *Parser) AccessChange(table, name string) error {
 	}
 
 	if len(conditions) > 0 {
-		ret, err := smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
-			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+		ret, err := p.EvalIf(conditions)
 		if err != nil {
 			return err
 		}

@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -87,6 +88,11 @@ func (p *Parser) NewStateParametersFront() error {
 		return p.ErrInfo("conditions false")
 	}
 	*/
+	if len(p.TxMap["conditions"]) > 0 {
+		if err := smart.CompileEval(string(p.TxMap["conditions"])); err != nil {
+			return p.ErrInfo(err)
+		}
+	}
 	// must be supplemented
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
