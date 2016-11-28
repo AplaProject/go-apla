@@ -285,8 +285,9 @@ func Image(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		alt = pars[1]
 	}
-	rez := ""
-	if len(pars[0]) > 0 {
+	rez := " "
+	if len(pars[0]) > 0 && (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
+		strings.HasSuffix(pars[0], `png`)) {
 		rez = fmt.Sprintf(`<img src="%s" alt="%s" style="display:block;">`, pars[0], alt)
 	}
 	return rez
