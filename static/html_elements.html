@@ -1,8 +1,27 @@
 <script>
 	$(".aside .nav li").removeClass("active");
-	$(".company, .dashboard_company").addClass("active");
+	$(".html_elements").addClass("active");
 	
-	$( "#dl_modal" ).load( "content?controllerHTML=modal_company", { }, function() {});
+	$(".inputmask").inputmask();
+	
+	$(".selectbox").select2({
+		theme: 'bootstrap'
+	});
+	
+	$(".filestyle").filestyle();
+	
+	$(".datatable").show().dataTable({
+		paging:   true,
+		ordering: true,
+		searching: true,
+		info:     true,
+		"pageLength": 10
+	});
+	
+	$(".dataTables_length select").select2({
+		minimumResultsForSearch: Infinity,
+		theme: 'bootstrap'
+	});
 	
 	// CLASSYLOADER
 	// ----------------------------------- 
@@ -54,6 +73,7 @@
 <div class="content-heading">
    HTML-Elements
 </div>
+<h4>Dashboard Links</h4>
 <div class="row dashboard">
    <div class="col-lg-4 col-md-6 menu">
 	  <!-- START panel-->
@@ -64,13 +84,13 @@
 				  <em class="fa fa-building-o fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">2</div>
-				  <p class="m0">Total companies</p>
+				  <div class="text-lg">EGS</div>
+				  <p class="m0">Text</p>
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_new_company" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">New company</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -87,13 +107,13 @@
 				  <em class="fa fa-money fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">3</div>
-				  <p class="m0">Total projects</p>
+				  <div class="text-lg">EGS</div>
+				  <p class="m0">Text</p>
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_crowdfunding" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">CrowdFunding</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -110,13 +130,13 @@
 				  <em class="fa fa-exchange fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">1000 GLA</div>
-				  <p class="m0">Currency</p>
+				  <div class="text-lg">EGS</div>
+				  <p class="m0">Text</p>
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_currency_exchange" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">Currency Exchange</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -133,13 +153,13 @@
 				  <em class="fa fa-share-alt fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">1000 GLA</div>
-				  <p class="m0">Currency</p>
+				  <div class="text-lg">EGS</div>
+				  <p class="m0">Text</p>
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_shares_exchange" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">Shares Exchange</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -156,13 +176,13 @@
 				  <em class="fa fa-plus fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">1000 GLA</div>
-				  <p class="m0">Shares</p>
+				  <div class="text-lg">EGS</div>
+				  <p class="m0">Text</p>
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_new_shares" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">New shares</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -179,13 +199,13 @@
 				  <em class="fa fa-smile-o fa-5x"></em>
 			   </div>
 			   <div class="col-xs-9 text-right">
-				  <div class="text-lg">&nbsp;</div>
-				  <p class="m0">&nbsp;</p>
+				  <div class="text-lg">EGS</div>
+				  <p class="m0">Text</p>
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_new_good" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">New good</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -207,8 +227,8 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_new_item" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">New item</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -230,8 +250,31 @@
 			   </div>
 			</div>
 		 </div>
-		 <a href="#company_new_order" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
-			<span class="pull-left">New order</span>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
+			<span class="pull-right">
+			   <em class="fa fa-chevron-circle-right"></em>
+			</span>
+		 </a>
+	  </div>
+	  <!-- END panel-->
+   </div>
+   <div class="col-lg-4 col-md-6 menu">
+	  <!-- START panel-->
+	  <div class="panel panel-inverse">
+		 <div class="panel-heading">
+			<div class="row">
+			   <div class="col-xs-3">
+				  <em class="fa fa-globe fa-5x"></em>
+			   </div>
+			   <div class="col-xs-9 text-right">
+				  <div class="text-lg">&nbsp;</div>
+				  <p class="m0">&nbsp;</p>
+			   </div>
+			</div>
+		 </div>
+		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block">
+			<span class="pull-left">Link</span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -240,6 +283,61 @@
 	  <!-- END panel-->
    </div>
 </div>
+
+<h4>Panels</h4>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+	<div class="panel-body">
+		<form>
+			<div class="form-group">
+				<label class="control-label" for="input">Input</label>
+				<input type="text" class="form-control" id="input">
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="inputmask">Input with mask (data-inputmask="'mask':'9999-9999-9999-9999-9999'")</label>
+				<input type="text" class="inputmask form-control" id="inputmask" data-inputmask="'mask':'9999-9999-9999-9999-9999'">
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="inputmask1">Input with mask (data-inputmask="'mask':'aa-99999'")</label>
+				<input type="text" class="inputmask form-control" id="inputmask1" data-inputmask="'mask':'aa-99999'">
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="inputmask2">Input with mask (data-inputmask="'alias': 'dd/mm/yyyy'")</label>
+				<input type="text" class="inputmask form-control" id="inputmask2" data-inputmask="'alias': 'dd/mm/yyyy'">
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="textarea">Textarea</label>
+				<textarea class="form-control" id="textarea"></textarea>
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="selectbox">Selectbox</label>
+				<select id="selectbox" class="selectbox form-control">
+					<option value="">Category 1</option>
+					<option value="">Category 2</option>
+					<option value="">Category 3</option>
+					<option value="">Category 4</option>
+					<option value="">Category 5</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="filestyle">File</label>
+				<input type="file" class="filestyle form-control" id="filestyle">
+			</div>
+		</form>
+	</div>
+	<div class="panel-footer">
+		<div class="clearfix">
+			<div class="pull-left">
+				<button type="button" class="btn btn-primary">Button on left</button>
+			</div>
+			<div class="pull-right">
+				<button type="button" class="btn btn-primary" data-tool="panel-refresh" id="btn_id2" onClick="preloader(this);">Button on right and with preloader</button>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- END panel-->
+<!-- START panel-->
 <div class="panel b text-center">
  <div class="panel-body">
 	<p class="h4 text-bold mb0">Account Detail</p>
@@ -251,6 +349,7 @@
 	<p>Joined on July, 2016</p>
  </div>
 </div>
+<!-- END panel-->
 <!-- START panel-->
 <div class="panel panel-default">
  <div class="panel-heading">Your Companies</div>
@@ -283,10 +382,8 @@
  </div>
 </div>
 <!-- END panel-->
-<div class="text-center" style="margin-bottom:20px;"><a class="btn btn-primary btn-lg" href="#company_application_purchase">Buy product</a></div>
 <!-- START panel-->
 <div class="panel panel-default">
- <div class="panel-heading">Your Orders</div>
  <div class="panel-body">
 	<!-- START table-responsive-->
 	<div class="table-responsive">
@@ -328,6 +425,68 @@
  </div>
 </div>
 <!-- END panel-->
+<!-- START panel-->
+<div class="panel panel-default">
+ <div class="panel-body">
+	<!-- START table-responsive-->
+	<div class="table-responsive">
+	   <table class="datatable table table-striped table-bordered table-hover">
+		  <thead>
+			 <tr>
+				<th>Company</th>
+				<th width="70">Item id</th>
+				<th>Price</th>
+				<th>Qty</th>
+				<th>Total</th>
+				<th>Discount</th>
+				<th>Smart-contracts</th>
+			 </tr>
+		  </thead>
+		  <tbody>
+			 <tr>
+				<td><a href="#">Google</a></td>
+				<td>1</td>
+				<td>100</td>
+				<td>1</td>
+				<td>10000</td>
+				<td>Yes</td>
+				<td><a href="#company_smart_contracts">Add</a></td>
+			 </tr>
+			 <tr>
+				<td><a href="#">Facebook</a></td>
+				<td>2</td>
+				<td>1000</td>
+				<td>10</td>
+				<td>100000</td>
+				<td>No</td>
+				<td><a href="#">Detail</a></td>
+			 </tr>
+		  </tbody>
+	   </table>
+	</div>
+	<!-- END table-responsive-->
+ </div>
+</div>
+<!-- END panel-->
+
+<h4 class="page-header">Buttons</h4>
+<div class="text-center">
+	<a class="btn btn-default" href="#">Button default</a>
+	<a class="btn btn-primary" href="#">Button primary</a>
+	<a class="btn btn-success" href="#">Button success</a>
+	<a class="btn btn-info" href="#">Button info</a>
+	<a class="btn btn-warning" href="#">Button warning</a>
+	<a class="btn btn-danger" href="#">Button danger</a>
+</div>
+<div class="text-center m-lg">
+	<a class="btn btn-primary btn-sm" href="#">Button small</a>
+	<a class="btn btn-primary btn-lg" href="#">Button large</a>
+</div>
+<div>
+	<a class="btn btn-primary btn-block" href="#">Button block</a>
+</div>
+
+<h4 class="page-header">Diagrams</h4>
 <!-- START radial charts-->
 <div class="row mb-lg">
    <div class="col-sm-3 col-xs-6 text-center">
