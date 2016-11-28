@@ -85,7 +85,7 @@ func init() {
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit, `Image`: Image,
-		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
+		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
@@ -233,9 +233,33 @@ func BtnTemplate(vars *map[string]string, pars ...string) string {
 	if len(pars) >= 3 {
 		params = pars[2]
 	}
-	return fmt.Sprintf(`<button type="button" class="btn btn-primary"onclick="load_template('%s', {%s} )">%s</button>`, pars[0], params, pars[1])
+	if params == `''` {
+		params = ``
+	}
+	class := `"btn btn-primary"`
+	if len(pars) >= 4 {
+		class = pars[3]
+	}
+	return fmt.Sprintf(`<button type="button" class=%s onclick="load_template('%s', {%s} )">%s</button>`, class, pars[0], params, pars[1])
 }
 
+func BtnSys(vars *map[string]string, pars ...string) string {
+	params := ``
+	if len(pars) < 2 {
+		return ``
+	}
+	if len(pars) >= 3 {
+		params = pars[2]
+	}
+	if params == `''` {
+		params = ``
+	}
+	class := `"btn btn-primary"`
+	if len(pars) >= 4 {
+		class = pars[3]
+	}
+	return fmt.Sprintf(`<button type="button" class=%s onclick="load_page('%s', {%s} )">%s</button>`, class, pars[0], params, pars[1])
+}
 func Table(vars *map[string]string, pars *map[string]string) string {
 	fields := `*`
 	order := ``
