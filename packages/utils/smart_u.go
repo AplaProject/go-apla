@@ -194,6 +194,7 @@ func SetVar(vars *map[string]string, pars ...string) string {
 		} else {
 			val = lr[1]
 		}
+		val = strings.Replace(val, `#!`, `#`, -1)
 		(*vars)[strings.TrimSpace(lr[0])] = strings.Trim(val, " `\"")
 	}
 	return ``

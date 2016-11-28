@@ -44,9 +44,9 @@ SetVar(
     `page_dashboard_default #= MarkDown : ## My property
            Table{
                Table: #state_id#_property
-               Where: citizen_id='#citizen#'
+               Where: citizen_id='#!citizen#'
                Order: id
-               Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, #citizen_id#]]
+               Columns: [[ID, #!id#], [Name, #!name#], [Coordinates, #!coords#], [Citizen ID, #!citizen_id#]]
            }`,
 
     `page_government #= TemplateNav(AddProperty, AddProperty) BR()
@@ -54,7 +54,7 @@ SetVar(
             Table{
                 Table: #state_id#_property
                 Order: id
-                Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, #citizen_id#], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
+                Columns: [[ID, #!id#], [Name, #!name#], [Coordinates, #!coords#], [Citizen ID, #!citizen_id#], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#!id#")]]
             }`
 
 )
