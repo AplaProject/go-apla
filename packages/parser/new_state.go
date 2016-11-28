@@ -274,7 +274,7 @@ Navigation( Dashboard )
 PageTitle : StateValue(state_name)
 MarkDown : # Welcome, citizen!
 Image(StateValue(state_flag))
-TemplateNav(government)
+BtnTemplate(government, Government)
 PageEnd:
 `, `menu_default`, sid,
 
