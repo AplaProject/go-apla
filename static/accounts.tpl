@@ -56,7 +56,7 @@ MarkDown : ## Accounts
 Table{
 	Table: #state_id#_accounts
 	Order: id
-	Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
+	Columns: [[ID, #!id#], [Amount, #!amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#!id#")]]
 }`,
 
     `page_government #= BtnTemplate(AddAccount, AddAccount, '', 'btn btn-primary btn-lg')
@@ -67,7 +67,7 @@ Table{
      Table{
          Table: #state_id#_citizens
          Order: id
-         Columns: [[Avatar,Image(#avatar#)], [ID, Address(#id#)], [Name, #name#]]
+         Columns: [[Avatar,Image(#!avatar#)], [ID, Address(#!id#)], [Name, #!name#]]
      }`,
      page_send_money = `Title : Best country
                         Navigation( LiTemplate(government),non-link text)

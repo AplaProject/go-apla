@@ -49,13 +49,15 @@ SetVar(
                Columns: [[ID, #!id#], [Name, #!name#], [Coordinates, #!coords#], [Citizen ID, #!citizen_id#]]
            }`,
 
-    `page_government #= TemplateNav(AddProperty, AddProperty) BR()
+    `page_government #=
             MarkDown : ## Property
             Table{
                 Table: #state_id#_property
                 Order: id
                 Columns: [[ID, #!id#], [Name, #!name#], [Coordinates, #!coords#], [Citizen ID, #!citizen_id#], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#!id#")]]
-            }`
+            }
+             BtnTemplate(AddProperty, AddProperty, '', 'btn btn-primary btn-lg')
+            `
 
 )
 TextHidden( sc_value1, sc_value2, sc_conditions )

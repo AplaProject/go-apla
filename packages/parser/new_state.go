@@ -275,6 +275,8 @@ PageTitle : StateValue(state_name)
 MarkDown : # Welcome, citizen!
 Image(StateValue(state_flag))BR()
 BtnTemplate(government, Government)
+MarkDown : ### My address
+Address()
 PageEnd:
 `, `menu_default`, sid,
 
@@ -294,7 +296,7 @@ PageEnd:
 `, `government`, sid,
 
 		`citizens`, `Title : Citizens
-Navigation( Citizens )
+Navigation( LiTemplate(government), Citizens)
 PageTitle : Citizens
 Table{
     Table: `+id+`_citizens
@@ -318,7 +320,7 @@ PageEnd:
 `, `menu_default`, sid,
 
 		`CheckCitizens`, `Title : Check citizens requests
-Navigation( Citizens )
+Navigation( LiTemplate(government), Citizens)
 PageTitle : Citizens requests
 Table{
     Table: `+id+`_citizenship_requests
@@ -327,7 +329,7 @@ Table{
 	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnTemplate(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnTemplate(RejectCitizen,Reject,"RequestId:#id#")]]
 }
 PageEnd:
-`, `menu_default`, sid,
+`, `government`, sid,
 
 		`citizen_profile`, `Title:Profile
 Navigation(LiTemplate(Citizen),Editing profile)
@@ -359,6 +361,7 @@ PageEnd:`, `menu_default`, sid,
 [Dashboard](dashboard_default)
 [Tables](sys.listOfTables)
 [Smart contracts](sys.contracts)
+[Apps list](sys.app_catalog)
 [Interface](sys.interface)
 [Checking citizens](CheckCitizens)`, sid)
 	if err != nil {
