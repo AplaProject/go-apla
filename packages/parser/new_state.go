@@ -273,7 +273,7 @@ func (p *Parser) NewState() error {
 Navigation( Dashboard )
 PageTitle : StateValue(state_name)
 MarkDown : # Welcome, citizen!
-Image(StateValue(state_flag))
+Image(StateValue(state_flag))BR()
 BtnTemplate(government, Government)
 PageEnd:
 `, `menu_default`, sid,
@@ -282,12 +282,14 @@ PageEnd:
 Navigation( LiTemplate(dashboard_default, citizen),goverment)
 PageTitle : StateValue(state_name)
 MarkDown : # Welcome, government!
-SysLink(listOfTables, Tables) BR()
-SysLink(contracts, Contracts) BR()
-SysLink(interface, Interface) BR()
-TemplateNav(CheckCitizens, Check citizens)BR()
-TemplateNav(citizens, Citizens) BR()
-SysLink(app_catalog, App catalog) BR()
+BtnSys(listOfTables, Tables, '', 'btn btn-pill-left btn-primary')
+BtnSys(contracts, Contracts, '', 'btn btn-primary')
+BtnSys(app_catalog, App catalog, '', 'btn btn-primary')
+BtnSys(interface, Interface, '', 'btn btn-pill-right btn-primary') BR() BR()
+
+BtnTemplate(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg')
+BtnTemplate(citizens, Citizens, '', 'btn btn-primary btn-lg')
+
 PageEnd:
 `, `government`, sid,
 

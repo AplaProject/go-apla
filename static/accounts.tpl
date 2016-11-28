@@ -59,9 +59,9 @@ Table{
 	Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
 }`,
 
-    `page_government #= TemplateNav(AddAccount, AddAccount) BR()
-     TemplateNav(SendMoney, SendMoney) BR()
-     TemplateNav(UpdAmount, UpdAmount) BR()
+    `page_government #= BtnTemplate(AddAccount, AddAccount, '', 'btn btn-primary btn-lg')
+             BtnTemplate(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
+             BtnTemplate(UpdAmount, UpdAmount, '', 'btn btn-primary btn-lg') BR()
 
      MarkDown : ## Citizens
      Table{
