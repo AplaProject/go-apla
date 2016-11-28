@@ -439,7 +439,7 @@ func (p *Parser) AccessTable(table, action string) error {
 	}
 	if len(tablePermission[action]) > 0 {
 		ret, err := smart.EvalIf(tablePermission[action], &map[string]interface{}{`state`: p.TxStateID,
-			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID})
+			`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
 		if err != nil {
 			return err
 		}

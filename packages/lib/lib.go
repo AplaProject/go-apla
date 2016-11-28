@@ -543,6 +543,10 @@ func Escape(data string) string {
 	return string(out)
 }
 
+func EscapeForJson(data string) string {
+	return strings.Replace(data, `"`, `\"`, -1)
+}
+
 func CalculateMd5(filePath string) ([]byte, error) {
 	var result []byte
 	file, err := os.Open(filePath)

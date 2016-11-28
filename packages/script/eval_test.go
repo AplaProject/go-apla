@@ -61,6 +61,7 @@ func Multi(a, b int64) (int64, error) {
 
 func TestEvalVar(t *testing.T) {
 	test := []TestComp{
+		{"Multi( (34+35)*2, Multi( citizenId, 56))== 1 || Multi( (34+35)*2, Multi( citizenId, 56))== 0", `56972`},
 		{"2+ Multi( (34+35)*2, Multi( citizenId, 56)) /2", `56972`},
 		{"#my[id=3345].wa", "Invalid result column name wa [1:14]"},
 		{"7665 + #my[id=345].wallet*2 == 7915", "true"},
@@ -93,10 +94,15 @@ func TestEvalVar(t *testing.T) {
 		}
 		//		fmt.Println(out)
 	}
+}*/
+
+func Multi(a, b int64) (int64, error) {
+	return a + b*2, nil
 }
-*/
+
 func TestEvalIf(t *testing.T) {
 	test := []TestComp{
+		{"Multi( (34+35)*2, Multi( $citizenId, 56))== 1 || Multi( (34+35)*2, Multi( $citizenId, 56))== 0", `false`},
 		{"5 + 9 > 10", `true`},
 		{"34 == 45", `false`},
 		{"1345", `true`},
@@ -108,10 +114,10 @@ func TestEvalIf(t *testing.T) {
 	vars := map[string]interface{}{
 		`citizenId`: 56789,
 		`wallet_id`: 893451,
-		//		`Multi`:     Multi,
 		//		`Table`:     MyTable,
 	}
 	vm := NewVM()
+	vm.Extend(&ExtendData{map[string]interface{}{"Multi": Multi}, nil})
 	for i := 0; i < 2; i++ {
 		for _, item := range test {
 			out, err := vm.EvalIf(item.Input, &vars)
