@@ -73,6 +73,10 @@ type PageTpl struct {
 	Data     *CommonPage
 }
 
+var (
+	divs = make([]int, 0)
+)
+
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		"Balance":    Balance,
@@ -84,7 +88,8 @@ func init() {
 	}})
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
-	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit, `Image`: Image,
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
+		`Image`: Image, `Div`: Div, `P`: P, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -172,6 +177,62 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 		(*vars)[pars[0]+`_`+key] = val
 	}
 	return ``
+}
+
+func getClass(class string) string {
+	list := strings.Split(class, ` `)
+	for i, ilist := range list {
+		if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
+			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
+			list[i] = `col-` + ilist
+		}
+	}
+	return strings.Join(list, ` `)
+}
+
+func getTag(tag string, pars ...string) (out string) {
+	if len(pars) == 0 {
+		return
+	}
+	out = fmt.Sprintf(`<%s class="%s">`, tag, getClass(pars[0]))
+	for i := 1; i < len(pars); i++ {
+		out += pars[i]
+	}
+	return out + fmt.Sprintf(`</%s>`, tag)
+}
+
+func Div(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`div`, pars...)
+}
+
+func P(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`p`, pars...)
+}
+
+func Em(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`em`, pars...)
+}
+
+func Small(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`small`, pars...)
+}
+
+func Divs(vars *map[string]string, pars ...string) (out string) {
+	count := 0
+	for _, item := range pars {
+		out += fmt.Sprintf(`<div class="%s">`, getClass(item))
+		count++
+	}
+	divs = append(divs, count)
+	return
+}
+
+func DivsEnd(vars *map[string]string, pars ...string) (out string) {
+	if len(divs) > 0 {
+		out = strings.Repeat(`</div>`, divs[len(divs)-1])
+		divs = divs[:len(divs)-1]
+	}
+	return
 }
 
 func SetVar(vars *map[string]string, pars ...string) string {
@@ -307,13 +368,17 @@ func TxForm(vars *map[string]string, pars *map[string]string) string {
 
 func Image(vars *map[string]string, pars ...string) string {
 	alt := ``
+	class := ``
 	if len(pars) > 1 {
 		alt = pars[1]
+	}
+	if len(pars) > 2 {
+		class = pars[2]
 	}
 	rez := " "
 	if len(pars[0]) > 0 && (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
 		strings.HasSuffix(pars[0], `png`)) {
-		rez = fmt.Sprintf(`<img src="%s" alt="%s" style="display:block;">`, pars[0], alt)
+		rez = fmt.Sprintf(`<img src="%s" class="%s" alt="%s" stylex="display:block;">`, pars[0], class, alt)
 	}
 	return rez
 }
@@ -534,6 +599,26 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 	}
 	return lib.AddressToString(uint64(id))
 }
+
+/*func AddressToId(vars *map[string]string, pars ...string) string {
+	var idval int64
+	if len(pars) == 0 || len(pars[0]) == 0 {
+		uid,_ := strconv.ParseInt((*vars)[`citizen`], 10, 64)
+		idval = int64(uid)
+	} else {
+		if len(pars[0]) > 21 {
+			idval = lib.StringToAddress(pars[0])
+		} else {
+			if pars[0][0] == '-' {
+				idval,_ = strconv.ParseInt(pars[0], 10, 64)
+			} else {
+				uid,_ := strconv.ParseUint(pars[0], 10, 64)
+				idval = int64(uid)
+			}
+		}
+	}
+	return fmt.Sprintf(`%d`, idval)
+}*/
 
 func ProceedTemplate(html string, data interface{}) (string, error) {
 
