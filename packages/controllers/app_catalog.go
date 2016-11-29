@@ -30,6 +30,7 @@ type AppInfo struct {
 	Name  string
 	Title string
 	Desc  string
+	Img  string
 }
 
 type AppsList []AppInfo
@@ -73,6 +74,7 @@ func (c *Controller) AppCatalog() (string, error) {
 			app.Name = item[:len(item)-4]
 			app.Title = getPar(string(data), `Head`)
 			app.Desc = getPar(string(data), `Desc`)
+			app.Img = getPar(string(data), `Img`)
 			list = append(list, app)
 		}
 	}

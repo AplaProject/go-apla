@@ -12,9 +12,14 @@ SetVar(
                  	Name string
 
                      }
+                    func front {
+                 	    if AddressToId($CitizenId) == 0 {
+                            error "invalid address"
+                       }
 
+                 	}
                  	func main {
-                 		DBInsert(Table( "property"), "coords,citizen_id,name", $Coords, $CitizenId, $Name)
+                 		DBInsert(Table( "property"), "coords,citizen_id,name", $Coords, AddressToId($CitizenId), $Name)
                  	}
                  }`,
     sc_value2 = `contract EditProperty {
@@ -24,8 +29,13 @@ SetVar(
                  	        CitizenId string
                  	        Name string
                  	}
+                 	func front {
+                               if AddressToId($CitizenId) == 0 {
+                                                error "invalid address"
+                                }
+                    }
                  	func main {
-                 	  DBUpdate(Table( "property"), $PropertyId, "coords,citizen_id,name", $Coords, $CitizenId, $Name)
+                 	  DBUpdate(Table( "property"), $PropertyId, "coords,citizen_id,name", $Coords, AddressToId($CitizenId), $Name)
                  	}
                  }`,
 
@@ -62,8 +72,9 @@ SetVar(
 )
 TextHidden( sc_value1, sc_value2, sc_conditions )
 TextHidden( page_add_property, page_edit_property, page_dashboard_default, page_government )
-Json(`Head: "Adding property table",
-	Desc: "This application adds property table.",
+Json(`Head: "Property",
+	Desc: "Property",
+	Img: "/static/img/apps/property.jpg",
 	OnSuccess: {
 		script: 'template',
 		page: 'government',

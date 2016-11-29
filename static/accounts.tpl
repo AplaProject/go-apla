@@ -88,8 +88,9 @@ Table{
 TextHidden( sc_value1, sc_value2, sc_value3, sc_conditions )
 TextHidden( page_dashboard_default, page_government, page_send_money, page_add_account, page_upd_amount )
 
-Json(`Head: "Adding account column",
-	Desc: "This application adds citizen_id column into account table.",
+Json(`Head: "Money",
+	Desc: "Money",
+	Img: "/static/img/apps/money.jpg",
 	OnSuccess: {
 		script: 'template',
 		page: 'government',
