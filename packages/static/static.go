@@ -304,6 +304,7 @@
 // static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf
 // static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff
 // static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2
+// static/vendor/sparkline/index.js
 // static/vendor/spinkit/css/spinkit.css
 // static/vendor/sweetalert/dist/sweetalert.css
 // static/vendor/sweetalert/dist/sweetalert.min.js
@@ -5810,6 +5811,24 @@ func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2() (*asset, error) {
 	return a, err
 }
 
+// staticVendorSparklineIndexJs reads file data from disk. It returns an error on failure.
+func staticVendorSparklineIndexJs() (*asset, error) {
+	path := "static/vendor/sparkline/index.js"
+	name := "static/vendor/sparkline/index.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticVendorSpinkitCssSpinkitCss reads file data from disk. It returns an error on failure.
 func staticVendorSpinkitCssSpinkitCss() (*asset, error) {
 	path := "static/vendor/spinkit/css/spinkit.css"
@@ -6310,6 +6329,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf": staticVendorSimpleLineIconsFontsSimpleLineIconsTtf,
 	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff": staticVendorSimpleLineIconsFontsSimpleLineIconsWoff,
 	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2": staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2,
+	"static/vendor/sparkline/index.js": staticVendorSparklineIndexJs,
 	"static/vendor/spinkit/css/spinkit.css": staticVendorSpinkitCssSpinkitCss,
 	"static/vendor/sweetalert/dist/sweetalert.css": staticVendorSweetalertDistSweetalertCss,
 	"static/vendor/sweetalert/dist/sweetalert.min.js": staticVendorSweetalertDistSweetalertMinJs,
@@ -6775,6 +6795,9 @@ var _bintree = &bintree{nil, map[string]*bintree{
 					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{}},
 					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{}},
 				}},
+			}},
+			"sparkline": &bintree{nil, map[string]*bintree{
+				"index.js": &bintree{staticVendorSparklineIndexJs, map[string]*bintree{}},
 			}},
 			"spinkit": &bintree{nil, map[string]*bintree{
 				"css": &bintree{nil, map[string]*bintree{
