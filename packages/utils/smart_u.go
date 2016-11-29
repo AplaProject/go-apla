@@ -95,7 +95,7 @@ func init() {
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `TextHidden`: TextHidden,
-		`ValueById`: ValueById,
+		`ValueById`: ValueById, `FullScreen`: FullScreen,
 	})
 }
 
@@ -163,6 +163,16 @@ func JsonScript(vars *map[string]string, pars ...string) string {
 %s 
 }
 </script>`, pars[0])
+}
+
+func FullScreen(vars *map[string]string, pars ...string) string {
+	wide := `add`
+	if len(pars) > 0 && pars[0] == `0` {
+		wide = `remove`
+	}
+	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+	$("body").%sClass('wide');
+</script>`, wide)
 }
 
 func GetRowVars(vars *map[string]string, pars ...string) string {
