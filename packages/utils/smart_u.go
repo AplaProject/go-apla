@@ -95,7 +95,7 @@ func init() {
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `TextHidden`: TextHidden,
-		`ValueById`: ValueById, `FullScreen`: FullScreen,
+		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring,
 	})
 }
 
@@ -614,8 +614,9 @@ func Ring(vars *map[string]string, pars ...string) string {
 	class := `col-md-3`
 	title := ``
 	count := ``
+	size := 18
 	if len(pars) > 2 {
-		class = getClass(pars[2])
+		size = int(StrToInt64(pars[2]))
 	}
 	if len(pars) > 1 {
 		title = getClass(pars[1])
@@ -625,8 +626,8 @@ func Ring(vars *map[string]string, pars ...string) string {
 	}
 	return fmt.Sprintf(`<div class="%s"><div class="panel panel-default"> <div class="panel-body">
 			<div class="text-info">%s</div>
-			<div class="population">%s</div>
-		 </div></div></div>`, class, title, count)
+			<div class="population" style="font-size:%dpx">%s</div>
+		 </div></div></div>`, class, title, size, count)
 }
 
 /*func AddressToId(vars *map[string]string, pars ...string) string {
