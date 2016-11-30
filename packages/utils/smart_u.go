@@ -681,7 +681,7 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 	if len(pars) < 2 {
 		return ``
 	}
-	if len(pars) > 2 && pars[2] != `NULL` {
+	if len(pars) > 2 && pars[2] != `NULL` && pars[2] != `#my_avatar#` {
 		image = pars[2]
 	}
 	if len(pars) > 3 {

@@ -45,21 +45,13 @@ SetVar(
                          DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
                  	}
                  }`,
-    `page_dashboard_default #= Divs(md-6, panel panel-default panel-body)
-
-                               MarkDown : ## Accounts
-                               Table{
-                               	Table: #state_id#_accounts
-                               	Order: id
-                               	Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
-                               }
-                               MarkDown : ## My account
-                               Table{
-                               	Table: #state_id#_accounts
-                               		Where: citizen_id='#citizen#'
-                               		Columns: [[amount, #amount#]]
-                               }
-
+    `page_dashboard_default #= Divs(md-7)
+                               Divs(md-8)
+                               WiBalance( GetOne(amount, #state_id#_accounts, "citizen_id", #citizen#), StateValue(currency_name) )
+                               DivsEnd:
+                               Divs(md-8)
+                               WiAccount( GetOne(id, #state_id#_accounts, "citizen_id", #citizen#) )
+                               DivsEnd:
                                DivsEnd:`,
 
     `page_government #=
