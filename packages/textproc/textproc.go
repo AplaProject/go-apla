@@ -177,7 +177,7 @@ func funcProcess(name string, params [][]rune, vars *map[string]string) string {
 	for _, item := range params {
 		ipar := strings.TrimSpace(string(item))
 		val := Process(ipar, vars)
-		if len(val) == 0 {
+		if val == `NULL` {
 			val = Macro(ipar, vars)
 		}
 		pars = append(pars, val)
@@ -192,7 +192,7 @@ func mapProcess(name string, params *map[string]string, vars *map[string]string)
 		//		ipar := strings.TrimSpace(string(item))
 		if len(item) > 0 && item[0] != '[' {
 			val = Process(item, vars)
-			if len(val) == 0 {
+			if val == `NULL` {
 				val = Macro(item, vars)
 			}
 		} else {
@@ -211,7 +211,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		isKey, toLine        bool
 		pair                 rune
 	)
-
+	noproc := true
 	name := make([]rune, 0, 128)
 	key := make([]rune, 0, 128)
 	value := make([]rune, 0, 128)
@@ -330,29 +330,34 @@ func Process(input string, vars *map[string]string) (out string) {
 		}
 		if ch == '(' || ch == ':' {
 			if _, ok := engine.funcs[string(name)]; !ok {
-				return
+				return `NULL`
 			}
+			noproc = false
 			params = make([][]rune, 1)
 			params[0] = make([]rune, 0)
 			isFunc++
 			toLine = ch == ':'
 		} else if ch == '{' {
 			if _, ok := engine.maps[string(name)]; !ok {
-				return
+				return `NULL`
 			}
 			pmap = make(map[string]string)
 			isKey = true
+			noproc = false
 			key = key[:0]
 			isMap++
 		} else {
 			name = append(name, ch)
 			if len(name) > 64 {
-				return
+				return `NULL`
 			}
 		}
 	}
 	if toLine && isFunc > 0 {
 		out += funcProcess(string(name), params, vars) //+ "\r\n"
+	}
+	if noproc {
+		return `NULL`
 	}
 	return
 }

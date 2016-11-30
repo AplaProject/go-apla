@@ -273,7 +273,7 @@ func (p *Parser) NewState() error {
 Title : My country
 Navigation( Dashboard )
 
-Divs(md-4)
+Divs(md-6)
 GetRow(my, #state_id#_citizens, "id", #citizen#)
 WiCitizen( #my_name#, #my_id#, #my_avatar#, StateValue(state_flag) )
 DivsEnd:
@@ -283,7 +283,7 @@ PageEnd:
 
 		`government`, `Title : My country
 Navigation( LiTemplate(dashboard_default, citizen),goverment)
-Divs(md-9, panel panel-default panel-body)
+Divs(md-8, panel panel-default panel-body)
 
 MarkDown : # Welcome, government!
 BtnSys(listOfTables, Tables, '', 'btn btn-pill-left btn-primary')
@@ -368,7 +368,7 @@ PageEnd:`, `menu_default`, sid,
 	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		`menu_default`, `[dashboard](dashboard_default)
+		`menu_default`, `[Dashboard](dashboard_default)
 		[Government dashboard](government)`, sid,
 		`government`, `
 [Citizen dashboard](dashboard_default)

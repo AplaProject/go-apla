@@ -140,7 +140,7 @@
 							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" name="' + fields[i].name + '" type="text" class="form-control"></div>'
 						}
 						if (fields[i].htmlType == "calendar") {
-							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><div class="input-group date datetimepicker"><input id="' + fields[i].name + '" type="text" class="form-control"><span class="input-group-addon"><span class="fa fa-calendar"></span></span></div></div>'
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><div class="input-group date datetimepickerx"><input id="' + fields[i].name + '" type="text" class="form-control"><span class="input-group-addon"><span class="fa fa-calendar"></span></span></div></div>'
 						}
 						if (fields[i].htmlType == "file") {
 							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle"></div>'
@@ -148,7 +148,7 @@
 						container.append(el);
 						arr.push(fields[i].name);
 					}
-					$(".datetimepicker").datetimepicker({
+					$(".datetimepickerx").datetimepicker({
 						icons: {
 							time: 'fa fa-clock-o',
 							date: 'fa fa-calendar',
@@ -254,8 +254,15 @@
 	} );	
 	$(".datetimepicker").datetimepicker({
 		icons: {
-			time: 'fa fa-clock-o', date: 'fa fa-calendar', up: 'fa fa-chevron-up', down: 'fa fa-chevron-down', previous: 'fa fa-chevron-left', next: 'fa fa-chevron-right', today: 'fa fa-crosshairs', clear: 'fa fa-trash'
-		}, 
+			time: 'fa fa-clock-o',
+			date: 'fa fa-calendar',
+			up: 'fa fa-chevron-up',
+			down: 'fa fa-chevron-down',
+			previous: 'fa fa-chevron-left',
+			next: 'fa fa-chevron-right',
+			today: 'fa fa-crosshairs',
+			clear: 'fa fa-trash'
+		},		
 		format: 'DD MMMM, YYYY'
 	});
 	
@@ -299,14 +306,9 @@
 				</div>
 			</div>
 			{{end}}{{if eq .HtmlType "date"}}
-			<div class="form-group">
+			<div class="form-group" style="position:relative;">
 				<label class="control-label" for="{{.Name}}">{{.Title}}</label>
-				<div class="datetimepicker input-group date">
-					<input type="text" class="form-control" id="{{.Name}}" value="{{.Value}}">
-					<span class="input-group-addon">
-						<span class="fa fa-calendar"></span>
-					</span>
-				</div>
+				<input type="text" class="datetimepicker form-control" id="{{.Name}}" value="{{.Value}}">
 			</div>
 			{{end}} {{if eq .HtmlType "image"}} <img id="img{{.Name}}" style="margin: 10px 0px;" src=""> {{if .Value}}<script>
 						document.getElementById('img{{.Name}}').setAttribute( 'src', '{{.Value}}' );

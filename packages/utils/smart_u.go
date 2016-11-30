@@ -275,7 +275,7 @@ func SetVar(vars *map[string]string, pars ...string) string {
 		}
 		if proc {
 			val = textproc.Process(lr[1], vars)
-			if len(val) == 0 {
+			if val == `NULL` {
 				val = textproc.Macro(lr[1], vars)
 			}
 		} else {
@@ -378,7 +378,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		}
 		for _, th := range *columns {
 			val := textproc.Process(th[1], vars)
-			if len(val) == 0 {
+			if val == `NULL` {
 				val = textproc.Macro(th[1], vars)
 			}
 			out += `<td>` + val + `</td>`
@@ -630,7 +630,7 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 }
 
 func Ring(vars *map[string]string, pars ...string) string {
-	class := `col-md-3`
+	class := `col-md-4`
 	title := ``
 	count := ``
 	size := 18
