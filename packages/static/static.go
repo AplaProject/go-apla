@@ -137,6 +137,9 @@
 // static/history.html
 // static/html_elements.html
 // static/img/US.svg
+// static/img/apps/ava.png
+// static/img/apps/money.jpg
+// static/img/apps/property.jpg
 // static/img/avatar.svg
 // static/img/bg.png
 // static/img/bg1.jpg
@@ -161,6 +164,7 @@
 // static/img/mockup.png
 // static/img/profile-bg.jpg
 // static/img/radio_icon.png
+// static/img/spacer.gif
 // static/img/squares.gif
 // static/img/user/01.jpg
 // static/img/user/02.jpg
@@ -2805,6 +2809,60 @@ func staticImgUsSvg() (*asset, error) {
 	return a, err
 }
 
+// staticImgAppsAvaPng reads file data from disk. It returns an error on failure.
+func staticImgAppsAvaPng() (*asset, error) {
+	path := "static/img/apps/ava.png"
+	name := "static/img/apps/ava.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgAppsMoneyJpg reads file data from disk. It returns an error on failure.
+func staticImgAppsMoneyJpg() (*asset, error) {
+	path := "static/img/apps/money.jpg"
+	name := "static/img/apps/money.jpg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgAppsPropertyJpg reads file data from disk. It returns an error on failure.
+func staticImgAppsPropertyJpg() (*asset, error) {
+	path := "static/img/apps/property.jpg"
+	name := "static/img/apps/property.jpg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticImgAvatarSvg reads file data from disk. It returns an error on failure.
 func staticImgAvatarSvg() (*asset, error) {
 	path := "static/img/avatar.svg"
@@ -3223,6 +3281,24 @@ func staticImgProfileBgJpg() (*asset, error) {
 func staticImgRadio_iconPng() (*asset, error) {
 	path := "static/img/radio_icon.png"
 	name := "static/img/radio_icon.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgSpacerGif reads file data from disk. It returns an error on failure.
+func staticImgSpacerGif() (*asset, error) {
+	path := "static/img/spacer.gif"
+	name := "static/img/spacer.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6162,6 +6238,9 @@ var _bindata = map[string]func() (*asset, error){
 	"static/history.html": staticHistoryHtml,
 	"static/html_elements.html": staticHtml_elementsHtml,
 	"static/img/US.svg": staticImgUsSvg,
+	"static/img/apps/ava.png": staticImgAppsAvaPng,
+	"static/img/apps/money.jpg": staticImgAppsMoneyJpg,
+	"static/img/apps/property.jpg": staticImgAppsPropertyJpg,
 	"static/img/avatar.svg": staticImgAvatarSvg,
 	"static/img/bg.png": staticImgBgPng,
 	"static/img/bg1.jpg": staticImgBg1Jpg,
@@ -6186,6 +6265,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/mockup.png": staticImgMockupPng,
 	"static/img/profile-bg.jpg": staticImgProfileBgJpg,
 	"static/img/radio_icon.png": staticImgRadio_iconPng,
+	"static/img/spacer.gif": staticImgSpacerGif,
 	"static/img/squares.gif": staticImgSquaresGif,
 	"static/img/user/01.jpg": staticImgUser01Jpg,
 	"static/img/user/02.jpg": staticImgUser02Jpg,
@@ -6527,6 +6607,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"html_elements.html": &bintree{staticHtml_elementsHtml, map[string]*bintree{}},
 		"img": &bintree{nil, map[string]*bintree{
 			"US.svg": &bintree{staticImgUsSvg, map[string]*bintree{}},
+			"apps": &bintree{nil, map[string]*bintree{
+				"ava.png": &bintree{staticImgAppsAvaPng, map[string]*bintree{}},
+				"money.jpg": &bintree{staticImgAppsMoneyJpg, map[string]*bintree{}},
+				"property.jpg": &bintree{staticImgAppsPropertyJpg, map[string]*bintree{}},
+			}},
 			"avatar.svg": &bintree{staticImgAvatarSvg, map[string]*bintree{}},
 			"bg.png": &bintree{staticImgBgPng, map[string]*bintree{}},
 			"bg1.jpg": &bintree{staticImgBg1Jpg, map[string]*bintree{}},
@@ -6551,6 +6636,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
 			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{}},
 			"radio_icon.png": &bintree{staticImgRadio_iconPng, map[string]*bintree{}},
+			"spacer.gif": &bintree{staticImgSpacerGif, map[string]*bintree{}},
 			"squares.gif": &bintree{staticImgSquaresGif, map[string]*bintree{}},
 			"user": &bintree{nil, map[string]*bintree{
 				"01.jpg": &bintree{staticImgUser01Jpg, map[string]*bintree{}},
