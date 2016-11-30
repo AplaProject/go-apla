@@ -275,7 +275,7 @@ func SetVar(vars *map[string]string, pars ...string) string {
 		}
 		if proc {
 			val = textproc.Process(lr[1], vars)
-			if len(val) == 0 {
+			if val == `NULL` {
 				val = textproc.Macro(lr[1], vars)
 			}
 		} else {
