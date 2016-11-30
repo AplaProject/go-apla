@@ -45,11 +45,11 @@ SetVar(
                          DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
                  	}
                  }`,
-    `page_dashboard_default #= Divs(md-7)
-                               Divs(md-8)
+    `page_dashboard_default #= Divs(md-6)
+                               Divs(md-12)
                                WiBalance( GetOne(amount, #state_id#_accounts, "citizen_id", #citizen#), StateValue(currency_name) )
                                DivsEnd:
-                               Divs(md-8)
+                               Divs(md-12)
                                WiAccount( GetOne(id, #state_id#_accounts, "citizen_id", #citizen#) )
                                DivsEnd:
                                DivsEnd:`,

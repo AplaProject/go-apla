@@ -630,7 +630,7 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 }
 
 func Ring(vars *map[string]string, pars ...string) string {
-	class := `col-md-3`
+	class := `col-md-4`
 	title := ``
 	count := ``
 	size := 18
