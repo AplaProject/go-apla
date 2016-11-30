@@ -94,7 +94,7 @@ func init() {
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
-		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `TextHidden`: TextHidden,
+		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring,
 	})
 }
@@ -187,6 +187,21 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 		(*vars)[pars[0]+`_`+key] = val
 	}
 	return ``
+}
+
+func GetOne(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	where := ``
+	if len(pars) == 4 {
+		where = ` where ` + lib.EscapeName(pars[2]) + `='` + lib.Escape(pars[3]) + `'`
+	}
+	value, err := DB.Single(`select ` + lib.Escape(pars[0]) + ` from ` + lib.EscapeName(pars[1]) + where).String()
+	if err != nil {
+		return err.Error()
+	}
+	return value
 }
 
 func getClass(class string) string {
