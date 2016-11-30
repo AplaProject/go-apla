@@ -570,6 +570,5 @@ func NumString(in string) string {
 		out = append(append([]byte(` `), buf[len(buf)-3:]...), out...)
 		buf = buf[:len(buf)-3]
 	}
-	out = append(buf, out...)
 	return string(append(buf, out...))
 }
