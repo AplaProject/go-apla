@@ -645,7 +645,7 @@ func Ring(vars *map[string]string, pars ...string) string {
 	}
 	return fmt.Sprintf(`<div class="%s"><div class="panel panel-default"> <div class="panel-body">
 			<div class="text-info">%s</div>
-			<div class="population" style="font-size:%dpx">%s</div>
+			<div class="population" style="font-size:%dpx"><img src="static/img/spacer.gif" alt=""><span>%s</span></div>
 		 </div></div></div>`, class, title, size, count)
 }
 
