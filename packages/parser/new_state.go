@@ -368,7 +368,7 @@ PageEnd:`, `menu_default`, sid,
 	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		`menu_default`, `[dashboard](dashboard_default)
+		`menu_default`, `[Dashboard](dashboard_default)
 		[Government dashboard](government)`, sid,
 		`government`, `
 [Citizen dashboard](dashboard_default)

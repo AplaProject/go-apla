@@ -24,15 +24,15 @@ SetVar(
 }`,
     sc_value2 = `contract AddAccount {
                  	tx {
-                 	    Citizen string
+                 	    CitizenId string
                      }
 					func front {
-						if AddressToId($Citizen)==0 {
+						if AddressToId($CitizenId)==0 {
 							error "not valid citizen id"
 						}
 					}
                  	func main {
-                        DBInsert(Table( "accounts"), "citizen_id", AddressToId($Citizen))
+                        DBInsert(Table( "accounts"), "citizen_id", AddressToId($CitizenId))
                  	}
                  }`,
     sc_value3 = `contract UpdAmount {
