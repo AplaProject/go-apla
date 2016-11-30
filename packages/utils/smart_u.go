@@ -592,6 +592,9 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		} else if strings.Index(fitem.Tags, `image`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "image",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
+		} else if strings.Index(fitem.Tags, `date`) >= 0 {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "date",
+				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})

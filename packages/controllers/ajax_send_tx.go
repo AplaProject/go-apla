@@ -63,7 +63,8 @@ func (c *Controller) AjaxSendTx() interface{} {
 				lib.EncodeLenByte(&sign, bsign)
 			}
 		}
-		isPublic, err := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
+		var isPublic []byte
+		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
 		if err == nil && len(sign) > 0 && len(isPublic) == 0 {
 			flags |= consts.TxfPublic
 			public, _ := hex.DecodeString(c.r.FormValue(`public`))
