@@ -16,7 +16,7 @@ SetVar(
 )
 TextHidden( sc_value, sc_conditions )
 Json(`Head: "Avatar",
-	Desc: "Avatar",
+	Desc: "Adding an image",
 	Img: "/static/img/apps/ava.png",
 	OnSuccess: {
 		script: 'template',
