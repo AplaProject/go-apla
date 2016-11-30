@@ -94,8 +94,9 @@ func init() {
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
-		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `TextHidden`: TextHidden,
-		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring,
+		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
+		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
+		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen,
 	})
 }
 
@@ -187,6 +188,21 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 		(*vars)[pars[0]+`_`+key] = val
 	}
 	return ``
+}
+
+func GetOne(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	where := ``
+	if len(pars) == 4 {
+		where = ` where ` + lib.EscapeName(pars[2]) + `='` + lib.Escape(pars[3]) + `'`
+	}
+	value, err := DB.Single(`select ` + lib.Escape(pars[0]) + ` from ` + lib.EscapeName(pars[1]) + where).String()
+	if err != nil {
+		return err.Error()
+	}
+	return value
 }
 
 func getClass(class string) string {
@@ -576,6 +592,9 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		} else if strings.Index(fitem.Tags, `image`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "image",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
+		} else if strings.Index(fitem.Tags, `date`) >= 0 {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "date",
+				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
@@ -628,6 +647,61 @@ func Ring(vars *map[string]string, pars ...string) string {
 			<div class="text-info">%s</div>
 			<div class="population" style="font-size:%dpx">%s</div>
 		 </div></div></div>`, class, title, size, count)
+}
+
+func WiBalance(vars *map[string]string, pars ...string) string {
+	if len(pars) != 2 {
+		return ``
+	}
+	return fmt.Sprintf(`<div class="panel widget"><div class="row row-table row-flush">
+			<div class="col-xs-4 bg-info text-center"><em class="glyphicons glyphicons-coins x2"></em>
+			</div><div class="col-xs-8">
+			   <div class="panel-body text-center">
+				  <h4 class="mt0">%s %s</h4>
+				  <p class="mb0 text-muted">Balance</p>
+			   </div></div></div></div>`, lib.NumString(pars[0]), lib.Escape(pars[1]))
+}
+
+func WiAccount(vars *map[string]string, pars ...string) string {
+	if len(pars) != 1 {
+		return ``
+	}
+	return fmt.Sprintf(`<div class="panel widget bg-success"><div class="row row-table">
+			<div class="col-xs-4 text-center bg-success-dark pv-lg">
+			   <em class="glyphicons glyphicons-credit-card x2"></em></div>
+			<div class="col-xs-8 pv-lg">
+			   <div class="h1 m0 text-bold">%s</div>
+			   <div class="text-uppercase">ACCOUNT NUMBER</div>
+			</div></div></div>`, lib.Escape(pars[0]))
+}
+
+func WiCitizen(vars *map[string]string, pars ...string) string {
+	image := `/static/img/apps/ava.png`
+	flag := ``
+	if len(pars) < 2 {
+		return ``
+	}
+	if len(pars) > 2 && pars[2] != `NULL` && pars[2] != `#my_avatar#` {
+		image = pars[2]
+	}
+	if len(pars) > 3 {
+		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, pars[3])
+	}
+	return fmt.Sprintf(`<div class="panel widget"><div class="panel-body">
+			<div class="row row-table"><div class="col-xs-6 text-center">
+				  <img src="%s" alt="Image" class="img-circle thumb96">
+			   </div>
+			   <div class="col-xs-6">
+				  <h3 class="mt0">%s</h3>
+				  <ul class="list-unstyled">
+					 <li class="mb-sm">
+					 	%s
+					 </li></ul></div></div></div>
+		 <div class="panel-body bg-inverse"><div class="row row-table text-center">
+			   <div class="col-xs-12 p0">
+				  <p class="m0 h4">%s</p>
+				  <p class="m0 text-muted">Citizen ID</p>
+		</div></div></div></div>`, image, lib.Escape(pars[0]), flag, lib.AddressToString(uint64(StrToInt64(pars[1]))))
 }
 
 /*func AddressToId(vars *map[string]string, pars ...string) string {

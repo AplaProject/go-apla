@@ -49,10 +49,11 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
 	} else {
 		var flags uint8
+		var isPublic []byte
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		result.Time = lib.Time32()
 		userId := uint64(c.SessWalletId)
-		isPublic, err := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
+		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
 		if err == nil && len(isPublic) == 0 {
 			flags |= consts.TxfPublic
 		}

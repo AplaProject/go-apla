@@ -45,30 +45,23 @@ SetVar(
                          DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
                  	}
                  }`,
-    `page_dashboard_default #= MarkDown : ## My account
-Table{
-	Table: #state_id#_accounts
-		Where: citizen_id='#citizen#'
-		Columns: [[amount, #amount#]]
-}
+    `page_dashboard_default #= Divs(md-7)
+                               Divs(md-8)
+                               WiBalance( GetOne(amount, #state_id#_accounts, "citizen_id", #citizen#), StateValue(currency_name) )
+                               DivsEnd:
+                               Divs(md-8)
+                               WiAccount( GetOne(id, #state_id#_accounts, "citizen_id", #citizen#) )
+                               DivsEnd:
+                               DivsEnd:`,
 
-MarkDown : ## Accounts
-Table{
-	Table: #state_id#_accounts
-	Order: id
-	Columns: [[ID, #!id#], [Amount, #!amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#!id#")]]
-}`,
+    `page_government #=
+      Divs(md-12, panel panel-default panel-body)
+      BtnTemplate(AddAccount, AddAccount, '', 'btn btn-primary btn-lg')
+      BtnTemplate(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
+      BtnTemplate(UpdAmount, UpdAmount, '', 'btn btn-primary btn-lg') BR()
+      DivsEnd:
+`,
 
-    `page_government #= BtnTemplate(AddAccount, AddAccount, '', 'btn btn-primary btn-lg')
-             BtnTemplate(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
-             BtnTemplate(UpdAmount, UpdAmount, '', 'btn btn-primary btn-lg') BR()
-
-     MarkDown : ## Citizens
-     Table{
-         Table: #state_id#_citizens
-         Order: id
-         Columns: [[Avatar,Image(#!avatar#)], [ID, Address(#!id#)], [Name, #!name#]]
-     }`,
      page_send_money = `Title : Best country
                         Navigation( LiTemplate(government),non-link text)
                         PageTitle : Dashboard

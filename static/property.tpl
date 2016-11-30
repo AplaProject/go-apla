@@ -45,30 +45,34 @@ SetVar(
             PageEnd:`,
 
     page_edit_property = `Title:EditProperty
-                          Navigation(LiTemplate(government),Editing property)
-                          PageTitle: Editing property
-                          ValueById(#state_id#_property, #PropertyId#, "name,citizen_id,coords", "Name,CitizenId,Coords")
-                          TxForm{ Contract: EditProperty}
-                          PageEnd:`,
+Navigation(LiTemplate(government),Editing property)
+PageTitle: Editing property
+ValueById(#state_id#_property, #PropertyId#, "name,citizen_id,coords", "Name,CitizenId,Coords")
+SetVar( CitizenId= Address(#CitizenId#))
+TxForm{ Contract: EditProperty}
+PageEnd:`,
 
-    `page_dashboard_default #= MarkDown : ## My property
-           Table{
-               Table: #state_id#_property
-               Where: citizen_id='#!citizen#'
-               Order: id
-               Columns: [[ID, #!id#], [Name, #!name#], [Coordinates, #!coords#], [Citizen ID, #!citizen_id#]]
-           }`,
+    `page_dashboard_default #= Divs(md-12, panel panel-default panel-body)
+                               MarkDown : ## My property
+                                          Table{
+                                              Table: #state_id#_property
+                                              Where: citizen_id='#citizen#'
+                                              Order: id
+                                              Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, Address(#!citizen_id#)]]
+                                          }
+                               DivsEnd:`,
 
     `page_government #=
+     Divs(md-12, panel panel-default panel-body)
             MarkDown : ## Property
             Table{
                 Table: #state_id#_property
                 Order: id
-                Columns: [[ID, #!id#], [Name, #!name#], [Coordinates, #!coords#], [Citizen ID, #!citizen_id#], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#!id#")]]
+                Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, Address(#!citizen_id#)], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
             }
-             BtnTemplate(AddProperty, AddProperty, '', 'btn btn-primary btn-lg')
-            `
-
+         BtnTemplate(AddProperty, AddProperty, '', 'btn btn-primary btn-lg') BR()
+DivsEnd:
+`
 )
 TextHidden( sc_value1, sc_value2, sc_conditions )
 TextHidden( page_add_property, page_edit_property, page_dashboard_default, page_government )
