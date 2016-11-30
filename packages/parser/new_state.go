@@ -269,28 +269,41 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
-		`dashboard_default`, `Title : My country
+		`dashboard_default`, `FullScreen(1)
+Title : My country
 Navigation( Dashboard )
-PageTitle : StateValue(state_name)
+Divs(md-6, panel panel-default panel-body)
 MarkDown : # Welcome, citizen!
-Image(StateValue(state_flag))BR()
+Image(StateValue(state_flag))BR()BR()
 BtnTemplate(government, Government)
 MarkDown : ### My address
 Address()
+DivsEnd:
 PageEnd:
 `, `menu_default`, sid,
 
 		`government`, `Title : My country
 Navigation( LiTemplate(dashboard_default, citizen),goverment)
-PageTitle : StateValue(state_name)
+Divs(md-12, panel panel-default panel-body)
+
 MarkDown : # Welcome, government!
 BtnSys(listOfTables, Tables, '', 'btn btn-pill-left btn-primary')
 BtnSys(contracts, Contracts, '', 'btn btn-primary')
 BtnSys(app_catalog, App catalog, '', 'btn btn-primary')
 BtnSys(interface, Interface, '', 'btn btn-pill-right btn-primary') BR() BR()
-
 BtnTemplate(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg')
-BtnTemplate(citizens, Citizens, '', 'btn btn-primary btn-lg')
+DivsEnd:
+
+Ring(GetOne(count(*),#state_id#_citizens), Number of citizens, 30)
+
+Divs(md-12, panel panel-default panel-body)
+     MarkDown : ## Citizens
+     Table{
+         Table:  `+id+`_citizens
+         Order: id
+         Columns: [[Avatar,Image(#avatar#)], [ID, Address(#id#)], [Name, #name#]]
+     }
+DivsEnd:
 
 PageEnd:
 `, `government`, sid,

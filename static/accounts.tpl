@@ -45,30 +45,31 @@ SetVar(
                          DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
                  	}
                  }`,
-    `page_dashboard_default #= MarkDown : ## My account
-Table{
-	Table: #state_id#_accounts
-		Where: citizen_id='#citizen#'
-		Columns: [[amount, #amount#]]
-}
+    `page_dashboard_default #= Divs(md-6, panel panel-default panel-body)
 
-MarkDown : ## Accounts
-Table{
-	Table: #state_id#_accounts
-	Order: id
-	Columns: [[ID, #!id#], [Amount, #!amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#!id#")]]
-}`,
+                               MarkDown : ## Accounts
+                               Table{
+                               	Table: #state_id#_accounts
+                               	Order: id
+                               	Columns: [[ID, #id#], [Amount, #amount#], [Send money,BtnTemplate(SendMoney,Send,"RecipientAccountId:#id#")]]
+                               }
+                               MarkDown : ## My account
+                               Table{
+                               	Table: #state_id#_accounts
+                               		Where: citizen_id='#citizen#'
+                               		Columns: [[amount, #amount#]]
+                               }
 
-    `page_government #= BtnTemplate(AddAccount, AddAccount, '', 'btn btn-primary btn-lg')
-             BtnTemplate(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
-             BtnTemplate(UpdAmount, UpdAmount, '', 'btn btn-primary btn-lg') BR()
+                               DivsEnd:`,
 
-     MarkDown : ## Citizens
-     Table{
-         Table: #state_id#_citizens
-         Order: id
-         Columns: [[Avatar,Image(#!avatar#)], [ID, Address(#!id#)], [Name, #!name#]]
-     }`,
+    `page_government #=
+      Divs(md-12, panel panel-default panel-body)
+      BtnTemplate(AddAccount, AddAccount, '', 'btn btn-primary btn-lg')
+      BtnTemplate(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
+      BtnTemplate(UpdAmount, UpdAmount, '', 'btn btn-primary btn-lg') BR()
+      DivsEnd:
+`,
+
      page_send_money = `Title : Best country
                         Navigation( LiTemplate(government),non-link text)
                         PageTitle : Dashboard
