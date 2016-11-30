@@ -2531,3 +2531,53 @@ function saveMap() {
 	
 	newCoordsContainer.val(center + zoom + points);
 }
+
+function miniMap(elem, width, height) {
+	var num = 0;
+	
+	$("." + elem).each(function() {
+		var data = {};
+		var miniPoints = [];
+		var miniCoords = [];
+		var miniCenterX = 0;
+		var miniCenterY = 0;
+		var miniZoom = 0;
+		var latlng = {};
+		
+		num += 1;
+		data  = JSON.parse($(this).text());
+		miniPoints = data.cords;
+		miniZoom = Number(data.zoom);
+		miniCenterX = Number(data.center_point[0]);
+		miniCenterY = Number(data.center_point[1]);
+		
+		for (var i in miniPoints) {
+			latlng = {lat: Number(miniPoints[i][0]), lng: Number(miniPoints[i][1])};
+			miniCoords.push(latlng);
+		}
+		
+		$(this).text("");
+		var canvas = document.createElement('div');
+		canvas.setAttribute("id", "miniMap_" + num);
+		canvas.style.width = width;
+		canvas.style.height = height;
+		canvas.style.margin = "0px auto";
+		this.appendChild(canvas);
+		
+		var map = new google.maps.Map(document.getElementById("miniMap_" + num), {
+			zoom: miniZoom,
+			center: {lat: miniCenterX, lng: miniCenterY},
+			mapTypeId: google.maps.MapTypeId.TERRAIN
+		});
+		
+		var mini = new google.maps.Polygon({
+			paths: miniCoords,
+			strokeColor: '#FF0000',
+			strokeOpacity: 0.8,
+			strokeWeight: 2,
+			fillColor: '#0000FF',
+			fillOpacity: 0.6
+		});
+		mini.setMap(map);
+	});
+}
