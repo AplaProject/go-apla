@@ -378,7 +378,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		}
 		for _, th := range *columns {
 			val := textproc.Process(th[1], vars)
-			if len(val) == 0 {
+			if val == `NULL` {
 				val = textproc.Macro(th[1], vars)
 			}
 			out += `<td>` + val + `</td>`
