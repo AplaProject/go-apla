@@ -610,6 +610,25 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 	return lib.AddressToString(uint64(id))
 }
 
+func Ring(vars *map[string]string, pars ...string) string {
+	class := `col-md-3`
+	title := ``
+	count := ``
+	if len(pars) > 2 {
+		class = getClass(pars[2])
+	}
+	if len(pars) > 1 {
+		title = getClass(pars[1])
+	}
+	if len(pars) > 0 {
+		count = lib.NumString(pars[0])
+	}
+	return fmt.Sprintf(`<div class="%s"><div class="panel panel-default"> <div class="panel-body">
+			<div class="text-info">%s</div>
+			<div class="population">%s</div>
+		 </div></div></div>`, class, title, count)
+}
+
 /*func AddressToId(vars *map[string]string, pars ...string) string {
 	var idval int64
 	if len(pars) == 0 || len(pars[0]) == 0 {
