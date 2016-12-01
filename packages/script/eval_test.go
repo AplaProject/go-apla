@@ -102,6 +102,7 @@ func Multi(a, b int64) (int64, error) {
 
 func TestEvalIf(t *testing.T) {
 	test := []TestComp{
+		{"34 + `45` < 0", `runtime panic error`},
 		{"Multi( (34+35)*2, Multi( $citizenId, 56))== 1 || Multi( (34+35)*2, Multi( $citizenId, 56))== 0", `false`},
 		{"5 + 9 > 10", `true`},
 		{"34 == 45", `false`},
@@ -123,7 +124,7 @@ func TestEvalIf(t *testing.T) {
 			out, err := vm.EvalIf(item.Input, &vars)
 			if err != nil {
 				if err.Error() != item.Output {
-					t.Error(`error of ifeval ` + item.Input + err.Error())
+					t.Error(`error of ifeval ` + item.Input + ` ` + err.Error())
 				}
 			} else {
 				if fmt.Sprint(out) != item.Output {
