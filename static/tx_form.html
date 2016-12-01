@@ -263,9 +263,12 @@
 			today: 'fa fa-crosshairs',
 			clear: 'fa fa-trash'
 		},		
-		format: 'DD MMMM, YYYY'
+		format: 'YYYY-MM-DD'
 	});
-	
+
+	userLocation("map", "100%", "250px");
+
+
 /*	$(".map").on('click', function(){
 		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
 			$("#modal_map").modal("show");
@@ -298,12 +301,13 @@
 				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
 			{{end}} {{if eq .HtmlType "map"}}
 			<div class="form-group"> <label>{{.Title}}</label>
-				<textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+				<div class="map" id="{{.Name}}">{{.Value}}</div>
+				<!--textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
 			</div>
 			<div class="clearfix">
 				<div class="pull-left">
 					<button type="button" onClick="openMap('{{.Name}}');" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
-				</div>
+				</div-->
 			</div>
 			{{end}}{{if eq .HtmlType "date"}}
 			<div class="form-group" style="position:relative;">
