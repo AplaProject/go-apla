@@ -268,7 +268,6 @@
 
 	userLocation("map", "100%", "250px");
 
-
 /*	$(".map").on('click', function(){
 		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
 			$("#modal_map").modal("show");
@@ -301,8 +300,8 @@
 				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
 			{{end}} {{if eq .HtmlType "map"}}
 			<div class="form-group"> <label>{{.Title}}</label>
-				<div class="map" id="{{.Name}}">{{.Value}}</div>
-				<!--textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+				<textarea class="form-control map" id="{{.Name}}">{{.Value}}</textarea>
+				<!--div class="map" id="{{.Name}}">{{.Value}}</div>
 			</div>
 			<div class="clearfix">
 				<div class="pull-left">
