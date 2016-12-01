@@ -2581,3 +2581,81 @@ function miniMap(elem, width, height) {
 		mini.setMap(map);
 	});
 }
+
+function userLocation(elem, width, height) {
+	var num = 0;
+	
+	$("." + elem).each(function() {
+		num += 1;
+		
+		var data = $(this).text();
+		var zoom = 5;
+		var center = {lat: -25.363, lng: 131.044};
+		var point = null;
+		var canvas = document.createElement('div');
+		var textarea = document.createElement('textarea');
+		var id = "userLocation_" + num;
+		
+		$(this).text("");
+		canvas.setAttribute("id", id);
+		canvas.style.width = width;
+		canvas.style.height = height;
+		canvas.style.margin = "0px auto";
+		textarea.setAttribute("class", "form-control hidden");
+		textarea.innerHTML = data;
+		this.appendChild(textarea);
+		this.appendChild(canvas);
+		
+		var map = new google.maps.Map(document.getElementById(id), {
+			zoom: zoom,
+			center: center
+		});
+		
+		var marker = new google.maps.Marker({
+			position: point,
+			map: map,
+			draggable:true
+		});
+		
+		map.addListener('drag', function() {
+			if (point != null) {
+				textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
+			}
+		});
+		
+		map.addListener('zoom_changed', function() {
+			if (point != null) {
+				textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
+			}
+		});
+		
+		marker.addListener('drag', function() {
+			if (point != null) {
+				textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
+			}
+		});
+		
+		if (data) {
+			data  = JSON.parse(data);
+			zoom = Number(data.zoom);
+			center = {lat: Number(data.center_point[0]), lng: Number(data.center_point[1])};
+			point = {lat: Number(data.cords[0]), lng: Number(data.cords[1])};
+			
+			marker.setPosition(point);
+			
+			map.setZoom(zoom);
+			map.setCenter(center);
+			marker.setMap(map);
+			
+			return true;
+		} else {
+			map.addListener('click', function(e) {
+				if (point === null) {
+					point = e.latLng;
+					marker.setPosition(point);
+					textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
+				}
+			});
+		}
+	});
+}
