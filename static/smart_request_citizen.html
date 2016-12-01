@@ -150,6 +150,15 @@
 						if (fields[i].htmlType == "file") {
 							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle"></div>'
 						}
+						if (fields[i].htmlType == "map") {
+							var el = '<div class="form-group"> <label>'+fields[i].title + '</label>' +
+							'<textarea class="form-control map" id="' + fields[i].name + '"></textarea></div>';
+						}
+						if (fields[i].htmlType == "date") {
+							var el = '<div class="form-group" style="position:relative;">' +
+				'<label class="control-label" for="' + fields[i].name + '">' + fields[i].title + '</label>' +
+				'<input type="text" class="datetimepicker form-control" id="' + fields[i].name + '" value=""></div>';
+						}						
 						container.append(el);
 						arr.push(fields[i].name);
 					}

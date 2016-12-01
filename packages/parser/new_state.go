@@ -160,8 +160,10 @@ func (p *Parser) NewState() error {
 	tx {
 		StateId    int    "hidden"
 		FullName   string
-//		MiddleName string "optional"
-//		LastName   string
+ 		MiddleName string
+  		Gender   string
+  		BirthDate   string "date"
+  		BirthPlace   string "map"	
 	}
 	func front {
 		if Balance($wallet) < Money(StateParam($StateId, "citizenship_price")) {
@@ -169,7 +171,8 @@ func (p *Parser) NewState() error {
 		}
 	}
 	func main {
-		DBInsert(TableTx( "citizenship_requests"), "dlt_wallet_id,name,block_id", $wallet, $FullName, $block)
+		DBInsert(TableTx( "citizenship_requests"), "dlt_wallet_id,name,block_id,mname,gender,birthday,birthplace", 
+		    $wallet, $FullName, $block, $MiddleName, $Gender, $BirthDate, $BirthPlace )
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
 	tx {
@@ -411,6 +414,10 @@ PageEnd:`, `menu_default`, sid,
 				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"name" varchar(100) NOT NULL DEFAULT '',
+				"mname" varchar(100) NOT NULL DEFAULT '',
+				"gender" varchar(16) NOT NULL DEFAULT '',
+				"birthday" varchar(16) NOT NULL DEFAULT '',
+				"birthplace" varchar(300) NOT NULL DEFAULT '',
 				"approved" bigint  NOT NULL DEFAULT '0',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'

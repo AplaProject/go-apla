@@ -145,6 +145,15 @@
 						if (fields[i].htmlType == "file") {
 							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle"></div>'
 						}
+						if (fields[i].htmlType == "map") {
+							var el = '<div class="form-group"> <label>'+fields[i].Title + '</label>' +
+							'<textarea class="form-control map" id="' + fields[i]..Name + '">' + fields[i].Value + '</textarea></div>';
+						}
+						if (fields[i].htmlType == "date") {
+							var el = '<div class="form-group" style="position:relative;">' +
+				'<label class="control-label" for="' + fields[i].Name + '">' + fields[i].Title + '</label>' +
+				'<input type="text" class="datetimepicker form-control" id="' + fields[i].Name + '" value="' + fields[i].Value + '"></div>';
+						}
 						container.append(el);
 						arr.push(fields[i].name);
 					}
@@ -199,6 +208,9 @@
 				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
 			{{end}}
 			{{if eq .HtmlType "map"}}
+				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
+			{{end}}
+			{{if eq .HtmlType "polymap"}}
 				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
 			{{end}}
 		{{end}}
@@ -267,6 +279,7 @@
 	});
 
 	userLocation("map", "100%", "250px");
+	miniMap("polymap", "100%", "250px");
 
 /*	$(".map").on('click', function(){
 		$("#dl_modal").load("content?controllerHTML=modal_map", { }, function() {
@@ -307,6 +320,18 @@
 				<div class="pull-left">
 					<button type="button" onClick="openMap('{{.Name}}');" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
 				</div-->
+			</div>
+			{{end}}{{if eq .HtmlType "polymap"}}
+			<!--div class="form-group"> <label>{{.Title}}</label>
+				<textarea class="form-control polymap" id="{{.Name}}">{{.Value}}</textarea>
+			</div-->
+			<div class="form-group"> <label>{{.Title}}</label>
+				<textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+			</div>
+			<div class="clearfix">
+				<div class="pull-left">
+					<button type="button" onClick="openMap('{{.Name}}');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+				</div>
 			</div>
 			{{end}}{{if eq .HtmlType "date"}}
 			<div class="form-group" style="position:relative;">

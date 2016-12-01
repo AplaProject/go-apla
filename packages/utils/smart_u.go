@@ -586,7 +586,10 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
 			continue
 		}
-		if strings.Index(fitem.Tags, `map`) >= 0 {
+		if strings.Index(fitem.Tags, `polymap`) >= 0 {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "polymap",
+				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
+		} else if strings.Index(fitem.Tags, `map`) >= 0 {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "map",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		} else if strings.Index(fitem.Tags, `image`) >= 0 {
@@ -601,7 +604,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		}
 
 	}
-
+	fmt.Println(`Fields`, finfo.Fields)
 	if err = t.Execute(b, finfo); err != nil {
 		return fmt.Sprintf("Error: %v", err)
 	}
