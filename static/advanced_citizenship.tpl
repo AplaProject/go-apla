@@ -14,7 +14,7 @@ SetVar(
 		DateOfExpiry  string "date"
 	}
 	func main {
-	  DBUpdate(Table( "citizens"), $citizen, "name,avatar,PlaceOfBirth,DateOfBirth,Gender,DateOfIssue,DateOfExpiry", $NickName, $Image, $PlaceOfBirth, $DateOfBirth, $Gender, $DateOfIssue $DateOfExpiry)
+	  DBUpdate(Table( "citizens"), $citizen, "name,avatar,PlaceOfBirth,DateOfBirth,Gender,DateOfIssue,DateOfExpiry", $NickName, $Image, $PlaceOfBirth, $DateOfBirth, $Gender, $DateOfIssue, $DateOfExpiry)
 	}
 }`
 )
