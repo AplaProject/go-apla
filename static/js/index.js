@@ -270,6 +270,10 @@ function CopyToClipboard(elem, text) {
 		} else {
 			Alert("Copied to clipboard", "", "success");
 		}
+		$(elem).addClass("copied");
+		setTimeout(function(){
+			$(elem).removeClass("copied");
+		}, 3000)
 	});
 	clipboard.on('error', function (e) {
 		Alert("Error copying to clipboard", "", "error");
