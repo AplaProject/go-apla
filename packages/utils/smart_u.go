@@ -96,7 +96,7 @@ func init() {
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
-		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen,
+		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint,
 	})
 }
 
@@ -702,6 +702,16 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 				  <p class="m0 h4">%s</p>
 				  <p class="m0 text-muted">Citizen ID</p>
 		</div></div></div></div>`, image, lib.Escape(pars[0]), flag, lib.AddressToString(uint64(StrToInt64(pars[1]))))
+}
+
+func Map(vars *map[string]string, pars ...string) string {
+	(*vars)[`wimap`] = `1`
+	return fmt.Sprintf(`<div class="wimap">%s</div>`, pars[0])
+}
+
+func MapPoint(vars *map[string]string, pars ...string) string {
+	(*vars)[`wimappoint`] = `1`
+	return fmt.Sprintf(`<div class="wimappoint">%s</div>`, pars[0])
 }
 
 /*func AddressToId(vars *map[string]string, pars ...string) string {
