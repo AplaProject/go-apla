@@ -77,7 +77,7 @@ DivsEnd:
 TextHidden( sc_value1, sc_value2, sc_conditions )
 TextHidden( page_add_property, page_edit_property, page_dashboard_default, page_government )
 Json(`Head: "Property",
-	Desc: "Property",
+	Desc: "Simple Real Estate Register",
 	Img: "/static/img/apps/property.jpg",
 	OnSuccess: {
 		script: 'template',

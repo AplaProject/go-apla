@@ -82,7 +82,7 @@ TextHidden( sc_value1, sc_value2, sc_value3, sc_conditions )
 TextHidden( page_dashboard_default, page_government, page_send_money, page_add_account, page_upd_amount )
 
 Json(`Head: "Money",
-	Desc: "Money",
+	Desc: "Simple monetary system",
 	Img: "/static/img/apps/money.jpg",
 	OnSuccess: {
 		script: 'template',

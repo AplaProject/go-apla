@@ -63,6 +63,11 @@ func (block *Block) String() (ret string) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
+		{`func runtime string {
+			var i int
+			i = 50
+			return Sprintf("val=%d", i 0)
+		}`, `runtime`, `runtime panic error`},
 		{`func nop {
 			return
 		}

@@ -42,6 +42,7 @@ func init() {
 		"TableTx":     StateTableTx,
 		"AddressToId": AddressToID,
 		"DBAmount":    DBAmount,
+		"IsContract":  IsContract,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -223,6 +224,15 @@ func StateTable(p *Parser, tblname string) string {
 
 func StateTableTx(p *Parser, tblname string) string {
 	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
+}
+
+func IsContract(p *Parser, name string) bool {
+	if p.TxContract != nil {
+		return p.TxContract.Name == name
+	} else if len(p.TxSlice) > 1 {
+		return consts.TxTypes[utils.BytesToInt(p.TxSlice[1])] == name
+	}
+	return false
 }
 
 func AddressToID(input string) (addr int64) {
