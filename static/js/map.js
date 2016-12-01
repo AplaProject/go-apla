@@ -2588,23 +2588,38 @@ function userLocation(elem, width, height) {
 	$("." + elem).each(function() {
 		num += 1;
 		
-		var data = $(this).text();
+		var tag = $(this).context.tagName.toLowerCase();
+		var data = $(this).text() ? $(this).text() : $(this).val();
 		var zoom = 5;
 		var center = {lat: -25.363, lng: 131.044};
 		var point = null;
+		var options = {};
+		var draggable = true;
 		var canvas = document.createElement('div');
-		var textarea = document.createElement('textarea');
+		var textarea;
 		var id = "userLocation_" + num;
 		
-		$(this).text("");
 		canvas.setAttribute("id", id);
 		canvas.style.width = width;
 		canvas.style.height = height;
 		canvas.style.margin = "0px auto";
-		textarea.setAttribute("class", "form-control hidden");
-		textarea.innerHTML = data;
-		this.appendChild(textarea);
-		this.appendChild(canvas);
+		
+		if (tag !== "textarea") {
+			options = {draggable: false, zoomControl: false, scrollwheel: false, disableDoubleClickZoom: true, disableDefaultUI: true};
+			draggable = false;
+			$(this).text("");
+			this.appendChild(canvas);
+		} else {
+			var container = document.createElement('div');
+			container.setAttribute("class", elem);
+			options = {draggable: true, zoomControl: true, scrollwheel: true, disableDoubleClickZoom: false, disableDefaultUI: false};
+			draggable = true;
+			textarea = this;
+			textarea.setAttribute("class", "form-control hidden");
+			textarea.parentNode.insertBefore(container, textarea);
+			container.appendChild(textarea);
+			container.appendChild(canvas);
+		}
 		
 		var map = new google.maps.Map(document.getElementById(id), {
 			zoom: zoom,
@@ -2614,23 +2629,25 @@ function userLocation(elem, width, height) {
 		var marker = new google.maps.Marker({
 			position: point,
 			map: map,
-			draggable:true
+			draggable:draggable
 		});
 		
+		map.setOptions(options);
+		
 		map.addListener('drag', function() {
-			if (point != null) {
+			if (point != null && tag === "textarea") {
 				textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
 			}
 		});
 		
 		map.addListener('zoom_changed', function() {
-			if (point != null) {
+			if (point != null && tag === "textarea") {
 				textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
 			}
 		});
 		
 		marker.addListener('drag', function() {
-			if (point != null) {
+			if (point != null && tag === "textarea") {
 				textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
 			}
 		});
@@ -2646,11 +2663,9 @@ function userLocation(elem, width, height) {
 			map.setZoom(zoom);
 			map.setCenter(center);
 			marker.setMap(map);
-			
-			return true;
 		} else {
 			map.addListener('click', function(e) {
-				if (point === null) {
+				if (point === null && tag === "textarea") {
 					point = e.latLng;
 					marker.setPosition(point);
 					textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
