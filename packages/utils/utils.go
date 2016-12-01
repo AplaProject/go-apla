@@ -2302,13 +2302,20 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 	(*params)[`citizen`] = Int64ToStr(citizenId)
 	if len(data) > 0 {
 		template := textproc.Process(data, params)
+		getHeight := func() int64 {
+			height := int64(100)
+			if h, ok := (*params)[`hmap`]; ok {
+				height = StrToInt64(h)
+			}
+			return height
+		}
 		if (*params)[`wimap`] == `1` {
-			template += `<script language="JavaScript" type="text/javascript">
-			miniMap("wimap", "100%", "100px");</script>`
+			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())
 		}
 		if (*params)[`wimappoint`] == `1` {
-			template += `<script language="JavaScript" type="text/javascript">
-			userLocation("wimappoint", "100%", "100px");</script>`
+			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
 		}
 		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: template})
 	}
