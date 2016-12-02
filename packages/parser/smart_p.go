@@ -43,6 +43,8 @@ func init() {
 		"AddressToId": AddressToID,
 		"DBAmount":    DBAmount,
 		"IsContract":  IsContract,
+		"StateValue":  StateValue,
+		"Int":         Int,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -266,4 +268,13 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 func (p *Parser) EvalIf(conditions string) (bool, error) {
 	return smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
 		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
+}
+
+func StateValue(p *Parser, name string) string {
+	val, _ := utils.StateParam(int64(p.TxStateID), name)
+	return val
+}
+
+func Int(val string) int64 {
+	return utils.StrToInt64(val)
 }

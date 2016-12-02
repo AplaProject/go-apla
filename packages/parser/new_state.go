@@ -123,6 +123,7 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		"main_conditions", sid, "", "",
 		"new_table", sid, "", psid,
@@ -131,6 +132,7 @@ func (p *Parser) NewState() error {
 		"changing_smart_contracts", sid, "", psid,
 		"currency_name", p.TxMap["currency_name"], "", psid,
 		"state_name", p.TxMap["state_name"], "", psid,
+		"gov_account", p.TxWalletID, "", psid,
 		"dlt_spending", p.TxWalletID, "", psid,
 		"state_flag", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyCAYAAACqNX6+AAAAwElEQVR4Xu3TQREAAAiEQK9/aWvsAxMw4O06ysAommCuINgTFKQgmAEMp4UUBDOA4bSQgmAGMJwWUhDMAIbTQgqCGcBwWkhBMAMYTgspCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBaSEEwAxhOCykIZgDDaSEFwQxgOC2kIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LKQhmAMNpIViQBxv1ADO4LcKOAAAAAElFTkSuQmCC", "", psid,
 		"state_coords", ``, "", psid,
@@ -185,8 +187,13 @@ func (p *Parser) NewState() error {
 	}
 	func main {
 		var wallet int
+		var towallet int
 		wallet = DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )
-        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, $wallet_block, Money(StateParam($state, "citizenship_price")))
+		towallet = Int(StateValue("gov_account"))
+		if towallet == 0 {
+			towallet = $citizen
+		}
+        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, towallet, Money(StateParam($state, "citizenship_price")))
 		DBInsert(Table( "citizens"), "id,block_id,name", wallet, 
 		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
         DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
