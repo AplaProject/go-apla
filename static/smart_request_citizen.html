@@ -152,7 +152,7 @@
 						}
 						if (fields[i].htmlType == "map") {
 							var el = '<div class="form-group"> <label>'+fields[i].title + '</label>' +
-							'<textarea class="form-control map" id="' + fields[i].name + '"></textarea></div>';
+							'<textarea class="form-control imap" id="' + fields[i].name + '"></textarea></div>';
 						}
 						if (fields[i].htmlType == "date") {
 							var el = '<div class="form-group" style="position:relative;">' +
@@ -175,10 +175,11 @@
 						},
 						minDate: moment("01/01/1950"),
 						maxDate: 'now',
-						format: 'DD MMMM, YYYY'
+						format: 'YYYY-MM-DD'
 					});
 					$(".filestyle").filestyle();
-					
+					userLocation("imap", "100%", "250px");
+
 					console.log(fields)
 					console.log(arr)
 				}
@@ -210,7 +211,7 @@
 	$('#send').bind('click', function () {
 		predata = {
 			'TxName' : '{{.TxType}}',
-			'StateId': 1,	
+			'StateId': $("#countries").val(),	
 		};
 		for (i = 0; i < arr.length; i++ ) {
 			var field = arr[i];

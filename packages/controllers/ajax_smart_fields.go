@@ -60,14 +60,26 @@ func (c *Controller) AjaxSmartFields() interface{} {
 				err = fmt.Errorf(`there is not %s contract`, cntname)
 			} else {
 				fields := make([]string, 0)
+			main:
 				for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 					if strings.Index(fitem.Tags, `hidden`) >= 0 {
 						continue
+					}
+					for _, tag := range []string{`date`, `polymap`, `map`, `image`} {
+						if strings.Index(fitem.Tags, tag) >= 0 {
+							fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"%s", "txType":"%s", "title":"%s"}`,
+								fitem.Name, tag, fitem.Type.String(), fitem.Name))
+							continue main
+						}
 					}
 					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
 						fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"textinput", "txType":"%s", "title":"%s"}`,
 							fitem.Name, fitem.Type.String(), fitem.Name))
 					}
+					/*					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
+										fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"textinput", "txType":"%s", "title":"%s"}`,
+											fitem.Name, fitem.Type.String(), fitem.Name))
+									}*/
 				}
 				result.Fields = fmt.Sprintf(`[%s]`, strings.Join(fields, `,`))
 

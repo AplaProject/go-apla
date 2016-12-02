@@ -578,6 +578,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	b := new(bytes.Buffer)
 	finfo := FormInfo{TxName: name, OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
+txlist:
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		var value string
 		if val, ok := (*vars)[fitem.Name]; ok {
@@ -586,25 +587,19 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
 			continue
 		}
-		if strings.Index(fitem.Tags, `polymap`) >= 0 {
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "polymap",
-				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
-		} else if strings.Index(fitem.Tags, `map`) >= 0 {
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "map",
-				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
-		} else if strings.Index(fitem.Tags, `image`) >= 0 {
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "image",
-				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
-		} else if strings.Index(fitem.Tags, `date`) >= 0 {
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "date",
-				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
-		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
+		for _, tag := range []string{`date`, `polymap`, `map`, `image`} {
+			if strings.Index(fitem.Tags, tag) >= 0 {
+				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
+					TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
+				continue txlist
+			}
+		}
+		if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
 		}
 
 	}
-	fmt.Println(`Fields`, finfo.Fields)
 	if err = t.Execute(b, finfo); err != nil {
 		return fmt.Sprintf("Error: %v", err)
 	}
