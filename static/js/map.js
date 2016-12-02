@@ -2652,6 +2652,14 @@ function userLocation(elem, width, height) {
 			}
 		});
 		
+		map.addListener('click', function(e) {
+			if (tag === "textarea") {
+				point = e.latLng;
+				marker.setPosition(point);
+				textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
+			}
+		});
+		
 		if (data) {
 			data  = JSON.parse(data);
 			zoom = Number(data.zoom);
@@ -2663,14 +2671,6 @@ function userLocation(elem, width, height) {
 			map.setZoom(zoom);
 			map.setCenter(center);
 			marker.setMap(map);
-		} else {
-			map.addListener('click', function(e) {
-				if (point === null && tag === "textarea") {
-					point = e.latLng;
-					marker.setPosition(point);
-					textarea.innerHTML = '{"center_point":["' + map.getCenter().lat() + '","' + map.getCenter().lng() + '"], "zoom":"' + map.getZoom() + '", "cords":["' + marker.getPosition().lat() + '","' + marker.getPosition().lng() + '"]}';
-				}
-			});
 		}
 	});
 }
