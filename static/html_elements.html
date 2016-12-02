@@ -37,6 +37,49 @@
 		theme: 'bootstrap'
 	});
 	
+	(function($, window, document){
+	  'use strict';
+	
+	  var Selector = '[data-notify]',
+		  autoloadSelector = '[data-onload]',
+		  doc = $(document);
+	
+	
+	  $(function() {
+	
+		$(Selector).each(function(){
+	
+		  var $this  = $(this),
+			  onload = $this.data('onload');
+	
+		  if(onload !== undefined) {
+			setTimeout(function(){
+			  notifyNow($this);
+			}, 800);
+		  }
+	
+		  $this.on('click', function (e) {
+			e.preventDefault();
+			notifyNow($this);
+		  });
+	
+		});
+	
+	  });
+	
+	  function notifyNow($element) {
+		  var message = $element.data('message'),
+			  options = $element.data('options');
+	
+		  if(!message)
+			$.error('Notify: No message specified');
+		 
+		  $.notify(message, options || {});
+	  }
+	
+	
+	}(jQuery, window, document));
+	
 	// CLASSYLOADER
 	// ----------------------------------- 
 	
@@ -951,7 +994,7 @@
 		 <div class="panel-body bg-inverse">
 			<div class="row row-table text-center">
 			   <div class="col-xs-12 p0">
-				  <p class="m0 h4">1830-2419-4805-4495-7541&nbsp;<i class="clipboard fa fa-clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text="1830-2419-4805-4495-7541" onClick="CopyToClipboard('.clipboard')"></i></p>
+				  <p class="m0 h4">1830-2419-4805-4495-7541&nbsp;<i class="clipboard fa fa-clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text="1830-2419-4805-4495-7541" onClick="CopyToClipboard('.clipboard')" data-notify="" data-message="Copied to clipboard" data-options="{&quot;status&quot;:&quot;info&quot;}"></i></p>
 				  <p class="m0 text-muted">Citizen ID</p>
 			   </div>
 			</div>
