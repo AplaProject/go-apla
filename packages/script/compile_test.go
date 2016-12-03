@@ -63,6 +63,11 @@ func (block *Block) String() (ret string) {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
+		{`func formap string {
+			var my map
+			
+			return Sprintf("result=%v %s", my, my["test"] )
+		}`, `formap`, ``},
 		{`func runtime string {
 			var i int
 			i = 50
@@ -207,7 +212,7 @@ func TestVMCompile(t *testing.T) {
 			}); err == nil {
 				if out[0].(string) != item.Output {
 					fmt.Println(out[0].(string))
-					t.Error(`error vm` + item.Input)
+					t.Error(`error vm ` + item.Input)
 				}
 			} else if err.Error() != item.Output {
 				t.Error(err)

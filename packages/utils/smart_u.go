@@ -698,7 +698,8 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 					 </li></ul></div></div></div>
 		 <div class="panel-body bg-inverse"><div class="row row-table text-center">
 			   <div class="col-xs-12 p0">
-				  <p class="m0 h4">%s <i class="clipboard fa fa-clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text="%s" onClick="CopyToClipboard('.clipboard')"></i></p>
+				  <p class="m0 h4">%s <i class="clipboard fa fa-clipboard" aria-hidden="true" data-clipboard-action="copy" 
+				  data-clipboard-text="%s" onClick="CopyToClipboard('.clipboard')" data-message="Copied to clipboard" data-options="{&quot;status&quot;:&quot;info&quot;}"></i></p>
 				  <p class="m0 text-muted">Citizen ID</p>
 		</div></div></div></div>`, image, lib.Escape(pars[0]), flag, address, address)
 }

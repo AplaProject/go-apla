@@ -45,7 +45,7 @@ func init() {
 		"IsContract":  IsContract,
 		"StateValue":  StateValue,
 		"Int":         Int,
-		"Sha256":         Sha256,
+		"Sha256":      Sha256,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -195,7 +195,7 @@ func DBString(tblname string, name string, id int64) (string, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
 }
 
-func Sha256(text string) (string) {
+func Sha256(text string) string {
 	return string(utils.Sha256(text))
 }
 
@@ -203,7 +203,7 @@ func DBInt(tblname string, name string, id int64) (int64, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
 }
 
-func DBStringExt(tblname string, name string, id int64, idname string) (string, error) {
+func DBStringExt(tblname string, name string, id interface{}, idname string) (string, error) {
 	if isIndex, err := utils.DB.IsIndex(tblname, idname); err != nil {
 		return ``, err
 	} else if !isIndex {
@@ -213,7 +213,7 @@ func DBStringExt(tblname string, name string, id int64, idname string) (string, 
 		lib.EscapeName(idname)+`=?`, id).String()
 }
 
-func DBIntExt(tblname string, name string, id int64, idname string) (ret int64, err error) {
+func DBIntExt(tblname string, name string, id interface{}, idname string) (ret int64, err error) {
 	var val string
 	val, err = DBStringExt(tblname, name, id, idname)
 	if err != nil {
