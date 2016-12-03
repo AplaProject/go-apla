@@ -14,7 +14,7 @@ SetVar(
 		DateOfExpiry  string "date"
 	}
 	func main {
-	  DBUpdate(Table( "citizens"), $citizen, "name,avatar,PlaceOfBirth,DateOfBirth,Gender,DateOfIssue,DateOfExpiry", $NickName, $Image, $PlaceOfBirth, $DateOfBirth, $Gender, $DateOfIssue, $DateOfExpiry)
+	  DBUpdate(Table( "citizens"), $citizen, "name,avatar,place_of_birth,date_of_birth,gender,date_of_issue,date_of_expiry", $NickName, $Image, $PlaceOfBirth, $DateOfBirth, $Gender, $DateOfIssue, $DateOfExpiry)
 	}
 }`
 )
@@ -45,7 +45,7 @@ Json(`Head: "Advanced citizenship",
         			type: "NewColumn",
         			typeid: #typecolid#,
         			table_name : "#state_id#_citizens",
-        			column_name: "PlaceOfBirth",
+        			column_name: "place_of_birth",
         			permissions: "$citizen == #wallet_id#",
         			index: 0
         		}
@@ -56,7 +56,7 @@ Json(`Head: "Advanced citizenship",
                  			type: "NewColumn",
                  			typeid: #typecolid#,
                  			table_name : "#state_id#_citizens",
-                 			column_name: "DateOfBirth",
+                 			column_name: "date_of_birth",
                  			permissions: "$citizen == #wallet_id#",
                  			index: 0
                  		}
@@ -67,7 +67,7 @@ Json(`Head: "Advanced citizenship",
                          			type: "NewColumn",
                          			typeid: #typecolid#,
                          			table_name : "#state_id#_citizens",
-                         			column_name: "Gender",
+                         			column_name: "gender",
                          			permissions: "$citizen == #wallet_id#",
                          			index: 0
                          		}
@@ -78,7 +78,7 @@ Json(`Head: "Advanced citizenship",
                                  			type: "NewColumn",
                                  			typeid: #typecolid#,
                                  			table_name : "#state_id#_citizens",
-                                 			column_name: "DateOfIssue",
+                                 			column_name: "date_of_issue",
                                  			permissions: "$citizen == #wallet_id#",
                                  			index: 0
                                  		}
@@ -89,7 +89,7 @@ Json(`Head: "Advanced citizenship",
                                          			type: "NewColumn",
                                          			typeid: #typecolid#,
                                          			table_name : "#state_id#_citizens",
-                                         			column_name: "DateOfExpiry",
+                                         			column_name: "date_of_expiry",
                                          			permissions: "$citizen == #wallet_id#",
                                          			index: 0
                                          		}

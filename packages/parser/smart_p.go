@@ -45,6 +45,7 @@ func init() {
 		"IsContract":  IsContract,
 		"StateValue":  StateValue,
 		"Int":         Int,
+		"Sha256":         Sha256,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -192,6 +193,10 @@ func DBTransfer(p *Parser, tblname, columns string, idFrom, idTo int64, amount d
 
 func DBString(tblname string, name string, id int64) (string, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
+}
+
+func Sha256(text string) (string) {
+	return string(utils.Sha256(text))
 }
 
 func DBInt(tblname string, name string, id int64) (int64, error) {

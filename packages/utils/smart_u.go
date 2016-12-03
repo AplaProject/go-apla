@@ -685,6 +685,7 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 	if len(pars) > 3 {
 		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, pars[3])
 	}
+	address := lib.AddressToString(uint64(StrToInt64(pars[1])))
 	return fmt.Sprintf(`<div class="panel widget"><div class="panel-body">
 			<div class="row row-table"><div class="col-xs-6 text-center">
 				  <img src="%s" alt="Image" class="img-circle thumb96">
@@ -697,9 +698,9 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 					 </li></ul></div></div></div>
 		 <div class="panel-body bg-inverse"><div class="row row-table text-center">
 			   <div class="col-xs-12 p0">
-				  <p class="m0 h4">%s</p>
+				  <p class="m0 h4">%s <i class="clipboard fa fa-clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text="%s" onClick="CopyToClipboard('.clipboard')"></i></p>
 				  <p class="m0 text-muted">Citizen ID</p>
-		</div></div></div></div>`, image, lib.Escape(pars[0]), flag, lib.AddressToString(uint64(StrToInt64(pars[1]))))
+		</div></div></div></div>`, image, lib.Escape(pars[0]), flag, address, address)
 }
 
 func Map(vars *map[string]string, pars ...string) string {
