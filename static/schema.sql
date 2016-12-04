@@ -500,4 +500,20 @@ ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (
 INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');
 INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000000000000000');
 INSERT INTO system_parameters ("name", "value") VALUES ('max_columns', '20');
-INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":"200", "new_column":500,"new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1}');
+INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":"200", "new_column":500,"new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100}');
+
+
+DROP SEQUENCE IF EXISTS system_restore_access_id_seq CASCADE;
+CREATE SEQUENCE system_restore_access_id_seq START WITH 1;
+DROP TABLE IF EXISTS "system_restore_access"; CREATE TABLE "system_restore_access" (
+"id" bigint NOT NULL default nextval('system_restore_access_id_seq'),
+"citizen_id" bigint NOT NULL DEFAULT '0',
+"state_id" bigint NOT NULL DEFAULT '0',
+"active" bigint NOT NULL DEFAULT '0',
+"time" bigint NOT NULL DEFAULT '0',
+"close" bigint NOT NULL DEFAULT '0',
+"secret" text  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE system_restore_access_id_seq owned by system_restore_access.id;
+ALTER TABLE ONLY "system_restore_access" ADD CONSTRAINT system_restore_access_pkey PRIMARY KEY (id);
