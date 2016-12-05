@@ -497,3 +497,18 @@ func (p *Parser) AccessChange(table, name string) error {
 	}
 	return nil
 }
+
+func (p *Parser) getEGSPrice(name string) (int64, error) {
+	fPrice, err := p.Single(`SELECT value->'` + name + `' FROM system_parameters WHERE name = ?`, "op_price").Int64()
+	if err != nil {
+		return 0, p.ErrInfo(err)
+	}
+
+	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	if err != nil {
+		return 0, p.ErrInfo(err)
+	}
+
+	dltPrice := int64(fPrice / fuelRate)
+	return dltPrice, nil
+}

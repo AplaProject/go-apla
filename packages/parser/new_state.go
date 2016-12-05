@@ -124,7 +124,6 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
-		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		"restore_access_condition", sid, "", psid,
 		"new_table", sid, "", psid,
