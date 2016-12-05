@@ -522,9 +522,10 @@ func HexToInt64(input string) (ret int64) {
 func EscapeName(name string) string {
 	out := make([]byte, 1, len(name)+2)
 	out[0] = '"'
+	available := `()`
 	for _, ch := range []byte(name) {
 		if (ch >= '0' && ch <= '9') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') {
+			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
 			out = append(out, ch)
 		}
 	}
