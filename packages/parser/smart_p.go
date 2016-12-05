@@ -48,6 +48,8 @@ func init() {
 		"Sha256":         Sha256,
 		"UpdateContract": UpdateContract,
 		"UpdateParam":    UpdateParam,
+		"UpdateMenu":     UpdateMenu,
+		"UpdatePage":     UpdatePage,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -349,5 +351,52 @@ func UpdateParam(p *Parser, name, value, conditions string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func UpdateMenu(p *Parser, name, value, conditions string) error {
+	if err := p.AccessChange(`menu`, name); err != nil {
+		return err
+	}
+	fields := []string{"value"}
+	values := []interface{}{value}
+	if len(conditions) > 0 {
+		if err := smart.CompileEval(conditions); err != nil {
+			return err
+		}
+		fields = append(fields, "conditions")
+		values = append(values, conditions)
+	}
+	_, err := p.selectiveLoggingAndUpd(fields, values, utils.Int64ToStr(int64(p.TxStateID))+"_menu",
+		[]string{"name"}, []string{name}, true)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdatePage(p *Parser, name, value, menu, conditions string) error {
+	if err := p.AccessChange(`pages`, name); err != nil {
+		return p.ErrInfo(err)
+	}
+	fields := []string{"value"}
+	values := []interface{}{value}
+	if len(conditions) > 0 {
+		if err := smart.CompileEval(conditions); err != nil {
+			return err
+		}
+		fields = append(fields, "conditions")
+		values = append(values, conditions)
+	}
+	if len(menu) > 0 {
+		fields = append(fields, "menu")
+		values = append(values, menu)
+	}
+	_, err := p.selectiveLoggingAndUpd(fields, values, utils.Int64ToStr(int64(p.TxStateID))+"_pages",
+		[]string{"name"}, []string{name}, true)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
