@@ -204,6 +204,9 @@
 			{{if eq .HtmlType "textinput"}}
 				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
 			{{end}}
+			{{if eq .HtmlType "text"}}
+				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
+			{{end}}
 			{{if eq .HtmlType "date"}}
 				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
 			{{end}}
@@ -295,6 +298,9 @@
 			{{range .Fields}} {{if eq .HtmlType "textinput"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
+			{{end}} {{if eq .HtmlType "text"}}
+			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
+				<textarea id="{{.Name}}" name="{{.Name}}" style="height: 180px;" class="form-control">{{.Value}}</textarea></div>
 			{{end}} {{if eq .HtmlType "map"}}
 			<div class="form-group"> <label>{{.Title}}</label>
 				<textarea class="form-control map" id="{{.Name}}">{{.Value}}</textarea>

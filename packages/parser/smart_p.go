@@ -321,6 +321,10 @@ func Int(val string) int64 {
 }
 
 func UpdateContract(p *Parser, name, value, conditions string) error {
+	var (
+		fields []string
+		values []interface{}
+	)
 	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	cnt, err := p.OneRow(`SELECT id,conditions FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
 	if err != nil {
@@ -341,14 +345,19 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 			}
 		}
 	}
-	fields := []string{"value"}
-	values := []interface{}{value}
+	if len(value) > 0 {
+		fields = append(fields, "value")
+		values = append(values, value)
+	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions); err != nil {
 			return err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
+	}
+	if len(fields) == 0 {
+		return fmt.Errorf(`empty value and condition`)
 	}
 	root, err := smart.CompileBlock(value)
 	if err != nil {
@@ -365,18 +374,27 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 }
 
 func UpdateParam(p *Parser, name, value, conditions string) error {
+	var (
+		fields []string
+		values []interface{}
+	)
+
 	if err := p.AccessRights(name, true); err != nil {
 		return err
 	}
-	fields := []string{"value"}
-	values := []interface{}{value}
-
+	if len(value) > 0 {
+		fields = append(fields, "value")
+		values = append(values, value)
+	}
 	if len(conditions) > 0 {
 		if err := smart.CompileEval(conditions); err != nil {
 			return err
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
+	}
+	if len(fields) == 0 {
+		return fmt.Errorf(`empty value and condition`)
 	}
 	_, err := p.selectiveLoggingAndUpd(fields, values,
 		utils.Int64ToStr(int64(p.TxStateID))+"_state_parameters", []string{"name"}, []string{name}, true)
