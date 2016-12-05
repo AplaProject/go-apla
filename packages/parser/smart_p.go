@@ -18,6 +18,7 @@ package parser
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -38,6 +39,8 @@ func init() {
 		"DBInt":          DBInt,
 		"DBStringExt":    DBStringExt,
 		"DBIntExt":       DBIntExt,
+		"DBStringWhere":  DBStringWhere,
+		"DBIntWhere":     DBIntWhere,
 		"Table":          StateTable,
 		"TableTx":        StateTableTx,
 		"AddressToId":    AddressToID,
@@ -220,6 +223,35 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (st
 func DBIntExt(tblname string, name string, id interface{}, idname string) (ret int64, err error) {
 	var val string
 	val, err = DBStringExt(tblname, name, id, idname)
+	if err != nil {
+		return 0, err
+	}
+	if len(val) == 0 {
+		return 0, nil
+	}
+	return strconv.ParseInt(val, 10, 64)
+}
+
+func DBStringWhere(tblname string, name string, where string, params ...interface{}) (string, error) {
+	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
+	ret := re.FindAllStringSubmatch(where, -1)
+	for _, iret := range ret {
+		if len(iret) != 2 {
+			continue
+		}
+		if isIndex, err := utils.DB.IsIndex(tblname, iret[1]); err != nil {
+			return ``, err
+		} else if !isIndex {
+			return ``, fmt.Errorf(`there is not index on %s`, iret[1])
+		}
+	}
+	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
+		strings.Replace(lib.Escape(where), `$`, `?`, -1), params...).String()
+}
+
+func DBIntWhere(tblname string, name string, where string, params ...interface{}) (ret int64, err error) {
+	var val string
+	val, err = DBStringWhere(tblname, name, where, params...)
 	if err != nil {
 		return 0, err
 	}
