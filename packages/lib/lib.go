@@ -529,6 +529,9 @@ func EscapeName(name string) string {
 			out = append(out, ch)
 		}
 	}
+	if strings.IndexAny(string(out), available) >= 0 {
+		return string(out[1:])
+	}
 	return string(append(out, '"'))
 }
 
