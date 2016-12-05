@@ -31,21 +31,23 @@ import (
 
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
-		"DBInsert":    DBInsert,
-		"DBUpdate":    DBUpdate,
-		"DBTransfer":  DBTransfer,
-		"DBString":    DBString,
-		"DBInt":       DBInt,
-		"DBStringExt": DBStringExt,
-		"DBIntExt":    DBIntExt,
-		"Table":       StateTable,
-		"TableTx":     StateTableTx,
-		"AddressToId": AddressToID,
-		"DBAmount":    DBAmount,
-		"IsContract":  IsContract,
-		"StateValue":  StateValue,
-		"Int":         Int,
-		"Sha256":      Sha256,
+		"DBInsert":       DBInsert,
+		"DBUpdate":       DBUpdate,
+		"DBTransfer":     DBTransfer,
+		"DBString":       DBString,
+		"DBInt":          DBInt,
+		"DBStringExt":    DBStringExt,
+		"DBIntExt":       DBIntExt,
+		"Table":          StateTable,
+		"TableTx":        StateTableTx,
+		"AddressToId":    AddressToID,
+		"DBAmount":       DBAmount,
+		"IsContract":     IsContract,
+		"StateValue":     StateValue,
+		"Int":            Int,
+		"Sha256":         Sha256,
+		"UpdateContract": UpdateContract,
+		"UpdateParam":    UpdateParam,
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -282,4 +284,70 @@ func StateValue(p *Parser, name string) string {
 
 func Int(val string) int64 {
 	return utils.StrToInt64(val)
+}
+
+func UpdateContract(p *Parser, name, value, conditions string) error {
+	prefix := utils.Int64ToStr(int64(p.TxStateID))
+	cnt, err := p.OneRow(`SELECT id,conditions FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
+	if err != nil {
+		return err
+	}
+	if len(cnt) == 0 {
+		return fmt.Errorf(`unknown contract %s`, name)
+	}
+	cond := cnt[`conditions`]
+	if len(cond) > 0 {
+		ret, err := p.EvalIf(cond)
+		if err != nil {
+			return err
+		}
+		if !ret {
+			if err = p.AccessRights(`changing_smart_contracts`, false); err != nil {
+				return err
+			}
+		}
+	}
+	fields := []string{"value"}
+	values := []interface{}{value}
+	if len(conditions) > 0 {
+		if err := smart.CompileEval(conditions); err != nil {
+			return err
+		}
+		fields = append(fields, "conditions")
+		values = append(values, conditions)
+	}
+	root, err := smart.CompileBlock(value)
+	if err != nil {
+		return err
+	}
+	_, err = p.selectiveLoggingAndUpd(fields, values,
+		prefix+"_smart_contracts", []string{"id"}, []string{cnt["id"]}, true)
+	if err != nil {
+		return err
+	}
+	smart.FlushBlock(root)
+
+	return nil
+}
+
+func UpdateParam(p *Parser, name, value, conditions string) error {
+	if err := p.AccessRights(name, true); err != nil {
+		return err
+	}
+	fields := []string{"value"}
+	values := []interface{}{value}
+
+	if len(conditions) > 0 {
+		if err := smart.CompileEval(conditions); err != nil {
+			return err
+		}
+		fields = append(fields, "conditions")
+		values = append(values, conditions)
+	}
+	_, err := p.selectiveLoggingAndUpd(fields, values,
+		utils.Int64ToStr(int64(p.TxStateID))+"_state_parameters", []string{"name"}, []string{name}, true)
+	if err != nil {
+		return err
+	}
+	return nil
 }
