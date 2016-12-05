@@ -2313,6 +2313,37 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())
 		}
+		if (*params)[`wicitizen`] == `1` {
+			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">(function($, window, document){
+'use strict';
+  var Selector = '[data-notify]',
+      autoloadSelector = '[data-onload]',
+      doc = $(document);
+
+  $(function() {
+    $(Selector).each(function(){
+      var $this  = $(this),
+          onload = $this.data('onload');
+      if(onload !== undefined) {
+        setTimeout(function(){
+          notifyNow($this);
+        }, 800);
+      }
+      $this.on('click', function (e) {
+        e.preventDefault();
+        notifyNow($this);
+      });
+    });
+  });
+  function notifyNow($element) {
+      var message = $element.data('message'),
+          options = $element.data('options');
+ 	 if(!message)
+        $.error('Notify: No message specified');
+      $.notify(message, options || {});
+  }
+}(jQuery, window, document));</script>`)
+		}
 		if (*params)[`wimappoint`] == `1` {
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
