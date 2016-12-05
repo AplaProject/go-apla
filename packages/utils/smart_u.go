@@ -587,7 +587,7 @@ txlist:
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
 			continue
 		}
-		for _, tag := range []string{`date`, `polymap`, `map`, `image`} {
+		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`} {
 			if strings.Index(fitem.Tags, tag) >= 0 {
 				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
 					TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
