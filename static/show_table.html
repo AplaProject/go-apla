@@ -1,4 +1,43 @@
 {{ define "showTable" }}
+<style>
+	.textEditor {
+		position:relative;
+		font-size:0px;
+		padding-bottom:5px;
+	}
+	.textEditor code  {
+		position:relative;
+		font: 12px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
+		line-height:14px;
+		z-index:1;
+    }
+	.textEditor section  {
+		position:absolute;
+		left:0px;
+		top:0px;
+		width:100%;
+        height:100%;
+		z-index:2;
+    }
+</style>
+
+<script>
+	var i = 0;
+	
+	$(".textEditor").each(function() {
+		i += 1;
+		var id = "textEditor_" + i;
+		$(this).find("section").attr("id", id);
+		var editor = ace.edit(id);
+		var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
+		editor.setTheme("ace/theme/chrome");
+		editor.session.setMode(new JavaScriptMode());
+		editor.setShowPrintMargin(false);
+		editor.getSession().setUseWrapMode(true);
+		editor.renderer.setShowGutter(false);
+		editor.setReadOnly(true);
+	});
+</script>
 
 	<div class="content-heading">
 		Show Table
@@ -30,6 +69,20 @@
 				  {{end}}
 			  </tr>
 			  {{end}}
+			  <tr>
+				 <td>
+					<pre class="textEditor">
+						<code>$data.value</code>
+						<section>$data.value</section>
+					</pre>
+				</td>
+				<td>
+					<pre class="textEditor">
+						<code>$data.value</code>
+						<section>$data.value</section>
+					</pre>
+				</td>
+			  </tr>
 
 			  </tbody>
 		   </table>
@@ -37,11 +90,4 @@
 	 </div>
 	</div>
 	<!-- END panel-->
-<script type="text/javascript">
-	$(document).ready(function() {
-		$(".edit").editable({
-            type: 'text'
-		})
-	});
-</script>
 {{end}}
