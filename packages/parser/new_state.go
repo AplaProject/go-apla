@@ -382,7 +382,7 @@ PageEnd:`, `menu_default`, sid,
 		[Government dashboard](government)`, sid,
 		`government`, `
 [Citizen dashboard](dashboard_default)
-[Government dashboard](dashboard_default)
+[Government dashboard](government)
 [Tables](sys.listOfTables)
 [Smart contracts](sys.contracts)
 [Apps list](sys.app_catalog)
