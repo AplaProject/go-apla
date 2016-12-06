@@ -48,6 +48,10 @@ func (block *Block) String() (ret string) {
 	return
 }
 
+func getMap() map[string]interface{} {
+	return map[string]interface{}{`par0`: `Parameter 0`, `par1`: `Parameter 1`}
+}
+
 /*			if (111> 10) { //01 Commment
 				if 0==1 {
 					Println("TRUE TRUE temp function")
@@ -68,11 +72,15 @@ func TestVMCompile(t *testing.T) {
 			}
 		func formap string {
 			var my map
+			var ret map
 			
+			ret = GetMap()
+//			Println(ret)
+//			Println("Ooops", ret["par0"], ret["par1"])
 			my["par1"] = "my value" + proc(" space ")
 			my["par2"] = 203 * (100-86)
-			return Sprintf("result=%d+%s+%s+%d", my["par2"] + 32, my["par1"], proc($glob["test"]), $glob["number"] )
-		}`, `formap`, `result=2874+my value space proc+String valueproc+1001`},
+			return Sprintf("result=%s+%d+%s+%s+%d", ret["par1"], my["par2"] + 32, my["par1"], proc($glob["test"]), $glob["number"] )
+		}`, `formap`, `result=Parameter 1+2874+my value space proc+String valueproc+1001`},
 		{`func runtime string {
 					var i int
 					i = 50
@@ -203,7 +211,8 @@ func TestVMCompile(t *testing.T) {
 									}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},
 	}
 	vm := NewVM()
-	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf}, nil})
+	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
+		"GetMap": getMap}, nil})
 
 	for _, item := range test {
 		source := []rune(item.Input)
