@@ -10,7 +10,7 @@
 	
 	$(".filestyle").filestyle();
 	
-	$(".datetimepicker").datetimepicker({
+	/*$(".datetimepicker").datetimepicker({
 		icons: {
 			time: 'fa fa-clock-o',
 			date: 'fa fa-calendar',
@@ -22,7 +22,18 @@
 			clear: 'fa fa-trash'
 		},
 		format: 'DD MMMM, YYYY'
+	});*/
+	$.datetimepicker.setLocale('en');
+	jQuery(".datetimepicker").datetimepicker();
+	jQuery(".datepicker").datetimepicker({
+		format:'Y/m/d',
+		timepicker:false
 	});
+	jQuery(".timepicker").datetimepicker({
+		datepicker:false,
+		format:'H:i'
+	});
+	
 	
 	$(".datatable").show().dataTable({
 		paging:   true,
@@ -414,8 +425,16 @@
 				<input type="file" class="filestyle form-control" id="filestyle">
 			</div>
 			<div class="form-group">
-				<label class="control-label" for="datetimepicker">Datetimepicker</label>
+				<label class="control-label" for="datetimepicker">DateTimePicker</label>
 				<input type="text" class="datetimepicker form-control" id="datetimepicker">
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="datepicker">DatePicker</label>
+				<input type="text" class="datepicker form-control" id="datepicker">
+			</div>
+			<div class="form-group">
+				<label class="control-label" for="timepicker">TimePicker</label>
+				<input type="text" class="timepicker form-control" id="timepicker">
 			</div>
 		</form>
 	</div>
