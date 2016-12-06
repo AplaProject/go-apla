@@ -213,6 +213,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
 		} else {
 			value = reflect.New(vpar).Elem().Interface()
+			if vpar == reflect.TypeOf(map[string]interface{}{}) {
+				value = make(map[string]interface{})
+			}
 		}
 		rt.vars = append(rt.vars, value)
 	}
@@ -331,6 +334,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			} else {
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
+		case CMD_INDEX:
+			rt.stack[size-2] = rt.stack[size-2].(map[string]interface{})[rt.stack[size-1].(string)]
+			rt.stack = rt.stack[:size-1]
+		case CMD_SETINDEX:
+			rt.stack[size-3].(map[string]interface{})[rt.stack[size-2].(string)] = rt.stack[size-1]
+			rt.stack = rt.stack[:size-2]
 		case CMD_SIGN:
 			switch top[0].(type) {
 			case float64:

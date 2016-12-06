@@ -202,8 +202,9 @@ var (
 			0:           {ERR_VARS, CF_ERROR},
 		},
 		{ // STATE_ASSIGNEVAL
-			IS_LPAR: {STATE_EVAL | STATE_TOFORK | STATE_TOBODY, 0},
-			0:       {STATE_ASSIGN | STATE_TOFORK | STATE_STAY, 0},
+			IS_LPAR:   {STATE_EVAL | STATE_TOFORK | STATE_TOBODY, 0},
+			IS_LBRACK: {STATE_EVAL | STATE_TOFORK | STATE_TOBODY, 0},
+			0:         {STATE_ASSIGN | STATE_TOFORK | STATE_STAY, 0},
 		},
 		{ // STATE_ASSIGN
 			IS_COMMA:   {STATE_ASSIGN, 0},
@@ -290,7 +291,6 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 			block.Vars[vkey] = lexem.Value.(reflect.Type)
 		}
 	}
-	//	fmt.Println(`VARS`, block.Vars)
 	return nil
 }
 
@@ -582,6 +582,7 @@ func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	buffer := make(ByteCodes, 0, 20)
 	bytecode := make(ByteCodes, 0, 100)
 	parcount := make([]int, 0, 20)
+	setIndex := false
 	//	mode := 0
 main:
 	for ; i < len(*lexems); i++ {
@@ -604,6 +605,8 @@ main:
 			}
 			break main
 		case IS_LPAR:
+			buffer = append(buffer, &ByteCode{CMD_SYS, uint16(0xff)})
+		case IS_LBRACK:
 			buffer = append(buffer, &ByteCode{CMD_SYS, uint16(0xff)})
 		case IS_COMMA:
 			if len(parcount) > 0 {
@@ -640,6 +643,31 @@ main:
 						bytecode = append(bytecode, &ByteCode{CMD_PUSH, count})
 					}
 					buffer = buffer[:len(buffer)-1]
+					bytecode = append(bytecode, prev)
+				}
+			}
+		case IS_RBRACK:
+			for {
+				if len(buffer) == 0 {
+					return fmt.Errorf(`there is not pair`)
+				} else {
+					prev := buffer[len(buffer)-1]
+					buffer = buffer[:len(buffer)-1]
+					if prev.Value.(uint16) == 0xff {
+						break
+					} else {
+						bytecode = append(bytecode, prev)
+					}
+				}
+			}
+			if len(buffer) > 0 {
+				if prev := buffer[len(buffer)-1]; prev.Cmd == CMD_INDEX {
+					buffer = buffer[:len(buffer)-1]
+					if (*lexems)[i+1].Type == IS_EQ {
+						i++
+						setIndex = true
+						continue
+					}
 					bytecode = append(bytecode, prev)
 				}
 			}
@@ -693,6 +721,9 @@ main:
 			}
 			if !call {
 				cmd = &ByteCode{CMD_EXTEND, lexem.Value.(string)}
+				if (*lexems)[i+1].Type == IS_LBRACK {
+					buffer = append(buffer, &ByteCode{CMD_INDEX, 0})
+				}
 			}
 		case LEX_IDENT:
 			objInfo, tobj := vm.findObj(lexem.Value.(string), block)
@@ -727,6 +758,12 @@ main:
 					parcount = append(parcount, count)
 					call = true
 				}
+				if (*lexems)[i+1].Type == IS_LBRACK {
+					if objInfo == nil || objInfo.Type != OBJ_VAR {
+						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+					}
+					buffer = append(buffer, &ByteCode{CMD_INDEX, 0})
+				}
 			}
 			if !call {
 				cmd = &ByteCode{CMD_VAR, &VarInfo{objInfo, tobj}}
@@ -743,6 +780,9 @@ main:
 		} else {
 			bytecode = append(bytecode, buffer[i])
 		}
+	}
+	if setIndex {
+		bytecode = append(bytecode, &ByteCode{CMD_SETINDEX, 0})
 	}
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil

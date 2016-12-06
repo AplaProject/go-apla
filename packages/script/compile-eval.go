@@ -38,6 +38,8 @@ const (
 	CMD_CONTINUE          // continue from label
 	CMD_WHILE             // while
 	CMD_BREAK             // break
+	CMD_INDEX             // get index []
+	CMD_SETINDEX          // set index []
 	CMD_ERROR             // error command
 )
 
