@@ -43,6 +43,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}*/
 		if field[:1] == "+" || field[:1] == "-" {
 			addSqlFields += field[1:len(field)] + ","
+		} else if strings.HasPrefix(field, `timestamp `) {
+			addSqlFields += field[len(`timestamp `):] + `,`
 		} else {
 			addSqlFields += field + ","
 		}
@@ -78,8 +80,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			if k == "rb_id" {
 				k = "prev_rb_id"
 			}
-			if k[:1] == "+" {
+			if k[:1] == "+" || k[:1] == "-" {
 				addSqlFields += k[1:len(k)] + ","
+			} else if strings.HasPrefix(k, `timestamp `) {
+				addSqlFields += k[len(`timestamp `):] + `,`
 			} else {
 				addSqlFields += k + ","
 			}
@@ -101,6 +105,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
 			} else if fields[i][:1] == "-" {
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
+			} else if strings.HasPrefix(fields[i], `timestamp `) {
+				addSqlUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
 			} else {
 				addSqlUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
@@ -118,11 +124,15 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		for i := 0; i < len(fields); i++ {
 			if fields[i][:1] == "+" || fields[i][:1] == "-" {
 				addSqlIns0 += fields[i][1:len(fields[i])] + `,`
+			} else if strings.HasPrefix(fields[i], `timestamp `) {
+				addSqlIns0 += fields[i][len(`timestamp `):] + `,`
 			} else {
 				addSqlIns0 += fields[i] + `,`
 			}
 			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
 				addSqlIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
+			} else if strings.HasPrefix(fields[i], `timestamp `) {
+				addSqlIns1 += `to_timestamp('` + values[i] + `'),`
 			} else {
 				addSqlIns1 += `'` + values[i] + `',`
 			}
