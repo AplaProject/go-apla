@@ -66,15 +66,17 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	walletId = int64(head.WalletId)
 	// test
 	block := int64(0)
+	blockTime := int64(0)
 	walletBlock := int64(0)
 	if p.BlockData != nil {
 		block = p.BlockData.BlockId
 		walletBlock = p.BlockData.WalletId
+		blockTime = p.BlockData.Time
 	}
 
-	extend := map[string]interface{}{`type`: head.Type, `time`: head.Type, `state`: int64(head.StateId),
+	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateId),
 		`block`: block, `citizen`: citizenId, `wallet`: walletId, `wallet_block`: walletBlock,
-		`parser`: p, `contract`: p.TxContract}
+		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime}
 	for key, val := range p.TxData {
 		extend[key] = val
 	}
@@ -307,8 +309,18 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 }
 
 func (p *Parser) EvalIf(conditions string) (bool, error) {
+	time := int64(0)
+	if p.TxPtr != nil {
+		time = int64(p.TxPtr.(*consts.TXHeader).Time)
+	}
+	blockTime := int64(0)
+	if p.BlockData != nil {
+		blockTime = p.BlockData.Time
+	}
+
 	return smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
-		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
+		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p,
+		`block_time`: blockTime, `time`: time})
 }
 
 func StateValue(p *Parser, name string) string {
