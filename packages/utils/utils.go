@@ -467,11 +467,9 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 				return true
 			}
 		}
-	case "reduction_type":
-		if ok, _ := regexp.MatchString(`^(manual|promised_amount)$`, data); ok {
-			if StrToInt(data) <= 30 {
-				return true
-			}
+	case "column_type":
+		if ok, _ := regexp.MatchString(`^(text|int64|time|hash)$`, data); ok {
+			return true
 		}
 	case "avatar":
 		regex := `https?\:\/\/`        // SCHEME
@@ -691,6 +689,10 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 	case "comment":
 		if len(data) >= 1 && len(data) <= 512 {
+			return true
+		}
+	case "conditions":
+		if len(data) <= 1024 {
 			return true
 		}
 	case "hex_sign", "hex", "public_key":

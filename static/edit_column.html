@@ -9,7 +9,7 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+$('#column_name').val()+','+$('#permissions').val(){{if not .ColumnName}}+','+($("#index").is(":checked") ? "1" : "0"){{end}});
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+$('#column_name').val()+','+$('#permissions').val(){{if not .ColumnName}}+','+($("#index").is(":checked") ? "1" : "0")+','+$("#column_type").val(){{end}});
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -24,6 +24,7 @@
 				'column_name' : $('#column_name').val(),
 				'permissions' : $('#permissions').val(),
 				'index' : ($("#index").is(":checked") ? "1" : "0"),
+				'column_type' : $('#column_type').val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
 				'citizenId' : '{{.CitizenId}}',
@@ -62,8 +63,10 @@
 			   {{if .ColumnName}} <p class="form-control-static">{{.ColumnName}}</p> <input type="hidden" class="form-control" id="column_name" value="{{.ColumnName}}"> {{else}} <input type="text" class="form-control" id="column_name"> {{end}}
 		   </div>
 			{{if not .ColumnName}}<div class="form-group">
-				<label>Index</label>
-				<input type="checkbox" id="index">
+			<label>Type</label>
+			<select id="column_type"><option value="text">Text</option><option value="int64">Numbers</option><option value="time">Date/Time</option><option value="hash">Hash</option></select><br>
+			<label>Index</label>
+			<input type="checkbox" id="index">
 			</div>{{end}}
 			<div class="form-group">
 				<label>Permissions</label>

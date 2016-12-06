@@ -190,6 +190,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		columnName := []byte(c.r.FormValue("column_name"))
 		permissions := []byte(c.r.FormValue("permissions"))
 		index := []byte(c.r.FormValue("index"))
+		colType := []byte(c.r.FormValue("column_type"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
@@ -199,6 +200,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(columnName)...)
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
 		data = append(data, utils.EncodeLengthPlusData(index)...)
+		data = append(data, utils.EncodeLengthPlusData(colType)...)
 		data = append(data, binSignatures...)
 
 	case "EditColumn":

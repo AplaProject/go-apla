@@ -7,7 +7,7 @@ SetVar(
 	sc_conditions = "$citizen == #wallet_id#",
     sc_value1 = `contract AddProperty {
                  	tx {
-                         Coords string "map"
+                         Coords string "polymap"
                  	CitizenId string
                  	Name string
 
@@ -25,7 +25,7 @@ SetVar(
     sc_value2 = `contract EditProperty {
                  	tx {
                  		PropertyId  int
-                 	        Coords string "map"
+                 	        Coords string "polymap"
                  	        CitizenId string
                  	        Name string
                  	}

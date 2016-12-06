@@ -17,16 +17,14 @@
 package parser
 
 import (
-	//"encoding/json"
 	"encoding/json"
 	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (p *Parser) NewColumnInit() error {
 
-	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"index": "int64"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"index": "int64"}, {"column_type": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -41,11 +39,11 @@ func (p *Parser) NewColumnFront() error {
 	}
 
 	// Check InputData
-	/*verifyData := map[string]string{"table_name": "string", "column_name": "word", "permissions": "string"}
+	verifyData := map[string]string{"table_name": "string", "column_name": "string", "permissions": "conditions", "index": "int64", "column_type": "column_type"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
-	}*/
+	}
 
 	fPrice, err := p.Single(`SELECT value->'new_column' FROM system_parameters WHERE name = ?`, "op_price").Int64()
 	if err != nil {
@@ -75,7 +73,7 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(`column exists`)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["index"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["index"], p.TxMap["column_type"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -125,7 +123,19 @@ func (p *Parser) NewColumn() error {
 		return err
 	}
 
-	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` varchar(102400)`)
+	colType := ``
+	switch p.TxMaps.String["column_type"] {
+	case "text":
+		colType = `varchar(102400)`
+	case "int64":
+		colType = `bigint`
+	case "time":
+		colType = `timestamp`
+	case "hash":
+		colType = `varchar(32)`
+	}
+
+	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` `+colType)
 	if err != nil {
 		return err
 	}
