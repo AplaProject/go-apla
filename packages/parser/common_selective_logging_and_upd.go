@@ -107,6 +107,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
 				addSqlUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
+			} else if strings.HasPrefix(values[i], `timestamp `) {
+				addSqlUpdate += fields[i] + `= timestamp '` + values[i][len(`timestamp `):] + `',`
 			} else {
 				addSqlUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
@@ -133,6 +135,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
 				addSqlIns1 += `to_timestamp('` + values[i] + `'),`
+			} else if strings.HasPrefix(values[i], `timestamp `) {
+				addSqlIns1 += `timestamp '` + values[i][len(`timestamp `):] + `',`
 			} else {
 				addSqlIns1 += `'` + values[i] + `',`
 			}
