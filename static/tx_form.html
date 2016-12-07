@@ -267,7 +267,7 @@
 			}
 		});
 	} );	
-	$(".datetimepicker").datetimepicker({
+/*	$(".datetimepicker").datetimepicker({
 		icons: {
 			time: 'fa fa-clock-o',
 			date: 'fa fa-calendar',
@@ -280,7 +280,18 @@
 		},		
 		format: 'YYYY-MM-DD'
 	});
-
+*/
+	$.datetimepicker.setLocale('en');
+	jQuery(".datetimepicker").datetimepicker();
+	jQuery(".datepicker").datetimepicker({
+		format:'Y-m-d',
+		timepicker:false
+	});
+	jQuery(".timepicker").datetimepicker({
+		datepicker:false,
+		format:'H:i'
+	});
+	
 	userLocation("map", "100%", "250px");
 //	miniMap("polymap", "100%", "250px");
 
