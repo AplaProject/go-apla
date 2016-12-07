@@ -381,7 +381,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 			if val == `NULL` {
 				val = textproc.Macro(th[1], vars)
 			}
-			out += `<td>` + val + `</td>`
+			out += `<td>` + strings.Replace(val, "\n", "\n<br>", -1) + `</td>`
 		}
 		out += `</tr>`
 	}

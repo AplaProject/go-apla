@@ -215,6 +215,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			value = reflect.New(vpar).Elem().Interface()
 			if vpar == reflect.TypeOf(map[string]interface{}{}) {
 				value = make(map[string]interface{})
+			} else if vpar == reflect.TypeOf([]interface{}{}) {
+				value = make([]interface{}, 0)
 			}
 		}
 		rt.vars = append(rt.vars, value)

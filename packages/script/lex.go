@@ -95,7 +95,8 @@ var (
 		`true`: KEY_TRUE, `false`: KEY_FALSE, `break`: KEY_BREAK, `continue`: KEY_CONTINUE, `var`: KEY_VAR}
 	TYPES = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
 		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
-		`map`: reflect.TypeOf(map[string]interface{}{}), `money`: reflect.TypeOf(decimal.New(0, 0)),
+		`array`: reflect.TypeOf([]interface{}{}),
+		`map`:   reflect.TypeOf(map[string]interface{}{}), `money`: reflect.TypeOf(decimal.New(0, 0)),
 		`float`: reflect.TypeOf(float64(0.0)), `string`: reflect.TypeOf(``)}
 )
 
