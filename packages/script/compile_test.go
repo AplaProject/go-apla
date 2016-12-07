@@ -87,7 +87,7 @@ func TestVMCompile(t *testing.T) {
 			ret[2] = "Test"
 			return Sprintf("result=%s+%s+%d+%s", ret[1], my["par0"], my["par3"], myret[1] + ret[2])
 		}`, `forarray`, `result=The second string+Parameter 0+3456+Another Test`},
-		/*		`func proc(par string) string {
+		{`func proc(par string) string {
 							return par + "proc"
 							}
 						func formap string {
@@ -101,12 +101,12 @@ func TestVMCompile(t *testing.T) {
 							my["par2"] = 203 * (100-86)
 							return Sprintf("result=%s+%d+%s+%s+%d", ret["par1"], my["par2"] + 32, my["par1"], proc($glob["test"]), $glob["number"] )
 						}`, `formap`, `result=Parameter 1+2874+my value space proc+String valueproc+1001`},
-						{`func runtime string {
+		{`func runtime string {
 									var i int
 									i = 50
 									return Sprintf("val=%d", i 0)
 								}`, `runtime`, `runtime panic error`},
-						{`func nop {
+		{`func nop {
 									return
 								}
 
@@ -125,7 +125,7 @@ func TestVMCompile(t *testing.T) {
 									nop()
 									return Sprintf("val=%d", i)
 								}`, `loop`, `val=125`},
-						{`contract my {
+		{`contract my {
 													tx {
 														Par1 int
 														Par2 string
@@ -153,27 +153,27 @@ func TestVMCompile(t *testing.T) {
 													}
 												}
 												`, `mytest.init`, `OK`},
-						{`func money_test string {
+		{`func money_test string {
 											var my2, m1 money
 											my2 = 100
 											m1 = 1.2
 											return Sprintf( "Account %v %v", my2 - 5.6, m1*5 + my2)
 										}`, `money_test`, `Account 94.4 106`},
 
-						{`func line_test string {
+		{`func line_test string {
 												return "Start " +
 												Sprintf( "My String %s %d %d",
 												      "Param 1", 24,
 													345 + 789)
 											}`, `line_test`, `Start My String Param 1 24 1134`},
 
-						{`func err_test string {
+		{`func err_test string {
 												if 1001.02 {
 													error "Error message err_test"
 												}
 												return "OK"
 											}`, `err_test`, `Error message err_test`},
-						{`contract my {
+		{`contract my {
 													tx {
 														PublicKey  bytes
 														FirstName  string
@@ -185,7 +185,7 @@ func TestVMCompile(t *testing.T) {
 													}
 												}`, `my.init`, `OK`},
 
-						{`func temp3 string {
+		{`func temp3 string {
 													var i1 i2 int, s1 string, s2 string
 													i2, i1 = 348, 7
 													if i1 > 5 {
@@ -197,7 +197,7 @@ func TestVMCompile(t *testing.T) {
 													}
 													return s2
 												}`, `temp3`, `temp 3 function s1 string + 241440 -1`},
-						{`func params2(myval int, mystr string ) string {
+		{`func params2(myval int, mystr string ) string {
 													if 101>myval {
 														if myval == 90 {
 														} else {
@@ -213,14 +213,14 @@ func TestVMCompile(t *testing.T) {
 												}
 												`, `temp2`, `myval=51 + Params 2 test`},
 
-						{`func params(myval int, mystr string ) string {
+		{`func params(myval int, mystr string ) string {
 													return Sprintf("Params function %d %s", 33 + myval + $test1, mystr + " end" )
 												}
 												func temp string {
 													return "Prefix " + params(20, "Test string " + $test2) + $test3( 202 )
 												}
 												`, `temp`, `Prefix Params function 154 Test string test 2 endtest=202=test`},
-						{`func my_test string {
+		{`func my_test string {
 																return Sprintf("Called my_test %s %d", "Ooops", 777)
 															}
 
@@ -228,7 +228,7 @@ func TestVMCompile(t *testing.T) {
 															func initf string {
 																return Sprintf("%d %s %s %s", 65123 + (1001-500)*11, my_test(), "Тестовая строка", Sprintf("> %s %d <","OK", 999 ))
 															}
-													}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},*/
+													}`, `my.initf`, `70634 Called my_test Ooops 777 Тестовая строка > OK 999 <`},
 	}
 	vm := NewVM()
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,

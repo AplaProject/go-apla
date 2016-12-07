@@ -19,6 +19,7 @@ package script
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/shopspring/decimal"
 )
@@ -340,10 +341,18 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			itype := reflect.TypeOf(rt.stack[size-2]).String()
 			switch {
 			case itype[:3] == `map`:
-				rt.stack[size-2] = rt.stack[size-2].(map[string]interface{})[rt.stack[size-1].(string)]
+				if strings.Index(itype, `interface`) >= 0 {
+					rt.stack[size-2] = rt.stack[size-2].(map[string]interface{})[rt.stack[size-1].(string)]
+				} else {
+					rt.stack[size-2] = rt.stack[size-2].(map[string]string)[rt.stack[size-1].(string)]
+				}
 				rt.stack = rt.stack[:size-1]
 			case itype[:2] == `[]`:
-				rt.stack[size-2] = rt.stack[size-2].([]interface{})[rt.stack[size-1].(int64)]
+				if strings.Index(itype, `interface`) >= 0 {
+					rt.stack[size-2] = rt.stack[size-2].([]interface{})[rt.stack[size-1].(int64)]
+				} else {
+					rt.stack[size-2] = rt.stack[size-2].([]map[string]string)[rt.stack[size-1].(int64)]
+				}
 				rt.stack = rt.stack[:size-1]
 			default:
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
@@ -352,27 +361,36 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			itype := reflect.TypeOf(rt.stack[size-3]).String()
 			switch {
 			case itype[:3] == `map`:
-				rt.stack[size-3].(map[string]interface{})[rt.stack[size-2].(string)] = rt.stack[size-1]
+				if strings.Index(itype, `interface`) >= 0 {
+					rt.stack[size-3].(map[string]interface{})[rt.stack[size-2].(string)] = rt.stack[size-1]
+				} else {
+					rt.stack[size-3].(map[string]string)[rt.stack[size-2].(string)] = rt.stack[size-1].(string)
+				}
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == `[]`:
 				ind := rt.stack[size-2].(int64)
-				slice := rt.stack[size-3].([]interface{})
-				if int(ind) >= len(slice) {
-					slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
-					for i := 0; i < len(rt.vars); i++ {
-						if reflect.TypeOf(rt.vars[i]).String()[:2] == `[]` {
-							if len(rt.stack[size-3].([]interface{})) == len(rt.vars[i].([]interface{})) &&
-								((len(rt.vars[i].([]interface{})) > 0 &&
-									&rt.stack[size-3].([]interface{})[0] == &rt.vars[i].([]interface{})[0]) ||
-									len(rt.vars[i].([]interface{})) == 0 && cap(rt.vars[i].([]interface{})) == i+1) {
-								rt.vars[i] = slice
-								break
+				if strings.Index(itype, `interface`) >= 0 {
+					slice := rt.stack[size-3].([]interface{})
+					if int(ind) >= len(slice) {
+						slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
+						for i := 0; i < len(rt.vars); i++ {
+							if reflect.TypeOf(rt.vars[i]).String()[:2] == `[]` {
+								if len(rt.stack[size-3].([]interface{})) == len(rt.vars[i].([]interface{})) &&
+									((len(rt.vars[i].([]interface{})) > 0 &&
+										&rt.stack[size-3].([]interface{})[0] == &rt.vars[i].([]interface{})[0]) ||
+										len(rt.vars[i].([]interface{})) == 0 && cap(rt.vars[i].([]interface{})) == i+1) {
+									rt.vars[i] = slice
+									break
+								}
 							}
 						}
+						rt.stack[size-3] = slice
 					}
-					rt.stack[size-3] = slice
+					slice[ind] = rt.stack[size-1]
+				} else {
+					slice := rt.stack[size-3].([]map[string]string)
+					slice[ind] = rt.stack[size-1].(map[string]string)
 				}
-				slice[ind] = rt.stack[size-1]
 				rt.stack = rt.stack[:size-2]
 			default:
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)

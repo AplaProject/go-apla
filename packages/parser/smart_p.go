@@ -18,6 +18,7 @@ package parser
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -34,6 +35,7 @@ func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		"DBInsert":       DBInsert,
 		"DBUpdate":       DBUpdate,
+		"DBGetList":      DBGetList,
 		"DBTransfer":     DBTransfer,
 		"DBString":       DBString,
 		"DBInt":          DBInt,
@@ -48,6 +50,7 @@ func init() {
 		"IsContract":     IsContract,
 		"StateValue":     StateValue,
 		"Int":            Int,
+		"Len":            Len,
 		"Sha256":         Sha256,
 		"UpdateContract": UpdateContract,
 		"UpdateParam":    UpdateParam,
@@ -461,4 +464,38 @@ func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 	}
 
 	return nil
+}
+
+func Len(in []interface{}) int64 {
+	return int64(len(in))
+}
+
+func DBGetList(tblname string, name string, offset, limit int64, order string,
+	where string, params ...interface{}) ([]interface{}, error) {
+	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
+	ret := re.FindAllStringSubmatch(where, -1)
+
+	for _, iret := range ret {
+		if len(iret) != 2 {
+			continue
+		}
+		if isIndex, err := utils.DB.IsIndex(tblname, iret[1]); err != nil {
+			return nil, err
+		} else if !isIndex {
+			return nil, fmt.Errorf(`there is not index on %s`, iret[1])
+		}
+	}
+	if len(order) > 0 {
+		order = ` order by ` + lib.EscapeName(order)
+	}
+	if limit <= 0 {
+		limit = -1
+	}
+	list, err := utils.DB.GetAll(`select `+lib.Escape(name)+` from `+lib.EscapeName(tblname)+` where `+
+		strings.Replace(lib.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
+	result := make([]interface{}, len(list))
+	for i := 0; i < len(list); i++ {
+		result[i] = reflect.ValueOf(list[i]).Interface()
+	}
+	return result, err
 }
