@@ -216,7 +216,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if vpar == reflect.TypeOf(map[string]interface{}{}) {
 				value = make(map[string]interface{})
 			} else if vpar == reflect.TypeOf([]interface{}{}) {
-				value = make([]interface{}, 0)
+				value = make([]interface{}, 0, len(rt.vars)+1)
 			}
 		}
 		rt.vars = append(rt.vars, value)
@@ -337,11 +337,46 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
 		case CMD_INDEX:
-			rt.stack[size-2] = rt.stack[size-2].(map[string]interface{})[rt.stack[size-1].(string)]
-			rt.stack = rt.stack[:size-1]
+			itype := reflect.TypeOf(rt.stack[size-2]).String()
+			switch {
+			case itype[:3] == `map`:
+				rt.stack[size-2] = rt.stack[size-2].(map[string]interface{})[rt.stack[size-1].(string)]
+				rt.stack = rt.stack[:size-1]
+			case itype[:2] == `[]`:
+				rt.stack[size-2] = rt.stack[size-2].([]interface{})[rt.stack[size-1].(int64)]
+				rt.stack = rt.stack[:size-1]
+			default:
+				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
+			}
 		case CMD_SETINDEX:
-			rt.stack[size-3].(map[string]interface{})[rt.stack[size-2].(string)] = rt.stack[size-1]
-			rt.stack = rt.stack[:size-2]
+			itype := reflect.TypeOf(rt.stack[size-3]).String()
+			switch {
+			case itype[:3] == `map`:
+				rt.stack[size-3].(map[string]interface{})[rt.stack[size-2].(string)] = rt.stack[size-1]
+				rt.stack = rt.stack[:size-2]
+			case itype[:2] == `[]`:
+				ind := rt.stack[size-2].(int64)
+				slice := rt.stack[size-3].([]interface{})
+				if int(ind) >= len(slice) {
+					slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
+					for i := 0; i < len(rt.vars); i++ {
+						if reflect.TypeOf(rt.vars[i]).String()[:2] == `[]` {
+							if len(rt.stack[size-3].([]interface{})) == len(rt.vars[i].([]interface{})) &&
+								((len(rt.vars[i].([]interface{})) > 0 &&
+									&rt.stack[size-3].([]interface{})[0] == &rt.vars[i].([]interface{})[0]) ||
+									len(rt.vars[i].([]interface{})) == 0 && cap(rt.vars[i].([]interface{})) == i+1) {
+								rt.vars[i] = slice
+								break
+							}
+						}
+					}
+					rt.stack[size-3] = slice
+				}
+				slice[ind] = rt.stack[size-1]
+				rt.stack = rt.stack[:size-2]
+			default:
+				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
+			}
 		case CMD_SIGN:
 			switch top[0].(type) {
 			case float64:
