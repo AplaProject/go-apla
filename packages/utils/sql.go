@@ -377,7 +377,7 @@ func (db *DCDB) GetAll(query string, countRows int, args ...interface{}) ([]map[
 	//fmt.Println("columns", columns)
 
 	// Make a slice for the values
-	values := make([]sql.RawBytes, len(columns))
+	values := make([][]byte /*sql.RawBytes*/, len(columns))
 
 	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
 	// references into such a slice
