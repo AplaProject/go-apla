@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const APrepareTx = `ajax_prepare_tx`
@@ -70,6 +71,14 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 			if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
 				err = fmt.Errorf(`%s is empty`, fitem.Name)
 				break
+			}
+			if strings.Index(fitem.Tags, `address`) >= 0 {
+				addr := lib.StringToAddress(val)
+				if addr == 0 {
+					err = fmt.Errorf(`Address %s is not valid`, val)
+					break
+				}
+				val = utils.Int64ToStr(addr)
 			}
 			forsign += fmt.Sprintf(",%v", val)
 		}

@@ -201,19 +201,7 @@
 			'TxName' : '{{.TxName}}',
 		};
 		{{range .Fields}}
-			{{if eq .HtmlType "textinput"}}
-				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
-			{{end}}
-			{{if eq .HtmlType "text"}}
-				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
-			{{end}}
-			{{if eq .HtmlType "date"}}
-				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
-			{{end}}
-			{{if eq .HtmlType "map"}}
-				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
-			{{end}}
-			{{if eq .HtmlType "polymap"}}
+			{{if ne .HtmlType "image"}}
 				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
 			{{end}}
 		{{end}}
@@ -281,16 +269,17 @@
 		format: 'YYYY-MM-DD'
 	});
 */
+	$(".inputmask").inputmask();
 	$.datetimepicker.setLocale('en');
 	jQuery(".datetimepicker").datetimepicker();
-	jQuery(".datepicker").datetimepicker({
+/*	jQuery(".datepicker").datetimepicker({
 		format:'Y-m-d',
 		timepicker:false
 	});
 	jQuery(".timepicker").datetimepicker({
 		datepicker:false,
 		format:'H:i'
-	});
+	});*/
 	
 	userLocation("map", "100%", "250px");
 //	miniMap("polymap", "100%", "250px");
@@ -309,6 +298,10 @@
 			{{range .Fields}} {{if eq .HtmlType "textinput"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
+			{{end}} {{if eq .HtmlType "address"}}
+			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
+				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" 
+				class="inputmask form-control" data-inputmask="'mask':'9999-9999-9999-9999-9999'"></div>
 			{{end}} {{if eq .HtmlType "text"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<textarea id="{{.Name}}" name="{{.Name}}" style="height: 180px;" class="form-control">{{.Value}}</textarea></div>

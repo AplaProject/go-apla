@@ -99,6 +99,14 @@ func (c *Controller) AjaxSendTx() interface{} {
 						err = fmt.Errorf(`%s is empty`, fitem.Name)
 						break
 					}
+					if strings.Index(fitem.Tags, `address`) >= 0 {
+						addr := lib.StringToAddress(val)
+						if addr == 0 {
+							err = fmt.Errorf(`Address %s is not valid`, val)
+							break
+						}
+						val = utils.Int64ToStr(addr)
+					}
 					switch fitem.Type.String() {
 					case `uint64`:
 						lib.BinMarshal(&data, utils.StrToUint64(val))
