@@ -35,6 +35,7 @@ func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		"DBInsert":       DBInsert,
 		"DBUpdate":       DBUpdate,
+		"DBUpdateWhere":  DBUpdateWhere,
 		"DBGetList":      DBGetList,
 		"DBTransfer":     DBTransfer,
 		"DBString":       DBString,
@@ -177,6 +178,22 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 		return
 	}
 	_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{utils.Int64ToStr(id)}, true)
+	return
+}
+
+func DBUpdateWhere(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (err error) { // map[string]interface{}) {
+	var isIndex bool
+	columns := strings.Split(params, `,`)
+	if err = p.AccessColumns(tblname, columns); err != nil {
+		return
+	}
+	if isIndex, err = utils.DB.IsIndex(tblname, column); err != nil {
+		return
+	} else if !isIndex {
+		err = fmt.Errorf(`there is not index on %s`, column)
+	} else {
+		_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
+	}
 	return
 }
 
