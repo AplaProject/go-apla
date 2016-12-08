@@ -202,7 +202,7 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	if err != nil {
 		return err.Error()
 	}
-	return value
+	return strings.Replace(value, "\n", "\n<br>", -1)
 }
 
 func getClass(class string) string {
@@ -347,6 +347,7 @@ func BtnSys(vars *map[string]string, pars ...string) string {
 	}
 	return fmt.Sprintf(`<button type="button" class=%s onclick="load_page('%s', {%s} )">%s</button>`, class, pars[0], params, pars[1])
 }
+
 func Table(vars *map[string]string, pars *map[string]string) string {
 	fields := `*`
 	order := ``
