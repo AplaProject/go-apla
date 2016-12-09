@@ -1,0 +1,95 @@
+<style>
+	.tab-content {
+		border: 0px;
+		padding: 0px;
+	}
+	
+	.panel.panel-default {
+		border-top: 0px;
+		border-radius: 0px 0px 4px 4px;
+	}
+	
+	#message {
+		display: none;
+	}
+</style>
+<script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".anonym, .anonym_export_tpl").addClass("active");
+
+function js_checkall() {
+	$("input[type=checkbox]").attr("checked", true);
+	return false;
+}
+
+function js_gettpl() {
+	var name = $("#name").val();
+	if (name == '') {
+		alert('Specify Name of tpl file');
+		return false;
+	}
+	var contracts = [];
+	$(".contracts:checked").each(function(){
+		contracts[] = $(this).attr('name');
+	});
+	var pages = [];
+	$(".pages:checked").each(function(){
+		pages[] = $(this).attr('name');
+	});
+	var tables = [];
+	$(".tables:checked").each(function(){
+		tables[] = $(this).attr('name');
+	})
+	data = {"name": name, "contracts": contracts.join(','), "pages": pages.join(','), "tables": tables.join(',')};
+	console.log('Data', data);
+	return false;
+}
+
+</script>
+
+<div class="content-heading">
+	Export to Tpl
+</div>
+	<!-- Tab panes-->
+<div class="tab-content">
+	<!-- START panel-->
+	<div class="panel panel-default" data-sweet-alert>
+		<div class="panel-body">
+			<form role="form">
+				<div class="form-group">
+					<label for="name">Name</label>
+					<input id="name" name="name" type="text" value="" class="form-control">
+					<a href="#" onclick="return js_checkall()">Отметить все</a>
+				</div>
+			</form>
+			<table  class="table table-striped table-bordered table-hover">
+			<tr><th></th><th>Contracts</th></tr>
+			{{range .Contracts}}
+				<tr><td style="width: 50px;"><input type="checkbox" name="{{.Name}}" class="form-conntrol contracts"></td><td>{{.Name}}</td></tr>
+			{{end}}
+			</table>
+			<table  class="table table-striped table-bordered table-hover">
+			<tr><th></th><th>Pages</th></tr>
+			{{range .Pages}}
+				<tr><td style="width: 50px;"><input type="checkbox" name="{{.Name}}" class="form-conntrol pages"></td><td>{{.Name}}</td></tr>
+			{{end}}
+			</table>
+			<table  class="table table-striped table-bordered table-hover">
+			<tr><th></th><th>Tables</th></tr>
+			{{range .Tables}}
+				<tr><td style="width: 50px;"><input type="checkbox" name="{{.Name}}"  class="form-conntrol tables"></td><td>{{.Name}}</td></tr>
+			{{end}}
+			</table>
+		</div>
+		<div class="panel-footer">
+			<div class="clearfix">
+				<div class="pull-right">
+					<button type="button" class="btn btn-primary" onclick="return js_gettpl();">Request</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- END panel-->
+</div>
+

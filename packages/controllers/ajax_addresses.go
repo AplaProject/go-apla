@@ -49,7 +49,7 @@ func (c *Controller) AjaxAddresses() interface{} {
 	if len(state) == 0 {
 		request = `select id from "` + utils.Int64ToStr(c.SessStateId) + `_citizens" where id>=? order by id`
 	} else if state == `0` {
-		request = `select id from dlt_wallets where wallet_id>=? order by wallet_id`
+		request = `select wallet_id from dlt_wallets where wallet_id>=? order by wallet_id`
 	} else {
 		request = `select id from "` + lib.EscapeName(state) + `_citizens" where id>=? order by id`
 	}
