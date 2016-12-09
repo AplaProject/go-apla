@@ -48,26 +48,24 @@ func (p *Parser) NewTableFront() error {
 	// ...
 
 	// Check InputData
-	verifyData := map[string]string{}
+	verifyData := map[string]string{"global": "int64", "table_name": "word"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// New state table can only add a citizen of the same country
-	// ...
-
-	// Check the condition that must be met to complete this transaction
-	// select value from ea_state_parameters where name = "new_state_table"
-	// ...
-
-	var cols []string
+	var cols [][]string
 	err = json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if len(cols) == 0 {
 		return p.ErrInfo(`len(cols) == 0`)
+	}
+	for _, data := range cols {
+		if len(data) != 3 {
+			return p.ErrInfo(`len(data)!=3`)
+		}
 	}
 
 	// must be supplemented
@@ -92,15 +90,30 @@ func (p *Parser) NewTable() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
 	}
-	var cols []string
+	var cols [][]string
 	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
 
 	citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
 	colsSql := ""
 	colsSql2 := ""
-	for _, name := range cols {
-		colsSql += `"` + name + "\" varchar NOT NULL DEFAULT '',\n"
-		colsSql2 += `"` + name + `": "$citizen==` + citizenIdStr + `",`
+	sqlIndex := ""
+	for _, data := range cols {
+		colType := ``
+		switch data[1] {
+		case "text":
+			colType = `varchar(102400)`
+		case "int64":
+			colType = `bigint`
+		case "time":
+			colType = `timestamp`
+		case "hash":
+			colType = `varchar(32)`
+		}
+		colsSql += `"` + data[0] + `" `+colType+" ,\n"
+		colsSql2 += `"` + data[0] + `": "$citizen==` + citizenIdStr + `",`
+		if data[2] == "1" {
+			sqlIndex+=`CREATE INDEX "`+p.TxStateIDStr + `_` + p.TxMaps.String["table_name"] + `_` + data[0] + `_index" ON "` + p.TxStateIDStr + `_` + p.TxMaps.String["table_name"] + `" (` +data[0]+ `);`
+		}
 	}
 	colsSql2 = colsSql2[:len(colsSql2)-1]
 
@@ -112,8 +125,12 @@ func (p *Parser) NewTable() error {
 				);
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
-	fmt.Println(sql)
 	err := p.ExecSql(sql)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	err = p.ExecSql(sqlIndex)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -128,6 +145,8 @@ func (p *Parser) NewTable() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
+
 
 	return nil
 }

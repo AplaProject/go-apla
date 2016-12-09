@@ -58,7 +58,7 @@
 				column = [];
 				var val = $(this).find(".colname").val();
 				var type = $(this).find(".column_type").val();
-				var index = $(this).find(".index").prop("checked");
+				var index =  (+ $(this).find(".index").prop("checked")).toString();
 				column.push(val);
 				column.push(type);
 				column.push(index);
