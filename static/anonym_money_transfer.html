@@ -13,7 +13,45 @@
 		dl_navigate0('dashboardAnonym');
 	}
 	
-	$("#walletAddress").inputmask("9999-9999-9999-9999-9999").focus();
+	$("#walletAddress").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
+	$("#walletAddress").typeahead({
+		minLength: 1,
+		items: 10,
+		source: function (query, process) {
+			console.log(query)
+			return $.get('ajax?json=ajax_addresses', { 'address': query, 'state': 0 }, function (data) {
+				console.log(data)
+				var data = ["1750-4255-7561-5632-9384", "1750-4265-7561-5632-9384", "1750-1111-7561-5632-9384"];
+				return process(data);
+				//return process(data.address);
+			});
+		}
+	});
+	
+	/*$("#walletAddress").on('input', function () {
+		var val = $(this).val().replace(/[_-]/g, "");
+		var state = 0;
+		$.ajax({
+			type: 'GET',
+			url: 'ajax?json=ajax_addresses',
+			data: {
+				'address': val,
+				'state': state
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) {
+				//console.log(data)
+				var data = ["1750-4255-7561-5632-9384", "1750-4265-7561-5632-9384", "1750-1111-7561-5632-9384"];
+				$("#walletAddress").typeahead({
+					minLength: 1,
+					items: 10,
+					autoSelect: false,
+					source: data
+				});
+			}
+		});
+	});*/
 
 	$("#next").bind('click', function () {
 		$(".form-control").blur().each(function() {
