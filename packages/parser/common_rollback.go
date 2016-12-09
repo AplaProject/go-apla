@@ -17,7 +17,10 @@
 package parser
 
 import (
+	//	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -58,43 +61,57 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-			p.TxMap = map[string][]byte{}
-			err_ := utils.CallMethod(p, MethodName+"Init")
-			if _, ok := err_.(error); ok {
-				return utils.ErrInfo(err_.(error))
-			}
-
-			// если дошли до тр-ии, которая вызвала ошибку, то откатываем только фронтальную проверку
-			/*if i == 0 {
-				/*if skipCurrent { // тр-ия, которая вызвала ошибку закончилась еще до фронт. проверки, т.е. откатывать по ней вообще нечего
-					continue
-				}*/
-				/*// если успели дойти только до половины фронтальной функции
-				MethodNameRollbackFront := MethodName + "RollbackFront"
-				// откатываем только фронтальную проверку
-				err_ = utils.CallMethod(p, MethodNameRollbackFront)
-				if _, ok := err_.(error); ok {
-					return utils.ErrInfo(err_.(error))
-				}*/
-			/*} else if onlyFront {*/
-				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
-				if _, ok := err_.(error); ok {
-					return utils.ErrInfo(err_.(error))
-				}*/
-			/*} else {*/
-				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
-				if _, ok := err_.(error); ok {
-					return utils.ErrInfo(err_.(error))
-				}*/
-			if (i == 0 && !skipCurrent) || i > 0 {
-				log.Debug(MethodName+"Rollback")
-				err_ = utils.CallMethod(p, MethodName+"Rollback")
+			var (
+				MethodName string
+				err_       interface{}
+			)
+			if p.TxContract == nil {
+				MethodName = consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
+				p.TxMap = map[string][]byte{}
+				err_ = utils.CallMethod(p, MethodName+"Init")
 				if _, ok := err_.(error); ok {
 					return utils.ErrInfo(err_.(error))
 				}
+			}
+			// если дошли до тр-ии, которая вызвала ошибку, то откатываем только фронтальную проверку
+			/*if i == 0 {
+			/*if skipCurrent { // тр-ия, которая вызвала ошибку закончилась еще до фронт. проверки, т.е. откатывать по ней вообще нечего
+				continue
+			}*/
+			/*// если успели дойти только до половины фронтальной функции
+			MethodNameRollbackFront := MethodName + "RollbackFront"
+			// откатываем только фронтальную проверку
+			err_ = utils.CallMethod(p, MethodNameRollbackFront)
+			if _, ok := err_.(error); ok {
+				return utils.ErrInfo(err_.(error))
+			}*/
+			/*} else if onlyFront {*/
+			/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
+			if _, ok := err_.(error); ok {
+				return utils.ErrInfo(err_.(error))
+			}*/
+			/*} else {*/
+			/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
+			if _, ok := err_.(error); ok {
+				return utils.ErrInfo(err_.(error))
+			}*/
+			if (i == 0 && !skipCurrent) || i > 0 {
+				log.Debug(MethodName + "Rollback")
+				if p.TxContract != nil {
+					if err := p.CallContract(smart.CALL_INIT | smart.CALL_ROLLBACK); err != nil {
+						return utils.ErrInfo(err)
+					}
+					if err = p.autoRollback(); err != nil {
+						return p.ErrInfo(err)
+					}
+				} else {
+					err_ = utils.CallMethod(p, MethodName+"Rollback")
+					if _, ok := err_.(error); ok {
+						return utils.ErrInfo(err_.(error))
+					}
+				}
 				err = p.DelLogTx(transactionBinaryData_)
-				if err!=nil {
+				if err != nil {
 					log.Error("error: %v", err)
 				}
 				affect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE hex(hash) = ?", p.TxHash)
@@ -105,13 +122,13 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 			}
 
-				utils.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-				affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
-				if err != nil {
-					utils.WriteSelectiveLog(err)
-					return utils.ErrInfo(err)
-				}
-				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+			utils.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
+			affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
+			if err != nil {
+				utils.WriteSelectiveLog(err)
+				return utils.ErrInfo(err)
+			}
+			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 		}
 	}

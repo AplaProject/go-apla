@@ -44,8 +44,17 @@ func (c *Controller) AjaxAddresses() interface{} {
 	)
 	result.Address = make([]string, 0)
 	addr := strings.Replace(c.r.FormValue(`address`), `-`, ``, -1)
+	state := c.r.FormValue(`state`)
+	var request string
+	if len(state) == 0 {
+		request = `select id from "` + utils.Int64ToStr(c.SessStateId) + `_citizens" where id>=? order by id`
+	} else if state == `0` {
+		request = `select id from dlt_wallets where wallet_id>=? order by wallet_id`
+	} else {
+		request = `select id from "` + lib.EscapeName(state) + `_citizens" where id>=? order by id`
+	}
 	ret, _ := strconv.ParseUint(addr+strings.Repeat(`0`, 20-len(addr)), 10, 64)
-	req, err = c.GetAll(`select id from "`+utils.Int64ToStr(c.SessStateId)+`_citizens" where id>=? order by id`, 7, int64(ret))
+	req, err = c.GetAll(request, 7, int64(ret))
 
 	if err != nil {
 		result.Error = err.Error()
