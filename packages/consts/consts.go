@@ -17,7 +17,7 @@
 package consts
 
 // текущая версия
-const VERSION = "0.1.4b2"
+const VERSION = "0.1.4b3"
 
 const FIRST_QDLT = 1e+26
 
