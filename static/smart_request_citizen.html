@@ -162,7 +162,7 @@
 						container.append(el);
 						arr.push(fields[i].name);
 					}
-					$(".datetimepicker").datetimepicker({
+/*					$(".datetimepicker").datetimepicker({
 						icons: {
 							time: 'fa fa-clock-o',
 							date: 'fa fa-calendar',
@@ -176,7 +176,12 @@
 						minDate: moment("01/01/1950"),
 						maxDate: 'now',
 						format: 'YYYY-MM-DD'
-					});
+					});*/
+				$.datetimepicker.setLocale('en');
+				jQuery(".datetimepicker").datetimepicker({
+					format:'Y-m-d',
+					timepicker:false
+				});					
 					$(".filestyle").filestyle();
 					userLocation("imap", "100%", "250px");
 
