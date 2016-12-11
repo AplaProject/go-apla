@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
 	//	"strconv"
-
-	//	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const NExportTpl = `export_tpl`
@@ -32,6 +34,7 @@ type exportInfo struct {
 
 type exportTplPage struct {
 	Data      *CommonPage
+	Message   string
 	Contracts *[]exportInfo
 	Pages     *[]exportInfo
 	Tables    *[]exportInfo
@@ -54,7 +57,100 @@ func (c *Controller) getList(table string) (*[]exportInfo, error) {
 	return &ret, nil
 }
 
+func (c *Controller) setVar(name, prefix string) (out string) {
+	contracts := strings.Split(c.r.FormValue(name), `,`)
+	if len(contracts) == 0 {
+		return
+	}
+	out = `SetVar(`
+	list := make([]string, 0)
+	names := make([]string, 0)
+	for _, icontract := range contracts {
+		data, _ := c.Single(fmt.Sprintf(`select value from "%d_%s" where name=?`, c.SessStateId, name), icontract).String()
+		//		fmt.Println(`Data`, err, data)
+		if len(data) > 0 {
+			names = append(names, prefix+`_`+icontract)
+			if prefix == `p` {
+				list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, data))
+			} else {
+				list = append(list, fmt.Sprintf("%s_%s = `%s`", prefix, icontract, data))
+			}
+		}
+	}
+	out += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
+	return
+}
+
 func (c *Controller) ExportTpl() (string, error) {
+	name := c.r.FormValue(`name`)
+	message := ``
+	if len(name) > 0 {
+		var out string
+		tplname := filepath.Join(*utils.Dir, name+`.tpl`)
+		out += `SetVar(
+	global = 0,
+	type_new_page_id = TxId(NewPage),
+	type_new_contract_id = TxId(NewContract),
+	sc_conditions = "$citizen == #wallet_id#")
+`
+		out += c.setVar("smart_contracts", `sc`)
+		out += c.setVar("pages", `p`)
+		//		out += c.setVar("tables", `t_`)
+
+		out += "Json(`Head: \"\",\r\n" + `Desc: "",
+		Img: "",
+		OnSuccess: {
+			script: 'template',
+			page: 'government',
+			parameters: {}
+		},
+		TX: [`
+		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
+		if len(contracts) > 0 {
+			list := make([]string, 0)
+			for _, icontract := range contracts {
+				list = append(list, fmt.Sprintf(`{
+		Forsign: 'global,name,value,conditions',
+		Data: {
+			type: "NewContract",
+			typeid: #type_new_contract_id#,
+			global: #global#,
+			name: "%s",
+			value: $("#sc_%s").val(),
+			conditions: $("#sc_conditions").val()
+			}
+	   }`, icontract, icontract))
+			}
+			out += strings.Join(list, ",\r\n")
+		}
+		pages := strings.Split(c.r.FormValue("pages"), `,`)
+		if len(pages) > 0 {
+			list := make([]string, 0)
+			for _, ipage := range pages {
+				list = append(list, fmt.Sprintf(`{
+		Forsign: 'global,name,value,conditions',
+		Data: {
+			type: "NewPage",
+			typeid: #type_new_page_id#,
+			name : "%s",
+			menu: "menu_default",
+			value: $("#p_%s").val(),
+			global: #global#,
+			conditions: "$citizen == #wallet_id#",
+			}
+	   }`, ipage, ipage))
+			}
+			out += strings.Join(list, ",\r\n")
+		}
+
+		out += "]`\r\n)"
+
+		if err := ioutil.WriteFile(tplname, []byte(out), 0644); err != nil {
+			message = err.Error()
+		} else {
+			message = fmt.Sprintf(`File %s has been created`, tplname)
+		}
+	}
 	contracts, err := c.getList(`smart_contracts`)
 	if err != nil {
 		return ``, err
@@ -68,6 +164,6 @@ func (c *Controller) ExportTpl() (string, error) {
 		return ``, err
 	}
 	fmt.Println(`Export`, contracts, pages, tables)
-	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables}
+	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables, Message: message}
 	return proceedTemplate(c, NExportTpl, &pageData)
 }
