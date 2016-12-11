@@ -14,7 +14,7 @@
 	$('#next').bind('click', function () {
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#host').val()+','+$('#addressVote').val() );
+			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#host').val()+','+$('#addressVote').val()+','+$('#fuel_rate').val() );
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -29,6 +29,7 @@
 				'time' : serverTime,
 				'walletId' : '{{.WalletId}}',
 				'host' : $('#host').val(),
+				'fuelRate' : $('#fuel_rate').val(),
 				'addressVote' : $('#addressVote').val(),
 				'pubkey' : GKey.Public,
 				'signature1': $('#signature1').val(),
@@ -60,6 +61,10 @@
 		  <label>Host</label>
 		  <input type="text" class="form-control" value="{{.MyWalletData.host}}" id="host">
 	   </div>
+		<div class="form-group">
+			<label>Fuel rate</label>
+			<input type="text" class="form-control" value="{{.MyWalletData.fuel_rate}}" id="fuel_rate">
+		</div>
 	   <div class="form-group">
 		  <label>Address of the wallet you want to vote for</label>
 		  <input type="text" class="form-control" value="{{.MyWalletData.address_vote}}" id="addressVote">

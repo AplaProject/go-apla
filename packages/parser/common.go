@@ -245,7 +245,9 @@ func (p *Parser) GetTxMap(fields []string) (map[string][]byte, error) {
 }
 
 func (p *Parser) CheckInputData(data map[string]string) error {
+
 	for k, v := range data {
+		fmt.Println("v==", v, p.TxMap[k])
 		if !utils.CheckInputData(p.TxMap[k], v) {
 			return fmt.Errorf("incorrect " + k + "(" + string(p.TxMap[k]) + " : " + v + ")")
 		}

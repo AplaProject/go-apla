@@ -394,6 +394,7 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		data = string(data_.([]byte))
 	}
 	log.Debug("CheckInputData_:" + data)
+	log.Debug("dataType:" + dataType)
 	switch dataType {
 	case "arbitration_trust_list":
 		if ok, _ := regexp.MatchString(`^\[[0-9]{1,10}(,[0-9]{1,10}){0,100}\]$`, data); ok {

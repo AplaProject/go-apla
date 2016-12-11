@@ -104,11 +104,7 @@ func (p *Parser) UpdFullNodes() error {
 	}
 
 	// обновляем AI
-	if p.ConfigIni["db_type"] == "sqlite" {
-		err = p.SetAI("full_nodes", maxId)
-	} else {
-		err = p.SetAI("full_nodes", maxId+1)
-	}
+	err = p.SetAI("full_nodes", maxId+1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -128,6 +124,16 @@ func (p *Parser) UpdFullNodes() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
+	}
+
+	newRate, err := p.Single(`SELECT fuel_rate FROM dlt_wallets WHERE fuel_rate !=0 GROUP BY fuel_rate ORDER BY sum(amount) DESC LIMIT 1`).String()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
 
 	return nil
@@ -190,6 +196,9 @@ func (p *Parser) UpdFullNodesRollback() error {
 			return p.ErrInfo(err)
 		}
 	}
-
+	err = p.autoRollback()
+	if err != nil {
+		return err
+	}
 	return nil
 }

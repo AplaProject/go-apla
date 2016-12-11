@@ -32,6 +32,7 @@ type systemInfoPage struct {
 	Rollback []map[string]string
 	FullNodes []map[string]string
 	Votes []map[string]string
+	SystemParameters []map[string]string
 }
 
 func init() {
@@ -58,6 +59,11 @@ func (c *Controller) SystemInfo() (string, error) {
 	}
 
 	pageData.FullNodes, err = c.GetAll(`SELECT * FROM full_nodes`, -1)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+
+	pageData.SystemParameters, err = c.GetAll(`SELECT * FROM system_parameters`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

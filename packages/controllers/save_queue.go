@@ -149,17 +149,17 @@ func (c *Controller) SaveQueue() (string, error) {
 	case "DLTChangeHostVote":
 
 		stateId = 0
-		host := []byte(c.r.FormValue("host"))
-		addressVote := []byte(c.r.FormValue("addressVote"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
 		data = append(data, utils.EncodeLengthPlusData(userId)...)
 		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(host)...)
-		data = append(data, utils.EncodeLengthPlusData(addressVote)...)
+		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("host")))...)
+		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("addressVote")))...)
+		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("fuelRate")))...)
 		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
 		data = append(data, binSignatures...)
+
 
 	case "NewState":
 

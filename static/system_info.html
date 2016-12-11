@@ -83,6 +83,29 @@
 
 	<div class="panel panel-default">
 		<div class="panel-body">
+			SystemParameters
+			<div class="table-responsive">
+				<table class="table table-striped table-hover">
+					<tr>
+						{{range $i, $data1 := (index .SystemParameters 0)}}
+						<td>{{$i}}</td>
+						{{end}}
+					</tr>
+					{{range $i, $data := .SystemParameters}}
+					<tr>
+						{{range $i, $data1 := $data}}
+						<td>{{$data1}}</td>
+						{{end}}
+					</tr>
+					{{end}}
+				</table>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="panel panel-default">
+		<div class="panel-body">
 			Votes
 			<div class="table-responsive">
 				<table class="table table-striped table-hover">

@@ -258,6 +258,7 @@ DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "amount" decimal(30) NOT NULL DEFAULT '0',
 "host" varchar(50) NOT NULL DEFAULT '',
 "address_vote" varchar(255) NOT NULL DEFAULT '',
+"fuel_rate" bigint NOT NULL DEFAULT '0',
 "rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "dlt_wallets" ADD CONSTRAINT dlt_wallets_pkey PRIMARY KEY (wallet_id);

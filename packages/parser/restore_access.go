@@ -46,6 +46,10 @@ func (p *Parser) RestoreAccessFront() error {
 		return p.ErrInfo(err)
 	}
 
+	if p.TxWalletID != consts.RECOVERY_ADDRESS {
+		return p.ErrInfo("p.TxWalletID != consts.RECOVERY_ADDRESS")
+	}
+
 	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.TxMaps.Int64["state_id"]).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
