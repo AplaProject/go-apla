@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 	//	"strconv"
+	"encoding/json"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -91,6 +92,7 @@ func (c *Controller) ExportTpl() (string, error) {
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
+	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "$citizen == #wallet_id#")
 `
 		out += c.setVar("smart_contracts", `sc`)
@@ -105,10 +107,65 @@ func (c *Controller) ExportTpl() (string, error) {
 			parameters: {}
 		},
 		TX: [`
+		tables := strings.Split(c.r.FormValue("tables"), `,`)
+		if len(tables) > 0 {
+			list := make([]string, 0)
+			for _, itable := range tables {
+				if len(itable) == 0 {
+					continue
+				}
+				cols, _ := c.Single(fmt.Sprintf(`select columns_and_permissions->'update' from "%d_tables" where name=?`,
+					c.SessStateId), itable).String()
+				fmap := make(map[string]string)
+				json.Unmarshal([]byte(cols), &fmap)
+				fields := make([]string, 0)
+				for key := range fmap {
+					ikey := strings.ToLower(key)
+					index := 0
+					itype := ``
+					if ok, _ := c.IsIndex(itable, ikey); ok {
+						index = 1
+					}
+					coltype, _ := c.OneRow(`select data_type,character_maximum_length from information_schema.columns
+where table_name = ? and column_name = ?`, itable, ikey).String()
+					if len(coltype) > 0 {
+						switch coltype[`data_type`] {
+						case "character varying":
+							if coltype[`character_maximum_length`] == `32` {
+								itype = "hash"
+							} else {
+								itype = `text`
+							}
+						case `bigint`:
+							itype = "int64"
+						case `timestamp`:
+							itype = "time"
+						}
+					}
+					fields = append(fields, fmt.Sprintf(`["%s", "%s", "%d"]`, ikey, itype, index))
+				}
+
+				list = append(list, fmt.Sprintf(`{
+		Forsign: 'global,table_name,columns',
+		Data: {
+			type: "NewTable",
+			typeid: #type_new_table_id#,
+			global: #global#,
+			table_name : "%s",
+			columns: '[%s]',
+			permissions: "$citizen == #wallet_id#"
+			}
+	   }`, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
+			}
+			out += strings.Join(list, ",\r\n")
+		}
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
 		if len(contracts) > 0 {
 			list := make([]string, 0)
 			for _, icontract := range contracts {
+				if len(icontract) == 0 {
+					continue
+				}
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -127,6 +184,9 @@ func (c *Controller) ExportTpl() (string, error) {
 		if len(pages) > 0 {
 			list := make([]string, 0)
 			for _, ipage := range pages {
+				if len(ipage) == 0 {
+					continue
+				}
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
