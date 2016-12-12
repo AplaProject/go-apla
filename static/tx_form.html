@@ -288,7 +288,7 @@
 		minLength: 1,
 		items: 10,
 		source: function (query, process) {
-			return $.get('ajax?json=ajax_addresses', { 'address': query, 'state': 0 }, function (data) {
+			return $.get('ajax?json=ajax_addresses', { 'address': query }, function (data) {
 				return process(data.address);
 			});
 		}
