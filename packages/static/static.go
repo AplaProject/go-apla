@@ -74,6 +74,7 @@
 // static/edit_page.html
 // static/edit_state_parameters.html
 // static/edit_table.html
+// static/export_tpl.html
 // static/fonts/PFSquareSansPro-Bold.eot
 // static/fonts/PFSquareSansPro-Bold.svg
 // static/fonts/PFSquareSansPro-Bold.ttf
@@ -229,6 +230,7 @@
 // static/js/photoEditor/editor.js
 // static/js/photoEditor/vue.min.js
 // static/js/textEditor/ace.js
+// static/js/textEditor/ext-language_tools.js
 // static/js/textEditor/mode-c_cpp.js
 // static/js/textEditor/mode-markdown.js
 // static/js/textEditor/theme-chrome.js
@@ -1665,6 +1667,24 @@ func staticEdit_state_parametersHtml() (*asset, error) {
 func staticEdit_tableHtml() (*asset, error) {
 	path := "static/edit_table.html"
 	name := "static/edit_table.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticExport_tplHtml reads file data from disk. It returns an error on failure.
+func staticExport_tplHtml() (*asset, error) {
+	path := "static/export_tpl.html"
+	name := "static/export_tpl.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4469,6 +4489,24 @@ func staticJsTexteditorAceJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsTexteditorExtLanguage_toolsJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorExtLanguage_toolsJs() (*asset, error) {
+	path := "static/js/textEditor/ext-language_tools.js"
+	name := "static/js/textEditor/ext-language_tools.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsTexteditorModeC_cppJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorModeC_cppJs() (*asset, error) {
 	path := "static/js/textEditor/mode-c_cpp.js"
@@ -6251,6 +6289,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/edit_page.html": staticEdit_pageHtml,
 	"static/edit_state_parameters.html": staticEdit_state_parametersHtml,
 	"static/edit_table.html": staticEdit_tableHtml,
+	"static/export_tpl.html": staticExport_tplHtml,
 	"static/fonts/PFSquareSansPro-Bold.eot": staticFontsPfsquaresansproBoldEot,
 	"static/fonts/PFSquareSansPro-Bold.svg": staticFontsPfsquaresansproBoldSvg,
 	"static/fonts/PFSquareSansPro-Bold.ttf": staticFontsPfsquaresansproBoldTtf,
@@ -6406,6 +6445,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
 	"static/js/photoEditor/vue.min.js": staticJsPhotoeditorVueMinJs,
 	"static/js/textEditor/ace.js": staticJsTexteditorAceJs,
+	"static/js/textEditor/ext-language_tools.js": staticJsTexteditorExtLanguage_toolsJs,
 	"static/js/textEditor/mode-c_cpp.js": staticJsTexteditorModeC_cppJs,
 	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
 	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
@@ -6621,6 +6661,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"edit_page.html": &bintree{staticEdit_pageHtml, map[string]*bintree{}},
 		"edit_state_parameters.html": &bintree{staticEdit_state_parametersHtml, map[string]*bintree{}},
 		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{}},
+		"export_tpl.html": &bintree{staticExport_tplHtml, map[string]*bintree{}},
 		"fonts": &bintree{nil, map[string]*bintree{
 			"PFSquareSansPro-Bold.eot": &bintree{staticFontsPfsquaresansproBoldEot, map[string]*bintree{}},
 			"PFSquareSansPro-Bold.svg": &bintree{staticFontsPfsquaresansproBoldSvg, map[string]*bintree{}},
@@ -6796,6 +6837,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			}},
 			"textEditor": &bintree{nil, map[string]*bintree{
 				"ace.js": &bintree{staticJsTexteditorAceJs, map[string]*bintree{}},
+				"ext-language_tools.js": &bintree{staticJsTexteditorExtLanguage_toolsJs, map[string]*bintree{}},
 				"mode-c_cpp.js": &bintree{staticJsTexteditorModeC_cppJs, map[string]*bintree{}},
 				"mode-markdown.js": &bintree{staticJsTexteditorModeMarkdownJs, map[string]*bintree{}},
 				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
