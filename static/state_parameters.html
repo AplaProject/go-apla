@@ -54,7 +54,10 @@
 					<td class="thead">{{$value.name}}</td>
 					 <td>{{if eq $value.name "state_flag"}}<img id="flag"><script> document.getElementById('flag').setAttribute( 'src', '{{$value.value}}' ); </script>{{else}}<strong>{{$value.value}}</strong>{{end}}</td>
 					 <td><strong>{{$value.conditions}}</strong></td>
-					<td><button type="button" class="btn btn-primary" onclick="load_page('editStateParameters', {name: {{$value.name}}} )">Change</button></td>
+					<td><button type="button" class="btn btn-primary" onclick="load_page('editStateParameters', {name: {{$value.name}}} )">Change</button>
+						{{if eq $value.name "change_control"}}
+							<button type="button" class="btn btn-primary" onclick="load_page('restoreAccess')">Restore access</button>
+						{{end}}</td>
 				 </tr>
 			  {{end}}
 			  </tbody>

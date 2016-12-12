@@ -1,0 +1,64 @@
+{{ define "restoreAccess" }}
+<script>
+	var encrypted_message = '';
+	$('#save').bind('click', function () {
+
+		{{if .ShowSignData}}$("#main").css("display", "none");	$("#sign").css("display", "block");{{end}}
+
+		if ($("#change_key_status").val()=='1') {
+			encrypted_message = 30;
+			$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},'+encrypted_message );
+			doSign();
+			{{if not .ShowSignData}}$("#send_to_net").trigger("click");{{end}}
+			}
+		else {
+				$.post( 'ajax?controllerName=encryptComment', {
+					'type' : 'restoringAccess',
+					'comment' : $("#secret").val()
+		}, function (data) {
+			encrypted_message = data;
+			$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},'+encrypted_message );
+			doSign();
+			{{if not .ShowSignData}}$("#send_to_net").trigger("click");{{end}}
+			});
+		}
+	});
+
+	$('#send_to_net').bind('click', function () {
+
+		$.post( 'ajax?controllerName=saveQueue', {
+					'type' : '{{.TxType}}',
+					'time' : '{{.TimeNow}}',
+					'secret' : encrypted_message,
+					'signature1': $('#signature1').val()
+				}, function (data) {
+					dc_navigate ('restoringAccess', {'alert': '{{.Lang.sent_to_the_net}}'} );
+				}
+		);
+
+	} );
+</script>
+	<div class="content-heading">
+		Restore access
+	</div>
+	<!-- START panel-->
+	<div class="panel panel-default">
+	 <div class="panel-heading">
+	 	<div class="panel-title">
+			Restore access
+		</div>
+	 </div>
+	 <div class="panel-body">
+		 {{if eq .Active 1}}
+		 <button type="button" class="btn btn-primary" id="save">Forbid</button>
+		 {{else}}
+		 Secret:<br><textarea id="secret" class="form-control"></textarea><br><button type="submit"  id="save" class="btn btn-primary">{{.Lang.next}}</button>
+		 {{end}}
+		 {{if ne .Request 0}}
+		 <p>Request: {{.Request}}</p>
+		 <a href="#changeKeyClose" class="btn btn-primary">{{.Lang.cancel_the_requests}}</a>
+		 {{end}}
+	 </div>
+	</div>
+	<!-- END panel-->
+{{end}}

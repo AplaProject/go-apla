@@ -1,0 +1,43 @@
+{{ define "restoreAccessActive" }}
+<style>
+		.thead {
+			width:120px;
+			font-weight:bold;
+			white-space:nowrap;
+		}
+	</style>
+	
+	<script>
+		$(".aside .nav li").removeClass("active");
+		$(".citizen, .citizen_listOfTables").addClass("active");
+		
+//		$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
+		
+		// Font Awesome support
+		$.fn.editableform.buttons =
+		  '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
+			'<i class="fa fa-fw fa-check"></i>'+
+		  '</button>'+
+		  '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
+			'<i class="fa fa-fw fa-times"></i>'+
+		  '</button>';
+		  
+	</script>
+	
+	<div class="content-heading">
+		Restore access
+	</div>
+	<!-- START panel-->
+	<div class="panel panel-default">
+	 <div class="panel-heading">
+	 	<div class="panel-title">
+			Restore access
+		</div>
+	 </div>
+	 <div class="panel-body">
+		 <div>
+		 </div>
+	 </div>
+	</div>
+	<!-- END panel-->
+{{end}}
