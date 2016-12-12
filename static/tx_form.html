@@ -283,7 +283,16 @@
 	
 	userLocation("map", "100%", "250px");
 //	miniMap("polymap", "100%", "250px");
-
+	$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
+	$(".address").typeahead({
+		minLength: 1,
+		items: 10,
+		source: function (query, process) {
+			return $.get('ajax?json=ajax_addresses', { 'address': query, 'state': 0 }, function (data) {
+				return process(data.address);
+			});
+		}
+	});
 </script>
 <div class="panel-body">
 	<form role="form">
@@ -300,8 +309,11 @@
 				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
 			{{end}} {{if eq .HtmlType "address"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" 
-				class="inputmask form-control" data-inputmask="'mask':'9999-9999-9999-9999-9999'"></div>
+				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" data-type="wallet" class="form-control address">
+				<ul class="parsley-errors-list">
+					<li class="parsley-required">Please enter the correct address</li>
+				</ul>
+			</div>
 			{{end}} {{if eq .HtmlType "text"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<textarea id="{{.Name}}" name="{{.Name}}" style="height: 180px;" class="form-control">{{.Value}}</textarea></div>
