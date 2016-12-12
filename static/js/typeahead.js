@@ -162,7 +162,7 @@
       }
 	  
 	  // Форматируем вводимое значение при наличии маски ввода
-	  if ($("." + this.$element.context.className).attr("data-type") === "wallet") {
+	  if ($("#" + this.$element.context.id).attr("data-type") === "wallet") {
 	  	this.query = chunk(this.query, 4).join('-');
 	  }
 
