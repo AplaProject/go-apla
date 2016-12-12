@@ -18,38 +18,12 @@
 		minLength: 1,
 		items: 10,
 		source: function (query, process) {
-			console.log(query)
 			return $.get('ajax?json=ajax_addresses', { 'address': query, 'state': 0 }, function (data) {
 				return process(data.address);
 			});
 		}
 	});
 	
-	/*$("#walletAddress").on('input', function () {
-		var val = $(this).val().replace(/[_-]/g, "");
-		var state = 0;
-		$.ajax({
-			type: 'GET',
-			url: 'ajax?json=ajax_addresses',
-			data: {
-				'address': val,
-				'state': state
-			},
-			dataType: 'json',
-			crossDomain: true,
-			success: function(data) {
-				//console.log(data)
-				var data = ["1750-4255-7561-5632-9384", "1750-4265-7561-5632-9384", "1750-1111-7561-5632-9384"];
-				$("#walletAddress").typeahead({
-					minLength: 1,
-					items: 10,
-					autoSelect: false,
-					source: data
-				});
-			}
-		});
-	});*/
-
 	$("#next").bind('click', function () {
 		$(".form-control").blur().each(function() {
 			var id = $(this).attr("id");
@@ -126,7 +100,7 @@
 	<form id="anonymMoneyTransfer">
 	   <div class="form-group">
 		   <label class="control-label" for="walletAddress">Wallet address <strong class="text-danger">*</strong></label>
-		   <input type="text" class="form-control" id="walletAddress">
+		   <input type="text" class="form-control" id="walletAddress" data-type="wallet">
 		   <ul class="parsley-errors-list">
 		       <li class="parsley-required">Please enter correct wallet addres</li>
 		   </ul>

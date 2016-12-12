@@ -160,6 +160,11 @@
       } else {
         this.query = this.$element.val() || this.$element.text() || '';
       }
+	  
+	  // Форматируем вводимое значение при наличии маски ввода
+	  if ($("." + this.$element.context.className).attr("data-type") === "wallet") {
+	  	this.query = chunk(this.query, 4).join('-');
+	  }
 
       if (this.query.length < this.options.minLength && !this.options.showHintOnFocus) {
         return this.shown ? this.hide() : this;

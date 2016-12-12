@@ -735,6 +735,18 @@ function safe_tags_replace(str) {
 	return str.replace(/[&<>]/g, replaceTag);
 }
 
+function chunk(str, n) {
+	var ret = [];
+	var i;
+	var len;
+	
+	for(i = 0, len = str.length; i < len; i += n) {
+	   ret.push(str.substr(i, n))
+	}
+	
+	return ret;
+}
+
 function FormValidate(form, input, btn) {
 	var i = 0;
 
