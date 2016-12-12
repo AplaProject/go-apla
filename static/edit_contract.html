@@ -27,6 +27,7 @@
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .citizen_contracts").addClass("active");
 	
+	ace.require("ace/ext/language_tools");
 	var editor = ace.edit("textEditor");
 	var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
 	$(".textEditor code").html(editor.getValue());
@@ -40,6 +41,11 @@
 		$("#value").val(editor.getValue());
 		editor.resize();
 	});
+	editor.setOptions({
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+    });
 
 	$('#send').bind('click', function () {
 

@@ -20,10 +20,7 @@
 		source: function (query, process) {
 			console.log(query)
 			return $.get('ajax?json=ajax_addresses', { 'address': query, 'state': 0 }, function (data) {
-				console.log(data)
-				var data = ["1750-4255-7561-5632-9384", "1750-4265-7561-5632-9384", "1750-1111-7561-5632-9384"];
-				return process(data);
-				//return process(data.address);
+				return process(data.address);
 			});
 		}
 	});
