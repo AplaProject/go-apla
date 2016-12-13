@@ -42,10 +42,44 @@
 		editor.resize();
 	});
 	editor.setOptions({
-        enableBasicAutocompletion: true,
-        enableSnippets: true,
-        enableLiveAutocompletion: true
-    });
+		enableBasicAutocompletion: true,
+		enableSnippets: true,
+		enableLiveAutocompletion: true
+	});
+	
+	/*ace.config.loadModule('ace/ext/language_tools', function () {
+		editor.setOptions({
+			enableBasicAutocompletion: true,
+			enableSnippets: true,
+			enableLiveAutocompletion: true
+		});
+		
+		var snippetManager = ace.require("ace/snippets").snippetManager;
+		var config = ace.require("ace/config");
+		
+		ace.config.loadModule("ace/snippets/contracts", function(m) {
+			if (m) {
+				snippetManager.files.xml = m;
+				m.snippets = snippetManager.parseSnippetFile(m.snippetText);
+				var nsoa_snippets = nsoaGetSnippets();
+				nsoa_snippets.forEach(function (s) { m.snippets.push(s); });
+				snippetManager.register(m.snippets, m.scope);
+			}
+		});
+	});
+	
+	function nsoaGetSnippets() {
+		return [{
+			name: "lookup",
+			content: "lookup=${1:ns_field}:lookup_table=${2:oa_table}:lookup_by=${3:oa_field}:lookup_return=${4:oa_field}",
+			tabTrigger: "lookup"
+		},
+		{
+			name: "dropdown",
+			content: "<${1:oa_field} ${2:ns_field}>\n    ${3:ns_value} ${4:oa_value}\n</${1}>\n",
+			tabTrigger: "dropdown"
+		}];
+	}*/
 
 	$('#send').bind('click', function () {
 
