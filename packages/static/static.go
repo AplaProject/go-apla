@@ -233,6 +233,8 @@
 // static/js/textEditor/ext-language_tools.js
 // static/js/textEditor/mode-c_cpp.js
 // static/js/textEditor/mode-markdown.js
+// static/js/textEditor/snippets/contracts.js
+// static/js/textEditor/snippets/contracts.snippets
 // static/js/textEditor/theme-chrome.js
 // static/js/tooltip.js
 // static/js/triangles.js
@@ -254,6 +256,8 @@
 // static/pass.html
 // static/property.tpl
 // static/psw.html
+// static/restore_access.html
+// static/restore_access_active.html
 // static/schema.sql
 // static/show_table.html
 // static/signatures.html
@@ -4543,6 +4547,42 @@ func staticJsTexteditorModeMarkdownJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsTexteditorSnippetsContractsJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorSnippetsContractsJs() (*asset, error) {
+	path := "static/js/textEditor/snippets/contracts.js"
+	name := "static/js/textEditor/snippets/contracts.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsTexteditorSnippetsContractsSnippets reads file data from disk. It returns an error on failure.
+func staticJsTexteditorSnippetsContractsSnippets() (*asset, error) {
+	path := "static/js/textEditor/snippets/contracts.snippets"
+	name := "static/js/textEditor/snippets/contracts.snippets"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsTexteditorThemeChromeJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorThemeChromeJs() (*asset, error) {
 	path := "static/js/textEditor/theme-chrome.js"
@@ -4907,6 +4947,42 @@ func staticPropertyTpl() (*asset, error) {
 func staticPswHtml() (*asset, error) {
 	path := "static/psw.html"
 	name := "static/psw.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticRestore_accessHtml reads file data from disk. It returns an error on failure.
+func staticRestore_accessHtml() (*asset, error) {
+	path := "static/restore_access.html"
+	name := "static/restore_access.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticRestore_access_activeHtml reads file data from disk. It returns an error on failure.
+func staticRestore_access_activeHtml() (*asset, error) {
+	path := "static/restore_access_active.html"
+	name := "static/restore_access_active.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6448,6 +6524,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/textEditor/ext-language_tools.js": staticJsTexteditorExtLanguage_toolsJs,
 	"static/js/textEditor/mode-c_cpp.js": staticJsTexteditorModeC_cppJs,
 	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
+	"static/js/textEditor/snippets/contracts.js": staticJsTexteditorSnippetsContractsJs,
+	"static/js/textEditor/snippets/contracts.snippets": staticJsTexteditorSnippetsContractsSnippets,
 	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
 	"static/js/tooltip.js": staticJsTooltipJs,
 	"static/js/triangles.js": staticJsTrianglesJs,
@@ -6469,6 +6547,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/pass.html": staticPassHtml,
 	"static/property.tpl": staticPropertyTpl,
 	"static/psw.html": staticPswHtml,
+	"static/restore_access.html": staticRestore_accessHtml,
+	"static/restore_access_active.html": staticRestore_access_activeHtml,
 	"static/schema.sql": staticSchemaSql,
 	"static/show_table.html": staticShow_tableHtml,
 	"static/signatures.html": staticSignaturesHtml,
@@ -6840,6 +6920,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"ext-language_tools.js": &bintree{staticJsTexteditorExtLanguage_toolsJs, map[string]*bintree{}},
 				"mode-c_cpp.js": &bintree{staticJsTexteditorModeC_cppJs, map[string]*bintree{}},
 				"mode-markdown.js": &bintree{staticJsTexteditorModeMarkdownJs, map[string]*bintree{}},
+				"snippets": &bintree{nil, map[string]*bintree{
+					"contracts.js": &bintree{staticJsTexteditorSnippetsContractsJs, map[string]*bintree{}},
+					"contracts.snippets": &bintree{staticJsTexteditorSnippetsContractsSnippets, map[string]*bintree{}},
+				}},
 				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
 			}},
 			"tooltip.js": &bintree{staticJsTooltipJs, map[string]*bintree{}},
@@ -6865,6 +6949,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"pass.html": &bintree{staticPassHtml, map[string]*bintree{}},
 		"property.tpl": &bintree{staticPropertyTpl, map[string]*bintree{}},
 		"psw.html": &bintree{staticPswHtml, map[string]*bintree{}},
+		"restore_access.html": &bintree{staticRestore_accessHtml, map[string]*bintree{}},
+		"restore_access_active.html": &bintree{staticRestore_access_activeHtml, map[string]*bintree{}},
 		"schema.sql": &bintree{staticSchemaSql, map[string]*bintree{}},
 		"show_table.html": &bintree{staticShow_tableHtml, map[string]*bintree{}},
 		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{}},
