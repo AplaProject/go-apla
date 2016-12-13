@@ -100,16 +100,17 @@ func (c *Controller) ExportTpl() (string, error) {
 		//		out += c.setVar("tables", `t_`)
 
 		out += "Json(`Head: \"\",\r\n" + `Desc: "",
-		Img: "",
+		Img: "/static/img/apps/ava.png",
 		OnSuccess: {
 			script: 'template',
 			page: 'government',
 			parameters: {}
 		},
 		TX: [`
+		list := make([]string, 0)
+
 		tables := strings.Split(c.r.FormValue("tables"), `,`)
 		if len(tables) > 0 {
-			list := make([]string, 0)
 			for _, itable := range tables {
 				if len(itable) == 0 {
 					continue
@@ -157,11 +158,9 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 	   }`, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
 			}
-			out += strings.Join(list, ",\r\n")
 		}
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
 		if len(contracts) > 0 {
-			list := make([]string, 0)
 			for _, icontract := range contracts {
 				if len(icontract) == 0 {
 					continue
@@ -178,11 +177,9 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 	   }`, icontract, icontract))
 			}
-			out += strings.Join(list, ",\r\n")
 		}
 		pages := strings.Split(c.r.FormValue("pages"), `,`)
 		if len(pages) > 0 {
-			list := make([]string, 0)
 			for _, ipage := range pages {
 				if len(ipage) == 0 {
 					continue
@@ -200,10 +197,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 	   }`, ipage, ipage))
 			}
-			out += strings.Join(list, ",\r\n")
 		}
-
-		out += "]`\r\n)"
+		out += strings.Join(list, ",\r\n") + "]`\r\n)"
 
 		if err := ioutil.WriteFile(tplname, []byte(out), 0644); err != nil {
 			message = err.Error()

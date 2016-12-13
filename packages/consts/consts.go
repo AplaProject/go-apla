@@ -111,6 +111,10 @@ var TxTypes = map[int]string{
 	21: "NewMenu",
 	22: "ChangeNodeKeyDLT",
 	23: "AppendPage",
+	24: "RestoreAccessActive",
+	25: "RestoreAccessClose",
+	26: "RestoreAccessRequest",
+	27: "RestoreAccess",
 }
 
 func init() {

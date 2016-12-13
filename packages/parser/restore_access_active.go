@@ -49,7 +49,7 @@ func (p *Parser) RestoreAccessActiveFront() error {
 	}
 
 	// check that there is no repeat shift
-	active, err := p.Single("SELECT active FROM system_restore_access WHERE user_id  =  ? AND state_id = ?", p.TxUserID, p.TxUserID).Int64()
+	active, err := p.Single("SELECT active FROM system_restore_access WHERE state_id = ?", p.TxUserID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
