@@ -448,6 +448,28 @@ PageEnd:`, `menu_default`, sid,
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	err = p.ExecSql(`CREATE TABLE "` + id + `_languages" (
+				"name" varchar(100)  NOT NULL DEFAULT '',
+				"res" jsonb,
+				"conditions" text  NOT NULL DEFAULT '',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER TABLE ONLY "` + id + `_languages" ADD CONSTRAINT "` + id + `_languages_pkey" PRIMARY KEY (name);
+				`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	err = p.ExecSql(`INSERT INTO "`+id+`_languages" (name, res, conditions) VALUES
+		(?, ?, ?),
+		(?, ?, ?),
+		(?, ?, ?)`,
+		`Gender`, `{"en": "Gender", "ru": "Пол"}`, sid,
+		`male`, `{"en": "Male", "ru": "Мужской"}`, sid,
+		`female`, `{"en": "Female", "ru": "Женский"}`, sid)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	if err = utils.LoadContract(id); err != nil {
 		return p.ErrInfo(err)
 	}
