@@ -27,13 +27,13 @@
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .citizen_contracts").addClass("active");
 	
-	ace.require("ace/ext/language_tools");
+	var contractSnippets = [];
 	var editor = ace.edit("textEditor");
-	var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
+	var ContractMode = ace.require("ace/mode/c_cpp").Mode;
 	$(".textEditor code").html(editor.getValue());
 	$("#value").val(editor.getValue());
 	editor.setTheme("ace/theme/chrome");
-    editor.session.setMode(new JavaScriptMode());
+    editor.session.setMode(new ContractMode());
 	editor.setShowPrintMargin(false);
 	editor.getSession().setUseWrapMode(true);
 	editor.getSession().on('change', function(e) {
@@ -41,46 +41,35 @@
 		$("#value").val(editor.getValue());
 		editor.resize();
 	});
-	editor.setOptions({
-		enableBasicAutocompletion: true,
-		enableSnippets: true,
-		enableLiveAutocompletion: true
+	
+	$.ajax({
+		type: 'POST',
+		url: 'static/js/textEditor/snippets/contracts.js',
+		success: function(data) {
+			contractSnippets = JSON.parse(data);
+			
+			ace.config.loadModule('ace/ext/language_tools', function () {
+				editor.setOptions({
+					enableBasicAutocompletion: true,
+					enableSnippets: true,
+					enableLiveAutocompletion: true
+				});
+				
+				var snippetManager = ace.require("ace/snippets").snippetManager;
+				var config = ace.require("ace/config");
+				
+				ace.config.loadModule("ace/snippets/c_cpp", function(m) {
+					if (m) {
+						snippetManager.files.xml = m;
+						m.snippets = snippetManager.parseSnippetFile(m.snippetText);
+						contractSnippets.forEach(function (s) { m.snippets.push(s); });
+						snippetManager.register(m.snippets, m.scope);
+					}
+				});
+			});
+		}
 	});
 	
-	/*ace.config.loadModule('ace/ext/language_tools', function () {
-		editor.setOptions({
-			enableBasicAutocompletion: true,
-			enableSnippets: true,
-			enableLiveAutocompletion: true
-		});
-		
-		var snippetManager = ace.require("ace/snippets").snippetManager;
-		var config = ace.require("ace/config");
-		
-		ace.config.loadModule("ace/snippets/contracts", function(m) {
-			if (m) {
-				snippetManager.files.xml = m;
-				m.snippets = snippetManager.parseSnippetFile(m.snippetText);
-				var nsoa_snippets = nsoaGetSnippets();
-				nsoa_snippets.forEach(function (s) { m.snippets.push(s); });
-				snippetManager.register(m.snippets, m.scope);
-			}
-		});
-	});
-	
-	function nsoaGetSnippets() {
-		return [{
-			name: "lookup",
-			content: "lookup=${1:ns_field}:lookup_table=${2:oa_table}:lookup_by=${3:oa_field}:lookup_return=${4:oa_field}",
-			tabTrigger: "lookup"
-		},
-		{
-			name: "dropdown",
-			content: "<${1:oa_field} ${2:ns_field}>\n    ${3:ns_value} ${4:oa_value}\n</${1}>\n",
-			tabTrigger: "dropdown"
-		}];
-	}*/
-
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
