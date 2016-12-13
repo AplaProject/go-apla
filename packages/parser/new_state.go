@@ -386,6 +386,7 @@ PageEnd:`, `menu_default`, sid,
 [Tables](sys.listOfTables)
 [Smart contracts](sys.contracts)
 [Apps list](sys.app_catalog)
+[Language](sys.languages)
 [Interface](sys.interface)
 [Checking citizens](CheckCitizens)`, sid)
 	if err != nil {

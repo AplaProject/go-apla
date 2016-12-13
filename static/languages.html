@@ -1,0 +1,73 @@
+<style>
+    .textEditor {
+        position: relative;
+        font-size: 0px;
+        padding-top: 1px;
+        padding-bottom: 1px;
+    }
+    
+    .textEditor code {
+        position: relative;
+        font: 14px "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
+        line-height: 17px;
+        z-index: 1;
+    }
+    
+    .textEditor section {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+    }
+</style>
+
+<script>
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .citizen_languages").addClass("active");
+</script> {{if ne .Global "1"}}
+<div class="content-heading">
+    <div class="pull-right">
+        <!--button type="button" class="btn btn-green" onclick="load_page('languages', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em>Global</button-->
+        <button type="button" class="btn btn-default" onclick="load_template('newLanguage')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+    </div>
+    Language Resources
+</div>
+{{else}}
+<div class="content-heading">
+    <div class="pull-right">
+        <button type="button" class="btn btn-default" onclick="load_template('newLanguage')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+    </div>
+    Global
+</div>
+<ol class="breadcrumb">
+    <li><a href="#" onclick="load_template('languages')">Language Resources</a></li>
+</ol>
+{{end}}
+<!-- START panel-->
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Resources</th>
+                        <th width="50">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .List }}
+                    <tr>
+                        <td><strong>{{.name}}</strong></td>
+                        <td>{{.res}}</td>
+                        <td><a type="button" class="btn btn-labeled btn-default" onclick="load_page('editLanguage', {name: {{.name}} , global: {{$.Global}} } )"><span class="btn-label"><i class="fa fa-cog"></i></span></a></td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- END panel-->
