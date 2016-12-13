@@ -38,7 +38,7 @@
     {{else}}
 		<div class="content-heading">
 		  <div class="pull-right">
-			  <button type="button" class="btn btn-default" onclick="load_page('newContract')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newContract', {{if eq .Global "1"}}{global: 1}{{end}})"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
 		  </div>
 		  Global
 		</div>

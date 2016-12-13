@@ -48,7 +48,7 @@ func (p *Parser) NewTableFront() error {
 	// ...
 
 	// Check InputData
-	verifyData := map[string]string{"global": "int64", "table_name": "word"}
+	verifyData := map[string]string{"global": "int64", "table_name": "string"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -125,6 +125,7 @@ func (p *Parser) NewTable() error {
 				);
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
+	fmt.Println(sql)
 	err := p.ExecSql(sql)
 	if err != nil {
 		return p.ErrInfo(err)
