@@ -234,6 +234,8 @@
 // static/js/textEditor/mode-c_cpp.js
 // static/js/textEditor/mode-markdown.js
 // static/js/textEditor/snippets/c_cpp.js
+// static/js/textEditor/snippets/contracts.js
+// static/js/textEditor/snippets/contracts.json
 // static/js/textEditor/snippets/markdown.js
 // static/js/textEditor/theme-chrome.js
 // static/js/tooltip.js
@@ -4565,6 +4567,42 @@ func staticJsTexteditorSnippetsC_cppJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsTexteditorSnippetsContractsJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorSnippetsContractsJs() (*asset, error) {
+	path := "static/js/textEditor/snippets/contracts.js"
+	name := "static/js/textEditor/snippets/contracts.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsTexteditorSnippetsContractsJson reads file data from disk. It returns an error on failure.
+func staticJsTexteditorSnippetsContractsJson() (*asset, error) {
+	path := "static/js/textEditor/snippets/contracts.json"
+	name := "static/js/textEditor/snippets/contracts.json"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsTexteditorSnippetsMarkdownJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorSnippetsMarkdownJs() (*asset, error) {
 	path := "static/js/textEditor/snippets/markdown.js"
@@ -6525,6 +6563,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/textEditor/mode-c_cpp.js": staticJsTexteditorModeC_cppJs,
 	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
 	"static/js/textEditor/snippets/c_cpp.js": staticJsTexteditorSnippetsC_cppJs,
+	"static/js/textEditor/snippets/contracts.js": staticJsTexteditorSnippetsContractsJs,
+	"static/js/textEditor/snippets/contracts.json": staticJsTexteditorSnippetsContractsJson,
 	"static/js/textEditor/snippets/markdown.js": staticJsTexteditorSnippetsMarkdownJs,
 	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
 	"static/js/tooltip.js": staticJsTooltipJs,
@@ -6922,6 +6962,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"mode-markdown.js": &bintree{staticJsTexteditorModeMarkdownJs, map[string]*bintree{}},
 				"snippets": &bintree{nil, map[string]*bintree{
 					"c_cpp.js": &bintree{staticJsTexteditorSnippetsC_cppJs, map[string]*bintree{}},
+					"contracts.js": &bintree{staticJsTexteditorSnippetsContractsJs, map[string]*bintree{}},
+					"contracts.json": &bintree{staticJsTexteditorSnippetsContractsJson, map[string]*bintree{}},
 					"markdown.js": &bintree{staticJsTexteditorSnippetsMarkdownJs, map[string]*bintree{}},
 				}},
 				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
