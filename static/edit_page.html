@@ -1,27 +1,4 @@
 {{ define "editPage" }}
-<style>
-	.textEditor, .textEditorMenu {
-		position:relative;
-		font-size:0px;
-		padding-top:1px;
-		padding-bottom:1px;
-	}
-	.textEditor code, .textEditorMenu code  {
-		position:relative;
-		font: 14px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
-		line-height:17px;
-		z-index:1;
-    }
-	.textEditor section, .textEditorMenu section  {
-		position:absolute;
-		left:0px;
-		top:0px;
-		width:100%;
-        height:100%;
-		z-index:2;
-    }
-</style>
-
 <script>
 	var serverTime;
 	var menu = null;

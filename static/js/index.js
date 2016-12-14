@@ -285,6 +285,8 @@ function Alert(title, text, type, Confirm) {
 		var color;
 		var btnText = "OK";
 		var id = obj.parents(".modal").attr("id");
+		var bh = window.innerHeight - 170;
+		var oh = obj.height();
 		var minHeight = obj.css("min-height");
 		obj.css({ "position": "relative", "min-height": "300px" });
 
@@ -300,6 +302,8 @@ function Alert(title, text, type, Confirm) {
 		} else {
 			color = "#c1c1c1";
 		}
+		
+		$(".sweet-overlay, .sweet-alert").appendTo($("body"));
 
 		swal({
 			title: title,
@@ -328,7 +332,10 @@ function Alert(title, text, type, Confirm) {
 				}
 			}
 		});
-		$(".sweet-alert").appendTo(obj);
+		
+		if (bh > oh) {
+			$(".sweet-overlay, .sweet-alert").appendTo(obj);
+		}
 	}
 }
 
