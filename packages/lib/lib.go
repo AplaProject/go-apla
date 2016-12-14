@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"hash/crc64"
 	"io"
+	"math"
 	"math/big"
 	"os"
 	"reflect"
@@ -397,6 +398,9 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 			*out = append(*out, uint8(128+4-i))
 			*out = append(*out, tmp[i:]...)
 		}
+	case reflect.Float64:
+		bin := Float2Bytes(t.Float())
+		*out = append(*out, bin...)
 	case reflect.Int64:
 		EncodeLenInt64(out, t.Int())
 	case reflect.Uint64:
@@ -450,6 +454,9 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			t.SetInt(int64(binary.BigEndian.Uint32(tmp)))
 			*out = (*out)[size+1:]
 		}
+	case reflect.Float64:
+		t.SetFloat(Bytes2Float((*out)[:8]))
+		*out = (*out)[8:]
 	case reflect.Int64:
 		if val, err := DecodeLenInt64(out); err != nil {
 			return err
@@ -499,6 +506,8 @@ func FieldToBytes(v interface{}, num int) []byte {
 			ret = append(ret, []byte(fmt.Sprintf("%d", field.Uint()))...)
 		case reflect.Int8, reflect.Int32, reflect.Int64:
 			ret = append(ret, []byte(fmt.Sprintf("%d", field.Int()))...)
+		case reflect.Float64:
+			ret = append(ret, []byte(fmt.Sprintf("%f", field.Float()))...)
 		case reflect.String:
 			ret = append(ret, []byte(field.String())...)
 		case reflect.Slice:
@@ -575,4 +584,14 @@ func NumString(in string) string {
 		buf = buf[:len(buf)-3]
 	}
 	return string(append(buf, out...))
+}
+
+func Bytes2Float(bytes []byte) float64 {
+	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
+}
+
+func Float2Bytes(float float64) []byte {
+	bytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bytes, math.Float64bits(float))
+	return bytes
 }

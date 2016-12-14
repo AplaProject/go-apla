@@ -611,7 +611,8 @@ txlist:
 				continue txlist
 			}
 		}
-		if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
+		if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` ||
+			fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: title, Value: value})
 		}
