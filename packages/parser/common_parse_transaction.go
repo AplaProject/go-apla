@@ -79,10 +79,10 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					var val uint64
 					lib.BinUnmarshal(&input, &val)
 					v = val
-					/*				case `float64`:
-									var val float64
-									lib.BinUnmarshal(&input, &val)
-									v = val*/
+				case `float64`:
+					var val float64
+					lib.BinUnmarshal(&input, &val)
+					v = val
 				case `int64`:
 					v, err = lib.DecodeLenInt64(&input)
 				case `decimal.Decimal`:

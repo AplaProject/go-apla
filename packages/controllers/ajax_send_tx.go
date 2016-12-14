@@ -114,6 +114,8 @@ func (c *Controller) AjaxSendTx() interface{} {
 						//						lib.BinMarshal(&data, utils.StrToFloat64(val))
 					case `int64`:
 						lib.EncodeLenInt64(&data, utils.StrToInt64(val))
+					case `float64`:
+						lib.BinMarshal(&data, utils.StrToFloat64(val))
 					case `string`, `decimal.Decimal`:
 						data = append(append(data, lib.EncodeLength(int64(len(val)))...), []byte(val)...)
 					case `[]uint8`:
