@@ -4,6 +4,24 @@
 	
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .citizen_listOfTables").addClass("active");
+	
+	function CheckIndex() {
+		var id = $(".column_type");
+		var index = $(".index");
+		var val = id.val();
+		if (val === "text") {
+			index.prop("disabled", true);
+		} else {
+			index.prop("disabled", false);
+		}
+	}
+	
+	$(".column_type").select2({
+		minimumResultsForSearch: Infinity,
+		theme: 'bootstrap'
+	});
+	
+	CheckIndex();
 
 	$('#send').bind('click', function () {
 
@@ -62,12 +80,23 @@
 			   <label>Name</label>
 			   {{if .ColumnName}} <p class="form-control-static">{{.ColumnName}}</p> <input type="hidden" class="form-control" id="column_name" value="{{.ColumnName}}"> {{else}} <input type="text" class="form-control" id="column_name"> {{end}}
 		   </div>
-			{{if not .ColumnName}}<div class="form-group">
-			<label>Type</label>
-			<select id="column_type"><option value="text">Text</option><option value="int64">Numbers</option><option value="time">Date/Time</option><option value="hash">Hash</option></select><br>
-			<label>Index</label>
-			<input type="checkbox" id="index">
-			</div>{{end}}
+			{{if not .ColumnName}}
+				<div class="row">
+					<div class="form-group col-md-10">
+						<label>Type</label>
+						<select id="column_type" class="column_type form-control" onChange="CheckIndex();"><option value="text">Text</option><option value="int64">Numbers</option><option value="time">Date/Time</option><option value="hash">Hash</option></select><br>
+					</div>
+					<div class="form-group col-md-2">
+						<label style="display:block;" for="index">Index</label>
+						<div class="checkbox c-checkbox" style="display:inline-block; width:auto;">
+							<label style="padding-left:0px;">
+								<input id="index" class="hidden index" type="checkbox">
+								<span class="fa fa-check" style="margin:0px; margin-top:-4px;"></span>
+							</label>
+						</div>
+					</div>
+				</div>
+			{{end}}
 			<div class="form-group">
 				<label>Permissions</label>
 				<textarea class="form-control" id="permissions">{{.ColumnPermission}}</textarea>

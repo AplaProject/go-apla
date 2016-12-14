@@ -20,7 +20,7 @@
 			var col = '<tr>' +
 						 '<td><input class="colname form-control" type="text" value=""></td>' +
 						 '<td>' +
-						 	'<select class="column_type form-control"><option value="text">Text</option><option value="int64">Numbers</option><option value="time">Date/Time</option><option value="hash">Hash</option></select>' +
+						 	'<select class="column_type form-control" onChange="CheckIndex();"><option value="text">Text</option><option value="int64">Numbers</option><option value="time">Date/Time</option><option value="hash">Hash</option></select>' +
 						 '</td>' +
 						 '<td align="center">' +
 								'<div class="checkbox c-checkbox" style="display:inline-block; width:auto;">' +
@@ -38,6 +38,8 @@
 				theme: 'bootstrap'
 			});
 			$(".colname:last").focus();
+			
+			CheckIndex();
 		}
 		
 		function RemoveColumn(elem) {
@@ -45,7 +47,19 @@
 		}
 		
 		NewColumn();
-
+		
+		function CheckIndex() {
+			$(".column_type").each(function() {
+				var id = $(this);
+				var val = id.val();
+				if (val === "text") {
+					id.parent().parent().find(".index").prop("disabled", true);
+				} else {
+					id.parent().parent().find(".index").prop("disabled", false);
+				}
+			});
+		}
+		
 		$('#send').bind('click', function () {
 
 			/*columns = [];
