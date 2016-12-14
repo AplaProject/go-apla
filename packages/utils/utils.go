@@ -2292,7 +2292,12 @@ func FillLeft(slice []byte) []byte {
 }
 
 func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[string]string) (string, error) {
-	data, err := DB.Single(`SELECT value FROM "`+Int64ToStr(stateId)+`_pages" WHERE name = ?`, page).String()
+	query := `SELECT value FROM "` + Int64ToStr(stateId) + `_pages" WHERE name = ?`
+	if (*params)[`global`] == `1` {
+		query = `SELECT value FROM global_pages WHERE name = ?`
+	}
+
+	data, err := DB.Single(query, page).String()
 	if err != nil {
 		return "", err
 	}

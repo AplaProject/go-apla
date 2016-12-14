@@ -418,11 +418,15 @@ func StateValue(vars *map[string]string, pars ...string) string {
 func LiTemplate(vars *map[string]string, pars ...string) string {
 	name := pars[0]
 	title := name
+	params := ``
 	if len(pars) > 1 {
 		title = pars[1]
 	}
-	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a></li>`,
-		name, title)
+	if len(pars) >= 3 {
+		params = pars[2]
+	}
+	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s', {%s}); HideMenu();"><span>%s</span></a></li>`,
+		name, params, title)
 }
 
 func AppNav(vars *map[string]string, pars ...string) string {
