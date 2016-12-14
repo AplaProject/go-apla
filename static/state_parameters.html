@@ -25,6 +25,9 @@
 	</script>
 	
 	<div class="content-heading">
+		<div class="pull-right">
+		  <button type="button" class="btn btn-default" onclick="load_page('newStateParameters')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new parameter</button>
+	    </div>
 		State parameters
 	</div>
 	<ol class="breadcrumb">
@@ -54,26 +57,17 @@
 					<td class="thead">{{$value.name}}</td>
 					 <td>{{if eq $value.name "state_flag"}}<img id="flag"><script> document.getElementById('flag').setAttribute( 'src', '{{$value.value}}' ); </script>{{else}}<strong>{{$value.value}}</strong>{{end}}</td>
 					 <td><strong>{{$value.conditions}}</strong></td>
-					<td><button type="button" class="btn btn-primary" onclick="load_page('editStateParameters', {name: {{$value.name}}} )">Change</button>
+					 <td width="50" style="white-space:nowrap;"><button type="button" class="btn btn-labeled btn-default" onclick="load_page('editStateParameters', {name: {{$value.name}}} )"><span class="btn-label"><em class="fa fa-edit"></em></span></button>
 						{{if eq $value.name "change_control"}}
 							<button type="button" class="btn btn-primary" onclick="load_page('restoreAccess')">Restore access</button>
-						{{end}}</td>
+						{{end}}
+					 </td>
 				 </tr>
 			  {{end}}
 			  </tbody>
 		   </table>
 		</div>
 	 </div>
-	 <div class="panel-footer">
-	   <div class="clearfix">
-		  <div class="pull-left">
-
-		  </div>
-		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary" onclick="load_page('newStateParameters')">Add new parameter</button>
-		  </div>
-	   </div>
-	  </div>
 	</div>
 	<!-- END panel-->
 {{end}}

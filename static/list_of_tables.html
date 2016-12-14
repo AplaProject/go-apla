@@ -3,20 +3,28 @@
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .citizen_listOfTables").addClass("active");
 </script>
-
-	<div class="content-heading">
-		{{if not .Global}}
-			List Of Tables
-		{{else}}
-			Global
-		{{end}}
-	</div>
+	
 	{{if not .Global}}
+		<div class="content-heading">
+		  <div class="pull-right">
+			  <button type="button" class="btn btn-green" onclick="load_page('listOfTables', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em>Global</button>
+			  <button type="button" class="btn btn-default" onclick="load_page('stateParameters')"><em class="fa fa-cogs fa-fw mr-sm"></em>State parameters</button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newTable', {global: {{.Global}} })"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+		  </div>
+		  List Of Tables
+		</div>
     {{else}}
-   		<ol class="breadcrumb">
+		<div class="content-heading">
+		  <div class="pull-right">
+			  <button type="button" class="btn btn-default" onclick="load_page('newTable', {global: {{.Global}} })"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+		  </div>
+		  Global
+		</div>
+		<ol class="breadcrumb">
 		   <li><a href="#" onclick="load_page('listOfTables')">List Of Tables</a></li>
-		</ol>
+	   </ol>
     {{end}}
+	
 	<!-- START panel-->
 	<div class="panel panel-default">
 	 <!--<div class="panel-heading">
@@ -48,20 +56,5 @@
 		   </table>
 		</div>
 	 </div>
-	 <div class="panel-footer">
-	   <div class="clearfix">
-		  <div class="pull-left">
-			{{if not .Global}}
-			<button type="button" class="btn btn-info" onclick="load_page('listOfTables', {global: 1})">Global</button>
-			{{end}}
-		  </div>
-		  <div class="pull-right">
-			{{if not .Global}}
-			<button type="button" class="btn btn-primary" onclick="load_page('stateParameters')">stateParameters</button>
-			{{end}}
-			 <button type="button" class="btn btn-primary" onclick="load_page('newTable', {global: {{.Global}} })">Add new</button>
-		  </div>
-	   </div>
-	  </div>
 	</div>
 {{end}}
