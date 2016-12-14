@@ -51,6 +51,7 @@ func init() {
 		"IsContract":     IsContract,
 		"StateValue":     StateValue,
 		"Int":            Int,
+		"Str":            Str,
 		"Len":            Len,
 		"Sha256":         Sha256,
 		"UpdateContract": UpdateContract,
@@ -350,6 +351,16 @@ func StateValue(p *Parser, name string) string {
 
 func Int(val string) int64 {
 	return utils.StrToInt64(val)
+}
+
+func Str(v interface{}) (ret string) {
+	switch val := v.(type) {
+	case float64:
+		ret = fmt.Sprintf(`%f`, val)
+	default:
+		ret = fmt.Sprintf(`%v`, val)
+	}
+	return
 }
 
 func UpdateContract(p *Parser, name, value, conditions string) error {
