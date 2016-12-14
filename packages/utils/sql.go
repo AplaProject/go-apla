@@ -616,11 +616,11 @@ func (db *DCDB) GetQuotes() string {
 
 func (db *DCDB) ExecSql(query string, args ...interface{}) error {
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
-	var res sql.Result
+	//var res sql.Result
 	var err error
 	for {
 		log.Debug("newQuery: ", newQuery)
-		res, err = db.Exec(newQuery, newArgs...)
+		_, err = db.Exec(newQuery, newArgs...)
 		if err != nil {
 			if ok, _ := regexp.MatchString(`(?i)database is locked`, fmt.Sprintf("%s", err)); ok {
 				log.Error("database is locked %s / %s / %s", newQuery, newArgs, GetParent())
@@ -633,12 +633,12 @@ func (db *DCDB) ExecSql(query string, args ...interface{}) error {
 			break
 		}
 	}
-	affect, err := res.RowsAffected()
+	/*affect, err := res.RowsAffected()
 	lastId, err := res.LastInsertId()
 	if db.ConfigIni["sql_log"] == "1" {
 		parent := GetParent()
 		log.Debug("SQL: %v / RowsAffected=%d / LastInsertId=%d / %s / %s", newQuery, affect, lastId, newArgs, parent)
-	}
+	}*/
 	return nil
 }
 

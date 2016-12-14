@@ -533,7 +533,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
-	//	fmt.Println(`TXForm Init`, *vars)
+	//fmt.Println(`TXForm Init`, *vars)
 	onsuccess := (*pars)[`OnSuccess`]
 	contract := smart.GetContract(name)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
@@ -588,16 +588,28 @@ txlist:
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
 			continue
 		}
+		langres := fitem.Name
+		if off := strings.IndexByte(fitem.Tags, '#'); off >= 0 {
+			end := off + 1
+			for end < len(fitem.Tags) {
+				if fitem.Tags[end] == ' ' {
+					break
+				}
+				end++
+			}
+			langres = fitem.Tags[off+1 : end]
+		}
+		title := LangText(langres, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
 		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
 			if strings.Index(fitem.Tags, tag) >= 0 {
 				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
-					TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
+					TxType: fitem.Type.String(), Title: title, Value: value})
 				continue txlist
 			}
 		}
 		if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
-				TxType: fitem.Type.String(), Title: fitem.Name, Value: value})
+				TxType: fitem.Type.String(), Title: title, Value: value})
 		}
 
 	}

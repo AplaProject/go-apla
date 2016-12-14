@@ -160,7 +160,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
 		data = append(data, binSignatures...)
 
-
 	case "NewState":
 
 		stateId = 0
@@ -535,6 +534,19 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(userId)...)
 		data = append(data, utils.EncodeLengthPlusData(stateId)...)
 		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
+		data = append(data, binSignatures...)
+
+	case "EditLang", "NewLang":
+
+		name := []byte(c.r.FormValue("name"))
+		trans := []byte(c.r.FormValue("trans"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(name)...)
+		data = append(data, utils.EncodeLengthPlusData(trans)...)
 		data = append(data, binSignatures...)
 
 	case "ChangeNodeKey":

@@ -71,7 +71,7 @@ const ALERT_ERROR_TIME = 1
 const DATA_TYPE_MAX_BLOCK_ID = 10
 const DATA_TYPE_BLOCK_BODY = 7
 
-const CHANGE_KEY_PERIOD = 86400*7
+const CHANGE_KEY_PERIOD = 86400 * 7
 
 const UPD_FULL_NODES_PERIOD = 120 // на время тестов 1, потом надо ставить 86400
 
@@ -115,6 +115,8 @@ var TxTypes = map[int]string{
 	25: "RestoreAccessClose",
 	26: "RestoreAccessRequest",
 	27: "RestoreAccess",
+	28: "NewLang",
+	29: "EditLang",
 }
 
 func init() {

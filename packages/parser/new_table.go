@@ -48,7 +48,7 @@ func (p *Parser) NewTableFront() error {
 	// ...
 
 	// Check InputData
-	verifyData := map[string]string{"global": "int64", "table_name": "word"}
+	verifyData := map[string]string{"global": "int64", "table_name": "string"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -112,7 +112,7 @@ func (p *Parser) NewTable() error {
 		colsSql += `"` + data[0] + `" `+colType+" ,\n"
 		colsSql2 += `"` + data[0] + `": "$citizen==` + citizenIdStr + `",`
 		if data[2] == "1" {
-			sqlIndex+=`CREATE INDEX "`+p.TxStateIDStr + `_` + p.TxMaps.String["table_name"] + `_` + data[0] + `_index" ON "` + p.TxStateIDStr + `_` + p.TxMaps.String["table_name"] + `" (` +data[0]+ `);`
+			sqlIndex+=`CREATE INDEX "`+tableName+ `_` + data[0] + `_index" ON "` + tableName + `" (` +data[0]+ `);`
 		}
 	}
 	colsSql2 = colsSql2[:len(colsSql2)-1]
@@ -125,6 +125,7 @@ func (p *Parser) NewTable() error {
 				);
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
+	fmt.Println(sql)
 	err := p.ExecSql(sql)
 	if err != nil {
 		return p.ErrInfo(err)

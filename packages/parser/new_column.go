@@ -89,7 +89,13 @@ func (p *Parser) NewColumnFront() error {
 
 func (p *Parser) NewColumn() error {
 
-	table := p.TxStateIDStr + `_tables`
+	table := ``
+	if len(p.TxMaps.String["table_name"]) >= 7 && p.TxMaps.String["table_name"][:7] == "global_" {
+		table = `global_tables`
+	} else {
+		table = p.TxStateIDStr + `_tables`
+	}
+
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
 	if err != nil {
 		return err

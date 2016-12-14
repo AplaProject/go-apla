@@ -116,7 +116,7 @@
 		{{if .Data.name}}Edit{{else}}New{{end}} Contract
 	</div>
 	<ol class="breadcrumb">
-	   <li><a href="#" onclick="load_page('contracts')">Smart Contracts</a></li>
+	   <li><a href="#" onclick="load_page('contracts')">Smart Contracts</a></li> {{if eq .Global "1"}}<li><a href="#" onclick="load_page('contracts', {global: 1})">Global</a></li>{{end}}
 	</ol>
 
 	<!-- START panel-->
