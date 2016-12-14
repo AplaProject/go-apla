@@ -30,19 +30,19 @@
 <div class="content-heading">
     <div class="pull-right">
         <!--button type="button" class="btn btn-green" onclick="load_page('languages', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em>Global</button-->
-        <button type="button" class="btn btn-default" onclick="load_template('newLanguage')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+        <button type="button" class="btn btn-default" onclick="load_page('edit_language')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
     </div>
     Language Resources
 </div>
 {{else}}
 <div class="content-heading">
     <div class="pull-right">
-        <button type="button" class="btn btn-default" onclick="load_template('newLanguage')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+        <button type="button" class="btn btn-default" onclick="load_page('edit_language')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
     </div>
     Global
 </div>
 <ol class="breadcrumb">
-    <li><a href="#" onclick="load_template('languages')">Language Resources</a></li>
+    <li><a href="#" onclick="load_page('languages')">Language Resources</a></li>
 </ol>
 {{end}}
 <!-- START panel-->
@@ -62,7 +62,7 @@
                     <tr>
                         <td><strong>{{.name}}</strong></td>
                         <td>{{.res}}</td>
-                        <td><a type="button" class="btn btn-labeled btn-default" onclick="load_page('editLanguage', {name: {{.name}} , global: {{$.Global}} } )"><span class="btn-label"><i class="fa fa-cog"></i></span></a></td>
+                        <td><a type="button" class="btn btn-labeled btn-default" onclick="load_page('edit_language', {name: {{.name}} , global: {{$.Global}} } )"><span class="btn-label"><i class="fa fa-cog"></i></span></a></td>
                     </tr>
                     {{end}}
                 </tbody>

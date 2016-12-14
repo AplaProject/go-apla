@@ -1,0 +1,135 @@
+<script>
+	var serverTime;
+	var name;
+	var transdata;
+	
+	$(".aside .nav li").removeClass("active");
+	$(".citizen, .citizen_edit_language").addClass("active");
+
+	$('#send').bind('click', function () {
+		name = $("#name").val();
+		if (name== '') {
+			alert('Specify Name of the language resource');
+			return false;
+		}
+		var trans = {};
+		var transcount = 0;
+		$(".lpref").each(function(){
+			var key = $(this).val();
+			if (key != '') {
+				var id = $(this).attr("id").substr(4);
+				var text = $("#text"+id).val();
+				if (text != '') {
+					trans[key] = text;
+					transcount++;
+				}
+			}
+		});
+		if (transcount== 0) {
+			alert('There are not translations');
+			return false;
+		}
+		transdata = JSON.stringify(trans);
+		$.get( 'ajax?controllerName=GetServerTime', function (data) {
+			serverTime = data.time;
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.Data.CitizenId}},{{.Data.StateId}},'+name+','+transdata);
+			doSign();
+			$("#send_to_net").trigger("click");
+		}, "json" );
+		return false;
+	} );
+	$('#send_to_net').bind('click', function () {
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?controllerName=saveQueue',
+			data: {
+				'name': name,
+				'trans': transdata,
+				'type' : '{{.TxType}}',
+				'time' : serverTime,
+//				'conditions' : $("#conditions").val(),				
+				'citizenId' : '{{.Data.CitizenId}}',
+				'stateId' : '{{.Data.StateId}}',
+				'signature1': $('#signature1').val(),
+				'signature2': $('#signature2').val(),
+				'signature3': $('#signature3').val()
+			},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(data) { send_to_net_success(data) },
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );
+var lng_id = {{len .List}} + 1;
+function js_newtrans() {
+    $("#lang-list").append('<div class="col-md-1 col-xs-1" style="padding: 5px 5px;">'+
+                    '<input type="text" class="form-control lpref" id="lang'+lng_id+'"></div>'+
+                '<div class="col-md-11 col-xs-1" style="padding: 5px 5px;">' +
+                    '<input type="text" class="form-control" id="text'+lng_id+'"></div>');
+    lng_id++;
+    return false;
+}
+
+</script>
+<div class="content-heading">
+	{{if .Name}}Edit{{else}}New{{end}} Language Resource
+</div>
+<ol class="breadcrumb">
+	<li><a href="#" onclick="load_page('languages')">Languages resources</a></li>
+</ol>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+	<div class="panel-heading">
+		<div class="panel-title">
+			{{.Name}}
+		</div>
+	</div>
+	<div class="panel-body">
+		<form role="form">
+			<div class="form-group">
+				<label>Name</label>
+				<input type="text" class="form-control" id="name" value="{{.Name}}">
+			</div>
+			<div class="form-group">
+				<div class="col-md-1 col-xs-1" style="padding: 5px 5px;">
+					<label>Language</label>
+				</div>
+				<div class="col-md-11 col-xs-1" style="padding: 5px 5px;">
+					<label>Text</label>
+				</div>
+			</div>
+			<div class="form-group" id="lang-list">
+				{{if .List}} {{range $index, $el := .List}}
+				<div class="col-md-1 col-xs-1" style="padding: 5px 5px;">
+					<input type="text" class="form-control lpref" id="lang{{$index}}" value="{{.Lang}}">
+				</div>
+				<div class="col-md-11 col-xs-1" style="padding: 5px 5px;">
+					<input type="text" class="form-control" id="text{{$index}}" value="{{.Text}}">
+				</div>
+				{{end}} {{else}}
+				<div class="col-md-1 col-xs-1" style="padding: 5px 5px;">
+					<input type="text" class="form-control lpref" id="lang0">
+				</div>
+				<div class="col-md-11 col-xs-1" style="padding: 5px 5px;">
+					<input type="text" class="form-control" id="text0">
+				</div>
+				{{end}}
+			</div>
+			<div class="pull-left">
+				<a href="#" onclick="return js_newtrans();">New translation</a>
+			</div>
+		</form>
+	</div>
+	<div class="panel-footer">
+		<div class="clearfix">
+			<div class="pull-left">
+				<button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- END panel-->
+
+{{template "signatures".}}
