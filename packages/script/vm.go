@@ -19,6 +19,7 @@ package script
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/shopspring/decimal"
@@ -190,6 +191,8 @@ func ValueToFloat(v interface{}) (ret float64) {
 		ret = val
 	case int64:
 		ret = float64(val)
+	case string:
+		ret, _ = strconv.ParseFloat(val, 64)
 		/*	default:
 			ret = val.(decimal.Decimal)*/
 	}
@@ -427,7 +430,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			case string:
 				bin = top[1].(string) + top[0].(string)
 			case float64:
-				bin = top[1].(float64) + top[0].(float64)
+				bin = top[1].(float64) + ValueToFloat(top[0])
 			case int64:
 				bin = top[1].(int64) + top[0].(int64)
 			default:
@@ -441,7 +444,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case CMD_SUB:
 			switch top[1].(type) {
 			case float64:
-				bin = top[1].(float64) - top[0].(float64)
+				bin = top[1].(float64) - ValueToFloat(top[0])
 			case int64:
 				bin = top[1].(int64) - top[0].(int64)
 			default:
@@ -455,7 +458,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case CMD_MUL:
 			switch top[1].(type) {
 			case float64:
-				bin = top[1].(float64) * top[0].(float64)
+				bin = top[1].(float64) * ValueToFloat(top[0])
 			case int64:
 				bin = top[1].(int64) * top[0].(int64)
 			default:
@@ -469,7 +472,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case CMD_DIV:
 			switch top[1].(type) {
 			case float64:
-				bin = top[1].(float64) / top[0].(float64)
+				bin = top[1].(float64) / ValueToFloat(top[0])
 			case int64:
 				if top[0].(int64) == 0 {
 					return 0, fmt.Errorf(`divided by zero`)
