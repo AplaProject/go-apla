@@ -62,7 +62,7 @@ var c_cppHighlightRules = function() {
         "break|case|continue|default|do|else|for|goto|if|_Pragma|" +
         "return|switch|while|catch|operator|try|throw|using"
     );
-    
+	
     var storageType = (
         "asm|__asm__|auto|bool|_Bool|char|_Complex|double|enum|float|" +
         "_Imaginary|int|long|short|signed|struct|typedef|union|unsigned|void|" +
@@ -83,17 +83,37 @@ var c_cppHighlightRules = function() {
     var builtinConstants = (
         "NULL|true|false|TRUE|FALSE|nullptr"
     );
-
-    /*var keywordMapper = this.$keywords = this.createKeywordMapper({
-        "keyword.control" : keywordControls,
-        "storage.type" : storageType,
-        "storage.modifier" : storageModifiers,
-        "keyword.operator" : keywordOperators,
-        "variable.language": "this",
-        "constant.language": builtinConstants
-    }, "identifier");*/
 	
-	var keywordMapper = this.$keywords = this.createKeywordMapper({}, "identifier");
+	var keywordControlsContract = (
+		"var|if|error"
+    );
+	
+    var storageTypeContract = (
+        "int|string"
+    );
+	
+	var storageModifiersContract = (
+        ""
+    );
+
+    var keywordOperatorsContract = (
+        ""
+    );
+	
+	var builtinConstantsContract = (
+		"wallet|towallet|sender_id|" +
+        "StateId|Name|FullName|FirstName|MiddleName|Gender|BirthDate|BirthPlace|RequestId|PropertyId|Image|Coords|Coordinates|CitizenId|Company|" +
+		"RecipientAccountId|Amount|AccountId"
+    );
+	
+    var keywordMapper = this.$keywords = this.createKeywordMapper({
+        "keyword.control" : keywordControlsContract,
+        "storage.type" : storageTypeContract,
+        "storage.modifier" : storageModifiersContract,
+        "keyword.operator" : keywordOperatorsContract,
+        "variable.language": "this",
+        "constant.language": builtinConstantsContract
+    }, "identifier");
 
     var identifierRe = "[a-zA-Z\\$_\u00a1-\uffff][a-zA-Z\\d\\$_\u00a1-\uffff]*\\b";
     var escapeRe = /\\(?:['"?\\abfnrtv]|[0-7]{1,3}|x[a-fA-F\d]{2}|u[a-fA-F\d]{4}U[a-fA-F\d]{8}|.)/.source;
