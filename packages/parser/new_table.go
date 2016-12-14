@@ -66,6 +66,12 @@ func (p *Parser) NewTableFront() error {
 		if len(data) != 3 {
 			return p.ErrInfo(`len(data)!=3`)
 		}
+		if data[1]!=`text` && data[1]!=`int64` && data[1]!=`time` && data[1]!=`hash`  && data[1]!=`double` && data[1]!=`money`  {
+			return p.ErrInfo(`incorrect type`)
+		}
+		if data[2] == "1" && data[1]==`text` {
+			return p.ErrInfo(`incorrect index type`)
+		}
 	}
 
 	// must be supplemented
@@ -108,6 +114,10 @@ func (p *Parser) NewTable() error {
 			colType = `timestamp`
 		case "hash":
 			colType = `varchar(32)`
+		case "double":
+			colType = `double precision`
+		case "money":
+			colType = `decimal (30, 0)`
 		}
 		colsSql += `"` + data[0] + `" `+colType+" ,\n"
 		colsSql2 += `"` + data[0] + `": "$citizen==` + citizenIdStr + `",`
