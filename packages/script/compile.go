@@ -674,7 +674,7 @@ main:
 		case LEX_OPER:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
 				if oper.Cmd == CMD_SUB && (i == 0 || ((*lexems)[i-1].Type != LEX_NUMBER && (*lexems)[i-1].Type != LEX_IDENT &&
-					(*lexems)[i-1].Type != LEX_STRING && (*lexems)[i-1].Type != IS_RCURLY)) {
+					(*lexems)[i-1].Type != LEX_STRING && (*lexems)[i-1].Type != IS_RCURLY && (*lexems)[i-1].Type != IS_RBRACK)) {
 					oper.Cmd = CMD_SIGN
 					oper.Priority = UNARY
 				}
