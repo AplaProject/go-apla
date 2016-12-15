@@ -114,7 +114,7 @@ Json(`Head: "Property",
 			typeid: #type_new_table_id#,
 			global: #global#,
 			table_name : "property",
-			columns: '["citizen_id","coords","name"]',
+			columns: '[["citizen_id","int64","0"],["coords","text","0"],["name","text","0"]]',
 			permissions: "$citizen == #wallet_id#"
 		}
 		},

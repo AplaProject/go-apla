@@ -124,12 +124,14 @@ Json(`Head: "Money",
 			}
 	   },
 		{
-		Forsign: 'table_name,column_name,permissions,index',
+		Forsign: 'table_name,column_name,permissions,index,column_type',
 		Data: {
 			type: "NewColumn",
 			typeid: #type_new_column_id#,
 			table_name : "#state_id#_accounts",
 			column_name: "citizen_id",
+			index: "0",
+			column_type: "int64",			
 			permissions: "$citizen == #wallet_id#",
 			index: 1
 		}
