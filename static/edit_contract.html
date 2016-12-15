@@ -1,4 +1,15 @@
 {{ define "editContract" }}
+<style>
+	#back {
+		margin-left:-15px;
+		margin-top:-15px;
+		margin-bottom:10px;
+	}
+	#back span {
+		font-size:26px;
+	}
+</style>
+
 <script>
 	var serverTime;
 	
@@ -89,6 +100,15 @@
 			}
 		});
 	} );
+	
+	if (PageName == "") {
+		$("#back").hide();
+	}
+	
+	$("#back").on('click', function () {
+		load_page('editPage', {name: PageName , global: "" });
+		PageName = "";
+	});
 </script>
 	<div class="content-heading">
 		{{if .Data.name}}Edit{{else}}New{{end}} Contract
@@ -101,6 +121,7 @@
 	<div class="panel panel-default" data-sweet-alert>
 	 <div class="panel-body">
 		<form role="form">
+		   <button type="button" class="btn btn-link" onclick="" id="back" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></button>
 		   <div class="form-group">
 			   <label>Name</label>
 			   {{if .Data.name}} <p class="form-control-static">{{.Data.name}}</p> <input type="hidden" class="form-control" id="id" value="{{.Data.id}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
