@@ -467,7 +467,7 @@ func Navigation(vars *map[string]string, pars ...string) string {
 		li = append(li, ipar)
 	}
 	return textproc.Macro(fmt.Sprintf(`<ol class="breadcrumb"><span class="pull-right">
-	<a href='#' onclick="load_page('editPage', {name: '#page#'} )">Edit</a></span>%s</ol>`,
+	<a href='#' onclick="load_page('editPage', {name: '#page#', global:'#global#'} )">Edit</a></span>%s</ol>`,
 		strings.Join(li, `&nbsp;/&nbsp;`)), vars)
 }
 
