@@ -70,6 +70,7 @@
 // static/data/patients.json
 // static/edit_column.html
 // static/edit_contract.html
+// static/edit_language.html
 // static/edit_menu.html
 // static/edit_page.html
 // static/edit_state_parameters.html
@@ -235,7 +236,6 @@
 // static/js/textEditor/mode-markdown.js
 // static/js/textEditor/snippets/c_cpp.js
 // static/js/textEditor/snippets/contracts.js
-// static/js/textEditor/snippets/contracts.json
 // static/js/textEditor/snippets/markdown.js
 // static/js/textEditor/theme-chrome.js
 // static/js/tooltip.js
@@ -246,6 +246,7 @@
 // static/lang/en-us.all.json
 // static/lang/locale_en-US.ini
 // static/lang/locale_ru-RU.ini
+// static/languages.html
 // static/list_of_tables.html
 // static/login.html
 // static/menu.html
@@ -1601,6 +1602,24 @@ func staticEdit_columnHtml() (*asset, error) {
 func staticEdit_contractHtml() (*asset, error) {
 	path := "static/edit_contract.html"
 	name := "static/edit_contract.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticEdit_languageHtml reads file data from disk. It returns an error on failure.
+func staticEdit_languageHtml() (*asset, error) {
+	path := "static/edit_language.html"
+	name := "static/edit_language.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4585,24 +4604,6 @@ func staticJsTexteditorSnippetsContractsJs() (*asset, error) {
 	return a, err
 }
 
-// staticJsTexteditorSnippetsContractsJson reads file data from disk. It returns an error on failure.
-func staticJsTexteditorSnippetsContractsJson() (*asset, error) {
-	path := "static/js/textEditor/snippets/contracts.json"
-	name := "static/js/textEditor/snippets/contracts.json"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticJsTexteditorSnippetsMarkdownJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorSnippetsMarkdownJs() (*asset, error) {
 	path := "static/js/textEditor/snippets/markdown.js"
@@ -4769,6 +4770,24 @@ func staticLangLocale_enUsIni() (*asset, error) {
 func staticLangLocale_ruRuIni() (*asset, error) {
 	path := "static/lang/locale_ru-RU.ini"
 	name := "static/lang/locale_ru-RU.ini"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticLanguagesHtml reads file data from disk. It returns an error on failure.
+func staticLanguagesHtml() (*asset, error) {
+	path := "static/languages.html"
+	name := "static/languages.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6399,6 +6418,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/data/patients.json": staticDataPatientsJson,
 	"static/edit_column.html": staticEdit_columnHtml,
 	"static/edit_contract.html": staticEdit_contractHtml,
+	"static/edit_language.html": staticEdit_languageHtml,
 	"static/edit_menu.html": staticEdit_menuHtml,
 	"static/edit_page.html": staticEdit_pageHtml,
 	"static/edit_state_parameters.html": staticEdit_state_parametersHtml,
@@ -6564,7 +6584,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
 	"static/js/textEditor/snippets/c_cpp.js": staticJsTexteditorSnippetsC_cppJs,
 	"static/js/textEditor/snippets/contracts.js": staticJsTexteditorSnippetsContractsJs,
-	"static/js/textEditor/snippets/contracts.json": staticJsTexteditorSnippetsContractsJson,
 	"static/js/textEditor/snippets/markdown.js": staticJsTexteditorSnippetsMarkdownJs,
 	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
 	"static/js/tooltip.js": staticJsTooltipJs,
@@ -6575,6 +6594,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
 	"static/lang/locale_en-US.ini": staticLangLocale_enUsIni,
 	"static/lang/locale_ru-RU.ini": staticLangLocale_ruRuIni,
+	"static/languages.html": staticLanguagesHtml,
 	"static/list_of_tables.html": staticList_of_tablesHtml,
 	"static/login.html": staticLoginHtml,
 	"static/menu.html": staticMenuHtml,
@@ -6777,6 +6797,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"edit_column.html": &bintree{staticEdit_columnHtml, map[string]*bintree{}},
 		"edit_contract.html": &bintree{staticEdit_contractHtml, map[string]*bintree{}},
+		"edit_language.html": &bintree{staticEdit_languageHtml, map[string]*bintree{}},
 		"edit_menu.html": &bintree{staticEdit_menuHtml, map[string]*bintree{}},
 		"edit_page.html": &bintree{staticEdit_pageHtml, map[string]*bintree{}},
 		"edit_state_parameters.html": &bintree{staticEdit_state_parametersHtml, map[string]*bintree{}},
@@ -6963,7 +6984,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"snippets": &bintree{nil, map[string]*bintree{
 					"c_cpp.js": &bintree{staticJsTexteditorSnippetsC_cppJs, map[string]*bintree{}},
 					"contracts.js": &bintree{staticJsTexteditorSnippetsContractsJs, map[string]*bintree{}},
-					"contracts.json": &bintree{staticJsTexteditorSnippetsContractsJson, map[string]*bintree{}},
 					"markdown.js": &bintree{staticJsTexteditorSnippetsMarkdownJs, map[string]*bintree{}},
 				}},
 				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
@@ -6979,6 +6999,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{}},
 			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{}},
 		}},
+		"languages.html": &bintree{staticLanguagesHtml, map[string]*bintree{}},
 		"list_of_tables.html": &bintree{staticList_of_tablesHtml, map[string]*bintree{}},
 		"login.html": &bintree{staticLoginHtml, map[string]*bintree{}},
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
