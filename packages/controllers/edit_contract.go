@@ -51,9 +51,22 @@ func (c *Controller) EditContract() (string, error) {
 	}
 
 	id := utils.StrToInt64(c.r.FormValue("id"))
-	data, err := c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
+	name := c.r.FormValue("name")
+	if len(name) > 0 && !utils.CheckInputData_(name, "string", "") {
+		return "", utils.ErrInfo("Incorrect name")
+	}
+	var data map[string]string
+	var err error
+	if id != 0 {
+		data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+	} else {
+		data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
 	}
 
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{

@@ -174,7 +174,7 @@
 	editor.hoverLink.on("open", function() {
 		var ContractName = editor.hoverLink.link.value;
 		PageName = $("#page_name_text").text();
-		load_page('editContract', {name: ContractName , global: "0" });
+		load_page('editContract', {name: ContractName , global: "{{.Global}}" });
 	})
 	
 	function SetMenu() {
