@@ -172,9 +172,9 @@
 	HoverLink = require("hoverlink").HoverLink
 	editor.hoverLink = new HoverLink(editor);
 	editor.hoverLink.on("open", function() {
-		var ContractName = (editor.hoverLink.link.value).toLowerCase();
+		var ContractName = editor.hoverLink.link.value;
 		PageName = $("#page_name_text").text();
-		load_page('editContract', {id: ContractName , global: "0" });
+		load_page('editContract', {name: ContractName , global: "0" });
 	})
 	
 	function SetMenu() {
