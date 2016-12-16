@@ -121,7 +121,7 @@
 	}
 	
 	$("#back").on('click', function () {
-		load_page('editPage', {name: PageName , global: "" });
+		load_page('editPage', {name: PageName , global: "{{.Global}}" });
 		PageName = "";
 	});
 </script>
