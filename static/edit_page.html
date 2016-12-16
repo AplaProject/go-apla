@@ -1,4 +1,15 @@
 {{ define "editPage" }}
+<style>
+	#back {
+		margin-left:-15px;
+		margin-top:-15px;
+		margin-bottom:10px;
+	}
+	#back span {
+		font-size:26px;
+	}
+</style>
+
 <script>
 	var serverTime;
 	var menu = null;
@@ -206,14 +217,14 @@
 				   '</div>'
 				);
 				
-				var editor = ace.edit("textEditorMenu");
+				var editorView = ace.edit("textEditorMenu");
 				var JavaScriptMode = ace.require("ace/mode/markdown").Mode;
-				editor.setTheme("ace/theme/chrome");
-				editor.session.setMode(new JavaScriptMode());
-				editor.setShowPrintMargin(false);
-				editor.getSession().setUseWrapMode(true);
-				editor.renderer.setShowGutter(false);
-				editor.setReadOnly(true);
+				editorView.setTheme("ace/theme/chrome");
+				editorView.session.setMode(new JavaScriptMode());
+				editorView.setShowPrintMargin(false);
+				editorView.getSession().setUseWrapMode(true);
+				editorView.renderer.setShowGutter(false);
+				editorView.setReadOnly(true);
 				
 				obj.removeClass("whirl standard");
 			},
@@ -276,6 +287,10 @@
 			}
 		});
 	} );
+	
+	$("#back").on('click', function () {
+		load_page('interface');
+	});
 </script>
 	<div class="content-heading">
 		{{if .DataPage.name}}Edit{{else}}New{{end}} Page
@@ -296,6 +311,7 @@
 		 </div>
 		 <div class="panel-body">
 			<form role="form">
+				<button type="button" class="btn btn-link" onclick="" id="back" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></button>
 			   <div class="form-group">
 				   <label>Name</label>
 				   {{if .DataPage.name}} <p class="form-control-static" id="page_name_text">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name"> {{end}}
@@ -332,6 +348,9 @@
 		 </div>
 		 <div class="panel-footer">
 		   <div class="clearfix">
+			  <div class="pull-left">
+				<button type="button" class="btn btn-default" onClick="formatCode();"><i class="fa fa-code fa-fw mr-sm" aria-hidden="true"></i>Format Code</button>
+			  </div>
 			  <div class="pull-right">
 				 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Save</button>
 			  </div>

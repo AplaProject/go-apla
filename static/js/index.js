@@ -728,6 +728,18 @@ function saveImage() {
 	}
 }
 
+function formatCode() {
+	var source = editor.getValue();
+	var output = js_beautify(source, {
+		'indent_size': 1,
+		'indent_char': '\t'
+	});
+	var cursor = editor.getCursorPosition();
+	editor.setValue(output, -1);
+	editor.moveCursorToPosition(cursor);
+	editor.focus();
+}
+
 var tagsToReplace = {
 	'&': '&amp;',
 	'<': '&lt;',
