@@ -34,11 +34,11 @@ import (
 )
 
 type FieldInfo struct {
-	Name     string `json:"name"`
-	HtmlType string `json:"htmlType"`
-	TxType   string `json:"txType"`
-	Title    string `json:"title"`
-	Value    string `json:"value"`
+	Name     string      `json:"name"`
+	HtmlType string      `json:"htmlType"`
+	TxType   string      `json:"txType"`
+	Title    string      `json:"title"`
+	Value    interface{} `json:"value"`
 }
 
 type FormCommon struct {
@@ -71,6 +71,11 @@ type PageTpl struct {
 	Page     string
 	Template string
 	Data     *CommonPage
+}
+
+type SelList struct {
+	Cur  int64          `json:"cur"`
+	List map[int]string `json:"list"`
 }
 
 var (
@@ -583,6 +588,24 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	b := new(bytes.Buffer)
 	finfo := FormInfo{TxName: name, OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
+
+	gettag := func(prefix uint8, def, tags string) string {
+		ret := def
+		if off := strings.IndexByte(tags, prefix); off >= 0 {
+			end := off + 1
+			for end < len(tags) {
+				if tags[end] == ' ' {
+					break
+				}
+				end++
+			}
+			ret = tags[off+1 : end]
+		}
+		return ret
+	}
+	getlang := func(res string) string {
+		return LangText(res, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	}
 txlist:
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		var value string
@@ -592,18 +615,9 @@ txlist:
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
 			continue
 		}
-		langres := fitem.Name
-		if off := strings.IndexByte(fitem.Tags, '#'); off >= 0 {
-			end := off + 1
-			for end < len(fitem.Tags) {
-				if fitem.Tags[end] == ' ' {
-					break
-				}
-				end++
-			}
-			langres = fitem.Tags[off+1 : end]
-		}
-		title := LangText(langres, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+		langres := gettag('#', fitem.Name, fitem.Tags)
+		linklist := gettag('@', ``, fitem.Tags)
+		title := getlang(langres)
 		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
 			if strings.Index(fitem.Tags, tag) >= 0 {
 				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
@@ -611,12 +625,20 @@ txlist:
 				continue txlist
 			}
 		}
-		if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` ||
+		if len(linklist) > 0 {
+			sellist := SelList{StrToInt64(value), make(map[int]string)}
+			if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+				for ind, item := range alist {
+					sellist.List[ind+1] = getlang(item)
+				}
+			}
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
+				TxType: fitem.Type.String(), Title: title, Value: sellist})
+		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` ||
 			fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: title, Value: value})
 		}
-
 	}
 	if err = t.Execute(b, finfo); err != nil {
 		return fmt.Sprintf("Error: %v", err)

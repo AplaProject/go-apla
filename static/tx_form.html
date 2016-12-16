@@ -13,7 +13,7 @@
 	}
 </style>
 <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
-<script>
+<script language="JavaScript" type="text/javascript">
 	$(".aside .nav li").removeClass("active");
 //	$(".citizen, .anonym_request_citizen").addClass("active");
 //	$(".wrapper").addClass("map");
@@ -317,6 +317,13 @@
 			{{end}} {{if eq .HtmlType "text"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<textarea id="{{.Name}}" name="{{.Name}}" style="height: 180px;" class="form-control">{{.Value}}</textarea></div>
+			{{end}} {{if eq .HtmlType "select"}}
+			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
+				<select id="{{.Name}}" class="selectbox form-control">
+				{{$cur := .Value.Cur}}
+				{{range $key, $val := .Value.List}}<option value="{{$key}}" {{if eq $cur $key}}selected{{end}}>{{$val}}</option>{{end}}
+				</select>
+			</div>
 			{{end}} {{if eq .HtmlType "map"}}
 			<div class="form-group"> <label>{{.Title}}</label>
 				<textarea class="form-control map" id="{{.Name}}">{{.Value}}</textarea>
