@@ -101,7 +101,7 @@ func init() {
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
-		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint,
+		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 	})
 }
 
@@ -353,6 +353,13 @@ func BtnSys(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<button type="button" class=%s onclick="load_page('%s', {%s} )">%s</button>`, class, pars[0], params, pars[1])
 }
 
+func StateLink(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	return (*vars)[fmt.Sprintf(`%s_%s`, pars[0], pars[1])]
+}
+
 func Table(vars *map[string]string, pars *map[string]string) string {
 	fields := `*`
 	order := ``
@@ -375,6 +382,15 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	out := `<table  class="table table-striped table-bordered table-hover"><tr>`
 	for _, th := range *columns {
 		out += `<th>` + th[0] + `</th>`
+		th[1] = strings.TrimSpace(th[1])
+		if strings.HasPrefix(th[1], `StateLink`) && strings.IndexByte(th[1], ',') > 0 {
+			linklist := strings.TrimSpace(th[1][strings.IndexByte(th[1], '(')+1 : strings.IndexByte(th[1], ',')])
+			if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+				for ind, item := range alist {
+					(*vars)[fmt.Sprintf(`%s_%d`, linklist, ind+1)] = LangText(item, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+				}
+			}
+		}
 	}
 	out += `</tr>`
 	for _, item := range list {
