@@ -173,7 +173,7 @@
 	editor.hoverLink = new HoverLink(editor);
 	editor.hoverLink.on("open", function() {
 		var ContractName = (editor.hoverLink.link.value).toLowerCase();
-		PageName = $("#page_name").text();
+		PageName = $("#page_name_text").text();
 		load_page('editContract', {id: ContractName , global: "0" });
 	})
 	
@@ -298,7 +298,7 @@
 			<form role="form">
 			   <div class="form-group">
 				   <label>Name</label>
-				   {{if .DataPage.name}} <p class="form-control-static" id="page_name">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name"> {{end}}
+				   {{if .DataPage.name}} <p class="form-control-static" id="page_name_text">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name"> {{end}}
 			   </div>
 			   <div class="form-group">
 				   <label>Value</label>
