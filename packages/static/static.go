@@ -231,9 +231,8 @@
 // static/js/photoEditor/editor.js
 // static/js/photoEditor/vue.min.js
 // static/js/textEditor/ace.js
+// static/js/textEditor/beautify.js
 // static/js/textEditor/ext-language_tools.js
-// static/js/textEditor/jsbeautify.js
-// static/js/textEditor/lib_jsbeautify.js
 // static/js/textEditor/mode-c_cpp.js
 // static/js/textEditor/mode-markdown.js
 // static/js/textEditor/snippets/c_cpp.js
@@ -4516,46 +4515,28 @@ func staticJsTexteditorAceJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsTexteditorBeautifyJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorBeautifyJs() (*asset, error) {
+	path := "static/js/textEditor/beautify.js"
+	name := "static/js/textEditor/beautify.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsTexteditorExtLanguage_toolsJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorExtLanguage_toolsJs() (*asset, error) {
 	path := "static/js/textEditor/ext-language_tools.js"
 	name := "static/js/textEditor/ext-language_tools.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorJsbeautifyJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorJsbeautifyJs() (*asset, error) {
-	path := "static/js/textEditor/jsbeautify.js"
-	name := "static/js/textEditor/jsbeautify.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorLib_jsbeautifyJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorLib_jsbeautifyJs() (*asset, error) {
-	path := "static/js/textEditor/lib_jsbeautify.js"
-	name := "static/js/textEditor/lib_jsbeautify.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6617,9 +6598,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
 	"static/js/photoEditor/vue.min.js": staticJsPhotoeditorVueMinJs,
 	"static/js/textEditor/ace.js": staticJsTexteditorAceJs,
+	"static/js/textEditor/beautify.js": staticJsTexteditorBeautifyJs,
 	"static/js/textEditor/ext-language_tools.js": staticJsTexteditorExtLanguage_toolsJs,
-	"static/js/textEditor/jsbeautify.js": staticJsTexteditorJsbeautifyJs,
-	"static/js/textEditor/lib_jsbeautify.js": staticJsTexteditorLib_jsbeautifyJs,
 	"static/js/textEditor/mode-c_cpp.js": staticJsTexteditorModeC_cppJs,
 	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
 	"static/js/textEditor/snippets/c_cpp.js": staticJsTexteditorSnippetsC_cppJs,
@@ -7018,9 +6998,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			}},
 			"textEditor": &bintree{nil, map[string]*bintree{
 				"ace.js": &bintree{staticJsTexteditorAceJs, map[string]*bintree{}},
+				"beautify.js": &bintree{staticJsTexteditorBeautifyJs, map[string]*bintree{}},
 				"ext-language_tools.js": &bintree{staticJsTexteditorExtLanguage_toolsJs, map[string]*bintree{}},
-				"jsbeautify.js": &bintree{staticJsTexteditorJsbeautifyJs, map[string]*bintree{}},
-				"lib_jsbeautify.js": &bintree{staticJsTexteditorLib_jsbeautifyJs, map[string]*bintree{}},
 				"mode-c_cpp.js": &bintree{staticJsTexteditorModeC_cppJs, map[string]*bintree{}},
 				"mode-markdown.js": &bintree{staticJsTexteditorModeMarkdownJs, map[string]*bintree{}},
 				"snippets": &bintree{nil, map[string]*bintree{
