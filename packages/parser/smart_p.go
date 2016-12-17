@@ -81,7 +81,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 
 	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateId),
 		`block`: block, `citizen`: citizenId, `wallet`: walletId, `wallet_block`: walletBlock,
-		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime}
+		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime, `vars`: make(map[string]interface{})}
 	for key, val := range p.TxData {
 		extend[key] = val
 	}
