@@ -235,7 +235,7 @@
 	}
 	
 	function EditMenu() {
-		load_page('editMenu', {name: menu} );
+		load_page('editMenu', {name: menu, global:{{.Global}}} );
 	}
 	
 	$('#page_menu').select2({

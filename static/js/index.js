@@ -204,6 +204,7 @@ function load_template(page, parameters) {
 			$.ajax({
 				url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 				type: 'POST',
+				data: parameters ? parameters : {},
 				success: function (data) {
 					console.log(data);
 					var li = $("#dc li:first").html();
