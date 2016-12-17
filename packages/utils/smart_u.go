@@ -629,6 +629,8 @@ txlist:
 			value = val
 		}
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: `hidden`,
+				TxType: fitem.Type.String(), Title: ``, Value: value})
 			continue
 		}
 		langres := gettag('#', fitem.Name, fitem.Tags)
