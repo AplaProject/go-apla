@@ -469,7 +469,7 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 			}
 		}
 	case "column_type":
-		if ok, _ := regexp.MatchString(`^(text|int64|time|hash)$`, data); ok {
+		if ok, _ := regexp.MatchString(`^(text|int64|time|hash|money|double)$`, data); ok {
 			return true
 		}
 	case "avatar":

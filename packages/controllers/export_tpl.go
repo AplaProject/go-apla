@@ -23,6 +23,7 @@ import (
 	"strings"
 	//	"strconv"
 	"encoding/json"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -130,17 +131,21 @@ func (c *Controller) ExportTpl() (string, error) {
 					coltype, _ := c.OneRow(`select data_type,character_maximum_length from information_schema.columns
 where table_name = ? and column_name = ?`, itable, ikey).String()
 					if len(coltype) > 0 {
-						switch coltype[`data_type`] {
-						case "character varying":
+						switch {
+						case coltype[`data_type`] == "character varying":
 							if coltype[`character_maximum_length`] == `32` {
 								itype = "hash"
 							} else {
 								itype = `text`
 							}
-						case `bigint`:
+						case coltype[`data_type`] == `bigint`:
 							itype = "int64"
-						case `timestamp`:
+						case strings.HasPrefix(coltype[`data_type`], `timestamp`):
 							itype = "time"
+						case strings.HasPrefix(coltype[`data_type`], `numeric`):
+							itype = "money"
+						case strings.HasPrefix(coltype[`data_type`], `double`):
+							itype = "double"
 						}
 					}
 					fields = append(fields, fmt.Sprintf(`["%s", "%s", "%d"]`, ikey, itype, index))
