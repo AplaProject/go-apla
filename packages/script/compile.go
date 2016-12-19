@@ -148,6 +148,7 @@ var (
 			LEX_KEYWORD | (KEY_VAR << 8):      {STATE_VAR, 0},
 			LEX_KEYWORD | (KEY_TX << 8):       {STATE_TX, CF_TX},
 			LEX_KEYWORD | (KEY_ERROR << 8):    {STATE_EVAL, CF_CMDERROR},
+			LEX_KEYWORD | (KEY_NOTICE << 8):   {STATE_EVAL, CF_CMDERROR},
 			LEX_COMMENT:                       {STATE_BODY, 0},
 			LEX_IDENT:                         {STATE_ASSIGNEVAL | STATE_FORK, 0},
 			LEX_EXTEND:                        {STATE_ASSIGNEVAL | STATE_FORK, 0},
@@ -258,7 +259,7 @@ func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fCmdError(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_ERROR, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_ERROR, lexem.Value})
 	return nil
 }
 

@@ -329,7 +329,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case CMD_RETURN:
 			status = STATUS_RETURN
 		case CMD_ERROR:
-			err = fmt.Errorf(`%v`, rt.stack[len(rt.stack)-1])
+			pattern := `%v`
+			if cmd.Value.(uint32) == KEY_NOTICE {
+				pattern = `*%v`
+			}
+			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
 		case CMD_CALLVARI, CMD_CALL:
 			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
 
