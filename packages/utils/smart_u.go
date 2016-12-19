@@ -831,6 +831,10 @@ func Date(vars *map[string]string, pars ...string) string {
 			format = `2006-01-02`
 		}
 	}
+	format = strings.Replace(format, `YYYY`, `2006`, -1)
+	format = strings.Replace(format, `MM`, `01`, -1)
+	format = strings.Replace(format, `DD`, `02`, -1)
+
 	return itime.Format(format)
 }
 
