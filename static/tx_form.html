@@ -18,6 +18,7 @@
 //	$(".citizen, .anonym_request_citizen").addClass("active");
 //	$(".wrapper").addClass("map");
 	
+{{if eq .TxName "TXCitizenRequest"}}	
 	var arr = [];
 	var coords = [];
 	var selectbox = $("#countries");
@@ -39,7 +40,6 @@
 			Alert("Error", error, "error");
 		}
 	});
-	
 	function Message(text) {
 		if (!text) {
 			msg.html('').hide();
@@ -62,7 +62,6 @@
 		container.html("");
 		btn.prop("disabled", true);
 	}
-{{if eq .TxName "TXCitizenRequest"}}	
 	function changeCountry(elem) {
 		console.log("elem", elem);
 		var id = $("#countries").val();
@@ -187,68 +186,56 @@
 	Country();
 
 {{end}}
-	function SendTxOK() {
+	function SendTxOK{{.Unique}}() {
 		{{if .OnSuccess}}
 			{{.OnSuccess}};
 			HideMenu();	
 		{{end}}
 	}
-	var serverTime;
-	var predata;
+	var serverTime{{.Unique}};
+	var predata{{.Unique}};
 	
-	$('#send').bind('click', function () {
-		predata = {
+	$('#send{{.Unique}}').bind('click', function () {
+		predata{{.Unique}} = {
 			'TxName' : '{{.TxName}}',
 		};
 		{{range .Fields}}
 			{{if ne .HtmlType "image"}}
-				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
+				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
 			{{end}}
 		{{end}}
-//		for (i = 0; i < arr.length; i++ ) {
-//			var field = arr[i];
-//			if ($("#" + field).attr("type") == "file") {
-/*				$.each($('#'+field)[0].files, function(i, file) {
-					formdata.append(field +'-'+i, file);
-				});*/
-//			} else {
-//				predata[field] = $("#" + field).val();
-//			}
-//		}
-//		console.log('predata', predata);											
-		$.get( 'ajax?json=ajax_prepare_tx', predata,
+		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},
 			 function (data) {
 				if (data.error.length > 0 ) {
 					Alert("Error", data.error, "error");
 				} else {
 					console.log(data);
-					predata.time = data.time;
-					$("#for-signature").val(data.forsign);
-					doSign();
-					predata.signature1 = $('#signature1').val();
-					predata.signature2 = $('#signature2').val();
-					predata.signature3 = $('#signature3').val();
-
-					$("#send_to_net").trigger("click");
+					predata{{.Unique}}.time = data.time;
+					$("#for-signature{{.Unique}}").val(data.forsign);
+					doSign({{.Unique}});
+					predata{{.Unique}}.signature1 = $('#signature1{{.Unique}}').val();
+					predata{{.Unique}}.signature2 = $('#signature2{{.Unique}}').val();
+					predata{{.Unique}}.signature3 = $('#signature3{{.Unique}}').val();
+					$("#send_to_net{{.Unique}}").trigger("click");
 				}
 		}, "json" );
 	} );
 
-	$('#send_to_net').bind('click', function () {
+	$('#send_to_net{{.Unique}}').bind('click', function () {
 		{{range .Fields}}
 			{{if eq .HtmlType "image"}}
-				predata['{{.Name}}'] = $("#" + '{{.Name}}').val();
+				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
 			{{end}}
 		{{end}}
-		predata['public'] = GKey.Public;
+		predata{{.Unique}}['public'] = GKey.Public;
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?json=ajax_send_tx',
-			data: predata,
+			data: predata{{.Unique}},
 			dataType: 'json',
 			crossDomain: true,
 			success: function(result) {
-				send_to_net_success(result, SendTxOK);
+				send_to_net_success(result, SendTxOK{{.Unique}});
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
@@ -306,29 +293,29 @@
 		<div id="fields">
 			{{range .Fields}} {{if eq .HtmlType "textinput"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
+				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
 			{{end}}{{if eq .HtmlType "hidden"}}
-			<input id="{{.Name}}" name="{{.Name}}" type="hidden" value="{{.Value}}">
+			<input id="{{.Name}}{{.Unique}}" name="{{.Name}}" type="hidden" value="{{.Value}}">
 			{{end}} {{if eq .HtmlType "address"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-				<input id="{{.Name}}" name="{{.Name}}" type="text" value="{{.Value}}" data-type="wallet" class="form-control address">
+				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" data-type="wallet" class="form-control address">
 				<ul class="parsley-errors-list">
 					<li class="parsley-required">Please enter the correct address</li>
 				</ul>
 			</div>
 			{{end}} {{if eq .HtmlType "text"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-				<textarea id="{{.Name}}" name="{{.Name}}" style="height: 180px;" class="form-control">{{.Value}}</textarea></div>
+				<textarea id="{{.Name}}{{$.Unique}}" name="{{.Name}}" style="height: 180px;" class="form-control">{{.Value}}</textarea></div>
 			{{end}} {{if eq .HtmlType "select"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-				<select id="{{.Name}}" class="selectbox form-control">
+				<select id="{{.Name}}{{$.Unique}}" class="selectbox form-control">
 				{{$cur := .Value.Cur}}
 				{{range $key, $val := .Value.List}}<option value="{{$key}}" {{if eq $cur $key}}selected{{end}}>{{$val}}</option>{{end}}
 				</select>
 			</div>
 			{{end}} {{if eq .HtmlType "map"}}
 			<div class="form-group"> <label>{{.Title}}</label>
-				<textarea class="form-control map" id="{{.Name}}">{{.Value}}</textarea>
+				<textarea class="form-control map" id="{{.Name}}{{$.Unique}}">{{.Value}}</textarea>
 				<!--div class="map" id="{{.Name}}">{{.Value}}</div>
 			</div>
 			<div class="clearfix">
@@ -341,34 +328,34 @@
 				<textarea class="form-control polymap" id="{{.Name}}">{{.Value}}</textarea>
 			</div-->
 			<div class="form-group"> <label>{{.Title}}</label>
-				<textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+				<textarea class="form-control" id="{{.Name}}{{$.Unique}}">{{.Value}}</textarea>
 			</div>
 			<div class="clearfix">
 				<div class="pull-left">
-					<button type="button" onClick="openMap('{{.Name}}');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+					<button type="button" onClick="openMap('{{.Name}}{{$.Unique}}');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
 				</div>
 			</div>
 			{{end}}{{if eq .HtmlType "date"}}
 			<div class="form-group" style="position:relative;">
 				<label class="control-label" for="{{.Name}}">{{.Title}}</label>
-				<input type="text" class="datetimepicker form-control" id="{{.Name}}" value="{{.Value}}">
+				<input type="text" class="datetimepicker form-control" id="{{.Name}}{{$.Unique}}" value="{{.Value}}">
 			</div>
-			{{end}} {{if eq .HtmlType "image"}} <img id="img{{.Name}}" style="margin: 10px 0px;" src=""> {{if .Value}}<script>
-						document.getElementById('img{{.Name}}').setAttribute( 'src', '{{.Value}}' );
+			{{end}} {{if eq .HtmlType "image"}} <img id="img{{.Name}}{{$.Unique}}" style="margin: 10px 0px;" src=""> {{if .Value}}<script>
+						document.getElementById('img{{.Name}}{{$.Unique}}').setAttribute( 'src', '{{.Value}}' );
 					</script>{{end}}
 			<div class="form-group"> <label>{{.Title}}</label>
-				<textarea class="form-control" id="{{.Name}}">{{.Value}}</textarea>
+				<textarea class="form-control" id="{{.Name}}{{$.Unique}}">{{.Value}}</textarea>
 			</div>
 			<div class="clearfix">
 				<div class="pull-left">
-					<button type="button" class="btn btn-primary" onClick="openImageEditor('img{{.Name}}', '{{.Name}}', '1/1', '100', '100');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+					<button type="button" class="btn btn-primary" onClick="openImageEditor('img{{.Name}}{{$.Unique}}', '{{.Name}}{{$.Unique}}', '1/1', '100', '100');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
 				</div>
 			</div>
 			{{end}} {{end}}
 		</div>
 		<div class="clearfix">
 			<div class="pull-right">
-				<button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+				<button id="send{{.Unique}}" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
 			</div>
 		</div>
 	</form>

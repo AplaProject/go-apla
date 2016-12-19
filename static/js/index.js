@@ -398,7 +398,11 @@ function login_ok(result) {
 }
 
 function doSign_(type) {
-
+	unique = '';
+	if (typeof (type) === 'number') { 
+		unique = type.toString();
+		type = 'sign';
+	}
 	if (typeof (type) === 'undefined') type = 'sign';
 
 	console.log('type=' + type);
@@ -427,7 +431,7 @@ function doSign_(type) {
 		return false;
 	}
 	if (type == 'sign') {
-		var forsignature = $("#for-signature").val();
+		var forsignature = $("#for-signature" + unique).val();
 	}
 	else {
 		if (key) {
@@ -497,7 +501,7 @@ function doSign_(type) {
 	}
 	else {
 		console.log('Signature', signature);
-		$("#signature1").val(signature);
+		$("#signature1" + unique).val(signature);
 	}
 }
 

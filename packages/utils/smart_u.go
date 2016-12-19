@@ -53,6 +53,7 @@ type FormCommon struct {
 
 type FormInfo struct {
 	TxName    string
+	Unique    template.JS
 	OnSuccess template.JS
 	Fields    []FieldInfo
 	Data      FormCommon
@@ -70,6 +71,7 @@ type CommonPage struct {
 type PageTpl struct {
 	Page     string
 	Template string
+	Unique   string
 	Data     *CommonPage
 }
 
@@ -77,10 +79,6 @@ type SelList struct {
 	Cur  int64          `json:"cur"`
 	List map[int]string `json:"list"`
 }
-
-var (
-	divs = make([]int, 0)
-)
 
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
@@ -254,14 +252,19 @@ func Divs(vars *map[string]string, pars ...string) (out string) {
 		out += fmt.Sprintf(`<div class="%s">`, getClass(item))
 		count++
 	}
-	divs = append(divs, count)
+	if val, ok := (*vars)[`divs`]; ok {
+		(*vars)[`divs`] = fmt.Sprintf(`%s,%d`, val, count)
+	} else {
+		(*vars)[`divs`] = fmt.Sprintf(`%d`, count)
+	}
 	return
 }
 
 func DivsEnd(vars *map[string]string, pars ...string) (out string) {
-	if len(divs) > 0 {
-		out = strings.Repeat(`</div>`, divs[len(divs)-1])
-		divs = divs[:len(divs)-1]
+	if val, ok := (*vars)[`divs`]; ok && len(val) > 0 {
+		divs := strings.Split(val, `,`)
+		out = strings.Repeat(`</div>`, StrToInt(divs[len(divs)-1]))
+		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
 	}
 	return
 }
@@ -555,7 +558,11 @@ func ValueById(vars *map[string]string, pars ...string) string {
 }
 
 func TXForm(vars *map[string]string, pars *map[string]string) string {
-
+	var unique int64
+	if uval, ok := (*vars)[`tx_unique`]; ok {
+		unique = StrToInt64(uval) + 1
+	}
+	(*vars)[`tx_unique`] = Int64ToStr(unique)
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
 	//fmt.Println(`TXForm Init`, *vars)
@@ -602,7 +609,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	b := new(bytes.Buffer)
-	finfo := FormInfo{TxName: name, OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
+	finfo := FormInfo{TxName: name, Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
 
 	gettag := func(prefix uint8, def, tags string) string {

@@ -63,10 +63,9 @@ func App(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		out = err.Error()
 	}
-
 	if len(data) > 0 {
 		out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
-			Template: textproc.Process(string(data), &params),
+			Template: textproc.Process(string(data), &params), Unique: ``,
 			Data: &utils.CommonPage{
 				WalletId:     GetSessWalletId(sess),
 				CitizenId:    GetSessCitizenId(sess),
