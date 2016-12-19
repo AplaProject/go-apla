@@ -304,8 +304,12 @@ func Process(input string, vars *map[string]string) (out string) {
 				if ch == ')' {
 					isFunc--
 					if isFunc == 0 {
-						out += funcProcess(string(name), params, vars) //+ "\r\n"
-						name = name[:0]
+						if string(name) == `Func` {
+							name = []rune(funcProcess(string(name), params, vars))
+						} else {
+							out += funcProcess(string(name), params, vars) //+ "\r\n"
+							name = name[:0]
+						}
 					}
 				}
 				if ch == '(' {
