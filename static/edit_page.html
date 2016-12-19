@@ -18,10 +18,11 @@
 	$(".citizen, .citizen_interface").addClass("active");
 	
 	var editor = ace.edit("textEditor");
-	var JavaScriptMode = ace.require("ace/mode/markdown").Mode;
+	var JavaScriptMode = ace.require("ace/mode/less").Mode;
+	ace.require("ace/ext/language_tools");
 	$(".textEditor code").html(editor.getValue());
 	$("#page_value").val(editor.getValue());
-	editor.setTheme("ace/theme/chrome");
+	editor.setTheme("ace/theme/crimson_editor");
     editor.session.setMode(new JavaScriptMode());
 	editor.setShowPrintMargin(false);
 	editor.getSession().setUseWrapMode(true);
@@ -29,6 +30,11 @@
 		$(".textEditor code").html(editor.getValue());
 		$("#page_value").val(editor.getValue());
 		editor.resize();
+	});
+	editor.setOptions({
+		enableBasicAutocompletion: true,
+		enableSnippets: true,
+		enableLiveAutocompletion: true
 	});
 	
 	define("hoverlink", [], function(require, exports, module) {
@@ -219,7 +225,7 @@
 				
 				var editorView = ace.edit("textEditorMenu");
 				var JavaScriptMode = ace.require("ace/mode/markdown").Mode;
-				editorView.setTheme("ace/theme/chrome");
+				editorView.setTheme("ace/theme/xcode");
 				editorView.session.setMode(new JavaScriptMode());
 				editorView.setShowPrintMargin(false);
 				editorView.getSession().setUseWrapMode(true);
