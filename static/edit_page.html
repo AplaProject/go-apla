@@ -19,7 +19,7 @@
 	
 	var editor = ace.edit("textEditor");
 	var JavaScriptMode = ace.require("ace/mode/less").Mode;
-	ace.require("ace/ext/language_tools");
+	//ace.require("ace/ext/language_tools");
 	$(".textEditor code").html(editor.getValue());
 	$("#page_value").val(editor.getValue());
 	editor.setTheme("ace/theme/crimson_editor");
@@ -31,11 +31,11 @@
 		$("#page_value").val(editor.getValue());
 		editor.resize();
 	});
-	editor.setOptions({
+	/*editor.setOptions({
 		enableBasicAutocompletion: true,
 		enableSnippets: true,
 		enableLiveAutocompletion: true
-	});
+	});*/
 	
 	define("hoverlink", [], function(require, exports, module) {
 		"use strict";
