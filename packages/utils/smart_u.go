@@ -100,6 +100,7 @@ func init() {
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
+		`If`: If,
 	})
 }
 
@@ -156,6 +157,40 @@ func BtnEdit(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<a type="button" class="btn btn-primary btn-block" 
 	            onclick="load_page('%s', {id: %d, global: 0 } )"><i class="fa fa-cog"></i></a>`,
 		pars[0], StrToInt64(pars[1]))
+}
+
+func If(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	var sep string
+	if strings.Index(pars[0], `==`) >= 0 {
+		sep = `==`
+	} else if strings.Index(pars[0], `!=`) >= 0 {
+		sep = `!=`
+	}
+	cond := []string{pars[0]}
+	if len(sep) > 0 {
+		cond = strings.SplitN(pars[0], sep, 2)
+	}
+	switch sep {
+	case ``:
+		if len(pars[0]) > 0 && pars[0] != `0` && pars[0] != `false` {
+			return pars[1]
+		}
+	case `==`:
+		if len(cond) == 2 && strings.TrimSpace(cond[0]) == strings.TrimSpace(cond[1]) {
+			return pars[1]
+		}
+	case `!=`:
+		if len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1]) {
+			return pars[1]
+		}
+	}
+	if len(pars) > 2 {
+		return pars[2]
+	}
+	return ``
 }
 
 func JsonScript(vars *map[string]string, pars ...string) string {
