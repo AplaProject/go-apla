@@ -100,7 +100,7 @@ func init() {
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
-		`If`: If,
+		`If`: If, `Func`: Func,
 	})
 }
 
@@ -191,6 +191,13 @@ func If(vars *map[string]string, pars ...string) string {
 		return pars[2]
 	}
 	return ``
+}
+
+func Func(vars *map[string]string, pars ...string) string {
+	if len(pars) == 0 {
+		return ``
+	}
+	return strings.TrimSpace(pars[0])
 }
 
 func JsonScript(vars *map[string]string, pars ...string) string {
