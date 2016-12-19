@@ -234,12 +234,15 @@
 // static/js/textEditor/beautify.js
 // static/js/textEditor/ext-language_tools.js
 // static/js/textEditor/mode-c_cpp.js
+// static/js/textEditor/mode-less.js
 // static/js/textEditor/mode-markdown.js
 // static/js/textEditor/mode-yaml.js
 // static/js/textEditor/snippets/c_cpp.js
+// static/js/textEditor/snippets/less.js
 // static/js/textEditor/snippets/markdown.js
 // static/js/textEditor/snippets/yaml.js
 // static/js/textEditor/theme-chrome.js
+// static/js/textEditor/theme-crimson_editor.js
 // static/js/textEditor/theme-xcode.js
 // static/js/tooltip.js
 // static/js/triangles.js
@@ -4571,6 +4574,24 @@ func staticJsTexteditorModeC_cppJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsTexteditorModeLessJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorModeLessJs() (*asset, error) {
+	path := "static/js/textEditor/mode-less.js"
+	name := "static/js/textEditor/mode-less.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsTexteditorModeMarkdownJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorModeMarkdownJs() (*asset, error) {
 	path := "static/js/textEditor/mode-markdown.js"
@@ -4625,6 +4646,24 @@ func staticJsTexteditorSnippetsC_cppJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsTexteditorSnippetsLessJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorSnippetsLessJs() (*asset, error) {
+	path := "static/js/textEditor/snippets/less.js"
+	name := "static/js/textEditor/snippets/less.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsTexteditorSnippetsMarkdownJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorSnippetsMarkdownJs() (*asset, error) {
 	path := "static/js/textEditor/snippets/markdown.js"
@@ -4665,6 +4704,24 @@ func staticJsTexteditorSnippetsYamlJs() (*asset, error) {
 func staticJsTexteditorThemeChromeJs() (*asset, error) {
 	path := "static/js/textEditor/theme-chrome.js"
 	name := "static/js/textEditor/theme-chrome.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsTexteditorThemeCrimson_editorJs reads file data from disk. It returns an error on failure.
+func staticJsTexteditorThemeCrimson_editorJs() (*asset, error) {
+	path := "static/js/textEditor/theme-crimson_editor.js"
+	name := "static/js/textEditor/theme-crimson_editor.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6639,12 +6696,15 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/textEditor/beautify.js": staticJsTexteditorBeautifyJs,
 	"static/js/textEditor/ext-language_tools.js": staticJsTexteditorExtLanguage_toolsJs,
 	"static/js/textEditor/mode-c_cpp.js": staticJsTexteditorModeC_cppJs,
+	"static/js/textEditor/mode-less.js": staticJsTexteditorModeLessJs,
 	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
 	"static/js/textEditor/mode-yaml.js": staticJsTexteditorModeYamlJs,
 	"static/js/textEditor/snippets/c_cpp.js": staticJsTexteditorSnippetsC_cppJs,
+	"static/js/textEditor/snippets/less.js": staticJsTexteditorSnippetsLessJs,
 	"static/js/textEditor/snippets/markdown.js": staticJsTexteditorSnippetsMarkdownJs,
 	"static/js/textEditor/snippets/yaml.js": staticJsTexteditorSnippetsYamlJs,
 	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
+	"static/js/textEditor/theme-crimson_editor.js": staticJsTexteditorThemeCrimson_editorJs,
 	"static/js/textEditor/theme-xcode.js": staticJsTexteditorThemeXcodeJs,
 	"static/js/tooltip.js": staticJsTooltipJs,
 	"static/js/triangles.js": staticJsTrianglesJs,
@@ -7041,14 +7101,17 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"beautify.js": &bintree{staticJsTexteditorBeautifyJs, map[string]*bintree{}},
 				"ext-language_tools.js": &bintree{staticJsTexteditorExtLanguage_toolsJs, map[string]*bintree{}},
 				"mode-c_cpp.js": &bintree{staticJsTexteditorModeC_cppJs, map[string]*bintree{}},
+				"mode-less.js": &bintree{staticJsTexteditorModeLessJs, map[string]*bintree{}},
 				"mode-markdown.js": &bintree{staticJsTexteditorModeMarkdownJs, map[string]*bintree{}},
 				"mode-yaml.js": &bintree{staticJsTexteditorModeYamlJs, map[string]*bintree{}},
 				"snippets": &bintree{nil, map[string]*bintree{
 					"c_cpp.js": &bintree{staticJsTexteditorSnippetsC_cppJs, map[string]*bintree{}},
+					"less.js": &bintree{staticJsTexteditorSnippetsLessJs, map[string]*bintree{}},
 					"markdown.js": &bintree{staticJsTexteditorSnippetsMarkdownJs, map[string]*bintree{}},
 					"yaml.js": &bintree{staticJsTexteditorSnippetsYamlJs, map[string]*bintree{}},
 				}},
 				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
+				"theme-crimson_editor.js": &bintree{staticJsTexteditorThemeCrimson_editorJs, map[string]*bintree{}},
 				"theme-xcode.js": &bintree{staticJsTexteditorThemeXcodeJs, map[string]*bintree{}},
 			}},
 			"tooltip.js": &bintree{staticJsTooltipJs, map[string]*bintree{}},
