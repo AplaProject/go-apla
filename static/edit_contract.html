@@ -19,6 +19,7 @@
 	var contractSnippets = [];
 	var editor = ace.edit("textEditor");
 	var ContractMode = ace.require("ace/mode/c_cpp").Mode;
+	ace.require("ace/ext/language_tools");
 	$(".textEditor code").html(editor.getValue());
 	$("#value").val(editor.getValue());
 	editor.setTheme("ace/theme/chrome");
@@ -31,8 +32,13 @@
 		$("#value").val(editor.getValue());
 		editor.resize();
 	});
+	editor.setOptions({
+		enableBasicAutocompletion: true,
+		enableSnippets: true,
+		enableLiveAutocompletion: true
+	});
 	
-	$.ajax({
+	/*$.ajax({
 		type: 'POST',
 		url: 'static/js/textEditor/snippets/contracts.js',
 		success: function(data) {
@@ -58,7 +64,7 @@
 				});
 			});
 		}
-	});
+	});*/
 	
 	$('#send').bind('click', function () {
 
