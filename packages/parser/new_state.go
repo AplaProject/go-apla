@@ -133,6 +133,7 @@ func (p *Parser) NewState() error {
 		"changing_language", sid, "", psid,
 		"changing_smart_contracts", sid, "", psid,
 		"currency_name", p.TxMap["currency_name"], "", psid,
+		"gender_list", "male,female", "", psid,
 		"state_name", p.TxMap["state_name"], "", psid,
 		"gov_account", p.TxWalletID, "", psid,
 		"dlt_spending", p.TxWalletID, "", psid,

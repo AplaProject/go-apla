@@ -34,11 +34,11 @@ import (
 )
 
 type FieldInfo struct {
-	Name     string `json:"name"`
-	HtmlType string `json:"htmlType"`
-	TxType   string `json:"txType"`
-	Title    string `json:"title"`
-	Value    string `json:"value"`
+	Name     string      `json:"name"`
+	HtmlType string      `json:"htmlType"`
+	TxType   string      `json:"txType"`
+	Title    string      `json:"title"`
+	Value    interface{} `json:"value"`
 }
 
 type FormCommon struct {
@@ -53,6 +53,7 @@ type FormCommon struct {
 
 type FormInfo struct {
 	TxName    string
+	Unique    template.JS
 	OnSuccess template.JS
 	Fields    []FieldInfo
 	Data      FormCommon
@@ -70,12 +71,14 @@ type CommonPage struct {
 type PageTpl struct {
 	Page     string
 	Template string
+	Unique   string
 	Data     *CommonPage
 }
 
-var (
-	divs = make([]int, 0)
-)
+type SelList struct {
+	Cur  int64          `json:"cur"`
+	List map[int]string `json:"list"`
+}
 
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
@@ -96,7 +99,7 @@ func init() {
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
-		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint,
+		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 	})
 }
 
@@ -249,14 +252,19 @@ func Divs(vars *map[string]string, pars ...string) (out string) {
 		out += fmt.Sprintf(`<div class="%s">`, getClass(item))
 		count++
 	}
-	divs = append(divs, count)
+	if val, ok := (*vars)[`divs`]; ok {
+		(*vars)[`divs`] = fmt.Sprintf(`%s,%d`, val, count)
+	} else {
+		(*vars)[`divs`] = fmt.Sprintf(`%d`, count)
+	}
 	return
 }
 
 func DivsEnd(vars *map[string]string, pars ...string) (out string) {
-	if len(divs) > 0 {
-		out = strings.Repeat(`</div>`, divs[len(divs)-1])
-		divs = divs[:len(divs)-1]
+	if val, ok := (*vars)[`divs`]; ok && len(val) > 0 {
+		divs := strings.Split(val, `,`)
+		out = strings.Repeat(`</div>`, StrToInt(divs[len(divs)-1]))
+		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
 	}
 	return
 }
@@ -348,6 +356,13 @@ func BtnSys(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<button type="button" class=%s onclick="load_page('%s', {%s} )">%s</button>`, class, pars[0], params, pars[1])
 }
 
+func StateLink(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	return (*vars)[fmt.Sprintf(`%s_%s`, pars[0], pars[1])]
+}
+
 func Table(vars *map[string]string, pars *map[string]string) string {
 	fields := `*`
 	order := ``
@@ -370,6 +385,15 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	out := `<table  class="table table-striped table-bordered table-hover"><tr>`
 	for _, th := range *columns {
 		out += `<th>` + th[0] + `</th>`
+		th[1] = strings.TrimSpace(th[1])
+		if strings.HasPrefix(th[1], `StateLink`) && strings.IndexByte(th[1], ',') > 0 {
+			linklist := strings.TrimSpace(th[1][strings.IndexByte(th[1], '(')+1 : strings.IndexByte(th[1], ',')])
+			if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+				for ind, item := range alist {
+					(*vars)[fmt.Sprintf(`%s_%d`, linklist, ind+1)] = LangText(item, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+				}
+			}
+		}
 	}
 	out += `</tr>`
 	for _, item := range list {
@@ -534,7 +558,11 @@ func ValueById(vars *map[string]string, pars ...string) string {
 }
 
 func TXForm(vars *map[string]string, pars *map[string]string) string {
-
+	var unique int64
+	if uval, ok := (*vars)[`tx_unique`]; ok {
+		unique = StrToInt64(uval) + 1
+	}
+	(*vars)[`tx_unique`] = Int64ToStr(unique)
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
 	//fmt.Println(`TXForm Init`, *vars)
@@ -581,8 +609,26 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	b := new(bytes.Buffer)
-	finfo := FormInfo{TxName: name, OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
+	finfo := FormInfo{TxName: name, Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
 		CountSignArr: []byte{1}}}
+
+	gettag := func(prefix uint8, def, tags string) string {
+		ret := def
+		if off := strings.IndexByte(tags, prefix); off >= 0 {
+			end := off + 1
+			for end < len(tags) {
+				if tags[end] == ' ' {
+					break
+				}
+				end++
+			}
+			ret = tags[off+1 : end]
+		}
+		return ret
+	}
+	getlang := func(res string) string {
+		return LangText(res, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	}
 txlist:
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		var value string
@@ -590,20 +636,13 @@ txlist:
 			value = val
 		}
 		if strings.Index(fitem.Tags, `hidden`) >= 0 {
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: `hidden`,
+				TxType: fitem.Type.String(), Title: ``, Value: value})
 			continue
 		}
-		langres := fitem.Name
-		if off := strings.IndexByte(fitem.Tags, '#'); off >= 0 {
-			end := off + 1
-			for end < len(fitem.Tags) {
-				if fitem.Tags[end] == ' ' {
-					break
-				}
-				end++
-			}
-			langres = fitem.Tags[off+1 : end]
-		}
-		title := LangText(langres, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+		langres := gettag('#', fitem.Name, fitem.Tags)
+		linklist := gettag('@', ``, fitem.Tags)
+		title := getlang(langres)
 		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
 			if strings.Index(fitem.Tags, tag) >= 0 {
 				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
@@ -611,12 +650,20 @@ txlist:
 				continue txlist
 			}
 		}
-		if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` ||
+		if len(linklist) > 0 {
+			sellist := SelList{StrToInt64(value), make(map[int]string)}
+			if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+				for ind, item := range alist {
+					sellist.List[ind+1] = getlang(item)
+				}
+			}
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
+				TxType: fitem.Type.String(), Title: title, Value: sellist})
+		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` ||
 			fitem.Type.String() == `decimal.Decimal` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: title, Value: value})
 		}
-
 	}
 	if err = t.Execute(b, finfo); err != nil {
 		return fmt.Sprintf("Error: %v", err)

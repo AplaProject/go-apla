@@ -499,9 +499,17 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					}
 				}
 			case float64:
-				bin = top[1].(float64) * ValueToFloat(top[0])
+				if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
+				} else {
+					bin = top[1].(float64) * ValueToFloat(top[0])
+				}
 			case int64:
-				bin = top[1].(int64) * top[0].(int64)
+				if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
+				} else {
+					bin = top[1].(int64) * top[0].(int64)
+				}
 			default:
 				switch reflect.TypeOf(top[1]).String() {
 				case `decimal.Decimal`:

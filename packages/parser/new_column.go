@@ -19,6 +19,7 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -139,9 +140,13 @@ func (p *Parser) NewColumn() error {
 		colType = `timestamp`
 	case "hash":
 		colType = `varchar(32)`
+	case "money":
+		colType = `decimal(30,0)`
+	case "double":
+		colType = `double precision`
 	}
 
-	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` `+colType)
+	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` ` + colType)
 	if err != nil {
 		return err
 	}
