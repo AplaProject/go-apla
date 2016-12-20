@@ -1,0 +1,80 @@
+<!--script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script-->
+<script language="JavaScript" type="text/javascript">
+	function SendTxOK{{.Unique}}() {
+		{{if .OnSuccess}}
+			{{.OnSuccess}};
+			HideMenu();	
+		{{end}}
+	}
+	var serverTime{{.Unique}};
+	var predata{{.Unique}};
+	
+	$('#send{{.Unique}}').bind('click', function () {
+		predata{{.Unique}} = {
+			'TxName' : '{{.TxName}}',
+		};
+		{{range .Fields}}
+			{{if ne .HtmlType "image"}}
+				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+			{{end}}
+		{{end}}
+		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},
+			 function (data) {
+				if (data.error.length > 0 ) {
+					Alert("Error", data.error, "error");
+				} else {
+					console.log(data);
+					predata{{.Unique}}.time = data.time;
+					$("#for-signature{{.Unique}}").val(data.forsign);
+					doSign({{.Unique}});
+					predata{{.Unique}}.signature1 = $('#signature1{{.Unique}}').val();
+					predata{{.Unique}}.signature2 = $('#signature2{{.Unique}}').val();
+					predata{{.Unique}}.signature3 = $('#signature3{{.Unique}}').val();
+					$("#send_to_net{{.Unique}}").trigger("click");
+				}
+		}, "json" );
+	} );
+
+	$('#send_to_net{{.Unique}}').bind('click', function () {
+		{{range .Fields}}
+			{{if eq .HtmlType "image"}}
+				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+			{{end}}
+		{{end}}
+		predata{{.Unique}}['public'] = GKey.Public;
+		$.ajax({
+			type: 'POST',
+			url: 'ajax?json=ajax_send_tx',
+			data: predata{{.Unique}},
+			dataType: 'json',
+			crossDomain: true,
+			success: function(result) {
+				send_to_net_success(result, SendTxOK{{.Unique}});
+			},
+			error: function(xhr, status, error) {
+				Alert("Error", error, "error");
+			}
+		});
+	} );	
+/*	$(".inputmask").inputmask();
+	$.datetimepicker.setLocale('en');
+	jQuery(".datetimepicker").datetimepicker();
+	userLocation("map", "100%", "250px");
+	$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
+	$(".address").typeahead({
+		minLength: 1,
+		items: 10,
+		source: function (query, process) {
+			return $.get('ajax?json=ajax_addresses', { 'address': query }, function (data) {
+				return process(data.address);
+			});
+		}
+	});*/
+</script>
+<div class="clearfix">
+	<div class="pull-right">
+		<button id="send{{.Unique}}" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+	</div>
+</div>
+
+{{template "signatures".}}

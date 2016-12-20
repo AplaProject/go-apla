@@ -60,6 +60,20 @@ type FormInfo struct {
 	Data      FormCommon
 }
 
+type TxInfo struct {
+	Name     string `json:"name"`
+	Id       string `json:"id"`
+	HtmlType string `json:"htmlType"`
+}
+
+type TxButtonInfo struct {
+	TxName    string
+	Unique    template.JS
+	OnSuccess template.JS
+	Fields    []TxInfo
+	Data      FormCommon
+}
+
 type CommonPage struct {
 	Address      string
 	WalletId     int64
@@ -91,7 +105,7 @@ func init() {
 	//		`*parser.Parser`: `parser`,
 	}})
 
-	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm})
+	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: P, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
@@ -101,7 +115,7 @@ func init() {
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
-		`If`: If, `Func`: Func, `Date`: Date, `Now`: Now,
+		`If`: If, `Func`: Func, `Date`: Date, `Now`: Now, `Input`: Input,
 	})
 }
 
@@ -219,6 +233,19 @@ func Now(vars *map[string]string, pars ...string) string {
 		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
 	}
 	return ret
+}
+
+func Input(vars *map[string]string, pars ...string) string {
+	var (
+		class, value string
+	)
+	if len(pars) > 1 {
+		class = pars[1]
+	}
+	if len(pars) > 2 {
+		value = pars[2]
+	}
+	return fmt.Sprintf(`<input type="text" id="%s" class="%s" value="%s">`, pars[0], class, value)
 }
 
 func Func(vars *map[string]string, pars ...string) string {
@@ -625,6 +652,97 @@ func ValueById(vars *map[string]string, pars ...string) string {
 		}
 	}
 	return ``
+}
+
+func TXButton(vars *map[string]string, pars *map[string]string) string {
+	var unique int64
+	if uval, ok := (*vars)[`tx_unique`]; ok {
+		unique = StrToInt64(uval) + 1
+	}
+	(*vars)[`tx_unique`] = Int64ToStr(unique)
+	name := (*pars)[`Contract`]
+	//	init := (*pars)[`Init`]
+	fmt.Println(`TXButton Init`, *vars)
+	onsuccess := (*pars)[`OnSuccess`]
+	contract := smart.GetContract(name)
+	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
+		return fmt.Sprintf(`there is not %s contract or parameters`, name)
+	}
+	funcMap := template.FuncMap{
+		"sum": func(a, b interface{}) float64 {
+			return InterfaceToFloat64(a) + InterfaceToFloat64(b)
+		},
+		"noescape": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+	}
+	data, err := static.Asset("static/tx_button.html")
+
+	sign, err := static.Asset("static/signatures_new.html")
+	if err != nil {
+		return fmt.Sprint(err.Error())
+	}
+
+	t := template.New("template").Funcs(funcMap)
+	t, err = t.Parse(string(data))
+	if err != nil {
+		return fmt.Sprintf("Error: %v", err)
+	}
+	t = template.Must(t.Parse(string(sign)))
+
+	if len(onsuccess) > 0 {
+		pars := strings.SplitN(onsuccess, `,`, 3)
+		onsuccess = ``
+		if len(pars) >= 2 {
+			onsuccess = fmt.Sprintf(`load_%s('%s'`, pars[0], pars[1])
+			if len(pars) == 3 {
+				onsuccess += `,{` + pars[2] + `}`
+			}
+
+			onsuccess += `)`
+		} else {
+			onsuccess = lib.Escape(pars[0])
+		}
+	}
+
+	b := new(bytes.Buffer)
+	finfo := TxButtonInfo{TxName: name, Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
+		Fields: make([]TxInfo, 0), Data: FormCommon{
+			CountSignArr: []byte{1}}}
+
+	idnames := strings.Split((*pars)[`Inputs`], `,`)
+	names := make(map[string]string)
+	for _, idn := range idnames {
+		lr := strings.SplitN(idn, `=`, 2)
+		if len(lr) == 2 {
+			names[lr[0]] = lr[1]
+		}
+	}
+txlist:
+	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		idname := fitem.Name
+		if idn, ok := names[idname]; ok {
+			idname = idn
+		}
+		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
+			if strings.Index(fitem.Tags, tag) >= 0 {
+				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, HtmlType: tag})
+				continue txlist
+			}
+		}
+		finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, HtmlType: "textinput"})
+	}
+	if err = t.Execute(b, finfo); err != nil {
+		return fmt.Sprintf("Error: %v", err)
+	}
+	lines := strings.Split(b.String(), "\n")
+	out := ``
+	for _, line := range lines {
+		if value := strings.TrimSpace(line); len(value) > 0 {
+			out += value + "\r\n"
+		}
+	}
+	return out
 }
 
 func TXForm(vars *map[string]string, pars *map[string]string) string {
