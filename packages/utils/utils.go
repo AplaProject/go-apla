@@ -649,7 +649,7 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 
 	case "walletAddress":
-		if ok, _ := regexp.MatchString("^(?i)[0-9-]{24}$", data); ok {
+		if ok, _ := regexp.MatchString("^(?i)[0-9]{20}$", strings.Replace(data, `-`, ``, -1)); ok {
 			return true
 		}
 	case "photo_hash", "sha256":
