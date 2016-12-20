@@ -80,6 +80,10 @@ snippet DBUpdate()\n\
 snippet DBAmount()\n\
 	DBAmount(${1:/*code*/})\n\
 \n\
+# func DBInt \n\
+snippet DBInt()\n\
+	DBInt(${1:/*code*/})\n\
+\n\
 # func DBIntExt \n\
 snippet DBIntExt()\n\
 	DBIntExt(${1:/*code*/})\n\
