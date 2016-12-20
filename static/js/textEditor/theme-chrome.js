@@ -25,7 +25,7 @@ color: rgb(191, 191, 191);\
 color: rgb(88, 72, 246);\
 }\
 .ace-chrome .ace_constant.ace_language {\
-color: rgb(88, 92, 246);\
+color: #0000ff;\
 }\
 .ace-chrome .ace_constant.ace_library {\
 color: rgb(6, 150, 14);\
@@ -52,7 +52,11 @@ font-style:italic;\
 color:#FD971F;\
 }\
 .ace-chrome .ace_keyword.ace_operator {\
-color: rgb(104, 118, 135);\
+font-weight:bold;\
+}\
+.ace-chrome .ace_modifier {\
+color: #df0002 !important;\
+font-weight:bold;\
 }\
 .ace-chrome .ace_comment {\
 color: #236e24;\
@@ -113,7 +117,7 @@ color: rgb(147, 15, 128);\
 color: rgb(255, 0, 0)\
 }\
 .ace-chrome .ace_string {\
-color: #1A1AA6;\
+color: #1a1aa6;\
 }\
 .ace-chrome .ace_entity.ace_other.ace_attribute-name {\
 color: #994409;\

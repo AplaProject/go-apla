@@ -89,15 +89,17 @@ var c_cppHighlightRules = function() {
     );
 	
     var storageTypeContract = (
-        "int|string"
+        "int|string|money"
     );
 	
 	var storageModifiersContract = (
-        ""
+        "Balance|Money|StateParam|StateValue|AddressToId|" +
+		"DBTransfer|DBInsert|DBUpdate|DBInt|DBAmount|DBIntExt|" +
+		"TableTx|Table|Int|Println"
     );
 
     var keywordOperatorsContract = (
-        ""
+        "contract|tx|front|main"
     );
 	
 	var builtinConstantsContract = (

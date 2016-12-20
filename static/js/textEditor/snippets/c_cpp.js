@@ -48,6 +48,62 @@ snippet func main, main\n\
 		${6:DBUpdate(${7:/*code*/})}\n\
 	}\n\
 \n\
+# func Balance \n\
+snippet Balance()\n\
+	Balance(${1:/*code*/})\n\
+\n\
+# func Money \n\
+snippet Money()\n\
+	Money(${1:/*code*/})\n\
+\n\
+# func StateParam \n\
+snippet StateParam()\n\
+	StateParam(${1:/*code*/})\n\
+\n\
+# func AddressToId \n\
+snippet AddressToId()\n\
+	AddressToId(${1:/*code*/})\n\
+\n\
+# func DBTransfer \n\
+snippet DBTransfer()\n\
+	DBTransfer(${1:/*code*/})\n\
+\n\
+# func DBInsert \n\
+snippet DBInsert()\n\
+	DBInsert(${1:/*code*/})\n\
+\n\
+# func DBUpdate \n\
+snippet DBUpdate()\n\
+	DBUpdate(${1:/*code*/})\n\
+\n\
+# func DBAmount \n\
+snippet DBAmount()\n\
+	DBAmount(${1:/*code*/})\n\
+\n\
+# func DBIntExt \n\
+snippet DBIntExt()\n\
+	DBIntExt(${1:/*code*/})\n\
+\n\
+# func TableTx \n\
+snippet TableTx()\n\
+	TableTx(${1:/*code*/})\n\
+\n\
+# func Table \n\
+snippet Table()\n\
+	Table(${1:/*code*/})\n\
+\n\
+# func Int \n\
+snippet Int()\n\
+	Int(${1:/*code*/})\n\
+\n\
+# func StateValue \n\
+snippet StateValue()\n\
+	StateValue(${1:/*code*/})\n\
+\n\
+# func Println \n\
+snippet Println()\n\
+	Println(${1:/*code*/})\n\
+\n\
 ";
 exports.scope = "c_cpp";
 
