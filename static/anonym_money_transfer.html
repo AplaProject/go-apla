@@ -14,7 +14,7 @@
 	}
 	
 	$("#walletAddress").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
-	$("#walletAddress").typeahead({
+	/*$("#walletAddress").typeahead({
 		minLength: 1,
 		items: 10,
 		source: function (query, process) {
@@ -22,12 +22,16 @@
 				return process(data.address);
 			});
 		}
-	});
+	});*/
 	
 	$("#next").bind('click', function () {
 		$(".form-control").blur().each(function() {
 			var id = $(this).attr("id");
 			var val = $(this).val();
+			
+			if (id === "walletAddress") {
+				val = chunk(val, 4).join('-');
+			}
 			
 			if (id === "comment") {
 				if (val) {
