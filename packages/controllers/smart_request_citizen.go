@@ -24,6 +24,7 @@ const NSmartRequestCitizen = `smart_request_citizen`
 
 type citizenSmartPage struct {
 	Data     *CommonPage
+	Unique   string
 	TxType   string
 	TxTypeId int64
 }
@@ -34,6 +35,6 @@ func init() {
 
 func (c *Controller) SmartRequestCitizen() (string, error) {
 	txType := "TXCitizenRequest"
-	pageData := citizenSmartPage{Data: c.Data, TxType: txType, TxTypeId: utils.TypeInt(txType)}
+	pageData := citizenSmartPage{Data: c.Data, TxType: txType, TxTypeId: utils.TypeInt(txType), Unique: ``}
 	return proceedTemplate(c, NSmartRequestCitizen, &pageData)
 }

@@ -763,8 +763,8 @@ func BytesToInt64(s []byte) int64 {
 	return int64
 }
 func StrToUint64(s string) uint64 {
-	int64, _ := strconv.ParseInt(s, 10, 64)
-	return uint64(int64)
+	ret, _ := strconv.ParseUint(s, 10, 64)
+	return ret
 }
 func StrToInt(s string) int {
 	int_, _ := strconv.Atoi(s)

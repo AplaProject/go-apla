@@ -18,8 +18,10 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"strings"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const AHistory = `ajax_history`
@@ -47,7 +49,7 @@ func (c *Controller) AjaxHistory() interface{} {
 	if length == -1 {
 		length = 20
 	}
-	log.Debug("a/h walletId %s / c.SessAddress %s", walletId, c.SessAddress);
+	log.Debug("a/h walletId %s / c.SessAddress %s", walletId, c.SessAddress)
 	limit := fmt.Sprintf(`LIMIT %d OFFSET %d`, length, utils.StrToInt(c.r.FormValue("start")))
 	if walletId != 0 {
 		total, _ := c.Single(`SELECT count(id) FROM dlt_transactions where sender_wallet_id = ? OR
@@ -61,15 +63,27 @@ func (c *Controller) AjaxHistory() interface{} {
 				where sender_wallet_id=? OR 
 		        recipient_wallet_id=?  OR
 		        recipient_wallet_address=? order by d.id desc  `+limit, -1, walletId, walletId, c.SessAddress)
-			if err!=nil {
-				log.Error("%s", err);
+			if err != nil {
+				log.Error("%s", err)
 			}
-			log.Debug("%v", history);
 			for ind := range history {
 				max, _ := c.Single(`select max(id) from block_chain`).Int64()
 				history[ind][`confirm`] = utils.Int64ToStr(max - utils.StrToInt64(history[ind][`block_id`]))
 				history[ind][`sender_address`] = lib.AddressToString(uint64(utils.StrToInt64(history[ind][`sw`])))
-				history[ind][`recipient_address`] = lib.AddressToString(uint64(utils.StrToInt64(history[ind][`rw`])))
+				recipient := history[ind][`rw`]
+				if len(recipient) < 10 {
+					recipient = history[ind][`recipient_wallet_address`]
+				}
+				if len(recipient) == 24 {
+					recipient = strings.Replace(recipient, `-`, ``, -1)
+				}
+				var rec uint64
+				if recipient[0] == '-' {
+					rec = uint64(utils.StrToInt64(recipient))
+				} else {
+					rec = utils.StrToUint64(recipient)
+				}
+				history[ind][`recipient_address`] = lib.AddressToString(rec)
 			}
 		}
 	}
