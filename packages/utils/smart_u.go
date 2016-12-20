@@ -101,7 +101,7 @@ func init() {
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
-		`If`: If, `Func`: Func, `Date`: Date,
+		`If`: If, `Func`: Func, `Date`: Date, `Now`: Now,
 	})
 }
 
@@ -192,6 +192,33 @@ func If(vars *map[string]string, pars ...string) string {
 		return pars[2]
 	}
 	return ``
+}
+
+func Now(vars *map[string]string, pars ...string) string {
+	var (
+		cut   int
+		query string
+	)
+	if len(pars) == 0 || pars[0] == `` {
+		query = `select round(extract(epoch from now()))::integer`
+		cut = 10
+	} else {
+		query = `select now()`
+		switch pars[0] {
+		case `datetime`:
+			cut = 19
+		default:
+			query = fmt.Sprintf(`select to_char(now(), '%s')`, pars[0])
+		}
+	}
+	ret, err := DB.Single(query).String()
+	if err != nil {
+		return err.Error()
+	}
+	if cut > 0 {
+		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
+	}
+	return ret
 }
 
 func Func(vars *map[string]string, pars ...string) string {
