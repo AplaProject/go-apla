@@ -467,7 +467,9 @@ PageEnd:`, `menu_default`, sid,
 	err = p.ExecSql(`INSERT INTO "`+id+`_languages" (name, res, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?),
+		(?, ?, ?),
 		(?, ?, ?)`,
+		`dateformat`, `{"en": "2006-01-02", "ru": "02.01.2006"}`, sid,
 		`Gender`, `{"en": "Gender", "ru": "Пол"}`, sid,
 		`male`, `{"en": "Male", "ru": "Мужской"}`, sid,
 		`female`, `{"en": "Female", "ru": "Женский"}`, sid)

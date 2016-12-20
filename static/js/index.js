@@ -648,10 +648,14 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 					if (typeof txStatus.wait != "undefined") {
 						console.log("txStatus", txStatus);
 					} else if (typeof txStatus.error != "undefined") {
-						if (txStatus.error[0] == '*') {
-							re = /\*(.*)\(parser/i;
+						if (txStatus.error[0] == '!') {
+							re = /!(.*)\(parser/i;
 							found = txStatus.error.match(re);
 							Alert("Warning", (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "warning");
+						} else 	if (txStatus.error[0] == '*') {
+							re = /\*(.*)\(parser/i;
+							found = txStatus.error.match(re);
+							Alert("Info", (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "info");
 						} else
 							Alert("Error", txStatus.error, "error");
 						clearInterval(interval);
