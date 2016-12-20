@@ -304,7 +304,7 @@ function Alert(title, text, type, Confirm) {
 			color = "#c1c1c1";
 		}
 		
-		$(".sweet-overlay, .sweet-alert").appendTo($("body"));
+		$(".sweet-alert").appendTo($("body"));
 
 		swal({
 			title: title,
@@ -335,7 +335,7 @@ function Alert(title, text, type, Confirm) {
 		});
 		
 		if (bh > oh) {
-			$(".sweet-overlay, .sweet-alert").appendTo(obj);
+			$(".sweet-alert").appendTo(obj);
 		}
 	}
 }
