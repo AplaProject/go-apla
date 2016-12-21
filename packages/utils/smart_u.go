@@ -116,6 +116,7 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label,
 	})
 }
 
@@ -237,15 +238,23 @@ func Now(vars *map[string]string, pars ...string) string {
 
 func Input(vars *map[string]string, pars ...string) string {
 	var (
-		class, value string
+		class, value, placeholder string
 	)
+	itype := `text`
 	if len(pars) > 1 {
 		class = pars[1]
 	}
 	if len(pars) > 2 {
-		value = pars[2]
+		placeholder = LangText(pars[2], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
 	}
-	return fmt.Sprintf(`<input type="text" id="%s" class="%s" value="%s">`, pars[0], class, value)
+	if len(pars) > 3 {
+		itype = pars[3]
+	}
+	if len(pars) > 4 {
+		value = pars[4]
+	}
+	return fmt.Sprintf(`<input type="%s" id="%s" placeholder="%s" class="%s" value="%s">`,
+		itype, pars[0], placeholder, class, value)
 }
 
 func Func(vars *map[string]string, pars ...string) string {
@@ -617,6 +626,27 @@ func PageTitle(vars *map[string]string, pars ...string) string {
 
 func PageEnd(vars *map[string]string, pars ...string) string {
 	return `</div></div>`
+}
+
+func Form(vars *map[string]string, pars ...string) string {
+	var class string
+	if len(pars[0]) > 0 {
+		class = fmt.Sprintf(`class="%s"`, pars[0])
+	}
+	return fmt.Sprintf(`<form role="form" %s>`, class)
+}
+
+func FormEnd(vars *map[string]string, pars ...string) string {
+	return `</form>`
+}
+
+func Label(vars *map[string]string, pars ...string) string {
+	var class string
+	if len(pars) > 1 && len(pars[1]) > 0 {
+		class = fmt.Sprintf(`class="%s"`, pars[0])
+	}
+	text := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	return fmt.Sprintf(`<label %s>%s</label>`, class, text)
 }
 
 func ValueById(vars *map[string]string, pars ...string) string {
