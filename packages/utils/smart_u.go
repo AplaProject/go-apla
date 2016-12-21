@@ -115,7 +115,7 @@ func init() {
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
-		`If`: If, `Func`: Func, `Date`: Date, `Now`: Now, `Input`: Input,
+		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 	})
 }
 
@@ -977,8 +977,37 @@ func Date(vars *map[string]string, pars ...string) string {
 		}
 	}
 	format = strings.Replace(format, `YYYY`, `2006`, -1)
+	format = strings.Replace(format, `YY`, `06`, -1)
 	format = strings.Replace(format, `MM`, `01`, -1)
 	format = strings.Replace(format, `DD`, `02`, -1)
+
+	return itime.Format(format)
+}
+
+func DateTime(vars *map[string]string, pars ...string) string {
+	if len(pars) == 0 || pars[0] == `NULL` {
+		return ``
+	}
+	itime, err := time.Parse(`2006-01-02T15:04:05`, pars[0][:19])
+	if err != nil {
+		return err.Error()
+	}
+	var format string
+	if len(pars) > 1 {
+		format = pars[1]
+	} else {
+		format = LangText(`timeformat`, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+		if format == `timeformat` {
+			format = `2006-01-02 15:04:05`
+		}
+	}
+	format = strings.Replace(format, `YYYY`, `2006`, -1)
+	format = strings.Replace(format, `YY`, `06`, -1)
+	format = strings.Replace(format, `MM`, `01`, -1)
+	format = strings.Replace(format, `DD`, `02`, -1)
+	format = strings.Replace(format, `HH`, `15`, -1)
+	format = strings.Replace(format, `MI`, `04`, -1)
+	format = strings.Replace(format, `SS`, `05`, -1)
 
 	return itime.Format(format)
 }
