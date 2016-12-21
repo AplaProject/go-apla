@@ -95,6 +95,11 @@ type SelList struct {
 	List map[int]string `json:"list"`
 }
 
+type SelInfo struct {
+	Id   int64
+	Name string
+}
+
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		"Balance":    Balance,
@@ -116,7 +121,7 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select,
 	})
 }
 
@@ -1040,6 +1045,38 @@ func DateTime(vars *map[string]string, pars ...string) string {
 	format = strings.Replace(format, `SS`, `05`, -1)
 
 	return itime.Format(format)
+}
+
+func Select(vars *map[string]string, pars ...string) string {
+	var (
+		class string
+		value int64
+	)
+	list := make([]SelInfo, 0)
+	if len(pars) > 1 {
+		if alist := strings.Split(StateValue(vars, pars[1]), `,`); len(alist) > 0 {
+			for ind, item := range alist {
+				list = append(list, SelInfo{Id: int64(ind + 1), Name: LangText(item, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])})
+			}
+		}
+	}
+	if len(pars) > 2 {
+		class = pars[2]
+	}
+	if len(pars) > 3 {
+		value = StrToInt64(pars[3])
+	}
+
+	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s">`, pars[0], class)
+	for _, item := range list {
+		var selected string
+		if item.Id == value {
+			selected = `selected`
+		}
+		out += fmt.Sprintf(`<option value="%d" %s>%s</option>`, item.Id, selected, item.Name)
+
+	}
+	return out + `</select>`
 }
 
 func Map(vars *map[string]string, pars ...string) string {
