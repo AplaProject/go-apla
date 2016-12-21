@@ -643,7 +643,7 @@ func FormEnd(vars *map[string]string, pars ...string) string {
 func Label(vars *map[string]string, pars ...string) string {
 	var class string
 	if len(pars) > 1 && len(pars[1]) > 0 {
-		class = fmt.Sprintf(`class="%s"`, pars[0])
+		class = fmt.Sprintf(`class="%s"`, pars[1])
 	}
 	text := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
 	return fmt.Sprintf(`<label %s>%s</label>`, class, text)
