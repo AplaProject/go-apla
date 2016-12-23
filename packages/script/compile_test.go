@@ -73,7 +73,7 @@ func getArray() []interface{} {
 
 func TestVMCompile(t *testing.T) {
 	test := []TestVM{
-		/*	{`func proc(par string) string {
+		{`func proc(par string) string {
 				return par + "proc"
 				}
 			func forarray string {
@@ -88,7 +88,7 @@ func TestVMCompile(t *testing.T) {
 				ret[2] = "Test"
 				return Sprintf("result=%s+%s+%d+%s", ret[1], my["par0"], my["par3"], myret[1] + ret[2])
 			}`, `forarray`, `result=The second string+Parameter 0+3456+Another Test`},
-			{`func proc(par string) string {
+		{`func proc(par string) string {
 								return par + "proc"
 								}
 							func formap string {
@@ -102,12 +102,12 @@ func TestVMCompile(t *testing.T) {
 								my["par2"] = 203 * (100-86)
 								return Sprintf("result=%s+%d+%s+%s+%d", ret["par1"], my["par2"] + 32, my["par1"], proc($glob["test"]), $glob["number"] )
 							}`, `formap`, `result=Parameter 1+2874+my value space proc+String valueproc+1001`},
-			{`func runtime string {
+		{`func runtime string {
 										var i int
 										i = 50
 										return Sprintf("val=%d", i 0)
 									}`, `runtime`, `runtime panic error`},
-			{`func nop {
+		{`func nop {
 										return
 									}
 
@@ -125,7 +125,7 @@ func TestVMCompile(t *testing.T) {
 										}
 										nop()
 										return Sprintf("val=%d", i)
-									}`, `loop`, `val=125`},*/
+									}`, `loop`, `val=125`},
 		{`contract my {
 													tx {
 														Par1 int
@@ -148,7 +148,7 @@ func TestVMCompile(t *testing.T) {
 													func init string {
 														my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
 														my("Par1,Par2,ext", 33123, "Parameter 332", "33extended" )
-														empty("test",10)
+														@26empty("test",10)
 														Println( "mytest")
 														return "OK"
 													}

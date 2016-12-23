@@ -398,7 +398,12 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func StateName(state uint32, name string) string {
-	return fmt.Sprintf(`@%d%s`, state, name)
+	if name[0] != '@' {
+		return fmt.Sprintf(`@%d%s`, state, name)
+	} else if name[1] < '0' || name[1] > '9' {
+		name = `@0` + name[1:]
+	}
+	return name
 }
 
 func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
@@ -576,9 +581,8 @@ func findVar(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
 
 func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
 	var sname string
-	if name[0] != '@' {
-		sname = StateName((*block)[0].Info.(uint32), name)
-	}
+
+	sname = StateName((*block)[0].Info.(uint32), name)
 	ret, owner = findVar(name, block)
 	if ret != nil {
 		return

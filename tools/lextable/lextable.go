@@ -29,7 +29,7 @@ type Action map[string][]string
 type States map[string]Action
 
 const (
-	ALPHASIZE = 31 // The length of alphabet
+	ALPHASIZE = 32 // The length of alphabet
 )
 
 var (
@@ -38,7 +38,7 @@ var (
 		`comment`: 7}
 	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4}
 	alphabet = []byte{0x01, 0x0a, ' ', '`', '"', ';', '(', ')', '[', ']', '{', '}', '&',
-		'|', '#', '.', ',', '<', '>', '=', '!', '*', '$',
+		'|', '#', '.', ',', '<', '>', '=', '!', '*', '$', '@',
 		//           default  n    s    q    Q
 		'+', '-', '/', '0', '1', 'a', '_', 128}
 	//													r
@@ -56,7 +56,7 @@ var (
 			"<>!": ["oneq", "", "push next"],
 			"*+-": ["main", "oper", "next"],
 			"01": ["number", "", "push next"],
-			"$a_r": ["ident", "", "push next"],
+			"@$a_r": ["ident", "", "push next"],
 			"d": ["error", "", ""]
 		},
 	"string": {

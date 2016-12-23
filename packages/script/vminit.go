@@ -198,9 +198,7 @@ func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
 
 func (vm *VM) getObjByNameExt(name string, state uint32) (ret *ObjInfo) {
 	var sname string
-	if name[0] != '@' {
-		sname = StateName(state, name)
-	}
+	sname = StateName(state, name)
 	if ret = vm.getObjByName(name); ret == nil && len(sname) > 0 {
 		ret = vm.getObjByName(sname)
 	}
