@@ -339,7 +339,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 		blockTime = p.BlockData.Time
 	}
 
-	return smart.EvalIf(conditions, &map[string]interface{}{`state`: p.TxStateID,
+	return smart.EvalIf(conditions, utils.Int64ToStr(int64(p.TxStateID)), &map[string]interface{}{`state`: p.TxStateID,
 		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p,
 		`block_time`: blockTime, `time`: time})
 }
@@ -393,7 +393,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 		values = append(values, value)
 	}
 	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions); err != nil {
+		if err := smart.CompileEval(conditions, p.TxStateID); err != nil {
 			return err
 		}
 		fields = append(fields, "conditions")
@@ -402,7 +402,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 	if len(fields) == 0 {
 		return fmt.Errorf(`empty value and condition`)
 	}
-	root, err := smart.CompileBlock(value)
+	root, err := smart.CompileBlock(value, prefix)
 	if err != nil {
 		return err
 	}
@@ -430,7 +430,7 @@ func UpdateParam(p *Parser, name, value, conditions string) error {
 		values = append(values, value)
 	}
 	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions); err != nil {
+		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
 			return err
 		}
 		fields = append(fields, "conditions")
@@ -454,7 +454,7 @@ func UpdateMenu(p *Parser, name, value, conditions string) error {
 	fields := []string{"value"}
 	values := []interface{}{value}
 	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions); err != nil {
+		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
 			return err
 		}
 		fields = append(fields, "conditions")
@@ -475,7 +475,7 @@ func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 	fields := []string{"value"}
 	values := []interface{}{value}
 	if len(conditions) > 0 {
-		if err := smart.CompileEval(conditions); err != nil {
+		if err := smart.CompileEval(conditions, uint32(p.TxStateID)); err != nil {
 			return err
 		}
 		fields = append(fields, "conditions")

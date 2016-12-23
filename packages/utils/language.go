@@ -59,6 +59,9 @@ func LangText(in string, state int, accept string) string {
 		langs := strings.Split(accept, `,`)
 		lng := `en`
 		for _, val := range langs {
+			if len(val) < 2 {
+				break
+			}
 			if _, ok := (*lres)[val[:2]]; ok {
 				lng = val[:2]
 				break

@@ -78,7 +78,7 @@ func (p *Parser) NewContract() error {
 		prefix = p.TxStateIDStr
 	}
 
-	root, err := smart.CompileBlock(p.TxMaps.String["value"])
+	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

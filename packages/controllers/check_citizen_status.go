@@ -61,7 +61,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		/*		if err = json.Unmarshal([]byte(vals[`data`]), &data); err != nil {
 				return ``, err
 			}*/
-		contract := smart.GetContract(`TXCitizenRequest`)
+		contract := smart.GetContract(`TXCitizenRequest`, uint32(utils.StrToUint64(c.StateIdStr)))
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if fitem.Type.String() == `string` {
 				value := vals[`name`] //fitem.Name] //.(string)

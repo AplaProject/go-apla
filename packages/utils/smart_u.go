@@ -136,6 +136,7 @@ func LoadContracts() (err error) {
 	for _, istate := range states {
 		prefix = append(prefix, istate[`id`])
 	}
+	LoadContract(`global`)
 	for _, ipref := range prefix {
 		if err = LoadContract(ipref); err != nil {
 			return err
@@ -152,7 +153,7 @@ func LoadContract(prefix string) (err error) {
 		return err
 	}
 	for _, item := range contracts {
-		if err = smart.Compile(item[`value`]); err != nil {
+		if err = smart.Compile(item[`value`], prefix); err != nil {
 			return
 		}
 	}
@@ -699,7 +700,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	//	init := (*pars)[`Init`]
 	fmt.Println(`TXButton Init`, *vars)
 	onsuccess := (*pars)[`OnSuccess`]
-	contract := smart.GetContract(name)
+	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		return fmt.Sprintf(`there is not %s contract or parameters`, name)
 	}
@@ -790,7 +791,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	//	init := (*pars)[`Init`]
 	//fmt.Println(`TXForm Init`, *vars)
 	onsuccess := (*pars)[`OnSuccess`]
-	contract := smart.GetContract(name)
+	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		return fmt.Sprintf(`there is not %s contract or parameters`, name)
 	}

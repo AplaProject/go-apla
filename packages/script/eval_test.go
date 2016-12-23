@@ -121,7 +121,7 @@ func TestEvalIf(t *testing.T) {
 	vm.Extend(&ExtendData{map[string]interface{}{"Multi": Multi}, nil})
 	for i := 0; i < 2; i++ {
 		for _, item := range test {
-			out, err := vm.EvalIf(item.Input, &vars)
+			out, err := vm.EvalIf(item.Input, 0, &vars)
 			if err != nil {
 				if err.Error() != item.Output {
 					t.Error(`error of ifeval ` + item.Input + ` ` + err.Error())

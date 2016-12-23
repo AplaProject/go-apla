@@ -89,7 +89,7 @@ func (p *Parser) NewStateParametersFront() error {
 	}
 	*/
 	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"])); err != nil {
+		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}

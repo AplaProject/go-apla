@@ -397,27 +397,32 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
+func StateName(state uint32, name string) string {
+	return fmt.Sprintf(`@%d%s`, state, name)
+}
+
 func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	var itype int
 
 	prev := (*buf)[len(*buf)-2]
 	fblock := (*buf)[len(*buf)-1]
-
+	name := lexem.Value.(string)
 	switch state {
 	case STATE_BLOCK:
 		itype = OBJ_CONTRACT
-		fblock.Info = &ContractInfo{Id: uint32(len(prev.Children) - 1), Name: lexem.Value.(string)}
+		name = StateName((*buf)[0].Info.(uint32), name)
+		fblock.Info = &ContractInfo{Id: uint32(len(prev.Children) - 1), Name: name} //lexem.Value.(string)}
 	default:
 		itype = OBJ_FUNC
 		fblock.Info = &FuncInfo{}
 	}
 	fblock.Type = itype
-	prev.Objects[lexem.Value.(string)] = &ObjInfo{Type: itype, Value: fblock}
+	prev.Objects[name] = &ObjInfo{Type: itype, Value: fblock}
 	return nil
 }
 
-func (vm *VM) CompileBlock(input []rune) (*Block, error) {
-	root := &Block{}
+func (vm *VM) CompileBlock(input []rune, idstate uint32) (*Block, error) {
+	root := &Block{Info: idstate}
 	lexems, err := LexParser(input)
 	if err != nil {
 		return nil, err
@@ -549,8 +554,8 @@ func (vm *VM) FlushBlock(root *Block) {
 	}
 }
 
-func (vm *VM) Compile(input []rune) error {
-	root, err := vm.CompileBlock(input)
+func (vm *VM) Compile(input []rune, state uint32) error {
+	root, err := vm.CompileBlock(input, state)
 	if err == nil {
 		vm.FlushBlock(root)
 	}
@@ -570,11 +575,22 @@ func findVar(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
 }
 
 func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
+	var sname string
+	if name[0] != '@' {
+		sname = StateName((*block)[0].Info.(uint32), name)
+	}
 	ret, owner = findVar(name, block)
 	if ret != nil {
 		return
+	} else if len(sname) > 0 {
+		if ret, owner = findVar(sname, block); ret != nil {
+			return
+		}
 	}
-	return vm.getObjByName(name), nil
+	if ret = vm.getObjByName(name); ret == nil && len(sname) > 0 {
+		ret = vm.getObjByName(sname)
+	}
+	return
 }
 
 func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
@@ -754,7 +770,7 @@ main:
 					}
 					buffer = append(buffer, &ByteCode{cmdCall, objInfo})
 					if isContract {
-						bytecode = append(bytecode, &ByteCode{CMD_PUSH, lexem.Value.(string)})
+						bytecode = append(bytecode, &ByteCode{CMD_PUSH, StateName((*block)[0].Info.(uint32), lexem.Value.(string))})
 						count++
 					}
 					parcount = append(parcount, count)

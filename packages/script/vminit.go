@@ -179,7 +179,7 @@ func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
 	var ok bool
 	names := strings.Split(name, `.`)
 	block := &vm.Block
-	//	fmt.Println(block.Objects)
+	//fmt.Println(block.Objects)
 	for i, name := range names {
 		ret, ok = block.Objects[name]
 		if !ok {
@@ -196,6 +196,17 @@ func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
 	return
 }
 
+func (vm *VM) getObjByNameExt(name string, state uint32) (ret *ObjInfo) {
+	var sname string
+	if name[0] != '@' {
+		sname = StateName(state, name)
+	}
+	if ret = vm.getObjByName(name); ret == nil && len(sname) > 0 {
+		ret = vm.getObjByName(sname)
+	}
+	return
+}
+
 func (vm *VM) getInParams(ret *ObjInfo) int {
 	if ret.Type == OBJ_EXTFUNC {
 		return len(ret.Value.(ExtFuncInfo).Params)
@@ -204,7 +215,12 @@ func (vm *VM) getInParams(ret *ObjInfo) int {
 }
 
 func (vm *VM) Call(name string, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
-	obj := vm.getObjByName(name)
+	var obj *ObjInfo
+	if state, ok := (*extend)[`rt_state`]; ok {
+		obj = vm.getObjByNameExt(name, state.(uint32))
+	} else {
+		obj = vm.getObjByName(name)
+	}
 	if obj == nil {
 		return nil, fmt.Errorf(`unknown function`, name)
 	}

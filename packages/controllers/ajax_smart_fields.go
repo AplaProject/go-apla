@@ -55,7 +55,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 			result.Approved = req[`approved`]
 		} else {
 			cntname := c.r.FormValue(`contract_name`)
-			contract := smart.GetContract(cntname)
+			contract := smart.GetContract(cntname, uint32(stateId))
 			if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 				err = fmt.Errorf(`there is not %s contract`, cntname)
 			} else {

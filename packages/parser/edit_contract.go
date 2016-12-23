@@ -59,12 +59,13 @@ func (p *Parser) EditContractFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
+	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"])); err != nil {
+		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+utils.Int64ToStr(int64(p.TxStateID))+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -89,7 +90,7 @@ func (p *Parser) EditContract() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-	root, err := smart.CompileBlock(p.TxMaps.String["value"])
+	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

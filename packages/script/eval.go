@@ -32,9 +32,9 @@ var (
 	evals = make(map[uint64]*EvalCode)
 )
 
-func (vm *VM) CompileEval(input string) error {
+func (vm *VM) CompileEval(input string, state uint32) error {
 	source := `func eval bool { return ` + input + `}`
-	block, err := vm.CompileBlock([]rune(source))
+	block, err := vm.CompileBlock([]rune(source), state)
 	//	fmt.Println(`Compile Eval`, err, input)
 	if err == nil {
 		crc := crc64.Checksum([]byte(input), lib.Table64)
@@ -45,13 +45,13 @@ func (vm *VM) CompileEval(input string) error {
 
 }
 
-func (vm *VM) EvalIf(input string, vars *map[string]interface{}) (bool, error) {
+func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (bool, error) {
 	if len(input) == 0 {
 		return true, nil
 	}
 	crc := crc64.Checksum([]byte(input), lib.Table64)
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
-		if err := vm.CompileEval(input); err != nil {
+		if err := vm.CompileEval(input, state); err != nil {
 			return false, err
 		}
 	}

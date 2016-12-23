@@ -59,21 +59,29 @@ func init() {
 	}})
 }
 
+func Pref2state(prefix string) (state uint32) {
+	if prefix != `global` {
+		val, _ := strconv.ParseUint(prefix, 10, 32)
+		state = uint32(val)
+	}
+	return
+}
+
 // Compiles contract source code
-func Compile(src string) error {
-	return smartVM.Compile([]rune(src))
+func Compile(src, prefix string) error {
+	return smartVM.Compile([]rune(src), Pref2state(prefix))
 }
 
-func CompileBlock(src string) (*script.Block, error) {
-	return smartVM.CompileBlock([]rune(src))
+func CompileBlock(src, prefix string) (*script.Block, error) {
+	return smartVM.CompileBlock([]rune(src), Pref2state(prefix))
 }
 
-func CompileEval(src string) error {
-	return smartVM.CompileEval(src)
+func CompileEval(src string, prefix uint32) error {
+	return smartVM.CompileEval(src, prefix)
 }
 
-func EvalIf(src string, extend *map[string]interface{}) (bool, error) {
-	return smartVM.EvalIf(src, extend)
+func EvalIf(src, prefix string, extend *map[string]interface{}) (bool, error) {
+	return smartVM.EvalIf(src, Pref2state(prefix), extend)
 }
 
 func FlushBlock(root *script.Block) {
@@ -90,7 +98,10 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 }
 
 // Returns true if the contract exists
-func GetContract(name string /*, data interface{}*/) *Contract {
+func GetContract(name string, state uint32 /*, data interface{}*/) *Contract {
+	if name[0] != '@' {
+		name = script.StateName(state, name)
+	}
 	obj, ok := smartVM.Objects[name]
 	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
 	if ok && obj.Type == script.OBJ_CONTRACT {
