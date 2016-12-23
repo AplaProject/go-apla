@@ -99,9 +99,7 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 
 // Returns true if the contract exists
 func GetContract(name string, state uint32 /*, data interface{}*/) *Contract {
-	if name[0] != '@' {
-		name = script.StateName(state, name)
-	}
+	name = script.StateName(state, name)
 	obj, ok := smartVM.Objects[name]
 	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
 	if ok && obj.Type == script.OBJ_CONTRACT {
