@@ -788,6 +788,26 @@ txlist:
 	return out
 }
 
+func getSelect(linklist string) (data []map[string]string, id string, name string, err error) {
+	var count int64
+	tbl := strings.Split(linklist, `.`)
+	tblname := lib.EscapeName(tbl[0])
+	name = tbl[1]
+	id = `id`
+	if len(tbl) > 2 {
+		id = tbl[2]
+	}
+	count, err = DB.Single(`select count(*) from ` + tblname).Int64()
+	if err != nil {
+		return
+	}
+	if count > 0 && count <= 50 {
+		data, err = DB.GetAll(fmt.Sprintf(`select %s, %s from %s order by %s`, id,
+			lib.EscapeName(name), tblname, lib.EscapeName(name)), -1)
+	}
+	return
+}
+
 func TXForm(vars *map[string]string, pars *map[string]string) string {
 	var unique int64
 	if uval, ok := (*vars)[`tx_unique`]; ok {
@@ -883,7 +903,15 @@ txlist:
 		}
 		if len(linklist) > 0 {
 			sellist := SelList{StrToInt64(value), make(map[int]string)}
-			if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+			if strings.IndexByte(linklist, '.') >= 0 {
+				if data, id, name, err := getSelect(linklist); err != nil {
+					return err.Error()
+				} else if len(data) > 0 {
+					for _, item := range data {
+						sellist.List[int(StrToInt64(item[id]))] = item[name]
+					}
+				}
+			} else if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
 				for ind, item := range alist {
 					sellist.List[ind+1] = getlang(item)
 				}
@@ -1062,7 +1090,15 @@ func Select(vars *map[string]string, pars ...string) string {
 	)
 	list := make([]SelInfo, 0)
 	if len(pars) > 1 {
-		if alist := strings.Split(StateValue(vars, pars[1]), `,`); len(alist) > 0 {
+		if strings.IndexByte(pars[1], '.') >= 0 {
+			if data, id, name, err := getSelect(pars[1]); err != nil {
+				return err.Error()
+			} else if len(data) > 0 {
+				for _, item := range data {
+					list = append(list, SelInfo{Id: StrToInt64(item[id]), Name: item[name]})
+				}
+			}
+		} else if alist := strings.Split(StateValue(vars, pars[1]), `,`); len(alist) > 0 {
 			for ind, item := range alist {
 				list = append(list, SelInfo{Id: int64(ind + 1), Name: LangText(item, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])})
 			}
