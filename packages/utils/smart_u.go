@@ -121,7 +121,7 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param,
 	})
 }
 
@@ -179,6 +179,13 @@ func BtnEdit(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<a type="button" class="btn btn-primary btn-block" 
 	            onclick="load_page('%s', {id: %d, global: 0 } )"><i class="fa fa-cog"></i></a>`,
 		pars[0], StrToInt64(pars[1]))
+}
+
+func Param(vars *map[string]string, pars ...string) string {
+	if val, ok := (*vars)[pars[0]]; ok {
+		return val
+	}
+	return ``
 }
 
 func If(vars *map[string]string, pars ...string) string {

@@ -18,10 +18,11 @@ package parser
 
 import (
 	"encoding/json"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (p *Parser) UpdFullNodesInit() error {
@@ -44,10 +45,10 @@ func (p *Parser) UpdFullNodesFront() error {
 		return p.ErrInfo(err)
 	}
 	txTime := p.TxTime
-	if p.BlockData!= nil {
+	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	if txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD {
+	if txTime-upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD {
 		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
 	}
 
@@ -130,12 +131,12 @@ func (p *Parser) UpdFullNodes() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
-	if err != nil {
-		return p.ErrInfo(err)
+	if len(newRate) > 0 {
+		_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 	}
-
 	return nil
 }
 
