@@ -215,7 +215,7 @@
 	
 	$('#send').bind('click', function () {
 		predata = {
-			'TxName' : '{{.TxType}}',
+			'TxName' : '@' + $("#countries").val() + '{{.TxType}}',
 			'StateId': $("#countries").val(),	
 		};
 		for (i = 0; i < arr.length; i++ ) {
