@@ -74,6 +74,22 @@ func (p *Parser) NewTableFront() error {
 		}
 	}
 
+	prefix := p.TxStateIDStr
+	table := p.TxStateIDStr + `_tables`
+	if p.TxMaps.Int64["global"] == 1 {
+		table = `global_tables`
+		prefix = `global`
+	}
+
+	exists, err := p.Single(`SELECT count(*) FROM "`+table+`" WHERE name = ?`, prefix+`_`+p.TxMaps.String["table_name"]).Int64()
+	log.Debug(`SELECT count(*) FROM "`+table+`" WHERE name = ?`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if exists > 0 {
+		return p.ErrInfo(`table exists`)
+	}
+
 	// must be supplemented
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["table_name"], p.TxMap["columns"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
