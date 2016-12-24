@@ -52,6 +52,8 @@ func init() {
 		"StateValue":     StateValue,
 		"Int":            Int,
 		"Str":            Str,
+		"Money":          Money,
+		"Float":          Float,
 		"Len":            Len,
 		"Sha256":         Sha256,
 		"UpdateContract": UpdateContract,
@@ -361,6 +363,14 @@ func Str(v interface{}) (ret string) {
 		ret = fmt.Sprintf(`%v`, val)
 	}
 	return
+}
+
+func Money(v interface{}) (ret decimal.Decimal) {
+	return script.ValueToDecimal(v)
+}
+
+func Float(v interface{}) (ret float64) {
+	return script.ValueToFloat(v)
 }
 
 func UpdateContract(p *Parser, name, value, conditions string) error {
