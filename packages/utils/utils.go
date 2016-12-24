@@ -2509,3 +2509,15 @@ func OutInit() {
 func Out(pars ...interface{}) {
 	OutFile.WriteString(fmt.Sprint(pars...) + "\r\n")
 }
+
+func GetPrefix(tableName, stateId string) (string, error) {
+	s := strings.Split(tableName, "_")
+	if len(s) < 2 {
+		return "", ErrInfo("incorrect table name")
+	}
+	prefix := s[0]
+	if prefix != "global" && prefix != stateId {
+		return "", ErrInfo("incorrect table name")
+	}
+	return prefix, nil
+}

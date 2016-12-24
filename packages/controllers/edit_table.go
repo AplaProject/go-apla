@@ -18,9 +18,6 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	//"encoding/json"
-	//"fmt"
-	"strings"
 )
 
 type editTablePage struct {
@@ -56,15 +53,10 @@ func (c *Controller) EditTable() (string, error) {
 		tableName = c.r.FormValue("name")
 	}
 
-	s := strings.Split(tableName, "_")
-	if len(s) < 2 {
-		return "", utils.ErrInfo("incorrect table name")
+	prefix , err := utils.GetPrefix(tableName, c.StateIdStr)
+	if err != nil {
+		return "", utils.ErrInfo(err)
 	}
-	prefix := s[0]
-	if prefix != "global" && prefix != c.StateIdStr {
-		return "", utils.ErrInfo("incorrect table name")
-	}
-
 	global := ""
 	if prefix == "global" {
 		global = "1"

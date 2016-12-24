@@ -46,25 +46,21 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(err)
 	}
 
-	fPrice, err := p.Single(`SELECT value->'new_column' FROM system_parameters WHERE name = ?`, "op_price").Int64()
+	EGSPrice, err := p.getEGSPrice(`new_column`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	// Is there a correct amount on the wallet?
+	err = p.checkSenderDLT(EGSPrice, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	prefix , err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	dltPrice := int64(fPrice / fuelRate)
-
-	// есть ли нужная сумма на кошельке
-	err = p.checkSenderDLT(dltPrice, 0)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	table := p.TxStateIDStr + `_tables`
+	table := prefix + `_tables`
 	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
 	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"])
 	if err != nil {
@@ -90,12 +86,11 @@ func (p *Parser) NewColumnFront() error {
 
 func (p *Parser) NewColumn() error {
 
-	table := ``
-	if len(p.TxMaps.String["table_name"]) >= 7 && p.TxMaps.String["table_name"][:7] == "global_" {
-		table = `global_tables`
-	} else {
-		table = p.TxStateIDStr + `_tables`
+	prefix , err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
+	table := prefix + `_tables`
 
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
 	if err != nil {

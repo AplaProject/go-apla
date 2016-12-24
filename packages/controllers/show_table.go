@@ -37,6 +37,7 @@ type showTablePage struct {
 	Columns               map[string]string
 	ColumnsAndPermissions map[string]string
 	TableName             string
+	Global string
 }
 
 func (c *Controller) ShowTable() (string, error) {
@@ -48,8 +49,15 @@ func (c *Controller) ShowTable() (string, error) {
 		tableName = c.r.FormValue("name")
 	}
 
+	global := c.r.FormValue("global")
+	prefix := c.StateIdStr
+	if global == "1" {
+		prefix = "global"
+	} else {
+		global = "0"
+	}
 	var columns map[string]string
-	columns, err = c.GetMap(`SELECT data.* FROM "`+utils.Int64ToStr(c.StateId)+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	columns, err = c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -65,6 +73,7 @@ func (c *Controller) ShowTable() (string, error) {
 		Lang:         c.Lang,
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
+		Global:       global,
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,

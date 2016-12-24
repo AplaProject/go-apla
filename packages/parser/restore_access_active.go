@@ -61,7 +61,7 @@ func (p *Parser) RestoreAccessActiveFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	// есть ли нужная сумма на кошельке
+	// Is there a correct amount on the wallet?
 	err = p.checkSenderDLT(EGSPrice, 0)
 	if err != nil {
 		return p.ErrInfo(err)
