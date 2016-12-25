@@ -486,17 +486,26 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	fields := `*`
 	order := ``
 	where := ``
+	limit := ``
 	if val, ok := (*pars)[`Order`]; ok {
 		order = `order by ` + lib.Escape(val)
 	}
 	if val, ok := (*pars)[`Where`]; ok {
 		where = `where ` + lib.Escape(val)
 	}
+	if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
+		opar := strings.Split(val, `,`)
+		if len(opar) == 1 {
+			limit = fmt.Sprintf(` limit %d`, StrToInt64(opar[0]))
+		} else {
+			limit = fmt.Sprintf(` offset %d limit %d`, StrToInt64(opar[0]), StrToInt64(opar[1]))
+		}
+	}
 	if val, ok := (*pars)[`Fields`]; ok {
 		fields = lib.Escape(val)
 	}
-	list, err := DB.GetAll(fmt.Sprintf(`select %s from %s %s %s`, fields,
-		lib.EscapeName((*pars)[`Table`]), where, order), -1)
+	list, err := DB.GetAll(fmt.Sprintf(`select %s from %s %s %s%s`, fields,
+		lib.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 	if err != nil {
 		return err.Error()
 	}
@@ -518,7 +527,9 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	for _, item := range list {
 		out += `<tr>`
 		for key, value := range item {
-			(*vars)[key] = value
+			if key != `state_id` {
+				(*vars)[key] = value
+			}
 		}
 		for _, th := range *columns {
 			val := textproc.Process(th[1], vars)
