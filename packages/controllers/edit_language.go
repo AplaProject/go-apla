@@ -37,6 +37,7 @@ type editLanguagePage struct {
 	Global   string
 	TxType   string
 	TxTypeId int64
+	Unique   string
 }
 
 type ListLangRes []LangRes
@@ -78,6 +79,6 @@ func (c *Controller) EditLanguage() (string, error) {
 		txType = "EditLang"
 	}
 	txTypeId := utils.TypeInt(txType)
-	pageData := editLanguagePage{Data: c.Data, Global: global, Name: name, List: list, TxType: txType, TxTypeId: txTypeId}
+	pageData := editLanguagePage{Data: c.Data, Global: global, Name: name, List: list, TxType: txType, TxTypeId: txTypeId, Unique: ``}
 	return proceedTemplate(c, NEditLanguage, &pageData)
 }
