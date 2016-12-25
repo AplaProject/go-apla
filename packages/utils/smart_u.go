@@ -121,7 +121,7 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
 	})
 }
 
@@ -1028,6 +1028,13 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 				  data-message="Copied to clipboard" data-options="{&quot;status&quot;:&quot;info&quot;}"></i></p>
 				  <p class="m0 text-muted">Citizen ID</p>
 		</div></div></div></div>`, image, lib.Escape(pars[0]), flag, address, address)
+}
+
+func Mult(vars *map[string]string, pars ...string) string {
+	if len(pars) != 2 {
+		return ``
+	}
+	return Int64ToStr(round(StrToFloat64(pars[0]) * StrToFloat64(pars[1])))
 }
 
 func Date(vars *map[string]string, pars ...string) string {
