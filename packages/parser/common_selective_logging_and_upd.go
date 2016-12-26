@@ -138,7 +138,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			} else if strings.HasPrefix(values[i], `timestamp `) {
 				addSqlIns1 += `timestamp '` + values[i][len(`timestamp `):] + `',`
 			} else {
-				addSqlIns1 += `'` + values[i] + `',`
+				addSqlIns1 += `'` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
 		if whereFields != nil && whereValues != nil {
