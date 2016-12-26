@@ -245,6 +245,16 @@
 		load_page('editMenu', {name: menu, global:{{.Global}}} );
 	}
 	
+	function ShowConfirm() {
+		$(".form").hide();
+		$(".formConfirm .form-control-static").text($("#page_name").val());
+		$(".formConfirm").show();
+	}
+	
+	function Edit() {
+		load_page('editPage', {name: $("#page_name").val() , global: "{{.Global}}" });
+	}
+	
 	$('#page_menu').select2({
 		minimumResultsForSearch: Infinity,
 		theme: 'bootstrap'
@@ -288,7 +298,7 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(data) { send_to_net_success({{if .DataPage.name}}data{{else}}data, ShowConfirm{{end}}) },
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
@@ -306,7 +316,7 @@
 	   <li><a href='#' onclick="load_page('interface')">Interface</a></li>
 	</ol>
 
-<div class="row">
+<div class="row form">
 	<div class="col-md-8">
 		<!-- START panel-->
 		<div class="panel panel-primary" data-sweet-alert>
@@ -385,6 +395,28 @@
 		  	</div>
 		</div>
 		<!-- END panel-->
+	</div>
+</div>
+
+<div class="formConfirm" style="display:none;">
+	<!-- START panel-->
+	<div class="panel panel-default" data-sweet-alert>
+	 <div class="panel-body">
+	   <label>Name</label>
+	   <p class="form-control-static"></p>
+	 </div>
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-left">
+			
+		  </div>
+		  <div class="pull-right">
+			 <button type="button" id="edit" class="btn btn-primary" onClick="Edit();">Edit</button>
+			 <button type="button" id="new" class="btn btn-primary" onclick="load_page('newPage', {global: {{.Global}} });">Create</button>
+			 <button type="button" id="all" class="btn btn-primary" onClick="load_page('interface');">List</button>
+		  </div>
+	   </div>
+	  </div>
 	</div>
 </div>
 

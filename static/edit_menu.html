@@ -18,6 +18,16 @@
 		$("#menu_value").val(editor.getValue());
 		editor.resize();
 	});
+	
+	function ShowConfirm() {
+		$(".form").hide();
+		$(".formConfirm .form-control-static").text($("#menu_name").val());
+		$(".formConfirm").show();
+	}
+	
+	function Edit() {
+		load_page('editMenu', {name: $("#menu_name").val() , global: "{{.Global}}" });
+	}
 
 	$('#send').bind('click', function () {
 
@@ -48,7 +58,7 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(data) { send_to_net_success({{if .DataMenu.name}}data{{else}}data, ShowConfirm{{end}}) },
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
@@ -62,42 +72,63 @@
 		<li><a href='#' onclick="load_page('interface')">Interface</a></li>
 	</ol>
 
-<div class="panel panel-primary" data-sweet-alert>
-	<div class="panel-heading">
-		<div class="panel-title">
-			Menu
+	<div class="panel panel-primary form" data-sweet-alert>
+		<div class="panel-heading">
+			<div class="panel-title">
+				Menu
+			</div>
+		</div>
+		<div class="panel-body">
+			<form role="form">
+			   <div class="form-group">
+				   <label>Name</label>
+				   {{if .DataMenu.name}} <p class="form-control-static">{{.DataMenu.name}}</p> <input type="hidden" class="form-control" id="menu_name" value="{{.DataMenu.name}}"> {{else}} <input type="text" class="form-control" id="menu_name"> {{end}}
+			   </div>
+			   <div class="form-group">
+				   <label>Value</label>
+				   <pre class="textEditor">
+						<code></code>
+						<section id="textEditor">{{.DataMenu.value}}</section>
+				   </pre>
+				   <textarea id="menu_value" class="form-control hidden"></textarea>
+			   </div>
+			   <div class="form-group">
+				   <label>Conditions for change</label>
+				   <textarea class="form-control" id="menu_conditions">{{.DataMenu.conditions}}</textarea>
+			   </div>
+			</form>
+		</div>
+		<div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-right">
+			 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Save</button>
+		  </div>
+	   </div>
+	  </div>
+	</div>
+	<!-- END panel-->
+	
+	<div class="formConfirm" style="display:none;">
+		<!-- START panel-->
+		<div class="panel panel-default" data-sweet-alert>
+		 <div class="panel-body">
+		   <label>Name</label>
+		   <p class="form-control-static"></p>
+		 </div>
+		 <div class="panel-footer">
+		   <div class="clearfix">
+			  <div class="pull-left">
+				
+			  </div>
+			  <div class="pull-right">
+				 <button type="button" id="edit" class="btn btn-primary" onClick="Edit();">Edit</button>
+				 <button type="button" id="new" class="btn btn-primary" onclick="load_page('newMenu', {global: {{.Global}} });">Create</button>
+				 <button type="button" id="all" class="btn btn-primary" onClick="load_page('interface');">List</button>
+			  </div>
+		   </div>
+		  </div>
 		</div>
 	</div>
-	<div class="panel-body">
-		<form role="form">
-		   <div class="form-group">
-			   <label>Name</label>
-			   {{if .DataMenu.name}} <p class="form-control-static">{{.DataMenu.name}}</p> <input type="hidden" class="form-control" id="menu_name" value="{{.DataMenu.name}}"> {{else}} <input type="text" class="form-control" id="menu_name"> {{end}}
-		   </div>
-		   <div class="form-group">
-			   <label>Value</label>
-			   <pre class="textEditor">
-					<code></code>
-					<section id="textEditor">{{.DataMenu.value}}</section>
-			   </pre>
-			   <textarea id="menu_value" class="form-control hidden"></textarea>
-		   </div>
-		   <div class="form-group">
-			   <label>Conditions for change</label>
-			   <textarea class="form-control" id="menu_conditions">{{.DataMenu.conditions}}</textarea>
-		   </div>
-		</form>
-	</div>
-	<div class="panel-footer">
-   <div class="clearfix">
-	  <div class="pull-right">
-		 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Save</button>
-	  </div>
-   </div>
-  </div>
-</div>
-	<!-- END panel-->
-
 <input type="hidden" id="global" value="{{.Global}}">
 
 {{template "signatures".}}

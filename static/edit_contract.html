@@ -66,6 +66,16 @@
 		}
 	});*/
 	
+	function ShowConfirm() {
+		$(".form").hide();
+		$(".formConfirm .form-control-static").text($("#name").val());
+		$(".formConfirm").show();
+	}
+	
+	function Edit() {
+		load_page('editContract', {name: $("#name").val() , global: "{{.Global}}" });
+	}
+	
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -101,12 +111,12 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(data) { send_to_net_success({{if .Data.name}}data{{else}}data, ShowConfirm{{end}}) },
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
 		});
-	} );
+	});
 	
 	if (PageName == "") {
 		$("#back").hide();
@@ -123,44 +133,68 @@
 	<ol class="breadcrumb">
 	   <li><a href="#" onclick="load_page('contracts')">Smart Contracts</a></li> {{if eq .Global "1"}}<li><a href="#" onclick="load_page('contracts', {global: 1})">Global</a></li>{{end}}
 	</ol>
-
-	<!-- START panel-->
-	<div class="panel panel-default" data-sweet-alert>
-	 <div class="panel-body">
-		<form role="form">
-		   <button type="button" class="btn btn-link" onclick="" id="back" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></button>
-		   <div class="form-group">
-			   <label>Name</label>
-			   {{if .Data.name}} <p class="form-control-static">{{.Data.name}}</p> <input type="hidden" class="form-control" id="id" value="{{.Data.id}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
+	
+	<div class="form">
+		<!-- START panel-->
+		<div class="panel panel-default" data-sweet-alert>
+		 <div class="panel-body">
+			<form role="form">
+			   <button type="button" class="btn btn-link" onclick="" id="back" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></button>
+			   <div class="form-group">
+				   <label>Name</label>
+				   {{if .Data.name}} <p class="form-control-static">{{.Data.name}}</p> <input type="hidden" class="form-control" id="id" value="{{.Data.id}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
+			   </div>
+			   <div class="form-group">
+				   <label>Value</label>
+				   <pre class="textEditor">
+						<code></code>
+						<section id="textEditor">{{.Data.value}}</section>
+					</pre>
+				   <textarea id="value" class="form-control hidden"></textarea>
+			   </div>
+			   <div class="form-group">
+				   <label>Conditions for change</label>
+				   <textarea class="form-control" id="conditions">{{.Data.conditions}}</textarea>
+			   </div>
+			</form>
+		 </div>
+	
+			<input type="hidden" id="global" value="{{.Global}}">
+	
+	
+		 <div class="panel-footer">
+		   <div class="clearfix">
+			  <div class="pull-left">
+				<button type="button" class="btn btn-default" onClick="formatCode();"><i class="fa fa-code fa-fw mr-sm" aria-hidden="true"></i>Format Code</button>
+			  </div>
+			  <div class="pull-right">
+				 <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+			  </div>
 		   </div>
-		   <div class="form-group">
-			   <label>Value</label>
-			   <pre class="textEditor">
-					<code></code>
-					<section id="textEditor">{{.Data.value}}</section>
-				</pre>
-			   <textarea id="value" class="form-control hidden"></textarea>
-		   </div>
-		   <div class="form-group">
-			   <label>Conditions for change</label>
-			   <textarea class="form-control" id="conditions">{{.Data.conditions}}</textarea>
-		   </div>
-		</form>
-	 </div>
-
-		<input type="hidden" id="global" value="{{.Global}}">
-
-
-	 <div class="panel-footer">
-	   <div class="clearfix">
-		  <div class="pull-left">
-		  	<button type="button" class="btn btn-default" onClick="formatCode();"><i class="fa fa-code fa-fw mr-sm" aria-hidden="true"></i>Format Code</button>
 		  </div>
-		  <div class="pull-right">
-			 <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+		</div>
+	</div>
+	
+	<div class="formConfirm" style="display:none;">
+		<!-- START panel-->
+		<div class="panel panel-default" data-sweet-alert>
+		 <div class="panel-body">
+		   <label>Name</label>
+		   <p class="form-control-static"></p>
+		 </div>
+		 <div class="panel-footer">
+		   <div class="clearfix">
+			  <div class="pull-left">
+				
+			  </div>
+			  <div class="pull-right">
+				 <button type="button" id="edit" class="btn btn-primary" onClick="Edit();">Edit</button>
+				 <button type="button" id="new" class="btn btn-primary" onclick="load_page('newContract');">Create</button>
+				 <button type="button" id="all" class="btn btn-primary" onClick="load_page('contracts');">List</button>
+			  </div>
+		   </div>
 		  </div>
-	   </div>
-	  </div>
+		</div>
 	</div>
 
 
