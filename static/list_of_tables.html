@@ -2,6 +2,11 @@
 <script>
 	$(".aside .nav li").removeClass("active");
 	$(".citizen, .citizen_listOfTables").addClass("active");
+	
+	function WriteTableName(name, global) {
+		TableName = name;
+		TableGlobal = global;
+	}
 </script>
 	
 	{{if not .Global}}
@@ -49,7 +54,7 @@
 					 <td class="thead"><strong>{{$value.name}}</strong></td>
 					 <td><strong>{{$value.count}}</strong></td>
 					 <td><button type="button" class="btn btn-primary" onclick="load_page('showTable', {name: {{$value.name}}, global:{{$.Global}}} )">show</button></td>
-					 <td><button type="button" class="btn btn-primary" onclick="load_page('editTable', {name: {{$value.name}}, global:{{$.Global}}} )">edit</button></td>
+					 <td><button type="button" class="btn btn-primary" onclick="load_page('editTable', {name: {{$value.name}}, global:{{$.Global}}} ); WriteTableName({{$value.name}}, {{$.Global}});">edit</button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>

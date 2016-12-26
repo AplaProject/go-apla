@@ -16,6 +16,11 @@
 		}
 	}
 	
+	function BackToEditTable() {
+		load_page('editTable', {name: TableName , global: TableGlobal });
+		TableName = "";
+	}
+	
 	$(".column_type").select2({
 		minimumResultsForSearch: Infinity,
 		theme: 'bootstrap'
@@ -53,7 +58,7 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success(data) },
+			success: function(data) { send_to_net_success(data, BackToEditTable) },
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
