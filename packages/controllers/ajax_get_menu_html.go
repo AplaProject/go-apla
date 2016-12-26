@@ -17,8 +17,6 @@
 package controllers
 
 import (
-	"regexp"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -40,13 +38,7 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-
-	qrx := regexp.MustCompile(`(?is)\[([\w\s]*)\]\(glob.([\w\s]*)\)`)
-	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_template('$2',{global:1}); HideMenu();\"><span>$1</span></a></li>")
-	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\)`)
-	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_template('$2'); HideMenu();\"><span>$1</span></a></li>")
-	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(sys.([\w\s]*)\)`)
-	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_page('$2'); HideMenu();\"><span>$1</span></a></li>")
+	menu = ReplaceMenu(menu)
 
 	return menu, nil
 }
