@@ -17,7 +17,7 @@
 package textproc
 
 import (
-	//	"fmt"
+	//"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -60,7 +60,7 @@ func replace(input string, level int, vars *map[string]string) string {
 		name = name[:0]
 	}
 	for _, r := range input {
-		if r != engine.syschar {
+		if r != engine.syschar || isFunc > 0 {
 			if isName {
 				name = append(name, r)
 				if r == '(' && isMap == 0 {
