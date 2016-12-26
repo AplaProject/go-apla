@@ -94,7 +94,7 @@ var c_cppHighlightRules = function() {
 	
 	var storageModifiersContract = (
         "Balance|Money|StateParam|StateValue|AddressToId|" +
-		"DBTransfer|DBInsert|DBUpdate|DBInt|DBAmount|DBIntExt|" +
+		"DBTransfer|DBInsert|DBUpdate|DBInt|DBAmount|DBIntExt|DBIntWhere|" +
 		"TableTx|Table|Int|Println"
     );
 
