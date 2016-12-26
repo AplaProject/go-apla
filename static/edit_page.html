@@ -148,8 +148,9 @@
 				var session = editor.session;
 				var line = session.getLine(row);
 				
-				/*var match = this.getMatchAround(/https?:\/\/[^\s"']+/g, line, column);*/
-				var match = this.getMatchAround(/Contract:\s(\w*)/i, line, column);
+				/*var match = this.getMatchAround(/https?:\/\/[^\s"']+/g, line, column);
+				var match = this.getMatchAround(/Contract:\s(\w*)/i, line, column);*/
+				var match = this.getMatchAround(/Contract:\s(@?\d*\w+)/i, line, column);
 				if (!match)
 					return;
 				
