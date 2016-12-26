@@ -25,6 +25,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"regexp"
 )
 
 const APrepareTx = `ajax_prepare_tx`
@@ -39,16 +40,46 @@ func init() {
 	newPage(APrepareTx, `json`)
 }
 
-func (c *Controller) AjaxPrepareTx() interface{} {
-	var (
-		result PrepareTxJson
-		err    error
-	)
+func (c *Controller) checkTx() (contract *smart.Contract, err error) {
 	cntname := c.r.FormValue(`TxName`)
-	contract := smart.GetContract(cntname, uint32(c.SessStateId))
+	contract = smart.GetContract(cntname, uint32(c.SessStateId))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
 	} else {
+		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+			if strings.Index(fitem.Tags, `image`) >= 0 {
+				continue
+			}
+			val := strings.TrimSpace(c.r.FormValue(fitem.Name))
+			if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
+				err = fmt.Errorf(`%s is empty`, fitem.Name)
+				break
+			}
+			if strings.Index(fitem.Tags, `address`) >= 0 {
+				addr := lib.StringToAddress(val)
+				if addr == 0 {
+					err = fmt.Errorf(`Address %s is not valid`, val)
+					break
+				}
+			}
+			if fitem.Type.String() == `decimal.Decimal` {
+				re := regexp.MustCompile(`^\d+$`)
+				if !re.Match([]byte(val)) {
+					err = fmt.Errorf(`The value of money %s is not valid`, val)
+					break
+				}
+			}
+		}
+	}
+	return
+}
+
+func (c *Controller) AjaxPrepareTx() interface{} {
+	var (
+		result PrepareTxJson
+	)
+	contract, err := c.checkTx()
+	if err == nil {
 		var flags uint8
 		var isPublic []byte
 		info := (*contract).Block.Info.(*script.ContractInfo)
@@ -67,18 +98,9 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 			if strings.Index(fitem.Tags, `image`) >= 0 {
 				continue
 			}
-			val := c.r.FormValue(fitem.Name)
-			if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
-				err = fmt.Errorf(`%s is empty`, fitem.Name)
-				break
-			}
+			val := strings.TrimSpace(c.r.FormValue(fitem.Name))
 			if strings.Index(fitem.Tags, `address`) >= 0 {
-				addr := lib.StringToAddress(val)
-				if addr == 0 {
-					err = fmt.Errorf(`Address %s is not valid`, val)
-					break
-				}
-				val = utils.Int64ToStr(addr)
+				val = utils.Int64ToStr(lib.StringToAddress(val))
 			}
 			forsign += fmt.Sprintf(",%v", val)
 		}

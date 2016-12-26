@@ -25,7 +25,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -44,15 +43,10 @@ func (c *Controller) AjaxSendTx() interface{} {
 	var (
 		result SendTxJson
 		flags  uint8
-		err    error
 	)
-	cntname := c.r.FormValue(`TxName`)
-	contract := smart.GetContract(cntname, uint32(c.SessStateId))
-	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
-		err = fmt.Errorf(`there is not %s contract`, cntname)
-	} else {
+	contract, err := c.checkTx()
+	if err == nil {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
-
 		userId := uint64(c.SessWalletId)
 		sign := make([]byte, 0)
 		for i := 1; i <= 3; i++ {
@@ -94,18 +88,9 @@ func (c *Controller) AjaxSendTx() interface{} {
 			if err == nil {
 			fields:
 				for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
-					val := c.r.FormValue(fitem.Name)
-					if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
-						err = fmt.Errorf(`%s is empty`, fitem.Name)
-						break
-					}
+					val := strings.TrimSpace(c.r.FormValue(fitem.Name))
 					if strings.Index(fitem.Tags, `address`) >= 0 {
-						addr := lib.StringToAddress(val)
-						if addr == 0 {
-							err = fmt.Errorf(`Address %s is not valid`, val)
-							break
-						}
-						val = utils.Int64ToStr(addr)
+						val = utils.Int64ToStr(lib.StringToAddress(val))
 					}
 					switch fitem.Type.String() {
 					case `uint64`:
