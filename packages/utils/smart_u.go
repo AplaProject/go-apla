@@ -193,10 +193,11 @@ func If(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	var sep string
-	if strings.Index(pars[0], `==`) >= 0 {
-		sep = `==`
-	} else if strings.Index(pars[0], `!=`) >= 0 {
-		sep = `!=`
+	for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
+		if strings.Index(pars[0], item) >= 0 {
+			sep = item
+			break
+		}
 	}
 	cond := []string{pars[0]}
 	if len(sep) > 0 {
@@ -215,6 +216,23 @@ func If(vars *map[string]string, pars ...string) string {
 	case `!=`:
 		if len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1]) {
 			return pars[1]
+		}
+	case `>`, `<`, `<=`, `>=`:
+		ret0, _ := decimal.NewFromString(cond[0])
+		ret1, _ := decimal.NewFromString(cond[1])
+		if len(cond) == 2 {
+			var bin bool
+			if sep == `>` || sep == `<=` {
+				bin = ret0.Cmp(ret1) > 0
+			} else {
+				bin = ret0.Cmp(ret1) < 0
+			}
+			if sep == `<=` || sep == `>=` {
+				bin = !bin
+			}
+			if bin {
+				return pars[1]
+			}
 		}
 	}
 	if len(pars) > 2 {
