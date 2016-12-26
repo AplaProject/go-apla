@@ -201,6 +201,7 @@ func If(vars *map[string]string, pars ...string) string {
 	cond := []string{pars[0]}
 	if len(sep) > 0 {
 		cond = strings.SplitN(pars[0], sep, 2)
+		cond[0], cond[1] = strings.Trim(cond[0], `"`), strings.Trim(cond[1], `"`)
 	}
 	switch sep {
 	case ``:
