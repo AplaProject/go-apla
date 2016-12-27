@@ -6,42 +6,42 @@ SetVar(
 	type_new_column_id = TxId(NewColumn),
 	sc_conditions = "$citizen == #wallet_id#",
     sc_value1 = `contract SendMoney {
-                 tx {
+                 data {
                          RecipientAccountId int
                          Amount money
                  }
 
-				 func front {
+				 func conditions {
 				 	if DBAmount(Table("accounts"),"citizen_id", $citizen ) < $Amount {
 					 	error "not enough money"
 					}
 				 }
-               	func main {
+               	func action {
 				    var sender_id int
                  	sender_id  = DBIntExt( Table("accounts"), "id", $citizen, "citizen_id")
 			        DBTransfer(Table("accounts"), "amount,id", sender_id, $RecipientAccountId, $Amount)
                  }
 }`,
     sc_value2 = `contract AddAccount {
-                 	tx {
+                 	data {
                  	    CitizenId string
                      }
-					func front {
+					func conditions {
 						if AddressToId($CitizenId)==0 {
 							error "not valid citizen id"
 						}
 					}
-                 	func main {
+                 	func action {
                         DBInsert(Table( "accounts"), "citizen_id", AddressToId($CitizenId))
                  	}
                  }`,
     sc_value3 = `contract UpdAmount {
-                 	tx {
+                 	data {
                          AccountId int
                          Amount money
                      }
 
-                 	func main {
+                 	func action {
                          DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
                  	}
                  }`,

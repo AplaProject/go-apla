@@ -163,7 +163,7 @@ func (p *Parser) NewState() error {
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
 		(?, ?),(?, ?),(?,?),(?,?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
-	tx {
+	data {
 		StateId    int    "hidden"
 		FullName   string
  		MiddleName string
@@ -171,25 +171,25 @@ func (p *Parser) NewState() error {
   		BirthDate   string "date"
   		BirthPlace   string "map"	
 	}
-	func front {
+	func conditions {
 		if Balance($wallet) < Money(StateParam($StateId, "citizenship_price")) {
 			error "not enough money"
 		}
 	}
-	func main {
+	func action {
 		DBInsert(TableTx( "citizenship_requests"), "dlt_wallet_id,name,block_id,mname,gender,birthday,birthplace", 
 		    $wallet, $FullName, $block, $MiddleName, $Gender, $BirthDate, $BirthPlace )
 	}
 }`, `TXNewCitizen`, `contract TXNewCitizen {
-	tx {
+	data {
         RequestId int
     }
- 	func front {
+ 	func conditions {
 		if Balance(DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )) < Money(StateParam($state, "citizenship_price")) {
 			error "not enough money"
 		}
 	}
-	func main {
+	func action {
 		var wallet int
 		var towallet int
 		wallet = DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )
@@ -203,31 +203,31 @@ func (p *Parser) NewState() error {
         DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
 	}	
 }`, `TXRejectCitizen`, `contract TXRejectCitizen {
-   tx { 
+   data { 
         RequestId int
    }
-   func main { 
+   func action { 
 	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
    }
 }`, `TXEditProfile`, `contract TXEditProfile {
-	tx {
+	data {
 		FirstName  string
 	}
 	func init {
 	}
-	func front {
+	func conditions {
 
 	}
-	func main {
+	func action {
 	  DBUpdate(Table( "citizens"), $citizen, "name", $FirstName)
 	}
 }`, `TXTest`, `contract TXTest {
-	tx {
+	data {
 		Name string 
 		Company string "optional"
 		Coordinates string "map"
 	}
-	func main {
+	func action {
 		Println("TXTest main")
 	}
 }`,

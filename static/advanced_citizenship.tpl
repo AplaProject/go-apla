@@ -4,7 +4,7 @@ SetVar(
 	typeid = TxId(EditContract),
 	typecolid = TxId(NewColumn),
 	sc_value = `contract TXEditProfile {
-	tx {
+	data {
 		NickName  string
 		Image string "image"
 		PlaceOfBirth  string "map"
@@ -13,7 +13,7 @@ SetVar(
 		DateOfIssue  string "date"
 		DateOfExpiry  string "date"
 	}
-	func main {
+	func action {
 	  DBUpdate(Table( "citizens"), $citizen, "name,avatar,place_of_birth,date_of_birth,gender,date_of_issue,date_of_expiry", $NickName, $Image, $PlaceOfBirth, $DateOfBirth, $Gender, $DateOfIssue, $DateOfExpiry)
 	}
 }`
