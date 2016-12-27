@@ -92,6 +92,10 @@ snippet DBIntExt()\n\
 snippet DBIntWhere()\n\
 	DBIntWhere(${1:/*code*/})\n\
 \n\
+# func DBGetList \n\
+snippet DBGetList()\n\
+	DBGetList(${1:/*code*/})\n\
+\n\
 # func TableTx \n\
 snippet TableTx()\n\
 	TableTx(${1:/*code*/})\n\
