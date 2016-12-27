@@ -60,6 +60,16 @@
 			});
 		}
 		
+		function ShowConfirm() {
+			$(".form").hide();
+			$(".formConfirm .form-control-static").text("1_" + $("#tableName").val());
+			$(".formConfirm").show();
+		}
+		
+		function Edit() {
+			load_page('editTable', {name: "1_" + $("#tableName").val(), global:{{.Global}}} );
+		}
+		
 		$('#send').bind('click', function () {
 
 			/*columns = [];
@@ -108,7 +118,7 @@
 				},
 				dataType: 'json',
 				crossDomain: true,
-				success: function(data) { send_to_net_success(data) },
+				success: function(data) { send_to_net_success(data, ShowConfirm) },
 				error: function(xhr, status, error) {
 					Alert("Error", error, "error");
 				}
@@ -123,7 +133,7 @@
 		<li><a href="#" onclick="load_page('listOfTables')">List Of Tables</a></li>{{if eq .Global "1"}}<li><a href="#" onclick="load_page('listOfTables', {global: 1})">Global</a></li>{{end}}
 	</ol>
 	<!-- START panel-->
-	<div class="panel panel-default" data-sweet-alert>
+	<div class="panel panel-default form" data-sweet-alert>
 		<div class="panel-heading">
 			<div class="panel-title">
 				<input id="tableName" class="form-control" type="text" value="" placeholder="Table name">
@@ -152,6 +162,48 @@
 		  </div>
 	   </div>
 	  </div>
+	</div>
+	
+	<div class="formConfirm" style="display:none;">
+		<!-- START panel-->
+		<div class="panel panel-default" data-sweet-alert>
+		 <div class="panel-body">
+		   <label>Name</label>
+		   <p class="form-control-static"></p>
+			<div class="table-responsive">
+				<table class="table table-striped table-bordered table-hover">
+				  <thead>
+					  <tr>
+					  {{ range $name, $permissions := .Columns }}
+						  <td class="thead"><strong>{{$name}}</strong></td>
+					  {{end}}
+					  </tr>
+				   <thead>
+				   <tbody>
+					  {{ range $data := .TableData }}
+					  <tr>
+						  {{ range $name, $permissions := $.Columns }}
+						  <td class="thead"><strong>{{index $data $name}}</strong></td>
+						  {{end}}
+					  </tr>
+					  {{end}}
+				  </tbody>
+			   </table>
+			</div>
+		 </div>
+		 <div class="panel-footer">
+		   <div class="clearfix">
+			  <div class="pull-left">
+				
+			  </div>
+			  <div class="pull-right">
+				 <button type="button" id="edit" class="btn btn-primary" onClick="Edit();">Edit</button>
+				 <button type="button" id="new" class="btn btn-primary" onclick="load_page('newTable', {global: {{.Global}} });">Create</button>
+				 <button type="button" id="all" class="btn btn-primary" onClick="load_page('listOfTables');">List</button>
+			  </div>
+		   </div>
+		  </div>
+		</div>
 	</div>
 
 	<input id="global" type="hidden" value="{{.Global}}">

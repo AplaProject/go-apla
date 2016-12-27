@@ -55,20 +55,22 @@
 	 <div class="panel-body">
 		<div class="table-responsive">
 			<table class="table table-striped table-bordered table-hover">
-			  <tbody>
-			  <tr>
-			  {{ range $name, $permissions := .Columns }}
-			  	  <td class="thead"><strong>{{$name}}</strong></td>
-			  {{end}}
-			  </tr>
-
-			  {{ range $data := .TableData }}
-			  <tr>
-				  {{ range $name, $permissions := $.Columns }}
-				  <td class="thead"><strong>{{index $data $name}}</strong></td>
+			  <thead>
+				  <tr>
+				  {{ range $name, $permissions := .Columns }}
+					  <td class="thead"><strong>{{$name}}</strong></td>
 				  {{end}}
-			  </tr>
-			  {{end}}
+				  </tr>
+			  </thead>
+			  <tbody>
+				  {{ range $data := .TableData }}
+				  <tr>
+					  {{ range $name, $permissions := $.Columns }}
+					  <td class="thead"><strong>{{index $data $name}}</strong></td>
+					  {{end}}
+				  </tr>
+				  {{end}}
+			  </tbody>
 			  <!--<tr>
 				 <td>
 					<pre class="textEditor">

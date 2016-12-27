@@ -52,8 +52,14 @@ func (c *Controller) EditContract() (string, error) {
 
 	id := utils.StrToInt64(c.r.FormValue("id"))
 	name := c.r.FormValue("name")
+	if len(name) > 0 && name[:1] == `@` {
+		name = name[1:]
+	}
 	if len(name) > 0 && !utils.CheckInputData_(name, "string", "") {
 		return "", utils.ErrInfo("Incorrect name")
+	}
+	if global == "0" && id == 0 {
+		name = name[1:]
 	}
 	var data map[string]string
 	var err error

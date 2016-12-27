@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
 
 type cacheLang struct {
@@ -70,4 +71,49 @@ func LangText(in string, state int, accept string) string {
 		return (*lres)[lng]
 	}
 	return in
+}
+
+func LangMacro(input string, state int, accept string) string {
+	if len(input) == 0 {
+		return input
+	}
+	syschar := '$'
+	length := utf8.RuneCountInString(input)
+	result := make([]rune, 0, length)
+	isName := false
+	name := make([]rune, 0, 128)
+	clearname := func() {
+		result = append(append(result, syschar), name...)
+		isName = false
+		name = name[:0]
+	}
+	for _, r := range input {
+		if r != syschar {
+			if isName {
+				name = append(name, r)
+				if len(name) > 64 || r < ' ' {
+					clearname()
+				}
+			} else {
+				result = append(result, r)
+			}
+			continue
+		}
+		if isName {
+			value := LangText(string(name), state, accept)
+			if value != string(name) {
+				result = append(result, []rune(value)...)
+				isName = false
+			} else {
+				result = append(append(result, syschar), name...)
+			}
+			name = name[:0]
+		} else {
+			isName = true
+		}
+	}
+	if isName {
+		result = append(append(result, syschar), name...)
+	}
+	return string(result)
 }
