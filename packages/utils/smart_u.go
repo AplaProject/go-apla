@@ -318,10 +318,16 @@ func FullScreen(vars *map[string]string, pars ...string) string {
 }
 
 func GetRowVars(vars *map[string]string, pars ...string) string {
-	if len(pars) != 4 {
+	if len(pars) != 4 && len(pars) != 3 {
 		return ``
 	}
-	value, err := DB.OneRow(`select * from ` + lib.EscapeName(pars[1]) + ` where ` + lib.EscapeName(pars[2]) + `='` + lib.Escape(pars[3]) + `'`).String()
+	where := ``
+	if len(pars) == 4 {
+		where = ` where ` + lib.EscapeName(pars[2]) + `='` + lib.Escape(pars[3]) + `'`
+	} else if len(pars) == 3 {
+		where = ` where ` + lib.Escape(pars[2])
+	}
+	value, err := DB.OneRow(`select * from ` + lib.EscapeName(pars[1]) + where).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -338,6 +344,8 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	where := ``
 	if len(pars) == 4 {
 		where = ` where ` + lib.EscapeName(pars[2]) + `='` + lib.Escape(pars[3]) + `'`
+	} else if len(pars) == 3 {
+		where = ` where ` + lib.Escape(pars[2])
 	}
 	value, err := DB.Single(`select ` + lib.Escape(pars[0]) + ` from ` + lib.EscapeName(pars[1]) + where).String()
 	if err != nil {
