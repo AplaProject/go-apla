@@ -97,7 +97,7 @@ func TestVMCompile(t *testing.T) {
 
 								ret = GetMap()
 					//			Println(ret)
-					//			Println("Ooops", ret["par0"], ret["par1"])
+								//Println("Ooops", ret["par0"], ret["par1"])
 								my["par1"] = "my value" + proc(" space ")
 								my["par2"] = 203 * (100-86)
 								return Sprintf("result=%s+%d+%s+%s+%d", ret["par1"], my["par2"] + 32, my["par1"], proc($glob["test"]), $glob["number"] )
@@ -127,15 +127,15 @@ func TestVMCompile(t *testing.T) {
 										return Sprintf("val=%d", i)
 									}`, `loop`, `val=125`},
 		{`contract my {
-													tx {
+													data {
 														Par1 int
 														Par2 string
 													}
-													func front {
+													func conditions {
 														Println("Front", $Par1)
 										//				my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
 													}
-													func main {
+													func action {
 														Println("Main", $Par2, $ext)
 													}
 												}
@@ -175,7 +175,7 @@ func TestVMCompile(t *testing.T) {
 															return "OK"
 														}`, `err_test`, `Error message err_test`},
 		{`contract my {
-																tx {
+																data {
 																	PublicKey  bytes
 																	FirstName  string
 																	MiddleName string "optional"

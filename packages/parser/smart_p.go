@@ -139,7 +139,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		}
 	}
 
-	methods := []string{`init`, `front`, `main`, `rollback`}
+	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	p.TxContract.Extend = p.getExtend()
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {

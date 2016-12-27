@@ -355,7 +355,7 @@ func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
 func fTx(buf *[]*Block, state int, lexem *Lexem) error {
 	contract := (*buf)[len(*buf)-1]
 	if contract.Type != OBJ_CONTRACT {
-		return fmt.Errorf(`tx can be only in contract`)
+		return fmt.Errorf(`data can only be in contract`)
 	}
 	(*contract).Info.(*ContractInfo).Tx = new([]*FieldInfo)
 	return nil

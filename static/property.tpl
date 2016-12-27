@@ -6,35 +6,35 @@ SetVar(
 	type_new_table_id = TxId(NewTable),
 	sc_conditions = "$citizen == #wallet_id#",
     sc_value1 = `contract AddProperty {
-                 	tx {
+                 	data {
                          Coords string "polymap"
                  	CitizenId string
                  	Name string
 
                      }
-                    func front {
+                    func conditions {
                  	    if AddressToId($CitizenId) == 0 {
                             error "invalid address"
                        }
 
                  	}
-                 	func main {
+                 	func action {
                  		DBInsert(Table( "property"), "coords,citizen_id,name", $Coords, AddressToId($CitizenId), $Name)
                  	}
                  }`,
     sc_value2 = `contract EditProperty {
-                 	tx {
+                 	data {
                  		PropertyId  int
                  	        Coords string "polymap"
                  	        CitizenId string
                  	        Name string
                  	}
-                 	func front {
+                 	func conditions {
                                if AddressToId($CitizenId) == 0 {
                                                 error "invalid address"
                                 }
                     }
-                 	func main {
+                 	func action {
                  	  DBUpdate(Table( "property"), $PropertyId, "coords,citizen_id,name", $Coords, AddressToId($CitizenId), $Name)
                  	}
                  }`,

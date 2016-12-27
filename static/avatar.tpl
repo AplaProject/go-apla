@@ -4,11 +4,11 @@ SetVar(
 	typeid = TxId(EditContract),
 	typecolid = TxId(NewColumn),
 	sc_value = `contract TXEditProfile {
-	tx {
+	data {
 		FirstName  string
 		Image string "image"
 	}
-	func main {
+	func action {
 	  DBUpdate(Table( "citizens"), $citizen, "name,avatar", $FirstName, $Image)
   	  Println("TXEditProfile new")
 	}

@@ -126,7 +126,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	for i, ipar := range pars {
 		(*rt.extend)[ipar] = params[i]
 	}
-	for _, method := range []string{`init`, `front`, `main`} {
+	for _, method := range []string{`init`, `conditions`, `action`} {
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == OBJ_FUNC {
 			rtemp := rt.vm.RunInit()
 			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
