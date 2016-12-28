@@ -1370,6 +1370,11 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 			//			fmt.Println(`TYPES`, reflect.TypeOf(a), reflect.TypeOf(b))
 			return a.(int) + b.(int)
 		},
+		"replaceBr": func(text string)  template.HTML {
+			text = strings.Replace(text, `\n`, "<br>", -1)
+			text = strings.Replace(text, `\t`, "&nbsp;&nbsp;&nbsp;&nbsp;", -1)
+			return template.HTML(text)
+		},
 		"noescape": func(s string) template.HTML {
 			return template.HTML(s)
 		},

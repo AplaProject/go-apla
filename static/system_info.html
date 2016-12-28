@@ -140,7 +140,7 @@
 					{{range $i, $data := .Rollback}}
 					<tr>
 						{{range $i, $data1 := $data}}
-						<td>{{$data1}}</td>
+						<td>{{replaceBr $data1}}</td>
 						{{end}}
 					</tr>
 					{{end}}

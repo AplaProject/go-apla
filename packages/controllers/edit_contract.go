@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"regexp"
 )
 
 type editContractPage struct {
@@ -52,14 +53,21 @@ func (c *Controller) EditContract() (string, error) {
 
 	id := utils.StrToInt64(c.r.FormValue("id"))
 	name := c.r.FormValue("name")
-	if len(name) > 0 && name[:1] == `@` {
-		name = name[1:]
-	}
-	if len(name) > 0 && !utils.CheckInputData_(name, "string", "") {
-		return "", utils.ErrInfo("Incorrect name")
-	}
-	if global == "0" && id == 0 {
-		name = name[1:]
+	if (id == 0) {
+		// @ - global or alien state
+		if len(name) > 0 && name[:1] == `@` {
+			name = name[1:]
+			r, _ := regexp.Compile(`([0-9]+)`)
+			stateId := r.FindString(name)
+			if len(stateId) > 0 {
+				prefix = stateId
+			}
+			r, _ = regexp.Compile(`([\w]+)`)
+			name = r.FindString(name)
+		}
+		if len(name) > 0 && !utils.CheckInputData_(name, "string", "") {
+			return "", utils.ErrInfo("Incorrect name")
+		}
 	}
 	var data map[string]string
 	var err error

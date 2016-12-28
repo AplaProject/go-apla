@@ -373,6 +373,14 @@
 			  </div>
 		   </div>
 		  </div>
+
+			{{if .DataPageHistory}}
+				{{range $data := .DataPageHistory }}
+					{{$data.block_id}}<br>
+					{{$data.conditions}}<br>
+					{{$data.value}}<br><br><br>
+				{{end}}
+			{{end}}
 		</div>
 	</div>
 	<div class="col-md-4 two_col">

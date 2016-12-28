@@ -334,6 +334,11 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 	funcMap := template.FuncMap{
+		"replaceBr": func(text string)  template.HTML {
+			text = strings.Replace(text, `\n`, "<br>", -1)
+			text = strings.Replace(text, `\t`, "&nbsp;&nbsp;&nbsp;&nbsp;", -1)
+			return template.HTML(text)
+		},
 		"makeCurrencyName": func(currencyId int64) string {
 			if currencyId >= 1000 {
 				return ""

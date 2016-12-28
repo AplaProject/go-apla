@@ -20,6 +20,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"encoding/json"
 	//"fmt"
+	"encoding/json"
+	"fmt"
 )
 
 type editPagePage struct {
@@ -35,6 +37,7 @@ type editPagePage struct {
 	TimeNow      int64
 	DataMenu     map[string]string
 	DataPage     map[string]string
+	DataPageHistory    []map[string]string
 	AllMenu      []map[string]string
 	StateId      int64
 	Global       string
@@ -61,12 +64,35 @@ func (c *Controller) EditPage() (string, error) {
 		name = c.r.FormValue("name")
 	}
 
-	dataPage, err := c.OneRow(`SELECT * FROM "`+prefix+`_pages" WHERE name = ?`, name).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
+	var dataPageMain map[string]string
+	var dataPageHistory []map[string]string
+	var rbId int64
+	for i:=0; i<10; i++ {
+		if i==0 {
+			dataPage, err := c.OneRow(`SELECT * FROM "` + prefix + `_pages" WHERE name = ?`, name).String()
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
+			rbId = utils.StrToInt64(dataPage["rb_id"])
+			dataPageMain = dataPage
+		} else {
+			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbId).String()
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
+			var messageMap map[string]string
+			json.Unmarshal([]byte(data["data"]), &messageMap)
+			fmt.Printf("%s", messageMap)
+			rbId = utils.StrToInt64(messageMap["rb_id"])
+			messageMap["block_id"] = data["block_id"]
+			dataPageHistory = append(dataPageHistory, messageMap)
+		}
+		if rbId == 0 {
+			break
+		}
 	}
 
-	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, dataPage["menu"]).String()
+	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, dataPageMain["menu"]).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -91,7 +117,8 @@ func (c *Controller) EditPage() (string, error) {
 		StateId:      c.SessStateId,
 		AllMenu:      allMenu,
 		DataMenu:     dataMenu,
-		DataPage:     dataPage})
+		DataPage:     dataPageMain,
+		DataPageHistory:     dataPageHistory})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
