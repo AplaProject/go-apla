@@ -295,7 +295,7 @@
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
 			{{end}}{{if eq .HtmlType "hidden"}}
-			<input id="{{.Name}}{{.Unique}}" name="{{.Name}}" type="hidden" value="{{.Value}}">
+			<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="hidden" value="{{.Value}}">
 			{{end}} {{if eq .HtmlType "address"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" data-type="wallet" class="form-control address">
