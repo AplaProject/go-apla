@@ -114,9 +114,9 @@ func init() {
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: P, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
-		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink,
+		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
-		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript,
+		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
@@ -188,35 +188,26 @@ func Param(vars *map[string]string, pars ...string) string {
 	return ``
 }
 
-func If(vars *map[string]string, pars ...string) string {
-	if len(pars) < 2 {
-		return ``
-	}
+func ifValue(val string) bool {
 	var sep string
 	for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
-		if strings.Index(pars[0], item) >= 0 {
+		if strings.Index(val, item) >= 0 {
 			sep = item
 			break
 		}
 	}
-	cond := []string{pars[0]}
+	cond := []string{val}
 	if len(sep) > 0 {
-		cond = strings.SplitN(pars[0], sep, 2)
+		cond = strings.SplitN(val, sep, 2)
 		cond[0], cond[1] = strings.Trim(cond[0], `"`), strings.Trim(cond[1], `"`)
 	}
 	switch sep {
 	case ``:
-		if len(pars[0]) > 0 && pars[0] != `0` && pars[0] != `false` {
-			return pars[1]
-		}
+		return len(val) > 0 && val != `0` && val != `false`
 	case `==`:
-		if len(cond) == 2 && strings.TrimSpace(cond[0]) == strings.TrimSpace(cond[1]) {
-			return pars[1]
-		}
+		return len(cond) == 2 && strings.TrimSpace(cond[0]) == strings.TrimSpace(cond[1])
 	case `!=`:
-		if len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1]) {
-			return pars[1]
-		}
+		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
 		ret0, _ := decimal.NewFromString(cond[0])
 		ret1, _ := decimal.NewFromString(cond[1])
@@ -230,10 +221,58 @@ func If(vars *map[string]string, pars ...string) string {
 			if sep == `<=` || sep == `>=` {
 				bin = !bin
 			}
-			if bin {
-				return pars[1]
-			}
+			return bin
 		}
+	}
+	return false
+}
+
+func And(vars *map[string]string, pars ...string) string {
+	for _, item := range pars {
+		if !ifValue(item) {
+			return `0`
+		}
+	}
+	return `1`
+}
+
+func Or(vars *map[string]string, pars ...string) string {
+	for _, item := range pars {
+		if ifValue(item) {
+			return `1`
+		}
+	}
+	return `0`
+}
+
+func CmpTime(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	prepare := func(val string) string {
+		val = strings.Replace(val, `T`, ` `, -1)
+		if len(val) > 19 {
+			val = val[:19]
+		}
+		return val
+	}
+	left := prepare(pars[0])
+	right := prepare(pars[1])
+	if left == right {
+		return `0`
+	}
+	if left < right {
+		return `-1`
+	}
+	return `1`
+}
+
+func If(vars *map[string]string, pars ...string) string {
+	if len(pars) < 2 {
+		return ``
+	}
+	if ifValue(pars[0]) {
+		return pars[1]
 	}
 	if len(pars) > 2 {
 		return pars[2]
