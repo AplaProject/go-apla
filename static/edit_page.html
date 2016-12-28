@@ -378,7 +378,7 @@
 				{{range $data := .DataPageHistory }}
 					{{$data.block_id}}<br>
 					{{$data.conditions}}<br>
-					{{$data.value}}<br>
+					{{noescape $data.value}}<br>
 					<button type="button" class="btn btn-primary">Restore</button>
 					<br><br>
 				{{end}}
