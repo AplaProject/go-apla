@@ -158,6 +158,15 @@
 			   </div>
 			</form>
 		 </div>
+
+
+			{{if .DataContractHistory}}
+			{{range $data := .DataContractHistory }}
+			{{$data.block_id}}<br>
+			{{$data.conditions}}<br>
+			{{$data.value}}<br><br><br>
+			{{end}}
+			{{end}}
 	
 			<input type="hidden" id="global" value="{{.Global}}">
 	

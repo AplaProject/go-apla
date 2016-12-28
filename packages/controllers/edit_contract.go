@@ -19,6 +19,8 @@ package controllers
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
+	"encoding/json"
+	"fmt"
 )
 
 type editContractPage struct {
@@ -28,6 +30,7 @@ type editContractPage struct {
 	CountSignArr []int
 	Lang         map[string]string
 	Data         map[string]string
+	DataContractHistory    []map[string]string
 	WalletId     int64
 	CitizenId    int64
 	TxType       string
@@ -69,17 +72,39 @@ func (c *Controller) EditContract() (string, error) {
 			return "", utils.ErrInfo("Incorrect name")
 		}
 	}
+
 	var data map[string]string
+	var dataContractHistory []map[string]string
+	var rbId int64
 	var err error
-	if id != 0 {
-		data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
-		if err != nil {
-			return "", utils.ErrInfo(err)
+	for i:=0; i<10; i++ {
+		if i==0 {
+			if id != 0 {
+				data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
+				if err != nil {
+					return "", utils.ErrInfo(err)
+				}
+			} else {
+				data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
+				if err != nil {
+					return "", utils.ErrInfo(err)
+				}
+			}
+			rbId = utils.StrToInt64(data["rb_id"])
+		} else {
+			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbId).String()
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
+			var messageMap map[string]string
+			json.Unmarshal([]byte(data["data"]), &messageMap)
+			fmt.Printf("%s", messageMap)
+			rbId = utils.StrToInt64(messageMap["rb_id"])
+			messageMap["block_id"] = data["block_id"]
+			dataContractHistory = append(dataContractHistory, messageMap)
 		}
-	} else {
-		data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
-		if err != nil {
-			return "", utils.ErrInfo(err)
+		if rbId == 0 {
+			break
 		}
 	}
 
@@ -90,6 +115,7 @@ func (c *Controller) EditContract() (string, error) {
 		SignData:     "",
 		WalletId:     c.SessWalletId,
 		Data:         data,
+		DataContractHistory:         dataContractHistory,
 		Global:       global,
 		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
