@@ -91,7 +91,7 @@ func replace(input string, level int, vars *map[string]string) string {
 						isName = false
 						name = name[:0]
 					}
-				} else if len(name) > 64 || r < ' ' || (r == ' ' && isFunc == 0 && isMap == 0) {
+				} else if (len(name) > 64 && isFunc == 0) || r < ' ' || (r == ' ' && isFunc == 0 && isMap == 0) {
 					clearname()
 				}
 			} else {
