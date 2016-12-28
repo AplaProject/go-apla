@@ -42,6 +42,8 @@ func TestDo(t *testing.T) {
 	AddFuncs(&map[string]TextFunc{`FullName`: FullName, `AsIs`: AsIs})
 	AddMaps(&map[string]MapFunc{`Map1`: Map1, `Table1`: Table1})
 	input := []TestText{
+		{`FullName(Param, qwert) test #FullName(Test, #val1#) OK(eeee) #string# FullName(qqq, #var#)`,
+			`Param qwert test Test строка 1 OK(eeee) #string# qqq строка 1 + test строка 1 test`},
 		{`test #Map1{href: http://google.com, Name: "test, quote"} and #NoFunc()`, `test (http://google.com:test, quote) and #NoFunc()`},
 		{`test #FullName(First Name, Last Name) and #NoFunc() and #AsIs("(finish)")`, `test First Name Last Name and #NoFunc() and (finish)`},
 		{`test #string#`, `test #string#`},

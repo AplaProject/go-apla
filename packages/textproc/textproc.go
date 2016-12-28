@@ -17,7 +17,7 @@
 package textproc
 
 import (
-	//"fmt"
+	//	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -91,10 +91,35 @@ func replace(input string, level int, vars *map[string]string) string {
 						isName = false
 						name = name[:0]
 					}
-				} else if len(name) > 64 || r < ' ' {
+				} else if len(name) > 64 || r < ' ' || (r == ' ' && isFunc == 0 && isMap == 0) {
 					clearname()
 				}
 			} else {
+				if r == '(' {
+					name = name[:0]
+					for i := len(result) - 1; i >= 0; i-- {
+						if (result[i] >= 'a' && result[i] <= 'z') ||
+							(result[i] >= 'A' && result[i] <= 'Z') {
+							name = append(name, result[i])
+						} else {
+							break
+						}
+					}
+					if len(name) > 0 {
+						for i, j := 0, len(name)-1; i < j; i, j = i+1, j-1 {
+							name[i], name[j] = name[j], name[i]
+						}
+						if _, ok := engine.funcs[string(name)]; ok {
+							isName = true
+							isFunc++
+							result = result[:len(result)-len(name)]
+							name = append(name, '(')
+							continue
+						}
+						name = name[:0]
+					}
+
+				}
 				result = append(result, r)
 			}
 			continue

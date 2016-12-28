@@ -598,10 +598,10 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 			}
 		}
 		for _, th := range *columns {
-			val := textproc.Process(th[1], vars)
-			if val == `NULL` {
-				val = textproc.Macro(th[1], vars)
-			}
+			//			val := textproc.Process(th[1], vars)
+			//			if val == `NULL` {
+			val := textproc.Macro(th[1], vars)
+			//			}
 			out += `<td>` + strings.Replace(val, "\n", "\n<br>", -1) + `</td>`
 		}
 		out += `</tr>`
