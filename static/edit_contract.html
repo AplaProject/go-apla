@@ -160,15 +160,7 @@
 		 </div>
 
 
-			{{if .DataContractHistory}}
-			{{range $data := .DataContractHistory }}
-			{{$data.block_id}}<br>
-			{{$data.conditions}}<br>
-			{{noescape $data.value}}<br>
-			<button type="button" class="btn btn-primary">Restore</button>
-			<br><br>
-			{{end}}
-			{{end}}
+
 	
 			<input type="hidden" id="global" value="{{.Global}}">
 	
@@ -184,6 +176,17 @@
 		   </div>
 		  </div>
 		</div>
+
+		{{if .DataContractHistory}}
+		{{range $data := .DataContractHistory }}
+		{{$data.block_id}}<br>
+		{{$data.conditions}}<br>
+		{{noescape $data.value}}<br>
+		<button type="button" class="btn btn-primary">Restore</button>
+		<br><br>
+		{{end}}
+		{{end}}
+
 	</div>
 	
 	<div class="formConfirm" style="display:none;">
