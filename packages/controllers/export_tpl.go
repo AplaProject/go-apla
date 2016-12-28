@@ -31,7 +31,8 @@ const NExportTpl = `export_tpl`
 
 type exportInfo struct {
 	//	Id   int    `json:"id"`
-	Name string `json:"name"`
+	Name   string `json:"name"`
+	Global bool   `json:"global"`
 }
 
 type exportTplPage struct {
@@ -46,15 +47,16 @@ func init() {
 	newPage(NExportTpl)
 }
 
-func (c *Controller) getList(table string) (*[]exportInfo, error) {
+func (c *Controller) getList(table, prefix string) (*[]exportInfo, error) {
 	ret := make([]exportInfo, 0)
-	contracts, err := c.GetAll(fmt.Sprintf(`select name from "%d_%s" order by name`, c.SessStateId, table), -1)
+	contracts, err := c.GetAll(fmt.Sprintf(`select name from "%s_%s" order by name`, prefix, table), -1)
 	if err != nil {
 		return nil, err
 	}
+	global := prefix == `global`
 	for _, ival := range contracts {
 		//		id, _ := strconv.ParseInt(ival[`id`], 10, 32)
-		ret = append(ret, exportInfo{ival["name"]})
+		ret = append(ret, exportInfo{ival["name"], global})
 	}
 	return &ret, nil
 }
@@ -68,7 +70,9 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 	list := make([]string, 0)
 	names := make([]string, 0)
 	for _, icontract := range contracts {
-		data, _ := c.Single(fmt.Sprintf(`select value from "%d_%s" where name=?`, c.SessStateId, name), icontract).String()
+		var state string
+		icontract, _, state = getState(c.SessStateId, icontract)
+		data, _ := c.Single(fmt.Sprintf(`select value from "%s_%s" where name=?`, state, name), icontract).String()
 		//		fmt.Println(`Data`, err, data)
 		if len(data) > 0 {
 			names = append(names, prefix+`_`+icontract)
@@ -80,6 +84,17 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 		}
 	}
 	out += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
+	return
+}
+
+func getState(stateId int64, name string) (out string, global int, state string) {
+	state = utils.Int64ToStr(stateId)
+	out = name
+	if strings.HasPrefix(name, `global_`) {
+		state = `global`
+		global = 1
+		out = out[len(`global_`):]
+	}
 	return
 }
 
@@ -116,8 +131,13 @@ func (c *Controller) ExportTpl() (string, error) {
 				if len(itable) == 0 {
 					continue
 				}
-				cols, _ := c.Single(fmt.Sprintf(`select columns_and_permissions->'update' from "%d_tables" where name=?`,
-					c.SessStateId), itable).String()
+				var (
+					state  string
+					global int
+				)
+				itable, global, state = getState(c.SessStateId, itable)
+				cols, _ := c.Single(fmt.Sprintf(`select columns_and_permissions->'update' from "%s_tables" where name=?`,
+					state), itable).String()
 				fmap := make(map[string]string)
 				json.Unmarshal([]byte(cols), &fmap)
 				fields := make([]string, 0)
@@ -156,12 +176,12 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 		Data: {
 			type: "NewTable",
 			typeid: #type_new_table_id#,
-			global: #global#,
+			global: %d,
 			table_name : "%s",
 			columns: '[%s]',
 			permissions: "$citizen == #wallet_id#"
 			}
-	   }`, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
+	   }`, global, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
 			}
 		}
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
@@ -170,17 +190,19 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				if len(icontract) == 0 {
 					continue
 				}
+				var global int
+				icontract, global, _ = getState(c.SessStateId, icontract)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
-			global: #global#,
+			global: %d,
 			name: "%s",
 			value: $("#sc_%s").val(),
 			conditions: $("#sc_conditions").val()
 			}
-	   }`, icontract, icontract))
+	   }`, global, icontract, icontract))
 			}
 		}
 		pages := strings.Split(c.r.FormValue("pages"), `,`)
@@ -189,6 +211,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				if len(ipage) == 0 {
 					continue
 				}
+				var global int
+				ipage, global, _ = getState(c.SessStateId, ipage)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -197,10 +221,10 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			name : "%s",
 			menu: "menu_default",
 			value: $("#p_%s").val(),
-			global: #global#,
+			global: %d,
 			conditions: "$citizen == #wallet_id#",
 			}
-	   }`, ipage, ipage))
+	   }`, ipage, ipage, global))
 			}
 		}
 		out += strings.Join(list, ",\r\n") + "]`\r\n)"
@@ -211,18 +235,35 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			message = fmt.Sprintf(`File %s has been created`, tplname)
 		}
 	}
-	contracts, err := c.getList(`smart_contracts`)
+	prefix := utils.Int64ToStr(c.SessStateId)
+	contracts, err := c.getList(`smart_contracts`, prefix)
 	if err != nil {
 		return ``, err
 	}
-	pages, err := c.getList(`pages`)
+	gcontracts, err := c.getList(`smart_contracts`, `global`)
 	if err != nil {
 		return ``, err
 	}
-	tables, err := c.getList(`tables`)
+	*contracts = append(*contracts, *gcontracts...)
+	pages, err := c.getList(`pages`, prefix)
 	if err != nil {
 		return ``, err
 	}
+	gpages, err := c.getList(`pages`, `global`)
+	if err != nil {
+		return ``, err
+	}
+	*pages = append(*pages, *gpages...)
+	tables, err := c.getList(`tables`, prefix)
+	if err != nil {
+		return ``, err
+	}
+	gtables, err := c.getList(`tables`, `global`)
+	if err != nil {
+		return ``, err
+	}
+	*tables = append(*tables, *gtables...)
+
 	fmt.Println(`Export`, contracts, pages, tables)
 	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables, Message: message}
 	return proceedTemplate(c, NExportTpl, &pageData)

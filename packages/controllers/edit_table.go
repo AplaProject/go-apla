@@ -21,19 +21,19 @@ import (
 )
 
 type editTablePage struct {
-	Alert                 string
-	SignData              string
-	ShowSignData          bool
-	CountSignArr          []int
-	Lang                  map[string]string
-	WalletId              int64
-	CitizenId             int64
-	TableName             string
-	TxType                string
-	TxTypeId              int64
-	TimeNow               int64
-	TableData             map[string]string
-	Columns               map[string]string
+	Alert        string
+	SignData     string
+	ShowSignData bool
+	CountSignArr []int
+	Lang         map[string]string
+	WalletId     int64
+	CitizenId    int64
+	TableName    string
+	TxType       string
+	TxTypeId     int64
+	TimeNow      int64
+	TableData    map[string]string
+	//	Columns               map[string]string
 	ColumnsAndPermissions map[string]string
 	StateId               int64
 	TablePermission       map[string]string
@@ -53,7 +53,7 @@ func (c *Controller) EditTable() (string, error) {
 		tableName = c.r.FormValue("name")
 	}
 
-	prefix , err := utils.GetPrefix(tableName, c.StateIdStr)
+	prefix, err := utils.GetPrefix(tableName, c.StateIdStr)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

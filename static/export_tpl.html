@@ -23,6 +23,14 @@ function js_checkall() {
 	return false;
 }
 
+function get_name(obj) {
+	var name = $(obj).attr('name');
+	if ($(obj).attr("data-global")=="1" ) {
+		name = 'global_' + name;
+	}
+	return name;
+}
+
 function get_tpl() {
 	var name = $("#name").val();
 	if (name == '') {
@@ -31,15 +39,15 @@ function get_tpl() {
 	}
 	var contracts = [];
 	$(".contracts:checked").each(function(){
-		contracts.push($(this).attr('name'));
+		contracts.push(get_name(this));
 	});
 	var pages = [];
 	$(".pages:checked").each(function(){
-		pages.push($(this).attr('name'));
+		pages.push(get_name(this));
 	});
 	var tables = [];
 	$(".tables:checked").each(function(){
-		tables.push($(this).attr('name'));
+		tables.push(get_name(this));
 	})
 	data = {"name": name, "smart_contracts": contracts.join(','), "pages": pages.join(','), "tables": tables.join(',')};
 	console.log('Data', data);
@@ -73,11 +81,13 @@ function get_tpl() {
 				<tr>
 					<th></th>
 					<th>Contracts</th>
+					<th></th>
 				</tr>
 				{{range .Contracts}}
 				<tr>
-					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}" class="form-conntrol contracts"></td>
-					<td>{{.Name}}</td>
+					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}" data-global="{{if .Global}}1{{else}}0{{end}}" class="form-control contracts"></td>
+					<td style="width: 200px;">{{.Name}}</td>
+					<td>{{if .Global}}global{{end}}</td>
 				</tr>
 				{{end}}
 			</table>
@@ -85,11 +95,13 @@ function get_tpl() {
 				<tr>
 					<th></th>
 					<th>Pages</th>
+					<th></th>
 				</tr>
 				{{range .Pages}}
 				<tr>
-					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}" class="form-conntrol pages"></td>
-					<td>{{.Name}}</td>
+					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}"  data-global="{{if .Global}}1{{else}}0{{end}}" class="form-control pages"></td>
+					<td style="width: 200px;">{{.Name}}</td>
+					<td>{{if .Global}}global{{end}}</td>
 				</tr>
 				{{end}}
 			</table>
@@ -97,11 +109,13 @@ function get_tpl() {
 				<tr>
 					<th></th>
 					<th>Tables</th>
+					<th></th>
 				</tr>
 				{{range .Tables}}
 				<tr>
-					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}" class="form-conntrol tables"></td>
-					<td>{{.Name}}</td>
+					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}"  data-global="{{if .Global}}1{{else}}0{{end}}"  class="form-control tables"></td>
+					<td style="width: 200px;">{{.Name}}</td>
+					<td>{{if .Global}}global{{end}}</td>
 				</tr>
 				{{end}}
 			</table>

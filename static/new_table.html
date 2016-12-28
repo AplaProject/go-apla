@@ -174,19 +174,19 @@
 				<table class="table table-striped table-bordered table-hover">
 				  <thead>
 					  <tr>
-					  {{ range $name, $permissions := .Columns }}
-						  <td class="thead"><strong>{{$name}}</strong></td>
-					  {{end}}
+					  { range $name, $permissions := .Columns }
+						  <td class="thead"><strong>{$name}</strong></td>
+					  {end}
 					  </tr>
 				   <thead>
 				   <tbody>
-					  {{ range $data := .TableData }}
+					  { range $data := .TableData }
 					  <tr>
-						  {{ range $name, $permissions := $.Columns }}
-						  <td class="thead"><strong>{{index $data $name}}</strong></td>
-						  {{end}}
+						  { range $name, $permissions := $.Columns }
+						  <td class="thead"><strong>{index $data $nam}}</strong></td>
+						  {end}
 					  </tr>
-					  {{end}}
+					  {end}
 				  </tbody>
 			   </table>
 			</div>
