@@ -164,7 +164,9 @@
 			{{range $data := .DataContractHistory }}
 			{{$data.block_id}}<br>
 			{{$data.conditions}}<br>
-			{{$data.value}}<br><br><br>
+			{{$data.value}}<br>
+			<button type="button" class="btn btn-primary">Restore</button>
+			<br><br>
 			{{end}}
 			{{end}}
 	
