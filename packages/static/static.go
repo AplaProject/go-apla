@@ -276,6 +276,7 @@
 // static/state_parameters.html
 // static/system_info.html
 // static/test.html
+// static/tx_button.html
 // static/tx_form.html
 // static/updating_blockchain.html
 // static/upgrade.html
@@ -5330,6 +5331,24 @@ func staticTestHtml() (*asset, error) {
 	return a, err
 }
 
+// staticTx_buttonHtml reads file data from disk. It returns an error on failure.
+func staticTx_buttonHtml() (*asset, error) {
+	path := "static/tx_button.html"
+	name := "static/tx_button.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticTx_formHtml reads file data from disk. It returns an error on failure.
 func staticTx_formHtml() (*asset, error) {
 	path := "static/tx_form.html"
@@ -6738,6 +6757,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/state_parameters.html": staticState_parametersHtml,
 	"static/system_info.html": staticSystem_infoHtml,
 	"static/test.html": staticTestHtml,
+	"static/tx_button.html": staticTx_buttonHtml,
 	"static/tx_form.html": staticTx_formHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/upgrade.html": staticUpgradeHtml,
@@ -7149,6 +7169,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{}},
 		"system_info.html": &bintree{staticSystem_infoHtml, map[string]*bintree{}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
+		"tx_button.html": &bintree{staticTx_buttonHtml, map[string]*bintree{}},
 		"tx_form.html": &bintree{staticTx_formHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"upgrade.html": &bintree{staticUpgradeHtml, map[string]*bintree{}},
