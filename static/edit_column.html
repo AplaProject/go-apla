@@ -17,8 +17,17 @@
 	}
 	
 	function BackToEditTable() {
-		load_page('editTable', {name: TableName , global: TableGlobal });
-		TableName = "";
+		if (TableName && TableName.length > 0) {
+			load_page('editTable', {name: TableName, global: TableGlobal });
+			TableName = "";
+		}
+		else {
+			var glob = 0;
+			var tbl = "{{.TableName}}";
+			if (tbl.substr(6) == 'global') 
+				glob = 1;
+			load_page('editTable', {name: tbl, global: glob });
+		}
 	}
 	
 	$(".column_type").select2({
