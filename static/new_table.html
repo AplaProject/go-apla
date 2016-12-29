@@ -65,7 +65,7 @@
 			if ({{.Global}} == 1) {
 				pref = 'global_';
 			}
-			load_page('editTable', {name: pref + $("#tableName").val(), global:{{.Global}}} );
+			load_page('editTable', {name: pref + $("#tableName").val().toLowerCase(), global:{{.Global}}} );
 		}
 		
 		$('#send').bind('click', function () {
@@ -81,6 +81,9 @@
 				var val = $(this).find(".colname").val();
 				var type = $(this).find(".column_type").val();
 				var index =  (+ $(this).find(".index").prop("checked")).toString();
+				if (val) {
+					val = val.toLowerCase();
+				}
 				column.push(val);
 				column.push(type);
 				column.push(index);
@@ -91,7 +94,8 @@
 
 			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;
-				$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#global").val()+','+$("#tableName").val()+','+columns_json);
+				$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#global").val()+
+						 ','+$("#tableName").val().toLowerCase()+','+columns_json);
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -104,7 +108,7 @@
 				url: 'ajax?controllerName=saveQueue',
 				data: {
 					'global' : $("#global").val(),
-					'table_name' : $("#tableName").val(),
+					'table_name' : $("#tableName").val().toLowerCase(),
 					'columns' : columns_json,
 					'type' : '{{.TxType}}',
 					'time' : serverTime,

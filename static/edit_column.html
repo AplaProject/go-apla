@@ -36,12 +36,12 @@
 	});
 	
 	CheckIndex();
-
+	var colname;
 	$('#send').bind('click', function () {
-
+		colname = $('#column_name').val().toLowerCase();
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+$('#column_name').val()+','+$('#permissions').val(){{if not .ColumnName}}+','+($("#index").is(":checked") ? "1" : "0")+','+$("#column_type").val(){{end}});
+			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+colname+','+$('#permissions').val(){{if not .ColumnName}}+','+($("#index").is(":checked") ? "1" : "0")+','+$("#column_type").val(){{end}});
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -53,7 +53,7 @@
 			url: 'ajax?controllerName=saveQueue',
 			data: {
 				'table_name' : '{{.TableName}}',
-				'column_name' : $('#column_name').val(),
+				'column_name' : colname,
 				'permissions' : $('#permissions').val(),
 				'index' : ($("#index").is(":checked") ? "1" : "0"),
 				'column_type' : $('#column_type').val(),
