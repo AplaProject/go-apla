@@ -20,6 +20,7 @@ import (
 	//"encoding/json"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -57,8 +58,10 @@ func (p *Parser) EditColumnFront() error {
 		return p.ErrInfo(err)
 	}
 
-
 	table := p.TxStateIDStr + `_tables`
+	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
+		table = `global_tables`
+	}
 	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -85,6 +88,9 @@ func (p *Parser) EditColumnFront() error {
 func (p *Parser) EditColumn() error {
 
 	table := p.TxStateIDStr + `_tables`
+	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
+		table = `global_tables`
+	}
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
 	if err != nil {
 		return err
