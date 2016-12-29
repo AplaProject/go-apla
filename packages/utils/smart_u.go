@@ -121,7 +121,8 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
+		`Textarea`: Textarea,
+		`Form`:     Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
 	})
 }
 
@@ -305,6 +306,20 @@ func Now(vars *map[string]string, pars ...string) string {
 		ret = strings.Replace(ret[:cut], `T`, ` `, -1)
 	}
 	return ret
+}
+
+func Textarea(vars *map[string]string, pars ...string) string {
+	var (
+		class, value string
+	)
+	if len(pars) > 1 {
+		class = pars[1]
+	}
+	if len(pars) > 2 {
+		value = pars[2]
+	}
+	return fmt.Sprintf(`<textarea id="%s" class="%s">%s</textarea>`,
+		pars[0], class, value)
 }
 
 func Input(vars *map[string]string, pars ...string) string {
@@ -1370,7 +1385,7 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 			//			fmt.Println(`TYPES`, reflect.TypeOf(a), reflect.TypeOf(b))
 			return a.(int) + b.(int)
 		},
-		"replaceBr": func(text string)  template.HTML {
+		"replaceBr": func(text string) template.HTML {
 			text = strings.Replace(text, `\n`, "<br>", -1)
 			text = strings.Replace(text, `\t`, "&nbsp;&nbsp;&nbsp;&nbsp;", -1)
 			return template.HTML(text)
