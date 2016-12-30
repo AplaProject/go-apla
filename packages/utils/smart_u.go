@@ -40,6 +40,7 @@ type FieldInfo struct {
 	TxType   string      `json:"txType"`
 	Title    string      `json:"title"`
 	Value    interface{} `json:"value"`
+	Param    string      `json:"param"`
 }
 
 type FormCommon struct {
@@ -123,6 +124,7 @@ func init() {
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea,
 		`Form`:     Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
+		`Money`: Money,
 	})
 }
 
@@ -226,6 +228,18 @@ func ifValue(val string) bool {
 		}
 	}
 	return false
+}
+
+func Money(vars *map[string]string, pars ...string) string {
+	cents := StrToInt(StateValue(vars, `money_cents`))
+	ret := pars[0]
+	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
+		if len(ret) < cents+1 {
+			ret = strings.Repeat(`0`, cents+1-len(ret)) + ret
+		}
+		ret = ret[:len(ret)-cents] + `.` + ret[len(ret)-cents:]
+	}
+	return ret
 }
 
 func And(vars *map[string]string, pars ...string) string {
@@ -1010,8 +1024,17 @@ txlist:
 			}
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
 				TxType: fitem.Type.String(), Title: title, Value: sellist})
-		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` ||
-			fitem.Type.String() == `decimal.Decimal` {
+		} else if fitem.Type.String() == `decimal.Decimal` {
+			//value = Money(vars, value)
+			postfix := ``
+			count := StrToInt(StateValue(vars, `money_cents`))
+			if count > 0 {
+				postfix = `.` + strings.Repeat(`9`, count) //fmt.Sprintf(`.\.0-9{%d}`, count)
+			}
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "money",
+				TxType: fitem.Type.String(), Title: title, Value: value,
+				Param: `9{1,20}` + postfix})
+		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: title, Value: value})
 		}

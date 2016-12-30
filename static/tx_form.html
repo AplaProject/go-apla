@@ -280,6 +280,7 @@
 			});
 		}
 	});
+	$(".inputmask").inputmask({'autoUnmask': true});
 </script>
 <div class="panel-body" datax-sweet-alert>
 	<form role="form">
@@ -294,6 +295,9 @@
 			{{range .Fields}} {{if eq .HtmlType "textinput"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
+			{{end}}{{if eq .HtmlType "money"}}
+			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
+				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" data-inputmask="'mask': '{{.Param}}'" class="inputmask form-control"></div>
 			{{end}}{{if eq .HtmlType "hidden"}}
 			<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="hidden" value="{{.Value}}">
 			{{end}} {{if eq .HtmlType "address"}}
