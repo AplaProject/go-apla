@@ -280,6 +280,7 @@
 // static/tx_form.html
 // static/updating_blockchain.html
 // static/upgrade.html
+// static/vendor/Chart.js/Chart.js
 // static/vendor/animate.css/animate.min.css
 // static/vendor/bootstrap/dist/css/bootstrap.css
 // static/vendor/bootstrap/dist/js/bootstrap.js
@@ -5403,6 +5404,24 @@ func staticUpgradeHtml() (*asset, error) {
 	return a, err
 }
 
+// staticVendorChartJsChartJs reads file data from disk. It returns an error on failure.
+func staticVendorChartJsChartJs() (*asset, error) {
+	path := "static/vendor/Chart.js/Chart.js"
+	name := "static/vendor/Chart.js/Chart.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticVendorAnimateCssAnimateMinCss reads file data from disk. It returns an error on failure.
 func staticVendorAnimateCssAnimateMinCss() (*asset, error) {
 	path := "static/vendor/animate.css/animate.min.css"
@@ -6761,6 +6780,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/tx_form.html": staticTx_formHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/upgrade.html": staticUpgradeHtml,
+	"static/vendor/Chart.js/Chart.js": staticVendorChartJsChartJs,
 	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
 	"static/vendor/bootstrap/dist/css/bootstrap.css": staticVendorBootstrapDistCssBootstrapCss,
 	"static/vendor/bootstrap/dist/js/bootstrap.js": staticVendorBootstrapDistJsBootstrapJs,
@@ -7174,6 +7194,9 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"upgrade.html": &bintree{staticUpgradeHtml, map[string]*bintree{}},
 		"vendor": &bintree{nil, map[string]*bintree{
+			"Chart.js": &bintree{nil, map[string]*bintree{
+				"Chart.js": &bintree{staticVendorChartJsChartJs, map[string]*bintree{}},
+			}},
 			"animate.css": &bintree{nil, map[string]*bintree{
 				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{}},
 			}},
