@@ -8,6 +8,10 @@
 	#back span {
 		font-size:26px;
 	}
+	.formConfirm .panel-heading {
+		padding-bottom:0px;
+		margin-bottom:0px;
+	}
 	.history {
 		display:none;
 	}
@@ -76,7 +80,8 @@
 	
 	function ShowConfirm() {
 		$(".form").hide();
-		$(".formConfirm .form-control-static").text($("#name").val());
+		$(".formConfirm .panel-heading").text($("#name").val());
+		$(".formConfirm .textEditorHistory code").html($("#value").val());
 		$(".formConfirm").show();
 	}
 	
@@ -150,7 +155,7 @@
 	});
 	
 	$(".restore").on('click', function () {
-		var code = $(this).parents(".panel").find(".textEditorHistory code").html();
+		var code = $(this).parents(".panel").find(".textEditorHistory_value").val();
 		editor.setValue(code, -1);
 		$(window).scrollTop(0);
 	});
@@ -232,6 +237,7 @@
 										<pre class="textEditorHistory">
 											<code>{{noescape $data.value}}</code>
 										</pre>
+										<textarea class="textEditorHistory_value form-control hidden">{{noescape $data.value}}</textarea>
 									</td>
 								 </tr>
 							  </tbody>
@@ -256,9 +262,13 @@
 	<div class="formConfirm" style="display:none;">
 		<!-- START panel-->
 		<div class="panel panel-default" data-sweet-alert>
+		 <h4 class="panel-heading"></h4>
 		 <div class="panel-body">
-		   <label>Name</label>
-		   <p class="form-control-static"></p>
+		   <!--<label>Name</label>
+		   <p class="form-control-static"></p>-->
+		   <pre class="textEditorHistory">
+				<code></code>
+			</pre>
 		 </div>
 		 <div class="panel-footer">
 		   <div class="clearfix">

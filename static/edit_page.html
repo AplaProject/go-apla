@@ -8,6 +8,18 @@
 	#back span {
 		font-size:26px;
 	}
+	.formConfirm .panel-heading {
+		padding-bottom:0px;
+		margin-bottom:0px;
+	}
+	.history {
+		display:none;
+	}
+	.thead {
+		width:120px;
+		font-weight:bold;
+		white-space:nowrap;
+	}
 </style>
 
 <script>
@@ -247,12 +259,17 @@
 	
 	function ShowConfirm() {
 		$(".form").hide();
-		$(".formConfirm .form-control-static").text($("#page_name").val());
+		$(".formConfirm .panel-heading").text($("#page_name").val());
+		$(".formConfirm .textEditorHistory code").html($("#page_value").val());
 		$(".formConfirm").show();
 	}
 	
 	function Edit() {
 		load_page('editPage', {name: $("#page_name").val() , global: "{{.Global}}" });
+	}
+	
+	function Reload() {
+		load_page('editPage', {name: {{.DataPage.name}} , global: "{{.Global}}" });
 	}
 	
 	$('#page_menu').select2({
@@ -298,7 +315,7 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success({{if .DataPage.name}}data{{else}}data, ShowConfirm{{end}}) },
+			success: function(data) { send_to_net_success({{if .DataPage.name}}data, Reload{{else}}data, ShowConfirm{{end}}) },
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
@@ -307,6 +324,23 @@
 	
 	$("#back").on('click', function () {
 		load_page('interface');
+	});
+	
+	
+	$("#btn_history").on('click', function () {
+		if ($(".history").is(":visible")) {
+			$(".history").hide();
+			$(this).find("span").text("Show");
+		} else {
+			$(".history").show();
+			$(this).find("span").text("Hide");
+		}
+	});
+	
+	$(".restore").on('click', function () {
+		var code = $(this).parents(".panel").find(".textEditorHistory_value").val();
+		editor.setValue(code, -1);
+		$(window).scrollTop(0);
 	});
 </script>
 	<div class="content-heading">
@@ -367,23 +401,62 @@
 		   <div class="clearfix">
 			  <div class="pull-left">
 				<!--<button type="button" class="btn btn-default" onClick="formatCode();"><i class="fa fa-code fa-fw mr-sm" aria-hidden="true"></i>Format Code</button>-->
+				{{if .DataPageHistory}}
+					<button type="button" class="btn btn-default" id="btn_history"><i class="fa fa-history fa-fw mr-sm" aria-hidden="true"></i><span>Show</span> History</button>
+				{{end}}
 			  </div>
 			  <div class="pull-right">
 				 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Save</button>
 			  </div>
 		   </div>
 		  </div>
-
-			{{if .DataPageHistory}}
-				{{range $data := .DataPageHistory }}
-					{{$data.block_id}}<br>
-					{{$data.conditions}}<br>
-					{{noescape $data.value}}<br>
-					<button type="button" class="btn btn-primary">Restore</button>
-					<br><br>
-				{{end}}
-			{{end}}
 		</div>
+		<!-- END panel-->
+		
+		{{if .DataPageHistory}}
+			<div class="history">
+				<h4 class="page-header">History of {{.DataPage.name}}</h4>
+				{{range $data := .DataPageHistory }}
+					<!-- START panel-->
+					<div class="panel panel-default">
+					 <div class="panel-body">
+						<div class="table-responsive">
+						   <table class="table table-striped table-bordered table-hover">
+							  <tbody>
+								 <tr>
+									<td class="thead">Block ID</td>
+									<td><strong><a href="#" onclick="load_page('block_explorer', {blockId: {{$data.block_id}}});">{{$data.block_id}}</a></strong></td>
+								 </tr>
+								 <tr>
+									<td class="thead">Conditions for change</td>
+									<td>{{$data.conditions}}</td>
+								 </tr>
+								 <tr>
+									<td class="thead">Value</td>
+									<td>
+										<pre class="textEditorHistory">
+											<code>{{noescape $data.value}}</code>
+										</pre>
+										<textarea class="textEditorHistory_value form-control hidden">{{noescape $data.value}}</textarea>
+									</td>
+								 </tr>
+							  </tbody>
+						   </table>
+						</div>
+					 </div>
+					 <div class="panel-footer">
+					   <div class="clearfix">
+						  <div class="pull-left"></div>
+						  <div class="pull-right">
+							 <button type="button" class="restore btn btn-green"><i class="fa fa-window-restore fa-fw mr-sm" aria-hidden="true"></i>Restore</button>
+						  </div>
+					   </div>
+					  </div>
+					</div>
+					<!-- END panel-->
+				{{end}}
+			</div>
+		{{end}}
 	</div>
 	<div class="col-md-4 two_col">
 		<div class="panel panel-primary" data-sweet-alert>
@@ -411,9 +484,13 @@
 <div class="formConfirm" style="display:none;">
 	<!-- START panel-->
 	<div class="panel panel-default" data-sweet-alert>
+	 <h4 class="panel-heading"></h4>
 	 <div class="panel-body">
-	   <label>Name</label>
-	   <p class="form-control-static"></p>
+	   <!--<label>Name</label>
+	   <p class="form-control-static"></p>-->
+	   <pre class="textEditorHistory">
+			<code></code>
+		</pre>
 	 </div>
 	 <div class="panel-footer">
 	   <div class="clearfix">

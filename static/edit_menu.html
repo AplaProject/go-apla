@@ -1,4 +1,10 @@
 {{ define "editMenu" }}
+<style>
+	.formConfirm .panel-heading {
+		padding-bottom:0px;
+		margin-bottom:0px;
+	}
+</style>
 <script>
 	var serverTime;
 	
@@ -21,7 +27,8 @@
 	
 	function ShowConfirm() {
 		$(".form").hide();
-		$(".formConfirm .form-control-static").text($("#menu_name").val());
+		$(".formConfirm .panel-heading").text($("#menu_name").val());
+		$(".formConfirm .textEditorHistory code").html($("#menu_value").val());
 		$(".formConfirm").show();
 	}
 	
@@ -111,9 +118,13 @@
 	<div class="formConfirm" style="display:none;">
 		<!-- START panel-->
 		<div class="panel panel-default" data-sweet-alert>
+		 <h4 class="panel-heading"></h4>
 		 <div class="panel-body">
-		   <label>Name</label>
-		   <p class="form-control-static"></p>
+		   <!--<label>Name</label>
+		   <p class="form-control-static"></p>-->
+		   <pre class="textEditorHistory">
+				<code></code>
+			</pre>
 		 </div>
 		 <div class="panel-footer">
 		   <div class="clearfix">
