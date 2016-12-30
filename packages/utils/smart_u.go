@@ -123,8 +123,8 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Textarea`: Textarea, //`InputMask`: InputMask,
-		`Form`:     Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
+		`Textarea`: Textarea, `InputMoney`: InputMoney,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source,
 	})
 }
@@ -358,8 +358,21 @@ func Input(vars *map[string]string, pars ...string) string {
 		itype, pars[0], placeholder, class, value)
 }
 
-/*func InputMask(vars *map[string]string, pars ...string) string {
-}*/
+func InputMoney(vars *map[string]string, pars ...string) string {
+	var (
+		class, value string
+	)
+	if len(pars) > 1 {
+		class = pars[1]
+	}
+	if len(pars) > 2 {
+		value = Money(vars, pars[2])
+	}
+	digit := StrToInt(StateValue(vars, `money_digit`))
+	return fmt.Sprintf(`<input id="%s" type="text" value="%s"
+				data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 'autoGroup': true, 'digits': %d, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"
+	class="inputmask %s">`, pars[0], value, digit, class)
+}
 
 func Func(vars *map[string]string, pars ...string) string {
 	if len(pars) == 0 {
