@@ -2318,6 +2318,30 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 			}
 			return height
 		}
+		if len((*params)[`wisource`]) > 0 {
+			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			var editor = ace.edit("textEditor");
+	var ContractMode = ace.require("ace/mode/c_cpp").Mode;
+	ace.require("ace/ext/language_tools");
+	$(".textEditor code").html(editor.getValue());
+	$("#%s").val(editor.getValue());
+	editor.setTheme("ace/theme/chrome");
+    editor.session.setMode(new ContractMode());
+	editor.setShowPrintMargin(false);
+	editor.getSession().setTabSize(4);
+	editor.getSession().setUseWrapMode(true);
+	editor.getSession().on('change', function(e) {
+		$(".textEditor code").html(editor.getValue());
+		$("#%s").val(editor.getValue());
+		editor.resize();
+	});
+	editor.setOptions({
+		enableBasicAutocompletion: true,
+		enableSnippets: true,
+		enableLiveAutocompletion: true
+	});
+			</script>`, (*params)[`wisource`], (*params)[`wisource`])
+		}
 		if (*params)[`wimap`] == `1` {
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())

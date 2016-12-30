@@ -272,7 +272,7 @@ function CopyToClipboard(elem, text) {
 			Alert("Copied to clipboard", "", "success");
 		}
 		$(elem).addClass("copied");
-		setTimeout(function(){
+		setTimeout(function () {
 			$(elem).removeClass("copied");
 		}, 3000)
 	});
@@ -303,7 +303,7 @@ function Alert(title, text, type, Confirm) {
 		} else {
 			color = "#c1c1c1";
 		}
-		
+
 		$(".sweet-alert").appendTo($("body"));
 
 		swal({
@@ -333,7 +333,7 @@ function Alert(title, text, type, Confirm) {
 				}
 			}
 		});
-		
+
 		if (bh > oh) {
 			$(".sweet-alert").appendTo(obj);
 		}
@@ -399,7 +399,7 @@ function login_ok(result) {
 
 function doSign_(type) {
 	unique = '';
-	if (typeof (type) === 'number') { 
+	if (typeof (type) === 'number') {
 		unique = type.toString();
 		type = 'sign';
 	}
@@ -652,7 +652,7 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 							re = /!(.*)\(parser/i;
 							found = txStatus.error.match(re);
 							Alert("Warning", (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "warning");
-						} else 	if (txStatus.error[0] == '*') {
+						} else if (txStatus.error[0] == '*') {
 							re = /\*(.*)\(parser/i;
 							found = txStatus.error.match(re);
 							Alert("Info", (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "info");
@@ -772,11 +772,11 @@ function chunk(str, n) {
 	var ret = [];
 	var i;
 	var len;
-	
-	for(i = 0, len = str.length; i < len; i += n) {
-	   ret.push(str.substr(i, n))
+
+	for (i = 0, len = str.length; i < len; i += n) {
+		ret.push(str.substr(i, n))
 	}
-	
+
 	return ret;
 }
 
@@ -807,6 +807,25 @@ function Validate(form, input, btn) {
 		FormValidate(form, input, btn);
 	})
 }
+
+function MoneyDigit(value, digit) {
+	var money = value.replace(' ', '');
+	if (digit > 0) {
+		off = money.indexOf('.');
+		if (off < 0) {
+			money = money + '0'.repeat(digit);
+		} else {
+			var cents = money.substr(off + 1);
+			if (cents.length > digit) {
+				money = money.substr(0, off) + cents.substr(digit);
+			} else if (cents.length < digit) {
+				money = money.substr(0, off) + cents + '0'.repeat(digit - cents.length);
+			}
+		}
+	}
+	return money.replace('.', '');
+}
+
 
 $(document).on('keydown', function (e) {
 	if (e.keyCode == 13 && $(".keyCode_13:visible").length) {

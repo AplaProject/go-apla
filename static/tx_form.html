@@ -201,7 +201,11 @@
 		};
 		{{range .Fields}}
 			{{if ne .HtmlType "image"}}
-				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
+				{{if eq .HtmlType "money"}}
+					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Name}}{{$.Unique}}').val(), {{.Param}});
+				{{else}}
+					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
+				{{end}}
 			{{end}}
 		{{end}}
 		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},
@@ -297,7 +301,9 @@
 				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
 			{{end}}{{if eq .HtmlType "money"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
-				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" data-inputmask="'mask': '{{.Param}}'" class="inputmask form-control"></div>
+				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}"
+				data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 'autoGroup': true, 'digits': {{.Param}}, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"
+				 class="inputmask form-control"></div>
 			{{end}}{{if eq .HtmlType "hidden"}}
 			<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="hidden" value="{{.Value}}">
 			{{end}} {{if eq .HtmlType "address"}}

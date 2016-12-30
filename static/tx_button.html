@@ -15,7 +15,11 @@
 		};
 		{{range .Fields}}
 			{{if ne .HtmlType "image"}}
-				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+				{{if eq .HtmlType "money"}}
+					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Id}}').val(), {{.Param}});
+				{{else}}
+					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+				{{end}}
 			{{end}}
 		{{end}}
 		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},

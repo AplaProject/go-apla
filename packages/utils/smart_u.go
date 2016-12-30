@@ -65,6 +65,7 @@ type TxInfo struct {
 	Name     string `json:"name"`
 	Id       string `json:"id"`
 	HtmlType string `json:"htmlType"`
+	Param    string `json:"param"`
 }
 
 type TxButtonInfo struct {
@@ -122,9 +123,9 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Textarea`: Textarea,
+		`Textarea`: Textarea, //`InputMask`: InputMask,
 		`Form`:     Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
-		`Money`: Money,
+		`Money`: Money, `Source`: Source,
 	})
 }
 
@@ -231,7 +232,7 @@ func ifValue(val string) bool {
 }
 
 func Money(vars *map[string]string, pars ...string) string {
-	cents := StrToInt(StateValue(vars, `money_cents`))
+	cents := StrToInt(StateValue(vars, `money_digit`))
 	ret := pars[0]
 	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
 		if len(ret) < cents+1 {
@@ -356,6 +357,9 @@ func Input(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<input type="%s" id="%s" placeholder="%s" class="%s" value="%s">`,
 		itype, pars[0], placeholder, class, value)
 }
+
+/*func InputMask(vars *map[string]string, pars ...string) string {
+}*/
 
 func Func(vars *map[string]string, pars ...string) string {
 	if len(pars) == 0 {
@@ -879,7 +883,13 @@ txlist:
 				continue txlist
 			}
 		}
-		finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, HtmlType: "textinput"})
+		if fitem.Type.String() == `decimal.Decimal` {
+			count := StrToInt(StateValue(vars, `money_digit`))
+			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, HtmlType: "money",
+				Id: idname, Param: IntToStr(count)})
+		} else {
+			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, HtmlType: "textinput"})
+		}
 	}
 	if err = t.Execute(b, finfo); err != nil {
 		return fmt.Sprintf("Error: %v", err)
@@ -1025,15 +1035,15 @@ txlist:
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
 				TxType: fitem.Type.String(), Title: title, Value: sellist})
 		} else if fitem.Type.String() == `decimal.Decimal` {
-			//value = Money(vars, value)
-			postfix := ``
-			count := StrToInt(StateValue(vars, `money_cents`))
-			if count > 0 {
-				postfix = `.` + strings.Repeat(`9`, count) //fmt.Sprintf(`.\.0-9{%d}`, count)
-			}
+			value = Money(vars, value)
+			count := StrToInt(StateValue(vars, `money_digit`))
+			/*			postfix := ``
+						if count > 0 {
+							postfix = `.` + strings.Repeat(`9`, count) //fmt.Sprintf(`.\.0-9{%d}`, count)
+						}*/
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "money",
 				TxType: fitem.Type.String(), Title: title, Value: value,
-				Param: `9{1,20}` + postfix})
+				Param: IntToStr(count) /*`9{1,20}` + postfix*/})
 		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
 				TxType: fitem.Type.String(), Title: title, Value: value})
@@ -1110,6 +1120,17 @@ func WiAccount(vars *map[string]string, pars ...string) string {
 			   <div class="h1 m0 text-bold">%s</div>
 			   <div class="text-uppercase">ACCOUNT NUMBER</div>
 			</div></div></div>`, lib.Escape(pars[0]))
+}
+
+func Source(vars *map[string]string, pars ...string) string {
+	var value string
+	if len(pars) > 1 {
+		value = pars[1]
+	}
+	(*vars)["wisource"] = pars[0]
+	return fmt.Sprintf(`<pre class="textEditor"><code></code><section id="textEditor">%s</section>
+					</pre>
+				   <textarea id="%s" class="form-control hidden"></textarea>`, value, pars[0])
 }
 
 func WiCitizen(vars *map[string]string, pars ...string) string {

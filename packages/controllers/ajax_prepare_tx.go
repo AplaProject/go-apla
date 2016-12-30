@@ -63,7 +63,7 @@ func (c *Controller) checkTx() (contract *smart.Contract, err error) {
 				}
 			}
 			if fitem.Type.String() == `decimal.Decimal` {
-				re := regexp.MustCompile(`^\d+$`)
+				re := regexp.MustCompile(`^\d+$`) //`^\d+\.?\d+?$`
 				if !re.Match([]byte(val)) {
 					err = fmt.Errorf(`The value of money %s is not valid`, val)
 					break
