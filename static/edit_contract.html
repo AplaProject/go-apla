@@ -8,6 +8,14 @@
 	#back span {
 		font-size:26px;
 	}
+	.history {
+		display:none;
+	}
+	.thead {
+		width:120px;
+		font-weight:bold;
+		white-space:nowrap;
+	}
 </style>
 
 <script>
@@ -76,6 +84,10 @@
 		load_page('editContract', {name: $("#name").val() , global: "{{.Global}}" });
 	}
 	
+	function Reload() {
+		load_page('editContract', {name: {{.Data.name}} , global: "{{.Global}}" });
+	}
+	
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -111,7 +123,7 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success({{if .Data.name}}data{{else}}data, ShowConfirm{{end}}) },
+			success: function(data) { send_to_net_success({{if .Data.name}}data, Reload{{else}}data, ShowConfirm{{end}}) },
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}
@@ -125,6 +137,22 @@
 	$("#back").on('click', function () {
 		load_page('editPage', {name: PageName , global: "{{.Global}}" });
 		PageName = "";
+	});
+	
+	$("#btn_history").on('click', function () {
+		if ($(".history").is(":visible")) {
+			$(".history").hide();
+			$(this).find("span").text("Show");
+		} else {
+			$(".history").show();
+			$(this).find("span").text("Hide");
+		}
+	});
+	
+	$(".restore").on('click', function () {
+		var code = $(this).parents(".panel").find(".textEditorHistory code").html();
+		editor.setValue(code, -1);
+		$(window).scrollTop(0);
 	});
 </script>
 	<div class="content-heading">
@@ -169,6 +197,9 @@
 		   <div class="clearfix">
 			  <div class="pull-left">
 				<button type="button" class="btn btn-default" onClick="formatCode();"><i class="fa fa-code fa-fw mr-sm" aria-hidden="true"></i>Format Code</button>
+				{{if .DataContractHistory}}
+					<button type="button" class="btn btn-default" id="btn_history"><i class="fa fa-history fa-fw mr-sm" aria-hidden="true"></i><span>Show</span> History</button>
+				{{end}}
 			  </div>
 			  <div class="pull-right">
 				 <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
@@ -176,17 +207,50 @@
 		   </div>
 		  </div>
 		</div>
-
+		
 		{{if .DataContractHistory}}
-		{{range $data := .DataContractHistory }}
-		{{$data.block_id}}<br>
-		{{$data.conditions}}<br>
-		{{noescape $data.value}}<br>
-		<button type="button" class="btn btn-primary">Restore</button>
-		<br><br>
+			<div class="history">
+				<h4 class="page-header">History of {{.Data.name}}</h4>
+				{{range $data := .DataContractHistory }}
+					<!-- START panel-->
+					<div class="panel panel-default">
+					 <div class="panel-body">
+						<div class="table-responsive">
+						   <table class="table table-striped table-bordered table-hover">
+							  <tbody>
+								 <tr>
+									<td class="thead">Block ID</td>
+									<td><strong><a href="#" onclick="load_page('block_explorer', {blockId: {{$data.block_id}}});">{{$data.block_id}}</a></strong></td>
+								 </tr>
+								 <tr>
+									<td class="thead">Conditions for change</td>
+									<td>{{$data.conditions}}</td>
+								 </tr>
+								 <tr>
+									<td class="thead">Value</td>
+									<td>
+										<pre class="textEditorHistory">
+											<code>{{noescape $data.value}}</code>
+										</pre>
+									</td>
+								 </tr>
+							  </tbody>
+						   </table>
+						</div>
+					 </div>
+					 <div class="panel-footer">
+					   <div class="clearfix">
+						  <div class="pull-left"></div>
+						  <div class="pull-right">
+							 <button type="button" class="restore btn btn-green"><i class="fa fa-window-restore fa-fw mr-sm" aria-hidden="true"></i>Restore</button>
+						  </div>
+					   </div>
+					  </div>
+					</div>
+					<!-- END panel-->
+				{{end}}
+			</div>
 		{{end}}
-		{{end}}
-
 	</div>
 	
 	<div class="formConfirm" style="display:none;">
