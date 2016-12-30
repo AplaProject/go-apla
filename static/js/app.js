@@ -500,46 +500,8 @@
       responsive: true
     };
 
-    var linectx = document.getElementById("chartjs-linechart").getContext("2d");
-    var lineChart = new Chart(linectx).Line(lineData, lineOptions);
-
-  // Bar chart
-  // ----------------------------------- 
-
-    var barData = {
-        labels : ['January','February','March','April','May','June','July'],
-        datasets : [
-          {
-            fillColor : '#23b7e5',
-            strokeColor : '#23b7e5',
-            highlightFill: '#23b7e5',
-            highlightStroke: '#23b7e5',
-            data : [rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor()]
-          },
-          {
-            fillColor : '#5d9cec',
-            strokeColor : '#5d9cec',
-            highlightFill : '#5d9cec',
-            highlightStroke : '#5d9cec',
-            data : [rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor()]
-          }
-        ]
-    };
-    
-    var barOptions = {
-      scaleBeginAtZero : true,
-      scaleShowGridLines : true,
-      scaleGridLineColor : 'rgba(0,0,0,.05)',
-      scaleGridLineWidth : 1,
-      barShowStroke : true,
-      barStrokeWidth : 2,
-      barValueSpacing : 5,
-      barDatasetSpacing : 1,
-      responsive: true
-    };
-
-    var barctx = document.getElementById("chartjs-barchart").getContext("2d");
-    var barChart = new Chart(barctx).Bar(barData, barOptions);
+    /*var linectx = document.getElementById("chartjs-linechart").getContext("2d");
+    var lineChart = new Chart(linectx).Line(lineData, lineOptions);*/
 
   //  Doughnut chart
   // ----------------------------------- 
@@ -577,47 +539,8 @@
       responsive: true
     };
 
-    var doughnutctx = document.getElementById("chartjs-doughnutchart").getContext("2d");
-    var doughnutChart = new Chart(doughnutctx).Doughnut(doughnutData, doughnutOptions);
-
-  // Pie chart
-  // ----------------------------------- 
-
-    var pieData =[
-          {
-            value: 300,
-            color: '#7266ba',
-            highlight: '#7266ba',
-            label: 'Purple'
-          },
-          {
-            value: 40,
-            color: '#fad732',
-            highlight: '#fad732',
-            label: 'Yellow'
-          },
-          {
-            value: 120,
-            color: '#23b7e5',
-            highlight: '#23b7e5',
-            label: 'Info'
-          }
-        ];
-
-    var pieOptions = {
-      segmentShowStroke : true,
-      segmentStrokeColor : '#fff',
-      segmentStrokeWidth : 2,
-      percentageInnerCutout : 0, // Setting this to zero convert a doughnut into a Pie
-      animationSteps : 100,
-      animationEasing : 'easeOutBounce',
-      animateRotate : true,
-      animateScale : false,
-      responsive: true
-    };
-
-    var piectx = document.getElementById("chartjs-piechart").getContext("2d");
-    var pieChart = new Chart(piectx).Pie(pieData, pieOptions);
+    /*var doughnutctx = document.getElementById("chartjs-doughnutchart").getContext("2d");
+    var doughnutChart = new Chart(doughnutctx).Doughnut(doughnutData, doughnutOptions);*/
 
   // Polar chart
   // ----------------------------------- 
@@ -666,8 +589,8 @@
       responsive: true
     };
 
-    var polarctx = document.getElementById("chartjs-polarchart").getContext("2d");
-    var polarChart = new Chart(polarctx).PolarArea(polarData, polarOptions);
+    /*var polarctx = document.getElementById("chartjs-polarchart").getContext("2d");
+    var polarChart = new Chart(polarctx).PolarArea(polarData, polarOptions);*/
 
   // Radar chart
   // ----------------------------------- 
@@ -719,8 +642,8 @@
       responsive: true
     };
 
-    var radarctx = document.getElementById("chartjs-radarchart").getContext("2d");
-    var radarChart = new Chart(radarctx).Radar(radarData, radarOptions);
+    /*var radarctx = document.getElementById("chartjs-radarchart").getContext("2d");
+    var radarChart = new Chart(radarctx).Radar(radarData, radarOptions);*/
 
   });
 

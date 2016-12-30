@@ -208,9 +208,114 @@
 	  drawVisualization();
 	});
  </script>
+ 
+<script>
+(function(window, document, $, undefined){
+
+  $(function(){
+
+    if ( typeof Chart === 'undefined' ) return;
+
+    // random values for demo
+    var rFactor = function(){ return Math.round(Math.random()*100); };
+
+  // Bar chart
+  // ----------------------------------- 
+
+    var barData = {
+        labels : ['January','February','March','April','May','June','July'],
+        datasets : [
+          {
+            fillColor : '#23b7e5',
+            strokeColor : '#23b7e5',
+            highlightFill: '#23b7e5',
+            highlightStroke: '#23b7e5',
+            data : [rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor()]
+          },
+          {
+            fillColor : '#5d9cec',
+            strokeColor : '#5d9cec',
+            highlightFill : '#5d9cec',
+            highlightStroke : '#5d9cec',
+            data : [rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor(),rFactor()]
+          }
+        ]
+    };
+    
+    var barOptions = {
+      scaleBeginAtZero : true,
+      scaleShowGridLines : true,
+      scaleGridLineColor : 'rgba(0,0,0,.05)',
+      scaleGridLineWidth : 1,
+      barShowStroke : true,
+      barStrokeWidth : 2,
+      barValueSpacing : 5,
+      barDatasetSpacing : 1,
+      responsive: true
+    };
+
+    var barctx = document.getElementById("chartjs-barchart").getContext("2d");
+    var barChart = new Chart(barctx).Bar(barData, barOptions);
+
+  // Pie chart
+  // ----------------------------------- 
+
+    var pieData =[
+          {
+            value: 300,
+            color: '#7266ba',
+            highlight: '#7266ba',
+            label: 'Purple'
+          },
+          {
+            value: 40,
+            color: '#fad732',
+            highlight: '#fad732',
+            label: 'Yellow'
+          },
+          {
+            value: 120,
+            color: '#23b7e5',
+            highlight: '#23b7e5',
+            label: 'Info'
+          }
+        ];
+
+    var pieOptions = {
+      segmentShowStroke : true,
+      segmentStrokeColor : '#fff',
+      segmentStrokeWidth : 2,
+      percentageInnerCutout : 0, // Setting this to zero convert a doughnut into a Pie
+      animationSteps : 100,
+      animationEasing : 'easeOutBounce',
+      animateRotate : true,
+      animateScale : false,
+      responsive: true
+    };
+
+    var piectx = document.getElementById("chartjs-piechart").getContext("2d");
+    var pieChart = new Chart(piectx).Pie(pieData, pieOptions);
+  });
+
+})(window, document, window.jQuery);
+</script>
 
 <div class="content-heading">
    HTML-Elements
+</div>
+<div class="row">
+	<div class="col-lg-6">
+		<h4>Bar Chart</h4>
+		<div>
+			<canvas id="chartjs-barchart"></canvas>
+		</div>
+	</div>
+	<div class="col-lg-6">
+		<h4>Pie Chart</h4>
+		<div>
+			<canvas id="chartjs-piechart"></canvas>
+		</div>
+	</div>
 </div>
 <div id="chart_div" style="height:400px;"></div>
 <textarea id="test_1" class="anyClass1">{"center_point":["55.801281","37.633667"], "zoom":"7", "cords":["56.511018","36.024170"]}</textarea>
