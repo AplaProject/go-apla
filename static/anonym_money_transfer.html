@@ -17,12 +17,14 @@
 	/*$("#walletAddress").typeahead({
 		minLength: 1,
 		items: 10,
+		autoSelect: false,
 		source: function (query, process) {
 			return $.get('ajax?json=ajax_addresses', { 'address': query, 'state': 0 }, function (data) {
+				data = {"address":["0091-9569-1929-6424-8536", "0091-9569-1929-6424-8537", "0091-9569-1929-6424-8538", "0091-9569-1929-6424-8539"],"error":""};
 				return process(data.address);
 			});
 		}
-	});*/
+	}).focus();*/
 	
 	$("#next").bind('click', function () {
 		$(".form-control").blur().each(function() {
