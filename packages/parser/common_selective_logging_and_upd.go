@@ -37,10 +37,12 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSqlFields += `,`
 	}
 	log.Debug("addSqlFields %s", addSqlFields)
-	for _, field := range fields {
+	for i, field := range fields {
 		/*if p.AllPkeys[table] == field {
 			continue
 		}*/
+		field = strings.TrimSpace(field)
+		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
 			addSqlFields += field[1:len(field)] + ","
 		} else if strings.HasPrefix(field, `timestamp `) {
