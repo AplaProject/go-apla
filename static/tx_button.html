@@ -16,7 +16,7 @@
 		{{range .Fields}}
 			{{if ne .HtmlType "image"}}
 				{{if eq .HtmlType "money"}}
-					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Id}}').val(), {{.Param}});
+					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Id}}').val(), "{{.Param}}");
 				{{else}}
 					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
 				{{end}}
@@ -74,6 +74,7 @@
 			});
 		}
 	});*/
+	$(".inputmask").inputmask({'autoUnmask': true});	
 </script>
 <div class="clearfix">
 	<div class="pull-right">

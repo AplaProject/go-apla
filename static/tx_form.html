@@ -202,7 +202,7 @@
 		{{range .Fields}}
 			{{if ne .HtmlType "image"}}
 				{{if eq .HtmlType "money"}}
-					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Name}}{{$.Unique}}').val(), {{.Param}});
+					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Name}}{{$.Unique}}').val(), "{{.Param}}");
 				{{else}}
 					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
 				{{end}}

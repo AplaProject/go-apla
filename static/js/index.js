@@ -808,8 +808,9 @@ function Validate(form, input, btn) {
 	})
 }
 
-function MoneyDigit(value, digit) {
+function MoneyDigit(value, dig) {
 	var money = value.replace(' ', '');
+	var digit = parseInt(dig, 10);
 	if (digit > 0) {
 		off = money.indexOf('.');
 		if (off < 0) {
