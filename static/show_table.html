@@ -68,6 +68,7 @@
 					  {{ range $name, $permissions := $.Columns }}
 					  <td class="thead"><strong>{{index $data $name}}</strong></td>
 					  {{end}}
+					  <td class="thead">{{if ne $data.rb_id "0"}}<button type="button" class="btn btn-primary" onclick="load_page('rowHistory', {rbId: {{$data.rb_id}}, tableName:{{$.TableName}}, global: {{$.Global}} });">History</button>{{end}}</td>
 				  </tr>
 				  {{end}}
 			  </tbody>
