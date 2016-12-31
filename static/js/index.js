@@ -817,7 +817,7 @@ function MoneyDigit(value, digit) {
 		} else {
 			var cents = money.substr(off + 1);
 			if (cents.length > digit) {
-				money = money.substr(0, off) + cents.substr(digit);
+				money = money.substr(0, off) + cents.substr(0, digit);
 			} else if (cents.length < digit) {
 				money = money.substr(0, off) + cents + '0'.repeat(digit - cents.length);
 			}
