@@ -323,7 +323,11 @@
 	} );
 	
 	$("#back").on('click', function () {
-		load_page('interface');
+		{{if .DataPage.name}}
+			load_template({{.DataPage.name}});
+		{{else}}
+			load_page('interface');
+		{{end}}
 	});
 	
 	
@@ -362,7 +366,7 @@
 		 </div>
 		 <div class="panel-body">
 			<form role="form">
-				<button type="button" class="btn btn-link" onclick="" id="back" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></button>
+				<button type="button" class="btn btn-link" onclick="" id="back" title="Back">Show page</button>
 			   <div class="form-group">
 				   <label>Name</label>
 				   {{if .DataPage.name}} <p class="form-control-static" id="page_name_text">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name"> {{end}}
