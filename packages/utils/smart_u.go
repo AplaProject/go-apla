@@ -70,6 +70,7 @@ type TxInfo struct {
 
 type TxButtonInfo struct {
 	TxName    string
+	Name      string
 	Unique    template.JS
 	OnSuccess template.JS
 	Fields    []TxInfo
@@ -125,7 +126,7 @@ func init() {
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
-		`Money`: Money, `Source`: Source, `Val`: Val,
+		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes,
 	})
 }
 
@@ -194,6 +195,10 @@ func Param(vars *map[string]string, pars ...string) string {
 		return val
 	}
 	return ``
+}
+
+func LangRes(vars *map[string]string, pars ...string) string {
+	return LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
 }
 
 func ifValue(val string) bool {
@@ -350,7 +355,7 @@ func Input(vars *map[string]string, pars ...string) string {
 		class = pars[1]
 	}
 	if len(pars) > 2 {
-		placeholder = LangText(pars[2], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+		placeholder = LangRes(vars, pars[2])
 	}
 	if len(pars) > 3 {
 		itype = pars[3]
@@ -638,7 +643,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 			linklist := strings.TrimSpace(th[1][strings.IndexByte(th[1], '(')+1 : strings.IndexByte(th[1], ',')])
 			if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
 				for ind, item := range alist {
-					(*vars)[fmt.Sprintf(`%s_%d`, linklist, ind+1)] = LangText(item, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+					(*vars)[fmt.Sprintf(`%s_%d`, linklist, ind+1)] = LangRes(vars, item)
 				}
 			}
 		}
@@ -789,7 +794,7 @@ func Label(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 && len(pars[1]) > 0 {
 		class = fmt.Sprintf(`class="%s"`, pars[1])
 	}
-	text := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	text := LangRes(vars, pars[0])
 	return fmt.Sprintf(`<label %s>%s</label>`, class, text)
 }
 
@@ -834,9 +839,12 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 		unique = StrToInt64(uval) + 1
 	}
 	(*vars)[`tx_unique`] = Int64ToStr(unique)
+	btnName := `Send`
+	if btn, ok := (*pars)[`Name`]; ok {
+		btnName = btn
+	}
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
-	fmt.Println(`TXButton Init`, *vars)
 	onsuccess := (*pars)[`OnSuccess`]
 	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
@@ -880,7 +888,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	b := new(bytes.Buffer)
-	finfo := TxButtonInfo{TxName: name, Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
+	finfo := TxButtonInfo{TxName: name, Name: LangRes(vars, btnName), Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
 		Fields: make([]TxInfo, 0), Data: FormCommon{
 			CountSignArr: []byte{1}}}
 
@@ -1014,9 +1022,6 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		}
 		return ret
 	}
-	getlang := func(res string) string {
-		return LangText(res, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
-	}
 txlist:
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		var value string
@@ -1030,7 +1035,7 @@ txlist:
 		}
 		langres := gettag('#', fitem.Name, fitem.Tags)
 		linklist := gettag('@', ``, fitem.Tags)
-		title := getlang(langres)
+		title := LangRes(vars, langres)
 		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
 			if strings.Index(fitem.Tags, tag) >= 0 {
 				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
@@ -1050,7 +1055,7 @@ txlist:
 				}
 			} else if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
 				for ind, item := range alist {
-					sellist.List[ind+1] = getlang(item)
+					sellist.List[ind+1] = LangRes(vars, item)
 				}
 			}
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
@@ -1206,7 +1211,7 @@ func Date(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		format = pars[1]
 	} else {
-		format = LangText(`dateformat`, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+		format = LangRes(vars, `dateformat`)
 		if format == `dateformat` {
 			format = `2006-01-02`
 		}
@@ -1231,7 +1236,7 @@ func DateTime(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		format = pars[1]
 	} else {
-		format = LangText(`timeformat`, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+		format = LangRes(vars, `timeformat`)
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}
@@ -1264,7 +1269,7 @@ func Select(vars *map[string]string, pars ...string) string {
 			}
 		} else if alist := strings.Split(StateValue(vars, pars[1]), `,`); len(alist) > 0 {
 			for ind, item := range alist {
-				list = append(list, SelInfo{Id: int64(ind + 1), Name: LangText(item, int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])})
+				list = append(list, SelInfo{Id: int64(ind + 1), Name: LangRes(vars, item)})
 			}
 		}
 	}
