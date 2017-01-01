@@ -125,7 +125,7 @@ func init() {
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
-		`Money`: Money, `Source`: Source,
+		`Money`: Money, `Source`: Source, `Val`: Val,
 	})
 }
 
@@ -553,6 +553,10 @@ func LinkTemplate(vars *map[string]string, pars ...string) string {
 		params = pars[2]
 	}
 	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
+}
+
+func Val(vars *map[string]string, pars ...string) string {
+	return fmt.Sprintf(`$('#%s').val()`, pars[0])
 }
 
 func BtnTemplate(vars *map[string]string, pars ...string) string {
