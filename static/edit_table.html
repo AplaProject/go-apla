@@ -51,7 +51,7 @@
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
-			{{index .TableData "name"}}
+			{{index .TableData "name"}} {{if .TableName}}<span class="pull-right"><a href="#" onclick="load_page('showTable', {global: {{.Global}}, name: {{.TableName}}})">Show data</a></span>{{end}}
 		</div>
 	 </div>
 	 <div class="panel-body">

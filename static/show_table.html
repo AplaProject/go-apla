@@ -49,7 +49,7 @@
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
-			{{.TableName}}
+			{{.TableName}} {{if .TableName}}<span class="pull-right"><a href="#" onclick="load_page('editTable', {global: {{.Global}}, name: {{.TableName}}})">Edit table</a></span>{{end}}
 		</div>
 	 </div>
 	 <div class="panel-body">

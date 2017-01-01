@@ -84,6 +84,8 @@ func (c *Controller) RowHistory() (string, error) {
 		WalletId:     c.SessWalletId,
 		History:         history,
 		CitizenId:    c.SessCitizenId,
+		TableName: tableName,
+		Global: global,
 		CountSignArr: c.CountSignArr,
 		Columns:      columns,
 		StateId:      c.SessStateId})
