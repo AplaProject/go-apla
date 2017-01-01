@@ -2342,6 +2342,10 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 	});
 			</script>`, (*params)[`wisource`], (*params)[`wisource`])
 		}
+		if (*params)[`wimoney`] == `1` {
+			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+				$(".inputmask").inputmask({'autoUnmask': true});</script>`)
+		}
 		if (*params)[`wimap`] == `1` {
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())

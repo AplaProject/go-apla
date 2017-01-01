@@ -377,6 +377,7 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 	if len(pars) > 2 {
 		value = Money(vars, pars[2])
 	}
+	(*vars)["wimoney"] = `1`
 	digit := StrToInt(StateValue(vars, `money_digit`))
 	return fmt.Sprintf(`<input id="%s" type="text" value="%s"
 				data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 'autoGroup': true, 'digits': %d, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"
