@@ -147,11 +147,15 @@
 				return match;
 			};
 			
-			this.onClick = function() {
-				if (this.link) {
-					this.link.editor = this.editor;
-					this._signal("open", this.link);
-					this.clear()
+			this.onClick = function(event) {
+				if (event.ctrlKey === true) {
+					if (this.link) {
+						this.link.editor = this.editor;
+						this._signal("open", this.link);
+						this.clear()
+					}
+				} else {
+					return false;
 				}
 			};
 			
