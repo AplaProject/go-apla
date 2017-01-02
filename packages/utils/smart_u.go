@@ -126,7 +126,7 @@ func init() {
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney,
-		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes,
 	})
 }
@@ -816,6 +816,10 @@ func Label(vars *map[string]string, pars ...string) string {
 	}
 	text := LangRes(vars, pars[0])
 	return fmt.Sprintf(`<label %s>%s</label>`, class, text)
+}
+
+func Legend(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`legend`, pars...)
 }
 
 func ValueById(vars *map[string]string, pars ...string) string {
