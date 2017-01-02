@@ -2534,6 +2534,7 @@ function saveMap() {
 
 function miniMap(elem, width, height) {
 	var num = 0;
+	$("." + elem).css({"font-size":"0px"});
 	
 	$("." + elem).each(function() {
 		var data = {};
