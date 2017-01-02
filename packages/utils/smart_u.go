@@ -453,6 +453,10 @@ func GetOne(vars *map[string]string, pars ...string) string {
 func getClass(class string) string {
 	list := strings.Split(class, ` `)
 	for i, ilist := range list {
+		if strings.HasPrefix(ilist, `data-`) {
+			list[i] = ``
+			continue
+		}
 		if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
 			list[i] = `col-` + ilist
@@ -491,7 +495,11 @@ func Small(vars *map[string]string, pars ...string) (out string) {
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
 	for _, item := range pars {
-		out += fmt.Sprintf(`<div class="%s">`, getClass(item))
+		more := ``
+		if strings.Index(item, `data-sweet-alert`) >= 0 {
+			more = `data-sweet-alert`
+		}
+		out += fmt.Sprintf(`<div class="%s" %s>`, getClass(item), more)
 		count++
 	}
 	if val, ok := (*vars)[`divs`]; ok {
