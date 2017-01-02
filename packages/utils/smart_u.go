@@ -126,7 +126,7 @@ func init() {
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney,
-		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Select`: Select, `Param`: Param, `Mult`: Mult,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes,
 	})
 }
@@ -453,6 +453,10 @@ func GetOne(vars *map[string]string, pars ...string) string {
 func getClass(class string) string {
 	list := strings.Split(class, ` `)
 	for i, ilist := range list {
+		if strings.HasPrefix(ilist, `data-`) {
+			list[i] = ``
+			continue
+		}
 		if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
 			list[i] = `col-` + ilist
@@ -491,7 +495,11 @@ func Small(vars *map[string]string, pars ...string) (out string) {
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
 	for _, item := range pars {
-		out += fmt.Sprintf(`<div class="%s">`, getClass(item))
+		more := ``
+		if strings.Index(item, `data-sweet-alert`) >= 0 {
+			more = `data-sweet-alert`
+		}
+		out += fmt.Sprintf(`<div class="%s" %s>`, getClass(item), more)
 		count++
 	}
 	if val, ok := (*vars)[`divs`]; ok {
@@ -808,6 +816,10 @@ func Label(vars *map[string]string, pars ...string) string {
 	}
 	text := LangRes(vars, pars[0])
 	return fmt.Sprintf(`<label %s>%s</label>`, class, text)
+}
+
+func Legend(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`legend`, pars...)
 }
 
 func ValueById(vars *map[string]string, pars ...string) string {

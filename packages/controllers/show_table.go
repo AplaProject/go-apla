@@ -17,7 +17,9 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"strings"
 	//"encoding/json"
 	//"fmt"
 )
@@ -37,7 +39,7 @@ type showTablePage struct {
 	Columns               map[string]string
 	ColumnsAndPermissions map[string]string
 	TableName             string
-	Global string
+	Global                string
 }
 
 func (c *Controller) ShowTable() (string, error) {
@@ -61,11 +63,33 @@ func (c *Controller) ShowTable() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	columns["id"] = ""
+	//	columns["id"] = ""
 
-	tableData, err := c.GetAll(`SELECT * FROM "`+tableName+`"`, 1000)
+	tableData, err := c.GetAll(`SELECT * FROM "`+tableName+`" order by id`, 1000)
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+	for i, item := range tableData {
+		for key, val := range item {
+			if strings.HasPrefix(val, `data:image`) {
+				tableData[i][key] = fmt.Sprintf(`<img src="%s">`, val)
+			} else if len(val) == 20 && val[19] == 'Z' && val[10] == 'T' {
+				tableData[i][key] = strings.Replace(val[:19], `T`, ` `, -1)
+			} else if val == `NULL` {
+				tableData[i][key] = ``
+			} else if strings.IndexAny(val, "\x00\x01\x02\x03\x04\x05\x06") >= 0 {
+				var out []byte
+				for i, ch := range fmt.Sprintf(`%x`, val) {
+					out = append(out, byte(ch))
+					if (i & 1) == 1 {
+						out = append(out, ' ')
+					}
+				}
+				tableData[i][key] = string(out)
+			} else {
+				tableData[i][key] = strings.Replace(val, "\n", "\n<br>", -1)
+			}
+		}
 	}
 
 	TemplateStr, err := makeTemplate("show_table", "showTable", &showTablePage{

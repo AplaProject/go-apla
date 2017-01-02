@@ -101,6 +101,8 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 			val := strings.TrimSpace(c.r.FormValue(fitem.Name))
 			if strings.Index(fitem.Tags, `address`) >= 0 {
 				val = utils.Int64ToStr(lib.StringToAddress(val))
+			} else if fitem.Type.String() == `decimal.Decimal` {
+				val = strings.TrimLeft(val, `0`)
 			}
 			forsign += fmt.Sprintf(",%v", val)
 		}
