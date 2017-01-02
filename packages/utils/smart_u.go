@@ -113,7 +113,8 @@ func init() {
 	//		`*parser.Parser`: `parser`,
 	}})
 
-	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton})
+	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
+		`ChartPie`: ChartPie})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: P, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
@@ -640,11 +641,15 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	for _, th := range *columns {
 		out += `<th>` + th[0] + `</th>`
 		th[1] = strings.TrimSpace(th[1])
-		if strings.HasPrefix(th[1], `StateLink`) && strings.IndexByte(th[1], ',') > 0 {
-			linklist := strings.TrimSpace(th[1][strings.IndexByte(th[1], '(')+1 : strings.IndexByte(th[1], ',')])
-			if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
-				for ind, item := range alist {
-					(*vars)[fmt.Sprintf(`%s_%d`, linklist, ind+1)] = LangRes(vars, item)
+		off := strings.Index(th[1], `StateLink`)
+		if off >= 0 {
+			thname := th[1][off:]
+			if strings.IndexByte(thname, ',') > 0 {
+				linklist := strings.TrimSpace(thname[strings.IndexByte(thname, '(')+1 : strings.IndexByte(thname, ',')])
+				if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+					for ind, item := range alist {
+						(*vars)[fmt.Sprintf(`%s_%d`, linklist, ind+1)] = LangRes(vars, item)
+					}
 				}
 			}
 		}
@@ -692,6 +697,12 @@ func Image(vars *map[string]string, pars ...string) string {
 
 func StateValue(vars *map[string]string, pars ...string) string {
 	val, _ := StateParam(StrToInt64((*vars)[`state_id`]), pars[0])
+	if len(pars) > 1 {
+		ind := StrToInt(pars[1])
+		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
+			val = LangRes(vars, alist[ind-1])
+		}
+	}
 	return val
 }
 
@@ -1301,6 +1312,50 @@ func Map(vars *map[string]string, pars ...string) string {
 func MapPoint(vars *map[string]string, pars ...string) string {
 	(*vars)[`wimappoint`] = `1`
 	return fmt.Sprintf(`<div class="wimappoint">%s</div>`, pars[0])
+}
+
+func ChartPie(vars *map[string]string, pars *map[string]string) string {
+
+	return fmt.Sprintf(`<div><canvas id="chartjs-piechart"></canvas>
+		</div><script language="JavaScript" type="text/javascript">
+		(function (){
+    var pieData =[
+          {
+            value: 300,
+            color: '#7266ba',
+            highlight: '#7266ba',
+            label: 'Purple'
+          },
+          {
+            value: 40,
+            color: '#fad732',
+            highlight: '#fad732',
+            label: 'Yellow'
+          },
+          {
+            value: 120,
+            color: '#23b7e5',
+            highlight: '#23b7e5',
+            label: 'Info'
+          }
+        ];
+
+    var pieOptions = {
+      segmentShowStroke : true,
+      segmentStrokeColor : '#fff',
+      segmentStrokeWidth : 2,
+      percentageInnerCutout : 0, 
+      animationSteps : 100,
+      animationEasing : 'easeOutBounce',
+      animateRotate : true,
+      animateScale : false,
+      responsive: true
+    };
+
+    var piectx = document.getElementById("chartjs-piechart").getContext("2d");
+    var pieChart = new Chart(piectx).Pie(pieData, pieOptions);
+	})();
+</script>`)
 }
 
 /*func AddressToId(vars *map[string]string, pars ...string) string {
