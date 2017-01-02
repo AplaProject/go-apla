@@ -1,0 +1,70 @@
+<script>
+	var WalletId = {{.WalletId}};
+	$(".brand").attr("data-version", "v" + Version);
+</script>
+<div class="modal fade" id="modal_block_detail" role="dialog" aria-labelledby="modal_block_detail_label">
+	<div class="modal-dialog" role="document">
+		<div class="brand modal-content" data-sweet-alert data-version="">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<div class="modal-header">
+				<h4 class="modal-title" id="modal_block_detail_label">Wallet address</h4>
+			</div>
+			<div class="modal-body">
+				<div class="table-responsive">
+				   <table class="table table-striped table-bordered table-hover">
+					  <tbody>
+						 <tr>
+							<td class="thead">Block ID</td>
+							<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter block ID for search">{{.BlockId}}</a></strong></td>
+						 </tr>
+						{{if .BlockData}}
+						 <tr>
+							<td class="thead">Time</td>
+							<td class="unixtime">{{.BlockData.time}}</td>
+						 </tr>
+						 <tr>
+							<td class="thead">Hash</td>
+							<td>{{.BlockData.hash}}</td>
+						 </tr>
+						{{if gt .BlockId 1}}
+						 <tr>
+							<td class="thead">Parent Hash:</td>
+							<td><a onclick="return prev_block()" >{{.BlockData.parent}}</a></td>
+						 </tr>
+						{{end}}
+						 <tr>
+							<td class="thead">State ID</td>
+							<td>{{.BlockData.state_id}}</td>
+						 </tr>
+						 <tr>
+							<td class="thead">Added by</td>
+							<td>{{.BlockData.wallet_address}}</td>
+						 </tr>
+						 <tr>
+							<td class="thead">Transactions</td>
+							<td>{{.BlockData.tx_list}}</td>
+						 </tr>
+						 <tr>
+							<td class="thead">Size</td>
+							<td>{{.BlockData.size}} bytes</td>
+						 </tr>
+						 <tr>
+							<td class="thead">Data</td>
+							<td>{{.BlockData.data}}</td>
+						 </tr>
+						{{else}}
+						 <tr>
+							<td class="thead" colspan="2">Block doesn't exist.</td>
+						 </tr>
+						
+						{{end}}
+					  </tbody>
+				   </table>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
