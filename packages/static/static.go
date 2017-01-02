@@ -258,6 +258,7 @@
 // static/menu.html
 // static/modal_anonym.html
 // static/modal_avatar.html
+// static/modal_block_detail.html
 // static/modal_map.html
 // static/new_state.html
 // static/new_table.html
@@ -267,6 +268,7 @@
 // static/psw.html
 // static/restore_access.html
 // static/restore_access_active.html
+// static/row_history.html
 // static/schema.sql
 // static/show_table.html
 // static/signatures.html
@@ -5008,6 +5010,24 @@ func staticModal_avatarHtml() (*asset, error) {
 	return a, err
 }
 
+// staticModal_block_detailHtml reads file data from disk. It returns an error on failure.
+func staticModal_block_detailHtml() (*asset, error) {
+	path := "static/modal_block_detail.html"
+	name := "static/modal_block_detail.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticModal_mapHtml reads file data from disk. It returns an error on failure.
 func staticModal_mapHtml() (*asset, error) {
 	path := "static/modal_map.html"
@@ -5156,6 +5176,24 @@ func staticRestore_accessHtml() (*asset, error) {
 func staticRestore_access_activeHtml() (*asset, error) {
 	path := "static/restore_access_active.html"
 	name := "static/restore_access_active.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticRow_historyHtml reads file data from disk. It returns an error on failure.
+func staticRow_historyHtml() (*asset, error) {
+	path := "static/row_history.html"
+	name := "static/row_history.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6758,6 +6796,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/menu.html": staticMenuHtml,
 	"static/modal_anonym.html": staticModal_anonymHtml,
 	"static/modal_avatar.html": staticModal_avatarHtml,
+	"static/modal_block_detail.html": staticModal_block_detailHtml,
 	"static/modal_map.html": staticModal_mapHtml,
 	"static/new_state.html": staticNew_stateHtml,
 	"static/new_table.html": staticNew_tableHtml,
@@ -6767,6 +6806,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/psw.html": staticPswHtml,
 	"static/restore_access.html": staticRestore_accessHtml,
 	"static/restore_access_active.html": staticRestore_access_activeHtml,
+	"static/row_history.html": staticRow_historyHtml,
 	"static/schema.sql": staticSchemaSql,
 	"static/show_table.html": staticShow_tableHtml,
 	"static/signatures.html": staticSignaturesHtml,
@@ -7171,6 +7211,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"menu.html": &bintree{staticMenuHtml, map[string]*bintree{}},
 		"modal_anonym.html": &bintree{staticModal_anonymHtml, map[string]*bintree{}},
 		"modal_avatar.html": &bintree{staticModal_avatarHtml, map[string]*bintree{}},
+		"modal_block_detail.html": &bintree{staticModal_block_detailHtml, map[string]*bintree{}},
 		"modal_map.html": &bintree{staticModal_mapHtml, map[string]*bintree{}},
 		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{}},
 		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{}},
@@ -7180,6 +7221,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"psw.html": &bintree{staticPswHtml, map[string]*bintree{}},
 		"restore_access.html": &bintree{staticRestore_accessHtml, map[string]*bintree{}},
 		"restore_access_active.html": &bintree{staticRestore_access_activeHtml, map[string]*bintree{}},
+		"row_history.html": &bintree{staticRow_historyHtml, map[string]*bintree{}},
 		"schema.sql": &bintree{staticSchemaSql, map[string]*bintree{}},
 		"show_table.html": &bintree{staticShow_tableHtml, map[string]*bintree{}},
 		"signatures.html": &bintree{staticSignaturesHtml, map[string]*bintree{}},
