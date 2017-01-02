@@ -148,7 +148,8 @@
 			};
 			
 			this.onClick = function(event) {
-				if (event.ctrlKey === true) {
+				if (event.altKey === true) {
+
 					if (this.link) {
 						this.link.editor = this.editor;
 						this._signal("open", this.link);
