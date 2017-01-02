@@ -742,6 +742,15 @@ function saveImage() {
 	}
 }
 
+function openBlockDetailPopup(id) {
+	console.log(id);
+	$("#dl_modal").load("content?controllerHTML=modal_block_detail", {blockId: id}, function () {
+		var modal = $("#modal_block_detail");
+
+		modal.modal("show");
+	});
+}
+
 function formatCode() {
 	var source = editor.getValue();
 	var output = js_beautify(source, {

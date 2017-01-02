@@ -7,7 +7,7 @@
 		<div class="brand modal-content" data-sweet-alert data-version="">
 			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			<div class="modal-header">
-				<h4 class="modal-title" id="modal_block_detail_label">Wallet address</h4>
+				<h4 class="modal-title" id="modal_block_detail_label">Block Detail</h4>
 			</div>
 			<div class="modal-body">
 				<div class="table-responsive">
@@ -15,9 +15,8 @@
 					  <tbody>
 						 <tr>
 							<td class="thead">Block ID</td>
-							<td><strong><a class="edit" href="#" data-type="text" data-pk="1" data-title="Enter block ID for search">{{.BlockId}}</a></strong></td>
+							<td><strong class="text-primary">{{.BlockId}}</strong></td>
 						 </tr>
-						{{if .BlockData}}
 						 <tr>
 							<td class="thead">Time</td>
 							<td class="unixtime">{{.BlockData.time}}</td>
@@ -29,7 +28,7 @@
 						{{if gt .BlockId 1}}
 						 <tr>
 							<td class="thead">Parent Hash:</td>
-							<td><a onclick="return prev_block()" >{{.BlockData.parent}}</a></td>
+							<td>{{.BlockData.parent}}</td>
 						 </tr>
 						{{end}}
 						 <tr>
@@ -52,12 +51,6 @@
 							<td class="thead">Data</td>
 							<td>{{.BlockData.data}}</td>
 						 </tr>
-						{{else}}
-						 <tr>
-							<td class="thead" colspan="2">Block doesn't exist.</td>
-						 </tr>
-						
-						{{end}}
 					  </tbody>
 				   </table>
 				</div>
@@ -68,3 +61,8 @@
 		</div>
 	</div>
 </div>
+<script>
+	$(".unixtime").each(function() {
+		$(this).text(moment.unix($(this).text()).format('D MMMM YYYY, hh:mm:ss', 'en'));
+	});
+</script>
