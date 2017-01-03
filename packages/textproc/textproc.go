@@ -17,7 +17,7 @@
 package textproc
 
 import (
-	//"fmt"
+	// "fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -200,10 +200,15 @@ func Split(input string) *[][]string {
 func funcProcess(name string, params [][]rune, vars *map[string]string) string {
 	pars := make([]string, 0)
 	for _, item := range params {
+		var val string
 		ipar := strings.TrimSpace(string(item))
-		val := Process(ipar, vars)
-		if val == `NULL` {
-			val = Macro(ipar, vars)
+		if strings.Index(ipar, `#=`) < 0 {
+			val = Process(ipar, vars)
+			if val == `NULL` {
+				val = Macro(ipar, vars)
+			}
+		} else {
+			val = ipar
 		}
 		pars = append(pars, val)
 	}

@@ -214,7 +214,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				var global int
 				ipage, global, _ = getState(c.SessStateId, ipage)
 				list = append(list, fmt.Sprintf(`{
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,menu,conditions',
 		Data: {
 			type: "NewPage",
 			typeid: #type_new_page_id#,
