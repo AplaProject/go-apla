@@ -202,7 +202,8 @@ func funcProcess(name string, params [][]rune, vars *map[string]string) string {
 	for _, item := range params {
 		var val string
 		ipar := strings.TrimSpace(string(item))
-		if strings.Index(ipar, `#=`) < 0 {
+		off := strings.Index(ipar, `#=`)
+		if off < 0 || off != strings.Index(ipar, `#`) {
 			val = Process(ipar, vars)
 			if val == `NULL` {
 				val = Macro(ipar, vars)
