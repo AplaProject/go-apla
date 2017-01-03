@@ -1344,29 +1344,24 @@ func MapPoint(vars *map[string]string, pars ...string) string {
 }
 
 func ChartPie(vars *map[string]string, pars *map[string]string) string {
-
-	return fmt.Sprintf(`<div><canvas id="chartjs-piechart"></canvas>
+	id := fmt.Sprintf(`pie%d`, RandInt(0, 0xfffffff))
+	data := textproc.Split((*pars)[`Data`])
+	out := make([]string, 0)
+	for _, item := range *data {
+		if len(item) == 3 {
+			out = append(out, fmt.Sprintf(`{
+            value: %s,
+            color: '#%s',
+            highlight: '#%s',
+            label: '%s'
+			}`, item[0], item[1], item[1], item[2]))
+		}
+	}
+	return fmt.Sprintf(`<div><canvas id="%s"></canvas>
 		</div><script language="JavaScript" type="text/javascript">
 		(function (){
     var pieData =[
-          {
-            value: 300,
-            color: '#7266ba',
-            highlight: '#7266ba',
-            label: 'Purple'
-          },
-          {
-            value: 40,
-            color: '#fad732',
-            highlight: '#fad732',
-            label: 'Yellow'
-          },
-          {
-            value: 120,
-            color: '#23b7e5',
-            highlight: '#23b7e5',
-            label: 'Info'
-          }
+          %s
         ];
 
     var pieOptions = {
@@ -1381,10 +1376,10 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
       responsive: true
     };
 
-    var piectx = document.getElementById("chartjs-piechart").getContext("2d");
+    var piectx = document.getElementById("%s").getContext("2d");
     var pieChart = new Chart(piectx).Pie(pieData, pieOptions);
 	})();
-</script>`)
+</script>`, id, strings.Join(out, ",\r\n"), id)
 }
 
 /*func AddressToId(vars *map[string]string, pars ...string) string {
