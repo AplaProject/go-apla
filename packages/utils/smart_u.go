@@ -445,7 +445,7 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 		return err.Error()
 	}
 	for key, val := range value {
-		(*vars)[pars[0]+`_`+key] = val
+		(*vars)[pars[0]+`_`+key] = lib.StripTags(val)
 	}
 	return ``
 }
@@ -464,7 +464,7 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	if err != nil {
 		return err.Error()
 	}
-	return strings.Replace(value, "\n", "\n<br>", -1)
+	return strings.Replace(lib.StripTags(value), "\n", "\n<br>", -1)
 }
 
 func getClass(class string) string {
@@ -684,7 +684,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		out += `<tr>`
 		for key, value := range item {
 			if key != `state_id` {
-				(*vars)[key] = value
+				(*vars)[key] = lib.StripTags(value)
 			}
 		}
 		for _, th := range *columns {
@@ -938,7 +938,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	for _, idn := range idnames {
 		lr := strings.SplitN(idn, `=`, 2)
 		if len(lr) == 2 {
-			names[lr[0]] = lr[1]
+			names[strings.TrimSpace(lr[0])] = strings.TrimSpace(lr[1])
 		}
 	}
 txlist:
@@ -1091,7 +1091,7 @@ txlist:
 					return err.Error()
 				} else if len(data) > 0 {
 					for _, item := range data {
-						sellist.List[int(StrToInt64(item[id]))] = item[name]
+						sellist.List[int(StrToInt64(item[id]))] = lib.StripTags(item[name])
 					}
 				}
 			} else if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
@@ -1305,7 +1305,7 @@ func Select(vars *map[string]string, pars ...string) string {
 				return err.Error()
 			} else if len(data) > 0 {
 				for _, item := range data {
-					list = append(list, SelInfo{Id: StrToInt64(item[id]), Name: item[name]})
+					list = append(list, SelInfo{Id: StrToInt64(item[id]), Name: lib.StripTags(item[name])})
 				}
 			}
 		} else if alist := strings.Split(StateValue(vars, pars[1]), `,`); len(alist) > 0 {

@@ -595,3 +595,7 @@ func Float2Bytes(float float64) []byte {
 	binary.LittleEndian.PutUint64(bytes, math.Float64bits(float))
 	return bytes
 }
+
+func StripTags(value string) string {
+	return strings.Replace(strings.Replace(value, `<`, `&lt;`, -1), `>`, `&gt;`, -1)
+}
