@@ -125,7 +125,7 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Textarea`: Textarea, `InputMoney`: InputMoney,
+		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes,
 	})
@@ -383,6 +383,23 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<input id="%s" type="text" value="%s"
 				data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 'autoGroup': true, 'digits': %d, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"
 	class="inputmask %s">`, pars[0], value, digit, class)
+}
+
+func InputAddress(vars *map[string]string, pars ...string) string {
+	var (
+		class, value string
+	)
+	if len(pars) > 1 {
+		class = pars[1]
+	}
+	if len(pars) > 2 {
+		value = pars[2]
+	}
+	(*vars)["wiaddress"] = `1`
+	return fmt.Sprintf(`<input id="%s" type="text" value="%s" data-type="wallet" class="%s address">
+				<ul class="parsley-errors-list">
+					<li class="parsley-required">Please enter the correct address</li>
+				</ul>`, pars[0], value, class)
 }
 
 func Func(vars *map[string]string, pars ...string) string {

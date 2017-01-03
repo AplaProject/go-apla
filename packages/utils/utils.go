@@ -2346,6 +2346,19 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 				$(".inputmask").inputmask({'autoUnmask': true});</script>`)
 		}
+		if (*params)[`wiaddress`] == `1` {
+			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+				$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
+	$(".address").typeahead({
+		minLength: 1,
+		items: 10,
+		source: function (query, process) {
+			return $.get('ajax?json=ajax_addresses', { 'address': query }, function (data) {
+				return process(data.address);
+			});
+		}
+	}).focus();</script>`)
+		}
 		if (*params)[`wimap`] == `1` {
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())
