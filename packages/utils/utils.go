@@ -2346,6 +2346,12 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 				$(".inputmask").inputmask({'autoUnmask': true});</script>`)
 		}
+		if (*params)[`widate`] == `1` {
+			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+		$.datetimepicker.setLocale('en');
+		jQuery(".datetimepicker").datetimepicker();
+	</script>`)
+		}
 		if (*params)[`wiaddress`] == `1` {
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 				$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();

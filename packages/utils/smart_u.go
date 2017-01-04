@@ -127,7 +127,7 @@ func init() {
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
-		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes,
+		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
 	})
 }
 
@@ -366,6 +366,20 @@ func Input(vars *map[string]string, pars ...string) string {
 	}
 	return fmt.Sprintf(`<input type="%s" id="%s" placeholder="%s" class="%s" value="%s">`,
 		itype, pars[0], placeholder, class, value)
+}
+
+func InputDate(vars *map[string]string, pars ...string) string {
+	var (
+		class, value string
+	)
+	if len(pars) > 1 {
+		class = pars[1]
+	}
+	if len(pars) > 2 {
+		value = pars[2]
+	}
+	(*vars)["widate"] = `1`
+	return fmt.Sprintf(`<input type="text" class="datetimepicker %s" id="%s" value="%s">`, class, pars[0], value)
 }
 
 func InputMoney(vars *map[string]string, pars ...string) string {
