@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"fmt"
 )
 
 func (c *Controller) AjaxGetMenuHtml() (string, error) {
@@ -39,6 +40,10 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 	menu = ReplaceMenu(menu)
+	menu += fmt.Sprintf(`<script>
+	$(".aside .nav li").removeClass("active");
+	$(".citizen_`+pageName+`").addClass("active");
+</script>`)
 
 	return menu, nil
 }

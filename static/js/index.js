@@ -209,7 +209,6 @@ function load_template(page, parameters) {
 					console.log(data);
 					var li = $("#dc li:first").html();
 					$("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
-					$("#dc li:first").next().addClass("active");
 				}
 			});
 		}, "html");
