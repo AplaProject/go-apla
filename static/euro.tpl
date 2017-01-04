@@ -98,7 +98,7 @@ DivsEnd: `)
 TextHidden( p_Euro)
 Json(`Head: "Euro",
 Desc: "Euro",
-		Img: "/static/img/apps/ava.png",
+		Img: "/static/img/apps/euro.jpeg",
 		OnSuccess: {
 			script: 'template',
 			page: 'government',

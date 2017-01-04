@@ -67,7 +67,7 @@ func (c *Controller) EditPage() (string, error) {
 	var dataPageMain map[string]string
 	var dataPageHistory []map[string]string
 	var rbId int64
-	for i:=0; i<10; i++ {
+	for i:=0; i<30; i++ {
 		if i==0 {
 			dataPage, err := c.OneRow(`SELECT * FROM "` + prefix + `_pages" WHERE name = ?`, name).String()
 			if err != nil {

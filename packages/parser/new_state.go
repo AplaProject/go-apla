@@ -256,10 +256,8 @@ func (p *Parser) NewState() error {
 	}
 
 	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
-		(?, ?, ?),
 		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid,
-		id+`_accounts`, `{"general_update":"`+sid+`", "update": {"amount": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid)
+		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -443,7 +441,7 @@ PageEnd:`, `menu_default`, sid,
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_accounts_id_seq" START WITH 1;
+	/*err = p.ExecSql(`CREATE SEQUENCE "` + id + `_accounts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_accounts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
 				"amount" decimal(30)  NOT NULL DEFAULT '0',
@@ -454,7 +452,7 @@ PageEnd:`, `menu_default`, sid,
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
-	}
+	}*/
 	err = p.ExecSql(`CREATE TABLE "` + id + `_languages" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"res" jsonb,
@@ -498,10 +496,10 @@ func (p *Parser) NewStateRollback() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql(`DROP TABLE "` + id + `_accounts"`)
+	/*err = p.ExecSql(`DROP TABLE "` + id + `_accounts"`)
 	if err != nil {
 		return p.ErrInfo(err)
-	}
+	}*/
 	err = p.ExecSql(`DROP TABLE "` + id + `_menu"`)
 	if err != nil {
 		return p.ErrInfo(err)

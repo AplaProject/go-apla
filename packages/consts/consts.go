@@ -117,6 +117,7 @@ var TxTypes = map[int]string{
 	27: "RestoreAccess",
 	28: "NewLang",
 	29: "EditLang",
+	30: "AppendMenu",
 }
 
 func init() {
