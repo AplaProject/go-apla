@@ -382,24 +382,27 @@ PageEnd:
 
     `page_dashboard_default #= Divs(md-12, panel panel-default panel-body)
                                MarkDown : ## My property
-                                          Table{
-                                              Table: #state_id#_property
-                                              Where: citizen_id='#citizen#'
-                                              Order: id
-                                              Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, Address(#!citizen_id#)]]
-                                          }
+                               Table{
+                                   Table: #state_id#_property
+                                   Where: citizen_id='#citizen#'
+                                   Order: id
+                                   Columns: [[ID, #id#], [Name, property], [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Details,BtnTemplate(PropertyDetails,Details,"PropertyId:#id#")], [Rent price,Money(#rent_price#)] , [Sell price,Money(#sell_price#)] , [Offers, #offers#] ]
+                               }
+                               DivsEnd:
+                               Divs(md-12, panel panel-default panel-body text-center)
+                                   BtnTemplate(SearchProperty, Search property, '', 'btn btn-primary btn-lg')
                                DivsEnd:`,
 
     `page_government #=
-     Divs(md-12, panel panel-default panel-body)
-            MarkDown : ## Property
-            Table{
-                Table: #state_id#_property
-                Order: id
-                Columns: [[ID, #id#], [Name, #name#], [Coordinates, #coords#], [Citizen ID, Address(#!citizen_id#)], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
-            }
-         BtnTemplate(AddProperty, AddProperty, '', 'btn btn-primary btn-lg') BR()
-DivsEnd:
+    Divs(md-12, panel panel-default panel-body)
+                MarkDown : ## Property
+                Table{
+                    Table: 1_property
+                    Order: id
+                    Columns: [[ID, #id#], [Type, StateLink(property_types, #type#)]  [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
+                }
+             BtnTemplate(AddProperty, AddProperty, '', 'btn btn-primary btn-lg') BR()
+    DivsEnd:
 `,
 `p_SellProperty #= Title : SellProperty
 Navigation( Citizens )
