@@ -27,53 +27,53 @@ SetVar(`sc_newForexOrder = contract newForexOrder {
 		}
 		var total money
 		total = $Amount * $SellRate
-		Println(total)
+		//Println(total)
 		if total < 1 {
 			warning total
 		}
 		var amount money
 		amount = DBAmount($SellTable, "citizen_id", $citizen)
-		Println("amount", amount)
+		//Println("amount", amount)
 
 		var forexAmount money
-		Println("SellTable", $SellTable)
-		Println("citizen", $citizen)
+		//Println("SellTable", $SellTable)
+		//Println("citizen", $citizen)
 		var account_id int
 		account_id = DBIntExt($SellTable, "id", $citizen, "citizen_id")
-		Println("account_id", account_id)
+		//Println("account_id", account_id)
 		forexAmount = DBIntWhere("global_forex_orders", "sum(amount)","sell_table = $ AND sell_table_account_id = $", $SellTable, account_id)
-		Println("forexAmount", forexAmount)
+		//Println("forexAmount", forexAmount)
 		if amount+forexAmount < $Amount {
 		    warning "not enough money "
 		}
-	    
+
 	}
-	
+
 	func action {
 		var reverseRate float
 		reverseRate = 1.0 / $SellRate
 		var totalSellAmount money
 		totalSellAmount = $Amount
 
-		Println("totalSellAmount", totalSellAmount)
+		//Println("totalSellAmount", totalSellAmount)
 		var list array
 		var data1 map
 		var i int
 		var len int
 
-		Println("sell_rate>=", reverseRate)
-		Println("$SellTable", $SellTable)
-		Println("reverseRate", reverseRate)
-		Println("$BuyTable", $BuyTable)
+		//Println("sell_rate>=", reverseRate)
+		//Println("$SellTable", $SellTable)
+		//Println("reverseRate", reverseRate)
+		//Println("$BuyTable", $BuyTable)
 		list = DBGetList("global_forex_orders", "id,sell_rate,amount,sell_table_account_id,sell_table,buy_table_account_id,buy_table", 0, 100000, "id desc", "buy_table=$ AND sell_rate>=$ AND sell_table=$ AND (empty_block_id=0 OR empty_block_id is NULL)", $SellTable, reverseRate, $BuyTable)
 		len = Len(list)
-		Println("len", len)
-		Println("list", list)
+		//Println("len", len)
+		//Println("list", list)
 		while i < len {
-			Println("i", i, "list", list)
+			//Println("i", i, "list", list)
 			data1 = list[i]
 			i = i + 1
-			Println(data1)
+			//Println(data1)
 			var readyToBuy money
 			readyToBuy = totalSellAmount * data1["sell_rate"]
 			var sellerSellAmount money
@@ -83,8 +83,8 @@ SetVar(`sc_newForexOrder = contract newForexOrder {
 				sellerSellAmount = readyToBuy // данный ордер удовлетворяет наш запрос целиком
 			}
 			if data1["amount"] - sellerSellAmount < 1 { // ордер опустошили
-				Println($block)
-				Println(data1["id"])
+				//Println($block)
+				//Println(data1["id"])
 				DBUpdate("global_forex_orders", Int(data1["id"]), "amount,empty_block_id", "0", $block)
 				DBInsert("global_forex_history2", "price,amount,total,direction,currency,timestamp time", data1["sell_rate"], data1["amount"], Money(data1["amount"])*Float(data1["sell_rate"]), $Direction, $BuyTable, $block_time)
 
@@ -98,41 +98,41 @@ SetVar(`sc_newForexOrder = contract newForexOrder {
 			var sellerBuyAmount money
 			sellerBuyAmount = sellerSellAmount * (1.0 / data1["sell_rate"])
 
-			Println("001")
+			//Println("001")
 			var sender_id int
 			sender_id = data1["sell_table_account_id"]
 
 			var recipient_id int
 			recipient_id = DBIntExt(data1["sell_table"], "id", $citizen, "citizen_id")
-			Println("recipient_id", recipient_id, "sender_id", sender_id, data1["sell_table"], sellerSellAmount, sellerBuyAmount, data1["sell_rate"])
+			//Println("recipient_id", recipient_id, "sender_id", sender_id, data1["sell_table"], sellerSellAmount, sellerBuyAmount, data1["sell_rate"])
 			DBTransfer(data1["sell_table"], "amount,id", Int(sender_id), recipient_id, sellerSellAmount)
 
-			Println("003")
+			//Println("003")
 			sender_id = DBIntExt(data1["buy_table"], "id", $citizen, "citizen_id")
-			Println("sender_id", sender_id)
+			//Println("sender_id", sender_id)
 			recipient_id = data1["buy_table_account_id"]
-			Println("recipient_id", recipient_id, "sender_id", sender_id, data1["buy_table"], sellerBuyAmount)
+			//Println("recipient_id", recipient_id, "sender_id", sender_id, data1["buy_table"], sellerBuyAmount)
             DBTransfer(data1["buy_table"], "amount,id", sender_id, Int(recipient_id), sellerBuyAmount)
 
-			Println("004")
+			//Println("004")
 				// вычитаем с нашего баланса сумму, которую потратили на данный ордер
 			totalSellAmount = totalSellAmount - sellerBuyAmount
-			Println("0041", totalSellAmount)
+			//Println("0041", totalSellAmount)
 			if totalSellAmount < 1 {
-				Println("0042")
+				//Println("0042")
 				break // проход по ордерам прекращаем, т.к. наш запрос удовлетворен
 			}
 		}
 
-		Println("005")
+		//Println("005")
 		if totalSellAmount >= 0.01 {
 			var sell_account_id int
-			Println("006")
+			//Println("006")
 			sell_account_id = DBIntExt($SellTable, "id", $citizen, "citizen_id")
 			var buy_account_id int
-			Println("007")
+			//Println("007")
 			buy_account_id = DBIntExt($BuyTable, "id", $citizen, "citizen_id")
-			Println("008")
+			//Println("008")
 			DBInsert("global_forex_orders", "sell_rate,amount,sell_table_account_id,sell_table,buy_table_account_id,buy_table", $SellRate, totalSellAmount, sell_account_id, $SellTable, buy_account_id, $BuyTable)
 		}
 	}
@@ -307,7 +307,6 @@ Divs(md-12, panel panel-default)
     	Columns: [
     		[Time, DateTime(#time#)],
     		[Type, If(#direction#=="sell", P(text-bold  text-danger, sell), P(text-bold  text-success, buy))],
-    		[direction, #direction#],
     		[Price, #price# #Currency2#],
     		[Amount, #amount#  #Currency1#],
     		[Total, #total#  #Currency2#]

@@ -37,9 +37,9 @@ sc_SendMoney = `contract SendMoney {
 	}
 
 	func conditions {
-	    Println("RecipientAccountId", $RecipientAccountId)
-	    Println("citizen", $citizen)
-	    Println("Amount", $Amount)
+	    //Println("RecipientAccountId", $RecipientAccountId)
+	    //Println("citizen", $citizen)
+	    //Println("Amount", $Amount)
 		if DBAmount(Table("accounts"), "citizen_id", $citizen) < $Amount {
 			error "not enough money"
 		}
@@ -60,7 +60,7 @@ sc_UpdAmount = `contract UpdAmount {
 	}
 
 	func action {
-	    Println("AccountId", $AccountId)
+	    //Println("AccountId", $AccountId)
 		DBUpdate(Table("accounts"), $AccountId, "amount", $Amount)
 	}
 }`)

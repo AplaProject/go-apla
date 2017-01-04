@@ -36,9 +36,9 @@ sc_BuyItem = `contract BuyItem {
 		var sender_id int
 		sender_id = DBIntWhere( Table("accounts"), "id", "citizen_id=$ and (disabled is NULL or disabled=0)", $citizen)
 		
-		Println("sender_id", sender_id)
-		Println("recipient_id", recipient_id)
-		Println("Price", $Price)
+		//Println("sender_id", sender_id)
+		//Println("recipient_id", recipient_id)
+		//Println("Price", $Price)
 		DBTransfer(Table("accounts"), "amount,id", sender_id, recipient_id, $Price)
 
 

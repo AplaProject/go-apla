@@ -10,7 +10,7 @@ SetVar(
 	}
 	func action {
 	  DBUpdate(Table( "citizens"), $citizen, "name,avatar", $FirstName, $Image)
-  	  Println("TXEditProfile new")
+  	  //Println("TXEditProfile new")
 	}
 }`
 )
