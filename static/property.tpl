@@ -2,7 +2,9 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
-	type_new_table_id = TxId(NewTable),	
+	type_append_id = TxId(AppendPage),
+	type_append_menu_id = TxId(AppendMenu),
+    type_new_table_id = TxId(NewTable),
 	sc_conditions = "$citizen == #wallet_id#")
 SetVar(sc_AddProperty = `contract AddProperty {
 	data {
