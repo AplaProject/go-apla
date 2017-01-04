@@ -48,7 +48,6 @@ func (c *Controller) BlockExplorer() (string, error) {
 
 	blockId := utils.StrToInt64(c.r.FormValue("blockId"))
 	pageData.SinglePage = utils.StrToInt64(c.r.FormValue("singlePage"))
-
 	if blockId > 0 {
 		pageData.BlockId = blockId
 		blockInfo, err := c.OneRow(`SELECT b.* FROM block_chain as b
@@ -118,6 +117,9 @@ func (c *Controller) BlockExplorer() (string, error) {
 			blockInfo[`tx_list`] = strings.Join(txlist, `, `)
 		}
 		pageData.BlockData = blockInfo
+		if c.r.FormValue("modal") == `1` {
+			return proceedTemplate(c, `modal_block_detail`, &pageData)
+		}
 	} else {
 		latest := utils.StrToInt64(c.r.FormValue("latest"))
 		if latest > 0 {

@@ -744,7 +744,7 @@ function saveImage() {
 
 function openBlockDetailPopup(id) {
 	console.log(id);
-	$("#dl_modal").load("content?controllerHTML=modal_block_detail", {blockId: id}, function () {
+	$("#dl_modal").load("content?page=block_explorer", { modal: 1, blockId: id }, function () {
 		var modal = $("#modal_block_detail");
 
 		modal.modal("show");

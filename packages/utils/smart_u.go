@@ -126,7 +126,8 @@ func init() {
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
-		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
+		`BlockInfo`: BlockInfo,
+		`Form`:      Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
 	})
 }
@@ -599,6 +600,10 @@ func LinkTemplate(vars *map[string]string, pars ...string) string {
 		params = pars[2]
 	}
 	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
+}
+
+func BlockInfo(vars *map[string]string, pars ...string) string {
+	return fmt.Sprintf(`<a href="#" onclick="openBlockDetailPopup('%s')">%[1]s</a>`, pars[0])
 }
 
 func Val(vars *map[string]string, pars ...string) string {
