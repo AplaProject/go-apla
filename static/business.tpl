@@ -205,9 +205,9 @@ DivsEnd:
 `, `menu_1 #= [Business](business)
               [Shops](shops)`)
 TextHidden( p_BuyItem, p_CompanyDetails, p_business, p_shops, menu_1)
-Json(`Head: "",
-Desc: "",
-		Img: "/static/img/apps/ava.png",
+Json(`Head: "Business",
+Desc: "Business",
+		Img: "/static/img/apps/business.png",
 		OnSuccess: {
 			script: 'template',
 			page: 'government',
