@@ -685,7 +685,7 @@ main:
 			if len(buffer) > 0 {
 				if prev := buffer[len(buffer)-1]; prev.Cmd == CMD_INDEX {
 					buffer = buffer[:len(buffer)-1]
-					if (*lexems)[i+1].Type == IS_EQ {
+					if i < len(*lexems)-1 && (*lexems)[i+1].Type == IS_EQ {
 						i++
 						setIndex = true
 						continue

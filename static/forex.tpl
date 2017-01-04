@@ -4,7 +4,7 @@ SetVar(
 	type_new_contract_id = TxId(NewContract),
 	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "$citizen == #wallet_id#")
-SetVar(sc_newForexOrder = `contract newForexOrder {
+SetVar(`sc_newForexOrder = contract newForexOrder {
 	data {
 		SellTable string
 		SellRate float

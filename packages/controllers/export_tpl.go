@@ -79,7 +79,7 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 			if prefix == `p` {
 				list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, data))
 			} else {
-				list = append(list, fmt.Sprintf("%s_%s = `%s`", prefix, icontract, data))
+				list = append(list, fmt.Sprintf("`%s_%s = %s`", prefix, icontract, data))
 			}
 		}
 	}
