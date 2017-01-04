@@ -16,12 +16,6 @@ SetVar(sc_AddProperty = `contract AddProperty {
 		if AddressToId($CitizenId) == 0 {
 			error "invalid address"
 		}
-		var id int
-		id = DBIntExt(Table("parlament"), "id", $citizen, "citizen_id")
-		if id == 0 {
-			error "access denied"
-		}
-
 	}
 	func action {
 		DBInsert(Table("property"), "coords,citizen_id,type", $Coords, AddressToId($CitizenId), $PropertyType)
