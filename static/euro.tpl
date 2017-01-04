@@ -2,7 +2,10 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
-	type_new_table_id = TxId(NewTable),	
+	type_append_id = TxId(AppendPage),
+	type_append_menu_id = TxId(AppendMenu),
+	type_new_menu_id = TxId(NewMenu),
+    type_new_table_id = TxId(NewTable),
 	sc_conditions = "$citizen == #wallet_id#")
 SetVar(sc_AddAccountEuro = `contract AddAccountEuro {
 	data {
@@ -94,8 +97,10 @@ Table{
 	Order: id
 	Columns: [[ID, #id#],[Amount, Money(#amount#)],[Citizen ID, Address(#citizen_id#)],[History, If(#rb_id#>0, SysLink(rowHistory, Show, "rbId:#rb_id#,tableName:'global_euro', global:1"), "No history")],[Disabled, If(#disabled#==1, "Div(label label-danger, Yes)", "")]]
 }
-DivsEnd: `)
-TextHidden( p_Euro)
+DivsEnd: `,
+`menu_1 #= [Euro](glob.Euro)`
+)
+TextHidden( p_Euro, menu_1)
 Json(`Head: "Euro",
 Desc: "Euro",
 		Img: "/static/img/apps/euro.jpeg",
@@ -148,13 +153,23 @@ Desc: "Euro",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
-{
+	   {
+                     			Forsign: 'global,name,value',
+                     			Data: {
+                     				type: "AppendMenu",
+                     				typeid: #type_append_menu_id#,
+                     				name : "government",
+                     				value: $("#menu_1").val(),
+                     				global: 0
+                     			}
+         },
+        {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
 			type: "NewPage",
 			typeid: #type_new_page_id#,
 			name : "Euro",
-			menu: "menu_default",
+			menu: "globalMenu",
 			value: $("#p_Euro").val(),
 			global: 1,
 			conditions: "$citizen == #wallet_id#",

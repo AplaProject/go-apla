@@ -412,7 +412,7 @@ PageEnd:`)
 TextHidden( page_dashboard_default, page_government, p_AddProperty, p_EditProperty, p_PropertyAcceptOffers, p_PropertyDetails, p_PropertyOffer, p_PropertyOffers, p_PropertyResults, p_SearchProperty, p_SellProperty)
 Json(`Head: "Property",
 Desc: "Property",
-		Img: "/static/img/apps/ava.png",
+		Img: "/static/img/apps/property.jpg",
 		OnSuccess: {
 			script: 'template',
 			page: 'government',

@@ -2,7 +2,10 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
-	type_new_table_id = TxId(NewTable),	
+	type_append_id = TxId(AppendPage),
+	type_append_menu_id = TxId(AppendMenu),
+	type_new_menu_id = TxId(NewMenu),
+    type_new_table_id = TxId(NewTable),
 	sc_conditions = "$citizen == #wallet_id#")
 SetVar(`sc_newForexOrder = contract newForexOrder {
 	data {
@@ -142,8 +145,6 @@ Navigation(LiTemplate(dashboard_default, Citizen))
 
 Form()
 
-        
-        
     Divs(md-12, panel panel-default panel-body text-center)
     BtnTemplate(newForexOrder,EURO/USD,"Table1:'global_euro',Table2:'1_accounts',global:1,Currency1:'EURO',Currency2:'USD'")
     DivsEnd:
@@ -315,8 +316,16 @@ Divs(md-12, panel panel-default)
     DivsEnd:
 DivsEnd:
 
-PageEnd:`)
-TextHidden( p_newForexOrder)
+PageEnd:`,
+         `menu_1 #=
+             [Forex](glob.newForexOrder){Table1:'global_euro',Table2:'1_accounts',global:1,Currency1:'EURO',Currency2:'USD'}
+         `,
+          `globalMenu #=
+             [Government dashboard](government)
+             [Forex](glob.newForexOrder){Table1:'global_euro',Table2:'1_accounts',global:1,Currency1:'EURO',Currency2:'USD'}
+             [Euro](glob.Euro)
+          `)
+TextHidden( p_newForexOrder, globalMenu, menu_1)
 Json(`Head: "Forex",
 Desc: "Forex",
 		Img: "/static/img/apps/forex.png",
@@ -358,16 +367,39 @@ Desc: "Forex",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
-{
+    {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
 			type: "NewPage",
 			typeid: #type_new_page_id#,
 			name : "newForexOrder",
-			menu: "menu_default",
+			menu: "globalMenu",
 			value: $("#p_newForexOrder").val(),
 			global: 1,
 			conditions: "$citizen == #wallet_id#",
 			}
-	   }]`
+	   },
+
+	   	{
+              			Forsign: 'global,name,value',
+              			Data: {
+              				type: "AppendMenu",
+              				typeid: #type_append_menu_id#,
+              				name : "government",
+              				value: $("#menu_1").val(),
+              				global: 0
+              			}
+        },
+       {
+       		Forsign: 'global,name,value,conditions',
+       		Data: {
+       			type: "NewMenu",
+       			typeid: #type_new_menu_id#,
+       			name : "globalMenu",
+       			value: $("#globalMenu").val(),
+       			global: 1,
+       			conditions: "$citizen == #wallet_id#",
+       			}
+       	   }
+	   ]`
 )
