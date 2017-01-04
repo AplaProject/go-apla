@@ -114,7 +114,7 @@ func init() {
 	}})
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
-		`ChartPie`: ChartPie})
+		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: P, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
@@ -1343,18 +1343,140 @@ func MapPoint(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<div class="wimappoint">%s</div>`, pars[0])
 }
 
+func ChartBar(vars *map[string]string, pars *map[string]string) string {
+	id := fmt.Sprintf(`bar%d`, RandInt(0, 0xfffffff))
+	data := make([]string, 0)
+	labels := make([]string, 0)
+	//	if len((*pars)[`Data`]) > 0 {
+	//	} else {
+	colors := strings.Split((*pars)[`Colors`], `,`)
+	value := (*pars)[`FieldValue`]
+	label := (*pars)[`FieldLabel`]
+	if len(colors) == 0 {
+		colors = []string{`23b7e5`}
+	}
+	if len(value) == 0 || len(label) == 0 {
+		return `empty FieldValue or FieldLabel`
+	}
+	order := ``
+	where := ``
+	limit := ``
+	if val, ok := (*pars)[`Order`]; ok {
+		order = `order by ` + lib.Escape(val)
+	}
+	if val, ok := (*pars)[`Where`]; ok {
+		where = `where ` + lib.Escape(val)
+	}
+	if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
+		opar := strings.Split(val, `,`)
+		if len(opar) == 1 {
+			limit = fmt.Sprintf(` limit %d`, StrToInt64(opar[0]))
+		} else {
+			limit = fmt.Sprintf(` offset %d limit %d`, StrToInt64(opar[0]), StrToInt64(opar[1]))
+		}
+	}
+	list, err := DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, lib.EscapeName(value), lib.EscapeName(label),
+		lib.EscapeName((*pars)[`Table`]), where, order, limit), -1)
+	if err != nil {
+		return err.Error()
+	}
+	for _, item := range list {
+		data = append(data, lib.StripTags(item[value]))
+		labels = append(labels, `'`+lib.StripTags(item[label])+`'`)
+	}
+	//	}
+	return fmt.Sprintf(`<div><canvas id="%s"></canvas>
+		</div><script language="JavaScript" type="text/javascript">
+		(function (){
+    var barData = {
+        labels : [%s],
+        datasets : [
+          {
+            fillColor : '#%[3]s',
+            strokeColor : '#%[3]s',
+            highlightFill: '#%[3]s',
+            highlightStroke: '#%[3]s',
+            data : [%s]
+          }
+        ]
+    };
+    
+    var barOptions = {
+      scaleBeginAtZero : true,
+      scaleShowGridLines : true,
+      scaleGridLineColor : 'rgba(0,0,0,.05)',
+      scaleGridLineWidth : 1,
+      barShowStroke : true,
+      barStrokeWidth : 2,
+      barValueSpacing : 5,
+      barDatasetSpacing : 1,
+      responsive: true
+    };
+
+    var barctx = document.getElementById("%s").getContext("2d");
+    var barChart = new Chart(barctx).Bar(barData, barOptions);
+	})();
+</script>`, id, strings.Join(labels, ","), colors[0], strings.Join(data, ","), id)
+}
+
 func ChartPie(vars *map[string]string, pars *map[string]string) string {
 	id := fmt.Sprintf(`pie%d`, RandInt(0, 0xfffffff))
-	data := textproc.Split((*pars)[`Data`])
 	out := make([]string, 0)
-	for _, item := range *data {
-		if len(item) == 3 {
+
+	if len((*pars)[`Data`]) > 0 {
+		data := textproc.Split((*pars)[`Data`])
+		for _, item := range *data {
+			if len(item) == 3 {
+				out = append(out, fmt.Sprintf(`{
+				value: %s,
+				color: '#%s',
+				highlight: '#%s',
+				label: '%s'
+				}`, item[0], item[1], item[1], item[2]))
+			}
+		}
+	} else {
+		colors := strings.Split((*pars)[`Colors`], `,`)
+		value := (*pars)[`FieldValue`]
+		label := (*pars)[`FieldLabel`]
+		if len(colors) == 0 {
+			return `empty color parameter in ChartPie`
+		}
+		if len(value) == 0 || len(label) == 0 {
+			return `empty FieldValue or FieldLabel`
+		}
+		order := ``
+		where := ``
+		limit := ``
+		if val, ok := (*pars)[`Order`]; ok {
+			order = `order by ` + lib.Escape(val)
+		}
+		if val, ok := (*pars)[`Where`]; ok {
+			where = `where ` + lib.Escape(val)
+		}
+		if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
+			opar := strings.Split(val, `,`)
+			if len(opar) == 1 {
+				limit = fmt.Sprintf(` limit %d`, StrToInt64(opar[0]))
+			} else {
+				limit = fmt.Sprintf(` offset %d limit %d`, StrToInt64(opar[0]), StrToInt64(opar[1]))
+			}
+		} else {
+			limit = fmt.Sprintf(` limit %d`, len(colors))
+		}
+		list, err := DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, lib.EscapeName(value), lib.EscapeName(label),
+			lib.EscapeName((*pars)[`Table`]), where, order, limit), -1)
+		if err != nil {
+			return err.Error()
+		}
+		for ind, item := range list {
+			color := colors[ind%len(colors)]
 			out = append(out, fmt.Sprintf(`{
-            value: %s,
-            color: '#%s',
-            highlight: '#%s',
-            label: '%s'
-			}`, item[0], item[1], item[1], item[2]))
+				value: %s,
+				color: '#%s',
+				highlight: '#%s',
+				label: '%s'
+			}`, lib.StripTags(item[value]), color, color, lib.StripTags(item[label])))
 		}
 	}
 	return fmt.Sprintf(`<div><canvas id="%s"></canvas>
