@@ -64,6 +64,7 @@ type FormInfo struct {
 type TxInfo struct {
 	Name     string `json:"name"`
 	Id       string `json:"id"`
+	Value    string `json:"value"`
 	HtmlType string `json:"htmlType"`
 	Param    string `json:"param"`
 }
@@ -954,30 +955,38 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 
 	idnames := strings.Split((*pars)[`Inputs`], `,`)
 	names := make(map[string]string)
+	values := make(map[string]string)
 	for _, idn := range idnames {
-		lr := strings.SplitN(idn, `=`, 2)
-		if len(lr) == 2 {
-			names[strings.TrimSpace(lr[0])] = strings.TrimSpace(lr[1])
+		if lr := strings.SplitN(idn, `#=`, 2); len(lr) == 2 {
+			values[strings.TrimSpace(lr[0])] = strings.TrimSpace(lr[1])
+		} else {
+			if lr = strings.SplitN(idn, `=`, 2); len(lr) == 2 {
+				names[strings.TrimSpace(lr[0])] = strings.TrimSpace(lr[1])
+			}
 		}
 	}
 txlist:
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		value := ``
 		idname := fitem.Name
-		if idn, ok := names[idname]; ok {
+		if idn, ok := values[idname]; ok {
+			value = (*vars)[idn]
+			idname = idn + (*vars)[`tx_unique`]
+		} else if idn, ok = names[idname]; ok {
 			idname = idn
 		}
 		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
 			if strings.Index(fitem.Tags, tag) >= 0 {
-				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, HtmlType: tag})
+				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, Value: value, HtmlType: tag})
 				continue txlist
 			}
 		}
 		if fitem.Type.String() == `decimal.Decimal` {
 			count := StrToInt(StateValue(vars, `money_digit`))
-			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, HtmlType: "money",
+			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HtmlType: "money",
 				Id: idname, Param: IntToStr(count)})
 		} else {
-			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, HtmlType: "textinput"})
+			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, Id: idname, HtmlType: "textinput"})
 		}
 	}
 	if err = t.Execute(b, finfo); err != nil {
