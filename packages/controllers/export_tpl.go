@@ -41,6 +41,7 @@ type exportTplPage struct {
 	Contracts *[]exportInfo
 	Pages     *[]exportInfo
 	Tables    *[]exportInfo
+	Menu      *[]exportInfo
 }
 
 func init() {
@@ -107,15 +108,17 @@ func (c *Controller) ExportTpl() (string, error) {
 		out += `SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
+	type_new_menu_id = TxId(NewMenu),
 	type_new_contract_id = TxId(NewContract),
 	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "$citizen == #wallet_id#")
 `
 		out += c.setVar("smart_contracts", `sc`)
 		out += c.setVar("pages", `p`)
+		out += c.setVar("menu", `m`)
 		//		out += c.setVar("tables", `t_`)
 
-		out += "Json(`Head: \"\",\r\n" + `Desc: "",
+		out += "Json(`Head: \"" + c.r.FormValue(`title`) + "\",\r\n" + `Desc: "` + c.r.FormValue(`desc`) + `",
 		Img: "/static/img/apps/ava.png",
 		OnSuccess: {
 			script: 'template',
@@ -205,6 +208,28 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	   }`, global, icontract, icontract))
 			}
 		}
+		menu := strings.Split(c.r.FormValue("menu"), `,`)
+		if len(menu) > 0 {
+			for _, imenu := range menu {
+				if len(imenu) == 0 {
+					continue
+				}
+				var global int
+				imenu, global, _ = getState(c.SessStateId, imenu)
+				list = append(list, fmt.Sprintf(`{
+		Forsign: 'global,name,value, conditions',
+		Data: {
+			type: "NewMenu",
+			typeid: #type_new_menu_id#,
+			name : "%s",
+			value: $("#m_%s").val(),
+			global: %d,
+			conditions: "$citizen == #wallet_id#",
+			}
+	   }`, imenu, imenu, global))
+			}
+		}
+
 		pages := strings.Split(c.r.FormValue("pages"), `,`)
 		if len(pages) > 0 {
 			for _, ipage := range pages {
@@ -213,18 +238,26 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				}
 				var global int
 				ipage, global, _ = getState(c.SessStateId, ipage)
+				prefix := utils.Int64ToStr(c.SessStateId)
+				if global == 1 {
+					prefix = `global`
+				}
+				menu, _ := c.Single(fmt.Sprintf(`select menu from "%s_pages" where name=?`, prefix), ipage).String()
+				if len(menu) == 0 {
+					menu = "menu_default"
+				}
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
 			type: "NewPage",
 			typeid: #type_new_page_id#,
 			name : "%s",
-			menu: "menu_default",
+			menu: "%s",
 			value: $("#p_%s").val(),
 			global: %d,
 			conditions: "$citizen == #wallet_id#",
 			}
-	   }`, ipage, ipage, global))
+	   }`, ipage, menu, ipage, global))
 			}
 		}
 		out += strings.Join(list, ",\r\n") + "]`\r\n)"
@@ -236,35 +269,37 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 		}
 	}
 	prefix := utils.Int64ToStr(c.SessStateId)
-	contracts, err := c.getList(`smart_contracts`, prefix)
+	loadlist := func(name string) (*[]exportInfo, error) {
+		list, err := c.getList(name, prefix)
+		if err != nil {
+			return nil, err
+		}
+		glist, err := c.getList(name, `global`)
+		if err != nil {
+			return nil, err
+		}
+		*list = append(*list, *glist...)
+		return list, nil
+	}
+	contracts, err := loadlist(`smart_contracts`)
 	if err != nil {
 		return ``, err
 	}
-	gcontracts, err := c.getList(`smart_contracts`, `global`)
+	pages, err := loadlist(`pages`)
 	if err != nil {
 		return ``, err
 	}
-	*contracts = append(*contracts, *gcontracts...)
-	pages, err := c.getList(`pages`, prefix)
+	tables, err := loadlist(`tables`)
 	if err != nil {
 		return ``, err
 	}
-	gpages, err := c.getList(`pages`, `global`)
+	menu, err := loadlist(`menu`)
 	if err != nil {
 		return ``, err
 	}
-	*pages = append(*pages, *gpages...)
-	tables, err := c.getList(`tables`, prefix)
-	if err != nil {
-		return ``, err
-	}
-	gtables, err := c.getList(`tables`, `global`)
-	if err != nil {
-		return ``, err
-	}
-	*tables = append(*tables, *gtables...)
 
-	fmt.Println(`Export`, contracts, pages, tables)
-	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables, Message: message}
+	//	fmt.Println(`Export`, contracts, pages, tables)
+	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables,
+		Menu: menu, Message: message}
 	return proceedTemplate(c, NExportTpl, &pageData)
 }

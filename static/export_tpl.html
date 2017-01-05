@@ -49,7 +49,12 @@ function get_tpl() {
 	$(".tables:checked").each(function(){
 		tables.push(get_name(this));
 	})
-	data = {"name": name, "smart_contracts": contracts.join(','), "pages": pages.join(','), "tables": tables.join(',')};
+	var menu = [];
+	$(".menu:checked").each(function(){
+		menu.push(get_name(this));
+	})
+	data = {"name": name, "title": $("#title").val(),"desc": $("#desc").val(), 
+	    "smart_contracts": contracts.join(','), "pages": pages.join(','), "tables": tables.join(','), "menu": menu.join(',')};
 	console.log('Data', data);
 	load_page('export_tpl', data);
 	return false;
@@ -74,6 +79,14 @@ function get_tpl() {
 				<div class="form-group">
 					<label for="name">Name</label>
 					<input id="name" name="name" type="text" value="" class="form-control">
+				</div>
+				<div class="form-group">
+					<label for="name">Title</label>
+					<input id="title" name="title" type="text" value="" class="form-control">
+				</div>
+				<div class="form-group">
+					<label for="name">Description</label>
+					<input id="desc" name="desc" type="text" value="" class="form-control">
 					<a href="#" onclick="return js_checkall()">Отметить все</a>
 				</div>
 			</form>
@@ -105,6 +118,20 @@ function get_tpl() {
 				</tr>
 				{{end}}
 			</table>
+			<table class="table table-striped table-bordered table-hover">
+				<tr>
+					<th></th>
+					<th>Menu</th>
+					<th></th>
+				</tr>
+				{{range .Menu}}
+				<tr>
+					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}"  data-global="{{if .Global}}1{{else}}0{{end}}" class="form-control menu"></td>
+					<td style="width: 200px;">{{.Name}}</td>
+					<td>{{if .Global}}global{{end}}</td>
+				</tr>
+				{{end}}
+			</table>			
 			<table class="table table-striped table-bordered table-hover">
 				<tr>
 					<th></th>
