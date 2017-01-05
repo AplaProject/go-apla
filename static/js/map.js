@@ -2508,8 +2508,8 @@ function openMap(container) {
 			})
 		} else {
 			StateZoom = 7;
-			StateCenterX = 55.758032;
-			StateCenterY = 37.633667;
+			StateCenterX = 23.907173;
+			StateCenterY = 54.333531;
 			
 			modal.modal("show");
 			modal.on('shown.bs.modal', function(e) {
@@ -2585,6 +2585,7 @@ function miniMap(elem, width, height) {
 
 function userLocation(elem, width, height) {
 	var num = 0;
+	$("." + elem).css({"font-size":"0px"});
 	
 	$("." + elem).each(function() {
 		num += 1;
@@ -2592,7 +2593,7 @@ function userLocation(elem, width, height) {
 		var tag = $(this).context.tagName.toLowerCase();
 		var data = $(this).text() ? $(this).text() : $(this).val();
 		var zoom = 5;
-		var center = {lat: -25.363, lng: 131.044};
+		var center = {lat: 23.907173, lng: 54.333531};
 		var point = null;
 		var options = {};
 		var draggable = true;
