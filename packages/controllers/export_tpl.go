@@ -42,6 +42,7 @@ type exportTplPage struct {
 	Pages     *[]exportInfo
 	Tables    *[]exportInfo
 	Menu      *[]exportInfo
+	Params    *[]exportInfo
 }
 
 func init() {
@@ -110,12 +111,14 @@ func (c *Controller) ExportTpl() (string, error) {
 	type_new_page_id = TxId(NewPage),
 	type_new_menu_id = TxId(NewMenu),
 	type_new_contract_id = TxId(NewContract),
+	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "$citizen == #wallet_id#")
 `
 		out += c.setVar("smart_contracts", `sc`)
 		out += c.setVar("pages", `p`)
 		out += c.setVar("menu", `m`)
+		out += c.setVar("state_parameters", `pa`)
 		//		out += c.setVar("tables", `t_`)
 
 		out += "Json(`Head: \"" + c.r.FormValue(`title`) + "\",\r\n" + `Desc: "` + c.r.FormValue(`desc`) + `",
@@ -208,6 +211,27 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	   }`, global, icontract, icontract))
 			}
 		}
+		params := strings.Split(c.r.FormValue("state_parameters"), `,`)
+		if len(params) > 0 {
+			for _, iparam := range params {
+				if len(iparam) == 0 {
+					continue
+				}
+				//				var global int
+				iparam, _, _ = getState(c.SessStateId, iparam)
+				list = append(list, fmt.Sprintf(`{
+		Forsign: 'name,value,conditions',
+		Data: {
+			type: "NewStateParameters",
+			typeid: #type_new_state_params_id#,
+			name : "%s",
+			value: $("#pa_%s").val(),
+			conditions: "$citizen == #wallet_id#",
+			}
+	   }`, iparam, iparam))
+			}
+		}
+
 		menu := strings.Split(c.r.FormValue("menu"), `,`)
 		if len(menu) > 0 {
 			for _, imenu := range menu {
@@ -217,7 +241,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				var global int
 				imenu, global, _ = getState(c.SessStateId, imenu)
 				list = append(list, fmt.Sprintf(`{
-		Forsign: 'global,name,value, conditions',
+		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewMenu",
 			typeid: #type_new_menu_id#,
@@ -297,9 +321,12 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	if err != nil {
 		return ``, err
 	}
-
+	params, err := c.getList(`state_parameters`, prefix)
+	if err != nil {
+		return ``, err
+	}
 	//	fmt.Println(`Export`, contracts, pages, tables)
 	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables,
-		Menu: menu, Message: message}
+		Menu: menu, Params: params, Message: message}
 	return proceedTemplate(c, NExportTpl, &pageData)
 }
