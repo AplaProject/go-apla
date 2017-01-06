@@ -19,6 +19,8 @@ package script
 import (
 	"fmt"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -95,6 +97,16 @@ type ExtendData struct {
 	AutoPars map[string]string
 }
 
+func parseContract(in string) (id uint64, name string) {
+	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
+	ret := re.FindStringSubmatch(in)
+	if len(ret) == 3 {
+		id, _ = strconv.ParseUint(ret[1], 10, 32)
+		name = ret[2]
+	}
+	return
+}
+
 func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	//fmt.Println(`ExecContract`, rt, name, txs, params)
 
@@ -133,6 +145,15 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		if rt.blocks[i].Block.Type == OBJ_FUNC && rt.blocks[i].Block.Parent != nil &&
 			rt.blocks[i].Block.Parent.Type == OBJ_CONTRACT {
 			parent = rt.blocks[i].Block.Parent.Info.(*ContractInfo).Name
+			fid, fname := parseContract(parent)
+			cid, _ := parseContract(name)
+			if len(fname) > 0 {
+				if fid == 0 {
+					parent = `@` + fname
+				} else if fid == cid {
+					parent = fname
+				}
+			}
 			break
 		}
 	}
