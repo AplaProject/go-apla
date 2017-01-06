@@ -488,7 +488,7 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32) (*Block, error) {
 			if top.Objects == nil {
 				top.Objects = make(map[string]*ObjInfo)
 			}
-			block := &Block{}
+			block := &Block{Parent: top}
 			top.Children = append(top.Children, block)
 			blockstack = append(blockstack, block)
 			//			fmt.Println(`PUSH`, curState)
@@ -553,6 +553,7 @@ func (vm *VM) FlushBlock(root *Block) {
 				shift--
 				continue
 			}
+			item.Parent = &vm.Block
 			item.Info.(*ContractInfo).Id += uint32(shift)
 		}
 		vm.Children = append(vm.Children, item)
