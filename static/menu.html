@@ -323,14 +323,14 @@
 	<!-- START navbar header-->
 	<div class="navbar-header">
 	   <a href="#" class="navbar-brand" onclick="dl_navigate('beta'); HideMenu();">
-		  <div class="brand-logo">
+		  <div class="brand-logo hidden-xs">
 			 <!--<span class="beta">Testing</span>-->
 			 <span class="version"></span>
 			 <img src="static/img/logo.svg" alt="App Logo" class="img-responsive">
 		  </div>
-		  <div class="brand-logo-collapsed">
+		  <div class="brand-logo-collapsed visible-xs">
 			 <!--<span class="beta">Testing</span>-->
-			 <span class="version"></span>
+			 <span class="version hidden-xs"></span>
 			 <img src="static/img/logo_null.svg" alt="App Logo" class="img-responsive">
 		  </div>
 	   </a>
@@ -346,15 +346,16 @@
 				<em class="fa fa-navicon"></em>
 			 </a>-->
 			 <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
-			 <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle">
-				<em class="fa fa-navicon"></em>
+			 <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle menu">
+				<!--<em class="fa fa-navicon"></em>-->
+				<div class="patty"></div>
 			 </a>
 		  </li>
 		  {{if ne .Data.CitizenId 0}}
 		  <!-- START User avatar toggle-->
 		  <li>
 			 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
-			  <a id="user-block-toggle" href="#user-block" data-toggle="collapse">
+			  <a id="user-block-toggle" class="hidden-xs" href="#user-block" data-toggle="collapse">
 				<em class="icon-user"></em>
 			 </a>
 		  </li>
@@ -373,7 +374,7 @@
 			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1}); HideMenu();">0</a>
 		  </li>-->
 		  <!-- START Alert menu-->
-		  <li class="dropdown dropdown-list">
+		  <li class="dropdown dropdown-list hidden-xs">
 			 <a href="#" data-toggle="dropdown">
 				<em class="icon-bell"></em>
 				<!--<div class="label label-danger">11</div>-->
@@ -398,7 +399,7 @@
 		  </li>
 		  <!-- END Alert menu-->
 		  <!-- START Offsidebar button-->
-		  <li>
+		  <li class="hidden-xs">
 			 <a href="" onclick="return logout()">
 				<em class="icon-logout"></em>
 			 </a>
@@ -861,7 +862,12 @@
 				   <span>HTML-Elements</span>
 			   </a>
 		   </li>
-
+			<li class="visible-xs">
+			 <a href="" onclick="return logout()">
+				<em class="icon-logout"></em>
+				<span>Exit</span>
+			 </a>
+		  </li>
 		  <li id="DemoButton"><button class="btn btn-default btn-demo" type="button" onClick="Demo();"><span class="fa fa-eye"></span><em> Show opportunities</em></button><input id="demo" type="hidden" value="0"></li>
 	   </ul>
 	   <!-- END sidebar nav-->
