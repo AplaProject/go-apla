@@ -78,6 +78,7 @@ type Block struct {
 	Objects  map[string]*ObjInfo
 	Type     int
 	Info     interface{}
+	Parent   *Block
 	Vars     []reflect.Type
 	Code     ByteCodes
 	Children Blocks
@@ -126,15 +127,26 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	for i, ipar := range pars {
 		(*rt.extend)[ipar] = params[i]
 	}
+	prevparent := (*rt.extend)[`parent`]
+	parent := ``
+	for i := len(rt.blocks) - 1; i >= 0; i-- {
+		if rt.blocks[i].Block.Type == OBJ_FUNC && rt.blocks[i].Block.Parent != nil &&
+			rt.blocks[i].Block.Parent.Type == OBJ_CONTRACT {
+			parent = rt.blocks[i].Block.Parent.Info.(*ContractInfo).Name
+			break
+		}
+	}
 	for _, method := range []string{`init`, `conditions`, `action`} {
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == OBJ_FUNC {
 			rtemp := rt.vm.RunInit()
+			(*rt.extend)[`parent`] = parent
 			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
 			if err != nil {
 				return err
 			}
 		}
 	}
+	(*rt.extend)[`parent`] = prevparent
 
 	return nil
 }
