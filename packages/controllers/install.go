@@ -114,19 +114,19 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(`DROP SCHEMA public CASCADE`)
+	err = c.DCDB.ExecSql(`select 'drop table "' || tablename || '" cascade;' from pg_tables;`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(`CREATE SCHEMA public`)
+	/*err = c.DCDB.ExecSql(`CREATE SCHEMA public`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
-	}
+	}*/
 
 	schema, err := static.Asset("static/schema.sql")
 	if err != nil {
