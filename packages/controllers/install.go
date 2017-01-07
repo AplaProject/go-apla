@@ -117,8 +117,8 @@ func (c *Controller) Install() (string, error) {
 	err = c.DCDB.ExecSql(`select 'drop table "' || tablename || '" cascade;' from pg_tables where schemaname = 'public';`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		//dropConfig()
-		//return "", utils.ErrInfo(err)
+		dropConfig()
+		return "", utils.ErrInfo(err)
 	}
 
 	/*err = c.DCDB.ExecSql(`CREATE SCHEMA public`)
