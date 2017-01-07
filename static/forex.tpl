@@ -326,7 +326,7 @@ PageEnd:`,
           `)
 TextHidden( p_newForexOrder, globalMenu, menu_1)
 Json(`Head: "Forex",
-Desc: "Forex",
+Desc: "Currency exchange",
 		Img: "/static/img/apps/forex.png",
 		OnSuccess: {
 			script: 'template',

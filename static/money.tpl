@@ -163,7 +163,7 @@ PageEnd:`,
 `menu_1 #= [CentralBank](CentralBank)`)
 TextHidden( page_dashboard_default, page_government, p_CentralBank, p_SendMoney, menu_1)
 Json(`Head: "Money",
-	Desc: "Simple monetary system",
+	Desc: "Elements of managing the financial system",
 	Img: "/static/img/apps/money.jpg",
 		OnSuccess: {
 			script: 'template',

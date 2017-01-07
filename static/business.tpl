@@ -206,7 +206,7 @@ DivsEnd:
               [Shops](shops)`)
 TextHidden( p_BuyItem, p_CompanyDetails, p_business, p_shops, menu_1)
 Json(`Head: "Business",
-Desc: "Business",
+Desc: "Company register, buying and sales tools",
 		Img: "/static/img/apps/business.png",
 		OnSuccess: {
 			script: 'template',

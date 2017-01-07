@@ -406,7 +406,7 @@ TxForm{ Contract: SellProperty}
 PageEnd:`)
 TextHidden( page_dashboard_default, page_government, p_AddProperty, p_EditProperty, p_PropertyAcceptOffers, p_PropertyDetails, p_PropertyOffer, p_PropertyOffers, p_PropertyResults, p_SearchProperty, p_SellProperty)
 Json(`Head: "Property",
-Desc: "Property",
+Desc: "Real estate register",
 		Img: "/static/img/apps/property.jpg",
 		OnSuccess: {
 			script: 'template',
