@@ -155,8 +155,8 @@ PageEnd:`,
                                    BtnTemplate(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
                                DivsEnd:
                                `,
-`p_SendMoney #= Title : Best country
-                        Navigation( LiTemplate(government),non-link text)
+`p_SendMoney #= Title : Send money
+                        Navigation( LiTemplate(dashboard_default, Citizen), Send money)
                         PageTitle : Dashboard
                         TxForm { Contract: SendMoney }
 						PageEnd:`,

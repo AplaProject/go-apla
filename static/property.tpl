@@ -156,12 +156,13 @@ sc_SetPropertySellPrice = `contract SetPropertySellPrice {
 	}
 }`)
 TextHidden( sc_AddProperty, sc_EditProperty, sc_PropertyAcceptOffers, sc_PropertySendOffer, sc_SellProperty, sc_SetPropertyPrice, sc_SetPropertyRentPrice, sc_SetPropertySellPrice)
-SetVar(`p_AddProperty #= Navigation( LiTemplate(government),Add property )
-            PageTitle : Add Property
-            TxForm{ Contract: AddProperty}
-            PageEnd:`,
+SetVar(`p_AddProperty #= Title: Add property
+Navigation( LiTemplate(government, Government),Add property )
+PageTitle : Add Property
+TxForm{ Contract: AddProperty}
+PageEnd:`,
 `p_EditProperty #= Title:EditProperty
-Navigation(LiTemplate(government),Editing property)
+Navigation(LiTemplate(government, Government),Edit property)
 PageTitle: Editing property
 
 ValueById(1_property, #PropertyId#, "name,citizen_id,coords,type", "Name,CitizenId,Coords,PropertyType")
@@ -170,7 +171,7 @@ TxForm{ Contract: EditProperty}
 
 PageEnd:`,
 `p_PropertyAcceptOffers #= Title: Best country
-Navigation(LiTemplate(dashboard_default, citizen))
+Navigation(LiTemplate(dashboard_default, Citizen))
 
 GetRow(offer, #state_id#_property_offers, "id", #OfferId#)
 
@@ -218,7 +219,7 @@ PageEnd:
 `,
 `p_PropertyDetails #= FullScreen(1)
 Title: Best country
-Navigation(LiTemplate(dashboard_default, citizen))
+Navigation(LiTemplate(dashboard_default, Citizen))
 SetVar(hmap=350)
 
 GetRow(myproperty, #state_id#_property, "id", #PropertyId#)
@@ -309,7 +310,7 @@ FormEnd:
 PageEnd:
 `,
 `p_PropertyOffers #= Title: Property Offers
-Navigation(LiTemplate(dashboard_default, citizen))
+Navigation(LiTemplate(dashboard_default, Citizen))
 
 Divs(md-12, panel panel-default panel-body)
 MarkDown : ## Offers
