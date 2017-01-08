@@ -480,8 +480,8 @@ Divs(md-6, panel panel-default panel-body)
     DivsEnd:
     InputDate(Date_stop_voting,form-control input-lg,2017/01/07 22:00)
     
-    Input(ElectionName, "hidden", text, text, #ElectionName#)
-    Input(PositionId, "hidden", text, text, #PositionId#)
+    Input(ElectionName, "hidden", text, text, "Representative")
+     Input(PositionId, "hidden", text, text, 1)
      Divs(md-12,help-block)
      DivsEnd:
     TxButton{Contract: GENewElectionCampaign,Inputs:"ElectionName=ElectionName,PositionId=PositionId,DateStart=DateStart,CandidatesDeadline=CandidatesDeadline,Date_start_voting=Date_start_voting,Date_stop_voting", OnSuccess: "template,GECampaigns"}
@@ -852,6 +852,7 @@ SetVar(`m_Elections = [Government dashboard](government)
 [Legislature dashboard](Legislature)
 [Elections](GEElections)
 [Campaigns](GECampaigns)
+[Start Election](GENewCampaign)
 [Smart contracts](sys.contracts)
 `,
  `m_Legislature = [Government dashboard](government)
