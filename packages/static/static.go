@@ -75,6 +75,7 @@
 // static/edit_page.html
 // static/edit_state_parameters.html
 // static/edit_table.html
+// static/elections.tpl
 // static/euro.tpl
 // static/export_tpl.html
 // static/fonts/PFSquareSansPro-Bold.eot
@@ -145,6 +146,7 @@
 // static/img/US.svg
 // static/img/apps/ava.png
 // static/img/apps/business.png
+// static/img/apps/elections.jpg
 // static/img/apps/euro.jpeg
 // static/img/apps/forex.png
 // static/img/apps/money.jpg
@@ -1725,6 +1727,24 @@ func staticEdit_tableHtml() (*asset, error) {
 	return a, err
 }
 
+// staticElectionsTpl reads file data from disk. It returns an error on failure.
+func staticElectionsTpl() (*asset, error) {
+	path := "/eg/static/elections.tpl"
+	name := "static/elections.tpl"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticEuroTpl reads file data from disk. It returns an error on failure.
 func staticEuroTpl() (*asset, error) {
 	path := "/eg/static/euro.tpl"
@@ -2971,6 +2991,24 @@ func staticImgAppsAvaPng() (*asset, error) {
 func staticImgAppsBusinessPng() (*asset, error) {
 	path := "/eg/static/img/apps/business.png"
 	name := "static/img/apps/business.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgAppsElectionsJpg reads file data from disk. It returns an error on failure.
+func staticImgAppsElectionsJpg() (*asset, error) {
+	path := "/eg/static/img/apps/elections.jpg"
+	name := "static/img/apps/elections.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6784,6 +6822,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/edit_page.html": staticEdit_pageHtml,
 	"static/edit_state_parameters.html": staticEdit_state_parametersHtml,
 	"static/edit_table.html": staticEdit_tableHtml,
+	"static/elections.tpl": staticElectionsTpl,
 	"static/euro.tpl": staticEuroTpl,
 	"static/export_tpl.html": staticExport_tplHtml,
 	"static/fonts/PFSquareSansPro-Bold.eot": staticFontsPfsquaresansproBoldEot,
@@ -6854,6 +6893,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/US.svg": staticImgUsSvg,
 	"static/img/apps/ava.png": staticImgAppsAvaPng,
 	"static/img/apps/business.png": staticImgAppsBusinessPng,
+	"static/img/apps/elections.jpg": staticImgAppsElectionsJpg,
 	"static/img/apps/euro.jpeg": staticImgAppsEuroJpeg,
 	"static/img/apps/forex.png": staticImgAppsForexPng,
 	"static/img/apps/money.jpg": staticImgAppsMoneyJpg,
@@ -7182,6 +7222,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"edit_page.html": &bintree{staticEdit_pageHtml, map[string]*bintree{}},
 		"edit_state_parameters.html": &bintree{staticEdit_state_parametersHtml, map[string]*bintree{}},
 		"edit_table.html": &bintree{staticEdit_tableHtml, map[string]*bintree{}},
+		"elections.tpl": &bintree{staticElectionsTpl, map[string]*bintree{}},
 		"euro.tpl": &bintree{staticEuroTpl, map[string]*bintree{}},
 		"export_tpl.html": &bintree{staticExport_tplHtml, map[string]*bintree{}},
 		"fonts": &bintree{nil, map[string]*bintree{
@@ -7256,6 +7297,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"apps": &bintree{nil, map[string]*bintree{
 				"ava.png": &bintree{staticImgAppsAvaPng, map[string]*bintree{}},
 				"business.png": &bintree{staticImgAppsBusinessPng, map[string]*bintree{}},
+				"elections.jpg": &bintree{staticImgAppsElectionsJpg, map[string]*bintree{}},
 				"euro.jpeg": &bintree{staticImgAppsEuroJpeg, map[string]*bintree{}},
 				"forex.png": &bintree{staticImgAppsForexPng, map[string]*bintree{}},
 				"money.jpg": &bintree{staticImgAppsMoneyJpg, map[string]*bintree{}},

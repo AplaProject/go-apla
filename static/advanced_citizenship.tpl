@@ -65,6 +65,19 @@ Json(`Head: "Advanced citizenship",
                  			index: 0
                  		}
                  		},
+                 	   {
+                 		Forsign: 'table_name,column_name,permissions,index,column_type',
+                 		Data: {
+                 			type: "NewColumn",
+                 			typeid: #typecolid#,
+                 			table_name : "#state_id#_citizens",
+                 			column_name: "avatar",
+							index: "0",
+							column_type: "hash",
+                 			permissions: "$citizen == #wallet_id#",
+                 			index: 0
+                 		}
+                 		},
                          	   {
                          		Forsign: 'table_name,column_name,permissions,index,column_type',
                          		Data: {
