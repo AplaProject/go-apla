@@ -458,7 +458,7 @@ PageEnd:`,
 Navigation( New Election )
 Divs(md-6, panel panel-default panel-body)
     Divs(panel-heading)
-    MarkDown: <h4>Start #ElectionName#'s Election</h4>
+    MarkDown: <h4>Start Representative's Election</h4>
         Divs(panel-title)
   
     Form()
