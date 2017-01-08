@@ -147,9 +147,11 @@
 // static/img/apps/ava.png
 // static/img/apps/business.png
 // static/img/apps/elections.jpg
-// static/img/apps/euro.jpeg
+// static/img/apps/euro.jpg
+// static/img/apps/forex.jpg
 // static/img/apps/forex.png
 // static/img/apps/money.jpg
+// static/img/apps/money.png
 // static/img/apps/property.jpg
 // static/img/avatar.svg
 // static/img/bg.png
@@ -3023,10 +3025,28 @@ func staticImgAppsElectionsJpg() (*asset, error) {
 	return a, err
 }
 
-// staticImgAppsEuroJpeg reads file data from disk. It returns an error on failure.
-func staticImgAppsEuroJpeg() (*asset, error) {
-	path := "/eg/static/img/apps/euro.jpeg"
-	name := "static/img/apps/euro.jpeg"
+// staticImgAppsEuroJpg reads file data from disk. It returns an error on failure.
+func staticImgAppsEuroJpg() (*asset, error) {
+	path := "/eg/static/img/apps/euro.jpg"
+	name := "static/img/apps/euro.jpg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgAppsForexJpg reads file data from disk. It returns an error on failure.
+func staticImgAppsForexJpg() (*asset, error) {
+	path := "/eg/static/img/apps/forex.jpg"
+	name := "static/img/apps/forex.jpg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3063,6 +3083,24 @@ func staticImgAppsForexPng() (*asset, error) {
 func staticImgAppsMoneyJpg() (*asset, error) {
 	path := "/eg/static/img/apps/money.jpg"
 	name := "static/img/apps/money.jpg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgAppsMoneyPng reads file data from disk. It returns an error on failure.
+func staticImgAppsMoneyPng() (*asset, error) {
+	path := "/eg/static/img/apps/money.png"
+	name := "static/img/apps/money.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6894,9 +6932,11 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/apps/ava.png": staticImgAppsAvaPng,
 	"static/img/apps/business.png": staticImgAppsBusinessPng,
 	"static/img/apps/elections.jpg": staticImgAppsElectionsJpg,
-	"static/img/apps/euro.jpeg": staticImgAppsEuroJpeg,
+	"static/img/apps/euro.jpg": staticImgAppsEuroJpg,
+	"static/img/apps/forex.jpg": staticImgAppsForexJpg,
 	"static/img/apps/forex.png": staticImgAppsForexPng,
 	"static/img/apps/money.jpg": staticImgAppsMoneyJpg,
+	"static/img/apps/money.png": staticImgAppsMoneyPng,
 	"static/img/apps/property.jpg": staticImgAppsPropertyJpg,
 	"static/img/avatar.svg": staticImgAvatarSvg,
 	"static/img/bg.png": staticImgBgPng,
@@ -7298,9 +7338,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"ava.png": &bintree{staticImgAppsAvaPng, map[string]*bintree{}},
 				"business.png": &bintree{staticImgAppsBusinessPng, map[string]*bintree{}},
 				"elections.jpg": &bintree{staticImgAppsElectionsJpg, map[string]*bintree{}},
-				"euro.jpeg": &bintree{staticImgAppsEuroJpeg, map[string]*bintree{}},
+				"euro.jpg": &bintree{staticImgAppsEuroJpg, map[string]*bintree{}},
+				"forex.jpg": &bintree{staticImgAppsForexJpg, map[string]*bintree{}},
 				"forex.png": &bintree{staticImgAppsForexPng, map[string]*bintree{}},
 				"money.jpg": &bintree{staticImgAppsMoneyJpg, map[string]*bintree{}},
+				"money.png": &bintree{staticImgAppsMoneyPng, map[string]*bintree{}},
 				"property.jpg": &bintree{staticImgAppsPropertyJpg, map[string]*bintree{}},
 			}},
 			"avatar.svg": &bintree{staticImgAvatarSvg, map[string]*bintree{}},

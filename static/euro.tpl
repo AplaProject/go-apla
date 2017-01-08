@@ -103,7 +103,7 @@ DivsEnd: `,
 TextHidden( p_Euro, menu_1)
 Json(`Head: "Euro",
 Desc: "International currency",
-		Img: "/static/img/apps/euro.jpeg",
+		Img: "/static/img/apps/euro.jpg",
 		OnSuccess: {
 			script: 'template',
 			page: 'government',
