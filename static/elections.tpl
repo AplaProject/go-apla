@@ -4,7 +4,8 @@ SetVar(
 	type_new_menu_id = TxId(NewMenu),
 	type_new_contract_id = TxId(NewContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
-	type_new_table_id = TxId(NewTable),	
+	type_new_table_id = TxId(NewTable),
+	type_append_menu_id = TxId(AppendMenu),
 	sc_conditions = "$citizen == #wallet_id#")
 SetVar(`sc_ SLStartVoting = contract SLStartVoting {
 	data {
@@ -853,13 +854,18 @@ SetVar(`m_Elections = [Government dashboard](government)
 [Campaigns](GECampaigns)
 [Smart contracts](sys.contracts)
 `,
-`m_Legislature = [Government dashboard](government)
-[Legislature dashboard](Legislature)
-[Smart Laws](SLList)
-[Laws Voting List](SLVotingList)`)
-TextHidden( m_Elections, m_Legislature)
+ `m_Legislature = [Government dashboard](government)
+ [Legislature dashboard](Legislature)
+ [Smart Laws](SLList)
+ [Laws Voting List](SLVotingList)`,
+`menu_1 #=
+[Election Campaigns](GECampaigns)`,
+ `menu_2 #=
+[Legislature](Legislature)
+[Election](GEElections)`)
+
+TextHidden( m_Elections, m_Legislature, menu_1, menu_2)
 SetVar()
-TextHidden( )
 Json(`Head: "Elections",
 Desc: "General Elections and votes in the Legislature",
 		Img: "/static/img/apps/elections.jpg",
@@ -1339,7 +1345,27 @@ Desc: "General Elections and votes in the Legislature",
 			conditions: "$citizen == #wallet_id#",
 			}
 	   },
-{
+	   	{
+            Forsign: 'global,name,value',
+            Data: {
+            	type: "AppendMenu",
+            	typeid: #type_append_menu_id#,
+            	name : "government",
+            	value: $("#menu_1").val(),
+            	global: 0
+            }
+       },
+       {
+             Forsign: 'global,name,value',
+             Data: {
+             	type: "AppendMenu",
+             	typeid: #type_append_menu_id#,
+             	name : "government",
+             	value: $("#menu_2").val(),
+             	global: 0
+             }
+       },
+    {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
 			type: "NewPage",

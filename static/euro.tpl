@@ -154,14 +154,14 @@ Desc: "International currency",
 			}
 	   },
 	   {
-                     			Forsign: 'global,name,value',
-                     			Data: {
-                     				type: "AppendMenu",
-                     				typeid: #type_append_menu_id#,
-                     				name : "government",
-                     				value: $("#menu_1").val(),
-                     				global: 0
-                     			}
+         Forsign: 'global,name,value',
+         Data: {
+         	type: "AppendMenu",
+         	typeid: #type_append_menu_id#,
+         	name : "government",
+         	value: $("#menu_1").val(),
+         	global: 0
+         }
          },
         {
 		Forsign: 'global,name,value,menu,conditions',
