@@ -316,19 +316,26 @@ func If(vars *map[string]string, pars ...string) string {
 
 func Now(vars *map[string]string, pars ...string) string {
 	var (
-		cut   int
-		query string
+		cut             int
+		query, interval string
 	)
-	if len(pars) == 0 || pars[0] == `` {
-		query = `select round(extract(epoch from now()))::integer`
+	if len(pars) > 1 && len(pars[1]) > 0 {
+		interval = pars[1]
+		if interval[0] != '-' && interval[0] != '+' {
+			interval = `+` + interval
+		}
+		interval = fmt.Sprintf(` %s interval '%s'`, interval[:1], strings.TrimSpace(interval[1:]))
+	}
+	if pars[0] == `` {
+		query = `select round(extract(epoch from now()` + interval + `))::integer`
 		cut = 10
 	} else {
-		query = `select now()`
+		query = `select now()` + interval
 		switch pars[0] {
 		case `datetime`:
 			cut = 19
 		default:
-			query = fmt.Sprintf(`select to_char(now(), '%s')`, pars[0])
+			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, pars[0])
 		}
 	}
 	ret, err := DB.Single(query).String()
