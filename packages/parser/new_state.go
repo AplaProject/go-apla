@@ -391,6 +391,7 @@ PageEnd:`, `menu_default`, sid,
 [Smart contracts](sys.contracts)
 [Apps list](sys.app_catalog)
 [Language](sys.languages)
+[Export](sys.export_tpl)
 [Interface](sys.interface)
 [Checking citizens](CheckCitizens)`, sid)
 	if err != nil {
