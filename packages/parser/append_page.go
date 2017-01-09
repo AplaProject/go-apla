@@ -78,7 +78,7 @@ func (p *Parser) AppendPage() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	new := strings.Replace(page, "PageEnd:", p.TxMaps.String["value"], -1) + `PageEnd:`
+	new := strings.Replace(page, "PageEnd:", p.TxMaps.String["value"], -1) + "\r\nPageEnd:"
 	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)

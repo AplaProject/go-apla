@@ -89,6 +89,29 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 	return
 }
 
+func (c *Controller) setAppend(name, prefix string) (out string) {
+	inlist := make([]string, 0)
+	json.Unmarshal([]byte(c.r.FormValue(`app`+name)), &inlist)
+	if len(inlist) == 0 {
+		return
+	}
+	out = `SetVar(`
+	names := make([]string, 0)
+	list := make([]string, 0)
+	for _, ilist := range inlist {
+		//		var state string
+
+		lr := strings.SplitN(ilist, `=`, 2)
+		iname, _, _ := getState(c.SessStateId, lr[0])
+		if len(lr) > 1 {
+			names = append(names, prefix+`_`+iname)
+			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, iname, lr[1]))
+		}
+	}
+	out += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
+	return
+}
+
 func getState(stateId int64, name string) (out string, global int, state string) {
 	state = utils.Int64ToStr(stateId)
 	out = name
@@ -109,7 +132,9 @@ func (c *Controller) ExportTpl() (string, error) {
 		out += `SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
+	type_append_page_id = TxId(AppendPage),
 	type_new_menu_id = TxId(NewMenu),
+	type_append_menu_id = TxId(AppendMenu),
 	type_new_contract_id = TxId(NewContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
@@ -119,6 +144,8 @@ func (c *Controller) ExportTpl() (string, error) {
 		out += c.setVar("pages", `p`)
 		out += c.setVar("menu", `m`)
 		out += c.setVar("state_parameters", `pa`)
+		out += c.setAppend("pages", `ap`)
+		out += c.setAppend("menu", `am`)
 		//		out += c.setVar("tables", `t_`)
 
 		out += "Json(`Head: \"" + c.r.FormValue(`title`) + "\",\r\n" + `Desc: "` + c.r.FormValue(`desc`) + `",
@@ -284,6 +311,53 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	   }`, ipage, menu, ipage, global))
 			}
 		}
+
+		inlist := make([]string, 0)
+		json.Unmarshal([]byte(c.r.FormValue(`apppages`)), &inlist)
+		if len(inlist) >= 0 {
+			for _, ilist := range inlist {
+				var global int
+				var iname string
+
+				lr := strings.SplitN(ilist, `=`, 2)
+				iname, global, _ = getState(c.SessStateId, lr[0])
+				if len(lr) > 1 {
+					list = append(list, fmt.Sprintf(`{
+			Forsign: 'global,name,value',
+			Data: {
+				type: "AppendPage",
+				typeid: #type_append_page_id#,
+				name : "%s",
+				value: $("#ap_%s").val(),
+				global: %d
+				}
+		}`, iname, iname, global))
+				}
+			}
+		}
+		json.Unmarshal([]byte(c.r.FormValue(`appmenu`)), &inlist)
+		if len(inlist) >= 0 {
+			for _, ilist := range inlist {
+				var global int
+				var iname string
+
+				lr := strings.SplitN(ilist, `=`, 2)
+				iname, global, _ = getState(c.SessStateId, lr[0])
+				if len(lr) > 1 {
+					list = append(list, fmt.Sprintf(`{
+			Forsign: 'global,name,value',
+			Data: {
+				type: "AppendMenu",
+				typeid: #type_append_menu_id#,
+				name : "%s",
+				value: $("#am_%s").val(),
+				global: %d
+				}
+		}`, iname, iname, global))
+				}
+			}
+		}
+
 		out += strings.Join(list, ",\r\n") + "]`\r\n)"
 
 		if err := ioutil.WriteFile(tplname, []byte(out), 0644); err != nil {
