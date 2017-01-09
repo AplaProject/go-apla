@@ -44,7 +44,7 @@ func (p *Parser) NewContractFront() error {
 	// ...
 
 	// Check InputData
-	verifyData := map[string]string{}
+	verifyData := map[string]string{"global": "int64", "name": "string"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
