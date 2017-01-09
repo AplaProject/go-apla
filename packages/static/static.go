@@ -327,6 +327,7 @@
 // static/vendor/fontawesome/fonts/fontawesome-webfont.woff2
 // static/vendor/jQuery-Storage-API/jquery.storageapi.js
 // static/vendor/jquery/dist/jquery.js
+// static/vendor/jquery/dist/jquery.mobile-1.4.5.js
 // static/vendor/jquery-classyloader/js/jquery.classyloader.min.js
 // static/vendor/loaders.css/loaders.css
 // static/vendor/modernizr/modernizr.custom.js
@@ -6261,6 +6262,24 @@ func staticVendorJqueryDistJqueryJs() (*asset, error) {
 	return a, err
 }
 
+// staticVendorJqueryDistJqueryMobile145Js reads file data from disk. It returns an error on failure.
+func staticVendorJqueryDistJqueryMobile145Js() (*asset, error) {
+	path := "static/vendor/jquery/dist/jquery.mobile-1.4.5.js"
+	name := "static/vendor/jquery/dist/jquery.mobile-1.4.5.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs reads file data from disk. It returns an error on failure.
 func staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs() (*asset, error) {
 	path := "static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"
@@ -7036,6 +7055,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/vendor/fontawesome/fonts/fontawesome-webfont.woff2": staticVendorFontawesomeFontsFontawesomeWebfontWoff2,
 	"static/vendor/jQuery-Storage-API/jquery.storageapi.js": staticVendorJqueryStorageApiJqueryStorageapiJs,
 	"static/vendor/jquery/dist/jquery.js": staticVendorJqueryDistJqueryJs,
+	"static/vendor/jquery/dist/jquery.mobile-1.4.5.js": staticVendorJqueryDistJqueryMobile145Js,
 	"static/vendor/jquery-classyloader/js/jquery.classyloader.min.js": staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs,
 	"static/vendor/loaders.css/loaders.css": staticVendorLoadersCssLoadersCss,
 	"static/vendor/modernizr/modernizr.custom.js": staticVendorModernizrModernizrCustomJs,
@@ -7515,6 +7535,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"jquery": &bintree{nil, map[string]*bintree{
 				"dist": &bintree{nil, map[string]*bintree{
 					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{}},
+					"jquery.mobile-1.4.5.js": &bintree{staticVendorJqueryDistJqueryMobile145Js, map[string]*bintree{}},
 				}},
 			}},
 			"jquery-classyloader": &bintree{nil, map[string]*bintree{
