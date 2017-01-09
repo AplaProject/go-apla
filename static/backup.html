@@ -58,7 +58,7 @@
 	   <div class="clearfix">
 		  <div class="pull-right">
 			<button id="clipboard" type="button" class="btn btn-primary" data-clipboard-action="copy" data-clipboard-text="" onClick="preloader(this);">Copy to clipboard</button>		
-			<a id="dwn" href="" class="btn btn-primary" download="daylight.txt" onclick="return backup_download()">Download as File</a>		
+			<a id="dwn" href="" class="btn btn-primary" download="egaas.txt" onclick="return backup_download()">Download as File</a>
 		  </div>
 	   </div>
 	  </div>
@@ -81,11 +81,11 @@
 	function backup_download() {	
 		var Data = new Blob([backup], {type: 'text/plain;charset=utf-8;'});
 		if (navigator.msSaveBlob) {
-		    navigator.msSaveBlob(Data, 'daylight.txt');
+		    navigator.msSaveBlob(Data, 'egaas.txt');
 		} else {
 		    var link = document.createElement('a');
 		    link.href = window.URL.createObjectURL(Data);
-		    link.setAttribute('download', 'daylight.txt');
+		    link.setAttribute('download', 'egaas.txt');
 		    document.body.appendChild(link);    
 		    link.click();
 		    document.body.removeChild(link);    
