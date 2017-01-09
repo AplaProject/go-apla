@@ -244,7 +244,12 @@ func ifValue(val string) bool {
 }
 
 func Money(vars *map[string]string, pars ...string) string {
-	cents := StrToInt(StateValue(vars, `money_digit`))
+	var cents int
+	if len(pars) > 1 {
+		cents = StrToInt(pars[1])
+	} else {
+		cents = StrToInt(StateValue(vars, `money_digit`))
+	}
 	ret := pars[0]
 	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
 		if len(ret) < cents+1 {
@@ -387,15 +392,20 @@ func InputDate(vars *map[string]string, pars ...string) string {
 func InputMoney(vars *map[string]string, pars ...string) string {
 	var (
 		class, value string
+		digit        int
 	)
 	if len(pars) > 1 {
 		class = pars[1]
 	}
+	if len(pars) > 3 {
+		digit = StrToInt(pars[3])
+	} else {
+		digit = StrToInt(StateValue(vars, `money_digit`))
+	}
 	if len(pars) > 2 {
-		value = Money(vars, pars[2])
+		value = Money(vars, pars[2], IntToStr(digit))
 	}
 	(*vars)["wimoney"] = `1`
-	digit := StrToInt(StateValue(vars, `money_digit`))
 	return fmt.Sprintf(`<input id="%s" type="text" value="%s"
 				data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 'autoGroup': true, 'digits': %d, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"
 	class="inputmask %s">`, pars[0], value, digit, class)
