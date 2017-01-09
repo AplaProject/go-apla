@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"html/template"
 	//	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -992,7 +993,12 @@ txlist:
 			}
 		}
 		if fitem.Type.String() == `decimal.Decimal` {
-			count := StrToInt(StateValue(vars, `money_digit`))
+			var count int
+			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+				count = StrToInt(ret[1])
+			} else {
+				count = StrToInt(StateValue(vars, `money_digit`))
+			}
 			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HtmlType: "money",
 				Id: idname, Param: IntToStr(count)})
 		} else {
@@ -1140,12 +1146,13 @@ txlist:
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
 				TxType: fitem.Type.String(), Title: title, Value: sellist})
 		} else if fitem.Type.String() == `decimal.Decimal` {
-			value = Money(vars, value)
-			count := StrToInt(StateValue(vars, `money_digit`))
-			/*			postfix := ``
-						if count > 0 {
-							postfix = `.` + strings.Repeat(`9`, count) //fmt.Sprintf(`.\.0-9{%d}`, count)
-						}*/
+			var count int
+			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+				count = StrToInt(ret[1])
+			} else {
+				count = StrToInt(StateValue(vars, `money_digit`))
+			}
+			value = Money(vars, value, IntToStr(count))
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "money",
 				TxType: fitem.Type.String(), Title: title, Value: value,
 				Param: IntToStr(count) /*`9{1,20}` + postfix*/})
