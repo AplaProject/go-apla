@@ -528,7 +528,16 @@ func getTag(tag string, pars ...string) (out string) {
 }
 
 func Div(vars *map[string]string, pars ...string) (out string) {
-	return getTag(`div`, pars...)
+	var row bool
+	if strings.Index(getClass(pars[0]), `col-`) >= 0 && len((*vars)[`isrow`]) == 0 {
+		out = `<div class="row">`
+		row = true
+	}
+	out += getTag(`div`, pars...)
+	if row {
+		out += `</div>`
+	}
+	return out
 }
 
 func P(vars *map[string]string, pars ...string) (out string) {
@@ -550,7 +559,13 @@ func Divs(vars *map[string]string, pars ...string) (out string) {
 		if strings.Index(item, `data-sweet-alert`) >= 0 {
 			more = `data-sweet-alert`
 		}
-		out += fmt.Sprintf(`<div class="%s" %s>`, getClass(item), more)
+		classes := getClass(item)
+		if strings.Index(classes, `col-`) >= 0 && len((*vars)[`isrow`]) == 0 {
+			out += `<div class="row">`
+			count++
+			(*vars)[`isrow`] = IntToStr(len((*vars)[`divs`]))
+		}
+		out += fmt.Sprintf(`<div class="%s" %s>`, classes, more)
 		count++
 	}
 	if val, ok := (*vars)[`divs`]; ok {
@@ -566,6 +581,9 @@ func DivsEnd(vars *map[string]string, pars ...string) (out string) {
 		divs := strings.Split(val, `,`)
 		out = strings.Repeat(`</div>`, StrToInt(divs[len(divs)-1]))
 		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
+	}
+	if len((*vars)[`isrow`]) > 0 && (*vars)[`isrow`] != `closed` && StrToInt((*vars)[`isrow`]) == len((*vars)[`divs`]) {
+		(*vars)[`isrow`] = ``
 	}
 	return
 }
@@ -845,10 +863,18 @@ func Title(vars *map[string]string, pars ...string) string {
 }
 
 func PageTitle(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<div class="panel panel-default" data-sweet-alert><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body">`, pars[0])
+	var row string
+	if len((*vars)[`isrow`]) == 0 {
+		row = ` row`
+		(*vars)[`isrow`] = `closed`
+	}
+	return fmt.Sprintf(`<div class="panel panel-default" data-sweet-alert><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body%s">`, pars[0], row)
 }
 
 func PageEnd(vars *map[string]string, pars ...string) string {
+	if (*vars)[`isrow`] == `closed` {
+		(*vars)[`isrow`] = ``
+	}
 	return `</div></div>`
 }
 
