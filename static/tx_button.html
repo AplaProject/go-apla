@@ -60,21 +60,6 @@
 			}
 		});
 	} );	
-/*	$(".inputmask").inputmask();
-	$.datetimepicker.setLocale('en');
-	jQuery(".datetimepicker").datetimepicker();
-	userLocation("map", "100%", "250px");
-	$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
-	$(".address").typeahead({
-		minLength: 1,
-		items: 10,
-		source: function (query, process) {
-			return $.get('ajax?json=ajax_addresses', { 'address': query }, function (data) {
-				return process(data.address);
-			});
-		}
-	});*/
-	$(".inputmask").inputmask({'autoUnmask': true});	
 </script>
 <div class="clearfix">
 	{{range .Fields}}{{if .Value}}

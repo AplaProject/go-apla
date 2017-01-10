@@ -260,17 +260,9 @@
 		format: 'YYYY-MM-DD'
 	});
 */
-	//$(".inputmask").inputmask();
-	$.datetimepicker.setLocale('en');
-	jQuery(".datetimepicker").datetimepicker();
-/*	jQuery(".datepicker").datetimepicker({
-		format:'Y-m-d',
-		timepicker:false
-	});
-	jQuery(".timepicker").datetimepicker({
-		datepicker:false,
-		format:'H:i'
-	});*/
+ $(document).ready(function() {
+//	$.datetimepicker.setLocale('en');
+//	$(".datetimepicker").datetimepicker();
 	
 	userLocation("map", "100%", "250px");
 //	miniMap("polymap", "100%", "250px");
@@ -285,6 +277,7 @@
 		}
 	}).focus();
 	$(".inputmask").inputmask({'autoUnmask': true});
+ });
 </script>
 <div class="panel-body">
 	<form role="form">

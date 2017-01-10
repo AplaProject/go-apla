@@ -38,7 +38,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	_ "github.com/go-sql-driver/mysql"
+	//	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
 )
@@ -54,17 +54,42 @@ type DCDB struct {
 }
 
 func ReplQ(q string) string {
-	q1 := strings.Split(q, "?")
-	result := ""
-	for i := 0; i < len(q1); i++ {
-		if i != len(q1)-1 {
-			result += q1[i] + "$" + IntToStr(i+1)
+	/*	q1 := strings.Split(q, "?")
+		result := ""
+		for i := 0; i < len(q1); i++ {
+			if i != len(q1)-1 {
+				result += q1[i] + "$" + IntToStr(i+1)
+			} else {
+				result += q1[i]
+			}
+		}*/
+	var quote, skip bool
+	ind := 1
+	in := []rune(q)
+	out := make([]rune, 0, len(in)+16)
+	for i, ch := range in {
+		if skip {
+			skip = false
+		} else if ch == '\'' {
+			if quote {
+				if i == len(in)-1 || in[i+1] != '\'' {
+					quote = false
+				} else {
+					skip = true
+				}
+			} else {
+				quote = true
+			}
+		}
+		if ch != '?' || quote {
+			out = append(out, ch)
 		} else {
-			result += q1[i]
+			out = append(out, []rune(fmt.Sprintf(`$%d`, ind))...)
+			ind++
 		}
 	}
 	//log.Debug("%v", result)
-	return result
+	return string(out)
 }
 
 func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
@@ -552,6 +577,7 @@ func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{})
 
 func FormatQueryArgs(q, dbType string, args ...interface{}) (string, []interface{}) {
 	var newArgs []interface{}
+
 	newQ := q
 	if ok, _ := regexp.MatchString(`CREATE TABLE`, newQ); !ok {
 		newQ = strings.Replace(newQ, "[hex]", "decode(?,'HEX')", -1)
