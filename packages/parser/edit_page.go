@@ -40,11 +40,11 @@ func (p *Parser) EditPageFront() error {
 	}
 
 	// Check InputData
-	/*verifyData := map[string]string{"name": "string", "value": "string", "menu": "string", "conditions": "string"}
+	verifyData := map[string]string{"name": "string", "menu": "string"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
-	}*/
+	}
 
 	/*
 		Check conditions
