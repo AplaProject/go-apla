@@ -528,15 +528,11 @@ func getTag(tag string, pars ...string) (out string) {
 }
 
 func Div(vars *map[string]string, pars ...string) (out string) {
-	var row bool
-	if strings.Index(getClass(pars[0]), `col-`) >= 0 && len((*vars)[`isrow`]) == 0 {
+	if len((*vars)[`isrow`]) == 0 {
 		out = `<div class="row">`
-		row = true
+		(*vars)[`isrow`] = `opened`
 	}
 	out += getTag(`div`, pars...)
-	if row {
-		out += `</div>`
-	}
 	return out
 }
 
@@ -554,17 +550,17 @@ func Small(vars *map[string]string, pars ...string) (out string) {
 
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
+
+	if len((*vars)[`isrow`]) == 0 {
+		out = `<div class="row">`
+		(*vars)[`isrow`] = `opened`
+	}
 	for _, item := range pars {
 		more := ``
 		if strings.Index(item, `data-sweet-alert`) >= 0 {
 			more = `data-sweet-alert`
 		}
 		classes := getClass(item)
-		if strings.Index(classes, `col-`) >= 0 && len((*vars)[`isrow`]) == 0 {
-			out += `<div class="row">`
-			count++
-			(*vars)[`isrow`] = IntToStr(len((*vars)[`divs`]))
-		}
 		out += fmt.Sprintf(`<div class="%s" %s>`, classes, more)
 		count++
 	}
@@ -581,9 +577,6 @@ func DivsEnd(vars *map[string]string, pars ...string) (out string) {
 		divs := strings.Split(val, `,`)
 		out = strings.Repeat(`</div>`, StrToInt(divs[len(divs)-1]))
 		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
-	}
-	if len((*vars)[`isrow`]) > 0 && (*vars)[`isrow`] != `closed` && StrToInt((*vars)[`isrow`]) == len((*vars)[`divs`]) {
-		(*vars)[`isrow`] = ``
 	}
 	return
 }

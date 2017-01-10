@@ -2310,6 +2310,10 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 	(*params)[`citizen`] = Int64ToStr(citizenId)
 	if len(data) > 0 {
 		template := textproc.Process(data, params)
+		if (*params)[`isrow`] == `opened` {
+			template += `</div>`
+			(*params)[`isrow`] = ``
+		}
 		template = LangMacro(template, int(stateId), (*params)[`accept_lang`])
 		getHeight := func() int64 {
 			height := int64(100)
