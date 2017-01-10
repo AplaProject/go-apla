@@ -1149,6 +1149,9 @@ txlist:
 		title := LangRes(vars, langres)
 		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
 			if strings.Index(fitem.Tags, tag) >= 0 {
+				if tag == `date` {
+					(*vars)[`widate`] = `1`
+				}
 				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
 					TxType: fitem.Type.String(), Title: title, Value: value})
 				continue txlist

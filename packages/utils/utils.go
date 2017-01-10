@@ -2352,11 +2352,11 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 		}
 		if (*params)[`widate`] == `1` {
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-			$(document).ready(function() {
-				$.datetimepicker.setLocale('en');
-				$(".datetimepicker").datetimepicker();
-			})
-	</script>`)
+						$(document).ready(function() {
+							$.datetimepicker.setLocale('en');
+							$(".datetimepicker").datetimepicker();
+						})
+				</script>`)
 		}
 		if (*params)[`wiaddress`] == `1` {
 			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
