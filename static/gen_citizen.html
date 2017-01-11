@@ -1,0 +1,54 @@
+<style>
+</style>
+<script language="JavaScript" type="text/javascript">
+$(".aside .nav li").removeClass("active");
+$(".anonym, .anonym_gen_citizen").addClass("active");
+
+var phrase_limit = 20;
+
+function gen_citizen() {
+    do_generate();
+    return false;
+}
+
+$(document).ready(function(){
+    do_phrase(phrase_limit);
+})
+</script>
+
+<div class="content-heading">
+	Add New Citizen
+</div>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+    <div class="panel-body">
+        {{if .Message}}
+        <div class="form-group">
+            <label>{{.Message}}</label>
+        </div>
+        {{end}}
+        <form role="form">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input id="name" name="name" type="text" value="" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="seed">Account seed</label>
+				<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
+				<div class="clearfix">
+    				<button id="genseed" class="btn btn-default pull-left" type="button" onclick="return do_phrase(phrase_limit);">Generate new seed</button>
+                </div>
+                <input id="prvkey" type="hidden" value="">
+                <input id="pubkey" type="hidden" value="">
+            </div>
+        </form>
+    </div>
+    <div class="panel-footer">
+        <div class="clearfix">
+            <div class="pull-right">
+                <button type="button" class="btn btn-primary" onclick="return gen_citizen();">Create new citizen</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END panel-->
