@@ -26,8 +26,10 @@
 	.dataTables_length, .dataTables_filter {
 		padding-top:15px;
 	}
-	.Ellipsis {
-		max-width:75px;
+	@media only screen and (min-width: 768px) {
+		.Ellipsis {
+			max-width:75px;
+		}
 	}
 	.pagination {
 		margin-bottom:15px !important;
@@ -130,7 +132,7 @@
  <div class="panel-body">
 	<div id="nodata" class="box-placeholder text-center">No data available</div>
 	<div class="table-responsive">
-	   <table id="history" class="table table-striped table-hover">
+	   <table id="history" class="table table-striped table-hover" data-role="table">
 		  <thead>
 			 <tr>
 				<th>Block ID</th>

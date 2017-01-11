@@ -54,15 +54,15 @@
 	 </div>
 	 <div class="panel-body">
 		<div class="table-responsive">
-			<table class="table table-striped table-bordered table-hover">
+			<table class="table table-striped table-bordered table-hover" data-role="table">
 			  <thead>
 				  <tr>
-					  <td class="thead"><strong>id</strong></td>
-					  <td class="thead"><strong>rb_id</strong></td>
+					  <th>id</th>
+					  <th>rb_id</th>
 				  {{ range $name, $permissions := .Columns }}
-					  <td class="thead"><strong>{{$name}}</strong></td>
+					  <th>{{$name}}</th>
 				  {{end}}
-					  <td class="thead"><strong>History</strong></td>
+					  <th>History</th>
 				  </tr>
 			  </thead>
 			  <tbody>

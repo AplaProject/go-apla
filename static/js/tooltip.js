@@ -3,11 +3,17 @@ var interval;
 function TooltipEllipsis(element) {
 	'use strict';
 	
+	$(window).on('resize load', function(){
+		if (el.find(".tooltipEllipsis").length) {
+			return false;
+		}
+	});
+	
 	var el = $("." + element);
 	
 	el.each(function() {
 		var w = $(this).width();
-		var text = $(this).html();
+		var text = $(this).text();
 		var l = parseInt($(this).css("padding-left"));
 		var t = parseInt($(this).css("padding-top"));
 		if (w >= 75) {

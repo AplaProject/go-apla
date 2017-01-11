@@ -834,6 +834,67 @@ function MoneyDigit(value, dig) {
 	return money.replace('.', '');
 }
 
+function InitMobileTable() {
+	var table = $("[data-role='table']");
+	table.data('mode', 'reflow').addClass("ui-responsive");
+	
+	if (table.length) {
+		console.log('load table');
+		table.each(function() {
+			var _this = $(this);
+			_this.find("tbody tr").each(function() {
+				var td = $(this).find("td");
+				var title = $(this).find("td:first");
+				
+				if (!td.find(".ui-table-td").length) {
+					td.wrapInner("<div class='ui-table-td'></div>");
+				}
+				title.addClass("ui-table-title");
+			});
+			if (_this.hasClass("ui-table")) {
+				_this.closest("table").table("refresh").trigger("create");
+				console.log('reload table');
+			} else {
+				_this.table();
+			}
+		});
+		
+		$(".column_type").each(function() {
+			var id = $(this);
+			var val = id.val();
+			if (val === "text") {
+				id.parent().parent().parent().find(".index").prop("disabled", true);
+			} else {
+				id.parent().parent().parent().find(".index").prop("disabled", false);
+			}
+		});
+	}
+}
+
+var observeDOM = (function(){
+    var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
+        eventListenerSupported = window.addEventListener;
+
+    return function(content, callback){
+        if (MutationObserver){
+            // define a new observer
+            var obs = new MutationObserver(function(mutations, observer){
+                if (mutations[0].addedNodes.length || mutations[0].removedNodes.length)
+                    callback();
+            });
+            // have the observer observe foo for changes in children
+            obs.observe(content, {childList:true, subtree:true});
+        }
+        else if (eventListenerSupported){
+            content.addEventListener('DOMNodeInserted', callback, false);
+            content.addEventListener('DOMNodeRemoved', callback, false);
+        }
+    }
+})();
+
+observeDOM(document.getElementById('dl_content'), function(){
+    InitMobileTable();
+});
 
 $(document).on('keydown', function (e) {
 	if (e.keyCode == 13 && $(".keyCode_13:visible").length) {

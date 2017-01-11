@@ -111,7 +111,7 @@
 	{{end}}
 	   <!-- START table responsive-->
 	   <div class="table-responsive">
-		   <table id="block_explorer" class="table table-striped table-hover ui-responsive" data-role="table" data-mode="reflow">
+		   <table id="block_explorer" class="table table-striped table-hover" data-role="table">
 			  <thead>
 				 <tr>
 					<th>Block ID</th>
@@ -125,7 +125,7 @@
 			  <tbody>
 				{{range .List}}
 				 <tr>
-					<td class="ui-table-title"><a href="" onclick="return block_detail({{.id}})">{{.id}}</a></td>
+					<td><a href="" onclick="return block_detail({{.id}})">{{.id}}</a></td>
 					<!--td>.hash</td-->
 					<td class="unixtime">{{.time}}</td>
 					<!--td>.state_id</td-->
@@ -146,7 +146,7 @@
 	function addRow(item) {
 		var id = $("#block_explorer tbody");
 		var el = '<tr class="addRow">'+
-					'<td class="ui-table-title">'+
+					'<td>'+
 						'<a href="" onclick="return block_detail('+item.id+')">'+item.id+'</a>'+
 					'</td>'+
 					'<td class="addtime">'+item.time+'</td>'+
@@ -201,7 +201,6 @@
 				latestBlock = data.latest;
 			} 
 			latestTime = setTimeout( block_reload, 2000 );
-			$("[data-role='table']").closest("table").table("refresh").trigger("create");
     	}, "JSON");
 	}
 	
@@ -212,5 +211,4 @@
 	$(".unixtime").each(function() {
 		$(this).text(moment.unix($(this).text()).format('D MMMM YYYY, hh:mm:ss', 'en'));
 	});
-	$("[data-role='table']").table();
 </script>

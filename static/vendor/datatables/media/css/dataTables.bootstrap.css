@@ -1,8 +1,12 @@
 table.dataTable {
   clear: both;
-  margin-top: 6px !important;
-  margin-bottom: 6px !important;
   max-width: none !important;
+}
+@media (min-width: 768px) {
+	table.dataTable {
+		margin-top: 6px !important;
+		margin-bottom: 6px !important;
+	}
 }
 table.dataTable td,
 table.dataTable th {
