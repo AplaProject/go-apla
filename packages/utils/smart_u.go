@@ -689,12 +689,16 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	order := ``
 	where := ``
 	limit := ``
-	TableClass := ``
+	tableClass := ``
+	adaptive := ``
 	if val, ok := (*pars)[`Order`]; ok {
 		order = `order by ` + lib.Escape(val)
 	}
 	if val, ok := (*pars)[`Class`]; ok {
-		TableClass = lib.Escape(val)
+		tableClass = lib.Escape(val)
+	}
+	if _, ok := (*pars)[`Adaptive`]; ok {
+		adaptive = `data-role="table"`
 	}
 	if val, ok := (*pars)[`Where`]; ok {
 		where = `where ` + lib.Escape(val)
@@ -716,7 +720,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		return err.Error()
 	}
 	columns := textproc.Split((*pars)[`Columns`])
-	out := `<div class="table-responsive"><table class="table `+TableClass+`" data-role="table"><thead>`
+	out := `<div class="table-responsive"><table class="table `+tableClass+`" `+adaptive+`><thead>`
 	for _, th := range *columns {
 		if len(th) < 2 {
 			return `incorrect column`
