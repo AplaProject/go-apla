@@ -712,7 +712,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		return err.Error()
 	}
 	columns := textproc.Split((*pars)[`Columns`])
-	out := `<div class="table-responsive"><table  class="table table-striped table-bordered table-hover"><tr>`
+	out := `<div class="table-responsive"><table class="table table-striped table-bordered table-hover" data-role="table"><thead>`
 	for _, th := range *columns {
 		out += `<th>` + th[0] + `</th>`
 		th[1] = strings.TrimSpace(th[1])
@@ -729,7 +729,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 			}
 		}
 	}
-	out += `</tr>`
+	out += `</thead>`
 	for _, item := range list {
 		out += `<tr>`
 		for key, value := range item {
