@@ -219,12 +219,36 @@
 					predata{{.Unique}}.signature1 = $('#signature1{{.Unique}}').val();
 					predata{{.Unique}}.signature2 = $('#signature2{{.Unique}}').val();
 					predata{{.Unique}}.signature3 = $('#signature3{{.Unique}}').val();
-					$("#send_to_net{{.Unique}}").trigger("click");
+//					$("#send_to_net{{.Unique}}").trigger("click");
+					sendnet{{.Unique}}();					
 				}
 		}, "json" );
 	} );
 
-	$('#send_to_net{{.Unique}}').bind('click', function () {
+function sendnet{{.Unique}}() {
+	{{range .Fields}}
+		{{if eq .HtmlType "image"}}
+			predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
+		{{end}}
+	{{end}}
+	predata{{.Unique}}['public'] = GKey.Public;
+	$.ajax({
+		type: 'POST',
+		url: 'ajax?json=ajax_send_tx',
+		data: predata{{.Unique}},
+		dataType: 'json',
+		crossDomain: true,
+		success: function(result) {
+			send_to_net_success(result, SendTxOK{{.Unique}});
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
+}
+
+	$('#send_to_net{{.Unique}}').bind('click', sendnet{{.Unique}}
+	/*function () {
 		{{range .Fields}}
 			{{if eq .HtmlType "image"}}
 				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
@@ -244,7 +268,7 @@
 				Alert("Error", error, "error");
 			}
 		});
-	} );	
+	}*/ );	
 /*	$(".datetimepicker").datetimepicker({
 		icons: {
 			time: 'fa fa-clock-o',
