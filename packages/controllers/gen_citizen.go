@@ -17,7 +17,8 @@
 package controllers
 
 import (
-//"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"html/template"
+	//"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const NGenCitizen = `gen_citizen`
@@ -25,6 +26,7 @@ const NGenCitizen = `gen_citizen`
 type genCitizenPage struct {
 	Data    *CommonPage
 	Message string
+	Unique  template.JS
 }
 
 func init() {
@@ -37,6 +39,6 @@ func (c *Controller) GenCitizen() (string, error) {
 	if len(name) > 0 {
 	}
 	//prefix := utils.Int64ToStr(c.SessStateId)
-	pageData := genCitizenPage{Data: c.Data, Message: message}
+	pageData := genCitizenPage{Data: c.Data, Message: message, Unique: template.JS(`255`)}
 	return proceedTemplate(c, NGenCitizen, &pageData)
 }

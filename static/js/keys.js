@@ -160,8 +160,8 @@ KJUR.crypto.ECDSA.prototype.GenKeyPairHex = function () {
 	}
 	var srcHash;
 	if (i == phrase_low.length && phrasepriv.length >= 64) {
-		GKey.StateId = phrasepriv.length >= 68 ? phrasepriv.substr(64, 2) : '';
-		GKey.CitizenId = phrasepriv.length >= 68 ? phrasepriv.substr(66) : '';
+		//		GKey.StateId = phrasepriv.length >= 68 ? phrasepriv.substr(64, 2) : '';
+		//		GKey.CitizenId = phrasepriv.length >= 68 ? phrasepriv.substr(66) : '';
 		srcHash = phrasepriv.substr(0, 64);
 	} else {
 		var hash = CryptoJS.SHA256(phrase);

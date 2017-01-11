@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 
+	"encoding/hex"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
@@ -47,6 +48,7 @@ func init() {
 		"Table":          StateTable,
 		"TableTx":        StateTableTx,
 		"AddressToId":    AddressToID,
+		"IdToAddress":    IDToAddress,
 		"DBAmount":       DBAmount,
 		"IsContract":     IsContract,
 		"StateValue":     StateValue,
@@ -56,6 +58,8 @@ func init() {
 		"Float":          Float,
 		"Len":            Len,
 		"Sha256":         Sha256,
+		"PubToID":        PubToID,
+		"HexToBytes":     HexToBytes,
 		"UpdateContract": UpdateContract,
 		"UpdateParam":    UpdateParam,
 		"UpdateMenu":     UpdateMenu,
@@ -232,6 +236,18 @@ func Sha256(text string) string {
 	return string(utils.Sha256(text))
 }
 
+func PubToID(hexkey string) int64 {
+	pubkey, err := hex.DecodeString(hexkey)
+	if err != nil {
+		return 0
+	}
+	return int64(lib.Address(pubkey))
+}
+
+func HexToBytes(hexdata string) ([]byte, error) {
+	return hex.DecodeString(hexdata)
+}
+
 func DBInt(tblname string, name string, id int64) (int64, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
 }
@@ -319,6 +335,14 @@ func AddressToID(input string) (addr int64) {
 	}
 	if !lib.IsValidAddress(lib.AddressToString(uint64(addr))) {
 		return 0
+	}
+	return
+}
+
+func IDToAddress(id int64) (out string) {
+	out = lib.AddressToString(uint64(id))
+	if !lib.IsValidAddress(out) {
+		out = `invalid`
 	}
 	return
 }

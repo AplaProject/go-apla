@@ -163,7 +163,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?),(?, ?),(?,?),(?,?),(?,?)`,
+		(?, ?),(?, ?),(?,?),(?,?),(?,?),(?,?)`,
 		`TXCitizenRequest`, `contract TXCitizenRequest {
 	data {
 		StateId    int    "hidden"
@@ -222,6 +222,24 @@ func (p *Parser) NewState() error {
 	}
 	func action {
 	  DBUpdate(Table( "citizens"), $citizen, "name", $FirstName)
+	}
+}`, `GenCitizen`, `contract GenCitizen {
+	data {
+		Name      string
+ 		PublicKey string
+	}
+	func conditions {
+	    if StateValue("gov_account") != $citizen {
+	        error "Access denied"
+	    }
+	    $idc = PubToID($PublicKey)
+	    if $idc == 0 || DBIntExt("dlt_wallets", "wallet_id", $idc, "wallet_id") == $idc {
+	        warning "Pubkey is used"
+	    }
+	}
+	func action {
+		DBInsert("dlt_wallets", "wallet_id,public_key_0,address_vote", $idc, HexToBytes($PublicKey), IdToAddress($idc))
+		DBInsert(Table( "citizens"), "id,block_id,name", $idc, $block, $Name )
 	}
 }`, `TXTest`, `contract TXTest {
 	data {
