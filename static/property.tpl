@@ -266,7 +266,8 @@ DivsEnd:
 
 Divs(md-12, panel panel-default panel-body)
 MarkDown : ## Offers
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_property_offers
     Where: property_id='#PropertyId#'
     Columns: [[ID, #id#], [price, Money(#price#)], [sender_citizen_id, #sender_citizen_id#], [Type, StateLink(property_prices_types, #type#) ], [Accept, BtnTemplate(PropertyAcceptOffers, Accept, "OfferId:#id#")] ]
@@ -314,7 +315,8 @@ Navigation(LiTemplate(dashboard_default, Citizen))
 
 Divs(md-12, panel panel-default panel-body)
 MarkDown : ## Offers
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_property_offers
     Where: property_id='#PropertyId#'
     Columns: [[ID, #id#], [price, #price#], [sender_citizen_id, #sender_citizen_id#], [type ID, #type#] ]
@@ -327,7 +329,8 @@ PageEnd:
 Navigation( Citizens )
 
 Divs(md-12, panel panel-default panel-body)
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_property
     Where: "If( #Ptype# == 1, sell_price > #PriceMin# and sell_price < #PriceMax#, rent_price > #PriceMin# and rent_price < #PriceMax#)""
     Order: id
@@ -377,7 +380,8 @@ PageEnd:
 
     `page_dashboard_default #= Divs(md-12, panel panel-default panel-body)
                                MarkDown : ## My property
-                               Table{
+                               Table {
+                                   Class: table-striped table-hover
                                    Table: #state_id#_property
                                    Where: citizen_id='#citizen#'
                                    Order: id
@@ -391,7 +395,8 @@ PageEnd:
     `page_government #=
     Divs(md-12, panel panel-default panel-body)
                 MarkDown : ## Property
-                Table{
+                Table {
+                    Class: table-striped table-hover
                     Table: 1_property
                     Order: id
                     Columns: [[ID, #id#], [Type, StateLink(property_types, #type#)]  [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]

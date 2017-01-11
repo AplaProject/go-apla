@@ -119,7 +119,8 @@ DivsEnd:
 
 Divs(md-12, panel panel-default panel-body)
 Legend(" ", "Accounts")
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_accounts
 	Order: id
 	Where: company_id = 0 or company_id is NULL
@@ -133,7 +134,8 @@ Div(clearfix md)
 
 Divs(md-12, panel panel-default panel-body)
 Legend(" ", "Companies accounts")
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_accounts
 	Order: id
 	Where: company_id > 0

@@ -92,7 +92,8 @@ DivsEnd:
 
 Divs(md-12, panel panel-default panel-body)
 Legend(" ", "EURO accounts")
-Table{
+Table {
+    Class: table-striped table-hover
     Table: global_euro
 	Order: id
 	Columns: [[ID, #id#],[Amount, Money(#amount#)],[Citizen ID, Address(#citizen_id#)],[History, If(#rb_id#>0, SysLink(rowHistory, Show, "rbId:#rb_id#,tableName:'global_euro', global:1"), "No history")],[Disabled, If(#disabled#==1, "Div(label label-danger, Yes)", "")]]

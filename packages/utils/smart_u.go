@@ -718,6 +718,9 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	columns := textproc.Split((*pars)[`Columns`])
 	out := `<div class="table-responsive"><table class="table `+TableClass+`" data-role="table"><thead>`
 	for _, th := range *columns {
+		if len(th) < 2 {
+			return `incorrect column`
+		}
 		out += `<th>` + th[0] + `</th>`
 		th[1] = strings.TrimSpace(th[1])
 		off := strings.Index(th[1], `StateLink`)
@@ -742,6 +745,9 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 			}
 		}
 		for _, th := range *columns {
+			if len(th) < 2 {
+				return `incorrect column`
+			}
 			//			val := textproc.Process(th[1], vars)
 			//			if val == `NULL` {
 			val := textproc.Macro(th[1], vars)

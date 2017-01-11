@@ -155,7 +155,8 @@ DivsEnd:
 
 Divs(md-12, panel panel-default panel-body)
 Legend(" ", "My items")
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_items
 	Order: id DESC
 	Where: company_id=#CompanyId#
@@ -182,7 +183,8 @@ DivsEnd:
 
 Divs(md-12, panel panel-default panel-body)
 Legend(" ", "My companies")
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_companies
     Where: owner_citizen_id=#citizen#
 	Order: id
@@ -195,7 +197,8 @@ Navigation( LiTemplate(dashboard_default, Citizen), Shops)
 
 Divs(md-12, panel panel-default panel-body)
 Legend(" ", "Goods")
-Table{
+Table {
+    Class: table-striped table-hover
     Table: #state_id#_items
 	Order: id DESC
 	Columns: [[Name, #name#],[Price, Money(#price#)], [Buy, BtnTemplate(BuyItem, Buy,"ItemId:#id#")] ]

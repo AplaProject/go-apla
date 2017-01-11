@@ -263,6 +263,7 @@ Divs(md-6, panel panel-default panel-body)
     Legend(" ", "Sell orders")
     Divs()
     Table {
+        Class: table-striped table-hover
     	Table: global_forex_orders
     	Order: sell_rate ASC
     	Where: sell_table='#Table2#' and (empty_block_id is NULL or empty_block_id=0)
@@ -280,7 +281,8 @@ Divs(md-6, panel panel-default panel-body)
     Legend(" ", "Buy orders")
     Divs()
     Table {
-    	Table: global_forex_orders
+        Class: table-striped table-hover
+       	Table: global_forex_orders
     	Order: sell_rate DESC
     	Where: sell_table='#Table1#' and (empty_block_id is NULL or empty_block_id=0)
     	Columns: [
@@ -301,6 +303,7 @@ Divs(md-12, panel panel-default)
     
     Divs(panel-body)
     Table {
+        Class: table-striped table-hover
     	Table: global_forex_history2
     	Order: time DESC
     	Where: currency='#Table1#' or currency='#Table2#'
