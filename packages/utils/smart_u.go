@@ -944,6 +944,11 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
+	class := `clearfix pull-right`
+	if len((*pars)[`Class`]) > 0 {
+		class = getClass((*pars)[`Class`])
+	}
+
 	onsuccess := (*pars)[`OnSuccess`]
 	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
@@ -987,7 +992,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	b := new(bytes.Buffer)
-	finfo := TxButtonInfo{TxName: name, Class: (*pars)[`Class`], Name: LangRes(vars, btnName), Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
+	finfo := TxButtonInfo{TxName: name, Class: class, Name: LangRes(vars, btnName), Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
 		Fields: make([]TxInfo, 0), Data: FormCommon{
 			CountSignArr: []byte{1}}}
 

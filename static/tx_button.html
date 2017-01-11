@@ -7,7 +7,7 @@
 	}
 	var serverTime{{.Unique}};
 	var predata{{.Unique}};
-	
+	$(document).ready(function(){
 	$('#send{{.Unique}}').bind('click', function () {
 		predata{{.Unique}} = {
 			'TxName' : '{{.TxName}}',
@@ -33,12 +33,34 @@
 					predata{{.Unique}}.signature1 = $('#signature1{{.Unique}}').val();
 					predata{{.Unique}}.signature2 = $('#signature2{{.Unique}}').val();
 					predata{{.Unique}}.signature3 = $('#signature3{{.Unique}}').val();
-					$("#send_to_net{{.Unique}}").trigger("click");
+//					$("#send_to_net{{.Unique}}").trigger("click");
+					sendnet{{.Unique}}();
 				}
 		}, "json" );
 	} );
 
-	$('#send_to_net{{.Unique}}').bind('click', function () {
+function sendnet{{.Unique}}() {
+	{{range .Fields}}
+		{{if eq .HtmlType "image"}}
+			predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+		{{end}}
+	{{end}}
+	predata{{.Unique}}['public'] = GKey.Public;
+	$.ajax({
+		type: 'POST',
+		url: 'ajax?json=ajax_send_tx',
+		data: predata{{.Unique}},
+		dataType: 'json',
+		crossDomain: true,
+		success: function(result) {
+			send_to_net_success(result, SendTxOK{{.Unique}});
+		},
+		error: function(xhr, status, error) {
+			Alert("Error", error, "error");
+		}
+	});
+}
+	$('#send_to_net{{.Unique}}').bind('click', sendnet{{.Unique}}/*function () {
 		{{range .Fields}}
 			{{if eq .HtmlType "image"}}
 				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
@@ -58,15 +80,14 @@
 				Alert("Error", error, "error");
 			}
 		});
-	} );	
+	}*/ );	
+})
 </script>
-<div class="clearfix">
+<div class="{{.Class}}">
 	{{range .Fields}}{{if .Value}}
 		<textarea id="{{.Id}}" style="display:none;">{{.Value}}</textarea>
 	{{end}}{{end}}
-	<div class="pull-right">
-		<button id="send{{.Unique}}" type="button" class="btn btn-primary {{.Class}}" data-tool="panel-refresh" onClick="preloader(this);">{{.Name}}</button>
-	</div>
+	<button id="send{{.Unique}}" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">{{.Name}}</button>
 </div>
 
 {{template "signatures".}}
