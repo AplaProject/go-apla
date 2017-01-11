@@ -73,6 +73,7 @@ type TxInfo struct {
 type TxButtonInfo struct {
 	TxName    string
 	Name      string
+	Class     string
 	Unique    template.JS
 	OnSuccess template.JS
 	Fields    []TxInfo
@@ -986,7 +987,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	b := new(bytes.Buffer)
-	finfo := TxButtonInfo{TxName: name, Name: LangRes(vars, btnName), Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
+	finfo := TxButtonInfo{TxName: name, Class: (*pars)[`Class`], Name: LangRes(vars, btnName), Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
 		Fields: make([]TxInfo, 0), Data: FormCommon{
 			CountSignArr: []byte{1}}}
 
