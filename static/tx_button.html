@@ -83,13 +83,11 @@ function sendnet{{.Unique}}() {
 	}*/ );	
 })
 </script>
-<div class="clearfix">
+<div class="{{.Class}}">
 	{{range .Fields}}{{if .Value}}
 		<textarea id="{{.Id}}" style="display:none;">{{.Value}}</textarea>
 	{{end}}{{end}}
-	<div class="pull-right">
-		<button id="send{{.Unique}}" type="button" class="btn btn-primary {{.Class}}" data-tool="panel-refresh" onClick="preloader(this);">{{.Name}}</button>
-	</div>
+	<button id="send{{.Unique}}" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">{{.Name}}</button>
 </div>
 
 {{template "signatures".}}
