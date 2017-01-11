@@ -689,8 +689,12 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	order := ``
 	where := ``
 	limit := ``
+	TableClass := ``
 	if val, ok := (*pars)[`Order`]; ok {
 		order = `order by ` + lib.Escape(val)
+	}
+	if val, ok := (*pars)[`Class`]; ok {
+		TableClass = lib.Escape(val)
 	}
 	if val, ok := (*pars)[`Where`]; ok {
 		where = `where ` + lib.Escape(val)
@@ -712,7 +716,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		return err.Error()
 	}
 	columns := textproc.Split((*pars)[`Columns`])
-	out := `<div class="table-responsive"><table class="table table-striped table-bordered table-hover" data-role="table"><thead>`
+	out := `<div class="table-responsive"><table class="table `+TableClass+`" data-role="table"><thead>`
 	for _, th := range *columns {
 		out += `<th>` + th[0] + `</th>`
 		th[1] = strings.TrimSpace(th[1])
