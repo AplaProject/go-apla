@@ -284,6 +284,8 @@ function Alert(title, text, type, Confirm) {
 	if (obj) {
 		var color;
 		var btnText = "OK";
+		var btnShow = true;
+		var timer = null;
 		var id = obj.parents(".modal").attr("id");
 		var bh = window.innerHeight - 170;
 		var oh = obj.height();
@@ -299,6 +301,11 @@ function Alert(title, text, type, Confirm) {
 			}
 		} else if (type == "warning") {
 			color = "#ff902b";
+		} else if (type == "notification") {
+			type = "success";
+			color = "#23b7e5";
+			btnShow = false;
+			timer = 3000;
 		} else {
 			color = "#c1c1c1";
 		}
@@ -308,15 +315,18 @@ function Alert(title, text, type, Confirm) {
 		swal({
 			title: title,
 			text: text,
+			timer: timer,
 			allowEscapeKey: false,
 			type: type,
 			html: true,
 			confirmButtonColor: color,
-			confirmButtonText: btnText
+			confirmButtonText: btnText,
+			showConfirmButton: btnShow
 		}, function (isConfirm) {
 			if (text.toLowerCase().indexOf("[error]") != -1) {
 				CopyToClipboard(".sweet-alert .confirm", text);
 			}
+			
 			if (isConfirm) {
 				if (Confirm) {
 					if (Confirm == false) {
@@ -330,6 +340,22 @@ function Alert(title, text, type, Confirm) {
 					minHeight = null;
 					$("#" + id).modal("hide");
 				}
+			}
+			
+			if (timer) {
+				if (Confirm) {
+					if (Confirm == false) {
+						return false;
+					} else {
+						Confirm();
+					}
+				}
+				if (Confirm != false) {
+					obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+					minHeight = null;
+					$("#" + id).modal("hide");
+				}
+				swal.close();
 			}
 		});
 
