@@ -948,6 +948,11 @@ function MoneyDigit(value, dig) {
 	return money.replace('.', '');
 }
 
+function InitMobileHead() {
+	var head = $(".content-wrapper .content-heading").clone().children().remove().end().text();
+	$(".topnavbar-wrapper .content-heading").text(head);
+}
+
 function InitMobileTable() {
 	var table = $("[data-role='table']");
 	table.data('mode', 'reflow').addClass("ui-responsive");
@@ -1007,6 +1012,7 @@ var observeDOM = (function () {
 })();
 
 observeDOM(document.getElementById('dl_content'), function () {
+	InitMobileHead();
 	InitMobileTable();
 });
 
