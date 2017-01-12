@@ -216,15 +216,21 @@ var AllTimer;
 var IgnoreTimer;
 
 function clearAllTimeouts() {
-	AllTimer = setTimeout(function () { }, 0);
+	/*AllTimer = setTimeout(function () { }, 0);
 
 	for (var i = 0; i < AllTimer; i += 1) {
 		if (IgnoreTimer != i) {
 			clearTimeout(i);
 		}
-	}
-
+	}*/
 	$(".wrapper").removeClass("map");
+	
+	try {
+		if (latestTime) {
+			clearTimeout(latestTime);
+		}
+	} catch (err) {
+	}
 }
 
 function load_page(page, parameters) {
@@ -339,85 +345,108 @@ function CopyToClipboard(elem, text) {
 
 function Alert(title, text, type, Confirm) {
 	if (obj) {
-		var color;
-		var btnText = "OK";
-		var btnShow = true;
 		var timer = null;
-		var id = obj.parents(".modal").attr("id");
-		var bh = window.innerHeight - 170;
-		var oh = obj.height();
-		var minHeight = obj.css("min-height");
-		obj.css({ "position": "relative", "min-height": "300px" });
-
-		if (type == "success") {
-			color = "#23b7e5";
-		} else if (type == "error") {
-			color = "#f05050";
-			if (text.toLowerCase().indexOf("[error]") != -1) {
-				btnText = "Copy text error to clipboard";
-			}
-		} else if (type == "warning") {
-			color = "#ff902b";
-		} else if (type == "notification") {
+		
+		if (type == "notification") {
 			type = "success";
-			color = "#23b7e5";
-			btnShow = false;
 			timer = 3000;
+			
+			$.notify({
+				message: text,
+				status: type,
+				timeout: timer
+			});
+			
+			if (Confirm) {
+				if (Confirm == false) {
+					return false;
+				} else {
+					Confirm();
+				}
+			}
+			if (Confirm != false) {
+				obj.removeClass("whirl standard");
+			}
 		} else {
-			color = "#c1c1c1";
-		}
-
-		$(".sweet-alert").appendTo($("body"));
-
-		swal({
-			title: title,
-			text: text,
-			timer: timer,
-			allowEscapeKey: false,
-			type: type,
-			html: true,
-			confirmButtonColor: color,
-			confirmButtonText: btnText,
-			showConfirmButton: btnShow
-		}, function (isConfirm) {
-			if (text.toLowerCase().indexOf("[error]") != -1) {
-				CopyToClipboard(".sweet-alert .confirm", text);
+			var color;
+			var btnText = "OK";
+			var btnShow = true;
+			var id = obj.parents(".modal").attr("id");
+			var bh = window.innerHeight - 170;
+			var oh = obj.height();
+			var minHeight = obj.css("min-height");
+			obj.css({ "position": "relative", "min-height": "300px" });
+	
+			if (type == "success") {
+				color = "#23b7e5";
+			} else if (type == "error") {
+				color = "#f05050";
+				if (text.toLowerCase().indexOf("[error]") != -1) {
+					btnText = "Copy text error to clipboard";
+				}
+			} else if (type == "warning") {
+				color = "#ff902b";
+			} else if (type == "timeout") {
+				type = "success";
+				color = "#23b7e5";
+				btnShow = false;
+				timer = 3000;
+			} else {
+				color = "#c1c1c1";
 			}
-
-			if (isConfirm) {
-				if (Confirm) {
-					if (Confirm == false) {
-						return false;
-					} else {
-						Confirm();
+	
+			$(".sweet-alert").appendTo($("body"));
+	
+			swal({
+				title: title,
+				text: text,
+				timer: timer,
+				allowEscapeKey: false,
+				type: type,
+				html: true,
+				confirmButtonColor: color,
+				confirmButtonText: btnText,
+				showConfirmButton: btnShow
+			}, function (isConfirm) {
+				if (text.toLowerCase().indexOf("[error]") != -1) {
+					CopyToClipboard(".sweet-alert .confirm", text);
+				}
+	
+				if (isConfirm) {
+					if (Confirm) {
+						if (Confirm == false) {
+							return false;
+						} else {
+							Confirm();
+						}
+					}
+					if (Confirm != false) {
+						obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+						minHeight = null;
+						$("#" + id).modal("hide");
 					}
 				}
-				if (Confirm != false) {
-					obj.css({ "min-height": minHeight }).removeClass("whirl standard");
-					minHeight = null;
-					$("#" + id).modal("hide");
-				}
-			}
-
-			if (timer) {
-				if (Confirm) {
-					if (Confirm == false) {
-						return false;
-					} else {
-						Confirm();
+	
+				if (timer) {
+					if (Confirm) {
+						if (Confirm == false) {
+							return false;
+						} else {
+							Confirm();
+						}
 					}
+					if (Confirm != false) {
+						obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+						minHeight = null;
+						$("#" + id).modal("hide");
+					}
+					swal.close();
 				}
-				if (Confirm != false) {
-					obj.css({ "min-height": minHeight }).removeClass("whirl standard");
-					minHeight = null;
-					$("#" + id).modal("hide");
-				}
-				swal.close();
+			});
+	
+			if (bh > oh) {
+				$(".sweet-alert").appendTo(obj);
 			}
-		});
-
-		if (bh > oh) {
-			$(".sweet-alert").appendTo(obj);
 		}
 	}
 }
@@ -749,7 +778,7 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 							ReadyFunction(txStatus.success);
 						} else {
 							Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>',
-								typeof data.type_success === "string" ? data.type_success : 'success', ReadyFunction);
+								typeof data.type_success === "string" ? data.type_success : 'notification', ReadyFunction);
 						}
 					}
 				},

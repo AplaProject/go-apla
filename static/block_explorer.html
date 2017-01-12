@@ -180,7 +180,7 @@
 	});
 {{else}}	
 	var latestBlock = {{.Latest}};
-	var  latestTime;
+	var latestTime;
 	
 	function block_reload() {
 		$.post("ajax?json=ajax_explorer", {latest: latestBlock},
