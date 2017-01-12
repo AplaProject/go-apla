@@ -205,7 +205,11 @@
 
 <body class="layout-fixed">
    <div class="wrapper">
-      <!-- Main section-->
+      <div class="nav_hist">
+		  <a href="#" id="hist_back" onclick="return hist_back();" style="display:none;" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></a>
+		  <a href="#" id="hist_forward" onclick="return hist_forward();" style="display:none;" title="Forward"><span class="glyphicons glyphicons-arrow-right"></span></a>
+	  </div>
+	  <!-- Main section-->
 	  <div id="dl_menu">
 	  </div>
       <section>
@@ -400,6 +404,7 @@
 						$(".sweet-overlay, .sweet-alert").remove();
 						//console.log('$("#loader").spin(false)');
 						$('#dl_content').html( data );
+						hist_push(['dl_navigate0', page, parameters]);
 						if ( parameters && parameters.hasOwnProperty("lang")) {
 							if ( page[0] == 'E' )
 								load_emenu();
