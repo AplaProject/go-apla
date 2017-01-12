@@ -239,6 +239,9 @@ function sendnet{{.Unique}}() {
 		dataType: 'json',
 		crossDomain: true,
 		success: function(result) {
+			{{if .AutoClose}}
+				result.type_success = 'notification';
+			{{end}}
 			send_to_net_success(result, SendTxOK{{.Unique}});
 		},
 		error: function(xhr, status, error) {

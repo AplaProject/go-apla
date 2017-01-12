@@ -383,7 +383,7 @@ function Alert(title, text, type, Confirm) {
 			if (text.toLowerCase().indexOf("[error]") != -1) {
 				CopyToClipboard(".sweet-alert .confirm", text);
 			}
-			
+
 			if (isConfirm) {
 				if (Confirm) {
 					if (Confirm == false) {
@@ -398,7 +398,7 @@ function Alert(title, text, type, Confirm) {
 					$("#" + id).modal("hide");
 				}
 			}
-			
+
 			if (timer) {
 				if (Confirm) {
 					if (Confirm == false) {
@@ -748,7 +748,8 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 						if (skipsuccess) {
 							ReadyFunction(txStatus.success);
 						} else {
-							Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>', 'success', ReadyFunction);
+							Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>',
+								typeof data.type_success === "string" ? data.type_success : 'success', ReadyFunction);
 						}
 					}
 				},
