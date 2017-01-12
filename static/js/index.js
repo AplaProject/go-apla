@@ -923,7 +923,7 @@ function InitMobileTable() {
 	table.data('mode', 'reflow').addClass("ui-responsive");
 
 	if (table.length) {
-		console.log('load table');
+		//console.log('load table');
 		table.each(function () {
 			var _this = $(this);
 			_this.find("tbody tr").each(function () {
@@ -937,7 +937,7 @@ function InitMobileTable() {
 			});
 			if (_this.hasClass("ui-table")) {
 				_this.closest("table").table("refresh").trigger("create");
-				console.log('reload table');
+				//console.log('reload table');
 			} else {
 				_this.table();
 			}
