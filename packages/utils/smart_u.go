@@ -336,7 +336,11 @@ func Now(vars *map[string]string, pars ...string) string {
 		case `datetime`:
 			cut = 19
 		default:
-			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, pars[0])
+			format := pars[0]
+			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
+				format = strings.Replace(format, `HH`, `HH24`, -1)
+			}
+			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
 		}
 	}
 	ret, err := DB.Single(query).String()
