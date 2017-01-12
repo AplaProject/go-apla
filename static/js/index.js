@@ -349,7 +349,7 @@ function Alert(title, text, type, Confirm) {
 		
 		if (type == "notification") {
 			type = "success";
-			timer = 3000;
+			timer = 1500;
 			
 			$.notify({
 				message: text,
@@ -777,7 +777,8 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 						if (skipsuccess) {
 							ReadyFunction(txStatus.success);
 						} else {
-							Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>',
+							//Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>',
+							Alert('Success', 'Imprinted in blockchain. Block ' + txStatus.success + '',
 								typeof data.type_success === "string" ? data.type_success : 'notification', ReadyFunction);
 						}
 					}
