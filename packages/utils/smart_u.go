@@ -59,6 +59,7 @@ type FormInfo struct {
 	Unique    template.JS
 	OnSuccess template.JS
 	Fields    []FieldInfo
+	AutoClose bool
 	Data      FormCommon
 }
 
@@ -77,6 +78,7 @@ type TxButtonInfo struct {
 	Unique    template.JS
 	OnSuccess template.JS
 	Fields    []TxInfo
+	AutoClose bool
 	Data      FormCommon
 }
 
@@ -724,7 +726,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		return err.Error()
 	}
 	columns := textproc.Split((*pars)[`Columns`])
-	out := `<div class="table-responsive"><table class="table `+tableClass+`" `+adaptive+`><thead>`
+	out := `<div class="table-responsive"><table class="table ` + tableClass + `" ` + adaptive + `><thead>`
 	for _, th := range *columns {
 		if len(th) < 2 {
 			return `incorrect column`
@@ -1011,8 +1013,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 
 	b := new(bytes.Buffer)
 	finfo := TxButtonInfo{TxName: name, Class: class, Name: LangRes(vars, btnName), Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
-		Fields: make([]TxInfo, 0), Data: FormCommon{
-			CountSignArr: []byte{1}}}
+		Fields: make([]TxInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`, Data: FormCommon{CountSignArr: []byte{1}}}
 
 	idnames := strings.Split((*pars)[`Inputs`], `,`)
 	names := make(map[string]string)
@@ -1140,8 +1141,8 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	b := new(bytes.Buffer)
-	finfo := FormInfo{TxName: name, Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess), Fields: make([]FieldInfo, 0), Data: FormCommon{
-		CountSignArr: []byte{1}}}
+	finfo := FormInfo{TxName: name, Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
+		Fields: make([]FieldInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`, Data: FormCommon{CountSignArr: []byte{1}}}
 
 	gettag := func(prefix uint8, def, tags string) string {
 		ret := def
