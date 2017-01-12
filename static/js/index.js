@@ -110,6 +110,60 @@ var GKey = {
 
 GKey.init();
 
+var hist = [['load_template', 'dashboard_default', {}]];
+var hist_cur = 0;
+var hist_stay = 0;
+
+function hist_push(obj) {
+	if (hist_stay != 0) {
+		hist_cur += hist_stay;
+		hist_stay = 0;
+	} else {
+		if (hist_cur < hist.length - 1) {
+			hist = hist.slice(0, hist_cur + 1);
+		}
+		hist.push(obj);
+		hist_cur = hist.length - 1;
+		if (hist.length >= 100) {
+			hist.shift();
+		}
+	}
+	if (hist_cur >= 1) {
+		$("#hist_back").show();
+	} else {
+		$("#hist_back").hide();
+	}
+	if (hist_cur < hist.length - 1) {
+		$("#hist_forward").show();
+	} else {
+		$("#hist_forward").hide();
+	}
+}
+
+function hist_go(obj) {
+	if (obj[0] == 'load_app') {
+		load_app(obj[1]);
+	} else {
+		window[obj[0]](obj[1], obj[2]);
+	}
+}
+
+function hist_back() {
+	if (hist_cur > 0) {
+		hist_stay = -1;
+		hist_go(hist[hist_cur - 1]);
+	}
+	return false;
+}
+
+function hist_forward() {
+	if (hist_cur < hist.length - 1) {
+		hist_stay = 1;
+		hist_go(hist[hist_cur + 1]);
+	}
+	return false;
+}
+
 function getCookie(name) {
 	var matches = document.cookie.match(new RegExp(
 		"(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
@@ -182,6 +236,7 @@ function load_page(page, parameters) {
 			//            $("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			hist_push(['load_page', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
 				$('.sidebar-collapse').collapse('toggle');
@@ -196,17 +251,18 @@ function load_template(page, parameters) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
 				$('.sidebar-collapse').collapse('toggle');
 			}
-			console.log(page);
+			//			console.log(page);
 			$.ajax({
 				url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 				type: 'POST',
 				data: parameters ? parameters : {},
 				success: function (data) {
-					console.log(data);
+					//					console.log(data);
 					var li = $("#dc li:first").html();
 					$("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
 				}
@@ -221,6 +277,7 @@ function load_app(page) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			hist_push(['load_app', page]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
 				$('.sidebar-collapse').collapse('toggle');
@@ -382,6 +439,7 @@ function dl_navigate(page, parameters) {
 			//$("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			hist_push(['dl_navigate', page, parameters]);
 			/*if ( parameters && parameters.hasOwnProperty("lang")) {
 				if ( page[0] == 'E' )
 					load_emenu();
@@ -863,15 +921,15 @@ function MoneyDigit(value, dig) {
 function InitMobileTable() {
 	var table = $("[data-role='table']");
 	table.data('mode', 'reflow').addClass("ui-responsive");
-	
+
 	if (table.length) {
 		console.log('load table');
-		table.each(function() {
+		table.each(function () {
 			var _this = $(this);
-			_this.find("tbody tr").each(function() {
+			_this.find("tbody tr").each(function () {
 				var td = $(this).find("td");
 				var title = $(this).find("td:first");
-				
+
 				if (!td.find(".ui-table-td").length) {
 					td.wrapInner("<div class='ui-table-td'></div>");
 				}
@@ -884,8 +942,8 @@ function InitMobileTable() {
 				_this.table();
 			}
 		});
-		
-		$(".column_type").each(function() {
+
+		$(".column_type").each(function () {
 			var id = $(this);
 			var val = id.val();
 			if (val === "text") {
@@ -897,29 +955,29 @@ function InitMobileTable() {
 	}
 }
 
-var observeDOM = (function(){
-    var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
-        eventListenerSupported = window.addEventListener;
+var observeDOM = (function () {
+	var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
+		eventListenerSupported = window.addEventListener;
 
-    return function(content, callback){
-        if (MutationObserver){
-            // define a new observer
-            var obs = new MutationObserver(function(mutations, observer){
-                if (mutations[0].addedNodes.length || mutations[0].removedNodes.length)
-                    callback();
-            });
-            // have the observer observe foo for changes in children
-            obs.observe(content, {childList:true, subtree:true});
-        }
-        else if (eventListenerSupported){
-            content.addEventListener('DOMNodeInserted', callback, false);
-            content.addEventListener('DOMNodeRemoved', callback, false);
-        }
-    }
+	return function (content, callback) {
+		if (MutationObserver) {
+			// define a new observer
+			var obs = new MutationObserver(function (mutations, observer) {
+				if (mutations[0].addedNodes.length || mutations[0].removedNodes.length)
+					callback();
+			});
+			// have the observer observe foo for changes in children
+			obs.observe(content, { childList: true, subtree: true });
+		}
+		else if (eventListenerSupported) {
+			content.addEventListener('DOMNodeInserted', callback, false);
+			content.addEventListener('DOMNodeRemoved', callback, false);
+		}
+	}
 })();
 
-observeDOM(document.getElementById('dl_content'), function(){
-    InitMobileTable();
+observeDOM(document.getElementById('dl_content'), function () {
+	InitMobileTable();
 });
 
 $(document).on('keydown', function (e) {
