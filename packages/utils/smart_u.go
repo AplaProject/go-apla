@@ -131,8 +131,8 @@ func init() {
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
-		`BlockInfo`: BlockInfo,
-		`Form`:      Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
+		`BlockInfo`: BlockInfo, `Back`: Back,
+		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
 	})
 }
@@ -448,6 +448,19 @@ func Func(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	return strings.TrimSpace(pars[0])
+}
+
+func Back(vars *map[string]string, pars ...string) string {
+	if len(pars[0]) == 0 || len(pars) < 2 || len(pars[1]) == 0 {
+		return ``
+	}
+	var params string
+	if len(pars) == 3 {
+		params = lib.Escape(pars[2])
+	}
+	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+	hist_push(['load_%s', '%s', {%s}]);
+</script>`, lib.Escape(pars[0]), lib.Escape(pars[1]), params)
 }
 
 func JsonScript(vars *map[string]string, pars ...string) string {
