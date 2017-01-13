@@ -1,6 +1,6 @@
 ### Installation v1.x - only egs-wallet
 
-Install golang >=1.6 https://golang.org/dl/
+Install golang >=1.6 https://golang.org/dl/<br>
 Set GOPATH
 ```
 go get -u github.com/jteeuwen/go-bindata/...
@@ -15,7 +15,7 @@ go build
 ### Installation v0.x - full egaas (private blockchain)
 
 
-Install golang >=1.6 https://golang.org/dl/
+Install golang >=1.6 https://golang.org/dl/<br>
 Set GOPATH
 ```
 go get -u github.com/jteeuwen/go-bindata/...
