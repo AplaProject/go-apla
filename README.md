@@ -1,7 +1,8 @@
 ### Installation v1.x - only egs-wallet
 
 Install golang >=1.6 https://golang.org/dl/<br>
-Set GOPATH
+Set GOPATH<br>
+Install git https://git-scm.com/
 ```
 go get -u github.com/jteeuwen/go-bindata/...
 git clone -b 1.0 https://github.com/EGaaS/go-egaas-mvp.git
@@ -16,7 +17,8 @@ go build
 
 
 Install golang >=1.6 https://golang.org/dl/<br>
-Set GOPATH
+Set GOPATH<br>
+Install git https://git-scm.com/
 ```
 go get -u github.com/jteeuwen/go-bindata/...
 git clone https://github.com/EGaaS/go-egaas-mvp.git
