@@ -374,6 +374,39 @@
 		  <!--<li class="hidden-xs">
 			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1}); HideMenu();">0</a>
 		  </li>-->
+		  <!-- START Language menu-->
+		  <li class="language dropdown dropdown-list hidden-xs">
+			 <a href="#" data-toggle="dropdown">
+				<em class="en flag"></em>
+			 </a>
+			 <ul class="dropdown-menu animated flipInX">
+				<li>
+				   <div class="list-group">
+					  <a href="#" class="list-group-item" onClick="changeLanguage('en')">
+						 <div class="media-box">
+							<div class="pull-left">
+							   <em class="en flag"></em>
+							</div>
+							<div class="media-box-body clearfix">
+							   <p class="m0">Enghlish (UK)</p>
+							</div>
+						 </div>
+					  </a>
+					  <a href="#" class="list-group-item" onClick="changeLanguage('nl')">
+						 <div class="media-box">
+							<div class="pull-left">
+							   <em class="nl flag"></em>
+							</div>
+							<div class="media-box-body clearfix">
+							   <p class="m0">Nederlands (NL)</p>
+							</div>
+						 </div>
+					  </a>
+				   </div>
+				</li>
+			 </ul>
+		  </li>
+		  <!-- END Language menu-->
 		  <!-- START Alert menu-->
 		  <li class="dropdown dropdown-list hidden-xs">
 			 <a href="#" data-toggle="dropdown">
@@ -865,8 +898,27 @@
 				   <em class="fa fa-html5"></em>
 				   <span>HTML-Elements</span>
 			   </a>
-		   </li>
-			<li class="visible-xs">
+		  </li>
+		  <li class="visible-xs">
+			 <a href="#language" data-toggle="collapse" class="toggle-hover">
+				<em class="fa fa-language"></em>
+				<span>Language</span>
+			 </a>
+			 <ul id="language" class="nav sidebar-subnav collapse">
+				<li class="sidebar-subnav-header">Language</li>
+				<li>
+				   <a href="#" onClick="changeLanguage('en'); HideMenu();">
+					  <span>Enghlish (UK)</span>
+				   </a>
+				</li>
+				<li>
+				   <a href="#" onClick="changeLanguage('nl'); HideMenu();">
+					  <span>Nederlands (NL)</span>
+				   </a>
+				</li>
+			 </ul>
+		  </li>
+		  <li class="visible-xs">
 			 <a href="" onclick="return logout()">
 				<em class="icon-logout"></em>
 				<span>Exit</span>
