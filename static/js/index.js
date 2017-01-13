@@ -242,6 +242,7 @@ function load_page(page, parameters) {
 			//            $("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			updateLanguage("#dl_content .lang");
 			hist_push(['load_page', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -257,6 +258,7 @@ function load_template(page, parameters) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			updateLanguage("#dl_content .lang");
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
@@ -283,6 +285,7 @@ function load_app(page) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			updateLanguage("#dl_content .lang");
 			hist_push(['load_app', page]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -473,6 +476,7 @@ function dl_navigate(page, parameters) {
 			//$("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
+			updateLanguage("#dl_content .lang");
 			hist_push(['dl_navigate', page, parameters]);
 			/*if ( parameters && parameters.hasOwnProperty("lang")) {
 				if ( page[0] == 'E' )
@@ -491,6 +495,7 @@ function load_menu(lang) {
 			parametersJson: '{"lang":"1"}'
 		}
 		$("#dl_menu").load("content?page=menu", { parameters: parametersJson }, function () {
+			updateLanguage("#dl_menu .lang");
 		});
 	} else {
 		$("#dl_menu").html('');
@@ -952,6 +957,27 @@ function MoneyDigit(value, dig) {
 		}
 	}
 	return money.replace('.', '');
+}
+
+function updateLanguage(classes) {
+	$(classes).each(function (obj) {
+		var data = $(this).attr('lang-id');
+		$(this).html(Lang[data]);
+	});
+}
+
+function loadjs(filename) {
+	var fileref = document.createElement('script')
+	fileref.setAttribute("type", "text/javascript")
+	fileref.setAttribute("src", filename)
+	if (typeof fileref != "undefined")
+		document.getElementsByTagName("head")[0].appendChild(fileref)
+}
+
+function changeLanguage(lang) {
+	loadjs('static/lang/' + lang + '.js');
+	setTimeout(function () { updateLanguage('.lang') }, 1500);
+	$("#langflag").attr('class', 'flag ' + lang);
 }
 
 function InitMobileHead() {
