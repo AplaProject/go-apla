@@ -260,12 +260,13 @@
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
-// static/lang/en.json
 // static/lang/flags/en.svg
+// static/lang/flags/flags.png
 // static/lang/flags/nl.svg
+// static/lang/gb.js
 // static/lang/locale_en-US.ini
 // static/lang/locale_ru-RU.ini
-// static/lang/nl.json
+// static/lang/nl.js
 // static/languages.html
 // static/list_of_tables.html
 // static/login.html
@@ -5062,24 +5063,6 @@ func staticLangEnUsAllJson() (*asset, error) {
 	return a, err
 }
 
-// staticLangEnJson reads file data from disk. It returns an error on failure.
-func staticLangEnJson() (*asset, error) {
-	path := "static/lang/en.json"
-	name := "static/lang/en.json"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticLangFlagsEnSvg reads file data from disk. It returns an error on failure.
 func staticLangFlagsEnSvg() (*asset, error) {
 	path := "static/lang/flags/en.svg"
@@ -5098,10 +5081,46 @@ func staticLangFlagsEnSvg() (*asset, error) {
 	return a, err
 }
 
+// staticLangFlagsFlagsPng reads file data from disk. It returns an error on failure.
+func staticLangFlagsFlagsPng() (*asset, error) {
+	path := "static/lang/flags/flags.png"
+	name := "static/lang/flags/flags.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticLangFlagsNlSvg reads file data from disk. It returns an error on failure.
 func staticLangFlagsNlSvg() (*asset, error) {
 	path := "static/lang/flags/nl.svg"
 	name := "static/lang/flags/nl.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticLangGbJs reads file data from disk. It returns an error on failure.
+func staticLangGbJs() (*asset, error) {
+	path := "static/lang/gb.js"
+	name := "static/lang/gb.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5152,10 +5171,10 @@ func staticLangLocale_ruRuIni() (*asset, error) {
 	return a, err
 }
 
-// staticLangNlJson reads file data from disk. It returns an error on failure.
-func staticLangNlJson() (*asset, error) {
-	path := "static/lang/nl.json"
-	name := "static/lang/nl.json"
+// staticLangNlJs reads file data from disk. It returns an error on failure.
+func staticLangNlJs() (*asset, error) {
+	path := "static/lang/nl.js"
+	name := "static/lang/nl.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -7102,12 +7121,13 @@ var _bindata = map[string]func() (*asset, error){
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
-	"static/lang/en.json": staticLangEnJson,
 	"static/lang/flags/en.svg": staticLangFlagsEnSvg,
+	"static/lang/flags/flags.png": staticLangFlagsFlagsPng,
 	"static/lang/flags/nl.svg": staticLangFlagsNlSvg,
+	"static/lang/gb.js": staticLangGbJs,
 	"static/lang/locale_en-US.ini": staticLangLocale_enUsIni,
 	"static/lang/locale_ru-RU.ini": staticLangLocale_ruRuIni,
-	"static/lang/nl.json": staticLangNlJson,
+	"static/lang/nl.js": staticLangNlJs,
 	"static/languages.html": staticLanguagesHtml,
 	"static/list_of_tables.html": staticList_of_tablesHtml,
 	"static/login.html": staticLoginHtml,
@@ -7532,14 +7552,15 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
 			"42.ini": &bintree{staticLang42Ini, map[string]*bintree{}},
 			"en-us.all.json": &bintree{staticLangEnUsAllJson, map[string]*bintree{}},
-			"en.json": &bintree{staticLangEnJson, map[string]*bintree{}},
 			"flags": &bintree{nil, map[string]*bintree{
 				"en.svg": &bintree{staticLangFlagsEnSvg, map[string]*bintree{}},
+				"flags.png": &bintree{staticLangFlagsFlagsPng, map[string]*bintree{}},
 				"nl.svg": &bintree{staticLangFlagsNlSvg, map[string]*bintree{}},
 			}},
+			"gb.js": &bintree{staticLangGbJs, map[string]*bintree{}},
 			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{}},
 			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{}},
-			"nl.json": &bintree{staticLangNlJson, map[string]*bintree{}},
+			"nl.js": &bintree{staticLangNlJs, map[string]*bintree{}},
 		}},
 		"languages.html": &bintree{staticLanguagesHtml, map[string]*bintree{}},
 		"list_of_tables.html": &bintree{staticList_of_tablesHtml, map[string]*bintree{}},
