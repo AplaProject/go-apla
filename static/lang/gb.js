@@ -1,4 +1,5 @@
 Lang={
+	"lng": "UK",
 	"installation": "Installation",
 	"mode": "Mode",
 	"private_net": "Private-net",

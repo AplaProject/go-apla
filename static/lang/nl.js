@@ -1,4 +1,5 @@
 Lang={
+	"lng": "NL",
 	"installation": "Installatie",
 	"mode": "Modus",
 	"private_net": "Privé net",
