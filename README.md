@@ -1,4 +1,4 @@
-### Installation v1.x
+### Installation v1.x - only egs-wallet
 
 Install golang >=1.6 https://golang.org/dl/
 Set GOPATH
@@ -12,7 +12,7 @@ go build
 ./go-egaas-mvp
 ```
 
-### Installation v0.x
+### Installation v0.x - full egaas (private blockchain)
 
 
 Install golang >=1.6 https://golang.org/dl/
