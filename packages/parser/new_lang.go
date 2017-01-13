@@ -84,6 +84,7 @@ func (p *Parser) NewLang() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	utils.UpdateLang(int(p.TxStateID), p.TxMaps.String["name"], p.TxMaps.String["res"])
 	return nil
 }
 
