@@ -136,6 +136,7 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem,
 	})
 }
 
@@ -1457,6 +1458,63 @@ func Map(vars *map[string]string, pars ...string) string {
 func MapPoint(vars *map[string]string, pars ...string) string {
 	(*vars)[`wimappoint`] = `1`
 	return fmt.Sprintf(`<div class="wimappoint">%s</div>`, pars[0])
+}
+
+func MenuGroup(vars *map[string]string, pars ...string) string {
+	var (
+		class, icon, in, id string
+	)
+	id = (*vars)[`menuid`]
+	if len(id) > 0 {
+		id = IntToStr(StrToInt(id) + 1)
+	} else {
+		id = `0`
+	}
+	(*vars)[`menuid`] = id
+	if len(pars) > 1 {
+		class = lib.Escape(pars[1])
+	}
+	if len(pars) > 2 {
+		icon = fmt.Sprintf(`<em class="%s"></em>`, lib.Escape(pars[2]))
+	}
+	if len(pars) > 3 {
+		in = lib.Escape(pars[3])
+	}
+	return fmt.Sprintf(`<li class="%s">
+			 <a href="#m%s" title="%s" data-toggle="collapse" class="toggle-hover">
+				%s<span>%[3]s</span>
+			 </a>
+			 <ul id="m%[2]s" class="nav sidebar-subnav collapse %s">`,
+		class, id, LangRes(vars, lib.Escape(pars[0])), icon, in)
+}
+
+func MenuItem(vars *map[string]string, pars ...string) string {
+	var (
+		class, action, page, params, icon string
+	)
+	if len(pars) > 1 {
+		class = lib.Escape(pars[1])
+	}
+	if len(pars) > 2 {
+		action = lib.Escape(pars[2])
+	}
+	if len(pars) > 3 {
+		page = lib.Escape(pars[3])
+	}
+	if len(pars) > 4 {
+		params = lib.Escape(pars[4])
+	}
+	if len(pars) > 5 {
+		icon = fmt.Sprintf(`<em class="%s"></em>`, lib.Escape(pars[5]))
+	}
+	return fmt.Sprintf(`<li class="%s">
+		<a href="#" title="%s" onClick="%s('%s',{%s});HideMenu();">
+		%s<span>%[2]s</span></a></li>`,
+		class, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
+}
+
+func MenuEnd(vars *map[string]string, pars ...string) string {
+	return `</ul></li>`
 }
 
 func ChartBar(vars *map[string]string, pars *map[string]string) string {

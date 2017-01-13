@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -31,6 +32,7 @@ const NMenu = `menu`
 type menuPage struct {
 	Data          *CommonPage
 	Menu          string
+	MainMenu      string
 	CanCitizen    bool
 	StateName     string
 	StateFlag     string
@@ -55,8 +57,8 @@ func ReplaceMenu(menu string) string {
 
 func (c *Controller) Menu() (string, error) {
 	var (
-		err                                                            error
-		updver, menu, stateName, stateFlag, citizenName, citizenAvatar string
+		err                                                                  error
+		updver, menu, main, stateName, stateFlag, citizenName, citizenAvatar string
 	)
 
 	if strings.HasPrefix(c.r.Host, `localhost`) {
@@ -68,9 +70,20 @@ func (c *Controller) Menu() (string, error) {
 
 	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
 	if c.StateIdStr != "" {
-		menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
+		main, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "main_menu").String()
 		if err != nil {
 			return "", err
+		}
+		if len(main) > 0 {
+			params := make(map[string]string)
+			params[`state_id`] = c.StateIdStr
+			params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
+			main = utils.LangMacro(textproc.Process(main, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
+		} else {
+			menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
+			if err != nil {
+				return "", err
+			}
 		}
 
 		stateName, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_name").String()
@@ -93,7 +106,7 @@ func (c *Controller) Menu() (string, error) {
 		}
 		menu = ReplaceMenu(menu)
 	}
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, CanCitizen: canCitizen > 0,
+	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: main, CanCitizen: canCitizen > 0,
 		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName,
 		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc()})
 }
