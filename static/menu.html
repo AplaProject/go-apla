@@ -378,7 +378,7 @@
 		  <li class="language dropdown dropdown-list hidden-xs">
 			 <a href="#" class="current_language" data-toggle="dropdown">
 				<em id="langflag" class="gb flag"></em>
-				<span>UK</span>
+				<span class="lang" lang-id="lng"></span>
 				<i class="fa fa-angle-down"></i>
 			 </a>
 			 <ul class="dropdown-menu animated flipInX">
@@ -488,18 +488,18 @@
 			 <a href="#da" title="EGS-wallet" data-toggle="collapse" class="toggle-hover">
 				<!--<div class="pull-right label label-info">2</div>-->
 				<em class="icon-user"></em>
-				<span>EGS-wallet</span>
+				<span class="lang" lang-id="egs_wallet"></span>
 			 </a>
 			 <ul id="da" class="nav sidebar-subnav collapse{{if not .Menu}} in{{end}}">
-				<li class="sidebar-subnav-header">EGS-wallet</li>
+				<li class="sidebar-subnav-header lang" lang-id="egs_wallet"></li>
 				<li class="dashboard_anonym">
 				   <a {{if not .Menu}}class="active"{{end}} href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym'); HideMenu();">
-					  <span>Dashboard</span>
+					  <span class="lang" lang-id="dashboard"></span>
 				   </a>
 				</li>
 				<li class="anonym_money_transfer">
 				   <a href="#" title="Money transfer" onclick="dl_navigate0('anonymMoneyTransfer'); HideMenu();">
-					  <span>Money transfer</span>
+					  <span class="lang" lang-id="money_transfer"></span>
 				   </a>
 				</li>
 				{{if .Btc}}
@@ -511,28 +511,28 @@
 				{{end}}
 				<li class="anonym_history">
 				   <a href="#" title="History"  onclick="load_page('history'); HideMenu();">
-					  <span>History</span>
+					  <span class="lang" lang-id="history"></span>
 				   </a>
 				</li>
 				<li class="anonym_block_generation">
 				   <a href="#"  onclick="dl_navigate0('forging'); HideMenu();" title="Forging">
-					  <span>Forging</span>
+					  <span class="lang" lang-id="forging"></span>
 				   </a>
 				</li>
 				<li class="anonym_backup">
 				   <a href="#"  onclick="load_page('backup'); HideMenu();" title="Backup">
-					  <span>Backup</span>
+					  <span class="lang" lang-id="backup"></span>
 				   </a>
 				</li>
 				 <li class="anonym_new_state">
 					 <a href="#" title="Create a new state" onClick="load_page('newState');HideMenu();">
-						 <span>Create a new state</span>
+						 <span class="lang" lang-id="create_new_state"></span>
 					 </a>
 				 </li>
 				{{if .CanCitizen}}
 				 <li class="anonym_request_citizen">
 					 <a href="#" title="Request for citizenship" onClick="load_page('smart_request_citizen');HideMenu();">
-						 <span>Request for citizenship</span>
+						 <span class="lang" lang-id="request_citizenship"></span>
 					 </a>
 				 </li>
 				{{end}}
@@ -550,10 +550,10 @@
 		  <li class="citizen active">
 			 <a href="#dc" title="Citizen" data-toggle="collapse" class="toggle-hover">
 				<em class="icon-home"></em>
-				<span>Citizen</span>
+				<span class="lang" lang-id="citizen"></span>
 			 </a>
 			 <ul id="dc" class="nav sidebar-subnav collapse in">
-				<li class="sidebar-subnav-header">Citizen</li>
+				<li class="sidebar-subnav-header lang" lang-id="citizen"></li>
 				 {{noescape .Menu}}
 				 <!--
 				 Tables
