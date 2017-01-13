@@ -14,14 +14,14 @@
 		  <div class="pull-right">
 			  <button type="button" class="btn btn-green" onclick="load_page('listOfTables', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em>Global</button>
 			  <button type="button" class="btn btn-default" onclick="load_page('stateParameters')"><em class="fa fa-cogs fa-fw mr-sm"></em>State parameters</button>
-			  <button type="button" class="btn btn-default" onclick="load_page('newTable', {global: {{.Global}} })"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newTable', {global: {{.Global}} })"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_new"></span></button>
 		  </div>
 		  List Of Tables
 		</div>
     {{else}}
 		<div class="content-heading">
 		  <div class="pull-right">
-			  <button type="button" class="btn btn-default" onclick="load_page('newTable', {global: {{.Global}} })"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newTable', {global: {{.Global}} })"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_new"></span></button>
 		  </div>
 		  Global
 		</div>
