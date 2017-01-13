@@ -76,7 +76,9 @@ func (c *Controller) Menu() (string, error) {
 		}
 		if len(main) > 0 {
 			params := make(map[string]string)
-			main = textproc.Process(main, &params)
+			params[`state_id`] = c.StateIdStr
+			params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
+			main = utils.LangMacro(textproc.Process(main, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
 		} else {
 			menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
 			if err != nil {

@@ -231,20 +231,23 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					}
 				}
 				if toedit {
+					tablepref := `#state_id#`
+					if state == `global` {
+						tablepref = state
+					}
 					list = append(list, fmt.Sprintf(`{
 		Forsign: 'table_name,general_update,insert,new_column',
 		Data: {
 			type: "EditTable",
 			typeid: #type_edit_table_id#,
-			table_name : "%s",
+			table_name : "%s_%s",
 			general_update: "%s",
 			insert: "%s",
 			new_column: "%s",
 			}
-	   }`, itable[strings.IndexByte(itable, '_')+1:], jperm[`general_update`], jperm[`insert`],
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], jperm[`general_update`], jperm[`insert`],
 						jperm[`new_column`]))
 				}
-				fmt.Println("PERM", jperm)
 			}
 		}
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)

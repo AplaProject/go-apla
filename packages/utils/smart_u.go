@@ -1485,7 +1485,7 @@ func MenuGroup(vars *map[string]string, pars ...string) string {
 				%s<span>%[3]s</span>
 			 </a>
 			 <ul id="m%[2]s" class="nav sidebar-subnav collapse %s">`,
-		class, id, lib.Escape(pars[0]), icon, in)
+		class, id, LangRes(vars, lib.Escape(pars[0])), icon, in)
 }
 
 func MenuItem(vars *map[string]string, pars ...string) string {
@@ -1510,7 +1510,7 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<li class="%s">
 		<a href="#" title="%s" onClick="%s('%s',{%s});HideMenu();">
 		%s<span>%[2]s</span></a></li>`,
-		class, lib.Escape(pars[0]), action, page, params, icon)
+		class, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
 }
 
 func MenuEnd(vars *map[string]string, pars ...string) string {
