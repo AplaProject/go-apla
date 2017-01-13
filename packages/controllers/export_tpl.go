@@ -136,6 +136,7 @@ func (c *Controller) ExportTpl() (string, error) {
 	type_append_page_id = TxId(AppendPage),
 	type_new_menu_id = TxId(NewMenu),
 	type_edit_table_id = TxId(EditTable),
+	type_edit_column_id = TxId(EditColumn),
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_contract_id = TxId(NewContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
@@ -230,11 +231,11 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 						break
 					}
 				}
+				tablepref := `#state_id#`
+				if state == `global` {
+					tablepref = state
+				}
 				if toedit {
-					tablepref := `#state_id#`
-					if state == `global` {
-						tablepref = state
-					}
 					list = append(list, fmt.Sprintf(`{
 		Forsign: 'table_name,general_update,insert,new_column',
 		Data: {
@@ -247,6 +248,20 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], jperm[`general_update`], jperm[`insert`],
 						jperm[`new_column`]))
+				}
+				for key, field := range jperm[`update`].(map[string]interface{}) {
+					if !re.MatchString(field.(string)) {
+						list = append(list, fmt.Sprintf(`{
+		Forsign: 'table_name,column_name,permissions',
+		Data: {
+			type: "EditColumn",
+			typeid: #type_edit_column_id#,
+			table_name : "%s_%s",
+			column_name: "%s",
+			permissions: "%s",
+			}
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], key, field.(string)))
+					}
 				}
 			}
 		}
