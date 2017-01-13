@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"regexp"
 )
 
 const NExportTpl = `export_tpl`
@@ -134,6 +135,7 @@ func (c *Controller) ExportTpl() (string, error) {
 	type_new_page_id = TxId(NewPage),
 	type_append_page_id = TxId(AppendPage),
 	type_new_menu_id = TxId(NewMenu),
+	type_edit_table_id = TxId(EditTable),
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_contract_id = TxId(NewContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
@@ -215,6 +217,34 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			permissions: "$citizen == #wallet_id#"
 			}
 	   }`, global, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
+
+				perm, _ := c.Single(fmt.Sprintf(`select columns_and_permissions from "%s_tables" where name=?`,
+					state), itable).String()
+				var jperm map[string]interface{}
+				json.Unmarshal([]byte(perm), &jperm)
+				var toedit bool
+				re, _ := regexp.Compile(`^\$citizen\s*==\s*-+\d+$`)
+				for _, val := range []string{`insert`, `new_column`, `general_update`} {
+					if !re.MatchString(jperm[val].(string)) {
+						toedit = true
+						break
+					}
+				}
+				if toedit {
+					list = append(list, fmt.Sprintf(`{
+		Forsign: 'table_name,general_update,insert,new_column',
+		Data: {
+			type: "EditTable",
+			typeid: #type_edit_table_id#,
+			table_name : "%s",
+			general_update: "%s",
+			insert: "%s",
+			new_column: "%s",
+			}
+	   }`, itable[strings.IndexByte(itable, '_')+1:], jperm[`general_update`], jperm[`insert`],
+						jperm[`new_column`]))
+				}
+				fmt.Println("PERM", jperm)
 			}
 		}
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)

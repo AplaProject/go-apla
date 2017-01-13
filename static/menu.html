@@ -446,6 +446,9 @@
 		  <!--<li class="nav-heading ">
 			 <span data-localize="sidebar.heading.HEADER">Main Navigation</span>
 		  </li>-->
+{{if .MainMenu}}	
+ 		{{noescape .MainMenu}}		
+{{else}}
 		  <li class="anonym {{if not .Menu}}active{{end}}">
 			 <a href="#da" title="EGS-wallet" data-toggle="collapse" class="toggle-hover">
 				<!--<div class="pull-right label label-info">2</div>-->
@@ -637,7 +640,7 @@
 			 </ul>
 		  </li>
 		  {{end}}
-
+{{end}}
 		  <li class="company Demo">
 			 <a href="#dco" title="Company" data-toggle="collapse" class="toggle-hover">
 				<em class="fa fa-building-o"></em>
