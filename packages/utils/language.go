@@ -31,6 +31,17 @@ var (
 	lang = make(map[int]*cacheLang)
 )
 
+func UpdateLang(state int, name, value string) {
+	if _, ok := lang[state]; !ok {
+		return
+	}
+	var ires map[string]string
+	json.Unmarshal([]byte(value), &ires)
+	if len(ires) > 0 {
+		(*lang[state]).res[name] = &ires
+	}
+}
+
 func loadLang(state int) error {
 	list, err := DB.GetAll(fmt.Sprintf(`select * from "%d_languages"`, state), -1)
 	if err != nil {
