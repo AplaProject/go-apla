@@ -1,5 +1,6 @@
 <script language="JavaScript" type="text/javascript">
 	function SendTxOK{{.Unique}}() {
+		{{if .Silent}}preloader_hide();{{end}}
 		{{if .OnSuccess}}
 			{{.OnSuccess}};
 			HideMenu();	
@@ -56,7 +57,7 @@ function sendnet{{.Unique}}() {
 			{{if .AutoClose}}
 				result.type_success = 'notification';
 			{{end}}
-			send_to_net_success(result, SendTxOK{{.Unique}});
+			send_to_net_success(result, SendTxOK{{.Unique}}, {{if .Silent}}true{{else}}false{{end}});
 		},
 		error: function(xhr, status, error) {
 			Alert("Error", error, "error");

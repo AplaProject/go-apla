@@ -224,7 +224,7 @@ function clearAllTimeouts() {
 		}
 	}*/
 	$(".wrapper").removeClass("map");
-	
+
 	try {
 		if (latestTime) {
 			clearTimeout(latestTime);
@@ -346,17 +346,17 @@ function CopyToClipboard(elem, text) {
 function Alert(title, text, type, Confirm) {
 	if (obj) {
 		var timer = null;
-		
+
 		if (type == "notification") {
 			type = "success";
 			timer = 1500;
-			
+
 			$.notify({
 				message: text,
 				status: type,
 				timeout: timer
 			});
-			
+
 			if (Confirm) {
 				if (Confirm == false) {
 					return false;
@@ -376,7 +376,7 @@ function Alert(title, text, type, Confirm) {
 			var oh = obj.height();
 			var minHeight = obj.css("min-height");
 			obj.css({ "position": "relative", "min-height": "300px" });
-	
+
 			if (type == "success") {
 				color = "#23b7e5";
 			} else if (type == "error") {
@@ -394,9 +394,9 @@ function Alert(title, text, type, Confirm) {
 			} else {
 				color = "#c1c1c1";
 			}
-	
+
 			$(".sweet-alert").appendTo($("body"));
-	
+
 			swal({
 				title: title,
 				text: text,
@@ -411,7 +411,7 @@ function Alert(title, text, type, Confirm) {
 				if (text.toLowerCase().indexOf("[error]") != -1) {
 					CopyToClipboard(".sweet-alert .confirm", text);
 				}
-	
+
 				if (isConfirm) {
 					if (Confirm) {
 						if (Confirm == false) {
@@ -426,7 +426,7 @@ function Alert(title, text, type, Confirm) {
 						$("#" + id).modal("hide");
 					}
 				}
-	
+
 				if (timer) {
 					if (Confirm) {
 						if (Confirm == false) {
@@ -443,12 +443,17 @@ function Alert(title, text, type, Confirm) {
 					swal.close();
 				}
 			});
-	
+
 			if (bh > oh) {
 				$(".sweet-alert").appendTo(obj);
 			}
 		}
 	}
+}
+
+function preloader_hide() {
+	$(".sk-cube-grid").remove();
+	$(".whirl").removeClass('whirl');
 }
 
 function preloader(elem) {
