@@ -224,11 +224,14 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				var jperm map[string]interface{}
 				json.Unmarshal([]byte(perm), &jperm)
 				var toedit bool
-				re, _ := regexp.Compile(`^\$citizen\s*==\s*-+\d+$`)
+				vals := make(map[string]string)
+				re, _ := regexp.Compile(`^\$citizen\s*==\s*-?\d+$`)
 				for _, val := range []string{`insert`, `new_column`, `general_update`} {
 					if !re.MatchString(jperm[val].(string)) {
 						toedit = true
-						break
+						vals[val] = jperm[val].(string)
+					} else {
+						vals[val] = "$citizen == #wallet_id#"
 					}
 				}
 				tablepref := `#state_id#`
@@ -246,8 +249,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			insert: "%s",
 			new_column: "%s",
 			}
-	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], jperm[`general_update`], jperm[`insert`],
-						jperm[`new_column`]))
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], vals[`general_update`], vals[`insert`],
+						vals[`new_column`]))
 				}
 				for key, field := range jperm[`update`].(map[string]interface{}) {
 					if !re.MatchString(field.(string)) {
