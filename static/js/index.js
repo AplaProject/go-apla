@@ -496,14 +496,25 @@ function dl_navigate(page, parameters) {
 		}, "html");
 }
 
-function load_menu(lang) {
+function load_menu(lang, submenu) {
 	if (g_menuShow) {
+		$('.menu_page').remove();
 		parametersJson = "";
 		if (typeof lang != 'undefined') {
 			parametersJson: '{"lang":"1"}'
 		}
 		$("#dl_menu").load("content?page=menu", { parameters: parametersJson }, function () {
 			//updateLanguage("#dl_menu .lang");
+			if (typeof submenu === "string")
+				$.ajax({
+					url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + submenu,
+					type: 'POST',
+					data: {},
+					success: function (data) {
+						param = JSON.parse(data);
+						$("#mp_" + param.idname).after(param.menu);
+					}
+				});
 			loadLanguage();
 		});
 	} else {

@@ -158,7 +158,7 @@
 				
 				//setTimeout(function(){
 					$( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
-						load_menu();
+						load_menu(undefined, 'dashboard_default');
 						NProgressStart.done();
 					});
 				//}, 100);
