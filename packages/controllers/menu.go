@@ -70,7 +70,7 @@ func (c *Controller) Menu() (string, error) {
 
 	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
 	if c.StateIdStr != "" {
-		main, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "main_menu").String()
+		main, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "xmain_menu").String()
 		if err != nil {
 			return "", err
 		}

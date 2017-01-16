@@ -274,10 +274,10 @@ function load_template(page, parameters) {
 				type: 'POST',
 				data: parameters ? parameters : {},
 				success: function (data) {
-					param = JSON.parse(data);
-					$("#mp_" + param.idname).after(param.menu);
-					//					var li = $("#dc li:first").html();
-					//                  $("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
+					//param = JSON.parse(data);
+					//$("#mp_" + param.idname).after(param.menu);
+									var li = $("#dc li:first").html();
+					                $("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
 				}
 			});
 		}, "html");
