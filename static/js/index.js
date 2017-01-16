@@ -959,6 +959,23 @@ function MoneyDigit(value, dig) {
 	return money.replace('.', '');
 }
 
+function loadLanguage() {
+	//localStorage.removeItem('EGAAS_LANG');
+	var userLang = navigator.language || navigator.userLanguage;
+	var lang = localStorage.getItem('EGAAS_LANG');
+	
+	if (lang === null) {
+		lang = userLang.substring(0,2);
+		if (lang != "nl") {
+			lang = "gb";
+		}
+	}
+	
+	localStorage.setItem('EGAAS_LANG', lang);
+	
+	changeLanguage(lang);
+}
+
 function updateLanguage(classes) {
 	$(classes).each(function (obj) {
 		var data = $(this).attr('lang-id');
@@ -976,7 +993,7 @@ function loadjs(filename) {
 
 function changeLanguage(lang) {
 	loadjs('static/lang/' + lang + '.js');
-	setTimeout(function () { updateLanguage('.lang') }, 1500);
+	setTimeout(function () { updateLanguage('.lang') }, 100);
 	$("#langflag").attr('class', 'flag ' + lang);
 }
 

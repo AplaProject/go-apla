@@ -45,14 +45,17 @@
 	$(".brand").attr("data-version", "v" + Version);
 
 	$('.db_settings').hide();
+	loadLanguage();
 
 	$('#extended_div').css("display", "block")
 	$("#settings_extended").prop("checked", true)
 
-	$('#first_load, #log_level').select2({
-		minimumResultsForSearch: Infinity,
-		theme: 'bootstrap'
-	});
+	setTimeout(function () {
+		$('#first_load, #log_level').select2({
+			minimumResultsForSearch: Infinity,
+			theme: 'bootstrap'
+		});
+	}, 110);
 
 	$('#url').css("display", "none");
 	$('.db_settings').show();
@@ -125,14 +128,14 @@
 	<div data-sweet-alert>
 		<div class="panel-body">
 			<div class="start_type">
-				<h1>Installation</h1>
+				<h1 class="lang" lang-id="installation"></h1>
 				<div id="extended_div">
 					<form id="installation" class="extended_form keyCode_13">
 						<fieldset class="form-group">
-							<label class="col-sm-3 control-label" for="first_load">Mode</label>
+							<label class="col-sm-3 control-label lang" for="first_load" lang-id="mode"></label>
 							<div class="col-sm-9">
 								<select id="first_load" class="form-control">
-									<option value="Private-net">Private-net</option>
+									<option value="Private-net" class="lang" lang-id="private_net"></option>
 								</select>
 								<div>
 									<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
@@ -146,7 +149,7 @@
 								<div class="checkbox c-checkbox">
 									<label>
 									   <input id="generate_first_block" type="checkbox" value="1" checked>
-											<span class="fa fa-check"></span><strong>Generate first block</strong>
+											<span class="fa fa-check"></span><strong class="lang" lang-id="generate_first_block"></strong>
 									   </label>
 								 </div>
 							</div>
@@ -158,45 +161,45 @@
 							</div>
 						</fieldset>
 						<fieldset class="form-group">
-							<label class="col-sm-3 control-label" for="dir">Log level</label>
+							<label class="col-sm-3 control-label lang" for="dir" lang-id="log_level"></label>
 							<div class="col-sm-9">
 								<select id="log_level" class="form-control">
-									<option value="ERROR">ERROR</option>
-									<option value="DEBUG" selected>DEBUG</option>
+									<option value="ERROR" class="lang" lang-id="error"></option>
+									<option value="DEBUG" class="lang" lang-id="debug" selected></option>
 								</select>
 							</div>
 						</fieldset>
 						<div class="well box-placeholder">
 							<legend class="clearfix">
-								<a class="pull-right" href="https://github.com/EGaaS/go-egaas-mvp/wiki/eGaaS-app-installation-instruction" onclick='THRUST.remote.send("https://github.com/EGaaS/go-egaas-mvp/wiki/eGaaS-app-installation-instruction")' target="_blank">Instruction<i class="fa fa-external-link" aria-hidden="true"></i></a>
-								<span class="pull-left">PostgreSQL Settings</span>
+								<a class="pull-right" href="https://github.com/EGaaS/go-egaas-mvp/wiki/eGaaS-app-installation-instruction" onclick='THRUST.remote.send("https://github.com/EGaaS/go-egaas-mvp/wiki/eGaaS-app-installation-instruction")' target="_blank"><span class="lang" lang-id="instruction"></span><i class="fa fa-external-link" aria-hidden="true"></i></a>
+								<span class="pull-left lang" lang-id="postgresql_settings"></span>
 							</legend>
 							<fieldset class="form-group db_settings">
-								<label class="col-sm-3 control-label" for="host">Host</label>
+								<label class="col-sm-3 control-label lang" lang-id="host" for="host"></label>
 								<div class="col-sm-9">
 									<input id="host" class="form-control" type="text" value="localhost">
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">
-								<label class="col-sm-3 control-label" for="port">Port</label>
+								<label class="col-sm-3 control-label lang" lang-id="port" for="port"></label>
 								<div class="col-sm-9">
 									<input id="port" class="form-control" type="text" value="5432">
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">
-								<label class="col-sm-3 control-label" for="db_name">DB name</label>
+								<label class="col-sm-3 control-label lang" lang-id="db_name" for="db_name"></label>
 								<div class="col-sm-9">
 									<input id="db_name" class="form-control" type="text" value="">
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">
-								<label class="col-sm-3 control-label" for="username">Username</label>
+								<label class="col-sm-3 control-label lang" lang-id="username" for="username"></label>
 								<div class="col-sm-9">
 									<input id="username" class="form-control" type="text" value="postgres">
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">
-								<label class="col-sm-3 control-label" for="password">Password</label>
+								<label class="col-sm-3 control-label lang" lang-id="password" for="password"></label>
 								<div class="col-sm-9">
 									<input id="password" class="form-control" type="password" value="">
 								</div>
@@ -207,10 +210,10 @@
 			</div>
 		</div>
 		<div class="panel-footer text-right">
-			<button class="submit btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="next">Next</button>
+			<button class="submit btn btn-primary lang" lang-id="next" data-tool="panel-refresh" onClick="preloader(this);" id="next"></button>
 		</div>
 		<div class="appStart hidden" style="padding: 0px 20px;text-align:center;">
-			<span>eGaaS has been successfully installed! Close and re-start the application.</span>
+			<span class="lang" lang-id="egaas_successfully_installed"></span>
 		</div>
 	</div>
 </div>
