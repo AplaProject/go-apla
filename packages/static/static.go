@@ -236,6 +236,7 @@
 // static/js/inputmask.js
 // static/js/keys.js
 // static/js/map.js
+// static/js/mmenu.js
 // static/js/nprogress.js
 // static/js/photoEditor/cropper.min.js
 // static/js/photoEditor/editor.js
@@ -260,9 +261,7 @@
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
-// static/lang/flags/en.svg
 // static/lang/flags/flags.png
-// static/lang/flags/nl.svg
 // static/lang/gb.js
 // static/lang/locale_en-US.ini
 // static/lang/locale_ru-RU.ini
@@ -357,6 +356,7 @@
 // static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png
 // static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif
 // static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js
+// static/votings.tpl
 // DO NOT EDIT!
 
 package static
@@ -4631,6 +4631,24 @@ func staticJsMapJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsMmenuJs reads file data from disk. It returns an error on failure.
+func staticJsMmenuJs() (*asset, error) {
+	path := "static/js/mmenu.js"
+	name := "static/js/mmenu.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsNprogressJs reads file data from disk. It returns an error on failure.
 func staticJsNprogressJs() (*asset, error) {
 	path := "static/js/nprogress.js"
@@ -5063,46 +5081,10 @@ func staticLangEnUsAllJson() (*asset, error) {
 	return a, err
 }
 
-// staticLangFlagsEnSvg reads file data from disk. It returns an error on failure.
-func staticLangFlagsEnSvg() (*asset, error) {
-	path := "static/lang/flags/en.svg"
-	name := "static/lang/flags/en.svg"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticLangFlagsFlagsPng reads file data from disk. It returns an error on failure.
 func staticLangFlagsFlagsPng() (*asset, error) {
 	path := "static/lang/flags/flags.png"
 	name := "static/lang/flags/flags.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticLangFlagsNlSvg reads file data from disk. It returns an error on failure.
-func staticLangFlagsNlSvg() (*asset, error) {
-	path := "static/lang/flags/nl.svg"
-	name := "static/lang/flags/nl.svg"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6809,6 +6791,24 @@ func staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs() (*ass
 	return a, err
 }
 
+// staticVotingsTpl reads file data from disk. It returns an error on failure.
+func staticVotingsTpl() (*asset, error) {
+	path := "static/votings.tpl"
+	name := "static/votings.tpl"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -7097,6 +7097,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/inputmask.js": staticJsInputmaskJs,
 	"static/js/keys.js": staticJsKeysJs,
 	"static/js/map.js": staticJsMapJs,
+	"static/js/mmenu.js": staticJsMmenuJs,
 	"static/js/nprogress.js": staticJsNprogressJs,
 	"static/js/photoEditor/cropper.min.js": staticJsPhotoeditorCropperMinJs,
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
@@ -7121,9 +7122,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
-	"static/lang/flags/en.svg": staticLangFlagsEnSvg,
 	"static/lang/flags/flags.png": staticLangFlagsFlagsPng,
-	"static/lang/flags/nl.svg": staticLangFlagsNlSvg,
 	"static/lang/gb.js": staticLangGbJs,
 	"static/lang/locale_en-US.ini": staticLangLocale_enUsIni,
 	"static/lang/locale_ru-RU.ini": staticLangLocale_ruRuIni,
@@ -7218,6 +7217,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png": staticVendorXEditableDistBootstrap3EditableImgClearPng,
 	"static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif": staticVendorXEditableDistBootstrap3EditableImgLoadingGif,
 	"static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js": staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs,
+	"static/votings.tpl": staticVotingsTpl,
 }
 
 // AssetDir returns the file names below a certain
@@ -7520,6 +7520,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"inputmask.js": &bintree{staticJsInputmaskJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
 			"map.js": &bintree{staticJsMapJs, map[string]*bintree{}},
+			"mmenu.js": &bintree{staticJsMmenuJs, map[string]*bintree{}},
 			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{}},
 			"photoEditor": &bintree{nil, map[string]*bintree{
 				"cropper.min.js": &bintree{staticJsPhotoeditorCropperMinJs, map[string]*bintree{}},
@@ -7553,9 +7554,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"42.ini": &bintree{staticLang42Ini, map[string]*bintree{}},
 			"en-us.all.json": &bintree{staticLangEnUsAllJson, map[string]*bintree{}},
 			"flags": &bintree{nil, map[string]*bintree{
-				"en.svg": &bintree{staticLangFlagsEnSvg, map[string]*bintree{}},
 				"flags.png": &bintree{staticLangFlagsFlagsPng, map[string]*bintree{}},
-				"nl.svg": &bintree{staticLangFlagsNlSvg, map[string]*bintree{}},
 			}},
 			"gb.js": &bintree{staticLangGbJs, map[string]*bintree{}},
 			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{}},
@@ -7766,6 +7765,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				}},
 			}},
 		}},
+		"votings.tpl": &bintree{staticVotingsTpl, map[string]*bintree{}},
 	}},
 }}
 
