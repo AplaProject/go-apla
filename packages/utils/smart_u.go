@@ -137,7 +137,7 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
-		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage,
 	})
 }
 
@@ -1517,6 +1517,10 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 		<a href="#" title="%s" onClick="%s('%s',{%s});HideMenu();">
 		%s<span>%[2]s</span></a></li>`,
 		class, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
+}
+
+func MenuPage(vars *map[string]string, pars ...string) string {
+	return fmt.Sprintf(`<div id="mp_%s" style="display: none;"></div>`, lib.Escape(pars[0]))
 }
 
 func MenuEnd(vars *map[string]string, pars ...string) string {

@@ -17,8 +17,9 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"strings"
 )
 
 func (c *Controller) AjaxGetMenuHtml() (string, error) {
@@ -39,11 +40,11 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	menu = ReplaceMenu(menu)
-	menu += fmt.Sprintf(`<script>
-	$(".aside .nav li").removeClass("active");
-	$(".citizen_`+pageName+`").addClass("active");
-</script>`)
+	outmenu := ReplaceMenu(menu)
+	menu = fmt.Sprintf(`{"idname": "%s", "menu": "%s<script>
+	$('.aside .nav li').removeClass('active');
+	$('.citizen_`+pageName+`').addClass('active');
+	</script>"}`, menuName, strings.Replace(strings.Replace(outmenu, "\"", "\\\"", -1), `li class='`, `li class='menu_page `, -1))
 
-	return menu, nil
+	return strings.Replace(strings.Replace(strings.Replace(menu, "\n", "", -1), "\r", "", -1), "\t", "", -1), nil
 }

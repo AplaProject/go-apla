@@ -237,6 +237,7 @@ function load_page(page, parameters) {
 	//    $('#loader').spin();
 	clearAllTimeouts();
 	NProgress.set(1.0);
+	$('.menu_page').remove();
 	$.post("content?page=" + page, parameters ? parameters : {},
 		function (data) {
 			//            $("#loader").spin(false);
@@ -266,15 +267,17 @@ function load_template(page, parameters) {
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
 				$('.sidebar-collapse').collapse('toggle');
 			}
+			$('.menu_page').remove();
 			//			console.log(page);
 			$.ajax({
 				url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 				type: 'POST',
 				data: parameters ? parameters : {},
 				success: function (data) {
-					//					console.log(data);
-					var li = $("#dc li:first").html();
-					$("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
+					param = JSON.parse(data);
+					$("#mp_" + param.idname).after(param.menu);
+					//					var li = $("#dc li:first").html();
+					//                  $("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
 				}
 			});
 		}, "html");
@@ -283,6 +286,7 @@ function load_template(page, parameters) {
 function load_app(page) {
 	clearAllTimeouts();
 	NProgress.set(1.0);
+	$('.menu_page').remove();
 	$.post("app?page=" + page, {},
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
@@ -968,16 +972,16 @@ function loadLanguage() {
 	//localStorage.removeItem('EGAAS_LANG');
 	var userLang = navigator.language || navigator.userLanguage;
 	var lang = localStorage.getItem('EGAAS_LANG');
-	
+
 	if (lang === null) {
-		lang = userLang.substring(0,2);
+		lang = userLang.substring(0, 2);
 		if (lang != "nl") {
 			lang = "gb";
 		}
 	}
-	
+
 	localStorage.setItem('EGAAS_LANG', lang);
-	
+
 	changeLanguage(lang);
 }
 
