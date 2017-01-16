@@ -113,6 +113,8 @@ var (
 	Tls                     = flag.String("tls", "", "Support https. Specify directory for .well-known")
 	DevTools                = flag.Int64("devtools", 0, "Devtools in thrust-shell")
 	Upd                     = flag.Bool("update", false, "Update")
+	OneCountry              int64
+	PrivCountry             bool
 	OutFile                 *os.File
 
 	DaemonsChans []*DaemonsChansType

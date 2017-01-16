@@ -112,15 +112,15 @@
 						</ul>
 					</div>
 				</fieldset>
-				<fieldset id="countries" class="form-group phrase">
+				<fieldset id="countries" class="form-group phrase" {{if .OneCountry}}style="display:none;"{{end}}>
 					<label class="col-sm-3 control-label" for="phrase">Country</label>
 					<div class="col-sm-9">
 						<select id="state_id" class="form-control">
 							<option value="0" class="no_citizenship" selected="selected">No citizenship</option>
 							<!--<option value="0">-----</option>-->
-							<!--{{ range $id, $name := .States }}
-							<option value="{{$id}}">{{$name}}</option>
-							{{end}}-->
+							<!--{ range $id, $name := .States }
+							<option value="{$id}">{$name}</option>
+							{end}-->
 						</select>
 					</div>
 				</fieldset>
@@ -140,7 +140,7 @@
 		</div>
 		<div class="panel-footer flex buttons">
 			<a href="" onclick="return import_form()" class="btn btn-link">Import<span> account</span></a>
-			<a href="" onclick="return register_form()" class="btn btn-link">Create<span> account</span></a>
+			{{if not .PrivCountry}}<a href="" onclick="return register_form()" class="btn btn-link">Create<span> account</span></a>{{end}}
 			<button type="button" class="submit btn btn-primary" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn">Login</button>
 		</div>
 	</div>
@@ -185,10 +185,10 @@
 			<div class="noimport flex buttons">
 				<a href="" onclick="return import_form()" class="btn btn-link btn-default">Import<span> account</span></a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
-				<button type="button" class="submit btn btn-primary" datax-tool="panel-refresh" onclick="return do_register(this, true)" id="create_btn">Create<span> account</span></button>
+				{{if not .PrivCountry}}<button type="button" class="submit btn btn-primary" datax-tool="panel-refresh" onclick="return do_register(this, true)" id="create_btn">Create<span> account</span></button>{{end}}
 			</div>
 			<div class="noregister flex buttons" style="display:none;">
-				<a href="" onclick="return register_form()" class="btn btn-link">Create<span> account</span></a>
+				{{if not .PrivCountry}}<a href="" onclick="return register_form()" class="btn btn-link">Create<span> account</span></a>{{end}}
 				<a href="" onclick="return login_form()" class="islogin btn btn-link">Login</a>
 				<button type="button" class="submit btn btn-primary" data-tool="panel-refresh" onclick="return do_register(this, false)" id="import_btn">Import<span> account</span></button>
 			</div>
@@ -204,7 +204,7 @@ $(".brand").attr("data-version", "v" + Version);
 
 var repeat_step = false;
 var backup = '';
-var private = '{{.Private}}';
+var private = ''; // to delete?
 
 //var copied = 0;
 var passphraseText;
@@ -312,6 +312,10 @@ function do_register_back() {
 
 function do_sign() {
 	NProgressStart.start();
+	{{if .OneCountry}}
+		$( "#state_id" ).val('{{.OneCountry}}');
+	{{end}}
+	
 	$.get( 'ajax?json=ajax_get_uid',{}, function(data) {
 		console.log(data);
 		var key = GKey.Public;
@@ -327,7 +331,7 @@ function do_sign() {
 			}, function (data) {
 				console.log('DATA', data, $( "#state_id" ).val());
 				if (data.address) {
-//					GKey.StateId = $( "#state_id" ).val();
+					GKey.StateId = $( "#state_id" ).val();
 					GKey.add(data.address);
 				}
 				login_ok( data.result );
@@ -419,6 +423,7 @@ function do_login() {
 	}
 	
 	if (GKey.decrypt(encKey, pass)) {
+		GKey.StateId = $( "#state_id" ).val();
 		GKey.save();
 		do_sign();
 	} else {
@@ -533,8 +538,14 @@ $(document).ready(function(){
 		//$(".islogin").hide();
 	}
 	encKey = localStorage.getItem('EncKey');
+	selectboxState(JSON.parse({{.States}}));	
+	{{if .OneCountry}}
+		GKey.StateId = '{{.OneCountry}}';
+		$( "#state_id" ).val('{{.OneCountry}}');
+	{{end}}
 	if (GKey.Private) {
-		GKey.StateId = $( "#state_id" ).val();
+		$( "#state_id" ).val(GKey.StateId);
+//		document.getElementById('state_id').value = GKey.StateId;
 		GKey.save();
 		do_sign();
 	} else {
@@ -550,7 +561,7 @@ $(document).ready(function(){
 		}
 	}
 	
-	$.ajax({
+/*	$.ajax({
 		type: 'GET',
 		url: '/ajax?controllerName=AjaxStatesList',
 		dataType: 'json',
@@ -561,7 +572,7 @@ $(document).ready(function(){
 		error: function(xhr, status, error) {
 			Alert("Error", error, "error");
 		}
-	});
+	});*/
 });
 
 $(document).on('keydown', function(e){

@@ -48,6 +48,9 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result.Error = err.Error()
 		return result
 	}
+	if utils.PrivCountry && utils.OneCountry > 0 {
+		stateId = utils.OneCountry
+	}
 	//Test
 	if stateId == 0 {
 		citizen, err := c.Single(`SELECT count(id) FROM "1_citizens"`).Int64()
@@ -103,8 +106,9 @@ func (c *Controller) AjaxSignIn() interface{} {
 			log.Debug("citizenId %v", citizenId)
 			if citizenId == 0 {
 				stateId = 0
-				log.Debug("not a citizen")
-				//result.Error = "not a citizen"
+				if utils.PrivCountry {
+					result.Error = "not a citizen"
+				}
 			}
 		} else {
 			result.Error = err.Error()

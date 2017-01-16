@@ -101,6 +101,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if *utils.Dir == "" {
 		*utils.Dir = configIni["dir"]
 	}
+	utils.OneCountry = utils.StrToInt64(configIni["one_country"])
+	utils.PrivCountry = configIni["priv_country"] == `1` || configIni["priv_country"] == `true`
+
 	/*	outfile, err := os.Create("./out.txt")
 	    if err != nil {
 	        panic(err)
