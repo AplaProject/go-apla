@@ -76,6 +76,7 @@ type TxButtonInfo struct {
 	TxName    string
 	Name      string
 	Class     string
+	ClassBtn  string
 	Unique    template.JS
 	OnSuccess template.JS
 	Fields    []TxInfo
@@ -984,6 +985,10 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	if len((*pars)[`Class`]) > 0 {
 		class = getClass((*pars)[`Class`])
 	}
+	classBtn := `btn btn-primary`
+	if len((*pars)[`ClassBtn`]) > 0 {
+		classBtn = getClass((*pars)[`ClassBtn`])
+	}
 
 	onsuccess := (*pars)[`OnSuccess`]
 	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
@@ -1028,7 +1033,8 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	b := new(bytes.Buffer)
-	finfo := TxButtonInfo{TxName: name, Class: class, Name: LangRes(vars, btnName), Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
+	finfo := TxButtonInfo{TxName: name, Class: class, ClassBtn: classBtn, Name: LangRes(vars, btnName),
+		Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
 		Fields: make([]TxInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`,
 		Silent: (*pars)[`Silent`] == `1`, Data: FormCommon{CountSignArr: []byte{1}}}
 
