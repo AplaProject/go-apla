@@ -613,7 +613,7 @@ TextHidden( m_Referendum)
 SetVar()
 TextHidden( )
 Json(`Head: "",
-Desc: "Votin",
+Desc: "Voting",
 		Img: "/static/img/apps/elections.jpg",
 		OnSuccess: {
 			script: 'template',
