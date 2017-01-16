@@ -51,6 +51,7 @@ func init() {
 		"IdToAddress":    IDToAddress,
 		"DBAmount":       DBAmount,
 		"IsContract":     IsContract,
+		"IsGovAccount":   IsGovAccount,
 		"StateValue":     StateValue,
 		"Int":            Int,
 		"Str":            Str,
@@ -318,6 +319,10 @@ func IsContract(p *Parser, name string) bool {
 		return consts.TxTypes[utils.BytesToInt(p.TxSlice[1])] == name
 	}
 	return false
+}
+
+func IsGovAccount(p *Parser, citizen int64) bool {
+	return utils.StrToInt64(StateValue(p, `gov_account`)) == citizen
 }
 
 func AddressToID(input string) (addr int64) {

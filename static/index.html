@@ -233,7 +233,6 @@
    
    <!-- =============== APP SCRIPTS ===============-->
    <script src="static/js/app.js"></script>
-   <script language="JavaScript" type="text/javascript" src="static/lang/gb.js"></script>
    <script src="static/js/index.js"></script>
    <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
    
@@ -405,7 +404,8 @@
 						$(".sweet-overlay, .sweet-alert").remove();
 						//console.log('$("#loader").spin(false)');
 						$('#dl_content').html( data );
-						updateLanguage("#dl_content .lang");
+						//updateLanguage("#dl_content .lang");
+						loadLanguage();
 						hist_push(['dl_navigate0', page, parameters]);
 						if ( parameters && parameters.hasOwnProperty("lang")) {
 							if ( page[0] == 'E' )
@@ -421,7 +421,7 @@
 
 		}
 	$( document ).ready( function( ){
-			updateLanguage(".lang");
+			loadLanguage();
 		} );		
 	</script>
 </body>

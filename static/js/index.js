@@ -242,7 +242,8 @@ function load_page(page, parameters) {
 			//            $("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['load_page', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -258,7 +259,8 @@ function load_template(page, parameters) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
@@ -285,7 +287,8 @@ function load_app(page) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['load_app', page]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -476,7 +479,8 @@ function dl_navigate(page, parameters) {
 			//$("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['dl_navigate', page, parameters]);
 			/*if ( parameters && parameters.hasOwnProperty("lang")) {
 				if ( page[0] == 'E' )
@@ -495,7 +499,8 @@ function load_menu(lang) {
 			parametersJson: '{"lang":"1"}'
 		}
 		$("#dl_menu").load("content?page=menu", { parameters: parametersJson }, function () {
-			updateLanguage("#dl_menu .lang");
+			//updateLanguage("#dl_menu .lang");
+			loadLanguage();
 		});
 	} else {
 		$("#dl_menu").html('');
@@ -959,6 +964,23 @@ function MoneyDigit(value, dig) {
 	return money.replace('.', '');
 }
 
+function loadLanguage() {
+	//localStorage.removeItem('EGAAS_LANG');
+	var userLang = navigator.language || navigator.userLanguage;
+	var lang = localStorage.getItem('EGAAS_LANG');
+	
+	if (lang === null) {
+		lang = userLang.substring(0,2);
+		if (lang != "nl") {
+			lang = "gb";
+		}
+	}
+	
+	localStorage.setItem('EGAAS_LANG', lang);
+	
+	changeLanguage(lang);
+}
+
 function updateLanguage(classes) {
 	$(classes).each(function (obj) {
 		var data = $(this).attr('lang-id');
@@ -976,8 +998,11 @@ function loadjs(filename) {
 
 function changeLanguage(lang) {
 	loadjs('static/lang/' + lang + '.js');
-	setTimeout(function () { updateLanguage('.lang') }, 1500);
+	setTimeout(function () {
+		updateLanguage('.lang');
+	}, 100);
 	$("#langflag").attr('class', 'flag ' + lang);
+	localStorage.setItem('EGAAS_LANG', lang);
 }
 
 function InitMobileHead() {
