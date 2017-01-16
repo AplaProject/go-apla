@@ -5,22 +5,22 @@ var GKey = {
 		var pass = getCookie('psw');
 		var pubKey = localStorage.getItem('PubKey');
 		if (pubKey)
-			this.Public = pubKey;
+			GKey.Public = pubKey;
 
 		if (pass && localStorage.getItem('EncKey')) {
-			this.decrypt(localStorage.getItem('EncKey'), pass)
+			GKey.decrypt(localStorage.getItem('EncKey'), pass)
 		}
 		if (localStorage.getItem('Address'))
-			this.Address = localStorage.getItem('Address');
+			GKey.Address = localStorage.getItem('Address');
 		var pubKey = localStorage.getItem('PubKey');
 		var stateId = localStorage.getItem('StateId');
 		if (stateId)
-			this.StateId = stateId;
+			GKey.StateId = stateId;
 		var citizenId = localStorage.getItem('CitizenId');
 		if (citizenId)
-			this.CitizenId = citizenId;
+			GKey.CitizenId = citizenId;
 		if (localStorage.getItem('Accounts'))
-			this.Accounts = JSON.parse(localStorage.getItem('Accounts'));
+			GKey.Accounts = JSON.parse(localStorage.getItem('Accounts'));
 	},
 	add: function (address) {
 		localStorage.setItem('Address', address);
