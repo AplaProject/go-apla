@@ -103,7 +103,7 @@
 	
 	<div id="login_form" class="start_form" style="display:none;" data-sweet-alert>
 		<div class="panel-body">
-			<h1>Login</h1>
+			<h1 class="lang" lang-id="login"></h1>
 			<form class="keyCode_13">
 				<fieldset class="form-group" id="field-list">
 					<label class="col-sm-3 control-label" for="list"></label>
@@ -113,7 +113,7 @@
 					</div>
 				</fieldset>
 				<fieldset id="countries" class="form-group phrase" {{if .OneCountry}}style="display:none;"{{end}}>
-					<label class="col-sm-3 control-label" for="phrase">Country</label>
+					<label class="col-sm-3 control-label lang" for="phrase" lang-id="country"></label>
 					<div class="col-sm-9">
 						<select id="state_id" class="form-control">
 							<option value="0" class="no_citizenship" selected="selected">No citizenship</option>
@@ -125,13 +125,13 @@
 					</div>
 				</fieldset>
 				<fieldset class="s-box form-group" id="field-address">
-					<label class="col-sm-3 control-label" for="address">Address</label>
+					<label class="col-sm-3 control-label lang" for="address" lang-id="address"></label>
 					<div class="col-sm-9">
 						<input id="address" class="form-control" type="text" disabled/>
 					</div>
 				</fieldset>
 				<fieldset class="form-group decpass">
-					<label class="col-sm-3 control-label" for="decpass">Password</label>
+					<label class="col-sm-3 control-label lang" for="decpass" lang-id="password"></label>
 					<div class="col-sm-9">
 						<input id="decpass" class="form-control" type="password"/>
 					</div>

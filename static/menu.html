@@ -452,7 +452,7 @@
 <aside class="aside">
  <!-- START Sidebar (left)-->
  <div class="aside-inner">
-	<nav data-sidebar-anyclick-close="" class="sidebar">
+	<nav id="mmenu" data-sidebar-anyclick-close="" class="sidebar">
 	   <!-- START sidebar nav-->
 	   <ul class="nav">
 		  <!-- START user info-->
@@ -939,6 +939,28 @@
 	}
 </style>
 <script>
+	/*$(document).ready(function(){
+		setTimeout(function () {
+			$("#mmenu").mmenu({
+				extensions: ['widescreen', 'theme-white', 'effect-menu-slide', 'pagedim-black'],
+				navbars	: [
+					{
+						position	: 'top',
+						content		: [
+							'prev',
+							'title'
+						]
+					}
+				]
+			});
+			
+			var api = $("#mmenuu").data("mmenu");
+			api.bind("initPanels", function($panel) {
+				console.log("This panel is now opened:" + $panel.attr( "id" ));
+			});
+			api.initPanels($("#mmenu"));
+		}, 110);
+	});*/
 	$(document).keydown(function(e){
 		'use strict';
 		

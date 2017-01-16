@@ -1003,6 +1003,7 @@ function changeLanguage(lang) {
 	}, 100);
 	$("#langflag").attr('class', 'flag ' + lang);
 	localStorage.setItem('EGAAS_LANG', lang);
+	//$("select").trigger("change.select2");
 }
 
 function InitMobileHead() {
