@@ -501,7 +501,7 @@ func (p *Parser) AccessChange(table, name string) error {
 }
 
 func (p *Parser) getEGSPrice(name string) (int64, error) {
-	fPrice, err := p.Single(`SELECT value->'` + name + `' FROM system_parameters WHERE name = ?`, "op_price").Int64()
+	fPrice, err := p.Single(`SELECT value->'`+name+`' FROM system_parameters WHERE name = ?`, "op_price").Int64()
 	if err != nil {
 		return 0, p.ErrInfo(err)
 	}
