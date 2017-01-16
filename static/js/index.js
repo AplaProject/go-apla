@@ -998,8 +998,11 @@ function loadjs(filename) {
 
 function changeLanguage(lang) {
 	loadjs('static/lang/' + lang + '.js');
-	setTimeout(function () { updateLanguage('.lang') }, 100);
+	setTimeout(function () {
+		updateLanguage('.lang');
+	}, 100);
 	$("#langflag").attr('class', 'flag ' + lang);
+	localStorage.setItem('EGAAS_LANG', lang);
 }
 
 function InitMobileHead() {
