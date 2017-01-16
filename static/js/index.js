@@ -242,7 +242,8 @@ function load_page(page, parameters) {
 			//            $("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['load_page', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -258,7 +259,8 @@ function load_template(page, parameters) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
@@ -285,7 +287,8 @@ function load_app(page) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['load_app', page]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -476,7 +479,8 @@ function dl_navigate(page, parameters) {
 			//$("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
+			//updateLanguage("#dl_content .lang");
+			loadLanguage();
 			hist_push(['dl_navigate', page, parameters]);
 			/*if ( parameters && parameters.hasOwnProperty("lang")) {
 				if ( page[0] == 'E' )
@@ -495,7 +499,8 @@ function load_menu(lang) {
 			parametersJson: '{"lang":"1"}'
 		}
 		$("#dl_menu").load("content?page=menu", { parameters: parametersJson }, function () {
-			updateLanguage("#dl_menu .lang");
+			//updateLanguage("#dl_menu .lang");
+			loadLanguage();
 		});
 	} else {
 		$("#dl_menu").html('');

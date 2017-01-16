@@ -404,7 +404,8 @@
 						$(".sweet-overlay, .sweet-alert").remove();
 						//console.log('$("#loader").spin(false)');
 						$('#dl_content').html( data );
-						updateLanguage("#dl_content .lang");
+						//updateLanguage("#dl_content .lang");
+						loadLanguage();
 						hist_push(['dl_navigate0', page, parameters]);
 						if ( parameters && parameters.hasOwnProperty("lang")) {
 							if ( page[0] == 'E' )
