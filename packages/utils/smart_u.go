@@ -124,7 +124,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
-		`Image`: Image, `Div`: Div, `P`: P, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
+		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -132,7 +132,7 @@ func init() {
 		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
-		`If`: If, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
+		`If`: If, `IfEnd`: IfEnd, `Else`: Else, `ElseIf`: ElseIf, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
 		`BlockInfo`: BlockInfo, `Back`: Back,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
@@ -309,15 +309,64 @@ func CmpTime(vars *map[string]string, pars ...string) string {
 }
 
 func If(vars *map[string]string, pars ...string) string {
-	if len(pars) < 2 {
+	if len(pars) == 1 && strings.HasSuffix((*vars)[`ifs`], `0`) {
+		(*vars)[`ifs`] = (*vars)[`ifs`] + `0`
 		return ``
 	}
-	if ifValue(pars[0]) {
+	isTrue := ifValue(pars[0])
+	if len(pars) == 1 {
+		state := `0`
+		if isTrue {
+			state = `1`
+		}
+		(*vars)[`ifs`] = (*vars)[`ifs`] + state
+		return ``
+	}
+	if isTrue {
 		return pars[1]
 	}
 	if len(pars) > 2 {
 		return pars[2]
 	}
+	return ``
+}
+
+func Else(vars *map[string]string, pars ...string) string {
+	ival := []byte((*vars)[`ifs`])
+	if ilen := len(ival); ilen == 1 || (ilen > 1 && ival[ilen-2] == '1') {
+		if ival[ilen-1] == '0' {
+			ival[ilen-1] = '1'
+		} else {
+			ival[ilen-1] = '0'
+		}
+		(*vars)[`ifs`] = string(ival)
+	}
+	return ``
+}
+
+func ElseIf(vars *map[string]string, pars ...string) string {
+	ival := []byte((*vars)[`ifs`])
+	if ilen := len(ival); ilen == 1 || (ilen > 1 && ival[ilen-2] == '1') {
+		if ival[ilen-1] == '0' {
+			if ifValue(pars[0]) {
+				ival[ilen-1] = '1'
+			} else {
+				ival[ilen-1] = '0'
+			}
+		} else {
+			ival[ilen-1] = '-'
+		}
+		(*vars)[`ifs`] = string(ival)
+	}
+	return ``
+}
+
+func IfEnd(vars *map[string]string, pars ...string) string {
+	ilen := len((*vars)[`ifs`])
+	if ilen > 0 {
+		(*vars)[`ifs`] = (*vars)[`ifs`][:ilen-1]
+	}
+	fmt.Println(`IFEnd`, (*vars)[`ifs`])
 	return ``
 }
 
@@ -560,7 +609,7 @@ func Div(vars *map[string]string, pars ...string) (out string) {
 	return out
 }
 
-func P(vars *map[string]string, pars ...string) (out string) {
+func Par(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`p`, pars...)
 }
 

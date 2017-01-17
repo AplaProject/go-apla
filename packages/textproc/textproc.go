@@ -198,6 +198,10 @@ func Split(input string) *[][]string {
 }
 
 func funcProcess(name string, params [][]rune, vars *map[string]string) string {
+	if (strings.HasSuffix((*vars)[`ifs`], `0`) || strings.HasSuffix((*vars)[`ifs`], `-`)) && name != `If` && name != `IfEnd` && name != `Else` &&
+		name != `ElseIf` {
+		return ``
+	}
 	pars := make([]string, 0)
 	for _, item := range params {
 		var val string
@@ -217,6 +221,9 @@ func funcProcess(name string, params [][]rune, vars *map[string]string) string {
 }
 
 func mapProcess(name string, params *map[string]string, vars *map[string]string) string {
+	if strings.HasSuffix((*vars)[`ifs`], `0`) || strings.HasSuffix((*vars)[`ifs`], `-`) {
+		return ``
+	}
 	pars := make(map[string]string, 0)
 	for key, item := range *params {
 		var val string
