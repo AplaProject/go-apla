@@ -220,8 +220,12 @@
 
     if (!Settings.showSpinner)
       $el.find('[role="spinner"]').remove();
-
-    $el.appendTo(document.body);
+	
+	if (window.innerWidth < 768) {
+		$el.appendTo($("#dl_page"));
+	} else {
+		$el.appendTo(document.body);
+	}
 
     return $el;
   };

@@ -37,9 +37,6 @@
 <script>
 	$("body").removeClass("modal-open");
 	
-	$(".aside .nav li").removeClass("active");
-	$(".anonym, .dashboard_anonym").addClass("active");
-	
 	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {});
 	
 	var amount = {{.Amount}} / qDLT;

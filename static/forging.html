@@ -1,9 +1,6 @@
 {{ define "forging" }}
 
 <script>
-	$(".aside .nav li").removeClass("active");
-	$(".anonym, .anonym_block_generation").addClass("active");
-	
 	$( "#dl_modal" ).load( "content?controllerHTML=modal_anonym", { }, function() {});
 	
 	var interval;

@@ -309,12 +309,6 @@
 	  }
 	
 	})(window, document, window.jQuery);
-	
-	function HideMenu() {
-		if ($("body").hasClass("aside-toggled")) {
-			$(".sidebar-toggle").click();
-		}
-	}
 </script>
 <!-- top navbar-->
 <header class="topnavbar-wrapper">
@@ -322,7 +316,7 @@
  <nav role="navigation" class="navbar topnavbar">
 	<!-- START navbar header-->
 	<div class="navbar-header">
-	   <a href="#" class="navbar-brand" onclick="dl_navigate('beta'); HideMenu();">
+	   <a href="#" class="navbar-brand" onclick="dl_navigate('beta');">
 		  <div class="brand-logo hidden-xs">
 			 <!--<span class="beta">Testing</span>-->
 			 <span class="version"></span>
@@ -347,7 +341,8 @@
 				<em class="fa fa-navicon"></em>
 			 </a>-->
 			 <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
-			 <a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle mobile_menu">
+			 <!--<a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle mobile_menu">-->
+			 <a href="#mmenu" class="visible-xs sidebar-toggle mobile_menu">
 				<!--<em class="fa fa-navicon"></em>-->
 				<div class="patty"></div>
 			 </a>
@@ -368,11 +363,11 @@
 	   <ul class="nav navbar-nav navbar-right">
 		 {{if .UpdVer}}
 		  <li class="dropdown dropdown-list">
-			Version {{.UpdVer}} is available. <a href="#" onClick="load_page('upgrade'); HideMenu();">Upgrade</a>
+			Version {{.UpdVer}} is available. <a href="#" onClick="load_page('upgrade');">Upgrade</a>
 		  </li>
 		 {{end}}
 		  <!--<li class="hidden-xs">
-			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1}); HideMenu();">0</a>
+			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1});">0</a>
 		  </li>-->
 		  <!-- START Language menu-->
 		  <li class="language dropdown dropdown-list hidden-xs">
@@ -449,16 +444,17 @@
  <!-- END Top Navbar-->
 </header>
 <!-- sidebar-->
-<aside class="aside">
+<!--<aside class="aside">-->
  <!-- START Sidebar (left)-->
- <div class="aside-inner">
-	<nav id="mmenu" data-sidebar-anyclick-close="" class="sidebar">
+ <!--<div class="aside-inner">-->
+	<!--<nav data-sidebar-anyclick-close="" class="sidebar">-->
+	<nav id="mmenu">
 	   <!-- START sidebar nav-->
-	   <ul class="nav">
+	   <ul id="mmenu-panel" class="nav">
 		  <!-- START user info-->
-		  <li class="has-user-block">
-			 <div id="user-block" class="collapse">
-				<div class="item user-block" onclick="load_template('citizen_profile'); HideMenu();">
+		  <div id="user" class="has-user-block">
+			 <div id="user-block">
+				<div class="item user-block" onclick="load_template('citizen_profile');">
 				   <!-- User picture-->
 				   <div class="user-block-picture">
 					  <div class="user-block-status">
@@ -475,7 +471,7 @@
 				   </div>
 				</div>
 			 </div>
-		  </li>
+		  </div>
 		  <!-- END user info-->
 		  <!-- Iterates over all sidebar items-->
 		  <!--<li class="nav-heading ">
@@ -484,194 +480,165 @@
 {{if .MainMenu}}	
  		{{noescape .MainMenu}}		
 {{else}}
-		  <li class="anonym {{if not .Menu}}active{{end}}">
-			 <a href="#da" title="EGS-wallet" data-toggle="collapse" class="toggle-hover">
-				<!--<div class="pull-right label label-info">2</div>-->
+		  <li>
+			 <span>
 				<em class="icon-user"></em>
 				<span class="lang" lang-id="egs_wallet"></span>
-			 </a>
-			 <ul id="da" class="nav sidebar-subnav collapse{{if not .Menu}} in{{end}}">
-				<li class="sidebar-subnav-header lang" lang-id="egs_wallet"></li>
-				<li class="dashboard_anonym">
-				   <a {{if not .Menu}}class="active"{{end}} href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym'); HideMenu();">
+			 </span>
+			 <ul>
+				<li class="{{if not .Menu}}active{{end}}">
+				   <a href="#" title="Dashboard" onclick="dl_navigate0('dashboardAnonym');">
 					  <span class="lang" lang-id="dashboard"></span>
 				   </a>
 				</li>
-				<li class="anonym_money_transfer">
-				   <a href="#" title="Money transfer" onclick="dl_navigate0('anonymMoneyTransfer'); HideMenu();">
+				<li>
+				   <a href="#" title="Money transfer" onclick="dl_navigate0('anonymMoneyTransfer');">
 					  <span class="lang" lang-id="money_transfer"></span>
 				   </a>
 				</li>
 				{{if .Btc}}
-				<li class="anonym_btc">
-				   <a href="#" title="{{.Btc}}" onclick="load_page('btc'); HideMenu();">
+				<li>
+				   <a href="#" title="{{.Btc}}" onclick="load_page('btc');">
 					  <span>{{.Btc}}</span>
 				   </a>
 				</li>
 				{{end}}
-				<li class="anonym_history">
-				   <a href="#" title="History"  onclick="load_page('history'); HideMenu();">
+				<li>
+				   <a href="#" title="History"  onclick="load_page('history');">
 					  <span class="lang" lang-id="history"></span>
 				   </a>
 				</li>
-				<li class="anonym_block_generation">
-				   <a href="#"  onclick="dl_navigate0('forging'); HideMenu();" title="Forging">
+				<li>
+				   <a href="#" title="Forging" onclick="dl_navigate0('forging');">
 					  <span class="lang" lang-id="forging"></span>
 				   </a>
 				</li>
-				<li class="anonym_backup">
-				   <a href="#"  onclick="load_page('backup'); HideMenu();" title="Backup">
+				<li>
+				   <a href="#" title="Backup" onclick="load_page('backup');">
 					  <span class="lang" lang-id="backup"></span>
 				   </a>
 				</li>
-				 <li class="anonym_new_state">
-					 <a href="#" title="Create a new state" onClick="load_page('newState');HideMenu();">
+				 <li>
+					 <a href="#" title="Create a new state" onClick="load_page('newState');">
 						 <span class="lang" lang-id="create_new_state"></span>
 					 </a>
 				 </li>
 				{{if .CanCitizen}}
-				 <li class="anonym_request_citizen">
-					 <a href="#" title="Request for citizenship" onClick="load_page('smart_request_citizen');HideMenu();">
+				 <li>
+					 <a href="#" title="Request for citizenship" onClick="load_page('smart_request_citizen');">
 						 <span class="lang" lang-id="request_citizenship"></span>
 					 </a>
 				 </li>
 				{{end}}
 			 </ul>
 		  </li>
+		  
+			<li>
+				<span>
+					<em class="icon-emotsmile"></em>
+					<span>Menu</span>
+				</span>
+				<ul>
+					<li>
+						<a href="#" title="Submenu 1">
+							<span>Submenu 1</span>
+						</a>
+					</li>
+					<li>
+						<a href="#" title="Submenu 1">
+							<span>Submenu 1</span>
+						</a>
+					</li>
+					<li>
+						<span>
+							<em class="icon-emotsmile"></em>
+							<span>Submenu 1</span>
+						</span>
+						<ul>
+							<li>
+								<span>
+									<em class="icon-emotsmile"></em>
+									<span>Submenu 2</span>
+								</span>
+								<ul>
+									<li>
+										<a href="#" title="Submenu 1">
+											<span>Submenu 3</span>
+										</a>
+									</li>
+									<li>
+										<a href="#" title="Submenu 1">
+											<em class="icon-emotsmile"></em>
+											<span>Submenu 3</span>
+										</a>
+									</li>
+									<li>
+										<a href="#" title="Submenu 1">
+											<span>Submenu 3</span>
+										</a>
+									</li>
+									<li>
+										<a href="#" title="Submenu 1">
+											<span>Submenu 3</span>
+										</a>
+									</li>
+									<li>
+										<a href="#" title="Submenu 1">
+											<span>Submenu 3</span>
+										</a>
+									</li>
+								</ul>
+							</li>
+							<li>
+								<a href="#" title="Submenu 1">
+									<span>Submenu 2</span>
+								</a>
+							</li>
+							<li>
+								<a href="#" title="Submenu 1">
+									<span>Submenu 2</span>
+								</a>
+							</li>
+							<li>
+								<a href="#" title="Submenu 1">
+									<span>Submenu 2</span>
+								</a>
+							</li>
+							<li>
+								<a href="#" title="Submenu 1">
+									<span>Submenu 2</span>
+								</a>
+							</li>
+						</ul>
+					</li>
+					<li>
+						<a href="#" title="Submenu 1">
+							<span>Submenu 1</span>
+						</a>
+					</li>
+					<li>
+						<a href="#" title="Submenu 1">
+							<span>Submenu 1</span>
+						</a>
+					</li>
+				</ul>
+			</li>
 
-		   <li class="sys active">
-			   <a href="#" href="#" onClick="load_page('system_info'); HideMenu();" title="Government" data-toggle="collapse" class="toggle-hover">
+		   <li>
+			   <a href="#" title="Government" onClick="load_page('system_info');">
 				   <em class="icon-map"></em>
 				   <span>System</span>
 			   </a>
 		   </li>
 
 		  {{if .Menu}}
-		  <li class="citizen active">
-			 <a href="#dc" title="Citizen" data-toggle="collapse" class="toggle-hover">
+		  <li>
+			 <span>
 				<em class="icon-home"></em>
 				<span class="lang" lang-id="citizen"></span>
-			 </a>
-			 <ul id="dc" class="nav sidebar-subnav collapse in">
-				<li class="sidebar-subnav-header lang" lang-id="citizen"></li>
+			 </span>
+			 <ul>
 				 {{noescape .Menu}}
-				 <!--
-				 Tables
-				 <li class="state_parameters">
-					 <a href="#" title="state_name" onClick="load_page('listOfTables');HideMenu();">
-						 <span>{{.Data.StateName}}</span>
-					 </a>
-				 </li>
-				 <li class="state_parameters">
-					 <a href="#" title="state_name" onClick="load_page('globalTables');HideMenu();">
-						 <span>globalTables</span>
-					 </a>
-				 </li>
-				 <li class="state_parameters">
-					 <a href="#" title="state_name" onClick="load_page('sysTables');HideMenu();">
-						 <span>sysTables</span>
-					 </a>
-				 </li>
-
-
-				 Smart contracts
-				 <li class="state_parameters">
-					 <a href="#" title="state_name" onClick="load_page('stateContracts');HideMenu();">
-						 <span>{{.Data.StateName}}</span>
-					 </a>
-				 </li>
-				 <li class="state_parameters">
-					 <a href="#" title="state_name" onClick="load_page('globalContracts');HideMenu();">
-						 <span>globalTables</span>
-					 </a>
-				 </li>
-				 <li class="state_parameters">
-					 <a href="#" title="state_name" onClick="load_page('sysContracts');HideMenu();">
-						 <span>sysTables</span>
-					 </a>
-				 </li>
-		   <br>
-
-
-
-                 <li class="state_parameters">
-                     <a href="#" title="state_parameters" onClick="load_page('stateParameters');HideMenu();">
-                         <span>state_parameters</span>
-                     </a>
-                 </li>
-                 <li class="state_smart_laws">
-                     <a href="#" title="state_smart_laws" onClick="load_page('stateSmartLaws');HideMenu();">
-                         <span>stateSmartLaws</span>
-                     </a>
-                 </li>
-                 <li class="state_laws">
-                     <a href="#" title="state_laws" onClick="load_page('stateLaws');HideMenu();">
-                         <span>stateLaws</span>
-                     </a>
-                 </li>
-                 <li class="new_table">
-                     <a href="#" title="new_table" onClick="load_page('newTable');HideMenu();">
-                         <span>newTable</span>
-                     </a>
-                 </li>
-                 <li class="table_list">
-                     <a href="#" title="table_list" onClick="load_page('tableList');HideMenu();">
-                         <span>tableList</span>
-                     </a>
-                 </li>
-                 -->
-
-
-                <!--li class="dashboard_citizen">
-                   <a href="#dashboard_citizen" title="Dashboard" onClick="HideMenu();">
-                      <span>Dashboard</span>
-                   </a>
-                </li>
-                <li class="citizen_money_transfer">
-                   <a href="#citizen_money_transfer" title="Money transfer" onClick="HideMenu();">
-                      <span>Money transfer</span>
-                   </a>
-                </li>
-                <li class="citizen_bill_payment">
-                   <a href="#citizen_bill_payment" title="Bill Payment" onClick="HideMenu();">
-                      <span>Bill Payment</span>
-                   </a>
-                </li>
-                <li class="citizen_admission_high_school">
-                   <a href="#citizen_admission_high_school" title="Admission to high school" onClick="HideMenu();">
-                      <span>Admission to high school</span>
-                   </a>
-                </li>
-                <li class="citizen_new_company">
-                   <a href="#citizen_new_company" title="New company" onClick="HideMenu();">
-                      <span>New company</span>
-                   </a>
-                </li>
-                <li class="citizen_property">
-                   <a href="#citizen_property" title="My property" onClick="HideMenu();">
-                      <span>My property</span>
-                   </a>
-                </li>
-                <li class="citizen_political_party">
-                   <a href="#citizen_political_party" title="Сreate a political party" onClick="HideMenu();">
-                      <span>Сreate a political party</span>
-                   </a>
-                </li>
-                <li class="citizen_inheritance">
-                   <a href="#citizen_inheritance" title="Inheritance" onClick="HideMenu();">
-                      <span>Inheritance</span>
-                   </a>
-                </li>
-                <li class="citizen_marriage_registration">
-                   <a href="#citizen_marriage_registration" title="Marriage registration" onClick="HideMenu();">
-                      <span>Marriage registration</span>
-                   </a>
-                </li>
-                <li class="citizen_divorce">
-                   <a href="#citizen_divorce" title="Divorce" onClick="HideMenu();">
-                      <span>Divorce</span>
-                   </a>
-                </li-->
 			 </ul>
 		  </li>
 		  {{end}}
@@ -896,71 +863,91 @@
 			 </ul>
 		  </li>
 		  <li class="html_elements Demo">
-			   <a href="#html_elements" onClick="HideMenu();" title="HTML-Elements">
+			   <a href="#html_elements" title="HTML-Elements">
 				   <em class="fa fa-html5"></em>
 				   <span>HTML-Elements</span>
 			   </a>
 		  </li>
 		  <li class="visible-xs">
-			 <a href="#language" data-toggle="collapse" class="toggle-hover">
+			 <span>
 				<em class="fa fa-language"></em>
 				<span>Language</span>
-			 </a>
-			 <ul id="language" class="nav sidebar-subnav collapse">
-				<li class="sidebar-subnav-header">Language</li>
+			 </span>
+			 <ul id="language">
 				<li>
-				   <a href="#" onClick="changeLanguage('gb'); HideMenu();">
+				   <a href="#" onClick="changeLanguage('gb');">
 					  <span>Enghlish (UK)</span>
 				   </a>
 				</li>
 				<li>
-				   <a href="#" onClick="changeLanguage('nl'); HideMenu();">
+				   <a href="#" onClick="changeLanguage('nl');">
 					  <span>Nederlands (NL)</span>
 				   </a>
 				</li>
 			 </ul>
 		  </li>
 		  <li class="visible-xs">
-			 <a href="" onclick="return logout()">
+			 <a href="" onclick="return logout();">
 				<em class="icon-logout"></em>
 				<span>Exit</span>
 			 </a>
 		  </li>
-		  <li id="DemoButton"><button class="btn btn-default btn-demo" type="button" onClick="Demo();"><span class="fa fa-eye"></span><em> Show opportunities</em></button><input id="demo" type="hidden" value="0"></li>
+		  <li id="DemoButton">
+		  	<button class="btn btn-default btn-demo" type="button" onClick="Demo();">
+			<span class="fa fa-eye"></span><em> Show opportunities</em></button>
+			<input id="demo" type="hidden" value="0">
+		  </li>
 	   </ul>
 	   <!-- END sidebar nav-->
 	</nav>
- </div>
+<!-- </div>-->
  <!-- END Sidebar (left)-->
-</aside>
+<!--</aside>-->
 <style>
 	#DemoButton {
 		display:none;
 	}
 </style>
 <script>
-	/*$(document).ready(function(){
+	$(document).ready(function(){
 		setTimeout(function () {
 			$("#mmenu").mmenu({
 				extensions: ['widescreen', 'theme-white', 'effect-menu-slide', 'pagedim-black'],
 				navbars	: [
 					{
-						position	: 'top',
-						content		: [
+						position: 'top',
+						content: [
 							'prev',
 							'title'
 						]
+					},
+					{
+						position: 'top',
+						height: 3,
+						content	: $("#user")
 					}
-				]
+				],
+				setSelected		: {
+					hover: true,
+					parent: true
+				}
+			}, {
+				classNames: {
+					selected: "active"
+				},
+				offCanvas: {
+					pageSelector: "#dl_page"
+				}
 			});
 			
-			var api = $("#mmenuu").data("mmenu");
+			var api = $("#mmenu").data("mmenu");
+			api.initPanels($("#mmenu-panel"));
 			api.bind("initPanels", function($panel) {
-				console.log("This panel is now opened:" + $panel.attr( "id" ));
+				//console.log("This panel is now opened:" + $panel.attr( "id" ));
 			});
-			api.initPanels($("#mmenu"));
-		}, 110);
-	});*/
+		}, 500);
+	});
+	
 	$(document).keydown(function(e){
 		'use strict';
 		
