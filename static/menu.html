@@ -349,12 +349,11 @@
 		  </li>
 		  {{if ne .Data.CitizenId 0}}
 		  <!-- START User avatar toggle-->
-		  <li>
-			 <!-- Button used to collapse the left sidebar. Only visible on tablet and desktops-->
+		  <!--<li>
 			  <a id="user-block-toggle" class="hidden-xs" href="#user-block" data-toggle="collapse">
 				<em class="icon-user"></em>
 			 </a>
-		  </li>
+		  </li>-->
 		  <!-- END User avatar toggle-->
 		  {{end}}
 	   </ul>
@@ -454,20 +453,17 @@
 		  <!-- START user info-->
 		  <div id="user" class="has-user-block">
 			 <div id="user-block">
-				<div class="item user-block" onclick="load_template('citizen_profile');">
+				<div class="item user-block">
 				   <!-- User picture-->
-				   <div class="user-block-picture">
-					  <div class="user-block-status">
-						 {{if .CitizenAvatar}}<img id="Avatar" alt="Avatar" style="width: 60px; height: 60px" class="img-thumbnail img-circle" src="static/img/avatar.svg">
-						 <script>document.getElementById('Avatar').setAttribute( 'src', '{{.CitizenAvatar}}' ); </script>
-						 {{end}}
-					  </div>
-				   </div>
-				   <!-- Name and Job-->
-				   <div class="user-block-info">
-					  <span class="user-block-name">{{.CitizenName}}<i class="fa fa-angle-down"></i></span>
-					   <img id="menu-flag" height="15"><script>document.getElementById('menu-flag').setAttribute( 'src', '{{.StateFlag}}' ); </script>
-					   <span class="user-block-role">{{.StateName}}</span>
+				   <div class="user-block-picture user-block-info">
+						<img id="Avatar" style="width:60px; height:60px;" class="img-thumbnail img-circle" src="static/img/avatar.svg" alt="" {{if .CitizenAvatar}}style="cursor:pointer;" onclick="load_template('citizen_profile');"{{end}} />
+						{{if .CitizenAvatar}}<script>document.getElementById('Avatar').setAttribute( 'src', '{{.CitizenAvatar}}' ); </script>{{end}}
+						<span class="user-block-name">{{if .CitizenName}}{{.CitizenName}}{{else}}Anonym{{end}}</span>
+						<img id="menu-flag" class="menu-flag" src="static/countries/no_citizenship.png" alt="" />
+						{{if .StateFlag}}
+							<script>document.getElementById('menu-flag').setAttribute('src', '{{.StateFlag}}');</script>
+						{{end}}
+						<span class="user-block-role">{{if .StateName}}{{.StateName}}{{else}}No citizenship{{end}}</span>
 				   </div>
 				</div>
 			 </div>
