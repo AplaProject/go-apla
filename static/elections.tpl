@@ -7,7 +7,7 @@ SetVar(
 	type_new_table_id = TxId(NewTable),
 	type_append_menu_id = TxId(AppendMenu),
 	sc_conditions = "$citizen == #wallet_id#")
-SetVar(`sc_ SLStartVoting = contract SLStartVoting {
+SetVar(`sc_SLStartVoting = contract SLStartVoting {
 	data {
 		SmartLaws string
 		SmartLawsId int
@@ -351,7 +351,7 @@ func action {
 
 	}
 }`)
-TextHidden( sc_ SLStartVoting, sc_GECandidateRegistration, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResalt, sc_LSSignature, sc_SLEdit, sc_SLNewVoting, sc_SLVoting, sc_SLVotingResalt)
+TextHidden( sc_SLStartVoting, sc_GECandidateRegistration, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResalt, sc_LSSignature, sc_SLEdit, sc_SLNewVoting, sc_SLVoting, sc_SLVotingResalt)
 SetVar(`p_GECampaigns #= Title: Election Campaigns
 Navigation(LiTemplate(GEElections, Elections), Campaigns)
 Divs(md-12, panel panel-default)
@@ -981,7 +981,7 @@ Desc: "General Elections and votes in the Legislature",
 			typeid: #type_new_contract_id#,
 			global: 0,
 			name: " SLStartVoting",
-			value: $("#sc_ SLStartVoting").val(),
+			value: $("#sc_SLStartVoting").val(),
 			conditions: $("#sc_conditions").val()
 			}
 	   },
