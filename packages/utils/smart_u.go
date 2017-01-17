@@ -366,7 +366,6 @@ func IfEnd(vars *map[string]string, pars ...string) string {
 	if ilen > 0 {
 		(*vars)[`ifs`] = (*vars)[`ifs`][:ilen-1]
 	}
-	fmt.Println(`IFEnd`, (*vars)[`ifs`])
 	return ``
 }
 
@@ -877,7 +876,7 @@ func LiTemplate(vars *map[string]string, pars ...string) string {
 	if len(pars) >= 3 {
 		params = pars[2]
 	}
-	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s', {%s}); HideMenu();"><span>%s</span></a></li>`,
+	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s', {%s});"><span>%s</span></a></li>`,
 		name, params, title)
 }
 
@@ -887,7 +886,7 @@ func AppNav(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		title = pars[1]
 	}
-	return fmt.Sprintf(`<a href="#" onclick="load_app('%s'); HideMenu();"><span>%s</span></a>`, name, title)
+	return fmt.Sprintf(`<a href="#" onclick="load_app('%s');"><span>%s</span></a>`, name, title)
 }
 
 func TemplateNav(vars *map[string]string, pars ...string) string {
@@ -903,10 +902,10 @@ func TemplateNav(vars *map[string]string, pars ...string) string {
 	}
 	result := ""
 	if len(par1) > 0 && len(val1) > 0 {
-		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s', {%s: '%s'}); HideMenu();"><span>%s</span></a>`,
+		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s', {%s: '%s'});"><span>%s</span></a>`,
 			name, par1, val1, title)
 	} else {
-		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s'); HideMenu();"><span>%s</span></a>`,
+		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s');"><span>%s</span></a>`,
 			name, title)
 	}
 	return result
@@ -1563,7 +1562,7 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 		icon = fmt.Sprintf(`<em class="%s"></em>`, lib.Escape(pars[5]))
 	}
 	return fmt.Sprintf(`<li class="%s">
-		<a href="#" title="%s" onClick="%s('%s',{%s});HideMenu();">
+		<a href="#" title="%s" onClick="%s('%s',{%s});">
 		%s<span>%[2]s</span></a></li>`,
 		class, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
 }

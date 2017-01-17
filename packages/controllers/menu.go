@@ -48,11 +48,11 @@ func init() {
 
 func ReplaceMenu(menu string) string {
 	qrx := regexp.MustCompile(`(?is)\[([\w\s]*)\]\(glob.([\w\s]*)\){?([\w\d\s""'',:]*)?}?`)
-	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_template('$2',{global:1, $3}); HideMenu();\"><span>$1</span></a></li>")
+	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_template('$2',{global:1, $3});\"><span>$1</span></a></li>")
 	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(([\w\s]*)\){?([\w\d\s"",:]*)?}?`)
-	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_template('$2',{$3}); HideMenu();\"><span>$1</span></a></li>")
+	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_template('$2',{$3});\"><span>$1</span></a></li>")
 	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(sys.([\w\s]*)\){?([\w\d\s"",:]*)?}?`)
-	return qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_page('$2', {$3}); HideMenu();\"><span>$1</span></a></li>")
+	return qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_page('$2', {$3});\"><span>$1</span></a></li>")
 }
 
 func (c *Controller) Menu() (string, error) {
