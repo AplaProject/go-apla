@@ -56,10 +56,10 @@
 			 </a>-->
 			 <!-- Button to show/hide the sidebar on mobile. Visible on mobile only.-->
 			 <!--<a href="#" data-toggle-state="aside-toggled" data-no-persist="true" class="visible-xs sidebar-toggle mobile_menu">-->
-			 <a href="#mmenu" class="visible-xs sidebar-toggle mobile_menu">
-				<!--<em class="fa fa-navicon"></em>-->
+			 <!--<a href="#mmenu" class="visible-xs sidebar-toggle mobile_menu">
+				<em class="fa fa-navicon"></em>
 				<div class="patty"></div>
-			 </a>
+			 </a>-->
 		  </li>
 		  {{if ne .Data.CitizenId 0}}
 		  <!-- START User avatar toggle-->
@@ -170,7 +170,9 @@
 				<div class="item user-block">
 				   <!-- User picture-->
 				   <div class="user-block-picture user-block-info">
-						<img id="Avatar" style="width:60px; height:60px;" class="img-thumbnail img-circle" src="static/img/avatar.svg" alt="" {{if .CitizenAvatar}}style="cursor:pointer;" onclick="load_template('citizen_profile');"{{end}} />
+				   		<div class="img-thumbnail img-circle" {{if .CitizenAvatar}}style="cursor:pointer;" onclick="load_template('citizen_profile');"{{end}}>
+							<img id="Avatar" class="img-circle" src="static/img/avatar.svg" alt="" />
+						</div>
 						{{if .CitizenAvatar}}<script>document.getElementById('Avatar').setAttribute( 'src', '{{.CitizenAvatar}}' ); </script>{{end}}
 						<span class="user-block-name">{{if .CitizenName}}{{.CitizenName}}{{else}}Anonym{{end}}</span>
 						<!--<img id="menu-flag" class="menu-flag" src="static/countries/no_citizenship.png" alt="" />
@@ -590,7 +592,7 @@
 					},
 					{
 						position: 'top',
-						height: 3,
+						height: 4,
 						content	: $("#user")
 					}
 				],
@@ -611,6 +613,31 @@
 			MenuAPI.initPanels($("#mmenu-panel"));
 			MenuAPI.bind("initPanels", function($panel) {
 				//console.log("This panel is now opened:" + $panel.attr( "id" ));
+			});
+			
+			var $html = $("html");
+			var $burger = $("#hamburger").on('click', function(e) {
+				e.preventDefault();
+				if ($html.hasClass("mm-opened")){
+					MenuAPI.close();
+				} else {
+					MenuAPI.open();
+				}
+			})
+			.children(".hamburger");
+			
+			MenuAPI.bind('closed', function() {
+				setTimeout(function() {
+					$burger.parent().removeClass("isActive");
+					$burger.removeClass("is-active");
+				}, 100);
+			});
+			
+			MenuAPI.bind('opened', function() {
+				setTimeout(function() {
+					$burger.parent().addClass("isActive");
+					$burger.addClass("is-active");
+				}, 100);
 			});
 		}, 500);
 	});
