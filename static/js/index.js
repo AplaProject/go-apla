@@ -273,10 +273,20 @@ function load_template(page, parameters) {
 				type: 'POST',
 				data: parameters ? parameters : {},
 				success: function (data) {
-					console.log('Template menu', data);
-					$("#lidcitizen_gov ul").remove();
-					$("#lidcitizen_gov").append('<ul>' + data + '</ul>');
-					api.initPanels($("#lidcitizen_gov").parent());
+					var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
+					if (aname.length > 1) {
+						name = aname[1];
+						console.log('NAME', name);
+						$("#li" + name + " ul").remove();
+						$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
+						//$(".active").removeClass('active');
+						//					$("#li" + page).addClass('active');
+
+						//					$("#ligcitizen_government").addClass('active');
+						MenuAPI.initPanels($("#ul" + name));
+					}
+					//MenuAPI.initPanels($("#mmenu-panel"));
+
 					//param = JSON.parse(data);
 					//$("#mp_" + param.idname).after(param.menu);
 					//									var li = $("#dc li:first").html();
