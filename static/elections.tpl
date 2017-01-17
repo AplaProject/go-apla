@@ -980,7 +980,7 @@ Desc: "General Elections and votes in the Legislature",
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
 			global: 0,
-			name: " SLStartVoting",
+			name: "SLStartVoting",
 			value: $("#sc_SLStartVoting").val(),
 			conditions: $("#sc_conditions").val()
 			}
