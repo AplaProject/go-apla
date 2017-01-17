@@ -173,10 +173,10 @@
 						<img id="Avatar" style="width:60px; height:60px;" class="img-thumbnail img-circle" src="static/img/avatar.svg" alt="" {{if .CitizenAvatar}}style="cursor:pointer;" onclick="load_template('citizen_profile');"{{end}} />
 						{{if .CitizenAvatar}}<script>document.getElementById('Avatar').setAttribute( 'src', '{{.CitizenAvatar}}' ); </script>{{end}}
 						<span class="user-block-name">{{if .CitizenName}}{{.CitizenName}}{{else}}Anonym{{end}}</span>
-						<img id="menu-flag" class="menu-flag" src="static/countries/no_citizenship.png" alt="" />
+						<!--<img id="menu-flag" class="menu-flag" src="static/countries/no_citizenship.png" alt="" />
 						{{if .StateFlag}}
 							<script>document.getElementById('menu-flag').setAttribute('src', '{{.StateFlag}}');</script>
-						{{end}}
+						{{end}}-->
 						<span class="user-block-role">{{if .StateName}}{{.StateName}}{{else}}No citizenship{{end}}</span>
 				   </div>
 				</div>
@@ -622,7 +622,7 @@
 	$(document).ready(function(){
 		setTimeout(function () {
 			$("#mmenu").mmenu({
-				extensions: ['widescreen', 'theme-white', 'effect-menu-slide', 'pagedim-black'],
+				extensions: ['widescreen', 'theme-gray', 'effect-menu-slide', 'pagedim-black'],
 				navbars	: [
 					{
 						position: 'top',
@@ -650,9 +650,9 @@
 				}
 			});
 			
-			var api = $("#mmenu").data("mmenu");
-			api.initPanels($("#mmenu-panel"));
-			api.bind("initPanels", function($panel) {
+			MenuAPI = $("#mmenu").data("mmenu");
+			MenuAPI.initPanels($("#mmenu-panel"));
+			MenuAPI.bind("initPanels", function($panel) {
 				//console.log("This panel is now opened:" + $panel.attr( "id" ));
 			});
 		}, 500);

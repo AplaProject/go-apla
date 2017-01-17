@@ -1,3 +1,4 @@
+var MenuAPI;
 var qDLT = 1000000000000000000;
 var g_menuShow = true;
 var GKey = {
