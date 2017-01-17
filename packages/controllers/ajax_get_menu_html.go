@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//	"strings"
 )
@@ -48,11 +48,10 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 
 		return strings.Replace(strings.Replace(strings.Replace(menu, "\n", "", -1), "\r", "", -1), "\t", "", -1), nil
 	*/
-	menu = ReplaceMenu(menu)
-	menu += fmt.Sprintf(`<script>
-	$('.aside .nav li').removeClass('active');
-	$('.citizen_` + pageName + `').addClass('active');
-	</script>`)
+	params := make(map[string]string)
+	params[`state_id`] = c.StateIdStr
+	params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
+	menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
 
 	return menu, nil
 

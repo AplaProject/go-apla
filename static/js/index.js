@@ -238,7 +238,6 @@ function load_page(page, parameters) {
 	//    $('#loader').spin();
 	clearAllTimeouts();
 	NProgress.set(1.0);
-	$('.menu_page').remove();
 	$.post("content?page=" + page, parameters ? parameters : {},
 		function (data) {
 			//            $("#loader").spin(false);
@@ -268,17 +267,20 @@ function load_template(page, parameters) {
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
 				$('.sidebar-collapse').collapse('toggle');
 			}
-			$('.menu_page').remove();
 			//			console.log(page);
 			$.ajax({
 				url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 				type: 'POST',
 				data: parameters ? parameters : {},
 				success: function (data) {
+					console.log('Template menu', data);
+					$("#lidcitizen_gov ul").remove();
+					$("#lidcitizen_gov").append('<ul>' + data + '</ul>');
+					api.initPanels($("#lidcitizen_gov").parent());
 					//param = JSON.parse(data);
 					//$("#mp_" + param.idname).after(param.menu);
-									var li = $("#dc li:first").html();
-					                $("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
+					//									var li = $("#dc li:first").html();
+					///					                $("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
 				}
 			});
 		}, "html");
@@ -287,7 +289,6 @@ function load_template(page, parameters) {
 function load_app(page) {
 	clearAllTimeouts();
 	NProgress.set(1.0);
-	$('.menu_page').remove();
 	$.post("app?page=" + page, {},
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
@@ -475,6 +476,9 @@ function preloader(elem) {
 }
 
 function dl_navigate(page, parameters) {
+	if (page.substr(0, 2) == 'ul') {
+		return;
+	}
 	var json = JSON.stringify(parameters);
 	//$('#loader').spin();
 	clearAllTimeouts();
@@ -499,7 +503,6 @@ function dl_navigate(page, parameters) {
 
 function load_menu(lang, submenu) {
 	if (g_menuShow) {
-		$('.menu_page').remove();
 		parametersJson = "";
 		if (typeof lang != 'undefined') {
 			parametersJson: '{"lang":"1"}'
@@ -512,8 +515,9 @@ function load_menu(lang, submenu) {
 					type: 'POST',
 					data: {},
 					success: function (data) {
-						param = JSON.parse(data);
-						$("#mp_" + param.idname).after(param.menu);
+						console.log('load_menu', data);
+						//						param = JSON.parse(data);
+						//						$("#mp_" + param.idname).after(param.menu);
 					}
 				});
 			loadLanguage();
@@ -1014,9 +1018,9 @@ function loadjs(filename) {
 
 function changeLanguage(lang) {
 	loadjs('static/lang/' + lang + '.js');
-/*	setTimeout(function () {
-		updateLanguage('.lang');
-	}, 500);*/
+	/*	setTimeout(function () {
+			updateLanguage('.lang');
+		}, 500);*/
 	$("#langflag").attr('class', 'flag ' + lang);
 	localStorage.setItem('EGAAS_LANG', lang);
 	//$("select").trigger("change.select2");

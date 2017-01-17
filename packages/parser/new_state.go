@@ -400,18 +400,17 @@ PageEnd:`, `menu_default`, sid,
 	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		`menu_default`, `[Dashboard](dashboard_default)
-		[Government dashboard](government)`, sid,
-		`government`, `
-[Citizen dashboard](dashboard_default)
-[Government dashboard](government)
-[Tables](sys.listOfTables)
-[Smart contracts](sys.contracts)
-[Apps list](sys.app_catalog)
-[Language](sys.languages)
-[Export](sys.export_tpl)
-[Interface](sys.interface)
-[Checking citizens](CheckCitizens)`, sid)
+		`menu_default`, `MenuItem(Dashboard, dcitizen_dashboard, load_template, dashboard_default)
+ MenuItem(Government dashboard, dcitizen_gov, load_template, government)`, sid,
+		`government`, `MenuItem(Citizen dashboard, gcitizen_dashboard, load_template, dashboard_default)
+MenuItem(Government dashboard, gcitizen_government, load_template, government)
+MenuItem(Tables, gcitizen_table, load_page, listOfTables)
+MenuItem(Smart contracts, gcitizen_contracts, load_page, contracts)
+MenuItem(App List, gcitizen_applist, load_page, app_catalog)
+MenuItem(Languages, gcitizen_languages, load_page, languages)
+MenuItem(Export, gcitizen_export, load_page, export_tpl)
+MenuItem(Interface, gcitizen_interface, load_page, interface)
+MenuItem(Checking citizens, gcitizen_check, load_template, CheckCitizens)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
