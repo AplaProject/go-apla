@@ -526,8 +526,12 @@ $(document).ready(function(){
 			$("#phrase").val(private);
 			import_form();
 		} else {
-			do_phrase();
-			register_form();
+			{{if .PrivCountry}}
+				import_form();
+			{{else}}
+				do_phrase();
+				register_form();
+			{{end}}
 		}
 	} else if (localStorage.getItem('EncKey') || GKey.Accounts.length) {
 		login_form();

@@ -1013,9 +1013,9 @@ function loadjs(filename) {
 
 function changeLanguage(lang) {
 	loadjs('static/lang/' + lang + '.js');
-	setTimeout(function () {
+/*	setTimeout(function () {
 		updateLanguage('.lang');
-	}, 100);
+	}, 500);*/
 	$("#langflag").attr('class', 'flag ' + lang);
 	localStorage.setItem('EGAAS_LANG', lang);
 	//$("select").trigger("change.select2");

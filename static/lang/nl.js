@@ -1,4 +1,4 @@
-Lang={
+Lang = {
 	"lng": "NL",
 	"installation": "Installatie",
 	"mode": "Modus",
@@ -174,3 +174,5 @@ Lang={
 	"accept": "Accepteren",
 	"reject": "Verwerpen"
 }
+
+updateLanguage('.lang');
