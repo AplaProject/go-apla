@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"regexp"
+	//	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -25,14 +25,12 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-//"fmt"
-
 const NMenu = `menu`
 
 type menuPage struct {
 	Data          *CommonPage
 	Menu          string
-	MainMenu      string
+	MainMenu      bool
 	CanCitizen    bool
 	StateName     string
 	StateFlag     string
@@ -46,6 +44,7 @@ func init() {
 	newPage(NMenu)
 }
 
+/*
 func ReplaceMenu(menu string) string {
 	qrx := regexp.MustCompile(`(?is)\[([\w\s]*)\]\(glob.([\w\s]*)\){?([\w\d\s""'',:]*)?}?`)
 	menu = qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_template('$2',{global:1, $3});\"><span>$1</span></a></li>")
@@ -54,11 +53,12 @@ func ReplaceMenu(menu string) string {
 	qrx = regexp.MustCompile(`(?is)\[([\w\s]*)\]\(sys.([\w\s]*)\){?([\w\d\s"",:]*)?}?`)
 	return qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_page('$2', {$3});\"><span>$1</span></a></li>")
 }
-
+*/
 func (c *Controller) Menu() (string, error) {
 	var (
-		err                                                                  error
-		updver, menu, main, stateName, stateFlag, citizenName, citizenAvatar string
+		err                                                            error
+		updver, menu, stateName, stateFlag, citizenName, citizenAvatar string
+		isMain                                                         bool
 	)
 
 	if strings.HasPrefix(c.r.Host, `localhost`) {
@@ -70,20 +70,21 @@ func (c *Controller) Menu() (string, error) {
 
 	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
 	if c.StateIdStr != "" {
-		main, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "xmain_menu").String()
+		params := make(map[string]string)
+		params[`state_id`] = c.StateIdStr
+		params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
+
+		menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "main_menu").String()
 		if err != nil {
 			return "", err
 		}
-		if len(main) > 0 {
-			params := make(map[string]string)
-			params[`state_id`] = c.StateIdStr
-			params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
-			main = utils.LangMacro(textproc.Process(main, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
-		} else {
+		if len(menu) == 0 {
 			menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
 			if err != nil {
 				return "", err
 			}
+		} else {
+			isMain = true
 		}
 
 		stateName, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_name").String()
@@ -104,9 +105,10 @@ func (c *Controller) Menu() (string, error) {
 		if err != nil {
 			log.Error("%v", err)
 		}
-		menu = ReplaceMenu(menu)
+		//		menu = ReplaceMenu(menu)
+		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
 	}
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: main, CanCitizen: canCitizen > 0,
+	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
 		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName,
 		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc()})
 }

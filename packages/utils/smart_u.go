@@ -137,7 +137,7 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
-		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, //`MenuPage`: MenuPage,
 	})
 }
 
@@ -1516,38 +1516,33 @@ func MapPoint(vars *map[string]string, pars ...string) string {
 
 func MenuGroup(vars *map[string]string, pars ...string) string {
 	var (
-		class, icon, in, id string
+		idname, icon string
 	)
-	id = (*vars)[`menuid`]
-	if len(id) > 0 {
-		id = IntToStr(StrToInt(id) + 1)
-	} else {
-		id = `0`
-	}
-	(*vars)[`menuid`] = id
+	/*	id = (*vars)[`menuid`]
+		if len(id) > 0 {
+			id = IntToStr(StrToInt(id) + 1)
+		} else {
+			id = `0`
+		}
+		(*vars)[`menuid`] = id*/
 	if len(pars) > 1 {
-		class = lib.Escape(pars[1])
+		idname = lib.Escape(pars[1])
 	}
 	if len(pars) > 2 {
 		icon = fmt.Sprintf(`<em class="%s"></em>`, lib.Escape(pars[2]))
 	}
-	if len(pars) > 3 {
-		in = lib.Escape(pars[3])
-	}
-	return fmt.Sprintf(`<li class="%s">
-			 <a href="#m%s" title="%s" data-toggle="collapse" class="toggle-hover">
-				%s<span>%[3]s</span>
-			 </a>
-			 <ul id="m%[2]s" class="nav sidebar-subnav collapse %s">`,
-		class, id, LangRes(vars, lib.Escape(pars[0])), icon, in)
+	return fmt.Sprintf(`<li id="li%s"><span>%s
+     <span>%s</span></span>
+	 <ul id="ul%[1]s">`,
+		idname, icon, LangRes(vars, lib.Escape(pars[0])))
 }
 
 func MenuItem(vars *map[string]string, pars ...string) string {
 	var (
-		class, action, page, params, icon string
+		idname, action, page, params, icon string
 	)
 	if len(pars) > 1 {
-		class = lib.Escape(pars[1])
+		idname = lib.Escape(pars[1])
 	}
 	if len(pars) > 2 {
 		action = lib.Escape(pars[2])
@@ -1561,15 +1556,16 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 	if len(pars) > 5 {
 		icon = fmt.Sprintf(`<em class="%s"></em>`, lib.Escape(pars[5]))
 	}
-	return fmt.Sprintf(`<li class="%s">
+	return fmt.Sprintf(`<li id="li%s">
 		<a href="#" title="%s" onClick="%s('%s',{%s});">
 		%s<span>%[2]s</span></a></li>`,
-		class, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
+		idname, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
 }
 
+/*
 func MenuPage(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<div id="mp_%s" style="display: none;"></div>`, lib.Escape(pars[0]))
-}
+}*/
 
 func MenuEnd(vars *map[string]string, pars ...string) string {
 	return `</ul></li>`
