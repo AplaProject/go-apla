@@ -18,11 +18,6 @@
 	}
 </style>
 
-<script>
-	$(".aside .nav li").removeClass("active");
-	$(".anonym, .anonym_apps_list").addClass("active");
-</script>
-
 <div class="content-heading">
 	Application List
 </div>
@@ -42,7 +37,7 @@
 			<div class="panel-footer">
 				<div class="clearfix">
 					<div class="pull-right">
-						<a href="#" onclick="load_app('{{.Name}}'); HideMenu();" type="button" class="btn btn-primary">Launch</a>
+						<a href="#" onclick="load_app('{{.Name}}');" type="button" class="btn btn-primary">Launch</a>
 					</div>
 				</div>
 			</div>
