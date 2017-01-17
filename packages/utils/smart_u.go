@@ -137,7 +137,7 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
-		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, //`MenuPage`: MenuPage,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage,
 	})
 }
 
@@ -1539,11 +1539,11 @@ func MenuGroup(vars *map[string]string, pars ...string) string {
 
 func MenuItem(vars *map[string]string, pars ...string) string {
 	var (
-		idname, action, page, params, icon string
+		/*idname,*/ action, page, params, icon string
 	)
-	if len(pars) > 1 {
+	/*	if len(pars) > 1 {
 		idname = lib.Escape(pars[1])
-	}
+	}*/
 	if len(pars) > 2 {
 		action = lib.Escape(pars[2])
 	}
@@ -1559,13 +1559,12 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<li id="li%s">
 		<a href="#" title="%s" onClick="%s('%s',{%s});">
 		%s<span>%[2]s</span></a></li>`,
-		idname, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
+		page, LangRes(vars, lib.Escape(pars[0])), action, page, params, icon)
 }
 
-/*
 func MenuPage(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<div id="mp_%s" style="display: none;"></div>`, lib.Escape(pars[0]))
-}*/
+	return fmt.Sprintf(`<!--%s-->`, lib.Escape(pars[0]))
+}
 
 func MenuEnd(vars *map[string]string, pars ...string) string {
 	return `</ul></li>`
