@@ -166,7 +166,7 @@
 	   <ul id="mmenu-panel" class="nav">
 		  <!-- START user info-->
 		  <li id="user" class="has-user-block">
-			 <div id="user-block">
+			 <span id="user-block">
 				<div class="item user-block">
 				   <!-- User picture-->
 				   <div class="user-block-picture user-block-info">
@@ -182,7 +182,7 @@
 						<span class="user-block-role">{{if .StateName}}{{.StateName}}{{else}}No citizenship{{end}}</span>
 				   </div>
 				</div>
-			 </div>
+			 </span>
 		  </li>
 		  <!-- END user info-->
 		  <!-- Iterates over all sidebar items-->
@@ -589,15 +589,15 @@
 							'prev',
 							'title'
 						]
-					},
+					/*},
 					{
 						position: 'top',
 						height: 4,
-						content	: $("#user")
+						content	: $("#user")*/
 					}
 				],
 				setSelected		: {
-					hover: true,
+					//hover: true,
 					parent: true
 				}
 			}, {
