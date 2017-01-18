@@ -374,7 +374,7 @@
 				<button type="button" class="btn btn-link" onclick="" id="back" title="Back">Show page</button>
 			   <div class="form-group">
 				   <label>Name</label>
-				   {{if .DataPage.name}} <p class="form-control-static" id="page_name_text">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name"> {{end}}
+				   {{if .DataPage.name}} <p class="form-control-static" id="page_name_text">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name" value="{{.Name}}"> {{end}}
 			   </div>
 			   <div class="form-group">
 				   <label>Value</label>

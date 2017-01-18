@@ -247,19 +247,11 @@ function load_page(page, parameters) {
 			//loadLanguage();
 			hist_push(['load_page', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
-			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
-				$('.sidebar-collapse').collapse('toggle');
 		}, "html");
 }
 
 var latestMenu = '';
 function ajaxMenu(page, parameters) {
-	if (latestMenu != '') {
-		$("#ul" + latestMenu).remove();
-		$("#li" + latestMenu + ' .mm-next').remove();
-		MenuAPI.update();
-	}
-
 	$.ajax({
 		url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 		type: 'POST',
@@ -267,13 +259,21 @@ function ajaxMenu(page, parameters) {
 		success: function (data) {
 			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
 			if (aname.length > 1) {
-				name = aname[1];
+				if (latestMenu != '') {
+					//					MenuAPI.openPanel($("#mmenu-panel"));
+					MenuAPI.setSelected($("#li" + latestMenu), true);
+					$("#ul" + latestMenu).remove();
+					$("#li" + latestMenu + ' .mm-next').remove();
+					//					MenuAPI.update();
+				}
+				var name = aname[1];
 				latestMenu = name;
 				$("#li" + name + " ul").remove();
 				$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
 				updateLanguage($("#ul" + name + ' .lang'));
 				MenuAPI.initPanels($("#ul" + name));
 				MenuAPI.openPanel($("#ul" + name));
+				$("#li" + name + ' .mm-next').remove();
 				MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
 			}
 		}
@@ -285,15 +285,16 @@ function load_template(page, parameters) {
 	NProgress.set(1.0);
 	$.post("template?page=" + page, parameters ? parameters : {},
 		function (data) {
+			if (data == '') {
+				load_page('newPage', { global: 0, name: page });
+				return;
+			}
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
 			updateLanguage("#dl_content .lang");
 			//loadLanguage();
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
-			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
-				$('.sidebar-collapse').collapse('toggle');
-			}
 			ajaxMenu(page, parameters);
 		}, "html");
 }
@@ -309,8 +310,6 @@ function load_app(page) {
 			//loadLanguage();
 			hist_push(['load_app', page]);
 			window.scrollTo(0, 0);
-			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
-				$('.sidebar-collapse').collapse('toggle');
 		}, "html");
 }
 
