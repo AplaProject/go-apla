@@ -165,7 +165,7 @@
 	   <!-- START sidebar nav-->
 	   <ul id="mmenu-panel" class="nav">
 		  <!-- START user info-->
-		  <li id="user" class="has-user-block">
+		  <li class="has-user-block">
 			 <span id="user-block">
 				<div class="item user-block">
 				   <!-- User picture-->
@@ -555,7 +555,11 @@
 				</li>
 			 </ul>
 		  </li>
-		  <li class="visible-xs">
+		  <li id="exit">
+			 <a href="#mmenu-panel">
+				<em class="icon-home"></em>
+				<span>Home</span>
+			 </a>
 			 <a href="" onclick="return logout();">
 				<em class="icon-logout"></em>
 				<span>Exit</span>
@@ -579,68 +583,77 @@
 </style>
 <script>
 	$(document).ready(function(){
-//		setTimeout(function () {
-			$("#mmenu").mmenu({
-				extensions: ['widescreen', 'theme-white', 'effect-menu-slide', 'pagedim-black'],
-				navbars	: [
-					{
-						position: 'top',
-						content: [
-							'prev',
-							'title'
-						]
-					/*},
-					{
-						position: 'top',
-						height: 4,
-						content	: $("#user")*/
-					}
-				],
-				setSelected		: {
-					//hover: true,
-					parent: true
-				}
-			}, {
-				classNames: {
-					selected: "active"
+		updateLanguage('#mmenu .lang');
+		
+		$("#mmenu").mmenu({
+			extensions: ['widescreen', 'theme-white', 'effect-menu-slide', 'pagedim-black'],
+			navbar: {
+				add: true,
+				title: 'Welcome',
+				titleLink: 'parent'
+			},
+			navbars	: [
+				{
+					position: 'top',
+					content: [
+						/*'breadcrumbs',*/
+						'prev',
+						'title'
+					]
 				},
-				offCanvas: {
-					pageSelector: "#dl_page"
+				{
+					position: 'bottom',
+					content: $("#exit")
+				/*},
+				{
+					position: 'top',
+					height: 4,
+					content	: $("#user")*/
 				}
-			});
-			
-			MenuAPI = $("#mmenu").data("mmenu");
-			MenuAPI.initPanels($("#mmenu-panel"));
-			MenuAPI.bind("initPanels", function($panel) {
-				//console.log("This panel is now opened:" + $panel.attr( "id" ));
-			});
-			
-			var $html = $("html");
-			var $burger = $("#hamburger").on('click', function(e) {
-				e.preventDefault();
-				if ($html.hasClass("mm-opened")){
-					MenuAPI.close();
-				} else {
-					MenuAPI.open();
-				}
-			})
-			.children(".hamburger");
-			
-			MenuAPI.bind('closed', function() {
-				setTimeout(function() {
-					$burger.parent().removeClass("isActive");
-					$burger.removeClass("is-active");
-				}, 100);
-			});
-			
-			MenuAPI.bind('opened', function() {
-				setTimeout(function() {
-					$burger.parent().addClass("isActive");
-					$burger.addClass("is-active");
-				}, 100);
-			});
-			updateLanguage('#mmenu .lang');
-//		}, 500);
+			],
+			setSelected: {
+				//hover: true,
+				parent: true
+			}
+		}, {
+			classNames: {
+				selected: "active"
+			},
+			offCanvas: {
+				pageSelector: "#dl_page"
+			}
+		});
+		
+		MenuAPI = $("#mmenu").data("mmenu");
+		MenuAPI.initPanels($("#mmenu-panel"));
+		MenuAPI.bind("initPanels", function($panel) {
+			//console.log("This panel is now opened:" + $panel.attr( "id" ));
+		});
+		
+		var $html = $("html");
+		var $burger = $("#hamburger").on('click', function(e) {
+			e.preventDefault();
+			if ($html.hasClass("mm-opened")){
+				MenuAPI.close();
+			} else {
+				MenuAPI.open();
+			}
+		})
+		.children(".hamburger");
+		
+		MenuAPI.bind('closed', function() {
+			setTimeout(function() {
+				$burger.parent().removeClass("isActive");
+				$burger.removeClass("is-active");
+			}, 100);
+		});
+		
+		MenuAPI.bind('opened', function() {
+			setTimeout(function() {
+				$burger.parent().addClass("isActive");
+				$burger.addClass("is-active");
+			}, 100);
+		});
 	});
 	
 	$(document).keydown(function(e){
