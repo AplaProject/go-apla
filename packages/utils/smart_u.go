@@ -136,7 +136,7 @@ func init() {
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
 		`BlockInfo`: BlockInfo, `Back`: Back,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
-		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `InputDate`: InputDate,
+		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
 		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage,
 	})
 }
@@ -210,6 +210,10 @@ func Param(vars *map[string]string, pars ...string) string {
 
 func LangRes(vars *map[string]string, pars ...string) string {
 	return LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+}
+
+func LangJS(vars *map[string]string, pars ...string) string {
+	return fmt.Sprintf(`<span class="lang" lang-id="%s"></span>`, pars[0])
 }
 
 func ifValue(val string) bool {

@@ -276,21 +276,14 @@ function load_template(page, parameters) {
 					var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
 					if (aname.length > 1) {
 						name = aname[1];
-						console.log('NAME', name);
 						$("#li" + name + " ul").remove();
 						$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
-						//$(".active").removeClass('active');
-						//					$("#li" + page).addClass('active');
-
-						//					$("#ligcitizen_government").addClass('active');
+						//						$(".active").removeClass('active');
+						//						$("#li" + page).addClass('active');
 						MenuAPI.initPanels($("#ul" + name));
+						MenuAPI.openPanel($("#ul" + name));
+						MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
 					}
-					//MenuAPI.initPanels($("#mmenu-panel"));
-
-					//param = JSON.parse(data);
-					//$("#mp_" + param.idname).after(param.menu);
-					//									var li = $("#dc li:first").html();
-					///					                $("#dc").html('<li class="sidebar-subnav-header">' + li + '</li>' + data);
 				}
 			});
 		}, "html");
