@@ -55,6 +55,7 @@ func (c *Controller) NewPage() (string, error) {
 		TxTypeId:     txTypeId,
 		StateId:      c.SessStateId,
 		AllMenu:      allMenu,
+		Name:         c.r.FormValue("name"),
 		DataMenu:     map[string]string{},
 		DataPage:     map[string]string{}})
 	if err != nil {
