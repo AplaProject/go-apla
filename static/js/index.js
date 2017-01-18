@@ -252,7 +252,14 @@ function load_page(page, parameters) {
 		}, "html");
 }
 
+var latestMenu = '';
 function ajaxMenu(page, parameters) {
+	if (latestMenu != '') {
+		$("#ul" + latestMenu).remove();
+		$("#li" + latestMenu + ' .mm-next').remove();
+		MenuAPI.update();
+	}
+
 	$.ajax({
 		url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 		type: 'POST',
@@ -261,6 +268,7 @@ function ajaxMenu(page, parameters) {
 			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
 			if (aname.length > 1) {
 				name = aname[1];
+				latestMenu = name;
 				$("#li" + name + " ul").remove();
 				$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
 				updateLanguage($("#ul" + name + ' .lang'));
