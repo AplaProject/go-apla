@@ -259,19 +259,21 @@ function ajaxMenu(page, parameters) {
 		success: function (data) {
 			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
 			if (aname.length > 1) {
-				if (latestMenu != '') {
+				var name = aname[1];
+				if (latestMenu != '' && latestMenu != name) {
 					//					MenuAPI.openPanel($("#mmenu-panel"));
-					MenuAPI.setSelected($("#li" + latestMenu), true);
+					//					MenuAPI.setSelected($("#li" + latestMenu), true);
 					$("#ul" + latestMenu).remove();
 					$("#li" + latestMenu + ' .mm-next').remove();
 					//					MenuAPI.update();
 				}
-				var name = aname[1];
-				latestMenu = name;
-				$("#li" + name + " ul").remove();
-				$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
-				updateLanguage($("#ul" + name + ' .lang'));
-				MenuAPI.initPanels($("#ul" + name));
+				if (latestMenu != name) {
+					latestMenu = name;
+					$("#li" + name + " ul").remove();
+					$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
+					updateLanguage($("#ul" + name + ' .lang'));
+					MenuAPI.initPanels($("#ul" + name));
+				}
 				MenuAPI.openPanel($("#ul" + name));
 				$("#li" + name + ' .mm-next').remove();
 				MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
