@@ -243,8 +243,8 @@ function load_page(page, parameters) {
 			//            $("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			//updateLanguage("#dl_content .lang");
-			loadLanguage();
+			updateLanguage("#dl_content .lang");
+			//loadLanguage();
 			hist_push(['load_page', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -252,6 +252,25 @@ function load_page(page, parameters) {
 		}, "html");
 }
 
+function ajaxMenu(page, parameters) {
+	$.ajax({
+		url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
+		type: 'POST',
+		data: parameters ? parameters : {},
+		success: function (data) {
+			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
+			if (aname.length > 1) {
+				name = aname[1];
+				$("#li" + name + " ul").remove();
+				$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
+				updateLanguage($("#ul" + name + ' .lang'));
+				MenuAPI.initPanels($("#ul" + name));
+				MenuAPI.openPanel($("#ul" + name));
+				MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
+			}
+		}
+	});
+}
 
 function load_template(page, parameters) {
 	clearAllTimeouts();
@@ -260,32 +279,14 @@ function load_template(page, parameters) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			//updateLanguage("#dl_content .lang");
-			loadLanguage();
+			updateLanguage("#dl_content .lang");
+			//loadLanguage();
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
 				$('.sidebar-collapse').collapse('toggle');
 			}
-			//			console.log(page);
-			$.ajax({
-				url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
-				type: 'POST',
-				data: parameters ? parameters : {},
-				success: function (data) {
-					var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
-					if (aname.length > 1) {
-						name = aname[1];
-						$("#li" + name + " ul").remove();
-						$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
-						//						$(".active").removeClass('active');
-						//						$("#li" + page).addClass('active');
-						MenuAPI.initPanels($("#ul" + name));
-						MenuAPI.openPanel($("#ul" + name));
-						MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
-					}
-				}
-			});
+			ajaxMenu(page, parameters);
 		}, "html");
 }
 
@@ -296,8 +297,8 @@ function load_app(page) {
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			//updateLanguage("#dl_content .lang");
-			loadLanguage();
+			updateLanguage("#dl_content .lang");
+			//loadLanguage();
 			hist_push(['load_app', page]);
 			window.scrollTo(0, 0);
 			if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible"))
@@ -491,8 +492,8 @@ function dl_navigate(page, parameters) {
 			//$("#loader").spin(false);
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);
-			//updateLanguage("#dl_content .lang");
-			loadLanguage();
+			updateLanguage("#dl_content .lang");
+			//loadLanguage();
 			hist_push(['dl_navigate', page, parameters]);
 			/*if ( parameters && parameters.hasOwnProperty("lang")) {
 				if ( page[0] == 'E' )
@@ -511,19 +512,9 @@ function load_menu(lang, submenu) {
 			parametersJson: '{"lang":"1"}'
 		}
 		$("#dl_menu").load("content?page=menu", { parameters: parametersJson }, function () {
-			//updateLanguage("#dl_menu .lang");
+			updateLanguage("#dl_menu .lang");
 			if (typeof submenu === "string")
-				$.ajax({
-					url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + submenu,
-					type: 'POST',
-					data: {},
-					success: function (data) {
-						console.log('load_menu', data);
-						//						param = JSON.parse(data);
-						//						$("#mp_" + param.idname).after(param.menu);
-					}
-				});
-			loadLanguage();
+				ajaxMenu(submenu);
 		});
 	} else {
 		$("#dl_menu").html('');
@@ -1005,10 +996,14 @@ function loadLanguage() {
 }
 
 function updateLanguage(classes) {
-	$(classes).each(function (obj) {
-		var data = $(this).attr('lang-id');
-		$(this).html(Lang[data]);
-	});
+
+	if (typeof Lang === "undefined")
+		loadLanguage();
+	else
+		$(classes).each(function (obj) {
+			var data = $(this).attr('lang-id');
+			$(this).html(Lang[data]);
+		});
 }
 
 function loadjs(filename) {
