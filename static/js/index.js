@@ -1031,6 +1031,10 @@ function changeLanguage(lang) {
 	//$("select").trigger("change.select2");
 }
 
+function returnLang(data) {
+	return Lang[data];
+}
+
 function InitMobileHead() {
 	var head = $(".content-wrapper .content-heading").clone().children().remove().end().text();
 	$(".topnavbar-wrapper .content-heading").text(head);

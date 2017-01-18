@@ -182,7 +182,7 @@
 		</div>
 		<div class="panel-footer">
 			<div class="noimport flex buttons">
-				<a href="" onclick="return import_form()" class="btn btn-link btn-default lang" lang-id="import_account"></a>
+				<a href="" onclick="return import_form()" class="btn btn-link lang" lang-id="import_account"></a>
 				<a href="" onclick="return login_form()" class="islogin btn btn-link lang" lang-id="login"></a>
 				{{if not .PrivCountry}}<button type="button" class="submit btn btn-primary lang" datax-tool="panel-refresh" onclick="return do_register(this, true)" id="create_btn" lang-id="create_account"></button>{{end}}
 			</div>
@@ -248,7 +248,7 @@ function do_register(obj, is_register) {
 
 	if (pass.length < 6) {
 		preloader(obj);
-		Alert("Warning", "Password is too week. The length is less than 6.", "warning");
+		Alert(returnLang("warning"), returnLang("password_less"), "warning");
 		return false;
 	} 
 	if (is_register && !repeat_step) {
@@ -259,8 +259,8 @@ function do_register(obj, is_register) {
 		$("#pass").val('');
 		$("#phrase").val('');
 		$("#genseed").hide();
-		$("#lseed").html('Repeat account seed');
-		$("#lpass").html('Repeat password');
+		$("#lseed").html(returnLang("repeat_account_seed"));
+		$("#lpass").html(returnLang("repeat_password"));
 		$("#notice").hide();
 		repeat_step = true;
 		/*if (isMobile) {
@@ -271,11 +271,11 @@ function do_register(obj, is_register) {
 	}
 	preloader(obj);
 	if (pass != $("#rep_pass").val()) {
-		Alert("Warning", "Passwords do not match.", "warning");
+		Alert(returnLang("warning"), returnLang("passwords_do_not_match"), "warning");
 		return false;
 	} 
 	if (is_register && repeat_step && phrase != $("#rep_phrase").val()) {
-		Alert("Warning", "Account seeds do not match.", "warning");
+		Alert(returnLang("warning"), returnLang("account_seeds_do_not_match"), "warning");
 		return false;
 	}
 	do_generate();
@@ -298,8 +298,8 @@ function do_register_back() {
 	$("#phrase").val(phrase);
 	$("#genseed").show();
 	$("#saveseed").show();
-	$("#lseed").html('Account seed');
-	$("#lpass").html('Password');
+	$("#lseed").html(returnLang("account_seed"));
+	$("#lpass").html(returnLang("password"));
 	$("#notice").show();
 	repeat_step = false;
 	/*if (isMobile) {
@@ -365,8 +365,8 @@ function register_form() {
 	$("#notice").show();
 	$("#genseed").show();
 	$("#saveseed").show();
-	$("#lseed").html('Account seed');
-	$("#lpass").html('Password');
+	$("#lseed").html(returnLang("account_seed"));
+	$("#lpass").html(returnLang("password"));
 	$("#login_form").hide();
 	$(".noregister").hide();
 	$("#register_form").show();
@@ -387,8 +387,8 @@ function import_form() {
 		$("#key_btn").show();
 	} else
 		$("#key_btn").hide();
-	$("#lseed").html('Account seed');
-	$("#lpass").html('Password');
+	$("#lseed").html(returnLang("account_seed"));
+	$("#lpass").html(returnLang("password"));
 	$("#rep_pass").val('');
 	$("#login_form").hide();
 	$(".noimport").hide();
@@ -409,15 +409,15 @@ function do_login() {
 	var pass = $("#decpass").val();
 	
 	if ($("#address").val() == "" && $("#decpass").val() == "") {
-		Alert("Warning", "Enter the wallet address and the password, please", "warning");
+		Alert(returnLang("warning"), "Enter the wallet address and the password, please", "warning");
 		return false;
 	}
 	if ($("#address").val() == "") {
-		Alert("Warning", "Enter the wallet address, please", "warning");
+		Alert(returnLang("warning"), "Enter the wallet address, please", "warning");
 		return false;
 	}
 	if ($("#decpass").val() == "") {
-		Alert("Warning", "Enter the password, please", "warning");
+		Alert(returnLang("warning"), returnLang("enter_password"), "warning");
 		return false;
 	}
 	
@@ -429,14 +429,14 @@ function do_login() {
 		loginAttempts++;
 		//alert('Login Fail ' + loginAttempts + '/3');
 		if (loginAttempts >= 3) {
-			Alert("Login Fail", "Attempts - " + loginAttempts + "/3", "error", del_fail_address);
+			Alert(returnLang("login_fail"), returnLang("attempts") + " - " + loginAttempts + "/3", "error", del_fail_address);
 			loginAttempts = 0;
 			localStorage.removeItem('EncKey');
 			localStorage.removeItem('PubKey');
 //			$("#address").html('');
 			//import_form();
 		} else {
-			Alert("Login Fail", "Attempts - " + loginAttempts + "/3", "error");
+			Alert(returnLang("login_fail"), returnLang("attempts") + " - " + loginAttempts + "/3", "error");
 		}
 	}
 }
