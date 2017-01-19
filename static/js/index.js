@@ -280,6 +280,16 @@ function ajaxMenu(page, parameters) {
 				$(".mm-selected").removeClass("mm-selected");
 				MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
 			}
+			var bname = data.match(/<!--([\w_\d ]*)=([\w_\d '\(\)]*)-->/) || [""];
+			if (bname.length > 2) {
+				$(".mm-navbar-top .mm-title").html(bname[1]);
+				if (bname[2].length > 0) {
+					$(".mm-navbar-top a").attr('href', '');
+					$(".mm-navbar-top a").attr('onclick', bname[2] + ';return false;');
+				}
+			} else {
+				$(".mm-navbar-top a").attr('onclick', '');
+			}
 		}
 	});
 }

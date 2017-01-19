@@ -137,7 +137,7 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
-		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack,
 	})
 }
 
@@ -1568,6 +1568,14 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 
 func MenuPage(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<!--%s-->`, lib.Escape(pars[0]))
+}
+
+func MenuBack(vars *map[string]string, pars ...string) string {
+	var link string
+	if len(pars) > 1 {
+		link = fmt.Sprintf(`load_template('%s')`, lib.Escape(pars[1]))
+	}
+	return fmt.Sprintf(`<!--%s=%s-->`, lib.Escape(pars[0]), link)
 }
 
 func MenuEnd(vars *map[string]string, pars ...string) string {
