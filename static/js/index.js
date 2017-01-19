@@ -838,7 +838,7 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 							ReadyFunction(txStatus.success);
 						} else {
 							//Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>',
-							Alert('Success', 'Imprinted in blockchain. Block ' + txStatus.success + '',
+							Alert('Success', returnLang("imprinted_blockchain") + ' ' + txStatus.success + '',
 								typeof data.type_success === "string" ? data.type_success : 'notification', ReadyFunction);
 						}
 					}

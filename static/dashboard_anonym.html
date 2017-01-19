@@ -127,12 +127,7 @@
 
 </script>
 
-<div class="content-heading">
-   <!--Anonym-->Dashboard
-</div>
-<!--<ol class="breadcrumb">
-   <li class="active">Dashboard</li>
-</ol>-->
+<div class="content-heading lang" lang-id="dashboard"></div>
 <div class="panel widget bg-info available_balance">
  <div class="row row-table">
 	<div class="col-xs-3 text-center bg-info-dark pv-lg ico">
@@ -140,7 +135,7 @@
 	</div>
 	<div class="col-xs-9 pv-lg text">
 	   <div id="balance" class="h1 m0 text-bold"></div>
-	   <div class="text-uppercase">Available balance</div>
+	   <div class="text-uppercase lang" lang-id="available_balance"></div>
 	</div>
  </div>
 </div>
@@ -155,12 +150,12 @@
 			   </div>
 			   <div class="col-xs-9 text-right">
 				  <div class="text-lg">EGS</div>
-				  <p class="m0">Your wallet</p>
+				  <p class="m0 lang" lang-id="your_wallet"></p>
 			   </div>
 			</div>
 		 </div>
 		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" data-toggle="modal" data-target="#modal_wallet_address">
-			<span class="pull-left">Wallet address</span>
+			<span class="pull-left lang" lang-id="wallet_address"></span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -183,7 +178,7 @@
 			</div>
 		 </div>
 		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" onclick="dl_navigate0('anonymMoneyTransfer')">
-			<span class="pull-left">Money transfer</span>
+			<span class="pull-left lang" lang-id="money_transfer"></span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -206,7 +201,7 @@
 			</div>
 		 </div>
 		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block"  onclick="dl_navigate0('smart_request_citizen')">
-			<span class="pull-left">Request for citizen status</span>
+			<span class="pull-left lang" lang-id="request_citizen_status"></span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -229,7 +224,7 @@
 			</div>
 		 </div>
 		 <a href="#" class="panel-footer bg-gray-dark bt0 clearfix btn-block" onclick="dl_navigate0('forging')">
-			<span class="pull-left">Forging</span>
+			<span class="pull-left lang" lang-id="forging"></span>
 			<span class="pull-right">
 			   <em class="fa fa-chevron-circle-right"></em>
 			</span>
@@ -243,37 +238,35 @@
  <!-- Nav tabs-->
  <ul role="tablist" class="nav nav-tabs nav-justified">
 	<li role="presentation" class="active">
-	   <a href="#tab1" aria-controls="home" role="tab" data-toggle="tab" class="bb0">
-		  <em class="fa fa-clock-o fa-fw"></em> Transactions History</a>
+	   <a href="#tab1" aria-controls="home" role="tab" data-toggle="tab" class="bb0"><em class="fa fa-clock-o fa-fw"></em> <span class="lang" lang-id="transactions_history"></span></a>
 	</li>
 	<li role="presentation">
-	   <a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab" class="bb0" onclick="blockExplorer()">
-		  <em class="fa fa-th fa-fw"></em> Block Explorer</a>
+	   <a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab" class="bb0" onclick="blockExplorer()"><em class="fa fa-th fa-fw"></em> <span class="lang" lang-id="block_explorer"></span></a>
 	</li>
  </ul>
  <!-- Tab panes-->
  <div class="tab-content p0 bg-white">
 	<div id="tab1" role="tabpanel" class="tab-pane active">
 	   <!-- START table responsive-->
-	   <div id="nodata" class="box-placeholder text-center">No data available</div>
+	   <div id="nodata" class="box-placeholder text-center lang" lang-id="no_data_available"></div>
 	   <div class="table-responsive">
 		  <table id="history" class="table table-striped table-hover" data-role="table">
 		  <thead>
 			 <tr>
-				<th>Block ID</th>
-				<th>Time</th>
-				<th>Amount</th>
-				<th>Sender</th>
-				<th>Recipient</th>
-				<th>Comment</th>
-				<th>Confirmations</th>
+				<th class="lang" lang-id="block_id"></th>
+				<th class="lang" lang-id="time"></th>
+				<th class="lang" lang-id="amount"></th>
+				<th class="lang" lang-id="sender"></th>
+				<th class="lang" lang-id="recipient"></th>
+				<th class="lang" lang-id="comment"></th>
+				<th class="lang" lang-id="confirmations"></th>
 			 </tr>
 		  </thead>
 		  <tbody></tbody>
 	     </table>
 	   </div>
 	   <!-- END table responsive-->
-	   <div class="panel-footer text-right"><a href="#"  onclick="load_page('history');" class="btn btn-default btn-sm">View All History</a>
+	   <div class="panel-footer text-right"><a href="#"  onclick="load_page('history');" class="btn btn-default btn-sm lang" lang-id="view_all_history"></a>
 	   </div>
 	</div>
 	<div id="tab2" role="tabpanel" class="tab-pane">

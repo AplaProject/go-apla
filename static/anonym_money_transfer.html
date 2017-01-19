@@ -94,33 +94,31 @@
 	});	
 </script>
 
-<div class="content-heading">
-   Money transfer
-</div>
+<div class="content-heading lang" lang-id="money_transfer"></div>
 <!-- START panel-->
 <div id="Transfer" class="panel panel-default keyCode_13" data-sweet-alert style="max-width:400px;">
  <div class="panel-body">
 	<form id="anonymMoneyTransfer">
 	   <div class="form-group">
-		   <label class="control-label" for="walletAddress">Wallet address <strong class="text-danger">*</strong></label>
+		   <label class="control-label" for="walletAddress"><span class="lang" lang-id="wallet_address"></span> <strong class="text-danger">*</strong></label>
 		   <input type="text" class="form-control" id="walletAddress" data-type="wallet">
 		   <ul class="parsley-errors-list">
-		       <li class="parsley-required">Please enter correct wallet addres</li>
+		       <li class="parsley-required lang" lang-id="enter_correct_wallet"></li>
 		   </ul>
 	   </div>
 	   <div class="form-group">
-		   <label class="control-label" for="amount">Amount <strong class="text-danger">*</strong></label>
+		   <label class="control-label" for="amount"><span class="lang" lang-id="amount"></span> <strong class="text-danger">*</strong></label>
 		   <input type="text" class="form-control" id="amount">
 		   <ul class="parsley-errors-list">
 		       <li class="parsley-required amount"></li>
 		   </ul>
 	   </div>
 	   <div class="form-group">
-		   <label class="control-label" for="comment">Comment</label>
+		   <label class="control-label lang" for="comment" lang-id="comment"></label>
 		   <input type="text" class="form-control" id="comment">
 	   </div>
 	   <div class="form-group">
-		   <label class="control-label" for="commission">Commission <strong class="text-danger">*</strong></label>
+		   <label class="control-label" for="commission"><span class="lang" lang-id="commission"></span> <strong class="text-danger">*</strong></label>
 		   <input type="text" class="form-control" id="commission" disabled="">
 	   </div>
 	</form>
@@ -128,7 +126,7 @@
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">
-		 <button type="button" class="submit btn btn-primary" id="next" disabled>Send</button>
+		 <button type="button" class="submit btn btn-primary lang" id="next" disabled lang-id="send"></button>
 	  </div>
    </div>
   </div>
@@ -139,19 +137,19 @@
  <div class="panel-body">
 	<form>
 	   <div class="form-group">
-		   <label class="control-label">Wallet address</label>
+		   <label class="control-label lang" lang-id="wallet_address"></label>
 		   <p class="form-control-static" data-confirm="walletAddress"></p>
 	   </div>
 	   <div class="form-group">
-		   <label class="control-label">Amount</label>
+		   <label class="control-label lang" lang-id="amount"></label>
 		   <p class="form-control-static" data-confirm="amount"></p>
 	   </div>
 	   <div id="isComment" class="form-group">
-		   <label class="control-label">Comment</label>
+		   <label class="control-label lang" lang-id="comment"></label>
 		   <p class="form-control-static" data-confirm="comment"></p>
 	   </div>
 	   <div class="form-group">
-		   <label class="control-label">Commission</label>
+		   <label class="control-label lang" lang-id="commission"></label>
 		   <p class="form-control-static" data-confirm="commission"></p>
 	   </div>
 	</form>
@@ -159,10 +157,10 @@
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-left">
-		 <button type="button" class="btn btn-default" id="cancel">Cancel</button>
+		 <button type="button" class="btn btn-default lang" id="cancel" lang-id="cancel"></button>
 	  </div>
 	  <div class="pull-right">
-		 <button type="button" class="submit btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="send" disabled>Send</button>
+		 <button type="button" class="submit btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" id="send" disabled lang-id="send"></button>
 	  </div>
    </div>
   </div>
@@ -215,7 +213,7 @@ $("#anonymMoneyTransfer").on('input', function () {
 		if (amount.val()) {
 			amount.addClass("parsley-error");
 			amount.next(".parsley-errors-list").addClass("filled");
-			amount.next(".parsley-errors-list").find(".amount").text("Amount should be from 0.00001 to 100000000");
+			amount.next(".parsley-errors-list").find(".amount").text(returnLang("amount_should_be"));
 		} else {
 			amount.removeClass("parsley-error");
 			amount.next(".parsley-errors-list").removeClass("filled");
@@ -224,7 +222,7 @@ $("#anonymMoneyTransfer").on('input', function () {
 		if (parseFloat(amount.val()) + commission > balance) {
 			amount.addClass("parsley-error");
 			amount.next(".parsley-errors-list").addClass("filled");
-			amount.next(".parsley-errors-list").find(".amount").text("You don't have that much.");
+			amount.next(".parsley-errors-list").find(".amount").text(returnLang("do_not_have_that_much"));
 			$("#next").prop("disabled", true);
 			return false;
 		}
