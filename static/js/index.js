@@ -236,6 +236,7 @@ function clearAllTimeouts() {
 
 function load_page(page, parameters) {
 	//    $('#loader').spin();
+	$(".mm-selected").removeClass("mm-selected");
 	clearAllTimeouts();
 	NProgress.set(1.0);
 	$.post("content?page=" + page, parameters ? parameters : {},
