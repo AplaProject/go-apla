@@ -343,6 +343,10 @@ function Notify(message, options) {
 
 var clipboard;
 
+function defaultConfirm() {
+	return true;
+}
+
 function CopyToClipboard(elem, text) {
 	if (clipboard) {
 		clipboard.destroy();
@@ -358,7 +362,7 @@ function CopyToClipboard(elem, text) {
 		if (text) {
 			$(elem).attr("data-clipboard-text", "");
 		} else {
-			Alert("Copied to clipboard", "", "success");
+			Alert("Copied to clipboard", "", "notification:success", defaultConfirm);
 		}
 		$(elem).addClass("copied");
 		setTimeout(function () {
@@ -366,16 +370,17 @@ function CopyToClipboard(elem, text) {
 		}, 3000)
 	});
 	clipboard.on('error', function (e) {
-		Alert("Error copying to clipboard", "", "error");
+		Alert("Error copying to clipboard", "", "notification:danger", defaultConfirm);
 	});
 }
 
 function Alert(title, text, type, Confirm) {
 	if (obj) {
 		var timer = null;
+		var view = type.split(":");
 
-		if (type == "notification") {
-			type = "success";
+		if (view[0] == "notification" && !obj.hasClass("modal-content")) {
+			type = view[1] ? view[1] : "success";
 			timer = 1500;
 
 			$.notify({
@@ -392,7 +397,9 @@ function Alert(title, text, type, Confirm) {
 				}
 			}
 			if (Confirm != false) {
-				obj.removeClass("whirl standard");
+				setTimeout(function () {
+					obj.removeClass("whirl standard");
+				}, 0)
 			}
 		} else {
 			var color;
@@ -418,6 +425,19 @@ function Alert(title, text, type, Confirm) {
 				color = "#23b7e5";
 				btnShow = false;
 				timer = 3000;
+			} else if (view[0] == "notification") {
+				type = view[1] ? view[1] : "success";
+				if (type == "success") {
+					color = "#23b7e5";
+				} else if (type == "danger") {
+					type = "error";
+					color = "#f05050";
+					if (text.toLowerCase().indexOf("[error]") != -1) {
+						btnText = "Copy text error to clipboard";
+					}
+				} else if (type == "warning") {
+					color = "#ff902b";
+				}
 			} else {
 				color = "#c1c1c1";
 			}

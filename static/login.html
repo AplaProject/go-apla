@@ -4,6 +4,9 @@
 	#triangles {
 		display:block;
 	}
+	.uk-notify {
+		top:-5px;
+	}
 	.wrapper {
 		display:flex;
 		flex-flow:row wrap;
@@ -248,7 +251,7 @@ function do_register(obj, is_register) {
 
 	if (pass.length < 6) {
 		preloader(obj);
-		Alert(returnLang("warning"), returnLang("password_less"), "warning");
+		Alert(returnLang("warning"), returnLang("password_less"), "notification:warning", defaultConfirm);
 		return false;
 	} 
 	if (is_register && !repeat_step) {
@@ -271,11 +274,11 @@ function do_register(obj, is_register) {
 	}
 	preloader(obj);
 	if (pass != $("#rep_pass").val()) {
-		Alert(returnLang("warning"), returnLang("passwords_do_not_match"), "warning");
+		Alert(returnLang("warning"), returnLang("passwords_do_not_match"), "notification:warning", defaultConfirm);
 		return false;
 	} 
 	if (is_register && repeat_step && phrase != $("#rep_phrase").val()) {
-		Alert(returnLang("warning"), returnLang("account_seeds_do_not_match"), "warning");
+		Alert(returnLang("warning"), returnLang("account_seeds_do_not_match"), "notification:warning", defaultConfirm);
 		return false;
 	}
 	do_generate();
@@ -380,6 +383,10 @@ function register_form() {
 }
 
 function import_form() {
+	if (isMobile) {
+		$("#key_btn").addClass("hidden");
+	}
+	
 	if (!private.length)
 		$("#phrase").val('');
 	if (!private.length || private != $("#phrase").val()) {
@@ -409,15 +416,15 @@ function do_login() {
 	var pass = $("#decpass").val();
 	
 	if ($("#address").val() == "" && $("#decpass").val() == "") {
-		Alert(returnLang("warning"), "Enter the wallet address and the password, please", "warning");
+		Alert(returnLang("warning"), "Enter the wallet address and the password, please", "notification:warning", defaultConfirm);
 		return false;
 	}
 	if ($("#address").val() == "") {
-		Alert(returnLang("warning"), "Enter the wallet address, please", "warning");
+		Alert(returnLang("warning"), "Enter the wallet address, please", "notification:warning", defaultConfirm);
 		return false;
 	}
 	if ($("#decpass").val() == "") {
-		Alert(returnLang("warning"), returnLang("enter_password"), "warning");
+		Alert(returnLang("warning"), returnLang("enter_password"), "notification:warning", defaultConfirm);
 		return false;
 	}
 	
@@ -429,14 +436,14 @@ function do_login() {
 		loginAttempts++;
 		//alert('Login Fail ' + loginAttempts + '/3');
 		if (loginAttempts >= 3) {
-			Alert(returnLang("login_fail"), returnLang("attempts") + " - " + loginAttempts + "/3", "error", del_fail_address);
+			Alert(returnLang("login_fail"), returnLang("attempts") + " - " + loginAttempts + "/3", "notification:danger", del_fail_address);
 			loginAttempts = 0;
 			localStorage.removeItem('EncKey');
 			localStorage.removeItem('PubKey');
 //			$("#address").html('');
 			//import_form();
 		} else {
-			Alert(returnLang("login_fail"), returnLang("attempts") + " - " + loginAttempts + "/3", "error");
+			Alert(returnLang("login_fail"), returnLang("attempts") + " - " + loginAttempts + "/3", "notification:danger", defaultConfirm);
 		}
 	}
 }

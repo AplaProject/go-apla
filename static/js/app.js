@@ -1668,7 +1668,7 @@
         this.group = this.options.group;
 
         messages[this.uuid] = this;
-
+		
         if(!containers[this.options.pos]) {
             containers[this.options.pos] = $('<div class="uk-notify uk-notify-'+this.options.pos+'"></div>').appendTo('#dl_page').on("click", ".uk-notify-message", function(){
                 $(this).data("notifyMessage").close();
