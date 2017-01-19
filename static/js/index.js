@@ -276,6 +276,7 @@ function ajaxMenu(page, parameters) {
 				}
 				MenuAPI.openPanel($("#ul" + name));
 				$("#li" + name + ' .mm-next').remove();
+				$(".mm-selected").removeClass("mm-selected");
 				MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
 			}
 		}
