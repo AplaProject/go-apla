@@ -279,6 +279,12 @@ function ajaxMenu(page, parameters) {
 				$("#li" + name + ' .mm-next').remove();
 				$(".mm-selected").removeClass("mm-selected");
 				MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
+			} else {
+				//				$("#mmenu-panel ul").remove();
+				$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
+				updateLanguage($("#ul" + name + ' .lang'));
+				MenuAPI.initPanels($("#ul" + name));
+				MenuAPI.openPanel($("#ul" + name));
 			}
 			var bname = data.match(/<!--([\w_\d ]*)=([\w_\d '\(\)]*)-->/) || [""];
 			if (bname.length > 2) {
