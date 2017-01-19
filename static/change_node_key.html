@@ -42,23 +42,21 @@
 			crossDomain: true,
 			success: function(data) { send_to_net_success(data) },
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	} );
 
 </script>
 
-<div class="content-heading">
-   {{.Lang.change_node_key_title}}
-</div>
+<div class="content-heading lang" lang-id="change_node_key"></div>
 <ol class="breadcrumb">
-   <li><a href="#" onclick="dl_navigate0('forging')">Forging</a></li>
+   <li><a href="#" onclick="dl_navigate0('forging')" class="lang" lang-id="forging"></a></li>
 </ol>
 {{template "alertSuccess".}}
 
 <div id="generate" data-sweet-alert>
-	<button class="btn btn-danger" type="button" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" id="generate_change_node_key">{{.Lang.generate_new_node_key}}</button>
+	<button class="btn btn-danger lang" type="button" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" id="generate_change_node_key" lang-id="generate_new_node_key"></button>
 </div>
 
 {{template "signatures".}}

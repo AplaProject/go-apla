@@ -37,33 +37,27 @@
 			crossDomain: true,
 			success: function(data) { send_to_net_success(data) },
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	} );
 </script>
 
-<div class="content-heading">
-   Forging
-</div>
-<!--<ol class="breadcrumb">
-   <li><a href="#" onclick="dl_navigate0('dashboardAnonym')">Dashboard</a></li>
-   <li class="active">Forging</li>
-</ol>-->
+<div class="content-heading lang" lang-id="forging"></div>
 <!-- START panel-->
 <div class="panel panel-default" data-sweet-alert style="max-width:400px;">
  <div class="panel-body">
 	<form role="form">
 	   <div class="form-group">
-		  <label>Host</label>
+		  <label for="host" class="lang" lang-id="host"></label>
 		  <input type="text" class="form-control" value="{{.MyWalletData.host}}" id="host">
 	   </div>
 		<div class="form-group">
-			<label>Fuel rate</label>
+			<label for="fuel_rate" class="lang" lang-id="fuel_rate"></label>
 			<input type="text" class="form-control" value="{{.MyWalletData.fuel_rate}}" id="fuel_rate">
 		</div>
 	   <div class="form-group">
-		  <label>Address of the wallet you want to vote for</label>
+		  <label for="addressVote" class="lang" lang-id="address_to_vote"></label>
 		  <input type="text" class="form-control" value="{{.MyWalletData.address_vote}}" id="addressVote">
 	   </div>
 	</form>
@@ -71,10 +65,10 @@
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-left">
-		 <button type="button" class="btn btn-primary" onclick="dl_navigate0('ChangeNodeKey')">Change node key</button>
+		 <button type="button" class="btn btn-primary lang" onclick="dl_navigate0('ChangeNodeKey')" lang-id="change_node_key"></button>
 	  </div>
 	  <div class="pull-right">
-		 <button type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="next">Save</button>
+		 <button type="button" class="btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" id="next" lang-id="save"></button>
 	  </div>
    </div>
   </div>

@@ -13,15 +13,15 @@
 		<div class="brand modal-content" data-sweet-alert data-version="">
 			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			<div class="modal-header">
-				<h4 class="modal-title" id="modal_wallet_address_label">Wallet address</h4>
+				<h4 class="modal-title lang" id="modal_wallet_address_label" lang-id="wallet_address"></h4>
 			</div>
 			<div class="modal-body">
 				<center><img src="ajax?qr={{.Address}}" alt=""></center>
 				<div class="well" style="margin-bottom:0px; margin-top:15px; text-align:center; background-color:#f5f5f5;">{{.Address}}</div>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				<button id="clipboard" type="button" class="btn btn-primary" data-clipboard-action="copy" data-clipboard-text="{{.Address}}" onClick="preloader(this);">Copy to clipboard</button>
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" lang-id="close"></button>
+				<button id="clipboard" type="button" class="btn btn-primary lang" data-clipboard-action="copy" data-clipboard-text="{{.Address}}" onClick="preloader(this);" lang-id="copy_clipboard"></button>
 			</div>
 		</div>
 	</div>

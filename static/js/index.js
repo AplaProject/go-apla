@@ -352,7 +352,7 @@ function CopyToClipboard(elem, text) {
 		clipboard.destroy();
 	}
 	clipboard = new Clipboard(elem);
-
+	
 	if (text) {
 		$(elem).attr("data-clipboard-text", text);
 	}
@@ -362,15 +362,23 @@ function CopyToClipboard(elem, text) {
 		if (text) {
 			$(elem).attr("data-clipboard-text", "");
 		} else {
-			Alert("Copied to clipboard", "", "notification:success", defaultConfirm);
+			if (!obj.hasClass("modal-content")) {
+				Alert("", returnLang("copied_clipboard"), "notification:success", defaultConfirm);
+			} else {
+				Alert(returnLang("copied_clipboard"), "", "success", defaultConfirm);
+			}
 		}
 		$(elem).addClass("copied");
 		setTimeout(function () {
 			$(elem).removeClass("copied");
-		}, 3000)
+		}, 3000);
 	});
 	clipboard.on('error', function (e) {
-		Alert("Error copying to clipboard", "", "notification:danger", defaultConfirm);
+		if (!obj.hasClass("modal-content")) {
+			Alert("", "Error copying to clipboard", "notification:danger", defaultConfirm);
+		} else {
+			Alert("Error copying to clipboard", "", "error", defaultConfirm);
+		}
 	});
 }
 
@@ -800,9 +808,9 @@ function unixtime(target) {
 
 function send_to_net_success(data, ReadyFunction, skipsuccess) {
 	if (typeof data.error != "undefined" && data.error.length > 0) {
-		Alert("Error", data.error, "error");
+		Alert(returnLang("error"), data.error, "error");
 	} else if (data.hash == "undefined") {
-		Alert("Error", data.result, "error");
+		Alert(returnLang("error"), data.result, "error");
 	} else {
 		interval = setInterval(function () {
 			$.ajax({
@@ -823,13 +831,13 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 						if (txStatus.error[0] == '!') {
 							re = /!(.*)\(parser/i;
 							found = txStatus.error.match(re);
-							Alert("Warning", (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "warning");
+							Alert(returnLang("warning"), (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "warning");
 						} else if (txStatus.error[0] == '*') {
 							re = /\*(.*)\(parser/i;
 							found = txStatus.error.match(re);
-							Alert("Info", (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "info");
+							Alert(returnLang("info"), (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "info");
 						} else
-							Alert("Error", txStatus.error, "error");
+							Alert(returnLang("error"), txStatus.error, "error");
 						clearInterval(interval);
 					} else {
 						clearInterval(interval);
@@ -837,15 +845,15 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 						if (skipsuccess) {
 							ReadyFunction(txStatus.success);
 						} else {
-							//Alert('Success', 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>',
-							Alert('Success', returnLang("imprinted_blockchain") + ' ' + txStatus.success + '',
+							//Alert(returnLang("success"), 'Imprinted in blockchain. Block <a href="#" onclick="load_page(' + block_explorer + ', {blockId: ' + txStatus.success + '});">' + txStatus.success + '</a>',
+							Alert(returnLang("success"), returnLang("imprinted_blockchain") + ' ' + txStatus.success + '',
 								typeof data.type_success === "string" ? data.type_success : 'notification', ReadyFunction);
 						}
 					}
 				},
 				error: function (xhr, status, error) {
 					clearInterval(interval);
-					Alert("Error", error, "error");
+					Alert(returnLang("error"), error, "error");
 				},
 			});
 		}, 1000)
@@ -909,10 +917,10 @@ function saveImage() {
 			newImageData.val(img);
 			$("#modal_avatar").modal("hide");
 		} else {
-			Alert("Warning", "Please, choose image!", "warning", false);
+			Alert(returnLang("warning"), "Please, choose image!", "warning", false);
 		}
 	} else {
-		Alert("Warning", "Please, crop the photo!", "warning", false);
+		Alert(returnLang("warning"), "Please, crop the photo!", "warning", false);
 	}
 }
 
