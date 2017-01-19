@@ -14,8 +14,6 @@
 	}
 </style>
 <script language="JavaScript" type="text/javascript">
-	$(".aside .nav li").removeClass("active");
-	$(".anonym, .anonym_export_tpl").addClass("active");
 
 function js_checkall() {
 	$("input[type=checkbox]").attr("checked", true);
@@ -72,10 +70,15 @@ function get_tpl() {
 	$(".params:checked").each(function(){
 		params.push(get_name(this));
 	})
+	var langs = [];
+	$(".lang:checked").each(function(){
+		langs.push(get_name(this));
+	})
+	
 	data = {"name": name, "title": $("#title").val(),"desc": $("#desc").val(), 
 	    "smart_contracts": contracts.join(','), "pages": pages.join(','), "tables": tables.join(','), 
 		"menu": menu.join(','), "state_parameters": params.join(','), "apppages": JSON.stringify( apppages ),
-		"appmenu": JSON.stringify( appmenu )};
+		"appmenu": JSON.stringify( appmenu ), "lang": langs.join(',')};
 	console.log('Data', data);
 	load_page('export_tpl', data);
 	return false;
@@ -235,6 +238,18 @@ function js_appendpage(pref) {
 					<td>{{if .Global}}global{{end}}</td>
 				</tr>
 				{{end}}
+			</table>
+			<table class="table table-striped table-bordered table-hover">
+				<tr>
+					<th></th>
+					<th>Languages</th>
+					<th></th>
+				</tr>
+				<tr>
+					<td style="width: 50px;"><input type="checkbox" name="lang"  data-global="0"  class="form-control lang"></td>
+					<td style="width: 200px;">All languages</td>
+					<td></td>
+				</tr>
 			</table>
 		</div>
 		<div class="panel-footer">

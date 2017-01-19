@@ -17,8 +17,8 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -63,10 +63,21 @@ func (p *Parser) NewLangFront() error {
 			prefix = p.TxStateIDStr
 		}*/
 	prefix := p.TxStateIDStr
-	if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, p.TxMap["name"]).String(); err != nil {
-		return p.ErrInfo(err)
-	} else if len(exist) > 0 {
-		return p.ErrInfo(fmt.Sprintf("The language resource %s already exists", p.TxMap["name"]))
+	if len(p.TxMap["name"]) == 0 {
+		var list map[string]string
+		err := json.Unmarshal([]byte(p.TxMap["res"]), &list)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		if len(list) == 0 {
+			return fmt.Errorf(`empty lanuguage resource`)
+		}
+	} else {
+		if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, p.TxMap["name"]).String(); err != nil {
+			return p.ErrInfo(err)
+		} else if len(exist) > 0 {
+			return p.ErrInfo(fmt.Sprintf("The language resource %s already exists", p.TxMap["name"]))
+		}
 	}
 	return nil
 }
@@ -79,10 +90,25 @@ func (p *Parser) NewLang() error {
 		}
 	*/
 	prefix := p.TxStateIDStr
-	_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.TxMaps.String["name"],
-		p.TxMaps.String["res"]}, prefix+"_languages", nil, nil, true)
-	if err != nil {
-		return p.ErrInfo(err)
+	if len(p.TxMap["name"]) == 0 {
+		var list map[string]string
+		json.Unmarshal([]byte(p.TxMap["res"]), &list)
+		for name, res := range list {
+			if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, name).String(); err != nil {
+				return p.ErrInfo(err)
+			} else if len(exist) == 0 {
+				_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{name, res}, prefix+"_languages", nil, nil, true)
+				if err != nil {
+					return p.ErrInfo(err)
+				}
+			}
+		}
+	} else {
+		_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.TxMaps.String["name"],
+			p.TxMaps.String["res"]}, prefix+"_languages", nil, nil, true)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 	}
 	utils.UpdateLang(int(p.TxStateID), p.TxMaps.String["name"], p.TxMaps.String["res"])
 	return nil
