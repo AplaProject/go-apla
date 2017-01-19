@@ -113,6 +113,18 @@ func (c *Controller) setAppend(name, prefix string) (out string) {
 	return
 }
 
+func (c *Controller) setLang() (out string) {
+	out = "SetVar(`l_lang #= "
+	list := make(map[string]string)
+	res, _ := c.GetAll(fmt.Sprintf(`select * from "%d_languages"`, c.SessStateId), -1)
+	for _, ires := range res {
+		list[ires[`name`]] = ires[`res`]
+	}
+	val, _ := json.Marshal(list)
+	out += string(val) + "`)\r\nTextHidden(l_lang)\r\n"
+	return
+}
+
 func getState(stateId int64, name string) (out string, global int, state string) {
 	state = utils.Int64ToStr(stateId)
 	out = name
@@ -138,6 +150,7 @@ func (c *Controller) ExportTpl() (string, error) {
 	type_edit_table_id = TxId(EditTable),
 	type_edit_column_id = TxId(EditColumn),
 	type_append_menu_id = TxId(AppendMenu),
+	type_new_lang_id = TxId(NewLang),
 	type_new_contract_id = TxId(NewContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
@@ -149,6 +162,9 @@ func (c *Controller) ExportTpl() (string, error) {
 		out += c.setVar("state_parameters", `pa`)
 		out += c.setAppend("pages", `ap`)
 		out += c.setAppend("menu", `am`)
+		if c.r.FormValue(`lang`) == `lang` {
+			out += c.setLang()
+		}
 		//		out += c.setVar("tables", `t_`)
 
 		out += "Json(`Head: \"" + c.r.FormValue(`title`) + "\",\r\n" + `Desc: "` + c.r.FormValue(`desc`) + `",
@@ -361,6 +377,18 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 	   }`, ipage, menu, ipage, global))
 			}
+		}
+		langs := strings.Split(c.r.FormValue("lang"), `,`)
+		if len(langs) > 0 && langs[0] == `lang` {
+			list = append(list, `{
+				Forsign: 'name,trans',
+				Data: {
+					type: "NewLang",
+					typeid: #type_new_lang_id#,
+					name : "",
+					trans: $("#l_lang").val(),
+					}
+				}`)
 		}
 
 		inlist := make([]string, 0)
