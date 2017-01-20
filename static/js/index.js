@@ -1085,6 +1085,7 @@ function updateLanguage(classes) {
 			var data = $(this).attr('lang-id');
 			$(this).html(Lang[data]);
 		});
+		$("#langflag").attr('class', 'flag ' + localStorage.getItem('EGAAS_LANG'));
 }
 
 function loadjs(filename) {
