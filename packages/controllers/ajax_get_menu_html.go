@@ -31,14 +31,19 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	if global == "" || global == "0" {
 		prefix = c.StateIdStr
 	}
+	menuName := ``
+	menu := ``
+	var err error
+	if len(prefix) > 0 {
 
-	menuName, err := c.Single(`SELECT menu FROM "`+prefix+`_pages" WHERE name = ?`, pageName).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}
-	menu, err := c.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, menuName).String()
-	if err != nil {
-		return "", utils.ErrInfo(err)
+		menuName, err = c.Single(`SELECT menu FROM "` + prefix + `_pages" WHERE name = ?`, pageName).String()
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+		menu, err = c.Single(`SELECT value FROM "` + prefix + `_menu" WHERE name = ?`, menuName).String()
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
 	}
 	/*	outmenu := ReplaceMenu(menu)
 		menu = fmt.Sprintf(`{"idname": "%s", "menu": "%s<script>
@@ -51,9 +56,10 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	params := make(map[string]string)
 	params[`state_id`] = c.StateIdStr
 	params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
-	menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`]) +
-		`<!--#` + menuName + `#-->`
-
+	if len(menu) > 0 {
+		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`]) +
+			`<!--#` + menuName + `#-->`
+	}
 	return menu, nil
 
 }

@@ -62,7 +62,7 @@ $(document).ready(function(){
 })
 </script>
 
-<div class="content-heading">
+<div class="content-heading lang" lang-id="add_new_citizen">
 	Add New Citizen
 </div>
 <!-- START panel-->
@@ -75,14 +75,14 @@ $(document).ready(function(){
         {{end}}
         <form role="form">
             <div class="form-group">
-                <label for="name">Name</label>
+                <label for="name"  class="lang" lang-id="name">Name</label>
                 <input id="name" name="name" type="text" value="" class="form-control">
             </div>
             <div class="form-group">
-                <label for="seed">Account seed</label>
+                <label for="seed" class="lang" lang-id="account_seed">Account seed</label>
 				<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 				<div class="clearfix">
-    				<button id="genseed" class="btn btn-default pull-left" type="button" onclick="return do_phrase(phrase_limit);">Generate new seed</button>
+    				<button id="genseed" class="btn btn-default pull-left" type="button" onclick="return do_phrase(phrase_limit);" class="lang" lang-id="generate_new_seed">Generate new seed</button>
                 </div>
                 <input id="prvkey" type="hidden" value="">
                 <input id="pubkey" type="hidden" value="">
@@ -92,7 +92,7 @@ $(document).ready(function(){
     <div class="panel-footer">
         <div class="clearfix">
             <div class="pull-right">
-                <button type="button" class="btn btn-primary" id="send{{.Unique}}"  data-tool="panel-refresh" onClick="preloader(this);">Create new citizen</button>
+                <button type="button" class="btn btn-primary lang" id="send{{.Unique}}"  data-tool="panel-refresh" onClick="preloader(this);"  lang-id="create_new_citizen">Create new citizen</button>
             </div>
         </div>
     </div>

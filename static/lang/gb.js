@@ -176,7 +176,9 @@ Lang = {
 	"check_citizens_requests": "Check citizens requests",
 	"citizens_requests": "Citizens requests",
 	"accept": "Accept",
-	"reject": "Reject"
+	"reject": "Reject",
+    "add_new_citizen" : "Add new citizen",
+    "create_new_citizen" : "Create new citizen"
 }
 
 updateLanguage('.lang');

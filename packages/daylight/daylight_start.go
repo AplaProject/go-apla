@@ -49,8 +49,9 @@ import (
 )
 
 func FileAsset(name string) ([]byte, error) {
-	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.svg` {
-		logofile := *utils.Dir + `/logo.svg`
+
+	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.` + utils.LogoExt {
+		logofile := *utils.Dir + `/logo.` + utils.LogoExt
 		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
 			return ioutil.ReadFile(logofile)
 		}
@@ -184,6 +185,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		Exit(1)
 	}
 	defer f.Close()
+	
+	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
+		utils.LogoExt = `png`
+	}
 	IosLog("configIni:" + fmt.Sprintf("%v", configIni))
 	var backend *logging.LogBackend
 	switch configIni["log_output"] {

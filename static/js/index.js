@@ -265,6 +265,9 @@ function ajaxMenu(page, parameters) {
 		type: 'POST',
 		data: parameters ? parameters : {},
 		success: function (data) {
+		    if (data.length == 0) {
+		        return
+		    }
 			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
 			var name = 'temporary';
 			if (aname.length > 1) {

@@ -176,7 +176,9 @@ Lang = {
 	"check_citizens_requests": "Controleer Gebruikers verzoek",
 	"citizens_requests": "Gebruikers verzoek",
 	"accept": "Accepteren",
-	"reject": "Verwerpen"
+	"reject": "Verwerpen",
+	"add_new_citizen" : "Gebruiker toevoegen",
+	"create_new_citizen" : "Gebruiker aanmaken"
 }
 
 updateLanguage('.lang');
