@@ -139,21 +139,21 @@
 					
 					for (i = 0; i < fields.length; i++ ) {
 						if (fields[i].htmlType == "textinput") {
-							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" name="' + fields[i].name + '" type="text" class="form-control"></div>'
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + returnLang(fields[i].title) + '</label><input id="' + fields[i].name + '" name="' + fields[i].name + '" type="text" class="form-control"></div>'
 						}
 						if (fields[i].htmlType == "calendar") {
-							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><div class="input-group date datetimepicker"><input id="' + fields[i].name + '" type="text" class="form-control"><span class="input-group-addon"><span class="fa fa-calendar"></span></span></div></div>'
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + returnLang(fields[i].title) + '</label><div class="input-group date datetimepicker"><input id="' + fields[i].name + '" type="text" class="form-control"><span class="input-group-addon"><span class="fa fa-calendar"></span></span></div></div>'
 						}
 						if (fields[i].htmlType == "file") {
-							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + fields[i].title + '</label><input id="' + fields[i].name + '" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle"></div>'
+							var el = '<div class="form-group"><label for="' + fields[i].name + '">' + returnLang(fields[i].title) + '</label><input id="' + fields[i].name + '" type="file" accept="image/*" data-classbutton="btn btn-default" data-classinput="form-control inline" class="form-control filestyle"></div>'
 						}
 						if (fields[i].htmlType == "map") {
-							var el = '<div class="form-group"> <label>'+fields[i].title + '</label>' +
+							var el = '<div class="form-group"> <label>' + returnLang(fields[i].title) + '</label>' +
 							'<textarea class="form-control imap" id="' + fields[i].name + '"></textarea></div>';
 						}
 						if (fields[i].htmlType == "date") {
 							var el = '<div class="form-group" style="position:relative;">' +
-				'<label class="control-label" for="' + fields[i].name + '">' + fields[i].title + '</label>' +
+				'<label class="control-label" for="' + fields[i].name + '">' + returnLang(fields[i].title) + '</label>' +
 				'<input type="text" class="datetimepicker form-control" id="' + fields[i].name + '" value=""></div>';
 						}						
 						container.append(el);
