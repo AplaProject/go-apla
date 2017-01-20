@@ -248,12 +248,17 @@ function save_phrase(el) {
 function do_register(obj, is_register) {
 	var pass = $("#pass").val();
 	var phrase = $("#phrase").val();
-
+	
+	if (phrase.length < 50) {
+		preloader(obj);
+		Alert(returnLang("warning"), "Enter correct seed or key, please", "notification:warning", defaultConfirm);
+		return false;
+	}
 	if (pass.length < 6) {
 		preloader(obj);
 		Alert(returnLang("warning"), returnLang("password_less"), "notification:warning", defaultConfirm);
 		return false;
-	} 
+	}
 	if (is_register && !repeat_step) {
 		$("#key_btn").show();
 		$("#back").show();
