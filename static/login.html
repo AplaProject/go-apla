@@ -318,7 +318,6 @@ function do_register_back() {
 }
 
 function do_sign() {
-	NProgressStart.start();
 	{{if .OneCountry}}
 		$( "#state_id" ).val('{{.OneCountry}}');
 	{{end}}
@@ -337,11 +336,17 @@ function do_sign() {
 				'citizen_id': GKey.CitizenId,
 			}, function (data) {
 				console.log('DATA', data, $( "#state_id" ).val());
-				if (data.address) {
-					GKey.StateId = $( "#state_id" ).val();
-					GKey.add(data.address);
+				if (data.error && data.error.length > 0 ) {
+					GKey.clear();
+					Alert('Error', "Account seed is not citizen's seed", "notification:danger", defaultConfirm);
+				} else {
+					NProgressStart.start();
+					if (data.address) {
+						GKey.StateId = $( "#state_id" ).val();
+						GKey.add(data.address);
+					}
+					login_ok( data.result );
 				}
-				login_ok( data.result );
 			}, 'JSON'
 		)
 	}, 'JSON');

@@ -73,7 +73,6 @@ func (c *Controller) AjaxSignIn() interface{} {
 		return result
 	}
 	result.Address = lib.KeyToAddress(bkey)
-	c.sess.Set("address", result.Address)
 	log.Debug("address : %s", result.Address)
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
@@ -89,7 +88,6 @@ func (c *Controller) AjaxSignIn() interface{} {
 			result.Error = err.Error()
 			return result
 		}*/
-	c.sess.Set("wallet_id", walletId)
 	log.Debug("wallet_id : %d", walletId)
 	var citizenId int64
 	fmt.Println(`SingIN`, stateId)
@@ -108,6 +106,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 				stateId = 0
 				if utils.PrivCountry {
 					result.Error = "not a citizen"
+					return result
 				}
 			}
 		} else {
@@ -122,6 +121,8 @@ func (c *Controller) AjaxSignIn() interface{} {
 			result.Error = err.Error()
 			return result
 		}*/
+	c.sess.Set("wallet_id", walletId)
+	c.sess.Set("address", result.Address)
 	c.sess.Set("citizen_id", citizenId)
 	c.sess.Set("state_id", stateId)
 	log.Debug("wallet_id %d citizen_id %d state_id %d", walletId, citizenId, stateId)
