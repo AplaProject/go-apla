@@ -284,14 +284,15 @@ function ajaxMenu(page, parameters) {
 				$("#li" + latestMenu + ' .mm-next').remove();
 				//					MenuAPI.update();
 			}
-			//			console.log('Menu', latestMenu, name);
-			if (latestMenu != name) {
+			console.log('Menu', latestMenu, name);
+			if (latestMenu != name || latestMenu == 'temporary') {
 				latestMenu = name;
 				if (name != 'temporary') {
 					$("#li" + name + " ul").remove();
 					$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
 				} else {
-					//					console.log('Dynamic');
+					console.log('Dynamic');
+					$("#ultemporary").remove();
 					$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
 				}
 				updateLanguage($("#ul" + name + ' .lang'));
