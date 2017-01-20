@@ -78,13 +78,13 @@ func loadLang(state int) error {
 	return nil
 }
 
-func LangText(in string, state int, accept string) string {
+func LangText(in string, state int, accept string) (string,bool) {
 	if strings.IndexByte(in, ' ') >= 0 {
-		return in
+		return in, false
 	}
 	if _, ok := lang[state]; !ok {
 		if err := loadLang(state); err != nil {
-			return err.Error()
+			return err.Error(), false
 		}
 	}
 	if lres, ok := (*lang[state]).res[in]; ok {
@@ -102,9 +102,9 @@ func LangText(in string, state int, accept string) string {
 				break
 			}
 		}
-		return (*lres)[lng]
+		return (*lres)[lng], true
 	}
-	return in
+	return in, false
 }
 
 func LangMacro(input string, state int, accept string) string {
@@ -134,8 +134,8 @@ func LangMacro(input string, state int, accept string) string {
 			continue
 		}
 		if isName {
-			value := LangText(string(name), state, accept)
-			if value != string(name) {
+			value, ok := LangText(string(name), state, accept)
+			if ok {
 				result = append(result, []rune(value)...)
 				isName = false
 			} else {
@@ -149,5 +149,6 @@ func LangMacro(input string, state int, accept string) string {
 	if isName {
 		result = append(append(result, syschar), name...)
 	}
+
 	return string(result)
 }

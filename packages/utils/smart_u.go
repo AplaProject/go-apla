@@ -209,7 +209,8 @@ func Param(vars *map[string]string, pars ...string) string {
 }
 
 func LangRes(vars *map[string]string, pars ...string) string {
-	return LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	ret,_ := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	return ret
 }
 
 func LangJS(vars *map[string]string, pars ...string) string {
