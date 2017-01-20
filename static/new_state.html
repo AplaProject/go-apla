@@ -47,7 +47,7 @@
 
 			},
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	} );
@@ -60,16 +60,14 @@
 		}, "json" );
 	});
 </script>
-	<div class="content-heading">
-		Create a new state or community
-	</div>
+	<div class="content-heading lang" lang-id="create_new_state_or_community"></div>
 	 
 	<!-- START panel-->
 	<div id="my_state" class="panel panel-default" data-sweet-alert style="display:none;">
 		<div class="panel-body">
 			<form role="form">
 				<div class="form-group">
-					<label for="countries">Country</label>
+					<label for="countries" class="lang" lang-id="country"></label>
 					<select id="countries" class="form-control"></select>
 				</div>
 			</form>
@@ -77,7 +75,7 @@
 		<div id="buttons" class="panel-footer">
 			<div class="clearfix">
 				<div class="pull-right">
-					<button type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);" id="go_to_the_state">Go to the my state</button>
+					<button type="button" class="btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" id="go_to_the_state" lang-id="go_to_my_state"></button>
 				</div>
 			</div>
 		</div>
@@ -89,11 +87,11 @@
 			<div class="panel-body">
 				<form role="form">
 				   <div class="form-group">
-					   <label for="state_name">State or community name</label>
+					   <label for="state_name" class="lang" lang-id="state_or_community_name"></label>
 					   <input class="form-control" type="text" id="state_name">
 				   </div>
 				   <div class="form-group">
-					   <label for="currency_name">Currency name</label>
+					   <label for="currency_name" class="lang" lang-id="currency_name"></label>
 					   <input class="form-control" type="text" id="currency_name">
 				   </div>
 				</form>
@@ -101,7 +99,7 @@
 			<div class="panel-footer">
 			   <div class="clearfix">
 				  <div class="pull-right">
-					 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" onClick="preloader(this);">Next</button>
+					 <button type="button" class="btn btn-primary lang" id="send" data-tool="panel-refresh" onClick="preloader(this);" lang-id="next"></button>
 				  </div>
 			   </div>
 			</div>
