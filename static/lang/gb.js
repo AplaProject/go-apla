@@ -105,6 +105,7 @@ Lang = {
 	"no_results_found": "No results found",
 	"citizen": "Citizen",
 	"edit": "Edit",
+	"welcome": "Welcome",
 	"government_dashboard": "Government dashboard",
 	"list_of_tables": "List Of Tables",
 	"global": "Global",

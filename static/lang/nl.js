@@ -105,6 +105,7 @@ Lang = {
 	"no_results_found": "Niets gevonden",
 	"citizen": "Gebruiker",
 	"edit": "Wijzigen",
+	"welcome": "Welkom",
 	"government_dashboard": "Land overzicht",
 	"list_of_tables": "Tabel overzicht",
 	"global": "Globaal",
