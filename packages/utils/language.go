@@ -28,8 +28,28 @@ type cacheLang struct {
 }
 
 var (
-	lang = make(map[int]*cacheLang)
+	LangList []string
+	lang     = make(map[int]*cacheLang)
 )
+
+func IsLang(code string) bool {
+	if LangList == nil {
+		return true
+	}
+	for _, val := range LangList {
+		if val == code {
+			return true
+		}
+	}
+	return false
+}
+
+func DefLang() string {
+	if LangList == nil {
+		return `en`
+	}
+	return LangList[0]
+}
 
 func UpdateLang(state int, name, value string) {
 	if _, ok := lang[state]; !ok {
@@ -69,10 +89,13 @@ func LangText(in string, state int, accept string) string {
 	}
 	if lres, ok := (*lang[state]).res[in]; ok {
 		langs := strings.Split(accept, `,`)
-		lng := `en`
+		lng := DefLang()
 		for _, val := range langs {
 			if len(val) < 2 {
 				break
+			}
+			if !IsLang(val[:2]) {
+				continue
 			}
 			if _, ok := (*lres)[val[:2]]; ok {
 				lng = val[:2]

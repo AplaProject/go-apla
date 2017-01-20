@@ -114,7 +114,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 	utils.OneCountry = utils.StrToInt64(configIni["one_country"])
 	utils.PrivCountry = configIni["priv_country"] == `1` || configIni["priv_country"] == `true`
-
+	if len(configIni["lang"]) > 0 {
+		utils.LangList = strings.Split(configIni["lang"], `,`)
+	}
 	/*	outfile, err := os.Create("./out.txt")
 	    if err != nil {
 	        panic(err)

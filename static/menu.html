@@ -83,35 +83,28 @@
 			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1});">0</a>
 		  </li>-->
 		  <!-- START Language menu-->
+		 
 		  <li class="language dropdown dropdown-list hidden-xs">
 			 <a href="#" class="current_language" data-toggle="dropdown">
-				<em id="langflag" class="gb flag"></em>
+				<em id="langflag" class="{{.DefLang}} flag"></em>
 				<span class="lang" lang-id="lng"></span>
 				<i class="fa fa-angle-down"></i>
 			 </a>
 			 <ul class="dropdown-menu animated flipInX">
 				<li>
 				   <div class="list-group">
-					  <a href="#" class="list-group-item" onClick="changeLanguage('gb')">
+					   {{range .Langs}}
+					  <a href="#" class="list-group-item" onClick="changeLanguage('{{.Code}}')">
 						 <div class="media-box">
 							<div class="pull-left">
-							   <em class="gb flag"></em>
+							   <em class="{{.Code}} flag"></em>
 							</div>
 							<div class="media-box-body clearfix">
-							   <p class="m0">English (UK)</p>
+							   <p class="m0">{{.Title}}</p>
 							</div>
 						 </div>
 					  </a>
-					  <a href="#" class="list-group-item" onClick="changeLanguage('nl')">
-						 <div class="media-box">
-							<div class="pull-left">
-							   <em class="nl flag"></em>
-							</div>
-							<div class="media-box-body clearfix">
-							   <p class="m0">Nederlands (NL)</p>
-							</div>
-						 </div>
-					  </a>
+					  {{end}}
 				   </div>
 				</li>
 			 </ul>

@@ -27,6 +27,11 @@ import (
 
 const NMenu = `menu`
 
+type LangInfo struct {
+	Title string
+	Code  string   
+}
+
 type menuPage struct {
 	Data          *CommonPage
 	Menu          string
@@ -38,6 +43,8 @@ type menuPage struct {
 	CitizenAvatar string
 	UpdVer        string
 	Btc           string
+	Langs         []LangInfo
+	DefLang       string
 }
 
 func init() {
@@ -108,7 +115,21 @@ func (c *Controller) Menu() (string, error) {
 		//		menu = ReplaceMenu(menu)
 		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
 	}
+	var langs []LangInfo
+	if len(utils.LangList) > 0 {
+		for _, val := range utils.LangList {
+			if val == `en` {
+				langs = append(langs, LangInfo{Title:`English (UK)`, Code: `gb`})
+			}
+			if val == `nl` {
+				langs = append(langs, LangInfo{Title:`Nederlands (NL)`, Code: `nl`})
+			}
+		}
+	} else {
+		langs = []LangInfo{ LangInfo{Title:`English (UK)`, Code: `gb`},
+		LangInfo{Title:`Nederlands (NL)`, Code: `nl`}}
+	}
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
 		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName,
-		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc()})
+		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, DefLang: langs[0].Code })
 }
