@@ -251,7 +251,7 @@ function do_register(obj, is_register) {
 	
 	if (phrase.length < 50) {
 		preloader(obj);
-		Alert(returnLang("warning"), "Enter correct seed or key, please", "notification:warning", defaultConfirm);
+		Alert(returnLang("warning"), returnLang("enter_correct_seed_or_key"), "notification:warning", defaultConfirm);
 		return false;
 	}
 	if (pass.length < 6) {

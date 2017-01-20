@@ -30,6 +30,7 @@ Lang = {
 	"save_passphrase": "Save passphrase",
 	"make_sure": "Make sure that you keep the passphrase (account seed) safe and remember the password. You will be asked to re-type them for confirmation.",
 	"warning": "Warning",
+	"enter_correct_seed_or_key": "Enter correct seed or key, please",
 	"account_seeds_do_not_match": "Account seeds do not match.",
 	"enter_password": "Enter the password, please",
 	"password_less": "Password is too week. The length is less than 6.",

@@ -30,6 +30,7 @@ Lang = {
 	"save_passphrase": "Bewaar zaai sleutel zin",
 	"make_sure": "Bewaar je zaai sleutel goed en veilig. Je hebt hem later weer nodig en hij is uniek!",
 	"warning": "Waarschuwing",
+	"enter_correct_seed_or_key": "Voer alstublieft de juiste zaai sleutel in",
 	"account_seeds_do_not_match": "Gebruiker niet gelijk!",
 	"enter_password": "Uw wachtwoord a.u.b ?",
 	"password_less": "Tekort! Minimaal 6 tekens.",
