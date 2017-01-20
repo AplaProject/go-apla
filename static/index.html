@@ -136,9 +136,14 @@
 /*		if (accounts.length > 0 && thrust) {
 			localStorage.setItem('Accounts', accounts);
 		}*/
-				
 		$( document ).ready(function() {
-			loadLanguage();
+			{{if .Langs}}
+				var list = {{.Langs}}.split(',');
+				localStorage.setItem('EGAAS_LANG', list[0]);
+				changeLanguage(list[0]);
+			{{else}}
+				loadLanguage();
+			{{end}}
 			
 			{{if not .DbOk}}
 				NProgressStart.set(1);
@@ -419,8 +424,8 @@
 						$(".sweet-overlay, .sweet-alert").remove();
 						//console.log('$("#loader").spin(false)');
 						$('#dl_content').html( data );
-						//updateLanguage("#dl_content .lang");
-						loadLanguage();
+						updateLanguage("#dl_content .lang");
+						//loadLanguage();
 						hist_push(['dl_navigate0', page, parameters]);
 						if ( parameters && parameters.hasOwnProperty("lang")) {
 							if ( page[0] == 'E' )

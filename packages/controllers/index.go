@@ -44,6 +44,7 @@ type index struct {
 	Mobile      bool
 	ShowIOSMenu bool
 	Version     string
+	Langs       string
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +153,10 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("%v", err)
 	}
-
+	langs := ``
+	if len(utils.LangList) > 0 {
+		langs = strings.Join(utils.LangList, `,`)
+	}
 	b := new(bytes.Buffer)
 	err = t.Execute(b, &index{
 		DbOk:        true,
@@ -165,6 +169,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		Thrust:      utils.Thrust,
 		Android:     android,
 		Mobile:      mobile,
+		Langs:       langs,
 		Version:     consts.VERSION})
 	if err != nil {
 		log.Error("%v", err)

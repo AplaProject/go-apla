@@ -51,7 +51,8 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	params := make(map[string]string)
 	params[`state_id`] = c.StateIdStr
 	params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
-	menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
+	menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`]) +
+		`<!--#` + menuName + `#-->`
 
 	return menu, nil
 
