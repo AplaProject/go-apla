@@ -251,6 +251,13 @@ function load_page(page, parameters) {
 		}, "html");
 }
 
+function clearTempMenu() {
+	//console.log('clear temp');
+	//	$("#mmenu-panel li:first ul").remove();
+	//	$("#mmenu-panel li:first a").remove();
+	//	$("#ultemporary").remove();
+}
+
 var latestMenu = '';
 function ajaxMenu(page, parameters) {
 	$.ajax({
@@ -259,32 +266,43 @@ function ajaxMenu(page, parameters) {
 		data: parameters ? parameters : {},
 		success: function (data) {
 			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
+			var name = 'temporary';
 			if (aname.length > 1) {
-				var name = aname[1];
-				if (latestMenu != '' && latestMenu != name) {
-					//					MenuAPI.openPanel($("#mmenu-panel"));
-					//					MenuAPI.setSelected($("#li" + latestMenu), true);
-					$("#ul" + latestMenu).remove();
-					$("#li" + latestMenu + ' .mm-next').remove();
-					//					MenuAPI.update();
-				}
-				if (latestMenu != name) {
-					latestMenu = name;
+				name = aname[1];
+			} else {
+				/*				//				$("#mmenu-panel ul").remove();
+								$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
+								updateLanguage($("#ul" + name + ' .lang'));
+								MenuAPI.initPanels($("#ul" + name));
+								MenuAPI.openPanel($("#ul" + name));
+				*/
+			}
+			if (latestMenu != '' && latestMenu != name) {
+				//					MenuAPI.openPanel($("#mmenu-panel"));
+				//					MenuAPI.setSelected($("#li" + latestMenu), true);
+				$("#ul" + latestMenu).remove();
+				$("#li" + latestMenu + ' .mm-next').remove();
+				//					MenuAPI.update();
+			}
+			//			console.log('Menu', latestMenu, name);
+			if (latestMenu != name) {
+				latestMenu = name;
+				if (name != 'temporary') {
 					$("#li" + name + " ul").remove();
 					$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
-					updateLanguage($("#ul" + name + ' .lang'));
-					MenuAPI.initPanels($("#ul" + name));
+				} else {
+					//					console.log('Dynamic');
+					$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
 				}
-				MenuAPI.openPanel($("#ul" + name));
-				$("#li" + name + ' .mm-next').remove();
-				$(".mm-selected").removeClass("mm-selected");
-				MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
-			} else {
-				//				$("#mmenu-panel ul").remove();
-				$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
 				updateLanguage($("#ul" + name + ' .lang'));
 				MenuAPI.initPanels($("#ul" + name));
-				MenuAPI.openPanel($("#ul" + name));
+			}
+			MenuAPI.openPanel($("#ul" + name));
+			$("#li" + name + ' .mm-next').remove();
+			$(".mm-selected").removeClass("mm-selected");
+			MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
+			if (name == 'temporary') {
+				$("#mmenu-panel li:first a").remove();
 			}
 			var bname = data.match(/<!--([\w_\d ]*)=([\w_\d '\(\)]*)-->/) || [""];
 			if (bname.length > 2) {
@@ -294,7 +312,15 @@ function ajaxMenu(page, parameters) {
 					$(".mm-navbar-top a").attr('onclick', bname[2] + ';return false;');
 				}
 			} else {
-				$(".mm-navbar-top a").attr('onclick', '');
+				if (name == 'temporary') {
+					var title = $("#mmenu-panel .mm-navbar a").html();
+					$(".mm-navbar-top a").attr('onclick', '');
+					$(".mm-navbar-top .mm-title").html(title);
+					$(".mm-navbar-top a").attr('href', '#mmenu-panel');
+					//	$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
+				}
+				else
+					$(".mm-navbar-top a").attr('onclick', '');
 			}
 		}
 	});
@@ -368,7 +394,7 @@ function CopyToClipboard(elem, text) {
 		clipboard.destroy();
 	}
 	clipboard = new Clipboard(elem);
-	
+
 	if (text) {
 		$(elem).attr("data-clipboard-text", text);
 	}

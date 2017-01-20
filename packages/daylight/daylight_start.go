@@ -27,6 +27,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -46,6 +47,16 @@ import (
 	"github.com/go-thrust/thrust"
 	"github.com/op/go-logging"
 )
+
+func FileAsset(name string) ([]byte, error) {
+	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.svg` {
+		logofile := *utils.Dir + `/logo.svg`
+		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
+			return ioutil.ReadFile(logofile)
+		}
+	}
+	return static.Asset(name)
+}
 
 func Start(dir string, thrustWindowLoder *window.Window) {
 
@@ -372,14 +383,14 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
 		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
-		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
+		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 		if len(*utils.Tls) > 0 {
 			http.Handle(HandleHttpHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))
 			httpsMux := http.NewServeMux()
 			httpsMux.HandleFunc(HandleHttpHost+"/", controllers.Index)
 			httpsMux.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 			httpsMux.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
-			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: static.Asset, AssetDir: static.AssetDir, Prefix: ""}))
+			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
 		}
 
