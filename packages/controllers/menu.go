@@ -43,6 +43,7 @@ type menuPage struct {
 	CitizenAvatar string
 	UpdVer        string
 	Btc           string
+	LogoExt       string
 	Langs         []LangInfo
 	DefLang       string
 }
@@ -130,6 +131,6 @@ func (c *Controller) Menu() (string, error) {
 		LangInfo{Title:`Nederlands (NL)`, Code: `nl`}}
 	}
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
-		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName,
+		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, LogoExt: utils.LogoExt,
 		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, DefLang: langs[0].Code })
 }
