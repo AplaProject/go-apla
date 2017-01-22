@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -56,7 +57,7 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(err)
 	}
 
-	prefix , err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
+	prefix, err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -86,7 +87,7 @@ func (p *Parser) NewColumnFront() error {
 
 func (p *Parser) NewColumn() error {
 
-	prefix , err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
+	prefix, err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -115,7 +116,7 @@ func (p *Parser) NewColumn() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["permissions"]+`"`, rbId, p.TxMaps.String["table_name"])
+	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJson(p.TxMaps.String["permissions"])+`"`, rbId, p.TxMaps.String["table_name"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
