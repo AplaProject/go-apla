@@ -252,34 +252,55 @@ function load_page(page, parameters) {
 }
 
 function clearTempMenu() {
-	//console.log('clear temp');
+	console.log('clear temp');
 	//	$("#mmenu-panel li:first ul").remove();
 	//	$("#mmenu-panel li:first a").remove();
 	//	$("#ultemporary").remove();
+	curMenu = 'main_menu';
 }
 
 var latestMenu = '';
+var curMenu = 'main_menu';
+
 function ajaxMenu(page, parameters) {
 	$.ajax({
 		url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 		type: 'POST',
 		data: parameters ? parameters : {},
 		success: function (data) {
-		    if (data.length == 0) {
-		        return
-		    }
-			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
+			// linked menu
+			var amenuname = data.match(/<!--#([\w_\d]*)#-->/) || [""];
+			if (amenuname.length > 1)
+				menuname = amenuname[1];
+			console.log('Main', menuname, curMenu);
+			if (menuname == 'main_menu') {
+				if (curMenu != menuname) {
+					curMenu = menuname;
+					MenuAPI.openPanel($("#mmenu-panel"));
+				}
+				return;
+			}
+			if (curMenu == menuname)
+				return;
+			curMenu = menuname;
+
+
 			var name = 'temporary';
+			var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
 			if (aname.length > 1) {
 				name = aname[1];
 			} else {
-				/*				//				$("#mmenu-panel ul").remove();
-								$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
-								updateLanguage($("#ul" + name + ' .lang'));
-								MenuAPI.initPanels($("#ul" + name));
-								MenuAPI.openPanel($("#ul" + name));
-				*/
+				//				$("#ultemporary").remove();
 			}
+			/*			if (curMenu == name)
+							return;*/
+			/*				//				$("#mmenu-panel ul").remove();
+							$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
+							updateLanguage($("#ul" + name + ' .lang'));
+							MenuAPI.initPanels($("#ul" + name));
+							MenuAPI.openPanel($("#ul" + name));
+			*/
+			console.log('Menu', menuname, name, latestMenu, curMenu);
 			if (latestMenu != '' && latestMenu != name) {
 				//					MenuAPI.openPanel($("#mmenu-panel"));
 				//					MenuAPI.setSelected($("#li" + latestMenu), true);
@@ -287,15 +308,15 @@ function ajaxMenu(page, parameters) {
 				$("#li" + latestMenu + ' .mm-next').remove();
 				//					MenuAPI.update();
 			}
-			console.log('Menu', latestMenu, name);
-			if (latestMenu != name || latestMenu == 'temporary') {
+			console.log('Menu 2', latestMenu, name);
+			if (latestMenu != name || name == 'temporary') {
 				latestMenu = name;
 				if (name != 'temporary') {
 					$("#li" + name + " ul").remove();
 					$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
 				} else {
-					console.log('Dynamic');
 					$("#ultemporary").remove();
+					console.log('Dynamic');
 					$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
 				}
 				updateLanguage($("#ul" + name + ' .lang'));
@@ -313,7 +334,7 @@ function ajaxMenu(page, parameters) {
 				$(".mm-navbar-top .mm-title").html(bname[1]);
 				if (bname[2].length > 0) {
 					$(".mm-navbar-top a").attr('href', '');
-					$(".mm-navbar-top a").attr('onclick', bname[2] + ';return false;');
+					$(".mm-navbar-top a").attr('onclick', bname[2] + ';  return false;');
 				}
 			} else {
 				if (name == 'temporary') {
@@ -321,12 +342,67 @@ function ajaxMenu(page, parameters) {
 					$(".mm-navbar-top a").attr('onclick', '');
 					$(".mm-navbar-top .mm-title").html(title);
 					$(".mm-navbar-top a").attr('href', '#mmenu-panel');
-					//	$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
+					$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
 				}
 				else
-					$(".mm-navbar-top a").attr('onclick', '');
+					$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
 			}
 		}
+
+		/*		    if (data.length == 0) {
+						return
+					}
+					var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
+					var name = 'temporary';
+					if (aname.length > 1) {
+						name = aname[1];
+					} else {
+					}
+					if (latestMenu != '' && latestMenu != name) {
+						$("#ul" + latestMenu).remove();
+						$("#li" + latestMenu + ' .mm-next').remove();
+						//					MenuAPI.update();
+					}
+					console.log('Menu', latestMenu, name);
+					if (latestMenu != name || latestMenu == 'temporary') {
+						latestMenu = name;
+						if (name != 'temporary') {
+							$("#li" + name + " ul").remove();
+							$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
+						} else {
+							console.log('Dynamic');
+							$("#ultemporary").remove();
+							$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
+						}
+						updateLanguage($("#ul" + name + ' .lang'));
+						MenuAPI.initPanels($("#ul" + name));
+					}
+					MenuAPI.openPanel($("#ul" + name));
+					$("#li" + name + ' .mm-next').remove();
+					$(".mm-selected").removeClass("mm-selected");
+					MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
+					if (name == 'temporary') {
+						$("#mmenu-panel li:first a").remove();
+					}
+					var bname = data.match(/<!--([\w_\d ]*)=([\w_\d '\(\)]*)-->/) || [""];
+					if (bname.length > 2) {
+						$(".mm-navbar-top .mm-title").html(bname[1]);
+						if (bname[2].length > 0) {
+							$(".mm-navbar-top a").attr('href', '');
+							$(".mm-navbar-top a").attr('onclick', bname[2] + ';return false;');
+						}
+					} else {
+						if (name == 'temporary') {
+							var title = $("#mmenu-panel .mm-navbar a").html();
+							$(".mm-navbar-top a").attr('onclick', '');
+							$(".mm-navbar-top .mm-title").html(title);
+							$(".mm-navbar-top a").attr('href', '#mmenu-panel');
+							//	$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
+						}
+						else
+							$(".mm-navbar-top a").attr('onclick', '');
+					}
+				}*/
 	});
 }
 
@@ -826,6 +902,7 @@ function base64ToHex(str) {
 }
 
 
+
 function hex2a(hex) {
 	var str = '';
 	for (var i = 0; i < hex.length; i += 2)
@@ -1089,7 +1166,7 @@ function updateLanguage(classes) {
 			var data = $(this).attr('lang-id');
 			$(this).html(Lang[data]);
 		});
-		$("#langflag").attr('class', 'flag ' + localStorage.getItem('EGAAS_LANG'));
+	$("#langflag").attr('class', 'flag ' + localStorage.getItem('EGAAS_LANG'));
 }
 
 function loadjs(filename) {
