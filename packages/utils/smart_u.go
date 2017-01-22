@@ -209,7 +209,7 @@ func Param(vars *map[string]string, pars ...string) string {
 }
 
 func LangRes(vars *map[string]string, pars ...string) string {
-	ret,_ := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	ret, _ := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
 	return ret
 }
 
@@ -238,8 +238,8 @@ func ifValue(val string) bool {
 	case `!=`:
 		return len(cond) == 2 && strings.TrimSpace(cond[0]) != strings.TrimSpace(cond[1])
 	case `>`, `<`, `<=`, `>=`:
-		ret0, _ := decimal.NewFromString(cond[0])
-		ret1, _ := decimal.NewFromString(cond[1])
+		ret0, _ := decimal.NewFromString(strings.TrimSpace(cond[0]))
+		ret1, _ := decimal.NewFromString(strings.TrimSpace(cond[1]))
 		if len(cond) == 2 {
 			var bin bool
 			if sep == `>` || sep == `<=` {
