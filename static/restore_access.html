@@ -5,23 +5,23 @@
 
 		{{if .ShowSignData}}$("#main").css("display", "none");	$("#sign").css("display", "block");{{end}}
 
-		if ($("#change_key_status").val()=='1') {
+	    if ($("#change_key_status").val()=='1') {
 			encrypted_message = 30;
 			$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},'+encrypted_message );
 			doSign();
 			{{if not .ShowSignData}}$("#send_to_net").trigger("click");{{end}}
-			}
-		else {
-				$.post( 'ajax?controllerName=encryptComment', {
-					'type' : 'restoringAccess',
-					'comment' : $("#secret").val()
-		}, function (data) {
-			encrypted_message = data;
-			$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},'+encrypted_message );
-			doSign();
-			{{if not .ShowSignData}}$("#send_to_net").trigger("click");{{end}}
-			});
-		}
+		 }
+		 else {
+					$.post( 'ajax?controllerName=encryptComment', {
+						'type' : 'restoringAccess',
+						'comment' : $("#secret").val()
+					}, function (data) {
+						encrypted_message = data;
+						$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},'+encrypted_message );
+						doSign();
+						{{if not .ShowSignData}}$("#send_to_net").trigger("click");{{end}}
+					});
+				}
 	});
 
 	$('#send_to_net').bind('click', function () {
