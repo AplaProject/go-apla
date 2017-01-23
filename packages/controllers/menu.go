@@ -45,6 +45,7 @@ type menuPage struct {
 	Btc           string
 	LogoExt       string
 	Langs         []LangInfo
+	CountLangs        int
 	DefLang       string
 }
 
@@ -132,5 +133,5 @@ func (c *Controller) Menu() (string, error) {
 	}
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
 		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, LogoExt: utils.LogoExt,
-		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, DefLang: langs[0].Code })
+		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code })
 }
