@@ -38,6 +38,11 @@ const (
 	OBJ_EXTFUNC
 	OBJ_VAR
 	OBJ_EXTEND
+
+	COST_CALL     = 50
+	COST_CONTRACT = 100
+	COST_EXTEND   = 10
+	COST_DEFAULT  = int64(0xffffffff)
 )
 
 type ExtFuncInfo struct {
@@ -157,11 +162,13 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 			break
 		}
 	}
+	rt.cost -= COST_CONTRACT
 	for _, method := range []string{`init`, `conditions`, `action`} {
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == OBJ_FUNC {
-			rtemp := rt.vm.RunInit()
+			rtemp := rt.vm.RunInit(rt.cost)
 			(*rt.extend)[`parent`] = parent
 			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
+			rt.cost = rtemp.cost
 			if err != nil {
 				return err
 			}
@@ -257,7 +264,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 	}
 	switch obj.Type {
 	case OBJ_FUNC:
-		rt := vm.RunInit()
+		rt := vm.RunInit(COST_DEFAULT)
 		ret, err = rt.Run(obj.Value.(*Block), params, extend)
 	case OBJ_EXTFUNC:
 		finfo := obj.Value.(ExtFuncInfo)
