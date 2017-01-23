@@ -75,6 +75,8 @@ type Parser struct {
 	TxStateID        uint32
 	TxStateIDStr     string
 	TxTime           int64
+	TxCost           int64 // Maximum cost of executing contract
+	TxUsedCost       int64 // Used cost of CPU resources
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go

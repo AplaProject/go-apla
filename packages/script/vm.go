@@ -49,6 +49,7 @@ type RunTime struct {
 	vars   []interface{}
 	extend *map[string]interface{}
 	vm     *VM
+	cost   int64
 	err    error
 	//	vars  *map[string]interface{}
 }
@@ -225,17 +226,25 @@ func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
 	return
 }
 
-func (vm *VM) RunInit() *RunTime {
-	rt := RunTime{stack: make([]interface{}, 0, 1024), vm: vm}
+func (rt *RunTime) SetCost(cost int64) {
+	rt.cost = cost
+}
+
+func (rt *RunTime) Cost() int64 {
+	return rt.cost
+}
+
+func (vm *VM) RunInit(cost int64) *RunTime {
+	rt := RunTime{stack: make([]interface{}, 0, 1024), vm: vm, cost: cost}
 	return &rt
 }
 
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
-
 	top := make([]interface{}, 8)
 	start := len(rt.stack)
 	rt.blocks = append(rt.blocks, &BlockStack{block, len(rt.vars)})
 	for vkey, vpar := range block.Vars {
+		rt.cost--
 		var value interface{}
 		if block.Type == OBJ_FUNC && vkey < len(block.Info.(*FuncInfo).Params) {
 			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
@@ -256,6 +265,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	labels := make([]int, 0)
 	//main:
 	for ci := 0; ci < len(block.Code); ci++ { //_, cmd := range block.Code {
+		rt.cost--
+		if rt.cost <= 0 {
+			return 0, fmt.Errorf(`paid CPU resource is over`)
+		}
 		cmd := block.Code[ci]
 		var bin interface{}
 		size := len(rt.stack)
@@ -337,6 +350,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
 		case CMD_CALLVARI, CMD_CALL:
+			rt.cost -= COST_CALL
 			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
 
 		case CMD_VAR:
@@ -355,6 +369,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
 		case CMD_EXTEND, CMD_CALLEXTEND:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
+				rt.cost -= COST_EXTEND
 				if cmd.Cmd == CMD_CALLEXTEND {
 					err := rt.extendFunc(cmd.Value.(string))
 					if err != nil {
