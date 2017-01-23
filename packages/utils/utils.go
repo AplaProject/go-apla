@@ -116,7 +116,7 @@ var (
 	OneCountry              int64
 	PrivCountry             bool
 	OutFile                 *os.File
-	LogoExt                 = `svg`
+	LogoExt                 = `png`
 
 	DaemonsChans []*DaemonsChansType
 	eWallets     = &sync.Mutex{}
