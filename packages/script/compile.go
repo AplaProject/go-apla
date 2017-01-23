@@ -776,6 +776,11 @@ main:
 					buffer = append(buffer, &ByteCode{cmdCall, objInfo})
 					if isContract {
 						bytecode = append(bytecode, &ByteCode{CMD_PUSH, StateName((*block)[0].Info.(uint32), lexem.Value.(string))})
+						if count == 0 {
+							count = 2
+							bytecode = append(bytecode, &ByteCode{CMD_PUSH, ""})
+							bytecode = append(bytecode, &ByteCode{CMD_PUSH, ""})
+						}
 						count++
 					}
 					parcount = append(parcount, count)

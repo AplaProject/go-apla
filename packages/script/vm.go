@@ -75,7 +75,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 		pars := make([]reflect.Value, in)
 		limit := 0
 		(*rt.extend)[`rt`] = rt
-		//	fmt.Println(`CALL`, count, i, in, limit)
+		//		fmt.Println(`CALL`, finfo, count, in)
 		auto := 0
 		for k := 0; k < in; k++ {
 			if len(finfo.Auto[k]) > 0 {
