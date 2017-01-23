@@ -85,10 +85,14 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		walletBlock = p.BlockData.WalletId
 		blockTime = p.BlockData.Time
 	}
+	cost := p.TxCost
+	if cost == 0 {
+		cost = script.COST_DEFAULT
+	}
 
 	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateId),
 		`block`: block, `citizen`: citizenId, `wallet`: walletId, `wallet_block`: walletBlock,
-		`parent`: ``,
+		`parent`: ``, `txcost`: cost,
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
 	for key, val := range p.TxData {
 		extend[key] = val
@@ -147,6 +151,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	p.TxContract.Extend = p.getExtend()
+	before := (*p.TxContract.Extend)[`txcost`].(int64)
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
 			cfunc := p.TxContract.GetFunc(methods[i])
@@ -156,11 +161,11 @@ func (p *Parser) CallContract(flags int) (err error) {
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
 			if err != nil {
-				//			fmt.Println(`Contract Error`, err)
-				return
+				break
 			}
 		}
 	}
+	p.TxUsedCost = before - (*p.TxContract.Extend)[`txcost`].(int64)
 	return
 }
 
