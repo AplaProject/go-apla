@@ -1188,6 +1188,8 @@ function changeLanguage(lang) {
 }
 
 function returnLang(data) {
+	if (typeof Lang === 'undefined')
+		return '';
 	return Lang[data];
 }
 

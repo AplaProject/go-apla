@@ -57,8 +57,34 @@ function sendnet{{.Unique}}() {
 
 var phrase_limit = 20;
 
-$(document).ready(function(){
+function randomPassword(length) {
+    var chars = "abcdefghijkmnpqrstuvwxyz!@#$%&-+ABCDEFGHJKLMNP23456789";
+    var pass = "";
+    for (var x = 0; x < length; x++) {
+        var i = Math.floor(Math.random() * chars.length);
+        pass += chars.charAt(i);
+    }
+    return pass;
+}
+
+function enc_phrase() {
     do_phrase(phrase_limit);
+	var msg = $("#phrase").val();
+	var pass = randomPassword(10);//Math.random().toString(36).slice(-10);
+	var enc = CryptoJS.AES.encrypt(msg, pass/*, {
+	mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7}*/);
+	$("#encphrase").val(enc);
+	$("#encpass").val(pass);
+	enc = $("#encphrase").val();
+	var check = CryptoJS.AES.decrypt(enc, pass).toString( CryptoJS.enc.Utf8 );
+	if (check != msg)  {
+		$("#encphrase").val('Wrong decryption');
+		$("#encpass").val('');
+	} 
+}
+
+$(document).ready(function(){
+    enc_phrase();
 })
 </script>
 
@@ -82,8 +108,12 @@ $(document).ready(function(){
                 <label for="seed" class="lang" lang-id="account_seed">Account seed</label>
 				<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 				<div class="clearfix">
-    				<button id="genseed" class="btn btn-default pull-left" type="button" onclick="return do_phrase(phrase_limit);" class="lang" lang-id="generate_new_seed">Generate new seed</button>
+    				<button id="genseed" class="btn btn-default pull-left" type="button" onclick="return enc_phrase();" class="lang" lang-id="generate_new_seed">Generate new seed</button>
                 </div>
+                <label for="encseed">Encrypted account seed</label>
+				<textarea class="form-control" name="encphrase" id="encphrase" rows="5"></textarea>
+                <label for="pass">Password</label>
+				<input disable id="encpass" value="" class="form-control" >
                 <input id="prvkey" type="hidden" value="">
                 <input id="pubkey" type="hidden" value="">
             </div>
