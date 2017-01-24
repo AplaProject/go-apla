@@ -21,8 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -96,34 +95,34 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	var (
 		data []byte
-		key  []byte
+		//		key  []byte
 	)
-	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime),
-		WalletId: walletId, CitizenId: citizenId}
+	/*	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime),
+		WalletId: walletId, CitizenId: citizenId}*/
 	switch txType_ {
-	case "CitizenRequest":
-		_, err = lib.BinMarshal(&data, &consts.CitizenRequest{TxHeader: txHead,
-			StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign})
-	case "NewCitizen":
-		if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
-			_, err = lib.BinMarshal(&data, &consts.NewCitizen{TxHeader: txHead,
-				StateId:   utils.StrToInt64(c.r.FormValue("stateId")),
-				PublicKey: key, Sign: sign})
-		}
-	case "TXNewCitizen":
-		// This will be common part
-		userId := uint64(walletId)
-		stateId := uint32(utils.StrToInt64(c.r.FormValue("stateId")))
-		TXHead := consts.TXHeader{Type: int32(txType), Time: uint32(txTime),
-			WalletId: userId, StateId: int32(stateId), Sign: sign}
-		// ---
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-		if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
-			_, err = lib.BinMarshal(&data, &consts.TXNewCitizen{TXHeader: TXHead,
-				PublicKey: key})
-		}
+	/*	case "CitizenRequest":
+			_, err = lib.BinMarshal(&data, &consts.CitizenRequest{TxHeader: txHead,
+				StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign})
+		case "NewCitizen":
+			if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
+				_, err = lib.BinMarshal(&data, &consts.NewCitizen{TxHeader: txHead,
+					StateId:   utils.StrToInt64(c.r.FormValue("stateId")),
+					PublicKey: key, Sign: sign})
+			}
+		case "TXNewCitizen":
+			// This will be common part
+			userId := uint64(walletId)
+			stateId := uint32(utils.StrToInt64(c.r.FormValue("stateId")))
+			TXHead := consts.TXHeader{Type: int32(txType), Time: uint32(txTime),
+				WalletId: userId, StateId: int32(stateId), Sign: sign}
+			// ---
+			if stateId == 0 {
+				return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
+			}
+			if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
+				_, err = lib.BinMarshal(&data, &consts.TXNewCitizen{TXHeader: TXHead,
+					PublicKey: key})
+			}*/
 	case "DLTTransfer":
 
 		stateId = 0

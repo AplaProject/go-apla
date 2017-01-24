@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -45,13 +46,13 @@ func (p *Parser) ChangeNodeKeyFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	*/
 	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.TxMaps.Int64["citizen_id"])
 	if err != nil || len(nodePublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")
 	}
-	*/
-	/*forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["user_id"], p.TxMap["new_node_public_key"])
+
+	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["user_id"], p.TxMap["new_node_public_key"])
 	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, p.TxMap["sign"], true)
 	if err != nil || !CheckSignResult {
 		forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["user_id"], p.TxMap["new_node_public_key"])
@@ -61,21 +62,20 @@ func (p *Parser) ChangeNodeKeyFront() error {
 		}
 	}
 
-	err = p.limitRequest(p.Variables.Int64["limit_node_key"], "node_key", p.Variables.Int64["limit_node_key_period"])
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	*/
+	/*	err = p.limitRequest(p.Variables.Int64["limit_node_key"], "node_key", p.Variables.Int64["limit_node_key_period"])
+		if err != nil {
+			return p.ErrInfo(err)
+		}*/
+
 	return nil
 }
 
 func (p *Parser) ChangeNodeKey() error {
 
-
-		_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.TxMaps.Bytes["new_node_public_key"]).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
