@@ -129,12 +129,12 @@ func init() {
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
-		`TxId`: TxId, `SetVar`: SetVar, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
+		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `IfEnd`: IfEnd, `Else`: Else, `ElseIf`: ElseIf, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
-		`BlockInfo`: BlockInfo, `Back`: Back,
+		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
 		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack,
@@ -539,6 +539,57 @@ func FullScreen(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 	$("body").%sClass('wide');
 </script>`, wide)
+}
+
+func GetList(vars *map[string]string, pars ...string) string {
+	// name, table, fields, where, order, limit
+	if len(pars) < 3 {
+		return ``
+	}
+	where := ``
+	order := ``
+	limit := -1
+	fields := lib.Escape(pars[2])
+	keys := strings.Split(fields, `,`)
+	if len(pars) >= 4 {
+		where = ` where ` + lib.Escape(pars[3])
+	}
+	if len(pars) >= 5 {
+		order = ` order by ` + lib.EscapeName(pars[4])
+	}
+	if len(pars) >= 6 {
+		limit = StrToInt(pars[5])
+	}
+
+	value, err := DB.GetAll(`select `+fields+` from `+lib.EscapeName(pars[1])+where+order, limit)
+	if err != nil {
+		return err.Error()
+	}
+	//out := make(map[string]map[string]string)
+	for _, item := range value {
+		ikey := item[keys[0]]
+		for key, ival := range item {
+			if strings.IndexByte(ival, '<') >= 0 {
+				//				item[key] = lib.StripTags(ival)
+				ival = lib.StripTags(ival)
+			}
+			(*vars)[pars[0]+ikey+key] = ival
+		}
+		//		out[item[keys[0]]] = item
+	}
+	/*	sout, err := json.Marshal(out)
+		if err != nil {
+			return err.Error()
+		}
+		(*vars)[pars[0]] = string(sout)*/
+	return ``
+}
+
+func ListVal(vars *map[string]string, pars ...string) string {
+	if len(pars) != 3 {
+		return ``
+	}
+	return (*vars)[pars[0]+pars[1]+pars[2]]
 }
 
 func GetRowVars(vars *map[string]string, pars ...string) string {
