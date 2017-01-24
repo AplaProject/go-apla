@@ -45,6 +45,7 @@ type index struct {
 	ShowIOSMenu bool
 	Version     string
 	Langs       string
+	LogoExt     string
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -170,6 +171,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		Android:     android,
 		Mobile:      mobile,
 		Langs:       langs,
+		LogoExt:     utils.LogoExt,
 		Version:     consts.VERSION})
 	if err != nil {
 		log.Error("%v", err)
