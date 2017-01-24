@@ -134,7 +134,7 @@ func init() {
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `IfEnd`: IfEnd, `Else`: Else, `ElseIf`: ElseIf, `Func`: Func, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
-		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal,
+		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal, `Tag`: Tag,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
 		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack,
@@ -653,6 +653,27 @@ func getTag(tag string, pars ...string) (out string) {
 		out += pars[i]
 	}
 	return out + fmt.Sprintf(`</%s>`, tag)
+}
+
+func Tag(vars *map[string]string, pars ...string) (out string) {
+	var valid bool
+	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`} {
+		if pars[0] == itag {
+			valid = true
+			break
+		}
+	}
+	if valid {
+		var class, title string
+		if len(pars) > 1 {
+			title = lib.StripTags(pars[1])
+		}
+		if len(pars) > 2 {
+			class = lib.Escape(pars[2])
+		}
+		return fmt.Sprintf(`<%s class="%s">%s</%[1]s>`, pars[0], class, title)
+	}
+	return ``
 }
 
 func Div(vars *map[string]string, pars ...string) (out string) {
