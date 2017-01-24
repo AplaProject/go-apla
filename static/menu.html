@@ -83,32 +83,33 @@
 			 <a id="BlockNumber" href="#" onClick="load_page('block_explorer', {singlePage: 1});">0</a>
 		  </li>-->
 		  <!-- START Language menu-->
-		 
-		  <li class="language dropdown dropdown-list hidden-xs">
-			 <a href="#" class="current_language" data-toggle="dropdown">
-				<em id="langflag" class="{{.DefLang}} flag"></em>
-				<span class="lang" lang-id="lng"></span>
-				<i class="fa fa-angle-down"></i>
-			 </a>
-			 <ul class="dropdown-menu animated flipInX">
-				<li>
-				   <div class="list-group">
-					   {{range .Langs}}
-					  <a href="#" class="list-group-item" onClick="changeLanguage('{{.Code}}')">
-						 <div class="media-box">
-							<div class="pull-left">
-							   <em class="{{.Code}} flag"></em>
-							</div>
-							<div class="media-box-body clearfix">
-							   <p class="m0">{{.Title}}</p>
-							</div>
-						 </div>
-					  </a>
-					  {{end}}
-				   </div>
-				</li>
-			 </ul>
-		  </li>
+		  {{if gt .CountLangs 1}}
+			  <li class="language dropdown dropdown-list hidden-xs">
+				 <a href="#" class="current_language" data-toggle="dropdown">
+					<em id="langflag" class="{{.DefLang}} flag"></em>
+					<span class="lang" lang-id="lng"></span>
+					<i class="fa fa-angle-down"></i>
+				 </a>
+				 <ul class="dropdown-menu animated flipInX">
+					<li>
+					   <div class="list-group">
+						   {{range .Langs}}
+						  <a href="#" class="list-group-item" onClick="changeLanguage('{{.Code}}')">
+							 <div class="media-box">
+								<div class="pull-left">
+								   <em class="{{.Code}} flag"></em>
+								</div>
+								<div class="media-box-body clearfix">
+								   <p class="m0">{{.Title}}</p>
+								</div>
+							 </div>
+						  </a>
+						  {{end}}
+					   </div>
+					</li>
+				 </ul>
+			  </li>
+		  {{end}}
 		  <!-- END Language menu-->
 		  <!-- START Alert menu-->
 		  <li class="dropdown dropdown-list hidden-xs">
@@ -466,24 +467,26 @@
 				   <span>HTML-Elements</span>
 			   </a>
 		  </li>
-		  <li class="visible-xs">
-			 <span>
-				<em class="fa fa-language"></em>
-				<span>Language</span>
-			 </span>
-			 <ul id="language">
-				<li>
-				   <a href="#" onClick="changeLanguage('gb');">
-					  <span>Enghlish (UK)</span>
-				   </a>
-				</li>
-				<li>
-				   <a href="#" onClick="changeLanguage('nl');">
-					  <span>Nederlands (NL)</span>
-				   </a>
-				</li>
-			 </ul>
-		  </li>
+		  {{if gt .CountLangs 1}}
+			  <li class="visible-xs">
+				 <span>
+					<em class="fa fa-language"></em>
+					<span>Language</span>
+				 </span>
+				 <ul id="language">
+					<li>
+					   <a href="#" onClick="changeLanguage('gb');">
+						  <span>Enghlish (UK)</span>
+					   </a>
+					</li>
+					<li>
+					   <a href="#" onClick="changeLanguage('nl');">
+						  <span>Nederlands (NL)</span>
+					   </a>
+					</li>
+				 </ul>
+			  </li>
+		  {{end}}
 		  <li id="exit">
 			 <!--<a href="#mmenu-panel">
 				<em class="icon-home"></em>
