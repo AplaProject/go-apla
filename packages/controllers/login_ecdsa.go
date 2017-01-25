@@ -25,6 +25,7 @@ import (
 type loginECDSAPage struct {
 	Lang  map[string]string
 	Title string
+	Key   string
 	//	States     map[string]string
 	States      string
 	OneCountry  int64
@@ -50,11 +51,15 @@ func (c *Controller) LoginECDSA() (string, error) {
 			states[id] = state_name
 		}*/
 	states, _ := c.AjaxStatesList()
-
+	key := c.r.FormValue("key")
+	if len(key) > 0 {
+		c.Logout()
+	}
 	TemplateStr, err := makeTemplate("login", "loginECDSA", &loginECDSAPage{
 		Lang:        c.Lang,
 		Title:       "Login",
 		States:      states,
+		Key:         key,
 		OneCountry:  utils.OneCountry,
 		PrivCountry: utils.PrivCountry,
 		//	Private: string(private),
