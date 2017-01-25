@@ -171,11 +171,16 @@
 				})
 			{{else if .Key}}
 				NProgressStart.set(1);
+				$( "#dl_content" ).load( "content", { key: {{.Key}}}, function() {
+				    NProgressStart.done();
+				});
+
+/*				NProgressStart.set(1);
 				$("#dl_content").load( "content", { {{if .SetLang}}"parameters": {"lang":{{.SetLang}} }{{end}} }, function() {
 					$("#key").text("{{.Key}}");
 					doSign('login');
 				})
-				load_menu({{if .SetLang}}{{.SetLang}}{{end}});
+				load_menu({{if .SetLang}}{{.SetLang}}{{end}});*/
 			{{else}}
 				//g_menuShow = false;
 				NProgressStart.set(1);

@@ -81,8 +81,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	sessCitizenId := GetSessCitizenId(sess)
 	sessWalletId := GetSessWalletId(sess)
-
-	var key string
+	//	var key string
 
 	showIOSMenu := true
 	// Когда меню не выдаем
@@ -135,10 +134,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	if ok, _ := regexp.MatchString("(?i)(Android)", r.UserAgent()); ok {
 		android = true
 	}
-
-	key = strings.Replace(key, "\r", "\n", -1)
-	key = strings.Replace(key, "\n\n", "\n", -1)
-	key = strings.Replace(key, "\n", "\\\n", -1)
+	/*	key = strings.Replace(key, "\r", "\n", -1)
+		key = strings.Replace(key, "\n\n", "\n", -1)
+		key = strings.Replace(key, "\n", "\\\n", -1)*/
 
 	setLang := r.FormValue("lang")
 
@@ -162,7 +160,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	err = t.Execute(b, &index{
 		DbOk:        true,
 		Lang:        globalLangReadOnly[lang],
-		Key:         key,
+		Key:         r.FormValue(`key`),
 		SetLang:     setLang,
 		ShowIOSMenu: showIOSMenu,
 		IOS:         ios,

@@ -154,6 +154,28 @@
 			{{if not .PrivCountry}}<a href="" onclick="return register_form()" class="btn btn-link lang" lang-id="create_account"></a>{{end}}
 			<button type="button" class="submit btn btn-primary lang" data-tool="panel-refresh" onclick="preloader(this); return do_login();" id="login_btn" lang-id="login"></button>
 		</div>
+	</div>	
+	<div id="key_form" class="start_form" style="display:none;" data-sweet-alert>
+		<div class="panel-body">
+			<h1 >Import Key</h1>
+			<form class="keyCode_13">
+				<fieldset class="s-box form-group" id="field-address">
+					<label class="col-sm-3 control-label" for="address">Encrypted Key</label>
+					<div class="col-sm-9">
+						<textarea class="form-control" name="encphrase" id="encphrase" rows="5">{{.Key}}</textarea>
+					</div>
+				</fieldset>
+				<fieldset class="form-group decpass">
+					<label class="col-sm-3 control-label lang" for="encpass" lang-id="password"></label>
+					<div class="col-sm-9">
+						<input id="encpass" class="form-control" type="password"/>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+		<div class="panel-footer flex buttons">
+			<button type="button" id="key_btn" class="submit btn btn-primary lang" data-tool="panel-refresh" onclick="return do_decryptlogin(this);" id="login_btn" lang-id="login"></button>
+		</div>		
 	</div>
 	<div id="register_form" class="start_form" style="display:none;" data-sweet-alert>
 		<div class="panel-body">
@@ -353,7 +375,12 @@ function do_sign() {
 						GKey.StateId = $( "#state_id" ).val();
 						GKey.add(data.address);
 					}
-					login_ok( data.result );
+					{{if .Key}}
+						if (data.result) 
+							document.location = '/';
+					{{else}}
+						login_ok( data.result );
+					{{end}}
 				}
 			}, 'JSON'
 		)
@@ -426,8 +453,46 @@ function import_form() {
 	return false;
 }
 
+function key_form() {
+	if (isMobile) {
+		$("#key_btn").addClass("hidden");
+	}
+	$("#key_form").show();
+	$("#register_form").hide();
+	$("#login_form").hide();
+	WatchForm();
+	return false;
+}
+
+
 var encKey;
 var loginAttempts = 0;
+
+function myConfirm() {
+	setTimeout( function(){$(".whirl").removeClass("whirl standard");}, 3000);
+}
+
+function do_decryptlogin(obj) {
+	var pass = $("#encpass").val();
+	var key = $("#encphrase").val().replace(/@/g, '+'); 
+	if ( key == "") {
+		Alert(returnLang("warning"), "Enter the decrypted key", "notification:warning", myConfirm);
+		return false;
+	}
+	if ( pass == "") {
+		Alert(returnLang("warning"), returnLang("enter_password"), "notification:warning", myConfirm);
+		return false;
+	}
+	var seed = CryptoJS.AES.decrypt(key, pass).toString( CryptoJS.enc.Utf8 );
+	if (seed == "") {
+		Alert(returnLang("warning"), "Wrong password", "notification:warning", myConfirm);
+		return false;
+	}
+	$("#phrase").val(seed);
+	$("#pass").val(pass);
+	$("#rep_pass").val(pass);
+	return do_register(obj, false);
+}
 
 function do_login() {
 	// Check encKey
@@ -544,24 +609,31 @@ $(document).ready(function(){
 /*	if (pubkey) {
 		$("#address").html( 'Address: ' +  hex_sha1( pubkey ).toLowerCase());
 	}*/
-	load_accounts();
-	if (!GKey.Public && !GKey.Accounts.length) {
-		if (private.length)	{
-			$("#phrase").val(private);
-			import_form();
-		} else {
-			{{if .PrivCountry}}
+	{{if .Key}}
+		GKey.clear();
+		GKey.Private = '';
+		GKey.Public = '';		
+		key_form();
+	{{else}}
+		load_accounts();
+		if (!GKey.Public && !GKey.Accounts.length) {
+			if (private.length)	{
+				$("#phrase").val(private);
 				import_form();
-			{{else}}
-				do_phrase();
-				register_form();
-			{{end}}
+			} else {
+				{{if .PrivCountry}}
+					import_form();
+				{{else}}
+					do_phrase();
+					register_form();
+				{{end}}
+			}
+		} else if (localStorage.getItem('EncKey') || GKey.Accounts.length) {
+			login_form();
+		} else {
+			import_form();
 		}
-	} else if (localStorage.getItem('EncKey') || GKey.Accounts.length) {
-		login_form();
-	} else {
-		import_form();
-	}
+	{{end}}
 	if (!localStorage.getItem('EncKey')) {
 		//$(".islogin").hide();
 	}

@@ -189,9 +189,16 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	if len(tplName) == 0 {
 		tplName = r.FormValue("controllerHTML")
 		if len(tplName) == 0 {
-			tplName = pageName
-			if len(tplName) == 0 {
-				tplName = "dashboardAnonym"
+			if len(pageName) == 0 {
+				if len(r.FormValue("key")) > 0 {
+					c.Logout()
+					tplName = `loginECDSA`
+				}
+			} else {
+				tplName = pageName
+				if len(tplName) == 0 {
+					tplName = "dashboardAnonym"
+				}
 			}
 		}
 	}

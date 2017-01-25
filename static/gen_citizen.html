@@ -71,12 +71,13 @@ function enc_phrase() {
     do_phrase(phrase_limit);
 	var msg = $("#phrase").val();
 	var pass = randomPassword(10);//Math.random().toString(36).slice(-10);
-	var enc = CryptoJS.AES.encrypt(msg, pass/*, {
+	var emsg = CryptoJS.AES.encrypt(msg, pass/*, {
 	mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7}*/);
-	$("#encphrase").val(enc);
+	emsg = emsg.toString().replace(/\+/g, '@');
+	$("#encphrase").val(emsg);
 	$("#encpass").val(pass);
-	enc = $("#encphrase").val();
-	var check = CryptoJS.AES.decrypt(enc, pass).toString( CryptoJS.enc.Utf8 );
+	emsg = $("#encphrase").val().replace(/@/g, '+');
+	var check = CryptoJS.AES.decrypt(emsg, pass).toString( CryptoJS.enc.Utf8 );
 	if (check != msg)  {
 		$("#encphrase").val('Wrong decryption');
 		$("#encpass").val('');
