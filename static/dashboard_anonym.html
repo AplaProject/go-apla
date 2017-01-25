@@ -232,47 +232,47 @@
 	  </div>
 	  <!-- END panel-->
    </div>
-</div>
-<!-- START panel tab-->
-<div role="tabpanel" class="panel panel-transparent">
- <!-- Nav tabs-->
- <ul role="tablist" class="nav nav-tabs nav-justified">
-	<li role="presentation" class="active">
-	   <a href="#tab1" aria-controls="home" role="tab" data-toggle="tab" class="bb0"><em class="fa fa-clock-o fa-fw"></em> <span class="lang" lang-id="transactions_history"></span></a>
-	</li>
-	<li role="presentation">
-	   <a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab" class="bb0" onclick="blockExplorer()"><em class="fa fa-th fa-fw"></em> <span class="lang" lang-id="block_explorer"></span></a>
-	</li>
- </ul>
- <!-- Tab panes-->
- <div class="tab-content p0 bg-white">
-	<div id="tab1" role="tabpanel" class="tab-pane active">
-	   <!-- START table responsive-->
-	   <div id="nodata" class="box-placeholder text-center lang" lang-id="no_data_available"></div>
-	   <div class="table-responsive">
-		  <table id="history" class="table table-striped table-hover" data-role="table">
-		  <thead>
-			 <tr>
-				<th class="lang" lang-id="block_id"></th>
-				<th class="lang" lang-id="time"></th>
-				<th class="lang" lang-id="amount"></th>
-				<th class="lang" lang-id="sender"></th>
-				<th class="lang" lang-id="recipient"></th>
-				<th class="lang" lang-id="comment"></th>
-				<th class="lang" lang-id="confirmations"></th>
-			 </tr>
-		  </thead>
-		  <tbody></tbody>
-	     </table>
-	   </div>
-	   <!-- END table responsive-->
-	   <div class="panel-footer text-right"><a href="#"  onclick="load_page('history');" class="btn btn-default btn-sm lang" lang-id="view_all_history"></a>
-	   </div>
+	<!-- START panel tab-->
+	<div role="tabpanel" class="col-xs-12 panel panel-transparent">
+	 <!-- Nav tabs-->
+	 <ul role="tablist" class="nav nav-tabs nav-justified">
+		<li role="presentation" class="active">
+		   <a href="#tab1" aria-controls="home" role="tab" data-toggle="tab" class="bb0"><em class="fa fa-clock-o fa-fw"></em> <span class="lang" lang-id="transactions_history"></span></a>
+		</li>
+		<li role="presentation">
+		   <a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab" class="bb0" onclick="blockExplorer()"><em class="fa fa-th fa-fw"></em> <span class="lang" lang-id="block_explorer"></span></a>
+		</li>
+	 </ul>
+	 <!-- Tab panes-->
+	 <div class="tab-content p0 bg-white">
+		<div id="tab1" role="tabpanel" class="tab-pane active">
+		   <!-- START table responsive-->
+		   <div id="nodata" class="box-placeholder text-center lang" lang-id="no_data_available"></div>
+		   <div class="table-responsive">
+			  <table id="history" class="table table-striped table-hover" data-role="table">
+			  <thead>
+				 <tr>
+					<th class="lang" lang-id="block_id"></th>
+					<th class="lang" lang-id="time"></th>
+					<th class="lang" lang-id="amount"></th>
+					<th class="lang" lang-id="sender"></th>
+					<th class="lang" lang-id="recipient"></th>
+					<th class="lang" lang-id="comment"></th>
+					<th class="lang" lang-id="confirmations"></th>
+				 </tr>
+			  </thead>
+			  <tbody></tbody>
+			 </table>
+		   </div>
+		   <!-- END table responsive-->
+		   <div class="panel-footer text-right"><a href="#"  onclick="load_page('history');" class="btn btn-default btn-sm lang" lang-id="view_all_history"></a>
+		   </div>
+		</div>
+		<div id="tab2" role="tabpanel" class="tab-pane">
+		</div>
+	 </div>
 	</div>
-	<div id="tab2" role="tabpanel" class="tab-pane">
-	</div>
- </div>
+	<!-- END panel tab-->
 </div>
-<!-- END panel tab-->
 
 {{end}}
