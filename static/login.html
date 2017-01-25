@@ -476,18 +476,31 @@ function do_decryptlogin(obj) {
 	var pass = $("#encpass").val();
 	var key = $("#encphrase").val().replace(/@/g, '+'); 
 	if ( key == "") {
+		preloader(obj);
 		Alert(returnLang("warning"), "Enter the decrypted key", "notification:warning", myConfirm);
 		return false;
 	}
 	if ( pass == "") {
+		preloader(obj);
 		Alert(returnLang("warning"), returnLang("enter_password"), "notification:warning", myConfirm);
 		return false;
 	}
-	var seed = CryptoJS.AES.decrypt(key, pass).toString( CryptoJS.enc.Utf8 );
-	if (seed == "") {
+	var dec = CryptoJS.AES.decrypt(key, pass);//.toString( CryptoJS.enc.Utf8 );
+	var hex = dec.toString(CryptoJS.enc.Hex);
+	var valid = true;
+	for (i = 0; i < hex.length; i += 2) {
+		var num = parseInt(hex.substr(i, 2), 16);
+		if ((num < '0'.charCodeAt(0) || num > 'z'.charCodeAt(0)) && num != 0x20 ) {
+			valid = false;
+			break;
+		}
+	}
+	if (hex.length == 0 || !valid) {
+		preloader(obj);
 		Alert(returnLang("warning"), "Wrong password", "notification:warning", myConfirm);
 		return false;
 	}
+	var seed = dec.toString( CryptoJS.enc.Utf8 );
 	$("#phrase").val(seed);
 	$("#pass").val(pass);
 	$("#rep_pass").val(pass);
