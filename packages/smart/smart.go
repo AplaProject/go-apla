@@ -92,6 +92,10 @@ func FlushBlock(root *script.Block) {
 	smartVM.FlushBlock(root)
 }
 
+func ExtendCost(ext func(string) int64) {
+	smartVM.ExtCost = ext
+}
+
 func Extend(ext *script.ExtendData) {
 	smartVM.Extend(ext)
 }
