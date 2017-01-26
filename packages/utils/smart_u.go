@@ -155,9 +155,10 @@ func LoadContracts() (err error) {
 	LoadContract(`global`)
 	for _, ipref := range prefix {
 		if err = LoadContract(ipref); err != nil {
-			return err
+			break
 		}
 	}
+	smart.ExternOff()
 	return
 }
 

@@ -95,6 +95,7 @@ type Blocks []*Block
 
 type VM struct {
 	Block
+	Extern   bool   // extern mode of compilation
 }
 
 type ExtendData struct {
