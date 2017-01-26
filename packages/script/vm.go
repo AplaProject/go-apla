@@ -137,6 +137,14 @@ func (rt *RunTime) extendFunc(name string) error {
 	if f, ok = (*rt.extend)[name]; !ok || reflect.ValueOf(f).Kind().String() != `func` {
 		return fmt.Errorf(`unknown function %s`, name)
 	}
+	if rt.vm.ExtCost != nil {
+		cost := rt.vm.ExtCost(name)
+		if cost > rt.cost {
+			rt.cost = 0
+			return nil
+		}
+	}
+
 	size := len(rt.stack)
 	foo := reflect.ValueOf(f)
 	//	if count != foo.Type().NumIn() {

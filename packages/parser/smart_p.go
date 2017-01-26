@@ -32,6 +32,33 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+var (
+	extendCost = map[string]int64{
+		"DBInsert": 200,
+		"DBUpdate": 100,
+		"DBUpdateWhere":  100,
+		"DBGetList":      300,
+		"DBTransfer":     200,
+		"DBString":       100,
+		"DBInt":          100,
+		"DBStringExt":    100,
+		"DBIntExt":       100,
+		"DBStringWhere":  100,
+		"DBIntWhere":     100,
+		"AddressToId":    10,
+		"IdToAddress":    10,
+		"DBAmount":       100,
+		"IsGovAccount":   80,
+		"StateValue":     80,
+		"Sha256":         50,
+		"PubToID":        10,
+		"UpdateContract": 200,
+		"UpdateParam":    200,
+		"UpdateMenu":     200,
+		"UpdatePage":     200,
+	}
+)
+
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		"DBInsert":       DBInsert,
@@ -68,7 +95,15 @@ func init() {
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
+	smart.ExtendCost(getCost)
 	//	smart.Compile( embedContracts)
+}
+
+func getCost(name string) int64 {
+	if val, ok := extendCost[name]; ok {
+		return val
+	}
+	return 0
 }
 
 func (p *Parser) getExtend() *map[string]interface{} {
@@ -166,6 +201,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		}
 	}
 	p.TxUsedCost = before - (*p.TxContract.Extend)[`txcost`].(int64)
+	//fmt.Println(`Cost`, p.TxUsedCost)
 	return
 }
 

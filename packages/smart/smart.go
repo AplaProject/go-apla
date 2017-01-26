@@ -47,7 +47,7 @@ var (
 
 func init() {
 	smartVM = script.NewVM()
-
+	smartVM.Extern = true
 	smartVM.Extend(&script.ExtendData{map[string]interface{}{
 		"Println": fmt.Println,
 		"Sprintf": fmt.Sprintf,
@@ -65,6 +65,10 @@ func Pref2state(prefix string) (state uint32) {
 		state = uint32(val)
 	}
 	return
+}
+
+func ExternOff() {
+	smartVM.FlushExtern()
 }
 
 // Compiles contract source code
@@ -86,6 +90,10 @@ func EvalIf(src, prefix string, extend *map[string]interface{}) (bool, error) {
 
 func FlushBlock(root *script.Block) {
 	smartVM.FlushBlock(root)
+}
+
+func ExtendCost(ext func(string) int64) {
+	smartVM.ExtCost = ext
 }
 
 func Extend(ext *script.ExtendData) {

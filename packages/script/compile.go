@@ -560,6 +560,14 @@ func (vm *VM) FlushBlock(root *Block) {
 	}
 }
 
+func (vm *VM) FlushExtern() (err error) {
+	/*	if !vm.Extern {
+		return
+	}*/
+	vm.Extern = false
+	return
+}
+
 func (vm *VM) Compile(input []rune, state uint32) error {
 	root, err := vm.CompileBlock(input, state)
 	if err == nil {
@@ -750,12 +758,15 @@ main:
 			}
 		case LEX_IDENT:
 			objInfo, tobj := vm.findObj(lexem.Value.(string), block)
-			if objInfo == nil {
+			if objInfo == nil && (!vm.Extern || i >= len(*lexems)-2 || (*lexems)[i+1].Type != IS_LPAR) {
 				return fmt.Errorf(`unknown identifier %s`, lexem.Value.(string))
 			}
 			if i < len(*lexems)-2 {
 				if (*lexems)[i+1].Type == IS_LPAR {
 					var isContract bool
+					if vm.Extern && objInfo == nil {
+						objInfo = &ObjInfo{Type: OBJ_CONTRACT}
+					}
 					if objInfo == nil || (objInfo.Type != OBJ_EXTFUNC && objInfo.Type != OBJ_FUNC &&
 						objInfo.Type != OBJ_CONTRACT) {
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))

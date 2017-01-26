@@ -95,6 +95,8 @@ type Blocks []*Block
 
 type VM struct {
 	Block
+	ExtCost  func(string) int64
+	Extern   bool   // extern mode of compilation
 }
 
 type ExtendData struct {
