@@ -271,7 +271,7 @@ BEGIN:
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 
-		Time := time.Now().Unix()
+		//Time := time.Now().Unix()
 
 		// переведем тр-ии в `verified` = 1
 		err = p.AllTxParser()
@@ -285,6 +285,7 @@ BEGIN:
 		okBlock := false
 		for !okBlock {
 
+			Time := time.Now().Unix()
 			var mrklArray [][]byte
 			var usedTransactions string
 			var mrklRoot []byte
