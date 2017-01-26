@@ -27,8 +27,10 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 
 	// получим тип тр-ии и юзера
 	txType, walletId, citizenId := utils.GetTxTypeAndUserId(binaryTx)
-
-	if !utils.CheckInputData(txType, "int") {
+	if walletId == 0 && citizenId == 0 {
+		fatalError = "undefined walletId and citizenId"
+	}
+/*	if !utils.CheckInputData(txType, "int") {
 		fatalError = "error type"
 	}
 	if !utils.CheckInputData(walletId, "int64") {
@@ -36,7 +38,7 @@ func (p *Parser) ClearIncompatibleTx(binaryTx []byte, myTx bool) (string, string
 	}
 	if !utils.CheckInputData(citizenId, "int") {
 		fatalError = "error citizenId"
-	}
+	}*/
 
 	var forSelfUse int64
 

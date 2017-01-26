@@ -1143,11 +1143,13 @@ func BinToDecBytesShift(bin *[]byte, num int64) int64 {
 	return BinToDec(BytesShift(bin, num))
 }
 
-func BytesShift(str *[]byte, index int64) []byte {
-	if int64(len(*str)) < index {
-		return []byte("")
+func BytesShift(str *[]byte, index int64) (ret []byte) {
+	if int64(len(*str)) < index || index == 0 {
+		*str = (*str)[:0]
+		return []byte{}
 	}
-	var substr []byte
+	ret, *str = (*str)[:index],(*str)[index:]
+	/*	var substr []byte
 	var str_ []byte
 	substr = *str
 	substr = substr[0:index]
@@ -1155,6 +1157,8 @@ func BytesShift(str *[]byte, index int64) []byte {
 	str_ = str_[index:]
 	*str = str_
 	return substr
+	*/
+	return
 }
 
 func InterfaceToStr(v interface{}) string {

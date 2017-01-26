@@ -448,6 +448,9 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			var i uint8
 			size := val - 128
 			tmp := make([]byte, 4)
+			if len(*out)<= int(size) || size > 4 {
+				return fmt.Errorf(`wrong input data`)
+			}
 			for ; i < size; i++ {
 				tmp[4-size+i] = (*out)[i+1]
 			}
@@ -478,7 +481,9 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 		}
 	case reflect.Struct:
 		for i := 0; i < t.NumField(); i++ {
-			BinUnmarshal(out, t.Field(i).Addr().Interface())
+			if err := BinUnmarshal(out, t.Field(i).Addr().Interface()); err != nil {
+				return err
+			}
 		}
 	case reflect.Slice:
 		if val, err := DecodeLength(out); err != nil {
