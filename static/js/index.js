@@ -234,7 +234,7 @@ function clearAllTimeouts() {
 	}
 }
 
-function load_page(page, parameters) {
+function load_page(page, parameters, anchor) {
 	//    $('#loader').spin();
 	$(".mm-selected").removeClass("mm-selected");
 	clearAllTimeouts();
@@ -248,6 +248,9 @@ function load_page(page, parameters) {
 			//loadLanguage();
 			hist_push(['load_page', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
+			if (anchor) {
+				anchorScroll(anchor);
+			}
 		}, "html");
 }
 
@@ -1207,7 +1210,7 @@ function anchorScroll(anchor) {
 		$.scrollTo(top, 300, {easing:'linear', onAfter: function() {
 			// Можно добавить что-то после скроллинга
 		}});
-	}, 0);
+	}, 1000);
 }
 
 function InitMobileHead() {
