@@ -134,6 +134,13 @@
    <script src="static/vendor/Chart.js/Chart.js"></script>
    <!-- SPARKLINE-->
    <script src="static/vendor/sparkline/index.js"></script>
+   <!-- ScrollTo-->
+   <script src="static/js/scrollTo.js"></script>
+	<!-- Google charts-->
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<!-- Google map-->
+	<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
+	<script>document.write("<script type='text/javascript' src='static/js/map.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
    
    <script>
    		var isMobile = {{.Mobile}};
@@ -195,12 +202,6 @@
 			{{end}}
 		});
 	</script>
-	
-	<!-- Google charts-->
-	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-	<!-- Google map-->
-	<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
-	<script>document.write("<script type='text/javascript' src='static/js/map.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
 </head>
 
 <body class="layout-fixed">

@@ -640,7 +640,7 @@ function preloader(elem) {
 	}
 }
 
-function dl_navigate(page, parameters) {
+function dl_navigate(page, parameters, anchor) {
 	if (page.substr(0, 2) == 'ul') {
 		return;
 	}
@@ -663,6 +663,10 @@ function dl_navigate(page, parameters) {
 					load_menu();
 			}*/
 			window.scrollTo(0, 0);
+			
+			if (anchor) {
+				anchorScroll(anchor);
+			}
 		}, "html");
 }
 
@@ -1191,6 +1195,15 @@ function returnLang(data) {
 	if (typeof Lang === 'undefined')
 		return '';
 	return Lang[data];
+}
+
+function anchorScroll(anchor) {
+	var top = "#" + anchor;
+	setTimeout(function () {
+		$.scrollTo(top, 300, {easing:'linear', onAfter: function() {
+			// Можно добавить что-то после скроллинга
+		}});
+	}, 0);
 }
 
 function InitMobileHead() {
