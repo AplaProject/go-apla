@@ -406,7 +406,7 @@ function ajaxMenu(page, parameters) {
 	});
 }
 
-function load_template(page, parameters) {
+function load_template(page, parameters, anchor) {
 	clearAllTimeouts();
 	NProgress.set(1.0);
 	$.post("template?page=" + page, parameters ? parameters : {},
@@ -422,6 +422,10 @@ function load_template(page, parameters) {
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			ajaxMenu(page, parameters);
+			
+			if (anchor) {
+				anchorScroll(anchor);
+			}
 		}, "html");
 }
 
