@@ -24,6 +24,7 @@ import (
 	"reflect"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/op/go-logging"
@@ -341,16 +342,19 @@ func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (
 }
 
 func (p *Parser) checkSenderDLT(amount, commission int64) error {
-
+	wallet := p.TxWalletID
+	if wallet == 0 {
+		wallet = p.TxCitizenID
+	}
 	// получим сумму на кошельке юзера
-	totalAmount, err := p.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
+	totalAmount, err := p.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).Int64()
 	if err != nil {
-		return p.ErrInfo(err)
+		return err
 	}
 
 	amountAndCommission := amount + commission
 	if totalAmount < amountAndCommission {
-		return p.ErrInfo(fmt.Sprintf("%f < %f)", totalAmount, amountAndCommission))
+		return fmt.Errorf("%d < %d)", totalAmount, amountAndCommission)
 	}
 	return nil
 }
@@ -530,10 +534,48 @@ func (p *Parser) checkPrice(name string) error {
 	return nil
 }
 
+func (p *Parser) GetContractLimit() (ret int64) {
+	fuel, _ := p.GetFuel()
+	/*	if p.TxStateID > 0 && p.TxCitizenID > 0 {
+
+		}
+		TxCitizenID      int64
+		TxWalletID       int64
+		TxStateID */
+	if ret == 0 {
+		ret = script.COST_DEFAULT
+	}
+	p.TxCost = ret * fuel
+	return
+}
+
+func (p *Parser) CheckContractLimit() bool {
+	var balance decimal.Decimal
+	fuel, err := p.GetFuel()
+	if err != nil {
+		return false
+	}
+	wallet := p.TxWalletID
+	if p.TxStateID > 0 && p.TxCitizenID != 0 {
+		rel := decimal.New(1, 0) // money/egs
+		money, _ := p.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`, p.TxStateID)).Int64()
+		if money > 0 {
+			balance = decimal.New(money, 0).Mul(rel)
+		}
+		wallet = p.TxCitizenID
+	}
+	if balance.Cmp(decimal.New(0, 0)) == 0 {
+		balance, _ = utils.Balance(wallet)
+	}
+	/*		TxCitizenID      int64
+			TxWalletID       int64
+			TxStateID */
+	return balance.Cmp(decimal.New(int64(p.TxCost/fuel), 0)) > 0
+}
+
 func (p *Parser) payFPrice() error {
 	var (
 		fromId int64
-		fPrice int64
 	)
 
 	return nil
@@ -547,9 +589,17 @@ func (p *Parser) payFPrice() error {
 	if p.TxCost == 0 { // embedded transaction
 		fromId = p.TxWalletID
 	} else { // contract
-		//		fromId = p.TxContract.
+		if p.TxStateID > 0 && p.TxCitizenID != 0 {
+			// Получаем баланс из accounts и списываем нужную сумму оттуда.
+			// fromid = gov_account
+			// Если нет, то будем списывать с dlt_wallets fromid = CitizenId
+		} else {
+			// списываем напрямую с dlt_wallets у юзера
+			fromId = p.TxWalletID
+		}
 	}
-	egs := int64(fPrice / fuel)
+
+	egs := int64(p.TxUsedCost / fuel)
 	/*	if egs == 0 {  // Is it possible to pay nothing?
 		egs = 1
 	}*/

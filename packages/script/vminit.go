@@ -42,7 +42,7 @@ const (
 	COST_CALL     = 50
 	COST_CONTRACT = 100
 	COST_EXTEND   = 10
-	COST_DEFAULT  = int64(0xffffffff)
+	COST_DEFAULT  = int64(100000)
 )
 
 type ExtFuncInfo struct {
@@ -95,8 +95,8 @@ type Blocks []*Block
 
 type VM struct {
 	Block
-	ExtCost  func(string) int64
-	Extern   bool   // extern mode of compilation
+	ExtCost func(string) int64
+	Extern  bool // extern mode of compilation
 }
 
 type ExtendData struct {

@@ -34,8 +34,8 @@ import (
 
 var (
 	extendCost = map[string]int64{
-		"DBInsert": 200,
-		"DBUpdate": 100,
+		"DBInsert":       200,
+		"DBUpdate":       100,
 		"DBUpdateWhere":  100,
 		"DBGetList":      300,
 		"DBTransfer":     200,
@@ -120,14 +120,9 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		walletBlock = p.BlockData.WalletId
 		blockTime = p.BlockData.Time
 	}
-	cost := p.TxCost
-	if cost == 0 {
-		cost = script.COST_DEFAULT
-	}
-
 	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateId),
 		`block`: block, `citizen`: citizenId, `wallet`: walletId, `wallet_block`: walletBlock,
-		`parent`: ``, `txcost`: cost,
+		`parent`: ``, `txcost`: p.GetContractLimit(),
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
 	for key, val := range p.TxData {
 		extend[key] = val
@@ -186,6 +181,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	p.TxContract.Extend = p.getExtend()
+	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit() {
+		return fmt.Errorf(`there are not enough money`)
+	}
 	before := (*p.TxContract.Extend)[`txcost`].(int64)
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
