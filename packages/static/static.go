@@ -243,6 +243,7 @@
 // static/js/photoEditor/cropper.min.js
 // static/js/photoEditor/editor.js
 // static/js/photoEditor/vue.min.js
+// static/js/scrollTo.js
 // static/js/textEditor/ace.js
 // static/js/textEditor/beautify.js
 // static/js/textEditor/ext-language_tools.js
@@ -4759,6 +4760,24 @@ func staticJsPhotoeditorVueMinJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsScrolltoJs reads file data from disk. It returns an error on failure.
+func staticJsScrolltoJs() (*asset, error) {
+	path := "static/js/scrollTo.js"
+	name := "static/js/scrollTo.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsTexteditorAceJs reads file data from disk. It returns an error on failure.
 func staticJsTexteditorAceJs() (*asset, error) {
 	path := "static/js/textEditor/ace.js"
@@ -7142,6 +7161,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/photoEditor/cropper.min.js": staticJsPhotoeditorCropperMinJs,
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
 	"static/js/photoEditor/vue.min.js": staticJsPhotoeditorVueMinJs,
+	"static/js/scrollTo.js": staticJsScrolltoJs,
 	"static/js/textEditor/ace.js": staticJsTexteditorAceJs,
 	"static/js/textEditor/beautify.js": staticJsTexteditorBeautifyJs,
 	"static/js/textEditor/ext-language_tools.js": staticJsTexteditorExtLanguage_toolsJs,
@@ -7569,6 +7589,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				"editor.js": &bintree{staticJsPhotoeditorEditorJs, map[string]*bintree{}},
 				"vue.min.js": &bintree{staticJsPhotoeditorVueMinJs, map[string]*bintree{}},
 			}},
+			"scrollTo.js": &bintree{staticJsScrolltoJs, map[string]*bintree{}},
 			"textEditor": &bintree{nil, map[string]*bintree{
 				"ace.js": &bintree{staticJsTexteditorAceJs, map[string]*bintree{}},
 				"beautify.js": &bintree{staticJsTexteditorBeautifyJs, map[string]*bintree{}},
