@@ -507,12 +507,12 @@ func (p *Parser) getEGSPrice(name string) (int64, error) {
 	if err != nil {
 		return 0, p.ErrInfo(err)
 	}
-
-	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	p.TxCost = 0
+	p.TxUsedCost = fPrice
+	fuelRate, err := p.GetFuel()
 	if err != nil {
 		return 0, p.ErrInfo(err)
 	}
-
 	dltPrice := int64(fPrice / fuelRate)
 	return dltPrice, nil
 }
@@ -525,6 +525,44 @@ func (p *Parser) checkPrice(name string) error {
 	// Is there a correct amount on the wallet?
 	err = p.checkSenderDLT(EGSPrice, 0)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Parser) payFPrice() error {
+	var (
+		fromId int64
+		fPrice int64
+	)
+
+	return nil
+
+	toId := p.BlockData.WalletId // account of node
+	fuel, err := p.GetFuel()
+	if err != nil {
+		return err
+	}
+
+	if p.TxCost == 0 { // embedded transaction
+		fromId = p.TxWalletID
+	} else { // contract
+		//		fromId = p.TxContract.
+	}
+	egs := int64(fPrice / fuel)
+	/*	if egs == 0 {  // Is it possible to pay nothing?
+		egs = 1
+	}*/
+	amount, err := p.Single(`select amount from dlt_wallets where wallet_id=?`, fromId).Int64()
+	if amount < egs {
+		egs = amount
+	}
+	if err = p.ExecSql(`update dlt_wallets set amount = amount - ? where wallet_id=?`, egs, fromId); err != nil {
+		return err
+	}
+	if err = p.ExecSql(`update dlt_wallets set amount = amount + ? where wallet_id=?`, egs, toId); err != nil {
+		// refund payment
+		p.ExecSql(`update dlt_wallets set amount = amount + ? where wallet_id=?`, egs, fromId)
 		return err
 	}
 	return nil

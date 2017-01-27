@@ -174,9 +174,15 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			p.TxMap = map[string][]byte{}
 
 			p.TxIds++
-
+			p.TxUsedCost = 0
+			p.TxCost = 0
 			if p.TxContract != nil {
-				if err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN); err != nil {
+				// check that there are enough money
+
+				err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN)
+				// pay for CPU resources
+				p.payFPrice()
+				if err != nil {
 					if p.TxContract.Called == smart.CALL_FRONT || p.TxContract.Called == smart.CALL_MAIN {
 						err0 := p.RollbackTo(txForRollbackTo, false)
 						if err0 != nil {
@@ -207,6 +213,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 				log.Debug("MethodName", MethodName)
 				err_ = utils.CallMethod(p, MethodName)
+				// pay for CPU resources
+				p.payFPrice()
 				if _, ok := err_.(error); ok {
 					log.Error("error: %v", err_)
 					err0 := p.RollbackTo(txForRollbackTo, false)

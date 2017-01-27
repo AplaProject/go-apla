@@ -136,6 +136,7 @@ func (p *Parser) UpdFullNodes() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
+		p.UpdateFuel() // update fuel
 	}
 	return nil
 }

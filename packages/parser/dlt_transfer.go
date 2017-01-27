@@ -74,10 +74,7 @@ func (p *Parser) DLTTransferFront() error {
 		return p.ErrInfo(err)
 	}
 
-	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").String()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+	fuelRate, err := p.GetFuel()
 
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
 	// fuelRate = 1 000 000 000 000 000
@@ -86,10 +83,7 @@ func (p *Parser) DLTTransferFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	fuelRateDecemal, err := decimal.NewFromString(fuelRate)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+	fuelRateDecemal := decimal.New(fuelRate, 0)
 	commission := fPriceDecemal.Mul(fuelRateDecemal)
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер

@@ -57,24 +57,6 @@ func (p *Parser) EditTableFront() error {
 		return p.ErrInfo(err)
 	}*/
 
-	fPrice, err := p.Single(`SELECT value->'table_permission' FROM system_parameters WHERE name = ?`, "op_price").Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	dltPrice := int64(fPrice / fuelRate)
-
-	// есть ли нужная сумма на кошельке
-	err = p.checkSenderDLT(dltPrice, 0)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	table := prefix + `_tables`
 	exists, err := p.Single(`select count(*) from "`+table+`" where name = ?`, p.TxMaps.String["table_name"]).Int64()
 	if err != nil {

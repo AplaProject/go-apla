@@ -33,7 +33,7 @@ type anonymMoneyTransferPage struct {
 	WalletId     int64
 	CitizenId    int64
 	Commission   int64
-	Amount string
+	Amount       string
 }
 
 func (c *Controller) AnonymMoneyTransfer() (string, error) {
@@ -47,7 +47,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	fuelRate, err := c.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	fuelRate, err := c.GetFuel()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -69,10 +69,10 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		Title:        "anonymMoneyTransfer",
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
-		Amount: amount,
+		Amount:       amount,
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		Commission : commission,
+		Commission:   commission,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId})
