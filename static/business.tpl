@@ -205,8 +205,8 @@ Table {
 }
 
 DivsEnd:
-`, `menu_1 #= [Business](business)
-              [Shops](shops)`)
+`, `menu_1 #= MenuItem(Business, load_template, business)
+MenuItem(Shops, load_template, shops)`)
 TextHidden( p_BuyItem, p_CompanyDetails, p_business, p_shops, menu_1)
 Json(`Head: "Business",
 Desc: "Company register, buying and sales tools",

@@ -162,7 +162,7 @@ PageEnd:`,
                         PageTitle : Dashboard
                         TxForm { Contract: SendMoney }
 						PageEnd:`,
-`menu_1 #= [CentralBank](CentralBank)`)
+`menu_1 #= MenuItem(CentralBank, load_template, CentralBank)`)
 TextHidden( page_dashboard_default, page_government, p_CentralBank, p_SendMoney, menu_1)
 Json(`Head: "Money",
 	Desc: "Elements of managing the financial system",

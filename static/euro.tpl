@@ -99,7 +99,7 @@ Table {
 	Columns: [[ID, #id#],[Amount, Money(#amount#)],[Citizen ID, Address(#citizen_id#)],[History, If(#rb_id#>0, SysLink(rowHistory, Show, "rbId:#rb_id#,tableName:'global_euro', global:1"), "No history")],[Disabled, If(#disabled#==1, "Div(label label-danger, Yes)", "")]]
 }
 DivsEnd: `,
-`menu_1 #= [Euro](glob.Euro)`
+`menu_1 #= MenuItem(Euro, load_template, Euro, global:1)`
 )
 TextHidden( p_Euro, menu_1)
 Json(`Head: "Euro",

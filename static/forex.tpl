@@ -320,7 +320,7 @@ DivsEnd:
 
 PageEnd:`,
          `menu_1 #=
-             [Forex](glob.newForexOrder){Table1:'global_euro',Table2:'1_accounts',global:1,Currency1:'EURO',Currency2:'USD'}
+             MenuItem(Forex, load_template, newForexOrder, global:1,Table1:'global_euro',Table2:'1_accounts',global:1,Currency1:'EURO',Currency2:'USD')
          `,
           `globalMenu #=
              [Government dashboard](government)

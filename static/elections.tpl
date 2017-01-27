@@ -859,11 +859,10 @@ SetVar(`m_Elections = [Government dashboard](government)
  [Legislature dashboard](Legislature)
  [Smart Laws](SLList)
  [Laws Voting List](SLVotingList)`,
-`menu_1 #=
-[Election Campaigns](GECampaigns)`,
+`menu_1 #= MenuItem(Election Campaigns, load_template, GECampaigns)`,
  `menu_2 #=
-[Legislature](Legislature)
-[Election](GEElections)`)
+MenuItem(Legislature, load_template, Legislature)
+MenuItem(Election, load_template, GEElections)`)
 
 TextHidden( m_Elections, m_Legislature, menu_1, menu_2)
 SetVar()
