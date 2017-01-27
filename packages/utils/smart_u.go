@@ -805,7 +805,11 @@ func BtnTemplate(vars *map[string]string, pars ...string) string {
 	if len(pars) >= 4 {
 		class = pars[3]
 	}
-	return fmt.Sprintf(`<button type="button" class=%s onclick="load_template('%s', {%s} )">%s</button>`, class, pars[0], params, pars[1])
+	anchor := `''`
+	if len(pars) >= 5 {
+		anchor = pars[4]
+	}
+	return fmt.Sprintf(`<button type="button" class=%s onclick="load_template('%s', {%s}, %s )">%s</button>`, class, pars[0], params, anchor, pars[1])
 }
 
 func BtnSys(vars *map[string]string, pars ...string) string {
