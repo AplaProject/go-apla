@@ -18,9 +18,9 @@ package parser
 
 import (
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"time"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 func (p *Parser) RestoreAccessInit() error {
@@ -34,7 +34,7 @@ func (p *Parser) RestoreAccessInit() error {
 }
 
 func (p *Parser) RestoreAccessFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`system_restore_access`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -92,7 +92,7 @@ func (p *Parser) RestoreAccess() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	value := `$citizen=`+citizen_id
+	value := `$citizen=` + citizen_id
 	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{value, value}, p.TxStateIDStr+"_state_parameters", []string{"name"}, []string{"changing_tables"}, true)
 	if err != nil {
 		return p.ErrInfo(err)

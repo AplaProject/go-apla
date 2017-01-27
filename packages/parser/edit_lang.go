@@ -34,7 +34,7 @@ func (p *Parser) EditLangInit() error {
 
 func (p *Parser) EditLangFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`edit_lang`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

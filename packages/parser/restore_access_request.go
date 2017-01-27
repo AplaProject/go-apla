@@ -32,18 +32,7 @@ func (p *Parser) RestoreAccessRequestInit() error {
 }
 
 func (p *Parser) RestoreAccessRequestFront() error {
-	err := p.generalCheck()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	EGSPrice, err := p.getEGSPrice(`system_restore_access_request`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// есть ли нужная сумма на кошельке
-	err = p.checkSenderDLT(EGSPrice, 0)
+	err := p.generalCheck(`system_restore_access_request`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

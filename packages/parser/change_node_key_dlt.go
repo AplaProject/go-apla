@@ -17,8 +17,8 @@
 package parser
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (p *Parser) ChangeNodeKeyDLTInit() error {
@@ -35,7 +35,7 @@ func (p *Parser) ChangeNodeKeyDLTInit() error {
 
 func (p *Parser) ChangeNodeKeyDLTFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`change_node`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -47,18 +47,18 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 	}
 
 	txTime := p.TxTime
-	if p.BlockData!= nil {
+	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
 	last_forging_data_upd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
-	if err != nil || txTime - last_forging_data_upd < 600 {
+	if err != nil || txTime-last_forging_data_upd < 600 {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["new_node_public_key"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil || !CheckSignResult {
-		return p.ErrInfo("incorrect sign "+forSign)
+		return p.ErrInfo("incorrect sign " + forSign)
 	}
 	return nil
 }

@@ -35,7 +35,7 @@ func (p *Parser) NewContractInit() error {
 
 func (p *Parser) NewContractFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`new_contract`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

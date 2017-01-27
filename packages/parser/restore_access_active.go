@@ -40,7 +40,7 @@ func (p *Parser) RestoreAccessActiveInit() error {
 }
 
 func (p *Parser) RestoreAccessActiveFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`system_restore_access_active`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -56,17 +56,6 @@ func (p *Parser) RestoreAccessActiveFront() error {
 	if active == p.TxMaps.Int64["active"] {
 		return p.ErrInfo("active")
 	}
-
-	EGSPrice, err := p.getEGSPrice(`system_restore_access_active`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	// Is there a correct amount on the wallet?
-	err = p.checkSenderDLT(EGSPrice, 0)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["secret_hex"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {

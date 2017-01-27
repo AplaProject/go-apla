@@ -34,7 +34,7 @@ func (p *Parser) UpdFullNodesInit() error {
 }
 
 func (p *Parser) UpdFullNodesFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`upd_full_nodes`) // undefined, cost=0
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -109,7 +109,6 @@ func (p *Parser) UpdFullNodes() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
 
 	// получаем новые данные по wallet-нодам
 	all, err := p.GetList(`SELECT address_vote FROM dlt_wallets WHERE address_vote !='' AND amount > 10000000000000000000000 GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 100`).String()

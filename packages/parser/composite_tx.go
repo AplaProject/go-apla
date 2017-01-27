@@ -17,8 +17,8 @@
 package parser
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (p *Parser) CompositeTxInit() error {
@@ -33,7 +33,7 @@ func (p *Parser) CompositeTxInit() error {
 }
 
 func (p *Parser) CompositeTxFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`composite_tx`) // undefined, cost = 0
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -45,12 +45,9 @@ func (p *Parser) CompositeTxFront() error {
 		return p.ErrInfo(err)
 	}
 
-
 	// Check the condition that must be met to complete this transaction
 	// select front from composite_tx where name = "new_state_table"
 	// ...
-
-
 
 	// must be supplemented
 	forSign := fmt.Sprintf("%s,%s,%d", p.TxMap["type"], p.TxMap["time"], p.TxMap["state_id"], p.TxCitizenID)
@@ -66,21 +63,21 @@ func (p *Parser) CompositeTxFront() error {
 }
 
 func (p *Parser) CompositeTx() error {
-/*
-	retirees := getDataFromDB(ea_retirees)
-for data := range retirees {
-  // пока что запрещаем всё, кроме:
-  // update других таблиц через наш метод selectiveLoggingAndUpd() т.к. это легко роллбечится
-  // можно делать операции с данными, которые далее будут записаны через selectiveLoggingAndUpd()
-  // можно вставить формулы sum := data.k1 * 0.1 / data.k2
-  // вложенные циклы, условия и т.д. - всё запрещаем. особенно важно не трогать таблу, по которой цикл идет
-  // insert в другие таблицы разрашаем, это роллбечить вобще легко, т.к. есть номер блока. разумеется, данные, которые были только что вставлены не должны быть использованы в этом же блоке
+	/*
+	   	retirees := getDataFromDB(ea_retirees)
+	   for data := range retirees {
+	     // пока что запрещаем всё, кроме:
+	     // update других таблиц через наш метод selectiveLoggingAndUpd() т.к. это легко роллбечится
+	     // можно делать операции с данными, которые далее будут записаны через selectiveLoggingAndUpd()
+	     // можно вставить формулы sum := data.k1 * 0.1 / data.k2
+	     // вложенные циклы, условия и т.д. - всё запрещаем. особенно важно не трогать таблу, по которой цикл идет
+	     // insert в другие таблицы разрашаем, это роллбечить вобще легко, т.к. есть номер блока. разумеется, данные, которые были только что вставлены не должны быть использованы в этом же блоке
 
-  // есть список запрщенных таблиц для selectiveLoggingAndUpd, например accounts
+	     // есть список запрщенных таблиц для selectiveLoggingAndUpd, например accounts
 
-  // условные операторы - надо понять, можно ли при помощи них сделать так, чтобы роллбек что-то не учел.
-}
-*/
+	     // условные операторы - надо понять, можно ли при помощи них сделать так, чтобы роллбек что-то не учел.
+	   }
+	*/
 	return nil
 }
 

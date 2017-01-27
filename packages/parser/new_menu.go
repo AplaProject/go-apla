@@ -34,7 +34,7 @@ func (p *Parser) NewMenuInit() error {
 
 func (p *Parser) NewMenuFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`new_menu`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

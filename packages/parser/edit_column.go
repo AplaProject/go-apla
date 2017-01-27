@@ -37,7 +37,7 @@ func (p *Parser) EditColumnInit() error {
 }
 
 func (p *Parser) EditColumnFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`edit_column`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -48,16 +48,6 @@ func (p *Parser) EditColumnFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}*/
-
-	EGSPrice, err := p.getEGSPrice(`edit_column`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	// Is there a correct amount on the wallet?
-	err = p.checkSenderDLT(EGSPrice, 0)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
 
 	table := p.TxStateIDStr + `_tables`
 	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {

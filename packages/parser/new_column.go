@@ -35,7 +35,7 @@ func (p *Parser) NewColumnInit() error {
 }
 
 func (p *Parser) NewColumnFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`new_column`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -43,16 +43,6 @@ func (p *Parser) NewColumnFront() error {
 	// Check InputData
 	verifyData := map[string]string{"table_name": "string", "column_name": "string", "permissions": "conditions", "index": "int64", "column_type": "column_type"}
 	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	EGSPrice, err := p.getEGSPrice(`new_column`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	// Is there a correct amount on the wallet?
-	err = p.checkSenderDLT(EGSPrice, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

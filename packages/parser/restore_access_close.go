@@ -33,7 +33,7 @@ func (p *Parser) RestoreAccessCloseInit() error {
 }
 
 func (p *Parser) RestoreAccessCloseFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`system_restore_access_close`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -45,17 +45,6 @@ func (p *Parser) RestoreAccessCloseFront() error {
 	}
 	if close > 0 {
 		return p.ErrInfo("close=1")
-	}
-
-	EGSPrice, err := p.getEGSPrice(`system_restore_access_close`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// есть ли нужная сумма на кошельке
-	err = p.checkSenderDLT(EGSPrice, 0)
-	if err != nil {
-		return p.ErrInfo(err)
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID)

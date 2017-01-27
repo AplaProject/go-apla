@@ -33,7 +33,7 @@ func (p *Parser) AppendMenuInit() error {
 
 func (p *Parser) AppendMenuFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`edit_menu`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

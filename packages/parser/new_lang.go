@@ -34,7 +34,7 @@ func (p *Parser) NewLangInit() error {
 
 func (p *Parser) NewLangFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`new_lang`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

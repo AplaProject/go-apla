@@ -34,7 +34,7 @@ func (p *Parser) EditPageInit() error {
 
 func (p *Parser) EditPageFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`edit_page`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

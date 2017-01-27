@@ -516,3 +516,16 @@ func (p *Parser) getEGSPrice(name string) (int64, error) {
 	dltPrice := int64(fPrice / fuelRate)
 	return dltPrice, nil
 }
+
+func (p *Parser) checkPrice(name string) error {
+	EGSPrice, err := p.getEGSPrice(name)
+	if err != nil {
+		return err
+	}
+	// Is there a correct amount on the wallet?
+	err = p.checkSenderDLT(EGSPrice, 0)
+	if err != nil {
+		return err
+	}
+	return nil
+}
