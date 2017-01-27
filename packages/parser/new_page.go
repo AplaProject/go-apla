@@ -34,7 +34,7 @@ func (p *Parser) NewPageInit() error {
 
 func (p *Parser) NewPageFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`new_page`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

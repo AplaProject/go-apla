@@ -39,7 +39,7 @@ func (p *Parser) NewTableInit() error {
 
 func (p *Parser) NewTableFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`add_table`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -66,10 +66,10 @@ func (p *Parser) NewTableFront() error {
 		if len(data) != 3 {
 			return p.ErrInfo(`len(data)!=3`)
 		}
-		if data[1]!=`text` && data[1]!=`int64` && data[1]!=`time` && data[1]!=`hash`  && data[1]!=`double` && data[1]!=`money`  {
+		if data[1] != `text` && data[1] != `int64` && data[1] != `time` && data[1] != `hash` && data[1] != `double` && data[1] != `money` {
 			return p.ErrInfo(`incorrect type`)
 		}
-		if data[2] == "1" && data[1]==`text` {
+		if data[2] == "1" && data[1] == `text` {
 			return p.ErrInfo(`incorrect index type`)
 		}
 	}
@@ -82,7 +82,7 @@ func (p *Parser) NewTableFront() error {
 	}
 
 	exists, err := p.Single(`SELECT count(*) FROM "`+table+`" WHERE name = ?`, prefix+`_`+p.TxMaps.String["table_name"]).Int64()
-	log.Debug(`SELECT count(*) FROM "`+table+`" WHERE name = ?`)
+	log.Debug(`SELECT count(*) FROM "` + table + `" WHERE name = ?`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -135,10 +135,10 @@ func (p *Parser) NewTable() error {
 		case "money":
 			colType = `decimal (30, 0)`
 		}
-		colsSql += `"` + data[0] + `" `+colType+" ,\n"
+		colsSql += `"` + data[0] + `" ` + colType + " ,\n"
 		colsSql2 += `"` + data[0] + `": "$citizen==` + citizenIdStr + `",`
 		if data[2] == "1" {
-			sqlIndex+=`CREATE INDEX "`+tableName+ `_` + data[0] + `_index" ON "` + tableName + `" (` +data[0]+ `);`
+			sqlIndex += `CREATE INDEX "` + tableName + `_` + data[0] + `_index" ON "` + tableName + `" (` + data[0] + `);`
 		}
 	}
 	colsSql2 = colsSql2[:len(colsSql2)-1]
@@ -172,8 +172,6 @@ func (p *Parser) NewTable() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-
 
 	return nil
 }

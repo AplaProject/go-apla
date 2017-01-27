@@ -38,7 +38,7 @@ func (p *Parser) EditStateParametersInit() error {
 }
 
 func (p *Parser) EditStateParametersFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`edit_state_parameters`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

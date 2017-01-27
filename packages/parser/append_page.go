@@ -35,7 +35,7 @@ func (p *Parser) AppendPageInit() error {
 
 func (p *Parser) AppendPageFront() error {
 
-	err := p.generalCheck()
+	err := p.generalCheck(`edit_page`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

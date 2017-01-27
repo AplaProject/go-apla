@@ -38,7 +38,7 @@ func (p *Parser) NewStateInit() error {
 }
 
 func (p *Parser) NewStateFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`new_state`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -46,30 +46,6 @@ func (p *Parser) NewStateFront() error {
 	// Check InputData
 	verifyData := map[string]string{"state_name": "state_name", "currency_name": "currency_name"}
 	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	fPrice, err := p.Single(`SELECT value->'new_state' FROM system_parameters WHERE name = ?`, "op_price").Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	fuelRate, err := p.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	dltPrice := int64(fPrice / fuelRate)
-
-	// есть ли нужная сумма на кошельке
-	err = p.checkSenderDLT(dltPrice, 0)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// есть ли нужная сумма на кошельке
-	err = p.checkSenderDLT(dltPrice, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

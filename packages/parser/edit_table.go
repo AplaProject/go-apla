@@ -36,7 +36,7 @@ func (p *Parser) EditTableInit() error {
 }
 
 func (p *Parser) EditTableFront() error {
-	err := p.generalCheck()
+	err := p.generalCheck(`edit_table`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
