@@ -550,6 +550,8 @@ func (p *Parser) GetContractLimit() (ret int64) {
 }
 
 func (p *Parser) CheckContractLimit() bool {
+	return true
+
 	var balance decimal.Decimal
 	fuel, err := p.GetFuel()
 	if err != nil {
