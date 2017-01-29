@@ -137,7 +137,7 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal, `Tag`: Tag,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
-		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack, `WhiteMobileBg`: WhiteMobileBg,
 	})
 }
 
@@ -539,6 +539,16 @@ func FullScreen(vars *map[string]string, pars ...string) string {
 	}
 	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 	$("body").%sClass('wide');
+</script>`, wide)
+}
+
+func WhiteMobileBg(vars *map[string]string, pars ...string) string {
+	wide := `add`
+	if len(pars) > 0 && pars[0] == `0` {
+		wide = `remove`
+	}
+	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+	$("body").%sClass('flatPageMobile');
 </script>`, wide)
 }
 
