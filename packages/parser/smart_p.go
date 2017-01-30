@@ -196,6 +196,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf(`Wrong type of price function`)
 		}
 	}
+	if p.GetFuel() <= 0 {
+		return fmt.Errorf(`Fuel rate must be greater than 0`)
+	}
 	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit(price) {
 		return fmt.Errorf(`there are not enough money`)
 	}
@@ -208,12 +211,14 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 			p.TxContract.Called = 1 << i
 			_, err = smart.Run(cfunc, nil, p.TxContract.Extend)
+
 			if err != nil {
 				break
 			}
 		}
 	}
 	p.TxUsedCost = before - (*p.TxContract.Extend)[`txcost`].(int64)
+	p.TxPrice = price
 	//fmt.Println(`Cost`, p.TxUsedCost)
 	return
 }

@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -47,12 +48,12 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	fuelRate, err := c.GetFuel()
-	if err != nil {
-		return "", utils.ErrInfo(err)
+	fuelRate := c.GetFuel()
+	if fuelRate <= 0 {
+		return ``, fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 
-	commission := int64(fPrice * fuelRate)
+	commission := int64(float64(fPrice) / fuelRate)
 
 	log.Debug("sessCitizenId %d SessWalletId %d SessStateId %d", c.SessCitizenId, c.SessWalletId, c.SessStateId)
 	amount, err := c.Single("select amount from dlt_wallets where wallet_id = ?", c.SessWalletId).String()

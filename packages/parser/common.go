@@ -78,6 +78,8 @@ type Parser struct {
 	TxTime           int64
 	TxCost           int64 // Maximum cost of executing contract
 	TxUsedCost       int64 // Used cost of CPU resources
+	TxPrice          int64 // custom price for citizens
+	TxGovAccount     int64 // state wallet
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
@@ -513,11 +515,11 @@ func (p *Parser) getEGSPrice(name string) (int64, error) {
 	}
 	p.TxCost = 0
 	p.TxUsedCost = fPrice
-	fuelRate, err := p.GetFuel()
-	if err != nil {
-		return 0, p.ErrInfo(err)
+	fuelRate := p.GetFuel()
+	if fuelRate <= 0 {
+		return 0, fmt.Errorf(`fuel rate must be greater than 0`)
 	}
-	dltPrice := int64(fPrice / fuelRate)
+	dltPrice := int64(float64(fPrice) / fuelRate)
 	return dltPrice, nil
 }
 
@@ -535,43 +537,47 @@ func (p *Parser) checkPrice(name string) error {
 }
 
 func (p *Parser) GetContractLimit() (ret int64) {
-	fuel, _ := p.GetFuel()
+	//	fuel := p.GetFuel()
 	/*	if p.TxStateID > 0 && p.TxCitizenID > 0 {
 
 		}
 		TxCitizenID      int64
 		TxWalletID       int64
 		TxStateID */
-	if ret == 0 {
+	/*	if ret == 0 {
 		ret = script.COST_DEFAULT
-	}
-	p.TxCost = ret * fuel
-	return
+	}*/
+	// default maximum cost of F
+	p.TxCost = script.COST_DEFAULT // ret * fuel
+	return p.TxCost
 }
 
 func (p *Parser) CheckContractLimit(price int64) bool {
 	//	return true
 	var balance decimal.Decimal
-	fuel, err := p.GetFuel()
-	if err != nil {
+	fuel := p.GetFuel()
+	if fuel <= 0 {
 		return false
 	}
-	need := int64(p.TxCost / fuel)
+	need := int64(float64(p.TxCost) / fuel)
 	//	wallet := p.TxWalletID
 	if p.TxStateID > 0 && p.TxCitizenID != 0 {
 		var needuser int64
 		rel := int64(1) //decimal.New(1, 0) // money/egs
 		if price >= 0 {
-			needuser = int64(price / rel)
+			needuser = int64(price * rel)
 		} else {
-			needuser = int64(need / rel)
+			needuser = int64(need * rel)
 		}
-		money, _ := p.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`, p.TxStateID)).Int64()
-		if money < needuser {
-			return false
+		p.TxGovAccount = utils.StrToInt64(StateValue(p, `gov_account`))
+		if needuser > 0 {
+			if money, _ := p.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`, p.TxStateID),
+				p.TxCitizenID).Int64(); money < needuser {
+				return false
+			}
 		}
 		// Check if government has enough money
-		balance, _ = utils.Balance(utils.StrToInt64(StateValue(p, `gov_account`)))
+		balance, _ = utils.Balance(p.TxGovAccount)
 		//		balance = decimal.New(money, 0).Mul(rel)
 		//wallet = p.TxCitizenID
 	} else {
@@ -589,12 +595,10 @@ func (p *Parser) payFPrice() error {
 		fromId int64
 	)
 
-	return nil
-
 	toId := p.BlockData.WalletId // account of node
-	fuel, err := p.GetFuel()
-	if err != nil {
-		return err
+	fuel := p.GetFuel()
+	if fuel <= 0 {
+		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 
 	if p.TxCost == 0 { // embedded transaction
@@ -602,17 +606,19 @@ func (p *Parser) payFPrice() error {
 	} else { // contract
 		if p.TxStateID > 0 && p.TxCitizenID != 0 {
 			// Получаем баланс из accounts и списываем нужную сумму оттуда.
-			// fromid = gov_account
+			//	p.TxPrice
+			fromId = p.TxGovAccount
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			fromId = p.TxWalletID
 		}
 	}
 
-	egs := int64(p.TxUsedCost / fuel)
-	/*	if egs == 0 {  // Is it possible to pay nothing?
-		egs = 1
-	}*/
+	egs := int64(float64(p.TxUsedCost) / fuel)
+	fmt.Printf("Pay fuel=%f cost=%d egs=%d", fuel, p.TxUsedCost, egs)
+	if egs == 0 { // Is it possible to pay nothing?
+		return nil
+	}
 	amount, err := p.Single(`select amount from dlt_wallets where wallet_id=?`, fromId).Int64()
 	if amount < egs {
 		egs = amount
@@ -625,5 +631,7 @@ func (p *Parser) payFPrice() error {
 		p.ExecSql(`update dlt_wallets set amount = amount + ? where wallet_id=?`, egs, fromId)
 		return err
 	}
+	fmt.Printf("Paid price=%d\r\n", p.TxPrice)
+
 	return nil
 }
