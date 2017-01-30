@@ -504,9 +504,9 @@ function CopyToClipboard(elem, text) {
 	});
 	clipboard.on('error', function (e) {
 		if (!obj.hasClass("modal-content")) {
-			Alert("", "Error copying to clipboard", "notification:danger", defaultConfirm);
+			Alert("", returnLang("error_copying_clipboard"), "notification:danger", defaultConfirm);
 		} else {
-			Alert("Error copying to clipboard", "", "error", defaultConfirm);
+			Alert(returnLang("error_copying_clipboard"), "", "error", defaultConfirm);
 		}
 	});
 }
@@ -553,7 +553,7 @@ function Alert(title, text, type, Confirm) {
 			} else if (type == "error") {
 				color = "#f05050";
 				if (text.toLowerCase().indexOf("[error]") != -1) {
-					btnText = "Copy text error to clipboard";
+					btnText = returnLang("copy_text_error_clipboard");
 				}
 			} else if (type == "warning") {
 				color = "#ff902b";
@@ -570,7 +570,7 @@ function Alert(title, text, type, Confirm) {
 					type = "error";
 					color = "#f05050";
 					if (text.toLowerCase().indexOf("[error]") != -1) {
-						btnText = "Copy text error to clipboard";
+						btnText = returnLang("copy_text_error_clipboard");
 					}
 				} else if (type == "warning") {
 					color = "#ff902b";
