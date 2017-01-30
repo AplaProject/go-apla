@@ -243,7 +243,7 @@ var passphraseText;
 var passphraseTextCopy = returnLang("copy_passphrase");
 var passphraseTextSave = returnLang("save_passphrase");
 
-if (!isMobile) {
+if (isMobile === false) {
 	passphraseText = passphraseTextSave;
 } else {
 	passphraseText = passphraseTextCopy;
@@ -428,7 +428,7 @@ function register_form() {
 }
 
 function import_form() {
-	if (isMobile) {
+	if (isMobile === true) {
 		$("#key_btn").addClass("hidden");
 	}
 	
@@ -454,7 +454,7 @@ function import_form() {
 }
 
 function key_form() {
-	if (isMobile) {
+	if (isMobile === true) {
 		$("#key_btn").addClass("hidden");
 	}
 	$("#key_form").show();
