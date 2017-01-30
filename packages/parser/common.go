@@ -549,30 +549,39 @@ func (p *Parser) GetContractLimit() (ret int64) {
 	return
 }
 
-func (p *Parser) CheckContractLimit() bool {
-	return true
-
+func (p *Parser) CheckContractLimit(price int64) bool {
+	//	return true
 	var balance decimal.Decimal
 	fuel, err := p.GetFuel()
 	if err != nil {
 		return false
 	}
-	wallet := p.TxWalletID
+	need := int64(p.TxCost / fuel)
+	//	wallet := p.TxWalletID
 	if p.TxStateID > 0 && p.TxCitizenID != 0 {
-		rel := decimal.New(1, 0) // money/egs
-		money, _ := p.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`, p.TxStateID)).Int64()
-		if money > 0 {
-			balance = decimal.New(money, 0).Mul(rel)
+		var needuser int64
+		rel := int64(1) //decimal.New(1, 0) // money/egs
+		if price >= 0 {
+			needuser = int64(price / rel)
+		} else {
+			needuser = int64(need / rel)
 		}
-		wallet = p.TxCitizenID
-	}
-	if balance.Cmp(decimal.New(0, 0)) == 0 {
-		balance, _ = utils.Balance(wallet)
+		money, _ := p.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`, p.TxStateID)).Int64()
+		if money < needuser {
+			return false
+		}
+		// Check if government has enough money
+		balance, _ = utils.Balance(utils.StrToInt64(StateValue(p, `gov_account`)))
+		//		balance = decimal.New(money, 0).Mul(rel)
+		//wallet = p.TxCitizenID
+	} else {
+		//if balance.Cmp(decimal.New(0, 0)) == 0 {
+		balance, _ = utils.Balance(p.TxWalletID)
 	}
 	/*		TxCitizenID      int64
 			TxWalletID       int64
 			TxStateID */
-	return balance.Cmp(decimal.New(int64(p.TxCost/fuel), 0)) > 0
+	return balance.Cmp(decimal.New(need, 0)) > 0
 }
 
 func (p *Parser) payFPrice() error {
@@ -594,7 +603,6 @@ func (p *Parser) payFPrice() error {
 		if p.TxStateID > 0 && p.TxCitizenID != 0 {
 			// Получаем баланс из accounts и списываем нужную сумму оттуда.
 			// fromid = gov_account
-			// Если нет, то будем списывать с dlt_wallets fromid = CitizenId
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			fromId = p.TxWalletID

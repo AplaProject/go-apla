@@ -181,10 +181,25 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	p.TxContract.Extend = p.getExtend()
-	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit() {
+	before := (*p.TxContract.Extend)[`txcost`].(int64)
+	var price int64 = -1
+	if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
+		var ret []interface{}
+		if ret, err = smart.Run(cprice, nil, p.TxContract.Extend); err != nil {
+			return err
+		} else if len(ret) == 1 {
+			if _, ok := ret[0].(int64); !ok {
+				return fmt.Errorf(`Wrong result type of price function`)
+			}
+			price = ret[0].(int64)
+		} else {
+			return fmt.Errorf(`Wrong type of price function`)
+		}
+	}
+	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit(price) {
 		return fmt.Errorf(`there are not enough money`)
 	}
-	before := (*p.TxContract.Extend)[`txcost`].(int64)
+
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
 			cfunc := p.TxContract.GetFunc(methods[i])

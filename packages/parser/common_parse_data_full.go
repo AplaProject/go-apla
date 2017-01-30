@@ -177,8 +177,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			p.TxUsedCost = 0
 			p.TxCost = 0
 			if p.TxContract != nil {
-				// check that there are enough money
-
+				// check that there are enough money in CallContract
 				err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN)
 				// pay for CPU resources
 				p.payFPrice()
