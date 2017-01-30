@@ -28,10 +28,14 @@ import (
 )
 
 type Contract struct {
-	Name   string
-	Called uint32
-	Extend *map[string]interface{}
-	Block  *script.Block
+	Name          string
+	Called        uint32
+	TxPrice       int64   // custom price for citizens
+	TxGovAccount  int64   // state wallet
+	EGSRate       float64 // money/EGS rate
+	TableAccounts string
+	Extend        *map[string]interface{}
+	Block         *script.Block
 }
 
 const (

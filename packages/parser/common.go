@@ -24,6 +24,7 @@ import (
 	"reflect"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -78,8 +79,6 @@ type Parser struct {
 	TxTime           int64
 	TxCost           int64 // Maximum cost of executing contract
 	TxUsedCost       int64 // Used cost of CPU resources
-	TxPrice          int64 // custom price for citizens
-	TxGovAccount     int64 // state wallet
 	nodePublicKey    []byte
 	newPublicKeysHex [3][]byte
 	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
@@ -563,22 +562,32 @@ func (p *Parser) CheckContractLimit(price int64) bool {
 	//	wallet := p.TxWalletID
 	if p.TxStateID > 0 && p.TxCitizenID != 0 {
 		var needuser int64
-		rel := int64(1) //decimal.New(1, 0) // money/egs
-		if price >= 0 {
-			needuser = int64(price * rel)
-		} else {
-			needuser = int64(need * rel)
+		rate, _ := utils.EGSRate(int64(p.TxStateID)) // money/egs
+		tableAccounts, _ := utils.StateParam(int64(p.TxStateID), `table_accounts`)
+		tableAccounts = lib.Escape(tableAccounts)
+		if len(tableAccounts) == 0 {
+			tableAccounts = `accounts`
 		}
-		p.TxGovAccount = utils.StrToInt64(StateValue(p, `gov_account`))
+		if rate == 0 {
+			rate = 1.0
+		}
+		p.TxContract.EGSRate = rate
+		p.TxContract.TableAccounts = tableAccounts
+
+		if price >= 0 {
+			needuser = int64(float64(price) * rate)
+		} else {
+			needuser = int64(float64(need) * rate)
+		}
+		p.TxContract.TxGovAccount = utils.StrToInt64(StateValue(p, `gov_account`))
 		if needuser > 0 {
-			if money, _ := p.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`, p.TxStateID),
+			if money, _ := p.Single(fmt.Sprintf(`select amount from "%d_%s" where citizen_id=?`, p.TxStateID, tableAccounts),
 				p.TxCitizenID).Int64(); money < needuser {
 				return false
 			}
 		}
 		// Check if government has enough money
-		balance, _ = utils.Balance(p.TxGovAccount)
-		//		balance = decimal.New(money, 0).Mul(rel)
+		balance, _ = utils.Balance(p.TxContract.TxGovAccount)
 		//wallet = p.TxCitizenID
 	} else {
 		//if balance.Cmp(decimal.New(0, 0)) == 0 {
@@ -604,10 +613,8 @@ func (p *Parser) payFPrice() error {
 	if p.TxCost == 0 { // embedded transaction
 		fromId = p.TxWalletID
 	} else { // contract
-		if p.TxStateID > 0 && p.TxCitizenID != 0 {
-			// Получаем баланс из accounts и списываем нужную сумму оттуда.
-			//	p.TxPrice
-			fromId = p.TxGovAccount
+		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
+			fromId = p.TxContract.TxGovAccount
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			fromId = p.TxWalletID
@@ -631,7 +638,27 @@ func (p *Parser) payFPrice() error {
 		p.ExecSql(`update dlt_wallets set amount = amount + ? where wallet_id=?`, egs, fromId)
 		return err
 	}
-	fmt.Printf("Paid price=%d\r\n", p.TxPrice)
-
+	fmt.Printf(" Paid\r\n")
+	if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
+		table := fmt.Sprintf(`"%d_%s"`, p.TxStateID, p.TxContract.TableAccounts)
+		amount, err := p.Single(`select amount from `+table+` where citizen_id=?`, p.TxCitizenID).Int64()
+		money := int64(float64(egs) * p.TxContract.EGSRate)
+		if p.TxContract.TxPrice >= 0 {
+			money = int64(float64(p.TxContract.TxPrice) * p.TxContract.EGSRate)
+		}
+		if amount < money {
+			money = amount
+		}
+		if money > 0 {
+			if err = p.ExecSql(`update `+table+` set amount = amount - ? where citizen_id=?`, money, p.TxCitizenID); err != nil {
+				return err
+			}
+			if err = p.ExecSql(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxContract.TxGovAccount); err != nil {
+				// refund payment
+				p.ExecSql(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxCitizenID)
+				return err
+			}
+		}
+	}
 	return nil
 }

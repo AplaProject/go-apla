@@ -189,6 +189,10 @@ func Balance(wallet_id int64) (decimal.Decimal, error) {
 	return decimal.NewFromString(balance)
 }
 
+func EGSRate(idstate int64) (float64, error) {
+	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
+}
+
 func StateParam(idstate int64, name string) (string, error) {
 	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
 }

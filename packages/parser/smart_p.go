@@ -218,7 +218,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		}
 	}
 	p.TxUsedCost = before - (*p.TxContract.Extend)[`txcost`].(int64)
-	p.TxPrice = price
+	p.TxContract.TxPrice = price
 	//fmt.Println(`Cost`, p.TxUsedCost)
 	return
 }
