@@ -58,6 +58,7 @@
 // static/countries/flags.png
 // static/countries/mm.png
 // static/countries/no_citizenship.png
+// static/countup.html
 // static/css/style.css
 // static/dashboard_anonym.html
 // static/dashboard_cb.html
@@ -200,6 +201,7 @@
 // static/interface.html
 // static/js/app.js
 // static/js/clipboard.js
+// static/js/count.js
 // static/js/countUp.js
 // static/js/crypto/asn1-1.0.min.js
 // static/js/crypto/asn1hex-1.1.min.js
@@ -1417,6 +1419,24 @@ func staticCountriesMmPng() (*asset, error) {
 func staticCountriesNo_citizenshipPng() (*asset, error) {
 	path := "static/countries/no_citizenship.png"
 	name := "static/countries/no_citizenship.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticCountupHtml reads file data from disk. It returns an error on failure.
+func staticCountupHtml() (*asset, error) {
+	path := "static/countup.html"
+	name := "static/countup.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3973,6 +3993,24 @@ func staticJsAppJs() (*asset, error) {
 func staticJsClipboardJs() (*asset, error) {
 	path := "static/js/clipboard.js"
 	name := "static/js/clipboard.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsCountJs reads file data from disk. It returns an error on failure.
+func staticJsCountJs() (*asset, error) {
+	path := "static/js/count.js"
+	name := "static/js/count.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -6995,6 +7033,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/countries/flags.png": staticCountriesFlagsPng,
 	"static/countries/mm.png": staticCountriesMmPng,
 	"static/countries/no_citizenship.png": staticCountriesNo_citizenshipPng,
+	"static/countup.html": staticCountupHtml,
 	"static/css/style.css": staticCssStyleCss,
 	"static/dashboard_anonym.html": staticDashboard_anonymHtml,
 	"static/dashboard_cb.html": staticDashboard_cbHtml,
@@ -7137,6 +7176,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/interface.html": staticInterfaceHtml,
 	"static/js/app.js": staticJsAppJs,
 	"static/js/clipboard.js": staticJsClipboardJs,
+	"static/js/count.js": staticJsCountJs,
 	"static/js/countUp.js": staticJsCountupJs,
 	"static/js/crypto/asn1-1.0.min.js": staticJsCryptoAsn110MinJs,
 	"static/js/crypto/asn1hex-1.1.min.js": staticJsCryptoAsn1hex11MinJs,
@@ -7401,6 +7441,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"mm.png": &bintree{staticCountriesMmPng, map[string]*bintree{}},
 			"no_citizenship.png": &bintree{staticCountriesNo_citizenshipPng, map[string]*bintree{}},
 		}},
+		"countup.html": &bintree{staticCountupHtml, map[string]*bintree{}},
 		"css": &bintree{nil, map[string]*bintree{
 			"style.css": &bintree{staticCssStyleCss, map[string]*bintree{}},
 		}},
@@ -7556,6 +7597,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"js": &bintree{nil, map[string]*bintree{
 			"app.js": &bintree{staticJsAppJs, map[string]*bintree{}},
 			"clipboard.js": &bintree{staticJsClipboardJs, map[string]*bintree{}},
+			"count.js": &bintree{staticJsCountJs, map[string]*bintree{}},
 			"countUp.js": &bintree{staticJsCountupJs, map[string]*bintree{}},
 			"crypto": &bintree{nil, map[string]*bintree{
 				"asn1-1.0.min.js": &bintree{staticJsCryptoAsn110MinJs, map[string]*bintree{}},
