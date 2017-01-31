@@ -518,7 +518,7 @@ func (p *Parser) getEGSPrice(name string) (int64, error) {
 	if fuelRate <= 0 {
 		return 0, fmt.Errorf(`fuel rate must be greater than 0`)
 	}
-	dltPrice := int64(float64(fPrice) / fuelRate)
+	dltPrice := fPrice * fuelRate
 	return dltPrice, nil
 }
 
@@ -558,7 +558,7 @@ func (p *Parser) CheckContractLimit(price int64) bool {
 	if fuel <= 0 {
 		return false
 	}
-	need := int64(float64(p.TxCost) / fuel)
+	need := p.TxCost * fuel // need qEGS = F*fuel
 	//	wallet := p.TxWalletID
 	if p.TxStateID > 0 && p.TxCitizenID != 0 {
 		var needuser int64
@@ -621,7 +621,7 @@ func (p *Parser) payFPrice() error {
 		}
 	}
 
-	egs := int64(float64(p.TxUsedCost) / fuel)
+	egs := p.TxUsedCost * fuel
 	fmt.Printf("Pay fuel=%f cost=%d egs=%d", fuel, p.TxUsedCost, egs)
 	if egs == 0 { // Is it possible to pay nothing?
 		return nil

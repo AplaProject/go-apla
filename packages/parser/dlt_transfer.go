@@ -85,8 +85,7 @@ func (p *Parser) DLTTransferFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	fuelRateDecemal := decimal.NewFromFloat(fuelRate)
-	commission := fPriceDecemal.Div(fuelRateDecemal)
+	commission := fPriceDecemal.Mul(decimal.New(fuelRate, 0))
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
 	if p.TxMaps.Decimal["commission"].Cmp(commission) < 0 {

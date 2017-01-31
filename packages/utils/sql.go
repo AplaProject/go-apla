@@ -46,7 +46,7 @@ import (
 var Mutex = &sync.Mutex{}
 var log = logging.MustGetLogger("daemons")
 var DB *DCDB
-var cacheFuel float64
+var cacheFuel int64
 var fuelMutex = &sync.Mutex{}
 
 type DCDB struct {
@@ -1611,19 +1611,19 @@ func (db *DCDB) CheckStateName(stateId int64) (bool, error) {
 	return false, fmt.Errorf("null stateId")
 }
 
-func (db *DCDB) GetFuel() float64 {
-	// fuel = F/EGS
+func (db *DCDB) GetFuel() int64 {
+	// fuel = qEGS/F
 	fuelMutex.Lock()
 	defer fuelMutex.Unlock()
 	if cacheFuel <= 0 {
-		cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Float64()
+		cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
 	}
 	return cacheFuel
 }
 
 func (db *DCDB) UpdateFuel() {
 	fuelMutex.Lock()
-	cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Float64()
+	cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
 	fuelMutex.Unlock()
 }
 
