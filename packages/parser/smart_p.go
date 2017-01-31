@@ -372,7 +372,10 @@ func StateTableTx(p *Parser, tblname string) string {
 }
 
 func IsContract(p *Parser, name string) bool {
-	if p.TxContract != nil {
+	if p.TxContract != nil && len(name) > 0 {
+		if name[0] != '@' {
+			name = fmt.Sprintf(`@%d`, p.TxStateID) + name
+		}
 		return p.TxContract.Name == name
 	} else if len(p.TxSlice) > 1 {
 		return consts.TxTypes[utils.BytesToInt(p.TxSlice[1])] == name
