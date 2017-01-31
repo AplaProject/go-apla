@@ -17,6 +17,7 @@ function countUp() {
 		var countSpeed = element.getAttribute('data-count-speed');
 		var countSeparator = element.getAttribute('data-count-separator');
 		var countDecimal = element.getAttribute('data-count-decimal');
+		var countDecimals = element.getAttribute('data-count-decimals');
 		var countPrefix = element.getAttribute('data-count-prefix');
 		var countSuffix = element.getAttribute('data-count-suffix');
 		
@@ -42,13 +43,13 @@ function countUp() {
 		dom.appendChild(span);
 		container.replaceChild(dom, element);
 		
-		countUpStart(id, countNumber, countSpeed, countSeparator, countDecimal, countPrefix, countSuffix);
+		countUpStart(id, countNumber, countSpeed, countSeparator, countDecimal, countDecimals, countPrefix, countSuffix);
 	});
 	
 	countStart();
 }
 
-function countUpStart(id, countNumber, countSpeed, countSeparator, countDecimal, countPrefix, countSuffix) {
+function countUpStart(id, countNumber, countSpeed, countSeparator, countDecimal, countDecimals, countPrefix, countSuffix) {
 	var countUpOptions = {
 		useEasing : true,
 		useGrouping : true,
@@ -58,7 +59,7 @@ function countUpStart(id, countNumber, countSpeed, countSeparator, countDecimal,
 		suffix : countSuffix
 	};
 	
-	var countUp = new CountUp(id, 0, countNumber, 0, countSpeed, countUpOptions);
+	var countUp = new CountUp(id, 0, countNumber, countDecimals, countSpeed, countUpOptions);
 	countUp.start();
 }
 
