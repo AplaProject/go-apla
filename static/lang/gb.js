@@ -17,6 +17,7 @@ Lang = {
 	"repeat_password": "Repeat password",
 	"next": "Next",
 	"egaas_successfully_installed": "eGaaS has been successfully installed! Close and re-start the application.",
+	"cannot_connect_server": "Cannot connect to the server.<br />Please try again later.",
 	"login": "Login",
 	"country": "Country",
 	"no_citizenship": "No citizenship",

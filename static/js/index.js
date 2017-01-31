@@ -941,6 +941,8 @@ function unixtime(target) {
 }
 
 function send_to_net_success(data, ReadyFunction, skipsuccess) {
+	var i = 0;
+	
 	if (typeof data.error != "undefined" && data.error.length > 0) {
 		Alert(returnLang("error"), data.error, "error");
 	} else if (data.hash == "undefined") {
@@ -990,6 +992,13 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 					Alert(returnLang("error"), error, "error");
 				},
 			});
+			
+			i += 1;
+			
+			if (i >= 6) {
+				clearInterval(interval);
+				Alert(returnLang("error"), returnLang("cannot_connect_server"), "notification:danger");
+			}
 		}, 1000)
 	}
 }

@@ -17,6 +17,7 @@ Lang = {
 	"repeat_password": "Herhaal uw wachtwoord",
 	"next": "Volgende",
 	"egaas_successfully_installed": "De Referendapartij app is geïnstalleerd! Sluit en herstart.",
+	"cannot_connect_server": "Cannot connect to the server.<br />Please try again later.",
 	"login": "Inloggen",
 	"country": "Land",
 	"no_citizenship": "Referenda Nummer",
