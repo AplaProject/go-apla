@@ -552,7 +552,7 @@ func (p *Parser) GetContractLimit() (ret int64) {
 }
 
 func (p *Parser) CheckContractLimit(price int64) bool {
-	//	return true
+	return true
 	var balance decimal.Decimal
 	fuel := p.GetFuel()
 	if fuel <= 0 {
@@ -603,7 +603,7 @@ func (p *Parser) payFPrice() error {
 	var (
 		fromId int64
 	)
-
+	return nil
 	toId := p.BlockData.WalletId // account of node
 	fuel := p.GetFuel()
 	if fuel <= 0 {
