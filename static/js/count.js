@@ -36,6 +36,7 @@ function countUp() {
 		canvas.setAttribute("data-remaining-line-color", countOutline);
 		canvas.setAttribute("data-line-width", countThickness);
 		canvas.setAttribute("data-show-text", "false");
+		canvas.setAttribute("data-step", 1);
 		span.setAttribute("id", id);
 		span.setAttribute("style", "font-size:" + countFont);
 		dom.className = "countUp";
