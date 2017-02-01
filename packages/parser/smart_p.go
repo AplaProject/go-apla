@@ -136,6 +136,16 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	return &extend
 }
 
+func StackCont(p interface{}, name string) {
+	cont := p.(*Parser).TxContract
+	if len(name) > 0 {
+		cont.StackCont = append(cont.StackCont, name)
+	} else {
+		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+	}
+	return
+}
+
 func (p *Parser) CallContract(flags int) (err error) {
 	var public []byte
 	if flags&smart.CALL_ROLLBACK == 0 {
@@ -181,6 +191,8 @@ func (p *Parser) CallContract(flags int) (err error) {
 
 	methods := []string{`init`, `conditions`, `action`, `rollback`}
 	p.TxContract.Extend = p.getExtend()
+	p.TxContract.StackCont = []string{p.TxContract.Name}
+	(*p.TxContract.Extend)[`stack_cont`] = StackCont
 	before := (*p.TxContract.Extend)[`txcost`].(int64)
 	var price int64 = -1
 	if cprice := p.TxContract.GetFunc(`price`); cprice != nil {
@@ -376,7 +388,8 @@ func IsContract(p *Parser, name string) bool {
 		if name[0] != '@' {
 			name = fmt.Sprintf(`@%d`, p.TxStateID) + name
 		}
-		return p.TxContract.Name == name
+		//		return p.TxContract.Name == name
+		return p.TxContract.StackCont[len(p.TxContract.StackCont)-1] == name
 	} else if len(p.TxSlice) > 1 {
 		return consts.TxTypes[utils.BytesToInt(p.TxSlice[1])] == name
 	}

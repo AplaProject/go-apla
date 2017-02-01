@@ -165,6 +165,11 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		}
 	}
 	rt.cost -= COST_CONTRACT
+	var stackCont func(interface{}, string)
+	if stack, ok := (*rt.extend)[`stack_cont`]; ok && (*rt.extend)[`parser`] != nil {
+		stackCont = stack.(func(interface{}, string))
+		stackCont((*rt.extend)[`parser`], name)
+	}
 	for _, method := range []string{`init`, `conditions`, `action`} {
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == OBJ_FUNC {
 			rtemp := rt.vm.RunInit(rt.cost)
@@ -175,6 +180,9 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 				return err
 			}
 		}
+	}
+	if stackCont != nil {
+		stackCont((*rt.extend)[`parser`], ``)
 	}
 	(*rt.extend)[`parent`] = prevparent
 
