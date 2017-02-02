@@ -61,7 +61,7 @@ var (
 
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
-		"CallContract":   ExContract,
+		//		"CallContract":   ExContract,
 		"DBInsert":       DBInsert,
 		"DBUpdate":       DBUpdate,
 		"DBUpdateWhere":  DBUpdateWhere,
@@ -642,14 +642,4 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 		result[i] = reflect.ValueOf(list[i]).Interface()
 	}
 	return result, err
-}
-
-func ExContract(p *Parser, name string, params map[string]interface{}) error {
-	if name[0] != '@' {
-		name = fmt.Sprintf(`@%d`, p.TxStateID) + name
-	}
-
-	//	return script.ExecContract(rt *RunTime, name, txs string, params[]...)
-	//	(p *Parser) CallContract(flags int) (err error)
-	return nil
 }

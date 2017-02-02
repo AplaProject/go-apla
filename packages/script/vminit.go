@@ -194,7 +194,7 @@ func NewVM() *VM {
 	vm.Objects = make(map[string]*ObjInfo)
 	// Reserved 256 indexes for system purposes
 	vm.Children = make(Blocks, 256, 1024)
-	vm.Extend(&ExtendData{map[string]interface{}{"ExecContract": ExecContract},
+	vm.Extend(&ExtendData{map[string]interface{}{"ExecContract": ExecContract, "CallContract": ExContract},
 		map[string]string{
 			`*script.RunTime`: `rt`,
 		}})
@@ -300,4 +300,34 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 		return nil, fmt.Errorf(`unknown function`, name)
 	}
 	return ret, err
+}
+
+func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) error {
+
+	name = StateName(state, name)
+	contract, ok := rt.vm.Objects[name]
+	if !ok {
+		return fmt.Errorf(`unknown contract %s`, name)
+	}
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+	names := make([]string, 0)
+	vals := make([]interface{}, 0)
+	cblock := contract.Value.(*Block)
+	if cblock.Info.(*ContractInfo).Tx != nil {
+		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
+			if val, ok := params[tx.Name]; !ok {
+				return fmt.Errorf(`%s is not defined`, tx.Name)
+			} else {
+				names = append(names, tx.Name)
+				vals = append(vals, val)
+			}
+		}
+	}
+	if len(vals) == 0 {
+		vals = append(vals, ``)
+	}
+	//	fmt.Println(`ExContract`, name, params, names, vals)
+	return ExecContract(rt, name, strings.Join(names, `,`), vals...)
 }
