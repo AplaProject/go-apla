@@ -43,9 +43,9 @@ func init() {
 func (c *Controller) checkTx() (contract *smart.Contract, err error) {
 	cntname := c.r.FormValue(`TxName`)
 	contract = smart.GetContract(cntname, uint32(c.SessStateId))
-	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
+	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
 		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
-	} else {
+	} else if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if strings.Index(fitem.Tags, `image`) >= 0 {
 				continue
@@ -94,17 +94,19 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 				userId = c.SessCitizenId
 			}*/
 		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.Id, result.Time, userId, c.SessStateId, flags)
-		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-			if strings.Index(fitem.Tags, `image`) >= 0 {
-				continue
+		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
+			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+				if strings.Index(fitem.Tags, `image`) >= 0 {
+					continue
+				}
+				val := strings.TrimSpace(c.r.FormValue(fitem.Name))
+				if strings.Index(fitem.Tags, `address`) >= 0 {
+					val = utils.Int64ToStr(lib.StringToAddress(val))
+				} else if fitem.Type.String() == `decimal.Decimal` {
+					val = strings.TrimLeft(val, `0`)
+				}
+				forsign += fmt.Sprintf(",%v", val)
 			}
-			val := strings.TrimSpace(c.r.FormValue(fitem.Name))
-			if strings.Index(fitem.Tags, `address`) >= 0 {
-				val = utils.Int64ToStr(lib.StringToAddress(val))
-			} else if fitem.Type.String() == `decimal.Decimal` {
-				val = strings.TrimLeft(val, `0`)
-			}
-			forsign += fmt.Sprintf(",%v", val)
 		}
 		result.ForSign = forsign
 	}
