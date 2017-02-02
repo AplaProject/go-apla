@@ -88,13 +88,14 @@ const (
 	KEY_CONTINUE
 	KEY_WARNING
 	KEY_INFO
+	KEY_NIL
 	KEY_ERROR
 )
 
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
 		`if`: KEY_IF, `else`: KEY_ELSE, `error`: KEY_ERROR, `warning`: KEY_WARNING, `info`: KEY_INFO,
-		`while`: KEY_WHILE, `data`: KEY_TX,
+		`while`: KEY_WHILE, `data`: KEY_TX, `nil`: KEY_NIL,
 		`true`: KEY_TRUE, `false`: KEY_FALSE, `break`: KEY_BREAK, `continue`: KEY_CONTINUE, `var`: KEY_VAR}
 	TYPES = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
 		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
@@ -203,6 +204,9 @@ func LexParser(input []rune) (Lexems, error) {
 					case KEY_FALSE:
 						lexId = LEX_NUMBER
 						value = false
+					case KEY_NIL:
+						lexId = LEX_NUMBER
+						value = nil
 					default:
 						lexId = LEX_KEYWORD | (keyId << 8)
 						value = keyId

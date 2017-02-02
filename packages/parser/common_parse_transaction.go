@@ -72,47 +72,48 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 
 			p.TxContract = contract
 			p.TxData = make(map[string]interface{})
-			for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
-				var v interface{}
-				switch fitem.Type.String() {
-				case `uint64`:
-					var val uint64
-					lib.BinUnmarshal(&input, &val)
-					v = val
-				case `float64`:
-					var val float64
-					lib.BinUnmarshal(&input, &val)
-					v = val
-				case `int64`:
-					v, err = lib.DecodeLenInt64(&input)
-				case `decimal.Decimal`:
-					var s string
-					if err = lib.BinUnmarshal(&input, &s); err != nil {
+			if contract.Block.Info.(*script.ContractInfo).Tx != nil {
+				for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
+					var v interface{}
+					switch fitem.Type.String() {
+					case `uint64`:
+						var val uint64
+						lib.BinUnmarshal(&input, &val)
+						v = val
+					case `float64`:
+						var val float64
+						lib.BinUnmarshal(&input, &val)
+						v = val
+					case `int64`:
+						v, err = lib.DecodeLenInt64(&input)
+					case `decimal.Decimal`:
+						var s string
+						if err = lib.BinUnmarshal(&input, &s); err != nil {
+							return nil, err
+						}
+						v, err = decimal.NewFromString(s)
+					case `string`:
+						var s string
+						if err = lib.BinUnmarshal(&input, &s); err != nil {
+							return nil, err
+						}
+						v = s
+					case `[]uint8`:
+						var b []byte
+						if err = lib.BinUnmarshal(&input, &b); err != nil {
+							return nil, err
+						}
+						v = b
+					}
+					p.TxData[fitem.Name] = v
+					if err != nil {
 						return nil, err
 					}
-					v, err = decimal.NewFromString(s)
-				case `string`:
-					var s string
-					if err = lib.BinUnmarshal(&input, &s); err != nil {
-						return nil, err
+					if strings.Index(fitem.Tags, `image`) >= 0 {
+						continue
 					}
-					v = s
-				case `[]uint8`:
-					var b []byte
-					if err = lib.BinUnmarshal(&input, &b); err != nil {
-						return nil, err
-					}
-					v = b
+					forsign += fmt.Sprintf(",%v", v)
 				}
-				p.TxData[fitem.Name] = v
-				if err != nil {
-					return nil, err
-				}
-				if strings.Index(fitem.Tags, `image`) >= 0 {
-					continue
-				}
-				forsign += fmt.Sprintf(",%v", v)
-
 			}
 			p.TxData[`forsign`] = forsign
 			//			fmt.Println(`Contract data`, p.TxData)

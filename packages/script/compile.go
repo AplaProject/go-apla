@@ -794,6 +794,9 @@ main:
 						}
 						count++
 					}
+					if lexem.Value.(string) == `CallContract` {
+						bytecode = append(bytecode, &ByteCode{CMD_PUSH, (*block)[0].Info.(uint32)})
+					}
 					parcount = append(parcount, count)
 					call = true
 				}

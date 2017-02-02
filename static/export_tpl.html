@@ -58,6 +58,10 @@ function get_tpl() {
 	$(".tables:checked").each(function(){
 		tables.push(get_name(this));
 	})
+	var datatables = [];
+	$(".datatables:checked").each(function(){
+		datatables.push(get_name(this));
+	})
 	var menu = [];
 	$(".menu:checked").each(function(){
 		menu.push(get_name(this));
@@ -77,6 +81,7 @@ function get_tpl() {
 	
 	data = {"name": name, "title": $("#title").val(),"desc": $("#desc").val(), 
 	    "smart_contracts": contracts.join(','), "pages": pages.join(','), "tables": tables.join(','), 
+		"datatables": datatables.join(','), 
 		"menu": menu.join(','), "state_parameters": params.join(','), "apppages": JSON.stringify( apppages ),
 		"appmenu": JSON.stringify( appmenu ), "lang": langs.join(',')};
 	console.log('Data', data);
@@ -234,7 +239,7 @@ function js_appendpage(pref) {
 				{{range .Tables}}
 				<tr>
 					<td style="width: 50px;"><input type="checkbox" name="{{.Name}}"  data-global="{{if .Global}}1{{else}}0{{end}}"  class="form-control tables"></td>
-					<td style="width: 200px;">{{.Name}}</td>
+					<td style="width: 250px;">{{.Name}} <nobr><label style="font-weight: normal;float:right;"><input type="checkbox" name="{{.Name}}"  data-global="{{if .Global}}1{{else}}0{{end}}" class="datatables">&nbsp;Export data</label></nobr></td>
 					<td>{{if .Global}}global{{end}}</td>
 				</tr>
 				{{end}}

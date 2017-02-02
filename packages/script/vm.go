@@ -98,11 +98,15 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 			} else {
 				pars[count-i] = reflect.ValueOf(rt.stack[size-i+auto])
 			}
+			if !pars[count-i].IsValid() {
+				pars[count-i] = reflect.Zero(reflect.TypeOf(map[string]interface{}{}))
+				//reflect.ValueOf((*interface{})(nil)) //reflect.Zero(reflect.TypeOf(&MyType{}))
+			}
 		}
 		if i > 0 {
 			pars[in-1] = reflect.ValueOf(rt.stack[size-i : size])
 		}
-		//		fmt.Println(`Pars`, shift, count, limit, i, size, pars, pars[in-1].String())
+		//fmt.Println(`Pars`, shift, count, limit, i, size, pars)
 		if finfo.Variadic {
 			result = foo.CallSlice(pars)
 		} else {

@@ -86,30 +86,32 @@ func (c *Controller) AjaxSendTx() interface{} {
 			//			fmt.Println(`Header`, header)
 			_, err = lib.BinMarshal(&data, &header)
 			if err == nil {
-			fields:
-				for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
-					val := strings.TrimSpace(c.r.FormValue(fitem.Name))
-					if strings.Index(fitem.Tags, `address`) >= 0 {
-						val = utils.Int64ToStr(lib.StringToAddress(val))
-					}
-					switch fitem.Type.String() {
-					case `uint64`:
-						lib.BinMarshal(&data, utils.StrToUint64(val))
-						//					case `float64`:
-						//						lib.BinMarshal(&data, utils.StrToFloat64(val))
-					case `int64`:
-						lib.EncodeLenInt64(&data, utils.StrToInt64(val))
-					case `float64`:
-						lib.BinMarshal(&data, utils.StrToFloat64(val))
-					case `string`, `decimal.Decimal`:
-						data = append(append(data, lib.EncodeLength(int64(len(val)))...), []byte(val)...)
-					case `[]uint8`:
-						var bytes []byte
-						bytes, err = hex.DecodeString(val)
-						if err != nil {
-							break fields
+				if contract.Block.Info.(*script.ContractInfo).Tx != nil {
+				fields:
+					for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
+						val := strings.TrimSpace(c.r.FormValue(fitem.Name))
+						if strings.Index(fitem.Tags, `address`) >= 0 {
+							val = utils.Int64ToStr(lib.StringToAddress(val))
 						}
-						data = append(append(data, lib.EncodeLength(int64(len(bytes)))...), bytes...)
+						switch fitem.Type.String() {
+						case `uint64`:
+							lib.BinMarshal(&data, utils.StrToUint64(val))
+							//					case `float64`:
+							//						lib.BinMarshal(&data, utils.StrToFloat64(val))
+						case `int64`:
+							lib.EncodeLenInt64(&data, utils.StrToInt64(val))
+						case `float64`:
+							lib.BinMarshal(&data, utils.StrToFloat64(val))
+						case `string`, `decimal.Decimal`:
+							data = append(append(data, lib.EncodeLength(int64(len(val)))...), []byte(val)...)
+						case `[]uint8`:
+							var bytes []byte
+							bytes, err = hex.DecodeString(val)
+							if err != nil {
+								break fields
+							}
+							data = append(append(data, lib.EncodeLength(int64(len(bytes)))...), bytes...)
+						}
 					}
 				}
 				if err == nil {

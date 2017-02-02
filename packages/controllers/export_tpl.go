@@ -37,13 +37,14 @@ type exportInfo struct {
 }
 
 type exportTplPage struct {
-	Data      *CommonPage
-	Message   string
-	Contracts *[]exportInfo
-	Pages     *[]exportInfo
-	Tables    *[]exportInfo
-	Menu      *[]exportInfo
-	Params    *[]exportInfo
+	Data       *CommonPage
+	Message    string
+	Contracts  *[]exportInfo
+	Pages      *[]exportInfo
+	Tables     *[]exportInfo
+	DataTables *[]exportInfo
+	Menu       *[]exportInfo
+	Params     *[]exportInfo
 }
 
 func init() {
@@ -85,6 +86,71 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 				list = append(list, fmt.Sprintf("`%s_%s = %s`", prefix, icontract, data))
 			}
 		}
+	}
+	out += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
+	return
+}
+
+func (c *Controller) setData(name, prefix string) (out string) {
+	datatables := strings.Split(c.r.FormValue(name), `,`)
+	if len(datatables) == 0 {
+		return
+	}
+	out = `SetVar(`
+	list := make([]string, 0)
+	names := make([]string, 0)
+
+	for _, itable := range datatables {
+		if len(itable) == 0 {
+			continue
+		}
+		var (
+			state, tblname string
+			global         int
+		)
+		tblname = itable[strings.IndexByte(itable, '_')+1:]
+		itable, global, state = getState(c.SessStateId, itable)
+		contname := fmt.Sprintf(`Export%d_%s`, global, tblname)
+		fmt.Println(itable, global, state)
+		if global == 1 {
+			tblname = fmt.Sprintf(`"global_%s"`, tblname)
+		} else {
+			tblname = fmt.Sprintf(`Table("%s")`, tblname)
+		}
+		data, _ := c.GetAll(`select * from "`+itable+`" order by id`, -1)
+		if len(data) == 0 {
+			continue
+		}
+		pars := make([]string, 0)
+		lines := make([]string, 0)
+		for key := range data[0] {
+			if key != `rb_id` && key != `id` {
+				pars = append(pars, key)
+			}
+		}
+		contract := fmt.Sprintf(`contract %s {
+func action {
+	var tblname, fields string
+	tblname = %s
+	fields = "%s"
+`, contname, tblname, strings.Join(pars, `,`))
+		for _, ilist := range data {
+			params := make([]string, 0)
+			for _, ipar := range pars {
+				val := ilist[ipar]
+				if strings.IndexByte(val, 0) >= 0 {
+					val = `wrong parameter`
+				}
+				params = append(params, fmt.Sprintf(`"%s"`, val))
+			}
+			lines = append(lines, fmt.Sprintf(`	DBInsert(tblname, fields, %s)`, strings.Join(params, `,`)))
+		}
+		contract += strings.Join(lines, "\r\n")
+		contract += `
+	}
+}`
+		names = append(names, prefix+`_`+contname)
+		list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, contname, contract))
 	}
 	out += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
 	return
@@ -160,6 +226,7 @@ func (c *Controller) ExportTpl() (string, error) {
 		out += c.setVar("pages", `p`)
 		out += c.setVar("menu", `m`)
 		out += c.setVar("state_parameters", `pa`)
+		out += c.setData("datatables", `d`)
 		out += c.setAppend("pages", `ap`)
 		out += c.setAppend("menu", `am`)
 		if c.r.FormValue(`lang`) == `lang` {
@@ -284,6 +351,45 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				}
 			}
 		}
+
+		datatables := strings.Split(c.r.FormValue("datatables"), `,`)
+		if len(datatables) > 0 {
+			for _, itable := range datatables {
+				if len(itable) == 0 {
+					continue
+				}
+				var (
+					tblname string
+					global  int
+				)
+				tblname = itable[strings.IndexByte(itable, '_')+1:]
+				itable, global, _ = getState(c.SessStateId, itable)
+				contname := fmt.Sprintf(`Export%d_%s`, global, tblname)
+
+				list = append(list, fmt.Sprintf(`{
+		Forsign: 'global,name,value,conditions',
+		Data: {
+			type: "NewContract",
+			typeid: #type_new_contract_id#,
+			global: %d,
+			name: "%s",
+			value: $("#d_%s").val(),
+			conditions: $("#sc_conditions").val()
+			}
+	   }`, global, contname, contname))
+
+				list = append(list, fmt.Sprintf(`{
+		Forsign: '',
+		Data: {
+			type: "Contract",
+			global: %d,
+			name: "%s"
+			}
+	   }`, global, contname))
+
+			}
+		}
+
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
 		if len(contracts) > 0 {
 			for _, icontract := range contracts {
