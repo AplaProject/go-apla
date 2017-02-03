@@ -1,3 +1,179 @@
+function Generate_key() {
+	var key = "";
+	var hex = "0123456789abcdef";
+
+	for (i = 0; i < 64; i++) {
+		key += hex.charAt(Math.floor(Math.random() * 16));
+	}
+	return key;
+}
+//console.log(iv.toString())
+
+function  doSign(type){
+	doSign_(type);
+}
+
+var lastLinkEvent;
+function dlNavHash(e) {
+	if (lastLinkEvent!=location.hash) {
+		dlNav({'target': {'hash': location.hash}});
+	}
+}
+
+function dlNav(e){
+	if (e.buttons==3 || e.buttons==2 || e.buttons==4) {
+		return
+	}
+	if (typeof e.target.hash=='undefined') {
+		window.addEventListener("hashchange", dlNavHash);
+		return false;
+	}
+
+	lastLinkEvent = e.target.hash;
+
+	var str = e.target.hash;
+	var page_match = str.match(/#(\w+)/i);
+	if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='mmenu' && page_match[1]!='mm' && page_match[1]!='language' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='user') {
+	
+		var page = page_match[1];
+		var param_match = str.match(/\/\w+=\w+/gi);
+		var param_obj = {};
+		if (param_match) {
+			for (var i = 0; i < param_match.length; i++) {
+				var param = param_match[i].match(/(\w+)=(\w+)/i);
+				param_obj[param[1]] = param[2];
+			}
+		}
+		
+		dl_navigate(page, param_obj);
+	}
+}
+
+void function whichClickClosure( $ ){
+	var events     = {
+				1 : 'leftclick',
+				2 : 'middleclick',
+				3 : 'rightclick'
+			},
+	// List of interruption events for symbolic linking between custom and native events
+			interrupts = [
+				'preventDefault',
+				'stopPropagation',
+				'stopImmediatePropagation'
+			],
+	// A dummy empty event, used in custom interruption
+			emptyEvent = $.Event();
+
+	function makeInterrupts( customEvent, ensuingEvent ){
+		var output = {};
+
+		$.each( interrupts, function makeCustomInterrupt( index, method ){
+			output[ method ] = function customInterrupt(){
+				emptyEvent[ method ].call( this );
+
+				$( customEvent.target ).one( ensuingEvent, function defferedInterrupt( ensuingEvent ){
+					ensuingEvent[ method ]();
+				} );
+			};
+		} );
+
+		return output;
+	}
+
+	// We need to capture all mousedowns
+	$( document ).on( 'mousedown', function mousedownFilter( mousedown ){
+		// Determine which event we're listening for
+		var eventType = events[ mousedown.which ];
+
+		// Discard anything we can't map
+		if( !eventType ){
+			return;
+		}
+
+		$( document ).one( 'mouseup', function mouseupFilter( mouseup ){
+			// The custom click event we'll fire
+			var eventObject  = {},
+			// The ensuing native event the event symbolizes
+					ensuingEvent = '';
+
+			// Only capture events on the same element
+			if( mousedown.target !== mouseup.target ){
+				return;
+			}
+
+			// Middleclicks only trigger on links
+			if( eventType === 'middleclick' && $( mouseup.target ).is( 'a' ) ){
+				return;
+			}
+
+			if( eventType === 'middleclick' || eventType === 'leftclick' ){
+				ensuingEvent = 'click';
+			}
+
+			// Rightclicks also fire off contextmenu
+			if( eventType === 'rightclick' ){
+				ensuingEvent = 'contextmenu';
+			}
+
+			// Extend the eventObject
+			$.extend(
+					// Including all the deeper stuff
+					true,
+					// ...
+					eventObject,
+					// Take all the properties of mouseup...
+					mouseup,
+					// With our type and timestamp...
+					$.Event( eventType )
+			);
+
+			// Add custom interrupts
+			$.extend(
+					true,
+					eventObject,
+					makeInterrupts( eventObject, ensuingEvent )
+			);
+
+			$( mouseup.target )
+				// Fire this event on the target
+					.trigger( eventObject )
+				// Also fire an 'anyclick' event (with all the same internals) for convenience
+					.trigger( $.extend( eventObject, { type : 'anyclick' } ) );
+		} );
+	} );
+}( jQuery );
+
+$( document ).on( 'leftclick', function( e ){
+	dlNav(e);
+} );
+
+window.addEventListener("hashchange", dlNavHash);
+
+
+function dl_navigate0 (page, parameters) {
+
+	var json = JSON.stringify(parameters);
+
+	clearAllTimeouts();
+	NProgress.set(1.0);
+	$.post("content?page="+page, { tpl_name: page, parameters: json },
+			function(data) {
+				$(".sweet-overlay, .sweet-alert").remove();
+				$('#dl_content').html( data );
+				updateLanguage("#dl_content .lang");
+				//loadLanguage();
+				hist_push(['dl_navigate0', page, parameters]);
+				if ( parameters && parameters.hasOwnProperty("lang")) {
+					if ( page[0] == 'E' )
+						load_emenu();
+					else
+						load_menu();
+				}
+				window.scrollTo(0,0);
+			}, "html");
+
+}
+
 var MenuAPI;
 var qDLT = 1000000000000000000;
 var g_menuShow = true;
@@ -1264,30 +1440,32 @@ function InitMobileTable() {
 	}
 }
 
-var observeDOM = (function () {
-	var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
-		eventListenerSupported = window.addEventListener;
-
-	return function (content, callback) {
-		if (MutationObserver) {
-			// define a new observer
-			var obs = new MutationObserver(function (mutations, observer) {
-				if (mutations[0].addedNodes.length || mutations[0].removedNodes.length)
-					callback();
-			});
-			// have the observer observe foo for changes in children
-			obs.observe(content, { childList: true, subtree: true });
+$(window).load(function () {
+	var observeDOM = (function () {
+		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
+			eventListenerSupported = window.addEventListener;
+	
+		return function (content, callback) {
+			if (MutationObserver) {
+				// define a new observer
+				var obs = new MutationObserver(function (mutations, observer) {
+					if (mutations[0].addedNodes.length || mutations[0].removedNodes.length)
+						callback();
+				});
+				// have the observer observe foo for changes in children
+				obs.observe(content, { childList: true, subtree: true });
+			}
+			else if (eventListenerSupported) {
+				content.addEventListener('DOMNodeInserted', callback, false);
+				content.addEventListener('DOMNodeRemoved', callback, false);
+			}
 		}
-		else if (eventListenerSupported) {
-			content.addEventListener('DOMNodeInserted', callback, false);
-			content.addEventListener('DOMNodeRemoved', callback, false);
-		}
-	}
-})();
-
-observeDOM(document.getElementById('dl_content'), function () {
-	InitMobileHead();
-	InitMobileTable();
+	})();
+	
+	observeDOM(document.getElementById('dl_content'), function () {
+		InitMobileHead();
+		InitMobileTable();
+	});
 });
 
 $(document).on('keydown', function (e) {

@@ -1,241 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-	<meta name="description" content="">
-	<meta name="keywords" content="">
-	<title>eGaaS</title>
-	<link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
-	<!-- =============== VENDOR STYLES ===============-->
-	<!-- FONT AWESOME-->
-	<link rel="stylesheet" href="static/vendor/fontawesome/css/font-awesome.min.css">
-	<!-- SIMPLE LINE ICONS-->
-	<link rel="stylesheet" href="static/vendor/simple-line-icons/css/simple-line-icons.css">
-	<!-- ANIMATE.CSS-->
-	<link rel="stylesheet" href="static/vendor/animate.css/animate.min.css">
-	<!-- WHIRL (spinners)-->
-	<link rel="stylesheet" href="static/vendor/whirl/dist/whirl.css">
-	<!-- =============== PAGE VENDOR STYLES ===============-->
-	<!-- DATATABLES-->
-	<link rel="stylesheet" href="static/vendor/datatables-colvis/css/dataTables.colVis.css">
-	<link rel="stylesheet" href="static/vendor/datatables/media/css/dataTables.bootstrap.css">
-	<link rel="stylesheet" href="static/vendor/dataTables.fontAwesome/index.css">
-	<!-- XEDITABLE-->
-	<link rel="stylesheet" href="static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css">
-	<!-- DATETIMEPICKER-->
-	<link rel="stylesheet" href="static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css">
-	<link rel="stylesheet" href="static/vendor/datetimepicker/jquery.datetimepicker.css">
-	<!-- SELECT2-->
-	<link rel="stylesheet" href="static/vendor/select2/dist/css/select2.css">
-	<link rel="stylesheet" href="static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css">
-	<!-- Loaders.css-->
-	<link rel="stylesheet" href="static/vendor/loaders.css/loaders.css">
-	<!-- Spinkit-->
-	<link rel="stylesheet" href="static/vendor/spinkit/css/spinkit.css">
-	<!-- SWEET ALERT-->
-	<link rel="stylesheet" href="static/vendor/sweetalert/dist/sweetalert.css">
-	<!-- =============== APP STYLES ===============-->
-	<script>document.write("<link rel='stylesheet' href='static/css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
-	
-	<style>
-		#NProgressStart .bar:before {
-			background-image:url(/static/img/logo.{{.LogoExt}});
-		}
-		#NProgressStart .bar .peg {
-			background-image:url(/static/img/logo.{{.LogoExt}});
-		}
-		.loader .logo .null {
-			background-image:url(static/img/logo_null.svg);
-		}
-		.loader .logo .ok {
-			background-image:url(static/img/logo_ok.svg);
-		}
-		.brand:after {
-			background-image:url(static/img/logo.{{.LogoExt}});
-		}
-	</style>
-   
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/prng4-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/jsbn-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/jsbn2-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/ec-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/rng-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ecparam-1.0.min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/x64-core_min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/md5_min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/aes.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/sha1_min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/cj/sha256_min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/yahoo-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ext/ec-patch-min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/crypto-1.1.min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/asn1-1.0.min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/asn1hex-1.1.min.js"></script>
-	<script language="JavaScript" type="text/javascript" src="static/js/crypto/ecdsa-modified-1.0.min.js"></script>
-	
-   <!-- =============== VENDOR SCRIPTS ===============-->
-   <!-- MODERNIZR-->
-   <script src="static/vendor/modernizr/modernizr.custom.js"></script>
-   <!-- JQUERY-->
-   <script src="static/vendor/jquery/dist/jquery.js"></script>
-   <script src="static/vendor/jquery/dist/jquery.mobile-1.4.5.js"></script>
-   <!-- BOOTSTRAP-->
-   <script src="static/vendor/bootstrap/dist/js/bootstrap.js"></script>
-   <!-- STORAGE API-->
-   <script src="static/vendor/jQuery-Storage-API/jquery.storageapi.js"></script>
-   <!-- =============== PAGE VENDOR SCRIPTS ===============-->
-   <!-- MOMENT JS-->
-   <script src="static/vendor/moment/min/moment-with-locales.min.js"></script>
-   <!-- DATATABLES-->
-   <script src="static/vendor/datatables/media/js/jquery.dataTables.min.js"></script>
-   <script src="static/vendor/datatables-colvis/js/dataTables.colVis.js"></script>
-   <script src="static/vendor/datatables/media/js/dataTables.bootstrap.js"></script>
-   <script src="static/vendor/datatables/media/js/dataTables.colReorder.min.js"></script>
-   <script src="static/js/datetime.js"></script>
-   <!-- XEDITABLE-->
-   <script src="static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
-   <!-- DATETIMEPICKER-->
-   <script type="text/javascript" src="static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
-   <script type="text/javascript" src="static/vendor/datetimepicker/jquery.datetimepicker.full.js"></script>
-   <!-- FILESTYLE-->
-   <script src="static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"></script>
-   <!-- SELECT2-->
-   <script src="static/vendor/select2/dist/js/select2.js"></script>
-   <!-- SWEET ALERT-->
-   <script src="static/vendor/sweetalert/dist/sweetalert.min.js"></script>
-   <!-- Clipboard-->
-   <script src="static/js/clipboard.js"></script>
-   <!-- Preloader-->
-   <script src="static/js/nprogress.js"></script>
-   <!-- Custom Tooltip-->
-   <script src="static/js/tooltip.js"></script>
-   <!-- Inputmask-->
-   <script src="static/js/inputmask.js"></script>
-   <!-- Typeahead-->
-   <script src="static/js/typeahead.js"></script>
-   <!-- textEditor-->
-   <script type="text/javascript" src="static/js/textEditor/ace.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/ext-language_tools.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/theme-chrome.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/theme-crimson_editor.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/theme-xcode.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/mode-c_cpp.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/mode-less.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/mode-yaml.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/mode-markdown.js"></script>
-   <script type="text/javascript" src="static/js/textEditor/beautify.js"></script>
-   <!-- photoEditor-->
-   <script type="text/javascript" src="static/js/photoEditor/vue.min.js"></script>
-   <script type="text/javascript" src="static/js/photoEditor/cropper.min.js"></script>
-   <!-- CLASSY LOADER-->
-   <script src="static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"></script>
-   <script src="static/vendor/Chart.js/Chart.js"></script>
-   <!-- Count-->
-   <script src="static/js/countUp.js"></script>
-   <script src="static/js/count.js"></script>
-   <!-- SPARKLINE-->
-   <script src="static/vendor/sparkline/index.js"></script>
-   <!-- ScrollTo-->
-   <script src="static/js/scrollTo.js"></script>
-	<!-- Google charts-->
-	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-	<!-- Google map-->
-	<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
-	<script>document.write("<script type='text/javascript' src='static/js/map.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
-   
-   <script>
-   		var isMobile = {{.Mobile}};
-		var Version = '{{.Version}}';
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content="">
+<title>eGaaS</title>
+<link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
+<script>document.write("<link rel='stylesheet' href='static/css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
+<style>
+	#NProgressStart .bar:before {
+		background-image:url(/static/img/logo.{{.LogoExt}});
+	}
+	#NProgressStart .bar .peg {
+		background-image:url(/static/img/logo.{{.LogoExt}});
+	}
+	.loader .logo .null {
+		background-image:url(static/img/logo_null.svg);
+	}
+	.loader .logo .ok {
+		background-image:url(static/img/logo_ok.svg);
+	}
+	.brand:after {
+		background-image:url(static/img/logo.{{.LogoExt}});
+	}
+</style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
+<script type="text/javascript" src="static/js/app.js"></script>
+<script type="text/javascript" src="static/js/keys.js"></script>
+<script>document.write("<script type='text/javascript' src='static/js/index.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
+<script>
+	var isMobile = {{.Mobile}};
+	var Version = '{{.Version}}';
 //	    var accounts = '{{.Accounts}}';
-		var thrust = {{.Thrust}};
-		var PageName = "";
-		var TableName = "";
-		var TableGlobal = "";
-		if ( typeof THRUST != "undefined" )
-		{
-			THRUST.remote.send('ACCOUNTS');
-			THRUST.remote.listen(function(answer) {
-				localStorage.setItem('Accounts', answer.payload );
-				GKey.init();
-    		});
-		}
+	var thrust = {{.Thrust}};
+	var PageName = "";
+	var TableName = "";
+	var TableGlobal = "";
+	if ( typeof THRUST != "undefined" )
+	{
+		THRUST.remote.send('ACCOUNTS');
+		THRUST.remote.listen(function(answer) {
+			localStorage.setItem('Accounts', answer.payload );
+			GKey.init();
+		});
+	}
 /*		if (accounts.length > 0 && thrust) {
-			localStorage.setItem('Accounts', accounts);
-		}*/
-		$( document ).ready(function() {
-			{{if .Langs}}
-				var list = {{.Langs}}.split(',');
-				localStorage.setItem('EGAAS_LANG', list[0]);
-				changeLanguage(list[0]);
-			{{else}}
-				loadLanguage();
-			{{end}}
-			
-			{{if not .DbOk}}
-				NProgressStart.set(1);
-				$("#dl_content").load("content", function(response, status) {
-					if ( status == "error" ) { window.location.href = "index"; }
-					$("#loading_db").css("display", "none");
-				})
-			{{else if .Key}}
-				NProgressStart.set(1);
-				$( "#dl_content" ).load( "content", { key: {{.Key}}}, function() {
-				    NProgressStart.done();
-				});
+		localStorage.setItem('Accounts', accounts);
+	}*/
+	$( document ).ready(function() {
+		{{if .Langs}}
+			var list = {{.Langs}}.split(',');
+			localStorage.setItem('EGAAS_LANG', list[0]);
+			changeLanguage(list[0]);
+		{{else}}
+			loadLanguage();
+		{{end}}
+		
+		{{if not .DbOk}}
+			NProgressStart.set(1);
+			$("#dl_content").load("content", function(response, status) {
+				if ( status == "error" ) { window.location.href = "index"; }
+				$("#loading_db").css("display", "none");
+			})
+		{{else if .Key}}
+			NProgressStart.set(1);
+			$( "#dl_content" ).load( "content", { key: {{.Key}}}, function() {
+				NProgressStart.done();
+			});
 
 /*				NProgressStart.set(1);
-				$("#dl_content").load( "content", { {{if .SetLang}}"parameters": {"lang":{{.SetLang}} }{{end}} }, function() {
-					$("#key").text("{{.Key}}");
-					doSign('login');
-				})
-				load_menu({{if .SetLang}}{{.SetLang}}{{end}});*/
-			{{else}}
-				//g_menuShow = false;
-				NProgressStart.set(1);
-				//load_menu();
-				
-				//setTimeout(function(){
-					$( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
-						load_menu(undefined, 'dashboard_default');
-						NProgressStart.done();
-					});
-				//}, 100);
-			{{end}}
-		});
-	</script>
+			$("#dl_content").load( "content", { {{if .SetLang}}"parameters": {"lang":{{.SetLang}} }{{end}} }, function() {
+				$("#key").text("{{.Key}}");
+				doSign('login');
+			})
+			load_menu({{if .SetLang}}{{.SetLang}}{{end}});*/
+		{{else}}
+			//g_menuShow = false;
+			NProgressStart.set(1);
+			//load_menu();
+			
+			//setTimeout(function(){
+				$( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
+					load_menu(undefined, 'dashboard_default');
+					NProgressStart.done();
+				});
+			//}, 100);
+		{{end}}
+	});
+</script>
 </head>
-
 <body class="layout-fixed">
-   <!--<a href="#mmenu" class="visible-xs mobile_menu">
-      <span class="patty"></span>
-   </a>-->
-   <a href="#" id="hamburger" class="visible-xs">
-      <span class="hamburger hamburger--collapse">
-         <span class="hamburger-box">
-            <span class="hamburger-inner"></span>
-         </span>
-      </span>
-   </a>
-   <div id="dl_page">
-	   <div class="wrapper">
-		  <div class="nav_hist">
-			  <a href="#" id="hist_back" onclick="return hist_back();" style="display:none;">Back</a>
-			  <a href="#" id="hist_forward" onclick="return hist_forward();" style="display:none;">Forward</a>
-		  </div>
-		  <!-- Main section-->
-		  <div id="dl_menu">
-		  </div>
-		  <section>
-			 <!-- Page content-->
-			 <div id="dl_content" class="content-wrapper"></div>
-		  </section>
-	   </div>
-   </div>
-   <div id="dl_modal"></div>
-   <div id="loader"></div>
-   <div style="display: none;">
+	<a href="#" id="hamburger" class="visible-xs">
+		<span class="hamburger hamburger--collapse">
+			<span class="hamburger-box">
+				<span class="hamburger-inner"></span>
+			</span>
+		</span>
+	</a>
+	<div id="dl_page">
+		<div class="wrapper">
+			<div class="nav_hist">
+				<a href="#" id="hist_back" onclick="return hist_back();" style="display:none;">Back</a>
+				<a href="#" id="hist_forward" onclick="return hist_forward();" style="display:none;">Forward</a>
+			</div>
+			<div id="dl_menu"></div>
+			<section>
+				<div id="dl_content" class="content-wrapper"></div>
+			</section>
+		</div>
+	</div>
+	<div id="dl_modal"></div>
+	<div id="loader"></div>
+	<div style="display: none;">
 		<div id="key">key</div>
 		<div id="password">password</div>
 		<img  id="image_key" alt="" />
@@ -246,199 +124,5 @@
 		<div id="triangles_output" class="triangles"></div>
 		<div id="triangles_controls" class="controls" style="visibility:hidden;"></div>
 	</div>
-   
-   <!-- =============== APP SCRIPTS ===============-->
-   <script src="static/js/mmenu.js"></script>
-   <script>document.write("<script type='text/javascript' src='static/js/app.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
-   <script>document.write("<script type='text/javascript' src='static/js/index.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
-   <script language="JavaScript" type="text/javascript" src="static/js/keys.js"></script>
-   
-   <script language="JavaScript" type="text/javascript">
-		function Generate_key() {
-			var key = "";
-			var hex = "0123456789abcdef";
-	
-			for (i = 0; i < 64; i++) {
-				key += hex.charAt(Math.floor(Math.random() * 16));
-			}
-			return key;
-		}
-		//console.log(iv.toString())
-	
-		function  doSign(type){
-			doSign_(type);
-		}
-	</script>
-   
-	<script type="text/javascript" >
-		var lastLinkEvent;
-		function dlNavHash(e) {
-			if (lastLinkEvent!=location.hash) {
-				dlNav({'target': {'hash': location.hash}});
-			}
-		}
-	
-		function dlNav(e){
-			if (e.buttons==3 || e.buttons==2 || e.buttons==4) {
-				return
-			}
-			if (typeof e.target.hash=='undefined') {
-				window.addEventListener("hashchange", dlNavHash);
-				return false;
-			}
-	
-			lastLinkEvent = e.target.hash;
-	
-			var str = e.target.hash;
-			var page_match = str.match(/#(\w+)/i);
-			if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='mmenu' && page_match[1]!='mm' && page_match[1]!='language' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='user') {
-			
-				var page = page_match[1];
-				var param_match = str.match(/\/\w+=\w+/gi);
-				var param_obj = {};
-				if (param_match) {
-					for (var i = 0; i < param_match.length; i++) {
-						var param = param_match[i].match(/(\w+)=(\w+)/i);
-						param_obj[param[1]] = param[2];
-					}
-				}
-				
-				dl_navigate(page, param_obj);
-			}
-		}
-	
-		void function whichClickClosure( $ ){
-			var events     = {
-						1 : 'leftclick',
-						2 : 'middleclick',
-						3 : 'rightclick'
-					},
-			// List of interruption events for symbolic linking between custom and native events
-					interrupts = [
-						'preventDefault',
-						'stopPropagation',
-						'stopImmediatePropagation'
-					],
-			// A dummy empty event, used in custom interruption
-					emptyEvent = $.Event();
-	
-			function makeInterrupts( customEvent, ensuingEvent ){
-				var output = {};
-	
-				$.each( interrupts, function makeCustomInterrupt( index, method ){
-					output[ method ] = function customInterrupt(){
-						emptyEvent[ method ].call( this );
-	
-						$( customEvent.target ).one( ensuingEvent, function defferedInterrupt( ensuingEvent ){
-							ensuingEvent[ method ]();
-						} );
-					};
-				} );
-	
-				return output;
-			}
-	
-			// We need to capture all mousedowns
-			$( document ).on( 'mousedown', function mousedownFilter( mousedown ){
-				// Determine which event we're listening for
-				var eventType = events[ mousedown.which ];
-	
-				// Discard anything we can't map
-				if( !eventType ){
-					return;
-				}
-	
-				$( document ).one( 'mouseup', function mouseupFilter( mouseup ){
-					// The custom click event we'll fire
-					var eventObject  = {},
-					// The ensuing native event the event symbolizes
-							ensuingEvent = '';
-	
-					// Only capture events on the same element
-					if( mousedown.target !== mouseup.target ){
-						return;
-					}
-	
-					// Middleclicks only trigger on links
-					if( eventType === 'middleclick' && $( mouseup.target ).is( 'a' ) ){
-						return;
-					}
-	
-					if( eventType === 'middleclick' || eventType === 'leftclick' ){
-						ensuingEvent = 'click';
-					}
-	
-					// Rightclicks also fire off contextmenu
-					if( eventType === 'rightclick' ){
-						ensuingEvent = 'contextmenu';
-					}
-	
-					// Extend the eventObject
-					$.extend(
-							// Including all the deeper stuff
-							true,
-							// ...
-							eventObject,
-							// Take all the properties of mouseup...
-							mouseup,
-							// With our type and timestamp...
-							$.Event( eventType )
-					);
-	
-					// Add custom interrupts
-					$.extend(
-							true,
-							eventObject,
-							makeInterrupts( eventObject, ensuingEvent )
-					);
-	
-					$( mouseup.target )
-						// Fire this event on the target
-							.trigger( eventObject )
-						// Also fire an 'anyclick' event (with all the same internals) for convenience
-							.trigger( $.extend( eventObject, { type : 'anyclick' } ) );
-				} );
-			} );
-		}( jQuery );
-	
-		$( document ).on( 'leftclick', function( e ){
-			dlNav(e);
-		} );
-	
-		window.addEventListener("hashchange", dlNavHash);
-
-
-		function dl_navigate0 (page, parameters) {
-
-			var json = JSON.stringify(parameters);
-
-			//$('#loader').spin();
-			clearAllTimeouts();
-			NProgress.set(1.0);
-			$.post("content?page="+page, { tpl_name: page, parameters: json },
-					function(data) {
-						//$("#loader").spin(false);
-						$(".sweet-overlay, .sweet-alert").remove();
-						//console.log('$("#loader").spin(false)');
-						$('#dl_content').html( data );
-						updateLanguage("#dl_content .lang");
-						//loadLanguage();
-						hist_push(['dl_navigate0', page, parameters]);
-						if ( parameters && parameters.hasOwnProperty("lang")) {
-							if ( page[0] == 'E' )
-								load_emenu();
-							else
-								load_menu();
-						}
-						window.scrollTo(0,0);
-						if ($(".sidebar-collapse").is(":visible") && $(".navbar-toggle").is(":visible")) {
-							$('.sidebar-collapse').collapse('toggle');
-						}
-					}, "html");
-
-		}
-		
-	</script>
 </body>
-
 </html>
