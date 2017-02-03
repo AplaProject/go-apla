@@ -624,6 +624,10 @@
 				$burger.addClass("is-active");
 			}, 100);
 		});
+		
+		$("#mmenu .mm-panels ul li").on('click', function(){
+			$("#mmenu .mm-panels ul li a:not(.mm-next)").removeClass("mm-selected");
+		});
 	});
 	
 	$(document).keydown(function(e){
