@@ -79,6 +79,7 @@
 // static/elections.tpl
 // static/euro.tpl
 // static/export_tpl.html
+// static/fonts/FontAwesome.otf
 // static/fonts/PFSquareSansPro-Bold.eot
 // static/fonts/PFSquareSansPro-Bold.svg
 // static/fonts/PFSquareSansPro-Bold.ttf
@@ -99,6 +100,16 @@
 // static/fonts/PFSquareSansPro-Regular.ttf
 // static/fonts/PFSquareSansPro-Regular.woff
 // static/fonts/PFSquareSansPro-Regular.woff2
+// static/fonts/Simple-Line-Icons.eot
+// static/fonts/Simple-Line-Icons.svg
+// static/fonts/Simple-Line-Icons.ttf
+// static/fonts/Simple-Line-Icons.woff
+// static/fonts/Simple-Line-Icons.woff2
+// static/fonts/fontawesome-webfont.eot
+// static/fonts/fontawesome-webfont.svg
+// static/fonts/fontawesome-webfont.ttf
+// static/fonts/fontawesome-webfont.woff
+// static/fonts/fontawesome-webfont.woff2
 // static/fonts/glyphicons-filetypes-regular.eot
 // static/fonts/glyphicons-filetypes-regular.svg
 // static/fonts/glyphicons-filetypes-regular.ttf
@@ -167,8 +178,10 @@
 // static/img/bg7.jpg
 // static/img/bg8.jpg
 // static/img/bg9.jpg
+// static/img/clear.png
 // static/img/dummy.png
 // static/img/favicon.ico
+// static/img/loading.gif
 // static/img/lock-bg.jpg
 // static/img/logo.png
 // static/img/logo.svg
@@ -180,6 +193,11 @@
 // static/img/mockup.png
 // static/img/profile-bg.jpg
 // static/img/radio_icon.png
+// static/img/sort_asc.png
+// static/img/sort_asc_disabled.png
+// static/img/sort_both.png
+// static/img/sort_desc.png
+// static/img/sort_desc_disabled.png
 // static/img/spacer.gif
 // static/img/squares.gif
 // static/img/user/01.jpg
@@ -200,70 +218,10 @@
 // static/install_step_1.html
 // static/interface.html
 // static/js/app.js
-// static/js/clipboard.js
-// static/js/count.js
-// static/js/countUp.js
-// static/js/crypto/asn1-1.0.min.js
-// static/js/crypto/asn1hex-1.1.min.js
-// static/js/crypto/crypto-1.1.min.js
-// static/js/crypto/ecdsa-modified-1.0.min.js
-// static/js/crypto/ecparam-1.0.min.js
-// static/js/crypto/ext/cj/aes.js
-// static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js
-// static/js/crypto/ext/cj/ec-patch-min.js
-// static/js/crypto/ext/cj/md5_min.js
-// static/js/crypto/ext/cj/sha1_min.js
-// static/js/crypto/ext/cj/sha256_min.js
-// static/js/crypto/ext/cj/x64-core_min.js
-// static/js/crypto/ext/ec-min.js
-// static/js/crypto/ext/ec-patch-min.js
-// static/js/crypto/ext/jsbn-min.js
-// static/js/crypto/ext/jsbn2-min.js
-// static/js/crypto/ext/prng4-min.js
-// static/js/crypto/ext/rng-min.js
-// static/js/crypto/ext/yahoo-min.js
-// static/js/datetime.js
-// static/js/demo/demo-datatable.js
-// static/js/demo/demo-flot.js
-// static/js/demo/demo-forms.js
-// static/js/demo/demo-jqcloud.js
-// static/js/demo/demo-jqgrid.js
-// static/js/demo/demo-nestable.js
-// static/js/demo/demo-panels.js
-// static/js/demo/demo-rtl.js
-// static/js/demo/demo-search.js
-// static/js/demo/demo-sortable.js
-// static/js/demo/demo-upload.js
-// static/js/demo/demo-vector-map.js
-// static/js/demo/demo-wizard.js
-// static/js/demo/demo-xeditable.js
 // static/js/index.js
-// static/js/inputmask.js
 // static/js/keys.js
-// static/js/map.js
-// static/js/mmenu.js
-// static/js/nprogress.js
-// static/js/photoEditor/cropper.min.js
 // static/js/photoEditor/editor.js
-// static/js/photoEditor/vue.min.js
-// static/js/scrollTo.js
-// static/js/textEditor/ace.js
-// static/js/textEditor/beautify.js
-// static/js/textEditor/ext-language_tools.js
-// static/js/textEditor/mode-c_cpp.js
-// static/js/textEditor/mode-less.js
-// static/js/textEditor/mode-markdown.js
-// static/js/textEditor/mode-yaml.js
-// static/js/textEditor/snippets/c_cpp.js
-// static/js/textEditor/snippets/less.js
-// static/js/textEditor/snippets/markdown.js
-// static/js/textEditor/snippets/yaml.js
-// static/js/textEditor/theme-chrome.js
-// static/js/textEditor/theme-crimson_editor.js
-// static/js/textEditor/theme-xcode.js
-// static/js/tooltip.js
 // static/js/triangles.js
-// static/js/typeahead.js
 // static/lang/1.ini
 // static/lang/42.ini
 // static/lang/en-us.all.json
@@ -303,65 +261,6 @@
 // static/tx_form.html
 // static/updating_blockchain.html
 // static/upgrade.html
-// static/vendor/Chart.js/Chart.js
-// static/vendor/animate.css/animate.min.css
-// static/vendor/bootstrap/dist/css/bootstrap.css
-// static/vendor/bootstrap/dist/js/bootstrap.js
-// static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js
-// static/vendor/dataTables.fontAwesome/index.css
-// static/vendor/datatables/media/css/dataTables.bootstrap.css
-// static/vendor/datatables/media/images/Sorting icons.psd
-// static/vendor/datatables/media/images/favicon.ico
-// static/vendor/datatables/media/images/sort_asc.png
-// static/vendor/datatables/media/images/sort_asc_disabled.png
-// static/vendor/datatables/media/images/sort_both.png
-// static/vendor/datatables/media/images/sort_desc.png
-// static/vendor/datatables/media/images/sort_desc_disabled.png
-// static/vendor/datatables/media/js/dataTables.bootstrap.js
-// static/vendor/datatables/media/js/dataTables.buttons.min.js
-// static/vendor/datatables/media/js/dataTables.colReorder.min.js
-// static/vendor/datatables/media/js/dataTables.editor.min.js
-// static/vendor/datatables/media/js/dataTables.keyTable.min.js
-// static/vendor/datatables/media/js/dataTables.select.min.js
-// static/vendor/datatables/media/js/jquery.dataTables.min.js
-// static/vendor/datatables-colvis/css/dataTables.colVis.css
-// static/vendor/datatables-colvis/js/dataTables.colVis.js
-// static/vendor/datetimepicker/jquery.datetimepicker.css
-// static/vendor/datetimepicker/jquery.datetimepicker.full.js
-// static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css
-// static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js
-// static/vendor/fontawesome/css/font-awesome.min.css
-// static/vendor/fontawesome/fonts/FontAwesome.otf
-// static/vendor/fontawesome/fonts/fontawesome-webfont.eot
-// static/vendor/fontawesome/fonts/fontawesome-webfont.svg
-// static/vendor/fontawesome/fonts/fontawesome-webfont.ttf
-// static/vendor/fontawesome/fonts/fontawesome-webfont.woff
-// static/vendor/fontawesome/fonts/fontawesome-webfont.woff2
-// static/vendor/jQuery-Storage-API/jquery.storageapi.js
-// static/vendor/jquery/dist/jquery.js
-// static/vendor/jquery/dist/jquery.mobile-1.4.5.js
-// static/vendor/jquery-classyloader/js/jquery.classyloader.min.js
-// static/vendor/loaders.css/loaders.css
-// static/vendor/modernizr/modernizr.custom.js
-// static/vendor/moment/min/moment-with-locales.min.js
-// static/vendor/select2/dist/css/select2.css
-// static/vendor/select2/dist/js/select2.js
-// static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css
-// static/vendor/simple-line-icons/css/simple-line-icons.css
-// static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot
-// static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg
-// static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf
-// static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff
-// static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2
-// static/vendor/sparkline/index.js
-// static/vendor/spinkit/css/spinkit.css
-// static/vendor/sweetalert/dist/sweetalert.css
-// static/vendor/sweetalert/dist/sweetalert.min.js
-// static/vendor/whirl/dist/whirl.css
-// static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css
-// static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png
-// static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif
-// static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js
 // static/votings.tpl
 // DO NOT EDIT!
 
@@ -1811,6 +1710,24 @@ func staticExport_tplHtml() (*asset, error) {
 	return a, err
 }
 
+// staticFontsFontawesomeOtf reads file data from disk. It returns an error on failure.
+func staticFontsFontawesomeOtf() (*asset, error) {
+	path := "static/fonts/FontAwesome.otf"
+	name := "static/fonts/FontAwesome.otf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticFontsPfsquaresansproBoldEot reads file data from disk. It returns an error on failure.
 func staticFontsPfsquaresansproBoldEot() (*asset, error) {
 	path := "static/fonts/PFSquareSansPro-Bold.eot"
@@ -2157,6 +2074,186 @@ func staticFontsPfsquaresansproRegularWoff() (*asset, error) {
 func staticFontsPfsquaresansproRegularWoff2() (*asset, error) {
 	path := "static/fonts/PFSquareSansPro-Regular.woff2"
 	name := "static/fonts/PFSquareSansPro-Regular.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsSimpleLineIconsEot reads file data from disk. It returns an error on failure.
+func staticFontsSimpleLineIconsEot() (*asset, error) {
+	path := "static/fonts/Simple-Line-Icons.eot"
+	name := "static/fonts/Simple-Line-Icons.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsSimpleLineIconsSvg reads file data from disk. It returns an error on failure.
+func staticFontsSimpleLineIconsSvg() (*asset, error) {
+	path := "static/fonts/Simple-Line-Icons.svg"
+	name := "static/fonts/Simple-Line-Icons.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsSimpleLineIconsTtf reads file data from disk. It returns an error on failure.
+func staticFontsSimpleLineIconsTtf() (*asset, error) {
+	path := "static/fonts/Simple-Line-Icons.ttf"
+	name := "static/fonts/Simple-Line-Icons.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsSimpleLineIconsWoff reads file data from disk. It returns an error on failure.
+func staticFontsSimpleLineIconsWoff() (*asset, error) {
+	path := "static/fonts/Simple-Line-Icons.woff"
+	name := "static/fonts/Simple-Line-Icons.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsSimpleLineIconsWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsSimpleLineIconsWoff2() (*asset, error) {
+	path := "static/fonts/Simple-Line-Icons.woff2"
+	name := "static/fonts/Simple-Line-Icons.woff2"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsFontawesomeWebfontEot reads file data from disk. It returns an error on failure.
+func staticFontsFontawesomeWebfontEot() (*asset, error) {
+	path := "static/fonts/fontawesome-webfont.eot"
+	name := "static/fonts/fontawesome-webfont.eot"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsFontawesomeWebfontSvg reads file data from disk. It returns an error on failure.
+func staticFontsFontawesomeWebfontSvg() (*asset, error) {
+	path := "static/fonts/fontawesome-webfont.svg"
+	name := "static/fonts/fontawesome-webfont.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsFontawesomeWebfontTtf reads file data from disk. It returns an error on failure.
+func staticFontsFontawesomeWebfontTtf() (*asset, error) {
+	path := "static/fonts/fontawesome-webfont.ttf"
+	name := "static/fonts/fontawesome-webfont.ttf"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsFontawesomeWebfontWoff reads file data from disk. It returns an error on failure.
+func staticFontsFontawesomeWebfontWoff() (*asset, error) {
+	path := "static/fonts/fontawesome-webfont.woff"
+	name := "static/fonts/fontawesome-webfont.woff"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticFontsFontawesomeWebfontWoff2 reads file data from disk. It returns an error on failure.
+func staticFontsFontawesomeWebfontWoff2() (*asset, error) {
+	path := "static/fonts/fontawesome-webfont.woff2"
+	name := "static/fonts/fontawesome-webfont.woff2"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3395,6 +3492,24 @@ func staticImgBg9Jpg() (*asset, error) {
 	return a, err
 }
 
+// staticImgClearPng reads file data from disk. It returns an error on failure.
+func staticImgClearPng() (*asset, error) {
+	path := "static/img/clear.png"
+	name := "static/img/clear.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticImgDummyPng reads file data from disk. It returns an error on failure.
 func staticImgDummyPng() (*asset, error) {
 	path := "static/img/dummy.png"
@@ -3417,6 +3532,24 @@ func staticImgDummyPng() (*asset, error) {
 func staticImgFaviconIco() (*asset, error) {
 	path := "static/img/favicon.ico"
 	name := "static/img/favicon.ico"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgLoadingGif reads file data from disk. It returns an error on failure.
+func staticImgLoadingGif() (*asset, error) {
+	path := "static/img/loading.gif"
+	name := "static/img/loading.gif"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3615,6 +3748,96 @@ func staticImgProfileBgJpg() (*asset, error) {
 func staticImgRadio_iconPng() (*asset, error) {
 	path := "static/img/radio_icon.png"
 	name := "static/img/radio_icon.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgSort_ascPng reads file data from disk. It returns an error on failure.
+func staticImgSort_ascPng() (*asset, error) {
+	path := "static/img/sort_asc.png"
+	name := "static/img/sort_asc.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgSort_asc_disabledPng reads file data from disk. It returns an error on failure.
+func staticImgSort_asc_disabledPng() (*asset, error) {
+	path := "static/img/sort_asc_disabled.png"
+	name := "static/img/sort_asc_disabled.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgSort_bothPng reads file data from disk. It returns an error on failure.
+func staticImgSort_bothPng() (*asset, error) {
+	path := "static/img/sort_both.png"
+	name := "static/img/sort_both.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgSort_descPng reads file data from disk. It returns an error on failure.
+func staticImgSort_descPng() (*asset, error) {
+	path := "static/img/sort_desc.png"
+	name := "static/img/sort_desc.png"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticImgSort_desc_disabledPng reads file data from disk. It returns an error on failure.
+func staticImgSort_desc_disabledPng() (*asset, error) {
+	path := "static/img/sort_desc_disabled.png"
+	name := "static/img/sort_desc_disabled.png"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -3989,694 +4212,10 @@ func staticJsAppJs() (*asset, error) {
 	return a, err
 }
 
-// staticJsClipboardJs reads file data from disk. It returns an error on failure.
-func staticJsClipboardJs() (*asset, error) {
-	path := "static/js/clipboard.js"
-	name := "static/js/clipboard.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCountJs reads file data from disk. It returns an error on failure.
-func staticJsCountJs() (*asset, error) {
-	path := "static/js/count.js"
-	name := "static/js/count.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCountupJs reads file data from disk. It returns an error on failure.
-func staticJsCountupJs() (*asset, error) {
-	path := "static/js/countUp.js"
-	name := "static/js/countUp.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoAsn110MinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoAsn110MinJs() (*asset, error) {
-	path := "static/js/crypto/asn1-1.0.min.js"
-	name := "static/js/crypto/asn1-1.0.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoAsn1hex11MinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoAsn1hex11MinJs() (*asset, error) {
-	path := "static/js/crypto/asn1hex-1.1.min.js"
-	name := "static/js/crypto/asn1hex-1.1.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoCrypto11MinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoCrypto11MinJs() (*asset, error) {
-	path := "static/js/crypto/crypto-1.1.min.js"
-	name := "static/js/crypto/crypto-1.1.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoEcdsaModified10MinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoEcdsaModified10MinJs() (*asset, error) {
-	path := "static/js/crypto/ecdsa-modified-1.0.min.js"
-	name := "static/js/crypto/ecdsa-modified-1.0.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoEcparam10MinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoEcparam10MinJs() (*asset, error) {
-	path := "static/js/crypto/ecparam-1.0.min.js"
-	name := "static/js/crypto/ecparam-1.0.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtCjAesJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtCjAesJs() (*asset, error) {
-	path := "static/js/crypto/ext/cj/aes.js"
-	name := "static/js/crypto/ext/cj/aes.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtCjCryptojs312CoreFixMinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtCjCryptojs312CoreFixMinJs() (*asset, error) {
-	path := "static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js"
-	name := "static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtCjEcPatchMinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtCjEcPatchMinJs() (*asset, error) {
-	path := "static/js/crypto/ext/cj/ec-patch-min.js"
-	name := "static/js/crypto/ext/cj/ec-patch-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtCjMd5_minJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtCjMd5_minJs() (*asset, error) {
-	path := "static/js/crypto/ext/cj/md5_min.js"
-	name := "static/js/crypto/ext/cj/md5_min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtCjSha1_minJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtCjSha1_minJs() (*asset, error) {
-	path := "static/js/crypto/ext/cj/sha1_min.js"
-	name := "static/js/crypto/ext/cj/sha1_min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtCjSha256_minJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtCjSha256_minJs() (*asset, error) {
-	path := "static/js/crypto/ext/cj/sha256_min.js"
-	name := "static/js/crypto/ext/cj/sha256_min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtCjX64Core_minJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtCjX64Core_minJs() (*asset, error) {
-	path := "static/js/crypto/ext/cj/x64-core_min.js"
-	name := "static/js/crypto/ext/cj/x64-core_min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtEcMinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtEcMinJs() (*asset, error) {
-	path := "static/js/crypto/ext/ec-min.js"
-	name := "static/js/crypto/ext/ec-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtEcPatchMinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtEcPatchMinJs() (*asset, error) {
-	path := "static/js/crypto/ext/ec-patch-min.js"
-	name := "static/js/crypto/ext/ec-patch-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtJsbnMinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtJsbnMinJs() (*asset, error) {
-	path := "static/js/crypto/ext/jsbn-min.js"
-	name := "static/js/crypto/ext/jsbn-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtJsbn2MinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtJsbn2MinJs() (*asset, error) {
-	path := "static/js/crypto/ext/jsbn2-min.js"
-	name := "static/js/crypto/ext/jsbn2-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtPrng4MinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtPrng4MinJs() (*asset, error) {
-	path := "static/js/crypto/ext/prng4-min.js"
-	name := "static/js/crypto/ext/prng4-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtRngMinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtRngMinJs() (*asset, error) {
-	path := "static/js/crypto/ext/rng-min.js"
-	name := "static/js/crypto/ext/rng-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsCryptoExtYahooMinJs reads file data from disk. It returns an error on failure.
-func staticJsCryptoExtYahooMinJs() (*asset, error) {
-	path := "static/js/crypto/ext/yahoo-min.js"
-	name := "static/js/crypto/ext/yahoo-min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDatetimeJs reads file data from disk. It returns an error on failure.
-func staticJsDatetimeJs() (*asset, error) {
-	path := "static/js/datetime.js"
-	name := "static/js/datetime.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoDatatableJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoDatatableJs() (*asset, error) {
-	path := "static/js/demo/demo-datatable.js"
-	name := "static/js/demo/demo-datatable.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoFlotJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoFlotJs() (*asset, error) {
-	path := "static/js/demo/demo-flot.js"
-	name := "static/js/demo/demo-flot.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoFormsJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoFormsJs() (*asset, error) {
-	path := "static/js/demo/demo-forms.js"
-	name := "static/js/demo/demo-forms.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoJqcloudJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoJqcloudJs() (*asset, error) {
-	path := "static/js/demo/demo-jqcloud.js"
-	name := "static/js/demo/demo-jqcloud.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoJqgridJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoJqgridJs() (*asset, error) {
-	path := "static/js/demo/demo-jqgrid.js"
-	name := "static/js/demo/demo-jqgrid.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoNestableJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoNestableJs() (*asset, error) {
-	path := "static/js/demo/demo-nestable.js"
-	name := "static/js/demo/demo-nestable.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoPanelsJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoPanelsJs() (*asset, error) {
-	path := "static/js/demo/demo-panels.js"
-	name := "static/js/demo/demo-panels.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoRtlJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoRtlJs() (*asset, error) {
-	path := "static/js/demo/demo-rtl.js"
-	name := "static/js/demo/demo-rtl.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoSearchJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoSearchJs() (*asset, error) {
-	path := "static/js/demo/demo-search.js"
-	name := "static/js/demo/demo-search.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoSortableJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoSortableJs() (*asset, error) {
-	path := "static/js/demo/demo-sortable.js"
-	name := "static/js/demo/demo-sortable.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoUploadJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoUploadJs() (*asset, error) {
-	path := "static/js/demo/demo-upload.js"
-	name := "static/js/demo/demo-upload.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoVectorMapJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoVectorMapJs() (*asset, error) {
-	path := "static/js/demo/demo-vector-map.js"
-	name := "static/js/demo/demo-vector-map.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoWizardJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoWizardJs() (*asset, error) {
-	path := "static/js/demo/demo-wizard.js"
-	name := "static/js/demo/demo-wizard.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsDemoDemoXeditableJs reads file data from disk. It returns an error on failure.
-func staticJsDemoDemoXeditableJs() (*asset, error) {
-	path := "static/js/demo/demo-xeditable.js"
-	name := "static/js/demo/demo-xeditable.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticJsIndexJs reads file data from disk. It returns an error on failure.
 func staticJsIndexJs() (*asset, error) {
 	path := "static/js/index.js"
 	name := "static/js/index.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsInputmaskJs reads file data from disk. It returns an error on failure.
-func staticJsInputmaskJs() (*asset, error) {
-	path := "static/js/inputmask.js"
-	name := "static/js/inputmask.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4709,78 +4248,6 @@ func staticJsKeysJs() (*asset, error) {
 	return a, err
 }
 
-// staticJsMapJs reads file data from disk. It returns an error on failure.
-func staticJsMapJs() (*asset, error) {
-	path := "static/js/map.js"
-	name := "static/js/map.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsMmenuJs reads file data from disk. It returns an error on failure.
-func staticJsMmenuJs() (*asset, error) {
-	path := "static/js/mmenu.js"
-	name := "static/js/mmenu.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsNprogressJs reads file data from disk. It returns an error on failure.
-func staticJsNprogressJs() (*asset, error) {
-	path := "static/js/nprogress.js"
-	name := "static/js/nprogress.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsPhotoeditorCropperMinJs reads file data from disk. It returns an error on failure.
-func staticJsPhotoeditorCropperMinJs() (*asset, error) {
-	path := "static/js/photoEditor/cropper.min.js"
-	name := "static/js/photoEditor/cropper.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticJsPhotoeditorEditorJs reads file data from disk. It returns an error on failure.
 func staticJsPhotoeditorEditorJs() (*asset, error) {
 	path := "static/js/photoEditor/editor.js"
@@ -4799,334 +4266,10 @@ func staticJsPhotoeditorEditorJs() (*asset, error) {
 	return a, err
 }
 
-// staticJsPhotoeditorVueMinJs reads file data from disk. It returns an error on failure.
-func staticJsPhotoeditorVueMinJs() (*asset, error) {
-	path := "static/js/photoEditor/vue.min.js"
-	name := "static/js/photoEditor/vue.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsScrolltoJs reads file data from disk. It returns an error on failure.
-func staticJsScrolltoJs() (*asset, error) {
-	path := "static/js/scrollTo.js"
-	name := "static/js/scrollTo.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorAceJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorAceJs() (*asset, error) {
-	path := "static/js/textEditor/ace.js"
-	name := "static/js/textEditor/ace.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorBeautifyJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorBeautifyJs() (*asset, error) {
-	path := "static/js/textEditor/beautify.js"
-	name := "static/js/textEditor/beautify.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorExtLanguage_toolsJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorExtLanguage_toolsJs() (*asset, error) {
-	path := "static/js/textEditor/ext-language_tools.js"
-	name := "static/js/textEditor/ext-language_tools.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorModeC_cppJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorModeC_cppJs() (*asset, error) {
-	path := "static/js/textEditor/mode-c_cpp.js"
-	name := "static/js/textEditor/mode-c_cpp.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorModeLessJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorModeLessJs() (*asset, error) {
-	path := "static/js/textEditor/mode-less.js"
-	name := "static/js/textEditor/mode-less.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorModeMarkdownJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorModeMarkdownJs() (*asset, error) {
-	path := "static/js/textEditor/mode-markdown.js"
-	name := "static/js/textEditor/mode-markdown.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorModeYamlJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorModeYamlJs() (*asset, error) {
-	path := "static/js/textEditor/mode-yaml.js"
-	name := "static/js/textEditor/mode-yaml.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorSnippetsC_cppJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorSnippetsC_cppJs() (*asset, error) {
-	path := "static/js/textEditor/snippets/c_cpp.js"
-	name := "static/js/textEditor/snippets/c_cpp.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorSnippetsLessJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorSnippetsLessJs() (*asset, error) {
-	path := "static/js/textEditor/snippets/less.js"
-	name := "static/js/textEditor/snippets/less.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorSnippetsMarkdownJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorSnippetsMarkdownJs() (*asset, error) {
-	path := "static/js/textEditor/snippets/markdown.js"
-	name := "static/js/textEditor/snippets/markdown.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorSnippetsYamlJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorSnippetsYamlJs() (*asset, error) {
-	path := "static/js/textEditor/snippets/yaml.js"
-	name := "static/js/textEditor/snippets/yaml.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorThemeChromeJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorThemeChromeJs() (*asset, error) {
-	path := "static/js/textEditor/theme-chrome.js"
-	name := "static/js/textEditor/theme-chrome.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorThemeCrimson_editorJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorThemeCrimson_editorJs() (*asset, error) {
-	path := "static/js/textEditor/theme-crimson_editor.js"
-	name := "static/js/textEditor/theme-crimson_editor.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTexteditorThemeXcodeJs reads file data from disk. It returns an error on failure.
-func staticJsTexteditorThemeXcodeJs() (*asset, error) {
-	path := "static/js/textEditor/theme-xcode.js"
-	name := "static/js/textEditor/theme-xcode.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTooltipJs reads file data from disk. It returns an error on failure.
-func staticJsTooltipJs() (*asset, error) {
-	path := "static/js/tooltip.js"
-	name := "static/js/tooltip.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticJsTrianglesJs reads file data from disk. It returns an error on failure.
 func staticJsTrianglesJs() (*asset, error) {
 	path := "static/js/triangles.js"
 	name := "static/js/triangles.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticJsTypeaheadJs reads file data from disk. It returns an error on failure.
-func staticJsTypeaheadJs() (*asset, error) {
-	path := "static/js/typeahead.js"
-	name := "static/js/typeahead.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5843,1068 +4986,6 @@ func staticUpgradeHtml() (*asset, error) {
 	return a, err
 }
 
-// staticVendorChartJsChartJs reads file data from disk. It returns an error on failure.
-func staticVendorChartJsChartJs() (*asset, error) {
-	path := "static/vendor/Chart.js/Chart.js"
-	name := "static/vendor/Chart.js/Chart.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorAnimateCssAnimateMinCss reads file data from disk. It returns an error on failure.
-func staticVendorAnimateCssAnimateMinCss() (*asset, error) {
-	path := "static/vendor/animate.css/animate.min.css"
-	name := "static/vendor/animate.css/animate.min.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorBootstrapDistCssBootstrapCss reads file data from disk. It returns an error on failure.
-func staticVendorBootstrapDistCssBootstrapCss() (*asset, error) {
-	path := "static/vendor/bootstrap/dist/css/bootstrap.css"
-	name := "static/vendor/bootstrap/dist/css/bootstrap.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorBootstrapDistJsBootstrapJs reads file data from disk. It returns an error on failure.
-func staticVendorBootstrapDistJsBootstrapJs() (*asset, error) {
-	path := "static/vendor/bootstrap/dist/js/bootstrap.js"
-	name := "static/vendor/bootstrap/dist/js/bootstrap.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs reads file data from disk. It returns an error on failure.
-func staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs() (*asset, error) {
-	path := "static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
-	name := "static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesFontawesomeIndexCss reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesFontawesomeIndexCss() (*asset, error) {
-	path := "static/vendor/dataTables.fontAwesome/index.css"
-	name := "static/vendor/dataTables.fontAwesome/index.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaCssDatatablesBootstrapCss reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaCssDatatablesBootstrapCss() (*asset, error) {
-	path := "static/vendor/datatables/media/css/dataTables.bootstrap.css"
-	name := "static/vendor/datatables/media/css/dataTables.bootstrap.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaImagesSortingIconsPsd reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaImagesSortingIconsPsd() (*asset, error) {
-	path := "static/vendor/datatables/media/images/Sorting icons.psd"
-	name := "static/vendor/datatables/media/images/Sorting icons.psd"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaImagesFaviconIco reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaImagesFaviconIco() (*asset, error) {
-	path := "static/vendor/datatables/media/images/favicon.ico"
-	name := "static/vendor/datatables/media/images/favicon.ico"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaImagesSort_ascPng reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaImagesSort_ascPng() (*asset, error) {
-	path := "static/vendor/datatables/media/images/sort_asc.png"
-	name := "static/vendor/datatables/media/images/sort_asc.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaImagesSort_asc_disabledPng reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaImagesSort_asc_disabledPng() (*asset, error) {
-	path := "static/vendor/datatables/media/images/sort_asc_disabled.png"
-	name := "static/vendor/datatables/media/images/sort_asc_disabled.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaImagesSort_bothPng reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaImagesSort_bothPng() (*asset, error) {
-	path := "static/vendor/datatables/media/images/sort_both.png"
-	name := "static/vendor/datatables/media/images/sort_both.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaImagesSort_descPng reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaImagesSort_descPng() (*asset, error) {
-	path := "static/vendor/datatables/media/images/sort_desc.png"
-	name := "static/vendor/datatables/media/images/sort_desc.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaImagesSort_desc_disabledPng reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaImagesSort_desc_disabledPng() (*asset, error) {
-	path := "static/vendor/datatables/media/images/sort_desc_disabled.png"
-	name := "static/vendor/datatables/media/images/sort_desc_disabled.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaJsDatatablesBootstrapJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaJsDatatablesBootstrapJs() (*asset, error) {
-	path := "static/vendor/datatables/media/js/dataTables.bootstrap.js"
-	name := "static/vendor/datatables/media/js/dataTables.bootstrap.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaJsDatatablesButtonsMinJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaJsDatatablesButtonsMinJs() (*asset, error) {
-	path := "static/vendor/datatables/media/js/dataTables.buttons.min.js"
-	name := "static/vendor/datatables/media/js/dataTables.buttons.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaJsDatatablesColreorderMinJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaJsDatatablesColreorderMinJs() (*asset, error) {
-	path := "static/vendor/datatables/media/js/dataTables.colReorder.min.js"
-	name := "static/vendor/datatables/media/js/dataTables.colReorder.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaJsDatatablesEditorMinJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaJsDatatablesEditorMinJs() (*asset, error) {
-	path := "static/vendor/datatables/media/js/dataTables.editor.min.js"
-	name := "static/vendor/datatables/media/js/dataTables.editor.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaJsDatatablesKeytableMinJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaJsDatatablesKeytableMinJs() (*asset, error) {
-	path := "static/vendor/datatables/media/js/dataTables.keyTable.min.js"
-	name := "static/vendor/datatables/media/js/dataTables.keyTable.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaJsDatatablesSelectMinJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaJsDatatablesSelectMinJs() (*asset, error) {
-	path := "static/vendor/datatables/media/js/dataTables.select.min.js"
-	name := "static/vendor/datatables/media/js/dataTables.select.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesMediaJsJqueryDatatablesMinJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesMediaJsJqueryDatatablesMinJs() (*asset, error) {
-	path := "static/vendor/datatables/media/js/jquery.dataTables.min.js"
-	name := "static/vendor/datatables/media/js/jquery.dataTables.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesColvisCssDatatablesColvisCss reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesColvisCssDatatablesColvisCss() (*asset, error) {
-	path := "static/vendor/datatables-colvis/css/dataTables.colVis.css"
-	name := "static/vendor/datatables-colvis/css/dataTables.colVis.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatatablesColvisJsDatatablesColvisJs reads file data from disk. It returns an error on failure.
-func staticVendorDatatablesColvisJsDatatablesColvisJs() (*asset, error) {
-	path := "static/vendor/datatables-colvis/js/dataTables.colVis.js"
-	name := "static/vendor/datatables-colvis/js/dataTables.colVis.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatetimepickerJqueryDatetimepickerCss reads file data from disk. It returns an error on failure.
-func staticVendorDatetimepickerJqueryDatetimepickerCss() (*asset, error) {
-	path := "static/vendor/datetimepicker/jquery.datetimepicker.css"
-	name := "static/vendor/datetimepicker/jquery.datetimepicker.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorDatetimepickerJqueryDatetimepickerFullJs reads file data from disk. It returns an error on failure.
-func staticVendorDatetimepickerJqueryDatetimepickerFullJs() (*asset, error) {
-	path := "static/vendor/datetimepicker/jquery.datetimepicker.full.js"
-	name := "static/vendor/datetimepicker/jquery.datetimepicker.full.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss reads file data from disk. It returns an error on failure.
-func staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss() (*asset, error) {
-	path := "static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
-	name := "static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs reads file data from disk. It returns an error on failure.
-func staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs() (*asset, error) {
-	path := "static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
-	name := "static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorFontawesomeCssFontAwesomeMinCss reads file data from disk. It returns an error on failure.
-func staticVendorFontawesomeCssFontAwesomeMinCss() (*asset, error) {
-	path := "static/vendor/fontawesome/css/font-awesome.min.css"
-	name := "static/vendor/fontawesome/css/font-awesome.min.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorFontawesomeFontsFontawesomeOtf reads file data from disk. It returns an error on failure.
-func staticVendorFontawesomeFontsFontawesomeOtf() (*asset, error) {
-	path := "static/vendor/fontawesome/fonts/FontAwesome.otf"
-	name := "static/vendor/fontawesome/fonts/FontAwesome.otf"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorFontawesomeFontsFontawesomeWebfontEot reads file data from disk. It returns an error on failure.
-func staticVendorFontawesomeFontsFontawesomeWebfontEot() (*asset, error) {
-	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
-	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.eot"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorFontawesomeFontsFontawesomeWebfontSvg reads file data from disk. It returns an error on failure.
-func staticVendorFontawesomeFontsFontawesomeWebfontSvg() (*asset, error) {
-	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
-	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.svg"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorFontawesomeFontsFontawesomeWebfontTtf reads file data from disk. It returns an error on failure.
-func staticVendorFontawesomeFontsFontawesomeWebfontTtf() (*asset, error) {
-	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
-	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.ttf"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorFontawesomeFontsFontawesomeWebfontWoff reads file data from disk. It returns an error on failure.
-func staticVendorFontawesomeFontsFontawesomeWebfontWoff() (*asset, error) {
-	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
-	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorFontawesomeFontsFontawesomeWebfontWoff2 reads file data from disk. It returns an error on failure.
-func staticVendorFontawesomeFontsFontawesomeWebfontWoff2() (*asset, error) {
-	path := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
-	name := "static/vendor/fontawesome/fonts/fontawesome-webfont.woff2"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorJqueryStorageApiJqueryStorageapiJs reads file data from disk. It returns an error on failure.
-func staticVendorJqueryStorageApiJqueryStorageapiJs() (*asset, error) {
-	path := "static/vendor/jQuery-Storage-API/jquery.storageapi.js"
-	name := "static/vendor/jQuery-Storage-API/jquery.storageapi.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorJqueryDistJqueryJs reads file data from disk. It returns an error on failure.
-func staticVendorJqueryDistJqueryJs() (*asset, error) {
-	path := "static/vendor/jquery/dist/jquery.js"
-	name := "static/vendor/jquery/dist/jquery.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorJqueryDistJqueryMobile145Js reads file data from disk. It returns an error on failure.
-func staticVendorJqueryDistJqueryMobile145Js() (*asset, error) {
-	path := "static/vendor/jquery/dist/jquery.mobile-1.4.5.js"
-	name := "static/vendor/jquery/dist/jquery.mobile-1.4.5.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs reads file data from disk. It returns an error on failure.
-func staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs() (*asset, error) {
-	path := "static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"
-	name := "static/vendor/jquery-classyloader/js/jquery.classyloader.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorLoadersCssLoadersCss reads file data from disk. It returns an error on failure.
-func staticVendorLoadersCssLoadersCss() (*asset, error) {
-	path := "static/vendor/loaders.css/loaders.css"
-	name := "static/vendor/loaders.css/loaders.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorModernizrModernizrCustomJs reads file data from disk. It returns an error on failure.
-func staticVendorModernizrModernizrCustomJs() (*asset, error) {
-	path := "static/vendor/modernizr/modernizr.custom.js"
-	name := "static/vendor/modernizr/modernizr.custom.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorMomentMinMomentWithLocalesMinJs reads file data from disk. It returns an error on failure.
-func staticVendorMomentMinMomentWithLocalesMinJs() (*asset, error) {
-	path := "static/vendor/moment/min/moment-with-locales.min.js"
-	name := "static/vendor/moment/min/moment-with-locales.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSelect2DistCssSelect2Css reads file data from disk. It returns an error on failure.
-func staticVendorSelect2DistCssSelect2Css() (*asset, error) {
-	path := "static/vendor/select2/dist/css/select2.css"
-	name := "static/vendor/select2/dist/css/select2.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSelect2DistJsSelect2Js reads file data from disk. It returns an error on failure.
-func staticVendorSelect2DistJsSelect2Js() (*asset, error) {
-	path := "static/vendor/select2/dist/js/select2.js"
-	name := "static/vendor/select2/dist/js/select2.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss reads file data from disk. It returns an error on failure.
-func staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss() (*asset, error) {
-	path := "static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
-	name := "static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSimpleLineIconsCssSimpleLineIconsCss reads file data from disk. It returns an error on failure.
-func staticVendorSimpleLineIconsCssSimpleLineIconsCss() (*asset, error) {
-	path := "static/vendor/simple-line-icons/css/simple-line-icons.css"
-	name := "static/vendor/simple-line-icons/css/simple-line-icons.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSimpleLineIconsFontsSimpleLineIconsEot reads file data from disk. It returns an error on failure.
-func staticVendorSimpleLineIconsFontsSimpleLineIconsEot() (*asset, error) {
-	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
-	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSimpleLineIconsFontsSimpleLineIconsSvg reads file data from disk. It returns an error on failure.
-func staticVendorSimpleLineIconsFontsSimpleLineIconsSvg() (*asset, error) {
-	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
-	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSimpleLineIconsFontsSimpleLineIconsTtf reads file data from disk. It returns an error on failure.
-func staticVendorSimpleLineIconsFontsSimpleLineIconsTtf() (*asset, error) {
-	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
-	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSimpleLineIconsFontsSimpleLineIconsWoff reads file data from disk. It returns an error on failure.
-func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff() (*asset, error) {
-	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
-	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2 reads file data from disk. It returns an error on failure.
-func staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2() (*asset, error) {
-	path := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
-	name := "static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSparklineIndexJs reads file data from disk. It returns an error on failure.
-func staticVendorSparklineIndexJs() (*asset, error) {
-	path := "static/vendor/sparkline/index.js"
-	name := "static/vendor/sparkline/index.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSpinkitCssSpinkitCss reads file data from disk. It returns an error on failure.
-func staticVendorSpinkitCssSpinkitCss() (*asset, error) {
-	path := "static/vendor/spinkit/css/spinkit.css"
-	name := "static/vendor/spinkit/css/spinkit.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSweetalertDistSweetalertCss reads file data from disk. It returns an error on failure.
-func staticVendorSweetalertDistSweetalertCss() (*asset, error) {
-	path := "static/vendor/sweetalert/dist/sweetalert.css"
-	name := "static/vendor/sweetalert/dist/sweetalert.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorSweetalertDistSweetalertMinJs reads file data from disk. It returns an error on failure.
-func staticVendorSweetalertDistSweetalertMinJs() (*asset, error) {
-	path := "static/vendor/sweetalert/dist/sweetalert.min.js"
-	name := "static/vendor/sweetalert/dist/sweetalert.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorWhirlDistWhirlCss reads file data from disk. It returns an error on failure.
-func staticVendorWhirlDistWhirlCss() (*asset, error) {
-	path := "static/vendor/whirl/dist/whirl.css"
-	name := "static/vendor/whirl/dist/whirl.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss reads file data from disk. It returns an error on failure.
-func staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss() (*asset, error) {
-	path := "static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
-	name := "static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorXEditableDistBootstrap3EditableImgClearPng reads file data from disk. It returns an error on failure.
-func staticVendorXEditableDistBootstrap3EditableImgClearPng() (*asset, error) {
-	path := "static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
-	name := "static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorXEditableDistBootstrap3EditableImgLoadingGif reads file data from disk. It returns an error on failure.
-func staticVendorXEditableDistBootstrap3EditableImgLoadingGif() (*asset, error) {
-	path := "static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
-	name := "static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs reads file data from disk. It returns an error on failure.
-func staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs() (*asset, error) {
-	path := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
-	name := "static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticVotingsTpl reads file data from disk. It returns an error on failure.
 func staticVotingsTpl() (*asset, error) {
 	path := "static/votings.tpl"
@@ -7054,6 +5135,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/elections.tpl": staticElectionsTpl,
 	"static/euro.tpl": staticEuroTpl,
 	"static/export_tpl.html": staticExport_tplHtml,
+	"static/fonts/FontAwesome.otf": staticFontsFontawesomeOtf,
 	"static/fonts/PFSquareSansPro-Bold.eot": staticFontsPfsquaresansproBoldEot,
 	"static/fonts/PFSquareSansPro-Bold.svg": staticFontsPfsquaresansproBoldSvg,
 	"static/fonts/PFSquareSansPro-Bold.ttf": staticFontsPfsquaresansproBoldTtf,
@@ -7074,6 +5156,16 @@ var _bindata = map[string]func() (*asset, error){
 	"static/fonts/PFSquareSansPro-Regular.ttf": staticFontsPfsquaresansproRegularTtf,
 	"static/fonts/PFSquareSansPro-Regular.woff": staticFontsPfsquaresansproRegularWoff,
 	"static/fonts/PFSquareSansPro-Regular.woff2": staticFontsPfsquaresansproRegularWoff2,
+	"static/fonts/Simple-Line-Icons.eot": staticFontsSimpleLineIconsEot,
+	"static/fonts/Simple-Line-Icons.svg": staticFontsSimpleLineIconsSvg,
+	"static/fonts/Simple-Line-Icons.ttf": staticFontsSimpleLineIconsTtf,
+	"static/fonts/Simple-Line-Icons.woff": staticFontsSimpleLineIconsWoff,
+	"static/fonts/Simple-Line-Icons.woff2": staticFontsSimpleLineIconsWoff2,
+	"static/fonts/fontawesome-webfont.eot": staticFontsFontawesomeWebfontEot,
+	"static/fonts/fontawesome-webfont.svg": staticFontsFontawesomeWebfontSvg,
+	"static/fonts/fontawesome-webfont.ttf": staticFontsFontawesomeWebfontTtf,
+	"static/fonts/fontawesome-webfont.woff": staticFontsFontawesomeWebfontWoff,
+	"static/fonts/fontawesome-webfont.woff2": staticFontsFontawesomeWebfontWoff2,
 	"static/fonts/glyphicons-filetypes-regular.eot": staticFontsGlyphiconsFiletypesRegularEot,
 	"static/fonts/glyphicons-filetypes-regular.svg": staticFontsGlyphiconsFiletypesRegularSvg,
 	"static/fonts/glyphicons-filetypes-regular.ttf": staticFontsGlyphiconsFiletypesRegularTtf,
@@ -7142,8 +5234,10 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/bg7.jpg": staticImgBg7Jpg,
 	"static/img/bg8.jpg": staticImgBg8Jpg,
 	"static/img/bg9.jpg": staticImgBg9Jpg,
+	"static/img/clear.png": staticImgClearPng,
 	"static/img/dummy.png": staticImgDummyPng,
 	"static/img/favicon.ico": staticImgFaviconIco,
+	"static/img/loading.gif": staticImgLoadingGif,
 	"static/img/lock-bg.jpg": staticImgLockBgJpg,
 	"static/img/logo.png": staticImgLogoPng,
 	"static/img/logo.svg": staticImgLogoSvg,
@@ -7155,6 +5249,11 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/mockup.png": staticImgMockupPng,
 	"static/img/profile-bg.jpg": staticImgProfileBgJpg,
 	"static/img/radio_icon.png": staticImgRadio_iconPng,
+	"static/img/sort_asc.png": staticImgSort_ascPng,
+	"static/img/sort_asc_disabled.png": staticImgSort_asc_disabledPng,
+	"static/img/sort_both.png": staticImgSort_bothPng,
+	"static/img/sort_desc.png": staticImgSort_descPng,
+	"static/img/sort_desc_disabled.png": staticImgSort_desc_disabledPng,
 	"static/img/spacer.gif": staticImgSpacerGif,
 	"static/img/squares.gif": staticImgSquaresGif,
 	"static/img/user/01.jpg": staticImgUser01Jpg,
@@ -7175,70 +5274,10 @@ var _bindata = map[string]func() (*asset, error){
 	"static/install_step_1.html": staticInstall_step_1Html,
 	"static/interface.html": staticInterfaceHtml,
 	"static/js/app.js": staticJsAppJs,
-	"static/js/clipboard.js": staticJsClipboardJs,
-	"static/js/count.js": staticJsCountJs,
-	"static/js/countUp.js": staticJsCountupJs,
-	"static/js/crypto/asn1-1.0.min.js": staticJsCryptoAsn110MinJs,
-	"static/js/crypto/asn1hex-1.1.min.js": staticJsCryptoAsn1hex11MinJs,
-	"static/js/crypto/crypto-1.1.min.js": staticJsCryptoCrypto11MinJs,
-	"static/js/crypto/ecdsa-modified-1.0.min.js": staticJsCryptoEcdsaModified10MinJs,
-	"static/js/crypto/ecparam-1.0.min.js": staticJsCryptoEcparam10MinJs,
-	"static/js/crypto/ext/cj/aes.js": staticJsCryptoExtCjAesJs,
-	"static/js/crypto/ext/cj/cryptojs-312-core-fix-min.js": staticJsCryptoExtCjCryptojs312CoreFixMinJs,
-	"static/js/crypto/ext/cj/ec-patch-min.js": staticJsCryptoExtCjEcPatchMinJs,
-	"static/js/crypto/ext/cj/md5_min.js": staticJsCryptoExtCjMd5_minJs,
-	"static/js/crypto/ext/cj/sha1_min.js": staticJsCryptoExtCjSha1_minJs,
-	"static/js/crypto/ext/cj/sha256_min.js": staticJsCryptoExtCjSha256_minJs,
-	"static/js/crypto/ext/cj/x64-core_min.js": staticJsCryptoExtCjX64Core_minJs,
-	"static/js/crypto/ext/ec-min.js": staticJsCryptoExtEcMinJs,
-	"static/js/crypto/ext/ec-patch-min.js": staticJsCryptoExtEcPatchMinJs,
-	"static/js/crypto/ext/jsbn-min.js": staticJsCryptoExtJsbnMinJs,
-	"static/js/crypto/ext/jsbn2-min.js": staticJsCryptoExtJsbn2MinJs,
-	"static/js/crypto/ext/prng4-min.js": staticJsCryptoExtPrng4MinJs,
-	"static/js/crypto/ext/rng-min.js": staticJsCryptoExtRngMinJs,
-	"static/js/crypto/ext/yahoo-min.js": staticJsCryptoExtYahooMinJs,
-	"static/js/datetime.js": staticJsDatetimeJs,
-	"static/js/demo/demo-datatable.js": staticJsDemoDemoDatatableJs,
-	"static/js/demo/demo-flot.js": staticJsDemoDemoFlotJs,
-	"static/js/demo/demo-forms.js": staticJsDemoDemoFormsJs,
-	"static/js/demo/demo-jqcloud.js": staticJsDemoDemoJqcloudJs,
-	"static/js/demo/demo-jqgrid.js": staticJsDemoDemoJqgridJs,
-	"static/js/demo/demo-nestable.js": staticJsDemoDemoNestableJs,
-	"static/js/demo/demo-panels.js": staticJsDemoDemoPanelsJs,
-	"static/js/demo/demo-rtl.js": staticJsDemoDemoRtlJs,
-	"static/js/demo/demo-search.js": staticJsDemoDemoSearchJs,
-	"static/js/demo/demo-sortable.js": staticJsDemoDemoSortableJs,
-	"static/js/demo/demo-upload.js": staticJsDemoDemoUploadJs,
-	"static/js/demo/demo-vector-map.js": staticJsDemoDemoVectorMapJs,
-	"static/js/demo/demo-wizard.js": staticJsDemoDemoWizardJs,
-	"static/js/demo/demo-xeditable.js": staticJsDemoDemoXeditableJs,
 	"static/js/index.js": staticJsIndexJs,
-	"static/js/inputmask.js": staticJsInputmaskJs,
 	"static/js/keys.js": staticJsKeysJs,
-	"static/js/map.js": staticJsMapJs,
-	"static/js/mmenu.js": staticJsMmenuJs,
-	"static/js/nprogress.js": staticJsNprogressJs,
-	"static/js/photoEditor/cropper.min.js": staticJsPhotoeditorCropperMinJs,
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
-	"static/js/photoEditor/vue.min.js": staticJsPhotoeditorVueMinJs,
-	"static/js/scrollTo.js": staticJsScrolltoJs,
-	"static/js/textEditor/ace.js": staticJsTexteditorAceJs,
-	"static/js/textEditor/beautify.js": staticJsTexteditorBeautifyJs,
-	"static/js/textEditor/ext-language_tools.js": staticJsTexteditorExtLanguage_toolsJs,
-	"static/js/textEditor/mode-c_cpp.js": staticJsTexteditorModeC_cppJs,
-	"static/js/textEditor/mode-less.js": staticJsTexteditorModeLessJs,
-	"static/js/textEditor/mode-markdown.js": staticJsTexteditorModeMarkdownJs,
-	"static/js/textEditor/mode-yaml.js": staticJsTexteditorModeYamlJs,
-	"static/js/textEditor/snippets/c_cpp.js": staticJsTexteditorSnippetsC_cppJs,
-	"static/js/textEditor/snippets/less.js": staticJsTexteditorSnippetsLessJs,
-	"static/js/textEditor/snippets/markdown.js": staticJsTexteditorSnippetsMarkdownJs,
-	"static/js/textEditor/snippets/yaml.js": staticJsTexteditorSnippetsYamlJs,
-	"static/js/textEditor/theme-chrome.js": staticJsTexteditorThemeChromeJs,
-	"static/js/textEditor/theme-crimson_editor.js": staticJsTexteditorThemeCrimson_editorJs,
-	"static/js/textEditor/theme-xcode.js": staticJsTexteditorThemeXcodeJs,
-	"static/js/tooltip.js": staticJsTooltipJs,
 	"static/js/triangles.js": staticJsTrianglesJs,
-	"static/js/typeahead.js": staticJsTypeaheadJs,
 	"static/lang/1.ini": staticLang1Ini,
 	"static/lang/42.ini": staticLang42Ini,
 	"static/lang/en-us.all.json": staticLangEnUsAllJson,
@@ -7278,65 +5317,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/tx_form.html": staticTx_formHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/upgrade.html": staticUpgradeHtml,
-	"static/vendor/Chart.js/Chart.js": staticVendorChartJsChartJs,
-	"static/vendor/animate.css/animate.min.css": staticVendorAnimateCssAnimateMinCss,
-	"static/vendor/bootstrap/dist/css/bootstrap.css": staticVendorBootstrapDistCssBootstrapCss,
-	"static/vendor/bootstrap/dist/js/bootstrap.js": staticVendorBootstrapDistJsBootstrapJs,
-	"static/vendor/bootstrap-filestyle/src/bootstrap-filestyle.js": staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs,
-	"static/vendor/dataTables.fontAwesome/index.css": staticVendorDatatablesFontawesomeIndexCss,
-	"static/vendor/datatables/media/css/dataTables.bootstrap.css": staticVendorDatatablesMediaCssDatatablesBootstrapCss,
-	"static/vendor/datatables/media/images/Sorting icons.psd": staticVendorDatatablesMediaImagesSortingIconsPsd,
-	"static/vendor/datatables/media/images/favicon.ico": staticVendorDatatablesMediaImagesFaviconIco,
-	"static/vendor/datatables/media/images/sort_asc.png": staticVendorDatatablesMediaImagesSort_ascPng,
-	"static/vendor/datatables/media/images/sort_asc_disabled.png": staticVendorDatatablesMediaImagesSort_asc_disabledPng,
-	"static/vendor/datatables/media/images/sort_both.png": staticVendorDatatablesMediaImagesSort_bothPng,
-	"static/vendor/datatables/media/images/sort_desc.png": staticVendorDatatablesMediaImagesSort_descPng,
-	"static/vendor/datatables/media/images/sort_desc_disabled.png": staticVendorDatatablesMediaImagesSort_desc_disabledPng,
-	"static/vendor/datatables/media/js/dataTables.bootstrap.js": staticVendorDatatablesMediaJsDatatablesBootstrapJs,
-	"static/vendor/datatables/media/js/dataTables.buttons.min.js": staticVendorDatatablesMediaJsDatatablesButtonsMinJs,
-	"static/vendor/datatables/media/js/dataTables.colReorder.min.js": staticVendorDatatablesMediaJsDatatablesColreorderMinJs,
-	"static/vendor/datatables/media/js/dataTables.editor.min.js": staticVendorDatatablesMediaJsDatatablesEditorMinJs,
-	"static/vendor/datatables/media/js/dataTables.keyTable.min.js": staticVendorDatatablesMediaJsDatatablesKeytableMinJs,
-	"static/vendor/datatables/media/js/dataTables.select.min.js": staticVendorDatatablesMediaJsDatatablesSelectMinJs,
-	"static/vendor/datatables/media/js/jquery.dataTables.min.js": staticVendorDatatablesMediaJsJqueryDatatablesMinJs,
-	"static/vendor/datatables-colvis/css/dataTables.colVis.css": staticVendorDatatablesColvisCssDatatablesColvisCss,
-	"static/vendor/datatables-colvis/js/dataTables.colVis.js": staticVendorDatatablesColvisJsDatatablesColvisJs,
-	"static/vendor/datetimepicker/jquery.datetimepicker.css": staticVendorDatetimepickerJqueryDatetimepickerCss,
-	"static/vendor/datetimepicker/jquery.datetimepicker.full.js": staticVendorDatetimepickerJqueryDatetimepickerFullJs,
-	"static/vendor/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css": staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss,
-	"static/vendor/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js": staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs,
-	"static/vendor/fontawesome/css/font-awesome.min.css": staticVendorFontawesomeCssFontAwesomeMinCss,
-	"static/vendor/fontawesome/fonts/FontAwesome.otf": staticVendorFontawesomeFontsFontawesomeOtf,
-	"static/vendor/fontawesome/fonts/fontawesome-webfont.eot": staticVendorFontawesomeFontsFontawesomeWebfontEot,
-	"static/vendor/fontawesome/fonts/fontawesome-webfont.svg": staticVendorFontawesomeFontsFontawesomeWebfontSvg,
-	"static/vendor/fontawesome/fonts/fontawesome-webfont.ttf": staticVendorFontawesomeFontsFontawesomeWebfontTtf,
-	"static/vendor/fontawesome/fonts/fontawesome-webfont.woff": staticVendorFontawesomeFontsFontawesomeWebfontWoff,
-	"static/vendor/fontawesome/fonts/fontawesome-webfont.woff2": staticVendorFontawesomeFontsFontawesomeWebfontWoff2,
-	"static/vendor/jQuery-Storage-API/jquery.storageapi.js": staticVendorJqueryStorageApiJqueryStorageapiJs,
-	"static/vendor/jquery/dist/jquery.js": staticVendorJqueryDistJqueryJs,
-	"static/vendor/jquery/dist/jquery.mobile-1.4.5.js": staticVendorJqueryDistJqueryMobile145Js,
-	"static/vendor/jquery-classyloader/js/jquery.classyloader.min.js": staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs,
-	"static/vendor/loaders.css/loaders.css": staticVendorLoadersCssLoadersCss,
-	"static/vendor/modernizr/modernizr.custom.js": staticVendorModernizrModernizrCustomJs,
-	"static/vendor/moment/min/moment-with-locales.min.js": staticVendorMomentMinMomentWithLocalesMinJs,
-	"static/vendor/select2/dist/css/select2.css": staticVendorSelect2DistCssSelect2Css,
-	"static/vendor/select2/dist/js/select2.js": staticVendorSelect2DistJsSelect2Js,
-	"static/vendor/select2-bootstrap-theme/dist/select2-bootstrap.css": staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss,
-	"static/vendor/simple-line-icons/css/simple-line-icons.css": staticVendorSimpleLineIconsCssSimpleLineIconsCss,
-	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.eot": staticVendorSimpleLineIconsFontsSimpleLineIconsEot,
-	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.svg": staticVendorSimpleLineIconsFontsSimpleLineIconsSvg,
-	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.ttf": staticVendorSimpleLineIconsFontsSimpleLineIconsTtf,
-	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff": staticVendorSimpleLineIconsFontsSimpleLineIconsWoff,
-	"static/vendor/simple-line-icons/fonts/Simple-Line-Icons.woff2": staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2,
-	"static/vendor/sparkline/index.js": staticVendorSparklineIndexJs,
-	"static/vendor/spinkit/css/spinkit.css": staticVendorSpinkitCssSpinkitCss,
-	"static/vendor/sweetalert/dist/sweetalert.css": staticVendorSweetalertDistSweetalertCss,
-	"static/vendor/sweetalert/dist/sweetalert.min.js": staticVendorSweetalertDistSweetalertMinJs,
-	"static/vendor/whirl/dist/whirl.css": staticVendorWhirlDistWhirlCss,
-	"static/vendor/x-editable/dist/bootstrap3-editable/css/bootstrap-editable.css": staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss,
-	"static/vendor/x-editable/dist/bootstrap3-editable/img/clear.png": staticVendorXEditableDistBootstrap3EditableImgClearPng,
-	"static/vendor/x-editable/dist/bootstrap3-editable/img/loading.gif": staticVendorXEditableDistBootstrap3EditableImgLoadingGif,
-	"static/vendor/x-editable/dist/bootstrap3-editable/js/bootstrap-editable.min.js": staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs,
 	"static/votings.tpl": staticVotingsTpl,
 }
 
@@ -7467,6 +5447,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"euro.tpl": &bintree{staticEuroTpl, map[string]*bintree{}},
 		"export_tpl.html": &bintree{staticExport_tplHtml, map[string]*bintree{}},
 		"fonts": &bintree{nil, map[string]*bintree{
+			"FontAwesome.otf": &bintree{staticFontsFontawesomeOtf, map[string]*bintree{}},
 			"PFSquareSansPro-Bold.eot": &bintree{staticFontsPfsquaresansproBoldEot, map[string]*bintree{}},
 			"PFSquareSansPro-Bold.svg": &bintree{staticFontsPfsquaresansproBoldSvg, map[string]*bintree{}},
 			"PFSquareSansPro-Bold.ttf": &bintree{staticFontsPfsquaresansproBoldTtf, map[string]*bintree{}},
@@ -7487,6 +5468,16 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"PFSquareSansPro-Regular.ttf": &bintree{staticFontsPfsquaresansproRegularTtf, map[string]*bintree{}},
 			"PFSquareSansPro-Regular.woff": &bintree{staticFontsPfsquaresansproRegularWoff, map[string]*bintree{}},
 			"PFSquareSansPro-Regular.woff2": &bintree{staticFontsPfsquaresansproRegularWoff2, map[string]*bintree{}},
+			"Simple-Line-Icons.eot": &bintree{staticFontsSimpleLineIconsEot, map[string]*bintree{}},
+			"Simple-Line-Icons.svg": &bintree{staticFontsSimpleLineIconsSvg, map[string]*bintree{}},
+			"Simple-Line-Icons.ttf": &bintree{staticFontsSimpleLineIconsTtf, map[string]*bintree{}},
+			"Simple-Line-Icons.woff": &bintree{staticFontsSimpleLineIconsWoff, map[string]*bintree{}},
+			"Simple-Line-Icons.woff2": &bintree{staticFontsSimpleLineIconsWoff2, map[string]*bintree{}},
+			"fontawesome-webfont.eot": &bintree{staticFontsFontawesomeWebfontEot, map[string]*bintree{}},
+			"fontawesome-webfont.svg": &bintree{staticFontsFontawesomeWebfontSvg, map[string]*bintree{}},
+			"fontawesome-webfont.ttf": &bintree{staticFontsFontawesomeWebfontTtf, map[string]*bintree{}},
+			"fontawesome-webfont.woff": &bintree{staticFontsFontawesomeWebfontWoff, map[string]*bintree{}},
+			"fontawesome-webfont.woff2": &bintree{staticFontsFontawesomeWebfontWoff2, map[string]*bintree{}},
 			"glyphicons-filetypes-regular.eot": &bintree{staticFontsGlyphiconsFiletypesRegularEot, map[string]*bintree{}},
 			"glyphicons-filetypes-regular.svg": &bintree{staticFontsGlyphiconsFiletypesRegularSvg, map[string]*bintree{}},
 			"glyphicons-filetypes-regular.ttf": &bintree{staticFontsGlyphiconsFiletypesRegularTtf, map[string]*bintree{}},
@@ -7559,8 +5550,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"bg7.jpg": &bintree{staticImgBg7Jpg, map[string]*bintree{}},
 			"bg8.jpg": &bintree{staticImgBg8Jpg, map[string]*bintree{}},
 			"bg9.jpg": &bintree{staticImgBg9Jpg, map[string]*bintree{}},
+			"clear.png": &bintree{staticImgClearPng, map[string]*bintree{}},
 			"dummy.png": &bintree{staticImgDummyPng, map[string]*bintree{}},
 			"favicon.ico": &bintree{staticImgFaviconIco, map[string]*bintree{}},
+			"loading.gif": &bintree{staticImgLoadingGif, map[string]*bintree{}},
 			"lock-bg.jpg": &bintree{staticImgLockBgJpg, map[string]*bintree{}},
 			"logo.png": &bintree{staticImgLogoPng, map[string]*bintree{}},
 			"logo.svg": &bintree{staticImgLogoSvg, map[string]*bintree{}},
@@ -7572,6 +5565,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
 			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{}},
 			"radio_icon.png": &bintree{staticImgRadio_iconPng, map[string]*bintree{}},
+			"sort_asc.png": &bintree{staticImgSort_ascPng, map[string]*bintree{}},
+			"sort_asc_disabled.png": &bintree{staticImgSort_asc_disabledPng, map[string]*bintree{}},
+			"sort_both.png": &bintree{staticImgSort_bothPng, map[string]*bintree{}},
+			"sort_desc.png": &bintree{staticImgSort_descPng, map[string]*bintree{}},
+			"sort_desc_disabled.png": &bintree{staticImgSort_desc_disabledPng, map[string]*bintree{}},
 			"spacer.gif": &bintree{staticImgSpacerGif, map[string]*bintree{}},
 			"squares.gif": &bintree{staticImgSquaresGif, map[string]*bintree{}},
 			"user": &bintree{nil, map[string]*bintree{
@@ -7596,84 +5594,12 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"interface.html": &bintree{staticInterfaceHtml, map[string]*bintree{}},
 		"js": &bintree{nil, map[string]*bintree{
 			"app.js": &bintree{staticJsAppJs, map[string]*bintree{}},
-			"clipboard.js": &bintree{staticJsClipboardJs, map[string]*bintree{}},
-			"count.js": &bintree{staticJsCountJs, map[string]*bintree{}},
-			"countUp.js": &bintree{staticJsCountupJs, map[string]*bintree{}},
-			"crypto": &bintree{nil, map[string]*bintree{
-				"asn1-1.0.min.js": &bintree{staticJsCryptoAsn110MinJs, map[string]*bintree{}},
-				"asn1hex-1.1.min.js": &bintree{staticJsCryptoAsn1hex11MinJs, map[string]*bintree{}},
-				"crypto-1.1.min.js": &bintree{staticJsCryptoCrypto11MinJs, map[string]*bintree{}},
-				"ecdsa-modified-1.0.min.js": &bintree{staticJsCryptoEcdsaModified10MinJs, map[string]*bintree{}},
-				"ecparam-1.0.min.js": &bintree{staticJsCryptoEcparam10MinJs, map[string]*bintree{}},
-				"ext": &bintree{nil, map[string]*bintree{
-					"cj": &bintree{nil, map[string]*bintree{
-						"aes.js": &bintree{staticJsCryptoExtCjAesJs, map[string]*bintree{}},
-						"cryptojs-312-core-fix-min.js": &bintree{staticJsCryptoExtCjCryptojs312CoreFixMinJs, map[string]*bintree{}},
-						"ec-patch-min.js": &bintree{staticJsCryptoExtCjEcPatchMinJs, map[string]*bintree{}},
-						"md5_min.js": &bintree{staticJsCryptoExtCjMd5_minJs, map[string]*bintree{}},
-						"sha1_min.js": &bintree{staticJsCryptoExtCjSha1_minJs, map[string]*bintree{}},
-						"sha256_min.js": &bintree{staticJsCryptoExtCjSha256_minJs, map[string]*bintree{}},
-						"x64-core_min.js": &bintree{staticJsCryptoExtCjX64Core_minJs, map[string]*bintree{}},
-					}},
-					"ec-min.js": &bintree{staticJsCryptoExtEcMinJs, map[string]*bintree{}},
-					"ec-patch-min.js": &bintree{staticJsCryptoExtEcPatchMinJs, map[string]*bintree{}},
-					"jsbn-min.js": &bintree{staticJsCryptoExtJsbnMinJs, map[string]*bintree{}},
-					"jsbn2-min.js": &bintree{staticJsCryptoExtJsbn2MinJs, map[string]*bintree{}},
-					"prng4-min.js": &bintree{staticJsCryptoExtPrng4MinJs, map[string]*bintree{}},
-					"rng-min.js": &bintree{staticJsCryptoExtRngMinJs, map[string]*bintree{}},
-					"yahoo-min.js": &bintree{staticJsCryptoExtYahooMinJs, map[string]*bintree{}},
-				}},
-			}},
-			"datetime.js": &bintree{staticJsDatetimeJs, map[string]*bintree{}},
-			"demo": &bintree{nil, map[string]*bintree{
-				"demo-datatable.js": &bintree{staticJsDemoDemoDatatableJs, map[string]*bintree{}},
-				"demo-flot.js": &bintree{staticJsDemoDemoFlotJs, map[string]*bintree{}},
-				"demo-forms.js": &bintree{staticJsDemoDemoFormsJs, map[string]*bintree{}},
-				"demo-jqcloud.js": &bintree{staticJsDemoDemoJqcloudJs, map[string]*bintree{}},
-				"demo-jqgrid.js": &bintree{staticJsDemoDemoJqgridJs, map[string]*bintree{}},
-				"demo-nestable.js": &bintree{staticJsDemoDemoNestableJs, map[string]*bintree{}},
-				"demo-panels.js": &bintree{staticJsDemoDemoPanelsJs, map[string]*bintree{}},
-				"demo-rtl.js": &bintree{staticJsDemoDemoRtlJs, map[string]*bintree{}},
-				"demo-search.js": &bintree{staticJsDemoDemoSearchJs, map[string]*bintree{}},
-				"demo-sortable.js": &bintree{staticJsDemoDemoSortableJs, map[string]*bintree{}},
-				"demo-upload.js": &bintree{staticJsDemoDemoUploadJs, map[string]*bintree{}},
-				"demo-vector-map.js": &bintree{staticJsDemoDemoVectorMapJs, map[string]*bintree{}},
-				"demo-wizard.js": &bintree{staticJsDemoDemoWizardJs, map[string]*bintree{}},
-				"demo-xeditable.js": &bintree{staticJsDemoDemoXeditableJs, map[string]*bintree{}},
-			}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
-			"inputmask.js": &bintree{staticJsInputmaskJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
-			"map.js": &bintree{staticJsMapJs, map[string]*bintree{}},
-			"mmenu.js": &bintree{staticJsMmenuJs, map[string]*bintree{}},
-			"nprogress.js": &bintree{staticJsNprogressJs, map[string]*bintree{}},
 			"photoEditor": &bintree{nil, map[string]*bintree{
-				"cropper.min.js": &bintree{staticJsPhotoeditorCropperMinJs, map[string]*bintree{}},
 				"editor.js": &bintree{staticJsPhotoeditorEditorJs, map[string]*bintree{}},
-				"vue.min.js": &bintree{staticJsPhotoeditorVueMinJs, map[string]*bintree{}},
 			}},
-			"scrollTo.js": &bintree{staticJsScrolltoJs, map[string]*bintree{}},
-			"textEditor": &bintree{nil, map[string]*bintree{
-				"ace.js": &bintree{staticJsTexteditorAceJs, map[string]*bintree{}},
-				"beautify.js": &bintree{staticJsTexteditorBeautifyJs, map[string]*bintree{}},
-				"ext-language_tools.js": &bintree{staticJsTexteditorExtLanguage_toolsJs, map[string]*bintree{}},
-				"mode-c_cpp.js": &bintree{staticJsTexteditorModeC_cppJs, map[string]*bintree{}},
-				"mode-less.js": &bintree{staticJsTexteditorModeLessJs, map[string]*bintree{}},
-				"mode-markdown.js": &bintree{staticJsTexteditorModeMarkdownJs, map[string]*bintree{}},
-				"mode-yaml.js": &bintree{staticJsTexteditorModeYamlJs, map[string]*bintree{}},
-				"snippets": &bintree{nil, map[string]*bintree{
-					"c_cpp.js": &bintree{staticJsTexteditorSnippetsC_cppJs, map[string]*bintree{}},
-					"less.js": &bintree{staticJsTexteditorSnippetsLessJs, map[string]*bintree{}},
-					"markdown.js": &bintree{staticJsTexteditorSnippetsMarkdownJs, map[string]*bintree{}},
-					"yaml.js": &bintree{staticJsTexteditorSnippetsYamlJs, map[string]*bintree{}},
-				}},
-				"theme-chrome.js": &bintree{staticJsTexteditorThemeChromeJs, map[string]*bintree{}},
-				"theme-crimson_editor.js": &bintree{staticJsTexteditorThemeCrimson_editorJs, map[string]*bintree{}},
-				"theme-xcode.js": &bintree{staticJsTexteditorThemeXcodeJs, map[string]*bintree{}},
-			}},
-			"tooltip.js": &bintree{staticJsTooltipJs, map[string]*bintree{}},
 			"triangles.js": &bintree{staticJsTrianglesJs, map[string]*bintree{}},
-			"typeahead.js": &bintree{staticJsTypeaheadJs, map[string]*bintree{}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
 			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
@@ -7718,179 +5644,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"tx_form.html": &bintree{staticTx_formHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"upgrade.html": &bintree{staticUpgradeHtml, map[string]*bintree{}},
-		"vendor": &bintree{nil, map[string]*bintree{
-			"Chart.js": &bintree{nil, map[string]*bintree{
-				"Chart.js": &bintree{staticVendorChartJsChartJs, map[string]*bintree{}},
-			}},
-			"animate.css": &bintree{nil, map[string]*bintree{
-				"animate.min.css": &bintree{staticVendorAnimateCssAnimateMinCss, map[string]*bintree{}},
-			}},
-			"bootstrap": &bintree{nil, map[string]*bintree{
-				"dist": &bintree{nil, map[string]*bintree{
-					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap.css": &bintree{staticVendorBootstrapDistCssBootstrapCss, map[string]*bintree{}},
-					}},
-					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap.js": &bintree{staticVendorBootstrapDistJsBootstrapJs, map[string]*bintree{}},
-					}},
-				}},
-			}},
-			"bootstrap-filestyle": &bintree{nil, map[string]*bintree{
-				"src": &bintree{nil, map[string]*bintree{
-					"bootstrap-filestyle.js": &bintree{staticVendorBootstrapFilestyleSrcBootstrapFilestyleJs, map[string]*bintree{}},
-				}},
-			}},
-			"dataTables.fontAwesome": &bintree{nil, map[string]*bintree{
-				"index.css": &bintree{staticVendorDatatablesFontawesomeIndexCss, map[string]*bintree{}},
-			}},
-			"datatables": &bintree{nil, map[string]*bintree{
-				"media": &bintree{nil, map[string]*bintree{
-					"css": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.css": &bintree{staticVendorDatatablesMediaCssDatatablesBootstrapCss, map[string]*bintree{}},
-					}},
-					"images": &bintree{nil, map[string]*bintree{
-						"Sorting icons.psd": &bintree{staticVendorDatatablesMediaImagesSortingIconsPsd, map[string]*bintree{}},
-						"favicon.ico": &bintree{staticVendorDatatablesMediaImagesFaviconIco, map[string]*bintree{}},
-						"sort_asc.png": &bintree{staticVendorDatatablesMediaImagesSort_ascPng, map[string]*bintree{}},
-						"sort_asc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_asc_disabledPng, map[string]*bintree{}},
-						"sort_both.png": &bintree{staticVendorDatatablesMediaImagesSort_bothPng, map[string]*bintree{}},
-						"sort_desc.png": &bintree{staticVendorDatatablesMediaImagesSort_descPng, map[string]*bintree{}},
-						"sort_desc_disabled.png": &bintree{staticVendorDatatablesMediaImagesSort_desc_disabledPng, map[string]*bintree{}},
-					}},
-					"js": &bintree{nil, map[string]*bintree{
-						"dataTables.bootstrap.js": &bintree{staticVendorDatatablesMediaJsDatatablesBootstrapJs, map[string]*bintree{}},
-						"dataTables.buttons.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesButtonsMinJs, map[string]*bintree{}},
-						"dataTables.colReorder.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesColreorderMinJs, map[string]*bintree{}},
-						"dataTables.editor.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesEditorMinJs, map[string]*bintree{}},
-						"dataTables.keyTable.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesKeytableMinJs, map[string]*bintree{}},
-						"dataTables.select.min.js": &bintree{staticVendorDatatablesMediaJsDatatablesSelectMinJs, map[string]*bintree{}},
-						"jquery.dataTables.min.js": &bintree{staticVendorDatatablesMediaJsJqueryDatatablesMinJs, map[string]*bintree{}},
-					}},
-				}},
-			}},
-			"datatables-colvis": &bintree{nil, map[string]*bintree{
-				"css": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.css": &bintree{staticVendorDatatablesColvisCssDatatablesColvisCss, map[string]*bintree{}},
-				}},
-				"js": &bintree{nil, map[string]*bintree{
-					"dataTables.colVis.js": &bintree{staticVendorDatatablesColvisJsDatatablesColvisJs, map[string]*bintree{}},
-				}},
-			}},
-			"datetimepicker": &bintree{nil, map[string]*bintree{
-				"jquery.datetimepicker.css": &bintree{staticVendorDatetimepickerJqueryDatetimepickerCss, map[string]*bintree{}},
-				"jquery.datetimepicker.full.js": &bintree{staticVendorDatetimepickerJqueryDatetimepickerFullJs, map[string]*bintree{}},
-			}},
-			"eonasdan-bootstrap-datetimepicker": &bintree{nil, map[string]*bintree{
-				"build": &bintree{nil, map[string]*bintree{
-					"css": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.css": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildCssBootstrapDatetimepickerMinCss, map[string]*bintree{}},
-					}},
-					"js": &bintree{nil, map[string]*bintree{
-						"bootstrap-datetimepicker.min.js": &bintree{staticVendorEonasdanBootstrapDatetimepickerBuildJsBootstrapDatetimepickerMinJs, map[string]*bintree{}},
-					}},
-				}},
-			}},
-			"fontawesome": &bintree{nil, map[string]*bintree{
-				"css": &bintree{nil, map[string]*bintree{
-					"font-awesome.min.css": &bintree{staticVendorFontawesomeCssFontAwesomeMinCss, map[string]*bintree{}},
-				}},
-				"fonts": &bintree{nil, map[string]*bintree{
-					"FontAwesome.otf": &bintree{staticVendorFontawesomeFontsFontawesomeOtf, map[string]*bintree{}},
-					"fontawesome-webfont.eot": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontEot, map[string]*bintree{}},
-					"fontawesome-webfont.svg": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontSvg, map[string]*bintree{}},
-					"fontawesome-webfont.ttf": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontTtf, map[string]*bintree{}},
-					"fontawesome-webfont.woff": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff, map[string]*bintree{}},
-					"fontawesome-webfont.woff2": &bintree{staticVendorFontawesomeFontsFontawesomeWebfontWoff2, map[string]*bintree{}},
-				}},
-			}},
-			"jQuery-Storage-API": &bintree{nil, map[string]*bintree{
-				"jquery.storageapi.js": &bintree{staticVendorJqueryStorageApiJqueryStorageapiJs, map[string]*bintree{}},
-			}},
-			"jquery": &bintree{nil, map[string]*bintree{
-				"dist": &bintree{nil, map[string]*bintree{
-					"jquery.js": &bintree{staticVendorJqueryDistJqueryJs, map[string]*bintree{}},
-					"jquery.mobile-1.4.5.js": &bintree{staticVendorJqueryDistJqueryMobile145Js, map[string]*bintree{}},
-				}},
-			}},
-			"jquery-classyloader": &bintree{nil, map[string]*bintree{
-				"js": &bintree{nil, map[string]*bintree{
-					"jquery.classyloader.min.js": &bintree{staticVendorJqueryClassyloaderJsJqueryClassyloaderMinJs, map[string]*bintree{}},
-				}},
-			}},
-			"loaders.css": &bintree{nil, map[string]*bintree{
-				"loaders.css": &bintree{staticVendorLoadersCssLoadersCss, map[string]*bintree{}},
-			}},
-			"modernizr": &bintree{nil, map[string]*bintree{
-				"modernizr.custom.js": &bintree{staticVendorModernizrModernizrCustomJs, map[string]*bintree{}},
-			}},
-			"moment": &bintree{nil, map[string]*bintree{
-				"min": &bintree{nil, map[string]*bintree{
-					"moment-with-locales.min.js": &bintree{staticVendorMomentMinMomentWithLocalesMinJs, map[string]*bintree{}},
-				}},
-			}},
-			"select2": &bintree{nil, map[string]*bintree{
-				"dist": &bintree{nil, map[string]*bintree{
-					"css": &bintree{nil, map[string]*bintree{
-						"select2.css": &bintree{staticVendorSelect2DistCssSelect2Css, map[string]*bintree{}},
-					}},
-					"js": &bintree{nil, map[string]*bintree{
-						"select2.js": &bintree{staticVendorSelect2DistJsSelect2Js, map[string]*bintree{}},
-					}},
-				}},
-			}},
-			"select2-bootstrap-theme": &bintree{nil, map[string]*bintree{
-				"dist": &bintree{nil, map[string]*bintree{
-					"select2-bootstrap.css": &bintree{staticVendorSelect2BootstrapThemeDistSelect2BootstrapCss, map[string]*bintree{}},
-				}},
-			}},
-			"simple-line-icons": &bintree{nil, map[string]*bintree{
-				"css": &bintree{nil, map[string]*bintree{
-					"simple-line-icons.css": &bintree{staticVendorSimpleLineIconsCssSimpleLineIconsCss, map[string]*bintree{}},
-				}},
-				"fonts": &bintree{nil, map[string]*bintree{
-					"Simple-Line-Icons.eot": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsEot, map[string]*bintree{}},
-					"Simple-Line-Icons.svg": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsSvg, map[string]*bintree{}},
-					"Simple-Line-Icons.ttf": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsTtf, map[string]*bintree{}},
-					"Simple-Line-Icons.woff": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff, map[string]*bintree{}},
-					"Simple-Line-Icons.woff2": &bintree{staticVendorSimpleLineIconsFontsSimpleLineIconsWoff2, map[string]*bintree{}},
-				}},
-			}},
-			"sparkline": &bintree{nil, map[string]*bintree{
-				"index.js": &bintree{staticVendorSparklineIndexJs, map[string]*bintree{}},
-			}},
-			"spinkit": &bintree{nil, map[string]*bintree{
-				"css": &bintree{nil, map[string]*bintree{
-					"spinkit.css": &bintree{staticVendorSpinkitCssSpinkitCss, map[string]*bintree{}},
-				}},
-			}},
-			"sweetalert": &bintree{nil, map[string]*bintree{
-				"dist": &bintree{nil, map[string]*bintree{
-					"sweetalert.css": &bintree{staticVendorSweetalertDistSweetalertCss, map[string]*bintree{}},
-					"sweetalert.min.js": &bintree{staticVendorSweetalertDistSweetalertMinJs, map[string]*bintree{}},
-				}},
-			}},
-			"whirl": &bintree{nil, map[string]*bintree{
-				"dist": &bintree{nil, map[string]*bintree{
-					"whirl.css": &bintree{staticVendorWhirlDistWhirlCss, map[string]*bintree{}},
-				}},
-			}},
-			"x-editable": &bintree{nil, map[string]*bintree{
-				"dist": &bintree{nil, map[string]*bintree{
-					"bootstrap3-editable": &bintree{nil, map[string]*bintree{
-						"css": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.css": &bintree{staticVendorXEditableDistBootstrap3EditableCssBootstrapEditableCss, map[string]*bintree{}},
-						}},
-						"img": &bintree{nil, map[string]*bintree{
-							"clear.png": &bintree{staticVendorXEditableDistBootstrap3EditableImgClearPng, map[string]*bintree{}},
-							"loading.gif": &bintree{staticVendorXEditableDistBootstrap3EditableImgLoadingGif, map[string]*bintree{}},
-						}},
-						"js": &bintree{nil, map[string]*bintree{
-							"bootstrap-editable.min.js": &bintree{staticVendorXEditableDistBootstrap3EditableJsBootstrapEditableMinJs, map[string]*bintree{}},
-						}},
-					}},
-				}},
-			}},
-		}},
 		"votings.tpl": &bintree{staticVotingsTpl, map[string]*bintree{}},
 	}},
 }}
