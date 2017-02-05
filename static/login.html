@@ -368,7 +368,7 @@ function do_sign() {
 				console.log('DATA', data, $( "#state_id" ).val());
 				if (data.error && data.error.length > 0 ) {
 					GKey.clear();
-					Alert('Error', returnLang("seed_not_seed"), defaultConfirm);
+					Alert('Error', returnLang("seed_not_seed"), "notification:warning", defaultConfirm);
 				} else {
 					NProgressStart.start();
 					if (data.address) {
