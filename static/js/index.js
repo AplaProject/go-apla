@@ -9,22 +9,22 @@ function Generate_key() {
 }
 //console.log(iv.toString())
 
-function  doSign(type){
+function doSign(type) {
 	doSign_(type);
 }
 
 var lastLinkEvent;
 function dlNavHash(e) {
-	if (lastLinkEvent!=location.hash) {
-		dlNav({'target': {'hash': location.hash}});
+	if (lastLinkEvent != location.hash) {
+		dlNav({ 'target': { 'hash': location.hash } });
 	}
 }
 
-function dlNav(e){
-	if (e.buttons==3 || e.buttons==2 || e.buttons==4) {
+function dlNav(e) {
+	if (e.buttons == 3 || e.buttons == 2 || e.buttons == 4) {
 		return
 	}
-	if (typeof e.target.hash=='undefined') {
+	if (typeof e.target.hash == 'undefined') {
 		window.addEventListener("hashchange", dlNavHash);
 		return false;
 	}
@@ -33,8 +33,8 @@ function dlNav(e){
 
 	var str = e.target.hash;
 	var page_match = str.match(/#(\w+)/i);
-	if (page_match && typeof page_match[1]!='undefined' && page_match[1]!='mmenu' && page_match[1]!='mm' && page_match[1]!='language' && page_match[1]!='tab1' && page_match[1]!='tab2' && page_match[1]!='tab3' && page_match[1]!='myModal' && page_match[1]!='user') {
-	
+	if (page_match && typeof page_match[1] != 'undefined' && page_match[1] != 'mmenu' && page_match[1] != 'mm' && page_match[1] != 'language' && page_match[1] != 'tab1' && page_match[1] != 'tab2' && page_match[1] != 'tab3' && page_match[1] != 'myModal' && page_match[1] != 'user') {
+
 		var page = page_match[1];
 		var param_match = str.match(/\/\w+=\w+/gi);
 		var param_obj = {};
@@ -44,133 +44,133 @@ function dlNav(e){
 				param_obj[param[1]] = param[2];
 			}
 		}
-		
+
 		dl_navigate(page, param_obj);
 	}
 }
 
-void function whichClickClosure( $ ){
-	var events     = {
-				1 : 'leftclick',
-				2 : 'middleclick',
-				3 : 'rightclick'
-			},
-	// List of interruption events for symbolic linking between custom and native events
-			interrupts = [
-				'preventDefault',
-				'stopPropagation',
-				'stopImmediatePropagation'
-			],
-	// A dummy empty event, used in custom interruption
-			emptyEvent = $.Event();
+void function whichClickClosure($) {
+	var events = {
+		1: 'leftclick',
+		2: 'middleclick',
+		3: 'rightclick'
+	},
+		// List of interruption events for symbolic linking between custom and native events
+		interrupts = [
+			'preventDefault',
+			'stopPropagation',
+			'stopImmediatePropagation'
+		],
+		// A dummy empty event, used in custom interruption
+		emptyEvent = $.Event();
 
-	function makeInterrupts( customEvent, ensuingEvent ){
+	function makeInterrupts(customEvent, ensuingEvent) {
 		var output = {};
 
-		$.each( interrupts, function makeCustomInterrupt( index, method ){
-			output[ method ] = function customInterrupt(){
-				emptyEvent[ method ].call( this );
+		$.each(interrupts, function makeCustomInterrupt(index, method) {
+			output[method] = function customInterrupt() {
+				emptyEvent[method].call(this);
 
-				$( customEvent.target ).one( ensuingEvent, function defferedInterrupt( ensuingEvent ){
-					ensuingEvent[ method ]();
-				} );
+				$(customEvent.target).one(ensuingEvent, function defferedInterrupt(ensuingEvent) {
+					ensuingEvent[method]();
+				});
 			};
-		} );
+		});
 
 		return output;
 	}
 
 	// We need to capture all mousedowns
-	$( document ).on( 'mousedown', function mousedownFilter( mousedown ){
+	$(document).on('mousedown', function mousedownFilter(mousedown) {
 		// Determine which event we're listening for
-		var eventType = events[ mousedown.which ];
+		var eventType = events[mousedown.which];
 
 		// Discard anything we can't map
-		if( !eventType ){
+		if (!eventType) {
 			return;
 		}
 
-		$( document ).one( 'mouseup', function mouseupFilter( mouseup ){
+		$(document).one('mouseup', function mouseupFilter(mouseup) {
 			// The custom click event we'll fire
-			var eventObject  = {},
-			// The ensuing native event the event symbolizes
-					ensuingEvent = '';
+			var eventObject = {},
+				// The ensuing native event the event symbolizes
+				ensuingEvent = '';
 
 			// Only capture events on the same element
-			if( mousedown.target !== mouseup.target ){
+			if (mousedown.target !== mouseup.target) {
 				return;
 			}
 
 			// Middleclicks only trigger on links
-			if( eventType === 'middleclick' && $( mouseup.target ).is( 'a' ) ){
+			if (eventType === 'middleclick' && $(mouseup.target).is('a')) {
 				return;
 			}
 
-			if( eventType === 'middleclick' || eventType === 'leftclick' ){
+			if (eventType === 'middleclick' || eventType === 'leftclick') {
 				ensuingEvent = 'click';
 			}
 
 			// Rightclicks also fire off contextmenu
-			if( eventType === 'rightclick' ){
+			if (eventType === 'rightclick') {
 				ensuingEvent = 'contextmenu';
 			}
 
 			// Extend the eventObject
 			$.extend(
-					// Including all the deeper stuff
-					true,
-					// ...
-					eventObject,
-					// Take all the properties of mouseup...
-					mouseup,
-					// With our type and timestamp...
-					$.Event( eventType )
+				// Including all the deeper stuff
+				true,
+				// ...
+				eventObject,
+				// Take all the properties of mouseup...
+				mouseup,
+				// With our type and timestamp...
+				$.Event(eventType)
 			);
 
 			// Add custom interrupts
 			$.extend(
-					true,
-					eventObject,
-					makeInterrupts( eventObject, ensuingEvent )
+				true,
+				eventObject,
+				makeInterrupts(eventObject, ensuingEvent)
 			);
 
-			$( mouseup.target )
+			$(mouseup.target)
 				// Fire this event on the target
-					.trigger( eventObject )
+				.trigger(eventObject)
 				// Also fire an 'anyclick' event (with all the same internals) for convenience
-					.trigger( $.extend( eventObject, { type : 'anyclick' } ) );
-		} );
-	} );
-}( jQuery );
+				.trigger($.extend(eventObject, { type: 'anyclick' }));
+		});
+	});
+}(jQuery);
 
-$( document ).on( 'leftclick', function( e ){
+$(document).on('leftclick', function (e) {
 	dlNav(e);
-} );
+});
 
 window.addEventListener("hashchange", dlNavHash);
 
 
-function dl_navigate0 (page, parameters) {
+function dl_navigate0(page, parameters) {
 
 	var json = JSON.stringify(parameters);
 
 	clearAllTimeouts();
 	NProgress.set(1.0);
-	$.post("content?page="+page, { tpl_name: page, parameters: json },
-			function(data) {
-				$(".sweet-overlay, .sweet-alert").remove();
-				$('#dl_content').html( data );
-				updateLanguage("#dl_content .lang");
-				//loadLanguage();
-				hist_push(['dl_navigate0', page, parameters]);
-				if ( parameters && parameters.hasOwnProperty("lang")) {
-					if ( page[0] == 'E' )
-						load_emenu();
-					else
-						load_menu();
-				}
-				window.scrollTo(0,0);
-			}, "html");
+	$.post("content?page=" + page, { tpl_name: page, parameters: json },
+		function (data) {
+			$(".sweet-overlay, .sweet-alert").remove();
+			$('#dl_content').html(data);
+			updateLanguage("#dl_content .lang");
+			//loadLanguage();
+			hist_push(['dl_navigate0', page, parameters]);
+			if (parameters && parameters.hasOwnProperty("lang")) {
+				if (page[0] == 'E')
+					load_emenu();
+				else
+					load_menu();
+			}
+			window.scrollTo(0, 0);
+		}, "html");
 
 }
 
@@ -431,7 +431,6 @@ function load_page(page, parameters, anchor) {
 }
 
 function clearTempMenu() {
-	console.log('clear temp');
 	//	$("#mmenu-panel li:first ul").remove();
 	//	$("#mmenu-panel li:first a").remove();
 	//	$("#ultemporary").remove();
@@ -449,6 +448,7 @@ function ajaxMenu(page, parameters) {
 		success: function (data) {
 			// linked menu
 			var amenuname = data.match(/<!--#([\w_\d]*)#-->/) || [""];
+			var menuname = 'menu_default';
 			if (amenuname.length > 1)
 				menuname = amenuname[1];
 			console.log('Main', menuname, curMenu);
@@ -601,7 +601,7 @@ function load_template(page, parameters, anchor) {
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
 			ajaxMenu(page, parameters);
-			
+
 			if (anchor) {
 				anchorScroll(anchor);
 			}
@@ -846,7 +846,7 @@ function dl_navigate(page, parameters, anchor) {
 					load_menu();
 			}*/
 			window.scrollTo(0, 0);
-			
+
 			if (anchor) {
 				anchorScroll(anchor);
 			}
@@ -879,8 +879,10 @@ function login_ok(result) {
 
 	setTimeout(function () {
 		if (result) {
+			//load_page("home");
 			$("#dl_content").load("content", { tpl_name: 'home' }, function () {
 				NProgressStart.done();
+				updateLanguage("#dl_content .lang");
 			});
 		}
 	}, 100);
@@ -1118,7 +1120,7 @@ function unixtime(target) {
 
 function send_to_net_success(data, ReadyFunction, skipsuccess) {
 	var i = 0;
-	
+
 	if (typeof data.error != "undefined" && data.error.length > 0) {
 		Alert(returnLang("error"), data.error, "error");
 	} else if (data.hash == "undefined") {
@@ -1168,9 +1170,9 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 					Alert(returnLang("error"), error, "error");
 				},
 			});
-			
+
 			i += 1;
-			
+
 			if (i >= 6) {
 				clearInterval(interval);
 				Alert(returnLang("error"), returnLang("cannot_connect_server"), "notification:danger");
@@ -1392,9 +1394,11 @@ function returnLang(data) {
 function anchorScroll(anchor) {
 	var top = "#" + anchor;
 	setTimeout(function () {
-		$.scrollTo(top, 300, {easing:'linear', onAfter: function() {
-			// Можно добавить что-то после скроллинга
-		}});
+		$.scrollTo(top, 300, {
+			easing: 'linear', onAfter: function () {
+				// Можно добавить что-то после скроллинга
+			}
+		});
 	}, 1000);
 }
 
@@ -1444,7 +1448,7 @@ $(window).load(function () {
 	var observeDOM = (function () {
 		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
 			eventListenerSupported = window.addEventListener;
-	
+
 		return function (content, callback) {
 			if (MutationObserver) {
 				// define a new observer
@@ -1461,7 +1465,7 @@ $(window).load(function () {
 			}
 		}
 	})();
-	
+
 	observeDOM(document.getElementById('dl_content'), function () {
 		InitMobileHead();
 		InitMobileTable();

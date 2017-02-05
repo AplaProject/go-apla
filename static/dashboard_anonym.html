@@ -37,7 +37,9 @@
 <script>
 	$("body").removeClass("modal-open");
 	
-	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {});
+	$( "#dl_modal" ).load( "content?tpl_name=modalAnonym", { }, function() {
+		updateLanguage("#dl_modal .lang");
+	});
 	
 	var amount = {{.Amount}} / qDLT;
 	$("#balance").text(amount + " EGS");
