@@ -38,6 +38,7 @@ var (
 		"DBUpdate":       100,
 		"DBUpdateWhere":  100,
 		"DBGetList":      300,
+		"DBGetTable":     1000,
 		"DBTransfer":     200,
 		"DBString":       100,
 		"DBInt":          100,
@@ -66,6 +67,7 @@ func init() {
 		"DBUpdate":       DBUpdate,
 		"DBUpdateWhere":  DBUpdateWhere,
 		"DBGetList":      DBGetList,
+		"DBGetTable":     DBGetTable,
 		"DBTransfer":     DBTransfer,
 		"DBString":       DBString,
 		"DBInt":          DBInt,
@@ -614,8 +616,7 @@ func Len(in []interface{}) int64 {
 	return int64(len(in))
 }
 
-func DBGetList(tblname string, name string, offset, limit int64, order string,
-	where string, params ...interface{}) ([]interface{}, error) {
+func checkWhere(tblname string, where string, order string) (string, string, error) {
 	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
 	ret := re.FindAllStringSubmatch(where, -1)
 
@@ -624,22 +625,53 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 			continue
 		}
 		if isIndex, err := utils.DB.IsIndex(tblname, iret[1]); err != nil {
-			return nil, err
+			return ``, ``, err
 		} else if !isIndex {
-			return nil, fmt.Errorf(`there is not index on %s`, iret[1])
+			return ``, ``, fmt.Errorf(`there is not index on %s`, iret[1])
 		}
 	}
 	if len(order) > 0 {
 		order = ` order by ` + lib.EscapeName(order)
 	}
+	return strings.Replace(lib.Escape(where), `$`, `?`, -1), order, nil
+}
+
+func DBGetList(tblname string, name string, offset, limit int64, order string,
+	where string, params ...interface{}) ([]interface{}, error) {
+	var err error
+
+	where, order, err = checkWhere(tblname, where, order)
 	if limit <= 0 {
 		limit = -1
 	}
-	list, err := utils.DB.GetAll(`select `+lib.Escape(name)+` from `+lib.EscapeName(tblname)+` where `+
-		strings.Replace(lib.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
+	name = lib.Escape(name)
+	list, err := utils.DB.GetAll(`select `+name+` from `+lib.EscapeName(tblname)+` where `+
+		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
+		result[i] = reflect.ValueOf(list[i][name]).Interface()
+	}
+	return result, err
+}
+
+func DBGetTable(tblname string, columns string, offset, limit int64, order string,
+	where string, params ...interface{}) ([]interface{}, error) {
+	var err error
+
+	where, order, err = checkWhere(tblname, where, order)
+	if limit <= 0 {
+		limit = -1
+	}
+	cols := strings.Split(lib.Escape(columns), `,`)
+	list, err := utils.DB.GetAll(`select `+strings.Join(cols, `,`)+` from `+lib.EscapeName(tblname)+` where `+
+		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
+	result := make([]interface{}, len(list))
+	for i := 0; i < len(list); i++ {
+		//result[i] = make(map[string]interface{})
 		result[i] = reflect.ValueOf(list[i]).Interface()
+		/*		for _, key := range cols {
+				result[i][key] = reflect.ValueOf(list[i][key]).Interface()
+			}*/
 	}
 	return result, err
 }

@@ -448,7 +448,7 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			var i uint8
 			size := val - 128
 			tmp := make([]byte, 4)
-			if len(*out)<= int(size) || size > 4 {
+			if len(*out) <= int(size) || size > 4 {
 				return fmt.Errorf(`wrong input data`)
 			}
 			for ; i < size; i++ {
@@ -551,7 +551,7 @@ func EscapeName(name string) string {
 
 func Escape(data string) string {
 	out := make([]byte, 0, len(data)+2)
-	available := `_ ,=!-'()*$<>: `
+	available := `_ ,=!-'()?*$<>: `
 	for _, ch := range []byte(data) {
 		if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
 			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
