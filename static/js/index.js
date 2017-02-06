@@ -1469,6 +1469,9 @@ $(window).load(function () {
 	observeDOM(document.getElementById('dl_content'), function () {
 		InitMobileHead();
 		InitMobileTable();
+		if ($("[data-count]").length) {
+			countUp();
+		}
 	});
 });
 
