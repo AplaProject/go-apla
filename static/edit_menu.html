@@ -30,6 +30,7 @@
 		$(".formConfirm .panel-heading").text($("#menu_name").val());
 		$(".formConfirm .textEditorHistory code").html($("#menu_value").val());
 		$(".formConfirm").show();
+		MenuReload();
 	}
 	
 	function Edit() {
@@ -65,7 +66,9 @@
 			},
 			dataType: 'json',
 			crossDomain: true,
-			success: function(data) { send_to_net_success({{if .DataMenu.name}}data{{else}}data, ShowConfirm{{end}}) },
+			success: function(data) { 
+				send_to_net_success({{if .DataMenu.name}}data, MenuReload{{else}}data, ShowConfirm{{end}}) 
+			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
 			}

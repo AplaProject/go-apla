@@ -440,12 +440,17 @@ function clearTempMenu() {
 var latestMenu = '';
 var curMenu = 'main_menu';
 
-function ajaxMenu(page, parameters) {
+function ajaxMenu(page, parameters, customFunc) {
 	$.ajax({
 		url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
 		type: 'POST',
 		data: parameters ? parameters : {},
 		success: function (data) {
+			if (customFunc) {
+				customFunc();
+				return;
+			}
+
 			// linked menu
 			var amenuname = data.match(/<!--#([\w_\d]*)#-->/) || [""];
 			var menuname = 'menu_default';
@@ -495,7 +500,6 @@ function ajaxMenu(page, parameters) {
 					$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
 				} else {
 					$("#ultemporary").remove();
-					console.log('Dynamic');
 					$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
 				}
 				updateLanguage($("#ul" + name + ' .lang'));
@@ -585,7 +589,7 @@ function ajaxMenu(page, parameters) {
 	});
 }
 
-function load_template(page, parameters, anchor) {
+function load_template(page, parameters, anchor, customFunc) {
 	clearAllTimeouts();
 	NProgress.set(1.0);
 	$.post("template?page=" + page, parameters ? parameters : {},
@@ -600,11 +604,10 @@ function load_template(page, parameters, anchor) {
 			//loadLanguage();
 			hist_push(['load_template', page, parameters ? parameters : {}]);
 			window.scrollTo(0, 0);
-			ajaxMenu(page, parameters);
-
 			if (anchor) {
 				anchorScroll(anchor);
 			}
+			ajaxMenu(page, parameters, customFunc);
 		}, "html");
 }
 
@@ -870,6 +873,11 @@ function load_menu(lang, submenu) {
 }
 
 function MenuReload() {
+	$("#mmenu").remove();
+	curMenu = 'update_menu';
+	$("#ul" + latestMenu).remove();
+	$("#li" + latestMenu + ' .mm-next').remove();
+	latestMenu = '';//update_menu';
 	load_menu();
 }
 
