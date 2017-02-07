@@ -42,7 +42,7 @@ const (
 	COST_CALL     = 50
 	COST_CONTRACT = 100
 	COST_EXTEND   = 10
-	COST_DEFAULT  = int64(100000) // default maximum cost of F
+	COST_DEFAULT  = int64(10000000) // default maximum cost of F
 )
 
 type ExtFuncInfo struct {
