@@ -17,28 +17,28 @@
 package controllers
 
 import (
+	"encoding/json"
+	//	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
-	"encoding/json"
-	"fmt"
 )
 
 type editContractPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	CountSignArr []int
-	Lang         map[string]string
-	Data         map[string]string
-	DataContractHistory    []map[string]string
-	WalletId     int64
-	CitizenId    int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	TableName    string
-	StateId      int64
-	Global       string
+	Alert               string
+	SignData            string
+	ShowSignData        bool
+	CountSignArr        []int
+	Lang                map[string]string
+	Data                map[string]string
+	DataContractHistory []map[string]string
+	WalletId            int64
+	CitizenId           int64
+	TxType              string
+	TxTypeId            int64
+	TimeNow             int64
+	TableName           string
+	StateId             int64
+	Global              string
 }
 
 func (c *Controller) EditContract() (string, error) {
@@ -56,7 +56,7 @@ func (c *Controller) EditContract() (string, error) {
 
 	id := utils.StrToInt64(c.r.FormValue("id"))
 	name := c.r.FormValue("name")
-	if (id == 0) {
+	if id == 0 {
 		// @ - global or alien state
 		if len(name) > 0 && name[:1] == `@` {
 			name = name[1:]
@@ -77,8 +77,8 @@ func (c *Controller) EditContract() (string, error) {
 	var dataContractHistory []map[string]string
 	var rbId int64
 	var err error
-	for i:=0; i<10; i++ {
-		if i==0 {
+	for i := 0; i < 10; i++ {
+		if i == 0 {
 			if id != 0 {
 				data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
 				if err != nil {
@@ -98,7 +98,7 @@ func (c *Controller) EditContract() (string, error) {
 			}
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
-			fmt.Printf("%s", messageMap)
+			//			fmt.Printf("%s", messageMap)
 			rbId = utils.StrToInt64(messageMap["rb_id"])
 			messageMap["block_id"] = data["block_id"]
 			dataContractHistory = append(dataContractHistory, messageMap)
@@ -109,20 +109,20 @@ func (c *Controller) EditContract() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId:     c.SessWalletId,
-		Data:         data,
-		DataContractHistory:         dataContractHistory,
-		Global:       global,
-		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId,
-		StateId:      c.SessStateId})
+		Alert:               c.Alert,
+		Lang:                c.Lang,
+		ShowSignData:        c.ShowSignData,
+		SignData:            "",
+		WalletId:            c.SessWalletId,
+		Data:                data,
+		DataContractHistory: dataContractHistory,
+		Global:              global,
+		CitizenId:           c.SessCitizenId,
+		CountSignArr:        c.CountSignArr,
+		TimeNow:             timeNow,
+		TxType:              txType,
+		TxTypeId:            txTypeId,
+		StateId:             c.SessStateId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

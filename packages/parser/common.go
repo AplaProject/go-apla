@@ -603,7 +603,7 @@ func (p *Parser) payFPrice() error {
 	var (
 		fromId int64
 	)
-	return nil
+	//return nil
 	toId := p.BlockData.WalletId // account of node
 	fuel := p.GetFuel()
 	if fuel <= 0 {
@@ -612,6 +612,9 @@ func (p *Parser) payFPrice() error {
 
 	if p.TxCost == 0 { // embedded transaction
 		fromId = p.TxWalletID
+		if fromId == 0 {
+			fromId = p.TxCitizenID
+		}
 	} else { // contract
 		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
 			fromId = p.TxContract.TxGovAccount
@@ -620,26 +623,30 @@ func (p *Parser) payFPrice() error {
 			fromId = p.TxWalletID
 		}
 	}
-
 	egs := p.TxUsedCost * fuel
-	fmt.Printf("Pay fuel=%f cost=%d egs=%d", fuel, p.TxUsedCost, egs)
+	fmt.Printf("Pay fuel=%d fromId=%d toId=%d cost=%d egs=%d", fuel, fromId, toId, p.TxUsedCost, egs)
 	if egs == 0 { // Is it possible to pay nothing?
 		return nil
 	}
-	amount, err := p.Single(`select amount from dlt_wallets where wallet_id=?`, fromId).Int64()
-	if amount < egs {
+
+	if amount, err := p.Single(`select amount from dlt_wallets where wallet_id=?`, fromId).Int64(); err != nil {
+		return err
+	} else if amount < egs {
 		egs = amount
 	}
-	if err = p.ExecSql(`update dlt_wallets set amount = amount - ? where wallet_id=?`, egs, fromId); err != nil {
+	commission := int64(float64(egs) * 0.03)
+	query := fmt.Sprintf(`begin;
+	update dlt_wallets set amount = amount - least(amount, '%d') where wallet_id='%d';
+	update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
+	update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
+	commit;`, egs, fromId, egs-commission, toId, commission, consts.COMMISSION_WALLET)
+	if err := p.ExecSql(query); err != nil {
 		return err
 	}
-	if err = p.ExecSql(`update dlt_wallets set amount = amount + ? where wallet_id=?`, egs, toId); err != nil {
-		// refund payment
-		p.ExecSql(`update dlt_wallets set amount = amount + ? where wallet_id=?`, egs, fromId)
-		return err
-	}
-	fmt.Printf(" Paid\r\n")
+	fmt.Printf(" Paid commission %v\r\n", commission)
+	return nil
 	if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
+		// Это все уберется, гос-во будет снимать деньги с граждан внутри контрактов
 		table := fmt.Sprintf(`"%d_%s"`, p.TxStateID, p.TxContract.TableAccounts)
 		amount, err := p.Single(`select amount from `+table+` where citizen_id=?`, p.TxCitizenID).Int64()
 		money := int64(float64(egs) * p.TxContract.EGSRate)
