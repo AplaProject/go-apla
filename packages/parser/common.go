@@ -617,7 +617,8 @@ func (p *Parser) payFPrice() error {
 		}
 	} else { // contract
 		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
-			fromId = p.TxContract.TxGovAccount
+			//fromId = p.TxContract.TxGovAccount
+			fromId = utils.StrToInt64(StateValue(p, `gov_account`))
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			fromId = p.TxWalletID

@@ -36,6 +36,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"html/template"
 	"image"
 	"io"
 	"io/ioutil"
@@ -1148,15 +1149,15 @@ func BytesShift(str *[]byte, index int64) (ret []byte) {
 		*str = (*str)[:0]
 		return []byte{}
 	}
-	ret, *str = (*str)[:index],(*str)[index:]
+	ret, *str = (*str)[:index], (*str)[index:]
 	/*	var substr []byte
-	var str_ []byte
-	substr = *str
-	substr = substr[0:index]
-	str_ = *str
-	str_ = str_[index:]
-	*str = str_
-	return substr
+		var str_ []byte
+		substr = *str
+		substr = substr[0:index]
+		str_ = *str
+		str_ = str_[index:]
+		*str = str_
+		return substr
 	*/
 	return
 }
@@ -2316,12 +2317,12 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 	(*params)[`state_id`] = Int64ToStr(stateId)
 	(*params)[`citizen`] = Int64ToStr(citizenId)
 	if len(data) > 0 {
-		template := textproc.Process(data, params)
+		templ := textproc.Process(data, params)
 		if (*params)[`isrow`] == `opened` {
-			template += `</div>`
+			templ += `</div>`
 			(*params)[`isrow`] = ``
 		}
-		template = LangMacro(template, int(stateId), (*params)[`accept_lang`])
+		templ = LangMacro(templ, int(stateId), (*params)[`accept_lang`])
 		getHeight := func() int64 {
 			height := int64(100)
 			if h, ok := (*params)[`hmap`]; ok {
@@ -2330,7 +2331,7 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 			return height
 		}
 		if len((*params)[`wisource`]) > 0 {
-			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			var editor = ace.edit("textEditor");
 	var ContractMode = ace.require("ace/mode/c_cpp").Mode;
 	ace.require("ace/ext/language_tools");
@@ -2354,11 +2355,11 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 			</script>`, (*params)[`wisource`], (*params)[`wisource`])
 		}
 		if (*params)[`wimoney`] == `1` {
-			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 				$(".inputmask").inputmask({'autoUnmask': true});</script>`)
 		}
 		if (*params)[`widate`] == `1` {
-			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 						$(document).ready(function() {
 							$.datetimepicker.setLocale('en');
 							$(".datetimepicker").datetimepicker();
@@ -2366,7 +2367,7 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 				</script>`)
 		}
 		if (*params)[`wiaddress`] == `1` {
-			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 				$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
 	$(".address").typeahead({
 		minLength: 1,
@@ -2379,11 +2380,11 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 	}).focus();</script>`)
 		}
 		if (*params)[`wimap`] == `1` {
-			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())
 		}
 		if (*params)[`wicitizen`] == `1` {
-			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">(function($, window, document){
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">(function($, window, document){
 'use strict';
   var Selector = '[data-notify]',
       autoloadSelector = '[data-onload]',
@@ -2414,10 +2415,49 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 }(jQuery, window, document));</script>`)
 		}
 		if (*params)[`wimappoint`] == `1` {
-			template += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
 		}
-		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: template})
+		if (*params)[`wibtncont`] == `1` {
+			var unique int64
+			if uval, ok := (*params)[`tx_unique`]; ok {
+				unique = StrToInt64(uval) + 1
+			}
+			(*params)[`tx_unique`] = Int64ToStr(unique)
+			funcMap := template.FuncMap{
+				"sum": func(a, b interface{}) float64 {
+					return InterfaceToFloat64(a) + InterfaceToFloat64(b)
+				},
+				"noescape": func(s string) template.HTML {
+					return template.HTML(s)
+				},
+			}
+			data, err := static.Asset("static/tx_btncont.html")
+			if err != nil {
+				return ``, err
+			}
+			sign, err := static.Asset("static/signatures_new.html")
+			if err != nil {
+				return ``, err
+			}
+
+			t := template.New("template").Funcs(funcMap)
+			if t, err = t.Parse(string(data)); err != nil {
+				return ``, err
+			}
+			t = template.Must(t.Parse(string(sign)))
+			b := new(bytes.Buffer)
+
+			finfo := TxBtnCont{ //Class: class, ClassBtn: classBtn, Name: LangRes(vars, btnName),
+				Unique: template.JS((*params)[`tx_unique`]), // OnSuccess: template.JS(onsuccess),
+				//Fields: make([]TxInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`,
+				/*Silent: (*pars)[`Silent`] == `1`,*/ Data: FormCommon{CountSignArr: []byte{1}}}
+			if err = t.Execute(b, finfo); err != nil {
+				return ``, err
+			}
+			templ += b.String()
+		}
+		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: templ})
 	}
 	return ``, nil
 }

@@ -85,6 +85,19 @@ type TxButtonInfo struct {
 	Data      FormCommon
 }
 
+type TxBtnCont struct {
+	TxName    string
+	Name      string
+	Class     string
+	ClassBtn  string
+	Unique    template.JS
+	OnSuccess template.JS
+	Fields    []TxInfo
+	AutoClose bool
+	Silent    bool
+	Data      FormCommon
+}
+
 type CommonPage struct {
 	Address      string
 	WalletId     int64
@@ -134,7 +147,7 @@ func init() {
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `IfEnd`: IfEnd, `Else`: Else, `ElseIf`: ElseIf, `Trim`: Trim, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
-		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal, `Tag`: Tag,
+		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal, `Tag`: Tag, `BtnContract`: BtnContract,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
 		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack, `WhiteMobileBg`: WhiteMobileBg,
@@ -824,6 +837,28 @@ func BtnTemplate(vars *map[string]string, pars ...string) string {
 		anchor = pars[4]
 	}
 	return fmt.Sprintf(`<button type="button" class=%s onclick="load_template('%s', {%s}, %s )">%s</button>`, class, pars[0], params, anchor, pars[1])
+}
+
+func BtnContract(vars *map[string]string, pars ...string) string {
+	// contract, title, text, params, class
+	params := ``
+	if len(pars) < 3 {
+		return ``
+	}
+
+	if len(pars) >= 4 {
+		params = pars[3]
+	}
+	if params == `''` {
+		params = ``
+	}
+	class := `"btn btn-primary"`
+	if len(pars) >= 5 {
+		class = pars[4]
+	}
+	(*vars)["wibtncont"] = `1`
+	return fmt.Sprintf(`<button type="button" class=%s data-tool="panel-refresh" onclick="btn_contract(this, '%s', {%s}, '%s' )">%s</button>`,
+		class, pars[0], params, pars[2], pars[1])
 }
 
 func BtnSys(vars *map[string]string, pars ...string) string {
