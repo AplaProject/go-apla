@@ -694,6 +694,7 @@ function Alert(title, text, type, Confirm) {
 	if (obj) {
 		var timer = null;
 		var view = type.split(":");
+		var cancel = view[1] ? view[1] : false;
 
 		if (view[0] == "notification" && !obj.hasClass("modal-content")) {
 			type = view[1] ? view[1] : "success";
@@ -726,6 +727,8 @@ function Alert(title, text, type, Confirm) {
 			var oh = obj.height();
 			var minHeight = obj.css("min-height");
 			obj.css({ "position": "relative", "min-height": "300px" });
+			
+			type = view[0];
 
 			if (type == "success") {
 				color = "#23b7e5";
@@ -769,7 +772,8 @@ function Alert(title, text, type, Confirm) {
 				html: true,
 				confirmButtonColor: color,
 				confirmButtonText: btnText,
-				showConfirmButton: btnShow
+				showConfirmButton: btnShow,
+				showCancelButton: cancel
 			}, function (isConfirm) {
 				if (text.toLowerCase().indexOf("[error]") != -1) {
 					CopyToClipboard(".sweet-alert .confirm", text);
