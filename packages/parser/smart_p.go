@@ -637,19 +637,31 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 }
 
 func DBGetList(tblname string, name string, offset, limit int64, order string,
-	where string, params ...interface{}) ([]interface{}, error) {
-	var err error
+where string, params ...interface{}) ([]interface{}, error) {
+	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
+	ret := re.FindAllStringSubmatch(where, -1)
 
-	where, order, err = checkWhere(tblname, where, order)
+	for _, iret := range ret {
+		if len(iret) != 2 {
+			continue
+		}
+		if isIndex, err := utils.DB.IsIndex(tblname, iret[1]); err != nil {
+			return nil, err
+		} else if !isIndex {
+			return nil, fmt.Errorf(`there is not index on %s`, iret[1])
+		}
+	}
+	if len(order) > 0 {
+		order = ` order by ` + lib.EscapeName(order)
+	}
 	if limit <= 0 {
 		limit = -1
 	}
-	name = lib.Escape(name)
-	list, err := utils.DB.GetAll(`select `+name+` from `+lib.EscapeName(tblname)+` where `+
-		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
+	list, err := utils.DB.GetAll(`select `+lib.Escape(name)+` from `+lib.EscapeName(tblname)+` where `+
+		strings.Replace(lib.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
-		result[i] = reflect.ValueOf(list[i][name]).Interface()
+		result[i] = reflect.ValueOf(list[i]).Interface()
 	}
 	return result, err
 }
