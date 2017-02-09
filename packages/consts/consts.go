@@ -120,6 +120,8 @@ var TxTypes = map[int]string{
 	28: "NewLang",
 	29: "EditLang",
 	30: "AppendMenu",
+	31: "NewSign",
+	32: "EditSign",
 }
 
 func init() {
