@@ -33,6 +33,7 @@ Lang = {
 	"make_sure": "Bewaar je zaai sleutel goed en veilig. Je hebt hem later weer nodig en hij is uniek!",
 	"seed_not_seed": "Account seed is not citizen's seed",
 	"enter_decrypted_key": "Enter the decrypted key",
+	"encrypted_key": "Encrypted Key",
 	"enter_wallet_and_password": "Voer het portemonnee adres en het wachtwoord in, aub.",
 	"enter_wallet": "Voer het portemonnee adres in, a.u.b.",
 	"warning": "Waarschuwing",

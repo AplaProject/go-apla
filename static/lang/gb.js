@@ -33,6 +33,7 @@ Lang = {
 	"make_sure": "Make sure that you keep the passphrase (account seed) safe and remember the password. You will be asked to re-type them for confirmation.",
 	"seed_not_seed": "Account seed is not citizen's seed",
 	"enter_decrypted_key": "Enter the decrypted key",
+	"encrypted_key": "Encrypted Key",
 	"enter_wallet_and_password": "Enter the wallet address and the password, please",
 	"enter_wallet": "Enter the wallet address, please",
 	"warning": "Warning",
