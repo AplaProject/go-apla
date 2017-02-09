@@ -1372,16 +1372,46 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 }
 
 func ParseSign(sign string) (r, s *big.Int) {
-	var off int
-	if len(sign) > 128 {
-		off = 8
-		if sign[7] == '1' {
-			off = 10
+	//	var off int
+	parse := func(bsign []byte) []byte {
+		blen := int(bsign[1])
+		//		fmt.Printf("Parse %d %x\r\n", blen, bsign)
+		if blen > len(bsign)-2 {
+			return nil
 		}
+		ret := bsign[2 : 2+blen]
+		if len(ret) > 32 {
+			ret = ret[len(ret)-32:]
+		} else if len(ret) < 32 {
+			ret = append(bytes.Repeat([]byte{0}, 32-len(ret)), ret...)
+		}
+		return ret
+	}
+	if len(sign) > 128 {
+		bsign, err := hex.DecodeString(sign)
+		if err != nil {
+			return
+		}
+		//		fmt.Printf("In %d %x\r\n", bsign[1], bsign)
+		left := parse(bsign[2:])
+		if left == nil || int(bsign[3])+6 > len(bsign) {
+			return
+		}
+		right := parse(bsign[4+bsign[3]:])
+		if right == nil {
+			return
+		}
+		sign = hex.EncodeToString(append(left, right...))
+		//		fmt.Printf("sign %s\r\n", sign)
+		/*		off = 8
+				if sign[7] == '1' {
+					off = 10
+				}*/
+
 	} else if len(sign) < 128 {
 		return
 	}
-	all, err := hex.DecodeString(string(sign[off:]))
+	all, err := hex.DecodeString(string(sign[:]))
 	if err != nil {
 		return
 	}
