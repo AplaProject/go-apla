@@ -103,12 +103,14 @@ func (p *Parser) NewState() error {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
+		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		"restore_access_condition", sid, "", psid,
 		"new_table", sid, "", psid,
 		"new_column", sid, "", psid,
 		"changing_tables", sid, "", psid,
 		"changing_language", sid, "", psid,
+		"changing_signature", sid, "", psid,
 		"changing_smart_contracts", sid, "", psid,
 		"currency_name", p.TxMap["currency_name"], "", psid,
 		"gender_list", "male,female", "", psid,
@@ -384,6 +386,7 @@ MenuItem(Tables, load_page, listOfTables)
 MenuItem(Smart contracts, load_page, contracts)
 MenuItem(App List, load_page, app_catalog)
 MenuItem(Languages, load_page, languages)
+MenuItem(Signatures, load_page, signatures)
 MenuItem(Export, load_page, export_tpl)
 MenuItem(Interface, load_page, interface)
 MenuItem(Checking citizens, load_template, CheckCitizens)`, sid)
@@ -473,6 +476,18 @@ MenuItem(Checking citizens, load_template, CheckCitizens)`, sid)
 		return p.ErrInfo(err)
 	}
 
+	err = p.ExecSql(`CREATE TABLE "` + id + `_signatures" (
+				"name" varchar(100)  NOT NULL DEFAULT '',
+				"value" jsonb,
+				"conditions" text  NOT NULL DEFAULT '',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER TABLE ONLY "` + id + `_signatures" ADD CONSTRAINT "` + id + `_signatures_pkey" PRIMARY KEY (name);
+				`)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	if err = utils.LoadContract(id); err != nil {
 		return p.ErrInfo(err)
 	}
@@ -481,51 +496,20 @@ MenuItem(Checking citizens, load_template, CheckCitizens)`, sid)
 
 func (p *Parser) NewStateRollback() error {
 
-	id_, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
+	id, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	id := utils.Int64ToStr(id_)
 	err = p.ExecSql(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	/*err = p.ExecSql(`DROP TABLE "` + id + `_accounts"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-	err = p.ExecSql(`DROP TABLE "` + id + `_menu"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSql(`DROP TABLE "` + id + `_pages"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_citizens"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_tables"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_smart_contracts"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_state_parameters"`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	err = p.ExecSql(`DROP TABLE "` + id + `_citizenship_requests"`)
-	if err != nil {
-		return p.ErrInfo(err)
+	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
+		`smart_contracts`, `state_parameters`, `citizenship_requests`} {
+		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 	}
 
 	maxId, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
