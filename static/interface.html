@@ -30,22 +30,22 @@
     {{if ne .Global "1"}}
 		<div class="content-heading">
 		  <div class="pull-right">
-			  <button type="button" class="btn btn-green" onclick="load_page('interface', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em>Global</button>
-			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}} } )"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add page</button>
-			  <button type="button" class="btn btn-default" onclick="load_page('newMenu', {global: {{.Global}}} )"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add menu</button>
+			  <button type="button" class="btn btn-green" onclick="load_page('interface', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em><span class="lang" lang-id="global"></span></button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}} } )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_page"></span></button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newMenu', {global: {{.Global}}} )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_menu"></span></button>
 		  </div>
-		  Interface
+		  <span class="lang" lang-id="interface"></span>
 		</div>
     {{else}}
 		<div class="content-heading">
 		  <div class="pull-right">
-			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}} } )"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add page</button>
-			  <button type="button" class="btn btn-default" onclick="load_page('newMenu', {global: {{.Global}}} )"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add menu</button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}} } )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_page"></span></button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newMenu', {global: {{.Global}}} )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_menu"></span></button>
 		  </div>
-		  Global
+		  <span class="lang" lang-id="global"></span>
 		</div>
 		<ol class="breadcrumb">
-		   <li><a href="#" onclick="load_page('interface')">Interface</a></li>
+		   <li><a href="#" onclick="load_page('interface')" class="lang" lang-id="interface"></a></li>
 	   </ol>
     {{end}}
 	<div class="row">
@@ -53,7 +53,7 @@
 			<div class="panel panel-primary">
 			 <div class="panel-heading">
 				<div class="panel-title">
-					Pages
+					<span class="lang" lang-id="pages"></span>
 				</div>
 			 </div>
 			 <div class="panel-body">
@@ -76,7 +76,7 @@
 			<div class="panel panel-primary">
 				<div class="panel-heading">
 					<div class="panel-title">
-						Menu
+						<span class="lang" lang-id="menu"></span>
 					</div>
 				</div>
 				<div class="panel-body">

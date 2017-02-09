@@ -10,7 +10,9 @@
 		'<i class="fa fa-fw fa-times"></i>'+
 	  '</button>';
 	
-	$(".edit").data("title", "Enter block ID for search");
+	$(".edit").data("title", returnLang("enter_block_id_search"));
+	
+	updateLanguage("#block_explorer .lang");
 </script>
 
 {{if .BlockId}}
@@ -23,7 +25,7 @@
 	</style>
 	
 	<div class="content-heading">
-	   Block Information
+	   <span class="lang" lang-id="block_information"></span>
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href="#" onclick="load_page('block_explorer', {singlePage: 1});" class="lang" lang-id="block_explorer"></a></li>
@@ -44,21 +46,21 @@
 					<td class="unixtime">{{.BlockData.time}}</td>
 				 </tr>
 				 <tr>
-					<td class="thead">Hash</td>
+					<td class="thead lang" lang-id="hash"></td>
 					<td>{{.BlockData.hash}}</td>
 				 </tr>
 				{{if gt .BlockId 1}}
 				 <tr>
-					<td class="thead">Parent Hash</td>
-					<td><a onclick="return prev_block()">{{.BlockData.parent}}</a></td>
+					<td class="thead lang" lang-id="parent_hash"></td>
+					<td><a onclick="return prev_block()" style="cursor:pointer;">{{.BlockData.parent}}</a></td>
 				 </tr>
 				{{end}}
 				 <tr>
-					<td class="thead">State ID</td>
+					<td class="thead lang" lang-id="state_id"></td>
 					<td>{{.BlockData.state_id}}</td>
 				 </tr>
 				 <tr>
-					<td class="thead">Added by</td>
+					<td class="thead lang" lang-id="added_by"></td>
 					<td>{{.BlockData.wallet_address}}</td>
 				 </tr>
 				 <tr>
@@ -66,16 +68,16 @@
 					<td>{{.BlockData.tx_list}}</td>
 				 </tr>
 				 <tr>
-					<td class="thead">Size</td>
+					<td class="thead lang" lang-id="size"></td>
 					<td>{{.BlockData.size}} bytes</td>
 				 </tr>
 				 <tr>
-					<td class="thead">Data</td>
+					<td class="thead lang" lang-id="data"></td>
 					<td>{{.BlockData.data}}</td>
 				 </tr>
 				{{else}}
 				 <tr>
-					<td class="thead" colspan="2">Block doesn't exist.</td>
+					<td class="thead lang" colspan="2" lang-id="block_doesnt_exist"></td>
 				 </tr>
 				
 				{{end}}
@@ -87,11 +89,11 @@
 	   <div class="clearfix">
 		  <div class="pull-left">
 			{{if gt .BlockId 1}}
-			 <a href="#" onclick="return prev_block()" class="btn btn-primary"><span class="fa fa-angle-left"></span> &nbsp; Prev Block</a>
+			 <a href="#" onclick="return prev_block()" class="btn btn-primary"><span class="fa fa-angle-left"></span> &nbsp; <span class="lang" lang-id="prev_block"></span></a>
 			{{end}}
 		  </div>
 		  <div class="pull-right">
-			 <a href="#" onclick="return next_block()" class="btn btn-primary">Next Block &nbsp; <span class="fa fa-angle-right"></span></a>
+			 <a href="#" onclick="return next_block()" class="btn btn-primary"><span class="lang" lang-id="next_block"></span> &nbsp; <span class="fa fa-angle-right"></span></a>
 		  </div>
 	   </div>
 	  </div>
@@ -112,9 +114,9 @@
 				 <tr>
 					<th class="lang" lang-id="block_id"></th>
 					<!--th>Hash</th-->
-					<th>Timestamp</th>
+					<th class="lang" lang-id="timestamp"></th>
 					<!--th>State ID</th-->
-					<th>Added by</th>
+					<th class="lang" lang-id="added_by"></th>
 					<th style="text-transform: capitalize;" class="lang" lang-id="transactions"></th>
 				 </tr>
 			  </thead>

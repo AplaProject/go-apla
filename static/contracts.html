@@ -30,20 +30,20 @@
     {{if ne .Global "1"}}
 		<div class="content-heading">
 		  <div class="pull-right">
-			  <button type="button" class="btn btn-green" onclick="load_page('contracts', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em>Global</button>
-			  <button type="button" class="btn btn-default" onclick="load_page('newContract')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+			  <button type="button" class="btn btn-green" onclick="load_page('contracts', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em><span class="lang" lang-id="global"></span></button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newContract')"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_new"></span></button>
 		  </div>
-		  Smart Contracts
+		  <span class="lang" lang-id="smart_contracts"></span>
 		</div>
     {{else}}
 		<div class="content-heading">
 		  <div class="pull-right">
-			  <button type="button" class="btn btn-default" onclick="load_page('newContract', {{if eq .Global "1"}}{global: 1}{{end}})"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new</button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newContract', {{if eq .Global "1"}}{global: 1}{{end}})"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_new"></span></button>
 		  </div>
-		  Global
+		  <span class="lang" lang-id="global"></span>
 		</div>
 		<ol class="breadcrumb">
-		   <li><a href="#" onclick="load_page('contracts')">Smart Contracts</a></li>
+		   <li><a href="#" onclick="load_page('contracts')" class="lang" lang-id="smart_contracts"></a></li>
 	   </ol>
     {{end}}
 	<!-- START panel-->
@@ -54,8 +54,8 @@
 			  <thead>
 				 <tr>
 					<th width="25">ID</th>
-					<th>Contract Name</th>
-					<th width="50">Action</th>
+					<th class="lang" lang-id="contract_name"></th>
+					<th width="50" class="lang" lang-id="action"></th>
 				 </tr>
 			  </thead>
 			  <tbody>

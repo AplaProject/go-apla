@@ -70,32 +70,32 @@
 				send_to_net_success({{if .DataMenu.name}}data, MenuReload{{else}}data, ShowConfirm{{end}}) 
 			},
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	} );
 </script>
 	<div class="content-heading">
-		{{if .DataMenu.name}}Edit{{else}}New{{end}} Menu
+		{{if .DataMenu.name}}<span class="lang" lang-id="edit_menu"></span>{{else}}<span class="lang" lang-id="new_menu"></span>{{end}}
 	</div>
 	<ol class="breadcrumb">
-		<li><a href='#' onclick="load_page('interface')">Interface</a></li>
+		<li><a href='#' onclick="load_page('interface')" class="lang" lang-id="interface"></a></li>
 	</ol>
 
 	<div class="panel panel-primary form" data-sweet-alert>
 		<div class="panel-heading">
 			<div class="panel-title">
-				Menu
+				<span class="lang" lang-id="menu"></span>
 			</div>
 		</div>
 		<div class="panel-body">
 			<form role="form">
 			   <div class="form-group">
-				   <label>Name</label>
+				   <label class="lang" lang-id="name"></label>
 				   {{if .DataMenu.name}} <p class="form-control-static">{{.DataMenu.name}}</p> <input type="hidden" class="form-control" id="menu_name" value="{{.DataMenu.name}}"> {{else}} <input type="text" class="form-control" id="menu_name"> {{end}}
 			   </div>
 			   <div class="form-group">
-				   <label>Value</label>
+				   <label class="lang" lang-id="value"></label>
 				   <pre class="textEditor">
 						<code></code>
 						<section id="textEditor">{{.DataMenu.value}}</section>
@@ -103,7 +103,7 @@
 				   <textarea id="menu_value" class="form-control hidden"></textarea>
 			   </div>
 			   <div class="form-group">
-				   <label>Conditions for change</label>
+				   <label class="lang" lang-id="conditions_change"></label>
 				   <textarea class="form-control" id="menu_conditions">{{.DataMenu.conditions}}</textarea>
 			   </div>
 			</form>
@@ -111,7 +111,7 @@
 		<div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-right">
-			 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Save</button>
+			 <button type="button" class="btn btn-primary lang" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" lang-id="save"></button>
 		  </div>
 	   </div>
 	  </div>
@@ -123,8 +123,6 @@
 		<div class="panel panel-default" data-sweet-alert>
 		 <h4 class="panel-heading"></h4>
 		 <div class="panel-body">
-		   <!--<label>Name</label>
-		   <p class="form-control-static"></p>-->
 		   <pre class="textEditorHistory">
 				<code></code>
 			</pre>
@@ -135,9 +133,9 @@
 				
 			  </div>
 			  <div class="pull-right">
-				 <button type="button" id="edit" class="btn btn-primary" onClick="Edit();">Edit</button>
-				 <button type="button" id="new" class="btn btn-primary" onclick="load_page('newMenu', {global: {{.Global}} });">Create</button>
-				 <button type="button" id="all" class="btn btn-primary" onClick="load_page('interface');">List</button>
+				 <button type="button" id="edit" class="btn btn-primary lang" onClick="Edit();" lang-id="edit"></button>
+				 <button type="button" id="new" class="btn btn-primary lang" onclick="load_page('newMenu', {global: {{.Global}} });" lang-id="create"></button>
+				 <button type="button" id="all" class="btn btn-primary lang" onClick="load_page('interface');" lang-id="list"></button>
 			  </div>
 		   </div>
 		  </div>

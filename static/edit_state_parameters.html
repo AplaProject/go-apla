@@ -53,18 +53,18 @@
 				send_to_net_success(data, MenuReload);
 			},
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	} );
 </script>
 
 	<div class="content-heading">
-		{{if .StateParameters.name}}Edit{{else}}New{{end}} Parameter
+		{{if .StateParameters.name}}<span class="lang" lang-id="edit_parameter"></span>{{else}}<span class="lang" lang-id="new_parameter"></span>{{end}}
 	</div>
 	<ol class="breadcrumb">
-		<li><a href="#" onclick="load_page('listOfTables')">List Of Tables</a></li>
-		<li><a href="#" onclick="load_page('stateParameters')">State parameters</a></li>
+		<li><a href="#" onclick="load_page('listOfTables')" class="lang" lang-id="list_of_tables"></a></li>
+		<li><a href="#" onclick="load_page('stateParameters')" class="lang" lang-id="state_parameters"></a></li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default" data-sweet-alert>
@@ -76,11 +76,11 @@
 	 <div class="panel-body">
 	 	<form role="form">
 		   <div class="form-group">
-			   <label>Name</label>
+			   <label class="lang" lang-id="name"></label>
 			   {{if .StateParameters.name}} <p class="form-control-static">{{.StateParameters.name}}</p> <input type="hidden" class="form-control" id="name" value="{{.StateParameters.name}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
 		   </div>
 		   <div class="form-group">
-			   <label>Value</label>
+			   <label class="lang" lang-id="value"></label>
 
 			   {{if .StateParameters.name}}
 				   {{if eq .StateParameters.name "state_flag"}}<p><img id="flag" src="{{.StateParameters.value}}">
@@ -93,7 +93,7 @@
 			   <textarea class="form-control" id="value">{{.StateParameters.value}}</textarea>
 		   </div>
 		   <div class="form-group">
-			   <label>Conditions for change</label>
+			   <label class="lang" lang-id="conditions_change"></label>
 				<textarea class="form-control" id="conditions">{{.StateParameters.conditions}}</textarea>
 			   <!--select class="selectbox form-control" id="conditions">
 				 {{ range $param := .AllStateParameters }} <option {{if eq (index $.StateParameters "conditions") $param}} selected {{end}}>{{$param}}</option> {{end}}
@@ -106,14 +106,14 @@
 		  <div class="pull-left">
 			  {{if .StateParameters.name}}
 				  {{if eq .StateParameters.name "state_flag"}}
-					<button type="button" class="btn btn-primary" onClick="openImageEditor('flag', 'value', '2/1', '100', '50');"><i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>
+					<button type="button" class="btn btn-primary" onClick="openImageEditor('flag', 'value', '2/1', '100', '50');"><i class="fa fa-file-image-o"></i> &nbsp;<span class="lang" lang-id="add_edit_image"></span></button>
 				  {{else}}
-					<button type="button" class="btn btn-primary" onClick="preloader(this); openMap('value');" id="openMap"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
+					<button type="button" class="btn btn-primary" onClick="preloader(this); openMap('value');" id="openMap"><i class="fa fa-map-marker"></i> &nbsp;<span class="lang" lang-id="add_edit_coords"></span></button>
 				  {{end}}
 			  {{end}}
 		  </div>
 		  <div class="pull-right">
-			  <button type="button" id="send" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+			  <button type="button" id="send" class="btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" lang-id="send"></button>
 		  </div>
 	   </div>
 	  </div>

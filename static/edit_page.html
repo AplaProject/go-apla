@@ -225,18 +225,18 @@
 			success: function(data) {
 				$("#DataMenu").html("").append(
 					'<div class="form-group">' +
-					   '<label>Name</label>' +
+					   '<label class="lang" lang-id="name">' + returnLang("name") + '</label>' +
 					   '<p class="form-control-static">' + data.name + '</p>' +
 				   '</div>' +
 				   '<div class="form-group">' +
-					   '<label>Value</label>' +
+					   '<label class="lang" lang-id="value">' + returnLang("value") + '</label>' +
 					   '<pre class="textEditorMenu">' +
 							'<code>' + data.value + '</code>' +
 							'<section id="textEditorMenu">' + data.value + '</section>' +
 						'</pre>' +
 				    '</div>' +
 					'<div class="form-group">' +
-					   '<label>Conditions</label>' +
+					   '<label class="lang" lang-id="conditions_change">' + returnLang("conditions_change") + '</label>' +
 					   '<p class="form-control-static">' + data.conditions + '</p>' +
 				   '</div>'
 				);
@@ -253,7 +253,7 @@
 				obj.removeClass("whirl standard");
 			},
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	}
@@ -322,7 +322,7 @@
 			crossDomain: true,
 			success: function(data) { send_to_net_success({{if .DataPage.name}}data, Reload{{else}}data, ShowConfirm{{end}}) },
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	} );
@@ -339,10 +339,12 @@
 	$("#btn_history").on('click', function () {
 		if ($(".history").is(":visible")) {
 			$(".history").hide();
-			$(this).find("span").text("Show");
+			$(this).find(".show_history").show();
+			$(this).find(".hide_history").hide();
 		} else {
 			$(".history").show();
-			$(this).find("span").text("Hide");
+			$(this).find(".show_history").hide();
+			$(this).find(".hide_history").show();
 		}
 	});
 	
@@ -353,10 +355,10 @@
 	});
 </script>
 	<div class="content-heading">
-		{{if .DataPage.name}}Edit{{else}}New{{end}} Page
+		{{if .DataPage.name}}<span class="lang" lang-id="edit_page"></span>{{else}}<span class="lang" lang-id="new_page"></span>{{end}}
 	</div>
 	<ol class="breadcrumb">
-	   <li><a href='#' onclick="load_page('interface')">Interface</a></li>
+	   <li><a href='#' onclick="load_page('interface')" class="lang" lang-id="interface"></a></li>
 	</ol>
 
 <div class="row form">
@@ -366,18 +368,18 @@
 	
 		 <div class="panel-heading">
 			<div class="panel-title">
-				Page
+				<span class="lang" lang-id="page"></span>
 			</div>
 		 </div>
 		 <div class="panel-body">
 			<form role="form">
-				<button type="button" class="btn btn-link" onclick="" id="back" title="Back">Show page</button>
+				<button type="button" class="btn btn-link lang" onclick="" id="back" lang-id="show_page"></button>
 			   <div class="form-group">
-				   <label>Name</label>
+				   <label class="lang" lang-id="name"></label>
 				   {{if .DataPage.name}} <p class="form-control-static" id="page_name_text">{{.DataPage.name}}</p> <input type="hidden" class="form-control" id="page_name" value="{{.DataPage.name}}"> {{else}} <input type="text" class="form-control" id="page_name" value="{{.Name}}"> {{end}}
 			   </div>
 			   <div class="form-group">
-				   <label>Value</label>
+				   <label class="lang" lang-id="value"></label>
 				   <pre class="textEditor">
 						<code></code>
 						<section id="textEditor">{{.DataPage.value}}</section>
@@ -385,7 +387,7 @@
 				   <textarea id="page_value" class="form-control hidden"></textarea>
 			   </div>
 			   <div class="form-group">
-				   <label>Menu</label>
+				   <label class="lang" lang-id="menu"></label>
 				   <select class="form-control" id="page_menu">
 					 {{range $data := .AllMenu }}
 						 <option value="{{index $data "name"}}"
@@ -401,7 +403,7 @@
 					</select>
 			   </div>
 			   <div class="form-group">
-				   <label>Conditions for change</label>
+				   <label class="lang" lang-id="conditions_change"></label>
 				   <textarea class="form-control" id="page_conditions">{{.DataPage.conditions}}</textarea>
 			   </div>
 			</form>
@@ -409,13 +411,12 @@
 		 <div class="panel-footer">
 		   <div class="clearfix">
 			  <div class="pull-left">
-				<!--<button type="button" class="btn btn-default" onClick="formatCode();"><i class="fa fa-code fa-fw mr-sm" aria-hidden="true"></i>Format Code</button>-->
 				{{if .DataPageHistory}}
-					<button type="button" class="btn btn-default" id="btn_history"><i class="fa fa-history fa-fw mr-sm" aria-hidden="true"></i><span>Show</span> History</button>
+					<button type="button" class="btn btn-default" id="btn_history"><i class="fa fa-history fa-fw mr-sm" aria-hidden="true"></i><span class="show_history lang" lang-id="show_history"></span><span class="hide_history lang" lang-id="hide_history"></span></button>
 				{{end}}
 			  </div>
 			  <div class="pull-right">
-				 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);">Save</button>
+				 <button type="button" class="btn btn-primary lang" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" lang-id="save"></button>
 			  </div>
 		   </div>
 		  </div>
@@ -424,7 +425,7 @@
 		
 		{{if .DataPageHistory}}
 			<div class="history">
-				<h4 class="page-header">History of {{.DataPage.name}}</h4>
+				<h4 class="page-header"><span class="lang" lang-id="history_of"></span> {{.DataPage.name}}</h4>
 				{{range $data := .DataPageHistory }}
 					<!-- START panel-->
 					<div class="panel panel-default">
@@ -433,15 +434,15 @@
 						   <table class="table table-striped table-bordered table-hover">
 							  <tbody>
 								 <tr>
-									<td class="thead">Block ID</td>
+									<td class="thead lang" lang-id="block_id"></td>
 									<td><strong><a href="#" onClick="openBlockDetailPopup({{$data.block_id}})">{{$data.block_id}}</a></strong></td>
 								 </tr>
 								 <tr>
-									<td class="thead">Conditions for change</td>
+									<td class="thead lang" lang-id="conditions_change"></td>
 									<td>{{$data.conditions}}</td>
 								 </tr>
 								 <tr>
-									<td class="thead">Value</td>
+									<td class="thead lang" lang-id="value"></td>
 									<td>
 										<pre class="textEditorHistory">
 											<code>{{noescape $data.value}}</code>
@@ -457,7 +458,7 @@
 					   <div class="clearfix">
 						  <div class="pull-left"></div>
 						  <div class="pull-right">
-							 <button type="button" class="restore btn btn-green"><i class="fa fa-window-restore fa-fw mr-sm" aria-hidden="true"></i>Restore</button>
+							 <button type="button" class="restore btn btn-green"><i class="fa fa-window-restore fa-fw mr-sm" aria-hidden="true"></i><span class="lang" lang-id="restore"></span></button>
 						  </div>
 					   </div>
 					  </div>
@@ -471,7 +472,7 @@
 		<div class="panel panel-primary" data-sweet-alert>
 			<div class="panel-heading">
 				<div class="panel-title">
-					Menu
+					<span class="lang" lang-id="menu"></span>
 				</div>
 			</div>
 			<div class="panel-body">
@@ -480,8 +481,8 @@
 			<div class="panel-footer">
 			   <div class="clearfix">
 				  <div class="pull-left">
-					 <button type="button" class="btn btn-primary" onclick="EditMenu();">edit</button>
-					 <button type="button" id="DataMenuBtn" class="hidden" data-tool="panel-refresh" onClick="preloader(this);">edit</button>
+					 <button type="button" class="btn btn-primary lang" onclick="EditMenu();" lang-id="edit"></button>
+					 <button type="button" id="DataMenuBtn" class="hidden lang" data-tool="panel-refresh" onClick="preloader(this);" lang-id="edit"></button>
 				  </div>
 			   </div>
 		  	</div>
@@ -507,9 +508,9 @@
 			
 		  </div>
 		  <div class="pull-right">
-			 <button type="button" id="edit" class="btn btn-primary" onClick="Edit();">Edit</button>
-			 <button type="button" id="new" class="btn btn-primary" onclick="load_page('newPage', {global: {{.Global}} });">Create</button>
-			 <button type="button" id="all" class="btn btn-primary" onClick="load_page('interface');">List</button>
+			 <button type="button" id="edit" class="btn btn-primary lang" onClick="Edit();" lang-id="edit"></button>
+			 <button type="button" id="new" class="btn btn-primary lang" onclick="load_page('newPage', {global: {{.Global}} });" lang-id="create"></button>
+			 <button type="button" id="all" class="btn btn-primary lang" onClick="load_page('interface');" lang-id="list"></button>
 		  </div>
 	   </div>
 	  </div>

@@ -26,30 +26,25 @@
 	
 	<div class="content-heading">
 		<div class="pull-right">
-		  <button type="button" class="btn btn-default" onclick="load_page('restoreAccess')"><em class="fa fa-sign-in fa-fw mr-sm"></em>Restore access</button>
-		  <button type="button" class="btn btn-default" onclick="load_page('newStateParameters')"><em class="fa fa-plus-circle fa-fw mr-sm"></em>Add new parameter</button>
+		  <button type="button" class="btn btn-default" onclick="load_page('restoreAccess')"><em class="fa fa-sign-in fa-fw mr-sm"></em><span class="lang" lang-id="restore_access"></span></button>
+		  <button type="button" class="btn btn-default" onclick="load_page('newStateParameters')"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_new_parameter"></span></button>
 	    </div>
-		State parameters
+		<span class="lang" lang-id="state_parameters"></span>
 	</div>
 	<ol class="breadcrumb">
-		<li><a href="#" onclick="load_page('listOfTables')">List Of Tables</a></li>
+		<li><a href="#" onclick="load_page('listOfTables')" class="lang" lang-id="list_of_tables"></a></li>
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
-	 <!--<div class="panel-heading">
-	 	<div class="panel-title">
-			State parameters
-		</div>
-	 </div>-->
 	 <div class="panel-body p0_mob">
 		<div class="table-responsive">
 		   <table class="table table-striped table-bordered table-hover" data-role="table">
 			  <thead>
 				  <tr>
-					  <th>Parameter</th>
-					  <th>Value</th>
-					  <th>Conditions for change</th>
-					  <th width="50">Edit</th>
+					  <th class="lang" lang-id="parameter"></th>
+					  <th class="lang" lang-id="value"></th>
+					  <th class="lang" lang-id="conditions_change"></th>
+					  <th width="50" class="lang" lang-id="edit"></th>
 				  </tr>
 			  </thead>
 			  <tbody>
@@ -58,7 +53,7 @@
 					<td class="thead">{{$value.name}}</td>
 					 <td>{{if eq $value.name "state_flag"}}<img id="flag" alt="" /><script> document.getElementById('flag').setAttribute( 'src', '{{$value.value}}' ); </script>{{else}}<strong>{{$value.value}}</strong>{{end}}</td>
 					 <td><strong>{{$value.conditions}}</strong></td>
-					<td width="50"><button type="button" class="btn btn-labeled btn-default" onclick="load_page('editStateParameters', {name: {{$value.name}}} )"><span class="btn-label"><em class="fa fa-edit"></em></span></button></td>
+					<td width="50"><button type="button" class="btn btn-labeled btn-default fw" onclick="load_page('editStateParameters', {name: {{$value.name}}} )"><span class="btn-label d-block"><em class="fa fa-edit"></em></span></button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>

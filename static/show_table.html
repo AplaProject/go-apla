@@ -1,55 +1,15 @@
 {{ define "showTable" }}
-<style>
-	.textEditor {
-		position:relative;
-		font-size:0px;
-		padding-bottom:5px;
-	}
-	.textEditor code  {
-		position:relative;
-		font: 12px "Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
-		line-height:14px;
-		z-index:1;
-    }
-	.textEditor section  {
-		position:absolute;
-		left:0px;
-		top:0px;
-		width:100%;
-        height:100%;
-		z-index:2;
-    }
-</style>
-
-<script>
-	/*var i = 0;
-	
-	$(".textEditor").each(function() {
-		i += 1;
-		var id = "textEditor_" + i;
-		$(this).find("section").attr("id", id);
-		var editor = ace.edit(id);
-		var JavaScriptMode = ace.require("ace/mode/c_cpp").Mode;
-		editor.setTheme("ace/theme/chrome");
-		editor.session.setMode(new JavaScriptMode());
-		editor.setShowPrintMargin(false);
-		editor.getSession().setUseWrapMode(true);
-		editor.renderer.setShowGutter(false);
-		editor.setReadOnly(true);
-	});*/
-</script>
-
 	<div class="content-heading">
-		Show Table
+		<span class="lang" lang-id="show_table"></span>
 	</div>
 	<ol class="breadcrumb">
-		<li><a href="#" onclick="load_page('listOfTables')">List Of Tables</a></li> {{if eq .Global "1"}}<li><a href="#" onclick="load_page('listOfTables', {global: 1})">Global</a></li>{{end}}
+		<li><a href="#" onclick="load_page('listOfTables')" class="lang" lang-id="list_of_tables"></a></li> {{if eq .Global "1"}}<li><a href="#" onclick="load_page('listOfTables', {global: 1})" class="lang" lang-id="global"></a></li>{{end}}
 	</ol>
 	<!-- START panel-->
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
-			{{.TableName}} {{if .TableName}}<span class="pull-right"><a href="#" onclick="load_page('editTable', {global: {{.Global}}, name: {{.TableName}}})">Edit table</a></span>{{end}}
+			{{.TableName}} {{if .TableName}}<span class="pull-right"><a href="#" onclick="load_page('editTable', {global: {{.Global}}, name: {{.TableName}}})" class="lang" lang-id="edit_table"></a></span>{{end}}
 		</div>
 	 </div>
 	 <div class="panel-body">
@@ -62,7 +22,7 @@
 				  {{ range $name, $permissions := .Columns }}
 					  <th>{{$name}}</th>
 				  {{end}}
-					  <th>History</th>
+					  <th class="lang" lang-id="history"></th>
 				  </tr>
 			  </thead>
 			  <tbody>
@@ -73,25 +33,9 @@
 					  {{ range $name, $permissions := $.Columns }}
 					  <td class="thead"><strong>{{$val:=index $data $name}}{{noescape $val}}</strong></td>
 					  {{end}}
-					  <td class="thead">{{if ne $data.rb_id "0"}}<button type="button" class="btn btn-primary" onclick="load_page('rowHistory', {rbId: {{$data.rb_id}}, tableName:{{$.TableName}}, global: {{$.Global}} });">History</button>{{end}}</td>
+					  <td class="thead">{{if ne $data.rb_id "0"}}<button type="button" class="btn btn-primary lang" onclick="load_page('rowHistory', {rbId: {{$data.rb_id}}, tableName:{{$.TableName}}, global: {{$.Global}} });" lang-id="history"></button>{{end}}</td>
 				  </tr>
 				  {{end}}
-			  </tbody>
-			  <!--<tr>
-				 <td>
-					<pre class="textEditor">
-						<code>$data.value</code>
-						<section>$data.value</section>
-					</pre>
-				</td>
-				<td>
-					<pre class="textEditor">
-						<code>$data.value</code>
-						<section>$data.value</section>
-					</pre>
-				</td>
-			  </tr>-->
-
 			  </tbody>
 		   </table>
 		</div>

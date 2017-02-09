@@ -1235,7 +1235,7 @@ function openImageEditor(img, container, ratio, width, height) {
 
 	$("#dl_modal").load("content?controllerHTML=modal_avatar", {}, function () {
 		var modal = $("#modal_avatar");
-
+		updateLanguage("#dl_modal .lang");
 		modal.modal("show");
 	});
 }
@@ -1260,7 +1260,7 @@ function saveImage() {
 function openBlockDetailPopup(id) {
 	$("#dl_modal").load("content?page=block_explorer", { modal: 1, blockId: id }, function () {
 		var modal = $("#modal_block_detail");
-
+		updateLanguage("#dl_modal .lang");
 		modal.modal("show");
 	});
 }

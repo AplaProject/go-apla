@@ -69,16 +69,16 @@
 			crossDomain: true,
 			success: function(data) { send_to_net_success(data, BackToEditTable) },
 			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
+				Alert(returnLang("error"), error, "error");
 			}
 		});
 	} );
 </script>
 	<div class="content-heading">
-		{{if .ColumnName}}Edit{{else}}New{{end}} Column
+		{{if .ColumnName}}<span class="lang" lang-id="edit_column"></span>{{else}}<span class="lang" lang-id="new_column"></span>{{end}}
 	</div>
 	<ol class="breadcrumb">
-		<li><a href="#" onclick="load_page('listOfTables')">List Of Tables</a></li>
+		<li><a href="#" onclick="load_page('listOfTables')" class="lang" lang-id="list_of_tables"></a></li>
 	   <li><a href="#" onclick="load_page('editTable', {name: {{.TableName}}})">{{.TableName}}</a></li>
 	</ol>
 	<!-- START panel-->
@@ -91,17 +91,24 @@
 	 <div class="panel-body">
 	 	<form role="form">
 		   <div class="form-group">
-			   <label>Name</label>
+			   <label class="lang" lang-id="name"></label>
 			   {{if .ColumnName}} <p class="form-control-static">{{.ColumnName}}</p> <input type="hidden" class="form-control" id="column_name" value="{{.ColumnName}}"> {{else}} <input type="text" class="form-control" id="column_name"> {{end}}
 		   </div>
 			{{if not .ColumnName}}
 				<div class="row">
 					<div class="form-group col-md-10">
-						<label>Type</label>
-						<select id="column_type" class="column_type form-control" onChange="CheckIndex();"><option value="text">Text</option><option value="int64">Numbers</option><option value="time">Date/Time</option><option value="hash">Varchar(32)</option><option value="money">Money</option><option value="double">Double</option></select>
+						<label class="lang" lang-id="column_type"></label>
+						<select id="column_type" class="column_type form-control" onChange="CheckIndex();">
+							<option value="text" class="lang" lang-id="text"></option>
+							<option value="int64" class="lang" lang-id="numbers"></option>
+							<option value="time" class="lang" lang-id="date_time"></option>
+							<option value="hash" class="lang" lang-id="varchar"></option>
+							<option value="money" class="lang" lang-id="money"></option>
+							<option value="double" class="lang" lang-id="double"></option>
+						</select>
 					</div>
 					<div class="form-group col-md-2">
-						<label style="display:block;" for="index">Index</label>
+						<label style="display:block;" for="index" class="lang" lang-id="index"></label>
 						<div class="checkbox c-checkbox" style="display:inline-block; width:auto;">
 							<label style="padding-left:0px;">
 								<input id="index" class="hidden index" type="checkbox">
@@ -112,7 +119,7 @@
 				</div>
 			{{end}}
 			<div class="form-group">
-				<label>Permissions</label>
+				<label class="lang" lang-id="permissions"></label>
 				<textarea class="form-control" id="permissions">{{.ColumnPermission}}</textarea>
 			</div>
 		</form>
@@ -123,7 +130,7 @@
 
 		  </div>
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary" id="send" data-tool="panel-refresh" onClick="preloader(this);">Send</button>
+			 <button type="button" class="btn btn-primary lang" id="send" data-tool="panel-refresh" onClick="preloader(this);" lang-id="send"></button>
 		  </div>
 	   </div>
 	  </div>
