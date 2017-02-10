@@ -104,7 +104,7 @@ type ExtendData struct {
 	AutoPars map[string]string
 }
 
-func parseContract(in string) (id uint64, name string) {
+func ParseContract(in string) (id uint64, name string) {
 	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
 	ret := re.FindStringSubmatch(in)
 	if len(ret) == 3 {
@@ -130,10 +130,14 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	for _, ipar := range pars {
 		parnames[ipar] = true
 	}
+	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] {
 				return fmt.Errorf(`%s is not defined`, tx.Name)
+			}
+			if tx.Name == `Signature` {
+				isSignature = true
 			}
 		}
 	}
@@ -152,8 +156,8 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		if rt.blocks[i].Block.Type == OBJ_FUNC && rt.blocks[i].Block.Parent != nil &&
 			rt.blocks[i].Block.Parent.Type == OBJ_CONTRACT {
 			parent = rt.blocks[i].Block.Parent.Info.(*ContractInfo).Name
-			fid, fname := parseContract(parent)
-			cid, _ := parseContract(name)
+			fid, fname := ParseContract(parent)
+			cid, _ := ParseContract(name)
 			if len(fname) > 0 {
 				if fid == 0 {
 					parent = `@` + fname
@@ -169,6 +173,13 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	if stack, ok := (*rt.extend)[`stack_cont`]; ok && (*rt.extend)[`parser`] != nil {
 		stackCont = stack.(func(interface{}, string))
 		stackCont((*rt.extend)[`parser`], name)
+	}
+	if (*rt.extend)[`parser`] != nil && isSignature {
+		obj := rt.vm.Objects[`check_signature`]
+		finfo := obj.Value.(ExtFuncInfo)
+		if err := finfo.Func.(func(*map[string]interface{}, string) error)(rt.extend, name); err != nil {
+			return err
+		}
 	}
 	for _, method := range []string{`init`, `conditions`, `action`} {
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == OBJ_FUNC {

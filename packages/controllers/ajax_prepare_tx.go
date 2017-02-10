@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -30,17 +31,25 @@ import (
 
 const APrepareTx = `ajax_prepare_tx`
 
+type TxSignJson struct {
+	ForSign string    `json:"forsign"`
+	Field   string    `json:"field"`
+	Title   string    `json:"title"`
+	Params  []SignRes `json:"params"`
+}
+
 type PrepareTxJson struct {
-	ForSign string `json:"forsign"`
-	Time    uint32 `json:"time"`
-	Error   string `json:"error"`
+	ForSign string       `json:"forsign"`
+	Signs   []TxSignJson `json:"signs"`
+	Time    uint32       `json:"time"`
+	Error   string       `json:"error"`
 }
 
 func init() {
 	newPage(APrepareTx, `json`)
 }
 
-func (c *Controller) checkTx() (contract *smart.Contract, err error) {
+func (c *Controller) checkTx(result *PrepareTxJson) (contract *smart.Contract, err error) {
 	cntname := c.r.FormValue(`TxName`)
 	contract = smart.GetContract(cntname, uint32(c.SessStateId))
 	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
@@ -50,23 +59,53 @@ func (c *Controller) checkTx() (contract *smart.Contract, err error) {
 			if strings.Index(fitem.Tags, `image`) >= 0 {
 				continue
 			}
-			val := strings.TrimSpace(c.r.FormValue(fitem.Name))
-			if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
-				err = fmt.Errorf(`%s is empty`, fitem.Name)
-				break
-			}
-			if strings.Index(fitem.Tags, `address`) >= 0 {
-				addr := lib.StringToAddress(val)
-				if addr == 0 {
-					err = fmt.Errorf(`Address %s is not valid`, val)
+			if strings.Index(fitem.Tags, `signature`) >= 0 && result != nil {
+				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+					pref := utils.Int64ToStr(c.SessStateId)
+					if c.SessStateId == 0 {
+						pref = `global`
+					}
+					var value string
+					value, err = c.Single(fmt.Sprintf(`select value from "%s_signatures" where name=?`, pref), ret[1]).String()
+					if err != nil {
+						break
+					}
+					if len(value) == 0 {
+						err = fmt.Errorf(`%s is unknown signature`, ret[1])
+						break
+					}
+					var sign TxSignJson
+					err = json.Unmarshal([]byte(value), &sign)
+					if err != nil {
+						break
+					}
+					sign.ForSign = fmt.Sprintf(`%d,%d`, (*result).Time, uint64(c.SessWalletId))
+					for _, isign := range sign.Params {
+						val := strings.TrimSpace(c.r.FormValue(isign.Param))
+						sign.ForSign += fmt.Sprintf(`,%v`, val)
+					}
+					sign.Field = fitem.Name
+					(*result).Signs = append((*result).Signs, sign)
+				}
+			} else {
+				val := strings.TrimSpace(c.r.FormValue(fitem.Name))
+				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
+					err = fmt.Errorf(`%s is empty`, fitem.Name)
 					break
 				}
-			}
-			if fitem.Type.String() == `decimal.Decimal` {
-				re := regexp.MustCompile(`^\d+$`) //`^\d+\.?\d+?$`
-				if !re.Match([]byte(val)) {
-					err = fmt.Errorf(`The value of money %s is not valid`, val)
-					break
+				if strings.Index(fitem.Tags, `address`) >= 0 {
+					addr := lib.StringToAddress(val)
+					if addr == 0 {
+						err = fmt.Errorf(`Address %s is not valid`, val)
+						break
+					}
+				}
+				if fitem.Type.String() == `decimal.Decimal` {
+					re := regexp.MustCompile(`^\d+$`) //`^\d+\.?\d+?$`
+					if !re.Match([]byte(val)) {
+						err = fmt.Errorf(`The value of money %s is not valid`, val)
+						break
+					}
 				}
 			}
 		}
@@ -78,12 +117,12 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 	var (
 		result PrepareTxJson
 	)
-	contract, err := c.checkTx()
+	result.Time = lib.Time32()
+	contract, err := c.checkTx(&result)
 	if err == nil {
 		var flags uint8
 		var isPublic []byte
 		info := (*contract).Block.Info.(*script.ContractInfo)
-		result.Time = lib.Time32()
 		userId := uint64(c.SessWalletId)
 		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
 		if err == nil && len(isPublic) == 0 {
@@ -96,7 +135,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.Id, result.Time, userId, c.SessStateId, flags)
 		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
 			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-				if strings.Index(fitem.Tags, `image`) >= 0 {
+				if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
 					continue
 				}
 				val := strings.TrimSpace(c.r.FormValue(fitem.Name))

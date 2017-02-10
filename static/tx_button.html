@@ -27,6 +27,14 @@
 					Alert("Error", data.error, "error");
 				} else {
 					console.log(data);
+					if (data.signs) {
+						for (var i=0; i < data.signs.length; i++ ) {
+							sign = GKey.sign(data.signs[i].forsign);
+							console.log('Sign', sign);
+							data.forsign += ',' + sign;
+							predata{{.Unique}}[data.signs[i].field] = sign;
+						}
+					}
 					predata{{.Unique}}.time = data.time;
 					$("#for-signature{{.Unique}}").val(data.forsign);
 					doSign({{.Unique}});
