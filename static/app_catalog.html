@@ -19,7 +19,7 @@
 </style>
 
 <div class="content-heading">
-	Application List
+	<span class="lang" lang-id="application_list"></span>
 </div>
 <div class="row">
 	{{range .List}}
@@ -37,7 +37,7 @@
 			<div class="panel-footer">
 				<div class="clearfix">
 					<div class="pull-right">
-						<a href="#" onclick="load_app('{{.Name}}');" type="button" class="btn btn-primary">Launch</a>
+						<a href="#" onclick="load_app('{{.Name}}');" type="button" class="btn btn-primary lang" lang-id="launch"></a>
 					</div>
 				</div>
 			</div>

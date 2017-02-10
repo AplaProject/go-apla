@@ -1,26 +1,38 @@
-<div class="panel panel-default" data-sweet-alert>
+<div class="content-heading" id="apptitle"></div>
+<ol class="breadcrumb">
+	<li><a href="#" onclick="load_page('app_catalog')" class="lang" lang-id="application_list"></a></li>
+</ol>
+<div class="panel panel-warning" data-sweet-alert>
 	<div class="panel-heading">
-		<div class="panel-title" id="apptitle"></div>
+		<div class="panel-title lang" lang-id="donot_leave_page"></div>
 	</div>
 	<div class="panel-body">
-
-		<h1 id="head"></h1>
+		<!--<h1 id="head"></h1>-->
 		<p id="desc"></p>
-		<div class="panel-body">
-			<form role="form">
-				<div class="clearfix">
-					<div class="pull-left">
-						<div style="font-size: 1.5em;font-weight:bold;">Don't leave this page until the process finishes.</div>
-						<div id="process" style="font-size: 16px;"><span id="curtx">0</span>/<span id="alltx"></span> transactions</div>
-					</div>
-					<div class="pull-right">
-						<button id="send" type="button" class="btn btn-primary" data-tool="panel-refresh" onClick="preloader(this);">Install</button>
-						<button id="sendcontract" type="button" style="display: none;" class="btn btn-primary" data-toolx="panel-refresh" onClickx="preloader(this);">Install Contract</button>
-					</div>
-				</div>
-			</form>
+		<div class="well" style="margin-bottom:0px; margin-top:15px; background-color:#f5f5f5;">
+			<!--<div style="font-size: 1.5em;font-weight:bold;" class="lang" lang-id="donot_leave_page"></div>-->
+			<div id="process" style="font-size: 16px;"><span id="curtx">0</span>/<span id="alltx"></span> <span class="lang" lang-id="transactions" style="text-transform:lowercase;"></span></div>
 		</div>
-
+		<!--<form role="form">
+			<div class="clearfix">
+				<div class="pull-left">
+					<div style="font-size: 1.5em;font-weight:bold;" class="lang" lang-id="donot_leave_page"></div>
+					<div id="process" style="font-size: 16px;"><span id="curtx">0</span>/<span id="alltx"></span> <span class="lang" lang-id="transactions" style="text-transform:lowercase;"></span></div>
+				</div>
+				<div class="pull-right">
+					<button id="send" type="button" class="btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" lang-id="install"></button>
+					<button id="sendcontract" type="button" style="display: none;" class="btn btn-primary" data-toolx="panel-refresh" onClickx="preloader(this);">Install Contract</button>
+				</div>
+			</div>
+		</form>-->
+	</div>
+	<div class="panel-footer">
+		<div class="clearfix">
+			<div class="pull-right">
+				<button id="send" type="button" class="btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" lang-id="install"></button>
+				<button id="sendcontract" type="button" style="display: none;" class="btn btn-primary" data-toolx="panel-refresh" onClickx="preloader(this);">Install Contract</button>
+			</div>
+		</div>
 	</div>
 </div>
 {{noescape .Template}}
@@ -32,7 +44,7 @@
 
 	function SendTxOK( blockid ) {
 		if (txcurrent < jdata.TX.length - 1) {
-			$("#tx"+txcurrent).css('background-color', '#267F00');
+			$("#tx"+txcurrent).css('background-color', '#32ac8e');
 			$("#tx"+txcurrent).html(blockid);
 			txcurrent++;	
 			$("#curtx").html(txcurrent);
@@ -88,7 +100,7 @@
 				success: function(data) { 
 					send_to_net_success(data, SendTxOK, true )},
 				error: function(xhr, status, error) {
-					Alert("Error", error,"error");
+					Alert(returnLang("error"), error,"error");
 				}
 		});
 	} );						
@@ -128,7 +140,7 @@ function sendnetcontract() {
 			send_to_net_success(result, SendTxOK, true);
 		},
 		error: function(xhr, status, error) {
-			Alert("Error", error, "error");
+			Alert(returnLang("error"), error, "error");
 		}
 	});
 }
@@ -139,10 +151,15 @@ function sendnetcontract() {
 		$("#head").html( jdata.Head );
 		$("#desc").html( jdata.Desc );
 		$("#alltx").html( jdata.TX.length );
-		var tbl = '<table style="font-size: 12px; border-spacing: 5px;border-collapse: separate;"><tr style="text-align:center;">';
+		/*var tbl = '<table style="font-size: 12px; border-spacing: 5px;border-collapse: separate;"><tr style="text-align:center;">';
 		for (i=0; i< jdata.TX.length; i++ ) {
 			tbl += '<td id="tx'+i+'" style="color:#fff;border:2px solid #267F00;width: 6em;padding:0px 1em;">&nbsp;</td>'; 
 		}
-		$("#process").append(tbl + '</tr></table>');
+		$("#process").append(tbl + '</tr></table>');*/
+		var tbl = '<div class="installApp">';
+		for (i=0; i< jdata.TX.length; i++ ) {
+			tbl += '<article id="tx'+i+'">&nbsp;</article>'; 
+		}
+		$("#process").append(tbl + '</div>');
 	});
 </script> {{template "signatures".}}
