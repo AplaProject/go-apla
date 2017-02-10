@@ -1448,21 +1448,71 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 func Ring(vars *map[string]string, pars ...string) string {
 	class := `col-md-4`
 	title := ``
-	count := ``
+	count := 0
 	size := 18
-	if len(pars) > 2 {
-		size = int(StrToInt64(pars[2]))
+	if len(pars) > 0 {
+		count = int(StrToInt64(pars[0]))
 	}
 	if len(pars) > 1 {
 		title = getClass(pars[1])
 	}
-	if len(pars) > 0 {
-		count = lib.NumString(pars[0])
+	if len(pars) > 2 {
+		size = int(StrToInt64(pars[2]))
+	}
+	pct := 100
+	if len(pars) > 3 {
+		pct = int(StrToInt64(pars[3]))
+	}
+	speed := 1
+	if len(pars) > 4 {
+		speed = int(StrToInt64(pars[4]))
+	}
+	color := `23b7e5`
+	if len(pars) > 5 {
+		color = pars[5]
+	}
+	fontColor := `656565`
+	if len(pars) > 6 {
+		fontColor = pars[6]
+	}
+	width := 250
+	if len(pars) > 7 {
+		width = int(StrToInt64(pars[7]))
+	}
+	thickness := 10
+	if len(pars) > 8 {
+		thickness = int(StrToInt64(pars[8]))
+	}
+	prefix := ``
+	if len(pars) > 9 {
+		prefix = pars[9]
+	}
+	suffix := ``
+	if len(pars) > 10 {
+		suffix = pars[10]
 	}
 	return fmt.Sprintf(`<div class="%s"><div class="panel panel-default"> <div class="panel-body">
 			<div class="text-info">%s</div>
-			<div class="population" style="font-size:%dpx"><img src="static/img/spacer.gif" alt=""><span>%s</span></div>
-		 </div></div></div>`, class, title, size, count)
+			    <div
+                    data-count
+                    data-count-font="%dpx"
+                    data-count-number="%d"
+                    data-count-percentage="%d"
+                    data-count-speed="%d"
+                    data-count-color="#%s"
+                    data-count-font-color="#%s"
+                    data-count-width="%d"
+                    data-count-thickness="%d"
+                    data-count-prefix="%s"
+                    data-count-suffix="%s"
+                    data-count-outline="rgba(200,200,200,0.4)"
+                    data-count-fill="#ffffff"
+                    data-count-pie=""
+                    data-count-separator=" "
+                    data-count-decimal=" "
+                    data-count-decimals=" "
+                ></div>
+		 </div></div></div>`, class, title, size, count, pct, speed, color, fontColor, width, thickness, prefix, suffix)
 }
 
 func WiBalance(vars *map[string]string, pars ...string) string {
