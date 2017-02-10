@@ -690,12 +690,29 @@ function CopyToClipboard(elem, text) {
 	});
 }
 
-function Alert(title, text, type, Confirm) {
+function Alert(title, text, type, Confirm, no, yes, fullScreen) {
 	if (obj) {
 		var timer = null;
 		var view = type.split(":");
-		var cancel = view[1] ? view[1] : false;
-
+		var cancelbtnShow = view[1] ? view[1] : false;
+		var cancelbtnText = "Cancel";
+		var btnText = "OK";
+		
+		if (no) {
+			var textNo = no.split(":");
+			cancelbtnText = textNo[1] ? textNo[1] : "Cancel";
+		}
+		
+		if (yes) {
+			var textYes = yes.split(":");
+			btnText = textYes[1] ? textYes[1] : "OK";
+		}
+		
+		if (fullScreen) {
+			var outsideClose = fullScreen.split(":");
+			var outsideClick = outsideClose[1] ? outsideClose[1] : false;
+		}
+		
 		if (view[0] == "notification" && !obj.hasClass("modal-content")) {
 			type = view[1] ? view[1] : "success";
 			timer = 1500;
@@ -720,7 +737,6 @@ function Alert(title, text, type, Confirm) {
 			}
 		} else {
 			var color;
-			var btnText = "OK";
 			var btnShow = true;
 			var id = obj.parents(".modal").attr("id");
 			var bh = window.innerHeight - 170;
@@ -737,6 +753,8 @@ function Alert(title, text, type, Confirm) {
 				if (text.toLowerCase().indexOf("[error]") != -1) {
 					btnText = returnLang("copy_text_error_clipboard");
 				}
+			} else if (type == "question") {
+				color = "#4b91ea";
 			} else if (type == "warning") {
 				color = "#ff902b";
 			} else if (type == "timeout") {
@@ -770,10 +788,12 @@ function Alert(title, text, type, Confirm) {
 				allowEscapeKey: false,
 				type: type,
 				html: true,
-				confirmButtonColor: color,
-				confirmButtonText: btnText,
 				showConfirmButton: btnShow,
-				showCancelButton: cancel
+				confirmButtonText: btnText,
+				confirmButtonColor: color,
+				showCancelButton: cancelbtnShow,
+				cancelButtonText: cancelbtnText,
+				allowOutsideClick: outsideClick
 			}, function (isConfirm) {
 				if (text.toLowerCase().indexOf("[error]") != -1) {
 					CopyToClipboard(".sweet-alert .confirm", text);
@@ -810,8 +830,14 @@ function Alert(title, text, type, Confirm) {
 					swal.close();
 				}
 			});
-
-			if (bh > oh) {
+			
+			if (fullScreen) {
+				$(".sweet-overlay").addClass("fullScreen");
+			} else {
+				$(".sweet-overlay").removeClass("fullScreen");
+			}
+			
+			if (bh > oh && !fullScreen) {
 				$(".sweet-alert").appendTo(obj);
 			}
 		}
