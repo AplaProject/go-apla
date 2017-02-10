@@ -467,6 +467,14 @@ CREATE TABLE "global_pages" (
 );
 ALTER TABLE ONLY "global_pages" ADD CONSTRAINT global_pages_pkey PRIMARY KEY (name);
 
+CREATE TABLE "global_signatures" (
+"name" varchar(100)  NOT NULL DEFAULT '',
+"value" jsonb,
+"conditions" text  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "global_signatures" ADD CONSTRAINT global_signatures_pkey PRIMARY KEY (name);
+
 
 CREATE SEQUENCE global_smart_contracts_id_seq START WITH 1;
 CREATE TABLE "global_smart_contracts" (
@@ -501,7 +509,7 @@ ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (
 INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');
 INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000000000000000');
 INSERT INTO system_parameters ("name", "value") VALUES ('max_columns', '20');
-INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":"200", "change_node": 100, "edit_lang": 10, "change_host_vote": 100, "new_column":500, "new_lang": 10, "new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100, "system_restore_access":100}');
+INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":"200", "change_node": 100, "edit_lang": 10, "edit_sign": 10, "change_host_vote": 100, "new_column":500, "new_lang": 10, "new_sign": 10, "new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100, "system_restore_access":100}');
 
 
 DROP SEQUENCE IF EXISTS system_restore_access_id_seq CASCADE;
