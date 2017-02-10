@@ -65,6 +65,7 @@
 	});
 
 	$('#send_to_net').bind('click', function () {
+		serverTimeout(5000);
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?controllerName=saveQueue',

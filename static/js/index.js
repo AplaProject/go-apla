@@ -641,7 +641,6 @@ function Demo() {
 }
 
 var obj;
-//var successTimeout;
 
 function Notify(message, options) {
 	var btn_notify = $("#notify");
@@ -856,10 +855,6 @@ function preloader(elem) {
 	if (!obj.find(".sk-cube-grid").length) {
 		obj.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
 	}
-	
-	/*successTimeout = setTimeout(function () {
-		Alert(returnLang("error"), returnLang("cannot_connect_server"), "notification:danger");
-	}, 5000)*/
 }
 
 function dl_navigate(page, parameters, anchor) {
@@ -1162,9 +1157,18 @@ function unixtime(target) {
 	}
 }
 
+var successTimeout;
+
+function serverTimeout(time) {
+	clearTimeout(successTimeout);
+	successTimeout = setTimeout(function () {
+		Alert(returnLang("error"), returnLang("cannot_connect_server"), "notification:danger");
+	}, time)
+}
+
 function send_to_net_success(data, ReadyFunction, skipsuccess) {
 	var i = 0;
-	//clearTimeout(successTimeout);
+	clearTimeout(successTimeout);
 
 	if (typeof data.error != "undefined" && data.error.length > 0) {
 		Alert(returnLang("error"), data.error, "error");
