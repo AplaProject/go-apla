@@ -636,12 +636,24 @@ func (p *Parser) payFPrice() error {
 		egs = amount
 	}
 	commission := int64(float64(egs) * 0.03)
-	query := fmt.Sprintf(`begin;
-	update dlt_wallets set amount = amount - least(amount, '%d') where wallet_id='%d';
-	update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
-	update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
-	commit;`, egs, fromId, egs-commission, toId, commission, consts.COMMISSION_WALLET)
-	if err := p.ExecSql(query); err != nil {
+	/*	query := fmt.Sprintf(`begin;
+		update dlt_wallets set amount = amount - least(amount, '%d') where wallet_id='%d';
+		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
+		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
+		commit;`, egs, fromId, egs-commission, toId, commission, consts.COMMISSION_WALLET)
+		if err := p.ExecSql(query); err != nil {
+			return err
+		}*/
+	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
+		[]string{utils.Int64ToStr(fromId)}, true); err != nil {
+		return err
+	}
+	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs - commission}, `dlt_wallets`, []string{`wallet_id`},
+		[]string{utils.Int64ToStr(toId)}, true); err != nil {
+		return err
+	}
+	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
+		[]string{utils.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)
