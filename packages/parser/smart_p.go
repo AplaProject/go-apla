@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -25,6 +26,7 @@ import (
 
 	"encoding/hex"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -63,38 +65,39 @@ var (
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		//		"CallContract":   ExContract,
-		"DBInsert":       DBInsert,
-		"DBUpdate":       DBUpdate,
-		"DBUpdateWhere":  DBUpdateWhere,
-		"DBGetList":      DBGetList,
-		"DBGetTable":     DBGetTable,
-		"DBTransfer":     DBTransfer,
-		"DBString":       DBString,
-		"DBInt":          DBInt,
-		"DBStringExt":    DBStringExt,
-		"DBIntExt":       DBIntExt,
-		"DBStringWhere":  DBStringWhere,
-		"DBIntWhere":     DBIntWhere,
-		"Table":          StateTable,
-		"TableTx":        StateTableTx,
-		"AddressToId":    AddressToID,
-		"IdToAddress":    IDToAddress,
-		"DBAmount":       DBAmount,
-		"ContractAccess": IsContract,
-		"IsGovAccount":   IsGovAccount,
-		"StateValue":     StateValue,
-		"Int":            Int,
-		"Str":            Str,
-		"Money":          Money,
-		"Float":          Float,
-		"Len":            Len,
-		"Sha256":         Sha256,
-		"PubToID":        PubToID,
-		"HexToBytes":     HexToBytes,
-		"UpdateContract": UpdateContract,
-		"UpdateParam":    UpdateParam,
-		"UpdateMenu":     UpdateMenu,
-		"UpdatePage":     UpdatePage,
+		"DBInsert":        DBInsert,
+		"DBUpdate":        DBUpdate,
+		"DBUpdateWhere":   DBUpdateWhere,
+		"DBGetList":       DBGetList,
+		"DBGetTable":      DBGetTable,
+		"DBTransfer":      DBTransfer,
+		"DBString":        DBString,
+		"DBInt":           DBInt,
+		"DBStringExt":     DBStringExt,
+		"DBIntExt":        DBIntExt,
+		"DBStringWhere":   DBStringWhere,
+		"DBIntWhere":      DBIntWhere,
+		"Table":           StateTable,
+		"TableTx":         StateTableTx,
+		"AddressToId":     AddressToID,
+		"IdToAddress":     IDToAddress,
+		"DBAmount":        DBAmount,
+		"ContractAccess":  IsContract,
+		"IsGovAccount":    IsGovAccount,
+		"StateValue":      StateValue,
+		"Int":             Int,
+		"Str":             Str,
+		"Money":           Money,
+		"Float":           Float,
+		"Len":             Len,
+		"Sha256":          Sha256,
+		"PubToID":         PubToID,
+		"HexToBytes":      HexToBytes,
+		"UpdateContract":  UpdateContract,
+		"UpdateParam":     UpdateParam,
+		"UpdateMenu":      UpdateMenu,
+		"UpdatePage":      UpdatePage,
+		"check_signature": CheckSignature, // system function
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -586,6 +589,51 @@ func UpdateMenu(p *Parser, name, value, conditions string) error {
 	return nil
 }
 
+func CheckSignature(i *map[string]interface{}, name string) error {
+	state, name := script.ParseContract(name)
+	pref := utils.Int64ToStr(int64(state))
+	if state == 0 {
+		pref = `global`
+	}
+	//	fmt.Println(`CheckSignature`, i, state, name)
+	p := (*i)[`parser`].(*Parser)
+	value, err := p.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
+	if err != nil {
+		return err
+	}
+	if len(value) == 0 {
+		return nil
+	}
+	hexsign, err := hex.DecodeString((*i)[`Signature`].(string))
+	if len(hexsign) == 0 || err != nil {
+		return fmt.Errorf(`wrong signature`)
+	}
+
+	var sign controllers.TxSignJson
+	err = json.Unmarshal([]byte(value), &sign)
+	if err != nil {
+		return err
+	}
+	wallet := (*i)[`wallet`].(int64)
+	if wallet == 0 {
+		wallet = (*i)[`citizen`].(int64)
+	}
+	forsign := fmt.Sprintf(`%d,%d`, uint64((*i)[`time`].(int64)), uint64(wallet))
+	for _, isign := range sign.Params {
+		forsign += fmt.Sprintf(`,%v`, (*i)[isign.Param])
+	}
+
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forsign, hexsign, true)
+	if err != nil {
+		return err
+	}
+	fmt.Println(`Check signature`, CheckSignResult, forsign)
+	if !CheckSignResult {
+		return fmt.Errorf(`incorrect signature ` + forsign)
+	}
+	return nil
+}
+
 func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 	if err := p.AccessChange(`pages`, name); err != nil {
 		return p.ErrInfo(err)
@@ -637,7 +685,7 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 }
 
 func DBGetList(tblname string, name string, offset, limit int64, order string,
-where string, params ...interface{}) ([]interface{}, error) {
+	where string, params ...interface{}) ([]interface{}, error) {
 	re := regexp.MustCompile(`([a-z]+[\w_]*)\"?\s*[><=]`)
 	ret := re.FindAllStringSubmatch(where, -1)
 
