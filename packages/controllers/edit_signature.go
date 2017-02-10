@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	//	"encoding/json"
+	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -47,33 +47,42 @@ func init() {
 
 func (c *Controller) EditSignature() (string, error) {
 	global := c.r.FormValue("global")
-	//	prefix := "global"
+	prefix := "global"
 	if global == "" || global == "0" {
-		//	prefix = c.StateIdStr
+		prefix = c.StateIdStr
 		global = "0"
 	}
 	name := c.r.FormValue(`name`)
 
 	txType := "NewSign"
-
-	//list := make([]LangRes, 0)
+	var title, cond string
+	list := make([]SignRes, 0)
 	if len(name) > 0 {
-		/*		res, err := c.Single(`SELECT res FROM "`+prefix+`_languages" where name=?`, name).String()
-				if err != nil {
-					return "", err
+		res, err := c.OneRow(`SELECT value, conditions FROM "`+prefix+`_signatures" where name=?`, name).String()
+		if err != nil {
+			return "", err
+		}
+		if len(res) > 0 {
+			var rmap map[string]interface{}
+			cond = res[`conditions`]
+			err = json.Unmarshal([]byte(res[`value`]), &rmap)
+			if err != nil {
+				return "", err
+			}
+			if val, ok := rmap[`title`]; ok {
+				title = val.(string)
+			}
+			if val, ok := rmap[`params`]; ok {
+				for _, item := range val.([]interface{}) {
+					text := item.(map[string]interface{})
+					list = append(list, SignRes{text[`name`].(string), text[`text`].(string)})
 				}
-				var rmap map[string]string
-				err = json.Unmarshal([]byte(res), &rmap)
-				if err != nil {
-					return "", err
-				}
-				for key, text := range rmap {
-					list = append(list, LangRes{key, text})
-				}
-				sort.Sort(ListLangRes(list))*/
-		txType = "EditLang"
+			}
+			txType = "EditSign"
+		}
 	}
 	txTypeId := utils.TypeInt(txType)
-	pageData := editSignaturePage{Data: c.Data, Global: global, Name: name, TxType: txType, TxTypeId: txTypeId, Unique: ``}
+	pageData := editSignaturePage{Data: c.Data, List: list, Title: title, Conditions: cond,
+		Global: global, Name: name, TxType: txType, TxTypeId: txTypeId, Unique: ``}
 	return proceedTemplate(c, NEditSignature, &pageData)
 }
