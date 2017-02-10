@@ -569,6 +569,16 @@ func WhiteMobileBg(vars *map[string]string, pars ...string) string {
 </script>`, wide)
 }
 
+func WhiteBg(vars *map[string]string, pars ...string) string {
+	wide := `add`
+	if len(pars) > 0 && pars[0] == `0` {
+		wide = `remove`
+	}
+	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+	$("body").%sClass('flatPage');
+</script>`, wide)
+}
+
 func GetList(vars *map[string]string, pars ...string) string {
 	// name, table, fields, where, order, limit
 	if len(pars) < 3 {
@@ -922,7 +932,12 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		return err.Error()
 	}
 	columns := textproc.Split((*pars)[`Columns`])
-	out := `<div class="table-responsive"><table class="table ` + tableClass + `" ` + adaptive + `><thead>`
+
+	out := ``
+	if strings.TrimSpace(tableClass) == `table-responsive` {
+		out += `<div class="table-responsive">`
+	}
+	out += `<table class="table ` + tableClass + `" ` + adaptive + `><thead>`
 	for _, th := range *columns {
 		if len(th) < 2 {
 			return `incorrect column`
@@ -962,7 +977,11 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		}
 		out += `</tr>`
 	}
-	return out + `</table></div>`
+	out += `</table>`
+	if strings.TrimSpace(tableClass) == `table-responsive` {
+		out += `</div>`
+	}
+	return out
 }
 
 func TxForm(vars *map[string]string, pars *map[string]string) string {
