@@ -12,6 +12,9 @@
 		padding-bottom:0px;
 		margin-bottom:0px;
 	}
+	#btn_history .hide_history {
+		display:none;
+	}
 	.history {
 		display:none;
 	}
@@ -334,7 +337,6 @@
 			load_page('interface');
 		{{end}}
 	});
-	
 	
 	$("#btn_history").on('click', function () {
 		if ($(".history").is(":visible")) {
