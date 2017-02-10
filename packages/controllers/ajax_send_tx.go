@@ -44,7 +44,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 		result SendTxJson
 		flags  uint8
 	)
-	contract, err := c.checkTx()
+	contract, err := c.checkTx(nil)
 	if err == nil {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
 		userId := uint64(c.SessWalletId)

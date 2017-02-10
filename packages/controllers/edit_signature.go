@@ -25,8 +25,8 @@ import (
 const NEditSignature = `edit_signature`
 
 type SignRes struct {
-	Param string
-	Text  string
+	Param string `json:"name"`
+	Text  string `json:"text"`
 }
 
 type editSignaturePage struct {
