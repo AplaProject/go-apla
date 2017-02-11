@@ -14,7 +14,9 @@
         for (var prop in params) {
 			predata{{$.Unique}}[prop] = params[prop];
         }
-		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},
+		prepare_contract(predata{{.Unique}}, {{$.Unique}}, sendnet{{$.Unique}});
+		
+/*		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},
 			 function (data) {
 				if (data.error.length > 0 ) {
 					Alert("Error", data.error, "error");
@@ -28,7 +30,7 @@
 					predata{{.Unique}}.signature3 = $('#signature3{{.Unique}}').val();
 					sendnet{{.Unique}}();
 				}
-		}, "json" );
+		}, "json" );*/
 	}
 
 function sendnet{{.Unique}}() {

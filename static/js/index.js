@@ -1440,6 +1440,46 @@ function returnLang(data) {
 	return Lang[data];
 }
 
+function prepare_ok(predata, unique, forsign, sendnet) {
+	$("#for-signature"+unique).val(forsign);
+	doSign(unique);
+	predata.signature1 = $('#signature1' + unique).val();
+	predata.signature2 = $('#signature2' + unique).val();
+	predata.signature3 = $('#signature3' + unique).val();
+//	$("#send_to_net{{.Unique}}").trigger("click");
+	sendnet();
+}
+
+function prepare_contract(predata, unique, sendnet) {
+	$.get( 'ajax?json=ajax_prepare_tx', predata,
+		function (data) {
+			if (data.error.length > 0 ) {
+				Alert("Error", data.error, "error");
+			} else {
+				console.log(data);
+				predata.time = data.time;
+				if (data.signs) {
+					accept = '';
+					for (var i=0; i < data.signs.length; i++ ) {
+						isign = data.signs[i]
+						sign = GKey.sign(isign.forsign);
+						accept += isign.title + '<br>';
+						for (var k=0; k<isign.params.length; k++ ) {
+							accept += isign.params[k].text + ': ' + predata[isign.params[k].name] + '<br>';
+						}
+						data.forsign += ',' + sign;
+						predata[isign.field] = sign;
+					}
+					Alert("Confirmation", accept, "question:cancel", function(){
+						prepare_ok(predata, unique, data.forsign, sendnet);
+					}, "no:Cancel", "yes:Accept", "fullScreen:close");
+				} else {
+					prepare_ok(predata, unique, data.forsign, sendnet);
+				}
+			}
+	}, "json" );
+}
+
 function anchorScroll(anchor) {
 	var top = "#" + anchor;
 	setTimeout(function () {

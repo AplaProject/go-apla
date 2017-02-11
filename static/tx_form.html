@@ -207,7 +207,8 @@
 				{{end}}
 			{{end}}
 		{{end}}
-		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},
+		prepare_contract(predata{{.Unique}}, {{$.Unique}}, sendnet{{$.Unique}});
+/*		$.get( 'ajax?json=ajax_prepare_tx', predata{{.Unique}},
 			 function (data) {
 				if (data.error.length > 0 ) {
 					Alert("Error", data.error, "error");
@@ -222,7 +223,7 @@
 //					$("#send_to_net{{.Unique}}").trigger("click");
 					sendnet{{.Unique}}();					
 				}
-		}, "json" );
+		}, "json" );*/
 	} );
 
 function sendnet{{.Unique}}() {
