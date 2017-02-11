@@ -92,19 +92,19 @@ function js_newpars() {
 				<input type="text" class="form-control" id="title" value="{{.Title}}">
 			</div>
 			<div class="form-group">
-				<div class="col-md-1 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-2 col-xs-1" style="padding: 5px 5px;">
 					<label>Parameter</label>
 				</div>
-				<div class="col-md-11 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-10 col-xs-1" style="padding: 5px 5px;">
 					<label>Text</label>
 				</div>
 			</div>
 			<div class="form-group" id="par-list">
 				{{if .List}} {{range $index, $el := .List}}
-				<div class="col-md-1 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-2 col-xs-1" style="padding: 5px 5px;">
 					<input type="text" class="form-control lpref" id="pars{{$index}}" value="{{.Param}}">
 				</div>
-				<div class="col-md-11 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-10 col-xs-1" style="padding: 5px 5px;">
 					<input type="text" class="form-control" id="text{{$index}}" value="{{.Text}}">
 				</div>
 				{{end}} {{else}}
