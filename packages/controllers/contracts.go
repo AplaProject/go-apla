@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -44,7 +45,16 @@ func (c *Controller) Contracts() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-
+	for ind, val := range stateSmartLaws {
+		if val[`wallet_id`] == `NULL` {
+			stateSmartLaws[ind][`wallet`] = ``
+		} else {
+			stateSmartLaws[ind][`wallet`] = lib.AddressToString(uint64(utils.StrToInt64(val[`wallet_id`])))
+		}
+		if val[`active`] == `NULL` {
+			stateSmartLaws[ind][`active`] = ``
+		}
+	}
 	var allStateParameters []string
 	if global == "0" {
 		allStateParameters, err = c.GetList(`SELECT name FROM "` + prefix + `_state_parameters"`).String()
