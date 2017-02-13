@@ -130,6 +130,8 @@ func (p *Parser) NewState() error {
 				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
+				"wallet_id" bigint  NOT NULL DEFAULT '0',
+				"active" character(1) NOT NULL DEFAULT '0',
 				"conditions" text  NOT NULL DEFAULT '',
 				"variables" bytea  NOT NULL DEFAULT '',
 				"rb_id" bigint NOT NULL DEFAULT '0'
