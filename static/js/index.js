@@ -1191,6 +1191,7 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 					if (typeof txStatus.wait != "undefined") {
 						console.log("txStatus", txStatus);
 					} else if (typeof txStatus.error != "undefined") {
+						clearInterval(interval);
 						if (txStatus.error[0] == '!') {
 							re = /!(.*)\(parser/i;
 							found = txStatus.error.match(re);
@@ -1200,7 +1201,6 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 							found = txStatus.error.match(re);
 							Alert(returnLang("info"), (found && found.length > 1 ? found[1] : txStatus.error.substr(1)), "info");
 						} else
-							clearInterval(interval);
 							Alert(returnLang("error"), txStatus.error, "error");
 					} else {
 						clearInterval(interval);
