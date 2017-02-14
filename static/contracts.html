@@ -55,6 +55,8 @@
 				 <tr>
 					<th width="25">ID</th>
 					<th class="lang" lang-id="contract_name"></th>
+					<th>WalletID</th>
+					<th>Active</th>
 					<th width="50" class="lang" lang-id="action"></th>
 				 </tr>
 			  </thead>
@@ -63,6 +65,8 @@
 				 <tr>
 					 <td><strong>{{$data.id}}</strong></td>
 					 <td><strong>{{$data.name}}</strong></td>
+					 <td><strong>{{$data.wallet}}</strong></td>
+					 <td><strong>{{$data.active}}</strong></td>
 					 <td><a type="button" class="btn btn-labeled btn-default" onclick="load_page('editContract', {id: {{$data.id}} , global: {{$.Global}} } )"><span class="btn-label"><i class="fa fa-cog"></i></span></a></td>
 				 </tr>
 			  {{end}}

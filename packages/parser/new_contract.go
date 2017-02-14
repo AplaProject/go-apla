@@ -77,12 +77,17 @@ func (p *Parser) NewContract() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-
+	var wallet int64
+	if wallet = p.TxCitizenID; wallet == 0 {
+		wallet = p.TxWalletID
+	}
 	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", nil, nil, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
+		[]interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"],
+			wallet}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

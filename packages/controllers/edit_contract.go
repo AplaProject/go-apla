@@ -18,7 +18,8 @@ package controllers
 
 import (
 	"encoding/json"
-	//	"fmt"
+	//"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
 )
@@ -89,6 +90,14 @@ func (c *Controller) EditContract() (string, error) {
 				if err != nil {
 					return "", utils.ErrInfo(err)
 				}
+			}
+			if data[`wallet_id`] == `NULL` {
+				data[`wallet`] = ``
+			} else {
+				data[`wallet`] = lib.AddressToString(uint64(utils.StrToInt64(data[`wallet_id`])))
+			}
+			if data[`active`] == `NULL` {
+				data[`active`] = ``
 			}
 			rbId = utils.StrToInt64(data["rb_id"])
 		} else {
