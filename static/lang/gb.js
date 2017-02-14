@@ -222,7 +222,24 @@ Lang = {
     "add_new_citizen" : "Add new citizen",
     "create_new_citizen" : "Create new citizen",
 	"delete_last_point": "Delete Last Point",
-	"clear_map": "Clear Map"
-}
+	"clear_map": "Clear Map",
+	"add_and_edit_image": "Add and edit image",
+	"drop_image_or_browse": "Drop image here or<label class='browse'>browse...<input id='file' type='file' accept='image/*' class='sr-only'></label>",
+	"upload": "Upload",
+	"undo": "Undo",
+	"delete": "Delete",
+	"ok": "OK",
+	"download": "Download",
+	"move": "Move",
+	"crop": "Crop",
+	"zoom_in": "Zoom In",
+	"zoom_out": "Zoom Out",
+	"rotate_left": "Rotate Left",
+	"rotate_right": "Rotate Right",
+	"flip_horizontal": "Flip Horizontal",
+	"flip_vertical": "Flip Vertical",
+	"please_choose_image": "Please, choose image!",
+	"please_crop_photo": "Please, crop the photo!"
+};
 
 updateLanguage('.lang');

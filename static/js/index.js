@@ -695,17 +695,17 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen) {
 		var timer = null;
 		var view = type.split(":");
 		var cancelbtnShow = view[1] ? view[1] : false;
-		var cancelbtnText = "Cancel";
-		var btnText = "OK";
+		var cancelbtnText = returnLang("cancel");
+		var btnText = returnLang("ok");
 		
 		if (no) {
 			var textNo = no.split(":");
-			cancelbtnText = textNo[1] ? textNo[1] : "Cancel";
+			cancelbtnText = textNo[1] ? textNo[1] : returnLang("cancel");
 		}
 		
 		if (yes) {
 			var textYes = yes.split(":");
-			btnText = textYes[1] ? textYes[1] : "OK";
+			btnText = textYes[1] ? textYes[1] : returnLang("ok");
 		}
 		
 		if (fullScreen) {
@@ -1287,10 +1287,10 @@ function saveImage() {
 			newImageData.val(img);
 			$("#modal_avatar").modal("hide");
 		} else {
-			Alert(returnLang("warning"), "Please, choose image!", "warning", false);
+			Alert(returnLang("warning"), returnLang("please_choose_image"), "warning", false);
 		}
 	} else {
-		Alert(returnLang("warning"), "Please, crop the photo!", "warning", false);
+		Alert(returnLang("warning"), returnLang("please_crop_photo"), "warning", false);
 	}
 }
 
@@ -1411,7 +1411,11 @@ function updateLanguage(classes) {
 	else
 		$(classes).each(function (obj) {
 			var data = $(this).attr('lang-id');
-			$(this).html(Lang[data]);
+			if (classes === ".langTitle") {
+				$(this).attr("title", Lang[data]);
+			} else {
+				$(this).html(Lang[data]);
+			}
 		});
 	$("#langflag").attr('class', 'flag ' + localStorage.getItem('EGAAS_LANG'));
 }

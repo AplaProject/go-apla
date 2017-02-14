@@ -16,6 +16,9 @@
 	$(".brand").attr("data-version", "v" + Version);
 </script>
 <script type="text/javascript" src="static/js/photoEditor/editor.js"></script>
+<script>
+	updateLanguage(".langTitle");
+</script>
 
 <div class="modal fade" id="modal_avatar" role="dialog" aria-labelledby="modal_avatar_label">
 	<div class="modal-dialog modal-lg" role="document">
@@ -23,7 +26,7 @@
 			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			<div class="modal-body">
 				<section id="photoEditor">
-					<header class="header"><span class="title">Add and edit image</span>
+					<header class="header"><span class="title lang" lang-id="add_and_edit_image"></span>
 						<button-box></button-box>
 					</header>
 					<main class="main">
@@ -32,21 +35,17 @@
 					</main>
 					<script id="button-box" type="text/x-template">
 						<div @click="click" class="menu">
-							<label for="file" title="Upload" v-show="!uploaded" class="menu__button"><span class="fa fa-upload"></span></label>
-							<button data-action="restore" title="Undo (Ctrl + Z)" v-show="cropped" class="menu__button"><span class="fa fa-undo"></span></button>
-							<button data-action="remove" title="Delete (Delete)" v-show="uploaded &amp;&amp; !cropping" class="menu__button menu__button--danger"><span class="fa fa-trash"></span></button>
-							<button data-action="clear" title="Cancel (Esc)" v-show="cropping" class="menu__button menu__button--danger"><span class="fa fa-ban"></span></button>
-							<button data-action="crop" title="OK (Enter)" v-show="cropping" class="menu__button menu__button--success"><span class="fa fa-check"></span></button>
-							<a data-action="download" href="${ url }" title="Download" download="${ name }" v-show="url" class="menu__button menu__button--success"><span class="fa fa-download"></span></a>
+							<label for="file" title="" v-show="!uploaded" class="menu__button langTitle" lang-id="upload"><span class="fa fa-upload"></span></label>
+							<button data-action="restore" title="" v-show="cropped" class="menu__button langTitle" lang-id="undo"><span class="fa fa-undo"></span></button>
+							<button data-action="remove" title="" v-show="uploaded &amp;&amp; !cropping" class="menu__button menu__button--danger langTitle" lang-id="delete"><span class="fa fa-trash"></span></button>
+							<button data-action="clear" title="" v-show="cropping" class="menu__button menu__button--danger langTitle" lang-id="cancel"><span class="fa fa-ban"></span></button>
+							<button data-action="crop" title="" v-show="cropping" class="menu__button menu__button--success langTitle" lang-id="ok"><span class="fa fa-check"></span></button>
+							<a data-action="download" href="${ url }" title="" download="${ name }" v-show="url" class="menu__button menu__button--success langTitle" lang-id="download"><span class="fa fa-download"></span></a>
 						</div>
 					</script>
 					<script id="upload-box" type="text/x-template">
 						<div @change="change" @dragover="dragover" @drop="drop" v-show="!uploaded" class="upload">
-							<p>Drop image here or
-								<label class="browse">browse...
-									<input id="file" type="file" accept="image/*" class="sr-only">
-								</label>
-							</p>
+							<p class="lang" lang-id="drop_image_or_browse"></p>
 						</div>
 					</script>
 					<script id="canvas-box" type="text/x-template">
@@ -55,14 +54,14 @@
 								<template v-if="url"><img id="cropped" src="${ url }" alt="${ name }" @load="load"></template>
 							</div>
 							<div @click="click" v-show="cropper" class="toolbar">
-								<button data-action="move" title="Move (M)" class="toolbar__button"><span class="fa fa-arrows"></span></button>
-								<button data-action="crop" title="Crop (C)" class="toolbar__button"><span class="fa fa-crop"></span></button>
-								<button data-action="zoom-in" title="Zoom In (I)" class="toolbar__button"><span class="fa fa-search-plus"></span></button>
-								<button data-action="zoom-out" title="Zoom Out (O)" class="toolbar__button"><span class="fa fa-search-minus"></span></button>
-								<button data-action="rotate-left" title="Rotate Left (L)" class="toolbar__button"><span class="fa fa-rotate-left"></span></button>
-								<button data-action="rotate-right" title="Rotate Right (R)" class="toolbar__button"><span class="fa fa-rotate-right"></span></button>
-								<button data-action="flip-horizontal" title="Flip Horizontal (H)" class="toolbar__button"><span class="fa fa-arrows-h"></span></button>
-								<button data-action="flip-vertical" title="Flip Vertical (V)" class="toolbar__button"><span class="fa fa-arrows-v"></span></button>
+								<button data-action="move" title="" class="toolbar__button langTitle" lang-id="move"><span class="fa fa-arrows"></span></button>
+								<button data-action="crop" title="" class="toolbar__button langTitle" lang-id="crop"><span class="fa fa-crop"></span></button>
+								<button data-action="zoom-in" title="" class="toolbar__button langTitle" lang-id="zoom_in"><span class="fa fa-search-plus"></span></button>
+								<button data-action="zoom-out" title="" class="toolbar__button langTitle" lang-id="zoom_out"><span class="fa fa-search-minus"></span></button>
+								<button data-action="rotate-left" title="" class="toolbar__button langTitle" lang-id="rotate_left"><span class="fa fa-rotate-left"></span></button>
+								<button data-action="rotate-right" title="" class="toolbar__button langTitle" lang-id="rotate_right"><span class="fa fa-rotate-right"></span></button>
+								<button data-action="flip-horizontal" title="" class="toolbar__button langTitle" lang-id="flip_horizontal"><span class="fa fa-arrows-h"></span></button>
+								<button data-action="flip-vertical" title="" class="toolbar__button langTitle" lang-id="flip_vertical"><span class="fa fa-arrows-v"></span></button>
 							</div>
 						</div>
 					</script>
