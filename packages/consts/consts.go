@@ -20,6 +20,7 @@ package consts
 const VERSION = "0.1.6b2"
 
 const FIRST_QDLT = 1e+26
+const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 
 // используется в confirmations
 const COUNT_CONFIRMED_NODES = 5
