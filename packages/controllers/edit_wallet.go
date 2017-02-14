@@ -32,8 +32,9 @@ type editWalletPage struct {
 	TxType   string
 	TxTypeId int64
 	//	Lang                map[string]string
-	Info   map[string]string
-	Unique string
+	Info    map[string]string
+	Unique  string
+	StateId int64
 
 	/*	DataContractHistory []map[string]string
 		CitizenId           int64
@@ -90,6 +91,7 @@ func (c *Controller) EditWallet() (string, error) {
 			data[`address`] = lib.AddressToString(uint64(id))
 		}
 	}
-	pageData := editWalletPage{Data: c.Data, Alert: alert, TxType: txType, TxTypeId: txTypeId, Info: data, Unique: ``}
+	pageData := editWalletPage{Data: c.Data, StateId: c.SessStateId,
+		Alert: alert, TxType: txType, TxTypeId: txTypeId, Info: data, Unique: ``}
 	return proceedTemplate(c, NEditWallet, &pageData)
 }

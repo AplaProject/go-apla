@@ -498,6 +498,26 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
 
+	case "EditWallet":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if userId == 0 {
+			userId = citizenId
+		}
+		wallet_id := []byte(c.r.FormValue("id"))
+		spending := []byte(c.r.FormValue("spending_contract"))
+		conditions := []byte(c.r.FormValue("conditions_change"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(wallet_id)...)
+		data = append(data, utils.EncodeLengthPlusData(spending)...)
+		data = append(data, utils.EncodeLengthPlusData(conditions)...)
+		data = append(data, binSignatures...)
+
 	case "NewTable":
 
 		userId := walletId

@@ -9,23 +9,24 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.Data.WalletId}},0,' + $("#global").val() + ',' + $("#id").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+			$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.Data.WalletId}},{{.StateId}},{{.Info.wallet_id}},' + 
+              $("#spending_contract").val() + ',' + $("#conditions_change").val());
 			doSign();
-			$("#send_to_net").trigger("click");
+			send_to_net_wallet();
 		}, "json" );
 	} );
 
 
-	$('#send_to_net').bind('click', function () {
+    function send_to_net_wallet() {
 		$.ajax({
 			type: 'POST',
 			url: 'ajax?controllerName=saveQueue',
 			data: {
-				'id' : $("#id").val(),
-				'name' : $("#name").val(),
-				'value' : $("#value").val(),
-				'conditions' : $("#conditions").val(),
+				'id' : '{{.Info.wallet_id}}',
+				'spending_contract' : $("#spending_contract").val(),
+				'conditions_change' : $("#conditions_change").val(),
 				'type' : '{{.TxType}}',
+				'stateId' : '{{.StateId}}',
 				'time' : serverTime,
 				'signature1': $('#signature1').val(),
 				'signature2': $('#signature2').val(),
@@ -38,7 +39,7 @@
 				Alert(returnLang("error"), error, "error");
 			}
 		});
-	});
+	}
 
 function search_wallet() {
     var id = $("#search").val();
