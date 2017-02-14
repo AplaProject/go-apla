@@ -172,7 +172,7 @@
 				<div class="item user-block">
 				   <!-- User picture-->
 				   <div class="user-block-picture user-block-info">
-				   		<div class="img-thumbnail img-circle" {{if .CitizenAvatar}}style="cursor:pointer;" onclick="load_template('citizen_profile');"{{end}}>
+				   		<div class="img-thumbnail img-circle" {{if .StateName}}style="cursor:pointer;" onclick="load_template('citizen_profile');"{{end}}>
 							<img id="Avatar" class="img-circle" src="static/img/avatar.svg" alt="" />
 						</div>
 						{{if .CitizenAvatar}}<script>document.getElementById('Avatar').setAttribute( 'src', '{{.CitizenAvatar}}' ); </script>{{end}}
