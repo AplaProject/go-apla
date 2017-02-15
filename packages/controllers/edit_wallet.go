@@ -89,6 +89,12 @@ func (c *Controller) EditWallet() (string, error) {
 				data[`amount`] = ret
 			}
 			data[`address`] = lib.AddressToString(uint64(id))
+			if data[`spending_contract`] == `NULL` {
+				data[`spending_contract`] = ``
+			}
+			if data[`conditions_change`] == `NULL` {
+				data[`conditions_change`] = ``
+			}
 		}
 	}
 	pageData := editWalletPage{Data: c.Data, StateId: c.SessStateId,
