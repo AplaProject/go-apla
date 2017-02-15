@@ -1570,22 +1570,16 @@ $(window).load(function () {
 				container: 'body'
 			});
 		}
-		if ($("[data-tool]").length) {
-			panelCollapse();
-			
-			$(".panel").on('hide.bs.collapse', function(event){
-				
-			})
-			.on('show.bs.collapse', function(event){
-				
-			})
-			.on('panel.remove', function(event, panel, deferred){
-				$('[data-toggle="tooltip"]').tooltip('destroy');
-				deferred.resolve();
-			})
-			.on('panel.removed', function(event, panel){
-				
-			});
+		if ($("[data-widget]").length) {
+			if ($("[data-widget]").data("widget") === "panel-collapse") {
+				panelCollapse();
+			}
+			if ($("[data-widget]").data("widget") === "panel-refresh") {
+				panelRefresh();
+			}
+			if ($("[data-widget]").data("widget") === "panel-dismiss") {
+				panelDismiss();
+			}
 		}
 	});
 });
