@@ -1565,6 +1565,28 @@ $(window).load(function () {
 		if ($("[data-count]").length) {
 			countUp();
 		}
+		if ($("[data-toggle]").length) {
+			$('[data-toggle="tooltip"]').tooltip({
+				container: 'body'
+			});
+		}
+		if ($("[data-tool]").length) {
+			panelCollapse();
+			
+			$(".panel").on('hide.bs.collapse', function(event){
+				
+			})
+			.on('show.bs.collapse', function(event){
+				
+			})
+			.on('panel.remove', function(event, panel, deferred){
+				$('[data-toggle="tooltip"]').tooltip('destroy');
+				deferred.resolve();
+			})
+			.on('panel.removed', function(event, panel){
+				
+			});
+		}
 	});
 });
 
