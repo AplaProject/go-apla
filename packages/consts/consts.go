@@ -124,6 +124,7 @@ var TxTypes = map[int]string{
 	31: "NewSign",
 	32: "EditSign",
 	33: "EditWallet",
+	34: "ActivateContract",
 }
 
 func init() {

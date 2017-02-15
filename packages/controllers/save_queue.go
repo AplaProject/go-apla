@@ -446,6 +446,25 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
 
+	case "ActivateContract":
+
+		userId := walletId
+		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateId > 0 {
+			userId = citizenId
+		}
+
+		global := []byte(c.r.FormValue("global"))
+		id := []byte(c.r.FormValue("id"))
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(userId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(global)...)
+		data = append(data, utils.EncodeLengthPlusData(id)...)
+		data = append(data, binSignatures...)
+
 	case "NewMenu":
 
 		userId := walletId
