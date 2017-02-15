@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"encoding/json"
-	//"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
@@ -36,7 +35,9 @@ type editContractPage struct {
 	CitizenId           int64
 	TxType              string
 	TxTypeId            int64
-	TimeNow             int64
+	TxActivateType      string
+	TxActivateTypeId    int64
+	Confirm             bool
 	TableName           string
 	StateId             int64
 	Global              string
@@ -46,7 +47,6 @@ func (c *Controller) EditContract() (string, error) {
 
 	txType := "EditContract"
 	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
 
 	global := c.r.FormValue("global")
 	prefix := "global"
@@ -78,6 +78,7 @@ func (c *Controller) EditContract() (string, error) {
 	var dataContractHistory []map[string]string
 	var rbId int64
 	var err error
+	var cont_wallet int64
 	for i := 0; i < 10; i++ {
 		if i == 0 {
 			if id != 0 {
@@ -94,7 +95,8 @@ func (c *Controller) EditContract() (string, error) {
 			if data[`wallet_id`] == `NULL` {
 				data[`wallet`] = ``
 			} else {
-				data[`wallet`] = lib.AddressToString(uint64(utils.StrToInt64(data[`wallet_id`])))
+				cont_wallet = utils.StrToInt64(data[`wallet_id`])
+				data[`wallet`] = lib.AddressToString(uint64(cont_wallet))
 			}
 			if data[`active`] == `NULL` {
 				data[`active`] = ``
@@ -116,7 +118,6 @@ func (c *Controller) EditContract() (string, error) {
 			break
 		}
 	}
-
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:               c.Alert,
 		Lang:                c.Lang,
@@ -128,9 +129,11 @@ func (c *Controller) EditContract() (string, error) {
 		Global:              global,
 		CitizenId:           c.SessCitizenId,
 		CountSignArr:        c.CountSignArr,
-		TimeNow:             timeNow,
 		TxType:              txType,
 		TxTypeId:            txTypeId,
+		Confirm:             c.SessWalletId == cont_wallet,
+		TxActivateType:      `ActivateContract`,
+		TxActivateTypeId:    utils.TypeInt(`ActivateContract`),
 		StateId:             c.SessStateId})
 	if err != nil {
 		return "", utils.ErrInfo(err)

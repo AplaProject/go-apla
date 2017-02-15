@@ -59,7 +59,11 @@ func (p *Parser) EditContractFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := utils.Int64ToStr(int64(p.TxStateID))
+	prefix := `global`
+	if p.TxMaps.Int64["global"] == 0 {
+		prefix = p.TxStateIDStr
+	}
+	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	if len(p.TxMap["conditions"]) > 0 {
 		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
 			return p.ErrInfo(err)

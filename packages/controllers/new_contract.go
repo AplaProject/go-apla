@@ -24,7 +24,6 @@ func (c *Controller) NewContract() (string, error) {
 
 	txType := "NewContract"
 	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
 
 	global := c.r.FormValue("global")
 	if global == "" || global == "0" {
@@ -39,7 +38,6 @@ func (c *Controller) NewContract() (string, error) {
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
 		CountSignArr: c.CountSignArr,
-		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
 		Global:       global,
