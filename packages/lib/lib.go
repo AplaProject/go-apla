@@ -581,7 +581,21 @@ func CalculateMd5(filePath string) ([]byte, error) {
 	return hash.Sum(result), nil
 }
 
+/*func reverse(in string) string {
+	r := []rune(in)
+	n := len(r)
+	for i := 0; i < n/2; i++ {
+		r[i], r[n-1-i] = r[n-1-i], r[i]
+	}
+	return string(r)
+}*/
+
 func NumString(in string) string {
+	if strings.IndexByte(in, '.') >= 0 {
+		lr := strings.Split(in, `.`)
+		return NumString(lr[0]) + `.` + lr[1]
+		//		return NumString(lr[0]) + `.` + reverse(NumString(reverse(lr[1])))
+	}
 	buf := []byte(in)
 	out := make([]byte, len(in)+4)
 	for len(buf) > 3 {
