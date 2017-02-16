@@ -690,13 +690,17 @@ function CopyToClipboard(elem, text) {
 	});
 }
 
-function Alert(title, text, type, Confirm, no, yes, fullScreen) {
+function Alert(title, text, type, Confirm, ConfirmStatus, no, yes, fullScreen) {
 	if (obj) {
 		var timer = null;
 		var view = type.split(":");
 		var cancelbtnShow = view[1] ? view[1] : false;
 		var cancelbtnText = returnLang("cancel");
 		var btnText = returnLang("ok");
+		
+		if (ConfirmStatus) {
+			ConfirmStatus = ConfirmStatus ? ConfirmStatus : true;
+		}
 		
 		if (no) {
 			var textNo = no.split(":");
@@ -788,6 +792,7 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen) {
 				allowEscapeKey: false,
 				type: type,
 				html: true,
+				closeOnConfirm: ConfirmStatus,
 				showConfirmButton: btnShow,
 				confirmButtonText: btnText,
 				confirmButtonColor: color,
