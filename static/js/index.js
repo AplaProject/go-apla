@@ -1576,6 +1576,9 @@ $(window).load(function () {
 			});
 		}
 		if ($("[data-widget]").length) {
+			if ($("[data-widget]").data("widget") === "panel-scroll") {
+				panelScroll();
+			}
 			if ($("[data-widget]").data("widget") === "panel-collapse") {
 				panelCollapse();
 			}
