@@ -1190,8 +1190,8 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 
 	onsuccess := (*pars)[`OnSuccess`]
 	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
-	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
-		return fmt.Sprintf(`there is not %s contract or parameters`, name)
+	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
+		return fmt.Sprintf(`there is not %s contract`, name)
 	}
 	funcMap := template.FuncMap{
 		"sum": func(a, b interface{}) float64 {
@@ -1248,33 +1248,35 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 			}
 		}
 	}
-txlist:
-	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-		value := ``
-		idname := fitem.Name
-		if idn, ok := values[idname]; ok {
-			value = (*vars)[idn]
-			idname = idn + (*vars)[`tx_unique`]
-		} else if idn, ok = names[idname]; ok {
-			idname = idn
-		}
-		for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
-			if strings.Index(fitem.Tags, tag) >= 0 {
-				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, Value: value, HtmlType: tag})
-				continue txlist
+	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
+	txlist:
+		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+			value := ``
+			idname := fitem.Name
+			if idn, ok := values[idname]; ok {
+				value = (*vars)[idn]
+				idname = idn + (*vars)[`tx_unique`]
+			} else if idn, ok = names[idname]; ok {
+				idname = idn
 			}
-		}
-		if fitem.Type.String() == `decimal.Decimal` {
-			var count int
-			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-				count = StrToInt(ret[1])
+			for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
+				if strings.Index(fitem.Tags, tag) >= 0 {
+					finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, Value: value, HtmlType: tag})
+					continue txlist
+				}
+			}
+			if fitem.Type.String() == `decimal.Decimal` {
+				var count int
+				if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+					count = StrToInt(ret[1])
+				} else {
+					count = StrToInt(StateValue(vars, `money_digit`))
+				}
+				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HtmlType: "money",
+					Id: idname, Param: IntToStr(count)})
 			} else {
-				count = StrToInt(StateValue(vars, `money_digit`))
+				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, Id: idname, HtmlType: "textinput"})
 			}
-			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HtmlType: "money",
-				Id: idname, Param: IntToStr(count)})
-		} else {
-			finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, Id: idname, HtmlType: "textinput"})
 		}
 	}
 	if err = t.Execute(b, finfo); err != nil {
