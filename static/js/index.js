@@ -697,26 +697,26 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
 		var cancelbtnShow = view[1] ? view[1] : false;
 		var cancelbtnText = returnLang("cancel");
 		var btnText = returnLang("ok");
-		
+
 		if (no) {
 			var textNo = no.split(":");
 			cancelbtnText = textNo[1] ? textNo[1] : returnLang("cancel");
 		}
-		
+
 		if (yes) {
 			var textYes = yes.split(":");
 			btnText = textYes[1] ? textYes[1] : returnLang("ok");
 		}
-		
+
 		if (fullScreen) {
 			var outsideClose = fullScreen.split(":");
 			var outsideClick = outsideClose[1] ? outsideClose[1] : false;
 		}
-		
+
 		if (ConfirmStatus) {
 			ConfirmStatus = ConfirmStatus ? ConfirmStatus : true;
 		}
-		
+
 		if (view[0] == "notification" && !obj.hasClass("modal-content")) {
 			type = view[1] ? view[1] : "success";
 			timer = 1500;
@@ -747,7 +747,7 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
 			var oh = obj.height();
 			var minHeight = obj.css("min-height");
 			obj.css({ "position": "relative", "min-height": "300px" });
-			
+
 			type = view[0];
 
 			if (type == "success") {
@@ -835,13 +835,13 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
 					swal.close();
 				}
 			});
-			
+
 			if (fullScreen) {
 				$(".sweet-overlay").addClass("fullScreen");
 			} else {
 				$(".sweet-overlay").removeClass("fullScreen");
 			}
-			
+
 			if (bh > oh && !fullScreen) {
 				$(".sweet-alert").appendTo(obj);
 			}
@@ -856,7 +856,7 @@ function preloader_hide() {
 
 function preloader(elem) {
 	obj = $("#" + elem.id).parents("[data-sweet-alert]");
-	
+
 	if (!obj.find(".sk-cube-grid").length) {
 		obj.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
 	}
@@ -1450,43 +1450,45 @@ function returnLang(data) {
 }
 
 function prepare_ok(predata, unique, forsign, sendnet) {
-	$("#for-signature"+unique).val(forsign);
+	$("#for-signature" + unique).val(forsign);
 	doSign(unique);
 	predata.signature1 = $('#signature1' + unique).val();
 	predata.signature2 = $('#signature2' + unique).val();
 	predata.signature3 = $('#signature3' + unique).val();
-//	$("#send_to_net{{.Unique}}").trigger("click");
+	//	$("#send_to_net{{.Unique}}").trigger("click");
 	sendnet();
 }
 
 function prepare_contract(predata, unique, sendnet) {
-	$.get( 'ajax?json=ajax_prepare_tx', predata,
+	$.get('ajax?json=ajax_prepare_tx', predata,
 		function (data) {
-			if (data.error.length > 0 ) {
+			if (data.error.length > 0) {
+				$(".sweet-alert").remove();
 				Alert("Error", data.error, "error");
 			} else {
 				console.log(data);
 				predata.time = data.time;
 				if (data.signs) {
 					accept = '';
-					for (var i=0; i < data.signs.length; i++ ) {
+					for (var i = 0; i < data.signs.length; i++) {
 						isign = data.signs[i]
 						sign = GKey.sign(isign.forsign);
 						accept += isign.title + '<br>';
-						for (var k=0; k<isign.params.length; k++ ) {
+						for (var k = 0; k < isign.params.length; k++) {
 							accept += isign.params[k].text + ': ' + predata[isign.params[k].name] + '<br>';
 						}
 						data.forsign += ',' + sign;
 						predata[isign.field] = sign;
 					}
-					Alert("Confirmation", accept, "question:cancel", function(){
+					$(".sweet-alert").remove();
+					Alert("Confirmation", accept, "question:cancel", function () {
 						prepare_ok(predata, unique, data.forsign, sendnet);
 					}, "no:Cancel", "yes:Accept", "fullScreen:close");
 				} else {
 					prepare_ok(predata, unique, data.forsign, sendnet);
 				}
 			}
-	}, "json" );
+		}, "json");
 }
 
 function anchorScroll(anchor) {
