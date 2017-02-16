@@ -389,15 +389,22 @@ func StateTableTx(p *Parser, tblname string) string {
 	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
 }
 
-func IsContract(p *Parser, name string) bool {
-	if p.TxContract != nil && len(name) > 0 {
-		if name[0] != '@' {
-			name = fmt.Sprintf(`@%d`, p.TxStateID) + name
+func IsContract(p *Parser, names ...interface{}) bool {
+	for _, iname := range names {
+		name := iname.(string)
+		if p.TxContract != nil && len(name) > 0 {
+			if name[0] != '@' {
+				name = fmt.Sprintf(`@%d`, p.TxStateID) + name
+			}
+			//		return p.TxContract.Name == name
+			if p.TxContract.StackCont[len(p.TxContract.StackCont)-1] == name {
+				return true
+			}
+		} else if len(p.TxSlice) > 1 {
+			if consts.TxTypes[utils.BytesToInt(p.TxSlice[1])] == name {
+				return true
+			}
 		}
-		//		return p.TxContract.Name == name
-		return p.TxContract.StackCont[len(p.TxContract.StackCont)-1] == name
-	} else if len(p.TxSlice) > 1 {
-		return consts.TxTypes[utils.BytesToInt(p.TxSlice[1])] == name
 	}
 	return false
 }
