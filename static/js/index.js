@@ -690,17 +690,13 @@ function CopyToClipboard(elem, text) {
 	});
 }
 
-function Alert(title, text, type, Confirm, ConfirmStatus, no, yes, fullScreen) {
+function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
 	if (obj) {
 		var timer = null;
 		var view = type.split(":");
 		var cancelbtnShow = view[1] ? view[1] : false;
 		var cancelbtnText = returnLang("cancel");
 		var btnText = returnLang("ok");
-		
-		if (ConfirmStatus) {
-			ConfirmStatus = ConfirmStatus ? ConfirmStatus : true;
-		}
 		
 		if (no) {
 			var textNo = no.split(":");
@@ -715,6 +711,10 @@ function Alert(title, text, type, Confirm, ConfirmStatus, no, yes, fullScreen) {
 		if (fullScreen) {
 			var outsideClose = fullScreen.split(":");
 			var outsideClick = outsideClose[1] ? outsideClose[1] : false;
+		}
+		
+		if (ConfirmStatus) {
+			ConfirmStatus = ConfirmStatus ? ConfirmStatus : true;
 		}
 		
 		if (view[0] == "notification" && !obj.hasClass("modal-content")) {
