@@ -38,9 +38,9 @@ function sendnet{{.Unique}}() {
 function btn_contract(obj, contract, params, text) {
     console.log(contract, params, text);
     preloader(obj);    
-    Alert(text, contract, "success:cancel", function(){
+    Alert(text, contract, "question:cancel", function(){
         prepare_btncontract( contract, params );
-    });
+    }, "no:Cancel", "yes:Accept", "fullScreen:close", true);
 }
 </script>
 {{template "signatures".}}
