@@ -19,7 +19,7 @@ package parser
 import (
 	"encoding/hex"
 	"encoding/json"
-	// "fmt"
+	//"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -27,8 +27,26 @@ import (
 
 // не использовать для комментов
 func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (string, error) {
-
 	var tableId string
+
+	isBytea := make(map[string]bool)
+	colTypes, err := p.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
+	if err != nil {
+		return ``, err
+	}
+	for _, icol := range colTypes {
+		isBytea[icol[`column_name`]] = icol[`data_type`] == `bytea`
+	}
+	for i, v := range values_ {
+		if len(fields) > i && isBytea[fields[i]] {
+			switch v.(type) {
+			case string:
+				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
+					values_[i] = vbyte
+				}
+			}
+		}
+	}
 
 	values := utils.InterfaceSliceToStr(values_)
 
@@ -74,7 +92,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			if k == p.AllPkeys[table] {
 				continue
 			}
-			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && v != "" {
+			if (isBytea[k] || utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"})) && v != "" {
 				jsonMap[k] = string(utils.BinToHex([]byte(v)))
 			} else {
 				jsonMap[k] = v
@@ -101,7 +119,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		log.Debug("string(jsonData) %s / rbId %d", string(jsonData), rbId)
 		addSqlUpdate := ""
 		for i := 0; i < len(fields); i++ {
-			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
+			if (isBytea[fields[i]] || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"})) && len(values[i]) != 0 {
 				addSqlUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
@@ -133,7 +151,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			} else {
 				addSqlIns0 += fields[i] + `,`
 			}
-			if utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(values[i]) != 0 {
+			if (isBytea[fields[i]] || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"})) && len(values[i]) != 0 {
 				addSqlIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
 				addSqlIns1 += `to_timestamp('` + values[i] + `'),`
