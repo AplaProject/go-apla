@@ -150,7 +150,7 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal, `Tag`: Tag, `BtnContract`: BtnContract,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
-		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack, `WhiteMobileBg`: WhiteMobileBg,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack, `WhiteMobileBg`: WhiteMobileBg,`Bin2Hex`: Bin2Hex,
 	})
 }
 
@@ -567,6 +567,13 @@ func WhiteMobileBg(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 	$("body").%sClass('flatPageMobile');
 </script>`, wide)
+}
+
+func Bin2Hex(vars *map[string]string, pars ...string) string {
+	if len(pars) == 0 {
+		return ``
+	}
+	return string(BinToHex(pars[0]))
 }
 
 func WhiteBg(vars *map[string]string, pars ...string) string {
