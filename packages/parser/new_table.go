@@ -178,11 +178,16 @@ func (p *Parser) NewTable() error {
 
 func (p *Parser) NewTableRollback() error {
 
+	err := p.autoRollback()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
 	tableName := `global_` + p.TxMaps.String["table_name"]
 	if p.TxMaps.Int64["global"] == 0 {
 		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
 	}
-	err := p.ExecSql(`DROP TABLE "` + tableName + `"`)
+	err = p.ExecSql(`DROP TABLE "` + tableName + `"`)
 
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {

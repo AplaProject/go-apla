@@ -19,6 +19,7 @@ package controllers
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/shopspring/decimal"
 )
 
 type anonymMoneyTransferPage struct {
@@ -33,7 +34,7 @@ type anonymMoneyTransferPage struct {
 	TimeNow      int64
 	WalletId     int64
 	CitizenId    int64
-	Commission   int64
+	Commission   string
 	Amount       string
 }
 
@@ -49,11 +50,11 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	}
 
 	fuelRate := c.GetFuel()
-	if fuelRate <= 0 {
+	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return ``, fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 
-	commission := fPrice * fuelRate
+	commission := decimal.New(fPrice, 0).Mul(fuelRate)
 
 	log.Debug("sessCitizenId %d SessWalletId %d SessStateId %d", c.SessCitizenId, c.SessWalletId, c.SessStateId)
 	amount, err := c.Single("select amount from dlt_wallets where wallet_id = ?", c.SessWalletId).String()
@@ -73,7 +74,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		Amount:       amount,
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		Commission:   commission,
+		Commission:   commission.String(),
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId})

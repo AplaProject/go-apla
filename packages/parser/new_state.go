@@ -498,21 +498,26 @@ MenuItem(Checking citizens, load_template, CheckCitizens)`, sid)
 }
 
 func (p *Parser) NewStateRollback() error {
-
 	id, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
+	err = p.autoRollback()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
 		`smart_contracts`, `state_parameters`, `citizenship_requests`} {
 		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
+	}
+
+	err = p.ExecSql(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
+	if err != nil {
+		return p.ErrInfo(err)
 	}
 
 	maxId, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
@@ -528,6 +533,7 @@ func (p *Parser) NewStateRollback() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
 	return nil
 }
 

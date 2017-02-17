@@ -41,6 +41,7 @@ import (
 	//	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
+	"github.com/shopspring/decimal"
 )
 
 var Mutex = &sync.Mutex{}
@@ -1612,13 +1613,14 @@ func (db *DCDB) CheckStateName(stateId int64) (bool, error) {
 	return false, fmt.Errorf("null stateId")
 }
 
-func (db *DCDB) GetFuel() int64 {
+func (db *DCDB) GetFuel() decimal.Decimal {
 	// fuel = qEGS/F
 	/*	fuelMutex.Lock()
 		defer fuelMutex.Unlock()
 		if cacheFuel <= 0 {*/
-	cacheFuel, _ := db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
+	fuel, _ := db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").String()
 	//}
+	cacheFuel, _ := decimal.NewFromString(fuel)
 	return cacheFuel
 }
 

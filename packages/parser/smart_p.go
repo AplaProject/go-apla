@@ -214,12 +214,12 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf(`Wrong type of price function`)
 		}
 	}
-	if p.GetFuel() <= 0 {
+	if p.GetFuel().Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`Fuel rate must be greater than 0`)
 	}
-	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit(price) {
+	/*	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit(price) {
 		return fmt.Errorf(`there are not enough money`)
-	}
+	}*/
 
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
@@ -235,7 +235,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			}
 		}
 	}
-	p.TxUsedCost = before - (*p.TxContract.Extend)[`txcost`].(int64)
+	p.TxUsedCost = decimal.New(before-(*p.TxContract.Extend)[`txcost`].(int64), 0)
 	p.TxContract.TxPrice = price
 	//fmt.Println(`Cost`, p.TxUsedCost)
 	return

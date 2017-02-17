@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/shopspring/decimal"
 )
 
 /**
@@ -174,7 +175,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			p.TxMap = map[string][]byte{}
 
 			p.TxIds++
-			p.TxUsedCost = 0
+			p.TxUsedCost = decimal.New(0, 0)
 			p.TxCost = 0
 			if p.TxContract != nil {
 				// check that there are enough money in CallContract

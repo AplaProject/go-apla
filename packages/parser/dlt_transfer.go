@@ -75,7 +75,7 @@ func (p *Parser) DLTTransferFront() error {
 	}
 
 	fuelRate := p.GetFuel()
-	if fuelRate <= 0 {
+	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
@@ -85,7 +85,7 @@ func (p *Parser) DLTTransferFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	commission := fPriceDecemal.Mul(decimal.New(fuelRate, 0))
+	commission := fPriceDecemal.Mul(fuelRate)
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
 	if p.TxMaps.Decimal["commission"].Cmp(commission) < 0 {

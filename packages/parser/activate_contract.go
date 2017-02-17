@@ -21,6 +21,7 @@ import (
 
 	//	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/shopspring/decimal"
 )
 
 func (p *Parser) ActivateContractInit() error {
@@ -65,10 +66,10 @@ func (p *Parser) ActivateContractFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if err := p.checkSenderDLT(cost, 0); err != nil {
+	if err := p.checkSenderDLT(cost, decimal.New(0, 0)); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Int64["activate_cost"] = cost
+	p.TxMaps.String["activate_cost"] = cost.String()
 	return nil
 }
 
@@ -81,7 +82,7 @@ func (p *Parser) ActivateContract() error {
 	if wallet == 0 {
 		wallet = p.TxCitizenID
 	}
-	egs := p.TxMaps.Int64["activate_cost"]
+	egs := p.TxMaps.String["activate_cost"]
 	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{utils.Int64ToStr(wallet)}, true); err != nil {
 		return err
