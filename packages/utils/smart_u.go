@@ -850,8 +850,11 @@ func BtnTemplate(vars *map[string]string, pars ...string) string {
 }
 
 func BtnContract(vars *map[string]string, pars ...string) string {
-	// contract, title, text, params, class
+	// contract, title, text, params, class, pagetemplate, name, paramssuccess
 	params := ``
+	onsuccess := ``
+	page := ``
+	pageparam := ``
 	if len(pars) < 3 {
 		return ``
 	}
@@ -866,9 +869,16 @@ func BtnContract(vars *map[string]string, pars ...string) string {
 	if len(pars) >= 5 {
 		class = pars[4]
 	}
+	if len(pars) >= 7 {
+		onsuccess = lib.Escape(pars[5])
+		page = lib.Escape(pars[6])
+		if len(pars) == 8 {
+			pageparam = lib.Escape(pars[7])
+		}
+	}
 	(*vars)["wibtncont"] = `1`
-	return fmt.Sprintf(`<button type="button" class=%s data-tool="panel-refresh" onclick="btn_contract(this, '%s', {%s}, '%s' )">%s</button>`,
-		class, pars[0], params, pars[2], pars[1])
+	return fmt.Sprintf(`<button type="button" class=%s data-tool="panel-refresh" onclick="btn_contract(this, '%s', {%s}, '%s', '%s', '%s', {%s})">%s</button>`,
+		class, pars[0], params, pars[2], onsuccess, page, pageparam, pars[1])
 }
 
 func BtnSys(vars *map[string]string, pars ...string) string {

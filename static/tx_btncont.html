@@ -1,12 +1,19 @@
 <script language="JavaScript" type="text/javascript">
+	var serverTime{{.Unique}};
+	var predata{{.Unique}};
+	var load{{.Unique}} = '';
+	var name{{.Unique}} = '';
+	var param{{.Unique}};
+
 	function SendTxOK{{.Unique}}() {
 		preloader_hide();
-        if (hist.length > hist_cur) {
+		if (load{{.Unique}}.length > 0 && name{{.Unique}}.length > 0) {
+			window['load_'+load{{.Unique}}](name{{.Unique}}, param{{.Unique}});
+		} else if (hist.length > hist_cur) {
             hist_go(hist[hist_cur]);
         }
 	}
-	var serverTime{{.Unique}};
-	var predata{{.Unique}};
+
 	function prepare_btncontract( contract, params ) {
 		predata{{.Unique}} = {
 			'TxName' : contract,
@@ -35,9 +42,13 @@ function sendnet{{.Unique}}() {
 	});
 }
 
-function btn_contract(obj, contract, params, text) {
+function btn_contract(obj, contract, params, text, loadname, pagename, pageparam) {
     console.log(contract, params, text);
     preloader(obj);    
+	load{{.Unique}} = loadname;
+	name{{.Unique}} = pagename;
+	param{{.Unique}} = pageparam;
+	
     Alert(text, contract, "question:cancel", function(){
         prepare_btncontract( contract, params );
     }, "no:Cancel", "yes:Accept", "fullScreen:close", true);
