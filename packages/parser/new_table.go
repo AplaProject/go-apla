@@ -129,7 +129,7 @@ func (p *Parser) NewTable() error {
 		case "time":
 			colType = `timestamp`
 		case "hash":
-			colType = `varchar(32)`
+			colType = `bytea`
 		case "double":
 			colType = `double precision`
 		case "money":

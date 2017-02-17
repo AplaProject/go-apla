@@ -125,7 +125,7 @@ func (p *Parser) NewColumn() error {
 	case "time":
 		colType = `timestamp`
 	case "hash":
-		colType = `varchar(32)`
+		colType = `bytea`
 	case "money":
 		colType = `decimal(30,0)`
 	case "double":
