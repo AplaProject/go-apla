@@ -520,12 +520,7 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
-	dltPrice, err := decimal.NewFromString(fPrice)
-	if err != nil {
-		return decimal.New(0, 0), p.ErrInfo(err)
-	}
-	dltPrice = dltPrice.Mul(fuelRate)
-	return dltPrice, nil
+	return p.TxUsedCost.Mul(fuelRate), nil
 }
 
 func (p *Parser) checkPrice(name string) error {
