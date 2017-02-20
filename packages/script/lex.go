@@ -89,13 +89,15 @@ const (
 	KEY_WARNING
 	KEY_INFO
 	KEY_NIL
+	KEY_ACTION
+	KEY_COND
 	KEY_ERROR
 )
 
 var (
 	KEYWORDS = map[string]uint32{`contract`: KEY_CONTRACT, `func`: KEY_FUNC, `return`: KEY_RETURN,
 		`if`: KEY_IF, `else`: KEY_ELSE, `error`: KEY_ERROR, `warning`: KEY_WARNING, `info`: KEY_INFO,
-		`while`: KEY_WHILE, `data`: KEY_TX, `nil`: KEY_NIL,
+		`while`: KEY_WHILE, `data`: KEY_TX, `nil`: KEY_NIL, `action`: KEY_ACTION, `conditions`: KEY_COND,
 		`true`: KEY_TRUE, `false`: KEY_FALSE, `break`: KEY_BREAK, `continue`: KEY_CONTINUE, `var`: KEY_VAR}
 	TYPES = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
 		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
@@ -198,6 +200,15 @@ func LexParser(input []rune) (Lexems, error) {
 					value = name[1:]
 				} else if keyId, ok := KEYWORDS[name]; ok {
 					switch keyId {
+					case KEY_ACTION, KEY_COND:
+						if len(lexems) > 0 {
+							lexf := *lexems[len(lexems)-1]
+							if lexf.Type&0xff != LEX_KEYWORD || lexf.Value.(uint32) != KEY_FUNC {
+								lexems = append(lexems, &Lexem{LEX_KEYWORD | (KEY_FUNC << 8),
+									KEY_FUNC, line, lexOff - offline + 1})
+							}
+						}
+						value = name
 					case KEY_TRUE:
 						lexId = LEX_NUMBER
 						value = true
