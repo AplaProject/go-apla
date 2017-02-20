@@ -33,6 +33,7 @@ func (p *Parser) autoRollback() error {
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
+	defer rows.Close()
 	for rows.Next() {
 		err = rows.Scan(&rollbackTxRow.tx_hash, &rollbackTxRow.table_name, &rollbackTxRow.table_id)
 		if err != nil {
