@@ -438,10 +438,17 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 func (p *Parser) AccessTable(table, action string) error {
 
+	prefix := utils.Int64ToStr(int64(p.TxStateID))
+
+	if isCustom, err := p.IsCustomTable(table); err != nil {
+		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать
+	} else if !isCustom && table != prefix+`_citizenship_requests` && table != `dlt_wallets` {
+		return fmt.Errorf(table + ` is not a custom table`)
+	}
+
 	if p.TxStateID == 0 {
 		return nil
 	}
-	prefix := utils.Int64ToStr(int64(p.TxStateID))
 
 	tablePermission, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", table)
 	if err != nil {
@@ -461,10 +468,17 @@ func (p *Parser) AccessTable(table, action string) error {
 
 func (p *Parser) AccessColumns(table string, columns []string) error {
 
+	prefix := utils.Int64ToStr(int64(p.TxStateID))
+
+	if isCustom, err := p.IsCustomTable(table); err != nil {
+		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать
+	} else if !isCustom && table != prefix+`_citizenship_requests` {
+		return fmt.Errorf(table + ` is not a custom table`)
+	}
+
 	if p.TxStateID == 0 {
 		return nil
 	}
-	prefix := utils.Int64ToStr(int64(p.TxStateID))
 
 	columnsAndPermissions, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
 		"key", "value", table)

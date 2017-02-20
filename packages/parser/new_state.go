@@ -179,7 +179,7 @@ func (p *Parser) NewState() error {
 		if towallet == 0 {
 			towallet = $citizen
 		}
-        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, towallet, Money(StateParam($state, "citizenship_price")))
+//        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, towallet, Money(StateParam($state, "citizenship_price")))
 		DBInsert(Table( "citizens"), "id,block_id,name", wallet, 
 		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
         DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)

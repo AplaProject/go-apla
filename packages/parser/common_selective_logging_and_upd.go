@@ -40,15 +40,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	for _, icol := range colTypes {
 		isBytea[icol[`column_name`]] = icol[`data_type`] == `bytea`
 	}
-	if table[0] >= '0' && table[0] <= '9' {
-		if off := strings.IndexByte(table, '_'); off > 0 {
-			prefix := table[:off]
-			if name, err := p.Single(`select name from "`+prefix+`_tables" where name = ?`, table).String(); err != nil {
-				return ``, err
-			} else {
-				isCustom = name == table
-			}
-		}
+	if isCustom, err = p.IsCustomTable(table); err != nil {
+		return ``, err
 	}
 
 	for i, v := range values_ {

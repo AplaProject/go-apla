@@ -284,25 +284,25 @@ func DBUpdateWhere(p *Parser, tblname string, column string, value interface{}, 
 }
 
 func DBTransfer(p *Parser, tblname, columns string, idFrom, idTo int64, amount decimal.Decimal) (err error) { // map[string]interface{}) {
-	cols := strings.Split(columns, `,`)
-	idname := `id`
-	if len(cols) == 2 {
-		idname = cols[1]
-	}
-	column := cols[0]
-	if err = p.AccessColumns(tblname, []string{column}); err != nil {
-		return
-	}
-	value := amount.String()
+	/*	cols := strings.Split(columns, `,`)
+		idname := `id`
+		if len(cols) == 2 {
+			idname = cols[1]
+		}
+		column := cols[0]
+		if err = p.AccessColumns(tblname, []string{column}); err != nil {
+			return
+		}
+		value := amount.String()
 
-	if _, err = p.selectiveLoggingAndUpd([]string{`-` + column}, []interface{}{value}, tblname, []string{idname},
-		[]string{utils.Int64ToStr(idFrom)}, true); err != nil {
-		return
-	}
-	if _, err = p.selectiveLoggingAndUpd([]string{`+` + column}, []interface{}{value}, tblname, []string{idname},
-		[]string{utils.Int64ToStr(idTo)}, true); err != nil {
-		return
-	}
+		if _, err = p.selectiveLoggingAndUpd([]string{`-` + column}, []interface{}{value}, tblname, []string{idname},
+			[]string{utils.Int64ToStr(idFrom)}, true); err != nil {
+			return
+		}
+		if _, err = p.selectiveLoggingAndUpd([]string{`+` + column}, []interface{}{value}, tblname, []string{idname},
+			[]string{utils.Int64ToStr(idTo)}, true); err != nil {
+			return
+		}*/
 	return
 }
 
