@@ -151,7 +151,9 @@ func TestVMCompile(t *testing.T) {
 			}
 		}
 		contract empty {
-			func action {
+			conditions {Println("EmptyCond")
+				}
+			action {
 				Println("Empty", $parent)
 				if 1 {
 					my("Par1,Par2,ext", 123, "Parameter 2", "extended" )
