@@ -1646,7 +1646,7 @@ func (db *DCDB) IsIndex(tblname, column string) (bool, error) {
 }
 
 func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
-	if table[0] >= '0' && table[0] <= '9' {
+	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
 		if off := strings.IndexByte(table, '_'); off > 0 {
 			prefix := table[:off]
 			if name, err := db.Single(`select name from "`+prefix+`_tables" where name = ?`, table).String(); err == nil {
