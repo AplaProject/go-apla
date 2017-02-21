@@ -305,7 +305,9 @@ BtnSys(interface, Interface, '', 'btn btn-pill-right btn-primary') BR() BR()
 BtnTemplate(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg') BR() BR()
 DivsEnd:
 
-Ring(GetOne(count(*),#state_id#_citizens), Number of citizens, 30)
+Divs(md-4, panel panel-default panel-body)
+Ring(GetOne(count(*),#state_id#_citizens), 30)
+DivsEnd:
 
 Divs(md-12, panel panel-default panel-body)
      MarkDown : ## Citizens
