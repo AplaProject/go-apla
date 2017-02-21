@@ -137,7 +137,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
-		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `Divs`: Divs, `DivsEnd`: DivsEnd,
+		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -796,6 +796,10 @@ func Small(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`small`, pars...)
 }
 
+func Strong(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`strong`, pars...)
+}
+
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
 
@@ -871,13 +875,17 @@ func TxId(vars *map[string]string, pars ...string) string {
 
 func LinkTemplate(vars *map[string]string, pars ...string) string {
 	params := ``
+	class := ``
 	if len(pars) < 2 {
 		return ``
 	}
 	if len(pars) >= 3 {
 		params = pars[2]
 	}
-	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
+	if len(pars) >= 4 {
+		class = pars[3]
+	}
+	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" class="%s">%s</a>`, pars[0], params, class, pars[1])
 }
 
 func BlockInfo(vars *map[string]string, pars ...string) string {
