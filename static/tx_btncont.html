@@ -15,11 +15,6 @@
 	}
 
 	function prepare_btncontract( contract, params ) {
-/*	    console.log('obj', obj);
-		
-	    preloader(obj);    
-		
-	    console.log('obj2', obj);*/
 		predata{{.Unique}} = {
 			'TxName' : contract,
 		};
@@ -48,11 +43,12 @@ function sendnet{{.Unique}}() {
 }
 
 function btn_contract(obj, contract, params, text, loadname, pagename, pageparam) {
-//    console.log(contract, params, text);
+    console.log(contract, params, text);
+    preloader(obj);    
 	load{{.Unique}} = loadname;
 	name{{.Unique}} = pagename;
 	param{{.Unique}} = pageparam;
-	preloader(obj);    
+	
     Alert(text, contract, "question:cancel", function(){
         prepare_btncontract( contract, params );
     }, "no:Cancel", "yes:Accept", "fullScreen:close", true);
