@@ -30,13 +30,14 @@ import (
 	//"regexp"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 func IosLog(text string) {
 }
 
+/*
 func NewBoundListener(maxActive int, l net.Listener) net.Listener {
 	return &boundListener{l, make(chan bool, maxActive)}
 }
@@ -66,22 +67,22 @@ func (l *boundConn) Close() error {
 	<-l.active
 	return err
 }
-
+*/
 func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 
-	i:=0
+	i := 0
 	host := ListenHttpHost
 	var l net.Listener
 	var err error
 	for {
 		i++
 		if i > 7 {
-			log.Error("Error listening %d",  host)
+			log.Error("Error listening %d", host)
 			panic("Error listening ")
 		}
 		if i > 1 {
-			host = ":7"+utils.IntToStr(i)+"79"
-			*BrowserHttpHost = "http://"+host
+			host = ":7" + utils.IntToStr(i) + "79"
+			*BrowserHttpHost = "http://" + host
 		}
 		log.Debug("host", host)
 		l, err = net.Listen("tcp4", host)
@@ -99,7 +100,10 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 	}
 
 	go func() {
-		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
+		srv := &http.Server{Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		//		srv.SetKeepAlivesEnabled(false)
+		err = srv.Serve(l)
+		//		err = http.Serve( NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
 			log.Error("Error listening:", err, ListenHttpHost)
 			panic(err)
@@ -110,7 +114,7 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 
 // For ipv6 on the server
 func httpListenerV6() {
-	i:=0
+	i := 0
 	port := *utils.ListenHttpPort
 	var l net.Listener
 	var err error
@@ -120,7 +124,7 @@ func httpListenerV6() {
 			panic("Error listening ")
 		}
 		if i > 0 {
-			port = "7"+utils.IntToStr(i)+"79"
+			port = "7" + utils.IntToStr(i) + "79"
 		}
 		i++
 		l, err = net.Listen("tcp6", ":"+port)
@@ -132,7 +136,10 @@ func httpListenerV6() {
 	}
 
 	go func() {
-		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
+		srv := &http.Server{Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		//		srv.SetKeepAlivesEnabled(false)
+		err = srv.Serve(l)
+		//		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
 			log.Error("Error listening:", err)
 			panic(err)
@@ -158,32 +165,32 @@ func tcpListener() {
 
 		log.Debug("*utils.tcpHost: %v", *utils.TcpHost+":"+consts.TCP_PORT)
 		//if len(*utils.TcpHost) > 0 {
-			// включаем листинг TCP-сервером и обработку входящих запросов
-			l, err := net.Listen("tcp4", *utils.TcpHost+":"+consts.TCP_PORT)
-			if err != nil {
-				log.Error("Error listening:", err)
-				//panic(err)
-			} else {
-				//defer l.Close()
-				go func() {
-					for {
-						conn, err := l.Accept()
-						if err != nil {
-							log.Error("Error accepting:", err)
-							utils.Sleep(1)
-							//panic(err)
-							//os.Exit(1)
-						} else {
-							go func(conn net.Conn) {
-								t := new(tcpserver.TcpServer)
-								t.DCDB = db
-								t.Conn = conn
-								t.HandleTcpRequest()
-							}(conn)
-						}
+		// включаем листинг TCP-сервером и обработку входящих запросов
+		l, err := net.Listen("tcp4", *utils.TcpHost+":"+consts.TCP_PORT)
+		if err != nil {
+			log.Error("Error listening:", err)
+			//panic(err)
+		} else {
+			//defer l.Close()
+			go func() {
+				for {
+					conn, err := l.Accept()
+					if err != nil {
+						log.Error("Error accepting:", err)
+						utils.Sleep(1)
+						//panic(err)
+						//os.Exit(1)
+					} else {
+						go func(conn net.Conn) {
+							t := new(tcpserver.TcpServer)
+							t.DCDB = db
+							t.Conn = conn
+							t.HandleTcpRequest()
+						}(conn)
 					}
-				}()
-			}
+				}
+			}()
+		}
 		//}
 	}()
 }
