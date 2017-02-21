@@ -609,7 +609,7 @@ func MessageBoard(vars *map[string]string, pars ...string) string {
 					</a>`
 
 	}
-	(*vars)["wibtncont"] = `1`
+	//	(*vars)["wibtncont"] = `1`
 	return fmt.Sprintf(`<div id="panelDemo2" class="panel panel-info elastic" data-sweet-alert>
 			<div class="panel-heading">
 				UN Conference
@@ -622,17 +622,20 @@ func MessageBoard(vars *map[string]string, pars ...string) string {
 			</div>
 			<div class="panel-footer"><div class="input-group">
                                  <input placeholder="press message" class="form-control input-sm" type="text" id="message_board_text" value="Hello">
-                                 <span class="input-group-btn">
-                                 <script>
-								 function send_mess(obj) {
-                                 	var message_board_text =  $( "#message_board_text" ).val();
-  								 	btn_contract(obj, 'addMessage', {Text: message_board_text}, 'You vote for candidate to #campaign#', 
-									        'template', 'dashboard_default', {})
-								 }
-                                 </script>
-                                    <button type="button" class="btn btn-default btn-sm" data-tool="panel-refresh" onclick="send_mess(this)" id="panelRefresh_1">Send</button>
-                                    </button>
-                                 </span>
+                                 <span class="input-group-btn">`+
+		TXButton(vars, &map[string]string{`Contract`: `addMessage`, `Name`: `Send`,
+			`ClassBtn`: `btn btn-default btn-sm`, `AutoClose`: `1`,
+			`OnSuccess`: `template,dashboard_default`, `Inputs`: `Text=message_board_text`})+
+		/*                                <script>
+										 function send_mess(obj) {
+		                                 	var message_board_text =  $( "#message_board_text" ).val();
+		  								 	btn_contract(obj, 'addMessage', {Text: message_board_text}, 'You vote for candidate to #campaign#',
+											        'template', 'dashboard_default', {})
+										 }
+		                                 </script>
+		                                    <button type="button" class="btn btn-default btn-sm" data-tool="panel-refresh" onclick="send_mess(this)" id="panelRefresh_1">Send</button>
+		                                    </button>*/
+		`                                 </span>
                               </div></div>
 		</div>`, ret)
 }
