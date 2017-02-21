@@ -1529,55 +1529,50 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 	return lib.AddressToString(uint64(id))
 }
 
+
 func Ring(vars *map[string]string, pars ...string) string {
-	class := `col-md-4`
-	title := ``
 	count := 0
 	size := 18
 	if len(pars) > 0 {
 		count = int(StrToInt64(pars[0]))
 	}
 	if len(pars) > 1 {
-		title = getClass(pars[1])
-	}
-	if len(pars) > 2 {
-		size = int(StrToInt64(pars[2]))
+		size = int(StrToInt64(pars[1]))
 	}
 	pct := 100
-	if len(pars) > 3 {
-		pct = int(StrToInt64(pars[3]))
+	if len(pars) > 2 {
+		pct = int(StrToInt64(pars[2]))
 	}
 	speed := 1
-	if len(pars) > 4 {
-		speed = int(StrToInt64(pars[4]))
+	if len(pars) > 3 {
+		speed = int(StrToInt64(pars[3]))
 	}
 	color := `23b7e5`
-	if len(pars) > 5 {
-		color = pars[5]
+	if len(pars) > 4 {
+		color = pars[4]
 	}
 	fontColor := `656565`
-	if len(pars) > 6 {
-		fontColor = pars[6]
+	if len(pars) > 5 {
+		fontColor = pars[5]
 	}
 	width := 250
-	if len(pars) > 7 {
-		width = int(StrToInt64(pars[7]))
+	if len(pars) > 6 {
+		width = int(StrToInt64(pars[6]))
 	}
 	thickness := 10
-	if len(pars) > 8 {
-		thickness = int(StrToInt64(pars[8]))
+	if len(pars) > 7 {
+		thickness = int(StrToInt64(pars[7]))
 	}
 	prefix := ``
-	if len(pars) > 9 {
-		prefix = pars[9]
+	if len(pars) > 8 {
+		prefix = pars[8]
 	}
 	suffix := ``
-	if len(pars) > 10 {
-		suffix = pars[10]
+	if len(pars) > 9 {
+		suffix = pars[9]
 	}
-	return fmt.Sprintf(`<div class="%s"><div class="panel panel-default"> <div class="panel-body">
-			<div class="text-info">%s</div>
-			    <div
+	return fmt.Sprintf(`
+		<div
                     data-count
                     data-count-font="%dpx"
                     data-count-number="%d"
@@ -1595,9 +1590,9 @@ func Ring(vars *map[string]string, pars ...string) string {
                     data-count-separator=" "
                     data-count-decimal=" "
                     data-count-decimals=" "
-                ></div>
-		 </div></div></div>`, class, title, size, count, pct, speed, color, fontColor, width, thickness, prefix, suffix)
+                ></div>`, size, count, pct, speed, color, fontColor, width, thickness, prefix, suffix)
 }
+
 
 func WiBalance(vars *map[string]string, pars ...string) string {
 	if len(pars) != 2 {
