@@ -253,7 +253,18 @@ func Process(input string, vars *map[string]string) (out string) {
 	name := make([]rune, 0, 128)
 	key := make([]rune, 0, 128)
 	value := make([]rune, 0, 128)
-	for _, ch := range input {
+	forbody := make([]rune, 0, 1024)
+	for off, ch := range input {
+		if (*vars)[`for_loop`] == `1` {
+			if off+10 < len(input) && input[off:off+10] == `ForListEnd` {
+				(*vars)[`for_body`] = string(forbody)
+				forbody = forbody[:0]
+				(*vars)[`for_loop`] = `0`
+			} else {
+				forbody = append(forbody, ch)
+				continue
+			}
+		}
 		if isMap > 0 {
 			if pair > 0 {
 				if ch != pair {
