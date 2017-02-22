@@ -1827,8 +1827,12 @@ func Select(vars *map[string]string, pars ...string) string {
 }
 
 func Map(vars *map[string]string, pars ...string) string {
+	class := ``
+	if len(pars) > 1 {
+		class = pars[1]
+	}
 	(*vars)[`wimap`] = `1`
-	return fmt.Sprintf(`<div class="wimap">%s</div>`, pars[0])
+	return fmt.Sprintf(`<div class="wimap %s">%s</div>`, class, pars[0])
 }
 
 func MapPoint(vars *map[string]string, pars ...string) string {
