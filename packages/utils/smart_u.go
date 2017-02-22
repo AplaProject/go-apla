@@ -768,12 +768,11 @@ func getClass(class string) (string, string) {
 			if len(lr) == 1 {
 				more = append(more, ilist)
 			} else if len(lr) == 2 {
-				/*if ok, _ := regexp.MatchString(`(?i)href`, lr[0]); ok {
-					continue
-				}*/
 				right := strings.Trim(lr[1], `"'`)
-				if len(right) > 0 && right[0:1] !=`#` {
-					continue
+				if ok, _ := regexp.MatchString(`(?i)href`, lr[0]); ok {
+					if len(right) > 0 && right[0:1] !=`#` {
+						continue
+					}
 				}
 				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], right))
 			}
