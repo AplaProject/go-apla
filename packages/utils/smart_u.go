@@ -146,7 +146,7 @@ func init() {
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `IfEnd`: IfEnd, `Else`: Else, `ElseIf`: ElseIf, `Trim`: Trim, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
-		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress,
+		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress, `ForList`: ForList, `ForListEnd`: ForListEnd,
 		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal, `Tag`: Tag, `BtnContract`: BtnContract,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
@@ -664,9 +664,17 @@ func GetList(vars *map[string]string, pars ...string) string {
 	if err != nil {
 		return err.Error()
 	}
+	list := make([]string, 0)
+	cols := make([]string, 0)
 	//out := make(map[string]map[string]string)
 	for _, item := range value {
 		ikey := item[keys[0]]
+		list = append(list, ikey)
+		if len(cols) == 0 {
+			for key := range item {
+				cols = append(cols, key)
+			}
+		}
 		for key, ival := range item {
 			if strings.IndexByte(ival, '<') >= 0 {
 				//				item[key] = lib.StripTags(ival)
@@ -676,12 +684,33 @@ func GetList(vars *map[string]string, pars ...string) string {
 		}
 		//		out[item[keys[0]]] = item
 	}
-	/*	sout, err := json.Marshal(out)
-		if err != nil {
-			return err.Error()
-		}
-		(*vars)[pars[0]] = string(sout)*/
+	(*vars)[pars[0]+`_list`] = strings.Join(list, `|`)
+	(*vars)[pars[0]+`_columns`] = strings.Join(cols, `|`)
 	return ``
+}
+
+func ForList(vars *map[string]string, pars ...string) string {
+	(*vars)[`for_name`] = pars[0]
+	(*vars)[`for_loop`] = `1`
+	return ``
+}
+
+func ForListEnd(vars *map[string]string, pars ...string) (out string) {
+	name := (*vars)[`for_name`]
+	list := strings.Split((*vars)[name+`_list`], `|`)
+	cols := strings.Split((*vars)[name+`_columns`], `|`)
+	for i, item := range list {
+		item = strings.TrimSpace(item)
+		if len(item) == 0 {
+			continue
+		}
+		(*vars)[`index`] = fmt.Sprintf(`%d`, i+1)
+		for _, icol := range cols {
+			(*vars)[icol] = (*vars)[name+item+icol]
+		}
+		out += textproc.Process((*vars)[`for_body`], vars)
+	}
+	return
 }
 
 func ListVal(vars *map[string]string, pars ...string) string {
@@ -728,26 +757,36 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	return strings.Replace(lib.StripTags(value), "\n", "\n<br>", -1)
 }
 
-func getClass(class string) string {
+func getClass(class string) (string, string) {
 	list := strings.Split(class, ` `)
-	for i, ilist := range list {
-		if strings.HasPrefix(ilist, `data-`) {
-			list[i] = ``
-			continue
-		}
-		if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
+
+	more := make([]string, 0)
+	classes := make([]string, 0)
+	for _, ilist := range list {
+		if strings.HasPrefix(ilist, `data-`) || strings.IndexByte(ilist, '=') > 0 {
+			lr := strings.Split(ilist, `=`)
+			if len(lr) == 1 {
+				more = append(more, ilist)
+			} else if len(lr) == 2 {
+				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], strings.Trim(lr[1], `"'`)))
+			}
+		} else if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
-			list[i] = `col-` + ilist
+			classes = append(classes, `col-`+ilist)
+		} else {
+			classes = append(classes, ilist)
 		}
+
 	}
-	return strings.Join(list, ` `)
+	return strings.Join(classes, ` `), strings.Join(more, ` `)
 }
 
 func getTag(tag string, pars ...string) (out string) {
 	if len(pars) == 0 {
 		return
 	}
-	out = fmt.Sprintf(`<%s class="%s">`, tag, getClass(pars[0]))
+	class, more := getClass(pars[0])
+	out = fmt.Sprintf(`<%s class="%s" %s>`, tag, class, more)
 	for i := 1; i < len(pars); i++ {
 		out += pars[i]
 	}
@@ -808,12 +847,8 @@ func Divs(vars *map[string]string, pars ...string) (out string) {
 		(*vars)[`isrow`] = `opened`
 	}
 	for _, item := range pars {
-		more := ``
-		if strings.Index(item, `data-sweet-alert`) >= 0 {
-			more = `data-sweet-alert`
-		}
-		classes := getClass(item)
-		out += fmt.Sprintf(`<div class="%s" %s>`, classes, more)
+		class, more := getClass(item)
+		out += fmt.Sprintf(`<div class="%s" %s>`, class, more)
 		count++
 	}
 	if val, ok := (*vars)[`divs`]; ok {
@@ -1259,12 +1294,13 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
 	class := `clearfix pull-right`
+	//var more, moreBtn string
 	if len((*pars)[`Class`]) > 0 {
-		class = getClass((*pars)[`Class`])
+		class, _ = getClass((*pars)[`Class`])
 	}
 	classBtn := `btn btn-primary`
 	if len((*pars)[`ClassBtn`]) > 0 {
-		classBtn = getClass((*pars)[`ClassBtn`])
+		classBtn, _ = getClass((*pars)[`ClassBtn`])
 	}
 
 	onsuccess := (*pars)[`OnSuccess`]
@@ -1545,7 +1581,6 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 	return lib.AddressToString(uint64(id))
 }
 
-
 func Ring(vars *map[string]string, pars ...string) string {
 	count := 0
 	size := 18
@@ -1608,7 +1643,6 @@ func Ring(vars *map[string]string, pars ...string) string {
                     data-count-decimals=" "
                 ></div>`, size, count, pct, speed, color, fontColor, width, thickness, prefix, suffix)
 }
-
 
 func WiBalance(vars *map[string]string, pars ...string) string {
 	if len(pars) != 2 {
