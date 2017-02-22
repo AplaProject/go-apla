@@ -137,7 +137,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
-		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
+		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -768,7 +768,13 @@ func getClass(class string) (string, string) {
 			if len(lr) == 1 {
 				more = append(more, ilist)
 			} else if len(lr) == 2 {
-				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], strings.Trim(lr[1], `"'`)))
+				right := strings.Trim(lr[1], `"'`)
+				if ok, _ := regexp.MatchString(`(?i)href`, lr[0]); ok {
+					if len(right) > 0 && right[0:1] !=`#` {
+						continue
+					}
+				}
+				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], right))
 			}
 		} else if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
@@ -833,6 +839,10 @@ func Em(vars *map[string]string, pars ...string) (out string) {
 
 func Small(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`small`, pars...)
+}
+
+func A(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`a`, pars...)
 }
 
 func Strong(vars *map[string]string, pars ...string) (out string) {
@@ -910,17 +920,19 @@ func TxId(vars *map[string]string, pars ...string) string {
 
 func LinkTemplate(vars *map[string]string, pars ...string) string {
 	params := ``
-	class := ``
 	if len(pars) < 2 {
 		return ``
 	}
 	if len(pars) >= 3 {
 		params = pars[2]
 	}
+	classParams := ``
 	if len(pars) >= 4 {
-		class = pars[3]
+		//class = pars[3]
+		class, more := getClass(pars[3])
+		classParams = fmt.Sprintf(`class="%s" %s`, class, more)
 	}
-	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" class="%s">%s</a>`, pars[0], params, class, pars[1])
+	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" %s>%s</a>`, pars[0], params, classParams, pars[1])
 }
 
 func BlockInfo(vars *map[string]string, pars ...string) string {
@@ -1815,8 +1827,12 @@ func Select(vars *map[string]string, pars ...string) string {
 }
 
 func Map(vars *map[string]string, pars ...string) string {
+	class := ``
+	if len(pars) > 1 {
+		class = pars[1]
+	}
 	(*vars)[`wimap`] = `1`
-	return fmt.Sprintf(`<div class="wimap">%s</div>`, pars[0])
+	return fmt.Sprintf(`<div class="wimap %s">%s</div>`, class, pars[0])
 }
 
 func MapPoint(vars *map[string]string, pars ...string) string {
