@@ -19,7 +19,6 @@ package controllers
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"encoding/json"
-	//"fmt"
 	"encoding/json"
 	"fmt"
 )
@@ -74,6 +73,10 @@ func (c *Controller) EditPage() (string, error) {
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
+			if len(dataPage) > 0 && len(dataPage[`conditions`]) == 0 {
+				dataPage[`conditions`] = fmt.Sprintf(`$citizen==%d`, c.SessCitizenId)
+			}
+
 			rbId = utils.StrToInt64(dataPage["rb_id"])
 			dataPageMain = dataPage
 		} else {

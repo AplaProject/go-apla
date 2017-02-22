@@ -19,7 +19,7 @@ package controllers
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"encoding/json"
-	//"fmt"
+	"fmt"
 )
 
 func (c *Controller) NewPage() (string, error) {
@@ -57,7 +57,7 @@ func (c *Controller) NewPage() (string, error) {
 		AllMenu:      allMenu,
 		Name:         c.r.FormValue("name"),
 		DataMenu:     map[string]string{},
-		DataPage:     map[string]string{}})
+		DataPage:     map[string]string{`conditions`: fmt.Sprintf(`$citizen==%d`, c.SessCitizenId)}})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

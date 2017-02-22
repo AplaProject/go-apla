@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -41,7 +42,7 @@ func (c *Controller) NewContract() (string, error) {
 		TxType:       txType,
 		TxTypeId:     txTypeId,
 		Global:       global,
-		Data:         map[string]string{},
+		Data:         map[string]string{`conditions`: fmt.Sprintf(`$citizen==%d`, c.SessCitizenId)},
 		StateId:      c.SessStateId})
 	if err != nil {
 		return "", utils.ErrInfo(err)

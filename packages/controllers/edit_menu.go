@@ -19,7 +19,7 @@ package controllers
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"encoding/json"
-	//"fmt"
+	"fmt"
 )
 
 type editMenuPage struct {
@@ -62,6 +62,9 @@ func (c *Controller) EditMenu() (string, error) {
 	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, name).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+	if len(dataMenu) > 0 && len(dataMenu[`conditions`]) == 0 {
+		dataMenu[`conditions`] = fmt.Sprintf(`$citizen==%d`, c.SessCitizenId)
 	}
 
 	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage{
