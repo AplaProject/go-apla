@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -48,7 +50,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
 
 	r.ParseForm()
-	page := r.FormValue("page")
+	page := lib.Escape(r.FormValue("page"))
 	params := make(map[string]string)
 	if len(page) == 0 {
 		log.Error("%v", len(page) == 0)
@@ -57,13 +59,16 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	for name := range r.Form {
 		params[name] = r.FormValue(name)
 	}
-	params[`global`] = r.FormValue("global")
+	params[`global`] = lib.Escape(r.FormValue("global"))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	//	fmt.Println(`PARAMS`, params)
 	tpl, err := utils.CreateHtmlFromTemplate(page, sessCitizenId, sessStateId, &params)
 	if err != nil {
 		log.Error("%v", err)
-		return
+	}
+	if err != nil || strings.TrimSpace(tpl) == `NULL` || len(tpl) == 0 {
+		tpl = `Something is wrong. <a href="#" onclick="load_page('editPage', {name: '` + page +
+			`', global:'` + params[`global`] + `'})">Edit page</a>`
 	}
 	w.Write([]byte(tpl))
 	return
