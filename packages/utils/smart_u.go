@@ -137,7 +137,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
-		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
+		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -768,7 +768,14 @@ func getClass(class string) (string, string) {
 			if len(lr) == 1 {
 				more = append(more, ilist)
 			} else if len(lr) == 2 {
-				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], strings.Trim(lr[1], `"'`)))
+				/*if ok, _ := regexp.MatchString(`(?i)href`, lr[0]); ok {
+					continue
+				}*/
+				right := strings.Trim(lr[1], `"'`)
+				if len(right) > 0 && right[0:1] !=`#` {
+					continue
+				}
+				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], right))
 			}
 		} else if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
@@ -833,6 +840,10 @@ func Em(vars *map[string]string, pars ...string) (out string) {
 
 func Small(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`small`, pars...)
+}
+
+func A(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`a`, pars...)
 }
 
 func Strong(vars *map[string]string, pars ...string) (out string) {
