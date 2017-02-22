@@ -757,26 +757,36 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	return strings.Replace(lib.StripTags(value), "\n", "\n<br>", -1)
 }
 
-func getClass(class string) string {
+func getClass(class string) (string, string) {
 	list := strings.Split(class, ` `)
-	for i, ilist := range list {
-		if strings.HasPrefix(ilist, `data-`) {
-			list[i] = ``
-			continue
-		}
-		if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
+
+	more := make([]string, 0)
+	classes := make([]string, 0)
+	for _, ilist := range list {
+		if strings.HasPrefix(ilist, `data-`) || strings.IndexByte(ilist, '=') > 0 {
+			lr := strings.Split(ilist, `=`)
+			if len(lr) == 1 {
+				more = append(more, ilist)
+			} else if len(lr) == 2 {
+				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], strings.Trim(lr[1], `"'`)))
+			}
+		} else if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
-			list[i] = `col-` + ilist
+			classes = append(classes, `col-`+ilist)
+		} else {
+			classes = append(classes, ilist)
 		}
+
 	}
-	return strings.Join(list, ` `)
+	return strings.Join(classes, ` `), strings.Join(more, ` `)
 }
 
 func getTag(tag string, pars ...string) (out string) {
 	if len(pars) == 0 {
 		return
 	}
-	out = fmt.Sprintf(`<%s class="%s">`, tag, getClass(pars[0]))
+	class, more := getClass(pars[0])
+	out = fmt.Sprintf(`<%s class="%s" %s>`, tag, class, more)
 	for i := 1; i < len(pars); i++ {
 		out += pars[i]
 	}
@@ -837,12 +847,8 @@ func Divs(vars *map[string]string, pars ...string) (out string) {
 		(*vars)[`isrow`] = `opened`
 	}
 	for _, item := range pars {
-		more := ``
-		if strings.Index(item, `data-sweet-alert`) >= 0 {
-			more = `data-sweet-alert`
-		}
-		classes := getClass(item)
-		out += fmt.Sprintf(`<div class="%s" %s>`, classes, more)
+		class, more := getClass(item)
+		out += fmt.Sprintf(`<div class="%s" %s>`, class, more)
 		count++
 	}
 	if val, ok := (*vars)[`divs`]; ok {
@@ -1288,12 +1294,13 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
 	class := `clearfix pull-right`
+	//var more, moreBtn string
 	if len((*pars)[`Class`]) > 0 {
-		class = getClass((*pars)[`Class`])
+		class, _ = getClass((*pars)[`Class`])
 	}
 	classBtn := `btn btn-primary`
 	if len((*pars)[`ClassBtn`]) > 0 {
-		classBtn = getClass((*pars)[`ClassBtn`])
+		classBtn, _ = getClass((*pars)[`ClassBtn`])
 	}
 
 	onsuccess := (*pars)[`OnSuccess`]
