@@ -1544,7 +1544,7 @@ function InitMobileTable() {
 	}
 }
 
-$(window).load(function () {
+$(document).ready(function () {
 	var observeDOM = (function () {
 		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
 			eventListenerSupported = window.addEventListener;
