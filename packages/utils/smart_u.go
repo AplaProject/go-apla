@@ -910,17 +910,19 @@ func TxId(vars *map[string]string, pars ...string) string {
 
 func LinkTemplate(vars *map[string]string, pars ...string) string {
 	params := ``
-	class := ``
 	if len(pars) < 2 {
 		return ``
 	}
 	if len(pars) >= 3 {
 		params = pars[2]
 	}
+	classParams := ``
 	if len(pars) >= 4 {
-		class = pars[3]
+		//class = pars[3]
+		class, more := getClass(pars[3])
+		classParams = fmt.Sprintf(`class="%s" %s`, class, more)
 	}
-	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" class="%s">%s</a>`, pars[0], params, class, pars[1])
+	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" %s>%s</a>`, pars[0], params, classParams, pars[1])
 }
 
 func BlockInfo(vars *map[string]string, pars ...string) string {
