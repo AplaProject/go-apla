@@ -273,11 +273,9 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					if len(coltype) > 0 {
 						switch {
 						case coltype[`data_type`] == "character varying":
-							if coltype[`character_maximum_length`] == `32` {
-								itype = "hash"
-							} else {
-								itype = `text`
-							}
+							itype = `text`
+						case coltype[`data_type`] == "bytea":
+							itype = "hash"
 						case coltype[`data_type`] == `bigint`:
 							itype = "int64"
 						case strings.HasPrefix(coltype[`data_type`], `timestamp`):

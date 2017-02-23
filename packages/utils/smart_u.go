@@ -730,6 +730,7 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 	} else if len(pars) == 3 {
 		where = ` where ` + lib.Escape(pars[2])
 	}
+	fmt.Println(`select * from ` + lib.EscapeName(pars[1]) + where)
 	value, err := DB.OneRow(`select * from ` + lib.EscapeName(pars[1]) + where).String()
 	if err != nil {
 		return err.Error()

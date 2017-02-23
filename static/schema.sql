@@ -477,7 +477,7 @@ CREATE TABLE "global_signatures" (
 );
 ALTER TABLE ONLY "global_signatures" ADD CONSTRAINT global_signatures_pkey PRIMARY KEY (name);
 
-
+DROP SEQUENCE IF EXISTS global_smart_contracts_id_seq CASCADE;
 CREATE SEQUENCE global_smart_contracts_id_seq START WITH 1;
 CREATE TABLE "global_smart_contracts" (
 "id" bigint NOT NULL  default nextval('global_smart_contracts_id_seq'),
