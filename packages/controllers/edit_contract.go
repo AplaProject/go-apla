@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
@@ -100,6 +101,9 @@ func (c *Controller) EditContract() (string, error) {
 			}
 			if data[`active`] == `NULL` {
 				data[`active`] = ``
+			}
+			if len(data[`conditions`]) == 0 {
+				data[`conditions`] = fmt.Sprintf(`$citizen==%d`, c.SessCitizenId)
 			}
 			rbId = utils.StrToInt64(data["rb_id"])
 		} else {

@@ -8,9 +8,6 @@
 <script>
 	var serverTime;
 	
-	$(".aside .nav li").removeClass("active");
-	$(".citizen, .citizen_interface").addClass("active");
-	
 	var editor = ace.edit("textEditor");
 	var JavaScriptMode = ace.require("ace/mode/markdown").Mode;
 	$(".textEditor code").html(editor.getValue());
