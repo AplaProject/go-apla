@@ -38,7 +38,7 @@ var (
 	extendCost = map[string]int64{
 		"DBInsert":       200,
 		"DBUpdate":       100,
-		"DBUpdateWhere":  100,
+		"DBUpdateExt":  100,
 		"DBGetList":      300,
 		"DBGetTable":     1000,
 		"DBTransfer":     200,
@@ -67,7 +67,7 @@ func init() {
 		//		"CallContract":   ExContract,
 		"DBInsert":        DBInsert,
 		"DBUpdate":        DBUpdate,
-		"DBUpdateWhere":   DBUpdateWhere,
+		"DBUpdateExt":   DBUpdateExt,
 		"DBGetList":       DBGetList,
 		"DBGetTable":      DBGetTable,
 		"DBTransfer":      DBTransfer,
@@ -267,7 +267,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 	return
 }
 
-func DBUpdateWhere(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (err error) { // map[string]interface{}) {
+func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	var isIndex bool
 	columns := strings.Split(params, `,`)
 	if err = p.AccessColumns(tblname, columns); err != nil {
