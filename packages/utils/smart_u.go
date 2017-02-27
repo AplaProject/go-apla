@@ -209,15 +209,6 @@ func StateParam(idstate int64, name string) (string, error) {
 	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
 }
 
-func BtnEdit(vars *map[string]string, pars ...string) string {
-	if len(pars) != 2 {
-		return ``
-	}
-	return fmt.Sprintf(`<a type="button" class="btn btn-primary btn-block" 
-	            onclick="load_page('%s', {id: %d, global: 0 } )"><i class="fa fa-cog"></i></a>`,
-		pars[0], StrToInt64(pars[1]))
-}
-
 func Param(vars *map[string]string, pars ...string) string {
 	if val, ok := (*vars)[pars[0]]; ok {
 		return val
@@ -939,6 +930,18 @@ func LinkTemplate(vars *map[string]string, pars ...string) string {
 		classParams = fmt.Sprintf(`class="%s" %s`, class, more)
 	}
 	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" %s>%s</a>`, pars[0], params, classParams, title)
+}
+
+func BtnEdit(vars *map[string]string, pars ...string) string {
+	params := ``
+	if len(pars) < 2 {
+		return ``
+	}
+	if len(pars) >= 3 {
+		params = pars[2]
+	}
+	return fmt.Sprintf(`<button style="width: 44px;" type="button" class="btn btn-labeled btn-default" onclick="load_template('%s', {%s})"><span class="btn-label"><em class="fa fa-%s"></em></span></button>`,
+		lib.Escape(pars[0]), params, lib.Escape(pars[1]))
 }
 
 func BlockInfo(vars *map[string]string, pars ...string) string {
