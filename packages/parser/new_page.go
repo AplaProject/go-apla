@@ -18,8 +18,8 @@ package parser
 
 import (
 	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"strings"
 )
 
 func (p *Parser) NewPageInit() error {
@@ -37,6 +37,10 @@ func (p *Parser) NewPageFront() error {
 	err := p.generalCheck(`new_page`)
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+
+	if strings.HasPrefix(string(p.TxMap["name"]), `sys-`) {
+		return fmt.Errorf(`The name cannot start with sys-`)
 	}
 
 	// Check InputData
