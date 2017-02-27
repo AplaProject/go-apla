@@ -298,10 +298,10 @@ Navigation( LiTemplate(dashboard_default, citizen),goverment)
 Divs(md-8, panel panel-default panel-body)
 
 MarkDown : # Welcome, government!
-BtnSys(listOfTables, Tables, '', 'btn btn-pill-left btn-primary')
-BtnSys(contracts, Contracts, '', 'btn btn-primary')
-BtnSys(app_catalog, App catalog, '', 'btn btn-primary')
-BtnSys(interface, Interface, '', 'btn btn-pill-right btn-primary') BR() BR()
+BtnTemplate(sys-listOfTables, Tables, '', 'btn btn-pill-left btn-primary')
+BtnTemplate(sys-contracts, Contracts, '', 'btn btn-primary')
+BtnTemplate(sys-app_catalog, App catalog, '', 'btn btn-primary')
+BtnTemplate(sys-interface, Interface, '', 'btn btn-pill-right btn-primary') BR() BR()
 BtnTemplate(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg') BR() BR()
 DivsEnd:
 

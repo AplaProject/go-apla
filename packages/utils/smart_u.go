@@ -138,7 +138,7 @@ func init() {
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
-		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
+		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
 		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
@@ -955,15 +955,17 @@ func BtnTemplate(vars *map[string]string, pars ...string) string {
 	if params == `''` {
 		params = ``
 	}
-	class := `"btn btn-primary"`
+	more := ``
+	class := `btn btn-primary`
 	if len(pars) >= 4 {
-		class = pars[3]
+		class, more = getClass(pars[3])
 	}
 	anchor := `''`
 	if len(pars) >= 5 {
 		anchor = pars[4]
 	}
-	return fmt.Sprintf(`<button type="button" class=%s onclick="load_template('%s', {%s}, %s )">%s</button>`, class, pars[0], params, anchor, pars[1])
+	return fmt.Sprintf(`<button type="button" class="%s" %s onclick="load_template('%s', {%s}, %s )">%s</button>`,
+		class, more, pars[0], params, anchor, pars[1])
 }
 
 func BtnContract(vars *map[string]string, pars ...string) string {
@@ -996,24 +998,6 @@ func BtnContract(vars *map[string]string, pars ...string) string {
 	(*vars)["wibtncont"] = `1`
 	return fmt.Sprintf(`<button type="button" class=%s data-tool="panel-refresh" onclick="btn_contract(this, '%s', {%s}, '%s', '%s', '%s', {%s})">%s</button>`,
 		class, pars[0], params, pars[2], onsuccess, page, pageparam, pars[1])
-}
-
-func BtnSys(vars *map[string]string, pars ...string) string {
-	params := ``
-	if len(pars) < 2 {
-		return ``
-	}
-	if len(pars) >= 3 {
-		params = pars[2]
-	}
-	if params == `''` {
-		params = ``
-	}
-	class := `"btn btn-primary"`
-	if len(pars) >= 4 {
-		class = pars[3]
-	}
-	return fmt.Sprintf(`<button type="button" class=%s onclick="load_page('%s', {%s} )">%s</button>`, class, pars[0], params, pars[1])
 }
 
 func StateLink(vars *map[string]string, pars ...string) string {
