@@ -39,8 +39,8 @@ func (p *Parser) NewPageFront() error {
 		return p.ErrInfo(err)
 	}
 
-	if strings.HasPrefix(string(p.TxMap["name"]), `sys-`) {
-		return fmt.Errorf(`The name cannot start with sys-`)
+	if strings.HasPrefix(string(p.TxMap["name"]), `sys-`) || strings.HasPrefix(string(p.TxMap["name"]), `app-`) {
+		return fmt.Errorf(`The name cannot start with sys- or app-`)
 	}
 
 	// Check InputData

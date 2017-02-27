@@ -492,7 +492,6 @@ function ajaxMenu(page, parameters, customFunc) {
 				$("#li" + latestMenu + ' .mm-next').remove();
 				//					MenuAPI.update();
 			}
-			console.log('Menu 2', latestMenu, name);
 			if (latestMenu != name || name == 'temporary') {
 				latestMenu = name;
 				if (name != 'temporary') {
@@ -531,70 +530,17 @@ function ajaxMenu(page, parameters, customFunc) {
 					$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
 			}
 		}
-
-		/*		    if (data.length == 0) {
-						return
-					}
-					var aname = data.match(/<!--([\w_\d]*)-->/) || [""];
-					var name = 'temporary';
-					if (aname.length > 1) {
-						name = aname[1];
-					} else {
-					}
-					if (latestMenu != '' && latestMenu != name) {
-						$("#ul" + latestMenu).remove();
-						$("#li" + latestMenu + ' .mm-next').remove();
-						//					MenuAPI.update();
-					}
-					console.log('Menu', latestMenu, name);
-					if (latestMenu != name || latestMenu == 'temporary') {
-						latestMenu = name;
-						if (name != 'temporary') {
-							$("#li" + name + " ul").remove();
-							$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
-						} else {
-							console.log('Dynamic');
-							$("#ultemporary").remove();
-							$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
-						}
-						updateLanguage($("#ul" + name + ' .lang'));
-						MenuAPI.initPanels($("#ul" + name));
-					}
-					MenuAPI.openPanel($("#ul" + name));
-					$("#li" + name + ' .mm-next').remove();
-					$(".mm-selected").removeClass("mm-selected");
-					MenuAPI.setSelected($("#ul" + name + " #li" + page), true);
-					if (name == 'temporary') {
-						$("#mmenu-panel li:first a").remove();
-					}
-					var bname = data.match(/<!--([\w_\d ]*)=([\w_\d '\(\)]*)-->/) || [""];
-					if (bname.length > 2) {
-						$(".mm-navbar-top .mm-title").html(bname[1]);
-						if (bname[2].length > 0) {
-							$(".mm-navbar-top a").attr('href', '');
-							$(".mm-navbar-top a").attr('onclick', bname[2] + ';return false;');
-						}
-					} else {
-						if (name == 'temporary') {
-							var title = $("#mmenu-panel .mm-navbar a").html();
-							$(".mm-navbar-top a").attr('onclick', '');
-							$(".mm-navbar-top .mm-title").html(title);
-							$(".mm-navbar-top a").attr('href', '#mmenu-panel');
-							//	$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
-						}
-						else
-							$(".mm-navbar-top a").attr('onclick', '');
-					}
-				}*/
 	});
 }
 
 function load_template(page, parameters, anchor, customFunc) {
 	var isPage = page.substr(0, 4) == 'sys-';
+	var isApp = page.substr(0, 4) == 'app-';
 	if (isPage) {
 		$(".mm-selected").removeClass("mm-selected");
 	}
-	var url = isPage ? "content?page=" + page.substr(4) : "template?page=" + page;
+	var url = isPage ? "content?page=" + page.substr(4) : (isApp ? "app?page=" + page.substr(4) :
+		"template?page=" + page);
 	clearAllTimeouts();
 	NProgress.set(1.0);
 	$.post(url, parameters ? parameters : {},
@@ -612,7 +558,7 @@ function load_template(page, parameters, anchor, customFunc) {
 			if (anchor) {
 				anchorScroll(anchor);
 			}
-			if (!isPage)
+			if (!isPage && !isApp)
 				ajaxMenu(page, parameters, customFunc);
 		}, "html");
 }
