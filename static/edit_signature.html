@@ -84,18 +84,18 @@ function js_newpars() {
 		 <div class="panel-body">
 		<form role="form">
 			<div class="form-group">
-				<label>Name</label>
+				<label>Contract name</label>
 				<input type="text" class="form-control" id="name" value="{{.Name}}" {{if .Name}}disabled{{end}}>
 			</div>
 			<div class="form-group">
-				<label>Title</label>
+				<label>Title of confirmation window</label>
 				<input type="text" class="form-control" id="title" value="{{.Title}}">
 			</div>
 			<div class="form-group">
-				<div class="col-md-2 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-4 col-xs-1" style="padding: 5px 5px;">
 					<label>Parameter</label>
 				</div>
-				<div class="col-md-10 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-8 col-xs-1" style="padding: 5px 5px;">
 					<label>Text</label>
 				</div>
 			</div>
@@ -108,10 +108,10 @@ function js_newpars() {
 					<input type="text" class="form-control" id="text{{$index}}" value="{{.Text}}">
 				</div>
 				{{end}} {{else}}
-				<div class="col-md-1 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-4 col-xs-1" style="padding: 5px 5px;">
 					<input type="text" class="form-control lpref" id="lang0">
 				</div>
-				<div class="col-md-11 col-xs-1" style="padding: 5px 5px;">
+				<div class="col-md-8 col-xs-1" style="padding: 5px 5px;">
 					<input type="text" class="form-control" id="text0">
 				</div>
 				{{end}}

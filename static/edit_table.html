@@ -102,11 +102,11 @@
 		<form role="form">
 			<div class="form-group">
 				<label class="lang" lang-id="insert"></label>
-				<textarea class="form-control" id="insert">{{.TablePermission.insert}}</textarea>
+				<input type="text" class="form-control" id="insert" value="{{.TablePermission.insert}}"></input>
 			</div>
 			<div class="form-group">
 				<label class="lang" lang-id="new_column"></label>
-				<textarea class="form-control" id="new_column">{{.TablePermission.new_column}}</textarea>
+				<input type="text" class="form-control" id="new_column" value="{{.TablePermission.new_column}}"></input>
 			</div>
 		</form>
 	</div>
@@ -130,7 +130,7 @@
 	<div class="panel-body">
 		<form role="form">
 			<div class="form-group">
-				<textarea class="form-control" id="general_update">{{.TablePermission.general_update}}</textarea>
+				<input type="text" class="form-control" id="general_update" value="{{.TablePermission.general_update}}"></input>
 			</div>
 		</form>
 	</div>
