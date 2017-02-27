@@ -590,9 +590,14 @@ function ajaxMenu(page, parameters, customFunc) {
 }
 
 function load_template(page, parameters, anchor, customFunc) {
+	var isPage = page.substr(0, 4) == 'sys-';
+	if (isPage) {
+		$(".mm-selected").removeClass("mm-selected");
+	}
+	var url = isPage ? "content?page=" + page.substr(4) : "template?page=" + page;
 	clearAllTimeouts();
 	NProgress.set(1.0);
-	$.post("template?page=" + page, parameters ? parameters : {},
+	$.post(url, parameters ? parameters : {},
 		function (data) {
 			if (data == '') {
 				load_page('newPage', { global: 0, name: page });
@@ -607,7 +612,8 @@ function load_template(page, parameters, anchor, customFunc) {
 			if (anchor) {
 				anchorScroll(anchor);
 			}
-			ajaxMenu(page, parameters, customFunc);
+			if (!isPage)
+				ajaxMenu(page, parameters, customFunc);
 		}, "html");
 }
 
