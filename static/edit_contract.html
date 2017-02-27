@@ -228,7 +228,19 @@
 				   <label class="lang" lang-id="value"></label>
 				   <pre class="textEditor">
 						<code></code>
-						<section id="textEditor">{{.Data.value}}</section>
+						<section id="textEditor">{{if not .Data.value}}contract ... {
+    data {
+
+    }
+
+    conditions {
+
+    }
+
+    action {
+
+    }
+}{{else}}{{.Data.value}}{{end}}</section>
 					</pre>
 				   <textarea id="value" class="form-control hidden"></textarea>
 			   </div>
