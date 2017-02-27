@@ -139,8 +139,7 @@ func init() {
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
-		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `CmpTime`: CmpTime,
-		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
+		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
 		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
@@ -921,6 +920,12 @@ func TxId(vars *map[string]string, pars ...string) string {
 
 func LinkTemplate(vars *map[string]string, pars ...string) string {
 	params := ``
+
+	title := pars[0]
+	if len(pars) > 1 {
+		title = pars[1]
+	}
+
 	if len(pars) < 2 {
 		return ``
 	}
@@ -933,7 +938,7 @@ func LinkTemplate(vars *map[string]string, pars ...string) string {
 		class, more := getClass(pars[3])
 		classParams = fmt.Sprintf(`class="%s" %s`, class, more)
 	}
-	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" %s>%s</a>`, pars[0], params, classParams, pars[1])
+	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" %s>%s</a>`, pars[0], params, classParams, title)
 }
 
 func BlockInfo(vars *map[string]string, pars ...string) string {
@@ -1139,38 +1144,6 @@ func LiTemplate(vars *map[string]string, pars ...string) string {
 	}
 	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s', {%s});"><span>%s</span></a></li>`,
 		name, params, title)
-}
-
-func AppNav(vars *map[string]string, pars ...string) string {
-	name := pars[0]
-	title := name
-	if len(pars) > 1 {
-		title = pars[1]
-	}
-	return fmt.Sprintf(`<a href="#" onclick="load_app('%s');"><span>%s</span></a>`, name, title)
-}
-
-func TemplateNav(vars *map[string]string, pars ...string) string {
-	name := pars[0]
-	title := name
-	par1 := ""
-	val1 := ""
-	if len(pars) > 1 {
-		par1 = pars[1]
-	}
-	if len(pars) > 2 {
-		val1 = pars[2]
-	}
-	result := ""
-	if len(par1) > 0 && len(val1) > 0 {
-		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s', {%s: '%s'});"><span>%s</span></a>`,
-			name, par1, val1, title)
-	} else {
-		result = fmt.Sprintf(`<a href="#" onclick="load_template('%s');"><span>%s</span></a>`,
-			name, title)
-	}
-	return result
-
 }
 
 func Navigation(vars *map[string]string, pars ...string) string {
