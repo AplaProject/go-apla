@@ -139,7 +139,7 @@ func init() {
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate, `BtnSys`: BtnSys,
-		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `SysLink`: SysLink, `CmpTime`: CmpTime,
+		`AppNav`: AppNav, `TemplateNav`: TemplateNav, `CmpTime`: CmpTime,
 		`Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
 		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
@@ -771,7 +771,7 @@ func getClass(class string) (string, string) {
 			} else if len(lr) == 2 {
 				right := strings.Trim(lr[1], `"'`)
 				if ok, _ := regexp.MatchString(`(?i)href`, lr[0]); ok {
-					if len(right) > 0 && right[0:1] !=`#` {
+					if len(right) > 0 && right[0:1] != `#` {
 						continue
 					}
 				}
@@ -1197,17 +1197,6 @@ func Navigation(vars *map[string]string, pars ...string) string {
 	return textproc.Macro(fmt.Sprintf(`<ol class="breadcrumb"><span class="pull-right">
 	<a href='#' onclick="load_page('editPage', {name: '#page#', global:'#global#'} )">Edit</a></span>%s</ol>`,
 		strings.Join(li, `&nbsp;/&nbsp;`)), vars)
-}
-
-func SysLink(vars *map[string]string, pars ...string) string {
-	params := ``
-	if len(pars) < 2 {
-		return ``
-	}
-	if len(pars) >= 3 {
-		params = pars[2]
-	}
-	return fmt.Sprintf(`<a href='#'onclick="load_page('%s', {%s} )">%s</a>`, pars[0], params, pars[1])
 }
 
 func MarkDown(vars *map[string]string, pars ...string) string {
