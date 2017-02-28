@@ -801,7 +801,7 @@ func Tag(vars *map[string]string, pars ...string) (out string) {
 	if valid {
 		var class, title string
 		if len(pars) > 1 {
-			title = lib.StripTags(pars[1])
+			title = pars[1]
 		}
 		if len(pars) > 2 {
 			class = lib.Escape(pars[2])
