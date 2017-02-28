@@ -382,19 +382,19 @@ PageEnd:`, `menu_default`, sid,
 	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
-		`menu_default`, `MenuItem(Dashboard, load_template, dashboard_default)
- MenuItem(Government dashboard, load_template, government)`, sid,
-		`government`, `MenuItem(Citizen dashboard, load_template, dashboard_default)
-MenuItem(Government dashboard, load_template, government)
-MenuItem(Tables, load_page, listOfTables)
-MenuItem(Smart contracts, load_page, contracts)
-MenuItem(App List, load_page, app_catalog)
-MenuItem(Wallet,  load_page, edit_wallet)
-MenuItem(Languages, load_page, languages)
-MenuItem(Signatures, load_page, signatures)
-MenuItem(Export, load_page, export_tpl)
-MenuItem(Interface, load_page, interface)
-MenuItem(Checking citizens, load_template, CheckCitizens)`, sid)
+		`menu_default`, `MenuItem(Dashboard, dashboard_default)
+ MenuItem(Government dashboard, government)`, sid,
+		`government`, `MenuItem(Citizen dashboard, dashboard_default)
+MenuItem(Government dashboard, government)
+MenuItem(Tables,sys-listOfTables)
+MenuItem(Smart contracts, sys-contracts)
+MenuItem(App List, sys-app_catalog)
+MenuItem(Wallet,  sys-edit_wallet)
+MenuItem(Languages, sys-languages)
+MenuItem(Signatures, sys-signatures)
+MenuItem(Export, sys-export_tpl)
+MenuItem(Interface, sys-interface)
+MenuItem(Checking citizens, CheckCitizens)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
