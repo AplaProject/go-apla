@@ -137,7 +137,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
-		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
+		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
@@ -832,8 +832,21 @@ func Small(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`small`, pars...)
 }
 
+func Span(vars *map[string]string, pars ...string) (out string) {
+	return getTag(`span`, pars...)
+}
+
 func A(vars *map[string]string, pars ...string) (out string) {
-	return getTag(`a`, pars...)
+	class, more := getClass(pars[0])
+	title := ``
+	if len(pars) > 1 {
+		title = pars[1]
+	}
+	href := `#`
+	if len(pars) > 2 {
+		href = pars[2]
+	}
+	return fmt.Sprintf(`<a class="%s" %s href="%s">%s</a>`, class, more, href, title)
 }
 
 func Strong(vars *map[string]string, pars ...string) (out string) {
