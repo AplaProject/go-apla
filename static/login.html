@@ -537,7 +537,6 @@ function do_login() {
 		Alert(returnLang("warning"), returnLang("enter_password"), "notification:warning", defaultConfirm);
 		return false;
 	}
-	
 	if (GKey.decrypt(encKey, pass)) {
 		GKey.StateId = $( "#state_id" ).val();
 		GKey.save();
@@ -592,7 +591,8 @@ function sel_account(ind) {
 function load_accounts() {
 	var accounts = '';
 	for (i=0;i<GKey.Accounts.length;i++) {
-		accounts += '<li><a href="" onclick="return sel_account(' + i + ');" data-ind="' + i + '">' + GKey.Accounts[i].Address + 
+		if (GKey.Accounts[i].EncKey != null )
+			accounts += '<li><a href="" onclick="return sel_account(' + i + ');" data-ind="' + i + '">' + GKey.Accounts[i].Address + 
 		 '</a>&nbsp;&nbsp;&nbsp;<a class="atimes" href="" onclick="return del_account( this, ' + i + ');"><i class="fa fa-fw fa-times"></i></a></li>';
 	}
 	$("#accounts").html(accounts);
