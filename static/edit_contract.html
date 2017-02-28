@@ -53,34 +53,6 @@
 		enableLiveAutocompletion: true
 	});
 	
-	/*$.ajax({
-		type: 'POST',
-		url: 'static/js/textEditor/snippets/contracts.js',
-		success: function(data) {
-			contractSnippets = JSON.parse(data);
-			
-			ace.config.loadModule('ace/ext/language_tools', function () {
-				editor.setOptions({
-					enableBasicAutocompletion: true,
-					enableSnippets: true,
-					enableLiveAutocompletion: true
-				});
-				
-				var snippetManager = ace.require("ace/snippets").snippetManager;
-				var config = ace.require("ace/config");
-				
-				ace.config.loadModule("ace/snippets/c_cpp", function(m) {
-					if (m) {
-						snippetManager.files.xml = m;
-						m.snippets = snippetManager.parseSnippetFile(m.snippetText);
-						contractSnippets.forEach(function (s) { m.snippets.push(s); });
-						snippetManager.register(m.snippets, m.scope);
-					}
-				});
-			});
-		}
-	});*/
-	
 	function ShowConfirm() {
 		$(".form").hide();
 		$(".formConfirm .panel-heading").text($("#name").val());
@@ -216,13 +188,30 @@
 		 <div class="panel-body">
 			<form role="form">
 			   <button type="button" class="btn btn-link" onclick="" id="back" title="Back"><span class="glyphicons glyphicons-arrow-left"></span></button>
-			   	<div class="form-group">
-				   <label>ID: </label>
-				   {{.Data.id}}
-			   </div>
-			   <div class="form-group">
-				   <label class="lang" lang-id="name"></label>
-				   {{if .Data.name}} <p class="form-control-static">{{.Data.name}}</p> <input type="hidden" class="form-control" id="id" value="{{.Data.id}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
+			   <div class="clearfix">
+				   <div class="pull-xs-left">
+					   <div class="form-group">
+						   <label>ID: </label>
+						   {{.Data.id}}
+					   </div>
+					   <div class="form-group mb-lg">
+						   <label class="lang" lang-id="name"></label>
+						   {{if .Data.name}} <p class="form-control-static">{{.Data.name}}</p> <input type="hidden" class="form-control" id="id" value="{{.Data.id}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
+					   </div>
+				   </div>
+				   <div class="pull-xs-right">
+					   <div class="form-group">
+						   <label>Wallet ID: </label>
+						   {{.Data.wallet}}
+					   </div>
+					   <div class="form-group mb-lg">
+						   <label>Active: </label>
+						   {{.Data.active}}&nbsp;&nbsp;&nbsp;
+						   {{if .Confirm}}
+							   {{if ne .Data.active "1"}}<button type="button" id="activate" class="btn btn-primary lang" data-tool="panel-refresh" onClick="activate_contract(this);" >Activate</button>{{end}}
+						   {{end}}
+					   </div>
+				   </div>
 			   </div>
 			   <div class="form-group">
 				   <label class="lang" lang-id="value"></label>
@@ -247,17 +236,6 @@
 			   <div class="form-group">
 				   <label class="lang" lang-id="conditions_change"></label>
 				   <input type="text" class="form-control" id="conditions" value="{{.Data.conditions}}"></input>
-			   </div>
-			   <div class="form-group">
-				   <label>Wallet ID: </label>
-				   {{.Data.wallet}}
-			   </div>
-			   <div class="form-group">
-				   <label>Active: </label>
-				   {{.Data.active}}&nbsp;&nbsp;&nbsp;
-				   {{if .Confirm}}
-					   {{if ne .Data.active "1"}}<button type="button" id="activate" class="btn btn-primary lang" data-tool="panel-refresh" onClick="activate_contract(this);" >Activate</button>{{end}}
-				   {{end}}
 			   </div>
 			</form>
 		 </div>
