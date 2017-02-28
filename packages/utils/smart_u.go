@@ -1820,17 +1820,22 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 	/*	if len(pars) > 1 {
 		idname = lib.Escape(pars[1])
 	}*/
+	off := 0
 	if len(pars) > 1 {
 		action = lib.Escape(pars[1])
 	}
-	if len(pars) > 2 {
-		page = lib.Escape(pars[2])
+	if !strings.HasPrefix(action, `load_`) {
+		action = `load_template`
+		off = 1
 	}
-	if len(pars) > 3 {
-		params = lib.Escape(pars[3])
+	if len(pars) > 2-off {
+		page = lib.Escape(pars[2-off])
 	}
-	if len(pars) > 4 {
-		icon = fmt.Sprintf(`<em class="%s"></em>`, lib.Escape(pars[4]))
+	if len(pars) > 3-off {
+		params = lib.Escape(pars[3-off])
+	}
+	if len(pars) > 4-off {
+		icon = fmt.Sprintf(`<em class="%s"></em>`, lib.Escape(pars[4-off]))
 	}
 	return fmt.Sprintf(`<li id="li%s">
 		<a href="#" title="%s" onClick="%s('%s',{%s});">
