@@ -411,23 +411,22 @@ function clearAllTimeouts() {
 }
 
 function load_page(page, parameters, anchor) {
-	//    $('#loader').spin();
-	$(".mm-selected").removeClass("mm-selected");
-	clearAllTimeouts();
-	NProgress.set(1.0);
-	$.post("content?page=" + page, parameters ? parameters : {},
-		function (data) {
-			//            $("#loader").spin(false);
-			$(".sweet-overlay, .sweet-alert").remove();
-			$('#dl_content').html(data);
-			updateLanguage("#dl_content .lang");
-			//loadLanguage();
-			hist_push(['load_page', page, parameters ? parameters : {}]);
-			window.scrollTo(0, 0);
-			if (anchor) {
-				anchorScroll(anchor);
-			}
-		}, "html");
+	load_template('sys-' + page, parameters, anchor);
+	/*	
+		$(".mm-selected").removeClass("mm-selected");
+		clearAllTimeouts();
+		NProgress.set(1.0);
+		$.post("content?page=" + page, parameters ? parameters : {},
+			function (data) {
+				$(".sweet-overlay, .sweet-alert").remove();
+				$('#dl_content').html(data);
+				updateLanguage("#dl_content .lang");
+				hist_push(['load_page', page, parameters ? parameters : {}]);
+				window.scrollTo(0, 0);
+				if (anchor) {
+					anchorScroll(anchor);
+				}
+			}, "html");*/
 }
 
 function clearTempMenu() {
