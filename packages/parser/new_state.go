@@ -86,7 +86,7 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	sid := `IsGovAccount($citizen)` //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
+	sid := `ContractConditions(\"MainCondition\")` //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                     //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
 	err = p.ExecSql(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
