@@ -86,8 +86,8 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	sid := `ContractConditions(\"MainCondition\")` //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
-	psid := sid                     //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
+	sid := "ContractConditions(`MainCondition`)" //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
+	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
 	err = p.ExecSql(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
@@ -293,28 +293,28 @@ MenuItem(Interface, sys-interface)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-/*
-	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizenship_requests_id_seq" START WITH 1;
-				CREATE TABLE "` + id + `_citizenship_requests" (
-				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
-				"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
-				"public_key_0" bytea  NOT NULL DEFAULT '',				
-				"name" varchar(100) NOT NULL DEFAULT '',
-				"mname" varchar(100) NOT NULL DEFAULT '',
-				"gender" varchar(16) NOT NULL DEFAULT '',
-				"birthday" varchar(16) NOT NULL DEFAULT '',
-				"birthplace" varchar(300) NOT NULL DEFAULT '',
-				"approved" bigint  NOT NULL DEFAULT '0',
-				"block_id" bigint NOT NULL DEFAULT '0',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER SEQUENCE "` + id + `_citizenship_requests_id_seq" owned by "` + id + `_citizenship_requests".id;
-				ALTER TABLE ONLY "` + id + `_citizenship_requests" ADD CONSTRAINT "` + id + `_citizenship_requests_pkey" PRIMARY KEY (id);
-				`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-*/
+	/*
+		err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizenship_requests_id_seq" START WITH 1;
+					CREATE TABLE "` + id + `_citizenship_requests" (
+					"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
+					"dlt_wallet_id" bigint  NOT NULL DEFAULT '0',
+					"public_key_0" bytea  NOT NULL DEFAULT '',
+					"name" varchar(100) NOT NULL DEFAULT '',
+					"mname" varchar(100) NOT NULL DEFAULT '',
+					"gender" varchar(16) NOT NULL DEFAULT '',
+					"birthday" varchar(16) NOT NULL DEFAULT '',
+					"birthplace" varchar(300) NOT NULL DEFAULT '',
+					"approved" bigint  NOT NULL DEFAULT '0',
+					"block_id" bigint NOT NULL DEFAULT '0',
+					"rb_id" bigint NOT NULL DEFAULT '0'
+					);
+					ALTER SEQUENCE "` + id + `_citizenship_requests_id_seq" owned by "` + id + `_citizenship_requests".id;
+					ALTER TABLE ONLY "` + id + `_citizenship_requests" ADD CONSTRAINT "` + id + `_citizenship_requests_pkey" PRIMARY KEY (id);
+					`)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	*/
 	/*err = p.ExecSql(`CREATE SEQUENCE "` + id + `_accounts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_accounts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
@@ -382,7 +382,7 @@ func (p *Parser) NewStateRollback() error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
-		`smart_contracts`, `state_parameters`/*, `citizenship_requests`*/} {
+		`smart_contracts`, `state_parameters` /*, `citizenship_requests`*/} {
 		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
 		if err != nil {
 			return p.ErrInfo(err)
