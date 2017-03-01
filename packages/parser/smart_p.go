@@ -38,7 +38,7 @@ var (
 	extendCost = map[string]int64{
 		"DBInsert":       200,
 		"DBUpdate":       100,
-		"DBUpdateExt":  100,
+		"DBUpdateExt":    100,
 		"DBGetList":      300,
 		"DBGetTable":     1000,
 		"DBTransfer":     200,
@@ -65,39 +65,40 @@ var (
 func init() {
 	smart.Extend(&script.ExtendData{map[string]interface{}{
 		//		"CallContract":   ExContract,
-		"DBInsert":        DBInsert,
-		"DBUpdate":        DBUpdate,
-		"DBUpdateExt":   DBUpdateExt,
-		"DBGetList":       DBGetList,
-		"DBGetTable":      DBGetTable,
-		"DBTransfer":      DBTransfer,
-		"DBString":        DBString,
-		"DBInt":           DBInt,
-		"DBStringExt":     DBStringExt,
-		"DBIntExt":        DBIntExt,
-		"DBStringWhere":   DBStringWhere,
-		"DBIntWhere":      DBIntWhere,
-		"Table":           StateTable,
-		"TableTx":         StateTableTx,
-		"AddressToId":     AddressToID,
-		"IdToAddress":     IDToAddress,
-		"DBAmount":        DBAmount,
-		"ContractAccess":  IsContract,
-		"IsGovAccount":    IsGovAccount,
-		"StateValue":      StateValue,
-		"Int":             Int,
-		"Str":             Str,
-		"Money":           Money,
-		"Float":           Float,
-		"Len":             Len,
-		"Sha256":          Sha256,
-		"PubToID":         PubToID,
-		"HexToBytes":      HexToBytes,
-		"UpdateContract":  UpdateContract,
-		"UpdateParam":     UpdateParam,
-		"UpdateMenu":      UpdateMenu,
-		"UpdatePage":      UpdatePage,
-		"check_signature": CheckSignature, // system function
+		"DBInsert":           DBInsert,
+		"DBUpdate":           DBUpdate,
+		"DBUpdateExt":        DBUpdateExt,
+		"DBGetList":          DBGetList,
+		"DBGetTable":         DBGetTable,
+		"DBTransfer":         DBTransfer,
+		"DBString":           DBString,
+		"DBInt":              DBInt,
+		"DBStringExt":        DBStringExt,
+		"DBIntExt":           DBIntExt,
+		"DBStringWhere":      DBStringWhere,
+		"DBIntWhere":         DBIntWhere,
+		"Table":              StateTable,
+		"TableTx":            StateTableTx,
+		"AddressToId":        AddressToID,
+		"IdToAddress":        IDToAddress,
+		"DBAmount":           DBAmount,
+		"ContractAccess":     IsContract,
+		"ContractConditions": ContractConditions,
+		"IsGovAccount":       IsGovAccount,
+		"StateValue":         StateValue,
+		"Int":                Int,
+		"Str":                Str,
+		"Money":              Money,
+		"Float":              Float,
+		"Len":                Len,
+		"Sha256":             Sha256,
+		"PubToID":            PubToID,
+		"HexToBytes":         HexToBytes,
+		"UpdateContract":     UpdateContract,
+		"UpdateParam":        UpdateParam,
+		"UpdateMenu":         UpdateMenu,
+		"UpdatePage":         UpdatePage,
+		"check_signature":    CheckSignature, // system function
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -387,6 +388,30 @@ func StateTable(p *Parser, tblname string) string {
 
 func StateTableTx(p *Parser, tblname string) string {
 	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
+}
+
+func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
+	for _, iname := range names {
+		name := iname.(string)
+		if len(name) > 0 {
+			contract := smart.GetContract(name, p.TxStateID)
+			if contract == nil {
+				return false, fmt.Errorf(`Unknown contract %s`, name)
+			}
+			block := contract.GetFunc(`conditions`)
+			if block == nil {
+				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
+			}
+			_, err := smart.Run(block, []interface{}{}, &map[string]interface{}{`state`: p.TxStateID,
+				`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
+			if err != nil {
+				return false, err
+			}
+		} else {
+			return false, fmt.Errorf(`empty contract name in ContractConditions`)
+		}
+	}
+	return true, nil
 }
 
 func IsContract(p *Parser, names ...interface{}) bool {

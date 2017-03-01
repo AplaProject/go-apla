@@ -76,11 +76,11 @@ func (p *Parser) EditContractFront() error {
 	if len(conditions) > 0 {
 		ret, err := p.EvalIf(conditions)
 		if err != nil {
-			return p.ErrInfo(err)
+			return err
 		}
 		if !ret {
 			if err = p.AccessRights(`changing_smart_contracts`, false); err != nil {
-				return p.ErrInfo(err)
+				return err
 			}
 		}
 	}
