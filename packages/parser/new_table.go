@@ -115,7 +115,7 @@ func (p *Parser) NewTable() error {
 	var cols [][]string
 	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
 
-	citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
+	//citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
 	colsSql := ""
 	colsSql2 := ""
 	sqlIndex := ""
@@ -136,7 +136,7 @@ func (p *Parser) NewTable() error {
 			colType = `decimal (30, 0)`
 		}
 		colsSql += `"` + data[0] + `" ` + colType + " ,\n"
-		colsSql2 += `"` + data[0] + `": "$citizen==` + citizenIdStr + `",`
+		colsSql2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
 		if data[2] == "1" {
 			sqlIndex += `CREATE INDEX "` + tableName + `_` + data[0] + `_index" ON "` + tableName + `" (` + data[0] + `);`
 		}
@@ -167,8 +167,8 @@ func (p *Parser) NewTable() error {
 		prefix = p.TxStateIDStr
 	}
 	err = p.ExecSql(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
-		tableName, `{"general_update":"$citizen==`+citizenIdStr+`", "update": {`+colsSql2+`}, 
-		"insert": "$citizen==`+citizenIdStr+`", "new_column":"$citizen==`+citizenIdStr+`"}`)
+		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSql2+`},
+		"insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

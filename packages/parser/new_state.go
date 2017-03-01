@@ -143,94 +143,17 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?),(?, ?),(?,?),(?,?),(?,?),(?,?)`,
-		`TXCitizenRequest`, `contract TXCitizenRequest {
-	data {
-		StateId    int    "hidden"
-		FullName   string
- 		MiddleName string
-  		Gender   string
-  		BirthDate   string "date"
-  		BirthPlace   string "map"	
-	}
-	func conditions {
-		if Balance($wallet) < Money(StateParam($StateId, "citizenship_price")) {
-			error "not enough money"
-		}
-	}
-	func action {
-		DBInsert(TableTx( "citizenship_requests"), "dlt_wallet_id,name,block_id,mname,gender,birthday,birthplace", 
-		    $wallet, $FullName, $block, $MiddleName, $Gender, $BirthDate, $BirthPlace )
-	}
-}`, `TXNewCitizen`, `contract TXNewCitizen {
-	data {
-        RequestId int
-    }
- 	func conditions {
-		if Balance(DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )) < Money(StateParam($state, "citizenship_price")) {
-			error "not enough money"
-		}
-	}
-	func action {
-		var wallet int
-		var towallet int
-		wallet = DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )
-		towallet = Int(StateValue("gov_account"))
-		if towallet == 0 {
-			towallet = $citizen
-		}
-//        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, towallet, Money(StateParam($state, "citizenship_price")))
-		DBInsert(Table( "citizens"), "id,block_id,name", wallet, 
-		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
-        DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
-	}	
-}`, `TXRejectCitizen`, `contract TXRejectCitizen {
-   data { 
-        RequestId int
-   }
-   func action { 
-	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
-   }
-}`, `TXEditProfile`, `contract TXEditProfile {
-	data {
-		FirstName  string
-	}
-	func init {
-	}
-	func conditions {
-
-	}
-	func action {
-	  DBUpdate(Table( "citizens"), $citizen, "name", $FirstName)
-	}
-}`, `GenCitizen`, `contract GenCitizen {
-	data {
-		Name      string
- 		PublicKey string
-	}
-	func conditions {
-	    if StateValue("gov_account") != $citizen {
-	        error "Access denied"
-	    }
-	    $idc = PubToID($PublicKey)
-	    if $idc == 0 || DBIntExt("dlt_wallets", "wallet_id", $idc, "wallet_id") == $idc {
-	        warning "Pubkey is used"
-	    }
-	}
-	func action {
-		DBInsert("dlt_wallets", "wallet_id,public_key_0,address_vote", $idc, HexToBytes($PublicKey), IdToAddress($idc))
-		DBInsert(Table( "citizens"), "id,block_id,name", $idc, $block, $Name )
-	}
-}`, `TXTest`, `contract TXTest {
-	data {
-		Name string 
-		Company string "optional"
-		Coordinates string "map"
-	}
-	func action {
-		Println("TXTest main")
-	}
-}`,
+		(?, ?)`,
+		`MainCondition`, `contract MainCondition {
+            data {}
+            conditions {
+                    if(StateValue("gov_account")!=$citizen)
+                    {
+                        warning "Sorry, you don't have access to this action."
+                    }
+            }
+            action {}
+    }`,
 	)
 
 	if err != nil {
@@ -275,11 +198,6 @@ func (p *Parser) NewState() error {
 
 	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
 		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `FullScreen(1)
 Title : My country
@@ -302,7 +220,6 @@ BtnTemplate(sys-listOfTables, Tables, '', btn btn-pill-left btn-primary)
 BtnTemplate(sys-contracts, Contracts)
 BtnTemplate(sys-app_catalog, App catalog)
 BtnTemplate(sys-interface, Interface, '', btn btn-pill-right btn-primary) BR() BR()
-BtnTemplate(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg') BR() BR()
 DivsEnd:
 
 Divs(md-4, panel panel-default panel-body)
@@ -320,49 +237,6 @@ DivsEnd:
 
 PageEnd:
 `, `government`, sid,
-
-		`citizens`, `Title : Citizens
-Navigation( LiTemplate(government), Citizens)
-PageTitle : Citizens
-Table{
-    Table: `+id+`_citizens
-    Columns: [[Avatar,Image(#avatar#)], [ID, #id#], [Name, #name#]]
-}
-PageEnd:
-`, `menu_default`, sid,
-
-		`NewCitizen`, `Title : New Citizen
-Navigation( Citizens )
-PageTitle : New Citizen 
-TxForm{ Contract: TXNewCitizen}
-PageEnd:
-`, `menu_default`, sid,
-
-		`RejectCitizen`, `Title : Reject Citizen
-Navigation( Citizens )
-PageTitle : Reject Citizen 
-TxForm{ Contract: TXRejectCitizen}
-PageEnd:
-`, `menu_default`, sid,
-
-		`CheckCitizens`, `Title : Check citizens requests
-Navigation( LiTemplate(government), Citizens)
-PageTitle : Citizens requests
-Table{
-    Table: `+id+`_citizenship_requests
-	Order: id
-	Where: approved=0
-	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnTemplate(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnTemplate(RejectCitizen,Reject,"RequestId:#id#")]]
-}
-PageEnd:
-`, `government`, sid,
-
-		`citizen_profile`, `Title:Profile
-Navigation(LiTemplate(Citizen),Editing profile)
-PageTitle: Editing profile
-ValueById(#state_id#_citizens, #citizen#, "name,avatar", "FirstName,Image")
-TxForm{ Contract: TXEditProfile, OnSuccess: MenuReload()}
-PageEnd:`, `menu_default`, sid,
 	)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -393,8 +267,7 @@ MenuItem(Wallet,  sys-edit_wallet)
 MenuItem(Languages, sys-languages)
 MenuItem(Signatures, sys-signatures)
 MenuItem(Export, sys-export_tpl)
-MenuItem(Interface, sys-interface)
-MenuItem(Checking citizens, CheckCitizens)`, sid)
+MenuItem(Interface, sys-interface)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -402,7 +275,6 @@ MenuItem(Checking citizens, CheckCitizens)`, sid)
 	err = p.ExecSql(`CREATE TABLE "` + id + `_citizens" (
 				"id" bigint NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
-				"name" varchar(100) NOT NULL DEFAULT '',
 				"block_id" bigint NOT NULL DEFAULT '0',
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
@@ -421,7 +293,7 @@ MenuItem(Checking citizens, CheckCitizens)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+/*
 	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_citizenship_requests_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_citizenship_requests" (
 				"id" bigint NOT NULL  default nextval('` + id + `_citizenship_requests_id_seq'),
@@ -442,7 +314,7 @@ MenuItem(Checking citizens, CheckCitizens)`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+*/
 	/*err = p.ExecSql(`CREATE SEQUENCE "` + id + `_accounts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_accounts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_accounts_id_seq'),
@@ -510,7 +382,7 @@ func (p *Parser) NewStateRollback() error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
-		`smart_contracts`, `state_parameters`, `citizenship_requests`} {
+		`smart_contracts`, `state_parameters`/*, `citizenship_requests`*/} {
 		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
 		if err != nil {
 			return p.ErrInfo(err)
