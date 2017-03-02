@@ -749,8 +749,24 @@ func GetOne(vars *map[string]string, pars ...string) string {
 }
 
 func getClass(class string) (string, string) {
-	list := strings.Split(class, ` `)
-
+	//list := strings.Split(class, ` `)
+	list := make([]string, 0)
+	buf := make([]rune, 0)
+	var quote bool
+	for _, ch := range class {
+		if ch == ' ' && !quote && len(buf) > 0 {
+			list = append(list, string(buf))
+			buf = buf[:0]
+		} else {
+			if ch == '"' {
+				quote = !quote
+			}
+			buf = append(buf, ch)
+		}
+	}
+	if len(buf) > 0 {
+		list = append(list, string(buf))
+	}
 	more := make([]string, 0)
 	classes := make([]string, 0)
 	for _, ilist := range list {
@@ -770,7 +786,7 @@ func getClass(class string) (string, string) {
 		} else if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
 			classes = append(classes, `col-`+ilist)
-		} else {
+		} else if ilist != `''` {
 			classes = append(classes, ilist)
 		}
 
