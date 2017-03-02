@@ -792,7 +792,7 @@ func getTag(tag string, pars ...string) (out string) {
 
 func Tag(vars *map[string]string, pars ...string) (out string) {
 	var valid bool
-	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`, `button`} {
+	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`, `button`, `table`, `thead`, `tbody`, `tr`, `td`} {
 		if pars[0] == itag {
 			valid = true
 			break
@@ -1131,7 +1131,7 @@ func Image(vars *map[string]string, pars ...string) string {
 	}
 	rez := " "
 	if len(pars[0]) > 0 && (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
-		strings.HasSuffix(pars[0], `png`)) {
+		strings.HasSuffix(pars[0], `png`) || strings.HasSuffix(pars[0], `svg`) || strings.HasSuffix(pars[0], `gif`)) {
 		rez = fmt.Sprintf(`<img src="%s" class="%s" alt="%s" stylex="display:block;">`, pars[0], class, alt)
 	}
 	return rez
