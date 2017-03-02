@@ -138,7 +138,7 @@ func init() {
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
-		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnPage`: BtnPage,
+		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
 		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
@@ -922,7 +922,7 @@ func TxId(vars *map[string]string, pars ...string) string {
 	return Int64ToStr(TypeInt(pars[0]))
 }
 
-func LinkTemplate(vars *map[string]string, pars ...string) string {
+func LinkPage(vars *map[string]string, pars ...string) string {
 	params := ``
 
 	title := pars[0]

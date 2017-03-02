@@ -11,25 +11,35 @@ SetVar(
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "ContractConditions(\"MainCondition\")")
-SetVar(`sc_GenCitizen = contract GenCitizen {
-	data {
-		Name      string
- 		PublicKey string
-	}
-	conditions {
-	    if StateValue("gov_account") != $citizen {
-	        error "Access denied"
-	    }
-	    $idc = PubToID($PublicKey)
-	    if $idc == 0 || DBIntExt("dlt_wallets", "wallet_id", $idc, "wallet_id") == $idc {
-	        warning "Pubkey is used"
-	    }
-	}
-	action {
-		DBInsert("dlt_wallets", "wallet_id,public_key_0,address_vote", $idc, HexToBytes($PublicKey), IdToAddress($idc))
-		DBInsert(Table( "citizens"), "id,block_id,name", $idc, $block, $Name )
-	}
-}`,
+SetVar(`sc_EditProfile = contract EditProfile {
+                        	data {
+                        		FirstName  string
+                        		Image string "image"
+                        	}
+                        	func action {
+                        	  DBUpdate(Table( "citizens"), $citizen, "name,avatar", $FirstName, $Image)
+                          	  //Println("TXEditProfile new")
+                        	}
+                        }
+`,`sc_GenCitizen = contract GenCitizen {
+          	data {
+          		Name      string
+           		PublicKey string
+          	}
+          	conditions {
+          	    if StateValue("gov_account") != $citizen {
+          	        error "Access denied"
+          	    }
+          	    $idc = PubToID($PublicKey)
+          	    if $idc == 0 || DBIntExt("dlt_wallets", "wallet_id", $idc, "wallet_id") == $idc {
+          	        warning "Pubkey is used"
+          	    }
+          	}
+          	action {
+          		DBInsert("dlt_wallets", "wallet_id,public_key_0,address_vote", $idc, HexToBytes($PublicKey), IdToAddress($idc))
+          		DBInsert(Table( "citizens"), "id,block_id,name", $idc, $block, $Name )
+          	}
+          }`,
 `sc_TXCitizenRequest = contract TXCitizenRequest {
 	data {
 		StateId    int    "hidden"
@@ -86,7 +96,7 @@ SetVar(`sc_GenCitizen = contract GenCitizen {
 	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
    }
 }`)
-TextHidden( sc_GenCitizen, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
+TextHidden( sc_GenCitizen, sc_EditProfile, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
 SetVar(`p_CheckCitizens #= Title : Check citizens requests
 Navigation( LiTemplate(government), Citizens)
 PageTitle : Citizens requests
@@ -132,7 +142,7 @@ SetVar()
 TextHidden( )
 SetVar()
 TextHidden( )
-SetVar(`ap_government #= BtnPage(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg') BR() BR()`)
+SetVar(`ap_government #= BtnPage(CheckCitizens, Check citizens, '', btn btn-primary btn-lg) BR() BR()`)
 TextHidden( ap_government)
 SetVar(`am_government #= MenuItem(Checking citizens, CheckCitizens)`)
 TextHidden( am_government)
@@ -144,7 +154,32 @@ Desc: "Basic environment ",
 			page: 'government',
 			parameters: {}
 		},
-		TX: [{
+		TX: [
+		{
+             		Forsign: 'global,id,value,conditions',
+             		Data: {
+             			typeid: #typeid#,
+             			type: "EditContract",
+             			global: #global#,
+             			id: #sc_id#,
+             			value: $("#sc_value").val(),
+             			conditions: $("#sc_conditions").val()
+             			}
+        },
+         {
+        		Forsign: 'table_name,column_name,permissions,index,column_type',
+        		Data: {
+        			type: "NewColumn",
+        			typeid: #typecolid#,
+        			table_name : "#state_id#_citizens",
+        			column_name: "avatar",
+        			index: "0",
+        			column_type: "text",
+        			permissions: "ContractConditions(\"MainCondition\")",
+        			index: 0
+        		}
+        },
+        {
 		Forsign: 'global,table_name,columns',
 		Data: {
 			type: "NewTable",
