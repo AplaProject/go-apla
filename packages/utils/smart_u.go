@@ -1131,7 +1131,7 @@ func Image(vars *map[string]string, pars ...string) string {
 	}
 	rez := " "
 	if len(pars[0]) > 0 && (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
-		strings.HasSuffix(pars[0], `png`)) {
+		strings.HasSuffix(pars[0], `png`) || strings.HasSuffix(pars[0], `svg`) || strings.HasSuffix(pars[0], `gif`)) {
 		rez = fmt.Sprintf(`<img src="%s" class="%s" alt="%s" stylex="display:block;">`, pars[0], class, alt)
 	}
 	return rez
