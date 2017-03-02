@@ -138,7 +138,7 @@ func init() {
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
-		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnTemplate`: BtnTemplate,
+		`LiTemplate`: LiTemplate, `LinkTemplate`: LinkTemplate, `BtnPage`: BtnPage,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateValue`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
 		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
@@ -965,7 +965,7 @@ func Val(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`$('#%s').val()`, pars[0])
 }
 
-func BtnTemplate(vars *map[string]string, pars ...string) string {
+func BtnPage(vars *map[string]string, pars ...string) string {
 	params := ``
 	if len(pars) < 2 {
 		return ``

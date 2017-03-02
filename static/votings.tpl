@@ -254,9 +254,9 @@ func action {
 TextHidden( sc_RF_NewIssue, sc_RF_next_event, sc_RF_NextVoting, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingResult)
 SetVar(`p_RF_List #= Title : $ListVotings$
 
-SetVar(ViewResult = BtnTemplate(RF_ViewResult, <b>$View$</b>, "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#',NumberVotes:#number_votes#,Back:0,Status:#status#",'btn btn-primary btn-block'))
-SetVar(GetResult = BtnTemplate(RF_Result, <b>$GetResult$</b>, "ReferendumId:#id#",'btn btn-primary btn-block'))
-SetVar(Cancel = BtnTemplate(RF_VotingCancel, <b>$Cancel$</b>,"ReferendumId:#id#",'btn btn-primary btn-block'))
+SetVar(ViewResult = BtnPage(RF_ViewResult, <b>$View$</b>, "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#',NumberVotes:#number_votes#,Back:0,Status:#status#",'btn btn-primary btn-block'))
+SetVar(GetResult = BtnPage(RF_Result, <b>$GetResult$</b>, "ReferendumId:#id#",'btn btn-primary btn-block'))
+SetVar(Cancel = BtnPage(RF_VotingCancel, <b>$Cancel$</b>,"ReferendumId:#id#",'btn btn-primary btn-block'))
 
 
 Divs(md-12, panel panel-default)
@@ -400,7 +400,7 @@ Divs(md-6, panel panel-default panel-body data-sweet-alert)
     Div(clearfix)        
     Divs(md-12,  text-center) 
      MarkDown: <br/><br/>
-      BtnTemplate(RF_UserList,<strong>$ListVotings$</strong>,"Status:0",'btn')
+      BtnPage(RF_UserList,<strong>$ListVotings$</strong>,"Status:0",'btn')
 
             
         Div(clearfix)
@@ -415,13 +415,13 @@ PageEnd:`,
 `p_RF_UserList #= Title : $FinishedVotings$
 
 
-SetVar(ViewResult = BtnTemplate(RF_ViewResult, <strong>$Result$</strong>, "ReferendumId:#id#,Issue:'#issue#',DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1",'btn btn-info btn-pill-right'))
+SetVar(ViewResult = BtnPage(RF_ViewResult, <strong>$Result$</strong>, "ReferendumId:#id#,Issue:'#issue#',DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1",'btn btn-info btn-pill-right'))
 
 Divs(md-6, panel panel-default panel-body data-sweet-alert)
     Divs(panel-heading)
         Divs(panel-title)
     
-         BtnTemplate(RF_UserVotingList,$StartVote$,"Status:1",'btn btn-square btn-primary btn-lg btn-block btn-oval')
+         BtnPage(RF_UserVotingList,$StartVote$,"Status:1",'btn btn-square btn-primary btn-lg btn-block btn-oval')
 
    
     Table{
@@ -443,9 +443,9 @@ PageEnd:`,
 
 SetVar(IdIssue = GetOne(next_event, #state_id#_citizens, "id", #citizen#))
 
-SetVar(Voting1 = BtnTemplate(RF_VotingConfirm,$Yes$,"ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#',RFChoice:1,RFChoiceT:'Yes'",'btn col-xs-6 btn-lg btn-pill-left btn-success'))
+SetVar(Voting1 = BtnPage(RF_VotingConfirm,$Yes$,"ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#',RFChoice:1,RFChoiceT:'Yes'",'btn col-xs-6 btn-lg btn-pill-left btn-success'))
 
-SetVar(Voting0 = BtnTemplate(RF_VotingConfirm,$No$,"ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#',RFChoice:0,RFChoiceT:'No'",'btn col-xs-6 btn-lg btn-pill-right btn-success'))
+SetVar(Voting0 = BtnPage(RF_VotingConfirm,$No$,"ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#',RFChoice:0,RFChoiceT:'No'",'btn col-xs-6 btn-lg btn-pill-right btn-success'))
 
 
 Divs(md-6, panel panel-default panel-body)
@@ -507,7 +507,7 @@ Divs(md-6, panel panel-default panel-body)
            MarkDown: $VotingFinished$
            MarkDown: <h4>$ResultSoon$</h4>)
            MarkDown: <br/>
-            BtnTemplate(RF_UserList, <strong>$ListVotings$</strong>,"Status:0",'btn')
+            BtnPage(RF_UserList, <strong>$ListVotings$</strong>,"Status:0",'btn')
     
         DivsEnd:
     DivsEnd:
@@ -541,7 +541,7 @@ Divs(md-6, panel panel-default panel-body)
      }
     
     Divs(btn-lg)
-    If(#Back#==1,BtnTemplate(RF_UserList, <strong>$ListVotings$</strong> ,"Status:1",'btn btn-pill-left btn-info'), BtnTemplate(RF_List, <strong>$ListVotings$</strong>, "Status:#Status#",'btn btn-pill-left btn-info'))
+    If(#Back#==1,BtnPage(RF_UserList, <strong>$ListVotings$</strong> ,"Status:1",'btn btn-pill-left btn-info'), BtnPage(RF_List, <strong>$ListVotings$</strong>, "Status:#Status#",'btn btn-pill-left btn-info'))
      DivsEnd:
     
         DivsEnd:
@@ -605,7 +605,7 @@ Divs(md-6, panel panel-default panel-body data-sweet-alert)
         
         Divs(text-center)
          MarkDown: <br/><br/><br/>
-        BtnTemplate(RF_UserVotingList,$Cancel$,"Status:0",'btn btn btn-oval btn-danger text-center')
+        BtnPage(RF_UserVotingList,$Cancel$,"Status:0",'btn btn btn-oval btn-danger text-center')
         DivsEnd:
         
         DivsEnd:

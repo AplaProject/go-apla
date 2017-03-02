@@ -52,7 +52,7 @@ Divs(md-12, panel widget)
     Divs: panel-body text-center bg-gray-darker
         Divs: row row-table
             Divs: col-xs-12
-                LinkTemplate(StateInfo, Image(StateValue(state_flag), Image, w50 img-responsive d-inline-block align-middle) Strong(d-inline-block align-middle, USA), 'id':1, text-white h3, "stateId:#stateId#")
+                LinkPage(StateInfo, Image(StateValue(state_flag), Image, w50 img-responsive d-inline-block align-middle) Strong(d-inline-block align-middle, USA), 'id':1, text-white h3, "stateId:#stateId#")
             DivsEnd:
         DivsEnd:
     DivsEnd:
@@ -76,7 +76,7 @@ ForList(my)
                         Divs: flag pull-right
                             Image(#flag#, ALT, class)
                         DivsEnd:
-                        LinkTemplate(CitizenInfo, Strong(media-box-heading text-primary, #username#), "citizenId:'#citizen_id#',stateId:1", class)
+                        LinkPage(CitizenInfo, Strong(media-box-heading text-primary, #username#), "citizenId:'#citizen_id#',stateId:1", class)
                         P(small, #text#)
                     DivsEnd:
                 DivsEnd:

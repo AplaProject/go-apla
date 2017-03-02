@@ -146,7 +146,7 @@ Navigation(LiTemplate(dashboard_default, Citizen))
 Form()
 
     Divs(md-12, panel panel-default panel-body text-center)
-    BtnTemplate(newForexOrder,EURO/USD,"Table1:'global_euro',Table2:'1_accounts',global:1,Currency1:'EURO',Currency2:'USD'")
+    BtnPage(newForexOrder,EURO/USD,"Table1:'global_euro',Table2:'1_accounts',global:1,Currency1:'EURO',Currency2:'USD'")
     DivsEnd:
 
 

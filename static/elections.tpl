@@ -367,12 +367,12 @@ Table {
 		[Start, Date(#date_start#, YYYY.MM.DD)],
 		[Deadline
 			for candidates, Date(#candidates_deadline#, YYYY.MM.DD)],
-	    [Candidate Registration,If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnTemplate(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"), "Finish")],
-	     [Candidate,BtnTemplate(GECanditatesView, View,"CampaignId:#id#,Position:'#name#'")],
+	    [Candidate Registration,If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnPage(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"), "Finish")],
+	     [Candidate,BtnPage(GECanditatesView, View,"CampaignId:#id#,Position:'#name#'")],
 		[Start Voting, DateTime(#date_start_voting#, YYYY.MM.DD HH:MI)],
 		[Stop Voting, DateTime(#date_stop_voting#, YYYY.MM.DD HH:MI)],
-		[Voting, If(And(#CmpTime(#date_start_voting#, Now(datetime)) == -1, #CmpTime(#date_stop_voting#, Now(datetime)) == 1), BtnTemplate(GEVoting, Go, "CampaignId:#id#,Position:'#name#'"), #num_votes#)],
-		[Result,If(#CmpTime(#date_stop_voting#, Now(datetime)) == -1, BtnTemplate(GEVotingResalt, View,"CampaignId:#id#,Position:'#name#'"), "--")]
+		[Voting, If(And(#CmpTime(#date_start_voting#, Now(datetime)) == -1, #CmpTime(#date_stop_voting#, Now(datetime)) == 1), BtnPage(GEVoting, Go, "CampaignId:#id#,Position:'#name#'"), #num_votes#)],
+		[Result,If(#CmpTime(#date_stop_voting#, Now(datetime)) == -1, BtnPage(GEVotingResalt, View,"CampaignId:#id#,Position:'#name#'"), "--")]
 	]
 }
 DivsEnd:
@@ -448,7 +448,7 @@ Table {
 	Table: 1_ge_elective_office
 	Columns: [[ID, #id#],[Election 's Type, #name#], 
 [Last election, Date(#last_election#, YYYY / MM / DD)],
-[Start,BtnTemplate(GENewCampaign,Go,"ElectionName:'#name#',PositionId:#id#")]]
+[Start,BtnPage(GENewCampaign,Go,"ElectionName:'#name#',PositionId:#id#")]]
 			}
 	        DivsEnd:
     DivsEnd:
@@ -552,7 +552,7 @@ Table{
          Table: 1_ge_candidates
          Where: id_election_campaign = #CampaignId#
          Order: candidate
-      Columns: [[candidate, #candidate#], [Description, #description#], [Vote,BtnTemplate(GEVoteConfirmation,For,"ChoiceId:#id#,CampaignId:#CampaignId#,CandidateId:#citizen_id#,Candidate:'#candidate#',Campaign:'#campaign#',Result:1")]]
+      Columns: [[candidate, #candidate#], [Description, #description#], [Vote,BtnPage(GEVoteConfirmation,For,"ChoiceId:#id#,CampaignId:#CampaignId#,CandidateId:#citizen_id#,Candidate:'#candidate#',Campaign:'#campaign#',Result:1")]]
      }
 DivsEnd:
     DivsEnd:
@@ -724,7 +724,7 @@ Table{
       Order:date_adoption
       Columns: [[Law, #text_name#],
       [Adoption,DateTime(#date_adoption#, YYYY.MM.DD)],[Last edition,DateTime(#date_last_edition#, YYYY.MM.DD)]
-      [Amend,BtnTemplate(LSAddVoting,Go,"SmartLaws:'#text_name#',SmartLawsId:#id_smart_contract#")]]
+      [Amend,BtnPage(LSAddVoting,Go,"SmartLaws:'#text_name#',SmartLawsId:#id_smart_contract#")]]
      }  
         DivsEnd:
     DivsEnd:
@@ -807,14 +807,14 @@ Table{
          Table: 1_laws_edition
          Order: status
       Columns: [[Law, #name#]
-      [Text,If(#status#==0, BtnTemplate(SLEdit,Edit,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"),BtnTemplate(SLView,View,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"))],
-      [Voting Start,If(#status#==0, BtnTemplate(SLStartVoting,Start,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"),DateTime(#date_voting_start#, YYYY.MM.DD HH:MI))],
-      [Voting “For”,If(#status#==1, BtnTemplate(LSVoting,For,"SmartLaws:'#name#',SmartLawsId:#laws_id#,Vote:1,VoteTxT:'For',TabId:#id#"),#resalt_for#)],
-      [Voting “Against”,If(#status#==1, BtnTemplate(LSVoting,Against,"SmartLaws:'#name#',SmartLawsId:#laws_id#,Vote:0,VoteTxT:'Against',TabId:#id#"), #result_against#)],
-     [Voting Stop, If(#status#==1, BtnTemplate(SLVotingResalt,Stop,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"), DateTime(#date_voting_stop#, YYYY.MM.DD HH:MI))],
-      [Voting List,If(#status#>2, BtnTemplate(SLRepresentativeVoting,View,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"), " ")],
+      [Text,If(#status#==0, BtnPage(SLEdit,Edit,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"),BtnPage(SLView,View,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"))],
+      [Voting Start,If(#status#==0, BtnPage(SLStartVoting,Start,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"),DateTime(#date_voting_start#, YYYY.MM.DD HH:MI))],
+      [Voting “For”,If(#status#==1, BtnPage(LSVoting,For,"SmartLaws:'#name#',SmartLawsId:#laws_id#,Vote:1,VoteTxT:'For',TabId:#id#"),#resalt_for#)],
+      [Voting “Against”,If(#status#==1, BtnPage(LSVoting,Against,"SmartLaws:'#name#',SmartLawsId:#laws_id#,Vote:0,VoteTxT:'Against',TabId:#id#"), #result_against#)],
+     [Voting Stop, If(#status#==1, BtnPage(SLVotingResalt,Stop,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"), DateTime(#date_voting_stop#, YYYY.MM.DD HH:MI))],
+      [Voting List,If(#status#>2, BtnPage(SLRepresentativeVoting,View,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"), " ")],
       [Voting results, If(#status#==3," ",#resalt_voting#)],
-      [Signature,If(And(#status#==3, #resalt_voting#==1), BtnTemplate(LSSignature,Signature,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"),DateTime(#date_end#, YYYY.MM.DD HH:MI))]]
+      [Signature,If(And(#status#==3, #resalt_voting#==1), BtnPage(LSSignature,Signature,"SmartLaws:'#name#',SmartLawsId:#laws_id#,TabId:#id#"),DateTime(#date_end#, YYYY.MM.DD HH:MI))]]
      }
 
 

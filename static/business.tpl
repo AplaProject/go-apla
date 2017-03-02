@@ -188,7 +188,7 @@ Table {
     Table: #state_id#_companies
     Where: owner_citizen_id=#citizen#
 	Order: id
-	Columns: [[ID, #id#],[Name, #name#],[Registration date, Date(#opened_time#, DD.MM.YYYY)], [Details, BtnTemplate(CompanyDetails,Details,"CompanyId:#id#")] ]
+	Columns: [[ID, #id#],[Name, #name#],[Registration date, Date(#opened_time#, DD.MM.YYYY)], [Details, BtnPage(CompanyDetails,Details,"CompanyId:#id#")] ]
 }
 
 DivsEnd: `,
@@ -201,7 +201,7 @@ Table {
     Class: table-striped table-hover
     Table: #state_id#_items
 	Order: id DESC
-	Columns: [[Name, #name#],[Price, Money(#price#)], [Buy, BtnTemplate(BuyItem, Buy,"ItemId:#id#")] ]
+	Columns: [[Name, #name#],[Price, Money(#price#)], [Buy, BtnPage(BuyItem, Buy,"ItemId:#id#")] ]
 }
 
 DivsEnd:

@@ -94,7 +94,7 @@ Table{
     Table: 1_citizenship_requests
 	Order: id
 	Where: approved=0
-	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnTemplate(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnTemplate(RejectCitizen,Reject,"RequestId:#id#")]]
+	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnPage(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnPage(RejectCitizen,Reject,"RequestId:#id#")]]
 }
 PageEnd:
 `,
@@ -132,7 +132,7 @@ SetVar()
 TextHidden( )
 SetVar()
 TextHidden( )
-SetVar(`ap_government #= BtnTemplate(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg') BR() BR()`)
+SetVar(`ap_government #= BtnPage(CheckCitizens, Check citizens, '', 'btn btn-primary btn-lg') BR() BR()`)
 TextHidden( ap_government)
 SetVar(`am_government #= MenuItem(Checking citizens, CheckCitizens)`)
 TextHidden( am_government)

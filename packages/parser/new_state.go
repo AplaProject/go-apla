@@ -216,10 +216,10 @@ Navigation( LiTemplate(dashboard_default, citizen),goverment)
 Divs(md-8, panel panel-default panel-body)
 
 MarkDown : # Welcome, government!
-BtnTemplate(sys-listOfTables, Tables, '', btn btn-pill-left btn-primary)
-BtnTemplate(sys-contracts, Contracts)
-BtnTemplate(sys-app_catalog, App catalog)
-BtnTemplate(sys-interface, Interface, '', btn btn-pill-right btn-primary) BR() BR()
+BtnPage(sys-listOfTables, Tables, '', btn btn-pill-left btn-primary)
+BtnPage(sys-contracts, Contracts)
+BtnPage(sys-app_catalog, App catalog)
+BtnPage(sys-interface, Interface, '', btn btn-pill-right btn-primary) BR() BR()
 DivsEnd:
 
 Divs(md-4, panel panel-default panel-body)

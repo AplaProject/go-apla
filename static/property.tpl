@@ -270,7 +270,7 @@ Table {
     Class: table-striped table-hover
     Table: #state_id#_property_offers
     Where: property_id='#PropertyId#'
-    Columns: [[ID, #id#], [price, Money(#price#)], [sender_citizen_id, #sender_citizen_id#], [Type, StateLink(property_prices_types, #type#) ], [Accept, BtnTemplate(PropertyAcceptOffers, Accept, "OfferId:#id#")] ]
+    Columns: [[ID, #id#], [price, Money(#price#)], [sender_citizen_id, #sender_citizen_id#], [Type, StateLink(property_prices_types, #type#) ], [Accept, BtnPage(PropertyAcceptOffers, Accept, "OfferId:#id#")] ]
 }
 
 
@@ -334,7 +334,7 @@ Table {
     Table: #state_id#_property
     Where: "If( #Ptype# == 1, sell_price > #PriceMin# and sell_price < #PriceMax#, rent_price > #PriceMin# and rent_price < #PriceMax#)""
     Order: id
-    Columns: [[ID, #id#], [Name, property], [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Send offer,BtnTemplate(PropertyOffer,Send offer,"PropertyId:#id#,Ptype:#Ptype#")], [Rent price,Money(#rent_price#)] , [Sell price,Money(#sell_price#)] ]
+    Columns: [[ID, #id#], [Name, property], [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Send offer,BtnPage(PropertyOffer,Send offer,"PropertyId:#id#,Ptype:#Ptype#")], [Rent price,Money(#rent_price#)] , [Sell price,Money(#sell_price#)] ]
 }
 DivsEnd:
 
@@ -370,7 +370,7 @@ Form(form-horizontal)
             DivsEnd:
         DivsEnd:
         
-        BtnTemplate(PropertyResults,Search,"Ptype:Val(Ptype),PriceMin:Val(PriceMin),PriceMax:Val(PriceMax)")
+        BtnPage(PropertyResults,Search,"Ptype:Val(Ptype),PriceMin:Val(PriceMin),PriceMax:Val(PriceMax)")
 
     DivsEnd:
 FormEnd:
@@ -385,11 +385,11 @@ PageEnd:
                                    Table: #state_id#_property
                                    Where: citizen_id='#citizen#'
                                    Order: id
-                                   Columns: [[ID, #id#], [Name, property], [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Details,BtnTemplate(PropertyDetails,Details,"PropertyId:#id#")], [Rent price,Money(#rent_price#)] , [Sell price,Money(#sell_price#)] , [Offers, #offers#] ]
+                                   Columns: [[ID, #id#], [Name, property], [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Details,BtnPage(PropertyDetails,Details,"PropertyId:#id#")], [Rent price,Money(#rent_price#)] , [Sell price,Money(#sell_price#)] , [Offers, #offers#] ]
                                }
                                DivsEnd:
                                Divs(md-12, panel panel-default panel-body text-center)
-                                   BtnTemplate(SearchProperty, Search property, '', 'btn btn-primary btn-lg')
+                                   BtnPage(SearchProperty, Search property, '', 'btn btn-primary btn-lg')
                                DivsEnd:`,
 
     `page_government #=
@@ -399,9 +399,9 @@ PageEnd:
                     Class: table-striped table-hover
                     Table: 1_property
                     Order: id
-                    Columns: [[ID, #id#], [Type, StateLink(property_types, #type#)]  [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Edit,BtnTemplate(EditProperty,Edit,"PropertyId:#id#")]]
+                    Columns: [[ID, #id#], [Type, StateLink(property_types, #type#)]  [Coordinates, Map(#coords#)], [Citizen ID, Address(#citizen_id#)], [Edit,BtnPage(EditProperty,Edit,"PropertyId:#id#")]]
                 }
-             BtnTemplate(AddProperty, AddProperty, '', 'btn btn-primary btn-lg') BR()
+             BtnPage(AddProperty, AddProperty, '', 'btn btn-primary btn-lg') BR()
     DivsEnd:
 `,
 `p_SellProperty #= Title : SellProperty

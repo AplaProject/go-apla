@@ -154,7 +154,7 @@ PageEnd:`,
                                DivsEnd:
                                DivsEnd:
                                Divs(md-12, panel panel-default panel-body text-center)
-                                   BtnTemplate(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
+                                   BtnPage(SendMoney, SendMoney, '', 'btn btn-primary btn-lg')
                                DivsEnd:
                                `,
 `p_SendMoney #= Title : Send money
