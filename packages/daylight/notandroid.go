@@ -28,7 +28,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"os"
 	//"regexp"
-	"time"
+	//	"time"
 
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -100,7 +100,7 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 	}
 
 	go func() {
-		srv := &http.Server{Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		srv := &http.Server{} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
 		//		srv.SetKeepAlivesEnabled(false)
 		err = srv.Serve(l)
 		//		err = http.Serve( NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
@@ -136,7 +136,7 @@ func httpListenerV6() {
 	}
 
 	go func() {
-		srv := &http.Server{Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		srv := &http.Server{} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
 		//		srv.SetKeepAlivesEnabled(false)
 		err = srv.Serve(l)
 		//		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))

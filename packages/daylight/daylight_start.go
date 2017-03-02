@@ -50,7 +50,7 @@ import (
 
 func FileAsset(name string) ([]byte, error) {
 
-	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.` + utils.LogoExt {
+	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.`+utils.LogoExt {
 		logofile := *utils.Dir + `/logo.` + utils.LogoExt
 		if fi, err := os.Stat(logofile); err == nil && fi.Size() > 0 {
 			return ioutil.ReadFile(logofile)
@@ -185,7 +185,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		Exit(1)
 	}
 	defer f.Close()
-	
+
 	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
 		utils.LogoExt = `png`
 	}
@@ -381,12 +381,14 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 		IosLog(fmt.Sprintf("BrowserHttpHost: %v, HandleHttpHost: %v, ListenHttpHost: %v", BrowserHttpHost, HandleHttpHost, ListenHttpHost))
 		fmt.Printf("BrowserHttpHost: %v, HandleHttpHost: %v, ListenHttpHost: %v\n", BrowserHttpHost, HandleHttpHost, ListenHttpHost)
+		go controllers.GetChain()
 		// включаем листинг веб-сервером для клиентской части
 		http.HandleFunc(HandleHttpHost+"/", controllers.Index)
 		http.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 		http.HandleFunc(HandleHttpHost+"/template", controllers.Template)
 		http.HandleFunc(HandleHttpHost+"/app", controllers.App)
 		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
+		http.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
 		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
 		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
@@ -397,6 +399,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			httpsMux.HandleFunc(HandleHttpHost+"/", controllers.Index)
 			httpsMux.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 			httpsMux.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
+			httpsMux.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
 			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
 		}

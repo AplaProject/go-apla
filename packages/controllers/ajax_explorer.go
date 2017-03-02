@@ -18,7 +18,7 @@ package controllers
 
 import (
 	"encoding/hex"
-	"encoding/json"
+	//	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -55,15 +55,15 @@ func (c *Controller) AjaxExplorer() interface{} {
 						explorer[ind][`wallet_address`] = ``
 					}
 
-					if explorer[ind][`tx`] == `[]` {
-						explorer[ind][`tx_count`] = `0`
-					} else {
-						var tx []string
-						json.Unmarshal([]byte(explorer[ind][`tx`]), &tx)
-						if tx != nil && len(tx) > 0 {
-							explorer[ind][`tx_count`] = utils.IntToStr(len(tx))
-						}
-					}
+					/*					if explorer[ind][`tx`] == `[]` {
+											explorer[ind][`tx_count`] = `0`
+										} else {
+											var tx []string
+											json.Unmarshal([]byte(explorer[ind][`tx`]), &tx)
+											if tx != nil && len(tx) > 0 {
+												explorer[ind][`tx_count`] = utils.IntToStr(len(tx))
+											}
+										}*/
 				}
 				result.Data = explorer
 				if explorer != nil && len(explorer) > 0 {

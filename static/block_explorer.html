@@ -182,14 +182,13 @@
 	var latestBlock = {{.Latest}};
 	var latestTime;
 	
-	function block_reload() {
+/*	function block_reload() {
 		$.post("ajax?json=ajax_explorer", {latest: latestBlock},
         function(data) {
 			if ($("#tab2").css('display') == 'none') {
 				return;
 			}
 			if (data.data && data.data.length > 0 ) {
-//				clearTimeout(latestTime);
 				for (i=data.data.length-1; i>=0; i-- )
 					addRow( data.data[i]);
 				//unixtime('.addtime');
@@ -202,13 +201,49 @@
 			} 
 			latestTime = setTimeout( block_reload, 2000 );
     	}, "JSON");
-	}
+		latestTime = setTimeout( block_reload, 2000 );
+	}*/
 	
-	latestTime = setTimeout( block_reload, 2000 );
+//	latestTime = setTimeout( block_reload, 2000 );
+	setTimeout( WsBlockchain, 1000 );
 {{end}}	
 
 	//unixtime('.unixtime');
 	$(".unixtime").each(function() {
 		$(this).text(moment.unix($(this).text()).format('D MMMM YYYY, hh:mm:ss', 'en'));
 	});
+
+    function WsBlockchain()
+	{
+		var ws = new WebSocket("ws://{{.Host}}/wschain");
+
+ 		ws.onopen = function()
+        {
+           ws.send(latestBlock);
+        };
+
+		ws.onmessage = function (evt)
+		{
+			if (!$("#tab2") || $("#tab2").css('display') == 'none') {
+				return;
+			}
+			data = JSON.parse(evt.data);
+//			console.log('ws', evt.data);
+			if (data.data && data.data.length > 0 ) {
+				for (i=data.data.length-1; i>=0; i-- )
+					addRow( data.data[i]);
+				$(".addtime").each(function() {
+					$(this).text(moment.unix($(this).text()).format('D MMMM YYYY, hh:mm:ss', 'en'));
+					$(this).removeClass('addtime');
+				});
+				latestBlock = data.latest;
+			} 
+			latestTime = setTimeout(function(){ws.send(latestBlock);}, 1000);
+		};
+
+		ws.onclose = function()
+		{
+			console.log("Connection closed");
+		};
+	}
 </script>
