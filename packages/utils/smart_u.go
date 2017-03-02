@@ -792,7 +792,7 @@ func getTag(tag string, pars ...string) (out string) {
 
 func Tag(vars *map[string]string, pars ...string) (out string) {
 	var valid bool
-	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`, `button`} {
+	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`, `button`, `table`, `thead`, `tbody`, `tr`, `td`} {
 		if pars[0] == itag {
 			valid = true
 			break
