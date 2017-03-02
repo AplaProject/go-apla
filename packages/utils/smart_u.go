@@ -799,14 +799,14 @@ func Tag(vars *map[string]string, pars ...string) (out string) {
 		}
 	}
 	if valid {
-		var class, title string
+		var class, title, more string
 		if len(pars) > 1 {
 			title = pars[1]
 		}
 		if len(pars) > 2 {
-			class = lib.Escape(pars[2])
+			class, more = getClass(lib.Escape(pars[2]))
 		}
-		return fmt.Sprintf(`<%s class="%s">%s</%[1]s>`, pars[0], class, title)
+		return fmt.Sprintf(`<%s class="%s" %s>%s</%[1]s>`, pars[0], class, more, title)
 	}
 	return ``
 }
@@ -1123,16 +1123,17 @@ func TxForm(vars *map[string]string, pars *map[string]string) string {
 func Image(vars *map[string]string, pars ...string) string {
 	alt := ``
 	class := ``
+	more := ``
 	if len(pars) > 1 {
 		alt = pars[1]
 	}
 	if len(pars) > 2 {
-		class = pars[2]
+		class, more = getClass(pars[2])
 	}
 	rez := " "
 	if len(pars[0]) > 0 && (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
 		strings.HasSuffix(pars[0], `png`) || strings.HasSuffix(pars[0], `svg`) || strings.HasSuffix(pars[0], `gif`)) {
-		rez = fmt.Sprintf(`<img src="%s" class="%s" alt="%s" stylex="display:block;">`, pars[0], class, alt)
+		rez = fmt.Sprintf(`<img src="%s" class="%s" %s alt="%s" stylex="display:block;">`, pars[0], class, more, alt)
 	}
 	return rez
 }
