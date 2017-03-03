@@ -1,5 +1,7 @@
 SetVar(
 	global = 0,
+	typeid = TxId(EditContract),
+	typecolid = TxId(NewColumn),
 	type_new_page_id = TxId(NewPage),
 	type_append_page_id = TxId(AppendPage),
 	type_new_menu_id = TxId(NewMenu),
@@ -154,15 +156,14 @@ Desc: "Basic environment ",
 			page: 'government',
 			parameters: {}
 		},
-		TX: [
-		{
+		TX: [{
              		Forsign: 'global,id,value,conditions',
              		Data: {
              			typeid: #typeid#,
              			type: "EditContract",
              			global: #global#,
              			id: #sc_id#,
-             			value: $("#sc_value").val(),
+             			value: $("#sc_EditProfile").val(),
              			conditions: $("#sc_conditions").val()
              			}
         },
@@ -175,8 +176,7 @@ Desc: "Basic environment ",
         			column_name: "avatar",
         			index: "0",
         			column_type: "text",
-        			permissions: "ContractConditions(\"MainCondition\")",
-        			index: 0
+        			permissions: "ContractConditions(\"MainCondition\")"
         		}
         },
         {
