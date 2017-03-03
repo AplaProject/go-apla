@@ -180,6 +180,18 @@ Desc: "Basic environment ",
         			permissions: "ContractConditions(\"MainCondition\")"
         		}
         },
+		{
+        		Forsign: 'table_name,column_name,permissions,index,column_type',
+        		Data: {
+        			type: "NewColumn",
+        			typeid: #typecolid#,
+        			table_name : "#state_id#_citizens",
+        			column_name: "name",
+        			index: "0",
+        			column_type: "hash",
+        			permissions: "ContractConditions(\"MainCondition\")"
+        		}
+        },
         {
 		Forsign: 'global,table_name,columns',
 		Data: {
