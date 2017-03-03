@@ -103,7 +103,7 @@ SetVar(`p_CheckCitizens #= Title : Check citizens requests
 Navigation( LiTemplate(government), Citizens)
 PageTitle : Citizens requests
 Table{
-    Table: 1_citizenship_requests
+    Table: #state_id#_citizenship_requests
 	Order: id
 	Where: approved=0
 	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnPage(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnPage(RejectCitizen,Reject,"RequestId:#id#")]]
@@ -132,7 +132,7 @@ PageEnd:`,
 Navigation( LiTemplate(government), Citizens)
 PageTitle : Citizens
 Table{
-    Table: 1_citizens
+    Table: #state_id#_citizens
     Columns: [[Avatar,Image(#avatar#)], [ID, #id#], [Name, #name#]]
 }
 PageEnd:
@@ -187,7 +187,7 @@ Desc: "Basic environment ",
 			typeid: #type_new_table_id#,
 			global: 0,
 			table_name : "citizenship_requests",
-			columns: '[["dlt_wallet_id", "int64", "1"],["public_key_0", "text", "0"],["name", "hash", "0"],["approved", "int64", "1"]["block_id", "int64", "1"]]',
+			columns: '[["dlt_wallet_id", "int64", "1"],["public_key_0", "text", "0"],["name", "hash", "0"],["approved", "int64", "1"],["block_id", "int64", "1"]]',
 			permissions: "ContractConditions(\"MainCondition\")"
 			}
 	   },

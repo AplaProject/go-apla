@@ -121,11 +121,13 @@ func (p *Parser) NewTable() error {
 	sqlIndex := ""
 	for _, data := range cols {
 		colType := ``
+		colDef := ``
 		switch data[1] {
 		case "text":
 			colType = `varchar(102400)`
 		case "int64":
 			colType = `bigint`
+			colDef = `NOT NULL DEFAULT '0'`
 		case "time":
 			colType = `timestamp`
 		case "hash":
@@ -134,8 +136,9 @@ func (p *Parser) NewTable() error {
 			colType = `double precision`
 		case "money":
 			colType = `decimal (30, 0)`
+			colDef = `NOT NULL DEFAULT '0'`
 		}
-		colsSql += `"` + data[0] + `" ` + colType + " ,\n"
+		colsSql += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
 		colsSql2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
 		if data[2] == "1" {
 			sqlIndex += `CREATE INDEX "` + tableName + `_` + data[0] + `_index" ON "` + tableName + `" (` + data[0] + `);`
