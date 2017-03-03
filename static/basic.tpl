@@ -187,7 +187,7 @@ Desc: "Basic environment ",
 			typeid: #type_new_table_id#,
 			global: 0,
 			table_name : "citizenship_requests",
-			columns: '[["dlt_wallet_id", "int64", "1"],["public_key_0", "text", "0"],["name", "hash", "0"],["approved", "int64", "1"]]',
+			columns: '[["dlt_wallet_id", "int64", "1"],["public_key_0", "text", "0"],["name", "hash", "0"],["approved", "int64", "1"]["block_id", "int64", "1"]]',
 			permissions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
