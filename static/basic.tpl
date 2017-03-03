@@ -157,7 +157,7 @@ Desc: "Basic environment ",
 			parameters: {}
 		},
 		TX: [{
-             		Forsign: 'global,id,value,conditions',
+             		Forsign: 'global,name,value,conditions',
              		Data: {
        type: "NewContract",
         typeid: #type_new_contract_id#,
