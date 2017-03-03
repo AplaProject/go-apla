@@ -159,12 +159,13 @@ Desc: "Basic environment ",
 		TX: [{
              		Forsign: 'global,id,value,conditions',
              		Data: {
-             			typeid: #typeid#,
-             			type: "EditContract",
-             			global: #global#,
-             			id: #sc_id#,
-             			value: $("#sc_EditProfile").val(),
-             			conditions: $("#sc_conditions").val()
+       type: "NewContract",
+        typeid: #type_new_contract_id#,
+        global: 0,
+        name: "EditProfile",
+        value: $("#sc_EditProfile").val(),
+        conditions: $("#sc_conditions").val()
+
              			}
         },
          {
