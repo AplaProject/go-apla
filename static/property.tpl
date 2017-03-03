@@ -184,7 +184,7 @@ Divs(col-lg-4 data-sweet-alert)
                     P(h4 mb0, Type)
                 DivsEnd:
                 Divs(col-xs-6)
-                    P(h4 text-bold mb0, StateValue(property_prices_types, #offer_type#))
+                    P(h4 text-bold mb0, StateVal(property_prices_types, #offer_type#))
                 DivsEnd:
             DivsEnd:
         DivsEnd:

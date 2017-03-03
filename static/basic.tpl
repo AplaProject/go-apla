@@ -29,7 +29,7 @@ SetVar(`sc_EditProfile = contract EditProfile {
            		PublicKey string
           	}
           	conditions {
-          	    if StateValue("gov_account") != $citizen {
+          	    if StateVal("gov_account") != $citizen {
           	        error "Access denied"
           	    }
           	    $idc = PubToID($PublicKey)
@@ -80,7 +80,7 @@ SetVar(`sc_EditProfile = contract EditProfile {
 		var wallet int
 		var towallet int
 		wallet = DBInt(Table( "citizenship_requests"), "dlt_wallet_id", $RequestId )
-		towallet = Int(StateValue("gov_account"))
+		towallet = Int(StateVal("gov_account"))
 		if towallet == 0 {
 			towallet = $citizen
 		}

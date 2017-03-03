@@ -147,7 +147,7 @@ DivsEnd:
 PageEnd:`,
     `page_dashboard_default #= Divs(md-6)
                                Divs()
-                               WiBalance( GetOne(amount, #state_id#_accounts, "citizen_id", #citizen#), StateValue(currency_name) )
+                               WiBalance( GetOne(amount, #state_id#_accounts, "citizen_id", #citizen#), StateVal(currency_name) )
                                DivsEnd:
                                Divs()
                                WiAccount( GetOne(id, #state_id#_accounts, "citizen_id", #citizen#) )

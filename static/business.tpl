@@ -140,7 +140,7 @@ DivsEnd:
 
 Divs(md-6)
     Divs()
-        WiBalance( Money(GetOne(amount, #state_id#_accounts, "company_id", #CompanyId#)), StateValue(currency_name) )
+        WiBalance( Money(GetOne(amount, #state_id#_accounts, "company_id", #CompanyId#)), StateVal(currency_name) )
     DivsEnd:
     Divs()
         WiAccount( GetOne(id, #state_id#_accounts, "company_id", #CompanyId#) )

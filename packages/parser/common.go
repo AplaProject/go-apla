@@ -596,7 +596,7 @@ func (p *Parser) GetContractLimit() (ret int64) {
 		} else {
 			needuser = int64(float64(need) * rate)
 		}
-		p.TxContract.TxGovAccount = utils.StrToInt64(StateValue(p, `gov_account`))
+		p.TxContract.TxGovAccount = utils.StrToInt64(StateVal(p, `gov_account`))
 		if needuser > 0 {
 			if money, _ := p.Single(fmt.Sprintf(`select amount from "%d_%s" where citizen_id=?`, p.TxStateID, tableAccounts),
 				p.TxCitizenID).Int64(); money < needuser {
@@ -636,7 +636,7 @@ func (p *Parser) payFPrice() error {
 	} else { // contract
 		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
 			//fromId = p.TxContract.TxGovAccount
-			fromId = utils.StrToInt64(StateValue(p, `gov_account`))
+			fromId = utils.StrToInt64(StateVal(p, `gov_account`))
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			fromId = p.TxWalletID

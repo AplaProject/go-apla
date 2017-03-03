@@ -39,7 +39,7 @@ GetRow("user", #stateId#_citizens, "id", #citizenId#)
 Divs(md-12, panel widget)
     Divs: half-float
         SetVar(hmap=300)
-        Map(StateValue(state_coords))
+        Map(StateVal(state_coords))
         Divs: half-float-bottom
             Image(#user_avatar#, Image, img-thumbnail img-circle thumb-full)
         DivsEnd:
@@ -52,7 +52,7 @@ Divs(md-12, panel widget)
     Divs: panel-body text-center bg-gray-darker
         Divs: row row-table
             Divs: col-xs-12
-                LinkPage(StateInfo, Image(StateValue(state_flag), Image, w50 img-responsive d-inline-block align-middle) Strong(d-inline-block align-middle, USA), 'id':1, text-white h3, "stateId:#stateId#")
+                LinkPage(StateInfo, Image(StateVal(state_flag), Image, w50 img-responsive d-inline-block align-middle) Strong(d-inline-block align-middle, USA), 'id':1, text-white h3, "stateId:#stateId#")
             DivsEnd:
         DivsEnd:
     DivsEnd:
@@ -148,7 +148,7 @@ DivsEnd:
 
 Divs(md-12)
     SetVar(hmap=400)
-    Map(StateValue(state_coords))
+    Map(StateVal(state_coords))
 DivsEnd:
 
 `,`menu_1 #= MenuItem(Messenger, load_template, Messenger)`)

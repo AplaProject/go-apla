@@ -140,7 +140,7 @@ func init() {
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
-		`PageEnd`: PageEnd, `StateVal`: StateValue, `Json`: JsonScript, `And`: And, `Or`: Or,
+		`PageEnd`: PageEnd, `StateVal`: StateVal, `Json`: JsonScript, `And`: And, `Or`: Or,
 		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
@@ -269,7 +269,7 @@ func Money(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		cents = StrToInt(pars[1])
 	} else {
-		cents = StrToInt(StateValue(vars, `money_digit`))
+		cents = StrToInt(StateVal(vars, `money_digit`))
 	}
 	ret := pars[0]
 	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
@@ -480,7 +480,7 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 	if len(pars) > 3 {
 		digit = StrToInt(pars[3])
 	} else {
-		digit = StrToInt(StateValue(vars, `money_digit`))
+		digit = StrToInt(StateVal(vars, `money_digit`))
 	}
 	if len(pars) > 2 {
 		value = Money(vars, pars[2], IntToStr(digit))
@@ -1097,7 +1097,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 			thname := th[1][off:]
 			if strings.IndexByte(thname, ',') > 0 {
 				linklist := strings.TrimSpace(thname[strings.IndexByte(thname, '(')+1 : strings.IndexByte(thname, ',')])
-				if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+				if alist := strings.Split(StateVal(vars, linklist), `,`); len(alist) > 0 {
 					for ind, item := range alist {
 						(*vars)[fmt.Sprintf(`%s_%d`, linklist, ind+1)] = LangRes(vars, item)
 					}
@@ -1154,7 +1154,7 @@ func Image(vars *map[string]string, pars ...string) string {
 	return rez
 }
 
-func StateValue(vars *map[string]string, pars ...string) string {
+func StateVal(vars *map[string]string, pars ...string) string {
 	val, _ := StateParam(StrToInt64((*vars)[`state_id`]), pars[0])
 	if len(pars) > 1 {
 		ind := StrToInt(pars[1])
@@ -1377,7 +1377,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 				if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					count = StrToInt(ret[1])
 				} else {
-					count = StrToInt(StateValue(vars, `money_digit`))
+					count = StrToInt(StateVal(vars, `money_digit`))
 				}
 				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HtmlType: "money",
 					Id: idname, Param: IntToStr(count)})
@@ -1523,7 +1523,7 @@ txlist:
 						sellist.List[int(StrToInt64(item[id]))] = lib.StripTags(item[name])
 					}
 				}
-			} else if alist := strings.Split(StateValue(vars, linklist), `,`); len(alist) > 0 {
+			} else if alist := strings.Split(StateVal(vars, linklist), `,`); len(alist) > 0 {
 				for ind, item := range alist {
 					sellist.List[ind+1] = LangRes(vars, item)
 				}
@@ -1535,7 +1535,7 @@ txlist:
 			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 				count = StrToInt(ret[1])
 			} else {
-				count = StrToInt(StateValue(vars, `money_digit`))
+				count = StrToInt(StateVal(vars, `money_digit`))
 			}
 			value = Money(vars, value, IntToStr(count))
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "money",
@@ -1781,7 +1781,7 @@ func Select(vars *map[string]string, pars ...string) string {
 					list = append(list, SelInfo{Id: StrToInt64(item[id]), Name: lib.StripTags(item[name])})
 				}
 			}
-		} else if alist := strings.Split(StateValue(vars, pars[1]), `,`); len(alist) > 0 {
+		} else if alist := strings.Split(StateVal(vars, pars[1]), `,`); len(alist) > 0 {
 			for ind, item := range alist {
 				list = append(list, SelInfo{Id: int64(ind + 1), Name: LangRes(vars, item)})
 			}

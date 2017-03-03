@@ -147,7 +147,7 @@ func (p *Parser) NewState() error {
 		`MainCondition`, `contract MainCondition {
             data {}
             conditions {
-                    if(StateValue("gov_account")!=$citizen)
+                    if(StateVal("gov_account")!=$citizen)
                     {
                         warning "Sorry, you don't have access to this action."
                     }
@@ -205,7 +205,7 @@ Navigation( Dashboard )
 
 Divs(md-6)
 GetRow(my, #state_id#_citizens, "id", #citizen#)
-WiCitizen( #my_name#, #my_id#, #my_avatar#, StateValue(state_flag) )
+WiCitizen( #my_name#, #my_id#, #my_avatar#, StateVal(state_flag) )
 DivsEnd:
 
 PageEnd:

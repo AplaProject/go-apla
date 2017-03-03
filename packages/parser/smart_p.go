@@ -52,7 +52,7 @@ var (
 		"IdToAddress":    10,
 		"DBAmount":       100,
 		//"IsGovAccount":   80,
-		"StateValue":     80,
+		"StateVal":     80,
 		"Sha256":         50,
 		"PubToID":        10,
 		"UpdateContract": 200,
@@ -85,7 +85,7 @@ func init() {
 		"ContractAccess":     IsContract,
 		"ContractConditions": ContractConditions,
 		//"IsGovAccount":       IsGovAccount,
-		"StateValue":         StateValue,
+		"StateVal":         StateVal,
 		"Int":                Int,
 		"Str":                Str,
 		"Money":              Money,
@@ -435,7 +435,7 @@ func IsContract(p *Parser, names ...interface{}) bool {
 }
 
 func IsGovAccount(p *Parser, citizen int64) bool {
-	return utils.StrToInt64(StateValue(p, `gov_account`)) == citizen
+	return utils.StrToInt64(StateVal(p, `gov_account`)) == citizen
 }
 
 func AddressToID(input string) (addr int64) {
@@ -489,7 +489,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 		`block_time`: blockTime, `time`: time})
 }
 
-func StateValue(p *Parser, name string) string {
+func StateVal(p *Parser, name string) string {
 	val, _ := utils.StateParam(int64(p.TxStateID), name)
 	return val
 }
