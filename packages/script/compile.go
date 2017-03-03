@@ -45,10 +45,12 @@ const (
 	STATE_FUNC
 	STATE_FPARAMS
 	STATE_FPARAM
+	STATE_FPARAMTYPE
 	STATE_FRESULT
 	//	STATE_IF
 	//	STATE_WHILE
 	STATE_VAR
+	STATE_VARTYPE
 	STATE_ASSIGNEVAL
 	STATE_ASSIGN
 	STATE_TX
@@ -75,6 +77,7 @@ const (
 	ERR_MUSTRCURLY // must be '}'
 	ERR_PARAMS     // wrong parameters
 	ERR_VARS       // wrong variables
+	ERR_VARTYPE    // must be type
 	ERR_ASSIGN     // must be '='
 )
 
@@ -178,11 +181,18 @@ var (
 		},
 		{ // STATE_FPARAM
 			LEX_NEWLINE: {STATE_FPARAM, 0},
-			LEX_IDENT:   {STATE_FPARAM, CF_FPARAM},
-			LEX_TYPE:    {STATE_FPARAM, CF_FTYPE},
-			IS_COMMA:    {STATE_FPARAM, 0},
-			IS_RPAR:     {STATE_FRESULT, 0},
-			0:           {ERR_PARAMS, CF_ERROR},
+			LEX_IDENT:   {STATE_FPARAMTYPE, CF_FPARAM},
+			// LEX_TYPE:    {STATE_FPARAM, CF_FTYPE},
+			IS_COMMA: {STATE_FPARAM, 0},
+			IS_RPAR:  {STATE_FRESULT, 0},
+			0:        {ERR_PARAMS, CF_ERROR},
+		},
+		{ // STATE_FPARAMTYPE
+			LEX_IDENT: {STATE_FPARAMTYPE, CF_FPARAM},
+			LEX_TYPE:  {STATE_FPARAM, CF_FTYPE},
+			IS_COMMA:  {STATE_FPARAMTYPE, 0},
+			//			IS_RPAR:   {STATE_FRESULT, 0},
+			0: {ERR_VARTYPE, CF_ERROR},
 		},
 		{ // STATE_FRESULT
 			LEX_NEWLINE: {STATE_FRESULT, 0},
@@ -198,10 +208,17 @@ var (
 				},*/
 		{ // STATE_VAR
 			LEX_NEWLINE: {STATE_BODY, 0},
-			LEX_IDENT:   {STATE_VAR, CF_FPARAM},
-			LEX_TYPE:    {STATE_VAR, CF_FTYPE},
-			IS_COMMA:    {STATE_VAR, 0},
-			0:           {ERR_VARS, CF_ERROR},
+			LEX_IDENT:   {STATE_VARTYPE, CF_FPARAM},
+			//			LEX_IDENT:   {STATE_VAR, CF_FPARAM},
+			//			LEX_TYPE:    {STATE_VAR, CF_FTYPE},
+			IS_COMMA: {STATE_VAR, 0},
+			0:        {ERR_VARS, CF_ERROR},
+		},
+		{ // STATE_VARTYPE
+			LEX_IDENT: {STATE_VARTYPE, CF_FPARAM},
+			LEX_TYPE:  {STATE_VAR, CF_FTYPE},
+			IS_COMMA:  {STATE_VARTYPE, 0},
+			0:         {ERR_VARTYPE, CF_ERROR},
 		},
 		{ // STATE_ASSIGNEVAL
 			IS_LPAR:   {STATE_EVAL | STATE_TOFORK | STATE_TOBODY, 0},
@@ -241,9 +258,13 @@ func fError(buf *[]*Block, state int, lexem *Lexem) error {
 		`must be '}'`,      // ERR_MUSTRCURLY
 		`wrong parameters`, // ERR_PARAMS
 		`wrong variables`,  // ERR_VARS
+		`must be type`,     // ERR_VARTYPE
 		`must be '='`,      // ERR_ASSIGN
 	}
 	fmt.Printf("%s %x %v [Ln:%d Col:%d]\r\n", errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
+	if lexem.Type == LEX_NEWLINE {
+		return fmt.Errorf(`%s (unexpected new line) [Ln:%d]`, errors[state], lexem.Line-1)
+	}
 	return fmt.Errorf(`%s %x %v [Ln:%d Col:%d]`, errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
 }
 
@@ -266,7 +287,7 @@ func fCmdError(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
-	if block.Type == OBJ_FUNC && state == STATE_FPARAM {
+	if block.Type == OBJ_FUNC && (state == STATE_FPARAM || state == STATE_FPARAMTYPE) {
 		fblock := block.Info.(*FuncInfo)
 		fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
 	}
