@@ -1454,7 +1454,14 @@ function anchorScroll(anchor) {
 }
 
 function InitMobileHead() {
-	var head = $(".content-wrapper .content-heading").clone().children().remove().end().text();
+	var head;
+	
+	if (!$(".content-wrapper .content-heading").children(".lang").length) {
+		head = $(".content-wrapper .content-heading").clone().children().remove().end().text();
+	} else {
+		head = $(".content-wrapper .content-heading").children(".lang").text();
+	}
+	
 	$(".topnavbar-wrapper .content-heading").text(head);
 }
 
