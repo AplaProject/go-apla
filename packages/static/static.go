@@ -8,6 +8,7 @@
 // static/app_template.html
 // static/avatar.tpl
 // static/backup.html
+// static/basic.tpl
 // static/beta.html
 // static/block_explorer.html
 // static/btc.html
@@ -426,6 +427,24 @@ func staticAvatarTpl() (*asset, error) {
 func staticBackupHtml() (*asset, error) {
 	path := "static/backup.html"
 	name := "static/backup.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticBasicTpl reads file data from disk. It returns an error on failure.
+func staticBasicTpl() (*asset, error) {
+	path := "static/basic.tpl"
+	name := "static/basic.tpl"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5216,6 +5235,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/app_template.html": staticApp_templateHtml,
 	"static/avatar.tpl": staticAvatarTpl,
 	"static/backup.html": staticBackupHtml,
+	"static/basic.tpl": staticBasicTpl,
 	"static/beta.html": staticBetaHtml,
 	"static/block_explorer.html": staticBlock_explorerHtml,
 	"static/btc.html": staticBtcHtml,
@@ -5529,6 +5549,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"app_template.html": &bintree{staticApp_templateHtml, map[string]*bintree{}},
 		"avatar.tpl": &bintree{staticAvatarTpl, map[string]*bintree{}},
 		"backup.html": &bintree{staticBackupHtml, map[string]*bintree{}},
+		"basic.tpl": &bintree{staticBasicTpl, map[string]*bintree{}},
 		"beta.html": &bintree{staticBetaHtml, map[string]*bintree{}},
 		"block_explorer.html": &bintree{staticBlock_explorerHtml, map[string]*bintree{}},
 		"btc.html": &bintree{staticBtcHtml, map[string]*bintree{}},
