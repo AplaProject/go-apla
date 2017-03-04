@@ -48,6 +48,8 @@
 	   <li><a href="#" onclick="load_page('listOfTables')" class="lang" lang-id="list_of_tables"></a></li> {{if eq .Global "1"}}<li><a href="#" onclick="load_page('listOfTables', {global: 1})" class="lang" lang-id="global"></a></li>{{end}}
 	</ol>
 	<!-- START panel-->
+<div class="row">
+	<div class="col-md-12">
 	<div class="panel panel-default">
 	 <div class="panel-heading">
 	 	<div class="panel-title">
@@ -88,32 +90,35 @@
 	   </div>
 	  </div>
 	</div>
+		</div>
 
 
 
 <!-- START panel-->
-<div class="panel panel-default" data-sweet-alert>
-	<div class="panel-heading">
-		<div class="panel-title">
-			<span class="lang" lang-id="table_permission"></span>
+<div class="col-md-6">
+	<div class="panel panel-default" data-sweet-alert>
+		<div class="panel-heading">
+			<div class="panel-title">
+				<span class="lang" lang-id="table_permission"></span>
+			</div>
 		</div>
-	</div>
-	<div class="panel-body">
-		<form role="form">
-			<div class="form-group">
-				<label class="lang" lang-id="insert"></label>
-				<input type="text" class="form-control" id="insert" value="{{.TablePermission.insert}}"></input>
-			</div>
-			<div class="form-group">
-				<label class="lang" lang-id="new_column"></label>
-				<input type="text" class="form-control" id="new_column" value="{{.TablePermission.new_column}}"></input>
-			</div>
-		</form>
-	</div>
-	<div class="panel-footer">
-		<div class="clearfix">
-			<div class="pull-right">
-				<button type="button" class="btn btn-primary lang" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" lang-id="save"></button>
+		<div class="panel-body">
+			<form role="form">
+				<div class="form-group">
+					<label class="lang" lang-id="insert"></label>
+					<input type="text" class="form-control" id="insert" value="{{.TablePermission.insert}}"></input>
+				</div>
+				<div class="form-group">
+					<label class="lang" lang-id="new_column"></label>
+					<input type="text" class="form-control" id="new_column" value="{{.TablePermission.new_column}}"></input>
+				</div>
+			</form>
+		</div>
+		<div class="panel-footer">
+			<div class="clearfix">
+				<div class="pull-right">
+					<button type="button" class="btn btn-primary lang" id="send" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" lang-id="save"></button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -121,26 +126,29 @@
 <!-- END panel-->
 
 <!-- START panel-->
-<div class="panel panel-default" data-sweet-alert>
- <div class="panel-heading">
-	<div class="panel-title">
-		<span class="lang" lang-id="conditions_changing_permissions"></span>
-	</div>
- </div>
-	<div class="panel-body">
-		<form role="form">
-			<div class="form-group">
-				<input type="text" class="form-control" id="general_update" value="{{.TablePermission.general_update}}"></input>
-			</div>
-		</form>
-	</div>
- <div class="panel-footer">
-   <div class="clearfix">
-	  <div class="pull-right">
-		 <button type="button" class="btn btn-primary lang" id="sendperm" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" lang-id="save"></button>
+<div class="col-md-6">
+	<div class="panel panel-default" data-sweet-alert>
+	 <div class="panel-heading">
+		<div class="panel-title">
+			<span class="lang" lang-id="conditions_changing_permissions"></span>
+		</div>
+	 </div>
+		<div class="panel-body">
+			<form role="form">
+				<div class="form-group">
+					<input type="text" class="form-control" id="general_update" value="{{.TablePermission.general_update}}"></input>
+				</div>
+			</form>
+		</div>
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-right">
+			 <button type="button" class="btn btn-primary lang" id="sendperm" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" lang-id="save"></button>
+		  </div>
+	   </div>
 	  </div>
-   </div>
-  </div>
+	</div>
+</div>
 </div>
 <!-- END panel-->
 
