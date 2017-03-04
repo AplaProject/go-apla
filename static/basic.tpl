@@ -23,7 +23,7 @@ SetVar(`sc_EditProfile = contract EditProfile {
                           	  //Println("TXEditProfile new")
                         	}
                         }
-`,`sc_GenCitizen = contract GenCitizen {
+`,`sc_GenCitizen #= contract GenCitizen {
           	data {
           		Name      string
            		PublicKey string
@@ -67,7 +67,7 @@ SetVar(`sc_EditProfile = contract EditProfile {
   	  //Println("TXEditProfile new")
 	}
 }`,
-`sc_TXNewCitizen = contract TXNewCitizen {
+`sc_TXNewCitizen #= contract TXNewCitizen {
 	data {
         RequestId int
     }
@@ -220,7 +220,7 @@ Desc: "Basic environment ",
 			typeid: #type_edit_table_id#,
 			table_name : "#state_id#_citizenship_requests",
 			general_update: "ContractConditions(\"MainCondition\")",
-			insert: "ContractConditions(\"MainCondition\")",
+			insert: "true",
 			new_column: "ContractConditions(\"MainCondition\")",
 			}
 	   },
