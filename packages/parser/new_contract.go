@@ -63,6 +63,12 @@ func (p *Parser) NewContractFront() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
+	if len(p.TxMap["conditions"]) > 0 {
+		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+			return p.ErrInfo(err)
+		}
+	}
+
 	if exist, err := p.Single(`select id from "`+prefix+"_smart_contracts"+`" where name=?`, p.TxMap["name"]).Int64(); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {

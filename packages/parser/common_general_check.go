@@ -91,6 +91,11 @@ func (p *Parser) generalCheck(name string) error {
 	if len(p.TxMap["sign"]) < 64 || len(p.TxMap["sign"]) > 5120 {
 		return utils.ErrInfoFmt("incorrect sign size %d", len(p.TxMap["sign"]))
 	}
+	for _, cond := range []string{`conditions`, `conditions_change`} {
+		if val, ok := p.TxMap[cond]; ok && len(val) == 0 {
+			return utils.ErrInfoFmt("Conditions cannot be empty")
+		}
+	}
 
 	return p.checkPrice(name)
 }
