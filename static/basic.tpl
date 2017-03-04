@@ -34,7 +34,7 @@ SetVar(`sc_EditProfile = contract EditProfile {
           	    }
           	    $idc = PubToID($PublicKey)
           	    if $idc == 0 || DBIntExt("dlt_wallets", "wallet_id", $idc, "wallet_id") == $idc {
-          	        warning "Pubkey is used"
+          	        warning "The key is already in use"
           	    }
           	}
           	action {
