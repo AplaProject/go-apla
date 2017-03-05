@@ -491,6 +491,7 @@ CREATE TABLE "global_smart_contracts" (
 );
 ALTER SEQUENCE "global_smart_contracts_id_seq" owned by "global_smart_contracts".id;
 ALTER TABLE ONLY "global_smart_contracts" ADD CONSTRAINT global_smart_contracts_pkey PRIMARY KEY (id);
+CREATE INDEX global_smart_contracts_index_name ON "global_smart_contracts" (name);
 
 CREATE TABLE "global_tables" (
 "name" bytea  NOT NULL DEFAULT '',
