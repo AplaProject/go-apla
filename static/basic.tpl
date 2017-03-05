@@ -98,7 +98,7 @@ SetVar(`sc_EditProfile = contract EditProfile {
 	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
    }
 }`)
-TextHidden( sc_GenCitizen, sc_EditProfile, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
+TextHidden( sc_GenCitizen, sc_conditions, sc_EditProfile, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
 SetVar(`p_CheckCitizens #= Title : Check citizens requests
 Navigation( LiTemplate(government), Citizens)
 PageTitle : Citizens requests
