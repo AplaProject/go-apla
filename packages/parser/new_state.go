@@ -142,8 +142,8 @@ func (p *Parser) NewState() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value) VALUES
-		(?, ?)`,
+	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value, wallet_id, active) VALUES
+		(?, ?, ?, ?)`,
 		`MainCondition`, `contract MainCondition {
             data {}
             conditions {
@@ -153,7 +153,7 @@ func (p *Parser) NewState() error {
                     }
             }
             action {}
-    }`,
+    }`, p.TxWalletID, 1,
 	)
 
 	if err != nil {
