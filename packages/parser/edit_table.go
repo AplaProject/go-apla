@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -119,6 +120,12 @@ func (p *Parser) EditTable() error {
 		return err
 	}
 	for _, action := range []string{"general_update", "new_column", "insert"} {
+		if len(p.TxMaps.String[action]) == 0 {
+			return fmt.Errorf(`Parameter "%s" cannot be empty`, action)
+		}
+		if err := smart.CompileEval(p.TxMaps.String[action], uint32(p.TxStateID)); err != nil {
+			return err
+		}
 		p.TxMaps.String[action] = strings.Replace(p.TxMaps.String[action], `"`, `\"`, -1)
 	}
 	//err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = columns_and_permissions || '{"general_update": ?, "new_column": ?, "insert": ?}', rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, `"`+p.TxMaps.String["insert"]+`"`, `"`+p.TxMaps.String["new_column"]+`"`, rbId, p.TxMaps.String["table_name"])

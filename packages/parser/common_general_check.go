@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -91,9 +92,12 @@ func (p *Parser) generalCheck(name string) error {
 	if len(p.TxMap["sign"]) < 64 || len(p.TxMap["sign"]) > 5120 {
 		return utils.ErrInfoFmt("incorrect sign size %d", len(p.TxMap["sign"]))
 	}
-	for _, cond := range []string{`conditions`, `conditions_change`} {
+	for _, cond := range []string{`conditions`, `conditions_change`, `permissions`} {
 		if val, ok := p.TxMap[cond]; ok && len(val) == 0 {
 			return utils.ErrInfoFmt("Conditions cannot be empty")
+		}
+		if err := smart.CompileEval(string(p.TxMap[cond]), uint32(p.TxStateID)); err != nil {
+			return utils.ErrInfo(err)
 		}
 	}
 
