@@ -20,6 +20,8 @@ import (
 	//	"io/ioutil"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//	"path/filepath"
+	"io/ioutil"
+	"path/filepath"
 )
 
 type loginECDSAPage struct {
@@ -30,13 +32,15 @@ type loginECDSAPage struct {
 	States      string
 	OneCountry  int64
 	PrivCountry bool
-	//	Private string
+	Private string
 }
 
 func (c *Controller) LoginECDSA() (string, error) {
 
-	//	var private []byte
-	//	private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
+	var private []byte
+	if c.ConfigIni["public_node"] != "1" {
+		private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
+	}
 
 	/*	states := make(map[string]string)
 		data, err := c.GetList(`SELECT id FROM system_states`).String()
@@ -62,7 +66,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 		Key:         key,
 		OneCountry:  utils.OneCountry,
 		PrivCountry: utils.PrivCountry,
-		//	Private: string(private),
+		Private: string(private),
 		/*		MyWalletData:          MyWalletData,
 				Title:                 "modalAnonym",
 		*/})
