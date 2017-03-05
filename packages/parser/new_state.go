@@ -138,7 +138,7 @@ func (p *Parser) NewState() error {
 				);
 				ALTER SEQUENCE "` + id + `_smart_contracts_id_seq" owned by "` + id + `_smart_contracts".id;
 				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT "` + id + `_smart_contracts_pkey" PRIMARY KEY (id);
-				CREATE INDEX ` + id + `_smart_contracts_index_name ON "` + id + `_smart_contracts" (name);
+				CREATE INDEX "` + id + `_smart_contracts_index_name" ON "` + id + `_smart_contracts" (name);
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
