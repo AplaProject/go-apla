@@ -12,7 +12,7 @@ SetVar(
 	type_new_contract_id = TxId(NewContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
-	sc_conditions = "ContractConditions(\"MainCondition\")")
+	sc_conditions = "ContractConditions(`MainCondition`)")
 SetVar(`sc_EditProfile = contract EditProfile {
                         	data {
                         		FirstName  string
