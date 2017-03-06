@@ -100,6 +100,7 @@
 				container.html("");
 				showFields();
 				container.prepend('<div class="form-group"><label for="price">' + returnLang("price") + '</label><input id="price" type="text" class="form-control" value="' + data.price + ' EGS" disabled></div>');
+				console.log(data)
 				if (localStorage.getItem('reqPrv') && localStorage.getItem('reqState')== id && data.fields.length == 0) {
 					if (data.approved == 0) {
 						//alert('The request is in the queue.');
@@ -133,8 +134,10 @@
 				}
 				
 				if (data.valid == false) {
-					btn.prop("disabled", true);
-					Alert("", "You don't have enough tokens in the account", "notification:warning", defaultConfirm);
+					if (data.fields.length != 0) {
+						btn.prop("disabled", true);
+						Alert("", "You don't have enough tokens in the account", "notification:warning", defaultConfirm);
+					}
 				}
 				
 				if (data.fields.length) {
@@ -156,8 +159,8 @@
 						}
 						if (fields[i].htmlType == "date") {
 							var el = '<div class="form-group" style="position:relative;">' +
-				'<label class="control-label" for="' + fields[i].name + '">' + returnLang(fields[i].title) + '</label>' +
-				'<input type="text" class="datetimepicker form-control" id="' + fields[i].name + '" value=""></div>';
+									'<label class="control-label" for="' + fields[i].name + '">' + returnLang(fields[i].title) + '</label>' +
+									'<input type="text" class="datetimepicker form-control" id="' + fields[i].name + '" value=""></div>';
 						}						
 						container.append(el);
 						arr.push(fields[i].name);
@@ -177,11 +180,12 @@
 						maxDate: 'now',
 						format: 'YYYY-MM-DD'
 					});*/
-				$.datetimepicker.setLocale('en');
-				jQuery(".datetimepicker").datetimepicker({
-					format:'Y-m-d',
-					timepicker:false
-				});					
+					$.datetimepicker.setLocale('en');
+					jQuery(".datetimepicker").datetimepicker({
+						format:'Y-m-d',
+						timepicker:false
+					});	
+									
 					$(".filestyle").filestyle();
 					userLocation("imap", "100%", "250px");
 
