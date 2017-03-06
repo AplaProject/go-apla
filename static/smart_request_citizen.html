@@ -133,8 +133,8 @@
 				}
 				
 				if (data.valid == false) {
-					$("#sorry").click();
 					btn.prop("disabled", true);
+					Alert("", "You don't have enough tokens in the account", "notification:warning", defaultConfirm);
 				}
 				
 				if (data.fields.length) {
