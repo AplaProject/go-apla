@@ -219,9 +219,9 @@ func (c *Controller) ExportTpl() (string, error) {
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_lang_id = TxId(NewLang),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
-	type_new_table_id = TxId(NewTable),	
-	sc_conditions = "$citizen == #wallet_id#")
+	type_new_table_id = TxId(NewTable))
 `
 		out += c.setVar("smart_contracts", `sc`)
 		out += c.setVar("pages", `p`)
@@ -297,7 +297,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			global: %d,
 			table_name : "%s",
 			columns: '[%s]',
-			permissions: "$citizen == #wallet_id#"
+			permissions: "ContractConditions(\"MainCondition\")"
 			}
 	   }`, global, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
 
@@ -373,19 +373,28 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			global: %d,
 			name: "%s",
 			value: $("#d_%s").val(),
-			conditions: $("#sc_conditions").val()
+			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   }`, global, contname, contname))
 
 				list = append(list, fmt.Sprintf(`{
-		Forsign: '',
+		Forsign: 'global,id',
 		Data: {
-			type: "Contract",
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
 			global: %d,
-			name: "%s"
+			id: "%s"
 			}
 	   }`, global, contname))
 
+				list = append(list, fmt.Sprintf(`{
+				Forsign: '',
+				Data: {
+					type: "Contract",
+					global: %d,
+					name: "%s"
+					}
+			}`, global, contname))
 			}
 		}
 
@@ -405,9 +414,19 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			global: %d,
 			name: "%s",
 			value: $("#sc_%s").val(),
-			conditions: $("#sc_conditions").val()
+			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   }`, global, icontract, icontract))
+				list = append(list, fmt.Sprintf(`{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: %d,
+			id: "%s"
+			}
+	   }`, global, icontract))
+
 			}
 		}
 		params := strings.Split(c.r.FormValue("state_parameters"), `,`)
@@ -425,7 +444,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			typeid: #type_new_state_params_id#,
 			name : "%s",
 			value: $("#pa_%s").val(),
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   }`, iparam, iparam))
 			}
@@ -447,7 +466,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			name : "%s",
 			value: $("#m_%s").val(),
 			global: %d,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   }`, imenu, imenu, global))
 			}
@@ -542,7 +561,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 		}
 
-		out += strings.Join(list, ",\r\n") + "]`\r\n)"
+		out += strings.Replace(strings.Join(list, ",\r\n"), "`", `\"`, -1) + "]`\r\n)"
 
 		if err := ioutil.WriteFile(tplname, []byte(out), 0644); err != nil {
 			message = err.Error()

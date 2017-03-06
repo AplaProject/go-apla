@@ -53,6 +53,15 @@ func (p *Parser) ActivateContractFront() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
+	if len(p.TxMaps.String["id"]) == 0 {
+		return p.ErrInfo("incorrect contract id")
+	}
+	if p.TxMaps.String["id"][0] > '9' {
+		p.TxMaps.String["id"], err = p.Single(`SELECT id FROM "`+prefix+`_smart_contracts" WHERE name = ?`, p.TxMaps.String["id"]).String()
+		if len(p.TxMaps.String["id"]) == 0 {
+			return p.ErrInfo("incorrect contract name")
+		}
+	}
 	active, err := p.Single(`SELECT active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
 	if err != nil {
 		return p.ErrInfo(err)

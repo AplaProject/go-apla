@@ -145,8 +145,7 @@ function sendnetcontract() {
 	});
 }
 
-
-	$(document).ready( function(){
+//	$(document).ready( function(){
 		$("#apptitle").html( jdata.Head );
 		$("#head").html( jdata.Head );
 		$("#desc").html( jdata.Desc );
@@ -161,5 +160,5 @@ function sendnetcontract() {
 			tbl += '<article id="tx'+i+'">&nbsp;</article>'; 
 		}
 		$("#process").append(tbl + '</div>');
-	});
+//	});
 </script> {{template "signatures".}}
