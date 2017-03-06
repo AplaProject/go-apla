@@ -57,7 +57,7 @@
 	}
 	
 	function hideFields(text) {
-		Message(text);
+		//Message(text);
 		btns.hide();
 		container.html("");
 		btn.prop("disabled", true);
@@ -104,17 +104,19 @@
 					if (data.approved == 0) {
 						//alert('The request is in the queue.');
 						hideFields();
-						Alert("", 'Please wait, the application passes the manual processing', "notification:success", defaultConfirm);
+						Alert("", 'Please wait, the application passes the manual processing', "notification:warning", defaultConfirm);
 						//Notify('The request is in the queue.', 'warning');
 					}
 					if (data.approved < 0) {
 						//alert('The request has been rejected.');
-						hideFields('The request has been rejected.');
+						Alert("", 'The request has been rejected.', "notification:danger", hideFields);
+						//hideFields('The request has been rejected.');
 					}
 					if (data.approved == 1) {
 						//alert('The request has been accepted.');
 						hideFields();
-						Notify('The request has been accepted.', 'success');
+						Alert("", 'The request has been accepted.', "notification:success", defaultConfirm);
+						//Notify('The request has been accepted.', 'success');
 					}
 /*					if (data.approved > 1) {
 						var idz = id.toString(16);
@@ -324,7 +326,7 @@
 			<div class="panel-footer">
 				<div class="clearfix">
 					<div class="pull-right">
-						<button type="button" class="btn btn-primary lang" lang-id="request"></button>
+						<button type="button" class="btn btn-primary lang" lang-id="request" disabled></button>
 					</div>
 				</div>
 			</div>
