@@ -10,6 +10,7 @@ SetVar(
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_lang_id = TxId(NewLang),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "ContractConditions(`MainCondition`)")
@@ -168,6 +169,15 @@ Desc: "Basic environment ",
 
              			}
         },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "EditProfile"
+			}
+	   },		
          {
         		Forsign: 'table_name,column_name,permissions,index,column_type',
         		Data: {
@@ -236,7 +246,15 @@ Desc: "Basic environment ",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
-
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "GenCitizen"
+			}
+	   },
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -249,6 +267,15 @@ Desc: "Basic environment ",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "TXCitizenRequest"
+			}
+	   },	   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -259,6 +286,15 @@ Desc: "Basic environment ",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "TXEditProfile"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -271,6 +307,15 @@ Desc: "Basic environment ",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "TXNewCitizen"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -281,6 +326,15 @@ Desc: "Basic environment ",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "TXRejectCitizen"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {

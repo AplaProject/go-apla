@@ -2,6 +2,7 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_append_id = TxId(AppendPage),
 	type_append_menu_id = TxId(AppendMenu),
     type_new_table_id = TxId(NewTable),
@@ -250,6 +251,15 @@ Desc: "Company register, buying and sales tools",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "AddCompanyAccount"
+			}
+	   },	   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -260,6 +270,15 @@ Desc: "Company register, buying and sales tools",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "BuyItem"
+			}
+	   },	   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -272,6 +291,15 @@ Desc: "Company register, buying and sales tools",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "NewCompany"
+			}
+	   },	 	   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -282,6 +310,15 @@ Desc: "Company register, buying and sales tools",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "NewItem"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
