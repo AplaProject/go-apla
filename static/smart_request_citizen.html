@@ -104,7 +104,8 @@
 					if (data.approved == 0) {
 						//alert('The request is in the queue.');
 						hideFields();
-						Notify('The request is in the queue.', 'warning');
+						Alert("", 'Please wait, the application passes the manual processing', "notification:success", defaultConfirm);
+						//Notify('The request is in the queue.', 'warning');
 					}
 					if (data.approved < 0) {
 						//alert('The request has been rejected.');
@@ -205,7 +206,7 @@
 	},'json')*/
 
 	function RequestOK() {
-		dl_navigate0('dashboardAnonym');
+		load_page('smart_request_citizen');
 	}
 
 	var serverTime;
