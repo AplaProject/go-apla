@@ -7,6 +7,7 @@ SetVar(
 	type_edit_column_id = TxId(EditColumn),
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "$citizen == #wallet_id#")
@@ -832,6 +833,15 @@ Desc: "Voting",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "RF_NewIssue"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -842,6 +852,15 @@ Desc: "Voting",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "RF_next_event"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -854,6 +873,15 @@ Desc: "Voting",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "RF_NextVoting"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -864,6 +892,15 @@ Desc: "Voting",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "RF_Voting"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -876,6 +913,15 @@ Desc: "Voting",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "RF_VotingCancel"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -886,6 +932,15 @@ Desc: "Voting",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "RF_VotingResult"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
