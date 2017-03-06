@@ -8,6 +8,7 @@ SetVar(
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_lang_id = TxId(NewLang),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),	
 	sc_conditions = "$citizen == #wallet_id#")
@@ -199,6 +200,15 @@ Desc: "Messenger",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "addMessage"
+			}
+	   },	   
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {

@@ -2,6 +2,7 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_append_id = TxId(AppendPage),
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_menu_id = TxId(NewMenu),
@@ -369,6 +370,15 @@ Desc: "Currency exchange",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "newForexOrder"
+			}
+	   },	   
     {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {

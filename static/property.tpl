@@ -2,6 +2,7 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_append_id = TxId(AppendPage),
 	type_append_menu_id = TxId(AppendMenu),
     type_new_table_id = TxId(NewTable),
@@ -452,6 +453,15 @@ Desc: "Real estate register",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "AddProperty"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -462,6 +472,15 @@ Desc: "Real estate register",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "EditProperty"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -474,6 +493,15 @@ Desc: "Real estate register",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "PropertyAcceptOffers"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -484,6 +512,15 @@ Desc: "Real estate register",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "PropertySendOffer"
+			}
+	   },			   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -496,6 +533,15 @@ Desc: "Real estate register",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SellProperty"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -506,6 +552,15 @@ Desc: "Real estate register",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SetPropertyPrice"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -518,6 +573,15 @@ Desc: "Real estate register",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SetPropertyRentPrice"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -528,6 +592,15 @@ Desc: "Real estate register",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SetPropertySellPrice"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {

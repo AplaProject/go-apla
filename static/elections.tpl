@@ -3,6 +3,7 @@ SetVar(
 	type_new_page_id = TxId(NewPage),
 	type_new_menu_id = TxId(NewMenu),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable),
 	type_append_menu_id = TxId(AppendMenu),
@@ -985,6 +986,15 @@ Desc: "General Elections and votes in the Legislature",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SLStartVoting"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -995,6 +1005,15 @@ Desc: "General Elections and votes in the Legislature",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "GECandidateRegistration"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -1007,6 +1026,15 @@ Desc: "General Elections and votes in the Legislature",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "GENewElectionCampaign"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -1017,6 +1045,15 @@ Desc: "General Elections and votes in the Legislature",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "GEVoting"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -1029,6 +1066,15 @@ Desc: "General Elections and votes in the Legislature",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "GEVotingResalt"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -1039,6 +1085,15 @@ Desc: "General Elections and votes in the Legislature",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "LSSignature"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -1051,6 +1106,15 @@ Desc: "General Elections and votes in the Legislature",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SLEdit"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -1061,6 +1125,15 @@ Desc: "General Elections and votes in the Legislature",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SLNewVoting"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -1073,6 +1146,15 @@ Desc: "General Elections and votes in the Legislature",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SLVoting"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -1083,6 +1165,15 @@ Desc: "General Elections and votes in the Legislature",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SLVotingResalt"
+			}
+	   },		   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {

@@ -2,6 +2,7 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_append_id = TxId(AppendPage),
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_menu_id = TxId(NewMenu),
@@ -133,6 +134,15 @@ Desc: "International currency",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "AddAccountEuro"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -144,6 +154,15 @@ Desc: "International currency",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "DisableEuroAccount"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -154,6 +173,15 @@ Desc: "International currency",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "UpdAmountEuro"
+			}
+	   },	   
 	   {
          Forsign: 'global,name,value',
          Data: {
