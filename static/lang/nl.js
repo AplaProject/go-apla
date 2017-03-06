@@ -7,6 +7,7 @@ Lang = {
 	"log_level": "log nivea",
 	"error": "FOUT",
 	"debug": "SPOOR OP",
+	"report_error": "Report an error",
 	"postgresql_settings": "PostgreSQL instellingen",
 	"instruction": "Instructie",
 	"host": "Host",

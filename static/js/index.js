@@ -705,9 +705,11 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
 				color = "#23b7e5";
 			} else if (type == "error") {
 				color = "#f05050";
-				if (text.toLowerCase().indexOf("[error]") != -1) {
+				cancelbtnShow = true;
+				cancelbtnText = returnLang("report_error");
+				/*if (text.toLowerCase().indexOf("[error]") != -1) {
 					btnText = returnLang("copy_text_error_clipboard");
-				}
+				}*/
 			} else if (type == "question") {
 				color = "#4b91ea";
 			} else if (type == "warning") {
@@ -767,6 +769,14 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
 						obj.css({ "min-height": minHeight }).removeClass("whirl standard");
 						minHeight = null;
 						$("#" + id).modal("hide");
+					}
+				} else {
+					if (type == "error") {
+						obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+						minHeight = null;
+						$("#" + id).modal("hide");
+						
+						window.open("mailto:bugs@egaas.org?subject=Report an error - " + hist[hist.length - 1][0] + "('" + hist[hist.length - 1][1] + "')" + "&body=" + text, "_blank");
 					}
 				}
 

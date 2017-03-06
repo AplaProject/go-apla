@@ -7,6 +7,7 @@ Lang = {
 	"log_level": "Log level",
 	"error": "ERROR",
 	"debug": "DEBUG",
+	"report_error": "Report an error",
 	"postgresql_settings": "PostgreSQL settings",
 	"instruction": "Instruction",
 	"host": "Host",
