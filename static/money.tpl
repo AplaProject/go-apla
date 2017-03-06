@@ -2,6 +2,7 @@ SetVar(
 	global = 0,
 	type_new_page_id = TxId(NewPage),
 	type_new_contract_id = TxId(NewContract),
+	type_activate_contract_id = TxId(ActivateContract),
 	type_append_id = TxId(AppendPage),
 	type_append_menu_id = TxId(AppendMenu),
     type_new_table_id = TxId(NewTable),
@@ -195,6 +196,15 @@ Json(`Head: "Money",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "AddAccount"
+			}
+	   },	   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -205,6 +215,15 @@ Json(`Head: "Money",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "DisableAccount"
+			}
+	   },	 	   
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -217,6 +236,15 @@ Json(`Head: "Money",
 			}
 	   },
 {
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "SendMoney"
+			}
+	   },		   
+{
 		Forsign: 'global,name,value,conditions',
 		Data: {
 			type: "NewContract",
@@ -227,6 +255,15 @@ Json(`Head: "Money",
 			conditions: $("#sc_conditions").val()
 			}
 	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "UpdAmount"
+			}
+	   },	   
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
