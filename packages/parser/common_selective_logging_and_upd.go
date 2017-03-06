@@ -30,16 +30,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 	var (
 		tableId  string
 		isCustom bool
+		err      error
 	)
 
-	isBytea := make(map[string]bool)
-	colTypes, err := p.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
-	if err != nil {
-		return ``, err
-	}
-	for _, icol := range colTypes {
-		isBytea[icol[`column_name`]] = icol[`data_type`] == `bytea`
-	}
+	isBytea := getBytea(table)
 	if isCustom, err = p.IsCustomTable(table); err != nil {
 		return ``, err
 	}

@@ -36,23 +36,23 @@ import (
 
 var (
 	extendCost = map[string]int64{
-		"DBInsert":       200,
-		"DBUpdate":       100,
-		"DBUpdateExt":    100,
-		"DBGetList":      300,
-		"DBGetTable":     1000,
-		"DBTransfer":     200,
-		"DBString":       100,
-		"DBInt":          100,
-		"DBStringExt":    100,
-		"DBIntExt":       100,
-		"DBStringWhere":  100,
-		"DBIntWhere":     100,
-		"AddressToId":    10,
-		"IdToAddress":    10,
-		"DBAmount":       100,
+		"DBInsert":      200,
+		"DBUpdate":      100,
+		"DBUpdateExt":   100,
+		"DBGetList":     300,
+		"DBGetTable":    1000,
+		"DBTransfer":    200,
+		"DBString":      100,
+		"DBInt":         100,
+		"DBStringExt":   100,
+		"DBIntExt":      100,
+		"DBStringWhere": 100,
+		"DBIntWhere":    100,
+		"AddressToId":   10,
+		"IdToAddress":   10,
+		"DBAmount":      100,
 		//"IsGovAccount":   80,
-		"StateVal":     80,
+		"StateVal":       80,
 		"Sha256":         50,
 		"PubToID":        10,
 		"UpdateContract": 200,
@@ -85,20 +85,20 @@ func init() {
 		"ContractAccess":     IsContract,
 		"ContractConditions": ContractConditions,
 		//"IsGovAccount":       IsGovAccount,
-		"StateVal":         StateVal,
-		"Int":                Int,
-		"Str":                Str,
-		"Money":              Money,
-		"Float":              Float,
-		"Len":                Len,
-		"Sha256":             Sha256,
-		"PubToID":            PubToID,
-		"HexToBytes":         HexToBytes,
-		"UpdateContract":     UpdateContract,
-		"UpdateParam":        UpdateParam,
-		"UpdateMenu":         UpdateMenu,
-		"UpdatePage":         UpdatePage,
-		"check_signature":    CheckSignature, // system function
+		"StateVal":        StateVal,
+		"Int":             Int,
+		"Str":             Str,
+		"Money":           Money,
+		"Float":           Float,
+		"Len":             Len,
+		"Sha256":          Sha256,
+		"PubToID":         PubToID,
+		"HexToBytes":      HexToBytes,
+		"UpdateContract":  UpdateContract,
+		"UpdateParam":     UpdateParam,
+		"UpdateMenu":      UpdateMenu,
+		"UpdatePage":      UpdatePage,
+		"check_signature": CheckSignature, // system function
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
@@ -331,7 +331,30 @@ func DBInt(tblname string, name string, id int64) (int64, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
 }
 
+func getBytea(table string) map[string]bool {
+	isBytea := make(map[string]bool)
+	colTypes, err := utils.DB.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
+	if err != nil {
+		return isBytea
+	}
+	for _, icol := range colTypes {
+		isBytea[icol[`column_name`]] = icol[`data_type`] == `bytea`
+	}
+	return isBytea
+}
+
 func DBStringExt(tblname string, name string, id interface{}, idname string) (string, error) {
+
+	isBytea := getBytea(tblname)
+	if isBytea[idname] {
+		switch id.(type) {
+		case string:
+			if vbyte, err := hex.DecodeString(id.(string)); err == nil {
+				id = vbyte
+			}
+		}
+	}
+
 	if isIndex, err := utils.DB.IsIndex(tblname, idname); err != nil {
 		return ``, err
 	} else if !isIndex {
