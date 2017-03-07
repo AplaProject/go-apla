@@ -221,6 +221,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 	/*	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit(price) {
 		return fmt.Errorf(`there are not enough money`)
 	}*/
+	if !p.TxContract.Block.Info.(*script.ContractInfo).Active {
+		return fmt.Errorf(`Contract %s is not active`, p.TxContract.Name)
+	}
 
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
@@ -545,7 +548,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 		values []interface{}
 	)
 	prefix := utils.Int64ToStr(int64(p.TxStateID))
-	cnt, err := p.OneRow(`SELECT id,conditions FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
+	cnt, err := p.OneRow(`SELECT id,conditions, active FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
 	if err != nil {
 		return err
 	}
@@ -578,7 +581,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 	if len(fields) == 0 {
 		return fmt.Errorf(`empty value and condition`)
 	}
-	root, err := smart.CompileBlock(value, prefix)
+	root, err := smart.CompileBlock(value, prefix, false, utils.StrToInt64(cnt["id"]))
 	if err != nil {
 		return err
 	}
@@ -586,6 +589,12 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 		prefix+"_smart_contracts", []string{"id"}, []string{cnt["id"]}, true)
 	if err != nil {
 		return err
+	}
+	for i, item := range root.Children {
+		if item.Type == script.OBJ_CONTRACT {
+			root.Children[i].Info.(*script.ContractInfo).TblId = utils.StrToInt64(cnt[`id`])
+			root.Children[i].Info.(*script.ContractInfo).Active = cnt[`active`] == `1`
+		}
 	}
 	smart.FlushBlock(root)
 

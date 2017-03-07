@@ -19,7 +19,7 @@ package parser
 import (
 	"fmt"
 
-	//	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
 )
@@ -104,6 +104,7 @@ func (p *Parser) ActivateContract() error {
 		[]string{p.TxMaps.String["id"]}, true); err != nil {
 		return err
 	}
+	smart.ActivateContract(utils.StrToInt64(p.TxMaps.String["id"]), prefix, true)
 	return nil
 }
 

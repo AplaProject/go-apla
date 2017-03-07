@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -87,16 +88,22 @@ func (p *Parser) NewContract() error {
 	if wallet = p.TxCitizenID; wallet == 0 {
 		wallet = p.TxWalletID
 	}
-	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix)
+	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
+	tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
 		[]interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"],
 			wallet}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	for i, item := range root.Children {
+		if item.Type == script.OBJ_CONTRACT {
+			root.Children[i].Info.(*script.ContractInfo).TblId = utils.StrToInt64(tblid)
+		}
+	}
+
 	smart.FlushBlock(root)
 	return nil
 }

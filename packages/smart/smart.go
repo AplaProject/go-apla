@@ -77,12 +77,12 @@ func ExternOff() {
 }
 
 // Compiles contract source code
-func Compile(src, prefix string) error {
-	return smartVM.Compile([]rune(src), Pref2state(prefix))
+func Compile(src, prefix string, active bool, tblid int64) error {
+	return smartVM.Compile([]rune(src), Pref2state(prefix), active, tblid)
 }
 
-func CompileBlock(src, prefix string) (*script.Block, error) {
-	return smartVM.CompileBlock([]rune(src), Pref2state(prefix))
+func CompileBlock(src, prefix string, active bool, tblid int64) (*script.Block, error) {
+	return smartVM.CompileBlock([]rune(src), Pref2state(prefix), active, tblid)
 }
 
 func CompileEval(src string, prefix uint32) error {
@@ -114,6 +114,21 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 	ret, err = rt.Run(block, params, extend)
 	(*extend)[`txcost`] = rt.Cost()
 	return
+}
+
+func ActivateContract(tblid int64, prefix string, active bool) {
+	if prefix == `global` {
+		prefix = `0`
+	}
+	for i, item := range smartVM.Block.Children {
+		if item != nil && item.Type == script.OBJ_CONTRACT {
+			cinfo := item.Info.(*script.ContractInfo)
+			if cinfo.TblId == tblid && strings.HasPrefix(cinfo.Name, `@`+prefix) &&
+				(len(cinfo.Name) > len(prefix)+1 && cinfo.Name[len(prefix)+1] > '9') {
+				smartVM.Children[i].Info.(*script.ContractInfo).Active = active
+			}
+		}
+	}
 }
 
 // Returns true if the contract exists

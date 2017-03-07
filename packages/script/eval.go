@@ -34,7 +34,7 @@ var (
 
 func (vm *VM) CompileEval(input string, state uint32) error {
 	source := `func eval bool { return ` + input + `}`
-	block, err := vm.CompileBlock([]rune(source), state)
+	block, err := vm.CompileBlock([]rune(source), state, false, 0)
 	//	fmt.Println(`Compile Eval`, err, input)
 	if err == nil {
 		crc := crc64.Checksum([]byte(input), lib.Table64)

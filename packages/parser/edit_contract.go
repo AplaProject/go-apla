@@ -18,7 +18,7 @@ package parser
 
 import (
 	"fmt"
-
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -94,7 +94,13 @@ func (p *Parser) EditContract() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix)
+	item, err := p.OneRow(`SELECT id, active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	tblid := utils.StrToInt64(item[`id`])
+	active := item[`active`] == `1`
+	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, utils.StrToInt64(p.TxMaps.String["id"]))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -102,6 +108,12 @@ func (p *Parser) EditContract() error {
 	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", []string{"id"}, []string{p.TxMaps.String["id"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+	for i, item := range root.Children {
+		if item.Type == script.OBJ_CONTRACT {
+			root.Children[i].Info.(*script.ContractInfo).TblId = tblid
+			root.Children[i].Info.(*script.ContractInfo).Active = active
+		}
 	}
 	smart.FlushBlock(root)
 	return nil

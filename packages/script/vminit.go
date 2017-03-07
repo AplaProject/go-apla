@@ -60,9 +60,11 @@ type FieldInfo struct {
 }
 
 type ContractInfo struct {
-	Id   uint32
-	Name string
-	Tx   *[]*FieldInfo
+	Id     uint32
+	Name   string
+	Active bool
+	TblId  int64
+	Tx     *[]*FieldInfo
 }
 
 type FuncInfo struct {
@@ -84,6 +86,8 @@ type ObjInfo struct {
 type Block struct {
 	Objects  map[string]*ObjInfo
 	Type     int
+	Active   bool
+	TblId    int64
 	Info     interface{}
 	Parent   *Block
 	Vars     []reflect.Type
@@ -129,6 +133,9 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	}
 	for _, ipar := range pars {
 		parnames[ipar] = true
+	}
+	if !cblock.Info.(*ContractInfo).Active {
+		return fmt.Errorf(`Contract %s is not active`, name)
 	}
 	var isSignature bool
 	if cblock.Info.(*ContractInfo).Tx != nil {

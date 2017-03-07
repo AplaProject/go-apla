@@ -437,7 +437,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	case STATE_BLOCK:
 		itype = OBJ_CONTRACT
 		name = StateName((*buf)[0].Info.(uint32), name)
-		fblock.Info = &ContractInfo{Id: uint32(len(prev.Children) - 1), Name: name} //lexem.Value.(string)}
+		fblock.Info = &ContractInfo{Id: uint32(len(prev.Children) - 1), Name: name, Active: (*buf)[0].Active, TblId: (*buf)[0].TblId} //lexem.Value.(string)}
 	default:
 		itype = OBJ_FUNC
 		fblock.Info = &FuncInfo{}
@@ -447,8 +447,8 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
-func (vm *VM) CompileBlock(input []rune, idstate uint32) (*Block, error) {
-	root := &Block{Info: idstate}
+func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int64) (*Block, error) {
+	root := &Block{Info: idstate, Active: active, TblId: tblid}
 	lexems, err := LexParser(input)
 	if err != nil {
 		return nil, err
@@ -589,8 +589,8 @@ func (vm *VM) FlushExtern() (err error) {
 	return
 }
 
-func (vm *VM) Compile(input []rune, state uint32) error {
-	root, err := vm.CompileBlock(input, state)
+func (vm *VM) Compile(input []rune, state uint32, active bool, tblid int64) error {
+	root, err := vm.CompileBlock(input, state, active, tblid)
 	if err == nil {
 		vm.FlushBlock(root)
 	}

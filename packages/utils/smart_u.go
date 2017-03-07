@@ -182,12 +182,12 @@ func LoadContract(prefix string) (err error) {
 		return err
 	}
 	for _, item := range contracts {
-		if err = smart.Compile(item[`value`], prefix); err != nil {
+		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, StrToInt64(item[`id`])); err != nil {
 			log.Error("Load Contract", item[`name`], err)
 			fmt.Println("Error Load Contract", item[`name`], err)
 			//return
 		} else {
-			fmt.Println("OK Load Contract", item[`name`])
+			fmt.Println("OK Load Contract", item[`name`], item[`id`], item[`active`] == `1`)
 		}
 	}
 	return
