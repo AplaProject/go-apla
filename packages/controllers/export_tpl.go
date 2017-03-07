@@ -25,6 +25,8 @@ import (
 	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
 )
@@ -81,11 +83,11 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 		//		fmt.Println(`Data`, err, data)
 		if len(data) > 0 {
 			names = append(names, prefix+`_`+icontract)
-			if prefix == `p` {
-				list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, data))
-			} else {
-				list = append(list, fmt.Sprintf("`%s_%s = %s`", prefix, icontract, data))
-			}
+			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, data))
+			/*			if prefix == `p` {
+						} else {
+							list = append(list, fmt.Sprintf("`%s_%s = %s`", prefix, icontract, data))
+						}*/
 		}
 	}
 	out += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
@@ -220,10 +222,61 @@ func (c *Controller) ExportTpl() (string, error) {
 	type_new_lang_id = TxId(NewLang),
 	type_new_contract_id = TxId(NewContract),
 	type_activate_contract_id = TxId(ActivateContract),
+	type_new_sign_id = TxId(NewSign),
 	type_new_state_params_id = TxId(NewStateParameters), 
 	type_new_table_id = TxId(NewTable))
 `
 		out += c.setVar("smart_contracts", `sc`)
+
+		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
+
+		signlist := make([]string, 0)
+
+		if len(contracts) > 0 {
+			for _, icontract := range contracts {
+				if len(icontract) == 0 {
+					continue
+				}
+				var global int
+				icontract, global, _ = getState(c.SessStateId, icontract)
+				state := c.SessStateId
+				if global == 1 {
+					state = 0
+				}
+				contract := smart.GetContract(icontract, uint32(state))
+				if contract.Block.Info.(*script.ContractInfo).Tx != nil {
+					signs := `SetVar(`
+					names := make([]string, 0)
+					list := make([]string, 0)
+					for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+						if strings.Index(fitem.Tags, `signature`) >= 0 {
+							if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+								pref := utils.Int64ToStr(state)
+								if state == 0 {
+									pref = `global`
+								}
+								sign, err := c.OneRow(fmt.Sprintf(`select * from "%s_signatures" where name=?`, pref), ret[1]).String()
+								if err != nil {
+									break
+								}
+								if len(sign) == 0 {
+									break
+								}
+								names = append(names, `sign_`+ret[1])
+								list = append(list, fmt.Sprintf("`sign_%s #= %s`", ret[1], sign[`value`]))
+								names = append(names, `signc_`+ret[1])
+								list = append(list, fmt.Sprintf("`signc_%s #= %s`", ret[1], sign[`conditions`]))
+								signlist = append(signlist, fmt.Sprintf(`%d%s`, global, ret[1]))
+							}
+						}
+					}
+					if len(list) > 0 {
+						signs += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
+						out += signs
+					}
+				}
+			}
+		}
 		out += c.setVar("pages", `p`)
 		out += c.setVar("menu", `m`)
 		out += c.setVar("state_parameters", `pa`)
@@ -398,7 +451,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 		}
 
-		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
+		contracts = strings.Split(c.r.FormValue("smart_contracts"), `,`)
 		if len(contracts) > 0 {
 			for _, icontract := range contracts {
 				if len(icontract) == 0 {
@@ -426,8 +479,20 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			id: "%s"
 			}
 	   }`, global, icontract))
-
 			}
+		}
+		for _, signitem := range signlist {
+			list = append(list, fmt.Sprintf(`{
+		Forsign: 'global,name,value,conditions',
+		Data: {
+			type: "NewSign",
+			typeid: #type_new_sign_id#,
+			global: %s,
+			name: "%s",
+			value: $("#sign_%s").val(),
+			conditions: $("#signc_%s").val()
+			}
+	   }`, signitem[:1], signitem[1:], signitem[1:], signitem[1:]))
 		}
 		params := strings.Split(c.r.FormValue("state_parameters"), `,`)
 		if len(params) > 0 {
@@ -497,7 +562,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			menu: "%s",
 			value: $("#p_%s").val(),
 			global: %d,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   }`, ipage, menu, ipage, global))
 			}
