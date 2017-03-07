@@ -227,13 +227,8 @@
 // static/js/keys.js
 // static/js/photoEditor/editor.js
 // static/js/triangles.js
-// static/lang/1.ini
-// static/lang/42.ini
-// static/lang/en-us.all.json
 // static/lang/flags/flags.png
 // static/lang/gb.js
-// static/lang/locale_en-US.ini
-// static/lang/locale_ru-RU.ini
 // static/lang/nl.js
 // static/languages.html
 // static/list_of_tables.html
@@ -243,6 +238,7 @@
 // static/modal_avatar.html
 // static/modal_block_detail.html
 // static/modal_map.html
+// static/modal_signature.html
 // static/money.tpl
 // static/new_state.html
 // static/new_table.html
@@ -4382,60 +4378,6 @@ func staticJsTrianglesJs() (*asset, error) {
 	return a, err
 }
 
-// staticLang1Ini reads file data from disk. It returns an error on failure.
-func staticLang1Ini() (*asset, error) {
-	path := "static/lang/1.ini"
-	name := "static/lang/1.ini"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticLang42Ini reads file data from disk. It returns an error on failure.
-func staticLang42Ini() (*asset, error) {
-	path := "static/lang/42.ini"
-	name := "static/lang/42.ini"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticLangEnUsAllJson reads file data from disk. It returns an error on failure.
-func staticLangEnUsAllJson() (*asset, error) {
-	path := "static/lang/en-us.all.json"
-	name := "static/lang/en-us.all.json"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticLangFlagsFlagsPng reads file data from disk. It returns an error on failure.
 func staticLangFlagsFlagsPng() (*asset, error) {
 	path := "static/lang/flags/flags.png"
@@ -4458,42 +4400,6 @@ func staticLangFlagsFlagsPng() (*asset, error) {
 func staticLangGbJs() (*asset, error) {
 	path := "static/lang/gb.js"
 	name := "static/lang/gb.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticLangLocale_enUsIni reads file data from disk. It returns an error on failure.
-func staticLangLocale_enUsIni() (*asset, error) {
-	path := "static/lang/locale_en-US.ini"
-	name := "static/lang/locale_en-US.ini"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// staticLangLocale_ruRuIni reads file data from disk. It returns an error on failure.
-func staticLangLocale_ruRuIni() (*asset, error) {
-	path := "static/lang/locale_ru-RU.ini"
-	name := "static/lang/locale_ru-RU.ini"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4656,6 +4562,24 @@ func staticModal_block_detailHtml() (*asset, error) {
 func staticModal_mapHtml() (*asset, error) {
 	path := "static/modal_map.html"
 	name := "static/modal_map.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticModal_signatureHtml reads file data from disk. It returns an error on failure.
+func staticModal_signatureHtml() (*asset, error) {
+	path := "static/modal_signature.html"
+	name := "static/modal_signature.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -5435,13 +5359,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/keys.js": staticJsKeysJs,
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
 	"static/js/triangles.js": staticJsTrianglesJs,
-	"static/lang/1.ini": staticLang1Ini,
-	"static/lang/42.ini": staticLang42Ini,
-	"static/lang/en-us.all.json": staticLangEnUsAllJson,
 	"static/lang/flags/flags.png": staticLangFlagsFlagsPng,
 	"static/lang/gb.js": staticLangGbJs,
-	"static/lang/locale_en-US.ini": staticLangLocale_enUsIni,
-	"static/lang/locale_ru-RU.ini": staticLangLocale_ruRuIni,
 	"static/lang/nl.js": staticLangNlJs,
 	"static/languages.html": staticLanguagesHtml,
 	"static/list_of_tables.html": staticList_of_tablesHtml,
@@ -5451,6 +5370,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/modal_avatar.html": staticModal_avatarHtml,
 	"static/modal_block_detail.html": staticModal_block_detailHtml,
 	"static/modal_map.html": staticModal_mapHtml,
+	"static/modal_signature.html": staticModal_signatureHtml,
 	"static/money.tpl": staticMoneyTpl,
 	"static/new_state.html": staticNew_stateHtml,
 	"static/new_table.html": staticNew_tableHtml,
@@ -5767,15 +5687,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"triangles.js": &bintree{staticJsTrianglesJs, map[string]*bintree{}},
 		}},
 		"lang": &bintree{nil, map[string]*bintree{
-			"1.ini": &bintree{staticLang1Ini, map[string]*bintree{}},
-			"42.ini": &bintree{staticLang42Ini, map[string]*bintree{}},
-			"en-us.all.json": &bintree{staticLangEnUsAllJson, map[string]*bintree{}},
 			"flags": &bintree{nil, map[string]*bintree{
 				"flags.png": &bintree{staticLangFlagsFlagsPng, map[string]*bintree{}},
 			}},
 			"gb.js": &bintree{staticLangGbJs, map[string]*bintree{}},
-			"locale_en-US.ini": &bintree{staticLangLocale_enUsIni, map[string]*bintree{}},
-			"locale_ru-RU.ini": &bintree{staticLangLocale_ruRuIni, map[string]*bintree{}},
 			"nl.js": &bintree{staticLangNlJs, map[string]*bintree{}},
 		}},
 		"languages.html": &bintree{staticLanguagesHtml, map[string]*bintree{}},
@@ -5786,6 +5701,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"modal_avatar.html": &bintree{staticModal_avatarHtml, map[string]*bintree{}},
 		"modal_block_detail.html": &bintree{staticModal_block_detailHtml, map[string]*bintree{}},
 		"modal_map.html": &bintree{staticModal_mapHtml, map[string]*bintree{}},
+		"modal_signature.html": &bintree{staticModal_signatureHtml, map[string]*bintree{}},
 		"money.tpl": &bintree{staticMoneyTpl, map[string]*bintree{}},
 		"new_state.html": &bintree{staticNew_stateHtml, map[string]*bintree{}},
 		"new_table.html": &bintree{staticNew_tableHtml, map[string]*bintree{}},
