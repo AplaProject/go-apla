@@ -1274,7 +1274,7 @@ function openSignature() {
 		updateLanguage("#dl_modal .lang");
 		modal.modal({
 			show: true,
-			backdrop: false,
+			backdrop: 'static',
 			keyboard: false
 		});
 	});
