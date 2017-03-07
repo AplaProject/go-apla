@@ -1268,6 +1268,18 @@ function openBlockDetailPopup(id) {
 	});
 }
 
+function openSignature() {
+	$("#dl_modal").load("content?controllerHTML=modal_signature", {}, function () {
+		var modal = $("#modal_signature");
+		updateLanguage("#dl_modal .lang");
+		modal.modal({
+			show: true,
+			backdrop: false,
+			keyboard: false
+		});
+	});
+}
+
 function formatCode() {
 	var source = editor.getValue();
 	var output = js_beautify(source, {

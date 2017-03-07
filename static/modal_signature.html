@@ -1,0 +1,28 @@
+<script>
+	$(".brand").attr("data-version", "v" + Version);
+</script>
+<div class="modal fade" id="modal_signature" role="dialog" aria-labelledby="modal_signature_label">
+	<div class="modal-dialog" role="document">
+		<div class="brand modal-content" data-sweet-alert data-version="">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<div class="modal-header">
+				<h4 class="modal-title" id="modal_signature_label">Signature</h4>
+			</div>
+			<div class="modal-body">
+				<form>
+				   <div class="form-group">
+					   <label class="control-label" for="Signature1">Signature1 <strong class="text-danger">*</strong></label>
+					   <textarea id="Signature1" class="form-control"></textarea>
+				   </div>
+				   <div class="form-group">
+					   <label class="control-label" for="Signature2">Signature2 <strong class="text-danger">*</strong></label>
+					   <textarea id="Signature2" class="form-control"></textarea>
+				   </div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button id="send" type="button" class="btn btn-primary lang" onClick="preloader(this);" lang-id="send"></button>
+			</div>
+		</div>
+	</div>
+</div>
