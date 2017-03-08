@@ -324,7 +324,36 @@ Desc: "Basic environment ",
 			global: 0,
 			id: "TXRejectCitizen"
 			}
-	   },		   
+	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "AddAccountEuro"
+			}
+	   },
+
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "DisableEuroAccount"
+			}
+	   },
+
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 1,
+			id: "UpdAmountEuro"
+			}
+	   },	   
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
@@ -334,7 +363,7 @@ Desc: "Basic environment ",
 			menu: "government",
 			value: $("#p_CheckCitizens").val(),
 			global: 0,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   },
 
@@ -347,7 +376,7 @@ Desc: "Basic environment ",
 			menu: "menu_default",
 			value: $("#p_citizen_profile").val(),
 			global: 0,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   },
 {
@@ -359,7 +388,7 @@ Desc: "Basic environment ",
 			menu: "menu_default",
 			value: $("#p_citizens").val(),
 			global: 0,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   },
 
