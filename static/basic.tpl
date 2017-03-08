@@ -102,26 +102,18 @@ SetVar(`sc_EditProfile = contract EditProfile {
 TextHidden( sc_GenCitizen, sc_conditions, sc_EditProfile, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
 SetVar(`p_CheckCitizens #= Title : Check citizens requests
 Navigation( LiTemplate(government), Citizens)
-PageTitle : Citizens requests
-Table{
-    Table: #state_id#_citizenship_requests
-	Order: id
-	Where: approved=0
-	Columns: [[ID, #id#],[Name, #name#],[Accept,BtnPage(NewCitizen,Accept,"RequestId:#id#")],[Reject,BtnPage(RejectCitizen,Reject,"RequestId:#id#")]]
+Divs(md-8, panel panel-default panel-body data-sweet-alert)
+Legend(" ", "Citizens requests")
+Table {
+Class: table-striped table-hover
+Table: #state_id#_citizenship_requests
+Order: id DESC
+Where: approved=0
+Columns: [[ID, #id#],[Name, #name#],
+[Decision, BtnContract(TXNewCitizen,Accept,Accept requests from #name#,"RequestId:#id#",'btn btn-success btn-pill-left')],
+[ ,BtnContract(TXRejectCitizen,Reject, Reject requests from #name#,"RequestId:#id#",'btn btn-danger btn-pill-right')]]
 }
-PageEnd:
-`,
-`p_NewCitizen #= Title : New Citizen
-Navigation( Citizens )
-PageTitle : New Citizen 
-TxForm{ Contract: TXNewCitizen}
-PageEnd:
-`,
-`p_RejectCitizen #= Title : Reject Citizen
-Navigation( Citizens )
-PageTitle : Reject Citizen 
-TxForm{ Contract: TXRejectCitizen}
-PageEnd:
+DivsEnd: PageEnd:
 `,
 `p_citizen_profile #= Title:Profile
 Navigation(LiTemplate(Citizen),Editing profile)
@@ -138,15 +130,13 @@ Table{
 }
 PageEnd:
 `)
-TextHidden( p_CheckCitizens, p_NewCitizen, p_RejectCitizen, p_citizen_profile, p_citizens)
+TextHidden( p_CheckCitizens, p_citizen_profile, p_citizens)
 SetVar()
 TextHidden( )
 SetVar()
 TextHidden( )
 SetVar()
 TextHidden( )
-SetVar(`ap_government #= BtnPage(CheckCitizens, Check citizens, '', btn btn-primary btn-lg) BR() BR()`)
-TextHidden( ap_government)
 SetVar(`am_government #= MenuItem(Checking citizens, CheckCitizens)`)
 TextHidden( am_government)
 Json(`Head: "Basic",
@@ -347,30 +337,7 @@ Desc: "Basic environment ",
 			conditions: "$citizen == #wallet_id#",
 			}
 	   },
-{
-		Forsign: 'global,name,value,menu,conditions',
-		Data: {
-			type: "NewPage",
-			typeid: #type_new_page_id#,
-			name : "NewCitizen",
-			menu: "menu_default",
-			value: $("#p_NewCitizen").val(),
-			global: 0,
-			conditions: "$citizen == #wallet_id#",
-			}
-	   },
-{
-		Forsign: 'global,name,value,menu,conditions',
-		Data: {
-			type: "NewPage",
-			typeid: #type_new_page_id#,
-			name : "RejectCitizen",
-			menu: "menu_default",
-			value: $("#p_RejectCitizen").val(),
-			global: 0,
-			conditions: "$citizen == #wallet_id#",
-			}
-	   },
+
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
@@ -395,16 +362,7 @@ Desc: "Basic environment ",
 			conditions: "$citizen == #wallet_id#",
 			}
 	   },
-{
-			Forsign: 'global,name,value',
-			Data: {
-				type: "AppendPage",
-				typeid: #type_append_page_id#,
-				name : "government",
-				value: $("#ap_government").val(),
-				global: 0
-				}
-		},
+
 {
 			Forsign: 'global,name,value',
 			Data: {
