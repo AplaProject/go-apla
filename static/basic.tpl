@@ -325,35 +325,9 @@ Desc: "Basic environment ",
 			id: "TXRejectCitizen"
 			}
 	   },
-{
-		Forsign: 'global,id',
-		Data: {
-			type: "ActivateContract",
-			typeid: #type_activate_contract_id#,
-			global: 1,
-			id: "AddAccountEuro"
-			}
-	   },
 
-{
-		Forsign: 'global,id',
-		Data: {
-			type: "ActivateContract",
-			typeid: #type_activate_contract_id#,
-			global: 1,
-			id: "DisableEuroAccount"
-			}
-	   },
 
-{
-		Forsign: 'global,id',
-		Data: {
-			type: "ActivateContract",
-			typeid: #type_activate_contract_id#,
-			global: 1,
-			id: "UpdAmountEuro"
-			}
-	   },	   
+
 {
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
