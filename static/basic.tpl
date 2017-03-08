@@ -102,7 +102,7 @@ SetVar(`sc_EditProfile = contract EditProfile {
 TextHidden( sc_GenCitizen, sc_conditions, sc_EditProfile, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
 SetVar(`p_CheckCitizens #= Title : Check citizens requests
 Navigation( LiTemplate(government), Citizens)
-Divs(md-8, panel panel-default panel-body data-sweet-alert)
+Divs(md-4, panel panel-default panel-body data-sweet-alert)
 Legend(" ", "Citizens requests")
 Table {
 Class: table-striped table-hover
@@ -110,8 +110,8 @@ Table: #state_id#_citizenship_requests
 Order: id DESC
 Where: approved=0
 Columns: [[ID, #id#],[Name, #name#],
-[Decision, BtnContract(TXNewCitizen,Accept,Accept requests from #name#,"RequestId:#id#",'btn btn-success btn-pill-left')],
-[ ,BtnContract(TXRejectCitizen,Reject, Reject requests from #name#,"RequestId:#id#",'btn btn-danger btn-pill-right')]]
+[Decision, BtnContract(TXNewCitizen,Accept,Accept requests from #name#,"RequestId:#id#",'btn btn-success')],
+[ ,BtnContract(TXRejectCitizen,Reject, Reject requests from #name#,"RequestId:#id#",'btn btn-danger')]]
 }
 DivsEnd: PageEnd:
 `,
