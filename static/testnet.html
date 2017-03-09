@@ -11,10 +11,43 @@
 <body>
 <p>Тестовый блокчейн. Все данные будут удалены 26/03/17</p>    
 <form>
-<div style="margin: 10px 0px"><input type="text" placeholder="Email address"></div>
-<div style="margin: 10px 0px"><input type="text" placeholder="Country"></div>
-<div style="margin: 10px 0px"><input type="text" placeholder="Currency"></div>
-<button type="submit">Send</button>
+<div style="margin: 10px 0px"><input type="text" id="email" placeholder="Email address"></div>
+<div style="margin: 10px 0px"><input type="text" id="country" placeholder="Country"></div>
+<div style="margin: 10px 0px"><input type="text" id="currency" placeholder="Currency"></div>
+<button type="submit" onclick="return new_state()">Send</button>
 </form>
+
+<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
+<script type="text/javascript" src="static/js/app.js"></script>
+<script type="text/javascript">
+
+function new_state() {
+    var email = $("#email").val();
+    var country = $("#country").val();
+    var currency = $("#currency").val();
+    if (email == '') {
+        alert('Specify Email');
+        return false;
+    }
+    if (country == '') {
+        alert('Specify Country name');
+        return false;
+    }
+    if (currency == '') {
+        alert('Specify Currency name');
+        return false;
+    }
+    $.post("newstate", {email:  email, country: country, currency: currency},
+        function(data) {
+            console.log('answer', data );
+            if (data.error && data.error.length > 0)
+                alert( data.error);
+  	}, "JSON");
+   return false; 
+}
+
+</script>
+
+
 </body>
 </html>

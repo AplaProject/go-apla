@@ -48,6 +48,10 @@ type Settings struct {
 type IndexData struct {
 }
 
+type NewStateResult struct {
+	Error string `json:"error"`
+}
+
 var (
 	GSettings Settings
 )
@@ -74,6 +78,38 @@ func getIP(r *http.Request) (uint32, string) {
 			(uint32(ipb[1]) << 16) | (uint32(ipb[0]) << 24)
 	}
 	return ipval, remoteAddr
+}
+
+func newstateHandler(w http.ResponseWriter, r *http.Request) {
+	var result NewStateResult
+
+	errFunc := func(msg string) {
+		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, msg)))
+	}
+
+	r.ParseForm()
+	email := r.FormValue(`email`)
+	currency := r.FormValue(`currency`)
+	country := r.FormValue(`country`)
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if len(email) == 0 || !utils.ValidateEmail(email) {
+		errFunc(`Email is not valid`)
+		return
+	}
+	if len(country) == 0 {
+		errFunc(`Country cannot be empty`)
+		return
+	}
+	if len(currency) == 0 {
+		errFunc(`Currency cannot be empty`)
+		return
+	}
+	if jsonData, err := json.Marshal(result); err == nil {
+		w.Write(jsonData)
+	} else {
+		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+	}
 }
 
 func testnetHandler(w http.ResponseWriter, r *http.Request) {
@@ -212,6 +248,7 @@ CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); e
 	//	go Send()
 
 	http.HandleFunc(`/`, testnetHandler)
+	http.HandleFunc(`/newstate`, newstateHandler)
 	http.Handle("/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 
 	http.ListenAndServe(fmt.Sprintf(":%d", GSettings.Port), nil)
