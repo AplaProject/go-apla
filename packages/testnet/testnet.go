@@ -88,9 +88,9 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseForm()
-	email := r.FormValue(`email`)
-	currency := r.FormValue(`currency`)
-	country := r.FormValue(`country`)
+	email := strings.TrimSpace(r.FormValue(`email`))
+	currency := strings.TrimSpace(r.FormValue(`currency`))
+	country := strings.TrimSpace(r.FormValue(`country`))
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if len(email) == 0 || !utils.ValidateEmail(email) {
@@ -103,6 +103,20 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(currency) == 0 {
 		errFunc(`Currency cannot be empty`)
+		return
+	}
+	if id, err := utils.DB.Single(`select id from global_states_list where lower(state_name)=lower(?)`, country).Int64(); err != nil {
+		errFunc(err.Error())
+		return
+	} else if id > 0 {
+		errFunc(fmt.Sprintf(`State %s already exists`, country))
+		return
+	}
+	if id, err := utils.DB.Single(`select id from global_currencies_list where lower(currency_code)=lower(?)`, currency).Int64(); err != nil {
+		errFunc(err.Error())
+		return
+	} else if id > 0 {
+		errFunc(fmt.Sprintf(`Currency %s already exists`, currency))
 		return
 	}
 	if jsonData, err := json.Marshal(result); err == nil {
