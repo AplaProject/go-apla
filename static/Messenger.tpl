@@ -10,8 +10,7 @@ SetVar(
 	type_new_contract_id = TxId(NewContract),
 	type_activate_contract_id = TxId(ActivateContract),
 	type_new_state_params_id = TxId(NewStateParameters), 
-	type_new_table_id = TxId(NewTable),	
-	sc_conditions = "$citizen == #wallet_id#")
+	type_new_table_id = TxId(NewTable))
 SetVar(`sc_addMessage = contract addMessage {
 	data {
         Text string
@@ -176,7 +175,7 @@ Desc: "Messenger",
 			global: 1,
 			table_name : "messages",
 			columns: '[["stateid", "int64", "1"],["state_id", "int64", "1"],["username", "hash", "1"],["citizen_id", "int64", "1"],["ava", "text", "0"],["flag", "text", "0"],["text", "text", "0"],["time", "time", "1"]]',
-			permissions: "$citizen == #wallet_id#"
+			permissions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
 {
@@ -186,7 +185,7 @@ Desc: "Messenger",
 			typeid: #type_edit_column_id#,
 			table_name : "global_messages",
 			column_name: "stateid",
-			permissions: "",
+			permissions: "ContractConditions(\"MainCondition\")",
 			}
 	   },
 {
@@ -197,7 +196,7 @@ Desc: "Messenger",
 			global: 1,
 			name: "addMessage",
 			value: $("#sc_addMessage").val(),
-			conditions: $("#sc_conditions").val()
+			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
 {
@@ -218,7 +217,7 @@ Desc: "Messenger",
 			menu: "government",
 			value: $("#p_CitizenInfo").val(),
 			global: 0,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   },
 
@@ -241,7 +240,7 @@ Desc: "Messenger",
 			menu: "menu_default",
 			value: $("#p_Messenger").val(),
 			global: 0,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   },
 {
@@ -253,7 +252,7 @@ Desc: "Messenger",
 			menu: "menu_default",
 			value: $("#p_StateInfo").val(),
 			global: 0,
-			conditions: "$citizen == #wallet_id#",
+			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   }]`
 )
