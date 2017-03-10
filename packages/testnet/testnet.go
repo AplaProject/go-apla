@@ -51,8 +51,10 @@ type IndexData struct {
 }
 
 type NewStateResult struct {
-	Result int64  `json:"result"`
-	Error  string `json:"error"`
+	Private string `json:"private"`
+	Wallet  string `json:"wallet"`
+	Result  int64  `json:"result"`
+	Error   string `json:"error"`
 }
 
 var (
@@ -153,9 +155,26 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer resp.Body.Close()
-		if _, err := ioutil.ReadAll(resp.Body); err != nil {
+		if answer, err := ioutil.ReadAll(resp.Body); err != nil {
 			errFunc(err.Error())
 			return
+		} else {
+			var answerJson NewStateResult
+			if err = json.Unmarshal(answer, &answerJson); err != nil {
+				errFunc(err.Error())
+				return
+			}
+			if answerJson.Error != `success` {
+				errFunc(answerJson.Error)
+				return
+			}
+			upd, err := utils.DB.OneRow(`select private, wallet from testnet_emails where id=?`, id).String()
+			if err != nil {
+				errFunc(err.Error())
+				return
+			}
+			result.Private = upd[`private`]
+			result.Wallet = lib.AddressToString(uint64(utils.StrToInt64(upd[`wallet`])))
 		}
 	}
 
@@ -232,7 +251,8 @@ CREATE TABLE "testnet_emails" (
 "email" varchar(128) NOT NULL DEFAULT '',
 "country" varchar(128) NOT NULL DEFAULT '',
 "currency" varchar(32) NOT NULL DEFAULT '',
-"private" bytea NOT NULL DEFAULT '',
+"private" varchar(64) NOT NULL DEFAULT '',
+"wallet" bigint NOT NULL DEFAULT '0',
 "status" integer NOT NULL DEFAULT '0',
 "code" integer NOT NULL DEFAULT '0',
 "validate" integer NOT NULL DEFAULT '0'
