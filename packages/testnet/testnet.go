@@ -29,6 +29,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
@@ -43,13 +44,15 @@ const (
 type Settings struct {
 	Port uint32
 	Path string
+	Node string
 }
 
 type IndexData struct {
 }
 
 type NewStateResult struct {
-	Error string `json:"error"`
+	Result int64  `json:"result"`
+	Error  string `json:"error"`
 }
 
 var (
@@ -80,17 +83,28 @@ func getIP(r *http.Request) (uint32, string) {
 	return ipval, remoteAddr
 }
 
+func escape(name string) string {
+	out := make([]byte, 0, len(name))
+	skip := `<>"'`
+	for _, ch := range []byte(name) {
+		if strings.IndexByte(skip, ch) < 0 {
+			out = append(out, ch)
+		}
+	}
+	return string(out)
+}
+
 func newstateHandler(w http.ResponseWriter, r *http.Request) {
 	var result NewStateResult
 
 	errFunc := func(msg string) {
-		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, msg)))
+		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, lib.EscapeForJson(msg))))
 	}
 
 	r.ParseForm()
 	email := strings.TrimSpace(r.FormValue(`email`))
-	currency := strings.TrimSpace(r.FormValue(`currency`))
-	country := strings.TrimSpace(r.FormValue(`country`))
+	currency := escape(strings.TrimSpace(r.FormValue(`currency`)))
+	country := escape(strings.TrimSpace(r.FormValue(`country`)))
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if len(email) == 0 || !utils.ValidateEmail(email) {
@@ -119,6 +133,32 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 		errFunc(fmt.Sprintf(`Currency %s already exists`, currency))
 		return
 	}
+	if exist, err := utils.DB.Single(`select id from testnet_emails where email=? and country = ? and currency=?`,
+		email, country, currency).Int64(); err != nil {
+		errFunc(err.Error())
+		return
+	} else if exist > 0 {
+		errFunc(fmt.Sprintf(`The same request has been already sent`))
+		return
+	}
+	id, err := utils.DB.ExecSqlGetLastInsertId(`insert into testnet_emails (email,country,currency) 
+				values(?,?,?)`, `testnet_emails`, email, country, currency)
+	if err != nil {
+		result.Error = err.Error()
+	} else {
+		result.Result = utils.StrToInt64(id)
+		resp, err := http.Get(strings.TrimRight(GSettings.Node, `/`) + `/ajax?json=ajax_new_state&testnet=` + id)
+		if err != nil {
+			errFunc(err.Error())
+			return
+		}
+		defer resp.Body.Close()
+		if _, err := ioutil.ReadAll(resp.Body); err != nil {
+			errFunc(err.Error())
+			return
+		}
+	}
+
 	if jsonData, err := json.Marshal(result); err == nil {
 		w.Write(jsonData)
 	} else {
@@ -192,6 +232,8 @@ CREATE TABLE "testnet_emails" (
 "email" varchar(128) NOT NULL DEFAULT '',
 "country" varchar(128) NOT NULL DEFAULT '',
 "currency" varchar(32) NOT NULL DEFAULT '',
+"private" bytea NOT NULL DEFAULT '',
+"status" integer NOT NULL DEFAULT '0',
 "code" integer NOT NULL DEFAULT '0',
 "validate" integer NOT NULL DEFAULT '0'
 );
