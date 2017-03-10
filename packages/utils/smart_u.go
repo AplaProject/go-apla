@@ -142,7 +142,7 @@ func init() {
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateVal`: StateVal, `Json`: JsonScript, `And`: And, `Or`: Or,
 		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
-		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance,
+		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance, `GetVar`: GetVar,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `IfEnd`: IfEnd, `Else`: Else, `ElseIf`: ElseIf, `Trim`: Trim, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress, `ForList`: ForList, `ForListEnd`: ForListEnd,
@@ -1236,6 +1236,16 @@ func Label(vars *map[string]string, pars ...string) string {
 
 func Legend(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`legend`, pars...)
+}
+
+func GetVar(vars *map[string]string, pars ...string) (out string) {
+	if val, ok := (*vars)[pars[0]]; ok {
+		out = textproc.Process(val, vars)
+		if out == `NULL` {
+			out = textproc.Macro(val, vars)
+		}
+	}
+	return
 }
 
 func ValueById(vars *map[string]string, pars ...string) string {
