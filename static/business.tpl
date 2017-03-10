@@ -2346,11 +2346,12 @@ Desc: "Money & Busines",
 			}
 	   },
 {
-		Forsign: '',
+		Forsign: 'global,id',
 		Data: {
-			type: "Contract",
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
 			global: 0,
-			name: "Export0_accounts"
+			id: "Export0_accounts"
 			}
 	   },
 {
@@ -2365,11 +2366,12 @@ Desc: "Money & Busines",
 			}
 	   },
 {
-		Forsign: '',
+		Forsign: 'global,id',
 		Data: {
-			type: "Contract",
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
 			global: 0,
-			name: "Export0_government_agencies"
+			id: "Export0_government_agencies"
 			}
 	   },
 {
@@ -2384,11 +2386,12 @@ Desc: "Money & Busines",
 			}
 	   },
 {
-		Forsign: '',
+		Forsign: 'global,id',
 		Data: {
-			type: "Contract",
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
 			global: 0,
-			name: "Export0_occupations"
+			id: "Export0_occupations"
 			}
 	   },
 {
