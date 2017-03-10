@@ -15,6 +15,13 @@
 <div style="margin: 10px 0px"><input type="text" id="country" placeholder="Country"></div>
 <div style="margin: 10px 0px"><input type="text" id="currency" placeholder="Currency"></div>
 <button type="submit" onclick="return new_state()">Send</button>
+<p id="success" style="display:none;">Запрос на создание нового государства успешно отправлен. <br>
+    Приватный ключ: <strong id="privkey"></strong><br>
+    Номер кошелька: <strong id="wallet"></strong><br>
+    <br>Нажмите OK и дождитесь автоматического перенаправления на сайт 
+    node0.egaas.org. Или попробуйте зайти туда самостотельно через какое-то время используя указанный выше ваш приватный ключ.<br>
+    <button>OK</button>
+    </p>
 </form>
 
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
@@ -25,6 +32,7 @@ function new_state() {
     var email = $("#email").val();
     var country = $("#country").val();
     var currency = $("#currency").val();
+    $("#success").hide();
     if (email == '') {
         alert('Specify Email');
         return false;
@@ -42,6 +50,11 @@ function new_state() {
             console.log('answer', data );
             if (data.error && data.error.length > 0)
                 alert( data.error);
+            else {
+                $("#privkey").html(data.private);
+                $("#wallet").html(data.wallet);
+                $("#success").show();
+            }
   	}, "JSON");
    return false; 
 }

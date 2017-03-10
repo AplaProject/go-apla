@@ -2345,14 +2345,7 @@ Desc: "Money & Busines",
 			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
-{
-		Forsign: '',
-		Data: {
-			type: "Contract",
-			global: 0,
-			name: "Export0_accounts"
-			}
-	   },
+
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -2364,14 +2357,7 @@ Desc: "Money & Busines",
 			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
-{
-		Forsign: '',
-		Data: {
-			type: "Contract",
-			global: 0,
-			name: "Export0_government_agencies"
-			}
-	   },
+
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -2383,14 +2369,7 @@ Desc: "Money & Busines",
 			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
-{
-		Forsign: '',
-		Data: {
-			type: "Contract",
-			global: 0,
-			name: "Export0_occupations"
-			}
-	   },
+
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
