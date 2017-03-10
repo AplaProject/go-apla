@@ -2345,15 +2345,7 @@ Desc: "Money & Busines",
 			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
-{
-		Forsign: 'global,id',
-		Data: {
-			type: "ActivateContract",
-			typeid: #type_activate_contract_id#,
-			global: 0,
-			id: "Export0_accounts"
-			}
-	   },
+
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -2365,15 +2357,7 @@ Desc: "Money & Busines",
 			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
-{
-		Forsign: 'global,id',
-		Data: {
-			type: "ActivateContract",
-			typeid: #type_activate_contract_id#,
-			global: 0,
-			id: "Export0_government_agencies"
-			}
-	   },
+
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -2385,15 +2369,7 @@ Desc: "Money & Busines",
 			conditions: "ContractConditions(\"MainCondition\")"
 			}
 	   },
-{
-		Forsign: 'global,id',
-		Data: {
-			type: "ActivateContract",
-			typeid: #type_activate_contract_id#,
-			global: 0,
-			id: "Export0_occupations"
-			}
-	   },
+
 {
 		Forsign: 'global,name,value,conditions',
 		Data: {
