@@ -98,12 +98,16 @@ func (p *Parser) DLTTransferFront() error {
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["walletAddress"], p.TxMap["amount"], p.TxMap["commission"], p.TxMap["comment"])
+	fmt.Println(`OUT`, hex.EncodeToString(p.TxMap["sign"]))
+	fmt.Println(`FOROUT`, forSign)
+	fmt.Println(`PUBLIC`, p.PublicKeys)
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	fmt.Println(`TRANSFER`, CheckSignResult, err)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
-		return p.ErrInfo("incorrect sign")
+		return p.ErrInfo("incorrect sign OOPS")
 	}
 
 	totalAmount, err := p.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
@@ -131,8 +135,7 @@ func (p *Parser) DLTTransfer() error {
 	}
 	log.Debug("walletId %d", walletId)
 	//if walletId > 0 {
-
-	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE public_key_0 = [hex]`, p.TxMaps.Bytes["public_key"]).String()
+	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -146,7 +149,7 @@ func (p *Parser) DLTTransfer() error {
 	}
 	log.Debug("amountAndCommission %s", amountAndCommission)
 	log.Debug("amountAndCommission %s", amountAndCommission.String())
-	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
+	if len(p.TxMaps.Bytes["public_key"]) > 30 && len(pkey) == 0 {
 		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
 		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amountAndCommission.String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)

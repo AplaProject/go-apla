@@ -18,9 +18,13 @@ package controllers
 
 import (
 	"encoding/hex"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"io/ioutil"
 )
 
 const ANewState = `ajax_new_state`
@@ -65,11 +69,66 @@ func (c *Controller) AjaxNewState() interface{} {
 			return result
 		}
 	}
+	adminKey, err := ioutil.ReadFile(*utils.Dir + `/TestnetKey`)
+	if err != nil || len(strings.TrimSpace(string(adminKey))) != 64 {
+		result.Error = `TestnetKey is absent`
+		return result
+	}
 	err = c.ExecSql(`update testnet_emails set wallet=?, private=? where id=?`, wallet, spriv, id)
 	if err != nil {
 		result.Error = err.Error()
-	} else {
-		result.Error = `success`
+		return result
 	}
+	adminPriv, err := hex.DecodeString(string(adminKey))
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	adminWallet := int64(lib.Address(lib.PrivateToPublic(adminPriv)))
+	walletUser := strings.Replace(lib.AddressToString(uint64(wallet)), `-`, ``, -1)
+
+	txType := utils.TypeInt(`DLTTransfer`)
+	txTime := time.Now().Unix()
+	forSign := fmt.Sprintf("%d,%d,%d,%s,%s,%s,%s", txType, txTime, adminWallet,
+		walletUser, `1e+21`, `1000000000000000`, `testnet`)
+	signature, err := lib.SignECDSA(string(adminKey), forSign)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	/*	fmt.Println(`FORIN`, forSign)
+		fmt.Println(`IN`, hex.EncodeToString(signature))*/
+	sign := make([]byte, 0)
+	sign = append(sign, utils.EncodeLengthPlusData(signature)...)
+	binsign := utils.EncodeLengthPlusData(sign)
+
+	data := make([]byte, 0)
+	data = utils.DecToBin(txType, 1)
+	data = append(data, utils.DecToBin(txTime, 4)...)
+	data = append(data, utils.EncodeLengthPlusData(adminWallet)...)
+	data = append(data, utils.EncodeLengthPlusData(0)...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(walletUser))...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(`1e+21`))...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(`1000000000000000`))...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(`testnet`))...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(``))...)
+	data = append(data, binsign...)
+
+	md5 := utils.Md5(data)
+	err = c.ExecSql(`INSERT INTO transactions_status (
+			hash, time,	type, wallet_id, citizen_id	) VALUES (
+			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), txType, adminWallet, adminWallet)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+
+	result.Error = `success`
+
 	return result
 }
