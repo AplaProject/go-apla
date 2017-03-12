@@ -20,7 +20,12 @@ import (
 	//"encoding/json"
 	"fmt"
 
+	"encoding/hex"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+)
+
+var (
+	isGlobal bool
 )
 
 /*
@@ -29,7 +34,7 @@ Adding state tables should be spelled out in state settings
 
 func (p *Parser) NewStateInit() error {
 
-	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -59,6 +64,25 @@ func (p *Parser) NewStateFront() error {
 		return p.ErrInfo("incorrect sign")
 	}
 
+	if !isGlobal {
+		list, err := utils.DB.GetAllTables()
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		isGlobal = utils.InSliceString(`global_currencies_list`, list) && utils.InSliceString(`global_states_list`, list)
+	}
+	if isGlobal {
+		if id, err := utils.DB.Single(`select id from global_states_list where lower(state_name)=lower(?)`, string(p.TxMap["state_name"])).Int64(); err != nil {
+			return p.ErrInfo(err)
+		} else if id > 0 {
+			return p.ErrInfo(fmt.Errorf(`State %s already exists`, p.TxMap["state_name"]))
+		}
+		if id, err := utils.DB.Single(`select id from global_currencies_list where lower(currency_code)=lower(?)`, string(p.TxMap["currency_name"])).Int64(); err != nil {
+			return p.ErrInfo(err)
+		} else if id > 0 {
+			return p.ErrInfo(fmt.Errorf(`Currency %s already exists`, p.TxMap["currency_name"]))
+		}
+	}
 	return nil
 }
 
@@ -364,6 +388,25 @@ MenuItem(Interface, sys-interface)`, sid)
 				`)
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+
+	if isGlobal {
+		_, err := p.selectiveLoggingAndUpd([]string{"state_id", "state_name"},
+			[]interface{}{id, string(p.TxMap["state_name"])}, "global_states_list", nil, nil, true)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		_, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
+			[]interface{}{string(p.TxMap["currency_name"]), id + `_state_parameters`}, "global_currencies_list", nil, nil, true)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	}
+	if pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
+		return p.ErrInfo(err)
+	} else if len(p.TxMaps.Bytes["public_key"]) > 30 && len(pkey) == 0 {
+		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets",
+			[]string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
 
 	if err = utils.LoadContract(id); err != nil {

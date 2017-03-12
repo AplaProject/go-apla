@@ -37,16 +37,32 @@ func init() {
 	newPage(ANewState, `json`)
 }
 
+func sendTx(txType int64, adminWallet int64, data []byte) (err error) {
+	md5 := utils.Md5(data)
+	err = utils.DB.ExecSql(`INSERT INTO transactions_status (
+			hash, time,	type, wallet_id, citizen_id	) VALUES (
+			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), txType, adminWallet, adminWallet)
+	if err != nil {
+		return err
+	}
+	err = utils.DB.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+	if err != nil {
+		return err
+	}
+	return
+}
+
 func (c *Controller) AjaxNewState() interface{} {
 	var (
 		result    NewKey
 		err       error
 		spriv     string
+		current   map[string]string
 		priv, pub []byte
 		wallet    int64
 	)
 	id := utils.StrToInt64(c.r.FormValue("testnet"))
-	if current, err := c.OneRow(`select wallet, private from testnet_emails where id=?`, id).String(); err != nil {
+	if current, err = c.OneRow(`select country,currency,wallet, private from testnet_emails where id=?`, id).String(); err != nil {
 		result.Error = err.Error()
 	} else if len(current) == 0 {
 		result.Error = `unknown id`
@@ -114,15 +130,38 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, utils.EncodeLengthPlusData([]byte(``))...)
 	data = append(data, binsign...)
 
-	md5 := utils.Md5(data)
-	err = c.ExecSql(`INSERT INTO transactions_status (
-			hash, time,	type, wallet_id, citizen_id	) VALUES (
-			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), txType, adminWallet, adminWallet)
+	err = sendTx(txType, adminWallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+	time.Sleep(1500 * time.Millisecond)
+	txType = utils.TypeInt(`NewState`)
+	txTime = time.Now().Unix()
+	forSign = fmt.Sprintf("%d,%d,%d,%s,%s", txType, txTime, wallet, current[`country`], current[`currency`])
+	signature, err = lib.SignECDSA(spriv, forSign)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+
+	sign = utils.EncodeLengthPlusData(signature)
+	binsign = utils.EncodeLengthPlusData(sign)
+	data = data[:0]
+	data = utils.DecToBin(txType, 1)
+	data = append(data, utils.DecToBin(txTime, 4)...)
+	data = append(data, utils.EncodeLengthPlusData(wallet)...)
+	data = append(data, utils.EncodeLengthPlusData(0)...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(current[`country`]))...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(current[`currency`]))...)
+	data = append(data, utils.EncodeLengthPlusData(hex.EncodeToString(pub))...)
+	data = append(data, binsign...)
+	/*	pubkey := make([][]byte, 0)
+		pubkey = append(pubkey, pub)
+		CheckSignResult, err := utils.CheckSign(pubkey, forSign, sign, false)
+		fmt.Println(`CHECK`, CheckSignResult, err)*/
+
+	err = sendTx(txType, wallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result

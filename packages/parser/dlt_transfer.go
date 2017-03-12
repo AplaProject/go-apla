@@ -98,11 +98,7 @@ func (p *Parser) DLTTransferFront() error {
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["walletAddress"], p.TxMap["amount"], p.TxMap["commission"], p.TxMap["comment"])
-	fmt.Println(`OUT`, hex.EncodeToString(p.TxMap["sign"]))
-	fmt.Println(`FOROUT`, forSign)
-	fmt.Println(`PUBLIC`, p.PublicKeys)
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
-	fmt.Println(`TRANSFER`, CheckSignResult, err)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
