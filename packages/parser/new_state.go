@@ -285,14 +285,16 @@ PageEnd:
  MenuItem(Government dashboard, government)`, sid,
 		`government`, `MenuItem(Citizen dashboard, dashboard_default)
 MenuItem(Government dashboard, government)
+MenuGroup(Admin tools,admin)
 MenuItem(Tables,sys-listOfTables)
 MenuItem(Smart contracts, sys-contracts)
+MenuItem(Interface, sys-interface)
 MenuItem(App List, sys-app_catalog)
+MenuItem(Export, sys-export_tpl)
 MenuItem(Wallet,  sys-edit_wallet)
 MenuItem(Languages, sys-languages)
 MenuItem(Signatures, sys-signatures)
-MenuItem(Export, sys-export_tpl)
-MenuItem(Interface, sys-interface)`, sid)
+MenuEnd:`, sid)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
