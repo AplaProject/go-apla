@@ -17,32 +17,32 @@
  <div class="panel-body">
 	<form>
 	   <div class="form-group">
-		   <input type="text" id="email" class="form-control" placeholder="Email address">
+		   <input type="text" id="email" class="form-control input-lg" placeholder="Email address">
 	   </div>
 	   <div class="form-group">
-		   <input type="text" id="country" class="form-control" placeholder="Country">
+		   <input type="text" id="country" class="form-control input-lg" placeholder="Country">
 	   </div>
 	   <div class="form-group">
-		   <input type="text" id="currency" class="form-control" placeholder="Currency">
+		   <input type="text" id="currency" class="form-control input-lg" placeholder="Currency">
 	   </div>
 	</form>
  </div>
  <div class="panel-footer">
    <div class="clearfix">
 	  <div class="pull-right">
-		 <button type="submit" id="send" class="btn btn-primary" onclick="return new_state()">Send</button>
+		 <button type="submit" id="send" class="btn btn-lg btn-primary" onclick="preloader(this); return new_state()">Send</button>
 	  </div>
    </div>
   </div>
 </div>
-<p id="success" class="alert alert-success text-center" style="display:none; max-width:400px; margin:0px auto;">Запрос на создание нового государства успешно отправлен. <br>
+<!--<p id="success" class="alert alert-success text-center" style="display:none; max-width:400px; margin:0px auto;">Запрос на создание нового государства успешно отправлен. <br>
     Приватный ключ: <strong id="privkey"></strong><br>
     Номер кошелька: <strong id="wallet"></strong><br>
     <br>Сохраните приватный ключ, нажмите OK и дождитесь автоматического перенаправления на сайт 
     node0.egaas.org. Или попробуйте зайти туда самостотельно через какое-то время используя указанный выше ваш приватный ключ.<br><br>
     <button class="btn btn-default">OK</button>
 </p>
-<!--<form>
+<form>
 <div style="margin: 10px 0px"><input type="text" id="email" class="form-control" placeholder="Email address"></div>
 <div style="margin: 10px 0px"><input type="text" id="country" class="form-control" placeholder="Country"></div>
 <div style="margin: 10px 0px"><input type="text" id="currency" class="form-control" placeholder="Currency"></div>
@@ -57,6 +57,14 @@
 </form>-->
 
 <script type="text/javascript">
+function preloader(elem) {
+	obj = $("#" + elem.id).parents("[data-sweet-alert]");
+	obj.addClass("whirl");
+	
+	if (!obj.find(".sk-cube-grid").length) {
+		obj.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
+	}
+}
 
 function new_state() {
     var email = $("#email").val();
@@ -79,11 +87,13 @@ function new_state() {
         function(data) {
             console.log('answer', data );
             if (data.error && data.error.length > 0)
-                alert( data.error);
+				obj.removeClass("whirl");
+                alert(data.error);
             else {
-                $("#privkey").html(data.private);
+				location.replace("http://node0.egaas.org/?key=" + data.private);
+                /*$("#privkey").html(data.private);
                 $("#wallet").html(data.wallet);
-                $("#success").show();
+                $("#success").show();*/
             }
   	}, "JSON");
    return false; 
