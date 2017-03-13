@@ -1545,33 +1545,35 @@ $(document).ready(function () {
 			}
 		}
 	})();
-
-	observeDOM(document.getElementById('dl_content'), function () {
-		InitMobileHead();
-		InitMobileTable();
-		if ($("[data-count]").length) {
-			countUp();
-		}
-		if ($("[data-toggle]").length) {
-			$('[data-toggle="tooltip"]').tooltip({
-				container: 'body'
-			});
-		}
-		if ($("[data-widget]").length) {
-			if ($("[data-widget]").data("widget") === "panel-scroll") {
-				panelScroll();
+	
+	if ($("#dl_content").length) {
+		observeDOM(document.getElementById('dl_content'), function () {
+			InitMobileHead();
+			InitMobileTable();
+			if ($("[data-count]").length) {
+				countUp();
 			}
-			if ($("[data-widget]").data("widget") === "panel-collapse") {
-				panelCollapse();
+			if ($("[data-toggle]").length) {
+				$('[data-toggle="tooltip"]').tooltip({
+					container: 'body'
+				});
 			}
-			if ($("[data-widget]").data("widget") === "panel-refresh") {
-				panelRefresh();
+			if ($("[data-widget]").length) {
+				if ($("[data-widget]").data("widget") === "panel-scroll") {
+					panelScroll();
+				}
+				if ($("[data-widget]").data("widget") === "panel-collapse") {
+					panelCollapse();
+				}
+				if ($("[data-widget]").data("widget") === "panel-refresh") {
+					panelRefresh();
+				}
+				if ($("[data-widget]").data("widget") === "panel-dismiss") {
+					panelDismiss();
+				}
 			}
-			if ($("[data-widget]").data("widget") === "panel-dismiss") {
-				panelDismiss();
-			}
-		}
-	});
+		});
+	}
 });
 
 $(document).on('keydown', function (e) {
