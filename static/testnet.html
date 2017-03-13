@@ -6,14 +6,46 @@
 <meta name="description" content="">
 <meta name="keywords" content="">
 <title>Testnet eGaaS</title>
+<script>document.write("<link rel='stylesheet' href='css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
 <link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
+<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
+<script type="text/javascript" src="js/app.js"></script>
 </head>
 <body>
-<p>Тестовый блокчейн. Все данные будут удалены 26/03/17</p>    
-<form>
-<div style="margin: 10px 0px"><input type="text" id="email" placeholder="Email address"></div>
-<div style="margin: 10px 0px"><input type="text" id="country" placeholder="Country"></div>
-<div style="margin: 10px 0px"><input type="text" id="currency" placeholder="Currency"></div>
+<div class="alert alert-warning text-center" style="max-width:400px; margin:0px auto;">Тестовый блокчейн. Все данные будут удалены 26/03/17</div>
+<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
+ <div class="panel-body">
+	<form>
+	   <div class="form-group">
+		   <input type="text" id="email" class="form-control" placeholder="Email address">
+	   </div>
+	   <div class="form-group">
+		   <input type="text" id="country" class="form-control" placeholder="Country">
+	   </div>
+	   <div class="form-group">
+		   <input type="text" id="currency" class="form-control" placeholder="Currency">
+	   </div>
+	</form>
+ </div>
+ <div class="panel-footer">
+   <div class="clearfix">
+	  <div class="pull-right">
+		 <button type="submit" id="send" class="btn btn-primary" onclick="return new_state()">Send</button>
+	  </div>
+   </div>
+  </div>
+</div>
+<p id="success" class="alert alert-success text-center" style="display:none; max-width:400px; margin:0px auto;">Запрос на создание нового государства успешно отправлен. <br>
+    Приватный ключ: <strong id="privkey"></strong><br>
+    Номер кошелька: <strong id="wallet"></strong><br>
+    <br>Сохраните приватный ключ, нажмите OK и дождитесь автоматического перенаправления на сайт 
+    node0.egaas.org. Или попробуйте зайти туда самостотельно через какое-то время используя указанный выше ваш приватный ключ.<br><br>
+    <button class="btn btn-default">OK</button>
+</p>
+<!--<form>
+<div style="margin: 10px 0px"><input type="text" id="email" class="form-control" placeholder="Email address"></div>
+<div style="margin: 10px 0px"><input type="text" id="country" class="form-control" placeholder="Country"></div>
+<div style="margin: 10px 0px"><input type="text" id="currency" class="form-control" placeholder="Currency"></div>
 <button type="submit" onclick="return new_state()">Send</button>
 <p id="success" style="display:none;">Запрос на создание нового государства успешно отправлен. <br>
     Приватный ключ: <strong id="privkey"></strong><br>
@@ -22,10 +54,8 @@
     node0.egaas.org. Или попробуйте зайти туда самостотельно через какое-то время используя указанный выше ваш приватный ключ.<br>
     <button>OK</button>
     </p>
-</form>
+</form>-->
 
-<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
-<script type="text/javascript" src="static/js/app.js"></script>
 <script type="text/javascript">
 
 function new_state() {
