@@ -8,8 +8,11 @@
 <title>Testnet eGaaS</title>
 <script>document.write("<link rel='stylesheet' href='static/css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
 <link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
 <script type="text/javascript" src="static/js/app.js"></script>
+<script type="text/javascript" src="static/js/keys.js"></script>
+<script>document.write("<script type='text/javascript' src='static/js/index.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
 </head>
 <body>
 <div class="alert alert-warning text-center" style="max-width:400px; margin:0px auto;">Тестовый блокчейн. Все данные будут удалены 26/03/17</div>
@@ -57,14 +60,14 @@
 </form>-->
 
 <script type="text/javascript">
-function preloader(elem) {
+/*function preloader(elem) {
 	obj = $("#" + elem.id).parents("[data-sweet-alert]");
 	obj.addClass("whirl");
 	
 	if (!obj.find(".sk-cube-grid").length) {
 		obj.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
 	}
-}
+}*/
 
 function new_state() {
     var email = $("#email").val();
@@ -72,23 +75,27 @@ function new_state() {
     var currency = $("#currency").val();
     $("#success").hide();
     if (email == '') {
-        alert('Specify Email');
+        //alert('Specify Email');
+		Alert("", "Specify Email", "notification:warning", defaultConfirm);
         return false;
     }
     if (country == '') {
-        alert('Specify Country name');
+        //alert('Specify Country name');
+		Alert("", "Specify Country name", "notification:warning", defaultConfirm);
         return false;
     }
     if (currency == '') {
-        alert('Specify Currency name');
+        //alert('Specify Currency name');
+		Alert("", "Specify Currency name", "notification:warning", defaultConfirm);
         return false;
     }
     $.post("newstate", {email:  email, country: country, currency: currency},
         function(data) {
             console.log('answer', data );
             if (data.error && data.error.length > 0) {
+                //alert(data.error);
+				Alert("", data.error, "notification:danger", defaultConfirm);
 				obj.removeClass("whirl");
-                alert(data.error);
 			} else {
 				location.replace("http://node0.egaas.org/?key=" + data.private);
                 /*$("#privkey").html(data.private);
