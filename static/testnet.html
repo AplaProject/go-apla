@@ -15,28 +15,30 @@
 <script>document.write("<script type='text/javascript' src='static/js/index.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
 </head>
 <body>
-<div class="alert alert-warning text-center" style="max-width:400px; margin:0px auto;">Тестовый блокчейн. Все данные будут удалены 26/03/17</div>
-<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
- <div class="panel-body">
-	<form>
-	   <div class="form-group">
-		   <input type="text" id="email" class="form-control input-lg" placeholder="Email address">
+<div id="dl_page">
+	<div class="alert alert-warning text-center" style="max-width:400px; margin:0px auto;">Тестовый блокчейн. Все данные будут удалены 26/03/17</div>
+	<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
+	 <div class="panel-body">
+		<form>
+		   <div class="form-group">
+			   <input type="text" id="email" class="form-control input-lg" placeholder="Email address">
+		   </div>
+		   <div class="form-group">
+			   <input type="text" id="country" class="form-control input-lg" placeholder="Country">
+		   </div>
+		   <div class="form-group">
+			   <input type="text" id="currency" class="form-control input-lg" placeholder="Currency">
+		   </div>
+		</form>
+	 </div>
+	 <div class="panel-footer">
+	   <div class="clearfix">
+		  <div class="pull-right">
+			 <button type="submit" id="send" class="btn btn-lg btn-primary" onclick="preloader(this); return new_state()">Send</button>
+		  </div>
 	   </div>
-	   <div class="form-group">
-		   <input type="text" id="country" class="form-control input-lg" placeholder="Country">
-	   </div>
-	   <div class="form-group">
-		   <input type="text" id="currency" class="form-control input-lg" placeholder="Currency">
-	   </div>
-	</form>
- </div>
- <div class="panel-footer">
-   <div class="clearfix">
-	  <div class="pull-right">
-		 <button type="submit" id="send" class="btn btn-lg btn-primary" onclick="preloader(this); return new_state()">Send</button>
 	  </div>
-   </div>
-  </div>
+	</div>
 </div>
 <!--<p id="success" class="alert alert-success text-center" style="display:none; max-width:400px; margin:0px auto;">Запрос на создание нового государства успешно отправлен. <br>
     Приватный ключ: <strong id="privkey"></strong><br>
