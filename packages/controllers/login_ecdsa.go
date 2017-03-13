@@ -22,6 +22,7 @@ import (
 	//	"path/filepath"
 	"io/ioutil"
 	"path/filepath"
+	"strconv"
 )
 
 type loginECDSAPage struct {
@@ -30,13 +31,14 @@ type loginECDSAPage struct {
 	Key   string
 	//	States     map[string]string
 	States      string
+	State       int64
 	OneCountry  int64
 	PrivCountry bool
-	Private string
+	Private     string
 }
 
 func (c *Controller) LoginECDSA() (string, error) {
-
+	var err error
 	var private []byte
 	if c.ConfigIni["public_node"] != "1" {
 		private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
@@ -59,14 +61,33 @@ func (c *Controller) LoginECDSA() (string, error) {
 	if len(key) > 0 {
 		c.Logout()
 	}
+	var state_id int64
+	state := c.r.FormValue("state")
+	if len(state) > 0 {
+		state_id, err = strconv.ParseInt(state, 10, 64)
+		if err != nil {
+			list, err := utils.DB.GetAllTables()
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
+			if utils.InSliceString(`global_states_list`, list) {
+				state_id, err = c.Single("select state_id from where state_name=?", state).Int64()
+				if err != nil {
+					return "", utils.ErrInfo(err)
+				}
+			}
+		}
+	}
+
 	TemplateStr, err := makeTemplate("login", "loginECDSA", &loginECDSAPage{
 		Lang:        c.Lang,
 		Title:       "Login",
 		States:      states,
+		State:       state_id,
 		Key:         key,
 		OneCountry:  utils.OneCountry,
 		PrivCountry: utils.PrivCountry,
-		Private: string(private),
+		Private:     string(private),
 		/*		MyWalletData:          MyWalletData,
 				Title:                 "modalAnonym",
 		*/})
