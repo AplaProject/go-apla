@@ -17,10 +17,8 @@
 package parser
 
 import (
-	//"encoding/json"
 	"fmt"
 
-	"encoding/hex"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
