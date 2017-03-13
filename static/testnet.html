@@ -86,10 +86,10 @@ function new_state() {
     $.post("newstate", {email:  email, country: country, currency: currency},
         function(data) {
             console.log('answer', data );
-            if (data.error && data.error.length > 0)
+            if (data.error && data.error.length > 0) {
 				obj.removeClass("whirl");
                 alert(data.error);
-            else {
+			} else {
 				location.replace("http://node0.egaas.org/?key=" + data.private);
                 /*$("#privkey").html(data.private);
                 $("#wallet").html(data.wallet);
