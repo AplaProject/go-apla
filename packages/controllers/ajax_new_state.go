@@ -106,7 +106,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	txType := utils.TypeInt(`DLTTransfer`)
 	txTime := time.Now().Unix()
 	forSign := fmt.Sprintf("%d,%d,%d,%s,%s,%s,%s", txType, txTime, adminWallet,
-		walletUser, `1e+21`, `1000000000000000`, `testnet`)
+		walletUser, `2e+21`, `1000000000000000`, `testnet`)
 	signature, err := lib.SignECDSA(string(adminKey), forSign)
 	if err != nil {
 		result.Error = err.Error()
@@ -124,7 +124,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, utils.EncodeLengthPlusData(adminWallet)...)
 	data = append(data, utils.EncodeLengthPlusData(0)...)
 	data = append(data, utils.EncodeLengthPlusData([]byte(walletUser))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(`1e+21`))...)
+	data = append(data, utils.EncodeLengthPlusData([]byte(`2e+21`))...)
 	data = append(data, utils.EncodeLengthPlusData([]byte(`1000000000000000`))...)
 	data = append(data, utils.EncodeLengthPlusData([]byte(`testnet`))...)
 	data = append(data, utils.EncodeLengthPlusData([]byte(``))...)

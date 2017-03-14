@@ -71,7 +71,7 @@ func (p *Parser) generalCheck(name string) error {
 		}
 	} else {
 		log.Debug(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = %d`, p.TxCitizenID)
-		data, err := p.OneRow(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = ?`, utils.Int64ToStr(p.TxCitizenID)).String()
+		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", utils.Int64ToStr(p.TxCitizenID)).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

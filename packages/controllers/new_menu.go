@@ -18,8 +18,6 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	//"encoding/json"
-	"fmt"
 )
 
 func (c *Controller) NewMenu() (string, error) {
@@ -46,7 +44,7 @@ func (c *Controller) NewMenu() (string, error) {
 		TxType:       txType,
 		TxTypeId:     txTypeId,
 		StateId:      c.SessStateId,
-		DataMenu:     map[string]string{`conditions`: fmt.Sprintf(`$citizen==%d`, c.SessCitizenId)}})
+		DataMenu:     map[string]string{`conditions`: "ContractConditions(`MainCondition`)"}})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
