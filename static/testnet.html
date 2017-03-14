@@ -8,11 +8,8 @@
 <title>Testnet eGaaS</title>
 <script>document.write("<link rel='stylesheet' href='static/css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
 <link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
 <script type="text/javascript" src="static/js/app.js"></script>
-<script type="text/javascript" src="static/js/keys.js"></script>
-<script>document.write("<script type='text/javascript' src='static/js/index.js?v=" + Math.floor((Math.random() * 1000000) + 1) + "'><\/script>");</script>
 </head>
 <body>
 <div id="dl_page">
@@ -22,12 +19,21 @@
 		<form>
 		   <div class="form-group">
 			   <input type="text" id="email" class="form-control input-lg" placeholder="Email address">
+			   <ul class="parsley-errors-list">
+				   <li class="parsley-required">Specify Email</li>
+			   </ul>
 		   </div>
 		   <div class="form-group">
 			   <input type="text" id="country" class="form-control input-lg" placeholder="Country">
+			   <ul class="parsley-errors-list">
+				   <li class="parsley-required">Specify Country name</li>
+			   </ul>
 		   </div>
 		   <div class="form-group">
 			   <input type="text" id="currency" class="form-control input-lg" placeholder="Currency">
+			   <ul class="parsley-errors-list">
+				   <li class="parsley-required">Specify Currency name</li>
+			   </ul>
 		   </div>
 		</form>
 	 </div>
@@ -39,75 +45,71 @@
 	   </div>
 	  </div>
 	</div>
+	<div id="dataError" class="alert alert-danger text-center" style="display:none; max-width:400px; margin:0px auto;"></div>
 </div>
-<!--<p id="success" class="alert alert-success text-center" style="display:none; max-width:400px; margin:0px auto;">Запрос на создание нового государства успешно отправлен. <br>
-    Приватный ключ: <strong id="privkey"></strong><br>
-    Номер кошелька: <strong id="wallet"></strong><br>
-    <br>Сохраните приватный ключ, нажмите OK и дождитесь автоматического перенаправления на сайт 
-    node0.egaas.org. Или попробуйте зайти туда самостотельно через какое-то время используя указанный выше ваш приватный ключ.<br><br>
-    <button class="btn btn-default">OK</button>
-</p>
-<form>
-<div style="margin: 10px 0px"><input type="text" id="email" class="form-control" placeholder="Email address"></div>
-<div style="margin: 10px 0px"><input type="text" id="country" class="form-control" placeholder="Country"></div>
-<div style="margin: 10px 0px"><input type="text" id="currency" class="form-control" placeholder="Currency"></div>
-<button type="submit" onclick="return new_state()">Send</button>
-<p id="success" style="display:none;">Запрос на создание нового государства успешно отправлен. <br>
-    Приватный ключ: <strong id="privkey"></strong><br>
-    Номер кошелька: <strong id="wallet"></strong><br>
-    <br>Сохраните приватный ключ, нажмите OK и дождитесь автоматического перенаправления на сайт 
-    node0.egaas.org. Или попробуйте зайти туда самостотельно через какое-то время используя указанный выше ваш приватный ключ.<br>
-    <button>OK</button>
-    </p>
-</form>-->
 
 <script type="text/javascript">
-/*function preloader(elem) {
+function preloader(elem) {
 	obj = $("#" + elem.id).parents("[data-sweet-alert]");
 	obj.addClass("whirl");
 	
 	if (!obj.find(".sk-cube-grid").length) {
 		obj.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
 	}
-}*/
+}
+
+function checkInput(elem) {
+	var val = elem.val();
+	
+	if (val == "") {
+		elem.addClass("parsley-error");
+		elem.next().addClass("filled");
+	} else {
+		elem.removeClass("parsley-error");
+		elem.next().removeClass("filled");
+	}
+}
+
+$(".form-control").on('input', function() {
+	$("#dataError").hide();
+	checkInput($(this));
+})
 
 function new_state() {
     var email = $("#email").val();
     var country = $("#country").val();
     var currency = $("#currency").val();
-    $("#success").hide();
-    if (email == '') {
-        //alert('Specify Email');
-		Alert("", "Specify Email", "notification:warning", defaultConfirm);
-        return false;
-    }
-    if (country == '') {
-        //alert('Specify Country name');
-		Alert("", "Specify Country name", "notification:warning", defaultConfirm);
-        return false;
-    }
-    if (currency == '') {
-        //alert('Specify Currency name');
-		Alert("", "Specify Currency name", "notification:warning", defaultConfirm);
-        return false;
-    }
-    $.post("newstate", {email:  email, country: country, currency: currency},
-        function(data) {
-            console.log('answer', data );
-            if (data.error && data.error.length > 0) {
-                //alert(data.error);
-				Alert("", data.error, "notification:danger", defaultConfirm);
-				obj.removeClass("whirl");
-			} else {
-				location.replace({{.Node}}+"/?state="+country+"&pkey=" + data.private);
-                /*$("#privkey").html(data.private);
-                $("#wallet").html(data.wallet);
-                $("#success").show();*/
-            }
-  	}, "JSON");
-   return false; 
+	var noerror = $(".form-control").length;
+	
+	$("#dataError").hide();
+	
+	$(".form-control").each(function() {
+		if ($(this).val() == '') {
+			$(this).addClass("parsley-error");
+			$(this).next().addClass("filled");
+			obj.removeClass("whirl");
+		} else {
+			noerror -= 1;
+		}
+	})
+	
+	if (noerror !== 0) {
+		return false;
+	} else {
+		$.post("newstate", {email:  email, country: country, currency: currency},
+			function(data) {
+				console.log('answer', data );
+				if (data.error && data.error.length > 0) {
+					$("#dataError").text(data.error).show();
+					obj.removeClass("whirl");
+				} else {
+					location.replace({{.Node}}+"/?state="+country+"&pkey=" + data.private);
+				}
+		}, "JSON");
+	}
+	
+	return false; 
 }
-
 </script>
 
 
