@@ -1,0 +1,58 @@
+<style>
+</style>
+<script language="JavaScript" type="text/javascript">
+function new_keys() {
+    var count = parseInt($("#count").val());
+    if (count<1 || count > 50) {
+        Alert("Error",'Specify count of keys from 1 to 50', 'error');
+        return;
+    }
+    $.get("/ajax?json=ajax_gen_keys", {count: count}, function( data ){
+        console.log( data);
+        if (data.error && data.error.length > 0 ) {
+			Alert("Error", data.error, "error");
+		} else {
+            $("#gen").html(data.generated);
+            $("#used").html(data.used);
+            $("#avail").html(data.available);
+			Alert('Success', 'The keys has been successfully generated', 'success');
+        }
+    })
+    return false;
+}
+
+</script>
+
+<div class="content-heading lang" lang-id="gen_new_keys">
+	Generate new keys
+</div>
+<!-- START panel-->
+<div class="panel panel-default" data-sweet-alert>
+    <div class="panel-body">
+        {{if .Message}}
+        <div class="form-group">
+            <label>{{.Message}}</label>
+        </div>
+        {{end}}
+        <div class="form-group">
+            <label >Generated keys: </label> <strong id="gen">{{.Generated}}</strong><br>
+            <label >Used keys: </label> <strong id="used">{{.Used}}</strong><br>
+            <label >Available keys: </label> <strong id="avail">{{.Available}}</strong><br>
+        </div>
+        
+        <form role="form">
+            <div class="form-group">
+                <label for="name"  class="">Number of keys (1-50)</label>
+                <input id="count" name="count" type="text" value="50" class="form-control">
+            </div>
+        </form>
+    </div>
+    <div class="panel-footer">
+        <div class="clearfix">
+            <div class="pull-right">
+                <button type="button" class="btn btn-primary lang" id="newkeys"  data-tool="panel-refresh" onClick="preloader(this);return new_keys();"  lang-id="create_new_keys">Create new keys</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END panel-->
