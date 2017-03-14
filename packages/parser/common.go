@@ -440,10 +440,14 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 func (p *Parser) AccessTable(table, action string) error {
 
 	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
+	govAccount, _ := utils.StateParam(int64(p.TxStateID), `gov_account`)
+	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == utils.StrToInt64(govAccount) {
+		return nil
+	}
 
 	if isCustom, err := p.IsCustomTable(table); err != nil {
 		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) && !strings.HasSuffix(table, `dlt_wallets`) {
+	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]

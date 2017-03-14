@@ -323,8 +323,8 @@ CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); e
 		}
 
 	}
-	/*	if !utils.InSliceString(`testnet_keys`, list) {
-				if err = utils.DB.ExecSql(`CREATE TABLE "testnet_keys" (
+	if !utils.InSliceString(`testnet_keys`, list) {
+		if err = utils.DB.ExecSql(`CREATE TABLE "testnet_keys" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"state_id" integer NOT NULL DEFAULT '0',
 		"private" varchar(64) NOT NULL DEFAULT '',
@@ -332,9 +332,9 @@ CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); e
 		"status" integer NOT NULL DEFAULT '0'
 		);
 		CREATE INDEX testnet_index_keys ON "testnet_keys" (id,state_id,status);`); err != nil {
-					log.Fatalln(err)
-				}
-			}*/
+			log.Fatalln(err)
+		}
+	}
 	log.Println("Start")
 	//	go Send()
 
