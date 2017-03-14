@@ -120,7 +120,7 @@
 			{{end}}
 			<div class="form-group">
 				<label class="lang" lang-id="permissions"></label>
-				<textarea class="form-control" id="permissions">{{.ColumnPermission}}</textarea>
+				<textarea class="form-control" id="permissions">{{if not .ColumnPermission}}false{{else}}{{.ColumnPermission}}{{end}}</textarea>
 			</div>
 		</form>
 	 </div>

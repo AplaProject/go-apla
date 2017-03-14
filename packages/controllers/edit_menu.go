@@ -18,8 +18,6 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	//"encoding/json"
-	"fmt"
 )
 
 type editMenuPage struct {
@@ -64,7 +62,7 @@ func (c *Controller) EditMenu() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 	if len(dataMenu) > 0 && len(dataMenu[`conditions`]) == 0 {
-		dataMenu[`conditions`] = fmt.Sprintf(`$citizen==%d`, c.SessCitizenId)
+		dataMenu[`conditions`] = "ContractConditions(`MainCondition`)"
 	}
 
 	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage{
