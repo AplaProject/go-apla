@@ -17,9 +17,7 @@
 package controllers
 
 import (
-	//	"io/ioutil"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	//	"path/filepath"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
@@ -34,6 +32,7 @@ type loginECDSAPage struct {
 	State       int64
 	OneCountry  int64
 	PrivCountry bool
+	Import      bool
 	Private     string
 }
 
@@ -58,11 +57,15 @@ func (c *Controller) LoginECDSA() (string, error) {
 		}*/
 	states, _ := c.AjaxStatesList()
 	key := c.r.FormValue("key")
-	if len(key) > 0 {
+	pkey := c.r.FormValue("pkey")
+	state := c.r.FormValue("state")
+	if len(key) > 0 || len(pkey) > 0 {
 		c.Logout()
 	}
+	if len(pkey) > 0 {
+		private = []byte(pkey)
+	}
 	var state_id int64
-	state := c.r.FormValue("state")
 	if len(state) > 0 {
 		state_id, err = strconv.ParseInt(state, 10, 64)
 		if err != nil {
@@ -71,20 +74,20 @@ func (c *Controller) LoginECDSA() (string, error) {
 				return "", utils.ErrInfo(err)
 			}
 			if utils.InSliceString(`global_states_list`, list) {
-				state_id, err = c.Single("select state_id from where state_name=?", state).Int64()
+				state_id, err = c.Single("select state_id from global_states_list where state_name=?", state).Int64()
 				if err != nil {
 					return "", utils.ErrInfo(err)
 				}
 			}
 		}
 	}
-
 	TemplateStr, err := makeTemplate("login", "loginECDSA", &loginECDSAPage{
 		Lang:        c.Lang,
 		Title:       "Login",
 		States:      states,
 		State:       state_id,
 		Key:         key,
+		Import:      len(pkey) > 0,
 		OneCountry:  utils.OneCountry,
 		PrivCountry: utils.PrivCountry,
 		Private:     string(private),

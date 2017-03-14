@@ -36,6 +36,8 @@ type index struct {
 	DbOk        bool
 	Lang        map[string]string
 	Key         string
+	PKey        string
+	State       string
 	SetLang     string
 	Accounts    string
 	Thrust      bool
@@ -161,6 +163,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		DbOk:        true,
 		Lang:        globalLangReadOnly[lang],
 		Key:         r.FormValue(`key`),
+		PKey:        r.FormValue(`pkey`),
+		State:       r.FormValue(`state`),
 		SetLang:     setLang,
 		ShowIOSMenu: showIOSMenu,
 		IOS:         ios,

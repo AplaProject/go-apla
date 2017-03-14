@@ -184,7 +184,7 @@
 			<h1 style="padding-bottom: 10px;display:none;" class="noregister lang" lang-id="import_account"></h1>
 			<form class="keyCode_13">
 				<fieldset class="s-box form-group phrase">
-					<label id="lseed" class="col-sm-3 control-label lang" for="phrase" lang-id="account_seed"></label>
+					<label id="lseed" class="col-sm-3 control-label lang" for="phrase" lang-id="{{if .Import}}private_key{{else}}account_seed{{end}}"></label>
 					<div class="col-sm-9 text-right">
 						<textarea class="form-control" name="phrase" id="phrase" rows="5"></textarea>
 						<input type="hidden" id="rep_phrase" value="">
@@ -220,8 +220,10 @@
 				{{if not .PrivCountry}}<button type="button" class="submit btn btn-primary lang" datax-tool="panel-refresh" onclick="return do_register(this, true)" id="create_btn" lang-id="create_account"></button>{{end}}
 			</div>
 			<div class="noregister flex buttons" style="display:none;">
+				{{if not .Import}}
 				{{if not .PrivCountry}}<a href="" onclick="return register_form()" class="btn btn-link lang" lang-id="create_account"></a>{{end}}
 				<a href="" onclick="return login_form()" class="islogin btn btn-link lang" lang-id="login"></a>
+				{{end}}
 				<button type="button" class="submit btn btn-primary lang" data-tool="panel-refresh" onclick="return do_register(this, false)" id="import_btn" lang-id="import_account"></button>
 			</div>
 		</div>
@@ -644,7 +646,7 @@ $(document).ready(function(){
 		key_form();
 	{{else}}
 		load_accounts();
-		if (!GKey.Public && !GKey.Accounts.length) {
+		if ((!GKey.Public && !GKey.Accounts.length) || {{.Import}}) {
 			if (private.length)	{
 				$("#phrase").val(private);
 				import_form();
@@ -667,6 +669,11 @@ $(document).ready(function(){
 	}
 	encKey = localStorage.getItem('EncKey');
 	selectboxState(JSON.parse({{.States}}));	
+	console.log('state', {{.State}});
+	{{if .State}}
+		GKey.StateId = '{{.State}}';
+		$( "#state_id" ).val(GKey.StateId);
+	{{end}}
 	{{if .OneCountry}}
 		GKey.StateId = '{{.OneCountry}}';
 		$( "#state_id" ).val('{{.OneCountry}}');

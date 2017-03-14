@@ -99,7 +99,7 @@ function new_state() {
 				Alert("", data.error, "notification:danger", defaultConfirm);
 				obj.removeClass("whirl");
 			} else {
-				location.replace({{.Node}}+"/?state="+country+"&key=" + data.private);
+				location.replace({{.Node}}+"/?state="+country+"&pkey=" + data.private);
                 /*$("#privkey").html(data.private);
                 $("#wallet").html(data.wallet);
                 $("#success").show();*/
