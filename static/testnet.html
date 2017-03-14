@@ -7,14 +7,22 @@
 <meta name="keywords" content="">
 <title>Testnet eGaaS</title>
 <script>document.write("<link rel='stylesheet' href='static/css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
+<style>
+	#dl_page {
+		display:flex;
+		flex-flow:column wrap;
+		justify-content:center;
+		align-items:center;
+	}
+</style>
 <link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
 <script type="text/javascript" src="static/js/app.js"></script>
 </head>
 <body>
 <div id="dl_page">
-	<div class="alert alert-warning text-center" style="max-width:400px; margin:0px auto;">Тестовый блокчейн. Все данные будут удалены 26/03/17</div>
-	<div class="panel panel-default" data-sweet-alert style="max-width:400px;">
+	<div class="alert alert-warning text-center" style="width:100%; max-width:400px; margin:0px auto;">Тестовый блокчейн. Все данные будут удалены 26/03/17</div>
+	<div class="panel panel-default" data-sweet-alert style="width:100%; max-width:400px;">
 	 <div class="panel-body">
 		<form>
 		   <div class="form-group">
@@ -45,7 +53,7 @@
 	   </div>
 	  </div>
 	</div>
-	<div id="dataError" class="alert alert-danger text-center" style="display:none; max-width:400px; margin:0px auto;"></div>
+	<div id="dataError" class="alert alert-danger text-center" style="display:none; width:100%; max-width:400px; margin:0px auto;"></div>
 </div>
 
 <script type="text/javascript">
@@ -100,7 +108,12 @@ function new_state() {
 			function(data) {
 				console.log('answer', data );
 				if (data.error && data.error.length > 0) {
-					$("#dataError").text(data.error).show();
+					if (data.error === "state already exists") {
+						$("#country").addClass("parsley-error");
+						$("#country").next().addClass("filled").text(data.error);
+					} else {
+						$("#dataError").text(data.error).show();
+					}
 					obj.removeClass("whirl");
 				} else {
 					location.replace({{.Node}}+"/?state="+country+"&pkey=" + data.private);
