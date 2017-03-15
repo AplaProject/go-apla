@@ -1256,7 +1256,14 @@ function saveImage() {
 			Alert(returnLang("warning"), returnLang("please_choose_image"), "warning", false);
 		}
 	} else {
-		Alert(returnLang("warning"), returnLang("please_crop_photo"), "warning", false);
+		$("#photoEditor .menu__button.menu__button--success").click();
+		setTimeout(function(){
+			var img = el.attr("src");
+			newImage.attr("src", img);
+			newImageData.val(img);
+			$("#modal_avatar").modal("hide");
+		}, 10)
+		//Alert(returnLang("warning"), returnLang("please_crop_photo"), "warning", false);
 	}
 }
 
