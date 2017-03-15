@@ -7,40 +7,61 @@
 <meta name="keywords" content="">
 <title>Testnet eGaaS</title>
 <script>document.write("<link rel='stylesheet' href='static/css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
-<style>
-	#dl_page {
-		display:flex;
-		flex-flow:column wrap;
-		justify-content:center;
-		align-items:center;
-	}
-</style>
 <link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
 <script type="text/javascript" src="static/js/app.js"></script>
 </head>
-<body>
-<div id="dl_page">
-    {{if .Message}}
-        <div class="alert alert-warning text-center" style="width:100%; max-width:400px; margin:0px auto;">
-        {{.Message}}
-        </div>
-    {{else}}
-        <div class="alert alert-warning text-center" style="width:100%; max-width:400px; margin:0px auto;">
-                Country: {{.Country}}<br>
-                Available keys: {{.Available}}
-        </div>
-        <div class="panel panel-default" data-sweet-alert style="width:100%; max-width:400px;">
-        <div class="panel-footer">
-        <div class="clearfix">
-            <div class="pull-right">
-                <button type="submit" id="send" class="btn btn-lg btn-primary" onclick="preloader(this); return register()">Register</button>
-            </div>
-        </div>
-        </div>
-        </div>
+<body class="testnet_register">
+<div id="dl_page" data-sweet-alert>
+	<div class="wrapper">
+		<section>
+			<div id="dl_content" class="content-wrapper">
+				{{if .Message}}
+					<div class="alert alert-warning text-center">
+					{{.Message}}
+					</div>
+				{{else}}
+				<div class="row">
+					<div class="col-md-4">
+						<div class="panel panel-default elastic center">
+							<div class="panel-body">
+								<img class="img-responsive" src="img/US.svg" alt="">
+							</div>
+						</div>
+					</div>
+					<div class="col-md-8">
+						<div class="panel widget elastic">
+							<div class="panel-body text-center df f-column f-valign">
+								<h3 class="w100 m0">{{.Country}}</h3>
+								<p class="w100 text-muted mt">Free places: <strong>{{.Available}}</strong></p>
+								<div class="w100 text-center">
+									<button type="submit" id="send" class="btn btn-primary" onclick="preloader(this); return register()">Register</button>
+								</div>
+							</div>
+							<div class="panel-body text-center bg-gray-dark">
+								<div class="row row-table">
+									<div class="col-xs-4">
+										<h3 class="m0">01.01.2017</h3>
+										<p class="m0 text-muted">Founded</p>
+									</div>
+									<div class="col-xs-4">
+										<h3 class="m0">USD</h3>
+										<p class="m0 text-muted">Currency</p>
+									</div>
+									<div class="col-xs-4">
+										<h3 class="m0">500</h3>
+										<p class="m0 text-muted">Population</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="dataError" class="alert alert-danger text-center" style="display:none;"></div>
+			</div>
+		</section>
+	</div>
     {{end}}
-	<div id="dataError" class="alert alert-danger text-center" style="display:none; width:100%; max-width:400px; margin:0px auto;"></div>
 </div>
 
 <script type="text/javascript">
@@ -58,7 +79,7 @@ function register() {
         function(data) {
             console.log('answer', data );
             if (data.error && data.error.length > 0) {
-                alert(data.error);
+                $("#dataError").text(data.error).show();
             } else {
                 location.replace({{.Node}}+"/?state="+{{.State}}+"&pkey=" + data.private);
             }
