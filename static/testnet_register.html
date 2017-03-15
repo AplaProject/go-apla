@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content="">
+<title>Testnet eGaaS</title>
+<script>document.write("<link rel='stylesheet' href='static/css/style.css?v=" + Math.floor((Math.random() * 1000000) + 1) + "'>");</script>
+<style>
+	#dl_page {
+		display:flex;
+		flex-flow:column wrap;
+		justify-content:center;
+		align-items:center;
+	}
+</style>
+<link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
+<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
+<script type="text/javascript" src="static/js/app.js"></script>
+</head>
+<body>
+<div id="dl_page">
+    {{if .Message}}
+        <div class="alert alert-warning text-center" style="width:100%; max-width:400px; margin:0px auto;">
+        {{.Message}}
+        </div>
+    {{else}}
+        <div class="alert alert-warning text-center" style="width:100%; max-width:400px; margin:0px auto;">
+                Country: {{.Country}}<br>
+                Available keys: {{.Available}}
+        </div>
+        <div class="panel panel-default" data-sweet-alert style="width:100%; max-width:400px;">
+        <div class="panel-footer">
+        <div class="clearfix">
+            <div class="pull-right">
+                <button type="submit" id="send" class="btn btn-lg btn-primary" onclick="preloader(this); return register()">Register</button>
+            </div>
+        </div>
+        </div>
+        </div>
+    {{end}}
+	<div id="dataError" class="alert alert-danger text-center" style="display:none; width:100%; max-width:400px; margin:0px auto;"></div>
+</div>
+
+<script type="text/javascript">
+function preloader(elem) {
+	obj = $("#" + elem.id).parents("[data-sweet-alert]");
+	obj.addClass("whirl");
+	
+	if (!obj.find(".sk-cube-grid").length) {
+		obj.append('<div class="sk-cube-grid"><div class="sk-cube sk-cube1"></div><div class="sk-cube sk-cube2"></div><div class="sk-cube sk-cube3"></div><div class="sk-cube sk-cube4"></div><div class="sk-cube sk-cube5"></div><div class="sk-cube sk-cube6"></div><div class="sk-cube sk-cube7"></div><div class="sk-cube sk-cube8"></div><div class="sk-cube sk-cube9"></div></div>');
+	}
+}
+
+function register() {
+	$.post("newregister", {state: {{.State}}},
+        function(data) {
+            console.log('answer', data );
+            if (data.error && data.error.length > 0) {
+                alert(data.error);
+            } else {
+                location.replace({{.Node}}+"/?state="+{{.State}}+"&pkey=" + data.private);
+            }
+	}, "JSON");
+	return false; 
+}
+</script>
+
+
+</body>
+</html>

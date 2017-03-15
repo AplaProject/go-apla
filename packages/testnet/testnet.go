@@ -28,6 +28,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
@@ -51,6 +52,14 @@ type TestnetPage struct {
 	Node string
 }
 
+type RegisterPage struct {
+	Available int64
+	Country   string
+	State     int64
+	Node      string
+	Message   string
+}
+
 type NewStateResult struct {
 	Private string `json:"private"`
 	Wallet  string `json:"wallet"`
@@ -58,8 +67,16 @@ type NewStateResult struct {
 	Error   string `json:"error"`
 }
 
+type NewRegisterResult struct {
+	Private string `json:"private"`
+	//	Wallet  string `json:"wallet"`
+	//	Result int64  `json:"result"`
+	Error string `json:"error"`
+}
+
 var (
 	GSettings Settings
+	regMutex  = &sync.Mutex{}
 )
 
 func FileAsset(name string) ([]byte, error) {
@@ -186,6 +203,47 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func newregisterHandler(w http.ResponseWriter, r *http.Request) {
+	var result NewRegisterResult
+
+	errFunc := func(msg string) {
+		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, lib.EscapeForJson(msg))))
+	}
+
+	r.ParseForm()
+	state := utils.StrToInt64(r.FormValue(`state`))
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if state == 0 {
+		errFunc(`State is not defined`)
+		return
+	}
+	regMutex.Lock()
+	defer regMutex.Unlock()
+
+	key, err := utils.DB.OneRow(`select id, wallet, private from testnet_keys where state_id=? and status=0`, state).String()
+	if err != nil {
+		errFunc(err.Error())
+		return
+	}
+	if len(key) == 0 || len(key[`private`]) == 0 {
+		errFunc(`There are not available keys`)
+		return
+	}
+	err = utils.DB.ExecSql(`update testnet_keys set status=1 where id=? and state_id=? and status=0 and wallet=?`,
+		key[`id`], state, key[`wallet`])
+	if err != nil {
+		errFunc(err.Error())
+		return
+	}
+	result.Private = key[`private`]
+	if jsonData, err := json.Marshal(result); err == nil {
+		w.Write(jsonData)
+	} else {
+		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+	}
+}
+
 func testnetHandler(w http.ResponseWriter, r *http.Request) {
 	funcMap := template.FuncMap{
 		"noescape": func(s string) template.HTML {
@@ -202,6 +260,54 @@ func testnetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	b := new(bytes.Buffer)
 	err = t.Execute(b, TestnetPage{Node: strings.TrimRight(GSettings.Node, `/`)})
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+	}
+	w.Write(b.Bytes())
+	return
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	funcMap := template.FuncMap{
+		"noescape": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+	}
+	var (
+		message, country string
+		available, state int64
+		err              error
+	)
+	state = utils.StrToInt64(r.FormValue(`state`))
+	if state == 0 {
+		message = `State parameter is not defined`
+	} else {
+		country, err = utils.DB.Single(`select state_name from global_states_list where state_id=?`, state).String()
+		if err != nil {
+			message = err.Error()
+		} else if len(country) == 0 {
+			message = fmt.Sprintf(`State %d has not been found`, state)
+		} else {
+			available, err = utils.DB.Single(`select count(id) from testnet_keys where state_id=? and status=0`, state).Int64()
+			if err != nil {
+				message = err.Error()
+			} else if available == 0 {
+				message = `Unfortunately, there are not available private keys for registering. Try to open this link later.`
+			}
+		}
+	}
+
+	data, err := static.Asset("static/testnet_register.html")
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+	}
+	t, err := template.New("template").Funcs(funcMap).Parse(string(data))
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+	}
+	b := new(bytes.Buffer)
+	err = t.Execute(b, RegisterPage{Node: strings.TrimRight(GSettings.Node, `/`), Available: available,
+		Country: country, State: state, Message: message})
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
 	}
@@ -340,6 +446,8 @@ CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); e
 
 	http.HandleFunc(`/`, testnetHandler)
 	http.HandleFunc(`/newstate`, newstateHandler)
+	http.HandleFunc(`/newregister`, newregisterHandler)
+	http.HandleFunc(`/register`, registerHandler)
 	http.Handle("/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 
 	http.ListenAndServe(fmt.Sprintf(":%d", GSettings.Port), nil)

@@ -34,6 +34,10 @@ function new_keys() {
             <label>{{.Message}}</label>
         </div>
         {{end}}
+        <div><p>
+            You can share the link http://testnet.egaas.org/register?state={{.Data.StateId}} that users 
+            can get these generated keys.
+        </p></div>
         <div class="form-group">
             <label >Generated keys: </label> <strong id="gen">{{.Generated}}</strong><br>
             <label >Used keys: </label> <strong id="used">{{.Used}}</strong><br>
