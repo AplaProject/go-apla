@@ -442,7 +442,7 @@ CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); e
 		}
 	}
 	log.Println("Start")
-	//	go Send()
+	go GetTx()
 
 	http.HandleFunc(`/`, testnetHandler)
 	http.HandleFunc(`/newstate`, newstateHandler)
