@@ -1246,6 +1246,8 @@ function openImageEditor(img, container, ratio, width, height) {
 function saveImage() {
 	var el = $("#photoEditor #cropped");
 	var pts = $("#photoEditor img").length;
+	var btn = $("#photoEditor .menu__button.menu__button--success");
+	
 	if (!el.hasClass("cropper-hidden")) {
 		if (pts > 0) {
 			var img = el.attr("src");
@@ -1256,14 +1258,17 @@ function saveImage() {
 			Alert(returnLang("warning"), returnLang("please_choose_image"), "warning", false);
 		}
 	} else {
-		$("#photoEditor .menu__button.menu__button--success").click();
-		setTimeout(function(){
-			var img = el.attr("src");
-			newImage.attr("src", img);
-			newImageData.val(img);
-			$("#modal_avatar").modal("hide");
-		}, 10)
-		//Alert(returnLang("warning"), returnLang("please_crop_photo"), "warning", false);
+		if (btn.is(":visible")) {
+			btn.click();
+			setTimeout(function(){
+				var img = el.attr("src");
+				newImage.attr("src", img);
+				newImageData.val(img);
+				$("#modal_avatar").modal("hide");
+			}, 10)
+		} else {
+			Alert(returnLang("warning"), returnLang("please_crop_photo"), "warning", false);
+		}
 	}
 }
 
