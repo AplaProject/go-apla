@@ -51,6 +51,7 @@ var (
 		"AddressToId":   10,
 		"IdToAddress":   10,
 		"DBAmount":      100,
+		"NewState":      1000, // ?? What cost must be?
 		//"IsGovAccount":   80,
 		"StateVal":       80,
 		"Sha256":         50,
@@ -84,6 +85,7 @@ func init() {
 		"DBAmount":           DBAmount,
 		"ContractAccess":     IsContract,
 		"ContractConditions": ContractConditions,
+		"NewState":           NewStateFunc,
 		//"IsGovAccount":       IsGovAccount,
 		"StateVal":        StateVal,
 		"Int":             Int,
@@ -798,4 +800,13 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 			}*/
 	}
 	return result, err
+}
+
+func NewStateFunc(p *Parser, country, currency string) (err error) {
+	err = p.NewStateGlobal(country, currency)
+	if err != nil {
+		return
+	}
+	err = p.NewStateMain(country, currency)
+	return
 }
