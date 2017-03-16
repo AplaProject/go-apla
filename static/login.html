@@ -244,7 +244,7 @@ var private = '{{.Private}}';
 //var copied = 0;
 var passphraseText = "";
 var passphraseTextCopy = returnLang("copy_passphrase");
-var passphraseTextSave = returnLang("save_passphrase");
+var  passphraseTextSave = returnLang("save_passphrase");
 
 if (isMobile === false) {
 	passphraseText = passphraseTextSave;
@@ -672,6 +672,7 @@ $(document).ready(function(){
 	console.log('state', {{.State}});
 	{{if .State}}
 		GKey.StateId = '{{.State}}';
+		GKey.Private = '';
 		$( "#state_id" ).val(GKey.StateId);
 	{{end}}
 	{{if .OneCountry}}
