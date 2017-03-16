@@ -43,8 +43,8 @@ type TxInfo struct {
 	Time    string `json:"time"`
 	TxName  string `json:"tx"`
 	Comment string `json:"comment"`
-	Next    *TxInfo
-	Prev    *TxInfo
+	next    *TxInfo
+	prev    *TxInfo
 }
 
 const (
@@ -69,13 +69,13 @@ func GetTx() {
 	txTop = txList
 	prev := txList
 	for i := 0; i < txLimit; i++ {
-		txTop.Next = &TxInfo{}
-		txTop = txTop.Next
-		txTop.Prev = prev
+		txTop.next = &TxInfo{}
+		txTop = txTop.next
+		txTop.prev = prev
 		prev = txTop
 	}
-	txTop.Next = txList
-	txList.Prev = prev
+	txTop.next = txList
+	txList.prev = prev
 	txTop = txList
 
 	for {
@@ -172,7 +172,7 @@ func GetTx() {
 						txTop.Address == lib.AddressToString(uint64(wallet)) {
 						txTop.Comment = fmt.Sprintf(`%d`, utils.StrToInt64(txTop.Comment)+1)
 					} else {
-						txTop = txTop.Next
+						txTop = txTop.next
 						txId++
 						txTop.Id = txId
 						txTop.BlockId = utils.StrToInt64(item[`id`])
@@ -195,7 +195,7 @@ func GetTx() {
 							txTop.State = ``
 						}
 					}
-					fmt.Println(`NAME`, *txTop)
+					//					fmt.Println(`NAME`, *txTop)
 					block = block[size:]
 				}
 			}

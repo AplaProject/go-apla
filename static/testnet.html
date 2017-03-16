@@ -14,6 +14,9 @@
 		justify-content:center;
 		align-items:center;
 	}
+	.list td, .list th {
+		padding: 4px 10px;
+	}
 </style>
 <link rel="shortcut icon" href="static/img/favicon.ico" type="image/x-icon">
 <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBSoSxKFr6M-iL3RUm-PtHmA2zZTesjNKo"></script>
@@ -54,6 +57,13 @@
 	  </div>
 	</div>
 	<div id="dataError" class="alert alert-danger text-center" style="display:none; width:100%; max-width:400px; margin:0px auto;"></div>
+	<table border="1" class="list" id="tablelist">
+		<tr id="toplist"><th>Block</th><th>Time</th><th>Tx</th><th>State</th><th>Address</th><th>Comment</th></tr>
+		{{range .List}}
+		<tr id="l{{.Id}}"><td>{{.BlockId}}</td><td>{{.Time}}</td><td>{{.TxName}}</td>
+		       <td>{{.State}}</td><td>{{.Address}}</td><td>{{.Comment}}</td></tr>
+		{{end}}
+	</table>
 </div>
 
 <script type="text/javascript">
@@ -123,6 +133,43 @@ function new_state() {
 	
 	return false; 
 }
+
+var latestId = {{.Latest}};
+
+
+function WsBlockchain()
+{
+	var tbl = $('#tablelist').children(0);
+	var ws = new WebSocket("ws://{{.Host}}/wschain");
+
+	ws.onopen = function()
+	{
+		ws.send(latestId);
+	};
+	ws.onmessage = function (evt)
+	{
+		data = JSON.parse(evt.data);
+//		console.log('ws', evt.data);
+		if (data.data && data.data.length > 0 ) {
+			for (var i=data.data.length; i>0; i-- ) {
+				var item = data.data[i-1];
+				$("#toplist").after('<tr id="l'+item.id+'"><td>'+item.block+'</td><td>'+item.time+'</td><td>'+item.tx+'</td>' +
+		       '<td>'+item.state+'</td><td>'+item.wallet+'</td><td>'+item.comment+'</td></tr>');
+			   if (tbl.children().length > 50 )
+					$('#tablelist tr:last').remove();
+			}
+			latestId = data.latest;
+		} 
+		setTimeout(function(){ws.send(latestId);}, 1000);
+	};
+	ws.onclose = function()
+	{
+		console.log("Connection closed");
+	};
+}
+
+setTimeout( WsBlockchain, 1000 );
+
 </script>
 
 

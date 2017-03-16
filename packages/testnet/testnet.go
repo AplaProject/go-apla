@@ -49,7 +49,10 @@ type Settings struct {
 }
 
 type TestnetPage struct {
-	Node string
+	List   []*TxInfo
+	Latest int64
+	Host   string
+	Node   string
 }
 
 type RegisterPage struct {
@@ -259,7 +262,14 @@ func testnetHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
 	}
 	b := new(bytes.Buffer)
-	err = t.Execute(b, TestnetPage{Node: strings.TrimRight(GSettings.Node, `/`)})
+	list := make([]*TxInfo, 0)
+	start := txTop
+	for start.Id > 0 && len(list) < 50 {
+		list = append(list, start)
+		start = start.prev
+	}
+	err = t.Execute(b, TestnetPage{Node: strings.TrimRight(GSettings.Node, `/`), List: list,
+		Latest: txTop.Id, Host: r.Host})
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
 	}
@@ -448,6 +458,7 @@ CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); e
 	http.HandleFunc(`/newstate`, newstateHandler)
 	http.HandleFunc(`/newregister`, newregisterHandler)
 	http.HandleFunc(`/register`, registerHandler)
+	http.HandleFunc(`/wschain`, WsBlockchain)
 	http.Handle("/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 
 	http.ListenAndServe(fmt.Sprintf(":%d", GSettings.Port), nil)
