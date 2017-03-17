@@ -803,10 +803,6 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 }
 
 func NewStateFunc(p *Parser, country, currency string) (err error) {
-	err = p.NewStateGlobal(country, currency)
-	if err != nil {
-		return
-	}
-	err = p.NewStateMain(country, currency)
+	_, err = p.NewStateMain(country, currency)
 	return
 }

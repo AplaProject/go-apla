@@ -92,8 +92,7 @@ func (p *Parser) NewStateFront() error {
 	return nil
 }
 
-func (p *Parser) NewStateMain(country, currency string) (err error) {
-	var id string
+func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 	id, err = p.ExecSqlGetLastInsertId(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
 	if err != nil {
 		return
@@ -363,28 +362,31 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	if isGlobal {
-		_, err = p.selectiveLoggingAndUpd([]string{"state_id", "state_name"},
-			[]interface{}{id, country}, "global_states_list", nil, nil, true)
-		if err != nil {
-			return
-		}
-		_, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
-			[]interface{}{currency, id + `_state_parameters`}, "global_currencies_list", nil, nil, true)
-		if err != nil {
-			return
-		}
-	}
 	err = utils.LoadContract(id)
 	return
 }
 
 func (p *Parser) NewState() error {
 	var pkey string
-	err := p.NewStateMain(string(p.TxMap["state_name"]), string(p.TxMap["currency_name"]))
+	country := string(p.TxMap["state_name"])
+	currency := string(p.TxMap["currency_name"])
+	id, err := p.NewStateMain(country, currency)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	if isGlobal {
+		_, err = p.selectiveLoggingAndUpd([]string{"state_id", "state_name"},
+			[]interface{}{id, country}, "global_states_list", nil, nil, true)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		_, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
+			[]interface{}{currency, id + `_state_parameters`}, "global_currencies_list", nil, nil, true)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	}
+
 	if pkey, err = p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
 		return p.ErrInfo(err)
 	} else if len(p.TxMaps.Bytes["public_key"]) > 30 && len(pkey) == 0 {
