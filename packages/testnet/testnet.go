@@ -182,7 +182,7 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			var answerJson NewStateResult
 			if err = json.Unmarshal(answer, &answerJson); err != nil {
-				errFunc(err.Error())
+				errFunc(err.Error() + `; ` + string(answer))
 				return
 			}
 			if answerJson.Error != `success` {

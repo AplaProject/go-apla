@@ -54,7 +54,7 @@ func sendTx(txType int64, adminWallet int64, data []byte) (err error) {
 
 func (c *Controller) AjaxNewState() interface{} {
 	var (
-		result    NewKey
+		result    NewState
 		err       error
 		spriv     string
 		current   map[string]string
