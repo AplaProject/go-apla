@@ -79,11 +79,13 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 	for _, icontract := range contracts {
 		var state string
 		icontract, _, state = getState(c.SessStateId, icontract)
-		data, _ := c.Single(fmt.Sprintf(`select value from "%s_%s" where name=?`, state, name), icontract).String()
+		data, _ := c.OneRow(fmt.Sprintf(`select conditions,value from "%s_%s" where name=?`, state, name), icontract).String()
 		//		fmt.Println(`Data`, err, data)
-		if len(data) > 0 {
+		if len(data) > 0 && len(data[`value`]) > 0 {
 			names = append(names, prefix+`_`+icontract)
-			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, data))
+			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, data[`value`]))
+			names = append(names, prefix+`c_`+icontract)
+			list = append(list, fmt.Sprintf("`%sc_%s #= %s`", prefix, icontract, strings.Replace(data[`conditions`], "`", `"`, -1)))
 			/*			if prefix == `p` {
 						} else {
 							list = append(list, fmt.Sprintf("`%s_%s = %s`", prefix, icontract, data))
@@ -126,9 +128,24 @@ func (c *Controller) setData(name, prefix string) (out string) {
 		}
 		pars := make([]string, 0)
 		lines := make([]string, 0)
+		null := make(map[string]string)
 		for key := range data[0] {
 			if key != `rb_id` && key != `id` {
 				pars = append(pars, key)
+				coltype, _ := c.OneRow(`select data_type,character_maximum_length from information_schema.columns
+where table_name = ? and column_name = ?`, itable, key).String()
+				if len(coltype) > 0 {
+					ival := `0`
+					switch {
+					case coltype[`data_type`] == "character varying", coltype[`data_type`] == "bytea":
+						ival = ``
+					case strings.HasPrefix(coltype[`data_type`], `timestamp`):
+						ival = "NULL"
+						/*						case coltype[`data_type`] == `bigint`, strings.HasPrefix(coltype[`data_type`], `double`),
+												strings.HasPrefix(coltype[`data_type`], `numeric`):*/
+					}
+					null[key] = ival
+				}
 			}
 		}
 		contract := fmt.Sprintf(`contract %s {
@@ -143,6 +160,9 @@ func action {
 				val := ilist[ipar]
 				if strings.IndexByte(val, 0) >= 0 {
 					val = `wrong parameter`
+				}
+				if val == `NULL` {
+					val = null[ipar]
 				}
 				params = append(params, fmt.Sprintf(`"%s"`, lib.EscapeForJson(val)))
 			}
@@ -263,9 +283,9 @@ func (c *Controller) ExportTpl() (string, error) {
 									break
 								}
 								names = append(names, `sign_`+ret[1])
-								list = append(list, fmt.Sprintf("`sign_%s #= %s`", ret[1], sign[`value`]))
+								list = append(list, fmt.Sprintf("`sign_%s #= %s`", ret[1], strings.Replace(sign[`value`], "`", `"`, -1)))
 								names = append(names, `signc_`+ret[1])
-								list = append(list, fmt.Sprintf("`signc_%s #= %s`", ret[1], sign[`conditions`]))
+								list = append(list, fmt.Sprintf("`signc_%s #= %s`", ret[1], strings.Replace(sign[`conditions`], "`", `"`, -1)))
 								signlist = append(signlist, fmt.Sprintf(`%d%s`, global, ret[1]))
 							}
 						}
@@ -349,8 +369,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			typeid: #type_new_table_id#,
 			global: %d,
 			table_name : "%s",
-			columns: '[%s]',
-			permissions: "ContractConditions(\"MainCondition\")"
+			columns: '[%s]'
 			}
 	   }`, global, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
 
@@ -466,10 +485,10 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			typeid: #type_new_contract_id#,
 			global: %d,
 			name: "%s",
-			value: $("#sc_%s").val(),
-			conditions: "ContractConditions(\"MainCondition\")"
+			value: $("#sc_%[2]s").val(),
+			conditions: $("#scc_%[2]s").val()
 			}
-	   }`, global, icontract, icontract))
+	   }`, global, icontract))
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,id',
 		Data: {
@@ -489,10 +508,10 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			typeid: #type_new_sign_id#,
 			global: %s,
 			name: "%s",
-			value: $("#sign_%s").val(),
-			conditions: $("#signc_%s").val()
+			value: $("#sign_%[2]s").val(),
+			conditions: $("#signc_%[2]s").val()
 			}
-	   }`, signitem[:1], signitem[1:], signitem[1:], signitem[1:]))
+	   }`, signitem[:1], signitem[1:]))
 		}
 		params := strings.Split(c.r.FormValue("state_parameters"), `,`)
 		if len(params) > 0 {
@@ -508,10 +527,10 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			type: "NewStateParameters",
 			typeid: #type_new_state_params_id#,
 			name : "%s",
-			value: $("#pa_%s").val(),
-			conditions: "ContractConditions(\"MainCondition\")",
+			value: $("#pa_%[1]s").val(),
+			conditions: $("#pac_%[1]s").val(),
 			}
-	   }`, iparam, iparam))
+	   }`, iparam))
 			}
 		}
 
@@ -529,11 +548,11 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			type: "NewMenu",
 			typeid: #type_new_menu_id#,
 			name : "%s",
-			value: $("#m_%s").val(),
+			value: $("#m_%[1]s").val(),
 			global: %d,
-			conditions: "ContractConditions(\"MainCondition\")",
+			conditions: $("#mc_%[1]s").val()
 			}
-	   }`, imenu, imenu, global))
+	   }`, imenu, global))
 			}
 		}
 
@@ -560,11 +579,11 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			typeid: #type_new_page_id#,
 			name : "%s",
 			menu: "%s",
-			value: $("#p_%s").val(),
+			value: $("#p_%[1]s").val(),
 			global: %d,
-			conditions: "ContractConditions(\"MainCondition\")",
+			conditions: $("#pc_%[1]s").val(),
 			}
-	   }`, ipage, menu, ipage, global))
+	   }`, ipage, menu, global))
 			}
 		}
 		langs := strings.Split(c.r.FormValue("lang"), `,`)
@@ -596,10 +615,10 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				type: "AppendPage",
 				typeid: #type_append_page_id#,
 				name : "%s",
-				value: $("#ap_%s").val(),
+				value: $("#ap_%[1]s").val(),
 				global: %d
 				}
-		}`, iname, iname, global))
+		}`, iname, global))
 				}
 			}
 		}
@@ -618,10 +637,10 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				type: "AppendMenu",
 				typeid: #type_append_menu_id#,
 				name : "%s",
-				value: $("#am_%s").val(),
+				value: $("#am_%[1]s").val(),
 				global: %d
 				}
-		}`, iname, iname, global))
+		}`, iname, global))
 				}
 			}
 		}

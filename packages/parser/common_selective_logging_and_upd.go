@@ -136,6 +136,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
 			} else if fields[i][:1] == "-" {
 				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
+			} else if values[i] == `NULL` {
+				addSqlUpdate += fields[i] + `= NULL,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
 				addSqlUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
 			} else if strings.HasPrefix(values[i], `timestamp `) {
@@ -165,6 +167,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			// || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}))
 			if isBytea[fields[i]] && len(values[i]) != 0 {
 				addSqlIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
+			} else if values[i] == `NULL` {
+				addSqlIns1 += `NULL,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
 				addSqlIns1 += `to_timestamp('` + values[i] + `'),`
 			} else if strings.HasPrefix(values[i], `timestamp `) {
