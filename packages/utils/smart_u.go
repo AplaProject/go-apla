@@ -272,6 +272,9 @@ func Money(vars *map[string]string, pars ...string) string {
 		cents = StrToInt(StateVal(vars, `money_digit`))
 	}
 	ret := pars[0]
+	if ret == `NULL` {
+		ret = `0`
+	}
 	if cents > 0 && strings.IndexByte(ret, '.') < 0 {
 		if len(ret) < cents+1 {
 			ret = strings.Repeat(`0`, cents+1-len(ret)) + ret
