@@ -136,7 +136,7 @@ func init() {
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
-	textproc.AddFuncs(&map[string]textproc.TextFunc{`AppNav`: AppNav,`Address`: IdToAddress, `BtnEdit`: BtnEdit,
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`AppNav`: AppNav, `Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -154,13 +154,14 @@ func init() {
 }
 
 func AppNav(vars *map[string]string, pars ...string) string {
-		name := pars[0]
-		title := name
-		if len(pars) > 1 {
-				title = pars[1]
-			}
-		return fmt.Sprintf(`<a href="#" onclick="load_app('%s');"><span>%s</span></a>`, name, title)
+	name := pars[0]
+	title := name
+	if len(pars) > 1 {
+		title = pars[1]
+	}
+	return fmt.Sprintf(`<a href="#" onclick="load_app('%s');"><span>%s</span></a>`, name, title)
 }
+
 // Reading and compiling contracts from smart_contracts tables
 func LoadContracts() (err error) {
 	var states []map[string]string
@@ -819,7 +820,7 @@ func getTag(tag string, pars ...string) (out string) {
 
 func Tag(vars *map[string]string, pars ...string) (out string) {
 	var valid bool
-	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`, `button`, `table`, `thead`, `tbody`, `tr`, `td`} {
+	for _, itag := range []string{`h1`, `h2`, `h3`, `h4`, `h5`, `div`, `button`, `table`, `thead`, `tbody`, `tr`, `td`} {
 		if pars[0] == itag {
 			valid = true
 			break
