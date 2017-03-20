@@ -136,7 +136,7 @@ func init() {
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
-	textproc.AddFuncs(&map[string]textproc.TextFunc{`AppNav`: AppNav, `Address`: IdToAddress, `BtnEdit`: BtnEdit,
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -153,14 +153,7 @@ func init() {
 	})
 }
 
-func AppNav(vars *map[string]string, pars ...string) string {
-	name := pars[0]
-	title := name
-	if len(pars) > 1 {
-		title = pars[1]
-	}
-	return fmt.Sprintf(`<a href="#" onclick="load_app('%s');"><span>%s</span></a>`, name, title)
-}
+
 
 // Reading and compiling contracts from smart_contracts tables
 func LoadContracts() (err error) {
@@ -1013,8 +1006,14 @@ func BtnPage(vars *map[string]string, pars ...string) string {
 	if len(pars) >= 5 {
 		anchor = pars[4]
 	}
-	return fmt.Sprintf(`<button type="button" class="%s" %s onclick="load_template('%s', {%s}, %s )">%s</button>`,
-		class, more, pars[0], params, anchor, pars[1])
+	html := `<button type="button" class="%s" %s onclick="load_template('%s', {%s}, %s )">%s</button>`
+	page := pars[0]
+	if page[0:4] == `app-` {
+		html = `<button type="button" class="%s" %s onclick="load_app('%s', {%s}, %s )">%s</button>`
+		page = page[4:]
+	}
+	return fmt.Sprintf(html,
+		class, more, page, params, anchor, pars[1])
 }
 
 func BtnContract(vars *map[string]string, pars ...string) string {
