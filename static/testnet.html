@@ -175,7 +175,7 @@ function WsBlockchain()
 				}
 				$("#toplist").after('<tr id="l'+item.id+'"><td>'+item.block+'</td><td>'+item.time+'</td><td>'+item.tx+'</td>' +
 		       '<td>'+item.state+'</td><td>'+item.wallet+'</td><td>'+item.comment+'</td></tr>');
-			   if (tbl.children().length > 50 )
+			   if (tbl.children().length > 10 )
 					$('#tablelist tr:last').remove();
 			}
 			latestId = data.latest;

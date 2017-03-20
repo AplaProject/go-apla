@@ -264,7 +264,7 @@ func testnetHandler(w http.ResponseWriter, r *http.Request) {
 	b := new(bytes.Buffer)
 	list := make([]*TxInfo, 0)
 	start := txTop
-	for start.Id > 0 && len(list) < 50 {
+	for start.Id > 0 && len(list) < 10 {
 		list = append(list, start)
 		start = start.prev
 	}
