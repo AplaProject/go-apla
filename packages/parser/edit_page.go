@@ -61,7 +61,9 @@ func (p *Parser) EditPageFront() error {
 		return p.ErrInfo("incorrect sign")
 	}
 	if err = p.AccessChange(`pages`, p.TxMaps.String["name"]); err != nil {
-		return p.ErrInfo(err)
+		if err = p.AccessRights(`changing_page`, false); err != nil {
+			return p.ErrInfo(err)
+		}
 	}
 	return nil
 }

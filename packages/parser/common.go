@@ -433,6 +433,8 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 		if !ret {
 			return fmt.Errorf(`Access denied`)
 		}
+	} else {
+		return fmt.Errorf(`There is not %s in state_parameters`, condition)
 	}
 	return nil
 }
