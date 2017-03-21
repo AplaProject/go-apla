@@ -46,6 +46,7 @@ var (
 		"DBInt":         100,
 		"DBStringExt":   100,
 		"DBIntExt":      100,
+		"DBFreeRequest": 0,
 		"DBStringWhere": 100,
 		"DBIntWhere":    100,
 		"AddressToId":   10,
@@ -75,6 +76,7 @@ func init() {
 		"DBString":           DBString,
 		"DBInt":              DBInt,
 		"DBStringExt":        DBStringExt,
+		"DBFreeRequest":      DBFreeRequest,
 		"DBIntExt":           DBIntExt,
 		"DBStringWhere":      DBStringWhere,
 		"DBIntWhere":         DBIntWhere,
@@ -112,7 +114,7 @@ func getCost(name string) int64 {
 	if val, ok := extendCost[name]; ok {
 		return val
 	}
-	return 0
+	return -1
 }
 
 func (p *Parser) getExtend() *map[string]interface{} {
@@ -226,7 +228,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 	if !p.TxContract.Block.Info.(*script.ContractInfo).Active {
 		return fmt.Errorf(`Contract %s is not active`, p.TxContract.Name)
 	}
-
+	p.TxContract.FreeRequest = false
 	for i := uint32(0); i < 4; i++ {
 		if (flags & (1 << i)) > 0 {
 			cfunc := p.TxContract.GetFunc(methods[i])
@@ -367,6 +369,14 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (st
 	}
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
 		lib.EscapeName(idname)+`=?`, id).String()
+}
+
+func DBFreeRequest(p *Parser, tblname string, name string, id interface{}, idname string) (string, error) {
+	if p.TxContract.FreeRequest {
+		return ``, fmt.Errorf(`DBFreeRequest can be executed only once`)
+	}
+	p.TxContract.FreeRequest = true
+	return DBStringExt(tblname, name, id, idname)
 }
 
 func DBIntExt(tblname string, name string, id interface{}, idname string) (ret int64, err error) {

@@ -141,14 +141,6 @@ func (rt *RunTime) extendFunc(name string) error {
 	if f, ok = (*rt.extend)[name]; !ok || reflect.ValueOf(f).Kind().String() != `func` {
 		return fmt.Errorf(`unknown function %s`, name)
 	}
-	if rt.vm.ExtCost != nil {
-		cost := rt.vm.ExtCost(name)
-		if cost > rt.cost {
-			rt.cost = 0
-			return nil
-		}
-	}
-
 	size := len(rt.stack)
 	foo := reflect.ValueOf(f)
 	//	if count != foo.Type().NumIn() {
@@ -362,7 +354,22 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
 		case CMD_CALLVARI, CMD_CALL:
-			rt.cost -= COST_CALL
+			if cmd.Value.(*ObjInfo).Type == OBJ_EXTFUNC {
+				finfo := cmd.Value.(*ObjInfo).Value.(ExtFuncInfo)
+				if rt.vm.ExtCost != nil {
+					cost := rt.vm.ExtCost(finfo.Name)
+					if cost > rt.cost {
+						rt.cost = 0
+						return 0, fmt.Errorf(`paid CPU resource is over`)
+					} else if cost == -1 {
+						rt.cost -= COST_CALL
+					} else {
+						rt.cost -= cost
+					}
+				}
+			} else {
+				rt.cost -= COST_CALL
+			}
 			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
 
 		case CMD_VAR:

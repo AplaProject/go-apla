@@ -30,6 +30,7 @@ import (
 type Contract struct {
 	Name          string
 	Called        uint32
+	FreeRequest   bool
 	TxPrice       int64   // custom price for citizens
 	TxGovAccount  int64   // state wallet
 	EGSRate       float64 // money/EGS rate

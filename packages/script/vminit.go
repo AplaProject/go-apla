@@ -46,6 +46,7 @@ const (
 )
 
 type ExtFuncInfo struct {
+	Name     string
 	Params   []reflect.Type
 	Results  []reflect.Type
 	Auto     []string
@@ -225,7 +226,7 @@ func (vm *VM) Extend(ext *ExtendData) {
 		fobj := reflect.ValueOf(item).Type()
 		switch fobj.Kind() {
 		case reflect.Func:
-			data := ExtFuncInfo{make([]reflect.Type, fobj.NumIn()),
+			data := ExtFuncInfo{key, make([]reflect.Type, fobj.NumIn()),
 				make([]reflect.Type, fobj.NumOut()), make([]string, fobj.NumIn()),
 				fobj.IsVariadic(), item}
 			for i := 0; i < fobj.NumIn(); i++ {
