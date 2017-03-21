@@ -641,7 +641,7 @@ function CopyToClipboard(elem, text) {
 	});
 }
 
-function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
+function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, Cancel) {
 	if (obj) {
 		var timer = null;
 		var view = type.split(":");
@@ -772,12 +772,16 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus) {
 					}
 				} else {
 					if (type == "error") {
-						obj.css({ "min-height": minHeight }).removeClass("whirl standard");
-						minHeight = null;
-						$("#" + id).modal("hide");
-						
 						window.open("mailto:bugs@egaas.org?subject=Report an error - " + hist[hist.length - 1][0] + "('" + hist[hist.length - 1][1] + "')" + "&body=" + text, "_blank");
+					} else {
+						if (Cancel) {
+							Cancel();
+						}
 					}
+					
+					obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+					minHeight = null;
+					$("#" + id).modal("hide");
 				}
 
 				if (timer) {
