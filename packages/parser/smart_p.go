@@ -371,14 +371,6 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (st
 		lib.EscapeName(idname)+`=?`, id).String()
 }
 
-func DBFreeRequest(p *Parser, tblname string, name string, id interface{}, idname string) (string, error) {
-	if p.TxContract.FreeRequest {
-		return ``, fmt.Errorf(`DBFreeRequest can be executed only once`)
-	}
-	p.TxContract.FreeRequest = true
-	return DBStringExt(tblname, name, id, idname)
-}
-
 func DBIntExt(tblname string, name string, id interface{}, idname string) (ret int64, err error) {
 	var val string
 	val, err = DBStringExt(tblname, name, id, idname)
@@ -389,6 +381,21 @@ func DBIntExt(tblname string, name string, id interface{}, idname string) (ret i
 		return 0, nil
 	}
 	return strconv.ParseInt(val, 10, 64)
+}
+
+func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) (bool, error) {
+	if p.TxContract.FreeRequest {
+		return false, fmt.Errorf(`DBFreeRequest can be executed only once`)
+	}
+	p.TxContract.FreeRequest = true
+	ret, err := DBStringExt(tblname, idname, id, idname)
+	if err != nil {
+		return false, err
+	}
+	if len(ret) > 0 || ret == fmt.Sprintf(`%v`, id) {
+		return true, nil
+	}
+	return false, nil // fmt.Errorf(`DBFreeRequest error`)
 }
 
 func DBStringWhere(tblname string, name string, where string, params ...interface{}) (string, error) {
@@ -434,7 +441,10 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 		if len(name) > 0 {
 			contract := smart.GetContract(name, p.TxStateID)
 			if contract == nil {
-				return false, fmt.Errorf(`Unknown contract %s`, name)
+				contract = smart.GetContract(name, 0)
+				if contract == nil {
+					return false, fmt.Errorf(`Unknown contract %s`, name)
+				}
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
