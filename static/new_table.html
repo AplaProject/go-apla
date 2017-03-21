@@ -80,18 +80,19 @@
 		}
 		
 		$('#send').bind('click', function () {
-
-			/*columns = [];
-			$(".colname").each(function() {
-				var val = $(this).val();
-				columns.push(val);
-			});*/
 			columns = [];
+			var tblname = $("#tableName").val().toLowerCase();
+			if (tblname == '') {
+				Alert("Error",'Specify Table Name','error');
+				return;
+			}
 			$("#table tr").each(function() {
 				column = [];
 				var val = $(this).find(".colname").val();
 				var type = $(this).find(".column_type").val();
 				var index =  (+ $(this).find(".index").prop("checked")).toString();
+				if (!val) 
+					return true;
 				if (val) {
 					val = val.toLowerCase();
 				}
@@ -100,13 +101,17 @@
 				column.push(index);
 				columns.push(column);
 			});
-			columns.splice(0, 1);
+			if (columns.length == 0) {
+				Alert("Error",'Specify Column Name','error');
+				return;
+			}
+//			columns.splice(0, 1);
 			columns_json = JSON.stringify(columns)
 
 			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;
 				$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#global").val()+
-						 ','+$("#tableName").val().toLowerCase()+','+columns_json);
+						 ','+tblname+','+columns_json);
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
