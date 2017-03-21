@@ -383,19 +383,19 @@ func DBIntExt(tblname string, name string, id interface{}, idname string) (ret i
 	return strconv.ParseInt(val, 10, 64)
 }
 
-func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) (bool, error) {
+func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) error {
 	if p.TxContract.FreeRequest {
-		return false, fmt.Errorf(`DBFreeRequest can be executed only once`)
+		return fmt.Errorf(`DBFreeRequest can be executed only once`)
 	}
 	p.TxContract.FreeRequest = true
 	ret, err := DBStringExt(tblname, idname, id, idname)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if len(ret) > 0 || ret == fmt.Sprintf(`%v`, id) {
-		return true, nil
+		return nil
 	}
-	return false, nil // fmt.Errorf(`DBFreeRequest error`)
+	return fmt.Errorf(`DBFreeRequest: cannot find %v in %s of %s`, id, idname, tblname)
 }
 
 func DBStringWhere(tblname string, name string, where string, params ...interface{}) (string, error) {
