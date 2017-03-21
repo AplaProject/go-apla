@@ -380,65 +380,65 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 			log.Fatalln(err)
 		}
 	}
-	if !utils.InSliceString(`global_currencies_list`, list) {
-		if err = utils.DB.ExecSql(`CREATE SEQUENCE global_currencies_list_id_seq START WITH 1;
-CREATE TABLE "global_currencies_list" (
-"id" integer NOT NULL DEFAULT nextval('global_currencies_list_id_seq'),
-"currency_code" varchar(32) NOT NULL DEFAULT '',
-"settings_table" varchar(128) NOT NULL DEFAULT '',
-"rb_id" int NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE global_currencies_list_id_seq owned by global_currencies_list.id;
-ALTER TABLE ONLY "global_currencies_list" ADD CONSTRAINT global_currencies_list_pkey PRIMARY KEY (id);
-CREATE INDEX global_currencies_index_code ON "global_currencies_list" (currency_code);`); err != nil {
-			log.Fatalln(err)
-		}
-		if states, err := utils.DB.GetAll(`select * from system_states order by id`, -1); err != nil {
-			log.Fatalln(err)
-		} else {
-			for _, item := range states {
-				table := item[`id`] + `_state_parameters`
-				if code, err := utils.DB.Single(`select value from "` + table + `" where name='currency_name'`).String(); err != nil {
+	/*	if !utils.InSliceString(`global_currencies_list`, list) {
+				if err = utils.DB.ExecSql(`CREATE SEQUENCE global_currencies_list_id_seq START WITH 1;
+		CREATE TABLE "global_currencies_list" (
+		"id" integer NOT NULL DEFAULT nextval('global_currencies_list_id_seq'),
+		"currency_code" varchar(32) NOT NULL DEFAULT '',
+		"settings_table" varchar(128) NOT NULL DEFAULT '',
+		"rb_id" int NOT NULL DEFAULT '0'
+		);
+		ALTER SEQUENCE global_currencies_list_id_seq owned by global_currencies_list.id;
+		ALTER TABLE ONLY "global_currencies_list" ADD CONSTRAINT global_currencies_list_pkey PRIMARY KEY (id);
+		CREATE INDEX global_currencies_index_code ON "global_currencies_list" (currency_code);`); err != nil {
+					log.Fatalln(err)
+				}
+				if states, err := utils.DB.GetAll(`select * from system_states order by id`, -1); err != nil {
 					log.Fatalln(err)
 				} else {
-					if err = utils.DB.ExecSql(`insert into global_currencies_list (currency_code, settings_table) 
-					    values(?,?)`, code, table); err != nil {
-						log.Fatalln(err)
+					for _, item := range states {
+						table := item[`id`] + `_state_parameters`
+						if code, err := utils.DB.Single(`select value from "` + table + `" where name='currency_name'`).String(); err != nil {
+							log.Fatalln(err)
+						} else {
+							if err = utils.DB.ExecSql(`insert into global_currencies_list (currency_code, settings_table)
+							    values(?,?)`, code, table); err != nil {
+								log.Fatalln(err)
+							}
+						}
 					}
 				}
 			}
-		}
-	}
-	if !utils.InSliceString(`global_states_list`, list) {
-		if err = utils.DB.ExecSql(`CREATE SEQUENCE global_states_list_id_seq START WITH 1;
-CREATE TABLE "global_states_list" (
-"id" integer NOT NULL DEFAULT nextval('global_states_list_id_seq'),
-"state_id" bigint NOT NULL DEFAULT '0',
-"state_name" varchar(128) NOT NULL DEFAULT '',
-"rb_id" int NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE global_states_list_id_seq owned by global_states_list.id;
-ALTER TABLE ONLY "global_states_list" ADD CONSTRAINT global_states_list_pkey PRIMARY KEY (id);
-CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); err != nil {
-			log.Fatalln(err)
-		}
-		if states, err := utils.DB.GetAll(`select * from system_states order by id`, -1); err != nil {
-			log.Fatalln(err)
-		} else {
-			for _, item := range states {
-				table := item[`id`] + `_state_parameters`
-				if state, err := utils.DB.Single(`select value from "` + table + `" where name='state_name'`).String(); err != nil {
+			if !utils.InSliceString(`global_states_list`, list) {
+				if err = utils.DB.ExecSql(`CREATE SEQUENCE global_states_list_id_seq START WITH 1;
+		CREATE TABLE "global_states_list" (
+		"id" integer NOT NULL DEFAULT nextval('global_states_list_id_seq'),
+		"state_id" bigint NOT NULL DEFAULT '0',
+		"state_name" varchar(128) NOT NULL DEFAULT '',
+		"rb_id" int NOT NULL DEFAULT '0'
+		);
+		ALTER SEQUENCE global_states_list_id_seq owned by global_states_list.id;
+		ALTER TABLE ONLY "global_states_list" ADD CONSTRAINT global_states_list_pkey PRIMARY KEY (id);
+		CREATE INDEX global_states_index_name ON "global_states_list" (state_name);`); err != nil {
+					log.Fatalln(err)
+				}
+				if states, err := utils.DB.GetAll(`select * from system_states order by id`, -1); err != nil {
 					log.Fatalln(err)
 				} else {
-					if err = utils.DB.ExecSql(`insert into global_states_list (state_id, state_name) 
-					    values(?,?)`, item[`id`], state); err != nil {
-						log.Fatalln(err)
+					for _, item := range states {
+						table := item[`id`] + `_state_parameters`
+						if state, err := utils.DB.Single(`select value from "` + table + `" where name='state_name'`).String(); err != nil {
+							log.Fatalln(err)
+						} else {
+							if err = utils.DB.ExecSql(`insert into global_states_list (state_id, state_name)
+							    values(?,?)`, item[`id`], state); err != nil {
+								log.Fatalln(err)
+							}
+						}
 					}
 				}
-			}
-		}
 
-	}
+			}*/
 	if !utils.InSliceString(`testnet_keys`, list) {
 		if err = utils.DB.ExecSql(`CREATE TABLE "testnet_keys" (
 		"id" bigint NOT NULL DEFAULT '0',
