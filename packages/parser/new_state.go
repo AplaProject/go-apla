@@ -234,41 +234,31 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `FullScreen(1)
-Title : My country
-Navigation( Dashboard )
 
-Divs(md-6)
-GetRow(my, #state_id#_citizens, "id", #citizen#)
-WiCitizen( #my_name#, #my_id#, #my_avatar#, StateVal(state_flag) )
-DivsEnd:
-
-PageEnd:
-`, `menu_default`, sid,
-
-		`government`, `Title : My country
-Navigation( LiTemplate(dashboard_default, citizen),goverment)
-Divs(md-8, panel panel-default panel-body)
-
-MarkDown : # Welcome, government!
-BtnPage(sys-listOfTables, Tables, '', btn btn-pill-left btn-primary)
-BtnPage(sys-contracts, Contracts)
-BtnPage(sys-app_catalog, App catalog)
-BtnPage(sys-interface, Interface, '', btn btn-pill-right btn-primary) BR() BR()
-DivsEnd:
-
-Divs(md-4, panel panel-default panel-body)
-Ring(GetOne(count(*),#state_id#_citizens), 30)
-DivsEnd:
-
-Divs(md-12, panel panel-default panel-body)
-     MarkDown : ## Citizens
-     Table{
-         Table:  `+id+`_citizens
-         Order: id
-         Columns: [[Avatar,Image(#avatar#)], [ID, Address(#id#)], [Name, #name#]]
-     }
-DivsEnd:
-
+If(StateVal(type_office))
+Else:
+Title : Basic Apps
+Divs: col-md-4
+		Divs: panel panel-default elastic
+			Divs: panel-body text-center fill-area flexbox-item-grow
+				Divs: flexbox-item-grow flex-center
+					Divs: pv-lg
+					Image("/static/img/apps/money.png", Basic, center-block img-responsive img-circle img-thumbnail thumb96 )
+					DivsEnd:
+					P(h4,Basic Apps)
+					P(text-left,"Election and Assign, Polling, Messenger, Simple Money System")
+				DivsEnd:
+			DivsEnd:
+			Divs: panel-footer
+				Divs: clearfix
+					Divs: pull-right
+						BtnPage(app-basic, Install,'',btn btn-primary lang)
+					DivsEnd:
+				DivsEnd:
+			DivsEnd:
+		DivsEnd:
+	DivsEnd:
+IfEnd:
 PageEnd:
 `, `government`, sid,
 	)
