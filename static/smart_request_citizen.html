@@ -1,5 +1,5 @@
 <style>
-	.tab-content {
+	/*.tab-content {
 		border: 0px;
 		padding: 0px;
 	}
@@ -7,15 +7,13 @@
 	.panel.panel-default {
 		border-top: 0px;
 		border-radius: 0px 0px 4px 4px;
-	}
+	}*/
 	
 	#message {
 		display: none;
 	}
 </style>
 <script>
-	//$(".wrapper").addClass("map");
-	
 	var arr = [];
 	var coords = [];
 	var selectbox = $("#countries");
@@ -286,15 +284,32 @@
 </script>
 
 <div class="content-heading lang" lang-id="request_citizenship"></div>
-<div role="tabpanel">
-	<!-- Nav tabs-->
+<div class="panel panel-default active" data-sweet-alert>
+	<div class="panel-body">
+		<form role="form">
+			<div class="form-group">
+				<label for="countries" class="lang" lang-id="country"></label>
+				<select id="countries" class="form-control" onChange="changeCountry(this);"></select>
+			</div>
+			<div id="message" class="alert alert-danger"></div>
+			<div id="fields"></div>
+		</form>
+	</div>
+	<div id="buttons" class="panel-footer">
+		<div class="clearfix">
+			<div class="pull-right">
+				<button id="send" type="button" class="btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" lang-id="request"></button>
+				<button id="refresh" class="hidden" type="button" data-tool="panel-refresh" onClick="preloader(this);"></button>
+			</div>
+		</div>
+	</div>
+</div>
+<!--<div role="tabpanel">
 	<ul role="tablist" class="nav nav-tabs">
 		<li role="presentation" class="active"><a href="#tab1" aria-controls="home" role="tab" data-toggle="tab" class="lang" lang-id="virtual_and_not_recognized"></a></li>
 		<li role="presentation"><a href="#tab2" aria-controls="profile" role="tab" data-toggle="tab" class="lang" lang-id="real"></a></li>
 	</ul>
-	<!-- Tab panes-->
 	<div class="tab-content">
-		<!-- START panel-->
 		<div id="tab1" role="tabpanel" class="panel panel-default tab-pane active" data-sweet-alert>
 			<div class="panel-body">
 				<form role="form">
@@ -315,8 +330,6 @@
 				</div>
 			</div>
 		</div>
-		<!-- END panel-->
-		<!-- START panel-->
 		<div id="tab2" role="tabpanel" class="panel panel-default tab-pane" data-sweet-alert>
 			<div class="panel-body">
 				<form role="form">
@@ -335,9 +348,8 @@
 				</div>
 			</div>
 		</div>
-		<!-- END panel-->
 	</div>
-</div>
+</div>-->
 
 <div class="map_canvas elastic">
 	<div id="map_canvas"></div>
