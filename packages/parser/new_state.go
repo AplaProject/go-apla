@@ -262,7 +262,9 @@ IfEnd:
 PageEnd:
 `, `menu_default`, sid,
 
-		`government`, `
+		`government`, `Title : 
+
+PageEnd:
 `, `government`, sid,
 	)
 	if err != nil {
