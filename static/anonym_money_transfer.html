@@ -1,6 +1,20 @@
 {{ define "anonymMoneyTransfer" }}
 
 <script>
+	var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+	console.log("iOS " + iOS);
+	
+	if (iOS) {
+		var form = $("#Transfer");
+		var message = $('<div />', {
+			"class": 'alert alert-danger text-center',
+			html: "<strong>Prohibited for ios</strong>"
+		})
+		.insertAfter(form);
+		
+		form.hide();
+	}
+	
 	var serverTime;
 	var balance = {{.Amount}} / qDLT;
 	var commission = {{.Commission}} / qDLT;
