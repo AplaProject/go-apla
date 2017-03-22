@@ -51,7 +51,7 @@ function btn_contract(obj, contract, params, text, loadname, pagename, pageparam
 	
     Alert(text, contract, "question:cancel", function(){
         prepare_btncontract( contract, params );
-    }, "no:Cancel", "yes:Accept", "fullScreen:close", true, function(){ preloader_hide();});
+    }, "no:Cancel", "yes:Accept", "fullScreen:close", true, preloader_hide);
 }
 </script>
 {{template "signatures".}}
