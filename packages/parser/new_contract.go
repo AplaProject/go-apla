@@ -18,7 +18,9 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -45,6 +47,16 @@ func (p *Parser) NewContractFront() error {
 	// ...
 
 	// Check InputData
+	name := p.TxMaps.String["name"]
+	if off := strings.IndexByte(name, '#'); off > 0 {
+		p.TxMap["name"] = []byte(name[:off])
+		p.TxMaps.String["name"] = name[:off]
+		address := lib.StringToAddress(name[off+1:])
+		if address == 0 {
+			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, name[off+1:]))
+		}
+		p.TxMaps.Int64["wallet_contract"] = address
+	}
 	verifyData := map[string]string{"global": "int64", "name": "string"}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
@@ -52,7 +64,7 @@ func (p *Parser) NewContractFront() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
+	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], name, p.TxMap["value"], p.TxMap["conditions"])
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -92,6 +104,10 @@ func (p *Parser) NewContract() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	if val, ok := p.TxMaps.Int64["wallet_contract"]; ok {
+		wallet = val
+	}
+
 	tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
 		[]interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"],
 			wallet}, prefix+"_smart_contracts", nil, nil, true)

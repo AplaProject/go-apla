@@ -67,7 +67,8 @@
 	function Reload() {
 		load_page('editContract', {name: {{.Data.name}} , global: "{{.Global}}" });
 	}
-	
+	var nameContract = '';
+
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -75,7 +76,12 @@
 			if ($("#id").val()) {
 				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#global").val() + ',' + $("#id").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
 			} else {
-				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#global").val()+','+$("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+				nameContract = $("#name").val()
+				wallet = $("#walletAddress").val();
+				if (wallet) {
+					nameContract = nameContract + '#' + wallet
+				}
+				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#global").val()+','+nameContract + ',' + $("#value").val() + ',' + $("#conditions").val());
 			}
 			doSign();
 			$("#send_to_net").trigger("click");
@@ -90,7 +96,7 @@
 			data: {
 				'global' : $("#global").val(),
 				'id' : $("#id").val(),
-				'name' : $("#name").val(),
+				'name' : nameContract,
 				'value' : $("#value").val(),
 				'conditions' : $("#conditions").val(),
 				'type' : '{{.TxType}}',
@@ -174,6 +180,9 @@
 		editor.setValue(code, -1);
 		$(window).scrollTop(0);
 	});
+	{{if not .Data.name}}
+		$("#walletAddress").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true });
+	{{end}}
 </script>
 	<div class="content-heading">
 		{{if .Data.name}}<span class="lang" lang-id="edit_contract"></span>{{else}}<span class="lang" lang-id="new_contract"></span>{{end}}
@@ -199,10 +208,14 @@
 						   {{if .Data.name}} <p class="form-control-static">{{.Data.name}}</p> <input type="hidden" class="form-control" id="id" value="{{.Data.id}}"> {{else}} <input type="text" class="form-control" id="name"> {{end}}
 					   </div>
 				   </div>
-				   <div class="pull-xs-right">
+				   <div class="pull-xs-right" style="min-width:220px;">
 					   <div class="form-group">
 						   <label>Wallet ID: </label>
-						   {{.Data.wallet}}
+						   {{if .Data.name}}
+						   	{{.Data.wallet}}
+						   {{else}}
+					   		   <input type="text" class="form-control" id="walletAddress" data-type="wallet">
+						   {{end}}
 					   </div>
 					   <div class="form-group mb-lg">
 						   <label>Active: </label>
