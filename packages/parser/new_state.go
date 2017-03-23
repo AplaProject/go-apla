@@ -376,7 +376,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	if isGlobal {
-		_, err = p.selectiveLoggingAndUpd([]string{"state_id", "state_name"},
+		_, err = p.selectiveLoggingAndUpd([]string{"stateId", "state_name"},
 			[]interface{}{id, country}, "global_states_list", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)
