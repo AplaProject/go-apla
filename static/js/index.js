@@ -1566,6 +1566,25 @@ $(document).ready(function () {
 		observeDOM(document.getElementById('dl_content'), function () {
 			InitMobileHead();
 			InitMobileTable();
+			if ($("#dl_content .notification").length) {
+				var cont = $("#notification");
+				cont.html("");
+				if (cont.length) {
+					$(".notification").attr("class", "list-group").appendTo(cont);
+					
+					var pts = parseInt(cont.find(".more").html());
+					var more = pts - 3;
+					
+					if (more <= 0) {
+						cont.find(".more").parent().hide();
+					} else {
+						cont.find(".more").html(pts - 3);
+						cont.find(".more").parent().show();
+					}
+					
+					$("#notificationCount").addClass("label label-danger").html(pts);
+				}
+			}
 			if ($("[data-count]").length) {
 				countUp();
 			}
