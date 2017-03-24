@@ -135,6 +135,7 @@
 // static/forex.tpl
 // static/forging.html
 // static/gen_citizen.html
+// static/gen_keys.html
 // static/gov_birth_statement.html
 // static/gov_citizens.html
 // static/gov_create_budget.html
@@ -196,6 +197,7 @@
 // static/img/mb-sample.jpg
 // static/img/mockup.png
 // static/img/no_map.png
+// static/img/noflag.svg
 // static/img/profile-bg.jpg
 // static/img/radio_icon.png
 // static/img/sort_asc.png
@@ -223,6 +225,7 @@
 // static/install_step_1.html
 // static/interface.html
 // static/js/app.js
+// static/js/elliptic.min.js
 // static/js/index.js
 // static/js/keys.js
 // static/js/photoEditor/editor.js
@@ -259,6 +262,8 @@
 // static/state_parameters.html
 // static/system_info.html
 // static/test.html
+// static/testnet.html
+// static/testnet_register.html
 // static/tx_btncont.html
 // static/tx_button.html
 // static/tx_form.html
@@ -2722,6 +2727,24 @@ func staticGen_citizenHtml() (*asset, error) {
 	return a, err
 }
 
+// staticGen_keysHtml reads file data from disk. It returns an error on failure.
+func staticGen_keysHtml() (*asset, error) {
+	path := "static/gen_keys.html"
+	name := "static/gen_keys.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticGov_birth_statementHtml reads file data from disk. It returns an error on failure.
 func staticGov_birth_statementHtml() (*asset, error) {
 	path := "static/gov_birth_statement.html"
@@ -3820,6 +3843,24 @@ func staticImgNo_mapPng() (*asset, error) {
 	return a, err
 }
 
+// staticImgNoflagSvg reads file data from disk. It returns an error on failure.
+func staticImgNoflagSvg() (*asset, error) {
+	path := "static/img/noflag.svg"
+	name := "static/img/noflag.svg"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticImgProfileBgJpg reads file data from disk. It returns an error on failure.
 func staticImgProfileBgJpg() (*asset, error) {
 	path := "static/img/profile-bg.jpg"
@@ -4292,6 +4333,24 @@ func staticInterfaceHtml() (*asset, error) {
 func staticJsAppJs() (*asset, error) {
 	path := "static/js/app.js"
 	name := "static/js/app.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticJsEllipticMinJs reads file data from disk. It returns an error on failure.
+func staticJsEllipticMinJs() (*asset, error) {
+	path := "static/js/elliptic.min.js"
+	name := "static/js/elliptic.min.js"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -4954,6 +5013,42 @@ func staticTestHtml() (*asset, error) {
 	return a, err
 }
 
+// staticTestnetHtml reads file data from disk. It returns an error on failure.
+func staticTestnetHtml() (*asset, error) {
+	path := "static/testnet.html"
+	name := "static/testnet.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
+// staticTestnet_registerHtml reads file data from disk. It returns an error on failure.
+func staticTestnet_registerHtml() (*asset, error) {
+	path := "static/testnet_register.html"
+	name := "static/testnet_register.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticTx_btncontHtml reads file data from disk. It returns an error on failure.
 func staticTx_btncontHtml() (*asset, error) {
 	path := "static/tx_btncont.html"
@@ -5267,6 +5362,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/forex.tpl": staticForexTpl,
 	"static/forging.html": staticForgingHtml,
 	"static/gen_citizen.html": staticGen_citizenHtml,
+	"static/gen_keys.html": staticGen_keysHtml,
 	"static/gov_birth_statement.html": staticGov_birth_statementHtml,
 	"static/gov_citizens.html": staticGov_citizensHtml,
 	"static/gov_create_budget.html": staticGov_create_budgetHtml,
@@ -5328,6 +5424,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/img/mb-sample.jpg": staticImgMbSampleJpg,
 	"static/img/mockup.png": staticImgMockupPng,
 	"static/img/no_map.png": staticImgNo_mapPng,
+	"static/img/noflag.svg": staticImgNoflagSvg,
 	"static/img/profile-bg.jpg": staticImgProfileBgJpg,
 	"static/img/radio_icon.png": staticImgRadio_iconPng,
 	"static/img/sort_asc.png": staticImgSort_ascPng,
@@ -5355,6 +5452,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/install_step_1.html": staticInstall_step_1Html,
 	"static/interface.html": staticInterfaceHtml,
 	"static/js/app.js": staticJsAppJs,
+	"static/js/elliptic.min.js": staticJsEllipticMinJs,
 	"static/js/index.js": staticJsIndexJs,
 	"static/js/keys.js": staticJsKeysJs,
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
@@ -5391,6 +5489,8 @@ var _bindata = map[string]func() (*asset, error){
 	"static/state_parameters.html": staticState_parametersHtml,
 	"static/system_info.html": staticSystem_infoHtml,
 	"static/test.html": staticTestHtml,
+	"static/testnet.html": staticTestnetHtml,
+	"static/testnet_register.html": staticTestnet_registerHtml,
 	"static/tx_btncont.html": staticTx_btncontHtml,
 	"static/tx_button.html": staticTx_buttonHtml,
 	"static/tx_form.html": staticTx_formHtml,
@@ -5584,6 +5684,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"forex.tpl": &bintree{staticForexTpl, map[string]*bintree{}},
 		"forging.html": &bintree{staticForgingHtml, map[string]*bintree{}},
 		"gen_citizen.html": &bintree{staticGen_citizenHtml, map[string]*bintree{}},
+		"gen_keys.html": &bintree{staticGen_keysHtml, map[string]*bintree{}},
 		"gov_birth_statement.html": &bintree{staticGov_birth_statementHtml, map[string]*bintree{}},
 		"gov_citizens.html": &bintree{staticGov_citizensHtml, map[string]*bintree{}},
 		"gov_create_budget.html": &bintree{staticGov_create_budgetHtml, map[string]*bintree{}},
@@ -5648,6 +5749,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"mb-sample.jpg": &bintree{staticImgMbSampleJpg, map[string]*bintree{}},
 			"mockup.png": &bintree{staticImgMockupPng, map[string]*bintree{}},
 			"no_map.png": &bintree{staticImgNo_mapPng, map[string]*bintree{}},
+			"noflag.svg": &bintree{staticImgNoflagSvg, map[string]*bintree{}},
 			"profile-bg.jpg": &bintree{staticImgProfileBgJpg, map[string]*bintree{}},
 			"radio_icon.png": &bintree{staticImgRadio_iconPng, map[string]*bintree{}},
 			"sort_asc.png": &bintree{staticImgSort_ascPng, map[string]*bintree{}},
@@ -5679,6 +5781,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"interface.html": &bintree{staticInterfaceHtml, map[string]*bintree{}},
 		"js": &bintree{nil, map[string]*bintree{
 			"app.js": &bintree{staticJsAppJs, map[string]*bintree{}},
+			"elliptic.min.js": &bintree{staticJsEllipticMinJs, map[string]*bintree{}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
 			"photoEditor": &bintree{nil, map[string]*bintree{
@@ -5722,6 +5825,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"state_parameters.html": &bintree{staticState_parametersHtml, map[string]*bintree{}},
 		"system_info.html": &bintree{staticSystem_infoHtml, map[string]*bintree{}},
 		"test.html": &bintree{staticTestHtml, map[string]*bintree{}},
+		"testnet.html": &bintree{staticTestnetHtml, map[string]*bintree{}},
+		"testnet_register.html": &bintree{staticTestnet_registerHtml, map[string]*bintree{}},
 		"tx_btncont.html": &bintree{staticTx_btncontHtml, map[string]*bintree{}},
 		"tx_button.html": &bintree{staticTx_buttonHtml, map[string]*bintree{}},
 		"tx_form.html": &bintree{staticTx_formHtml, map[string]*bintree{}},
