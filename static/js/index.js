@@ -1572,7 +1572,14 @@ $(document).ready(function () {
 				if (cont.length) {
 					$(".notification").attr("class", "list-group").appendTo(cont);
 					
-					var pts = parseInt(cont.find(".more").html());
+					var pts = 0;
+					
+					if (cont.find(".more").length) {
+						pts = parseInt(cont.find(".more").html());
+					} else {
+						pts = cont.find("a.list-group-item").length;
+					}
+					
 					var more = pts - 3;
 					
 					if (more <= 0) {
