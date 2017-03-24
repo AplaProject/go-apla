@@ -450,7 +450,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 			if block == nil {
 				return false, fmt.Errorf(`There is not conditions in contract %s`, name)
 			}
-			_, err := smart.Run(block, []interface{}{}, &map[string]interface{}{`state`: p.TxStateID,
+			_, err := smart.Run(block, []interface{}{}, &map[string]interface{}{`state`: int64(p.TxStateID),
 				`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p})
 			if err != nil {
 				return false, err
