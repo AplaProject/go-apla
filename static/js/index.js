@@ -1597,7 +1597,7 @@ $(document).ready(function () {
 			}
 			if ($("[data-toggle]").length) {
 				$('[data-toggle="tooltip"]').tooltip({
-					container: 'body'
+					container: '#dl_content'
 				});
 			}
 			if ($("[data-widget]").length) {
