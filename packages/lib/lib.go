@@ -41,6 +41,7 @@ import (
 
 const (
 	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
+	SharedPriv   = "a092c8963e854c5dc19b655e5fcf2aba4ada1c1b70fe9c900f923fcd3cb1a5bf"
 )
 
 type Update struct {
@@ -617,4 +618,48 @@ func Float2Bytes(float float64) []byte {
 
 func StripTags(value string) string {
 	return strings.Replace(strings.Replace(value, `<`, `&lt;`, -1), `>`, `&gt;`, -1)
+}
+
+func GetSharedKey(private, public []byte) (shared []byte, err error) {
+	pubkeyCurve := elliptic.P256()
+
+	pub := new(ecdsa.PublicKey)
+	pub.Curve = pubkeyCurve
+	pub.X = new(big.Int).SetBytes(public[0:32])
+	pub.Y = new(big.Int).SetBytes(public[32:])
+
+	bi := new(big.Int).SetBytes(private)
+	priv := new(ecdsa.PrivateKey)
+	priv.PublicKey.Curve = pubkeyCurve
+	priv.D = bi
+	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
+
+	if priv.Curve.IsOnCurve(pub.X, pub.Y) {
+		x, _ := pub.Curve.ScalarMult(pub.X, pub.Y, priv.D.Bytes())
+		key := sha256.Sum256([]byte(hex.EncodeToString(x.Bytes())))
+		shared = key[:]
+	} else {
+		err = fmt.Errorf("Not IsOnCurve")
+	}
+	return
+}
+
+func GetSharedHex(private, public string) (string, error) {
+	priv, err := hex.DecodeString(private)
+	if err != nil {
+		return ``, err
+	}
+	pub, err := hex.DecodeString(public)
+	if err != nil {
+		return ``, err
+	}
+	shared, err := GetSharedKey(priv, pub)
+	if err != nil {
+		return ``, err
+	}
+	return hex.EncodeToString(shared), nil
+}
+
+func GetDefaultShared(public string) (string, error) {
+	return GetSharedHex(SharedPriv, public)
 }
