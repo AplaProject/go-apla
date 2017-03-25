@@ -153,8 +153,6 @@ func init() {
 	})
 }
 
-
-
 // Reading and compiling contracts from smart_contracts tables
 func LoadContracts() (err error) {
 	var states []map[string]string
@@ -1061,12 +1059,13 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	where := ``
 	limit := ``
 	tableClass := ``
+	tableMore := ``
 	adaptive := ``
 	if val, ok := (*pars)[`Order`]; ok {
 		order = `order by ` + lib.Escape(val)
 	}
 	if val, ok := (*pars)[`Class`]; ok {
-		tableClass = lib.Escape(val)
+		tableClass, tableMore = getClass(val)
 	}
 	if _, ok := (*pars)[`Adaptive`]; ok {
 		adaptive = `data-role="table"`
@@ -1096,14 +1095,23 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	if strings.TrimSpace(tableClass) == `table-responsive` {
 		out += `<div class="table-responsive">`
 	}
-	out += `<table class="table ` + tableClass + `" ` + adaptive + `><thead>`
+	out += `<table class="table ` + tableClass + `" ` + tableMore + ` ` + adaptive + `><thead>`
 	for _, th := range *columns {
 		if len(th) < 2 {
 			return `incorrect column`
 		}
-		out += `<th>` + th[0] + `</th>`
+		class := ``
+		more := ``
+		if len(th) > 2 {
+			class, more = getClass(th[2])
+			if len(class) > 0 {
+				class = fmt.Sprintf(`class="%s"`, class)
+			}
+		}
+		out += fmt.Sprintf(`<th %s %s>`, class, more) + th[0] + `</th>`
 		th[1] = strings.TrimSpace(th[1])
 		off := strings.Index(th[1], `StateLink`)
+
 		if off >= 0 {
 			thname := th[1][off:]
 			if strings.IndexByte(thname, ',') > 0 {
