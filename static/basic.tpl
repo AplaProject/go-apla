@@ -1315,7 +1315,7 @@ Divs(md-6, panel panel-default panel-body data-sweet-alert)
         DivsEnd:
         Divs(form-group)
             Label($DateFinishVoting$)
-            InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI,30 days))
+            InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI,60 days))
         DivsEnd:
         
        
