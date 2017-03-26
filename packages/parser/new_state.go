@@ -152,7 +152,7 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 		"state_name", country, "", psid,
 		"gov_account", p.TxWalletID, "", psid,
 		"dlt_spending", p.TxWalletID, "", psid,
-		"state_flag", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyCAYAAACqNX6+AAAAwElEQVR4Xu3TQREAAAiEQK9/aWvsAxMw4O06ysAommCuINgTFKQgmAEMp4UUBDOA4bSQgmAGMJwWUhDMAIbTQgqCGcBwWkhBMAMYTgspCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBaSEEwAxhOCykIZgDDaSEFwQxgOC2kIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LKQhmAMNpIViQBxv1ADO4LcKOAAAAAElFTkSuQmCC", "", psid,
+		"state_flag", "", "", psid,
 		"state_coords", ``, "", psid,
 		"citizenship_price", "1000000", "", psid)
 	if err != nil {
