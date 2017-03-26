@@ -1860,6 +1860,15 @@ func Encrypt(key, text []byte) ([]byte, error) {
 	return EncPrivateKeyBin, nil
 }
 
+func EncryptShared(public, text []byte) ([]byte, error) {
+	shared, err := lib.GetDefaultShared(hex.EncodeToString(public))
+	if err != nil {
+		return []byte(``), err
+	}
+	pub, _ := hex.DecodeString(shared)
+	return Encrypt(pub, text)
+}
+
 func EncryptCFB(text, key, iv []byte) ([]byte, []byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
