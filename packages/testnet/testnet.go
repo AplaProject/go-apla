@@ -292,7 +292,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	if state == 0 {
 		message = `State parameter is not defined`
 	} else {
-		country, err = utils.DB.Single(`select state_name from global_states_list where state_id=?`, state).String()
+		country, err = utils.DB.Single(`select state_name from global_states_list where gstate_id=?`, state).String()
 		if err != nil {
 			message = err.Error()
 		} else if len(country) == 0 {

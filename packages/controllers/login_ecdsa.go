@@ -74,7 +74,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 				return "", utils.ErrInfo(err)
 			}
 			if utils.InSliceString(`global_states_list`, list) {
-				state_id, err = c.Single("select stateId from global_states_list where state_name=?", state).Int64()
+				state_id, err = c.Single("select gstate_id from global_states_list where state_name=?", state).Int64()
 				if err != nil {
 					return "", utils.ErrInfo(err)
 				}
