@@ -41,7 +41,6 @@ import (
 
 const (
 	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
-	SharedPriv   = "a092c8963e854c5dc19b655e5fcf2aba4ada1c1b70fe9c900f923fcd3cb1a5bf"
 )
 
 type Update struct {
@@ -241,6 +240,14 @@ func FillLeft(slice []byte) []byte {
 		return slice
 	}
 	return append(make([]byte, 32-len(slice)), slice...)
+}
+
+// Fill the slice by zero at left if the size of the slice is less than 32.
+func FillLeft64(slice []byte) []byte {
+	if len(slice) >= 64 {
+		return slice
+	}
+	return append(make([]byte, 64-len(slice)), slice...)
 }
 
 // Function generate a random pair of ECDSA private and public keys.
@@ -623,6 +630,8 @@ func StripTags(value string) string {
 func GetSharedKey(private, public []byte) (shared []byte, err error) {
 	pubkeyCurve := elliptic.P256()
 
+	private = FillLeft(private)
+	public = FillLeft(public)
 	pub := new(ecdsa.PublicKey)
 	pub.Curve = pubkeyCurve
 	pub.X = new(big.Int).SetBytes(public[0:32])
@@ -660,6 +669,8 @@ func GetSharedHex(private, public string) (string, error) {
 	return hex.EncodeToString(shared), nil
 }
 
-func GetDefaultShared(public string) (string, error) {
-	return GetSharedHex(SharedPriv, public)
+func GetShared(public string) (string, string, error) {
+	priv, pub := GenKeys()
+	shared, err := GetSharedHex(priv, public)
+	return shared, pub, err
 }

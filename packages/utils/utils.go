@@ -1861,12 +1861,21 @@ func Encrypt(key, text []byte) ([]byte, error) {
 }
 
 func EncryptShared(public, text []byte) ([]byte, error) {
-	shared, err := lib.GetDefaultShared(hex.EncodeToString(public))
+	shared, pubkey, err := lib.GetShared(hex.EncodeToString(lib.FillLeft64(public)))
 	if err != nil {
 		return []byte(``), err
 	}
 	pub, _ := hex.DecodeString(shared)
-	return Encrypt(pub, text)
+	c, err := aes.NewCipher(pub)
+	if err != nil {
+		return nil, ErrInfo(err)
+	}
+	iv, _ := hex.DecodeString(pubkey)
+	plaintext := PKCS5Padding([]byte(text), c.BlockSize())
+	cfbdec := cipher.NewCBCEncrypter(c, iv[:16])
+	EncPrivateKeyBin := make([]byte, len(plaintext))
+	cfbdec.CryptBlocks(EncPrivateKeyBin, plaintext)
+	return append(iv, EncPrivateKeyBin...), nil
 }
 
 func EncryptCFB(text, key, iv []byte) ([]byte, []byte, error) {
