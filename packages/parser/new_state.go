@@ -49,12 +49,12 @@ func (p *Parser) NewStateGlobal(country, currency string) error {
 		isGlobal = utils.InSliceString(`global_currencies_list`, list) && utils.InSliceString(`global_states_list`, list)
 	}
 	if isGlobal {
-		if id, err := utils.DB.Single(`select id from global_states_list where lower(state_name)=lower(?)`, country).Int64(); err != nil {
+		if id, err := utils.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`State %s already exists`, country)
 		}
-		if id, err := utils.DB.Single(`select id from global_currencies_list where lower(currency_code)=lower(?)`, currency).Int64(); err != nil {
+		if id, err := utils.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`Currency %s already exists`, currency)
@@ -400,7 +400,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	if isGlobal {
-		_, err = p.selectiveLoggingAndUpd([]string{"stateId", "state_name"},
+		_, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name"},
 			[]interface{}{id, country}, "global_states_list", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)
