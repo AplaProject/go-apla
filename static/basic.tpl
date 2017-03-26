@@ -3748,6 +3748,16 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
+		Forsign: 'name,value,conditions',
+		Data: {
+			type: "NewStateParameters",
+			typeid: #type_new_state_params_id#,
+			name : "state_description",
+			value: $("#pa_state_description").val(),
+			conditions: "ContractConditions(\"MainCondition\")",
+			}
+	   },
+{
 		Forsign: 'global,name,value,menu,conditions',
 		Data: {
 			type: "NewPage",
