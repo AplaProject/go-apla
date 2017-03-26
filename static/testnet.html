@@ -143,6 +143,7 @@ function new_state() {
 					waitState = latestId;
 					stateWallet = data.wallet;
 					stateRedir = {{.Node}}+"/?state="+country+"&pkey=" + data.private
+				console.log('stateRedir', stateRedir );
 				}
 		}, "JSON");
 	}
