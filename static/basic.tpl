@@ -1564,7 +1564,7 @@ DivsEnd:
 Divs(col-md-4, panel panel-info elastic center)
     Div(panel-heading, Recognized as the number of UN members)
     Divs: panel-body
-        Ring(GetOne(id, global_states_list,gstate_id=#gstate_id#), 20, 100, 3, "5d9cec", "656565", 150)
+        Ring(GetOne(num_votes, global_states_list,gstate_id=#gstate_id#), 20, 100, 3, "5d9cec", "656565", 150)
     DivsEnd:
 DivsEnd:
 
@@ -1876,7 +1876,7 @@ Divs(md-6, panel panel-default elastic data-sweet-alert)
                 [Name,#state_name#],
                 [Flag, Image(#state_flag#, ALT, flag)],
                 [UG,#united_governments#],
-                [Votes,If(#united_governments#, BtnContract(@UG_Vote,Vote #num_votes#, Vote for #state_name#,"State_num:#id#",'btn btn-primary'),#num_votes#)]
+                [Votes,BtnContract(@UG_Vote,Vote #num_votes#, Vote for #state_name#,"State_num:#id#",'btn btn-primary')]
             ]
         }
     DivsEnd:
