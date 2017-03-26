@@ -210,8 +210,28 @@ function do_phrase(count) {
 	return false;//do_generate();
 }
 
+function bin2hex(input) {
+	var out = '';
+	var ch = '';
+	for (var i = 0; i < input.length; i++) {
+		ch = input.charCodeAt(i).toString(16)
+		out += ch.length == 1 ? "0" + ch : ch;
+	}
+	return out;
+}
+
+function hex2bin(input) {
+	var out = '';
+	for (i = 0; i < input.length; i += 2) {
+		var num = parseInt(input.substr(i, 2), 16);
+		out += String.fromCharCode(num);
+	}
+	return out;
+}
+
 var defaultPrivate = "a092c8963e854c5dc19b655e5fcf2aba4ada1c1b70fe9c900f923fcd3cb1a5bf";
 
+// private & public must be in hex encoding
 function getShared(private, public) {
 	var e = new elliptic.ec('p256');
 	var priv = e.keyFromPrivate(private, 'hex');
@@ -221,6 +241,7 @@ function getShared(private, public) {
 	return CryptoJS.SHA256(shared.toString(16)).toString(CryptoJS.enc.Hex);
 }
 
+// private must be in hex encoding
 function getDefaultShared(private) {
 	var e = new elliptic.ec('p256');
 	var def = e.keyFromPrivate(defaultPrivate, 'hex');
@@ -228,3 +249,19 @@ function getDefaultShared(private) {
 	return getShared(private, def.getPublic('hex'));
 }
 
+// private & text must be in hex encoding
+function decryptShared(private, text) {
+	var shared = getDefaultShared(private);
+	var input = hex2bin(text);
+	iv = input.substr(0, 16);
+	encText = input.substr(16);
+	cipherParams = CryptoJS.lib.CipherParams.create({
+		ciphertext: CryptoJS.enc.Hex.parse(bin2hex(encText))
+	});
+	pass = CryptoJS.enc.Hex.parse(shared);
+	var decrypted = CryptoJS.AES.decrypt(cipherParams, pass,
+		{
+			mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Hex.parse(bin2hex(iv))
+		});
+	return decrypted.toString(CryptoJS.enc.Hex);
+}
