@@ -1915,7 +1915,7 @@ DivsEnd:`)
 TextHidden( ap_dashboard_default, ap_government)
 SetVar(`am_government #= MenuItem(Administration,  gov_administration)
 MenuItem(Citizens,  citizens)
-MenuItem(List Votings,  RF_List)
+MenuItem(Pollings List,  RF_List)
 MenuItem(New Polling,  RF_NewIssue)`,
 `am_menu_default #= MenuItem(ListVotings, RF_UserList)
 MenuItem(QuestionList, RF_UserQuestionList)
