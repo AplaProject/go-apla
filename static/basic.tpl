@@ -1254,7 +1254,7 @@ Divs(md-4, panel panel-default elastic data-sweet-alert)
 DivsEnd:
 PageEnd:`,
 `p_RF_List #= Title : $ListVotings$
-Navigation( LiTemplate(government), Polling)
+Navigation( LiTemplate(government), Pollings)
 
 SetVar(ViewResultQues = BtnPage(RF_ViewResultQuestions, <b>$Vw$ #number_votes#</b>, "ReferendumId:#id#,Back:0,Status:#status#",btn btn-primary btn-block))
 SetVar(ViewResult = BtnPage(RF_ViewResult, <b>$Vw$ #number_votes#</b>, "ReferendumId:#id#,Back:0,Status:#status#",btn btn-primary btn-block))
