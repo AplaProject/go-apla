@@ -229,8 +229,6 @@ function hex2bin(input) {
 	return out;
 }
 
-var defaultPrivate = "a092c8963e854c5dc19b655e5fcf2aba4ada1c1b70fe9c900f923fcd3cb1a5bf";
-
 // private & public must be in hex encoding
 function getShared(private, public) {
 	var e = new elliptic.ec('p256');
@@ -242,19 +240,19 @@ function getShared(private, public) {
 }
 
 // private must be in hex encoding
-function getDefaultShared(private) {
+function getDefaultShared(private, public) {
 	var e = new elliptic.ec('p256');
-	var def = e.keyFromPrivate(defaultPrivate, 'hex');
-
+	var def = e.keyFromPublic(public, 'hex');
 	return getShared(private, def.getPublic('hex'));
 }
 
 // private & text must be in hex encoding
 function decryptShared(private, text) {
-	var shared = getDefaultShared(private);
+	var public = '04' + text.substr(0, 128);
+	var shared = getDefaultShared(private, public);
 	var input = hex2bin(text);
 	iv = input.substr(0, 16);
-	encText = input.substr(16);
+	encText = input.substr(64);
 	cipherParams = CryptoJS.lib.CipherParams.create({
 		ciphertext: CryptoJS.enc.Hex.parse(bin2hex(encText))
 	});
