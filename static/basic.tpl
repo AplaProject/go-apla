@@ -1876,7 +1876,7 @@ Divs(md-6, panel panel-default elastic data-sweet-alert)
                 [Name,#state_name#],
                 [Flag, Image(#state_flag#, ALT, flag)],
                 [UG,#united_governments#],
-                [Votes,If(#united_governments#==0, BtnContract(@UG_Vote,Vote #num_votes#, Vote for #state_name#,"State_num:#id#",'btn btn-primary'),#num_votes#)]
+                [Votes,If(#united_governments#, BtnContract(@UG_Vote,Vote #num_votes#, Vote for #state_name#,"State_num:#id#",'btn btn-primary'),#num_votes#)]
             ]
         }
     DivsEnd:
