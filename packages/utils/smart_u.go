@@ -1178,10 +1178,20 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 	if len(id) == 0 {
 		return ``
 	}
+	width := 100
+	ratio := `1/1`
+	if len(pars) > 1 {
+		width = StrToInt(pars[1])
+	}
+	if len(pars) > 2 {
+		if lr := strings.Split(pars[2], `/`); len(lr) == 2 {
+			ratio = fmt.Sprintf(`%d/%d`, StrToInt(lr[0]), StrToInt(lr[1]))
+		}
+	}
 	return fmt.Sprintf(`<img id="img%s" style="margin: 10px 0px;" src=""> 
 			<textarea style="display:none" class="form-control" id="%[1]s"></textarea>
-			<button type="button" class="btn btn-primary" onClick="openImageEditor('img%[1]s', '%[1]s', '1/1', '100', '100');">
-			<i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>`, id)
+			<button type="button" class="btn btn-primary" onClick="openImageEditor('img%[1]s', '%[1]s', '%s', '%d', '100');">
+			<i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>`, id, ratio, width)
 }
 
 func StateVal(vars *map[string]string, pars ...string) string {
