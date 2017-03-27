@@ -807,11 +807,10 @@ func action {
 `sc_TXEditProfile #= contract TXEditProfile {
 	data {
 		FirstName  string
-		Image string "image"
+		Avatar string "image"
 	}
 	action {
-	  DBUpdate(Table( "citizens"), $citizen, "name,avatar", $FirstName, $Image)
-  	  //Println("TXEditProfile new")
+	  DBUpdate(Table( "citizens"), $citizen, "name,avatar", $FirstName, $Avatar)
 	}
 }`,
 `sc_TXNewCitizen #= contract TXNewCitizen {
@@ -848,9 +847,27 @@ func action {
 TextHidden( sc_AddAccount, sc_AddCitizenAccount, sc_addMessage, sc_CentralBankConditions, sc_CitizenCondition, sc_CitizenDel, sc_DelMessage, sc_DisableAccount, sc_EditProfile, sc_GECandidateRegistration, sc_GenCitizen, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResult, sc_GV_NewPosition, sc_GV_PositionDismiss, sc_GV_Positions_Citizens, sc_MoneyTransfer, sc_RechargeAccount, sc_RF_NewIssue, sc_RF_SaveAns, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingDel, sc_RF_VotingResult, sc_RF_VotingStart, sc_RF_VotingStop, sc_SearchCitizen, sc_SendMoney, sc_SmartLaw_NumResultsVoting, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
 SetVar(`p_citizen_profile #= Title:Profile
 Navigation(LiTemplate(Citizen),Editing profile)
-PageTitle: Editing profile
-ValueById(#state_id#_citizens, #citizen#, "name,avatar", "FirstName,Image")
-TxForm{ Contract: TXEditProfile, OnSuccess: MenuReload()}
+
+GetRow("user", #state_id#_citizens, "id", #citizen#)
+
+Divs(md-6, panel panel-default elastic data-sweet-alert)
+    Divs(panel-body)
+Form()
+    Divs(form-group)
+        Label("Name")
+        Input(FirstName, "form-control input-lg m-b",text,text, #user_name#)
+    DivsEnd:
+        Image(#user_avatar#)
+        ImageInput(Avatar,100,400)
+        Textarea(Avatar,form-control hidden,#user_avatar#)
+        
+TxButton{ClassBtn:btn btn-primary, Contract:TXEditProfile,Name:Save, OnSuccess: "template,dashboard_default"}
+
+FormEnd:
+    DivsEnd:
+DivsEnd:
+PageEnd:
+
 PageEnd:`,
 `p_CitizenInfo #= Title: Citizen info
 Navigation(LiTemplate(government),Citizen info)
