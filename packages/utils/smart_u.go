@@ -137,7 +137,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
-		`Image`: Image, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
+		`Image`: Image, `ImageInput`: ImageInput, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateVal`: StateVal, `Json`: JsonScript, `And`: And, `Or`: Or,
@@ -1171,6 +1171,17 @@ func Image(vars *map[string]string, pars ...string) string {
 		rez = fmt.Sprintf(`<img src="%s" class="%s" %s alt="%s" stylex="display:block;">`, pars[0], class, more, alt)
 	}
 	return rez
+}
+
+func ImageInput(vars *map[string]string, pars ...string) string {
+	id := pars[0]
+	if len(id) == 0 {
+		return ``
+	}
+	return fmt.Sprintf(`<img id="img%s" style="margin: 10px 0px;" src=""> 
+			<textarea style="display:none" class="form-control" id="%[1]s"></textarea>
+			<button type="button" class="btn btn-primary" onClick="openImageEditor('img%[1]s', '%[1]s', '1/1', '100', '100');">
+			<i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>`, id)
 }
 
 func StateVal(vars *map[string]string, pars ...string) string {
