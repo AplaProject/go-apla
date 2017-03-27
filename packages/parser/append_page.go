@@ -25,7 +25,7 @@ import (
 
 func (p *Parser) AppendPageInit() error {
 
-	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -62,7 +62,9 @@ func (p *Parser) AppendPageFront() error {
 		return p.ErrInfo("incorrect sign")
 	}
 	if err = p.AccessChange(`pages`, p.TxMaps.String["name"]); err != nil {
-		return p.ErrInfo(err)
+		if p.AccessRights(`changing_page`, false) != nil {
+			return err
+		}
 	}
 	return nil
 }
