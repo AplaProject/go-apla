@@ -19,12 +19,13 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (p *Parser) EditMenuInit() error {
 
-	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -60,9 +61,15 @@ func (p *Parser) EditMenuFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err = p.AccessChange(`menu`, p.TxMaps.String["name"]); err != nil {
-		if err = p.AccessRights(`changing_menu`, false); err != nil {
+	if len(p.TxMap["conditions"]) > 0 {
+		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
 			return p.ErrInfo(err)
+		}
+	}
+
+	if err = p.AccessChange(`menu`, p.TxMaps.String["name"]); err != nil {
+		if p.AccessRights(`changing_menu`, false) != nil {
+			return err
 		}
 	}
 

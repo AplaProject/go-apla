@@ -23,7 +23,7 @@ import (
 
 func (p *Parser) AppendMenuInit() error {
 
-	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
+	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -60,7 +60,9 @@ func (p *Parser) AppendMenuFront() error {
 		return p.ErrInfo("incorrect sign")
 	}
 	if err = p.AccessChange(`menu`, p.TxMaps.String["name"]); err != nil {
-		return p.ErrInfo(err)
+		if p.AccessRights(`changing_menu`, false) != nil {
+			return err
+		}
 	}
 	return nil
 }

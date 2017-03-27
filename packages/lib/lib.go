@@ -242,6 +242,14 @@ func FillLeft(slice []byte) []byte {
 	return append(make([]byte, 32-len(slice)), slice...)
 }
 
+// Fill the slice by zero at left if the size of the slice is less than 32.
+func FillLeft64(slice []byte) []byte {
+	if len(slice) >= 64 {
+		return slice
+	}
+	return append(make([]byte, 64-len(slice)), slice...)
+}
+
 // Function generate a random pair of ECDSA private and public keys.
 func GenKeys() (privKey string, pubKey string) {
 	private, _ := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
@@ -617,4 +625,52 @@ func Float2Bytes(float float64) []byte {
 
 func StripTags(value string) string {
 	return strings.Replace(strings.Replace(value, `<`, `&lt;`, -1), `>`, `&gt;`, -1)
+}
+
+func GetSharedKey(private, public []byte) (shared []byte, err error) {
+	pubkeyCurve := elliptic.P256()
+
+	private = FillLeft(private)
+	public = FillLeft(public)
+	pub := new(ecdsa.PublicKey)
+	pub.Curve = pubkeyCurve
+	pub.X = new(big.Int).SetBytes(public[0:32])
+	pub.Y = new(big.Int).SetBytes(public[32:])
+
+	bi := new(big.Int).SetBytes(private)
+	priv := new(ecdsa.PrivateKey)
+	priv.PublicKey.Curve = pubkeyCurve
+	priv.D = bi
+	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
+
+	if priv.Curve.IsOnCurve(pub.X, pub.Y) {
+		x, _ := pub.Curve.ScalarMult(pub.X, pub.Y, priv.D.Bytes())
+		key := sha256.Sum256([]byte(hex.EncodeToString(x.Bytes())))
+		shared = key[:]
+	} else {
+		err = fmt.Errorf("Not IsOnCurve")
+	}
+	return
+}
+
+func GetSharedHex(private, public string) (string, error) {
+	priv, err := hex.DecodeString(private)
+	if err != nil {
+		return ``, err
+	}
+	pub, err := hex.DecodeString(public)
+	if err != nil {
+		return ``, err
+	}
+	shared, err := GetSharedKey(priv, pub)
+	if err != nil {
+		return ``, err
+	}
+	return hex.EncodeToString(shared), nil
+}
+
+func GetShared(public string) (string, string, error) {
+	priv, pub := GenKeys()
+	shared, err := GetSharedHex(priv, public)
+	return shared, pub, err
 }

@@ -508,12 +508,14 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 }
 
 func (p *Parser) AccessChange(table, name string) error {
-	if p.TxStateID == 0 {
+	/*	if p.TxStateID == 0 {
 		return nil
+	}*/
+	prefix := `global`
+	if p.TxMaps.Int64["global"] == 0 {
+		prefix = p.TxStateIDStr
 	}
-
-	prefix := utils.Int64ToStr(int64(p.TxStateID))
-
+	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
 	if err != nil {
 		return err
@@ -527,6 +529,8 @@ func (p *Parser) AccessChange(table, name string) error {
 		if !ret {
 			return fmt.Errorf(`Access denied`)
 		}
+	} else {
+		return fmt.Errorf(`There is not conditions in %s`, prefix+`_`+table)
 	}
 	return nil
 }

@@ -184,7 +184,7 @@ func GetTx() {
 							if val, ok := txStates[state]; ok {
 								txTop.State = val
 							} else {
-								stateName, _ := utils.DB.Single(`select state_name from global_states_list where state_id=?`, state).String()
+								stateName, _ := utils.DB.Single(`select state_name from global_states_list where gstate_id=?`, state).String()
 								if len(stateName) > 0 {
 									txStates[state] = stateName
 									txTop.State = stateName

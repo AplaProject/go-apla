@@ -49,12 +49,12 @@ func (p *Parser) NewStateGlobal(country, currency string) error {
 		isGlobal = utils.InSliceString(`global_currencies_list`, list) && utils.InSliceString(`global_states_list`, list)
 	}
 	if isGlobal {
-		if id, err := utils.DB.Single(`select id from global_states_list where lower(state_name)=lower(?)`, country).Int64(); err != nil {
+		if id, err := utils.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`State %s already exists`, country)
 		}
-		if id, err := utils.DB.Single(`select id from global_currencies_list where lower(currency_code)=lower(?)`, currency).Int64(); err != nil {
+		if id, err := utils.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`Currency %s already exists`, currency)
@@ -152,7 +152,7 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 		"state_name", country, "", psid,
 		"gov_account", p.TxWalletID, "", psid,
 		"dlt_spending", p.TxWalletID, "", psid,
-		"state_flag", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyCAYAAACqNX6+AAAAwElEQVR4Xu3TQREAAAiEQK9/aWvsAxMw4O06ysAommCuINgTFKQgmAEMp4UUBDOA4bSQgmAGMJwWUhDMAIbTQgqCGcBwWkhBMAMYTgspCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBaSEEwAxhOCykIZgDDaSEFwQxgOC2kIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LKQhmAMNpIViQBxv1ADO4LcKOAAAAAElFTkSuQmCC", "", psid,
+		"state_flag", "", "", psid,
 		"state_coords", ``, "", psid,
 		"citizenship_price", "1000000", "", psid)
 	if err != nil {
@@ -262,8 +262,32 @@ IfEnd:
 PageEnd:
 `, `menu_default`, sid,
 
-		`government`, `Title : 
+		`government`, `FullScreen(1)
 
+If(StateVal(type_office))
+Else:
+Title : Basic Apps
+Divs: col-md-4
+		Divs: panel panel-default elastic
+			Divs: panel-body text-center fill-area flexbox-item-grow
+				Divs: flexbox-item-grow flex-center
+					Divs: pv-lg
+					Image("/static/img/apps/money.png", Basic, center-block img-responsive img-circle img-thumbnail thumb96 )
+					DivsEnd:
+					P(h4,Basic Apps)
+					P(text-left,"Election and Assign, Polling, Messenger, Simple Money System")
+				DivsEnd:
+			DivsEnd:
+			Divs: panel-footer
+				Divs: clearfix
+					Divs: pull-right
+						BtnPage(app-basic, Install,'',btn btn-primary lang)
+					DivsEnd:
+				DivsEnd:
+			DivsEnd:
+		DivsEnd:
+	DivsEnd:
+IfEnd:
 PageEnd:
 `, `government`, sid,
 	)
@@ -376,7 +400,7 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	if isGlobal {
-		_, err = p.selectiveLoggingAndUpd([]string{"stateId", "state_name"},
+		_, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name"},
 			[]interface{}{id, country}, "global_states_list", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)

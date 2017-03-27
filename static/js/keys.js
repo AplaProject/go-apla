@@ -210,76 +210,56 @@ function do_phrase(count) {
 	return false;//do_generate();
 }
 
-
-function derive() {
-	console.log('start');
-	var private = 'f59d89d161b7ef26d499d5d896a06c03da6cea2bedbb078610fc4551c937ee9c';
-	var public = '041a3a4db29ce0b6b1393b025e8f0e37733f79ff6c33bed36cf84e1b21ff40d3860f1456bfa1c43e14e8c4b692ee619de7bf599db5063663ae028d0e9c7c680baa';
-
-	var curve = 'secp256r1';//f1.curve1.value;
-	var ec = new KJUR.crypto.ECDSA({ "curve": curve });
-
-	var par = ec.GenKeyPairHex();
-	priv2 = par['ecprvhex'];
-	pub2 = par['ecpubhex'];
-
-	var e = new elliptic.ec('p256');
-	//	ecdsa = e.genKeyPair();
-	ecdsa = e.keyFromPrivate(private, 'hex');
-	//e.getPublic();
-	console.log('KEY', private, public, ecdsa, ecdsa.getPublic('hex'));
-
-	var e = new elliptic.ec('p256');
-	//	ecdsa = e.genKeyPair();
-	ecdsa2 = e.keyFromPrivate(priv2, 'hex');
-	console.log('KEY2', priv2, pub2);
-
-	var test = ecdsa2.derive(ecdsa.getPublic());
-
-	var q = test.toString(16);
-	var bytes = [];
-	var str = '';
-	for (var i = 0; i < 4/*q.length*/; i += 2) {
-		var byte = parseInt(q.substring(i, i + 2), 16);
-		/*if (byte > 127) {
-			byte = -(~byte & 0xFF) - 1;
-		}*/
-		bytes.push(byte);
-		str += String.fromCharCode(byte);
+function bin2hex(input) {
+	var out = '';
+	var ch = '';
+	for (var i = 0; i < input.length; i++) {
+		ch = input.charCodeAt(i).toString(16)
+		out += ch.length == 1 ? "0" + ch : ch;
 	}
-	//	console.log('str', str, '=', String.fromCharCode(160));
-	var hash = CryptoJS.SHA256(str);
+	return out;
+}
 
-	var hash1 = CryptoJS.SHA256(test);
-	var hash2 = CryptoJS.SHA256(test.toString(16));
-	var hash3 = CryptoJS.SHA256('message');
-	console.log('hash', hash2.toString(CryptoJS.enc.Hex), hash.toString(CryptoJS.enc.Hex));
-	console.log('hash3', hash3.toString(CryptoJS.enc.Hex));
-	console.log('assert test', test.toString(16));
+function hex2bin(input) {
+	var out = '';
+	for (i = 0; i < input.length; i += 2) {
+		var num = parseInt(input.substr(i, 2), 16);
+		out += String.fromCharCode(num);
+	}
+	return out;
+}
 
+// private & public must be in hex encoding
+function getShared(private, public) {
+	var e = new elliptic.ec('p256');
+	var priv = e.keyFromPrivate(private, 'hex');
+	var pub = e.keyFromPublic(public, 'hex')
 
-	var ecdh = new elliptic.ec('p256');
-	//	var s1 = ecdh.genKeyPair();
-	var s2 = ecdh.genKeyPair();
-	//	var sh1 = s1.derive(s2.getPublic());
-	//	var sh2 = s2.derive(s1.getPublic());
-	var sh1 = ecdsa.derive(s2.getPublic());
-	var sh2 = s2.derive(ecdsa.getPublic());
-	//	console.log('S1', s1, s1.getPublic('hex'));
-	console.log('assert 0', sh1.toString(16), sh2.toString(16));
+	var shared = priv.derive(pub.getPublic());
+	return CryptoJS.SHA256(shared.toString(16)).toString(CryptoJS.enc.Hex);
+}
 
-	var sh1 = ecdsa.derive(ecdh.keyFromPublic(s2.getPublic('hex'), 'hex')
-		.getPublic());
-	var sh2 = s2.derive(ecdh.keyFromPublic(ecdsa.getPublic('hex'), 'hex')
-		.getPublic());
-	console.log('assert 1', sh1.toString(16), sh2.toString(16));
+// private must be in hex encoding
+function getDefaultShared(private, public) {
+	var e = new elliptic.ec('p256');
+	var def = e.keyFromPublic(public, 'hex');
+	return getShared(private, def.getPublic('hex'));
+}
 
-	var pub = ecdh.keyFromPublic(public, 'hex')
-
-	var sh1 = ecdsa.derive(ecdsa.getPublic());
-	var sh2 = ecdsa.derive(pub.getPublic());
-	//	console.log('S1', s1, s1.getPublic('hex'));
-	console.log('assert 2', sh1.toString(16), sh2.toString(16));
-};
-
-//derive();
+// private & text must be in hex encoding
+function decryptShared(private, text) {
+	var public = '04' + text.substr(0, 128);
+	var shared = getDefaultShared(private, public);
+	var input = hex2bin(text);
+	iv = input.substr(0, 16);
+	encText = input.substr(64);
+	cipherParams = CryptoJS.lib.CipherParams.create({
+		ciphertext: CryptoJS.enc.Hex.parse(bin2hex(encText))
+	});
+	pass = CryptoJS.enc.Hex.parse(shared);
+	var decrypted = CryptoJS.AES.decrypt(cipherParams, pass,
+		{
+			mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Hex.parse(bin2hex(iv))
+		});
+	return decrypted.toString(CryptoJS.enc.Hex);
+}

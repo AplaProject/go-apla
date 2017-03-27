@@ -142,14 +142,14 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 		errFunc(`Currency cannot be empty`)
 		return
 	}
-	if id, err := utils.DB.Single(`select id from global_states_list where lower(state_name)=lower(?)`, country).Int64(); err != nil {
+	if id, err := utils.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
 		errFunc(err.Error())
 		return
 	} else if id > 0 {
 		errFunc(fmt.Sprintf(`State %s already exists`, country))
 		return
 	}
-	if id, err := utils.DB.Single(`select id from global_currencies_list where lower(currency_code)=lower(?)`, currency).Int64(); err != nil {
+	if id, err := utils.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
 		errFunc(err.Error())
 		return
 	} else if id > 0 {
@@ -292,7 +292,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	if state == 0 {
 		message = `State parameter is not defined`
 	} else {
-		country, err = utils.DB.Single(`select state_name from global_states_list where state_id=?`, state).String()
+		country, err = utils.DB.Single(`select state_name from global_states_list where gstate_id=?`, state).String()
 		if err != nil {
 			message = err.Error()
 		} else if len(country) == 0 {
