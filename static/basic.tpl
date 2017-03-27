@@ -1726,7 +1726,7 @@ Navigation(LiTemplate(dashboard_default, Citizen))
 Divs(md-4, panel panel-default elastic center)
     Divs: panel-body
     SetVar(flag=StateVal(state_flag))
-        If(#flag#="")
+        If(#flag#=="")
              BtnPage(sys-editStateParameters,Upload Flag,"name:'state_flag'",btn btn-primary radius-tl-clear radius-tr-clear)
         Else:
             Image(#flag#, Flag, img-responsive)
