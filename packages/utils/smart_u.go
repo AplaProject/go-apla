@@ -1179,19 +1179,32 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	width := 100
+	height := 100
 	ratio := `1/1`
 	if len(pars) > 1 {
 		width = StrToInt(pars[1])
 	}
 	if len(pars) > 2 {
+		var w, h int
 		if lr := strings.Split(pars[2], `/`); len(lr) == 2 {
-			ratio = fmt.Sprintf(`%d/%d`, StrToInt(lr[0]), StrToInt(lr[1]))
+			w, h = StrToInt(lr[0]), StrToInt(lr[1])
+			height = int(width * w / h)
+		} else {
+			height = StrToInt(pars[2])
+			w, h = width, height
+			for _, i := range []int{2, 3, 5, 7} {
+				for (w%i) == 0 && (h%i) == 0 {
+					w = w / i
+					h = h / i
+				}
+			}
 		}
+		ratio = fmt.Sprintf(`%d/%d`, w, h)
 	}
 	return fmt.Sprintf(`<img id="img%s" style="margin: 10px 0px;" src=""> 
 			<textarea style="display:none" class="form-control" id="%[1]s"></textarea>
-			<button type="button" class="btn btn-primary" onClick="openImageEditor('img%[1]s', '%[1]s', '%s', '%d', '100');">
-			<i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>`, id, ratio, width)
+			<button type="button" class="btn btn-primary" onClick="openImageEditor('img%[1]s', '%[1]s', '%s', '%d', '%d');">
+			<i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>`, id, ratio, width, height)
 }
 
 func StateVal(vars *map[string]string, pars ...string) string {
