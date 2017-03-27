@@ -1775,7 +1775,7 @@ IfEnd:
 Divs(col-md-4, panel panel-info elastic center)
     Div(panel-heading, Recognized as the number of UN members)
     Divs: panel-body
-        Ring(GetOne(id, global_states_list,gstate_id=#state_id#), 20, 100, 3, "5d9cec", "656565", 150)
+        Ring(GetOne(num_votes, global_states_list,gstate_id=#state_id#), 20, 100, 3, "5d9cec", "656565", 150)
     DivsEnd:
 DivsEnd:
 
