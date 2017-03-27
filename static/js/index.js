@@ -1589,7 +1589,9 @@ $(document).ready(function () {
 						cont.find(".more").parent().show();
 					}
 					
-					$("#notificationCount").addClass("label label-danger").html(pts);
+					if (pts !== 0) {
+						$("#notificationCount").addClass("label label-danger").html(pts);
+					}
 				}
 			}
 			if ($("[data-count]").length) {
