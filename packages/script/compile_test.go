@@ -246,7 +246,7 @@ func TestVMCompile(t *testing.T) {
 
 	for ikey, item := range test {
 		source := []rune(item.Input)
-		if err := vm.Compile(source, uint32(ikey)+22); err != nil {
+		if err := vm.Compile(source, uint32(ikey)+22, true, 1); err != nil {
 			t.Error(err)
 		} else {
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
