@@ -79,7 +79,7 @@ func (p *Parser) EditMenuFront() error {
 func (p *Parser) EditMenu() error {
 
 	prefix := p.TxStateIDStr
-	if p.TxMaps.String["global"] == "1" {
+	if p.TxMaps.Int64["global"] == 1 {
 		prefix = "global"
 	}
 	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_menu", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
