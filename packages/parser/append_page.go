@@ -72,7 +72,7 @@ func (p *Parser) AppendPageFront() error {
 func (p *Parser) AppendPage() error {
 
 	prefix := p.TxStateIDStr
-	if p.TxMaps.String["global"] == "1" {
+	if p.TxMaps.Int64["global"] == 1 {
 		prefix = "global"
 	}
 	log.Debug("value page", p.TxMaps.String["value"])
