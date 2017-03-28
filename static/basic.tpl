@@ -1315,34 +1315,35 @@ SetVar(Stop = BtnContract(RF_VotingStop, <b>$Stp$</b>,Stop Voting,"ReferendumId:
 SetVar(Delete = BtnContract(RF_VotingDel, <b>$Del$</b>,Delete Voting,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_List))
 SetVar(Start = BtnContract(RF_VotingStart, <b>$Strt$</b>,Start Voting,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_List))
 
-
 Divs(md-12, panel panel-default data-sweet-alert)
-    Divs(panel-heading)
-        Divs(panel-title text-center)
-
-    Table{
-         Table: #state_id#_rf_referendums
-         Order: #id# DESC
-         Where: #status#!=2
-         Class: table-responsivee
-         Adaptive: 1
-      Columns: [[$Iss$, #issue#],
-      [Type,P(h4,If(#type#==2,Q,V))],
-      [$Strt$, P(h6,DateTime(#date_voting_start#, YYYY.MM.DD HH:MI))],
-	  [$Fnsh$, P(h6,DateTime(#date_voting_finish#, YYYY.MM.DD HH:MI))],
-	  [$Inf$,If(#type#==2,#ViewResultQues#,If(#number_votes# == 0, #number_votes#,If(#status#==1,#ViewResult#,BtnContract(RF_VotingResult, <b>$Vw$ #number_votes#</b>, Get Result,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_ViewResult,"ReferendumId:#id#, Back:0, Status:#status#"))))],
-	  [$Actn$, If(#CmpTime(#date_voting_start#, Now(datetime)) == 1,#Cancel#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1,#Stop#, #Delete#))],
-	  [$Res$,If(#CmpTime(#date_voting_start#, Now(datetime)) == 1, - , If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1, $Contin$, If(#status# == 1, If(#result#==1,$Y$,$N$), $Fnshd$)))]]
-     }
-     
-        P(<br/>)
-        BtnPage(RF_NewIssue, <b>$NewVoting$</b>,"Status:0",btn btn-oval btn-info btn-lg md5 pd5)
-DivsEnd:
+    Divs(panel-body)
+        Divs(table-responsive)
+            Table{
+                Table: #state_id#_rf_referendums
+                Class: table-striped table-bordered table-hover data-role="table"
+                Order: #id# DESC
+                Where: #status#!=2
+                Adaptive: 1
+                Columns: [
+                    [$Iss$, #issue#],
+                    [Type,P(h4,If(#type#==2,Q,V))],
+                    [$Strt$, P(h6,DateTime(#date_voting_start#, YYYY.MM.DD HH:MI))],
+                    [$Fnsh$, P(h6,DateTime(#date_voting_finish#, YYYY.MM.DD HH:MI))],
+                    [$Inf$,If(#type#==2,#ViewResultQues#,If(#number_votes# == 0, #number_votes#,If(#status#==1,#ViewResult#,BtnContract(RF_VotingResult, <b>$Vw$ #number_votes#</b>, Get Result,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_ViewResult,"ReferendumId:#id#, Back:0, Status:#status#"))))],
+                    [$Actn$, If(#CmpTime(#date_voting_start#, Now(datetime)) == 1,#Cancel#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1,#Stop#, #Delete#))],
+                    [$Res$,If(#CmpTime(#date_voting_start#, Now(datetime)) == 1, - , If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1, $Contin$, If(#status# == 1, If(#result#==1,$Y$,$N$), $Fnshd$)))]
+                ]
+            }
+        DivsEnd:
+    DivsEnd:
+    Divs(panel-footer text-center)
+        BtnPage(RF_NewIssue, $NewVoting$,"Status:0",btn btn-oval btn-info btn-lg md5 pd5)
     DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_RF_NewIssue #= Title : $NewVoting$
-Navigation( LiTemplate(Government), $NewVoting$ )
+Navigation( LiTemplate(government), $NewVoting$ )
 
 Divs(md-6, panel panel-default data-sweet-alert)
     Div(panel-heading, Div(panel-title, $NewVoting$))
@@ -1434,66 +1435,79 @@ DivsEnd:
 
 PageEnd:`,
 `p_RF_UserList #= Title : $ListVotings$
+Navigation( LiTemplate(dashboard_default, Dashboard),$ListVotings$)
 
-Navigation( LiTemplate(dashboard_default, Dashboard),$QuestionList$)
+SetVar(VotingY = BtnContract(RF_Voting, Em(fa fa-thumbs-up text-muted), Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$Y$",template,RF_UserList))
+SetVar(VotingN = BtnContract(RF_Voting, Em(fa fa-thumbs-down text-muted), Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$N$",template,RF_UserList))
+SetVar(ViewResult = BtnPage(RF_ViewResult, Em(fa fa-eye), "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$"))
 
-SetVar(VotingY = BtnContract(RF_Voting, $Y$, Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-info',template,RF_UserList))
-SetVar(VotingN = BtnContract(RF_Voting, $N$, Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-info',template,RF_UserList))
-
-SetVar(ViewResult = BtnPage(RF_ViewResult, <strong>$Res$</strong>, "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1",btn btn-info btn-pill-right))
-
-SetVar(Voting = BtnPage(RF_UserVotingList, $Vote$, "ReferendumId:#id#",btn btn-primary btn-pill-right))
-
-SetVar(ChangeVoting = BtnPage(RF_UserVotingList, $Chng$, "ReferendumId:#id#",btn btn-pill-right))
-
-Divs(md-6, panel panel-default panel-body data-sweet-alert)
-
-If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now()  and type=1))
-
-GetList(vote,#state_id#_rf_votes,"referendum_id,choice",citizen_id=#citizen#,id)
-
-    Table{
-         Table: #state_id#_rf_referendums
-         Order: #date_voting_start# DESC 
-         Where: #status#!=2 and #date_voting_start# < now()  and type=1
-         
-      Columns: [[,If(ListVal(vote,#id#,referendum_id)>0,P(h4 text-muted, <span id="tr#id#">#issue#</span>),P(h4 text-primary, #issue#)) If(#status#==1, #ViewResult#, If(ListVal(vote,#id#,referendum_id)>0," ",#VotingY# #VotingN#))],
-        [,If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,P(h4 text-primary,$Y$),P(h4 text-danger,$N$)))]
-        ]
-     }
-Else:
-P(h6, No questions to polling yet.)
-IfEnd:
+Divs(md-12, panel panel-default elastic data-sweet-alert)
+    Divs(panel-body)
+        If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now()  and type=1))
+            Divs(table-responsive)
+                GetList(vote,#state_id#_rf_votes,"referendum_id,choice",citizen_id=#citizen#,id)
+                Table{
+                    Table: #state_id#_rf_referendums
+                    Class: table-striped table-bordered table-hover data-role="table"
+                    Order: #date_voting_start# DESC 
+                    Where: #status#!=2 and #date_voting_start# < now()  and type=1
+                    Columns: [
+                        [
+                            Questions,
+                            If(ListVal(vote,#id#,referendum_id)>0, Tag(h4, <span id="tr#id#">#issue#</span>, panel-title text-muted d-inline-block mb0 wd-auto), Tag(h4, #issue#, panel-title text-primary d-inline-block mb0 wd-auto))
+                        ],
+                        [
+                            Action,
+                            If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,Tag(h4, $Y$, panel-title text-primary text-center mb0),Tag(h4, $N$, panel-title text-danger text-center mb0)),Div(text-center, If(ListVal(vote,#id#,referendum_id)>0," ", #VotingY# #VotingN#))), text-center align="center" width="150" style="min-width:150px"
+                        ],
+                        [
+                            Results,
+                            Div(text-center, If(ListVal(vote,#id#,referendum_id)>0, If(#status#==1, #ViewResult#, Tag(button, Em(fa fa-eye-slash), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled)), Tag(button, Em(fa fa-eye-slash), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled))), text-center align="center" width="50"
+                        ]
+                    ]
+                }
+            DivsEnd:
+        Else:
+            P(h6 text-center, No questions to polling yet.)
+        IfEnd:
+    DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_RF_UserQuestionList #= Title : $QuestionList$
 Navigation( LiTemplate(dashboard_default, Dashboard),$QuestionList$)
 
-SetVar(ViewResult = BtnPage(RF_ViewResultQuestions, <strong>$Res$</strong>, "ReferendumId:#id#,Back:1,Status:1",btn btn-info btn-pill-right))
-
-SetVar(Voting = BtnPage(RF_UserAns, $Ans$, "ReferendumId:#id#, Chng:0",btn btn-primary btn-pill-right))
-
-SetVar(ChangeVoting = BtnPage(RF_UserAns, $Chng$, "ReferendumId:#id#,Chng:1,VoteId:ListVal(vote,#id#,id)",btn btn-pill-right))
+SetVar(ViewResult = BtnPage(RF_ViewResultQuestions, Em(fa fa-eye), "ReferendumId:#id#,Back:1,Status:1",btn btn-green data-toggle="tooltip" data-trigger="hover" title="$Res$"))
+SetVar(Voting = BtnPage(RF_UserAns, Em(fa fa-pencil), "ReferendumId:#id#, Chng:0",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Ans$"))
+SetVar(ChangeVoting = BtnPage(RF_UserAns, Em(fa fa-edit), "ReferendumId:#id#,Chng:1,VoteId:ListVal(vote,#id#,id)",btn btn-default data-toggle="tooltip" data-trigger="hover" title="$Chng$"))
 
 GetList(vote,#state_id#_rf_votes,"referendum_id,answer,id",citizen_id=#citizen#,id)
 
-
-Divs(md-6, panel panel-default panel-body data-sweet-alert)
-
-If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now()  and type=2))
-
-    Table{
-         Table: #state_id#_rf_referendums
-         Order: #date_voting_start# DESC 
-         Where: #status#!=2 and #date_voting_start# < now() and #type#=2
-         
-      Columns: [[,If(ListVal(vote,#id#,referendum_id)>0,P(h4 text-muted, <span id="tr#id#">#issue#</span>) P(h4 text-primary, ListVal(vote,#id#,answer)), P(h4 text-primary, #issue#)) If(#status#==1, #ViewResult#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1,If(ListVal(vote,#id#,referendum_id)>0,#ChangeVoting#,#Voting#),))],
-        ]
-     }
-Else:
-P(h6, No questions yet.)
-IfEnd:
-
+Divs(md-12, panel panel-default elastic data-sweet-alert)
+    Divs(panel-body)
+        If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now() and type=2))
+            Divs(table-responsive)
+                Table {
+                    Table: #state_id#_rf_referendums
+                    Class: table-striped table-bordered table-hover data-role="table"
+                    Order: #date_voting_start# DESC
+                    Where: #status#!=2 and #date_voting_start# < now() and #type#=2
+                    Columns: [
+                        [
+                            Questions,
+                            If(ListVal(vote,#id#,referendum_id)>0, Tag(h4, <span id="tr#id#">#issue#</span>, text-muted mb0) P(text-muted mb0 mt-lg, ListVal(vote,#id#,answer)), Tag(h4, #issue#, panel-title text-primary mb0))
+                        ],
+                        [
+                            Action,
+                            If(#status#==1, #ViewResult#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1, If(ListVal(vote,#id#,referendum_id)>0, #ChangeVoting#, #Voting#))), text-center align="center" width="50"
+                        ]
+                    ]
+                }
+            DivsEnd:
+        Else:
+            P(h6 text-center, No questions yet.)
+        IfEnd:
+    DivsEnd:
 DivsEnd:
 
 PageEnd:`,
