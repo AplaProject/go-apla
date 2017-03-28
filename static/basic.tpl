@@ -1308,43 +1308,36 @@ DivsEnd:
 DivsEnd:
 PageEnd:`,
 `p_RF_NewIssue #= Title : $NewVoting$
-Navigation( LiTemplate(government), $NewVoting$ )
+Navigation( LiTemplate(Government), $NewVoting$ )
 
-Divs(md-6, panel panel-default panel-body data-sweet-alert)
-    Divs(panel-heading)
-        Divs(panel-title)
-        MarkDown: <h4>$NewVoting$</h4>
-          
+Divs(md-6, panel panel-default data-sweet-alert)
+    Div(panel-heading, Div(panel-title, $NewVoting$))
+    Divs(panel-body)
         Form()
-        Divs(form-group)
-            Label($EnterIssue$)
-            Textarea(Issue, form-control input-lg)
-        DivsEnd:
-        
-        Divs(form-group)
-            Label($TypeIssue$)
-            Select(Type,type_issue,form-control input-lg)
-        DivsEnd:
-        
-        Divs(form-group)
-            Label($DateStartVoting$)
-            InputDate(Date_start_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI))
-        DivsEnd:
-        Divs(form-group)
-            Label($DateFinishVoting$)
-            InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI,60 days))
-        DivsEnd:
-        
-       
-        Divs(text-right)
-
-            TxButton{ClassBtn:btn btn-primary btn-pill-right, Contract: RF_NewIssue,Name:$Save$,Inputs:"Issue=Issue,Type=Type,Date_start_voting=Date_start_voting,Date_stop_voting=Date_stop_voting", OnSuccess: "template,RF_List"}
-            
-            BtnPage(RF_List, $ListVotings$, "Status:1",btn btn-default btn-pill-left ml4)
-        DivsEnd:     
-        Div(clearfix)    
-         
-        FormEnd:   
+            Divs(form-group)
+                Label($EnterIssue$)
+                Textarea(Issue, form-control input-lg)
+            DivsEnd:
+            Divs(form-group)
+                Label($TypeIssue$)
+                Select(Type,type_issue,form-control input-lg)
+            DivsEnd:
+            Divs(form-group)
+                Label($DateStartVoting$)
+                InputDate(Date_start_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI))
+            DivsEnd:
+            Divs(form-group)
+                Label($DateFinishVoting$)
+                InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI,60 days))
+            DivsEnd:
+        FormEnd:
+    DivsEnd:
+    Divs(panel-footer)
+        Divs: clearfix
+            Divs: pull-right
+                BtnPage(RF_List, $ListVotings$, "Status:1",btn btn-default btn-pill-left ml4)
+                TxButton{ClassBtn:btn btn-primary btn-pill-right, Contract: RF_NewIssue,Name:$Save$,Inputs:"Issue=Issue,Type=Type,Date_start_voting=Date_start_voting,Date_stop_voting=Date_stop_voting", OnSuccess: "template,RF_List"}
+            DivsEnd:
         DivsEnd:
     DivsEnd:
 DivsEnd:
