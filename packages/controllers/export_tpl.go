@@ -580,7 +580,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			name : "%s",
 			menu: "%s",
 			value: $("#p_%[1]s").val(),
-			global: %d,
+			global: %[3]d,
 			conditions: $("#pc_%[1]s").val(),
 			}
 	   }`, ipage, menu, global))

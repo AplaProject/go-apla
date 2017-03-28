@@ -725,7 +725,7 @@ func action {
 
 	func action {
 	
-	DBUpdate(Table("rf_referendums"),$ReferendumId,"timestamp date_voting_finish,status",$block_time,0)
+	DBUpdate(Table("rf_referendums"),$ReferendumId,"timestamp date_voting_finish,status",$block_time,1)
 
 	}
 }`,
@@ -843,10 +843,42 @@ func action {
    action { 
 	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
    }
+}`,
+`sc_add_flag #= contract add_flag {
+    data {
+        flag string
+    }
+    conditions {
+        
+        CitizenCondition()
+    }
+
+    action {
+        
+       UpdateParam("state_flag", $flag, "ContractConditions(\"MainCondition\")")
+       DBUpdateExt("global_states_list", "gstate_id", $state, "state_flag", $flag)
+
+    }
 }`)
-TextHidden( sc_AddAccount, sc_AddCitizenAccount, sc_addMessage, sc_CentralBankConditions, sc_CitizenCondition, sc_CitizenDel, sc_DelMessage, sc_DisableAccount, sc_EditProfile, sc_GECandidateRegistration, sc_GenCitizen, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResult, sc_GV_NewPosition, sc_GV_PositionDismiss, sc_GV_Positions_Citizens, sc_MoneyTransfer, sc_RechargeAccount, sc_RF_NewIssue, sc_RF_SaveAns, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingDel, sc_RF_VotingResult, sc_RF_VotingStart, sc_RF_VotingStop, sc_SearchCitizen, sc_SendMoney, sc_SmartLaw_NumResultsVoting, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
-SetVar(`p_citizen_profile #= Title:Profile
-Navigation(LiTemplate(Citizen),Editing profile)
+TextHidden( sc_AddAccount, sc_AddCitizenAccount, sc_addMessage, sc_CentralBankConditions, sc_CitizenCondition, sc_CitizenDel, sc_DelMessage, sc_DisableAccount, sc_EditProfile, sc_GECandidateRegistration, sc_GenCitizen, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResult, sc_GV_NewPosition, sc_GV_PositionDismiss, sc_GV_Positions_Citizens, sc_MoneyTransfer, sc_RechargeAccount, sc_RF_NewIssue, sc_RF_SaveAns, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingDel, sc_RF_VotingResult, sc_RF_VotingStart, sc_RF_VotingStop, sc_SearchCitizen, sc_SendMoney, sc_SmartLaw_NumResultsVoting, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen,sc_add_flag)
+SetVar(`p_add_flag #= Title:Add Flag
+Navigation(LiTemplate(government),Editing profile)
+SetVar(flag=StateVal(state_flag))
+
+Divs(md-6, panel panel-default elastic data-sweet-alert)
+    Divs(panel-body)
+Form()
+
+ImageInput(flag,200,100)
+Textarea(flag, hidden, #flag#)
+TxButton{ClassBtn:btn btn-primary, Contract: add_flag,Name:Save,Inputs:"flag=flag", OnSuccess: "template,government"}
+
+FormEnd:
+    DivsEnd:
+DivsEnd:
+PageEnd:`,
+`p_citizen_profile #= Title:Profile
+Navigation(LiTemplate(dashboard_default, Dashboard),Editing profile)
 
 GetRow("user", #state_id#_citizens, "id", #citizen#)
 
@@ -857,11 +889,13 @@ Form()
         Label("Name")
         Input(FirstName, "form-control input-lg m-b",text,text, #user_name#)
     DivsEnd:
+    Divs(form-group)
+        Label("Image")
         Image(#user_avatar#)
-        ImageInput(Avatar,100,400)
+        ImageInput(Avatar,100,100)
         Textarea(Avatar,form-control hidden,#user_avatar#)
-        
-TxButton{ClassBtn:btn btn-primary, Contract:TXEditProfile,Name:Save, OnSuccess: "template,dashboard_default"}
+    DivsEnd:    
+TxButton{ClassBtn:btn btn-primary, Contract:TXEditProfile,Name:Save, OnSuccess: MenuReload()}
 
 FormEnd:
     DivsEnd:
@@ -1281,70 +1315,64 @@ SetVar(Stop = BtnContract(RF_VotingStop, <b>$Stp$</b>,Stop Voting,"ReferendumId:
 SetVar(Delete = BtnContract(RF_VotingDel, <b>$Del$</b>,Delete Voting,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_List))
 SetVar(Start = BtnContract(RF_VotingStart, <b>$Strt$</b>,Start Voting,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_List))
 
-
 Divs(md-12, panel panel-default data-sweet-alert)
-    Divs(panel-heading)
-        Divs(panel-title text-center)
-
-    Table{
-         Table: #state_id#_rf_referendums
-         Order: #id# DESC
-         Where: #status#!=2
-         Class: table-responsivee
-         Adaptive: 1
-      Columns: [[$Iss$, #issue#],
-      [Type,P(h4,If(#type#==2,Q,V))],
-      [$Strt$, P(h6,DateTime(#date_voting_start#, YYYY.MM.DD HH:MI))],
-	  [$Fnsh$, P(h6,DateTime(#date_voting_finish#, YYYY.MM.DD HH:MI))],
-	  [$Inf$,If(#type#==2,#ViewResultQues#,If(#number_votes# == 0, #number_votes#,If(#status#==1,#ViewResult#,BtnContract(RF_VotingResult, <b>$Vw$ #number_votes#</b>, Get Result,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_ViewResult,"ReferendumId:#id#, Back:0, Status:#status#"))))],
-	  [$Actn$, If(#CmpTime(#date_voting_start#, Now(datetime)) == 1,#Cancel#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1,#Stop#, #Delete#))],
-	  [$Res$,If(#CmpTime(#date_voting_start#, Now(datetime)) == 1, - , If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1, $Contin$, If(#status# == 1, If(#result#==1,$Y$,$N$), $Fnshd$)))]]
-     }
-     
-        P(<br/>)
-        BtnPage(RF_NewIssue, <b>$NewVoting$</b>,"Status:0",btn btn-oval btn-info btn-lg md5 pd5)
-DivsEnd:
+    Divs(panel-body)
+        Divs(table-responsive)
+            Table{
+                Table: #state_id#_rf_referendums
+                Class: table-striped table-bordered table-hover data-role="table"
+                Order: #id# DESC
+                Where: #status#!=2
+                Adaptive: 1
+                Columns: [
+                    [$Iss$, #issue#],
+                    [Type,P(h4,If(#type#==2,Q,V))],
+                    [$Strt$, P(h6,DateTime(#date_voting_start#, YYYY.MM.DD HH:MI))],
+                    [$Fnsh$, P(h6,DateTime(#date_voting_finish#, YYYY.MM.DD HH:MI))],
+                    [$Inf$,If(#type#==2,#ViewResultQues#,If(#number_votes# == 0, #number_votes#,If(#status#==1,#ViewResult#,BtnContract(RF_VotingResult, <b>$Vw$ #number_votes#</b>, Get Result,"ReferendumId:#id#",'btn btn-primary btn-block',template,RF_ViewResult,"ReferendumId:#id#, Back:0, Status:#status#"))))],
+                    [$Actn$, If(#CmpTime(#date_voting_start#, Now(datetime)) == 1,#Cancel#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1,#Stop#, #Delete#))],
+                    [$Res$,If(#CmpTime(#date_voting_start#, Now(datetime)) == 1, - , If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1, $Contin$, If(#status# == 1, If(#result#==1,$Y$,$N$), $Fnshd$)))]
+                ]
+            }
+        DivsEnd:
+    DivsEnd:
+    Divs(panel-footer text-center)
+        BtnPage(RF_NewIssue, $NewVoting$,"Status:0",btn btn-oval btn-info btn-lg md5 pd5)
     DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_RF_NewIssue #= Title : $NewVoting$
 Navigation( LiTemplate(government), $NewVoting$ )
 
-Divs(md-6, panel panel-default panel-body data-sweet-alert)
-    Divs(panel-heading)
-        Divs(panel-title)
-        MarkDown: <h4>$NewVoting$</h4>
-          
+Divs(md-6, panel panel-default data-sweet-alert)
+    Div(panel-heading, Div(panel-title, $NewVoting$))
+    Divs(panel-body)
         Form()
-        Divs(form-group)
-            Label($EnterIssue$)
-            Textarea(Issue, form-control input-lg)
-        DivsEnd:
-        
-        Divs(form-group)
-            Label($TypeIssue$)
-            Select(Type,type_issue,form-control input-lg)
-        DivsEnd:
-        
-        Divs(form-group)
-            Label($DateStartVoting$)
-            InputDate(Date_start_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI))
-        DivsEnd:
-        Divs(form-group)
-            Label($DateFinishVoting$)
-            InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI,60 days))
-        DivsEnd:
-        
-       
-        Divs(text-right)
-
-            TxButton{ClassBtn:btn btn-primary btn-pill-right, Contract: RF_NewIssue,Name:$Save$,Inputs:"Issue=Issue,Type=Type,Date_start_voting=Date_start_voting,Date_stop_voting=Date_stop_voting", OnSuccess: "template,RF_List"}
-            
-            BtnPage(RF_List, $ListVotings$, "Status:1",btn btn-default btn-pill-left ml4)
-        DivsEnd:     
-        Div(clearfix)    
-         
-        FormEnd:   
+            Divs(form-group)
+                Label($EnterIssue$)
+                Textarea(Issue, form-control input-lg)
+            DivsEnd:
+            Divs(form-group)
+                Label($TypeIssue$)
+                Select(Type,type_issue,form-control input-lg)
+            DivsEnd:
+            Divs(form-group)
+                Label($DateStartVoting$)
+                InputDate(Date_start_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI))
+            DivsEnd:
+            Divs(form-group)
+                Label($DateFinishVoting$)
+                InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD HH:MI,60 days))
+            DivsEnd:
+        FormEnd:
+    DivsEnd:
+    Divs(panel-footer)
+        Divs: clearfix
+            Divs: pull-right
+                BtnPage(RF_List, $ListVotings$, "Status:1",btn btn-default btn-pill-left ml4)
+                TxButton{ClassBtn:btn btn-primary btn-pill-right, Contract: RF_NewIssue,Name:$Save$,Inputs:"Issue=Issue,Type=Type,Date_start_voting=Date_start_voting,Date_stop_voting=Date_stop_voting", OnSuccess: "template,RF_List"}
+            DivsEnd:
         DivsEnd:
     DivsEnd:
 DivsEnd:
@@ -1407,66 +1435,79 @@ DivsEnd:
 
 PageEnd:`,
 `p_RF_UserList #= Title : $ListVotings$
+Navigation( LiTemplate(dashboard_default, Dashboard),$ListVotings$)
 
-Navigation( LiTemplate(dashboard_default, Dashboard),$QuestionList$)
+SetVar(VotingY = BtnContract(RF_Voting, Em(fa fa-thumbs-up text-muted), Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$Y$",template,RF_UserList))
+SetVar(VotingN = BtnContract(RF_Voting, Em(fa fa-thumbs-down text-muted), Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$N$",template,RF_UserList))
+SetVar(ViewResult = BtnPage(RF_ViewResult, Em(fa fa-eye), "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$"))
 
-SetVar(VotingY = BtnContract(RF_Voting, $Y$, Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-info',template,RF_UserList))
-SetVar(VotingN = BtnContract(RF_Voting, $N$, Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-info',template,RF_UserList))
-
-SetVar(ViewResult = BtnPage(RF_ViewResult, <strong>$Res$</strong>, "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1",btn btn-info btn-pill-right))
-
-SetVar(Voting = BtnPage(RF_UserVotingList, $Vote$, "ReferendumId:#id#",btn btn-primary btn-pill-right))
-
-SetVar(ChangeVoting = BtnPage(RF_UserVotingList, $Chng$, "ReferendumId:#id#",btn btn-pill-right))
-
-Divs(md-6, panel panel-default panel-body data-sweet-alert)
-
-If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now()  and type=1))
-
-GetList(vote,#state_id#_rf_votes,"referendum_id,choice",citizen_id=#citizen#,id)
-
-    Table{
-         Table: #state_id#_rf_referendums
-         Order: #date_voting_start# DESC 
-         Where: #status#!=2 and #date_voting_start# < now()  and type=1
-         
-      Columns: [[,If(ListVal(vote,#id#,referendum_id)>0,P(h4 text-muted, <span id="tr#id#">#issue#</span>),P(h4 text-primary, #issue#)) If(#status#==1, #ViewResult#, If(ListVal(vote,#id#,referendum_id)>0," ",#VotingY# #VotingN#))],
-        [,If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,P(h4 text-primary,$Y$),P(h4 text-danger,$N$)))]
-        ]
-     }
-Else:
-P(h6, No questions to polling yet.)
-IfEnd:
+Divs(md-12, panel panel-default elastic data-sweet-alert)
+    Divs(panel-body)
+        If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now()  and type=1))
+            Divs(table-responsive)
+                GetList(vote,#state_id#_rf_votes,"referendum_id,choice",citizen_id=#citizen#,id)
+                Table{
+                    Table: #state_id#_rf_referendums
+                    Class: table-striped table-bordered table-hover data-role="table"
+                    Order: #date_voting_start# DESC 
+                    Where: #status#!=2 and #date_voting_start# < now()  and type=1
+                    Columns: [
+                        [
+                            Questions,
+                            If(ListVal(vote,#id#,referendum_id)>0, Tag(h4, <span id="tr#id#">#issue#</span>, panel-title text-muted d-inline-block mb0 wd-auto), Tag(h4, #issue#, panel-title text-primary d-inline-block mb0 wd-auto))
+                        ],
+                        [
+                            Action,
+                            If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,Tag(h4, $Y$, panel-title text-primary text-center mb0),Tag(h4, $N$, panel-title text-danger text-center mb0)),Div(text-center, If(ListVal(vote,#id#,referendum_id)>0," ", #VotingY# #VotingN#))), text-center align="center" width="150" style="min-width:150px"
+                        ],
+                        [
+                            Results,
+                            Div(text-center, If(ListVal(vote,#id#,referendum_id)>0, If(#status#==1, #ViewResult#, Tag(button, Em(fa fa-eye-slash), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled)), Tag(button, Em(fa fa-eye-slash), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled))), text-center align="center" width="50"
+                        ]
+                    ]
+                }
+            DivsEnd:
+        Else:
+            P(h6 text-center, No questions to polling yet.)
+        IfEnd:
+    DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_RF_UserQuestionList #= Title : $QuestionList$
 Navigation( LiTemplate(dashboard_default, Dashboard),$QuestionList$)
 
-SetVar(ViewResult = BtnPage(RF_ViewResultQuestions, <strong>$Res$</strong>, "ReferendumId:#id#,Back:1,Status:1",btn btn-info btn-pill-right))
-
-SetVar(Voting = BtnPage(RF_UserAns, $Ans$, "ReferendumId:#id#, Chng:0",btn btn-primary btn-pill-right))
-
-SetVar(ChangeVoting = BtnPage(RF_UserAns, $Chng$, "ReferendumId:#id#,Chng:1,VoteId:ListVal(vote,#id#,id)",btn btn-pill-right))
+SetVar(ViewResult = BtnPage(RF_ViewResultQuestions, Em(fa fa-eye), "ReferendumId:#id#,Back:1,Status:1",btn btn-green data-toggle="tooltip" data-trigger="hover" title="$Res$"))
+SetVar(Voting = BtnPage(RF_UserAns, Em(fa fa-pencil), "ReferendumId:#id#, Chng:0",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Ans$"))
+SetVar(ChangeVoting = BtnPage(RF_UserAns, Em(fa fa-edit), "ReferendumId:#id#,Chng:1,VoteId:ListVal(vote,#id#,id)",btn btn-default data-toggle="tooltip" data-trigger="hover" title="$Chng$"))
 
 GetList(vote,#state_id#_rf_votes,"referendum_id,answer,id",citizen_id=#citizen#,id)
 
-
-Divs(md-6, panel panel-default panel-body data-sweet-alert)
-
-If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now()  and type=2))
-
-    Table{
-         Table: #state_id#_rf_referendums
-         Order: #date_voting_start# DESC 
-         Where: #status#!=2 and #date_voting_start# < now() and #type#=2
-         
-      Columns: [[,If(ListVal(vote,#id#,referendum_id)>0,P(h4 text-muted, <span id="tr#id#">#issue#</span>) P(h4 text-primary, ListVal(vote,#id#,answer)), P(h4 text-primary, #issue#)) If(#status#==1, #ViewResult#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1,If(ListVal(vote,#id#,referendum_id)>0,#ChangeVoting#,#Voting#),))],
-        ]
-     }
-Else:
-P(h6, No questions yet.)
-IfEnd:
-
+Divs(md-12, panel panel-default elastic data-sweet-alert)
+    Divs(panel-body)
+        If(GetOne(id, #state_id#_rf_referendums,status!=2 and date_voting_start < now() and type=2))
+            Divs(table-responsive)
+                Table {
+                    Table: #state_id#_rf_referendums
+                    Class: table-striped table-bordered table-hover data-role="table"
+                    Order: #date_voting_start# DESC
+                    Where: #status#!=2 and #date_voting_start# < now() and #type#=2
+                    Columns: [
+                        [
+                            Questions,
+                            If(ListVal(vote,#id#,referendum_id)>0, Tag(h4, <span id="tr#id#">#issue#</span>, text-muted mb0) P(text-muted mb0 mt-lg, ListVal(vote,#id#,answer)), Tag(h4, #issue#, panel-title text-primary mb0))
+                        ],
+                        [
+                            Action,
+                            If(#status#==1, #ViewResult#, If(#CmpTime(#date_voting_finish#, Now(datetime)) == 1, If(ListVal(vote,#id#,referendum_id)>0, #ChangeVoting#, #Voting#))), text-center align="center" width="50"
+                        ]
+                    ]
+                }
+            DivsEnd:
+        Else:
+            P(h6 text-center, No questions yet.)
+        IfEnd:
+    DivsEnd:
 DivsEnd:
 
 PageEnd:`,
@@ -1606,7 +1647,7 @@ Divs(md-12)
 DivsEnd:
  
 PageEnd:`)
-TextHidden( p_citizen_profile, p_CitizenInfo, p_citizens, p_GECampaigns, p_GECandidateRegistration, p_GECanditatesView, p_GEElections, p_GENewCampaign, p_GEVoting, p_GEVotingResalt, p_gov_administration, p_RF_List, p_RF_NewIssue, p_RF_Result, p_RF_UserAns, p_RF_UserList, p_RF_UserQuestionList, p_RF_ViewResult, p_RF_ViewResultQuestions, p_StateInfo)
+TextHidden( p_add_flag, p_citizen_profile, p_CitizenInfo, p_citizens, p_GECampaigns, p_GECandidateRegistration, p_GECanditatesView, p_GEElections, p_GENewCampaign, p_GEVoting, p_GEVotingResalt, p_gov_administration, p_RF_List, p_RF_NewIssue, p_RF_Result, p_RF_UserAns, p_RF_UserList, p_RF_UserQuestionList, p_RF_ViewResult, p_RF_ViewResultQuestions, p_StateInfo)
 SetVar()
 TextHidden( )
 SetVar(`pa_type_issue #= voting,question`,
@@ -1737,14 +1778,13 @@ Divs(md-8, panel panel-primary elastic data-sweet-alert)
             DivsEnd:
     DivsEnd:
 DivsEnd:`,
-`ap_government #= Title : Government 
-Navigation(LiTemplate(dashboard_default, Citizen))
+`ap_government #= Navigation(LiTemplate(dashboard_default, Citizen))
 
 Divs(md-4, panel panel-default elastic center)
     Divs: panel-body
     SetVar(flag=StateVal(state_flag))
         If(#flag#=="")
-             BtnPage(sys-editStateParameters,Upload Flag,"name:'state_flag'",btn btn-primary radius-tl-clear radius-tr-clear)
+             BtnPage(add_flag,Upload Flag,"name:'state_flag'",btn btn-primary radius-tl-clear radius-tr-clear)
         Else:
             Image(#flag#, Flag, img-responsive)
            
@@ -1900,33 +1940,40 @@ Divs(md-6, panel panel-default elastic data-sweet-alert)
 DivsEnd:
 
 Divs(md-6, panel panel-default elastic data-sweet-alert)
-    Div(panel-heading, Div(panel-title, Polling))
+    Div(panel-heading, Div(panel-title, Polling<span id='voting'></span>))
     Divs(panel-body)
         Divs(table-responsive)
             GetList(vote,global_glrf_votes,"referendum_id,choice",state_id=#state_id#,id)
-            Table {
-                Table: global_glrf_referendums
-                Order: #date_voting_start# DESC 
-                Where: #status#!=2 and #date_voting_start# < now()  and type=1
-                Columns: [
-                    [Questions,If(ListVal(vote,#id#,referendum_id)>0,Tag(h4, <span id="tr#id#">#issue#</span>, panel-title text-muted d-inline-block mb0 wd-auto),Tag(h4, #issue#, panel-title text-primary d-inline-block mb0 wd-auto))
-                    ],
-                    [Action,If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,Tag(h4, $Y$, panel-title text-primary text-center mb0),Tag(h4, $N$, panel-title text-danger text-center mb0)),Div(text-center, If(ListVal(vote,#id#,referendum_id)>0," ",BtnContract(@glrf_Voting, Em(fa fa-thumbs-up text-muted), Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$Y$")   BtnContract(@glrf_Voting, Em(fa fa-thumbs-down text-muted), Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$N$"))))
-                    ],
-                    [Results,If(ListVal(vote,#id#,referendum_id)>0,If(#status#==1, BtnPage(glrf_ViewResult, Em(fa fa-eye) Span('', ), "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1,global:1",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$")), Tag(button, Em(fa fa-eye-slash) Span('', ), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled))
-                    ]
-                ]
-            }
+     Table {
+         Table: global_glrf_referendums
+         Class: table-striped table-bordered table-hover data-role="table"
+         Order: #date_voting_start# DESC 
+         Where: #status#!=2 and #date_voting_start# < now()  and type=1
+         Columns: [
+             [
+                 Questions,
+                 If(ListVal(vote,#id#,referendum_id)>0,Tag(h4, <span id="tr#id#">#issue#</span>, panel-title text-muted d-inline-block mb0 wd-auto),Tag(h4, #issue#, panel-title text-primary d-inline-block mb0 wd-auto))
+             ],
+             [
+                 Action,
+                 If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,Tag(h4, $Y$, panel-title text-primary text-center mb0),Tag(h4, $N$, panel-title text-danger text-center mb0)),Div(text-center, If(ListVal(vote,#id#,referendum_id)>0," ",If(#status#==1,"no answer",BtnContract(@glrf_Voting, Em(fa fa-thumbs-up text-muted), Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$Y$")   BtnContract(@glrf_Voting, Em(fa fa-thumbs-down text-muted), Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$N$"))))), text-center align="center" width="150" style="min-width:150px"
+             ],
+             [
+                 Results,
+                 Div(text-center, If(#status#==1, BtnPage(glrf_ViewResult, Em(fa fa-eye), "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1,global:1",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$"), Tag(button, Em(fa fa-eye-slash), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled))), text-center align="center" width="50"
+             ]
+         ]
+     }
         DivsEnd:
     DivsEnd:
-     If(GetOne(admin, global_states_list, gstate_id=#state_id#))
-    Divs(panel-footer)
-        Divs: clearfix
-            Divs: pull-right
-                BtnPage(glrf_List, Polling ,global:1)
+    If(GetOne(admin, global_states_list, gstate_id=#state_id#))
+        Divs(panel-footer)
+            Divs: clearfix
+                Divs: pull-right
+                    BtnPage(glrf_List, Polling ,global:1)
+                DivsEnd:
             DivsEnd:
         DivsEnd:
-    DivsEnd:
     IfEnd:
 DivsEnd:`)
 TextHidden( ap_dashboard_default, ap_government)
@@ -1938,7 +1985,7 @@ MenuItem(New Polling,  RF_NewIssue)`,
 MenuItem(QuestionList, RF_UserQuestionList)
 MenuItem(Elections, GECampaigns)`)
 TextHidden( am_government, am_menu_default)
-SetVar(`l_lang #= {" ResultSoon":"{\"en\": \" Result will be soon\", \"nl\": \" Result will be soon\", \"ru\": \"Результат будет скоро\"}","Actn":"{\"en\": \"Actions\", \"nl\": \"Acties\", \"ru\": \"Действия\"}","Actual":"{\"en\": \"Actual\", \"nl\": \"Actueel\", \"ru\": \"Текущие\"}","Ans":"{\"en\": \"Answer\", \"nl\": \"Antwoord\", \"ru\": \"Ответить\"}","Cancel":"{\"en\": \"Cancel\", \"nl\": \"Annuleer\", \"ru\": \"Отменить\"}","Chng":"{\"en\": \"Change\", \"nl\": \"Wijzigen\", \"ru\": \"Изменить\"}","Confirm":"{\"en\": \"Confirm\", \"nl\": \"Bevestig\", \"ru\": \"Подтвердить\"}","Contin":"{\"en\": \"Continues\", \"nl\": \"Doorgaan\", \"ru\": \"Продолжаются\"}","Continues":"{\"en\": \"Continues\", \"nl\": \"Doorgaan\", \"ru\": \"Продолжаются\"}","DateFinishVoting":"{\"en\": \"Date Finish Voting\", \"nl\": \"Eind datum stem vraag\", \"ru\": \"Дата завершения голосования\"}","DateStartVoting":"{\"en\": \"Date Start Voting\", \"nl\": \"Begin datum stem vraag\", \"ru\": \"Дата начала голосования\"}","Del":"{\"en\": \"Delete\", \"nl\": \"Verwijdering\", \"ru\": \"Удалить\"}","EnterIssue":"{\"en\": \"Enter Issue\", \"nl\": \"Onderwerp\", \"ru\": \"Введите вопрос\"}","Finish":"{\"en\": \"Finish\", \"nl\": \"Einde\", \"ru\": \"Окончание\"}","Finished":"{\"en\": \"Finished\", \"nl\": \"Einde\", \"ru\": \"Завершено\"}","FinishedVotings":"{\"en\": \"Finished Votings\", \"nl\": \"Einde Stemmen\", \"ru\": \"Завершенные\"}","Fnsh":"{\"en\": \"Finish\", \"nl\": \"Einde\", \"ru\": \"Окончание\"}","Gender":"{\"en\": \"Gender\", \"ru\": \"Пол\"}","GetResult":"{\"en\": \"Get Result\", \"nl\": \"Haa resultaat op\", \"ru\": \"Получить результат\"}","GovernmentDashboard":"{\"en\": \"Government dashboard\", \"nl\": \"Land overzicht\", \"ru\": \"Панель государства\"}","Inf":"{\"en\": \"Info\", \"nl\": \"Info\", \"ru\": \"Информация\"}","Info":"{\"en\": \"Info\", \"nl\": \"Info\", \"ru\": \"Информация\"}","Iss":"{\"en\": \"Issue\", \"nl\": \"Onderwerp\", \"ru\": \"Вопрос\"}","Issue":"{\"en\": \"Issue\", \"nl\": \"Onderwerp\", \"ru\": \"Вопрос\"}","ListVotings":"{\"en\": \"List of Polling\", \"nl\": \"Stemlijst\", \"ru\": \"Опросы\"}","N":"{\"en\": \"No\", \"nl\": \"Nee\", \"ru\": \"Нет\"}","NewVoting":"{\"en\": \"New Polling\", \"nl\": \"Nieuwe vraag\", \"ru\": \"Новый опрос\"}","Next":"{\"en\": \"Next\", \"nl\": \"Naast\", \"ru\": \"Дальше\"}","No":"{\"en\": \"No\", \"nl\": \"Nee\", \"ru\": \"Нет\"}","NoAvailablePolls":"{\"en\": \"No Available Polls\", \"nl\": \"Geen beschikbare vragen\", \"ru\": \"Нет доступных голосований\"}","QuestionList":"{\"en\": \"Questions List\", \"nl\": \"Lijst van vragen\", \"ru\": \"Список вопросов\"}","Referendapartij":"{\"en\": \"Referendapartij\", \"nl\": \"stemNLwijzer.nl - directe democratie\", \"ru\": \"Referendapartij\"}","Res":"{\"en\": \"Result\", \"nl\": \"Resultaat\", \"ru\": \"Результат\"}","Result":"{\"en\": \"Result\", \"nl\": \"Resultaat\", \"ru\": \"Результат\"}","ResultSoon":"{\"en\": \" Result will be soon\", \"nl\": \" Result will be soon\", \"ru\": \"Результат будет скоро\"}","Save":"{\"en\": \"Save\", \"nl\": \"Bewaren\", \"ru\": \"Сохранить\"}","Start":"{\"en\": \"Start\", \"nl\": \"Sart\", \"ru\": \"Начало\"}","StartVote":"{\"en\": \"Start Vote\", \"nl\": \"Begin stemmen\", \"ru\": \"Начать голосование\"}","Stp":"{\"en\": \"Stop\", \"nl\": \"Stop\", \"ru\": \"Стоп\"}","Strt":"{\"en\": \"Start\", \"nl\": \"Sart\", \"ru\": \"Начало\"}","TotalVoted":"{\"en\": \"Total voted\", \"nl\": \"Aantal stemmen\", \"ru\": \"Всего проголосовало\"}","TypeIssue":"{\"en\": \"Type\", \"nl\": \"Type\", \"ru\": \"Тип опроса\"}","View":"{\"en\": \"View\", \"nl\": \"Uitzicht\", \"ru\": \"Смотреть\"}","Vote":"{\"en\": \"Vote\", \"nl\": \"Stemmen\", \"ru\": \"Голосовать\"}","Voting":"{\"en\": \"Voting\", \"nl\": \"Stemmen\", \"ru\": \"Голосование\"}","VotingFinished":"{\"en\": \" Voting finished\", \"nl\": \"Ende stemmen\", \"ru\": \"Голосование закончено\"}","Vw":"{\"en\": \"View\", \"nl\": \"Uitzicht\", \"ru\": \"Смотреть\"}","Welcome":"{\"en\": \"Welcome\", \"nl\": \"Welkom\", \"ru\": \"Добро пожаловать\"}","Y":"{\"en\": \"Yes\", \"nl\": \"Ja\", \"ru\": \"Да\"}","Yes":"{\"en\": \"Yes\", \"nl\": \"Ja\", \"ru\": \"Да\"}","YouVoted":"{\"en\": \"You voted for all available issues\", \"nl\": \"U stemt op alle beschikbare onderwerpen\", \"ru\": \"Вы проголосовали за все доступные вопросы\"}","YourAnswer":"{\"en\": \"Your Answer\", \"nl\": \"Uw antwoord\", \"ru\": \"Ваш ответ\"}","dateformat":"{\"en\": \"YYYY-MM-DD\", \"ru\": \"DD.MM.YYYY\"}","female":"{\"en\": \"Female\", \"ru\": \"Женский\"}","male":"{\"en\": \"Male\", \"ru\": \"Мужской\"}","qes1":"{\"en\": \"the first question \", \"nl\": \"De eerste vraag\"}","ques1":"{\"en\": \"the first question \", \"nl\": \"De eerste vraag\"}","timeformat":"{\"en\": \"YYYY-MM-DD HH:MI:SS\", \"ru\": \"DD.MM.YYYY HH:MI:SS\"}"}`)
+SetVar(`l_lang #= {" ResultSoon":"{\"en\": \" Result will be soon\", \"nl\": \" Result will be soon\", \"ru\": \"Результат будет скоро\"}","Actn":"{\"en\": \"Actions\", \"nl\": \"Acties\", \"ru\": \"Действия\"}","Actual":"{\"en\": \"Actual\", \"nl\": \"Actueel\", \"ru\": \"Текущие\"}","Ans":"{\"en\": \"Answer\", \"nl\": \"Antwoord\", \"ru\": \"Ответить\"}","Cancel":"{\"en\": \"Cancel\", \"nl\": \"Annuleer\", \"ru\": \"Отменить\"}","Chng":"{\"en\": \"Change\", \"nl\": \"Wijzigen\", \"ru\": \"Изменить\"}","Confirm":"{\"en\": \"Confirm\", \"nl\": \"Bevestig\", \"ru\": \"Подтвердить\"}","Contin":"{\"en\": \"Continues\", \"nl\": \"Doorgaan\", \"ru\": \"Продолжаются\"}","Continues":"{\"en\": \"Continues\", \"nl\": \"Doorgaan\", \"ru\": \"Продолжаются\"}","DateFinishVoting":"{\"en\": \"Date Finish Voting\", \"nl\": \"Eind datum stem vraag\", \"ru\": \"Дата завершения голосования\"}","DateStartVoting":"{\"en\": \"Date Start Voting\", \"nl\": \"Begin datum stem vraag\", \"ru\": \"Дата начала голосования\"}","Del":"{\"en\": \"Delete\", \"nl\": \"Verwijdering\", \"ru\": \"Удалить\"}","EnterIssue":"{\"en\": \"Enter Issue\", \"nl\": \"Onderwerp\", \"ru\": \"Введите вопрос\"}","Finish":"{\"en\": \"Finish\", \"nl\": \"Einde\", \"ru\": \"Окончание\"}","Finished":"{\"en\": \"Finished\", \"nl\": \"Einde\", \"ru\": \"Завершено\"}","FinishedVotings":"{\"en\": \"Finished Votings\", \"nl\": \"Einde Stemmen\", \"ru\": \"Завершенные\"}","Fnsh":"{\"en\": \"Finish\", \"nl\": \"Einde\", \"ru\": \"Окончание\"}","Fnshd":"{\"en\": \"Finished\", \"nl\": \"Einde\", \"ru\": \"Завершено\"}","Gender":"{\"en\": \"Gender\", \"ru\": \"Пол\"}","GetResult":"{\"en\": \"Get Result\", \"nl\": \"Haa resultaat op\", \"ru\": \"Получить результат\"}","GovernmentDashboard":"{\"en\": \"Government dashboard\", \"nl\": \"Land overzicht\", \"ru\": \"Панель государства\"}","Inf":"{\"en\": \"Info\", \"nl\": \"Info\", \"ru\": \"Информация\"}","Info":"{\"en\": \"Info\", \"nl\": \"Info\", \"ru\": \"Информация\"}","Iss":"{\"en\": \"Issue\", \"nl\": \"Onderwerp\", \"ru\": \"Вопрос\"}","Issue":"{\"en\": \"Issue\", \"nl\": \"Onderwerp\", \"ru\": \"Вопрос\"}","ListVotings":"{\"en\": \"List of Polling\", \"nl\": \"Stemlijst\", \"ru\": \"Опросы\"}","N":"{\"en\": \"No\", \"nl\": \"Nee\", \"ru\": \"Нет\"}","NewVoting":"{\"en\": \"New Polling\", \"nl\": \"Nieuwe vraag\", \"ru\": \"Новый опрос\"}","Next":"{\"en\": \"Next\", \"nl\": \"Naast\", \"ru\": \"Дальше\"}","No":"{\"en\": \"No\", \"nl\": \"Nee\", \"ru\": \"Нет\"}","NoAvailablePolls":"{\"en\": \"No Available Polls\", \"nl\": \"Geen beschikbare vragen\", \"ru\": \"Нет доступных голосований\"}","QuestionList":"{\"en\": \"Questions List\", \"nl\": \"Lijst van vragen\", \"ru\": \"Список вопросов\"}","Referendapartij":"{\"en\": \"Referendapartij\", \"nl\": \"stemNLwijzer.nl - directe democratie\", \"ru\": \"Referendapartij\"}","Res":"{\"en\": \"Result\", \"nl\": \"Resultaat\", \"ru\": \"Результат\"}","Result":"{\"en\": \"Result\", \"nl\": \"Resultaat\", \"ru\": \"Результат\"}","ResultSoon":"{\"en\": \" Result will be soon\", \"nl\": \" Result will be soon\", \"ru\": \"Результат будет скоро\"}","Save":"{\"en\": \"Save\", \"nl\": \"Bewaren\", \"ru\": \"Сохранить\"}","Start":"{\"en\": \"Start\", \"nl\": \"Sart\", \"ru\": \"Начало\"}","StartVote":"{\"en\": \"Start Vote\", \"nl\": \"Begin stemmen\", \"ru\": \"Начать голосование\"}","Stp":"{\"en\": \"Stop\", \"nl\": \"Stop\", \"ru\": \"Стоп\"}","Strt":"{\"en\": \"Start\", \"nl\": \"Sart\", \"ru\": \"Начало\"}","TotalVoted":"{\"en\": \"Total voted\", \"nl\": \"Aantal stemmen\", \"ru\": \"Всего проголосовало\"}","TypeIssue":"{\"en\": \"Type\", \"nl\": \"Type\", \"ru\": \"Тип опроса\"}","View":"{\"en\": \"View\", \"nl\": \"Uitzicht\", \"ru\": \"Смотреть\"}","Vote":"{\"en\": \"Vote\", \"nl\": \"Stemmen\", \"ru\": \"Голосовать\"}","Voting":"{\"en\": \"Voting\", \"nl\": \"Stemmen\", \"ru\": \"Голосование\"}","VotingFinished":"{\"en\": \" Voting finished\", \"nl\": \"Ende stemmen\", \"ru\": \"Голосование закончено\"}","Vw":"{\"en\": \"View\", \"nl\": \"Uitzicht\", \"ru\": \"Смотреть\"}","Welcome":"{\"en\": \"Welcome\", \"nl\": \"Welkom\", \"ru\": \"Добро пожаловать\"}","Y":"{\"en\": \"Yes\", \"nl\": \"Ja\", \"ru\": \"Да\"}","Yes":"{\"en\": \"Yes\", \"nl\": \"Ja\", \"ru\": \"Да\"}","YouVoted":"{\"en\": \"You voted for all available issues\", \"nl\": \"U stemt op alle beschikbare onderwerpen\", \"ru\": \"Вы проголосовали за все доступные вопросы\"}","YourAnswer":"{\"en\": \"Your Answer\", \"nl\": \"Uw antwoord\", \"ru\": \"Ваш ответ\"}","dateformat":"{\"en\": \"YYYY-MM-DD\", \"ru\": \"DD.MM.YYYY\"}","female":"{\"en\": \"Female\", \"ru\": \"Женский\"}","male":"{\"en\": \"Male\", \"ru\": \"Мужской\"}","qes1":"{\"en\": \"the first question \", \"nl\": \"De eerste vraag\"}","ques1":"{\"en\": \"the first question \", \"nl\": \"De eerste vraag\"}","timeformat":"{\"en\": \"YYYY-MM-DD HH:MI:SS\", \"ru\": \"DD.MM.YYYY HH:MI:SS\"}"}`)
 TextHidden(l_lang)
 Json(`Head: "Basic Apps",
 Desc: "Election and Assign, Polling, Messenger, Simple Money System",
@@ -3745,6 +3792,26 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
+		Forsign: 'global,name,value,conditions',
+		Data: {
+			type: "NewContract",
+			typeid: #type_new_contract_id#,
+			global: 0,
+			name: "add_flag",
+			value: $("#sc_add_flag").val(),
+			conditions: "ContractConditions(\"MainCondition\")"
+			}
+	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "add_flag"
+			}
+	   },
+{
 		Forsign: 'name,value,conditions',
 		Data: {
 			type: "NewStateParameters",
@@ -3771,6 +3838,18 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			typeid: #type_new_state_params_id#,
 			name : "state_description",
 			value: $("#pa_state_description").val(),
+			conditions: "ContractConditions(\"MainCondition\")",
+			}
+	   },
+{
+		Forsign: 'global,name,value,menu,conditions',
+		Data: {
+			type: "NewPage",
+			typeid: #type_new_page_id#,
+			name : "add_flag",
+			menu: "menu_default",
+			value: $("#p_add_flag").val(),
+			global: 0,
 			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   },

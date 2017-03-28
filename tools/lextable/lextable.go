@@ -29,18 +29,18 @@ type Action map[string][]string
 type States map[string]Action
 
 const (
-	ALPHASIZE = 32 // The length of alphabet
+	ALPHASIZE = 33 // The length of alphabet
 )
 
 var (
 	table [][ALPHASIZE]uint32
 	lexem = map[string]uint32{``: 0, `sys`: 1, `oper`: 2, `number`: 3, `ident`: 4, `newline`: 5, `string`: 6,
 		`comment`: 7}
-	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4}
+	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4, `skip`: 8}
 	alphabet = []byte{0x01, 0x0a, ' ', '`', '"', ';', '(', ')', '[', ']', '{', '}', '&',
 		'|', '#', '.', ',', '<', '>', '=', '!', '*', '$', '@',
 		//           default  n    s    q    Q
-		'+', '-', '/', '0', '1', 'a', '_', 128}
+		'+', '-', '/', '\\', '0', '1', 'a', '_', 128}
 	//													r
 	states = `{
 	"main": {
@@ -65,8 +65,12 @@ var (
 		},
 	"dstring": {
 			"Q": ["main", "string", "pop next"],
+			"\\": ["dslash", "", "skip"],			
 			"d": ["dstring", "", "next"]
 		},
+	"dslash": {
+		"d": ["dstring", "", "next"]
+	},		
 	"and": {
 			"&": ["main", "oper", "pop next"],
 			"d": ["error", "", ""]

@@ -43,6 +43,7 @@ const (
 	LEXF_NEXT = 1
 	LEXF_PUSH = 2
 	LEXF_POP  = 4
+	LEXF_SKIP = 8
 
 	// System characters
 	IS_LPAR   = 0x2801 // (
@@ -138,7 +139,7 @@ func LexParser(input []rune) (Lexems, error) {
 	}
 	length = uint32(len(input)) + 1
 	line = 1
-
+	skip := false
 	for off < length {
 		if off == length-1 {
 			todo(rune(' '))
@@ -149,6 +150,12 @@ func LexParser(input []rune) (Lexems, error) {
 			return nil, fmt.Errorf(`unknown lexem %s [Ln:%d Col:%d]`,
 				string(input[off:off+1]), line, off-offline+1)
 		}
+		if (flags & LEXF_SKIP) != 0 {
+			off++
+			skip = true
+			continue
+		}
+
 		if lexId > 0 {
 			lexOff := off
 			if (flags & LEXF_POP) != 0 {
@@ -171,6 +178,10 @@ func LexParser(input []rune) (Lexems, error) {
 				value = ch
 			case LEX_STRING, LEX_COMMENT:
 				value = string(input[lexOff+1 : right-1])
+				if lexId == LEX_STRING && skip {
+					skip = false
+					value = strings.Replace(value.(string), `\"`, `"`, -1)
+				}
 				for i, ch := range value.(string) {
 					if ch == 0xa {
 						line++
