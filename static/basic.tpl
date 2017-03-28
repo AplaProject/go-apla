@@ -725,7 +725,7 @@ func action {
 
 	func action {
 	
-	DBUpdate(Table("rf_referendums"),$ReferendumId,"timestamp date_voting_finish,status",$block_time,0)
+	DBUpdate(Table("rf_referendums"),$ReferendumId,"timestamp date_voting_finish,status",$block_time,1)
 
 	}
 }`,
@@ -843,10 +843,42 @@ func action {
    action { 
 	  DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", -1)
    }
+}`,
+`sc_add_flag #= contract add_flag {
+    data {
+        flag string
+    }
+    conditions {
+        
+        CitizenCondition()
+    }
+
+    action {
+        
+       UpdateParam("state_flag", $flag, "ContractConditions(\"MainCondition\")")
+       DBUpdateExt("global_states_list", "gstate_id", $state, "state_flag", $flag)
+
+    }
 }`)
-TextHidden( sc_AddAccount, sc_AddCitizenAccount, sc_addMessage, sc_CentralBankConditions, sc_CitizenCondition, sc_CitizenDel, sc_DelMessage, sc_DisableAccount, sc_EditProfile, sc_GECandidateRegistration, sc_GenCitizen, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResult, sc_GV_NewPosition, sc_GV_PositionDismiss, sc_GV_Positions_Citizens, sc_MoneyTransfer, sc_RechargeAccount, sc_RF_NewIssue, sc_RF_SaveAns, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingDel, sc_RF_VotingResult, sc_RF_VotingStart, sc_RF_VotingStop, sc_SearchCitizen, sc_SendMoney, sc_SmartLaw_NumResultsVoting, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen)
-SetVar(`p_citizen_profile #= Title:Profile
-Navigation(LiTemplate(Citizen),Editing profile)
+TextHidden( sc_AddAccount, sc_AddCitizenAccount, sc_addMessage, sc_CentralBankConditions, sc_CitizenCondition, sc_CitizenDel, sc_DelMessage, sc_DisableAccount, sc_EditProfile, sc_GECandidateRegistration, sc_GenCitizen, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResult, sc_GV_NewPosition, sc_GV_PositionDismiss, sc_GV_Positions_Citizens, sc_MoneyTransfer, sc_RechargeAccount, sc_RF_NewIssue, sc_RF_SaveAns, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingDel, sc_RF_VotingResult, sc_RF_VotingStart, sc_RF_VotingStop, sc_SearchCitizen, sc_SendMoney, sc_SmartLaw_NumResultsVoting, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen,sc_add_flag)
+SetVar(`p_add_flag #= Title:Add Flag
+Navigation(LiTemplate(government),Editing profile)
+SetVar(flag=StateVal(state_flag))
+
+Divs(md-6, panel panel-default elastic data-sweet-alert)
+    Divs(panel-body)
+Form()
+
+ImageInput(flag,200,100)
+Textarea(flag, hidden, #flag#)
+TxButton{ClassBtn:btn btn-primary, Contract: add_flag,Name:Save,Inputs:"flag=flag", OnSuccess: "template,government"}
+
+FormEnd:
+    DivsEnd:
+DivsEnd:
+PageEnd:`,
+`p_citizen_profile #= Title:Profile
+Navigation(LiTemplate(dashboard_default, Dashboard),Editing profile)
 
 GetRow("user", #state_id#_citizens, "id", #citizen#)
 
@@ -857,11 +889,13 @@ Form()
         Label("Name")
         Input(FirstName, "form-control input-lg m-b",text,text, #user_name#)
     DivsEnd:
+    Divs(form-group)
+        Label("Image")
         Image(#user_avatar#)
-        ImageInput(Avatar,100,400)
+        ImageInput(Avatar,100,100)
         Textarea(Avatar,form-control hidden,#user_avatar#)
-        
-TxButton{ClassBtn:btn btn-primary, Contract:TXEditProfile,Name:Save, OnSuccess: "template,dashboard_default"}
+    DivsEnd:    
+TxButton{ClassBtn:btn btn-primary, Contract:TXEditProfile,Name:Save, OnSuccess: MenuReload()}
 
 FormEnd:
     DivsEnd:
@@ -1599,7 +1633,7 @@ Divs(md-12)
 DivsEnd:
  
 PageEnd:`)
-TextHidden( p_citizen_profile, p_CitizenInfo, p_citizens, p_GECampaigns, p_GECandidateRegistration, p_GECanditatesView, p_GEElections, p_GENewCampaign, p_GEVoting, p_GEVotingResalt, p_gov_administration, p_RF_List, p_RF_NewIssue, p_RF_Result, p_RF_UserAns, p_RF_UserList, p_RF_UserQuestionList, p_RF_ViewResult, p_RF_ViewResultQuestions, p_StateInfo)
+TextHidden( p_add_flag, p_citizen_profile, p_CitizenInfo, p_citizens, p_GECampaigns, p_GECandidateRegistration, p_GECanditatesView, p_GEElections, p_GENewCampaign, p_GEVoting, p_GEVotingResalt, p_gov_administration, p_RF_List, p_RF_NewIssue, p_RF_Result, p_RF_UserAns, p_RF_UserList, p_RF_UserQuestionList, p_RF_ViewResult, p_RF_ViewResultQuestions, p_StateInfo)
 SetVar()
 TextHidden( )
 SetVar(`pa_type_issue #= voting,question`,
@@ -3744,6 +3778,26 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
+		Forsign: 'global,name,value,conditions',
+		Data: {
+			type: "NewContract",
+			typeid: #type_new_contract_id#,
+			global: 0,
+			name: "add_flag",
+			value: $("#sc_add_flag").val(),
+			conditions: "ContractConditions(\"MainCondition\")"
+			}
+	   },
+{
+		Forsign: 'global,id',
+		Data: {
+			type: "ActivateContract",
+			typeid: #type_activate_contract_id#,
+			global: 0,
+			id: "add_flag"
+			}
+	   },
+{
 		Forsign: 'name,value,conditions',
 		Data: {
 			type: "NewStateParameters",
@@ -3770,6 +3824,18 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			typeid: #type_new_state_params_id#,
 			name : "state_description",
 			value: $("#pa_state_description").val(),
+			conditions: "ContractConditions(\"MainCondition\")",
+			}
+	   },
+{
+		Forsign: 'global,name,value,menu,conditions',
+		Data: {
+			type: "NewPage",
+			typeid: #type_new_page_id#,
+			name : "add_flag",
+			menu: "menu_default",
+			value: $("#p_add_flag").val(),
+			global: 0,
 			conditions: "ContractConditions(\"MainCondition\")",
 			}
 	   },
