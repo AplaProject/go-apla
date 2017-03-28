@@ -210,11 +210,19 @@ function do_phrase(count) {
 	return false;//do_generate();
 }
 
+function str2utf(s) {
+	return unescape(encodeURIComponent(s));
+}
+
+function utf2str(s) {
+	return decodeURIComponent(escape(s));
+}
+
 function bin2hex(input) {
 	var out = '';
 	var ch = '';
 	for (var i = 0; i < input.length; i++) {
-		ch = input.charCodeAt(i).toString(16)
+		ch = input.charCodeAt(i).toString(16);
 		out += ch.length == 1 ? "0" + ch : ch;
 	}
 	return out;
@@ -233,7 +241,7 @@ function hex2bin(input) {
 function getShared(private, public) {
 	var e = new elliptic.ec('p256');
 	var priv = e.keyFromPrivate(private, 'hex');
-	var pub = e.keyFromPublic(public, 'hex')
+	var pub = e.keyFromPublic(public, 'hex');
 
 	var shared = priv.derive(pub.getPublic());
 	return CryptoJS.SHA256(shared.toString(16)).toString(CryptoJS.enc.Hex);
@@ -251,15 +259,31 @@ function decryptShared(private, text) {
 	var public = '04' + text.substr(0, 128);
 	var shared = getDefaultShared(private, public);
 	var input = hex2bin(text);
-	iv = input.substr(0, 16);
-	encText = input.substr(64);
+	var iv = input.substr(0, 16);
 	cipherParams = CryptoJS.lib.CipherParams.create({
-		ciphertext: CryptoJS.enc.Hex.parse(bin2hex(encText))
+		ciphertext: CryptoJS.enc.Hex.parse(text.substr(128))
 	});
-	pass = CryptoJS.enc.Hex.parse(shared);
+	var pass = CryptoJS.enc.Hex.parse(shared);
 	var decrypted = CryptoJS.AES.decrypt(cipherParams, pass,
 		{
 			mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Hex.parse(bin2hex(iv))
 		});
 	return decrypted.toString(CryptoJS.enc.Hex);
+}
+
+// public & text must be in hex encoding
+function encryptShared(public, text) {
+	var ec = new KJUR.crypto.ECDSA({ "curve": 'secp256r1' });
+	var keypair = ec.GenKeyPairHex();
+	if (public.length == 128) {
+		public = '04' + public;
+	}
+	var shared = getDefaultShared(keypair['ecprvhex'], public);
+	var iv = keypair['ecpubhex'].substr(2, 32);
+	var encrypted = CryptoJS.AES.encrypt(hex2bin(text), CryptoJS.enc.Hex.parse(shared),
+		{
+			padding: CryptoJS.pad.Pkcs7, keySize: 32,
+			mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Hex.parse(iv)
+		});
+	return keypair['ecpubhex'].substr(2, 128) + bin2hex(atob(encrypted.toString()));
 }

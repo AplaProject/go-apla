@@ -1137,9 +1137,10 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 				return `incorrect column`
 			}
 			//			val := textproc.Process(th[1], vars)
-			//			if val == `NULL` {
 			val := textproc.Macro(th[1], vars)
-			//			}
+			if val == `NULL` {
+				val = ``
+			}
 			out += `<td>` + strings.Replace(val, "\n", "\n<br>", -1) + `</td>`
 		}
 		out += `</tr>`
