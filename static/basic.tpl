@@ -1730,14 +1730,13 @@ Divs(md-8, panel panel-primary elastic data-sweet-alert)
             DivsEnd:
     DivsEnd:
 DivsEnd:`,
-`ap_government #= Title : Government 
-Navigation(LiTemplate(dashboard_default, Citizen))
+`ap_government #= Navigation(LiTemplate(dashboard_default, Citizen))
 
 Divs(md-4, panel panel-default elastic center)
     Divs: panel-body
     SetVar(flag=StateVal(state_flag))
         If(#flag#=="")
-             BtnPage(sys-editStateParameters,Upload Flag,"name:'state_flag'",btn btn-primary radius-tl-clear radius-tr-clear)
+             BtnPage(add_flag,Upload Flag,"name:'state_flag'",btn btn-primary radius-tl-clear radius-tr-clear)
         Else:
             Image(#flag#, Flag, img-responsive)
            
@@ -1893,33 +1892,40 @@ Divs(md-6, panel panel-default elastic data-sweet-alert)
 DivsEnd:
 
 Divs(md-6, panel panel-default elastic data-sweet-alert)
-    Div(panel-heading, Div(panel-title, Polling))
+    Div(panel-heading, Div(panel-title, Polling<span id='voting'></span>))
     Divs(panel-body)
         Divs(table-responsive)
             GetList(vote,global_glrf_votes,"referendum_id,choice",state_id=#state_id#,id)
-            Table {
-                Table: global_glrf_referendums
-                Order: #date_voting_start# DESC 
-                Where: #status#!=2 and #date_voting_start# < now()  and type=1
-                Columns: [
-                    [Questions,If(ListVal(vote,#id#,referendum_id)>0,Tag(h4, <span id="tr#id#">#issue#</span>, panel-title text-muted d-inline-block mb0 wd-auto),Tag(h4, #issue#, panel-title text-primary d-inline-block mb0 wd-auto))
-                    ],
-                    [Action,If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,Tag(h4, $Y$, panel-title text-primary text-center mb0),Tag(h4, $N$, panel-title text-danger text-center mb0)),Div(text-center, If(ListVal(vote,#id#,referendum_id)>0," ",BtnContract(@glrf_Voting, Em(fa fa-thumbs-up text-muted), Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$Y$")   BtnContract(@glrf_Voting, Em(fa fa-thumbs-down text-muted), Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$N$"))))
-                    ],
-                    [Results,If(ListVal(vote,#id#,referendum_id)>0,If(#status#==1, BtnPage(glrf_ViewResult, Em(fa fa-eye) Span('', ), "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1,global:1",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$")), Tag(button, Em(fa fa-eye-slash) Span('', ), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled))
-                    ]
-                ]
-            }
+     Table {
+         Table: global_glrf_referendums
+         Class: table-striped table-bordered table-hover data-role="table"
+         Order: #date_voting_start# DESC 
+         Where: #status#!=2 and #date_voting_start# < now()  and type=1
+         Columns: [
+             [
+                 Questions,
+                 If(ListVal(vote,#id#,referendum_id)>0,Tag(h4, <span id="tr#id#">#issue#</span>, panel-title text-muted d-inline-block mb0 wd-auto),Tag(h4, #issue#, panel-title text-primary d-inline-block mb0 wd-auto))
+             ],
+             [
+                 Action,
+                 If(ListVal(vote,#id#,referendum_id)>0,If(ListVal(vote,#id#,choice)==1,Tag(h4, $Y$, panel-title text-primary text-center mb0),Tag(h4, $N$, panel-title text-danger text-center mb0)),Div(text-center, If(ListVal(vote,#id#,referendum_id)>0," ",If(#status#==1,"no answer",BtnContract(@glrf_Voting, Em(fa fa-thumbs-up text-muted), Your choice Yes,"ReferendumId:#id#,RFChoice:1",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$Y$")   BtnContract(@glrf_Voting, Em(fa fa-thumbs-down text-muted), Your choice No,"ReferendumId:#id#,RFChoice:0",'btn btn-default btn-xs' data-toggle="tooltip" data-trigger="hover" title="$N$"))))), text-center align="center" width="150" style="min-width:150px"
+             ],
+             [
+                 Results,
+                 Div(text-center, If(#status#==1, BtnPage(glrf_ViewResult, Em(fa fa-eye), "ReferendumId:#id#,DateStart:'#date_voting_start#', DateFinish:'#date_voting_finish#', NumberVotes:#number_votes#,Back:1,Status:1,global:1",btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$"), Tag(button, Em(fa fa-eye-slash), btn btn-info data-toggle="tooltip" data-trigger="hover" title="$Res$ not available" disabled))), text-center align="center" width="50"
+             ]
+         ]
+     }
         DivsEnd:
     DivsEnd:
-     If(GetOne(admin, global_states_list, gstate_id=#state_id#))
-    Divs(panel-footer)
-        Divs: clearfix
-            Divs: pull-right
-                BtnPage(glrf_List, Polling ,global:1)
+    If(GetOne(admin, global_states_list, gstate_id=#state_id#))
+        Divs(panel-footer)
+            Divs: clearfix
+                Divs: pull-right
+                    BtnPage(glrf_List, Polling ,global:1)
+                DivsEnd:
             DivsEnd:
         DivsEnd:
-    DivsEnd:
     IfEnd:
 DivsEnd:`)
 TextHidden( ap_dashboard_default, ap_government)
