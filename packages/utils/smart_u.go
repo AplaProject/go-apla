@@ -673,6 +673,9 @@ func GetList(vars *map[string]string, pars ...string) string {
 				//				item[key] = lib.StripTags(ival)
 				ival = lib.StripTags(ival)
 			}
+			if ival == `NULL` {
+				ival = ``
+			}
 			(*vars)[pars[0]+ikey+key] = ival
 		}
 		//		out[item[keys[0]]] = item
@@ -729,6 +732,9 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 		return err.Error()
 	}
 	for key, val := range value {
+		if val == `NULL` {
+			val = ``
+		}
 		(*vars)[pars[0]+`_`+key] = lib.StripTags(val)
 	}
 	return ``
@@ -747,6 +753,9 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	value, err := DB.Single(`select ` + lib.Escape(pars[0]) + ` from ` + lib.EscapeName(pars[1]) + where).String()
 	if err != nil {
 		return err.Error()
+	}
+	if value == `NULL` {
+		value = ``
 	}
 	return strings.Replace(lib.StripTags(value), "\n", "\n<br>", -1)
 }
@@ -1991,6 +2000,9 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
 		return err.Error()
 	}
 	for _, item := range list {
+		if item[value] == `NULL` {
+			item[value] = ``
+		}
 		data = append(data, lib.StripTags(item[value]))
 		labels = append(labels, `'`+lib.StripTags(item[label])+`'`)
 	}
@@ -2080,6 +2092,9 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
 			return err.Error()
 		}
 		for ind, item := range list {
+			if item[value] == `NULL` {
+				item[value] = ``
+			}
 			color := colors[ind%len(colors)]
 			out = append(out, fmt.Sprintf(`{
 				value: %s,
