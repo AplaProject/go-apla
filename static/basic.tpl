@@ -858,7 +858,6 @@ func action {
 		if towallet == 0 {
 			towallet = $citizen
 		}
-//        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, towallet, Money(StateParam($state, "citizenship_price")))
 		DBInsert(Table( "citizens"), "id,block_id,name", wallet, 
 		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
         DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
@@ -1100,27 +1099,58 @@ PageEnd:`,
 `p_GECampaigns #= Title: Election Campaigns
 Navigation( LiTemplate(dashboard_default, Dashboard), Election Campaigns)
 
-Divs(md-12, panel panel-default panel-body data-sweet-alert)
-      Legend(" ", "Elections")
-
-Table {
-	Table: #state_id#_ge_campaigns
-	Order: id
-	//Where: date_stop_voting > now()
-	Columns: [
-		[Position, #name#],
-		[Start, Date(#date_start#, YYYY.MM.DD)],
-		[Deadline
-			for candidates, Date(#candidates_deadline#, YYYY.MM.DD)],
-	    [Candidate Registration,If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnPage(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"),  "Finish")],
-	     [Candidate,BtnPage(GECanditatesView, View,"CampaignId:#id#,Position:'#name#'")],
-		[Start Voting, DateTime(#date_start_voting#, YYYY.MM.DD HH:MI)],
-		[Stop Voting, DateTime(#date_stop_voting#, YYYY.MM.DD HH:MI)],
-		[Voting, If(And(#CmpTime(#date_start_voting#, Now(datetime)) == -1, #CmpTime(#date_stop_voting#, Now(datetime)) == 1), BtnPage(GEVoting, Go, "CampaignId:#id#,Position:'#name#'"), #num_votes#)],
-		[Result,If(#CmpTime(#date_stop_voting#, Now(datetime)) == -1, If(#status#==1,#BtnPage(GEVotingResalt, View,"CampaignId:#id#,Position:'#name#'"), BtnContract(GEVotingResult,Result,Get voting result for the election,"CampaignId:#id#")), "--")]
-	]
-}
+Divs(md-12, panel panel-default data-sweet-alert)
+    Divs(panel-body)
+        Divs(table-responsive)
+            Table {
+                Table: #state_id#_ge_campaigns
+                Class: table-striped table-bordered table-hover data-role="table"
+                Order: id
+                //Where: date_stop_voting > now()
+                Columns: [
+                    [
+                        Position,
+                        #name#
+                    ],
+                    [
+                        Start,
+                        Date(#date_start#, YYYY.MM.DD)
+                    ],
+                    [
+                        Deadline for candidates,
+                        Date(#candidates_deadline#, YYYY.MM.DD)
+                    ],
+                    [
+                        Candidate Registration,
+                        Div(text-center, If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnPage(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"),  "Finish")),
+                        text-center text-nowrap align="center" width="150"
+                    ],
+                    [
+                        Candidate,
+                        Div(text-center, BtnPage(GECanditatesView, View,"CampaignId:#id#,Position:'#name#'")),
+                        text-center text-nowrap align="center" width="100"
+                    ],
+                    [
+                        Start Voting,
+                        DateTime(#date_start_voting#, YYYY.MM.DD HH:MI)
+                    ],
+                    [
+                        Stop Voting,
+                        DateTime(#date_stop_voting#, YYYY.MM.DD HH:MI)
+                    ],
+                    [
+                        Voting,
+                        Div(text-center, If(And(#CmpTime(#date_start_voting#, Now(datetime)) == -1, #CmpTime(#date_stop_voting#, Now(datetime)) == 1), BtnPage(GEVoting, Go, "CampaignId:#id#,Position:'#name#'"), #num_votes#)),
+                        text-center text-nowrap align="center" width="50"
+                    ],
+                    [Result, Div(text-center, If(#CmpTime(#date_stop_voting#, Now(datetime)) == -1, If(#status#>0,If(#status#==2,#BtnPage(GEVotingResalt, View,"CampaignId:#id#,Position:'#name#',Status:#status#",btn btn-danger),#BtnPage(GEVotingResalt,View ,"CampaignId:#id#,Position:'#name#',Status:#status#")), BtnContract(GEVotingResult,Result,Get voting result for the election,"CampaignId:#id#")), "--")),
+                        text-center text-nowrap align="center" width="50"]
+                ]
+            }
+        DivsEnd:
+    DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_GECandidateRegistration #= Title : Candidate Registration
 Navigation( Candidate )
