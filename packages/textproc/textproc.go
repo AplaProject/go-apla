@@ -331,7 +331,7 @@ func Process(input string, vars *map[string]string) (out string) {
 				}
 				continue
 			}
-			if len(params[len(params)-1]) == 0 && ch != ')' && !toLine {
+			if len(params[len(params)-1]) == 0 && ch != ')' && ch != ',' && !toLine {
 				if ch >= '!' {
 					if ch == '"' || ch == '`' {
 						pair = ch

@@ -1176,7 +1176,7 @@ func Image(vars *map[string]string, pars ...string) string {
 		class, more = getClass(pars[2])
 	}
 	rez := " "
-	if len(pars[0]) > 0 && (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
+	if len(pars[0]) == 0 || (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
 		strings.HasSuffix(pars[0], `png`) || strings.HasSuffix(pars[0], `svg`) || strings.HasSuffix(pars[0], `gif`)) {
 		rez = fmt.Sprintf(`<img src="%s" class="%s" %s alt="%s" stylex="display:block;">`, pars[0], class, more, alt)
 	}
@@ -1211,8 +1211,7 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 		}
 		ratio = fmt.Sprintf(`%d/%d`, w, h)
 	}
-	return fmt.Sprintf(`<img id="img%s" style="margin: 10px 0px;" src=""> 
-			<textarea style="display:none" class="form-control" id="%[1]s"></textarea>
+	return fmt.Sprintf(`<textarea style="display:none" class="form-control" id="%[1]s"></textarea>
 			<button type="button" class="btn btn-primary" onClick="openImageEditor('img%[1]s', '%[1]s', '%s', '%d', '%d');">
 			<i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>`, id, ratio, width, height)
 }
