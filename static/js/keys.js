@@ -280,7 +280,7 @@ function encryptShared(public, text) {
 	}
 	var shared = getDefaultShared(keypair['ecprvhex'], public);
 	var iv = keypair['ecpubhex'].substr(2, 32);
-	var encrypted = CryptoJS.AES.encrypt(hex2bin(text), CryptoJS.enc.Hex.parse(shared),
+	var encrypted = CryptoJS.AES.encrypt(CryptoJS.enc.Hex.parse(text), CryptoJS.enc.Hex.parse(shared),
 		{
 			padding: CryptoJS.pad.Pkcs7, keySize: 32,
 			mode: CryptoJS.mode.CBC, iv: CryptoJS.enc.Hex.parse(iv)
