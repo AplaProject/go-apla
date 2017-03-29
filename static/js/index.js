@@ -766,7 +766,7 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, C
 						}
 					}
 					if (Confirm != false) {
-						obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+						obj.css({ "min-height": "" }).removeClass("whirl standard");
 						minHeight = null;
 						$("#" + id).modal("hide");
 					}
@@ -779,7 +779,7 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, C
 						}
 					}
 
-					obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+					obj.css({ "min-height": "" }).removeClass("whirl standard");
 					minHeight = null;
 					$("#" + id).modal("hide");
 				}
@@ -793,7 +793,7 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, C
 						}
 					}
 					if (Confirm != false) {
-						obj.css({ "min-height": minHeight }).removeClass("whirl standard");
+						obj.css({ "min-height": "" }).removeClass("whirl standard");
 						minHeight = null;
 						$("#" + id).modal("hide");
 					}
