@@ -88,6 +88,7 @@ func (c *Controller) AjaxEncryptKey() interface{} {
 		return result
 	}
 	result.Encrypted = hex.EncodeToString(encrypted)
+	result.Address = lib.AddressToString(uint64(result.WalletId))
 
 	return result
 }
