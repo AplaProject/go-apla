@@ -304,23 +304,51 @@ func action {
         var list array
         var votes int
         var war map
-        var i int
-        var len int
+        var i, position_id, len, id_pos int
         var position string
         
         position = DBString(Table("ge_campaigns"), "name", $CampaignId)
+        position_id = DBInt(Table("ge_campaigns"), "position_id", $CampaignId)
         
-        list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
+
+        list = DBGetList(Table("ge_person_position"), "id",0,100,"id desc", "position_id=$", position_id)
+        len = Len(list)
+        while i < len {
+            war = list[i]
+            i = i + 1
+            id_pos = DBIntWhere( Table("ge_person_position"), "id", "date_end=?","2000-01-01 00:00:00")
+            
+            if(id_pos!=0)
+            {
+                DBUpdate(Table("ge_person_position"),id_pos, "timestamp date_end", $block_time)
+            }
+        }
+        
+        i=0
+        
+         list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
+        
         len = Len(list)
         while i < len {
             war = list[i]
             i = i + 1
             votes = DBIntWhere( Table("ge_votes"), "count(id)", "id_candidate=$",war["id"])
             DBUpdate(Table("ge_candidates"),Int(war["id"]), "counter", votes)
+        }
+        
+        
+        list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
+        
+        i=0
+        
+        len = Len(list)
+        while i < len {
+            war = list[i]
+            i = i + 1
+
             if i < $numChoiceRes+1 {
                 DBUpdate(Table("ge_candidates"),Int(war["id"]), "result", 1)
-                
-                DBInsert(Table("ge_person_position"),"position_id,name,citizen_id,timestamp date_start,position",war["position_id"],war["candidate"],war["citizen_id"],$block_time, position)
+                DBInsert(Table("ge_person_position"),"position_id,name,citizen_id,timestamp date_start,date_end,position",war["position_id"],war["candidate"],war["citizen_id"],$block_time, "2000-01-01 00:00:00", position)
             
             } else {
                 DBUpdate(Table("ge_candidates"),Int(war["id"]), "result", 0)
@@ -1762,11 +1790,11 @@ Divs(md-12, panel widget data-sweet-alert)
         SetVar(hmap=300)
         Map(StateVal(state_coords), StateOnTheMapCitizen)
         Divs: half-float-bottom
-            Image(If(GetVar(my_avatar)!=="",#my_avatar#,"/static/img/apps/ava.png"), Image, img-thumbnail img-circle thumb-full)
+            LinkPage(citizen_profile, Image(If(GetVar(my_avatar)!=="",#my_avatar#,"/static/img/apps/ava.png"), Image, img-thumbnail img-circle thumb-full), "global:0", pointer)
         DivsEnd:
     DivsEnd:
     Divs: panel-body text-center
-        Tag(h3, If(GetVar(my_name)!=="",#my_name#,Anonym), m0)
+        Tag(h3, LinkPage(citizen_profile, If(GetVar(my_name)!=="",#my_name#,Anonym), "global:0", pointer), m0)
         Divs: list-comma align-center
             GetList(pos, #state_id#_positions_citizens, "position_name,citizen_id", "citizen_id =  #citizen#" and dismiss = 0)
             ForList(pos)
