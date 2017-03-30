@@ -1137,6 +1137,9 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	for _, item := range list {
 		out += `<tr>`
 		for key, value := range item {
+			if value == `NULL` {
+				value = ``
+			}
 			if key != `state_id` {
 				(*vars)[key] = lib.StripTags(value)
 			}
@@ -1751,10 +1754,10 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 	if len(pars) < 2 {
 		return ``
 	}
-	if len(pars) > 2 && pars[2] != `NULL` && pars[2] != `#my_avatar#` {
+	if len(pars) > 2 && pars[2] != `NULL` && pars[2] != `` && pars[2] != `#my_avatar#` {
 		image = pars[2]
 	}
-	if len(pars) > 3 {
+	if len(pars) > 3 && len(pars[3]) > 0 {
 		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, pars[3])
 	}
 	address := lib.AddressToString(uint64(StrToInt64(pars[1])))
