@@ -223,6 +223,10 @@ data {
  func conditions {
      
     MainCondition()
+    if(($DateStart >= $CandidatesDeadline) || ($CandidatesDeadline>=$Date_start_voting) || ($Date_start_voting >=$Date_stop_voting))
+    {
+        warning "Invalid dates"
+    }
     
 }
 
@@ -274,90 +278,115 @@ func action {
     
   }
 }`,
-`sc_GEVotingResult #= contract GEVotingResult {
- data {
-    CampaignId int 
-    
- }
- 
- func conditions {
-     
-    MainCondition()
-     
-    var x int
-    x=DBIntWhere( Table("ge_campaigns"), "id", "date_stop_voting < now() and id=$", $CampaignId)
-    if x==0 {
-      info "Resalt is not available now"
-    }
-    
-    x=DBIntExt( Table("ge_campaigns"), "status", $CampaignId, "id")
-    if x==1 {
-       info "Resalt is ready"
-    }
-    
-}
+`sc_GEVotingResult #= contract contract GEVotingResult {
+	data {
+		CampaignId int
 
-func action {
-    
-        SmartLaw_NumResultsVoting("CampaignId",$CampaignId)
-    
-        var list array
-        var votes int
-        var war map
-        var i, position_id, len, id_pos int
-        var position string
-        
-        position = DBString(Table("ge_campaigns"), "name", $CampaignId)
-        position_id = DBInt(Table("ge_campaigns"), "position_id", $CampaignId)
-        
+	}
 
-        list = DBGetList(Table("ge_person_position"), "id",0,100,"id desc", "position_id=$", position_id)
-        len = Len(list)
-        while i < len {
-            war = list[i]
-            i = i + 1
-            id_pos = DBIntWhere( Table("ge_person_position"), "id", "date_end=?","2000-01-01 00:00:00")
-            
-            if(id_pos!=0)
-            {
-                DBUpdate(Table("ge_person_position"),id_pos, "timestamp date_end", $block_time)
-            }
-        }
-        
-        i=0
-        
-         list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
-        
-        len = Len(list)
-        while i < len {
-            war = list[i]
-            i = i + 1
-            votes = DBIntWhere( Table("ge_votes"), "count(id)", "id_candidate=$",war["id"])
-            DBUpdate(Table("ge_candidates"),Int(war["id"]), "counter", votes)
-        }
-        
-        
-        list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
-        
-        i=0
-        
-        len = Len(list)
-        while i < len {
-            war = list[i]
-            i = i + 1
+	func conditions {
 
-            if i < $numChoiceRes+1 {
-                DBUpdate(Table("ge_candidates"),Int(war["id"]), "result", 1)
-                DBInsert(Table("ge_person_position"),"position_id,name,citizen_id,timestamp date_start,date_end,position",war["position_id"],war["candidate"],war["citizen_id"],$block_time, "2000-01-01 00:00:00", position)
-            
-            } else {
-                DBUpdate(Table("ge_candidates"),Int(war["id"]), "result", 0)
-            }
-        }
-        
-        DBUpdate(Table("ge_campaigns"),$CampaignId, "status", 1)
-    
-  }
+		MainCondition()
+
+		var x int
+		x = DBIntWhere(Table("ge_campaigns"), "id", "date_stop_voting < now() and id=$", $CampaignId)
+		if x == 0 {
+			info "Resalt is not available now"
+		}
+
+		x = DBIntExt(Table("ge_campaigns"), "status", $CampaignId, "id")
+		if x == 1 {
+			info "Resalt is ready"
+		}
+
+	}
+
+	func action {
+
+		SmartLaw_NumResultsVoting("CampaignId", $CampaignId)
+
+		var list array
+		var votes, vote1 int
+		var war map
+		var i, position_id, len, id_pos, equal int
+		var position string
+
+		position = DBString(Table("ge_campaigns"), "name", $CampaignId)
+		position_id = DBInt(Table("ge_campaigns"), "position_id", $CampaignId)
+
+
+		list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id", 0, 100, "counter desc", "id_election_campaign=$", $CampaignId)
+
+		len = Len(list)
+		while i < len {
+			war = list[i]
+			i = i + 1
+			votes = DBIntWhere(Table("ge_votes"), "count(id)", "id_candidate=$", war["id"])
+			DBUpdate(Table("ge_candidates"), Int(war["id"]), "counter", votes)
+		}
+		
+		i = 0
+		list = DBGetList(Table("ge_candidates"), "id,counter", 0, 100, "counter desc", "id_election_campaign=$", $CampaignId)
+
+		len = Len(list)
+		while i < len {
+			war = list[i]
+			i = i + 1
+			
+			if (vote1==Int(war["counter"])) {
+				equal = 1
+				//info "Equal Number of Votes. Elections were not held"
+			}
+			
+			if (i==$numChoiceRes) {
+			    vote1=Int(war["counter"])
+			}
+			
+		}
+		
+
+		if (equal != 1) {
+		    
+			i = 0
+			list = DBGetList(Table("ge_person_position"), "id", 0, 100, "id desc", "position_id=$", position_id)
+			len = Len(list)
+			while i < len {
+				war = list[i]
+				i = i + 1
+				id_pos = DBIntWhere(Table("ge_person_position"), "id", "date_end=?", "2000-01-01 00:00:00")
+
+				if (id_pos != 0) {
+					DBUpdate(Table("ge_person_position"), id_pos, "timestamp date_end", $block_time)
+				}
+			}
+
+
+			i = 0
+			list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id", 0, 100, "counter desc", "id_election_campaign=$", $CampaignId)
+
+			len = Len(list)
+			while i < len {
+				war = list[i]
+				i = i + 1
+
+				if i < $numChoiceRes + 1 {
+					DBUpdate(Table("ge_candidates"), Int(war["id"]), "result", 1)
+					DBInsert(Table("ge_person_position"), "position_id,name,citizen_id,timestamp date_start,date_end,position", war["position_id"], war["candidate"], war["citizen_id"], $block_time, "2000-01-01 00:00:00", position)
+
+				} else {
+					DBUpdate(Table("ge_candidates"), Int(war["id"]), "result", 0)
+				}
+			}
+			
+			 DBUpdate(Table("ge_campaigns"), $CampaignId, "status", 1)
+
+		}else{
+		
+		    DBUpdate(Table("ge_campaigns"), $CampaignId, "status", 2)
+		
+		}
+
+	}
 }`,
 `sc_GV_NewPosition #= contract GV_NewPosition {
 	data {
@@ -889,20 +918,31 @@ func action {
 }`)
 TextHidden( sc_AddAccount, sc_AddCitizenAccount, sc_addMessage, sc_CentralBankConditions, sc_CitizenCondition, sc_CitizenDel, sc_DelMessage, sc_DisableAccount, sc_EditProfile, sc_GECandidateRegistration, sc_GenCitizen, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResult, sc_GV_NewPosition, sc_GV_PositionDismiss, sc_GV_Positions_Citizens, sc_MoneyTransfer, sc_RechargeAccount, sc_RF_NewIssue, sc_RF_SaveAns, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingDel, sc_RF_VotingResult, sc_RF_VotingStart, sc_RF_VotingStop, sc_SearchCitizen, sc_SendMoney, sc_SmartLaw_NumResultsVoting, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen,sc_add_flag)
 SetVar(`p_add_flag #= Title:Add Flag
-Navigation(LiTemplate(government),Editing profile)
+Navigation(LiTemplate(Government),Editing profile)
+
 SetVar(flag=StateVal(state_flag))
 
-Divs(md-6, panel panel-default elastic data-sweet-alert)
+Divs(md-12, panel panel-default elastic data-sweet-alert)
     Divs(panel-body)
-Form()
-
-ImageInput(flag,200,100)
-Textarea(flag, hidden, #flag#)
-TxButton{ClassBtn:btn btn-primary, Contract: add_flag,Name:Save,Inputs:"flag=flag", OnSuccess: "template,government"}
-
-FormEnd:
+        Form()
+            Divs(form-group)
+                Label("Flag", d-block)
+                Image(If(GetVar(flag)!=="",#flag#,"static/img/noflag.svg"),,w-300 h-150 id=imgflag)
+            DivsEnd:
+        FormEnd:
+    DivsEnd:
+    Divs(panel-footer)
+        Divs: clearfix
+            Divs: pull-left
+                ImageInput(flag,300,150)
+            DivsEnd:
+            Divs: pull-right
+                TxButton{ClassBtn:btn btn-primary, Contract: add_flag,Name:Save,Inputs:"flag=flag", OnSuccess: "template,government"}
+            DivsEnd:
+        DivsEnd:
     DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_citizen_profile #= Title:Profile
 Navigation(LiTemplate(dashboard_default, Dashboard),Editing profile)
@@ -931,23 +971,23 @@ PageEnd:
 
 PageEnd:`,
 `p_CitizenInfo #= Title: Citizen info
-Navigation(LiTemplate(government),Citizen info)
+Navigation(LiTemplate(Government),Citizen info)
 
 SetVar(state_name=GetOne(value,#gstate_id#_state_parameters,name='state_name'))
 GetRow("user", #gstate_id#_citizens, "id", #citizenId#)
 
-Divs(md-12, panel widget)
-       Divs: half-float
+Divs(md-12, panel widget data-sweet-alert)
+    Divs: half-float
         Divs: no-map h-300
         DivsEnd:
         SetVar(hmap=300)
         Map(StateVal(state_coords), StateOnTheMapCitizen)
         Divs: half-float-bottom
-            Image(If(GetVar(user_avatar),#user_avatar#,"/static/img/apps/ava.png"), Image, img-thumbnail img-circle thumb-full)
+            Image(If(GetVar(user_avatar)!=="", #user_avatar#, "/static/img/avatar.svg"), Image, img-thumbnail img-circle thumb-full)
         DivsEnd:
     DivsEnd:
     Divs: panel-body text-center
-        Tag(h3, #user_name#, m0)
+        Tag(h3, If(GetVar(user_name)!=="", #user_name#, Anonym), m0)
         Divs: list-comma align-center
             GetList(pos, #gstate_id#_positions_citizens, "position_name,citizen_id", "citizen_id =  #citizenId#" and dismiss = 0)
             ForList(pos)
@@ -961,10 +1001,6 @@ Divs(md-12, panel widget)
             ForListEnd:
         DivsEnd:
     DivsEnd:
-    DivsEnd:
-    
-Divs(md-12, panel widget data-sweet-alert)    
-
     Divs: panel-body text-center bg-gray-darker
         Divs: row
             Divs: col-md-6 mt-sm
@@ -975,8 +1011,7 @@ Divs(md-12, panel widget data-sweet-alert)
                 P(text-muted m0, Citizen ID)
             DivsEnd:
         DivsEnd:
-
-DivsEnd:
+    DivsEnd:
 DivsEnd:
 
 Divs(md-4, panel panel-info elastic center data-sweet-alert)
@@ -1116,14 +1151,14 @@ Divs(md-12, panel panel-default data-sweet-alert)
                         Start,
                         Date(#date_start#, YYYY.MM.DD)
                     ],
+                                        [
+                        Candidate Registration,
+                        Div(text-center, If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnPage(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"),  "--")),
+                        text-center text-nowrap align="center" width="150"
+                    ],
                     [
                         Deadline for candidates,
                         Date(#candidates_deadline#, YYYY.MM.DD)
-                    ],
-                    [
-                        Candidate Registration,
-                        Div(text-center, If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnPage(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"),  "Finish")),
-                        text-center text-nowrap align="center" width="150"
                     ],
                     [
                         Candidate,
@@ -1289,27 +1324,49 @@ DivsEnd:
 PageEnd:`,
 `p_GEVotingResalt #= Title : Voting Result
 Navigation( Voting Result )
-Divs(md-6, panel panel-default panel-body)        
-        	ChartBar{Table: #state_id#_ge_candidates, FieldValue: counter, FieldLabel: candidate, Colors: "7266ba,fad732,23b7e5", Where: id_election_campaign = #CampaignId#, Order: counter DESC}
-DivsEnd: 
-Divs(md-6, panel panel-default panel-body)
-    Divs(panel-heading)
-        Divs(panel-title)
-        MarkDown: P(h4,#Position#)
 
-Table{
-         Table: #state_id#_ge_candidates
-         Where: id_election_campaign = #CampaignId#
-         Order: #counter# DESC
-      Columns: [[Candidate, #candidate#], [Description, #description#], [Votes,#counter#],[Result,#result#]]
-     }
-     
+GetList(account,#state_id#_accounts,"citizen_id,id",citizen_id!=0)
 
-
+Divs(md-6, panel panel-default elastic center)
+    Divs(panel-body canvas-responsive)
+        ChartBar{Table: #state_id#_ge_candidates, FieldValue: counter, FieldLabel: candidate, Colors: "7266ba,fad732,23b7e5", Where: id_election_campaign = #CampaignId#, Order: counter DESC}
     DivsEnd:
 DivsEnd:
-DivsEnd:
 
+Divs(md-6, panel panel-purple elastic center)
+    Div(panel-heading, Div(panel-title, #Position#))
+    Divs(panel-body)
+        Divs(table-responsive)
+            Table {
+                Table: #state_id#_ge_candidates
+                Class: table-striped table-bordered table-hover data-role="table"
+                Where: id_election_campaign = #CampaignId#
+                Order: #counter# DESC
+                Columns: [
+                    [
+                        Candidate,
+                        LinkPage(CitizenInfo,#candidate#,"citizenId:'#citizen_id#',gstate_id:#state_id#",pointer text-bold)
+                    ],
+                    [
+                        Description,
+                        #description#
+                    ],
+                    [
+                        Votes,
+                        #counter#
+                    ],
+                    [
+                        Result,
+                        #result#
+                    ]
+                ]
+            }
+        DivsEnd:
+    DivsEnd:
+    If(#Status#==2)
+        Div(panel-footer text-danger text-center, Equal Number of Votes. Elections were not held.)
+    IfEnd:
+DivsEnd:
 
 PageEnd:`,
 `p_gov_administration #= Title : Administration
@@ -1647,6 +1704,56 @@ DivsEnd:
 
 PageEnd:`,
 `p_RF_ViewResult #= Title : $Res$
+Navigation( LiTemplate(dashboard_default, Dashboard),$Res$)
+
+GetRow(vote,#state_id#_rf_referendums,"id",#ReferendumId#)
+
+Divs(md-6, panel panel-info elastic center)
+    Div(panel-heading, Div(panel-title, #vote_issue#))
+    Divs(panel-body f0)
+        Divs(panel-title text-center)
+            MarkDown: <strong>DateTime(#vote_date_voting_start#, YYYY.MM.DD HH:MI) - DateTime(#vote_date_voting_finish#, YYYY.MM.DD HH:MI)</strong>
+            MarkDown: <h4>$TotalVoted$: #vote_number_votes#</h4>
+        DivsEnd:
+    DivsEnd:
+    Divs(panel-body)
+        Divs(table-responsive)
+            Table{
+                Table: #state_id#_rf_result
+                Class: table-striped table-bordered table-hover data-role="table"
+                Where: referendum_id=#ReferendumId#
+                Order: #choice_str# DESC
+                Columns: [
+                    [
+                        Ответ,
+                        If(#choice#==1,P(h4 text-primary text-bold m0,$Y$),P(h4 text-danger text-bold m0,$N$))
+                    ],
+                    [
+                        Голоса,
+                        If(#choice#==1,P(h4 text-primary m0,#value#),P(h4 text-danger m0,#value#))
+                    ],
+                    [
+                        Процент,
+                        If(#choice#==1,P(h4 text-primary m0,#percents# %),P(h4 text-danger m0, #percents# %))
+                    ]
+                ]
+            }
+        DivsEnd:
+    DivsEnd:
+    Divs(panel-footer text-center)
+            If(#Back#==1,BtnPage(RF_UserList, <strong>$ListVotings$</strong> ,"Status:1",btn btn-oval btn-info f0), BtnPage(RF_List, <strong>$ListVotings$</strong>, "Status:0",btn btn-oval btn-info f0))
+        DivsEnd:
+    DivsEnd:
+DivsEnd:
+
+Divs(md-6, panel elastic center panel-default)
+    Divs: panel-body canvas-responsive
+        ChartPie{Table: #state_id#_rf_result, FieldValue: percents, FieldLabel: choice_str, Colors: "f05050,5d9cec,37bc9b,f05050,23b7e5,ff902b,f05050,131e26,37bc9b,f532e5,7266ba,3a3f51,fad732,232735,3a3f51,dde6e9,e4eaec,edf1f2", Where: referendum_id = #ReferendumId#, Order: choice}
+    DivsEnd:
+DivsEnd:
+
+PageEnd:`,
+`p_RF_ViewResultQuestions #= Title : $Res$
 Navigation( LiTemplate(government),  $Res$)
 
 SetVar(Issue = GetOne(issue, #state_id#_rf_referendums, "id", #ReferendumId#))
@@ -1684,52 +1791,20 @@ Divs(md-12, panel panel-success data-sweet-alert)
 DivsEnd:
 
 PageEnd:`,
-`p_RF_ViewResultQuestions #= Title : $Res$
-Navigation( LiTemplate(government),  $Res$)
-
-SetVar(Issue = GetOne(issue, #state_id#_rf_referendums, "id", #ReferendumId#))
-SetVar(Del = GetOne(id, #state_id#_citizen_del,"citizen_id", #citizen#))
-
-Divs( md-6,panel panel-success)
-    Divs: panel-body
-    MarkDown: P(h4 text-primary,#Issue#)
-    
-    If (#Del#>0)
-        MarkDown: P(h4 text-center text-danger,Uw account is opgeschort)
-    Else:
-    
-    Divs(btn-lg)
-    If(#Back#==1,BtnPage(RF_UserQuestionList, <strong>$QuestionList$</strong> ,"Status:1",btn btn-pill-left btn-info), BtnPage(RF_List, <strong>$ListVotings$</strong>, "Status:0",btn btn-pill-left btn-info))
-     DivsEnd:
-
-    Table{
-         Table: #state_id#_rf_votes
-         Order: #id# DESC 
-         Where: #referendum_id#=#ReferendumId#
-         
-      Columns: [[,P(h4 text-muted, #answer#)],
-        ]
-     }
-    IfEnd:
-
-DivsEnd:
-DivsEnd:
-
-PageEnd:`,
 `p_StateInfo #= Title: State info
 Navigation(LiTemplate(government), State info)
 
-
 Divs(md-4, panel panel-default elastic center)
     Divs: panel-body
-        Image(GetOne("value", #gstate_id#_state_parameters, "name", "state_flag"), ALT, img-responsive)
+    SetVar(flag=GetOne("value", #gstate_id#_state_parameters, "name", "state_flag"))
+        If(#flag#=="", Image(static/img/noflag.svg, No flag, img-responsive),Image(#flag#, Flag, img-responsive))
     DivsEnd:
 DivsEnd:
-Divs(md-8, panel widget elastic)
+Divs(md-8, panel widget elastic center)
     Divs: panel-body text-center
         Tag(h3, GetOne("value", #gstate_id#_state_parameters, "name", "state_name"), m0)
     DivsEnd:
-    Divs: panel-body text-center bg-gray-dark
+    Divs: panel-body text-center bg-gray-dark f0
         Divs: row row-table
             Divs: col-xs-4
                 Tag(h3, 01.01.2017, m0)
@@ -1746,7 +1821,6 @@ Divs(md-8, panel widget elastic)
         DivsEnd:
     DivsEnd:
 DivsEnd:
-
 
 Divs(col-md-4, panel panel-info elastic center)
     Div(panel-heading, Recognized as the number of UN members)
@@ -1768,7 +1842,6 @@ Divs(col-md-4, panel panel-info elastic center)
         Ring(GetOne(num_answers, global_states_list,gstate_id=#gstate_id#), 20, 100, 3, "5d9cec", "656565", 150)
     DivsEnd:
 DivsEnd:
-
 
 Divs(md-12)
     SetVar(hmap=400)
@@ -1820,7 +1893,7 @@ Divs(md-12, panel widget data-sweet-alert)
         SetVar(hmap=300)
         Map(StateVal(state_coords), StateOnTheMapCitizen)
         Divs: half-float-bottom
-            LinkPage(citizen_profile, Image(If(GetVar(my_avatar)!=="",#my_avatar#,"/static/img/apps/ava.png"), Image, img-thumbnail img-circle thumb-full), "global:0", pointer)
+            LinkPage(citizen_profile, Image(If(GetVar(my_avatar)!=="",#my_avatar#,"/static/img/avatar.svg"), Image, img-thumbnail img-circle thumb-full), "global:0", pointer)
         DivsEnd:
     DivsEnd:
     Divs: panel-body text-center
@@ -1839,10 +1912,10 @@ Divs(md-12, panel widget data-sweet-alert)
         DivsEnd:
     DivsEnd:
     Divs: panel-body text-center bg-gray-darker
-        Divs: row
+        Divs: row df f-valign
             Divs: col-md-6 mt-sm
-                LinkPage(government, Image(StateVal(state_flag), State flag, img-responsive d-inline-block align-middle w-100) Strong(d-inline-block align-middle, StateVal(state_name)), 'id':1, profile-flag text-white h3)
-                P(text-muted m0,The founder of the state LinkPage(CitizenInfo, Strong(media-box-heading text-primary, GetOne(name, #state_id#_citizens, "id=StateVal(gov_account)")), "citizenId:'StateVal(gov_account)',gstate_id:#state_id#", pointer))
+                LinkPage(government, Image(If(StateVal(state_flag)=="","static/img/noflag.svg",StateVal(state_flag)), State flag, img-responsive d-inline-block align-middle w-100) Strong(d-inline-block align-middle, StateVal(state_name)), 'id':1, profile-flag text-white h3)
+                P(text-muted m0 mt,The founder of the state LinkPage(CitizenInfo, Strong(media-box-heading text-primary, If(GetOne(name, #state_id#_citizens, "id=StateVal(gov_account)")!=="", GetOne(name, #state_id#_citizens, "id=StateVal(gov_account)"), Anonym)), "citizenId:'StateVal(gov_account)',gstate_id:#state_id#", pointer))
             DivsEnd:
             Divs: col-md-6 mt-lg mb
                 Tag(h4, Address(#my_id#) Em(clipboard fa fa-clipboard id="clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text=Address(#my_id#) onClick="CopyToClipboard('#clipboard')", ), m0)
@@ -1881,7 +1954,7 @@ Divs(md-8, panel panel-primary elastic data-sweet-alert)
                 Divs: list-group-item list-group-item-hover
                     Divs: media-box
                         Divs: pull-left
-                            Image(#ava#, ALT, media-box-object img-circle thumb32)
+                            Image(If(GetVar(ava)!=="",#ava#,"/static/img/avatar.svg"), Avatar, media-box-object img-circle thumb32)
                         DivsEnd:
                         Divs: media-box-body clearfix
                             Divs: pull-right
@@ -1989,20 +2062,18 @@ Divs(md-12, panel panel-info data-sweet-alert)
     Div(panel-heading, Div(panel-title, United governments Messenger))
     Divs(panel-body data-widget=panel-scroll data-start=bottom)
          Divs: list-group
-            GetList(my, global_messages, "id,username,ava,flag,text,citizen_id,stateid")
+            GetList(my, global_messages, "id,username,ava,flag,text,citizen_id,stateid,statename")
             ForList(my)
     	        Divs: list-group-item list-group-item-hover
                     Divs: media-box
                         Divs: pull-left
-                            Image(#ava#, ALT, media-box-object img-circle thumb32)
+                            Image(If(GetVar(ava)!=="",#ava#,"/static/img/avatar.svg"), Avatar, media-box-object img-circle thumb32)
                         DivsEnd:
                         Divs: media-box-body clearfix
                             Divs: flag pull-right
-                        LinkPage(StateInfo,Image(#flag#, ALT, class), "gstate_id:#stateid#", pointer)
-                                
-                                
+                                LinkPage(StateInfo,Image(If(GetVar(flag)=="","/static/img/noflag.svg",#flag#), Flag, data-toggle="tooltip" data-trigger="hover" title="#statename#"), "gstate_id:#stateid#", pointer)
                             DivsEnd:
-                            LinkPage(CitizenInfo, Strong(media-box-heading text-primary, #username#), "citizenId:'#citizen_id#',gstate_id:#stateid#", pointer)
+                            LinkPage(CitizenInfo, Strong(media-box-heading text-primary, If(GetVar(username)!=="",#username#,Anonym)), "citizenId:'#citizen_id#',gstate_id:#stateid#", pointer)
                             P(small, #text#)
                         DivsEnd:
                     DivsEnd:
@@ -2044,6 +2115,7 @@ Divs(md-6, panel panel-default elastic data-sweet-alert)
     Divs(panel-body)
         Table{
             Table: #state_id#_ge_person_position
+            Where: date_end < date_start
             Columns: [
                 [Рosition,#position#],
                 [Name, #name#],
@@ -2070,7 +2142,7 @@ Divs(md-6, panel panel-default elastic data-sweet-alert)
 DivsEnd:
 
 Divs(md-6, panel panel-default elastic data-sweet-alert)
-    Div(panel-heading, Div(panel-title, Polling<span id='voting'></span>))
+    Div(panel-heading, Div(panel-title, Polling<span id='list'></span>))
     Divs(panel-body)
         Divs(table-responsive)
             GetList(vote,global_glrf_votes,"referendum_id,choice",state_id=#state_id#,id)
