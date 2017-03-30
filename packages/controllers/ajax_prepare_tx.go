@@ -39,10 +39,11 @@ type TxSignJson struct {
 }
 
 type PrepareTxJson struct {
-	ForSign string       `json:"forsign"`
-	Signs   []TxSignJson `json:"signs"`
-	Time    uint32       `json:"time"`
-	Error   string       `json:"error"`
+	ForSign string            `json:"forsign"`
+	Signs   []TxSignJson      `json:"signs"`
+	Values  map[string]string `json:"values"`
+	Time    uint32            `json:"time"`
+	Error   string            `json:"error"`
 }
 
 func init() {
@@ -56,7 +57,7 @@ func (c *Controller) checkTx(result *PrepareTxJson) (contract *smart.Contract, e
 		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
 	} else if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-			if strings.Index(fitem.Tags, `image`) >= 0 {
+			if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `crypt`) >= 0 {
 				continue
 			}
 			if strings.Index(fitem.Tags, `signature`) >= 0 && result != nil {
@@ -118,6 +119,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		result PrepareTxJson
 	)
 	result.Time = lib.Time32()
+	result.Values = make(map[string]string)
 	contract, err := c.checkTx(&result)
 	if err == nil {
 		var flags uint8
@@ -138,11 +140,19 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 				if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
 					continue
 				}
-				val := strings.TrimSpace(c.r.FormValue(fitem.Name))
-				if strings.Index(fitem.Tags, `address`) >= 0 {
-					val = utils.Int64ToStr(lib.StringToAddress(val))
-				} else if fitem.Type.String() == `decimal.Decimal` {
-					val = strings.TrimLeft(val, `0`)
+				var val string
+				if strings.Index(fitem.Tags, `crypt`) >= 0 {
+					if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+						fmt.Println(`Crypt`, ret[1])
+						//						result.Values[fitem.Name] = ``
+					}
+				} else {
+					val = strings.TrimSpace(c.r.FormValue(fitem.Name))
+					if strings.Index(fitem.Tags, `address`) >= 0 {
+						val = utils.Int64ToStr(lib.StringToAddress(val))
+					} else if fitem.Type.String() == `decimal.Decimal` {
+						val = strings.TrimLeft(val, `0`)
+					}
 				}
 				forsign += fmt.Sprintf(",%v", val)
 			}

@@ -304,23 +304,51 @@ func action {
         var list array
         var votes int
         var war map
-        var i int
-        var len int
+        var i, position_id, len, id_pos int
         var position string
         
         position = DBString(Table("ge_campaigns"), "name", $CampaignId)
+        position_id = DBInt(Table("ge_campaigns"), "position_id", $CampaignId)
         
-        list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
+
+        list = DBGetList(Table("ge_person_position"), "id",0,100,"id desc", "position_id=$", position_id)
+        len = Len(list)
+        while i < len {
+            war = list[i]
+            i = i + 1
+            id_pos = DBIntWhere( Table("ge_person_position"), "id", "date_end=?","2000-01-01 00:00:00")
+            
+            if(id_pos!=0)
+            {
+                DBUpdate(Table("ge_person_position"),id_pos, "timestamp date_end", $block_time)
+            }
+        }
+        
+        i=0
+        
+         list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
+        
         len = Len(list)
         while i < len {
             war = list[i]
             i = i + 1
             votes = DBIntWhere( Table("ge_votes"), "count(id)", "id_candidate=$",war["id"])
             DBUpdate(Table("ge_candidates"),Int(war["id"]), "counter", votes)
+        }
+        
+        
+        list = DBGetList(Table("ge_candidates"), "id,candidate,citizen_id,position_id",0,100,"counter desc", "id_election_campaign=$", $CampaignId)
+        
+        i=0
+        
+        len = Len(list)
+        while i < len {
+            war = list[i]
+            i = i + 1
+
             if i < $numChoiceRes+1 {
                 DBUpdate(Table("ge_candidates"),Int(war["id"]), "result", 1)
-                
-                DBInsert(Table("ge_person_position"),"position_id,name,citizen_id,timestamp date_start,position",war["position_id"],war["candidate"],war["citizen_id"],$block_time, position)
+                DBInsert(Table("ge_person_position"),"position_id,name,citizen_id,timestamp date_start,date_end,position",war["position_id"],war["candidate"],war["citizen_id"],$block_time, "2000-01-01 00:00:00", position)
             
             } else {
                 DBUpdate(Table("ge_candidates"),Int(war["id"]), "result", 0)
@@ -830,7 +858,6 @@ func action {
 		if towallet == 0 {
 			towallet = $citizen
 		}
-//        DBTransfer("dlt_wallets", "amount,wallet_id", wallet, towallet, Money(StateParam($state, "citizenship_price")))
 		DBInsert(Table( "citizens"), "id,block_id,name", wallet, 
 		          $block, DBString(Table( "citizenship_requests"), "name", $RequestId ) )
         DBUpdate(Table( "citizenship_requests"), $RequestId, "approved", 1)
@@ -971,113 +998,210 @@ Divs(md-4, panel panel-info elastic center data-sweet-alert)
 DivsEnd:
 PageEnd:`,
 `p_citizens #= Title : Citizens
-Navigation( LiTemplate(government), Citizens)
-
+Navigation( LiTemplate(Government), Citizens)
 
 SetVar(DelCitizen = BtnContract(CitizenDel, <b>$Del$</b>, Delete citezen,"CitizenId:'#id#'",'btn btn-primary',template,citizens))
 
 GetList(del,#state_id#_citizen_del,"citizen_id,status",status=1,id)
 
-Divs(md-8, panel panel-default panel-body data-sweet-alert)
-    Form()
-        Legend(" ", "Search citizen")
-        Divs(form-group)
-            Label("Name")
-            Input(Name, "form-control  m-b")
-        DivsEnd:
+Divs(md-12, panel panel-default data-sweet-alert)
+    Div(panel-heading, Div(panel-title, Search citizen))
+    Divs(panel-body)
+        Form()
+            Divs(form-group)
+                Label("Name")
+                Input(Name, "form-control  m-b")
+            DivsEnd:
+        FormEnd:
+    DivsEnd:
+    Divs(panel-footer)
         TxButton{ Contract: SearchCitizen, Name: Search, Inputs: "Name=Name", OnSuccess: "template,citizens,CitizenName:Val(Name),Search:1" }
-    FormEnd:
+    DivsEnd:
 DivsEnd:
-Divs(md-12, panel panel-default panel-body)
-GetList(account,#state_id#_accounts,"citizen_id,id",citizen_id!=0)
-If(#Search#==1)
-BtnPage(citizens, <b>All</b>,"Search:0",btn btn-primary)
-    Table{
-        Table: #state_id#_citizens
-        Order: #name#
-        Where: #name#='#CitizenName#'
-        Columns:  [[Avatar,Image(#avatar#)], [Citizen ID, Address(#id#) Em(clipboard fa fa-clipboard id="clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text=Address(#id#) onClick="CopyToClipboard('#clipboard')", )], [Account,ListVal(account,#id#,id)],[Name, If(ListVal(del,#id#,status)==1,<s>#name#</s>, LinkPage(CitizenInfo,#name#,"citizenId:'#id#',gstate_id:#state_id#",pointer) )], [$Del$,If(ListVal(del,#id#,status)==1, - ,#DelCitizen#)]]
-    }
-Else:
 
-    Table{
-        Table: #state_id#_citizens
-        Order: #name#
-        Columns: [[Avatar,Image(#avatar#)], [Citizen ID, Address(#id#) Em(clipboard fa fa-clipboard id="clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text=Address(#id#) onClick="CopyToClipboard('#clipboard')", )], [Account,ListVal(account,#id#,id)],[Name, If(ListVal(del,#id#,status)==1,<s>#name#</s>, LinkPage(CitizenInfo,#name#,"citizenId:'#id#',gstate_id:#state_id#",pointer) )], [$Del$,If(ListVal(del,#id#,status)==1, - ,#DelCitizen#)]]
-    }
-IfEnd:
+GetList(account,#state_id#_accounts,"citizen_id,id",citizen_id!=0)
+
+Divs(md-12, panel panel-default data-sweet-alert)
+    Divs(panel-body)
+        Divs(table-responsive)
+            If(#Search#==1)
+                Table{
+                    Table: #state_id#_citizens
+                    Class: table-striped table-bordered table-hover data-role="table"
+                    Order: #name#
+                    Where: #name#='#CitizenName#'
+                    Columns:  [
+                        [
+                            Avatar,
+                            Image(If(GetVar(avatar)!=="", #avatar#, "/static/img/apps/ava.png"), Avatar, img-thumbnail img-circle thumb-full),
+                            text-center align="center" width="50"
+                        ],
+                        [
+                            Name,
+                            If(ListVal(del,#id#,status)==1, <s>#name#</s>, LinkPage(CitizenInfo,#name#,"citizenId:'#id#',gstate_id:#state_id#",pointer) )
+                        ],
+                        [
+                            Citizen ID,
+                            Address(#id#) Em(clipboard fa fa-clipboard id="clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text=Address(#id#) onClick="CopyToClipboard('#clipboard')", )
+                        ],
+                        [
+                            Account,
+                            ListVal(account,#id#,id)
+                        ],
+                        [
+                            $Del$,
+                            If(ListVal(del,#id#,status)==1, - ,#DelCitizen#),
+                            text-center align="center" width="50"
+                        ]
+                    ]
+                }
+            Else:
+                Table{
+                    Table: #state_id#_citizens
+                    Class: table-striped table-bordered table-hover data-role="table"
+                    Order: #name#
+                    Columns: [
+                        [
+                            Avatar,
+                            Image(If(GetVar(avatar)!=="", #avatar#, "/static/img/apps/ava.png"), Avatar, img-thumbnail img-circle thumb-full),
+                            text-center align="center" width="50"
+                        ],
+                        [
+                            Name,
+                            If(ListVal(del,#id#,status)==1,<s>#name#</s>, LinkPage(CitizenInfo,#name#,"citizenId:'#id#',gstate_id:#state_id#",pointer) )
+                        ],
+                        [
+                            Citizen ID,
+                            Address(#id#) Em(clipboard fa fa-clipboard id="clipboard" aria-hidden="true" data-clipboard-action="copy" data-clipboard-text=Address(#id#) onClick="CopyToClipboard('#clipboard')", )
+                        ],
+                        [
+                            Account,
+                            ListVal(account,#id#,id)
+                        ],
+                        [
+                            $Del$,
+                            If(ListVal(del,#id#,status)==1, - ,#DelCitizen#),
+                            text-center align="center" width="50"
+                        ]
+                    ]
+                }
+            IfEnd:
+        DivsEnd:
+    DivsEnd:
+    If(#Search#==1)
+        Divs(panel-footer text-center)
+            BtnPage(citizens, <b>View all</b>,"Search:0",btn btn-info btn-oval)
+        DivsEnd:
+    IfEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_GECampaigns #= Title: Election Campaigns
 Navigation( LiTemplate(dashboard_default, Dashboard), Election Campaigns)
 
-Divs(md-12, panel panel-default panel-body data-sweet-alert)
-      Legend(" ", "Elections")
-
-Table {
-	Table: #state_id#_ge_campaigns
-	Order: id
-	//Where: date_stop_voting > now()
-	Columns: [
-		[Position, #name#],
-		[Start, Date(#date_start#, YYYY.MM.DD)],
-		[Deadline
-			for candidates, Date(#candidates_deadline#, YYYY.MM.DD)],
-	    [Candidate Registration,If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnPage(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"),  "Finish")],
-	     [Candidate,BtnPage(GECanditatesView, View,"CampaignId:#id#,Position:'#name#'")],
-		[Start Voting, DateTime(#date_start_voting#, YYYY.MM.DD HH:MI)],
-		[Stop Voting, DateTime(#date_stop_voting#, YYYY.MM.DD HH:MI)],
-		[Voting, If(And(#CmpTime(#date_start_voting#, Now(datetime)) == -1, #CmpTime(#date_stop_voting#, Now(datetime)) == 1), BtnPage(GEVoting, Go, "CampaignId:#id#,Position:'#name#'"), #num_votes#)],
-		[Result,If(#CmpTime(#date_stop_voting#, Now(datetime)) == -1, If(#status#==1,#BtnPage(GEVotingResalt, View,"CampaignId:#id#,Position:'#name#'"), BtnContract(GEVotingResult,Result,Get voting result for the election,"CampaignId:#id#")), "--")]
-	]
-}
-DivsEnd:
-PageEnd:`,
-`p_GECandidateRegistration #= Title : Candidate Registration
-Navigation( Candidate )
-
-ValueById(#state_id#_citizens, #citizen#, "name", "FirstName")
-Divs(md-6, panel panel-default panel-body data-sweet-alert)
-    Divs(panel-heading)
-        Divs(panel-title)
-           MarkDown: Candidate to #CampaignName#  
-           MarkDown: <h1>#FirstName#</h1>
-          
-        Form()
-        Divs(form-group)
-            Label(Description)
-            Textarea(Description, form-control input-lg)
-        DivsEnd:
-        
-        Input(CampaignName, "hidden", text, text, #CampaignName#)
-        Input(FirstName, "hidden", text, text, #FirstName#)
-        Input(CampaignId, "hidden", text, text, #CampaignId#)
-        Input(PositionId, "hidden", text, text, #PositionId#)
-          
-            TxButton{Contract: GECandidateRegistration,Name:Registration,Inputs:"CampaignName=CampaignName,FirstName=FirstName,CampaignId=CampaignId,PositionId=PositionId,Description=Description", OnSuccess: "template,GECampaigns"}
-           
-        FormEnd:   
+Divs(md-12, panel panel-default data-sweet-alert)
+    Divs(panel-body)
+        Divs(table-responsive)
+            Table {
+                Table: #state_id#_ge_campaigns
+                Class: table-striped table-bordered table-hover data-role="table"
+                Order: id
+                //Where: date_stop_voting > now()
+                Columns: [
+                    [
+                        Position,
+                        #name#
+                    ],
+                    [
+                        Start,
+                        Date(#date_start#, YYYY.MM.DD)
+                    ],
+                    [
+                        Deadline for candidates,
+                        Date(#candidates_deadline#, YYYY.MM.DD)
+                    ],
+                    [
+                        Candidate Registration,
+                        Div(text-center, If(And(#CmpTime(#date_start#, Now(datetime)) == -1, #CmpTime(#candidates_deadline#, Now(datetime)) == 1), BtnPage(GECandidateRegistration,Go,"CampaignName:'#name#',CampaignId:#id#,PositionId:#position_id#"),  "Finish")),
+                        text-center text-nowrap align="center" width="150"
+                    ],
+                    [
+                        Candidate,
+                        Div(text-center, BtnPage(GECanditatesView, View,"CampaignId:#id#,Position:'#name#'")),
+                        text-center text-nowrap align="center" width="100"
+                    ],
+                    [
+                        Start Voting,
+                        DateTime(#date_start_voting#, YYYY.MM.DD HH:MI)
+                    ],
+                    [
+                        Stop Voting,
+                        DateTime(#date_stop_voting#, YYYY.MM.DD HH:MI)
+                    ],
+                    [
+                        Voting,
+                        Div(text-center, If(And(#CmpTime(#date_start_voting#, Now(datetime)) == -1, #CmpTime(#date_stop_voting#, Now(datetime)) == 1), BtnPage(GEVoting, Go, "CampaignId:#id#,Position:'#name#'"), #num_votes#)),
+                        text-center text-nowrap align="center" width="50"
+                    ],
+                    [Result, Div(text-center, If(#CmpTime(#date_stop_voting#, Now(datetime)) == -1, If(#status#>0,If(#status#==2,#BtnPage(GEVotingResalt, View,"CampaignId:#id#,Position:'#name#',Status:#status#",btn btn-danger),#BtnPage(GEVotingResalt,View ,"CampaignId:#id#,Position:'#name#',Status:#status#")), BtnContract(GEVotingResult,Result,Get voting result for the election,"CampaignId:#id#")), "--")),
+                        text-center text-nowrap align="center" width="50"]
+                ]
+            }
         DivsEnd:
     DivsEnd:
 DivsEnd:
 
 PageEnd:`,
-`p_GECanditatesView #= Title : Canditates
+`p_GECandidateRegistration #= Title : Candidate Registration
+Navigation( Candidate )
+
+ValueById(#state_id#_citizens, #citizen#, "name", "FirstName")
+
+Divs(md-12, panel panel-info data-sweet-alert)
+    Div(panel-heading, Div(panel-title, #FirstName# - Candidate to #CampaignName#))
+    Divs(panel-body)
+        Form()
+            Divs(form-group)
+                Label(Description)
+                Textarea(Description, form-control input-lg)
+            DivsEnd:
+        FormEnd:   
+    DivsEnd:
+    Divs(panel-footer)
+        Divs: clearfix
+            Divs: pull-right
+                Input(CampaignName, "hidden", text, text, #CampaignName#)
+                Input(FirstName, "hidden", text, text, #FirstName#)
+                Input(CampaignId, "hidden", text, text, #CampaignId#)
+                Input(PositionId, "hidden", text, text, #PositionId#)
+                TxButton{Contract: GECandidateRegistration,Name:Registration,Inputs:"CampaignName=CampaignName,FirstName=FirstName,CampaignId=CampaignId,PositionId=PositionId,Description=Description", OnSuccess: "template,GECampaigns"}
+            DivsEnd:
+        DivsEnd:
+    DivsEnd:
+DivsEnd:
+
+PageEnd:`,
+`p_GECanditatesView #= Title : Candidate to #Position#
 Navigation( LiTemplate(GECampaigns, Elections), Canditates)
-Divs(md-6, panel panel-default panel-body)
-    Divs(panel-heading)
-        Divs(panel-title)
-        MarkDown: Candidate to #Position#
 
-Table{
-         Table: #state_id#_ge_candidates
-         Where: id_election_campaign = #CampaignId#
-      Columns: [[Candidate, #candidate#], [Description, #description#]]
-     }
-     
-
-DivsEnd:
-DivsEnd:
+Divs(md-12, panel panel-info data-sweet-alert)
+    Divs(panel-body)
+        Table {
+            Table: #state_id#_ge_candidates
+            Class: table-striped table-bordered table-hover data-role="table"
+            Where: id_election_campaign = #CampaignId#
+            Columns: [
+                [
+                    Candidate,
+                    #candidate#
+                ],
+                [
+                    Description,
+                    #description#
+                ]
+            ]
+        }
+    DivsEnd:
 DivsEnd:
 PageEnd:`,
 `p_GEElections #= Title: Elections
@@ -1097,60 +1221,71 @@ DivsEnd:
 PageEnd:`,
 `p_GENewCampaign #= Title : New Election Campaign
 Navigation( New Election )
-Divs(md-6, panel panel-default panel-body)
-    Divs(panel-heading)
-    MarkDown: <h4>Start #ElectionName#'s Election</h4>
-        Divs(panel-title)
-  
-    Form()
-      Divs(md-10)
-    Divs(md-12,help-block)
-    
-    Divs(form-group)
-        Label(Start Date)
-        InputDate(DateStart,form-control input-lg,Now(YYYY.MM.DD 00:00))
-    DivsEnd:
-    Divs(form-group)
-        Label(Deadline for candidates)
-        InputDate(CandidatesDeadline,form-control input-lg,Now(YYYY.MM.DD 00:00,1 day))
-    DivsEnd:
-    Divs(form-group)
-        Label(Start Voting)
-        InputDate(Date_start_voting,form-control input-lg,Now(YYYY.MM.DD 08:00,2 day))
-    DivsEnd:
-    
-    Divs(form-group)
-        Label(Stop Voting)
-        InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD 22:00,2 day))
-    DivsEnd:    
 
-    Input(ElectionName, "hidden", text, text, #ElectionName#)
-    Input(PositionId, "hidden", text, text, #PositionId#)
-    Divs(md-12,help-block)
+Divs(md-6, panel panel-default data-sweet-alert)
+    Div(panel-heading, Div(panel-title text-primary, Start #ElectionName#'s Election))
+    Divs(panel-body)
+        Form()
+            Divs(form-group)
+                Label(Start Date)
+                InputDate(DateStart,form-control input-lg,Now(YYYY.MM.DD 00:00))
+            DivsEnd:
+            Divs(form-group)
+                Label(Deadline for candidates)
+                InputDate(CandidatesDeadline,form-control input-lg,Now(YYYY.MM.DD 00:00,1 day))
+            DivsEnd:
+            Divs(form-group)
+                Label(Start Voting)
+                InputDate(Date_start_voting,form-control input-lg,Now(YYYY.MM.DD 08:00,2 day))
+            DivsEnd:
+            Divs(form-group)
+                Label(Stop Voting)
+                InputDate(Date_stop_voting,form-control input-lg,Now(YYYY.MM.DD 22:00,2 day))
+            DivsEnd:    
+            Input(ElectionName, "hidden", text, text, #ElectionName#)
+            Input(PositionId, "hidden", text, text, #PositionId#)
+        FormEnd:
     DivsEnd:
-    TxButton{ClassBtn:btn btn-primary btn-pill-right, Contract: GENewElectionCampaign,Name:Start,Inputs:"ElectionName=ElectionName,PositionId=PositionId,DateStart=DateStart,CandidatesDeadline=CandidatesDeadline,Date_start_voting=Date_start_voting,Date_stop_voting=Date_stop_voting", OnSuccess: "template,GECampaigns"}
-     DivsEnd:
-    FormEnd:
-   
-
+    Divs(panel-footer)
+        Divs: clearfix
+            Divs: pull-right
+                TxButton{ClassBtn:btn btn-primary, Contract: GENewElectionCampaign,Name:Start,Inputs:"ElectionName=ElectionName,PositionId=PositionId,DateStart=DateStart,CandidatesDeadline=CandidatesDeadline,Date_start_voting=Date_start_voting,Date_stop_voting=Date_stop_voting", OnSuccess: "template,GECampaigns"}
+            DivsEnd:
         DivsEnd:
     DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_GEVoting #= Title : Voting
 Navigation( Voting )
-Divs(md-8, panel panel-default panel-body data-sweet-alert)
-    Divs(panel-heading)
-        Divs(panel-title)
-Table{
-         Table: #state_id#_ge_candidates
-         Where: id_election_campaign = #CampaignId#
-         Order: candidate
-      Columns: [[candidate, #candidate#], [Description, #description#], [Vote,BtnContract(GEVoting,For,You vote for candidate to #campaign#<br/>  #candidate#,"ChoiceId:#id#,CampaignId:#CampaignId#,Candidate:'#candidate#'",'btn btn-primary',template,GECampaigns)]]
-     }
-DivsEnd:
+
+Divs(md-12, panel panel-info data-sweet-alert)
+    Divs(panel-body)
+        Table{
+            Table: #state_id#_ge_candidates
+            Class: table-striped table-bordered table-hover data-role="table"
+            Where: id_election_campaign = #CampaignId#
+            Order: candidate
+            Columns: [
+                [
+                    Candidate,
+                    #candidate#
+                ],
+                [
+                    Description,
+                    #description#
+                ],
+                [
+                    Vote,
+                    Div(text-center, BtnContract(GEVoting,For,You vote for candidate to #campaign#<br/>  #candidate#,"ChoiceId:#id#,CampaignId:#CampaignId#,Candidate:'#candidate#'",'btn btn-primary',template,GECampaigns)),
+                        text-center text-nowrap align="center" width="50"
+                    
+                ]
+            ]
+        }
     DivsEnd:
 DivsEnd:
+
 PageEnd:`,
 `p_GEVotingResalt #= Title : Voting Result
 Navigation( Voting Result )
@@ -1512,47 +1647,41 @@ DivsEnd:
 
 PageEnd:`,
 `p_RF_ViewResult #= Title : $Res$
-Navigation( LiTemplate(dashboard_default, Dashboard),$Res$)
+Navigation( LiTemplate(government),  $Res$)
 
-GetRow(vote,#state_id#_rf_referendums,"id",#ReferendumId#)
+SetVar(Issue = GetOne(issue, #state_id#_rf_referendums, "id", #ReferendumId#))
+SetVar(Del = GetOne(id, #state_id#_citizen_del,"citizen_id", #citizen#))
 
-
-Divs(md-6, panel panel-default panel-body)
-    Divs(panel-heading)
-        Divs(panel-title text-center warning)
-           Divs(text-primary)
-          
-             MarkDown: <h4>#vote_issue#</41>
-           DivsEnd:
-          MarkDown: <strong>DateTime(#vote_date_voting_start#, YYYY.MM.DD HH:MI) - DateTime(#vote_date_voting_finish#, YYYY.MM.DD HH:MI)</strong>
-           
-           MarkDown: <h4>$TotalVoted$: #vote_number_votes#</h4>
-            
-           Table{
-    Table: #state_id#_rf_result
-    Where: referendum_id=#ReferendumId#
-    Order: #choice_str# DESC
-      Columns: [
-    [,If(#choice#==1,P(h4 text-primary,$Y$),P(h4 text-danger,$N$))],
-    [,If(#choice#==1,P(h4 text-primary,#value#),P(h4 text-danger,#value#))],
-    [,If(#choice#==1,P(h4 text-primary,#percents# %),P(h4 text-danger, #percents# %))]]
-     } 
-    
-        Divs(btn-lg)
-    If(#Back#==1,BtnPage(RF_UserList, <strong>$ListVotings$</strong> ,"Status:1",btn btn-pill-left btn-info), BtnPage(RF_List, <strong>$ListVotings$</strong>, "Status:0",btn btn-pill-left btn-info))
-     DivsEnd:
-    
-
+Divs(md-12, panel panel-success data-sweet-alert)
+    Div(panel-heading, Div(panel-title, #Issue#))
+    Divs(panel-body)
+        If (#Del#>0)
+            Tag(h4, Uw account is opgeschort, text-center text-danger)
+        Else:
+            Divs(table-responsive)
+                Table{
+                    Table: #state_id#_rf_votes
+                    Class: table-striped table-bordered table-hover data-role="table"
+                    Order: #id# DESC 
+                    Where: #referendum_id#=#ReferendumId#
+                    Columns: [
+                        [
+                            Results,
+                            P(text-muted m0, #answer#)
+                        ]
+                    ]
+                }
+            DivsEnd:
+        IfEnd:
+    DivsEnd:
+    Divs(panel-footer)
+        Divs: clearfix
+            Divs: pull-right
+                If(#Back#==1, BtnPage(RF_UserQuestionList, <strong>$QuestionList$</strong> ,"Status:1",btn btn-info), BtnPage(RF_List, <strong>$ListVotings$</strong>, "Status:0",btn btn-info))
+            DivsEnd:
         DivsEnd:
     DivsEnd:
 DivsEnd:
-
-Divs(md-6, panel panel-default)
-    Divs: panel-body
-        ChartPie{Table: #state_id#_rf_result, FieldValue: percents, FieldLabel: choice_str, Colors: "f05050,5d9cec,37bc9b,f05050,23b7e5,ff902b,f05050,131e26,37bc9b,f532e5,7266ba,3a3f51,fad732,232735,3a3f51,dde6e9,e4eaec,edf1f2", Where: referendum_id = #ReferendumId#, Order: choice}
-    DivsEnd:
-DivsEnd:
-
 
 PageEnd:`,
 `p_RF_ViewResultQuestions #= Title : $Res$
@@ -1691,11 +1820,11 @@ Divs(md-12, panel widget data-sweet-alert)
         SetVar(hmap=300)
         Map(StateVal(state_coords), StateOnTheMapCitizen)
         Divs: half-float-bottom
-            Image(If(GetVar(my_avatar),#my_avatar#,"/static/img/apps/ava.png"), Image, img-thumbnail img-circle thumb-full)
+            LinkPage(citizen_profile, Image(If(GetVar(my_avatar)!=="",#my_avatar#,"/static/img/apps/ava.png"), Image, img-thumbnail img-circle thumb-full), "global:0", pointer)
         DivsEnd:
     DivsEnd:
     Divs: panel-body text-center
-        Tag(h3, If(GetVar(my_name),#my_name#,Anonym), m0)
+        Tag(h3, LinkPage(citizen_profile, If(GetVar(my_name)!=="",#my_name#,Anonym), "global:0", pointer), m0)
         Divs: list-comma align-center
             GetList(pos, #state_id#_positions_citizens, "position_name,citizen_id", "citizen_id =  #citizen#" and dismiss = 0)
             ForList(pos)
@@ -1777,7 +1906,8 @@ Divs(md-8, panel panel-primary elastic data-sweet-alert)
 
             DivsEnd:
     DivsEnd:
-DivsEnd:`,
+DivsEnd:
+`,
 `ap_government #= Navigation(LiTemplate(dashboard_default, Citizen))
 
 Divs(md-4, panel panel-default elastic center)
