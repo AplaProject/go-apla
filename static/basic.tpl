@@ -918,7 +918,7 @@ func action {
 }`)
 TextHidden( sc_AddAccount, sc_AddCitizenAccount, sc_addMessage, sc_CentralBankConditions, sc_CitizenCondition, sc_CitizenDel, sc_DelMessage, sc_DisableAccount, sc_EditProfile, sc_GECandidateRegistration, sc_GenCitizen, sc_GENewElectionCampaign, sc_GEVoting, sc_GEVotingResult, sc_GV_NewPosition, sc_GV_PositionDismiss, sc_GV_Positions_Citizens, sc_MoneyTransfer, sc_RechargeAccount, sc_RF_NewIssue, sc_RF_SaveAns, sc_RF_Voting, sc_RF_VotingCancel, sc_RF_VotingDel, sc_RF_VotingResult, sc_RF_VotingStart, sc_RF_VotingStop, sc_SearchCitizen, sc_SendMoney, sc_SmartLaw_NumResultsVoting, sc_TXCitizenRequest, sc_TXEditProfile, sc_TXNewCitizen, sc_TXRejectCitizen,sc_add_flag)
 SetVar(`p_add_flag #= Title:Add Flag
-Navigation(LiTemplate(Government),Editing profile)
+Navigation(LiTemplate(government,Government),Editing profile)
 
 SetVar(flag=StateVal(state_flag))
 
@@ -949,29 +949,34 @@ Navigation(LiTemplate(dashboard_default, Dashboard),Editing profile)
 
 GetRow("user", #state_id#_citizens, "id", #citizen#)
 
-Divs(md-6, panel panel-default elastic data-sweet-alert)
+Divs(md-12, panel panel-default elastic data-sweet-alert)
     Divs(panel-body)
-Form()
-    Divs(form-group)
-        Label("Name")
-        Input(FirstName, "form-control input-lg m-b",text,text, #user_name#)
+        Form()
+            Divs(form-group)
+                Label("Name")
+                Input(FirstName, "form-control input-lg m-b",text,text, #user_name#)
+            DivsEnd:
+            Divs(form-group)
+                Label("Avatar", d-block)
+                Image(If(GetVar(user_avatar)!=="",#user_avatar#,"/static/img/avatar.svg"),,w-100 h-100 id=imgAvatar)
+            DivsEnd:
+        FormEnd:
     DivsEnd:
-    Divs(form-group)
-        Label("Image")
-        Image(#user_avatar#)
-        ImageInput(Avatar,100,100)
-        Textarea(Avatar,form-control hidden,#user_avatar#)
-    DivsEnd:    
-TxButton{ClassBtn:btn btn-primary, Contract:TXEditProfile,Name:Save, OnSuccess: MenuReload()}
-
-FormEnd:
+    Divs(panel-footer)
+        Divs: clearfix
+            Divs: pull-left
+                ImageInput(Avatar,100,100)
+            DivsEnd:
+            Divs: pull-right
+                TxButton{ClassBtn:btn btn-primary, Contract:TXEditProfile,Name:Save,Inputs:"Avatar=Avatar,FirstName=FirstName", OnSuccess: MenuReload()}
+            DivsEnd:
+        DivsEnd:
     DivsEnd:
 DivsEnd:
-PageEnd:
 
 PageEnd:`,
 `p_CitizenInfo #= Title: Citizen info
-Navigation(LiTemplate(Government),Citizen info)
+Navigation(LiTemplate(government,Government),Citizen info)
 
 SetVar(state_name=GetOne(value,#gstate_id#_state_parameters,name='state_name'))
 GetRow("user", #gstate_id#_citizens, "id", #citizenId#)
@@ -1033,7 +1038,7 @@ Divs(md-4, panel panel-info elastic center data-sweet-alert)
 DivsEnd:
 PageEnd:`,
 `p_citizens #= Title : Citizens
-Navigation( LiTemplate(Government), Citizens)
+Navigation( LiTemplate(government,Government), Citizens)
 
 SetVar(DelCitizen = BtnContract(CitizenDel, <b>$Del$</b>, Delete citezen,"CitizenId:'#id#'",'btn btn-primary',template,citizens))
 
@@ -1370,7 +1375,7 @@ DivsEnd:
 
 PageEnd:`,
 `p_gov_administration #= Title : Administration
-Navigation(LiTemplate(government),Administration)
+Navigation(LiTemplate(government,Government),Administration)
 
 Tag(h2, Election and Assign, page-header)
 
@@ -1497,7 +1502,7 @@ Divs(md-4, panel panel-default elastic data-sweet-alert)
 DivsEnd:
 PageEnd:`,
 `p_RF_List #= Title : $ListVotings$
-Navigation( LiTemplate(government), Pollings)
+Navigation( LiTemplate(government,Government), Pollings)
 
 SetVar(ViewResultQues = BtnPage(RF_ViewResultQuestions, <b>$Vw$ #number_votes#</b>, "ReferendumId:#id#,Back:0,Status:#status#",btn btn-primary btn-block))
 SetVar(ViewResult = BtnPage(RF_ViewResult, <b>$Vw$ #number_votes#</b>, "ReferendumId:#id#,Back:0,Status:#status#",btn btn-primary btn-block))
@@ -1535,7 +1540,7 @@ DivsEnd:
 
 PageEnd:`,
 `p_RF_NewIssue #= Title : $NewVoting$
-Navigation( LiTemplate(government), $NewVoting$ )
+Navigation( LiTemplate(government,Government), $NewVoting$ )
 
 Divs(md-6, panel panel-default data-sweet-alert)
     Div(panel-heading, Div(panel-title, $NewVoting$))
@@ -1754,7 +1759,7 @@ DivsEnd:
 
 PageEnd:`,
 `p_RF_ViewResultQuestions #= Title : $Res$
-Navigation( LiTemplate(government),  $Res$)
+Navigation( LiTemplate(government,Government),  $Res$)
 
 SetVar(Issue = GetOne(issue, #state_id#_rf_referendums, "id", #ReferendumId#))
 SetVar(Del = GetOne(id, #state_id#_citizen_del,"citizen_id", #citizen#))
@@ -1792,7 +1797,7 @@ DivsEnd:
 
 PageEnd:`,
 `p_StateInfo #= Title: State info
-Navigation(LiTemplate(government), State info)
+Navigation(LiTemplate(government,Government), State info)
 
 Divs(md-4, panel panel-default elastic center)
     Divs: panel-body
@@ -1913,8 +1918,9 @@ Divs(md-12, panel widget data-sweet-alert)
     DivsEnd:
     Divs: panel-body text-center bg-gray-darker
         Divs: row df f-valign
-            Divs: col-md-6 mt-sm
-                LinkPage(government, Image(If(StateVal(state_flag)=="","static/img/noflag.svg",StateVal(state_flag)), State flag, img-responsive d-inline-block align-middle w-100) Strong(d-inline-block align-middle, StateVal(state_name)), 'id':1, profile-flag text-white h3)
+			Divs: col-md-6 mt-sm
+            SetVar(flag=StateVal(state_flag))
+                LinkPage(government, Image(If(#flag#=="","static/img/noflag.svg",#flag#), State flag, img-responsive d-inline-block align-middle w-100) Strong(d-inline-block align-middle, StateVal(state_name)), 'id':1, profile-flag text-white h3)
                 P(text-muted m0 mt,The founder of the state LinkPage(CitizenInfo, Strong(media-box-heading text-primary, If(GetOne(name, #state_id#_citizens, "id=StateVal(gov_account)")!=="", GetOne(name, #state_id#_citizens, "id=StateVal(gov_account)"), Anonym)), "citizenId:'StateVal(gov_account)',gstate_id:#state_id#", pointer))
             DivsEnd:
             Divs: col-md-6 mt-lg mb
@@ -2070,7 +2076,7 @@ Divs(md-12, panel panel-info data-sweet-alert)
                             Image(If(GetVar(ava)!=="",#ava#,"/static/img/avatar.svg"), Avatar, media-box-object img-circle thumb32)
                         DivsEnd:
                         Divs: media-box-body clearfix
-                            Divs: flag pull-right
+                            Divs: flag no-bg pull-right
                                 LinkPage(StateInfo,Image(If(GetVar(flag)=="","/static/img/noflag.svg",#flag#), Flag, data-toggle="tooltip" data-trigger="hover" title="#statename#"), "gstate_id:#stateid#", pointer)
                             DivsEnd:
                             LinkPage(CitizenInfo, Strong(media-box-heading text-primary, If(GetVar(username)!=="",#username#,Anonym)), "citizenId:'#citizen_id#',gstate_id:#stateid#", pointer)
