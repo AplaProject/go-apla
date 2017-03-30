@@ -278,7 +278,7 @@ func action {
     
   }
 }`,
-`sc_GEVotingResult #= contract GEVotingResult {
+`sc_GEVotingResult #= contract contract GEVotingResult {
 	data {
 		CampaignId int
 
@@ -377,6 +377,8 @@ func action {
 					DBUpdate(Table("ge_candidates"), Int(war["id"]), "result", 0)
 				}
 			}
+			
+			 DBUpdate(Table("ge_campaigns"), $CampaignId, "status", 1)
 
 		}else{
 		
@@ -1952,7 +1954,7 @@ Divs(md-8, panel panel-primary elastic data-sweet-alert)
                 Divs: list-group-item list-group-item-hover
                     Divs: media-box
                         Divs: pull-left
-                            Image(#ava#, ALT, media-box-object img-circle thumb32)
+                            Image(If(GetVar(ava)!=="",#ava#,"/static/img/avatar.svg"), Avatar, media-box-object img-circle thumb32)
                         DivsEnd:
                         Divs: media-box-body clearfix
                             Divs: pull-right
@@ -2060,20 +2062,18 @@ Divs(md-12, panel panel-info data-sweet-alert)
     Div(panel-heading, Div(panel-title, United governments Messenger))
     Divs(panel-body data-widget=panel-scroll data-start=bottom)
          Divs: list-group
-            GetList(my, global_messages, "id,username,ava,flag,text,citizen_id,stateid")
+            GetList(my, global_messages, "id,username,ava,flag,text,citizen_id,stateid,statename")
             ForList(my)
     	        Divs: list-group-item list-group-item-hover
                     Divs: media-box
                         Divs: pull-left
-                            Image(#ava#, ALT, media-box-object img-circle thumb32)
+                            Image(If(GetVar(ava)!=="",#ava#,"/static/img/avatar.svg"), Avatar, media-box-object img-circle thumb32)
                         DivsEnd:
                         Divs: media-box-body clearfix
                             Divs: flag pull-right
-                        LinkPage(StateInfo,Image(#flag#, ALT, class), "gstate_id:#stateid#", pointer)
-                                
-                                
+                                LinkPage(StateInfo,Image(If(GetVar(flag)=="","/static/img/noflag.svg",#flag#), Flag, data-toggle="tooltip" data-trigger="hover" title="#statename#"), "gstate_id:#stateid#", pointer)
                             DivsEnd:
-                            LinkPage(CitizenInfo, Strong(media-box-heading text-primary, #username#), "citizenId:'#citizen_id#',gstate_id:#stateid#", pointer)
+                            LinkPage(CitizenInfo, Strong(media-box-heading text-primary, If(GetVar(username)!=="",#username#,Anonym)), "citizenId:'#citizen_id#',gstate_id:#stateid#", pointer)
                             P(small, #text#)
                         DivsEnd:
                     DivsEnd:
