@@ -278,7 +278,7 @@ func action {
     
   }
 }`,
-`sc_GEVotingResult #= contract contract GEVotingResult {
+`sc_GEVotingResult #= contract GEVotingResult {
 	data {
 		CampaignId int
 
@@ -2222,7 +2222,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
         			typeid: #typecolid#,
         			table_name : "#state_id#_citizens",
         			column_name: "name",
-        			index: "0",
+        			index: "1",
         			column_type: "hash",
         			permissions: "ContractConditions(\"CitizenCondition\")"
         		}
