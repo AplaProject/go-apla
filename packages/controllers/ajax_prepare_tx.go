@@ -142,10 +142,19 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 				}
 				var val string
 				if strings.Index(fitem.Tags, `crypt`) >= 0 {
+					var wallet string
 					if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-						fmt.Println(`Crypt`, ret[1])
-						//						result.Values[fitem.Name] = ``
+						wallet = c.r.FormValue(ret[1])
+					} else {
+						wallet = utils.Int64ToStr(c.SessWalletId)
 					}
+					key := EncryptNewKey(wallet)
+					if len(key.Error) != 0 {
+						result.Error = key.Error
+						return result
+					}
+					result.Values[fitem.Name] = key.Encrypted
+					val = key.Encrypted
 				} else {
 					val = strings.TrimSpace(c.r.FormValue(fitem.Name))
 					if strings.Index(fitem.Tags, `address`) >= 0 {

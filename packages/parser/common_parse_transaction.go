@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"encoding/hex"
 	"fmt"
 	"reflect"
 	"strings"
@@ -103,7 +104,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 						if err = lib.BinUnmarshal(&input, &b); err != nil {
 							return nil, err
 						}
-						v = b
+						v = hex.EncodeToString(b)
 					}
 					p.TxData[fitem.Name] = v
 					if err != nil {
