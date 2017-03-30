@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"encoding/hex"
-	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -37,24 +36,18 @@ func init() {
 	newPage(AEncryptKey, `json`)
 }
 
-func (c *Controller) AjaxEncryptKey() interface{} {
+func EncryptNewKey(wallet_id string) (result EncryptKey) {
 	var (
-		err    error
-		id     int64
-		result EncryptKey
+		err error
+		id  int64
 	)
 
-	wallet_id := c.r.FormValue("wallet_id")
 	if len(wallet_id) == 0 {
 		result.Error = `unknown wallet id`
 		return result
 	}
-	if wallet_id[0] == '-' {
-		id = utils.StrToInt64(wallet_id)
-	} else {
-		id = lib.StringToAddress(wallet_id)
-	}
-	pubKey, err := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
+	id = lib.StringToAddress(wallet_id)
+	pubKey, err := utils.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -71,7 +64,7 @@ func (c *Controller) AjaxEncryptKey() interface{} {
 		pub, _ := hex.DecodeString(result.Public)
 		idnew := int64(lib.Address(pub))
 
-		exist, err := c.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		exist, err := utils.DB.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
 		if err != nil {
 			result.Error = err.Error()
 			return result
@@ -80,7 +73,6 @@ func (c *Controller) AjaxEncryptKey() interface{} {
 			result.WalletId = idnew
 		}
 	}
-	fmt.Println(`AJAX Private`, private)
 	priv, _ := hex.DecodeString(private)
 	encrypted, err := utils.EncryptShared([]byte(pubKey), priv)
 	if err != nil {
@@ -90,5 +82,9 @@ func (c *Controller) AjaxEncryptKey() interface{} {
 	result.Encrypted = hex.EncodeToString(encrypted)
 	result.Address = lib.AddressToString(uint64(result.WalletId))
 
-	return result
+	return
+}
+
+func (c *Controller) AjaxEncryptKey() interface{} {
+	return EncryptNewKey(c.r.FormValue("wallet_id"))
 }

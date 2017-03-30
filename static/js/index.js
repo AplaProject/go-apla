@@ -1457,6 +1457,11 @@ function prepare_contract(predata, unique, sendnet) {
 			} else {
 				console.log(data);
 				predata.time = data.time;
+				if (data.values) {
+					for (var prop in data.values) {
+						predata[prop] = data.values[prop]
+					}
+				}
 				if (data.signs) {
 					accept = '';
 					for (var i = 0; i < data.signs.length; i++) {
@@ -1571,24 +1576,24 @@ $(document).ready(function () {
 				cont.html("");
 				if (cont.length) {
 					$(".notification").attr("class", "list-group").appendTo(cont);
-					
+
 					var pts = 0;
-					
+
 					if (cont.find(".more").length) {
 						pts = parseInt(cont.find(".more").html());
 					} else {
 						pts = cont.find("a.list-group-item").length;
 					}
-					
+
 					var more = pts - 3;
-					
+
 					if (more <= 0) {
 						cont.find(".more").parent().hide();
 					} else {
 						cont.find(".more").html(pts - 3);
 						cont.find(".more").parent().show();
 					}
-					
+
 					if (pts !== 0) {
 						$("#notificationCount").addClass("label label-danger").html(pts);
 					}

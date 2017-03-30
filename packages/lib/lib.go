@@ -76,6 +76,17 @@ func StringToAddress(address string) (result int64) {
 		err error
 		ret uint64
 	)
+	if address[0] == '-' {
+		if id, err := strconv.ParseInt(address, 10, 64); err != nil {
+			return 0
+		} else {
+			address = strconv.FormatUint(uint64(id), 10)
+		}
+	}
+	if len(address) < 20 {
+		address = strings.Repeat(`0`, 20-len(address)) + address
+	}
+
 	val := []byte(strings.Replace(address, `-`, ``, -1))
 	if len(val) != 20 {
 		return
