@@ -266,12 +266,12 @@ DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 ALTER TABLE ONLY "dlt_wallets" ADD CONSTRAINT dlt_wallets_pkey PRIMARY KEY (wallet_id);
 
 
-
-
-
-
-
-
+DROP TABLE IF EXISTS "global_apps"; CREATE TABLE "global_apps" (
+"name" varchar(100)  NOT NULL DEFAULT '',
+"done" integer NOT NULL DEFAULT '0',
+"blocks" text  NOT NULL DEFAULT ''
+);
+ALTER TABLE ONLY "global_apps" ADD CONSTRAINT "global_apps_pkey" PRIMARY KEY (name);
 
 
 DROP TABLE IF EXISTS "system_recognized_states"; CREATE TABLE "system_recognized_states" (

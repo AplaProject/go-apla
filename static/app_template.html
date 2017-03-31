@@ -11,7 +11,7 @@
 		<p id="desc"></p>
 		<div class="well" style="margin-bottom:0px; margin-top:15px; background-color:#f5f5f5;">
 			<!--<div style="font-size: 1.5em;font-weight:bold;" class="lang" lang-id="donot_leave_page"></div>-->
-			<div id="process" style="font-size: 16px;"><span id="curtx">0</span>/<span id="alltx"></span> <span class="lang" lang-id="transactions" style="text-transform:lowercase;"></span></div>
+			<div id="process" style="font-size: 16px;"><span id="curtx">{{.Data.Proceed}}</span>/<span id="alltx"></span> <span class="lang" lang-id="transactions" style="text-transform:lowercase;"></span></div>
 		</div>
 		<!--<form role="form">
 			<div class="clearfix">
@@ -29,7 +29,11 @@
 	<div class="panel-footer">
 		<div class="clearfix">
 			<div class="pull-right">
+				{{if .Data.Done}}
+				<strong>Installed</strong>
+				{{else}}
 				<button id="send" type="button" class="btn btn-primary lang" data-tool="panel-refresh" onClick="preloader(this);" lang-id="install"></button>
+				{{end}}
 				<button id="sendcontract" type="button" style="display: none;" class="btn btn-primary" data-toolx="panel-refresh" onClickx="preloader(this);">Install Contract</button>
 			</div>
 		</div>
@@ -37,13 +41,20 @@
 </div>
 {{noescape .Template}}
 <script language="JavaScript" type="text/javascript">
-	var txcurrent = 0;
+	var txcurrent = {{.Data.Proceed}};
 	var serverTime;
 	var predata;
 
 
 	function SendTxOK( blockid ) {
-		if (txcurrent < jdata.TX.length - 1) {
+		var next = txcurrent < jdata.TX.length - 1;
+		$.post('ajax?json=ajax_app_process', {name: {{.Page}}, block: blockid, done: next ? 0 : 1},
+		     function (data){ 
+				 if (data.error && data.error.length> 0 ) { 
+				 	console.log('App process', data.error);
+				 }
+			});
+		if (next) {
 			$("#tx"+txcurrent).css('background-color', '#32ac8e');
 			$("#tx"+txcurrent).html(blockid);
 			txcurrent++;	
@@ -156,7 +167,11 @@ function sendnetcontract() {
 		}
 		$("#process").append(tbl + '</tr></table>');*/
 		var tbl = '<div class="installApp">';
-		for (i=0; i< jdata.TX.length; i++ ) {
+		{{range .Data.Blocks}}
+			tbl += '<article id="txindex" style="background-color:#32ac8e">{{.}}</article>'; 
+		{{end}}
+
+		for (i={{.Data.Proceed}}; i< jdata.TX.length; i++ ) {
 			tbl += '<article id="tx'+i+'">&nbsp;</article>'; 
 		}
 		$("#process").append(tbl + '</div>');

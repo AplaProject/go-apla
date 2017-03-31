@@ -387,6 +387,17 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
+	err = p.ExecSql(`CREATE TABLE "` + id + `_apps" (
+				"name" varchar(100)  NOT NULL DEFAULT '',
+				"done" integer NOT NULL DEFAULT '0',
+				"blocks" text  NOT NULL DEFAULT ''
+				);
+				ALTER TABLE ONLY "` + id + `_apps" ADD CONSTRAINT "` + id + `_apps_pkey" PRIMARY KEY (name);
+				`)
+	if err != nil {
+		return
+	}
+
 	err = utils.LoadContract(id)
 	return
 }
@@ -432,7 +443,7 @@ func (p *Parser) NewStateRollback() error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
-		`smart_contracts`, `state_parameters` /*, `citizenship_requests`*/} {
+		`smart_contracts`, `state_parameters`, `apps` /*, `citizenship_requests`*/} {
 		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
 		if err != nil {
 			return p.ErrInfo(err)

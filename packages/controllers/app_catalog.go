@@ -19,6 +19,7 @@ package controllers
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
 	"sort"
 	"strings"
@@ -30,7 +31,8 @@ type AppInfo struct {
 	Name  string
 	Title string
 	Desc  string
-	Img  string
+	Img   string
+	Done  int
 }
 
 type AppsList []AppInfo
@@ -53,9 +55,14 @@ func getPar(data string, name string) string {
 	return ``
 }
 
-func (a AppsList) Len() int           { return len(a) }
-func (a AppsList) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a AppsList) Less(i, j int) bool { return strings.Compare(a[i].Title, a[j].Title) < 1 }
+func (a AppsList) Len() int      { return len(a) }
+func (a AppsList) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a AppsList) Less(i, j int) bool {
+	if a[i].Done == a[j].Done {
+		return strings.Compare(a[i].Title, a[j].Title) < 1
+	}
+	return a[i].Done < a[j].Done
+}
 
 func (c *Controller) AppCatalog() (string, error) {
 
@@ -63,6 +70,26 @@ func (c *Controller) AppCatalog() (string, error) {
 	if err != nil {
 		return ``, err
 	}
+	apps := make(map[string]int)
+	loadapps := func(table string) error {
+		data, err := c.GetAll(`select name,done from `+table, -1)
+		if err != nil {
+			return err
+		}
+		for _, item := range data {
+			apps[item[`name`]] = utils.StrToInt(item[`done`])
+		}
+		return nil
+	}
+	err = loadapps(fmt.Sprintf(`"%d_apps"`, c.SessStateId))
+	if err != nil {
+		return ``, err
+	}
+	err = loadapps(`global_apps`)
+	if err != nil {
+		return ``, err
+	}
+
 	list := make(AppsList, 0)
 	for _, item := range files {
 		if strings.HasSuffix(item, `.tpl`) {
@@ -75,6 +102,9 @@ func (c *Controller) AppCatalog() (string, error) {
 			app.Title = getPar(string(data), `Head`)
 			app.Desc = getPar(string(data), `Desc`)
 			app.Img = getPar(string(data), `Img`)
+			if done, ok := apps[app.Name]; ok {
+				app.Done = done
+			}
 			list = append(list, app)
 		}
 	}

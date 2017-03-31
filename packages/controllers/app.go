@@ -20,11 +20,19 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
+
+type AppData struct {
+	utils.CommonPage
+	Done    bool
+	Proceed int
+	Blocks  []string
+}
 
 func App(w http.ResponseWriter, r *http.Request) {
 	defer func() {
@@ -64,13 +72,38 @@ func App(w http.ResponseWriter, r *http.Request) {
 		out = err.Error()
 	}
 	if len(data) > 0 {
-		out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
-			Template: textproc.Process(string(data), &params), Unique: ``,
-			Data: &utils.CommonPage{
-				WalletId:     GetSessWalletId(sess),
-				CitizenId:    GetSessCitizenId(sess),
-				StateId:      GetSessInt64("state_id", sess),
-				CountSignArr: []int{0}}})
+		var table string
+		if strings.HasPrefix(page, `global`) {
+			table = `global_apps`
+		} else {
+			table = fmt.Sprintf(`"%d_apps"`, GetSessInt64("state_id", sess))
+		}
+		appinfo, err := utils.DB.OneRow(`select * from `+table+` where name=?`, page).String()
+		fmt.Printf(`Appinfo`, err, appinfo)
+		if err != nil {
+			out = err.Error()
+		} else {
+			var done bool
+			var blocks []string
+			if len(appinfo) > 0 {
+				done = appinfo[`done`] == `1`
+				blocks = strings.Split(appinfo[`blocks`], `,`)
+			} else {
+				blocks = make([]string, 0)
+			}
+			out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
+				Template: textproc.Process(string(data), &params), Unique: ``,
+				Data: &AppData{
+					CommonPage: utils.CommonPage{WalletId: GetSessWalletId(sess),
+						CitizenId:    GetSessCitizenId(sess),
+						StateId:      GetSessInt64("state_id", sess),
+						CountSignArr: []int{0},
+					},
+					Blocks:  blocks,
+					Proceed: len(blocks),
+					Done:    done,
+				}})
+		}
 	}
 
 	w.Write([]byte(out))

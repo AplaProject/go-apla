@@ -6,7 +6,7 @@ SetVar(
 	type_append_id = TxId(AppendPage),
 	type_append_menu_id = TxId(AppendMenu),
     type_new_table_id = TxId(NewTable),
-	sc_conditions = "$citizen == #wallet_id#")
+	sc_conditions = ContractConditions("MainCondition"))
 SetVar(sc_AddProperty = `contract AddProperty {
 	data {
 		Coords string "polymap"
@@ -156,7 +156,7 @@ sc_SetPropertySellPrice = `contract SetPropertySellPrice {
 		DBUpdate(Table("property"), 1, "sell_price", $Price)
 	}
 }`)
-TextHidden( sc_AddProperty, sc_EditProperty, sc_PropertyAcceptOffers, sc_PropertySendOffer, sc_SellProperty, sc_SetPropertyPrice, sc_SetPropertyRentPrice, sc_SetPropertySellPrice)
+TextHidden( sc_conditions, sc_AddProperty, sc_EditProperty, sc_PropertyAcceptOffers, sc_PropertySendOffer, sc_SellProperty, sc_SetPropertyPrice, sc_SetPropertyRentPrice, sc_SetPropertySellPrice)
 SetVar(`p_AddProperty #= Title: Add property
 Navigation( LiTemplate(government, Government),Add property )
 PageTitle : Add Property

@@ -111,7 +111,7 @@ type PageTpl struct {
 	Page     string
 	Template string
 	Unique   string
-	Data     *CommonPage
+	Data     interface{} //*CommonPage
 }
 
 type SelList struct {
@@ -2303,7 +2303,7 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 
 	b := new(bytes.Buffer)
 	err = t.Execute(b, data)
-	//	fmt.Println(`PROC`, err)
+	//fmt.Println(`PROC`, err, b.String())
 	if err != nil {
 		return "", err
 	}

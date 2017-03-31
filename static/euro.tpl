@@ -7,7 +7,7 @@ SetVar(
 	type_append_menu_id = TxId(AppendMenu),
 	type_new_menu_id = TxId(NewMenu),
     type_new_table_id = TxId(NewTable),
-	sc_conditions = "$citizen == #wallet_id#")
+	sc_conditions = ContractConditions("MainCondition"))
 SetVar(sc_AddAccountEuro = `contract AddAccountEuro {
 	data {
 		CitizenId string "address"
@@ -40,7 +40,7 @@ sc_UpdAmountEuro = `contract UpdAmountEuro {
 		DBUpdate("global_euro", $AccountId, "amount", $Amount)
 	}
 }`)
-TextHidden( sc_AddAccountEuro, sc_DisableEuroAccount, sc_UpdAmountEuro)
+TextHidden( sc_AddAccountEuro, sc_DisableEuroAccount, sc_UpdAmountEuro, sc_conditions)
 SetVar(`p_Euro #= Title : Euro
 Navigation( LiTemplate(government, Government),Euro)
 
