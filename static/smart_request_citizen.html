@@ -103,7 +103,10 @@
 					if (data.approved == 0) {
 						//alert('The request is in the queue.');
 						hideFields();
-						Alert("", 'Please wait, the application passes the manual processing', "notification:warning", defaultConfirm);
+						if (data.error && data.error.length > 0)
+							Alert("", data.error, "error", hideFields);
+						else
+							Alert("", 'Please wait, the application passes the manual processing', "notification:warning", defaultConfirm);
 						//Notify('The request is in the queue.', 'warning');
 					}
 					if (data.approved < 0) {
@@ -115,6 +118,12 @@
 						//alert('The request has been accepted.');
 						hideFields();
 						Alert("", 'The request has been accepted.', "notification:success", defaultConfirm);
+						//Notify('The request has been accepted.', 'success');
+					}
+					if (data.approved == 2) {
+						//alert('The request has been accepted.');
+						hideFields();
+						Alert("", 'You are a citizen.', "notification:success", defaultConfirm);
 						//Notify('The request has been accepted.', 'success');
 					}
 /*					if (data.approved > 1) {
