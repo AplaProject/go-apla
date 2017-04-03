@@ -411,8 +411,9 @@ func (p *Parser) NewState() error {
 		return p.ErrInfo(err)
 	}
 	if isGlobal {
-		_, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name"},
-			[]interface{}{id, country}, "global_states_list", nil, nil, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name", "timestamp date_founded"},
+			[]interface{}{id, country, p.BlockData.Time }, "global_states_list", nil, nil, true)
+
 		if err != nil {
 			return p.ErrInfo(err)
 		}
