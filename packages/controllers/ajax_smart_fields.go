@@ -49,6 +49,14 @@ func (c *Controller) AjaxSmartFields() interface{} {
 	stateId := utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateId)
 	//	if err == nil {
+	if exist, err := c.Single(`select id from "`+utils.Int64ToStr(stateId)+`_citizens" where id=?`, c.SessWalletId).Int64(); err != nil {
+		result.Error = err.Error()
+		return result
+	} else if exist > 0 {
+		result.Approved = 2
+		return result
+	}
+
 	if req, err = c.OneRow(`select id, approved from "`+utils.Int64ToStr(stateId)+`_citizenship_requests" where dlt_wallet_id=? order by id desc`,
 		c.SessWalletId).Int64(); err == nil {
 		if len(req) > 0 && req[`id`] > 0 {
@@ -94,7 +102,6 @@ func (c *Controller) AjaxSmartFields() interface{} {
 			}
 		}
 	}
-	fmt.Println(`Error`, err)
 	//	}
 	if err != nil {
 		result.Error = err.Error()
