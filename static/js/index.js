@@ -812,7 +812,7 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, C
 			}
 		}
 	}
-	
+
 	$("body").removeClass("appInstalling");
 }
 
@@ -1194,7 +1194,7 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 
 			i += 1;
 
-			if (i >= 6) {
+			if (i >= 15) {
 				clearInterval(interval);
 				Alert(returnLang("error"), returnLang("cannot_connect_server"), "notification:danger", preloader_hide);
 			}
