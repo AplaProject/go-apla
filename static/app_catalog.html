@@ -23,7 +23,7 @@
 </div>
 <div class="row">
 	{{range .List}}
-	<div class="col-md-4">
+	<div class="col-md-4 app">
 		<div class="panel panel-default elastic">
 			<div class="panel-body text-center fill-area flexbox-item-grow">
 				<div class="flexbox-item-grow flex-center">
@@ -34,17 +34,17 @@
 					<p class="text-left">{{.Desc}}</p>
 				</div>
 			</div>
+			{{if .Done}}
+				<div class="installed"></div>
+			{{else}}
 			<div class="panel-footer">
 				<div class="clearfix">
 					<div class="pull-right">
-						{{if .Done}}
-							<strong>Installed</strong>
-						{{else}}
-							<a href="#" onclick="load_app('{{.Name}}');" type="button" class="btn btn-primary lang" lang-id="launch"></a>
-						{{end}}
+						<a href="#" onclick="load_app('{{.Name}}');" type="button" class="btn btn-primary lang" lang-id="launch"></a>
 					</div>
 				</div>
 			</div>
+			{{end}}
 		</div>
 	</div>
 	{{end}}

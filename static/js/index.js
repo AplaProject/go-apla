@@ -812,6 +812,8 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, C
 			}
 		}
 	}
+	
+	$("body").removeClass("appInstalling");
 }
 
 function preloader_hide() {

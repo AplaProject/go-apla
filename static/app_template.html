@@ -80,6 +80,7 @@
 	}
 	
 	$('#send').bind('click', function () {
+		$("body").addClass("appInstalling");
 		$("#send").attr("disabled", true);
 		predata = jdata.TX[txcurrent].Data;
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
