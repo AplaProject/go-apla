@@ -322,6 +322,7 @@ MenuItem(Export, sys-export_tpl)
 MenuItem(Wallet,  sys-edit_wallet)
 MenuItem(Languages, sys-languages)
 MenuItem(Signatures, sys-signatures)
+MenuItem(Gen Keys, sys-gen_keys)
 MenuEnd:
 MenuBack(Welcome)`, sid)
 	if err != nil {
