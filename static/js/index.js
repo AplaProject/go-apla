@@ -1129,6 +1129,7 @@ function unixtime(target) {
 	}
 }
 
+var interval;
 var successTimeout;
 
 function serverTimeout(time) {
@@ -1141,6 +1142,7 @@ function serverTimeout(time) {
 function send_to_net_success(data, ReadyFunction, skipsuccess) {
 	var i = 0;
 	clearTimeout(successTimeout);
+	clearInterval(interval);
 
 	if (typeof data.error != "undefined" && data.error.length > 0) {
 		Alert(returnLang("error"), data.error, "error");
