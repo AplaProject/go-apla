@@ -138,9 +138,9 @@ func init() {
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `ImageInput`: ImageInput, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
-		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage,
+		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage, `UList`: UList, `UListEnd`: UListEnd, `Li`: Li,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
-		`PageEnd`: PageEnd, `StateVal`: StateVal, `Json`: JsonScript, `And`: And, `Or`: Or,
+		`PageEnd`: PageEnd, `StateVal`: StateVal, `Json`: JsonScript, `And`: And, `Or`: Or, `LiBegin`: LiBegin, `LiEnd`: LiEnd,
 		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
 		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance, `GetVar`: GetVar,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
@@ -856,6 +856,19 @@ func Em(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`em`, pars...)
 }
 
+func Li(vars *map[string]string, pars ...string) (out string) {
+	class := ``
+	more := ``
+	if val, ok := (*vars)[`uls`]; ok {
+		class = (*vars)[`liclass`+val]
+		more = (*vars)[`limore`+val]
+	}
+	if len(pars) > 1 {
+		class, more = getClass(pars[1])
+	}
+	return fmt.Sprintf(`<li class="%s" %s>%s</li>`, class, more, pars[0])
+}
+
 func Small(vars *map[string]string, pars ...string) (out string) {
 	return getTag(`small`, pars...)
 }
@@ -908,6 +921,57 @@ func DivsEnd(vars *map[string]string, pars ...string) (out string) {
 		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
 	}
 	return
+}
+
+func tagOut(tag, class, more string) string {
+	return fmt.Sprintf(`<%s class="%s" %s>`, tag, class, more)
+}
+
+func UList(vars *map[string]string, pars ...string) string {
+	var liclass, limore string
+
+	tag := `ul`
+	if len(pars) > 1 && pars[1] == `ol` {
+		tag = `ol`
+	}
+	if val, ok := (*vars)[`uls`]; ok {
+		(*vars)[`uls`] = val + tag[:1]
+	} else {
+		(*vars)[`uls`] = tag[:1]
+	}
+	class, more := getClass(pars[0])
+	if len(pars) > 2 {
+		liclass, limore = getClass(pars[2])
+	}
+	(*vars)[`liclass`+(*vars)[`uls`]] = liclass
+	(*vars)[`limore`+(*vars)[`uls`]] = limore
+	return tagOut(tag, class, more)
+}
+
+func UListEnd(vars *map[string]string, pars ...string) string {
+	tag := `ul`
+	ulen := len((*vars)[`uls`])
+	if ulen == 0 {
+		return ``
+	}
+	if (*vars)[`uls`][ulen-1] == 'o' {
+		tag = `ol`
+	}
+	(*vars)[`uls`] = (*vars)[`uls`][:ulen-1]
+	return fmt.Sprintf(`</%s>`, tag)
+}
+
+func LiBegin(vars *map[string]string, pars ...string) string {
+	class, more := getClass(pars[0])
+	if val, ok := (*vars)[`uls`]; ok {
+		class = (*vars)[`liclass`+val]
+		more = (*vars)[`limore`+val]
+	}
+	return tagOut(`li`, class, more)
+}
+
+func LiEnd(vars *map[string]string, pars ...string) string {
+	return fmt.Sprintf(`</li>`)
 }
 
 func SetVar(vars *map[string]string, pars ...string) string {
