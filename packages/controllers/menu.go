@@ -29,7 +29,7 @@ const NMenu = `menu`
 
 type LangInfo struct {
 	Title string
-	Code  string   
+	Code  string
 }
 
 type menuPage struct {
@@ -37,6 +37,7 @@ type menuPage struct {
 	Menu          string
 	MainMenu      bool
 	CanCitizen    bool
+	States        string
 	StateName     string
 	StateFlag     string
 	CitizenName   string
@@ -45,7 +46,7 @@ type menuPage struct {
 	Btc           string
 	LogoExt       string
 	Langs         []LangInfo
-	CountLangs        int
+	CountLangs    int
 	DefLang       string
 }
 
@@ -121,17 +122,18 @@ func (c *Controller) Menu() (string, error) {
 	if len(utils.LangList) > 0 {
 		for _, val := range utils.LangList {
 			if val == `en` {
-				langs = append(langs, LangInfo{Title:`English (UK)`, Code: `gb`})
+				langs = append(langs, LangInfo{Title: `English (UK)`, Code: `gb`})
 			}
 			if val == `nl` {
-				langs = append(langs, LangInfo{Title:`Nederlands (NL)`, Code: `nl`})
+				langs = append(langs, LangInfo{Title: `Nederlands (NL)`, Code: `nl`})
 			}
 		}
 	} else {
-		langs = []LangInfo{ LangInfo{Title:`English (UK)`, Code: `gb`},
-		LangInfo{Title:`Nederlands (NL)`, Code: `nl`}}
+		langs = []LangInfo{LangInfo{Title: `English (UK)`, Code: `gb`},
+			LangInfo{Title: `Nederlands (NL)`, Code: `nl`}}
 	}
+	states, _ := c.AjaxStatesList()
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
-		StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, LogoExt: utils.LogoExt,
-		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code })
+		States: states, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, LogoExt: utils.LogoExt,
+		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code})
 }

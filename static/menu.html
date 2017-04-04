@@ -181,7 +181,10 @@
 						{{if .StateFlag}}
 							<script>document.getElementById('menu-flag').setAttribute('src', '{{.StateFlag}}');</script>
 						{{end}}-->
-						<span class="user-block-role">{{if .StateName}}{{.StateName}}{{else}}No citizenship{{end}}</span>
+						<div style="padding: 0px 10px;"><select id="state_id" class="form-control user-block-role" onChange="changeState(this);" style="width: 100%;">
+							<option value="0" class="no_citizenship lang" selected="selected" lang-id="no_citizenship">No citizenship</option>
+						</select></div>
+						<!--span class="user-block-role">{{if .StateName}}{{.StateName}}{{else}}No citizenship{{end}}</span-->
 				   </div>
 				</div>
 			 </span>
@@ -558,7 +561,29 @@
 	}
 </style>
 <script>
+
+var selectbox = $("#state_id");
+var statesdata = JSON.parse({{.States}});
+var stateReload = false;
+
+	function changeState(elem) {
+		if (stateReload) {
+			login( $("#state_id").val(), true);
+		}
+	}
+	
+
 	$(document).ready(function(){
+
+		selectboxState(statesdata);
+		for (ids in statesdata) {
+			if (statesdata[ids].state_name == {{.StateName}}) {
+				selectbox.val(ids).trigger('change');
+				break
+			}
+		}
+		stateReload = true;
+
 		updateLanguage('#mmenu .lang');
 		
 		$("#mmenu").mmenu({

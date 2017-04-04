@@ -899,6 +899,46 @@ function login_ok(result) {
 	}, 100);
 }
 
+function login(state_id, iskey) {
+	serverTimeout(5000);
+	$.get('ajax?json=ajax_get_uid', {}, function (data) {
+		console.log(data);
+		var key = GKey.Public;
+		if (key.length > 128) {
+			key = key.substr(2);
+		}
+		var sign = GKey.sign(data.uid);
+		serverTimeout(5000);
+		$.post('ajax?json=ajax_sign_in', {
+			'sign': sign,
+			'key': key,
+			'state_id': state_id,
+			'citizen_id': GKey.CitizenId,
+		}, function (data) {
+			console.log('DATA', data, state_id);
+			if (data.error && data.error.length > 0) {
+				clearTimeout(successTimeout);
+				GKey.clear();
+				Alert(returnLang("error"), returnLang("seed_not_seed"), "notification:warning", defaultConfirm);
+			} else {
+				clearTimeout(successTimeout);
+				NProgressStart.start();
+				if (data.address) {
+					GKey.StateId = state_id;
+					GKey.add(data.address);
+				}
+				if (iskey) {
+					if (data.result)
+						document.location = '/';
+				} else {
+					login_ok(data.result);
+				}
+			}
+		}, 'JSON'
+		)
+	}, 'JSON');
+}
+
 function doSign_(type) {
 	unique = '';
 	if (typeof (type) === 'number') {
