@@ -71,6 +71,12 @@
 			});
 		{{else if .PKey}}
 			$( "#dl_content" ).load( "content", { pkey: {{.PKey}}, state: {{.State}}}, function() {
+				$("#phrase").prop("disabled", true);
+				$("#key_btn, h1.noregister").hide();
+				$(".flex.buttons.noregister").addClass("flex-end");
+				$("#import_btn").html($("h1.noimport").html());
+				$("h1.noimport").show();
+				$("#pass").focus();
 				NProgressStart.done();
 			});
 
