@@ -49,7 +49,7 @@ function btn_contract(obj, contract, params, text, loadname, pagename, pageparam
 	name{{.Unique}} = pagename;
 	param{{.Unique}} = pageparam;
 	
-    Alert(text, contract, "question:cancel", function(){
+    Alert(text, "", "question:cancel", function(){
         prepare_btncontract( contract, params );
     }, "no:Cancel", "yes:Accept", "fullScreen:close", true, preloader_hide);
 }
