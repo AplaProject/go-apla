@@ -107,13 +107,17 @@ func Extend(ext *script.ExtendData) {
 }
 
 func Run(block *script.Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
+	var extcost int64
 	cost := script.COST_DEFAULT
 	if ecost, ok := (*extend)[`txcost`]; ok {
 		cost = ecost.(int64)
 	}
 	rt := smartVM.RunInit(cost)
 	ret, err = rt.Run(block, params, extend)
-	(*extend)[`txcost`] = rt.Cost()
+	if ecost, ok := (*extend)[`txcost`]; ok && cost > ecost.(int64) {
+		extcost = cost - ecost.(int64)
+	}
+	(*extend)[`txcost`] = rt.Cost() - extcost
 	return
 }
 

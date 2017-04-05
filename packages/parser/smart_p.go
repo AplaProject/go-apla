@@ -37,6 +37,7 @@ import (
 var (
 	extendCost = map[string]int64{
 		"DBInsert":      200,
+		"InsertIndex":   50,
 		"DBUpdate":      100,
 		"DBUpdateExt":   100,
 		"DBGetList":     300,
@@ -245,7 +246,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 	}
 	p.TxUsedCost = decimal.New(before-(*p.TxContract.Extend)[`txcost`].(int64), 0)
 	p.TxContract.TxPrice = price
-	//fmt.Println(`Cost`, p.TxUsedCost)
 	return
 }
 
@@ -253,6 +253,21 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 	//	fmt.Println(`DBInsert`, tblname, params, val, len(val))
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
+	}
+	var (
+		cost int64
+		ind  int
+	)
+	if ind, err = p.NumIndexes(tblname); err != nil {
+		return
+	} else if ind > 0 {
+		cost = int64(ind) * getCost("InsertIndex")
+		if (*p.TxContract.Extend)[`txcost`].(int64) > cost {
+			(*p.TxContract.Extend)[`txcost`] = (*p.TxContract.Extend)[`txcost`].(int64) - cost
+		} else {
+			err = fmt.Errorf(`paid CPU resource is over`)
+			return
+		}
 	}
 	var lastId string
 	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
@@ -713,7 +728,6 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(`Check signature`, CheckSignResult, forsign)
 	if !CheckSignResult {
 		return fmt.Errorf(`incorrect signature ` + forsign)
 	}
