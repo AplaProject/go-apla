@@ -9,6 +9,9 @@
 	</style>
 	<script>
 		var serverTime;
+		var maxColumns = {{.MaxColumns}};
+		var maxIndexes = {{.MaxIndexes}};
+		var curColumns = 0;
 
 		$(".aside .nav li").removeClass("active");
 		$(".citizen, .citizen_listOfTables").addClass("active");
@@ -48,11 +51,20 @@
 					theme: 'bootstrap'
 				});
 			}, 0);
+			curColumns++;
+			if (curColumns == maxColumns) {
+				$("#add").hide()
+			}
 			$(".colname:last").focus();
 		}
 		
 		function RemoveColumn(elem) {
 			$(elem).parents("tr").remove();
+			curColumns--;
+			if (curColumns < maxColumns) {
+				$("#add").show();
+			}
+
 		}
 		
 		NewColumn();

@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -31,6 +32,8 @@ type newTablePage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
+	MaxColumns   int
+	MaxIndexes   int
 	Global       string
 }
 
@@ -57,6 +60,8 @@ func (c *Controller) NewTable() (string, error) {
 		Global:       global,
 		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
+		MaxColumns:   consts.MAX_COLUMNS,
+		MaxIndexes:   consts.MAX_INDEXES,
 		TxType:       txType,
 		TxTypeId:     txTypeId})
 	if err != nil {

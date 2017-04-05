@@ -36,6 +36,7 @@ type editColumnPage struct {
 	StateId          int64
 	ColumnPermission string
 	ColumnName       string
+	CanIndex         bool
 }
 
 func (c *Controller) EditColumn() (string, error) {

@@ -9,7 +9,7 @@
 		var id = $(".column_type");
 		var index = $(".index");
 		var val = id.val();
-		if (val === "text") {
+		if (val === "text" || !{{.CanIndex}}) {
 			index.prop("checked", false);			
 			index.prop("disabled", true);
 		} else {

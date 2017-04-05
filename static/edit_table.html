@@ -85,7 +85,9 @@
 
 		  </div>
 		  <div class="pull-left">
-			 <button type="button" class="btn btn-primary lang" onclick="load_page('newColumn', {tableName: {{index .TableData "name"}}} )" lang-id="add_column"></button>
+			{{if .CanColumns}}
+			    <button type="button" class="btn btn-primary lang" onclick="load_page('newColumn', {tableName: {{index .TableData "name"}}} )" lang-id="add_column"></button>
+			{{end}}
 		  </div>
 	   </div>
 	  </div>

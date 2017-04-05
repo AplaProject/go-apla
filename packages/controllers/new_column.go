@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -28,7 +30,9 @@ func (c *Controller) NewColumn() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	tableName := c.r.FormValue("tableName")
+	tableName := lib.Escape(c.r.FormValue("tableName"))
+
+	count, _ := c.NumIndexes(tableName)
 
 	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage{
 		Alert:            c.Alert,
@@ -42,6 +46,7 @@ func (c *Controller) NewColumn() (string, error) {
 		ColumnName:       "",
 		ColumnPermission: "",
 		CountSignArr:     c.CountSignArr,
+		CanIndex:         count < consts.MAX_INDEXES,
 		TimeNow:          timeNow,
 		TxType:           txType,
 		TxTypeId:         txTypeId})

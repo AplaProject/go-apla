@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -32,6 +33,7 @@ type editTablePage struct {
 	TxType       string
 	TxTypeId     int64
 	TimeNow      int64
+	CanColumns   bool
 	TableData    map[string]string
 	//	Columns               map[string]string
 	ColumnsAndPermissions map[string]string
@@ -76,6 +78,10 @@ func (c *Controller) EditTable() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	count, err := c.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", tableName).Int64()
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
 
 	TemplateStr, err := makeTemplate("edit_table", "editTable", &editTablePage{
 		Alert:                 c.Alert,
@@ -90,6 +96,7 @@ func (c *Controller) EditTable() (string, error) {
 		TxType:                txType,
 		TxTypeId:              txTypeId,
 		StateId:               c.SessStateId,
+		CanColumns:            count < consts.MAX_COLUMNS+2,
 		Global:                global,
 		TablePermission:       tablePermission,
 		ColumnsAndPermissions: columnsAndPermissions,
