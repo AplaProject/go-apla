@@ -49,8 +49,6 @@
 				});
 			}, 0);
 			$(".colname:last").focus();
-			
-			CheckIndex();
 		}
 		
 		function RemoveColumn(elem) {
@@ -65,7 +63,7 @@
 				var val = id.val();
 				if (val === "text") {
 					var ind = id.parent().parent().parent().find(".index");
-					ind.prop("checked", false);			
+					ind.prop("checked", false);		
 					ind.prop("disabled", true);
 				} else {
 					id.parent().parent().parent().find(".index").prop("disabled", false);

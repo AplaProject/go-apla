@@ -1645,6 +1645,16 @@ func (db *DCDB) IsIndex(tblname, column string) (bool, error) {
 	return len(indexes) > 0, nil
 }
 
+func (db *DCDB) NumIndexes(tblname string) (int, error) {
+	indexes, err := db.Single(`select count( i.relname) from pg_class t, pg_class i, pg_index ix, pg_attribute a 
+	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
+         and t.relkind = 'r'  and t.relname = ?`, tblname).Int64()
+	if err != nil {
+		return 0, err
+	}
+	return int(indexes - 1), nil
+}
+
 func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
 	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
 		if off := strings.IndexByte(table, '_'); off > 0 {

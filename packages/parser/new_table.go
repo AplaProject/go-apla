@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -62,6 +63,10 @@ func (p *Parser) NewTableFront() error {
 	if len(cols) == 0 {
 		return p.ErrInfo(`len(cols) == 0`)
 	}
+	if len(cols) > consts.MAX_COLUMNS {
+		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
+	}
+	var indexes int
 	for _, data := range cols {
 		if len(data) != 3 {
 			return p.ErrInfo(`len(data)!=3`)
@@ -69,9 +74,15 @@ func (p *Parser) NewTableFront() error {
 		if data[1] != `text` && data[1] != `int64` && data[1] != `time` && data[1] != `hash` && data[1] != `double` && data[1] != `money` {
 			return p.ErrInfo(`incorrect type`)
 		}
-		if data[2] == "1" && data[1] == `text` {
-			return p.ErrInfo(`incorrect index type`)
+		if data[2] == `1` {
+			if data[1] == `text` {
+				return p.ErrInfo(`incorrect index type`)
+			}
+			indexes++
 		}
+	}
+	if indexes > consts.MAX_INDEXES {
+		return fmt.Errorf(`Too many indexes. Limit is %d`, consts.MAX_INDEXES)
 	}
 
 	prefix := p.TxStateIDStr

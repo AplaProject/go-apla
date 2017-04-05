@@ -50,6 +50,11 @@ const MAX_TX_SIZE = 32 << 20
 
 const MAX_TX_COUNT = 100000
 
+const (
+	MAX_COLUMNS = 50 // Maximum columns in tables
+	MAX_INDEXES = 10 // Maximum indexes in tables
+)
+
 const ERROR_TIME = 1
 
 const ROUND_FIX = 0.00000000001

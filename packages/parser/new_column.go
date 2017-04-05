@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -59,6 +60,20 @@ func (p *Parser) NewColumnFront() error {
 	}
 	if exists > 0 {
 		return p.ErrInfo(`column exists`)
+	}
+
+	count, err := p.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", p.TxMaps.String["table_name"]).Int64()
+	if count >= consts.MAX_COLUMNS+2 /*id + rb_id*/ {
+		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
+	}
+	if p.TxMaps.Int64["index"] > 0 {
+		count, err := p.NumIndexes(p.TxMaps.String["table_name"])
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		if count >= consts.MAX_INDEXES {
+			return fmt.Errorf(`Too many indexes. Limit is %d`, consts.MAX_INDEXES)
+		}
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["index"], p.TxMap["column_type"])
