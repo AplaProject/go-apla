@@ -2188,7 +2188,8 @@ TextHidden( ap_dashboard_default, ap_government)
 SetVar(`am_government #= MenuItem(Administration,  gov_administration)
 MenuItem(Citizens,  citizens)
 MenuItem(Pollings List,  RF_List)
-MenuItem(New Polling,  RF_NewIssue)`,
+MenuItem(New Polling,  RF_NewIssue)
+MenuItem(Description,  GameDescription,global:1)`,
 `am_menu_default #= MenuItem(ListVotings, RF_UserList)
 MenuItem(QuestionList, RF_UserQuestionList)
 MenuItem(Elections, GECampaigns)`)

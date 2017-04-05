@@ -64,7 +64,9 @@
 				var id = $(this);
 				var val = id.val();
 				if (val === "text") {
-					id.parent().parent().parent().find(".index").prop("disabled", true);
+					var ind = id.parent().parent().parent().find(".index");
+					ind.prop("checked", false);			
+					ind.prop("disabled", true);
 				} else {
 					id.parent().parent().parent().find(".index").prop("disabled", false);
 				}

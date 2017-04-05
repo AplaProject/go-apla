@@ -10,6 +10,7 @@
 		var index = $(".index");
 		var val = id.val();
 		if (val === "text") {
+			index.prop("checked", false);			
 			index.prop("disabled", true);
 		} else {
 			index.prop("disabled", false);
