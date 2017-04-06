@@ -36,6 +36,7 @@ type editColumnPage struct {
 	StateId          int64
 	ColumnPermission string
 	ColumnName       string
+	ColumnType       string
 	CanIndex         bool
 }
 
@@ -71,6 +72,7 @@ func (c *Controller) EditColumn() (string, error) {
 		TableName:        tableName,
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
+		ColumnType:       utils.GetColumnType(tableName, columnName),
 		SignData:         "",
 		WalletId:         c.SessWalletId,
 		CitizenId:        c.SessCitizenId,

@@ -1666,3 +1666,25 @@ func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
 	}
 	return
 }
+
+func GetColumnType(tblname, column string) (itype string) {
+	coltype, _ := DB.OneRow(`select data_type,character_maximum_length from information_schema.columns
+where table_name = ? and column_name = ?`, tblname, column).String()
+	if len(coltype) > 0 {
+		switch {
+		case coltype[`data_type`] == "character varying":
+			itype = `text`
+		case coltype[`data_type`] == "bytea":
+			itype = "varchar"
+		case coltype[`data_type`] == `bigint`:
+			itype = "numbers"
+		case strings.HasPrefix(coltype[`data_type`], `timestamp`):
+			itype = "date_time"
+		case strings.HasPrefix(coltype[`data_type`], `numeric`):
+			itype = "money"
+		case strings.HasPrefix(coltype[`data_type`], `double`):
+			itype = "double"
+		}
+	}
+	return
+}

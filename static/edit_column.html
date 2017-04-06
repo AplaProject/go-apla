@@ -118,6 +118,11 @@
 						</div>
 					</div>
 				</div>
+			{{else}}
+	   		<div class="form-group">
+			   <label class="lang" lang-id="column_type"></label>
+			   <p class="form-control-static lang" lang-id="{{.ColumnType}}">{{.ColumnType}}</p> 
+		   </div>			
 			{{end}}
 			<div class="form-group">
 				<label class="lang" lang-id="permissions"></label>

@@ -62,16 +62,18 @@
 			  <thead>
 				  <tr>
 					  <th class="lang" lang-id="name"></th>
+					  <th class="lang" lang-id="column_type"></th>
 					  <th class="lang" lang-id="permissions"></th>
 					  <th width="50" class="lang" lang-id="action"></th>
 				  </tr>
 			  </thead>
 			  <tbody>
-			  {{ range $name, $permissions := .ColumnsAndPermissions }}
+			  {{ range .ColumnsAndPermissions }}
 				 <tr>
-					 <td class="thead"><strong>{{$name}}</strong></td>
-					 <td><strong>{{$permissions}}</strong></td>
-					 <td><button class="btn btn-primary lang" onclick="load_page('editColumn', {tableName: {{index $.TableData "name"}}, columnName: {{$name}} } )" lang-id="edit"></button></td>
+					 <td class="thead"><strong>{{.name}}</strong></td>
+					 <td><strong class="lang" lang-id="{{.type}}">{{.type}}</strong></td>
+					 <td><strong>{{.perm}}</strong></td>
+					 <td><button class="btn btn-primary lang" onclick="load_page('editColumn', {tableName: {{index $.TableData "name"}}, columnName: {{.name}} } )" lang-id="edit"></button></td>
 				 </tr>
 			  {{end}}
 			  </tbody>

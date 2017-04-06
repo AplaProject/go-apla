@@ -36,7 +36,7 @@ type editTablePage struct {
 	CanColumns   bool
 	TableData    map[string]string
 	//	Columns               map[string]string
-	ColumnsAndPermissions map[string]string
+	ColumnsAndPermissions []map[string]string
 	StateId               int64
 	TablePermission       map[string]string
 	Global                string
@@ -78,6 +78,11 @@ func (c *Controller) EditTable() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	list := make([]map[string]string, 0)
+	for key, value := range columnsAndPermissions {
+		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: utils.GetColumnType(tableName, key)})
+	}
+
 	count, err := c.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", tableName).Int64()
 	if err != nil {
 		return "", utils.ErrInfo(err)
@@ -99,7 +104,7 @@ func (c *Controller) EditTable() (string, error) {
 		CanColumns:            count < consts.MAX_COLUMNS+2,
 		Global:                global,
 		TablePermission:       tablePermission,
-		ColumnsAndPermissions: columnsAndPermissions,
+		ColumnsAndPermissions: list,
 		TableData:             tableData})
 	if err != nil {
 		return "", utils.ErrInfo(err)
