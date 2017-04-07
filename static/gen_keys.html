@@ -38,7 +38,17 @@ function new_keys() {
             You can share the link http://testnet.egaas.org/register?state={{.Data.StateId}} that users 
             can get these generated keys.
         </p></div>
-		<iframe src="https://www.facebook.com/plugins/share_button.php?href=http://testnet.egaas.org/register?state={{.Data.StateId}}&layout=button&size=large&mobile_iframe=true&appId=1420858444620431&width=114&height=28" width="114" height="28" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true"></iframe>
+		<div class="d-inline-block">
+			<iframe src="https://www.facebook.com/plugins/share_button.php?href=http://testnet.egaas.org/register?state={{.Data.StateId}}&layout=button&size=large&mobile_iframe=true&appId=1420858444620431&width=114&height=28" width="114" height="28" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true"></iframe>
+		</div>
+		<div class="d-inline-block ml-xl">
+			<iframe
+				src="https://platform.twitter.com/widgets/tweet_button.html?size=l&url=http://testnet.egaas.org/register?state={{.Data.StateId}}"
+				width="140"
+				height="28"
+				style="border: 0; overflow: hidden;">
+			</iframe>
+		</div>
         <div class="form-group">
             <label >Generated keys: </label> <strong id="gen">{{.Generated}}</strong><br>
             <label >Used keys: </label> <strong id="used">{{.Used}}</strong><br>
