@@ -399,6 +399,17 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
+	err = p.ExecSql(`CREATE TABLE "` + id + `_anonyms" (
+				"id_citizen" bigint NOT NULL DEFAULT '0',
+				"id_anonym" bigint NOT NULL DEFAULT '0',
+				"encrypted" bytea  NOT NULL DEFAULT ''
+				);
+				ALTER TABLE ONLY "` + id + `_anonyms" ADD CONSTRAINT "` + id + `_anonyms_pkey" PRIMARY KEY (id_citizen);
+				`)
+	if err != nil {
+		return
+	}
+
 	err = utils.LoadContract(id)
 	return
 }
@@ -413,7 +424,7 @@ func (p *Parser) NewState() error {
 	}
 	if isGlobal {
 		_, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name", "timestamp date_founded"},
-			[]interface{}{id, country, p.BlockData.Time }, "global_states_list", nil, nil, true)
+			[]interface{}{id, country, p.BlockData.Time}, "global_states_list", nil, nil, true)
 
 		if err != nil {
 			return p.ErrInfo(err)
@@ -445,7 +456,7 @@ func (p *Parser) NewStateRollback() error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
-		`smart_contracts`, `state_parameters`, `apps` /*, `citizenship_requests`*/} {
+		`smart_contracts`, `state_parameters`, `apps`, `anonyms` /*, `citizenship_requests`*/} {
 		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
 		if err != nil {
 			return p.ErrInfo(err)
