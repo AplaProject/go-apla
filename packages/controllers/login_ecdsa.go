@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type loginECDSAPage struct {
@@ -33,13 +34,16 @@ type loginECDSAPage struct {
 	OneCountry  int64
 	PrivCountry bool
 	Import      bool
+	Local       bool
 	Private     string
 }
 
 func (c *Controller) LoginECDSA() (string, error) {
 	var err error
 	var private []byte
-	if c.ConfigIni["public_node"] != "1" {
+
+	local := strings.HasPrefix(c.r.Host, `localhost`)
+	if c.ConfigIni["public_node"] != "1" || local {
 		private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
 	}
 
@@ -87,6 +91,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 		States:      states,
 		State:       state_id,
 		Key:         key,
+		Local:       local,
 		Import:      len(pkey) > 0,
 		OneCountry:  utils.OneCountry,
 		PrivCountry: utils.PrivCountry,

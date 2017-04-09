@@ -614,6 +614,9 @@ $(document).ready(function(){
 		key_form();
 	{{else}}
 		load_accounts();
+		if (private.length && {{.Local}})	{
+			$("#phrase").val(private);
+		}
 		if ((!GKey.Public && !GKey.Accounts.length) || {{.Import}}) {
 			if (private.length)	{
 				$("#phrase").val(private);
