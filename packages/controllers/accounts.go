@@ -17,21 +17,27 @@
 package controllers
 
 import (
-	"encoding/hex"
-	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (c *Controller) GetServerTime() (string, error) {
-	var more string
-	pub := c.r.FormValue(`pub`)
-	if len(pub) == 128 {
-		if key, err := hex.DecodeString(pub); err == nil {
-			if pubId := int64(lib.Address(key)); pubId != 0 {
-				more = fmt.Sprintf(`, "account": "%d"`, pubId)
-			}
-		}
-	}
-	return fmt.Sprintf(`{"time":"%s" %s}`, utils.Int64ToStr(utils.Time()), more), nil
+const NAccounts = `accounts`
+
+type accountsPage struct {
+	Data     *CommonPage
+	TxType   string
+	TxTypeId int64
+	Unique   string
+}
+
+func init() {
+	newPage(NAccounts)
+}
+
+func (c *Controller) Accounts() (string, error) {
+	//	prefix := c.StateIdStr
+	//	name := c.r.FormValue(`name`)
+
+	txType := "NewAccount"
+	pageData := accountsPage{Data: c.Data, TxType: txType, TxTypeId: utils.TypeInt(txType), Unique: ``}
+	return proceedTemplate(c, NAccounts, &pageData)
 }

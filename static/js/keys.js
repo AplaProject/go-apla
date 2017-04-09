@@ -147,6 +147,9 @@ var word_list = ["abandon", "ability", "able", "about", "above", "absent", "abso
 KJUR.crypto.ECDSA.prototype.GenKeyPairHex = function () {
 	var biN = this.ecparams['n'];
 	var phrase = $("#phrase").val();
+	if (!phrase || phrase.length == 0) {
+		phrase = get_phrase();
+	}
 	var phrasepriv = '';
 	var phrase_low = phrase.toLowerCase();
 	for (i = 0; i < phrase_low.length; i++) {
@@ -196,7 +199,7 @@ function getRandomInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function do_phrase(count) {
+function get_phrase(count) {
 	var limit = 15;
 	if (typeof count === 'number') {
 		limit = count;
@@ -206,7 +209,11 @@ function do_phrase(count) {
 		rnd = getRandomInt(0, word_list.length - 1);
 		passphrase[i] = word_list[rnd];
 	}
-	$("#phrase").val(passphrase.join(" "));
+	return passphrase.join(" ");
+}
+
+function do_phrase(count) {
+	$("#phrase").val(get_phrase());
 	return false;//do_generate();
 }
 
