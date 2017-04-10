@@ -55,7 +55,11 @@ func (p *Parser) NewAccount() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	_, err = p.selectiveLoggingAndUpd([]string{"citizen_id", "amount"}, []interface{}{p.TxCitizenID, 0},
+		p.TxStateIDStr+"_accounts", nil, nil, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 

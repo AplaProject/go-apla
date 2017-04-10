@@ -17,13 +17,25 @@
 package controllers
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const NAccounts = `accounts`
 
+type AccountInfo struct {
+	AccountId int64  `json:"account_id"`
+	Address   string `json:"address"`
+	Amount    string `json:"amount"`
+}
+
 type accountsPage struct {
 	Data     *CommonPage
+	List     []AccountInfo
+	Currency string
 	TxType   string
 	TxTypeId int64
 	Unique   string
@@ -34,10 +46,52 @@ func init() {
 }
 
 func (c *Controller) Accounts() (string, error) {
-	//	prefix := c.StateIdStr
-	//	name := c.r.FormValue(`name`)
 
+	data := make([]AccountInfo, 0)
+
+	cents, _ := utils.StateParam(c.SessStateId, `money_digit`)
+	digit := utils.StrToInt(cents)
+
+	currency, _ := utils.StateParam(c.SessStateId, `currency_name`)
+
+	newAccount := func(account int64, amount string) {
+		if amount == `NULL` {
+			amount = ``
+		} else if len(amount) > 0 {
+			if digit > 0 {
+				if len(amount) < digit+1 {
+					amount = strings.Repeat(`0`, digit+1-len(amount)) + amount
+				}
+				amount = amount[:len(amount)-digit] + `.` + amount[len(amount)-digit:]
+			}
+		}
+		data = append(data, AccountInfo{AccountId: account, Address: lib.AddressToString(uint64(account)),
+			Amount: amount})
+	}
+
+	amount, err := c.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`,
+		c.SessStateId), c.SessCitizenId).String()
+	if err != nil {
+		return ``, err
+	}
+	if len(amount) > 0 {
+		newAccount(c.SessCitizenId, amount)
+	} else {
+		newAccount(c.SessCitizenId, `NULL`)
+	}
+
+	list, err := c.GetAll(fmt.Sprintf(`select anon.*, acc.amount from "%d_anonyms" as anon
+	left join "%[1]d_accounts" as acc on acc.citizen_id=anon.id_anonym
+	where anon.id_citizen=?`, c.SessStateId), -1, c.SessCitizenId)
+	if err != nil {
+		return ``, err
+	}
+
+	for _, item := range list {
+		newAccount(utils.StrToInt64(item[`id_anonym`]), item[`amount`])
+	}
 	txType := "NewAccount"
-	pageData := accountsPage{Data: c.Data, TxType: txType, TxTypeId: utils.TypeInt(txType), Unique: ``}
+	pageData := accountsPage{Data: c.Data, List: data, Currency: currency, TxType: txType,
+		TxTypeId: utils.TypeInt(txType), Unique: ``}
 	return proceedTemplate(c, NAccounts, &pageData)
 }
