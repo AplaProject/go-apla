@@ -629,6 +629,31 @@ func (c *Controller) SaveQueue() (string, error) {
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
 
+	case "NewAccount":
+
+		accountId := utils.StrToInt64(c.r.FormValue("accountId"))
+		pubKey, err := hex.DecodeString(c.r.FormValue("pubkey"))
+		if accountId == 0 || stateId == 0 || userId == 0 || err != nil {
+			return ``, fmt.Errorf(`incorrect NewAccount parameters`)
+		}
+		encKey := c.r.FormValue("prvkey")
+		if len(encKey) == 0 {
+			return ``, fmt.Errorf(`incorrect encrypted key`)
+		}
+		err = c.ExecSql(fmt.Sprintf(`INSERT INTO "%d_anonyms" (id_citizen, id_anonym, encrypted)
+			VALUES (?,?,[hex])`, stateId), userId, accountId, encKey)
+		if err != nil {
+			return "", utils.ErrInfo(err)
+		}
+
+		data = utils.DecToBin(txType, 1)
+		data = append(data, utils.DecToBin(txTime, 4)...)
+		data = append(data, utils.EncodeLengthPlusData(accountId)...)
+		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+
+		data = append(data, utils.EncodeLengthPlusData(pubKey)...)
+		data = append(data, binSignatures...)
+
 	case "ChangeNodeKey":
 
 		publicKey := []byte(c.r.FormValue("publicKey"))

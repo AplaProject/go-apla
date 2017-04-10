@@ -404,8 +404,7 @@ MenuBack(Welcome)`, sid)
 				"id_anonym" bigint NOT NULL DEFAULT '0',
 				"encrypted" bytea  NOT NULL DEFAULT ''
 				);
-				ALTER TABLE ONLY "` + id + `_anonyms" ADD CONSTRAINT "` + id + `_anonyms_pkey" PRIMARY KEY (id_citizen);
-				`)
+				CREATE INDEX "` + id + `_anonyms_index_id" ON "` + id + `_anonyms" (id_citizen);`)
 	if err != nil {
 		return
 	}
