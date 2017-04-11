@@ -807,7 +807,17 @@ main:
 					}
 					buffer = append(buffer, &ByteCode{cmdCall, objInfo})
 					if isContract {
-						bytecode = append(bytecode, &ByteCode{CMD_PUSH, StateName((*block)[0].Info.(uint32), lexem.Value.(string))})
+						name := StateName((*block)[0].Info.(uint32), lexem.Value.(string))
+						for i := len(*block) - 1; i >= 0; i-- {
+							topblock := (*block)[i]
+							if topblock.Type == OBJ_CONTRACT {
+								if topblock.Info.(*ContractInfo).Used == nil {
+									topblock.Info.(*ContractInfo).Used = make(map[string]bool)
+								}
+								topblock.Info.(*ContractInfo).Used[name] = true
+							}
+						}
+						bytecode = append(bytecode, &ByteCode{CMD_PUSH, name})
 						if count == 0 {
 							count = 2
 							bytecode = append(bytecode, &ByteCode{CMD_PUSH, ""})

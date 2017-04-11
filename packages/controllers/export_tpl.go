@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"sort"
 	"strings"
 	//	"strconv"
 	"encoding/json"
@@ -32,6 +33,29 @@ import (
 )
 
 const NExportTpl = `export_tpl`
+
+type ExpContract struct {
+	Contract string
+	Global   int
+	Name     string
+}
+
+type ExpSlice []ExpContract
+
+func (a ExpSlice) Len() int      { return len(a) }
+func (a ExpSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ExpSlice) Less(i, j int) bool {
+	iused := smart.GetUsedContracts(a[i].Name, uint32(0), true)
+	if iused == nil {
+		return true
+	}
+	for _, val := range iused {
+		if val == a[j].Name {
+			return false
+		}
+	}
+	return true
+}
 
 type exportInfo struct {
 	//	Id   int    `json:"id"`
@@ -470,14 +494,31 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			}
 		}
 
-		contracts = strings.Split(c.r.FormValue("smart_contracts"), `,`)
-		if len(contracts) > 0 {
-			for _, icontract := range contracts {
+		cont := strings.Split(c.r.FormValue("smart_contracts"), `,`)
+		if len(cont) > 0 {
+			contracts := make(ExpSlice, 0)
+			for _, icontract := range cont {
+				var global int
+
 				if len(icontract) == 0 {
 					continue
 				}
-				var global int
 				icontract, global, _ = getState(c.SessStateId, icontract)
+				var name string
+				if global > 0 {
+					name = `@0` + icontract
+				} else {
+					name = fmt.Sprintf(`@%d%s`, c.SessStateId, icontract)
+				}
+				contracts = append(contracts, ExpContract{Contract: icontract, Global: global,
+					Name: name})
+			}
+			//			sort.Slice(contracts, sortContracts) for golang >= ver 1.8
+			sort.Sort(contracts)
+			for _, icont := range contracts {
+				global := icont.Global
+				icontract := icont.Contract
+				//				icontract, global, _ = getState(c.SessStateId, icontract)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {

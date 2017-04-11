@@ -65,6 +65,7 @@ type ContractInfo struct {
 	Name   string
 	Active bool
 	TblId  int64
+	Used   map[string]bool // Called contracts
 	Tx     *[]*FieldInfo
 }
 

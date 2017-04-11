@@ -147,6 +147,29 @@ func GetContract(name string, state uint32 /*, data interface{}*/) *Contract {
 	return nil
 }
 
+func GetUsedContracts(name string, state uint32, full bool) []string {
+	contract := GetContract(name, state)
+	if contract == nil || contract.Block.Info.(*script.ContractInfo).Used == nil {
+		return nil
+	}
+	ret := make([]string, 0)
+	used := make(map[string]bool)
+	for key := range contract.Block.Info.(*script.ContractInfo).Used {
+		ret = append(ret, key)
+		used[key] = true
+		if full {
+			sub := GetUsedContracts(key, state, full)
+			for _, item := range sub {
+				if _, ok := used[item]; !ok {
+					ret = append(ret, item)
+					used[item] = true
+				}
+			}
+		}
+	}
+	return ret
+}
+
 // Returns true if the contract exists
 func GetContractById(id int32 /*, p *Parser*/) *Contract {
 	idcont := id // - CNTOFF
