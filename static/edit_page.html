@@ -329,7 +329,7 @@
 	
 	$("#back").on('click', function () {
 		{{if .DataPage.name}}
-			load_template({{.DataPage.name}});
+			load_template({{.DataPage.name}}, {global: {{.Global}} });
 		{{else}}
 			load_page('interface');
 		{{end}}
