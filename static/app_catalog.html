@@ -19,6 +19,13 @@
 </style>
 
 <div class="content-heading">
+	<div class="pull-right">
+		<button type="button" id="key_btn" style="margin-top:0px;position:relative;"  class="btn btn-default" onclick="document.getElementById('upload_tpl').click();">
+			<em class="fa fa-upload fa-fw mr-sm"></em>
+			<span >Upload Application (TPL file)</span>
+			<input type="file" id="upload_tpl" class="hidden" value="" accept=".tpl">
+		</button>
+	</div>
 	<span class="lang" lang-id="application_list"></span>
 </div>
 <div class="row">
@@ -49,17 +56,13 @@
 	</div>
 	{{end}}
 	<div>
-	<div id="key_btn" style="margin-top:0px;position:relative;"  class="btn btn-default pull-left" onclick="document.getElementById('upload_tpl').click();" type="button">
-		<span >Upload Application (TPL file)</span>
-		<input type="file"  id="upload_tpl" value="" style="visibility:hidden;position:absolute;">
-	</div>
 	</div>
 </div>
 <script>
 function handleFileSelect(evt) {
 	var f = evt.target.files[0];
 	if (f.name.substr(-4) != '.tpl') {
-		alert('The file must have .tpl extension');
+		Alert(returnLang("warning"), "The file must have .tpl extension", "warning", defaultConfirm, "", "", "fullScreen:close", defaultConfirm)
 		return
 	}
     var reader = new FileReader();
