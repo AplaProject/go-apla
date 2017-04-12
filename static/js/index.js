@@ -562,10 +562,10 @@ function load_template(page, parameters, anchor, customFunc) {
 		}, "html");
 }
 
-function load_app(page) {
+function load_app(page, parameters) {
 	clearAllTimeouts();
 	NProgress.set(1.0);
-	$.post("app?page=" + page, {},
+	$.post("app?page=" + page, parameters ? parameters : {},
 		function (data) {
 			$(".sweet-overlay, .sweet-alert").remove();
 			$('#dl_content').html(data);

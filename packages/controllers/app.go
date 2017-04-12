@@ -66,10 +66,18 @@ func App(w http.ResponseWriter, r *http.Request) {
 	params[`wallet_id`] = utils.Int64ToStr(GetSessWalletId(sess))
 	params[`citizen_id`] = utils.Int64ToStr(GetSessCitizenId(sess))
 
-	var out string
-	data, err := static.Asset("static/" + page + ".tpl")
-	if err != nil {
-		out = err.Error()
+	var (
+		out  string
+		data []byte
+	)
+
+	if len(params[`file`]) == 0 {
+		data, err = static.Asset("static/" + page + ".tpl")
+		if err != nil {
+			out = err.Error()
+		}
+	} else {
+		data = []byte(params[`file`])
 	}
 	if len(data) > 0 {
 		var table string
@@ -79,7 +87,6 @@ func App(w http.ResponseWriter, r *http.Request) {
 			table = fmt.Sprintf(`"%d_apps"`, GetSessInt64("state_id", sess))
 		}
 		appinfo, err := utils.DB.OneRow(`select * from `+table+` where name=?`, page).String()
-		fmt.Printf(`Appinfo`, err, appinfo)
 		if err != nil {
 			out = err.Error()
 		} else {

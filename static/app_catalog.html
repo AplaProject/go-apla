@@ -48,4 +48,30 @@
 		</div>
 	</div>
 	{{end}}
+	<div>
+	<div id="key_btn" style="margin-top:0px;position:relative;"  class="btn btn-default pull-left" onclick="document.getElementById('upload_tpl').click();" type="button">
+		<span >Upload Application (TPL file)</span>
+		<input type="file"  id="upload_tpl" value="" style="visibility:hidden;position:absolute;">
+	</div>
+	</div>
 </div>
+<script>
+function handleFileSelect(evt) {
+	var f = evt.target.files[0];
+	if (f.name.substr(-4) != '.tpl') {
+		alert('The file must have .tpl extension');
+		return
+	}
+    var reader = new FileReader();
+    reader.onload = (function(theFile) {
+        return function(e) {
+			load_app(f.name.substr(0, f.name.length-4), {file: e.target.result})
+        };
+    })(f);
+    reader.readAsText(f);
+};
+
+	var upload = document.getElementById('upload_tpl');
+	if (upload)
+		upload.addEventListener('change', handleFileSelect, false);
+</script>
