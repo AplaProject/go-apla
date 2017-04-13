@@ -18,25 +18,33 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 func (c *Controller) AjaxStatesList() (string, error) {
 
-	result := make(map[string]map[string]string)
-	data, err := c.GetList(`SELECT id FROM system_states`).String()
+	result := make(map[int64]map[string]string)
+	data, err := c.GetList(`SELECT id FROM system_states`).Int64()
 	if err != nil {
 		return ``, err
 	}
+	query := func(id int64, name string) (string, error) {
+		return c.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = ?`, id), name).String()
+	}
 	for _, id := range data {
-		state_name, err := c.Single(`SELECT value FROM "` + id + `_state_parameters" WHERE name = 'state_name'`).String()
+		if !c.IsNodeState(id, c.r.Host) {
+			continue
+		}
+
+		state_name, err := query(id, `state_name`)
 		if err != nil {
 			return ``, err
 		}
-		state_flag, err := c.Single(`SELECT value FROM "` + id + `_state_parameters" WHERE name = 'state_flag'`).String()
+		state_flag, err := query(id, `state_flag`)
 		if err != nil {
 			return ``, err
 		}
-		state_coords, err := c.Single(`SELECT value FROM "` + id + `_state_parameters" WHERE name = 'state_coords'`).String()
+		state_coords, err := query(id, `state_coords`)
 		if err != nil {
 			return ``, err
 		}

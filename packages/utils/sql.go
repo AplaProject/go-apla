@@ -1705,3 +1705,17 @@ func (db *DCDB) IsState(country string) (int64, error) {
 	}
 	return 0, nil
 }
+
+func (db *DCDB) IsNodeState(state int64, host string) bool {
+	if strings.HasPrefix(host, `localhost`) {
+		return true
+	}
+	if val, ok := db.ConfigIni[`node_state_id`]; ok {
+		for _, id := range strings.Split(val, `,`) {
+			if StrToInt64(id) == state {
+				return true
+			}
+		}
+	}
+	return false
+}
