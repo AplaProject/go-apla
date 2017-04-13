@@ -1688,3 +1688,20 @@ where table_name = ? and column_name = ?`, tblname, column).String()
 	}
 	return
 }
+
+func (db *DCDB) IsState(country string) (int64, error) {
+	data, err := db.GetList(`SELECT id FROM system_states`).Int64()
+	if err != nil {
+		return 0, err
+	}
+	for _, id := range data {
+		state_name, err := db.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = 'state_name'`, id)).String()
+		if err != nil {
+			return 0, err
+		}
+		if strings.ToLower(state_name) == strings.ToLower(country) {
+			return id, nil
+		}
+	}
+	return 0, nil
+}

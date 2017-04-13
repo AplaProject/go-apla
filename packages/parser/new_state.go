@@ -84,8 +84,14 @@ func (p *Parser) NewStateFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
+	country := string(p.TxMap["state_name"])
+	if exist, err := p.IsState(country); err != nil {
+		return p.ErrInfo(err)
+	} else if exist > 0 {
+		return fmt.Errorf(`State %s already exists`, country)
+	}
 
-	err = p.NewStateGlobal(string(p.TxMap["state_name"]), string(p.TxMap["currency_name"]))
+	err = p.NewStateGlobal(country, string(p.TxMap["currency_name"]))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
