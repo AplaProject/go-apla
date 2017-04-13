@@ -102,6 +102,13 @@ func (p *Parser) EditStateParametersFront() error {
 			return p.ErrInfo(err)
 		}
 	}
+	if p.TxMaps.String["name"] == `state_name` {
+		if exist, err := p.IsState(p.TxMaps.String["value"]); err != nil {
+			return p.ErrInfo(err)
+		} else if exist > 0 && exist != int64(p.TxStateID) {
+			return fmt.Errorf(`State %s already exists`, p.TxMaps.String["value"])
+		}
+	}
 	if err := p.AccessRights(p.TxMaps.String["name"], true); err != nil {
 		return p.ErrInfo(err)
 	}
@@ -110,7 +117,9 @@ func (p *Parser) EditStateParametersFront() error {
 
 func (p *Parser) EditStateParameters() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"],
+		p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", []string{"name"},
+		[]string{p.TxMaps.String["name"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
