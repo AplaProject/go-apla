@@ -283,6 +283,10 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 	names := strings.Split(tblname, `_`)
 	if names[0] != `global` {
 		state := utils.StrToInt64(names[0])
+		if state != int64(p.TxStateID) {
+			err = fmt.Errorf(`Wrong state in DBInsertReport`)
+			return
+		}
 		if !p.IsNodeState(state, ``) {
 			return
 		}
