@@ -129,6 +129,17 @@
 			'key_password' : $('#key_password').val()
 		}, function (data) { $('#dl_content').html( data );  NProgressStart.done(); }, 'html' );*/
 	} );
+
+	$('#first_load').on('change', function() {
+		if (this.value=="Private-net") {
+			$('#url').css("display", "none")
+			$('#gen_first').show();
+		} else {
+			$('#url').css("display", "block");
+			$('#gen_first').hide();
+		}
+	});
+		
 </script>
 
 <!-- START panel-->
@@ -143,15 +154,16 @@
 							<label class="col-sm-3 control-label lang" for="first_load" lang-id="mode"></label>
 							<div class="col-sm-9">
 								<select id="first_load" class="form-control">
-									<option value="Private-net" class="lang" lang-id="private_net"></option>
+									<option value="Private-net" class="lang" lang-id="private_net">Private-net</option>
+									<option value="file">Url</option>
 								</select>
 								<div>
-									<input class="form-control" type="text" id="url" value="http://daylight.world/blockchain">
+									<input class="form-control" type="text" id="url" value="http://egaas-blockchain.github.io/blockchain-0-1">
 								</div>
 							</div>
 						</fieldset>
 	
-						<fieldset class="form-group">
+						<fieldset class="form-group" id="gen_first" >
 							<label class="col-sm-3 control-label" for="generate_first_block"></label>
 							<div class="col-sm-9">
 								<div class="checkbox c-checkbox">
