@@ -168,6 +168,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	daemons.ConfigInit()
 
 	go func() {
+		var err error
 		utils.DB, err = utils.NewDbConnect(configIni)
 		log.Debug("%v", utils.DB)
 		IosLog("utils.DB:" + fmt.Sprintf("%v", utils.DB))

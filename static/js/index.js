@@ -1430,11 +1430,13 @@ function loadLanguage() {
 	var userLang = navigator.language || navigator.userLanguage;
 	var lang = localStorage.getItem('EGAAS_LANG');
 
-	if (lang === null) {
+	if (lang === null && userLang) {
 		lang = userLang.substring(0, 2);
 		if (lang != "nl") {
 			lang = "gb";
 		}
+	} else {
+		lang = "gb";
 	}
 
 	localStorage.setItem('EGAAS_LANG', lang);

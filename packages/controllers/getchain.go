@@ -61,29 +61,31 @@ func UpdateChain(latest int64) (answer ChainMsg) {
 
 func GetChain() {
 	for {
-		// b.hash, b.state_id,
-		explorer, err := utils.DB.GetAll(`SELECT   b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
-		where b.id > $1	order by b.id desc limit 30 offset 0`, -1, chainLatest)
-		if err == nil && len(explorer) > 0 {
-			chainLatest = utils.StrToInt64(explorer[0][`id`])
-			if chainOff+len(explorer) > chainLimit {
-				for i := 0; i < 50; i++ {
-					chainList[i] = chainList[chainOff-50+i]
+		if utils.DB.DB != nil {
+			// b.hash, b.state_id,
+			explorer, err := utils.DB.GetAll(`SELECT   b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
+			where b.id > $1	order by b.id desc limit 30 offset 0`, -1, chainLatest)
+			if err == nil && len(explorer) > 0 {
+				chainLatest = utils.StrToInt64(explorer[0][`id`])
+				if chainOff+len(explorer) > chainLimit {
+					for i := 0; i < 50; i++ {
+						chainList[i] = chainList[chainOff-50+i]
+					}
+					chainOff = 50
 				}
-				chainOff = 50
-			}
-			for i := len(explorer); i > 0; i-- {
-				item := explorer[i-1]
-				wallet_id := utils.StrToInt64(item[`wallet_id`])
-				address := ``
-				if wallet_id != 0 {
-					address = lib.AddressToString(uint64(wallet_id))
-				}
+				for i := len(explorer); i > 0; i-- {
+					item := explorer[i-1]
+					wallet_id := utils.StrToInt64(item[`wallet_id`])
+					address := ``
+					if wallet_id != 0 {
+						address = lib.AddressToString(uint64(wallet_id))
+					}
 
-				chainList[chainOff] = ChainInfo{Id: utils.StrToInt64(item[`id`]),
-					//Hash: hex.EncodeToString([]byte(item[`hash`])), Wallet: wallet_id,State: utils.StrToInt64(item[`state_id`]),
-					Address: address, Time: item[`time`], Tx: item[`tx`]}
-				chainOff++
+					chainList[chainOff] = ChainInfo{Id: utils.StrToInt64(item[`id`]),
+						//Hash: hex.EncodeToString([]byte(item[`hash`])), Wallet: wallet_id,State: utils.StrToInt64(item[`state_id`]),
+						Address: address, Time: item[`time`], Tx: item[`tx`]}
+					chainOff++
+				}
 			}
 		}
 		time.Sleep(1 * time.Second)

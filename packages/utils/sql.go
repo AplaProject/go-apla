@@ -99,8 +99,11 @@ func ReplQ(q string) string {
 func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	var db *sql.DB
 	var err error
+	if len(ConfigIni["db_user"]) == 0 || len(ConfigIni["db_password"]) == 0 || len(ConfigIni["db_name"]) == 0 {
+		return &DCDB{}, err
+	}
 	db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable port=%s", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"], ConfigIni["db_port"]))
-	if err != nil {
+	if err != nil || db.Ping() != nil {
 		return &DCDB{}, err
 	}
 	log.Debug("return")
