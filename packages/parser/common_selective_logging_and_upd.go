@@ -33,6 +33,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		err      error
 	)
 
+	if generalRollback && p.BlockData == nil {
+		return ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
+	}
+
 	isBytea := getBytea(table)
 	if isCustom, err = p.IsCustomTable(table); err != nil {
 		return ``, err

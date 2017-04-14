@@ -62,6 +62,7 @@ var (
 		"UpdateParam":    200,
 		"UpdateMenu":     200,
 		"UpdatePage":     200,
+		"DBInsertReport": 200,
 	}
 )
 
@@ -103,6 +104,7 @@ func init() {
 		"UpdateParam":     UpdateParam,
 		"UpdateMenu":      UpdateMenu,
 		"UpdatePage":      UpdatePage,
+		"DBInsertReport":  DBInsertReport,
 		"check_signature": CheckSignature, // system function
 	}, map[string]string{
 		`*parser.Parser`: `parser`,
@@ -268,6 +270,27 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 			err = fmt.Errorf(`paid CPU resource is over`)
 			return
 		}
+	}
+	var lastId string
+	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	if err == nil {
+		ret, _ = strconv.ParseInt(lastId, 10, 64)
+	}
+	return
+}
+
+func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) {
+	names := strings.Split(tblname, `_`)
+	if names[0] != `global` {
+		state := utils.StrToInt64(names[0])
+		if !p.IsNodeState(state, ``) {
+			return
+		}
+	}
+	tblname = names[0] + `_reports_` + strings.Join(names[1:], `_`)
+
+	if err = p.AccessTable(tblname, "insert"); err != nil {
+		return
 	}
 	var lastId string
 	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
