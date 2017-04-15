@@ -27,3 +27,7 @@ $GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/..
 go build
 ./go-egaas-mvp
 ```
+
+
+### Questions?
+email: hello@egaas.org
