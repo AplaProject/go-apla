@@ -1722,3 +1722,10 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 	}
 	return false
 }
+
+func (db *DCDB) IsTable(tblname string) bool {
+	name, _ := db.Single(`SELECT table_name FROM information_schema.tables 
+         WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')
+     	AND table_name=?`, tblname).String()
+	return name == tblname
+}
