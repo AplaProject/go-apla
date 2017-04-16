@@ -213,7 +213,7 @@ BEGIN:
 
 						data := make([]byte, dataSize)
 						file.Read(data)
-						//logger.Debug("data %x\n", data)
+						logger.Debug("data %x\n", data)
 						blockId := utils.BinToDec(data[0:5])
 						if *utils.EndBlockId > 0 && blockId == *utils.EndBlockId {
 							if d.dPrintSleep(err, d.sleepTime) {
@@ -231,6 +231,7 @@ BEGIN:
 
 						if *utils.StartBlockId == 0 || (*utils.StartBlockId > 0 && blockId > *utils.StartBlockId) {
 
+							logger.Debug("block parsing")
 							// парсинг блока
 							parser.BinaryData = blockBin
 
@@ -240,6 +241,7 @@ BEGIN:
 							}
 
 							if err = parser.ParseDataFull(false); err != nil {
+								logger.Error("%v", err)
 								parser.BlockError(err)
 								if d.dPrintSleep(err, d.sleepTime) {
 									break BEGIN
