@@ -65,7 +65,6 @@
 		});
 	}, 110);
 
-	$('#url').css("display", "none");
 	$('.db_settings').show();
 	
 	$("#generate_first_block").bind('click', function () {
@@ -117,7 +116,7 @@
 			'http_port' : $('#http_port').val(),
 			'tpl_name' : 'installStep1',
 			'type' : $('input[name=settings]:checked').val(),
-			'url' : $('#url').val(),
+			'first_load_blockchain_url' : $('#url').val(),
 			'first_load' : $('#first_load').val(),
 			'log_level' : $('#log_level').val(),
 			'db_type' : "postgresql",
@@ -134,6 +133,9 @@
 		if (this.value=="Private-net") {
 			$('#url').css("display", "none")
 			$('#gen_first').show();
+		} else if (this.value=="nodes") {
+			$('#gen_first').hide();
+			$('#url').hide();
 		} else {
 			$('#url').css("display", "block");
 			$('#gen_first').hide();
@@ -155,15 +157,16 @@
 							<div class="col-sm-9">
 								<select id="first_load" class="form-control">
 									<option value="Private-net" class="lang" lang-id="private_net">Private-net</option>
-									<option value="file">Url</option>
+									<option value="nodes">Testnet Nodes</option>
+									<option value="file" selected>Testnet Url</option>
 								</select>
 								<div>
-									<input class="form-control" type="text" id="url" value="http://egaas-blockchain.github.io/blockchain-0-1">
+									<input class="form-control" type="text" id="url" value="https://media.githubusercontent.com/media/egaas-blockchain/egaas-blockchain.github.io/master/blockchain.raw">
 								</div>
 							</div>
 						</fieldset>
 	
-						<fieldset class="form-group" id="gen_first" >
+						<fieldset class="form-group" id="gen_first"  style="display:none">
 							<label class="col-sm-3 control-label" for="generate_first_block"></label>
 							<div class="col-sm-9">
 								<div class="checkbox c-checkbox">
@@ -181,11 +184,11 @@
 							</div>
 						</fieldset>
 						<fieldset class="form-group">
-							<label class="col-sm-3 control-label lang" for="dir" lang-id="log_level"></label>
+							<label class="col-sm-3 control-label lang" for="log_level" lang-id="log_level"></label>
 							<div class="col-sm-9">
 								<select id="log_level" class="form-control">
-									<option value="ERROR" class="lang" lang-id="error"></option>
-									<option value="DEBUG" class="lang" lang-id="debug" selected></option>
+									<option value="ERROR" class="lang" lang-id="error" selected></option>
+									<option value="DEBUG" class="lang" lang-id="debug"></option>
 								</select>
 							</div>
 						</fieldset>

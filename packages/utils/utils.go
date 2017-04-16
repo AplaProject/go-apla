@@ -118,6 +118,7 @@ var (
 	PrivCountry             bool
 	OutFile                 *os.File
 	LogoExt                 = `png`
+	DltWalletId	= flag.Int64("dltWalletId", 0, "DltWalletId")
 
 	DaemonsChans []*DaemonsChansType
 	eWallets     = &sync.Mutex{}
