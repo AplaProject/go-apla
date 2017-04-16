@@ -93,7 +93,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 	}
 
 	wTime := int64(12)
-	wTimeReady := int64(2)
+	wTimeReady := int64(1)
 	if c.ConfigIni["test_mode"] == "1" {
 		wTime = 2 * 365 * 86400
 		wTimeReady = 2 * 365 * 86400
@@ -108,7 +108,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		log.Debug("lastBlockData[lastBlockTime]: %v", lastBlockData["lastBlockTime"])
 		log.Debug("time.Now().Unix(): %v", time.Now().Unix())
 		// если уже почти собрали все блоки
-		if time.Now().Unix()-lastBlockData["lastBlockTime"] < 3600*wTimeReady {
+		if time.Now().Unix()-lastBlockData["lastBlockTime"] < 600*wTimeReady {
 			blockId = "-1"
 			blockTime = "-1"
 		}
