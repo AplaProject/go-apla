@@ -36,13 +36,13 @@ func main_loader(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(data))
 }
 func main_loader_html(w http.ResponseWriter, r *http.Request) {
-	html := `<html><title>EgaaS</title><body style="margin:0;padding:0;overflow:hidden;"><img src="static/img/main_loader.gif"/></body></html>`
+	html := `<html><title>EgaaS</title><body  bgcolor="#4DC3FD" style="margin:0;padding:0;overflow:hidden; text-align:center"><img src="static/img/main_loader.gif"/></body></html>`
 	fmt.Fprint(w, html)
 }
 func main() {
 	runtime.LockOSThread()
 
-	var width uint = 800
+	var width uint = 900
 	var height uint = 600
 	var thrustWindow *window.Window
 	if runtime.GOOS == "darwin" {
