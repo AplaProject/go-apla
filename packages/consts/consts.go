@@ -66,7 +66,7 @@ const WRITE_TIMEOUT = 20
 // дефолтное знаение, со скольким нодами устанавляиваем связь
 const OUT_CONNECTIONS = 10
 
-const GAPS_BETWEEN_BLOCKS = 1
+const GAPS_BETWEEN_BLOCKS = 5
 const COMMISSION = 1000
 const TCP_PORT = "7078"
 const MAX_BLOCK_USER_TXS = 100
