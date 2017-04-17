@@ -32,9 +32,9 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		return c.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = ?`, id), name).String()
 	}
 	for _, id := range data {
-		if !c.IsNodeState(id, c.r.Host) {
-			continue
-		}
+		/*		if !c.IsNodeState(id, c.r.Host) {
+				continue
+			}*/
 
 		state_name, err := query(id, `state_name`)
 		if err != nil {

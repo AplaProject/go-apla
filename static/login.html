@@ -130,11 +130,7 @@
 					<label class="col-sm-3 control-label lang" for="phrase" lang-id="country"></label>
 					<div class="col-sm-9">
 						<select id="state_id" class="form-control">
-							<option value="0" class="no_citizenship lang" selected="selected" lang-id="no_citizenship"></option>
-							<!--<option value="0">-----</option>-->
-							<!--{ range $id, $name := .States }
-							<option value="{$id}">{$name}</option>
-							{end}-->
+							<option value="0" class="no_citizenship lang" selected="selected" lang-id="no_citizenship">No citizenship</option>
 						</select>
 					</div>
 				</fieldset>
@@ -591,7 +587,7 @@ function del_account(obj, ind) {
 	return false;
 }
 
-var selectbox = $("#state_id");
+var selectbox; 
 
 function WatchForm() {
 	/*var el = $(".start_form");
@@ -604,6 +600,7 @@ function WatchForm() {
 }
 
 $(document).ready(function(){
+	selectbox = $("#state_id");
 /*	if (pubkey) {
 		$("#address").html( 'Address: ' +  hex_sha1( pubkey ).toLowerCase());
 	}*/
@@ -639,6 +636,9 @@ $(document).ready(function(){
 		//$(".islogin").hide();
 	}
 	encKey = localStorage.getItem('EncKey');
+	console.log('Login ready', {{.States}} );
+	updateLanguage(".lang");	
+	
 	selectboxState(JSON.parse({{.States}}));	
 	console.log('state', {{.State}});
 	{{if .State}}
@@ -683,8 +683,6 @@ $(document).ready(function(){
 	var upload = document.getElementById('upload_key');
 	if (upload)
 		upload.addEventListener('change', handleFileSelect, false);
-	console.log('Login ready');
-	updateLanguage(".lang");	
 });
 
 $(document).on('keydown', function(e){
