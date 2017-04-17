@@ -445,6 +445,9 @@ function ajaxMenu(page, parameters, customFunc) {
 		type: 'POST',
 		data: parameters ? parameters : {},
 		success: function (data) {
+			if (data.length == 0) {
+				return;
+			}
 			if (customFunc) {
 				customFunc();
 				return;
