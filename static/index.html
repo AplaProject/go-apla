@@ -90,12 +90,13 @@
 			//g_menuShow = false;
 			//load_menu();
 			
-			//setTimeout(function(){
+//			setTimeout(function(){
 				$( "#dl_content" ).load( "content", { tpl_name: 'home'}, function() {
 					load_menu(undefined, 'dashboard_default');
+					updateLanguage("#dl_content .lang");					
 					NProgressStart.done();
 				});
-			//}, 100);
+//			}, 3000);
 		{{end}}
 	});
 </script>

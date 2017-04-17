@@ -92,6 +92,7 @@ func (c *Controller) Install() (string, error) {
 	confIni.Set("db_port", dbPort)
 	confIni.Set("db_password", dbPassword)
 	confIni.Set("db_name", dbName)
+	confIni.Set("node_state_id", `*`)
 
 	err = confIni.SaveConfigFile(*utils.Dir + "/config.ini")
 	if err != nil {
@@ -178,7 +179,7 @@ func (c *Controller) Install() (string, error) {
 
 			if len(*utils.FirstBlockPublicKey) == 0 {
 				priv, pub := lib.GenKeys()
-				err := ioutil.WriteFile(*utils.Dir + "/PrivateKey", []byte(priv), 0644)
+				err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
 				}
@@ -190,7 +191,7 @@ func (c *Controller) Install() (string, error) {
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
 				priv, pub := lib.GenKeys()
 				fmt.Println("WriteFile " + *utils.Dir + "/NodePrivateKey")
-				err := ioutil.WriteFile(*utils.Dir + "/NodePrivateKey", []byte(priv), 0644)
+				err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
 				}
@@ -201,7 +202,7 @@ func (c *Controller) Install() (string, error) {
 		*utils.GenerateFirstBlock = 1
 		utils.FirstBlock(false)
 	}
-		log.Debug("1block")
+	log.Debug("1block")
 
 	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
 	NodePrivateKeyStr := strings.TrimSpace(string(NodePrivateKey))

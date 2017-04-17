@@ -680,6 +680,11 @@ $(document).ready(function(){
 			Alert("Error", error, "error");
 		}
 	});*/
+	var upload = document.getElementById('upload_key');
+	if (upload)
+		upload.addEventListener('change', handleFileSelect, false);
+	console.log('Login ready');
+	updateLanguage(".lang");	
 });
 
 $(document).on('keydown', function(e){
@@ -714,14 +719,7 @@ function handleFileSelect(evt) {
     reader.readAsText(f);
 };
 
-$( document ).ready(function() {
-	var upload = document.getElementById('upload_key');
-	if (upload)
-		upload.addEventListener('change', handleFileSelect, false);
-	updateLanguage(".lang");
-});
 
-		
 </script>
 <script type="text/javascript" src="static/js/triangles.js"></script>
 {{end}}

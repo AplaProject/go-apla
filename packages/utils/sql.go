@@ -1714,6 +1714,9 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 		return true
 	}
 	if val, ok := db.ConfigIni[`node_state_id`]; ok {
+		if val == `*` {
+			return true
+		}
 		for _, id := range strings.Split(val, `,`) {
 			if StrToInt64(id) == state {
 				return true
