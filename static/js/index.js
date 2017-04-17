@@ -726,9 +726,9 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, C
 				} else if (type == "danger") {
 					type = "error";
 					color = "#f05050";
-					if (text.toLowerCase().indexOf("[error]") != -1) {
+					/*if (text.toLowerCase().indexOf("[error]") != -1) {
 						btnText = returnLang("copy_text_error_clipboard");
-					}
+					}*/
 				} else if (type == "warning") {
 					color = "#ff902b";
 				}
@@ -753,9 +753,9 @@ function Alert(title, text, type, Confirm, no, yes, fullScreen, ConfirmStatus, C
 				cancelButtonText: cancelbtnText,
 				allowOutsideClick: outsideClick
 			}, function (isConfirm) {
-				if (text.toLowerCase().indexOf("[error]") != -1) {
+				/*if (text.toLowerCase().indexOf("[error]") != -1) {
 					CopyToClipboard(".sweet-alert .confirm", text);
-				}
+				}*/
 
 				if (isConfirm) {
 					if (Confirm) {
