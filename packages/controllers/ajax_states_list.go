@@ -31,7 +31,7 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		return ``, err
 	}
 	query := func(id string, name string) (string, error) {
-		return c.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = ?`, id), name).String()
+		return c.Single(fmt.Sprintf(`SELECT value FROM "%s_state_parameters" WHERE name = ?`, id), name).String()
 	}
 	for _, id := range data {
 		if !c.IsNodeState(utils.StrToInt64(id), c.r.Host) {
@@ -56,6 +56,9 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		result[id]["state_coords"] = state_coords
 
 	}
-	jsondata, _ := json.Marshal(result)
+	jsondata, err := json.Marshal(result)
+	if err != nil {
+		return ``, err
+	}
 	return string(jsondata), nil
 }
