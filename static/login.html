@@ -636,11 +636,9 @@ $(document).ready(function(){
 		//$(".islogin").hide();
 	}
 	encKey = localStorage.getItem('EncKey');
-	console.log('Login ready', {{.States}} );
 	updateLanguage(".lang");	
 	
 	selectboxState(JSON.parse({{.States}}));	
-	console.log('state', {{.State}});
 	{{if .State}}
 		GKey.StateId = '{{.State}}';
 		GKey.Private = '';

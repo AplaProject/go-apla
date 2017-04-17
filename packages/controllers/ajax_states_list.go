@@ -19,22 +19,24 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 func (c *Controller) AjaxStatesList() (string, error) {
 
-	result := make(map[int64]map[string]string)
-	data, err := c.GetList(`SELECT id FROM system_states`).Int64()
+	result := make(map[string]map[string]string)
+	data, err := c.GetList(`SELECT id FROM system_states`).String()
 	if err != nil {
 		return ``, err
 	}
-	query := func(id int64, name string) (string, error) {
+	query := func(id string, name string) (string, error) {
 		return c.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = ?`, id), name).String()
 	}
 	for _, id := range data {
-		/*		if !c.IsNodeState(id, c.r.Host) {
-				continue
-			}*/
+		if !c.IsNodeState(utils.StrToInt64(id), c.r.Host) {
+			continue
+		}
 
 		state_name, err := query(id, `state_name`)
 		if err != nil {
