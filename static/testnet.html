@@ -180,7 +180,7 @@ function WsBlockchain()
 				}
 				$("#toplist").parent().next().prepend('<tr id="l'+item.id+'"><td>'+item.block+'</td><td>'+item.time+'</td><td>'+item.tx+'</td>' +
 		       '<td>'+item.state+'</td><td>'+item.wallet+'</td><td>'+item.comment+'</td></tr>');
-			   if (tbl.children('tr').length > 10 )
+			   if (tbl.find('tr').length > 10 )
 					$('#tablelist tbody tr:last').remove();
 			}
 			latestId = data.latest;
@@ -249,6 +249,8 @@ $(document).ready(function () {
 			});
 		}
 	}
+	
+	InitMobileTable();
 });
 
 </script>
