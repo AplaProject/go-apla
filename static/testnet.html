@@ -53,24 +53,28 @@
 	<div id="dataError" class="alert alert-danger text-center" style="display:none; width:100%; max-width:400px; margin:0px auto;"></div>
 	<div class="table-responsive" style="width:100%; max-width:1200px; margin:0px auto;">
 		<table class="table table-striped table-bordered table-hover" id="tablelist" data-role="table">
-			<tr id="toplist">
-				<th>Block</th>
-				<th>Time</th>
-				<th>Tx</th>
-				<th>State</th>
-				<th>Address</th>
-				<th>Comment</th>
-			</tr>
-			{{range .List}}
-				<tr id="l{{.Id}}">
-					<td>{{.BlockId}}</td>
-					<td>{{.Time}}</td>
-					<td>{{.TxName}}</td>
-					<td>{{.State}}</td>
-					<td>{{.Address}}</td>
-					<td>{{.Comment}}</td>
+			<thead>
+				<tr id="toplist">
+					<th>Block</th>
+					<th>Time</th>
+					<th>Tx</th>
+					<th>State</th>
+					<th>Address</th>
+					<th>Comment</th>
 				</tr>
-			{{end}}
+			</thead>
+			<tbody>
+				{{range .List}}
+					<tr id="l{{.Id}}">
+						<td>{{.BlockId}}</td>
+						<td>{{.Time}}</td>
+						<td>{{.TxName}}</td>
+						<td>{{.State}}</td>
+						<td>{{.Address}}</td>
+						<td>{{.Comment}}</td>
+					</tr>
+				{{end}}
+			</tbody>
 		</table>
 	</div>
 </div>
