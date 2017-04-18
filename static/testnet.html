@@ -160,7 +160,7 @@ var latestId = {{.Latest}};
 
 function WsBlockchain()
 {
-	var tbl = $('#tablelist').children(0);
+	var tbl = $('#tablelist tbody').children(0);
 	var ws = new WebSocket("ws://{{.Host}}/wschain");
 
 	ws.onopen = function()
@@ -196,6 +196,33 @@ function WsBlockchain()
 setTimeout( WsBlockchain, 1000 );
 
 $(document).ready(function () {
+	var observeDOM = (function () {
+		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
+			eventListenerSupported = window.addEventListener;
+
+		return function (content, callback) {
+			if (MutationObserver) {
+				// define a new observer
+				var obs = new MutationObserver(function (mutations, observer) {
+					if (mutations[0].addedNodes.length || mutations[0].removedNodes.length)
+						callback();
+				});
+				// have the observer observe foo for changes in children
+				obs.observe(content, { childList: true, subtree: true });
+			}
+			else if (eventListenerSupported) {
+				content.addEventListener('DOMNodeInserted', callback, false);
+				content.addEventListener('DOMNodeRemoved', callback, false);
+			}
+		}
+	})();
+	
+	if ($("#dl_content").length) {
+		observeDOM(document.getElementById('dl_content'), function () {
+			InitMobileTable();
+		});
+	}
+	
 	function InitMobileTable() {
 		var table = $("[data-role='table']");
 		table.data('mode', 'reflow').addClass("ui-responsive");
@@ -222,8 +249,6 @@ $(document).ready(function () {
 			});
 		}
 	}
-	
-	InitMobileTable();
 });
 
 </script>
