@@ -304,6 +304,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 	return
 }
 
+func checkReport(tblname string) error {
 	if strings.Contains(tblname, `_reports_`) {
 		return fmt.Errorf(`Access denied to report table`)
 	}
@@ -315,6 +316,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
 		return
 	}*/
+	if err = checkReport(tblname); err != nil {
 		return
 	}
 	columns := strings.Split(params, `,`)
@@ -328,6 +330,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	var isIndex bool
 
+	if err = checkReport(tblname); err != nil {
 		return
 	}
 
@@ -369,6 +372,7 @@ func DBTransfer(p *Parser, tblname, columns string, idFrom, idTo int64, amount d
 }
 
 func DBString(tblname string, name string, id int64) (string, error) {
+	if err := checkReport(tblname); err != nil {
 		return ``, err
 	}
 
@@ -392,6 +396,7 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 func DBInt(tblname string, name string, id int64) (int64, error) {
+	if err := checkReport(tblname); err != nil {
 		return 0, err
 	}
 
@@ -411,6 +416,7 @@ func getBytea(table string) map[string]bool {
 }
 
 func DBStringExt(tblname string, name string, id interface{}, idname string) (string, error) {
+	if err := checkReport(tblname); err != nil {
 		return ``, err
 	}
 
@@ -461,6 +467,7 @@ func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, i
 }
 
 func DBStringWhere(tblname string, name string, where string, params ...interface{}) (string, error) {
+	if err := checkReport(tblname); err != nil {
 		return ``, err
 	}
 
@@ -579,6 +586,7 @@ func IDToAddress(id int64) (out string) {
 }
 
 func DBAmount(tblname, column string, id int64) decimal.Decimal {
+	if err := checkReport(tblname); err != nil {
 		return decimal.New(0, 0)
 	}
 
@@ -840,6 +848,7 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 func DBGetList(tblname string, name string, offset, limit int64, order string,
 	where string, params ...interface{}) ([]interface{}, error) {
 
+	if err := checkReport(tblname); err != nil {
 		return nil, err
 	}
 
@@ -874,6 +883,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 func DBGetTable(tblname string, columns string, offset, limit int64, order string,
 	where string, params ...interface{}) ([]interface{}, error) {
 	var err error
+	if err = checkReport(tblname); err != nil {
 		return nil, err
 	}
 
