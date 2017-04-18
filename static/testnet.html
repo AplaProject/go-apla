@@ -160,7 +160,7 @@ var latestId = {{.Latest}};
 
 function WsBlockchain()
 {
-	var tbl = $('#tablelist tbody').children(0);
+	var tbl = $('#tablelist tbody tr');
 	var ws = new WebSocket("ws://{{.Host}}/wschain");
 
 	ws.onopen = function()
@@ -180,7 +180,7 @@ function WsBlockchain()
 				}
 				$("#toplist").parent().next().prepend('<tr id="l'+item.id+'"><td>'+item.block+'</td><td>'+item.time+'</td><td>'+item.tx+'</td>' +
 		       '<td>'+item.state+'</td><td>'+item.wallet+'</td><td>'+item.comment+'</td></tr>');
-			   if (tbl.children().length > 10 )
+			   if (tbl.length > 10 )
 					$('#tablelist tbody tr:last').remove();
 			}
 			latestId = data.latest;
