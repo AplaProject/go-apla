@@ -30,7 +30,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 	}
 	tblname := lib.EscapeName(table)
 	// получим rb_id, по которому можно найти данные, которые были до этого
-	rbId, err := p.Single("SELECT rb_id FROM " + tblname + " " + where).Int64()
+	rbId, err := p.Single("SELECT rb_id FROM " + tblname + " " + where + " order by rb_id desc").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -42,8 +42,10 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		}
 
 		var jsonMap map[string]string
-		json.Unmarshal([]byte(rbData["data"]), &jsonMap)
-
+		err = json.Unmarshal([]byte(rbData["data"]), &jsonMap)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 		//log.Debug("logData",logData)
 		addSqlUpdate := ""
 		for k, v := range jsonMap {

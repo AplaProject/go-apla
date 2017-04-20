@@ -39,6 +39,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 	log.Debug("transactionBinaryData: %x", *transactionBinaryData)
 	log.Debug("transactionBinaryData: %s", *transactionBinaryData)
 	p.TxContract = nil
+	p.TxPtr = nil
 	if len(*transactionBinaryData) > 0 {
 
 		// хэш транзакции

@@ -603,6 +603,12 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 	if p.TxPtr != nil {
 		time = int64(p.TxPtr.(*consts.TXHeader).Time)
 	}
+	/*	if p.TxPtr != nil {
+		switch val := p.TxPtr.(type) {
+		case *consts.TXHeader:
+			time = int64(val.Time)
+		}
+	}*/
 	blockTime := int64(0)
 	if p.BlockData != nil {
 		blockTime = p.BlockData.Time

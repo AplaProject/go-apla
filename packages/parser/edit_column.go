@@ -82,7 +82,8 @@ func (p *Parser) EditColumn() error {
 	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
 		table = `global_tables`
 	}
-	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
+	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`,
+		p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).String()
 	if err != nil {
 		return err
 	}

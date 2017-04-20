@@ -92,13 +92,14 @@ func (p *Parser) NewColumnFront() error {
 
 func (p *Parser) NewColumn() error {
 
-	prefix, err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
+	tblname := p.TxMaps.String["table_name"]
+	prefix, err := utils.GetPrefix(tblname, p.TxStateIDStr)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
 
-	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
+	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where name=?`, tblname).String()
 	if err != nil {
 		return err
 	}
@@ -121,12 +122,12 @@ func (p *Parser) NewColumn() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJson(p.TxMaps.String["permissions"])+`"`, rbId, p.TxMaps.String["table_name"])
+	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJson(p.TxMaps.String["permissions"])+`"`, rbId, tblname)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.TxMaps.String["table_name"])
+	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tblname)
 	if err != nil {
 		return err
 	}
@@ -147,13 +148,13 @@ func (p *Parser) NewColumn() error {
 		colType = `double precision`
 	}
 
-	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` ` + colType)
+	err = p.ExecSql(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` ` + colType)
 	if err != nil {
 		return err
 	}
 
 	if p.TxMaps.Int64["index"] == 1 {
-		err = p.ExecSql(`CREATE INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + p.TxMaps.String["table_name"] + `" (` + p.TxMaps.String["column_name"] + `)`)
+		err = p.ExecSql(`CREATE INDEX "` + tblname + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + tblname + `" (` + p.TxMaps.String["column_name"] + `)`)
 		if err != nil {
 			return err
 		}

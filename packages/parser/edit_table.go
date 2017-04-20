@@ -96,11 +96,11 @@ func (p *Parser) EditTable() error {
 	}
 
 	table := prefix + `_tables`
-	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "` + table + `"`).String()
+	tblname := p.TxMaps.String["table_name"]
+	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where name=?`, tblname).String()
 	if err != nil {
 		return err
 	}
-
 	jsonMap := make(map[string]string)
 	for k, v := range logData {
 		if k == p.AllPkeys[table] {
@@ -127,20 +127,16 @@ func (p *Parser) EditTable() error {
 			return err
 		}
 		p.TxMaps.String[action] = strings.Replace(p.TxMaps.String[action], `"`, `\"`, -1)
+		err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`,
+			`"`+p.TxMaps.String[action]+`"`, rbId, tblname)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 	}
-	//err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = columns_and_permissions || '{"general_update": ?, "new_column": ?, "insert": ?}', rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, `"`+p.TxMaps.String["insert"]+`"`, `"`+p.TxMaps.String["new_column"]+`"`, rbId, p.TxMaps.String["table_name"])
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{general_update}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, rbId, p.TxMaps.String["table_name"])
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{new_column}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["new_column"]+`"`, rbId, p.TxMaps.String["table_name"])
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{insert}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["insert"]+`"`, rbId, p.TxMaps.String["table_name"])
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+	/*	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{general_update}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, rbId, p.TxMaps.String["table_name"])
+		if err != nil {
+			return p.ErrInfo(err)
+		}*/
 
 	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.TxMaps.String["table_name"])
 	if err != nil {
