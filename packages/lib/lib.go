@@ -37,6 +37,8 @@ import (
 	"time"
 	//	b58 "github.com/jbenet/go-base58"
 	//	"golang.org/x/crypto/ripemd160"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 const (
@@ -687,4 +689,13 @@ func GetShared(public string) (string, string, error) {
 	priv, pub := GenKeys()
 	shared, err := GetSharedHex(priv, public)
 	return shared, pub, err
+}
+
+func EGSMoney(money string) string {
+	digit := consts.EGS_DIGIT
+	if len(money) < digit+1 {
+		money = strings.Repeat(`0`, digit+1-len(money)) + money
+	}
+	money = money[:len(money)-digit] + `.` + money[len(money)-digit:]
+	return strings.TrimRight(money, `0`)
 }
