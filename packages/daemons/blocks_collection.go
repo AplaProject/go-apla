@@ -302,6 +302,7 @@ BEGIN:
 				parser.CurrentVersion = consts.VERSION
 
 				if err = parser.ParseDataFull(false); err != nil {
+					logger.Error("%v", err)
 					parser.BlockError(err)
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN
@@ -612,6 +613,7 @@ BEGIN:
 			if err == nil {
 				err = parser.InsertIntoBlockchain()
 				if err != nil {
+					logger.Error("%v", err)
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
@@ -620,6 +622,7 @@ BEGIN:
 			}
 			// начинаем всё с начала уже с другими нодами. Но у нас уже могут быть новые блоки до $block_id, взятые от нода, которого с в итоге мы баним
 			if err != nil {
+				logger.Error("%v", err)
 				parser.BlockError(err)
 				d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

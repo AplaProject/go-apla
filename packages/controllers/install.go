@@ -106,13 +106,14 @@ func (c *Controller) Install() (string, error) {
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
-	utils.DB, err = utils.NewDbConnect(configIni)
+	var DB *utils.DCDB
+	DB, err = utils.NewDbConnect(configIni)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
-	c.DCDB = utils.DB
+	c.DCDB = DB
 	if c.DCDB.DB == nil {
 		err = fmt.Errorf("utils.DB == nil")
 		log.Error("%v", utils.ErrInfo(err))
@@ -134,13 +135,6 @@ func (c *Controller) Install() (string, error) {
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
-
-	/*err = c.DCDB.ExecSql(`CREATE SCHEMA public`)
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
-		return "", utils.ErrInfo(err)
-	}*/
 
 	schema, err := static.Asset("static/schema.sql")
 	if err != nil {
