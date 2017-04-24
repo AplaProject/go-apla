@@ -163,6 +163,7 @@ func StackCont(p interface{}, name string) {
 func (p *Parser) CallContract(flags int) (err error) {
 	var public []byte
 	if flags&smart.CALL_ROLLBACK == 0 {
+		//		fmt.Println(`TXHEADER`, p.TxPtr.(*consts.TXHeader).Flags, len(p.TxPtr.(*consts.TXHeader).Sign), p.TxPtr.(*consts.TXHeader))
 		if p.TxPtr.(*consts.TXHeader).Flags&consts.TxfPublic > 0 {
 			public = p.TxPtr.(*consts.TXHeader).Sign[len(p.TxPtr.(*consts.TXHeader).Sign)-64:]
 			p.TxPtr.(*consts.TXHeader).Sign = p.TxPtr.(*consts.TXHeader).Sign[:len(p.TxPtr.(*consts.TXHeader).Sign)-64]
@@ -173,6 +174,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			if err != nil {
 				return err
 			}
+			//			fmt.Printf(`TXDATA %d %d\r\n`, len(data["public_key_0"]), len(public))
 			if len(data["public_key_0"]) == 0 {
 				if len(public) > 0 {
 					p.PublicKeys = append(p.PublicKeys, public)
@@ -189,9 +191,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 						}*/
 			}
 		}
-		/*	fmt.Printf("TXPublic=%x %d\r\n", p.PublicKeys[0], len(p.PublicKeys[0]))
-			fmt.Printf("TXSign=%x %d\r\n", p.TxPtr.(*consts.TXHeader).Sign, len(p.TxPtr.(*consts.TXHeader).Sign))
-			fmt.Printf("TXForSign=%s %d\r\n", p.TxData[`forsign`].(string), len(p.TxData[`forsign`].(string)))
+		/*fmt.Printf("TXPublic=%x %d\r\n", p.PublicKeys[0], len(p.PublicKeys[0]))
+		fmt.Printf("TXSign=%x %d\r\n", p.TxPtr.(*consts.TXHeader).Sign, len(p.TxPtr.(*consts.TXHeader).Sign))
+		fmt.Printf("TXForSign=%s %d\r\n", p.TxData[`forsign`].(string), len(p.TxData[`forsign`].(string)))
 		*/
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxPtr.(*consts.TXHeader).Sign, false)
 		//	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)

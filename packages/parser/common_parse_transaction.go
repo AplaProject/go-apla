@@ -40,6 +40,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 	log.Debug("transactionBinaryData: %s", *transactionBinaryData)
 	p.TxContract = nil
 	p.TxPtr = nil
+	p.PublicKeys = nil
 	if len(*transactionBinaryData) > 0 {
 
 		// хэш транзакции
@@ -68,6 +69,8 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			if contract == nil {
 				return nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
 			}
+			//			log.Debug(`TRANDEB %d %d NAME: %s`, int64(p.TxPtr.(*consts.TXHeader).WalletId),
+			//				uint64(p.TxPtr.(*consts.TXHeader).WalletId), contract.Name)
 			forsign := fmt.Sprintf("%d,%d,%d,%d,%d", p.TxPtr.(*consts.TXHeader).Type,
 				p.TxPtr.(*consts.TXHeader).Time, p.TxPtr.(*consts.TXHeader).WalletId,
 				p.TxPtr.(*consts.TXHeader).StateId, p.TxPtr.(*consts.TXHeader).Flags)
