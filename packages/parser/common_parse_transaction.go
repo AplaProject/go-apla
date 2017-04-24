@@ -35,7 +35,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 
 	var returnSlice [][]byte
 	var transSlice [][]byte
-	var merkleSlice [][]byte
 	log.Debug("transactionBinaryData: %x", *transactionBinaryData)
 	log.Debug("transactionBinaryData: %s", *transactionBinaryData)
 	p.TxContract = nil
@@ -168,12 +167,10 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			for i := 2; i < 4; i++ {
 				data := lib.FieldToBytes(t.Field(0).Interface(), i)
 				returnSlice = append(returnSlice, data)
-				merkleSlice = append(merkleSlice, utils.DSha256(data))
 			}
 			for i := 1; i < t.NumField(); i++ {
 				data := lib.FieldToBytes(t.Interface(), i)
 				returnSlice = append(returnSlice, data)
-				merkleSlice = append(merkleSlice, utils.DSha256(data))
 			}
 		} else {
 			i := 0
@@ -183,12 +180,10 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				if length > 0 && length < consts.MAX_TX_SIZE {
 					data := utils.BytesShift(transactionBinaryData, length)
 					returnSlice = append(returnSlice, data)
-					merkleSlice = append(merkleSlice, utils.DSha256(data))
 					log.Debug("%x", data)
 					log.Debug("%s", data)
 				} else if length == 0 && len(*transactionBinaryData) > 0 {
 					returnSlice = append(returnSlice, []byte{})
-					merkleSlice = append(merkleSlice, utils.DSha256([]byte{}))
 					continue
 				}
 				if length == 0 || i >= 20 { // у нас нет тр-ий с более чем 20 элементами
@@ -202,14 +197,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		if len(*transactionBinaryData) > 0 {
 			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect transactionBinaryData %x", transactionBinaryData))
 		}
-	} else {
-		merkleSlice = append(merkleSlice, []byte("0"))
 	}
-	log.Debug("merkleSlice", merkleSlice)
-	if len(merkleSlice) == 0 {
-		merkleSlice = append(merkleSlice, []byte("0"))
-	}
-	p.MerkleRoot = utils.MerkleTreeRoot(merkleSlice)
-	log.Debug("MerkleRoot %s\n", p.MerkleRoot)
 	return append(transSlice, returnSlice...), nil
 }
