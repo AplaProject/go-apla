@@ -227,7 +227,6 @@
 // static/js/elliptic.min.js
 // static/js/index.js
 // static/js/keys.js
-// static/js/paste.js
 // static/js/photoEditor/editor.js
 // static/js/triangles.js
 // static/lang/flags/flags.png
@@ -267,6 +266,7 @@
 // static/tx_form.html
 // static/updating_blockchain.html
 // static/upgrade.html
+// static/wallet_history.html
 // static/widgets.html
 // DO NOT EDIT!
 
@@ -4380,24 +4380,6 @@ func staticJsKeysJs() (*asset, error) {
 	return a, err
 }
 
-// staticJsPasteJs reads file data from disk. It returns an error on failure.
-func staticJsPasteJs() (*asset, error) {
-	path := "static/js/paste.js"
-	name := "static/js/paste.js"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
 // staticJsPhotoeditorEditorJs reads file data from disk. It returns an error on failure.
 func staticJsPhotoeditorEditorJs() (*asset, error) {
 	path := "static/js/photoEditor/editor.js"
@@ -5100,6 +5082,24 @@ func staticUpgradeHtml() (*asset, error) {
 	return a, err
 }
 
+// staticWallet_historyHtml reads file data from disk. It returns an error on failure.
+func staticWallet_historyHtml() (*asset, error) {
+	path := "static/wallet_history.html"
+	name := "static/wallet_history.html"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticWidgetsHtml reads file data from disk. It returns an error on failure.
 func staticWidgetsHtml() (*asset, error) {
 	path := "static/widgets.html"
@@ -5397,7 +5397,6 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/elliptic.min.js": staticJsEllipticMinJs,
 	"static/js/index.js": staticJsIndexJs,
 	"static/js/keys.js": staticJsKeysJs,
-	"static/js/paste.js": staticJsPasteJs,
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
 	"static/js/triangles.js": staticJsTrianglesJs,
 	"static/lang/flags/flags.png": staticLangFlagsFlagsPng,
@@ -5437,6 +5436,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/tx_form.html": staticTx_formHtml,
 	"static/updating_blockchain.html": staticUpdating_blockchainHtml,
 	"static/upgrade.html": staticUpgradeHtml,
+	"static/wallet_history.html": staticWallet_historyHtml,
 	"static/widgets.html": staticWidgetsHtml,
 }
 
@@ -5723,7 +5723,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"elliptic.min.js": &bintree{staticJsEllipticMinJs, map[string]*bintree{}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
-			"paste.js": &bintree{staticJsPasteJs, map[string]*bintree{}},
 			"photoEditor": &bintree{nil, map[string]*bintree{
 				"editor.js": &bintree{staticJsPhotoeditorEditorJs, map[string]*bintree{}},
 			}},
@@ -5770,6 +5769,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"tx_form.html": &bintree{staticTx_formHtml, map[string]*bintree{}},
 		"updating_blockchain.html": &bintree{staticUpdating_blockchainHtml, map[string]*bintree{}},
 		"upgrade.html": &bintree{staticUpgradeHtml, map[string]*bintree{}},
+		"wallet_history.html": &bintree{staticWallet_historyHtml, map[string]*bintree{}},
 		"widgets.html": &bintree{staticWidgetsHtml, map[string]*bintree{}},
 	}},
 }}
