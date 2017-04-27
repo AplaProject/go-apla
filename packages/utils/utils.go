@@ -114,11 +114,13 @@ var (
 	Tls                     = flag.String("tls", "", "Support https. Specify directory for .well-known")
 	DevTools                = flag.Int64("devtools", 0, "Devtools in thrust-shell")
 	Upd                     = flag.Bool("update", false, "Update")
+	BoltDir                 = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
+	BoltPsw                 = flag.String("boltPsw", "", "Bolt password")
 	OneCountry              int64
 	PrivCountry             bool
 	OutFile                 *os.File
 	LogoExt                 = `png`
-	DltWalletId	= flag.Int64("dltWalletId", 0, "DltWalletId")
+	DltWalletId             = flag.Int64("dltWalletId", 0, "DltWalletId")
 
 	DaemonsChans []*DaemonsChansType
 	eWallets     = &sync.Mutex{}
