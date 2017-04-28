@@ -33,7 +33,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
-	_ "github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
+	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/schema"
@@ -391,6 +391,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.HandleFunc(HandleHttpHost+"/app", controllers.App)
 		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 		http.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
+		http.HandleFunc(HandleHttpHost+"/exchangeapi", exchangeapi.Api)
 		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
 		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
@@ -402,6 +403,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			httpsMux.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 			httpsMux.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 			httpsMux.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
+			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi", exchangeapi.Api)
 			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
 		}

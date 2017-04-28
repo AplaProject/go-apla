@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -56,7 +57,20 @@ func init() {
 		encTest = tx.Bucket(settings).Get([]byte("EncTest"))
 		return nil
 	})
-
+	if len(*utils.ApiToken) > 0 {
+		err = boltDB.Update(func(tx *bolt.Tx) error {
+			err = tx.Bucket(settings).Put([]byte("Token"), []byte(*utils.ApiToken))
+			return err
+		})
+	} else {
+		err = boltDB.View(func(tx *bolt.Tx) error {
+			*utils.ApiToken = string(tx.Bucket(settings).Get([]byte("Token")))
+			return nil
+		})
+	}
+	if err != nil {
+		log.Fatal(fmt.Errorf(`BoltDB put/get token: %v`, err))
+	}
 	if len(*utils.BoltPsw) > 0 {
 		if len(encTest) == 0 {
 			err = boltDB.Update(func(tx *bolt.Tx) error {
@@ -139,4 +153,19 @@ func newKey() ([]byte, error) {
 		return nil, err
 	}
 	return pubKey, nil
+}
+
+func Api(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("exchangeapi Recovered", r)
+			fmt.Println("exchangeapi Recovered", r)
+		}
+	}()
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	/*	jsonData, err := json.Marshal()
+		if err == nil {
+			return jsonData
+		}
+		w.Write()*/
 }
