@@ -17,17 +17,25 @@
 package exchangeapi
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/boltdb/bolt"
 	"github.com/op/go-logging"
 )
 
+const (
+	forpsw = `test string for decoding`
+)
+
 var (
-	boltDB *bolt.DB
-	bucket = []byte(`Keys`)
-	log    = logging.MustGetLogger("exchangeapi")
+	boltDB   *bolt.DB
+	bucket   = []byte(`Keys`)
+	settings = []byte(`Settings`)
+	log      = logging.MustGetLogger("exchangeapi")
 )
 
 func init() {
@@ -36,17 +44,93 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//	NewKey()
+	var encTest []byte
+	err = boltDB.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists(settings)
+		return err
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	boltDB.View(func(tx *bolt.Tx) error {
+		encTest = tx.Bucket(settings).Get([]byte("EncTest"))
+		return nil
+	})
+
+	if len(*utils.BoltPsw) > 0 {
+		if len(encTest) == 0 {
+			err = boltDB.Update(func(tx *bolt.Tx) error {
+				var encrypted []byte
+
+				encrypted, err = encryptBytes([]byte(forpsw))
+				if err != nil {
+					return err
+				}
+				err = tx.Bucket(settings).Put([]byte("EncTest"), encrypted)
+				return err
+			})
+			if err != nil {
+				log.Fatal(fmt.Errorf(`BoltDB init: %v`, err))
+			}
+		} else {
+			decrypted, err := decryptBytes(encTest)
+			if err != nil {
+				log.Fatal(fmt.Errorf(`Check BoltPsw: %v`, err))
+			}
+			if string(decrypted) != forpsw {
+				log.Fatal(fmt.Errorf(`Wrong BoltPsw`))
+			}
+		}
+	} else {
+		if len(encTest) > 0 {
+			log.Fatal(fmt.Errorf(`-boltPsw parameter must be specified`))
+		}
+	}
 }
 
-func NewKey() ([]byte, error) {
-	key := `23`
-	err := boltDB.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucket(bucket)
+func encryptBytes(input []byte) (output []byte, err error) {
+	pass := sha256.Sum256([]byte(*utils.BoltPsw))
+	output, _, err = utils.EncryptCFB(input, pass[:], make([]byte, 16))
+	output = output[16:]
+	if err != nil {
+		return
+	}
+	return
+}
+
+func decryptBytes(input []byte) (output []byte, err error) {
+	pass := sha256.Sum256([]byte(*utils.BoltPsw))
+	output, err = utils.DecryptCFB(make([]byte, 16), input, pass[:])
+	return
+}
+
+func newKey() ([]byte, error) {
+	if len(*utils.BoltPsw) == 0 {
+		return nil, fmt.Errorf(`-boltPsw password is not defined`)
+	}
+	priv, pub := lib.GenKeys()
+
+	privKey, err := hex.DecodeString(priv)
+	if err != nil {
+		return nil, err
+	}
+	pubKey, err := hex.DecodeString(pub)
+	if err != nil {
+		return nil, err
+	}
+	address := int64(lib.Address(pubKey))
+
+	err = boltDB.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists(bucket)
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
-		if err := b.Put([]byte(key), []byte("test")); err != nil {
+		fmt.Println(`NewKey`, address)
+		input, err := encryptBytes(privKey)
+		if err != nil {
+			return err
+		}
+		if err := b.Put([]byte(utils.Int64ToStr(address)), input); err != nil {
 			return fmt.Errorf("put in bucket: %s", err)
 		}
 		return nil
@@ -54,17 +138,5 @@ func NewKey() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	/*	var val []byte
-		err = boltDB.View(func(tx *bolt.Tx) error {
-			val = tx.Bucket(bucket).Get([]byte("foo"))
-			return nil
-		})
-		fmt.Printf("The value of 'foo' is: %s %s\n", err, val)
-
-		err = boltDB.View(func(tx *bolt.Tx) error {
-			val = tx.Bucket(bucket).Get([]byte("23"))
-			return nil
-		})
-		fmt.Printf("The value of '23' is: %s %s\n", err, val)*/
-	return nil, nil
+	return pubKey, nil
 }
