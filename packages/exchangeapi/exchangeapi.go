@@ -19,8 +19,10 @@ package exchangeapi
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	//	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -38,6 +40,10 @@ var (
 	settings = []byte(`Settings`)
 	log      = logging.MustGetLogger("exchangeapi")
 )
+
+type DefaultApi struct {
+	Error string `json:"error"`
+}
 
 func init() {
 	var err error
@@ -118,7 +124,7 @@ func decryptBytes(input []byte) (output []byte, err error) {
 	return
 }
 
-func newKey() ([]byte, error) {
+func genNewKey() ([]byte, error) {
 	if len(*utils.BoltPsw) == 0 {
 		return nil, fmt.Errorf(`-boltPsw password is not defined`)
 	}
@@ -139,7 +145,6 @@ func newKey() ([]byte, error) {
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
-		fmt.Println(`NewKey`, address)
 		input, err := encryptBytes(privKey)
 		if err != nil {
 			return err
@@ -163,9 +168,23 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	/*	jsonData, err := json.Marshal()
-		if err == nil {
-			return jsonData
-		}
-		w.Write()*/
+	r.ParseForm()
+
+	token := r.FormValue("token")
+	if len(*utils.ApiToken) > 0 && token != *utils.ApiToken {
+		w.Write([]byte(`{"error": "Invalid token"}`))
+		return
+	}
+	var ret interface{}
+	switch r.URL.Path {
+	case `/exchangeapi/newkey`:
+		ret = newKey(r)
+	default:
+		ret = DefaultApi{`Unknown request`}
+	}
+	jsonData, err := json.Marshal(ret)
+	if err != nil {
+		ret = DefaultApi{err.Error()}
+	}
+	w.Write(jsonData)
 }
