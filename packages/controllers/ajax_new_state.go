@@ -37,21 +37,6 @@ func init() {
 	newPage(ANewState, `json`)
 }
 
-func sendTx(txType int64, adminWallet int64, data []byte) (err error) {
-	md5 := utils.Md5(data)
-	err = utils.DB.ExecSql(`INSERT INTO transactions_status (
-			hash, time,	type, wallet_id, citizen_id	) VALUES (
-			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), txType, adminWallet, adminWallet)
-	if err != nil {
-		return err
-	}
-	err = utils.DB.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
-	if err != nil {
-		return err
-	}
-	return
-}
-
 func (c *Controller) AjaxNewState() interface{} {
 	var (
 		result    NewState
@@ -130,7 +115,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, utils.EncodeLengthPlusData([]byte(``))...)
 	data = append(data, binsign...)
 
-	err = sendTx(txType, adminWallet, data)
+	err = c.SendTx(txType, adminWallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -161,7 +146,7 @@ func (c *Controller) AjaxNewState() interface{} {
 		CheckSignResult, err := utils.CheckSign(pubkey, forSign, sign, false)
 		fmt.Println(`CHECK`, CheckSignResult, err)*/
 
-	err = sendTx(txType, wallet, data)
+	err = c.SendTx(txType, wallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result

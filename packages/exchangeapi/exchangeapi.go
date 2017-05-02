@@ -179,6 +179,8 @@ func Api(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case `/exchangeapi/newkey`:
 		ret = newKey(r)
+	case `/exchangeapi/send`:
+		ret = send(r)
 	default:
 		ret = DefaultApi{`Unknown request`}
 	}

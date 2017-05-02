@@ -124,7 +124,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		}
 		data = append(append(data, lib.EncodeLength(int64(len(``)))...), []byte(``)...)
 		data = append(append(data, lib.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
-		err = sendTx(int64(header.Type), c.SessCitizenId, data)
+		err = c.SendTx(int64(header.Type), c.SessCitizenId, data)
 		if err != nil {
 			result.Error = err.Error()
 			return result

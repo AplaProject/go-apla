@@ -1732,3 +1732,18 @@ func (db *DCDB) IsTable(tblname string) bool {
      	AND table_name=?`, tblname).String()
 	return name == tblname
 }
+
+func (db *DCDB) SendTx(txType int64, adminWallet int64, data []byte) (err error) {
+	md5 := Md5(data)
+	err = db.ExecSql(`INSERT INTO transactions_status (
+			hash, time,	type, wallet_id, citizen_id	) VALUES (
+			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), txType, adminWallet, adminWallet)
+	if err != nil {
+		return err
+	}
+	err = db.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+	if err != nil {
+		return err
+	}
+	return
+}
