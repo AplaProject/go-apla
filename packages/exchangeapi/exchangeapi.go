@@ -175,12 +175,20 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"error": "Invalid token"}`))
 		return
 	}
+	if len(*utils.BoltPsw) == 0 {
+		w.Write([]byte(`{"error": "-boltPsw password is not defined"}`))
+		return
+	}
 	var ret interface{}
 	switch r.URL.Path {
 	case `/exchangeapi/newkey`:
 		ret = newKey(r)
 	case `/exchangeapi/send`:
 		ret = send(r)
+	case `/exchangeapi/balance`:
+		ret = balance(r)
+		//	case `/exchangeapi/history`:
+		//		ret = history(r)
 	default:
 		ret = DefaultApi{`Unknown request`}
 	}
