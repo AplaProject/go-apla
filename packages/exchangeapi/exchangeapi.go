@@ -187,8 +187,8 @@ func Api(w http.ResponseWriter, r *http.Request) {
 		ret = send(r)
 	case `/exchangeapi/balance`:
 		ret = balance(r)
-		//	case `/exchangeapi/history`:
-		//		ret = history(r)
+	case `/exchangeapi/history`:
+		ret = history(r)
 	default:
 		ret = DefaultApi{`Unknown request`}
 	}

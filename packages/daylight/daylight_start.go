@@ -394,6 +394,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.Api)
 		http.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.Api)
 		http.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.Api)
+		http.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.Api)
 		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
 		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
@@ -408,6 +409,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.Api)
 			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.Api)
 			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.Api)
+			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.Api)
 			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
 		}
