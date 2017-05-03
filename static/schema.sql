@@ -14,7 +14,8 @@ DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 );
 ALTER SEQUENCE "dlt_transactions_id_seq" owned by "dlt_transactions".id;
 ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMARY KEY (id);
-
+CREATE INDEX dlt_transactions_index_sender ON "dlt_transactions" (sender_wallet_id);
+CREATE INDEX dlt_transactions_index_recipient ON "dlt_transactions" (recipient_wallet_id);
 
 
 

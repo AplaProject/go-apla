@@ -697,5 +697,5 @@ func EGSMoney(money string) string {
 		money = strings.Repeat(`0`, digit+1-len(money)) + money
 	}
 	money = money[:len(money)-digit] + `.` + money[len(money)-digit:]
-	return strings.TrimRight(money, `0`)
+	return strings.TrimRight(strings.TrimRight(money, `0`), `.`)
 }

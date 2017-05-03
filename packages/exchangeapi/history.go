@@ -29,7 +29,8 @@ import (
 type HistOper struct {
 	BlockId string `json:"block_id"`
 	Dif     string `json:"dif"`
-	Balance string `json:"balance"`
+	Amount  string `json:"amount"`
+	EGS     string `json:"egs"`
 	Time    string `json:"time"`
 	//	Wallet  string `json:"wallet"`
 }
@@ -65,7 +66,7 @@ func history(r *http.Request) interface{} {
 	rb := utils.StrToInt64(current[`rb_id`])
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
-		for len(list) <= count /*&& rb > 0*/ {
+		for len(list) <= count && rb > 0 {
 			var data map[string]string
 			prev, err := utils.DB.OneRow(`select r.*, b.time from rollback as r
 			left join block_chain as b on b.id=r.block_id
@@ -95,12 +96,25 @@ func history(r *http.Request) interface{} {
 				dt := time.Unix(utils.StrToInt64(prev[`time`]), 0)
 
 				list = append(list, HistOper{BlockId: prev[`block_id`], Dif: sign + lib.EGSMoney(dif.String()),
-					Balance: lib.EGSMoney(balance.String()), Time: dt.Format(`02.01.2006 15:04:05`)})
+					Amount: balance.String(), EGS: lib.EGSMoney(balance.String()), Time: dt.Format(`02.01.2006 15:04:05`)})
 				balance = val
+
 			}
 		}
 	}
-
+	if rb == 0 {
+		first, err := utils.DB.OneRow(`select * from dlt_transactions where recipient_wallet_id=? order by id`, wallet).String()
+		if err != nil {
+			result.Error = err.Error()
+			return result
+		}
+		if len(first) > 0 {
+			dt := time.Unix(utils.StrToInt64(first[`time`]), 0)
+			list = append(list, HistOper{BlockId: first[`block_id`], Dif: `+` + lib.EGSMoney(first[`amount`]),
+				Amount: first[`amount`],
+				EGS:    lib.EGSMoney(first[`amount`]), Time: dt.Format(`02.01.2006 15:04:05`)})
+		}
+	}
 	result.Items = list
 
 	return result
