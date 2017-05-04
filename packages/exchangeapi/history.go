@@ -66,7 +66,7 @@ func history(r *http.Request) interface{} {
 	rb := utils.StrToInt64(current[`rb_id`])
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
-		for len(list) <= count && rb > 0 {
+		for len(list) < count && rb > 0 {
 			var data map[string]string
 			prev, err := utils.DB.OneRow(`select r.*, b.time from rollback as r
 			left join block_chain as b on b.id=r.block_id
