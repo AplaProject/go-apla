@@ -92,6 +92,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	fmt.Println("dcVersion:", consts.VERSION)
 	log.Debug("dcVersion: %v", consts.VERSION)
 
+	exchangeapi.InitApi()
+
 	// читаем config.ini
 	configIni := make(map[string]string)
 	configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
