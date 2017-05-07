@@ -102,9 +102,8 @@ func App(w http.ResponseWriter, r *http.Request) {
 				Template: textproc.Process(string(data), &params), Unique: ``,
 				Data: &AppData{
 					CommonPage: utils.CommonPage{WalletId: GetSessWalletId(sess),
-						CitizenId:    GetSessCitizenId(sess),
-						StateId:      GetSessInt64("state_id", sess),
-						CountSignArr: []int{0},
+						CitizenId: GetSessCitizenId(sess),
+						StateId:   GetSessInt64("state_id", sess),
 					},
 					Blocks:  blocks,
 					Proceed: len(blocks),

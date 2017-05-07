@@ -28,12 +28,11 @@ import (
 
 type CommonPage struct {
 	//Lang   map[string]string
-	Address      string
-	WalletId     int64
-	CitizenId    int64
-	StateId      int64
-	StateName    string
-	CountSignArr []int
+	Address   string
+	WalletId  int64
+	CitizenId int64
+	StateId   int64
+	StateName string
 }
 
 const ( // Type of pages

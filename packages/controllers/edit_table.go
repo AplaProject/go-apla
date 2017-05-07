@@ -25,7 +25,6 @@ type editTablePage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
-	CountSignArr []int
 	Lang         map[string]string
 	WalletId     int64
 	CitizenId    int64
@@ -95,7 +94,6 @@ func (c *Controller) EditTable() (string, error) {
 		SignData:              "",
 		WalletId:              c.SessWalletId,
 		CitizenId:             c.SessCitizenId,
-		CountSignArr:          c.CountSignArr,
 		TableName:             tableName,
 		TimeNow:               timeNow,
 		TxType:                txType,

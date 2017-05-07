@@ -17,15 +17,14 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type forgingPage struct {
 	Lang         map[string]string
 	Title        string
 	CountSign    int
-	CountSignArr []int
 	SignData     string
 	ShowSignData bool
 	MyWalletData map[string]string
@@ -57,7 +56,6 @@ func (c *Controller) Forging() (string, error) {
 		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		CountSign:    c.CountSign,
 		TimeNow:      timeNow,
 		TxType:       txType,

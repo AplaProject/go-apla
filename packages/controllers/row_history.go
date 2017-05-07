@@ -17,23 +17,22 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"encoding/json"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type rowHistoryPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
-	CountSignArr []int
 	Lang         map[string]string
-	History    []map[string]string
+	History      []map[string]string
 	WalletId     int64
 	CitizenId    int64
 	TableName    string
 	StateId      int64
 	Global       string
-	Columns               map[string]string
+	Columns      map[string]string
 }
 
 func (c *Controller) RowHistory() (string, error) {
@@ -61,7 +60,7 @@ func (c *Controller) RowHistory() (string, error) {
 	}
 	columns["id"] = ""
 	columns["block_id"] = ""
-	for i:=0; i<100; i++ {
+	for i := 0; i < 100; i++ {
 		data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbId).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
@@ -82,11 +81,10 @@ func (c *Controller) RowHistory() (string, error) {
 		ShowSignData: c.ShowSignData,
 		SignData:     "",
 		WalletId:     c.SessWalletId,
-		History:         history,
+		History:      history,
 		CitizenId:    c.SessCitizenId,
-		TableName: tableName,
-		Global: global,
-		CountSignArr: c.CountSignArr,
+		TableName:    tableName,
+		Global:       global,
 		Columns:      columns,
 		StateId:      c.SessStateId})
 	if err != nil {

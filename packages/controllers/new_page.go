@@ -47,7 +47,6 @@ func (c *Controller) NewPage() (string, error) {
 		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,

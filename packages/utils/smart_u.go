@@ -44,15 +44,14 @@ type FieldInfo struct {
 	Param    string      `json:"param"`
 }
 
-type FormCommon struct {
+/*type FormCommon struct {
 	//Lang   map[string]string
-	/*	Address      string
+		Address      string
 		WalletId     int64
 		CitizenId    int64
 		StateId      int64
-		StateName    string*/
-	CountSignArr []byte
-}
+		StateName    string
+}*/
 
 type FormInfo struct {
 	TxName    string
@@ -61,7 +60,7 @@ type FormInfo struct {
 	Fields    []FieldInfo
 	AutoClose bool
 	Silent    bool
-	Data      FormCommon
+	//Data      FormCommon
 }
 
 type TxInfo struct {
@@ -82,7 +81,6 @@ type TxButtonInfo struct {
 	Fields    []TxInfo
 	AutoClose bool
 	Silent    bool
-	Data      FormCommon
 }
 
 type TxBtnCont struct {
@@ -95,16 +93,14 @@ type TxBtnCont struct {
 	Fields    []TxInfo
 	AutoClose bool
 	Silent    bool
-	Data      FormCommon
 }
 
 type CommonPage struct {
-	Address      string
-	WalletId     int64
-	CitizenId    int64
-	StateId      int64
-	StateName    string
-	CountSignArr []int
+	Address   string
+	WalletId  int64
+	CitizenId int64
+	StateId   int64
+	StateName string
 }
 
 type PageTpl struct {
@@ -1480,7 +1476,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	finfo := TxButtonInfo{TxName: name, Class: class, ClassBtn: classBtn, Name: LangRes(vars, btnName),
 		Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
 		Fields: make([]TxInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`,
-		Silent: (*pars)[`Silent`] == `1`, Data: FormCommon{CountSignArr: []byte{1}}}
+		Silent: (*pars)[`Silent`] == `1`}
 
 	idnames := strings.Split((*pars)[`Inputs`], `,`)
 	names := make(map[string]string)
@@ -1612,7 +1608,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	b := new(bytes.Buffer)
 	finfo := FormInfo{TxName: name, Unique: template.JS((*vars)[`tx_unique`]), OnSuccess: template.JS(onsuccess),
 		Fields: make([]FieldInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`,
-		Silent: (*pars)[`Silent`] == `1`, Data: FormCommon{CountSignArr: []byte{1}}}
+		Silent: (*pars)[`Silent`] == `1`}
 
 	gettag := func(prefix uint8, def, tags string) string {
 		ret := def

@@ -41,7 +41,6 @@ func (c *Controller) NewStateParameters() (string, error) {
 		WalletId:           c.SessWalletId,
 		CitizenId:          c.SessCitizenId,
 		StateId:            c.StateId,
-		CountSignArr:       c.CountSignArr,
 		StateParameters:    map[string]string{},
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,

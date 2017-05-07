@@ -309,12 +309,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Debug("countSign: %v", countSign)
-	var CountSignArr []int
-	for i := 0; i < countSign; i++ {
-		CountSignArr = append(CountSignArr, i)
-	}
 	c.CountSign = countSign
-	c.CountSignArr = CountSignArr
 
 	if tplName == "" {
 		tplName = "login"
@@ -367,12 +362,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(pageName) > 0 && isPage(pageName, TPage) {
 		c.Data = &CommonPage{
-			Address:      c.SessAddress,
-			WalletId:     c.SessWalletId,
-			CitizenId:    c.SessCitizenId,
-			StateId:      c.SessStateId,
-			StateName:    stateName,
-			CountSignArr: []int{0}, // !!! Добавить вычисление
+			Address:   c.SessAddress,
+			WalletId:  c.SessWalletId,
+			CitizenId: c.SessCitizenId,
+			StateId:   c.SessStateId,
+			StateName: stateName,
 		}
 		w.Write([]byte(CallPage(c, pageName)))
 		return

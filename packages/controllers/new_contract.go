@@ -37,7 +37,6 @@ func (c *Controller) NewContract() (string, error) {
 		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		TxType:       txType,
 		TxTypeId:     txTypeId,
 		Global:       global,

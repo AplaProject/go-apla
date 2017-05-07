@@ -23,16 +23,15 @@ import (
 type restoreAccessPage struct {
 	Alert              string
 	SignData           string
-	Active           int64
-	Request  int64
+	Active             int64
+	Request            int64
 	ShowSignData       bool
-	CountSignArr       []int
 	Lang               map[string]string
 	WalletId           int64
 	CitizenId          int64
-	TxType          string
-	TxTypeId        int64
-	TimeNow         int64
+	TxType             string
+	TxTypeId           int64
+	TimeNow            int64
 	StateSmartLaws     map[string]string
 	AllStateParameters []string
 }
@@ -54,19 +53,19 @@ func (c *Controller) RestoreAccess() (string, error) {
 		request = data["time"]
 	}
 
-	TemplateStr, err := makeTemplate("restore_access", "restoreAccess", &restoreAccessPage {
-		Alert:              c.Alert,
-		Lang:               c.Lang,
-		ShowSignData:       c.ShowSignData,
-		SignData:           "",
-		Active:           active,
-		Request:           request,
-		TimeNow:         timeNow,
-		TxType:          txType,
-		TxTypeId:        txTypeId,
-		WalletId:           c.SessWalletId,
-		CitizenId:          c.SessCitizenId,
-		CountSignArr:       c.CountSignArr})
+	TemplateStr, err := makeTemplate("restore_access", "restoreAccess", &restoreAccessPage{
+		Alert:        c.Alert,
+		Lang:         c.Lang,
+		ShowSignData: c.ShowSignData,
+		SignData:     "",
+		Active:       active,
+		Request:      request,
+		TimeNow:      timeNow,
+		TxType:       txType,
+		TxTypeId:     txTypeId,
+		WalletId:     c.SessWalletId,
+		CitizenId:    c.SessCitizenId,
+	})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -25,7 +25,6 @@ type newTablePage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
-	CountSignArr []int
 	Lang         map[string]string
 	CitizenId    int64
 	StateId      int64
@@ -58,7 +57,6 @@ func (c *Controller) NewTable() (string, error) {
 		CitizenId:    c.SessCitizenId,
 		StateId:      c.StateId,
 		Global:       global,
-		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		MaxColumns:   consts.MAX_COLUMNS,
 		MaxIndexes:   consts.MAX_INDEXES,

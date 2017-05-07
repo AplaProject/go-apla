@@ -25,7 +25,6 @@ type dashboardAnonymPage struct {
 	Title        string
 	CountSign    int
 	Amount       string
-	CountSignArr []int
 	SignData     string
 	ShowSignData bool
 }
@@ -50,7 +49,6 @@ func (c *Controller) DashboardAnonym() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonym", &dashboardAnonymPage{
-		CountSignArr: c.CountSignArr,
 		CountSign:    c.CountSign,
 		Lang:         c.Lang,
 		Title:        "Home",

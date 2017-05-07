@@ -24,7 +24,6 @@ type changeStateSmartLawsPage struct {
 	Alert              string
 	SignData           string
 	ShowSignData       bool
-	CountSignArr       []int
 	Lang               map[string]string
 	WalletId           int64
 	CitizenId          int64
@@ -62,7 +61,6 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 		SignData:           "",
 		WalletId:           c.SessWalletId,
 		CitizenId:          c.SessCitizenId,
-		CountSignArr:       c.CountSignArr,
 		StateSmartLaws:     StateSmartLaws,
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,

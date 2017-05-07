@@ -24,7 +24,6 @@ type editMenuPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
-	CountSignArr []int
 	Lang         map[string]string
 	WalletId     int64
 	CitizenId    int64
@@ -73,7 +72,6 @@ func (c *Controller) EditMenu() (string, error) {
 		Global:       global,
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,

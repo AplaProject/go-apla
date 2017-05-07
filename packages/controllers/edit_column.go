@@ -25,7 +25,6 @@ type editColumnPage struct {
 	Alert            string
 	SignData         string
 	ShowSignData     bool
-	CountSignArr     []int
 	Lang             map[string]string
 	WalletId         int64
 	CitizenId        int64
@@ -77,7 +76,6 @@ func (c *Controller) EditColumn() (string, error) {
 		WalletId:         c.SessWalletId,
 		CitizenId:        c.SessCitizenId,
 		StateId:          c.SessStateId,
-		CountSignArr:     c.CountSignArr,
 		TimeNow:          timeNow,
 		TxType:           txType,
 		TxTypeId:         txTypeId})

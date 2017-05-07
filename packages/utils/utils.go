@@ -2503,7 +2503,7 @@ func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[s
 			finfo := TxBtnCont{ //Class: class, ClassBtn: classBtn, Name: LangRes(vars, btnName),
 				Unique: template.JS((*params)[`tx_unique`]), // OnSuccess: template.JS(onsuccess),
 				//Fields: make([]TxInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`,
-				/*Silent: (*pars)[`Silent`] == `1`,*/ Data: FormCommon{CountSignArr: []byte{1}}}
+				/*Silent: (*pars)[`Silent`] == `1`*/}
 			if err = t.Execute(b, finfo); err != nil {
 				return ``, err
 			}

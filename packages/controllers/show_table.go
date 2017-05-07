@@ -28,7 +28,6 @@ type showTablePage struct {
 	Alert                 string
 	SignData              string
 	ShowSignData          bool
-	CountSignArr          []int
 	Lang                  map[string]string
 	WalletId              int64
 	CitizenId             int64
@@ -100,7 +99,6 @@ func (c *Controller) ShowTable() (string, error) {
 		Global:       global,
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		Columns:      columns,
 		//tableData : columnsAndPermissions,
 		TableName: tableName,

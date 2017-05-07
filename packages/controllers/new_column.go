@@ -45,7 +45,6 @@ func (c *Controller) NewColumn() (string, error) {
 		StateId:          c.SessStateId,
 		ColumnName:       "",
 		ColumnPermission: "",
-		CountSignArr:     c.CountSignArr,
 		CanIndex:         count < consts.MAX_INDEXES,
 		TimeNow:          timeNow,
 		TxType:           txType,

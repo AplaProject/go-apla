@@ -39,7 +39,6 @@ func (c *Controller) NewMenu() (string, error) {
 		Global:       global,
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId,

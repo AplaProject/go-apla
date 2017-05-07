@@ -24,7 +24,6 @@ type listOfTablesPage struct {
 	Alert        string
 	SignData     string
 	ShowSignData bool
-	CountSignArr []int
 	Lang         map[string]string
 	WalletId     int64
 	CitizenId    int64
@@ -64,7 +63,6 @@ func (c *Controller) ListOfTables() (string, error) {
 		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSignArr: c.CountSignArr,
 		Tables:       tables})
 	if err != nil {
 		return "", utils.ErrInfo(err)

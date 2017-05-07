@@ -27,7 +27,6 @@ type editContractPage struct {
 	Alert               string
 	SignData            string
 	ShowSignData        bool
-	CountSignArr        []int
 	Lang                map[string]string
 	Data                map[string]string
 	DataContractHistory []map[string]string
@@ -131,7 +130,6 @@ func (c *Controller) EditContract() (string, error) {
 		DataContractHistory: dataContractHistory,
 		Global:              global,
 		CitizenId:           c.SessCitizenId,
-		CountSignArr:        c.CountSignArr,
 		TxType:              txType,
 		TxTypeId:            txTypeId,
 		Confirm:             c.SessWalletId == cont_wallet,

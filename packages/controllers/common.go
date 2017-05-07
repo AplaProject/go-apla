@@ -63,7 +63,6 @@ type Controller struct {
 	MyNotice         map[string]string
 	Parameters       map[string]string
 	CountSign        int
-	CountSignArr     []int
 	TimeFormat       string
 	NodeAdmin        bool
 	NodeConfig       map[string]string
@@ -334,7 +333,7 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 	funcMap := template.FuncMap{
-		"replaceBr": func(text string)  template.HTML {
+		"replaceBr": func(text string) template.HTML {
 			text = strings.Replace(text, `\n`, "<br>", -1)
 			text = strings.Replace(text, `\t`, "&nbsp;&nbsp;&nbsp;&nbsp;", -1)
 			return template.HTML(text)

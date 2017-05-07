@@ -24,7 +24,6 @@ type editStateParametersPage struct {
 	Alert              string
 	SignData           string
 	ShowSignData       bool
-	CountSignArr       []int
 	Lang               map[string]string
 	WalletId           int64
 	CitizenId          int64
@@ -64,7 +63,6 @@ func (c *Controller) EditStateParameters() (string, error) {
 		WalletId:           c.SessWalletId,
 		CitizenId:          c.SessCitizenId,
 		StateId:            c.StateId,
-		CountSignArr:       c.CountSignArr,
 		StateParameters:    stateParameters,
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,
