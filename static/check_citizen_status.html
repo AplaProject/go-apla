@@ -21,8 +21,6 @@
 			$("#for-signature").val(data.forsign);
 			doSign();
 			predata.signature1 = $('#signature1').val();
-			predata.signature2 = $('#signature2').val();
-			predata.signature3 = $('#signature3').val();
 			$("#send_to_net").trigger("click");
 		}
 	}
@@ -78,34 +76,6 @@
 				}
 			}
 		});
-/*		$.ajax({
-			type: 'POST',
-			url: 'ajax?controllerName=saveQueue',
-			data: {
-				'type' : '{{.TxType}}',
-				'time' : serverTime,
-				'walletId' : '{{.Data.WalletId}}',
-				'citizenId' : '{{.Data.CitizenId}}',
-				'stateId': {{.Data.StateId}},
-				'publicKey': '{{.Values.publicKey}}',
-//				'pubkey' : GKey.Public,
-				'signature1': $('#signature1').val(),
-				'signature2': $('#signature2').val(),
-				'signature3': $('#signature3').val()
-			},
-			dataType: 'json',
-			crossDomain: true,
-			success: function(result) {
-				if (typeof result.error != "undefined" && result.error.length > 0 ) {
-					Alert("Error", result.error, "error");
-				} else {
-					load_page('check_citizen_status', {accept: true, request_id: {{.Values.id}}});
-				}
-			},
-			error: function(xhr, status, error) {
-				Alert("Error", error, "error");
-			}
-		});*/
 	} );	
 	
 	$(".aside .nav li").removeClass("active");

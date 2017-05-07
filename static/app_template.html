@@ -96,8 +96,6 @@
 			predata.citizenId = {{.Data.CitizenId}};
 			predata.stateId = {{.Data.StateId}};
 			predata.signature1 = $('#signature1').val();
-			predata.signature2 = $('#signature2').val();
-			predata.signature3 = $('#signature3').val();
 
 			$("#send_to_net").trigger("click");
 		},"json" );
@@ -133,8 +131,6 @@
 					$("#for-signature").val(data.forsign);
 					doSign();
 					predatacontract.signature1 = $('#signature1').val();
-					predatacontract.signature2 = $('#signature2').val();
-					predatacontract.signature3 = $('#signature3').val();
 					sendnetcontract();
 				}
 		}, "json" );

@@ -1,13 +1,11 @@
 {{ define "signatures" }}
 <div id="sign" style="display:none">
 	<div class="form-group">
-		<label>{.Lang.data}</label>
+		<label></label>
 		<textarea id="for-signature{{.Unique}}" class="form-control" style="" rows="4">{.SignData}</textarea>
 	</div>
-	{{range $i := .Data.CountSignArr}}
-	    <div class="form-group"><label>{$.Lang.sign} {if gt $i 0}{$i}{end}</label><textarea class="form-control" id="signature{{sum $i 1}}{{$.Unique}}" style="" rows="4">-</textarea></div>
-	{{end}}
-	<button class="btn btn-primary"  id="send_to_net{{.Unique}}">{.Lang.send_to_net}</button>
+    <div class="form-group"><label></label><textarea class="form-control" id="signature1{{$.Unique}}" rows="4">-</textarea></div>
+	<button class="btn btn-primary"  id="send_to_net{{.Unique}}">Send_to_net</button>
 
 </div>
 {{end}}

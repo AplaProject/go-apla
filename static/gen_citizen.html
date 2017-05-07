@@ -28,8 +28,6 @@
 					$("#for-signature{{.Unique}}").val(data.forsign);
 					doSign({{.Unique}});
 					predata{{.Unique}}.signature1 = $('#signature1{{.Unique}}').val();
-					predata{{.Unique}}.signature2 = $('#signature2{{.Unique}}').val();
-					predata{{.Unique}}.signature3 = $('#signature3{{.Unique}}').val();
 //					$("#send_to_net{{.Unique}}").trigger("click");
 					sendnet{{.Unique}}();
 				}

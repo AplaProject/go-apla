@@ -1491,8 +1491,6 @@ function prepare_ok(predata, unique, forsign, sendnet) {
 	$("#for-signature" + unique).val(forsign);
 	doSign(unique);
 	predata.signature1 = $('#signature1' + unique).val();
-	predata.signature2 = $('#signature2' + unique).val();
-	predata.signature3 = $('#signature3' + unique).val();
 	//	$("#send_to_net{{.Unique}}").trigger("click");
 	sendnet();
 }
