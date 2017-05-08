@@ -51,7 +51,6 @@ type Controller struct {
 	LangInt          int64
 	ContentInc       bool
 	Periods          map[int64]string
-	ShowSignData     bool
 	Alert            string
 	SessStateId      int64
 	StateName        string

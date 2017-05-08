@@ -40,21 +40,19 @@ func (c *Controller) NewPage() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		Global:       global,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId,
-		StateId:      c.SessStateId,
-		AllMenu:      allMenu,
-		Name:         c.r.FormValue("name"),
-		DataMenu:     map[string]string{},
-		DataPage:     map[string]string{`conditions`: "ContractConditions(`MainCondition`)"}})
+		Alert:     c.Alert,
+		Lang:      c.Lang,
+		Global:    global,
+		WalletId:  c.SessWalletId,
+		CitizenId: c.SessCitizenId,
+		TimeNow:   timeNow,
+		TxType:    txType,
+		TxTypeId:  txTypeId,
+		StateId:   c.SessStateId,
+		AllMenu:   allMenu,
+		Name:      c.r.FormValue("name"),
+		DataMenu:  map[string]string{},
+		DataPage:  map[string]string{`conditions`: "ContractConditions(`MainCondition`)"}})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

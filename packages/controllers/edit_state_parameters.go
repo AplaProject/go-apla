@@ -22,8 +22,6 @@ import (
 
 type editStateParametersPage struct {
 	Alert              string
-	SignData           string
-	ShowSignData       bool
 	Lang               map[string]string
 	WalletId           int64
 	CitizenId          int64
@@ -58,8 +56,6 @@ func (c *Controller) EditStateParameters() (string, error) {
 	TemplateStr, err := makeTemplate("edit_state_parameters", "editStateParameters", &editStateParametersPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		ShowSignData:       c.ShowSignData,
-		SignData:           "",
 		WalletId:           c.SessWalletId,
 		CitizenId:          c.SessCitizenId,
 		StateId:            c.StateId,

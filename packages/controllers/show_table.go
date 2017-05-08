@@ -26,8 +26,6 @@ import (
 
 type showTablePage struct {
 	Alert                 string
-	SignData              string
-	ShowSignData          bool
 	Lang                  map[string]string
 	WalletId              int64
 	CitizenId             int64
@@ -92,14 +90,12 @@ func (c *Controller) ShowTable() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("show_table", "showTable", &showTablePage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		Global:       global,
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
-		Columns:      columns,
+		Alert:     c.Alert,
+		Lang:      c.Lang,
+		Global:    global,
+		WalletId:  c.SessWalletId,
+		CitizenId: c.SessCitizenId,
+		Columns:   columns,
 		//tableData : columnsAndPermissions,
 		TableName: tableName,
 		TableData: tableData})

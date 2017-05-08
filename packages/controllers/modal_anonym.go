@@ -25,8 +25,6 @@ type modalAnonymPage struct {
 	Lang         map[string]string
 	Title        string
 	CountSign    int
-	SignData     string
-	ShowSignData bool
 	MyWalletData map[string]string
 	Address      string
 	WalletId     int64
@@ -53,8 +51,6 @@ func (c *Controller) ModalAnonym() (string, error) {
 		Lang:         c.Lang,
 		MyWalletData: MyWalletData,
 		Title:        "modalAnonym",
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
 		Address:      c.SessAddress,

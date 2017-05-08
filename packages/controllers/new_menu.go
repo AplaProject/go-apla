@@ -32,18 +32,16 @@ func (c *Controller) NewMenu() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("edit_menu", "editMenu", &editMenuPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		Global:       global,
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId,
-		StateId:      c.SessStateId,
-		DataMenu:     map[string]string{`conditions`: "ContractConditions(`MainCondition`)"}})
+		Alert:     c.Alert,
+		Lang:      c.Lang,
+		Global:    global,
+		WalletId:  c.SessWalletId,
+		CitizenId: c.SessCitizenId,
+		TimeNow:   timeNow,
+		TxType:    txType,
+		TxTypeId:  txTypeId,
+		StateId:   c.SessStateId,
+		DataMenu:  map[string]string{`conditions`: "ContractConditions(`MainCondition`)"}})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

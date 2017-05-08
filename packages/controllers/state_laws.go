@@ -22,8 +22,6 @@ import (
 
 type stateLawsPage struct {
 	Alert              string
-	SignData           string
-	ShowSignData       bool
 	Lang               map[string]string
 	WalletId           int64
 	CitizenId          int64
@@ -55,8 +53,6 @@ func (c *Controller) StateLaws() (string, error) {
 	TemplateStr, err := makeTemplate("state_laws", "stateLaws", &stateLawsPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		ShowSignData:       c.ShowSignData,
-		SignData:           "",
 		WalletId:           c.SessWalletId,
 		CitizenId:          c.SessCitizenId,
 		StateLaws:          stateLaws,

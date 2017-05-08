@@ -63,17 +63,15 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		amount = "0"
 	}
 	TemplateStr, err := makeTemplate("anonym_money_transfer", "anonymMoneyTransfer", &anonymMoneyTransferPage{
-		Lang:         c.Lang,
-		Title:        "anonymMoneyTransfer",
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		Amount:       amount,
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
-		Commission:   commission.String(),
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Lang:       c.Lang,
+		Title:      "anonymMoneyTransfer",
+		Amount:     amount,
+		WalletId:   c.SessWalletId,
+		CitizenId:  c.SessCitizenId,
+		Commission: commission.String(),
+		TimeNow:    timeNow,
+		TxType:     txType,
+		TxTypeId:   txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

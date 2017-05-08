@@ -24,8 +24,6 @@ import (
 
 type editPagePage struct {
 	Alert           string
-	SignData        string
-	ShowSignData    bool
 	Lang            map[string]string
 	WalletId        int64
 	CitizenId       int64
@@ -107,9 +105,7 @@ func (c *Controller) EditPage() (string, error) {
 	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage{
 		Alert:           c.Alert,
 		Lang:            c.Lang,
-		ShowSignData:    c.ShowSignData,
 		Global:          global,
-		SignData:        "",
 		WalletId:        c.SessWalletId,
 		CitizenId:       c.SessCitizenId,
 		TimeNow:         timeNow,

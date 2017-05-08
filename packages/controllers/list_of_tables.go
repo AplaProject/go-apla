@@ -21,17 +21,15 @@ import (
 )
 
 type listOfTablesPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	Lang         map[string]string
-	WalletId     int64
-	CitizenId    int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	Global       string
-	Tables       []map[string]string
+	Alert     string
+	Lang      map[string]string
+	WalletId  int64
+	CitizenId int64
+	TxType    string
+	TxTypeId  int64
+	TimeNow   int64
+	Global    string
+	Tables    []map[string]string
 }
 
 func (c *Controller) ListOfTables() (string, error) {
@@ -56,14 +54,12 @@ func (c *Controller) ListOfTables() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("list_of_tables", "listOfTables", &listOfTablesPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		Global:       global,
-		SignData:     "",
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
-		Tables:       tables})
+		Alert:     c.Alert,
+		Lang:      c.Lang,
+		Global:    global,
+		WalletId:  c.SessWalletId,
+		CitizenId: c.SessCitizenId,
+		Tables:    tables})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

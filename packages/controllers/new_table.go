@@ -22,18 +22,16 @@ import (
 )
 
 type newTablePage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	Lang         map[string]string
-	CitizenId    int64
-	StateId      int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	MaxColumns   int
-	MaxIndexes   int
-	Global       string
+	Alert      string
+	Lang       map[string]string
+	CitizenId  int64
+	StateId    int64
+	TxType     string
+	TxTypeId   int64
+	TimeNow    int64
+	MaxColumns int
+	MaxIndexes int
+	Global     string
 }
 
 func (c *Controller) NewTable() (string, error) {
@@ -50,18 +48,16 @@ func (c *Controller) NewTable() (string, error) {
 	timeNow := utils.Time()
 
 	TemplateStr, err := makeTemplate("new_table", "newTable", &newTablePage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		CitizenId:    c.SessCitizenId,
-		StateId:      c.StateId,
-		Global:       global,
-		TimeNow:      timeNow,
-		MaxColumns:   consts.MAX_COLUMNS,
-		MaxIndexes:   consts.MAX_INDEXES,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Alert:      c.Alert,
+		Lang:       c.Lang,
+		CitizenId:  c.SessCitizenId,
+		StateId:    c.StateId,
+		Global:     global,
+		TimeNow:    timeNow,
+		MaxColumns: consts.MAX_COLUMNS,
+		MaxIndexes: consts.MAX_INDEXES,
+		TxType:     txType,
+		TxTypeId:   txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

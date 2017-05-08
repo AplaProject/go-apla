@@ -21,15 +21,13 @@ import (
 )
 
 type changeNodeKeyPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	Lang         map[string]string
-	WalletId     int64
-	CitizenId    int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
+	Alert     string
+	Lang      map[string]string
+	WalletId  int64
+	CitizenId int64
+	TxType    string
+	TxTypeId  int64
+	TimeNow   int64
 }
 
 func (c *Controller) ChangeNodeKey() (string, error) {
@@ -41,15 +39,13 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 	timeNow := utils.Time()
 
 	TemplateStr, err := makeTemplate("change_node_key", "changeNodeKey", &changeNodeKeyPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+		Alert:     c.Alert,
+		Lang:      c.Lang,
+		WalletId:  c.SessWalletId,
+		CitizenId: c.SessCitizenId,
+		TimeNow:   timeNow,
+		TxType:    txType,
+		TxTypeId:  txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

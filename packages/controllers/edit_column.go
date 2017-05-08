@@ -23,8 +23,6 @@ import (
 
 type editColumnPage struct {
 	Alert            string
-	SignData         string
-	ShowSignData     bool
 	Lang             map[string]string
 	WalletId         int64
 	CitizenId        int64
@@ -67,12 +65,10 @@ func (c *Controller) EditColumn() (string, error) {
 	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage{
 		Alert:            c.Alert,
 		Lang:             c.Lang,
-		ShowSignData:     c.ShowSignData,
 		TableName:        tableName,
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
 		ColumnType:       utils.GetColumnType(tableName, columnName),
-		SignData:         "",
 		WalletId:         c.SessWalletId,
 		CitizenId:        c.SessCitizenId,
 		StateId:          c.SessStateId,

@@ -22,18 +22,16 @@ import (
 )
 
 type editTablePage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	Lang         map[string]string
-	WalletId     int64
-	CitizenId    int64
-	TableName    string
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	CanColumns   bool
-	TableData    map[string]string
+	Alert      string
+	Lang       map[string]string
+	WalletId   int64
+	CitizenId  int64
+	TableName  string
+	TxType     string
+	TxTypeId   int64
+	TimeNow    int64
+	CanColumns bool
+	TableData  map[string]string
 	//	Columns               map[string]string
 	ColumnsAndPermissions []map[string]string
 	StateId               int64
@@ -90,8 +88,6 @@ func (c *Controller) EditTable() (string, error) {
 	TemplateStr, err := makeTemplate("edit_table", "editTable", &editTablePage{
 		Alert:                 c.Alert,
 		Lang:                  c.Lang,
-		ShowSignData:          c.ShowSignData,
-		SignData:              "",
 		WalletId:              c.SessWalletId,
 		CitizenId:             c.SessCitizenId,
 		TableName:             tableName,

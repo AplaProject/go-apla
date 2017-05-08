@@ -37,9 +37,7 @@ func (c *Controller) NewColumn() (string, error) {
 	TemplateStr, err := makeTemplate("edit_column", "editColumn", &editColumnPage{
 		Alert:            c.Alert,
 		Lang:             c.Lang,
-		ShowSignData:     c.ShowSignData,
 		TableName:        tableName,
-		SignData:         "",
 		WalletId:         c.SessWalletId,
 		CitizenId:        c.SessCitizenId,
 		StateId:          c.SessStateId,

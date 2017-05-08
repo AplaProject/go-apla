@@ -22,17 +22,15 @@ import (
 )
 
 type rowHistoryPage struct {
-	Alert        string
-	SignData     string
-	ShowSignData bool
-	Lang         map[string]string
-	History      []map[string]string
-	WalletId     int64
-	CitizenId    int64
-	TableName    string
-	StateId      int64
-	Global       string
-	Columns      map[string]string
+	Alert     string
+	Lang      map[string]string
+	History   []map[string]string
+	WalletId  int64
+	CitizenId int64
+	TableName string
+	StateId   int64
+	Global    string
+	Columns   map[string]string
 }
 
 func (c *Controller) RowHistory() (string, error) {
@@ -76,17 +74,15 @@ func (c *Controller) RowHistory() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("row_history", "rowHistory", &rowHistoryPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId:     c.SessWalletId,
-		History:      history,
-		CitizenId:    c.SessCitizenId,
-		TableName:    tableName,
-		Global:       global,
-		Columns:      columns,
-		StateId:      c.SessStateId})
+		Alert:     c.Alert,
+		Lang:      c.Lang,
+		WalletId:  c.SessWalletId,
+		History:   history,
+		CitizenId: c.SessCitizenId,
+		TableName: tableName,
+		Global:    global,
+		Columns:   columns,
+		StateId:   c.SessStateId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

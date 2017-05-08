@@ -22,8 +22,6 @@ import (
 
 type interfacePage struct {
 	Alert          string
-	SignData       string
-	ShowSignData   bool
 	Lang           map[string]string
 	WalletId       int64
 	CitizenId      int64
@@ -52,8 +50,6 @@ func (c *Controller) Interface() (string, error) {
 	TemplateStr, err := makeTemplate("interface", "interface", &interfacePage{
 		Alert:          c.Alert,
 		Lang:           c.Lang,
-		ShowSignData:   c.ShowSignData,
-		SignData:       "",
 		WalletId:       c.SessWalletId,
 		CitizenId:      c.SessCitizenId,
 		InterfacePages: interface_pages,

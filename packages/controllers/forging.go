@@ -24,8 +24,6 @@ import (
 type forgingPage struct {
 	Lang         map[string]string
 	Title        string
-	SignData     string
-	ShowSignData bool
 	MyWalletData map[string]string
 	WalletId     int64
 	CitizenId    int64
@@ -51,8 +49,6 @@ func (c *Controller) Forging() (string, error) {
 		Lang:         c.Lang,
 		MyWalletData: MyWalletData,
 		Title:        "modalAnonym",
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
 		TimeNow:      timeNow,

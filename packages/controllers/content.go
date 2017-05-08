@@ -375,14 +375,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			} */
 		c.TplName = tplName
 
-		if dbInit {
-			// Если у юзера только 1 праймари ключ, то выдавать форму, где показываются данные для подписи и форма ввода подписи не нужно.
-			// Только если он сам не захочет, указав это в my_table
-			showSignData := false
-			if showSignData {
-				c.ShowSignData = true
-			}
-		}
+		/*		if dbInit {
+				// Если у юзера только 1 праймари ключ, то выдавать форму, где показываются данные для подписи и форма ввода подписи не нужно.
+				// Только если он сам не захочет, указав это в my_table
+				c.ShowSignData = false
+			}*/
 
 		if dbInit && tplName != "updatingBlockchain" {
 			html, err := CallController(c, "AlertMessage")

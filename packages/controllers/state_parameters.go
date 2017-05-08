@@ -22,8 +22,6 @@ import (
 
 type stateParametersPage struct {
 	Alert           string
-	SignData        string
-	ShowSignData    bool
 	Lang            map[string]string
 	WalletId        int64
 	CitizenId       int64
@@ -49,8 +47,6 @@ func (c *Controller) StateParameters() (string, error) {
 	TemplateStr, err := makeTemplate("state_parameters", "stateParameters", &stateParametersPage{
 		Alert:           c.Alert,
 		Lang:            c.Lang,
-		ShowSignData:    c.ShowSignData,
-		SignData:        "",
 		WalletId:        c.SessWalletId,
 		CitizenId:       c.SessCitizenId,
 		StateParameters: stateParameters,

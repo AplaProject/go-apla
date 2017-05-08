@@ -31,17 +31,15 @@ func (c *Controller) NewContract() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
-		Alert:        c.Alert,
-		Lang:         c.Lang,
-		ShowSignData: c.ShowSignData,
-		SignData:     "",
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
-		TxType:       txType,
-		TxTypeId:     txTypeId,
-		Global:       global,
-		Data:         map[string]string{`conditions`: "ContractConditions(`MainCondition`)"},
-		StateId:      c.SessStateId})
+		Alert:     c.Alert,
+		Lang:      c.Lang,
+		WalletId:  c.SessWalletId,
+		CitizenId: c.SessCitizenId,
+		TxType:    txType,
+		TxTypeId:  txTypeId,
+		Global:    global,
+		Data:      map[string]string{`conditions`: "ContractConditions(`MainCondition`)"},
+		StateId:   c.SessStateId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

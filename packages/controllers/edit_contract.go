@@ -123,8 +123,6 @@ func (c *Controller) EditContract() (string, error) {
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:               c.Alert,
 		Lang:                c.Lang,
-		ShowSignData:        c.ShowSignData,
-		SignData:            "",
 		WalletId:            c.SessWalletId,
 		Data:                data,
 		DataContractHistory: dataContractHistory,
