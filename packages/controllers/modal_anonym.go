@@ -58,7 +58,6 @@ func (c *Controller) ModalAnonym() (string, error) {
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
 		Address:      c.SessAddress,
-		CountSign:    c.CountSign,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId})

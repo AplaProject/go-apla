@@ -62,7 +62,6 @@ type Controller struct {
 	SessAddress      string
 	MyNotice         map[string]string
 	Parameters       map[string]string
-	CountSign        int
 	TimeFormat       string
 	NodeAdmin        bool
 	NodeConfig       map[string]string

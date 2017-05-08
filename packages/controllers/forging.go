@@ -24,7 +24,6 @@ import (
 type forgingPage struct {
 	Lang         map[string]string
 	Title        string
-	CountSign    int
 	SignData     string
 	ShowSignData bool
 	MyWalletData map[string]string
@@ -56,7 +55,6 @@ func (c *Controller) Forging() (string, error) {
 		SignData:     "",
 		WalletId:     c.SessWalletId,
 		CitizenId:    c.SessCitizenId,
-		CountSign:    c.CountSign,
 		TimeNow:      timeNow,
 		TxType:       txType,
 		TxTypeId:     txTypeId})

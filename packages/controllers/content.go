@@ -282,11 +282,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	log.Debug("tplName2=", tplName)
 
 	// кол-во ключей=подписей у юзера
-	var countSign int
 	var userId int64
 	//	var myUserId int64
 	if (sessWalletId != 0 || sessCitizenId > 0) && dbInit && installProgress == "complete" {
-		countSign = 1
 		log.Debug("userId: %d", userId)
 		var pk map[string]string
 		if sessWalletId != 0 {
@@ -298,18 +296,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			log.Error("%v", err)
 		}
 		log.Debug("pk: %v", pk)
-		if len(pk["public_key_1"]) > 0 {
-			log.Debug("public_key_1: %x", pk["public_key_1"])
-			countSign = 2
-		}
-		if len(pk["public_key_2"]) > 0 {
-			log.Debug("public_key_2: %x", pk["public_key_2"])
-			countSign = 3
-		}
 	}
-
-	log.Debug("countSign: %v", countSign)
-	c.CountSign = countSign
 
 	if tplName == "" {
 		tplName = "login"
@@ -392,10 +379,8 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			// Если у юзера только 1 праймари ключ, то выдавать форму, где показываются данные для подписи и форма ввода подписи не нужно.
 			// Только если он сам не захочет, указав это в my_table
 			showSignData := false
-			if showSignData || countSign > 1 {
+			if showSignData {
 				c.ShowSignData = true
-			} else {
-				c.ShowSignData = false
 			}
 		}
 

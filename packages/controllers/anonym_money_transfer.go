@@ -25,7 +25,6 @@ import (
 type anonymMoneyTransferPage struct {
 	Lang         map[string]string
 	Title        string
-	CountSign    int
 	SignData     string
 	ShowSignData bool
 	TxType       string
@@ -64,7 +63,6 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		amount = "0"
 	}
 	TemplateStr, err := makeTemplate("anonym_money_transfer", "anonymMoneyTransfer", &anonymMoneyTransferPage{
-		CountSign:    c.CountSign,
 		Lang:         c.Lang,
 		Title:        "anonymMoneyTransfer",
 		ShowSignData: c.ShowSignData,

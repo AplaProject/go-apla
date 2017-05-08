@@ -23,7 +23,6 @@ import (
 type dashboardAnonymPage struct {
 	Lang         map[string]string
 	Title        string
-	CountSign    int
 	Amount       string
 	SignData     string
 	ShowSignData bool
@@ -49,7 +48,6 @@ func (c *Controller) DashboardAnonym() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonym", &dashboardAnonymPage{
-		CountSign:    c.CountSign,
 		Lang:         c.Lang,
 		Title:        "Home",
 		Amount:       amount,
