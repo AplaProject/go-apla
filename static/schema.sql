@@ -252,8 +252,6 @@ ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (ha
 DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "wallet_id" bigint  NOT NULL DEFAULT '0',
 "public_key_0" bytea  NOT NULL DEFAULT '',
-"public_key_1" bytea  NOT NULL DEFAULT '',
-"public_key_2" bytea  NOT NULL DEFAULT '',
 "node_public_key" bytea  NOT NULL DEFAULT '',
 "last_forging_data_upd" bigint NOT NULL DEFAULT '0',
 "amount" decimal(30) NOT NULL DEFAULT '0',

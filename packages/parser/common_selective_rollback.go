@@ -49,7 +49,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		//log.Debug("logData",logData)
 		addSqlUpdate := ""
 		for k, v := range jsonMap {
-			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}) && len(v) != 0 {
+			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
 				addSqlUpdate += k + `=decode('` + string(utils.BinToHex([]byte(v))) + `','HEX'),`
 			} else {
 				addSqlUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`

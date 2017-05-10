@@ -169,7 +169,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			p.TxPtr.(*consts.TXHeader).Sign = p.TxPtr.(*consts.TXHeader).Sign[:len(p.TxPtr.(*consts.TXHeader).Sign)-64]
 		}
 		if len(p.PublicKeys) == 0 {
-			data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?",
+			data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?",
 				int64(p.TxPtr.(*consts.TXHeader).WalletId)).String()
 			if err != nil {
 				return err
@@ -183,12 +183,6 @@ func (p *Parser) CallContract(flags int) (err error) {
 				}
 			} else {
 				p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
-				/*		if len(data["public_key_1"]) > 10 {
-							p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
-						}
-						if len(data["public_key_2"]) > 10 {
-							p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
-						}*/
 			}
 		}
 		/*fmt.Printf("TXPublic=%x %d\r\n", p.PublicKeys[0], len(p.PublicKeys[0]))

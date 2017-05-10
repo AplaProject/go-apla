@@ -82,7 +82,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 				}
 			}
 
-			data, err = c.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", walletId).String()
+			data, err = c.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", walletId).String()
 			if err == nil {
 				var PublicKeys [][]byte
 				PublicKeys = append(PublicKeys, []byte(data["public_key_0"]))

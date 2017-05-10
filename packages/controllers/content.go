@@ -281,23 +281,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("tplName2=", tplName)
 
-	// кол-во ключей=подписей у юзера
-	var userId int64
-	//	var myUserId int64
-	if (sessWalletId != 0 || sessCitizenId > 0) && dbInit && installProgress == "complete" {
-		log.Debug("userId: %d", userId)
-		var pk map[string]string
-		if sessWalletId != 0 {
-			pk, err = c.OneRow("SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM dlt_wallets WHERE wallet_id = ?", sessWalletId).String()
-		} else {
-			pk, err = c.OneRow(`SELECT hex(public_key_1) as public_key_1, hex(public_key_2) as public_key_2 FROM `+c.StateIdStr+`_citizens WHERE citizen_id = ?`, userId).String()
-		}
-		if err != nil {
-			log.Error("%v", err)
-		}
-		log.Debug("pk: %v", pk)
-	}
-
 	if tplName == "" {
 		tplName = "login"
 	}

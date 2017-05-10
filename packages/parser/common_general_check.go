@@ -36,7 +36,7 @@ func (p *Parser) generalCheck(name string) error {
 
 	// проверим, есть ли такой юзер и заодно получим public_key
 	if p.TxMaps.Int64["type"] == utils.TypeInt("DLTTransfer") || p.TxMaps.Int64["type"] == utils.TypeInt("NewState") || p.TxMaps.Int64["type"] == utils.TypeInt("DLTChangeHostVote") || p.TxMaps.Int64["type"] == utils.TypeInt("ChangeNodeKeyDLT") || p.TxMaps.Int64["type"] == utils.TypeInt("CitizenRequest") || p.TxMaps.Int64["type"] == utils.TypeInt("UpdFullNodes") {
-		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
+		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -60,18 +60,10 @@ func (p *Parser) generalCheck(name string) error {
 		} else {
 			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
 			log.Debug("data[public_key_0]", data["public_key_0"])
-			if len(data["public_key_1"]) > 10 {
-				log.Debug("data[public_key_1]", data["public_key_1"])
-				p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
-			}
-			if len(data["public_key_2"]) > 10 {
-				log.Debug("data[public_key_2]", data["public_key_2"])
-				p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
-			}
 		}
 	} else {
 		log.Debug(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = %d`, p.TxCitizenID)
-		data, err := p.OneRow("SELECT public_key_0, public_key_1, public_key_2 FROM dlt_wallets WHERE wallet_id = ?", utils.Int64ToStr(p.TxCitizenID)).String()
+		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.Int64ToStr(p.TxCitizenID)).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -80,12 +72,6 @@ func (p *Parser) generalCheck(name string) error {
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
 		p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
-		if len(data["public_key_1"]) > 10 {
-			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_1"]))
-		}
-		if len(data["public_key_2"]) > 10 {
-			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_2"]))
-		}
 	}
 	// чтобы не записали слишком длинную подпись
 	// 128 - это нод-ключ

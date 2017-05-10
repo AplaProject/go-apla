@@ -106,7 +106,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			if k == p.AllPkeys[table] {
 				continue
 			}
-			if (isBytea[k] || utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "public_key_1", "public_key_2", "node_public_key"})) && v != "" {
+			if (isBytea[k] || utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
 				jsonMap[k] = string(utils.BinToHex([]byte(v)))
 			} else {
 				jsonMap[k] = v
@@ -168,7 +168,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			} else {
 				addSqlIns0 += fields[i] + `,`
 			}
-			// || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}))
+			// || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "node_public_key"}))
 			if isBytea[fields[i]] && len(values[i]) != 0 {
 				addSqlIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if values[i] == `NULL` {
