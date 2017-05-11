@@ -78,7 +78,7 @@ func GetChain() {
 					wallet_id := utils.StrToInt64(item[`wallet_id`])
 					address := ``
 					if wallet_id != 0 {
-						address = lib.AddressToString(uint64(wallet_id))
+						address = lib.AddressToString(wallet_id)
 					}
 
 					chainList[chainOff] = ChainInfo{Id: utils.StrToInt64(item[`id`]),

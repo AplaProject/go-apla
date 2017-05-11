@@ -95,7 +95,7 @@ func (c *Controller) EditContract() (string, error) {
 				data[`wallet`] = ``
 			} else {
 				cont_wallet = utils.StrToInt64(data[`wallet_id`])
-				data[`wallet`] = lib.AddressToString(uint64(cont_wallet))
+				data[`wallet`] = lib.AddressToString(cont_wallet)
 			}
 			if data[`active`] == `NULL` {
 				data[`active`] = ``

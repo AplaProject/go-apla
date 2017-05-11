@@ -59,7 +59,7 @@ func (p *Parser) DLTTransferFront() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if lib.KeyToAddress(bkey) != lib.AddressToString(uint64(p.TxWalletID)) {
+		if lib.KeyToAddress(bkey) != lib.AddressToString(p.TxWalletID) {
 			return p.ErrInfo("incorrect public_key")
 		}
 	}
@@ -176,7 +176,7 @@ func (p *Parser) DLTTransfer() error {
 
 	// пишем в общую историю тр-ий
 	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, walletId, lib.AddressToString(utils.StrToUint64(p.TxMaps.String["walletAddress"])), p.TxMaps.Decimal["amount"].String(), p.TxMaps.Decimal["commission"].String(), p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+		p.TxWalletID, walletId, lib.AddressToString(int64(utils.StrToUint64(p.TxMaps.String["walletAddress"]))), p.TxMaps.Decimal["amount"].String(), p.TxMaps.Decimal["commission"].String(), p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -185,7 +185,8 @@ func (p *Parser) DLTTransfer() error {
 		return err
 	}
 
-	dlt_transactions_id, err = p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions", p.TxWalletID, p.BlockData.WalletId, lib.AddressToString(uint64(p.BlockData.WalletId)), p.TxMaps.Decimal["commission"].String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockId)
+	dlt_transactions_id, err = p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
+		p.TxWalletID, p.BlockData.WalletId, lib.AddressToString(p.BlockData.WalletId), p.TxMaps.Decimal["commission"].String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

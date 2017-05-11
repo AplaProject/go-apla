@@ -567,14 +567,14 @@ func AddressToID(input string) (addr int64) {
 		uaddr, _ := strconv.ParseUint(input, 10, 64)
 		addr = int64(uaddr)
 	}
-	if !lib.IsValidAddress(lib.AddressToString(uint64(addr))) {
+	if !lib.IsValidAddress(lib.AddressToString(addr)) {
 		return 0
 	}
 	return
 }
 
 func IDToAddress(id int64) (out string) {
-	out = lib.AddressToString(uint64(id))
+	out = lib.AddressToString(id)
 	if !lib.IsValidAddress(out) {
 		out = `invalid`
 	}

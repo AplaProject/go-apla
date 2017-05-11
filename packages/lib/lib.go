@@ -35,15 +35,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	//	b58 "github.com/jbenet/go-base58"
-	//	"golang.org/x/crypto/ripemd160"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
-const (
+/*const (
 	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
-)
+)*/
 
 type Update struct {
 	Version string
@@ -60,19 +58,20 @@ func init() {
 	Table64 = crc64.MakeTable(crc64.ECMA)
 }
 
-// Converts binary address to DayLight address.
-func AddressToString(address uint64) (ret string) {
-	num := strconv.FormatUint(address, 10)
+// Converts int64 address to EGAAS address as XXXX-...-XXXX.
+func AddressToString(address int64) (ret string) {
+	num := strconv.FormatUint(uint64(address), 10)
 	val := []byte(strings.Repeat("0", 20-len(num)) + num)
 
 	for i := 0; i < 4; i++ {
 		ret += string(val[i*4:(i+1)*4]) + `-`
 	}
 	ret += string(val[16:])
-	//	return /*`D` +*/ b58.Encode(address)
 	return
 }
 
+// Converts string EGAAS address to int64 address. The input address can be a positive or negative
+// number, or EGAAS address in XXXX-...-XXXX format. Returns 0 when error occurs.
 func StringToAddress(address string) (result int64) {
 	var (
 		err error
@@ -355,7 +354,8 @@ func IsValidAddress(address string) bool {
 		return bytes.Compare(checksum, h256[:4]) == 0*/
 }
 
-func Address(pubKey []byte) uint64 {
+// Gets int64 EGGAS address from the public key
+func Address(pubKey []byte) int64 {
 	h256 := sha256.Sum256(pubKey)
 	h512 := sha512.Sum512(h256[:])
 	crc := crc64.Checksum(h512[:], Table64)
@@ -376,7 +376,7 @@ func Address(pubKey []byte) uint64 {
 	if checksum > 0 {
 		checksum = 10 - checksum
 	}
-	return crc - (crc % 10) + uint64(checksum)
+	return int64(crc - (crc % 10) + uint64(checksum))
 	/*	h := ripemd160.New()
 		h.Write(h256[:])
 		finger := h.Sum(nil)

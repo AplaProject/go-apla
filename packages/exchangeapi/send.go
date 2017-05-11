@@ -109,7 +109,7 @@ func send(r *http.Request) interface{} {
 		result.Error = fmt.Sprintf(`There is not enough money. %v is less than %v`, totalAmount, amount.Add(commission))
 		return result
 	}
-	wallet := lib.AddressToString(uint64(recipient))
+	wallet := lib.AddressToString(recipient)
 	txType := utils.TypeInt(`DLTTransfer`)
 	txTime := time.Now().Unix()
 	forSign := fmt.Sprintf("%d,%d,%d,%s,%s,%s,%s", txType, txTime, sender,

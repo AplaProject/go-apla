@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -69,21 +68,12 @@ func (c *Controller) AjaxHistory() interface{} {
 			for ind := range history {
 				max, _ := c.Single(`select max(id) from block_chain`).Int64()
 				history[ind][`confirm`] = utils.Int64ToStr(max - utils.StrToInt64(history[ind][`block_id`]))
-				history[ind][`sender_address`] = lib.AddressToString(uint64(utils.StrToInt64(history[ind][`sw`])))
+				history[ind][`sender_address`] = lib.AddressToString(utils.StrToInt64(history[ind][`sw`]))
 				recipient := history[ind][`rw`]
 				if len(recipient) < 10 {
 					recipient = history[ind][`recipient_wallet_address`]
 				}
-				if len(recipient) == 24 {
-					recipient = strings.Replace(recipient, `-`, ``, -1)
-				}
-				var rec uint64
-				if recipient[0] == '-' {
-					rec = uint64(utils.StrToInt64(recipient))
-				} else {
-					rec = utils.StrToUint64(recipient)
-				}
-				history[ind][`recipient_address`] = lib.AddressToString(rec)
+				history[ind][`recipient_address`] = lib.AddressToString(lib.StringToAddress(recipient))
 			}
 		}
 	}

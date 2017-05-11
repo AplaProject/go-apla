@@ -39,7 +39,7 @@ func (c *Controller) Forging() (string, error) {
 	timeNow := utils.Time()
 
 	MyWalletData, err := c.OneRow("SELECT host, address_vote, fuel_rate FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
-	MyWalletData[`address`] = lib.AddressToString(uint64(c.SessWalletId))
+	MyWalletData[`address`] = lib.AddressToString(c.SessWalletId)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

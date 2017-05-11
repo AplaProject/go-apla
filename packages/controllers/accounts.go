@@ -65,7 +65,7 @@ func (c *Controller) Accounts() (string, error) {
 				amount = amount[:len(amount)-digit] + `.` + amount[len(amount)-digit:]
 			}
 		}
-		data = append(data, AccountInfo{AccountId: account, Address: lib.AddressToString(uint64(account)),
+		data = append(data, AccountInfo{AccountId: account, Address: lib.AddressToString(account),
 			Amount: amount})
 	}
 

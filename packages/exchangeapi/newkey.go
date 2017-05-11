@@ -39,7 +39,7 @@ func newKey(r *http.Request) interface{} {
 		return result
 	}
 	result.WalletId = int64(lib.Address(pub))
-	result.Address = lib.AddressToString(uint64(result.WalletId))
+	result.Address = lib.AddressToString(result.WalletId)
 	result.Public = hex.EncodeToString(pub)
 	return result
 }

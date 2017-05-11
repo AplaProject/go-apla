@@ -80,7 +80,7 @@ func EncryptNewKey(wallet_id string) (result EncryptKey) {
 		return result
 	}
 	result.Encrypted = hex.EncodeToString(encrypted)
-	result.Address = lib.AddressToString(uint64(result.WalletId))
+	result.Address = lib.AddressToString(result.WalletId)
 
 	return
 }

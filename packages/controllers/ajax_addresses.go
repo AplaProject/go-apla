@@ -60,8 +60,7 @@ func (c *Controller) AjaxAddresses() interface{} {
 		result.Error = err.Error()
 	} else {
 		for _, ireq := range req {
-			id := uint64(utils.StrToInt64(ireq[`id`]))
-			result.Address = append(result.Address, lib.AddressToString(id))
+			result.Address = append(result.Address, lib.AddressToString(utils.StrToInt64(ireq[`id`])))
 		}
 	}
 	return result

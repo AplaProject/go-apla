@@ -50,7 +50,7 @@ func (c *Controller) AjaxExplorer() interface{} {
 				for ind := range explorer {
 					explorer[ind][`hash`] = hex.EncodeToString([]byte(explorer[ind][`hash`]))
 					if len(explorer[ind][`wallet_id`]) > 0 {
-						explorer[ind][`wallet_address`] = lib.AddressToString(uint64(utils.StrToInt64(explorer[ind][`wallet_id`])))
+						explorer[ind][`wallet_address`] = lib.AddressToString(utils.StrToInt64(explorer[ind][`wallet_id`]))
 					} else {
 						explorer[ind][`wallet_address`] = ``
 					}

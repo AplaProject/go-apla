@@ -1705,7 +1705,7 @@ func IdToAddress(vars *map[string]string, pars ...string) string {
 	if id == 0 {
 		return `unknown address`
 	}
-	return lib.AddressToString(uint64(id))
+	return lib.AddressToString(id)
 }
 
 func Ring(vars *map[string]string, pars ...string) string {
@@ -1820,7 +1820,7 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 	if len(pars) > 3 && len(pars[3]) > 0 {
 		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, pars[3])
 	}
-	address := lib.AddressToString(uint64(StrToInt64(pars[1])))
+	address := lib.AddressToString(StrToInt64(pars[1]))
 	(*vars)["wicitizen"] = `1`
 	return fmt.Sprintf(`<div class="panel widget"><div class="panel-body">
 			<div class="row row-table"><div class="col-xs-6 text-center">

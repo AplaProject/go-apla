@@ -74,6 +74,6 @@ func (c *Controller) WalletHistory() (string, error) {
 			}
 		}
 	}
-	pageData := walletPage{Data: c.Data, List: list, IsData: len(list) > 0, Wallet: lib.AddressToString(uint64(walletId))}
+	pageData := walletPage{Data: c.Data, List: list, IsData: len(list) > 0, Wallet: lib.AddressToString(walletId)}
 	return proceedTemplate(c, NWalletHistory, &pageData)
 }

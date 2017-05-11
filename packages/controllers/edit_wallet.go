@@ -88,7 +88,7 @@ func (c *Controller) EditWallet() (string, error) {
 				ret = ret[:len(ret)-consts.EGS_DIGIT] + `.` + ret[len(ret)-consts.EGS_DIGIT:]
 				data[`amount`] = ret
 			}
-			data[`address`] = lib.AddressToString(uint64(id))
+			data[`address`] = lib.AddressToString(id)
 			if data[`spending_contract`] == `NULL` {
 				data[`spending_contract`] = ``
 			}

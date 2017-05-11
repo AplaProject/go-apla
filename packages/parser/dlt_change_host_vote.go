@@ -60,7 +60,7 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if lib.KeyToAddress(bkey) != lib.AddressToString(uint64(p.TxWalletID)) {
+		if lib.KeyToAddress(bkey) != lib.AddressToString(p.TxWalletID) {
 			return p.ErrInfo("incorrect public_key")
 		}
 	}

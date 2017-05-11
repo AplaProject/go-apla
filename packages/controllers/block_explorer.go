@@ -60,7 +60,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 			blockInfo[`hash`] = hex.EncodeToString([]byte(blockInfo[`hash`]))
 			blockInfo[`size`] = utils.IntToStr(len(blockInfo[`data`]))
 			if len(blockInfo[`wallet_id`]) > 0 {
-				blockInfo[`wallet_address`] = lib.AddressToString(uint64(utils.StrToInt64(blockInfo[`wallet_id`])))
+				blockInfo[`wallet_address`] = lib.AddressToString(utils.StrToInt64(blockInfo[`wallet_id`]))
 			} else {
 				blockInfo[`wallet_address`] = ``
 			}
@@ -137,7 +137,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		for ind := range blockExplorer {
 			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
 			if len(blockExplorer[ind][`wallet_id`]) > 0 {
-				blockExplorer[ind][`wallet_address`] = lib.AddressToString(uint64(utils.StrToInt64(blockExplorer[ind][`wallet_id`])))
+				blockExplorer[ind][`wallet_address`] = lib.AddressToString(utils.StrToInt64(blockExplorer[ind][`wallet_id`]))
 			} else {
 				blockExplorer[ind][`wallet_address`] = ``
 			}

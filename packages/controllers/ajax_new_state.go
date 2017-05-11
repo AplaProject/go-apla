@@ -86,7 +86,7 @@ func (c *Controller) AjaxNewState() interface{} {
 		return result
 	}
 	adminWallet := int64(lib.Address(lib.PrivateToPublic(adminPriv)))
-	walletUser := strings.Replace(lib.AddressToString(uint64(wallet)), `-`, ``, -1)
+	walletUser := strings.Replace(lib.AddressToString(wallet), `-`, ``, -1)
 
 	txType := utils.TypeInt(`DLTTransfer`)
 	txTime := time.Now().Unix()
