@@ -23,17 +23,15 @@ import (
 )
 
 type anonymMoneyTransferPage struct {
-	Lang         map[string]string
-	Title        string
-	SignData     string
-	ShowSignData bool
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
-	WalletId     int64
-	CitizenId    int64
-	Commission   string
-	Amount       string
+	Lang       map[string]string
+	Title      string
+	TxType     string
+	TxTypeId   int64
+	TimeNow    int64
+	WalletId   int64
+	CitizenId  int64
+	Commission string
+	Amount     string
 }
 
 func (c *Controller) AnonymMoneyTransfer() (string, error) {

@@ -61,17 +61,11 @@ func (c *Controller) SaveQueue() (string, error) {
 	//	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
 	txType := utils.TypeInt(txType_)
 	sign := make([]byte, 0)
-	for i := 1; i <= 3; i++ {
-		log.Debug("signature %s", c.r.FormValue(fmt.Sprintf("signature%d", i)))
-		signature := utils.ConvertJSSign(c.r.FormValue(fmt.Sprintf("signature%d", i)))
-		log.Debug("signature %s", signature)
-		if i == 1 || len(signature) > 0 {
-			bsign, _ := hex.DecodeString(signature)
-			log.Debug("bsign %s", bsign)
-			log.Debug("bsign %x", bsign)
-			sign = append(sign, utils.EncodeLengthPlusData(bsign)...)
-			log.Debug("sign %x", sign)
-		}
+	signature := utils.ConvertJSSign(c.r.FormValue("signature1"))
+	if len(signature) > 0 {
+		bsign, _ := hex.DecodeString(signature)
+		sign = append(sign, utils.EncodeLengthPlusData(bsign)...)
+		log.Debug("sign %x", sign)
 	}
 	if len(sign) == 0 {
 		return `{"result":"signature is empty"}`, nil

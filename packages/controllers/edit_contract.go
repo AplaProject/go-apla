@@ -25,8 +25,6 @@ import (
 
 type editContractPage struct {
 	Alert               string
-	SignData            string
-	ShowSignData        bool
 	Lang                map[string]string
 	Data                map[string]string
 	DataContractHistory []map[string]string

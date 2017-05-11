@@ -21,11 +21,9 @@ import (
 )
 
 type dashboardAnonymPage struct {
-	Lang         map[string]string
-	Title        string
-	Amount       string
-	SignData     string
-	ShowSignData bool
+	Lang   map[string]string
+	Title  string
+	Amount string
 }
 
 func (c *Controller) DashboardAnonym() (string, error) {

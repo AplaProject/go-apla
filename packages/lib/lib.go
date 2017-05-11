@@ -43,11 +43,12 @@ import (
 	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
 )*/
 
+// Update contains version info parameters
 type Update struct {
 	Version string
 	Hash    string
 	Sign    string
-	Url     string
+	URL     string
 }
 
 var (
@@ -618,7 +619,6 @@ func NumString(in string) string {
 	if strings.IndexByte(in, '.') >= 0 {
 		lr := strings.Split(in, `.`)
 		return NumString(lr[0]) + `.` + lr[1]
-		//		return NumString(lr[0]) + `.` + reverse(NumString(reverse(lr[1])))
 	}
 	buf := []byte(in)
 	out := make([]byte, len(in)+4)
@@ -691,6 +691,7 @@ func GetShared(public string) (string, string, error) {
 	return shared, pub, err
 }
 
+// Converts qEGS to EGS. For example, 123455000000000000000 => 123.455
 func EGSMoney(money string) string {
 	digit := consts.EGS_DIGIT
 	if len(money) < digit+1 {
