@@ -17,9 +17,6 @@
 package script
 
 import (
-	//	"fmt"
-	"hash/crc64"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 )
 
@@ -37,8 +34,7 @@ func (vm *VM) CompileEval(input string, state uint32) error {
 	block, err := vm.CompileBlock([]rune(source), state, false, 0)
 	//	fmt.Println(`Compile Eval`, err, input)
 	if err == nil {
-		crc := crc64.Checksum([]byte(input), lib.Table64)
-		evals[crc] = &EvalCode{Source: input, Code: block}
+		evals[lib.CRC64([]byte(input))] = &EvalCode{Source: input, Code: block}
 		return nil
 	}
 	return err
@@ -49,7 +45,7 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 	if len(input) == 0 {
 		return true, nil
 	}
-	crc := crc64.Checksum([]byte(input), lib.Table64)
+	crc := lib.CRC64([]byte(input))
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
 		if err := vm.CompileEval(input, state); err != nil {
 			return false, err

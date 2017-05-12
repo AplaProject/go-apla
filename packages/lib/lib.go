@@ -52,11 +52,11 @@ type Update struct {
 }
 
 var (
-	Table64 *crc64.Table
+	table64 *crc64.Table
 )
 
 func init() {
-	Table64 = crc64.MakeTable(crc64.ECMA)
+	table64 = crc64.MakeTable(crc64.ECMA)
 }
 
 // Converts int64 address to EGAAS address as XXXX-...-XXXX.
@@ -99,7 +99,7 @@ func StringToAddress(address string) (result int64) {
 	if ret, err = strconv.ParseUint(string(val), 10, 64); err != nil {
 		return 0
 	}
-	if !CheckSum(val) {
+	if CheckSum(val) != int(val[len(val)-1]-'0') {
 		return 0
 	}
 	result = int64(ret)
@@ -122,61 +122,6 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 	*data = (*data)[length:]
 	return x, nil
 }
-
-// Encodes values into binary data. The format parameter can contain the following characters:
-// 1 - 1 byte for encoding byte, int8, uint8
-// 4 - 4 bytes for encoding int32, uint32
-// i - 2-9 bytes for encoding int64, uint64 by EncodeLenInt64 function
-// s - for encoding string or []byte by EncodeLenByte function
-/*func EncodeBinary(out *[]byte, format string, args ...interface{}) error {
-	if *out == nil {
-		*out = make([]byte, 0, 2048)
-	}
-	if len(format) != len(args) {
-		return fmt.Errorf(`wrong count of parameters %d != %d`, len(format), len(args))
-	}
-	tmp := make([]byte,4)
-	for i, ch := range format {
-		switch ch {
-			case '1', '4':
-				switch ival := args[i].(type) {
-					case int8, uint8, int, int32, uint32:
-						val,_ := ival.(int)
-						if ch == '1' {
-							*out = append(*out, uint8(val))
-						} else {
-							binary.BigEndian.PutUint32(tmp, uint32(val))
-							*out = append(*out, tmp...)
-						}
-					default:
-						return fmt.Errorf(`wrong type %d`, i)
-				}
-			case 'i':
-				switch ival := args[i].(type) {
-					case int8, uint8, int, int32, uint32:
-						val,_ := ival.(int)
-						EncodeLenInt64(out, int64(val))
-					case int64, uint64:
-						val,_ := ival.(int64)
-						EncodeLenInt64(out, val)
-					default:
-						return fmt.Errorf(`wrong type %d`, i)
-				}
-			case 's':
-				switch ival := args[i].(type) {
-					case string:
-						EncodeLenByte(out, []byte(ival))
-					case []byte:
-						EncodeLenByte(out, ival)
-					default:
-						return fmt.Errorf(`wrong type %d`, i)
-				}
-			default:
-				return fmt.Errorf(`unknown input binary format`)
-		}
-	}
-	return nil
-}*/
 
 // Convert 32-byte value into [4]byte (BigEndian)
 func UintToBytes(val uint32) []byte {
@@ -274,6 +219,7 @@ func GenKeys() (privKey string, pubKey string) {
 	return
 }
 
+// SignECDSA returns the signature of forSign made with privateKey.
 func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
 	pubkeyCurve := elliptic.P256()
 
@@ -292,11 +238,11 @@ func SignECDSA(privateKey string, forSign string) (ret []byte, err error) {
 	if err != nil {
 		return
 	}
-	ret = FillLeft(r.Bytes())
-	ret = append(ret, FillLeft(s.Bytes())...)
+	ret = append(FillLeft(r.Bytes()), FillLeft(s.Bytes())...)
 	return
 }
 
+// PrivateToPublic returns the public key for the specified private key.
 func PrivateToPublic(key []byte) []byte {
 	pubkeyCurve := elliptic.P256()
 	bi := new(big.Int).SetBytes(key)
@@ -307,6 +253,7 @@ func PrivateToPublic(key []byte) []byte {
 	return append(FillLeft(priv.PublicKey.X.Bytes()), FillLeft(priv.PublicKey.Y.Bytes())...)
 }
 
+// PrivateToPublic returns the hex public key for the specified hex private key.
 func PrivateToPublicHex(hexkey string) string {
 	key, err := hex.DecodeString(hexkey)
 	if err != nil {
@@ -315,7 +262,8 @@ func PrivateToPublicHex(hexkey string) string {
 	return hex.EncodeToString(PrivateToPublic(key))
 }
 
-func CheckSum(val []byte) bool {
+// CheckSum calculates the 0-9 check sum of []byte
+func CheckSum(val []byte) int {
 	var all, one, two int
 	for i, ch := range val[:len(val)-1] {
 		digit := int(ch - '0')
@@ -330,10 +278,10 @@ func CheckSum(val []byte) bool {
 	if checksum > 0 {
 		checksum = 10 - checksum
 	}
-	return int(val[len(val)-1]-'0') == checksum
+	return checksum
 }
 
-// Function IsValidAddress checks if the specified address is DayLight address.
+// Function IsValidAddress checks if the specified address is EGAAS address.
 func IsValidAddress(address string) bool {
 	val := []byte(strings.Replace(address, `-`, ``, -1))
 	if len(val) != 20 {
@@ -342,47 +290,23 @@ func IsValidAddress(address string) bool {
 	if _, err := strconv.ParseUint(string(val), 10, 64); err != nil {
 		return false
 	}
-	return CheckSum(val)
+	return CheckSum(val) == int(val[len(val)-1]-'0')
+}
 
-	/*if address[0] != 'D' {
-		return false
-	}*/
-	/*	key := b58.Decode(address[0:])
-		checksum := key[len(key)-4:]
-		finger := key[:len(key)-4]
-		h256 := sha256.Sum256(finger)
-		h256 = sha256.Sum256(h256[:])
-		return bytes.Compare(checksum, h256[:4]) == 0*/
+// Crc64 returns crc64 sum
+func CRC64(input []byte) uint64 {
+	return crc64.Checksum(input, table64)
 }
 
 // Gets int64 EGGAS address from the public key
 func Address(pubKey []byte) int64 {
 	h256 := sha256.Sum256(pubKey)
 	h512 := sha512.Sum512(h256[:])
-	crc := crc64.Checksum(h512[:], Table64)
+	crc := CRC64(h512[:])
 	// replace the last digit by checksum
 	num := strconv.FormatUint(crc, 10)
 	val := []byte(strings.Repeat("0", 20-len(num)) + num)
-	var all, one, two int
-	for i, ch := range val[:len(val)-1] {
-		digit := int(ch - '0')
-		all += digit
-		if i&1 == 1 {
-			one += digit
-		} else {
-			two += digit
-		}
-	}
-	checksum := (two + 3*one) % 10
-	if checksum > 0 {
-		checksum = 10 - checksum
-	}
-	return int64(crc - (crc % 10) + uint64(checksum))
-	/*	h := ripemd160.New()
-		h.Write(h256[:])
-		finger := h.Sum(nil)
-		h256 = sha256.Sum256(finger)
-		h256 = sha256.Sum256(h256[:])*/
+	return int64(crc - (crc % 10) + uint64(CheckSum(val)))
 }
 
 // Converts a public key to DayLight address.
@@ -605,15 +529,6 @@ func CalculateMd5(filePath string) ([]byte, error) {
 
 	return hash.Sum(result), nil
 }
-
-/*func reverse(in string) string {
-	r := []rune(in)
-	n := len(r)
-	for i := 0; i < n/2; i++ {
-		r[i], r[n-1-i] = r[n-1-i], r[i]
-	}
-	return string(r)
-}*/
 
 func NumString(in string) string {
 	if strings.IndexByte(in, '.') >= 0 {
