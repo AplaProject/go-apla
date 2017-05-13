@@ -584,6 +584,7 @@ func GetSharedKey(private, public []byte) (shared []byte, err error) {
 	return
 }
 
+// GetSharedHex generates a shared key from private and public keys. All keys are hex string.
 func GetSharedHex(private, public string) (string, error) {
 	priv, err := hex.DecodeString(private)
 	if err != nil {
@@ -600,6 +601,9 @@ func GetSharedHex(private, public string) (string, error) {
 	return hex.EncodeToString(shared), nil
 }
 
+// GetShared returns the combined key for the specified public key. If the text is encrypted
+// with this key then it can be decrypted with the key made from private key and the returned public key (pub).
+// All keys are hex strings.
 func GetShared(public string) (string, string, error) {
 	priv, pub := GenKeys()
 	shared, err := GetSharedHex(priv, public)

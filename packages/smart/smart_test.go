@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"testing"
 	//	"time"
-
 	//	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	//	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -35,16 +34,16 @@ func TestNewContract(t *testing.T) {
 	//	var err error
 	test := []TestSmart{
 		{`contract NewCitizen {
-			tx {
+			data {
 				Public bytes
 				MyVal  string
 			}
-			func front {
+			func conditions {
 				Println( "Front")//TxJson())
 				//$tmp = "Test string"
 //				Println("NewCitizen Front", $tmp, $citizen, $state, $PublicKey )
 			}
-			func main {
+			func action {
 //				Println("NewCitizen Main", $tmp, $type, $wallet )
 //				DBInsert(Sprintf( "%d_citizens", $state), "public_key,block_id", $PublicKey, $block)
 			}
@@ -52,13 +51,13 @@ func TestNewContract(t *testing.T) {
 		`, ``},
 	}
 	for _, item := range test {
-		if err := Compile(item.Input); err != nil {
+		if err := Compile(item.Input, `1`, true, 1); err != nil {
 			t.Error(err)
 		}
 	}
-	cnt := GetContract(`NewCitizen`)
-	cfunc := cnt.GetFunc(`front`)
-	_, err := Run(cfunc, nil, nil)
+	cnt := GetContract(`NewCitizen`, 1)
+	cfunc := cnt.GetFunc(`conditions`)
+	_, err := Run(cfunc, nil, &map[string]interface{}{})
 	fmt.Println(`Err`, err)
 	//
 	/*	if err = cnt.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
