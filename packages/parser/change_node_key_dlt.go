@@ -50,8 +50,8 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	last_forging_data_upd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
-	if err != nil || txTime-last_forging_data_upd < 600 {
+	lastForgingDataUpd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
+	if err != nil || txTime-lastForgingDataUpd < 600 {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 

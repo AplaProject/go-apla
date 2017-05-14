@@ -27,7 +27,7 @@ import (
 const NAccounts = `accounts`
 
 type AccountInfo struct {
-	AccountId int64  `json:"account_id"`
+	AccountID int64  `json:"account_id"`
 	Address   string `json:"address"`
 	Amount    string `json:"amount"`
 }
@@ -37,7 +37,7 @@ type accountsPage struct {
 	List     []AccountInfo
 	Currency string
 	TxType   string
-	TxTypeId int64
+	TxTypeID int64
 	Unique   string
 }
 
@@ -65,7 +65,7 @@ func (c *Controller) Accounts() (string, error) {
 				amount = amount[:len(amount)-digit] + `.` + amount[len(amount)-digit:]
 			}
 		}
-		data = append(data, AccountInfo{AccountId: account, Address: lib.AddressToString(account),
+		data = append(data, AccountInfo{AccountID: account, Address: lib.AddressToString(account),
 			Amount: amount})
 	}
 
@@ -92,6 +92,6 @@ func (c *Controller) Accounts() (string, error) {
 	}
 	txType := "NewAccount"
 	pageData := accountsPage{Data: c.Data, List: data, Currency: currency, TxType: txType,
-		TxTypeId: utils.TypeInt(txType), Unique: ``}
+		TxTypeID: utils.TypeInt(txType), Unique: ``}
 	return proceedTemplate(c, NAccounts, &pageData)
 }

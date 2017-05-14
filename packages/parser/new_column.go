@@ -122,7 +122,7 @@ func (p *Parser) NewColumn() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJson(p.TxMaps.String["permissions"])+`"`, rbId, tblname)
+	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbId, tblname)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -59,7 +59,7 @@ func init() {
 	table64 = crc64.MakeTable(crc64.ECMA)
 }
 
-// Converts int64 address to EGAAS address as XXXX-...-XXXX.
+// AddressToString converts int64 address to EGAAS address as XXXX-...-XXXX.
 func AddressToString(address int64) (ret string) {
 	num := strconv.FormatUint(uint64(address), 10)
 	val := []byte(strings.Repeat("0", 20-len(num)) + num)
@@ -71,7 +71,7 @@ func AddressToString(address int64) (ret string) {
 	return
 }
 
-// Converts string EGAAS address to int64 address. The input address can be a positive or negative
+// StringToAddress converts string EGAAS address to int64 address. The input address can be a positive or negative
 // number, or EGAAS address in XXXX-...-XXXX format. Returns 0 when error occurs.
 func StringToAddress(address string) (result int64) {
 	var (
@@ -82,11 +82,11 @@ func StringToAddress(address string) (result int64) {
 		return 0
 	}
 	if address[0] == '-' {
-		if id, err := strconv.ParseInt(address, 10, 64); err != nil {
+		id, err := strconv.ParseInt(address, 10, 64)
+		if err != nil {
 			return 0
-		} else {
-			address = strconv.FormatUint(uint64(id), 10)
 		}
+		address = strconv.FormatUint(uint64(id), 10)
 	}
 	if len(address) < 20 {
 		address = strings.Repeat(`0`, 20-len(address)) + address
@@ -123,14 +123,14 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 	return x, nil
 }
 
-// Convert 32-byte value into [4]byte (BigEndian)
+// UintToBytes converts 32-byte value into [4]byte (BigEndian)
 func UintToBytes(val uint32) []byte {
 	tmp := make([]byte, 4)
 	binary.BigEndian.PutUint32(tmp, val)
 	return tmp
 }
 
-// Encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
+// EncodeLength encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
 // Otherwise, it returns (0x80 | len of int64) + int64 as BigEndian []byte
 //
 //   67 => 0x43
@@ -150,7 +150,7 @@ func EncodeLength(length int64) []byte {
 	return append(buf[:1], buf[i:]...)
 }
 
-// Decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
+// DecodeLength decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
 //
 //   0x43 => 67
 //   0x820400 => 1024
@@ -175,7 +175,7 @@ func DecodeLength(buf *[]byte) (ret int64, err error) {
 	return
 }
 
-// Appends the length of the slice (EncodeLength) + the slice.
+// EncodeLenByte appends the length of the slice (EncodeLength) + the slice.
 func EncodeLenByte(out *[]byte, buf []byte) *[]byte {
 	*out = append(append(*out, EncodeLength(int64(len(buf)))...), buf...)
 	return out
@@ -195,7 +195,7 @@ func EncodeLenInt64(data *[]byte, x int64) *[]byte {
 	return data
 }
 
-// Fill the slice by zero at left if the size of the slice is less than 32.
+// FillLeft fills the slice by zero at left if the size of the slice is less than 32.
 func FillLeft(slice []byte) []byte {
 	if len(slice) >= 32 {
 		return slice
@@ -203,7 +203,7 @@ func FillLeft(slice []byte) []byte {
 	return append(make([]byte, 32-len(slice)), slice...)
 }
 
-// Fill the slice by zero at left if the size of the slice is less than 32.
+// FillLeft64 fills the slice by zero at left if the size of the slice is less than 32.
 func FillLeft64(slice []byte) []byte {
 	if len(slice) >= 64 {
 		return slice
@@ -211,7 +211,7 @@ func FillLeft64(slice []byte) []byte {
 	return append(make([]byte, 64-len(slice)), slice...)
 }
 
-// Function generate a random pair of ECDSA private and public keys.
+// GenKeys generates a random pair of ECDSA private and public keys.
 func GenKeys() (privKey string, pubKey string) {
 	private, _ := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
 	privKey = hex.EncodeToString(private.D.Bytes())
@@ -253,7 +253,7 @@ func PrivateToPublic(key []byte) []byte {
 	return append(FillLeft(priv.PublicKey.X.Bytes()), FillLeft(priv.PublicKey.Y.Bytes())...)
 }
 
-// PrivateToPublic returns the hex public key for the specified hex private key.
+// PrivateToPublicHex returns the hex public key for the specified hex private key.
 func PrivateToPublicHex(hexkey string) string {
 	key, err := hex.DecodeString(hexkey)
 	if err != nil {
@@ -293,12 +293,12 @@ func IsValidAddress(address string) bool {
 	return CheckSum(val) == int(val[len(val)-1]-'0')
 }
 
-// Crc64 returns crc64 sum
+// CRC64 returns crc64 sum
 func CRC64(input []byte) uint64 {
 	return crc64.Checksum(input, table64)
 }
 
-// Gets int64 EGGAS address from the public key
+// Address gets int64 EGGAS address from the public key
 func Address(pubKey []byte) int64 {
 	h256 := sha256.Sum256(pubKey)
 	h512 := sha512.Sum512(h256[:])
@@ -309,12 +309,12 @@ func Address(pubKey []byte) int64 {
 	return int64(crc - (crc % 10) + uint64(CheckSum(val)))
 }
 
-// Converts a public key to DayLight address.
+// KeyToAddress converts a public key to DayLight address.
 func KeyToAddress(pubKey []byte) string {
 	return AddressToString(Address(pubKey))
 }
 
-// Tiem gets the current time in UNIX format.
+// Time32 gets the current time in UNIX format.
 func Time32() uint32 {
 	return uint32(time.Now().Unix())
 }
@@ -410,24 +410,24 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 		t.SetFloat(Bytes2Float((*out)[:8]))
 		*out = (*out)[8:]
 	case reflect.Int64:
-		if val, err := DecodeLenInt64(out); err != nil {
+		val, err := DecodeLenInt64(out)
+		if err != nil {
 			return err
-		} else {
-			t.SetInt(val)
 		}
+		t.SetInt(val)
 	case reflect.Uint64:
 		t.SetUint(binary.BigEndian.Uint64((*out)[:8]))
 		*out = (*out)[8:]
 	case reflect.String:
-		if val, err := DecodeLength(out); err != nil {
+		val, err := DecodeLength(out)
+		if err != nil {
 			return err
-		} else {
-			if len(*out) < int(val) {
-				return fmt.Errorf(`input slice is short`)
-			}
-			t.SetString(string((*out)[:val]))
-			*out = (*out)[val:]
 		}
+		if len(*out) < int(val) {
+			return fmt.Errorf(`input slice is short`)
+		}
+		t.SetString(string((*out)[:val]))
+		*out = (*out)[val:]
 	case reflect.Struct:
 		for i := 0; i < t.NumField(); i++ {
 			if err := BinUnmarshal(out, t.Field(i).Addr().Interface()); err != nil {
@@ -435,15 +435,15 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 			}
 		}
 	case reflect.Slice:
-		if val, err := DecodeLength(out); err != nil {
+		val, err := DecodeLength(out)
+		if err != nil {
 			return err
-		} else {
-			if len(*out) < int(val) {
-				return fmt.Errorf(`input slice is short`)
-			}
-			t.SetBytes((*out)[:val])
-			*out = (*out)[val:]
 		}
+		if len(*out) < int(val) {
+			return fmt.Errorf(`input slice is short`)
+		}
+		t.SetBytes((*out)[:val])
+		*out = (*out)[val:]
 	default:
 		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
 	}
@@ -510,7 +510,7 @@ func Escape(data string) string {
 	return string(out)
 }
 
-func EscapeForJson(data string) string {
+func EscapeForJSON(data string) string {
 	return strings.Replace(data, `"`, `\"`, -1)
 }
 

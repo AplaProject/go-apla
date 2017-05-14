@@ -188,7 +188,7 @@ func action {
 				if val == `NULL` {
 					val = null[ipar]
 				}
-				params = append(params, fmt.Sprintf(`"%s"`, lib.EscapeForJson(val)))
+				params = append(params, fmt.Sprintf(`"%s"`, lib.EscapeForJSON(val)))
 			}
 			lines = append(lines, fmt.Sprintf(`	DBInsert(tblname, fields, %s)`, strings.Join(params, `,`)))
 		}
@@ -427,8 +427,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			insert: "%s",
 			new_column: "%s",
 			}
-	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], lib.EscapeForJson(vals[`general_update`]),
-						lib.EscapeForJson(vals[`insert`]), lib.EscapeForJson(vals[`new_column`])))
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], lib.EscapeForJSON(vals[`general_update`]),
+						lib.EscapeForJSON(vals[`insert`]), lib.EscapeForJSON(vals[`new_column`])))
 				}
 				for key, field := range jperm[`update`].(map[string]interface{}) {
 					if !re.MatchString(field.(string)) {
@@ -441,7 +441,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			column_name: "%s",
 			permissions: "%s",
 			}
-	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], key, lib.EscapeForJson(field.(string))))
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], key, lib.EscapeForJSON(field.(string))))
 					}
 				}
 			}

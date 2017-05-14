@@ -21,9 +21,9 @@ import (
 )
 
 type rollbackTxRowType struct {
-	tx_hash    string
-	table_name string
-	table_id   string
+	txHash    string
+	tableName string
+	tableID   string
 }
 
 func (p *Parser) autoRollback() error {
@@ -35,11 +35,11 @@ func (p *Parser) autoRollback() error {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		err = rows.Scan(&rollbackTxRow.tx_hash, &rollbackTxRow.table_name, &rollbackTxRow.table_id)
+		err = rows.Scan(&rollbackTxRow.txHash, &rollbackTxRow.tableName, &rollbackTxRow.tableID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		err := p.selectiveRollback(rollbackTxRow.table_name, p.AllPkeys[rollbackTxRow.table_name]+"='"+rollbackTxRow.table_id+`'`, true)
+		err := p.selectiveRollback(rollbackTxRow.tableName, p.AllPkeys[rollbackTxRow.tableName]+"='"+rollbackTxRow.tableID+`'`, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

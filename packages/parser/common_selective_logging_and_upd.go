@@ -64,11 +64,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 
 	values := utils.InterfaceSliceToStr(values_)
 
-	addSqlFields := p.AllPkeys[table]
-	if len(addSqlFields) > 0 {
-		addSqlFields += `,`
+	addSQLFields := p.AllPkeys[table]
+	if len(addSQLFields) > 0 {
+		addSQLFields += `,`
 	}
-	log.Debug("addSqlFields %s", addSqlFields)
+	log.Debug("addSQLFields %s", addSQLFields)
 	for i, field := range fields {
 		/*if p.AllPkeys[table] == field {
 			continue
@@ -76,30 +76,30 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		field = strings.TrimSpace(field)
 		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
-			addSqlFields += field[1:len(field)] + ","
+			addSQLFields += field[1:len(field)] + ","
 		} else if strings.HasPrefix(field, `timestamp `) {
-			addSqlFields += field[len(`timestamp `):] + `,`
+			addSQLFields += field[len(`timestamp `):] + `,`
 		} else {
-			addSqlFields += field + ","
+			addSQLFields += field + ","
 		}
 	}
-	log.Debug("addSqlFields %s", addSqlFields)
+	log.Debug("addSQLFields %s", addSQLFields)
 
-	addSqlWhere := ""
+	addSQLWhere := ""
 	if whereFields != nil && whereValues != nil {
 		for i := 0; i < len(whereFields); i++ {
-			addSqlWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
+			addSQLWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
 		}
 	}
-	if len(addSqlWhere) > 0 {
-		addSqlWhere = " WHERE " + addSqlWhere[0:len(addSqlWhere)-5]
+	if len(addSQLWhere) > 0 {
+		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
 	// если есть, что логировать
-	logData, err := p.OneRow(`SELECT ` + addSqlFields + ` rb_id FROM "` + table + `" ` + addSqlWhere).String()
+	logData, err := p.OneRow(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere).String()
 	if err != nil {
 		return tableId, err
 	}
-	log.Debug(`SELECT ` + addSqlFields + ` rb_id FROM "` + table + `" ` + addSqlWhere)
+	log.Debug(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere)
 	if whereFields != nil && len(logData) > 0 {
 		jsonMap := make(map[string]string)
 		for k, v := range logData {
@@ -115,11 +115,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				k = "prev_rb_id"
 			}
 			if k[:1] == "+" || k[:1] == "-" {
-				addSqlFields += k[1:len(k)] + ","
+				addSQLFields += k[1:len(k)] + ","
 			} else if strings.HasPrefix(k, `timestamp `) {
-				addSqlFields += k[len(`timestamp `):] + `,`
+				addSQLFields += k[len(`timestamp `):] + `,`
 			} else {
-				addSqlFields += k + ","
+				addSQLFields += k + ","
 			}
 		}
 		jsonData, _ := json.Marshal(jsonMap)
@@ -131,66 +131,66 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			return tableId, err
 		}
 		log.Debug("string(jsonData) %s / rbId %d", string(jsonData), rbId)
-		addSqlUpdate := ""
+		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			// utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}
 			if isBytea[fields[i]] && len(values[i]) != 0 {
-				addSqlUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
+				addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if fields[i][:1] == "+" {
-				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
+				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + values[i] + `,`
 			} else if fields[i][:1] == "-" {
-				addSqlUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
+				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + values[i] + `,`
 			} else if values[i] == `NULL` {
-				addSqlUpdate += fields[i] + `= NULL,`
+				addSQLUpdate += fields[i] + `= NULL,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
-				addSqlUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
+				addSQLUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
 			} else if strings.HasPrefix(values[i], `timestamp `) {
-				addSqlUpdate += fields[i] + `= timestamp '` + values[i][len(`timestamp `):] + `',`
+				addSQLUpdate += fields[i] + `= timestamp '` + values[i][len(`timestamp `):] + `',`
 			} else {
-				addSqlUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
+				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
-		err = p.ExecSql(`UPDATE "`+table+`" SET `+addSqlUpdate+` rb_id = ? `+addSqlWhere, rbId)
-		log.Debug(`UPDATE "` + table + `" SET ` + addSqlUpdate + ` rb_id = ? ` + addSqlWhere)
+		err = p.ExecSql(`UPDATE "`+table+`" SET `+addSQLUpdate+` rb_id = ? `+addSQLWhere, rbId)
+		log.Debug(`UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
 			return tableId, err
 		}
 		tableId = logData[p.AllPkeys[table]]
 	} else {
-		addSqlIns0 := ""
-		addSqlIns1 := ""
+		addSQLIns0 := ""
+		addSQLIns1 := ""
 		for i := 0; i < len(fields); i++ {
 			if fields[i][:1] == "+" || fields[i][:1] == "-" {
-				addSqlIns0 += fields[i][1:len(fields[i])] + `,`
+				addSQLIns0 += fields[i][1:len(fields[i])] + `,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
-				addSqlIns0 += fields[i][len(`timestamp `):] + `,`
+				addSQLIns0 += fields[i][len(`timestamp `):] + `,`
 			} else {
-				addSqlIns0 += fields[i] + `,`
+				addSQLIns0 += fields[i] + `,`
 			}
 			// || utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "node_public_key"}))
 			if isBytea[fields[i]] && len(values[i]) != 0 {
-				addSqlIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
+				addSQLIns1 += `decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
 			} else if values[i] == `NULL` {
-				addSqlIns1 += `NULL,`
+				addSQLIns1 += `NULL,`
 			} else if strings.HasPrefix(fields[i], `timestamp `) {
-				addSqlIns1 += `to_timestamp('` + values[i] + `'),`
+				addSQLIns1 += `to_timestamp('` + values[i] + `'),`
 			} else if strings.HasPrefix(values[i], `timestamp `) {
-				addSqlIns1 += `timestamp '` + values[i][len(`timestamp `):] + `',`
+				addSQLIns1 += `timestamp '` + values[i][len(`timestamp `):] + `',`
 			} else {
-				addSqlIns1 += `'` + strings.Replace(values[i], `'`, `''`, -1) + `',`
+				addSQLIns1 += `'` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
 		if whereFields != nil && whereValues != nil {
 			for i := 0; i < len(whereFields); i++ {
-				addSqlIns0 += `` + whereFields[i] + `,`
-				addSqlIns1 += `'` + whereValues[i] + `',`
+				addSQLIns0 += `` + whereFields[i] + `,`
+				addSQLIns1 += `'` + whereValues[i] + `',`
 			}
 		}
-		addSqlIns0 = addSqlIns0[0 : len(addSqlIns0)-1]
-		addSqlIns1 = addSqlIns1[0 : len(addSqlIns1)-1]
-		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSqlIns0+") VALUES ("+addSqlIns1+")")
-		tableId, err = p.ExecSqlGetLastInsertId(`INSERT INTO "`+table+`" (`+addSqlIns0+`) VALUES (`+addSqlIns1+`)`, table)
+		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
+		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
+		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
+		tableId, err = p.ExecSqlGetLastInsertId(`INSERT INTO "`+table+`" (`+addSQLIns0+`) VALUES (`+addSQLIns1+`)`, table)
 		if err != nil {
 			return tableId, err
 		}

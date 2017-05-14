@@ -51,11 +51,11 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 	}
 
 	// public key need only when we don't have public_key in the dlt_wallets table
-	public_key_0, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
+	publicKey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(public_key_0) == 0 {
+	if len(publicKey) == 0 {
 		bkey, err := hex.DecodeString(string(p.TxMaps.Bytes["public_key"]))
 		if err != nil {
 			return p.ErrInfo(err)
@@ -69,9 +69,9 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	last_forging_data_upd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
-	if err != nil || txTime-last_forging_data_upd < 600 {
-		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
+	lastForgingDataUpd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
+	if err != nil || txTime-lastForgingDataUpd < 600 {
+		return p.ErrInfo("txTime - lastForgingDataUpd < 600 sec")
 	}
 
 	forSign := fmt.Sprintf("%s,%s,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["host"], p.TxMap["addressVote"], p.TxMap["fuelRate"])

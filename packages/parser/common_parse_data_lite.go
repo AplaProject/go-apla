@@ -49,10 +49,9 @@ func (p *Parser) ParseDataLite() error {
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 			log.Debug("MethodName", MethodName+"Init")
-			err_ := utils.CallMethod(p, MethodName+"Init")
-			if _, ok := err_.(error); ok {
-				log.Debug("%v", err)
-				return utils.ErrInfo(err_.(error))
+			result := utils.CallMethod(p, MethodName+"Init")
+			if _, ok := result.(error); ok {
+				return utils.ErrInfo(result.(error))
 			}
 			p.TxMap["md5hash"] = utils.Md5(transactionBinaryDataFull)
 			p.TxMapArr = append(p.TxMapArr, p.TxMap)

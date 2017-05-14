@@ -134,10 +134,8 @@ func (p *Parser) ParseDataRollback() error {
 			p.UpdDaemonTime(p.GoroutineName)
 			// отделим одну транзакцию
 			transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
-			// узнаем кол-во байт, которое занимает размер
-			size_ := len(utils.EncodeLength(sizesSlice[i]))
-			// удалим размер
-			utils.BytesShiftReverse(&p.BinaryData, size_)
+			// узнаем кол-во байт, которое занимает размер и удалим размер
+			utils.BytesShiftReverse(&p.BinaryData, len(utils.EncodeLength(sizesSlice[i])))
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 
 			utils.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
@@ -185,13 +183,13 @@ func (p *Parser) ParseDataRollback() error {
 			} else {
 				p.dataType = utils.BytesToInt(p.TxSlice[1])
 				MethodName := consts.TxTypes[p.dataType]
-				err_ := utils.CallMethod(p, MethodName+"Init")
-				if _, ok := err_.(error); ok {
-					return p.ErrInfo(err_.(error))
+				result := utils.CallMethod(p, MethodName+"Init")
+				if _, ok := result.(error); ok {
+					return p.ErrInfo(result.(error))
 				}
-				err_ = utils.CallMethod(p, MethodName+"Rollback")
-				if _, ok := err_.(error); ok {
-					return p.ErrInfo(err_.(error))
+				result = utils.CallMethod(p, MethodName+"Rollback")
+				if _, ok := result.(error); ok {
+					return p.ErrInfo(result.(error))
 				}
 				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
 				if _, ok := err_.(error); ok {

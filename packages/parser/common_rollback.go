@@ -52,10 +52,8 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			// отделим одну транзакцию
 			transactionBinaryData := utils.BytesShiftReverse(&binaryData, sizesSlice[i])
 			transactionBinaryData_ := transactionBinaryData
-			// узнаем кол-во байт, которое занимает размер
-			size_ := len(utils.EncodeLength(sizesSlice[i]))
-			// удалим размер
-			utils.BytesShiftReverse(&binaryData, size_)
+			// узнаем кол-во байт, которое занимает размер и удалим размер
+			utils.BytesShiftReverse(&binaryData, len(utils.EncodeLength(sizesSlice[i])))
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
 			if err != nil {

@@ -48,12 +48,12 @@ func (p *Parser) generalCheck(name string) error {
 			// возможно юзер послал ключ с тр-ией
 			log.Debug("pubkey %s", p.TxMap["public_key"])
 			log.Debug("pubkey %x", p.TxMap["public_key"])
-			walletId, err := p.GetWalletIdByPublicKey(p.TxMap["public_key"])
+			walletID, err := p.GetWalletIdByPublicKey(p.TxMap["public_key"])
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			log.Debug("walletId %d", walletId)
-			if walletId == 0 {
+			log.Debug("walletId %d", walletID)
+			if walletID == 0 {
 				return utils.ErrInfoFmt("incorrect wallet_id or public_key")
 			}
 			p.PublicKeys = append(p.PublicKeys, utils.HexToBin(p.TxMap["public_key"]))

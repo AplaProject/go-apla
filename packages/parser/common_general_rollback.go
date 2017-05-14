@@ -21,41 +21,41 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) generalRollback(table string, whereUserId_ interface{}, addWhere string, AI bool) error {
-	var whereUserId int64
-	switch whereUserId_.(type) {
-		case string:
-		whereUserId = utils.StrToInt64(whereUserId_.(string))
-		case []byte:
-		whereUserId = utils.BytesToInt64(whereUserId_.([]byte))
-		case int:
-		whereUserId = int64(whereUserId_.(int))
-		case int64:
-		whereUserId = whereUserId_.(int64)
+func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere string, AI bool) error {
+	var UserID int64
+	switch whereUserID.(type) {
+	case string:
+		UserID = utils.StrToInt64(whereUserID.(string))
+	case []byte:
+		UserID = utils.BytesToInt64(whereUserID.([]byte))
+	case int:
+		UserID = int64(whereUserID.(int))
+	case int64:
+		UserID = whereUserID.(int64)
 	}
 
 	where := ""
-	if whereUserId > 0 {
-		where = fmt.Sprintf(" WHERE user_id = %d ", whereUserId)
+	if UserID > 0 {
+		where = fmt.Sprintf(" WHERE user_id = %d ", UserID)
 	}
 	// получим rb_id, по которому можно найти данные, которые были до этого
-	logId, err := p.Single("SELECT rb_id FROM " + table + " " + where + addWhere).Int64()
+	logID, err := p.Single("SELECT rb_id FROM " + table + " " + where + addWhere).Int64()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	// если $rb_id = 0, значит восстанавливать нечего и нужно просто удалить запись
-	if logId == 0 {
+	if logID == 0 {
 		err = p.ExecSql("DELETE FROM " + table + " " + where + addWhere)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	} else {
 		// данные, которые восстановим
-		data, err := p.OneRow("SELECT * FROM rb_"+table+" WHERE rb_id = ?", logId).String()
+		data, err := p.OneRow("SELECT * FROM rb_"+table+" WHERE rb_id = ?", logID).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		addSql := ""
+		addSQL := ""
 		for k, v := range data {
 			// block_id т.к. в rb_ он нужен для удаления старых данных, а в обычной табле не нужен
 			if k == "rb_id" || k == "prev_rb_id" || k == "block_id" {
@@ -64,25 +64,25 @@ func (p *Parser) generalRollback(table string, whereUserId_ interface{}, addWher
 			if k == "node_public_key" {
 				switch p.ConfigIni["db_type"] {
 				case "sqlite":
-					addSql += fmt.Sprintf("%v='%x',", k, v)
+					addSQL += fmt.Sprintf("%v='%x',", k, v)
 				case "postgresql":
-					addSql += fmt.Sprintf("%v=decode('%x','HEX'),", k, v)
+					addSQL += fmt.Sprintf("%v=decode('%x','HEX'),", k, v)
 				case "mysql":
-					addSql += fmt.Sprintf("%v=UNHEX('%x'),", k, v)
+					addSQL += fmt.Sprintf("%v=UNHEX('%x'),", k, v)
 				}
 			} else {
-				addSql += fmt.Sprintf("%v = '%v',", k, v)
+				addSQL += fmt.Sprintf("%v = '%v',", k, v)
 			}
 		}
 		// всегда пишем предыдущий rb_id
-		addSql += fmt.Sprintf("rb_id = %v,", data["prev_rb_id"])
-		addSql = addSql[0 : len(addSql)-1]
-		err = p.ExecSql("UPDATE " + table + " SET " + addSql + where + addWhere)
+		addSQL += fmt.Sprintf("rb_id = %v,", data["prev_rb_id"])
+		addSQL = addSQL[0 : len(addSQL)-1]
+		err = p.ExecSql("UPDATE " + table + " SET " + addSQL + where + addWhere)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 		// подчищаем log
-		err = p.ExecSql("DELETE FROM rb_"+table+" WHERE rb_id= ?", logId)
+		err = p.ExecSql("DELETE FROM rb_"+table+" WHERE rb_id= ?", logID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

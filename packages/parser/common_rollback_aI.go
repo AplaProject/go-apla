@@ -28,14 +28,14 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 		return nil
 	}
 
-	AiId, err := p.GetAiId(table)
+	AiID, err := p.GetAiId(table)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	tblname := lib.EscapeName(table)
-	log.Debug("AiId: %s", AiId)
+	log.Debug("AiID: %s", AiID)
 	// если табла была очищена, то тут будет 0, поэтому нелья чистить таблы под нуль
-	current, err := p.Single("SELECT " + AiId + " FROM " + tblname + " ORDER BY " + AiId + " DESC LIMIT 1").Int64()
+	current, err := p.Single("SELECT " + AiID + " FROM " + tblname + " ORDER BY " + AiID + " DESC LIMIT 1").Int64()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -43,11 +43,11 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 	log.Debug("NewAi: %d", NewAi)
 
 	if p.ConfigIni["db_type"] == "postgresql" {
-		pg_get_serial_sequence, err := p.Single("SELECT pg_get_serial_sequence('" + table + "', '" + AiId + "')").String()
+		pgSerialSeq, err := p.Single("SELECT pg_get_serial_sequence('" + table + "', '" + AiID + "')").String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		err = p.ExecSql("ALTER SEQUENCE " + pg_get_serial_sequence + " RESTART WITH " + utils.Int64ToStr(NewAi))
+		err = p.ExecSql("ALTER SEQUENCE " + pgSerialSeq + " RESTART WITH " + utils.Int64ToStr(NewAi))
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

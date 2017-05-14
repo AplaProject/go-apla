@@ -126,23 +126,22 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 
 			if p.BlockData.BlockId > 1 && p.TxContract == nil {
-				var userId int64
+				var userID int64
 				// txSlice[3] могут подсунуть пустой
 				if len(p.TxSlice) > 3 {
 					if !utils.CheckInputData(p.TxSlice[3], "int64") {
 						return utils.ErrInfo(fmt.Errorf("empty user_id"))
-					} else {
-						userId = utils.BytesToInt64(p.TxSlice[3])
 					}
+					userID = utils.BytesToInt64(p.TxSlice[3])
 				} else {
 					return utils.ErrInfo(fmt.Errorf("empty user_id"))
 				}
 
 				// считаем по каждому юзеру, сколько в блоке от него транзакций
-				txCounter[userId]++
+				txCounter[userID]++
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
-				if txCounter[userId] > consts.MAX_BLOCK_USER_TXS {
+				if txCounter[userID] > consts.MAX_BLOCK_USER_TXS {
 					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
 						log.Error("error: %v", err0)
@@ -194,34 +193,34 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			} else {
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 				log.Debug("MethodName", MethodName+"Init")
-				err_ := utils.CallMethod(p, MethodName+"Init")
-				if _, ok := err_.(error); ok {
+				err := utils.CallMethod(p, MethodName+"Init")
+				if _, ok := err.(error); ok {
 					log.Error("error: %v", err)
-					return utils.ErrInfo(err_.(error))
+					return utils.ErrInfo(err.(error))
 				}
 
 				log.Debug("MethodName", MethodName+"Front")
-				err_ = utils.CallMethod(p, MethodName+"Front")
-				if _, ok := err_.(error); ok {
-					log.Error("error: %v", err_)
+				err = utils.CallMethod(p, MethodName+"Front")
+				if _, ok := err.(error); ok {
+					log.Error("error: %v", err)
 					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
 						log.Error("error: %v", err0)
 					}
-					return utils.ErrInfo(err_.(error))
+					return utils.ErrInfo(err.(error))
 				}
 
 				log.Debug("MethodName", MethodName)
-				err_ = utils.CallMethod(p, MethodName)
+				err = utils.CallMethod(p, MethodName)
 				// pay for CPU resources
 				p.payFPrice()
-				if _, ok := err_.(error); ok {
-					log.Error("error: %v", err_)
+				if _, ok := err.(error); ok {
+					log.Error("error: %v", err)
 					err0 := p.RollbackTo(txForRollbackTo, false)
 					if err0 != nil {
 						log.Error("error: %v", err0)
 					}
-					return utils.ErrInfo(err_.(error))
+					return utils.ErrInfo(err.(error))
 				}
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
