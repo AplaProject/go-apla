@@ -97,7 +97,7 @@ func ClearTmp(blocks map[int64]string) {
 }
 
 func (p *Parser) GetBlockInfo() *utils.BlockData {
-	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletId: p.BlockData.WalletId, CBID: p.BlockData.CBID, BlockId: p.BlockData.BlockId}
+	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletId: p.BlockData.WalletId, StateID: p.BlockData.StateID, BlockId: p.BlockData.BlockId}
 }
 
 func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interface{}) error {
@@ -218,7 +218,7 @@ func (p *Parser) InsertIntoBlockchain() error {
 		return err
 	}
 	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, state_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
-		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.CBID, p.BlockData.WalletId, p.BlockData.Time, p.TxIds)
+		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.StateID, p.BlockData.WalletId, p.BlockData.Time, p.TxIds)
 	if err != nil {
 		fmt.Println(err)
 		return err

@@ -29,7 +29,7 @@ type BlockHeader struct {
 	BlockId  uint32
 	Time     uint32
 	WalletId int64
-	CBId     byte
+	StateId     byte
 	Sign     []byte
 }
 

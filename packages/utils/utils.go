@@ -74,7 +74,7 @@ type BlockData struct {
 	BlockId       int64
 	Time          int64
 	WalletId      int64
-	CBID          int64
+	StateID          int64
 	CurrentUserId int64
 	Sign          []byte
 	Hash          []byte
@@ -227,14 +227,14 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	/*	if result.WalletId == 0x31 {
 		result.WalletId = 1
 	}*/
-	result.CBID = BinToDecBytesShift(binaryBlock, 1)
+	result.StateID = BinToDecBytesShift(binaryBlock, 1)
 	if result.BlockId > 1 {
 		signSize := DecodeLength(binaryBlock)
 		result.Sign = BytesShift(binaryBlock, signSize)
 	} else {
 		*binaryBlock = (*binaryBlock)[1:]
 	}
-	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.CBID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.CBID, result.Sign)
+	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.StateID, result.Sign)
 	return result
 }
 

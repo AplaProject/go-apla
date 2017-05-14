@@ -30,7 +30,7 @@ func (p *Parser) UpdBlockInfo() {
 			blockId = *utils.StartBlockId
 		}
 	}
-	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.CBID)
+	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.StateID)
 	log.Debug("forSha", forSha)
 	p.BlockData.Hash = utils.DSha256(forSha)
 	log.Debug("%v", p.BlockData.Hash)
@@ -40,13 +40,13 @@ func (p *Parser) UpdBlockInfo() {
 
 	if p.BlockData.BlockId == 1 {
 		err := p.ExecSql("INSERT INTO info_block (hash, block_id, time, state_id, wallet_id, current_version) VALUES ([hex], ?, ?, ?, ?, ?)",
-			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.CBID, p.BlockData.WalletId, p.CurrentVersion)
+			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId, p.CurrentVersion)
 		if err!=nil {
 			log.Error("%v", err)
 		}
 	} else {
 		err := p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, state_id = ?, wallet_id = ?, sent = 0",
-			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.CBID, p.BlockData.WalletId)
+			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId)
 		if err!=nil {
 			log.Error("%v", err)
 		}

@@ -368,14 +368,14 @@ BEGIN:
 			// готовим заголовок
 			newBlockIdBinary := utils.DecToBin(newBlockId, 4)
 			timeBinary := utils.DecToBin(Time, 4)
-			cbIdBinary := utils.DecToBin(myStateID, 1)
+			stateIdBinary := utils.DecToBin(myStateID, 1)
 
 			// заголовок
 			blockHeader := utils.DecToBin(0, 1)
 			blockHeader = append(blockHeader, newBlockIdBinary...)
 			blockHeader = append(blockHeader, timeBinary...)
 			lib.EncodeLenInt64(&blockHeader, myWalletId)
-			blockHeader = append(blockHeader, cbIdBinary...)
+			blockHeader = append(blockHeader, stateIdBinary...)
 			blockHeader = append(blockHeader, utils.EncodeLengthPlusData(signatureBin)...)
 
 			// сам блок

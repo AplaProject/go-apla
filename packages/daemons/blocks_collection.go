@@ -513,7 +513,7 @@ BEGIN:
 			logger.Debug("mrklRoot %s", mrklRoot)
 
 			// публичный ключ того, кто этот блок сгенерил
-			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.CBID)
+			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.StateID)
 			if err != nil {
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -524,7 +524,7 @@ BEGIN:
 			logger.Debug("nodePublicKey %x", nodePublicKey)
 
 			// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.CBID, mrklRoot)
+			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.StateID, mrklRoot)
 			logger.Debug("forSign %v", forSign)
 
 			// проверяем подпись
@@ -543,7 +543,7 @@ BEGIN:
 					continue BEGIN
 				}
 				// нужно привести данные в нашей БД в соответствие с данными у того, у кого качаем более свежий блок
-				err := parser.GetOldBlocks(blockData.WalletId, blockData.CBID, blockId-1, maxBlockIdHost, GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
+				err := parser.GetOldBlocks(blockData.WalletId, blockData.StateID, blockId-1, maxBlockIdHost, GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
 				if err != nil {
 					logger.Error("%v", err)
 					d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))

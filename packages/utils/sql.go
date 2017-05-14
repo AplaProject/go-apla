@@ -910,7 +910,7 @@ func (db *DCDB) GetConfirmedBlockId() (int64, error) {
 }
 
 func (db *DCDB) GetMyStateIDAndWalletId() (int64, int64, error) {
-	myStateID, err := db.GetMyCBID()
+	myStateID, err := db.GetMyStateID()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -959,7 +959,7 @@ func (db *DCDB) GetMyWalletId() (int64, error) {
 	return walletId, nil
 }
 
-func (db *DCDB) GetMyCBID() (int64, error) {
+func (db *DCDB) GetMyStateID() (int64, error) {
 	return db.Single("SELECT state_id FROM config").Int64()
 }
 
@@ -1533,7 +1533,7 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 	return nil
 }
 
-func (db *DCDB) GetSleepTime(myWalletId, myStateID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
+func (db *DCDB) GetSleepTime(myWalletId, myStateID, prevBlockStateID, prevBlockWalletId int64) (int64, error) {
 	// возьмем список всех full_nodes
 	fullNodesList, err := db.GetAll("SELECT id, wallet_id, state_id as state_id FROM full_nodes", -1)
 	if err != nil {
@@ -1542,7 +1542,7 @@ func (db *DCDB) GetSleepTime(myWalletId, myStateID, prevBlockCBID, prevBlockWall
 	log.Debug("fullNodesList %s", fullNodesList)
 
 	// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
-	prevBlockFullNodeId, err := db.Single("SELECT id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockCBID, prevBlockWalletId).Int64()
+	prevBlockFullNodeId, err := db.Single("SELECT id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockStateID, prevBlockWalletId).Int64()
 	if err != nil {
 		return int64(0), ErrInfo(err)
 	}

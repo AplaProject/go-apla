@@ -35,7 +35,7 @@ func (p *Parser) CheckBlockHeader() error {
 			return utils.ErrInfo(err)
 		}
 	}
-	log.Debug("PrevBlock.BlockId: %v / PrevBlock.Time: %v / PrevBlock.WalletId: %v / PrevBlock.CBID: %v / PrevBlock.Sign: %v", p.PrevBlock.BlockId, p.PrevBlock.Time, p.PrevBlock.WalletId, p.PrevBlock.CBID, p.PrevBlock.Sign)
+	log.Debug("PrevBlock.BlockId: %v / PrevBlock.Time: %v / PrevBlock.WalletId: %v / PrevBlock.StateID: %v / PrevBlock.Sign: %v", p.PrevBlock.BlockId, p.PrevBlock.Time, p.PrevBlock.WalletId, p.PrevBlock.StateID, p.PrevBlock.Sign)
 
 	log.Debug("p.PrevBlock.BlockId", p.PrevBlock.BlockId)
 	// для локальных тестов
@@ -70,7 +70,7 @@ func (p *Parser) CheckBlockHeader() error {
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	if !first {
 
-		sleepTime, err := p.GetSleepTime(p.BlockData.WalletId, p.BlockData.CBID, p.PrevBlock.CBID, p.PrevBlock.WalletId)
+		sleepTime, err := p.GetSleepTime(p.BlockData.WalletId, p.BlockData.StateID, p.PrevBlock.StateID, p.PrevBlock.WalletId)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -98,7 +98,7 @@ func (p *Parser) CheckBlockHeader() error {
 		}
 	}
 	// проверим, есть ли такой майнер и заодно получим public_key
-	nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(p.BlockData.WalletId, p.BlockData.CBID)
+	nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(p.BlockData.WalletId, p.BlockData.StateID)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -107,7 +107,7 @@ func (p *Parser) CheckBlockHeader() error {
 			return utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", p.BlockData.BlockId, p.PrevBlock.Hash, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.CBID, p.MrklRoot)
+		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", p.BlockData.BlockId, p.PrevBlock.Hash, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.StateID, p.MrklRoot)
 		log.Debug(forSign)
 		// проверим подпись
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, p.BlockData.Sign, true)
