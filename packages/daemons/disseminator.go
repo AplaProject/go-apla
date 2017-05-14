@@ -71,7 +71,7 @@ BEGIN:
 			logger.Error("%v", err)
 		}
 
-		myCBID, myWalletId, err := d.GetMyCBIDAndWalletId();
+		myStateID, myWalletId, err := d.GetMyStateIDAndWalletId();
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()
@@ -83,8 +83,8 @@ BEGIN:
 		}
 
 		fullNode := true
-		if myCBID > 0 {
-			delegate, err := d.CheckDelegateCB(myCBID)
+		if myStateID > 0 {
+			delegate, err := d.CheckDelegateCB(myStateID)
 			if err != nil {
 				d.dbUnlock()
 				logger.Error("%v", err)
@@ -100,7 +100,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		full_node_id, err:= d.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
+		full_node_id, err:= d.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myStateID, myWalletId, myStateID, myWalletId).Int64()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -112,7 +112,6 @@ BEGIN:
 		if full_node_id == 0 {
 			fullNode = false
 		}
-
 
 		var dataType int64 // это тип для того, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
 

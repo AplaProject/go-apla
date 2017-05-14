@@ -62,7 +62,7 @@ func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 BEGIN:
 	for {
 
-		// full_node_id == 0 приводитит к установке d.sleepTime = 10, тут надо обнулить, т.к. может быть первияная установка
+		// full_node_id == 0 приводит к установке d.sleepTime = 10 в daemons/upd_full_nodes.go, тут надо обнулить, т.к. может быть первичная установка
 		d.sleepTime = 1
 
 		logger.Info(GoroutineName)
@@ -94,7 +94,7 @@ BEGIN:
 		newBlockId := blockId + 1
 		logger.Debug("newBlockId: %v", newBlockId)
 
-		myCBID, myWalletId, err := d.GetMyCBIDAndWalletId()
+		myStateID, myWalletId, err := d.GetMyStateIDAndWalletId()
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()
@@ -105,8 +105,8 @@ BEGIN:
 			continue
 		}
 
-		if myCBID > 0 {
-			delegate, err := d.CheckDelegateCB(myCBID)
+		if myStateID > 0 {
+			delegate, err := d.CheckDelegateCB(myStateID)
 			if err != nil {
 				d.dbUnlock()
 				logger.Error("%v", err)
@@ -128,7 +128,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		my_full_node_id, err := d.FindInFullNodes(myCBID, myWalletId)
+		my_full_node_id, err := d.FindInFullNodes(myStateID, myWalletId)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -172,7 +172,7 @@ BEGIN:
 		}
 		logger.Debug("prevBlockHash %s", prevBlockHash)
 
-		sleepTime, err := d.GetSleepTime(myWalletId, myCBID, prevBlock["state_id"], prevBlock["wallet_id"])
+		sleepTime, err := d.GetSleepTime(myWalletId, myStateID, prevBlock["state_id"], prevBlock["wallet_id"])
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -351,7 +351,7 @@ BEGIN:
 
 			// подписываем нашим нод-ключем заголовок блока
 			var forSign string
-			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myCBID, string(mrklRoot))
+			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myStateID, string(mrklRoot))
 			logger.Debug("forSign: %v", forSign)
 			//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
 			bytes, err := lib.SignECDSA(nodePrivateKey, forSign)
@@ -368,7 +368,7 @@ BEGIN:
 			// готовим заголовок
 			newBlockIdBinary := utils.DecToBin(newBlockId, 4)
 			timeBinary := utils.DecToBin(Time, 4)
-			cbIdBinary := utils.DecToBin(myCBID, 1)
+			cbIdBinary := utils.DecToBin(myStateID, 1)
 
 			// заголовок
 			blockHeader := utils.DecToBin(0, 1)

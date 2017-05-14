@@ -84,7 +84,7 @@ BEGIN:
 			continue BEGIN
 		}
 
-		myCBID, myWalletId, err := d.GetMyCBIDAndWalletId();
+		myStateID, myWalletId, err := d.GetMyStateIDAndWalletId();
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()
@@ -96,7 +96,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		full_node_id, err:= d.FindInFullNodes(myCBID, myWalletId)
+		full_node_id, err:= d.FindInFullNodes(myStateID, myWalletId)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -109,7 +109,7 @@ BEGIN:
 		if full_node_id == 0 {
 			d.dbUnlock()
 			logger.Debug("full_node_id == 0")
-			d.sleepTime = 10
+			d.sleepTime = 10 // because 1s is too small for non-full nodes
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
 			}

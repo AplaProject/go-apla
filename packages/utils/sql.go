@@ -909,8 +909,8 @@ func (db *DCDB) GetConfirmedBlockId() (int64, error) {
 
 }
 
-func (db *DCDB) GetMyCBIDAndWalletId() (int64, int64, error) {
-	myCBID, err := db.GetMyCBID()
+func (db *DCDB) GetMyStateIDAndWalletId() (int64, int64, error) {
+	myStateID, err := db.GetMyCBID()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -918,7 +918,7 @@ func (db *DCDB) GetMyCBIDAndWalletId() (int64, int64, error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	return myCBID, myWalletId, nil
+	return myStateID, myWalletId, nil
 }
 
 func (db *DCDB) GetHosts() ([]string, error) {
@@ -935,8 +935,8 @@ func (db *DCDB) GetHosts() ([]string, error) {
 	return hosts, nil
 }
 
-func (db *DCDB) CheckDelegateCB(myCBID int64) (bool, error) {
-	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_state_id FROM system_recognized_states WHERE state_id = ?", myCBID).Int64()
+func (db *DCDB) CheckDelegateCB(myStateID int64) (bool, error) {
+	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_state_id FROM system_recognized_states WHERE state_id = ?", myStateID).Int64()
 	if err != nil {
 		return false, err
 	}
@@ -1499,8 +1499,8 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	return decKey, iv, decrypted, nil
 }
 
-func (db *DCDB) FindInFullNodes(myCBID, myWalletId int64) (int64, error) {
-	return db.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myCBID, myWalletId, myCBID, myWalletId).Int64()
+func (db *DCDB) FindInFullNodes(myStateID, myWalletId int64) (int64, error) {
+	return db.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myStateID, myWalletId, myStateID, myWalletId).Int64()
 }
 
 func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
@@ -1533,7 +1533,7 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 	return nil
 }
 
-func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
+func (db *DCDB) GetSleepTime(myWalletId, myStateID, prevBlockCBID, prevBlockWalletId int64) (int64, error) {
 	// возьмем список всех full_nodes
 	fullNodesList, err := db.GetAll("SELECT id, wallet_id, state_id as state_id FROM full_nodes", -1)
 	if err != nil {
@@ -1561,15 +1561,15 @@ func (db *DCDB) GetSleepTime(myWalletId, myCBID, prevBlockCBID, prevBlockWalletI
 	log.Debug("prevBlockFullNodePosition %d", prevBlockFullNodePosition)
 
 	// определим свое место (в том числе в delegate)
-	myPosition := func(fullNodesList []map[string]string, myWalletId, myCBID int64) int {
+	myPosition := func(fullNodesList []map[string]string, myWalletId, myStateID int64) int {
 		log.Debug("%v %v", fullNodesList, myWalletId)
 		for i, full_nodes := range fullNodesList {
-			if StrToInt64(full_nodes["state_id"]) == myCBID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_state_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
+			if StrToInt64(full_nodes["state_id"]) == myStateID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_state_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
 				return i
 			}
 		}
 		return -1
-	}(fullNodesList, myWalletId, myCBID)
+	}(fullNodesList, myWalletId, myStateID)
 	log.Debug("myPosition %d", myPosition)
 
 	sleepTime := 0
