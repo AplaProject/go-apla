@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"reflect"
 	"testing"
 
@@ -69,24 +68,10 @@ func TestDecodeLenInt64(t *testing.T) {
 		buf := val.data
 		x, err := DecodeLenInt64(&buf)
 		if err != nil {
-			t.Error(err.Error)
+			t.Error(err.Error())
 		}
 		if x != val.value {
 			t.Errorf("different int64 %d != %d", x, val.value)
-		}
-	}
-}
-
-func TestAddress(t *testing.T) {
-	for i := 0; i < 50; i++ {
-		key, seed := test.RandBytes(64)
-		address := KeyToAddress(key)
-		if (i % 10) == 0 {
-			if IsValidAddress(address[:len(address)-1]) {
-				t.Errorf("valid address %s for %x seed: %d", address[:len(address)-1], key, seed)
-			}
-		} else if !IsValidAddress(address) {
-			t.Errorf("not valid address %s for %x seed: %d", address, key, seed)
 		}
 	}
 }
@@ -129,19 +114,6 @@ func TestEncodeDecodeLength(t *testing.T) {
 		t.Errorf("wrong decoding empty slice")
 	}
 
-}
-
-func TestFill(t *testing.T) {
-	for i := 0; i < 50; i++ {
-		size := rand.Intn(33)
-		input, _ := test.RandBytes(size)
-
-		out := FillLeft(input)
-		if bytes.Compare(out[:32-size], make([]byte, 32-size)) != 0 ||
-			bytes.Compare(out[32-size:], input) != 0 {
-			t.Errorf(`different slices %x %x`, input, out)
-		}
-	}
 }
 
 /*
