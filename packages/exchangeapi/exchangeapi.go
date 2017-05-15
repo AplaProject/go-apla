@@ -18,7 +18,6 @@ package exchangeapi
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -148,13 +147,7 @@ func genNewKey() ([]byte, error) {
 	if len(*utils.BoltPsw) == 0 {
 		return nil, fmt.Errorf(`-boltPsw password is not defined`)
 	}
-	priv, pub := lib.GenKeys()
-
-	privKey, err := hex.DecodeString(priv)
-	if err != nil {
-		return nil, err
-	}
-	pubKey, err := hex.DecodeString(pub)
+	privKey, pubKey, err := lib.GenBytesKeys()
 	if err != nil {
 		return nil, err
 	}

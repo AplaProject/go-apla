@@ -89,7 +89,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 	}
 	var priv []byte
 	if len(words) == 0 {
-		spriv, _ := lib.GenKeys()
+		spriv, _, _ := lib.GenHexKeys()
 		priv, _ = hex.DecodeString(spriv)
 	} else {
 		phrase := make([]string, 0)

@@ -19,7 +19,6 @@ package lib
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/md5"
 	crand "crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -27,10 +26,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/crc64"
-	"io"
 	"math"
 	"math/big"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -38,18 +35,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
-
-/*const (
-	UpdPublicKey = `fd7f6ccf79ec35a7cf18640e83f0bbc62a5ae9ea7e9260e3a93072dd088d3c7acf5bcb95a7b44fcfceff8de4b16591d146bb3dc6e79f93f900e59a847d2684c3`
-)*/
-
-// Update contains version info parameters
-type Update struct {
-	Version string
-	Hash    string
-	Sign    string
-	URL     string
-}
 
 var (
 	table64 *crc64.Table
@@ -82,7 +67,8 @@ func StringToAddress(address string) (result int64) {
 		return 0
 	}
 	if address[0] == '-' {
-		id, err := strconv.ParseInt(address, 10, 64)
+		var id int64
+		id, err = strconv.ParseInt(address, 10, 64)
 		if err != nil {
 			return 0
 		}
@@ -211,12 +197,22 @@ func FillLeft64(slice []byte) []byte {
 	return append(make([]byte, 64-len(slice)), slice...)
 }
 
-// GenKeys generates a random pair of ECDSA private and public keys.
-func GenKeys() (privKey string, pubKey string) {
-	private, _ := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
-	privKey = hex.EncodeToString(private.D.Bytes())
-	pubKey = hex.EncodeToString(append(FillLeft(private.PublicKey.X.Bytes()), FillLeft(private.PublicKey.Y.Bytes())...))
-	return
+// GenKeys generates a random pair of ECDSA private and public binary keys.
+func GenBytesKeys() ([]byte, []byte, error) {
+	private, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+	if err != nil {
+		return nil, nil, err
+	}
+	return private.D.Bytes(), append(FillLeft(private.PublicKey.X.Bytes()), FillLeft(private.PublicKey.Y.Bytes())...), nil
+}
+
+// GenHexKeys generates a random pair of ECDSA private and public hex keys.
+func GenHexKeys() (string, string, error) {
+	priv, pub, err := GenBytesKeys()
+	if err != nil {
+		return ``, ``, err
+	}
+	return hex.EncodeToString(priv), hex.EncodeToString(pub), nil
 }
 
 // SignECDSA returns the signature of forSign made with privateKey.
@@ -281,7 +277,7 @@ func CheckSum(val []byte) int {
 	return checksum
 }
 
-// Function IsValidAddress checks if the specified address is EGAAS address.
+// IsValidAddress checks if the specified address is EGAAS address.
 func IsValidAddress(address string) bool {
 	val := []byte(strings.Replace(address, `-`, ``, -1))
 	if len(val) != 20 {
@@ -319,7 +315,10 @@ func Time32() uint32 {
 	return uint32(time.Now().Unix())
 }
 
+// BinMarshal converts v parameter to []byte slice.
 func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
+	var err error
+
 	t := reflect.ValueOf(v)
 	if *out == nil {
 		*out = make([]byte, 0, 2048)
@@ -344,7 +343,7 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 					break
 				}
 			}
-			*out = append(*out, uint8(128+4-i))
+			*out = append(*out, 128+4-i)
 			*out = append(*out, tmp[i:]...)
 		}
 	case reflect.Float64:
@@ -360,18 +359,23 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 		*out = append(append(*out, EncodeLength(int64(t.Len()))...), []byte(t.String())...)
 	case reflect.Struct:
 		for i := 0; i < t.NumField(); i++ {
-			BinMarshal(out, t.Field(i).Interface())
+			if out, err = BinMarshal(out, t.Field(i).Interface()); err != nil {
+				return out, err
+			}
 		}
 	case reflect.Slice:
 		*out = append(append(*out, EncodeLength(int64(t.Len()))...), t.Bytes()...)
 	case reflect.Ptr:
-		BinMarshal(out, t.Elem().Interface())
+		if out, err = BinMarshal(out, t.Elem().Interface()); err != nil {
+			return out, err
+		}
 	default:
 		return out, fmt.Errorf(`unsupported type of BinMarshal`)
 	}
 	return out, nil
 }
 
+// BinUnmarshal converts []byte slice which has been made with BinMarshal to v
 func BinUnmarshal(out *[]byte, v interface{}) error {
 	t := reflect.ValueOf(v)
 	if t.Kind() == reflect.Ptr {
@@ -450,42 +454,11 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 	return nil
 }
 
-func FieldToBytes(v interface{}, num int) []byte {
-	t := reflect.ValueOf(v)
-	ret := make([]byte, 0, 2048)
-	if t.Kind() == reflect.Struct && num < t.NumField() {
-		field := t.Field(num)
-		switch field.Kind() {
-		case reflect.Uint8, reflect.Uint32, reflect.Uint64:
-			ret = append(ret, []byte(fmt.Sprintf("%d", field.Uint()))...)
-		case reflect.Int8, reflect.Int32, reflect.Int64:
-			ret = append(ret, []byte(fmt.Sprintf("%d", field.Int()))...)
-		case reflect.Float64:
-			ret = append(ret, []byte(fmt.Sprintf("%f", field.Float()))...)
-		case reflect.String:
-			ret = append(ret, []byte(field.String())...)
-		case reflect.Slice:
-			ret = append(ret, field.Bytes()...)
-			//		case reflect.Ptr:
-			//		case reflect.Struct:
-			//		default:
-		}
-	}
-	return ret
-}
-
-func HexToInt64(input string) (ret int64) {
-	hex, _ := hex.DecodeString(input)
-	if length := len(hex); length <= 8 {
-		ret = int64(binary.BigEndian.Uint64(append(make([]byte, 8-length), hex...)))
-	}
-	return
-}
-
+// EscapeName deletes unaccessable characters for input name(s)
 func EscapeName(name string) string {
 	out := make([]byte, 1, len(name)+2)
 	out[0] = '"'
-	available := `() ,`
+	available := `() ,_`
 	for _, ch := range []byte(name) {
 		if (ch >= '0' && ch <= '9') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
 			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
@@ -512,22 +485,6 @@ func Escape(data string) string {
 
 func EscapeForJSON(data string) string {
 	return strings.Replace(data, `"`, `\"`, -1)
-}
-
-func CalculateMd5(filePath string) ([]byte, error) {
-	var result []byte
-	file, err := os.Open(filePath)
-	if err != nil {
-		return result, err
-	}
-	defer file.Close()
-
-	hash := md5.New()
-	if _, err := io.Copy(hash, file); err != nil {
-		return result, err
-	}
-
-	return hash.Sum(result), nil
 }
 
 func NumString(in string) string {
@@ -605,12 +562,15 @@ func GetSharedHex(private, public string) (string, error) {
 // with this key then it can be decrypted with the key made from private key and the returned public key (pub).
 // All keys are hex strings.
 func GetShared(public string) (string, string, error) {
-	priv, pub := GenKeys()
+	priv, pub, err := GenHexKeys()
+	if err != nil {
+		return ``, ``, err
+	}
 	shared, err := GetSharedHex(priv, public)
 	return shared, pub, err
 }
 
-// Converts qEGS to EGS. For example, 123455000000000000000 => 123.455
+// EGSMoney converts qEGS to EGS. For example, 123455000000000000000 => 123.455
 func EGSMoney(money string) string {
 	digit := consts.EGS_DIGIT
 	if len(money) < digit+1 {

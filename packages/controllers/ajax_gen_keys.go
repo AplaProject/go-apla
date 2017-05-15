@@ -78,7 +78,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 
 	for i := int64(0); i < count; i++ {
 		var priv []byte
-		spriv, _ := lib.GenKeys()
+		spriv, _, _ := lib.GenHexKeys()
 		priv, _ = hex.DecodeString(spriv)
 
 		pub := lib.PrivateToPublic(priv)

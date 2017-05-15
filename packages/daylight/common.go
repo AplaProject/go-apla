@@ -46,7 +46,7 @@ func firstBlock() {
 	if *utils.GenerateFirstBlock == 1 {
 
 		if len(*utils.FirstBlockPublicKey) == 0 {
-			priv, pub := lib.GenKeys()
+			priv, pub, _ := lib.GenHexKeys()
 			err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
@@ -54,7 +54,7 @@ func firstBlock() {
 			*utils.FirstBlockPublicKey = pub
 		}
 		if len(*utils.FirstBlockNodePublicKey) == 0 {
-			priv, pub := lib.GenKeys()
+			priv, pub, _ := lib.GenHexKeys()
 			err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
@@ -139,7 +139,7 @@ func GetHttpHost() (string, string, string) {
 	ListenHttpHost := ":" + *utils.ListenHttpPort
 	if len(*utils.TcpHost) > 0 {
 		ListenHttpHost = *utils.TcpHost + ":" + *utils.ListenHttpPort
-		BrowserHttpHost = "http://"+*utils.TcpHost+":"+*utils.ListenHttpPort
+		BrowserHttpHost = "http://" + *utils.TcpHost + ":" + *utils.ListenHttpPort
 	}
 	return BrowserHttpHost, HandleHttpHost, ListenHttpHost
 }

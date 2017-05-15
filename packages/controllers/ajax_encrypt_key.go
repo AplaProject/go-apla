@@ -59,7 +59,7 @@ func EncryptNewKey(wallet_id string) (result EncryptKey) {
 	var private string
 
 	for result.WalletId == 0 {
-		private, result.Public = lib.GenKeys()
+		private, result.Public, _ = lib.GenHexKeys()
 
 		pub, _ := hex.DecodeString(result.Public)
 		idnew := int64(lib.Address(pub))

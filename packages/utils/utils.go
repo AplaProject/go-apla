@@ -74,7 +74,7 @@ type BlockData struct {
 	BlockId       int64
 	Time          int64
 	WalletId      int64
-	StateID          int64
+	StateID       int64
 	CurrentUserId int64
 	Sign          []byte
 	Hash          []byte
@@ -2499,7 +2499,7 @@ func FirstBlock(exit bool) {
 
 		if len(*FirstBlockPublicKey) == 0 {
 			log.Debug("len(*FirstBlockPublicKey) == 0")
-			priv, pub := lib.GenKeys()
+			priv, pub, _ := lib.GenHexKeys()
 			err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", ErrInfo(err))
@@ -2508,7 +2508,7 @@ func FirstBlock(exit bool) {
 		}
 		if len(*FirstBlockNodePublicKey) == 0 {
 			log.Debug("len(*FirstBlockNodePublicKey) == 0")
-			priv, pub := lib.GenKeys()
+			priv, pub, _ := lib.GenHexKeys()
 			err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", ErrInfo(err))

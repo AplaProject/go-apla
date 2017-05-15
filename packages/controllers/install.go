@@ -172,7 +172,7 @@ func (c *Controller) Install() (string, error) {
 		if _, err := os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
 
 			if len(*utils.FirstBlockPublicKey) == 0 {
-				priv, pub := lib.GenKeys()
+				priv, pub, _ := lib.GenHexKeys()
 				err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
@@ -183,7 +183,7 @@ func (c *Controller) Install() (string, error) {
 
 		if _, err := os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
-				priv, pub := lib.GenKeys()
+				priv, pub, _ := lib.GenHexKeys()
 				fmt.Println("WriteFile " + *utils.Dir + "/NodePrivateKey")
 				err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 				if err != nil {

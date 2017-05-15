@@ -59,7 +59,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	}
 	exist := int64(1)
 	for exist != 0 {
-		spriv, _ = lib.GenKeys()
+		spriv, _, _ = lib.GenHexKeys()
 		priv, _ = hex.DecodeString(spriv)
 		pub = lib.PrivateToPublic(priv)
 		wallet = int64(lib.Address(pub))

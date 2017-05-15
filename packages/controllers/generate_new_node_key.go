@@ -24,7 +24,7 @@ import (
 
 func (c *Controller) GenerateNewNodeKey() (string, error) {
 
-	priv, pub := lib.GenKeys()
+	priv, pub, _ := lib.GenHexKeys()
 	json, err := json.Marshal(map[string]string{"private_key": priv, "public_key": pub,
 		"time": utils.Int64ToStr(utils.Time())})
 	if err != nil {
