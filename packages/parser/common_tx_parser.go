@@ -25,26 +25,26 @@ import (
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 	// проверим, нет ли несовместимых тр-ий
-	// 	&waitError  - значит просто откладываем обработку тр-ии на после того, как сформируются блок
 	// $fatal_error - удаляем тр-ию, т.к. она некорректная
 
 	var err error
-	fatalError, waitError, forSelfUse, txType, walletId, citizenId, thirdVar := p.ClearIncompatibleTx(binaryTx, myTx)
-	if len(fatalError) == 0 && len(waitError) == 0 {
+	var fatalError string
+	hashHex := utils.BinToHex(hash)
+	txType, walletId, citizenId := utils.GetTxTypeAndUserId(binaryTx)
+	if walletId == 0 && citizenId == 0 {
+		fatalError = "undefined walletId and citizenId"
+	} else {
 		p.BinaryData = binaryTx
 		err = p.ParseDataGate(false)
 	}
 
-	hashHex := utils.BinToHex(hash)
 	if err != nil || len(fatalError) > 0 {
 		p.DeleteQueueTx(hashHex) // удалим тр-ию из очереди
 	}
 	if err == nil && len(fatalError) > 0 {
 		err = errors.New(fatalError)
 	}
-	if err == nil && len(waitError) > 0 {
-		err = errors.New(waitError)
-	}
+
 	if err != nil {
 		log.Error("err: %v", err)
 		errText := fmt.Sprintf("%s", err)
@@ -82,10 +82,10 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
-		log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hashHex, utils.BinToHex(binaryTx), forSelfUse, txType, walletId, citizenId, thirdVar, counter)
+		log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
 		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 		// вставляем с verified=1
-		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), forSelfUse, txType, walletId, citizenId, thirdVar, counter)
+		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)

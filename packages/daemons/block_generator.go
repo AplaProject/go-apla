@@ -161,17 +161,6 @@ BEGIN:
 		}
 		logger.Debug("prevBlock %v", prevBlock)
 
-		prevBlockHash, err := d.Single("SELECT hex(hash) as hash FROM info_block").String()
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		logger.Debug("prevBlockHash %s", prevBlockHash)
-
 		sleepTime, err := d.GetSleepTime(myWalletId, myStateID, prevBlock["state_id"], prevBlock["wallet_id"])
 		if err != nil {
 			d.dbUnlock()
@@ -220,7 +209,7 @@ BEGIN:
 			continue BEGIN
 		}
 		logger.Debug("prevBlock %v", prevBlock)
-		prevBlockHash, err = d.Single("SELECT hex(hash) as hash FROM info_block").String()
+		prevBlockHash, err := d.Single("SELECT hex(hash) as hash FROM info_block").String()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -230,7 +219,6 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockId = prevBlock["block_id"]
 		logger.Debug("blockId %v", blockId)
 
 		logger.Debug("blockgeneration begin")
@@ -243,7 +231,7 @@ BEGIN:
 			continue
 		}
 
-		newBlockId = blockId + 1
+		newBlockId = prevBlock["block_id"] + 1
 
 		// получим наш приватный нодовский ключ
 		nodePrivateKey, err := d.GetNodePrivateKey()
@@ -392,7 +380,6 @@ BEGIN:
 					break BEGIN
 				}
 				continue
-				logger.Error("ParseDataFull error ", err)
 			}
 			okBlock = true
 		}
