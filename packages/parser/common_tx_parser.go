@@ -24,9 +24,6 @@ import (
 
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
-	// проверим, нет ли несовместимых тр-ий
-	// $fatal_error - удаляем тр-ию, т.к. она некорректная
-
 	var err error
 	var fatalError string
 	hashHex := utils.BinToHex(hash)

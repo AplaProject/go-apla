@@ -1431,8 +1431,6 @@ func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletId int64, citiz
 		BytesShift(&binaryBlock, 4) // уберем время
 		walletId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
 		citizenId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
-		// thirdVar - нужен тогда, когда нужно недопустить попадание в блок несовместимых тр-ий.
-		// Например, удаление крауд-фандинг проекта и инвестирование в него средств.
 	}
 	return
 }
