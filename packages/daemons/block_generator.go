@@ -220,6 +220,7 @@ BEGIN:
 			continue BEGIN
 		}
 		logger.Debug("prevBlock %v", prevBlock)
+		prevBlockHash, err = d.Single("SELECT hex(hash) as hash FROM info_block").String()
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -350,7 +351,8 @@ BEGIN:
 
 			// подписываем нашим нод-ключем заголовок блока
 			var forSign string
-			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlock[`hash`], Time, myWalletId, myStateID, string(mrklRoot))
+			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myStateID, string(mrklRoot))
+			//			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlock[`hash`], Time, myWalletId, myStateID, string(mrklRoot))
 			logger.Debug("forSign: %v", forSign)
 			//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
 			bytes, err := lib.SignECDSA(nodePrivateKey, forSign)

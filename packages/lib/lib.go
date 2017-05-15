@@ -458,7 +458,7 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 func EscapeName(name string) string {
 	out := make([]byte, 1, len(name)+2)
 	out[0] = '"'
-	available := `() ,_`
+	available := `() ,`
 	for _, ch := range []byte(name) {
 		if (ch >= '0' && ch <= '9') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
 			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {

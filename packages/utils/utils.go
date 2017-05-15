@@ -1494,6 +1494,90 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 	return true, nil
 }
 
+/*func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("Panic CheckECDSA %v", r)
+		}
+	}()
+
+	var signsSlice [][]byte
+	if len(forSign) == 0 {
+		return false, ErrInfoFmt("len(forSign) == 0")
+	}
+	if len(publicKeys) == 0 {
+		return false, ErrInfoFmt("len(publicKeys) == 0")
+	}
+	if len(signs) == 0 {
+		return false, ErrInfoFmt("len(signs) == 0")
+	}
+	// у нода всегда 1 подпись
+	if nodeKeyOrLogin {
+		signsSlice = append(signsSlice, signs)
+	} else {
+
+		log.Debug("signs %x", signs)
+		// в 1 signs может быть от 1 до 3-х подписей
+		i := 0
+		for {
+			if i > 2 {
+				return false, ErrInfoFmt("i > 3")
+			}
+			if len(signs) == 0 {
+				break
+			}
+			length := DecodeLength(&signs)
+			log.Debug("length %d", length)
+			if length == 0 {
+				break
+			}
+			signsSlice = append(signsSlice, BytesShift(&signs, length))
+			i++
+		}
+		if len(publicKeys) != len(signsSlice) {
+			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
+		}
+	}
+	log.Debug("publicKeys %x", publicKeys)
+	pubkeyCurve := elliptic.P256()
+	signhash := sha256.Sum256([]byte(forSign))
+
+	log.Debug("len(signsSlice) %d len(publicKeys) %d", len(signsSlice), len(publicKeys))
+
+	for i := 0; i < len(publicKeys); i++ {
+
+		if len(signsSlice[i]) == 0 {
+			return false, fmt.Errorf("len(signsSlice[i]) == 0")
+		}
+
+		log.Debug("pubkey %x", publicKeys[i])
+
+		public := publicKeys[i]
+		pubkey := new(ecdsa.PublicKey)
+		pubkey.Curve = pubkeyCurve
+		pubkey.X = new(big.Int).SetBytes(public[0:32])
+		pubkey.Y = new(big.Int).SetBytes(public[32:])
+		log.Debug("pubkey %v", pubkey)
+		log.Debug("signhash %x", signhash)
+		log.Debug("signsSlice[i] %x", signsSlice[i])
+		r, s := ParseSign(hex.EncodeToString(signsSlice[i]))
+		if r == nil || s == nil {
+			log.Debug("r == nil || s == nil")
+			return false, fmt.Errorf("r == nil || s == nil")
+		}
+		log.Debug("r = %v  s = %v", r, s)
+		verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
+		if !verifystatus {
+			log.Error("Check sign: %i %s\n", i, signsSlice[i])
+			return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[i] = %x, sign = %x",
+				signhash, forSign, publicKeys[i], signsSlice[i])
+		}
+
+	}
+
+	return true, nil
+}*/
+
 func B54Decode(b54_ interface{}) string {
 	var b54 string
 	switch b54_.(type) {
