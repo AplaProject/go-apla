@@ -74,7 +74,7 @@ func EncryptNewKey(wallet_id string) (result EncryptKey) {
 		}
 	}
 	priv, _ := hex.DecodeString(private)
-	encrypted, err := utils.EncryptShared([]byte(pubKey), priv)
+	encrypted, err := lib.SharedEncrypt([]byte(pubKey), priv)
 	if err != nil {
 		result.Error = err.Error()
 		return result

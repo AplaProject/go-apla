@@ -639,14 +639,6 @@ func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, Gor
 	return true
 }
 
-func (db *DCDB) GetQuotes() string {
-	dq := `"`
-	if db.ConfigIni["db_type"] == "mysql" {
-		dq = ``
-	}
-	return dq
-}
-
 func (db *DCDB) ExecSql(query string, args ...interface{}) error {
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	//var res sql.Result
@@ -813,16 +805,6 @@ func (db *DCDB) GetMyPublicKey(myPrefix string) ([]byte, error) {
 		return []byte(""), ErrInfo(err)
 	}
 	return result, nil
-}
-
-func (db *DCDB) GetMyPrivateKey(myPrefix string) (string, error) {
-	key, err := db.Single("SELECT private_key FROM my_keys WHERE block_id = (SELECT max(block_id) FROM my_keys)").String()
-	if err != nil {
-		return "", ErrInfo(err)
-	}
-	key = strings.Replace(key, "-----BEGIN RSA PRIVATE KEY-----", "-----BEGIN RSA PRIVATE KEY-----\n", -1)
-	key = strings.Replace(key, "-----END RSA PRIVATE KEY-----", "\n-----END RSA PRIVATE KEY-----", -1)
-	return key, nil
 }
 
 func (db *DCDB) GetNodePrivateKey() (string, error) {

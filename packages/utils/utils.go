@@ -22,20 +22,14 @@ import (
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
-	crand "crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
 	//	"crypto/tls"
-	"crypto/x509"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"flag"
 	"fmt"
 	"html/template"
-	"image"
 	"io"
 	"io/ioutil"
 	"math"
@@ -48,7 +42,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
-	b58 "github.com/jbenet/go-base58"
 	"github.com/kardianos/osext"
 	_ "github.com/lib/pq"
 	"github.com/mcuadros/go-version"
@@ -176,29 +169,6 @@ func (s SortCfCatalog) Swap(i, j int) {
 func (s SortCfCatalog) Less(i, j int) bool {
 	return s[i]["name"] < s[j]["name"]
 }
-func MakeCfCategories(lang map[string]string) []map[string]string {
-	var cfCategory []map[string]string
-	for i := 0; i < 18; i++ {
-		cfCategory = append(cfCategory, map[string]string{"id": IntToStr(i), "name": lang["cf_category_"+IntToStr(i)]})
-	}
-	sort.Sort(SortCfCatalog(cfCategory))
-	return cfCategory
-}
-
-func getImageDimension(imagePath string) (int, int) {
-	/*file, err := os.Open(imagePath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-	}
-	defer file.Close()*/
-	data, _ := static.Asset(imagePath)
-	file := bytes.NewReader(data)
-	image, _, err := image.DecodeConfig(file)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %v\n", imagePath, err)
-	}
-	return image.Width, image.Height
-}
 
 type ParamType struct {
 	X, Y, Width, Height int64
@@ -247,90 +217,6 @@ func Round(f float64, places int) (float64) {
 }
 */
 
-// ищем ближайшее время в $points_status_array или $max_promised_amount_array
-// $type - status для $points_status_array / amount - для $max_promised_amount_array
-func findMinPointsStatus(needTime int64, pointsStatusArray []map[int64]string, pType string) ([]map[string]string, []map[int64]string) {
-	var findTime []int64
-	newPointsStatusArray := pointsStatusArray
-	var timeStatusArr []map[string]string
-BR:
-	for i := 0; i < len(pointsStatusArray); i++ {
-		for time, _ := range pointsStatusArray[i] {
-			if time > needTime {
-				break BR
-			}
-			findTime = append(findTime, time)
-			start := i + 1
-			if i+1 > len(pointsStatusArray) {
-				start = len(pointsStatusArray)
-			}
-			newPointsStatusArray = pointsStatusArray[start:]
-		}
-	}
-	if len(findTime) > 0 {
-		for i := 0; i < len(findTime); i++ {
-			for _, status := range pointsStatusArray[i] {
-				timeStatusArr = append(timeStatusArr, map[string]string{"time": Int64ToStr(findTime[i]), pType: status})
-			}
-		}
-	}
-	return timeStatusArr, newPointsStatusArray
-}
-
-func findMinPct(needTime int64, pctArray []map[int64]map[string]float64, status string) float64 {
-	var findTime int64 = -1
-	var pct float64 = 0
-BR:
-	for i := 0; i < len(pctArray); i++ {
-		for time, _ := range pctArray[i] {
-			if time > needTime {
-				break BR
-			}
-			findTime = int64(i)
-		}
-	}
-	if findTime >= 0 {
-		for _, arr := range pctArray[findTime] {
-			pct = arr[status]
-		}
-	}
-	return pct
-}
-
-func findMinPct1(needTime int64, pctArray []map[int64]float64) float64 {
-	var findTime int64 = -1
-	var pct float64 = 0
-BR:
-	for i := 0; i < len(pctArray); i++ {
-		for time, _ := range pctArray[i] {
-			if time > needTime {
-				break BR
-			}
-			findTime = int64(i)
-		}
-	}
-	if findTime >= 0 {
-		for _, pct0 := range pctArray[findTime] {
-			pct = pct0
-		}
-	}
-	return pct
-}
-
-func getMaxPromisedAmountCalcProfit(amount, repaidAmount, maxPromisedAmount float64, currencyId int64) float64 {
-	// для WOC $repaid_amount всегда = 0, т.к. cash_request на WOC послать невозможно
-	// если наша сумма больше, чем максимально допустимая ($find_min_array[$i]['amount'])
-	var result float64
-	if amount+repaidAmount > maxPromisedAmount {
-		result = maxPromisedAmount - repaidAmount
-	} else if amount < maxPromisedAmount && currencyId == 1 { // для WOC разрешено брать maxPromisedAmount вместо promisedAmount, если promisedAmount < maxPromisedAmount
-		result = maxPromisedAmount
-	} else {
-		result = amount
-	}
-	return result
-}
-
 type resultArrType struct {
 	num_sec int64
 	pct     float64
@@ -361,23 +247,11 @@ func Round(num float64, precision int) float64 {
 	return float64(round(num*output)) / output
 }
 
-func RandSlice(min, max, count int64) []string {
-	var result []string
-	for i := 0; i < int(count); i++ {
-		result = append(result, IntToStr(RandInt(int(min), int(max))))
-	}
-	return result
-}
-
 func RandInt(min int, max int) int {
 	if max-min <= 0 {
 		return 1
 	}
 	return min + rand.Intn(max-min)
-}
-
-func PpLenght(p1, p2 [2]int) float64 {
-	return math.Sqrt(math.Pow(float64(p1[0]-p2[0]), 2) + math.Pow(float64(p1[1]-p2[1]), 2))
 }
 
 func CheckInputData(data_ interface{}, dataType string) bool {
@@ -1287,88 +1161,6 @@ func RandSeq(n int) string {
 	return string(b)
 }
 
-func GetPublicFromPrivate(key string) ([]byte, error) {
-	block, _ := pem.Decode([]byte(key))
-	if block == nil {
-		return nil, errors.New("bad key data")
-	}
-	log.Debug("%v", block)
-	if got, want := block.Type, "RSA PRIVATE KEY"; got != want {
-		return nil, errors.New("unknown key type " + got + ", want " + want)
-	}
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	log.Debug("privateKey %v", privateKey)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	e := fmt.Sprintf("%x", privateKey.PublicKey.E)
-	if len(e)%2 > 0 {
-		e = "0" + e
-	}
-	n := BinToHex(privateKey.PublicKey.N.Bytes())
-	n = append([]byte("00"), n...)
-	log.Debug("%s / %v", n, e)
-	publicKeyAsn := MakeAsn1(n, []byte(e))
-	return publicKeyAsn, nil
-}
-
-func MakeAsn1(hex_n, hex_e []byte) []byte {
-	//hex_n = append([]byte("00"), hex_n...)
-	n_ := []byte(HexToBin(hex_n))
-	n_ = append([]byte("02"), BinToHex(EncodeLength(int64(len(HexToBin(hex_n)))))...)
-	//log.Debug("n_length", string(n_))
-	n_ = append(n_, hex_n...)
-	//log.Debug("n_", string(n_))
-	e_ := append([]byte("02"), BinToHex(EncodeLength(int64(len(HexToBin(hex_e)))))...)
-	e_ = append(e_, hex_e...)
-	//log.Debug("e_", string(e_))
-	length := BinToHex(EncodeLength(int64(len(HexToBin(append(n_, e_...))))))
-	//log.Debug("length", string(length))
-	rez := append([]byte("30"), length...)
-	rez = append(rez, n_...)
-	rez = append(rez, e_...)
-	rez = append([]byte("00"), rez...)
-	//log.Debug("%v", string(rez))
-	//log.Debug("%v", len(string(rez)))
-	//log.Debug("%v", len(HexToBin(rez)))
-	rez = append(BinToHex(EncodeLength(int64(len(HexToBin(rez))))), rez...)
-	rez = append([]byte("03"), rez...)
-	//log.Debug("%v", string(rez))
-	rez = append([]byte("300d06092a864886f70d0101010500"), rez...)
-	//log.Debug("%v", string(rez))
-	rez = append(BinToHex(EncodeLength(int64(len(HexToBin(rez))))), rez...)
-	//log.Debug("%v", string(rez))
-	rez = append([]byte("30"), rez...)
-
-	//log.Debug("hex_n: %s", hex_n)
-	//log.Debug("hex_e: %s", hex_e)
-	//log.Debug("%v", string(rez))
-
-	return rez
-	//b64:=base64.StdEncoding.EncodeToString([]byte(utils.HexToBin("30"+length+bin_enc)))
-	//fmt.Println(b64)
-}
-
-func BinToRsaPubKey(publicKey []byte) (*rsa.PublicKey, error) {
-	key := base64.StdEncoding.EncodeToString(publicKey)
-	key = "-----BEGIN PUBLIC KEY-----\n" + key + "\n-----END PUBLIC KEY-----"
-	//fmt.Printf("%x\n", publicKeys[i])
-	log.Debug("key", key)
-	block, _ := pem.Decode([]byte(key))
-	if block == nil {
-		return nil, ErrInfo(fmt.Errorf("incorrect key"))
-	}
-	re, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	pub := re.(*rsa.PublicKey)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	return pub, nil
-}
-
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1398,31 +1190,6 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 		}
 	}
 	return lib.CheckECDSA(publicKeys[0], forSign, signsSlice[0])
-}
-
-func B54Decode(b54_ interface{}) string {
-	var b54 string
-	switch b54_.(type) {
-	case string:
-		b54 = b54_.(string)
-	case []byte:
-		b54 = string(b54_.([]byte))
-	}
-	return string(b58.Decode(b54))
-}
-
-func HashSha1(msg string) []byte {
-	sh := crypto.SHA1.New()
-	sh.Write([]byte(msg))
-	hash := sh.Sum(nil)
-	return hash
-}
-
-func HashSha1Hex(msg []byte) string {
-	sh := crypto.SHA1.New()
-	sh.Write(msg)
-	hash := sh.Sum(nil)
-	return string(BinToHex(hash))
 }
 
 func Md5(msg_ interface{}) []byte {
@@ -1466,22 +1233,6 @@ func Sha256(data_ interface{}) []byte {
 	sha256_ := sha256.New()
 	sha256_.Write(data)
 	return []byte(fmt.Sprintf("%x", sha256_.Sum(nil)))
-}
-
-func DeleteHeader(binaryData []byte) []byte {
-	/*
-		TYPE (0-блок, 1-тр-я)     1
-		BLOCK_ID   				       4
-		TIME       					       4
-		USER_ID                         5
-		LEVEL                              1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-		Далее - тело блока (Тр-ии)
-	*/
-	BytesShift(&binaryData, 15)
-	size := DecodeLength(&binaryData)
-	BytesShift(&binaryData, size)
-	return binaryData
 }
 
 func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
@@ -1578,48 +1329,6 @@ func DbClose(c *DCDB) {
 	}
 }
 
-func MaxInMap(m map[int64]int64) (int64, int64) {
-	var max int64
-	var maxK int64
-	for k, v := range m {
-		if max == 0 {
-			max = v
-			maxK = k
-		} else if v > max {
-			max = v
-			maxK = k
-		}
-	}
-	return max, maxK
-}
-
-func arraySum(m []map[int64]int64) int64 {
-	var sum int64
-	for i := 0; i < len(m); i++ {
-		for _, v := range m[i] {
-			sum += v
-		}
-	}
-	return sum
-}
-
-func MaxInSliceMap(m []map[int64]int64) (int64, int64) {
-	var max int64
-	var maxK int64
-	for i := 0; i < len(m); i++ {
-		for k, v := range m[i] {
-			if max == 0 {
-				max = v
-				maxK = k
-			} else if v > max {
-				max = v
-				maxK = k
-			}
-		}
-	}
-	return max, maxK
-}
-
 func TypesToIds(arr []string) []int64 {
 	var result []int64
 	for _, v := range arr {
@@ -1645,66 +1354,12 @@ func IntSliceToStr(Int []int) []string {
 	return result
 }
 
-func MakePrivateKey(key string) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode([]byte(key))
-	if block == nil {
-		return nil, errors.New("bad key data")
-	}
-	if got, want := block.Type, "RSA PRIVATE KEY"; got != want {
-		return nil, errors.New("unknown key type " + got + ", want " + want)
-	}
-	return x509.ParsePKCS1PrivateKey(block.Bytes)
-}
-
-func JoinInts(arr map[int]int, sep string) string {
-	var arrStr []string
-	for _, v := range arr {
-		arrStr = append(arrStr, IntToStr(v))
-	}
-	return strings.Join(arrStr, sep)
-}
-
 func JoinInt64Slice(arr []int64, sep string) string {
 	var arrStr []string
 	for _, v := range arr {
 		arrStr = append(arrStr, Int64ToStr(v))
 	}
 	return strings.Join(arrStr, sep)
-}
-
-func JoinIntsK(arr map[int]int, sep string) string {
-	var arrStr []string
-	for k, _ := range arr {
-		arrStr = append(arrStr, IntToStr(k))
-	}
-	return strings.Join(arrStr, sep)
-}
-func JoinInts64(arr map[int64]int, sep string) string {
-	var arrStr []string
-	for k, _ := range arr {
-		arrStr = append(arrStr, Int64ToStr(k))
-	}
-	return strings.Join(arrStr, sep)
-}
-
-func TimeLeft(sec int64, lang map[string]string) string {
-	result := ""
-	if sec > 0 {
-		days := int64(math.Floor(float64(sec / 86400)))
-		sec -= days * 86400
-		result += fmt.Sprintf(`%d %s `, days, lang["time_days"])
-	}
-	if sec > 0 {
-		hours := int64(math.Floor(float64(sec / 3600)))
-		sec -= hours * 3600
-		result += fmt.Sprintf(`%d %s `, hours, lang["time_hours"])
-	}
-	if sec > 0 {
-		minutes := int64(math.Floor(float64(sec / 60)))
-		sec -= minutes * 3600
-		result += fmt.Sprintf(`%d %s `, minutes, lang["time_minutes"])
-	}
-	return result
 }
 
 func MakeLastTx(lastTx []map[string]string, lng map[string]string) (string, map[int64]int64) {
@@ -1728,39 +1383,6 @@ func MakeLastTx(lastTx []map[string]string, lng map[string]string) (string, map[
 	}
 	result += "</table>"
 	return result, pendingTx
-}
-
-func Encrypt(key, text []byte) ([]byte, error) {
-	iv := []byte(RandSeq(aes.BlockSize))
-	c, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	plaintext := PKCS5Padding([]byte(text), c.BlockSize())
-	cfbdec := cipher.NewCBCEncrypter(c, iv)
-	EncPrivateKeyBin := make([]byte, len(plaintext))
-	cfbdec.CryptBlocks(EncPrivateKeyBin, plaintext)
-	EncPrivateKeyBin = append(iv, EncPrivateKeyBin...)
-	//EncPrivateKeyB64 := base64.StdEncoding.EncodeToString(EncPrivateKeyBin)
-	return EncPrivateKeyBin, nil
-}
-
-func EncryptShared(public, text []byte) ([]byte, error) {
-	shared, pubkey, err := lib.GetShared(hex.EncodeToString(lib.FillLeft64(public)))
-	if err != nil {
-		return []byte(``), err
-	}
-	pub, _ := hex.DecodeString(shared)
-	c, err := aes.NewCipher(pub)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	iv, _ := hex.DecodeString(pubkey)
-	plaintext := PKCS5Padding([]byte(text), c.BlockSize())
-	cfbdec := cipher.NewCBCEncrypter(c, iv[:16])
-	EncPrivateKeyBin := make([]byte, len(plaintext))
-	cfbdec.CryptBlocks(EncPrivateKeyBin, plaintext)
-	return append(iv, EncPrivateKeyBin...), nil
 }
 
 func EncryptCFB(text, key, iv []byte) ([]byte, []byte, error) {
@@ -1790,32 +1412,6 @@ func DecryptCFB(iv, encrypted, key []byte) ([]byte, error) {
 	decrypter.XORKeyStream(decrypted, encrypted)
 
 	return decrypted, nil
-}
-
-func EncryptData(data, publicKey []byte, randcandidateBlockHash string) ([]byte, []byte, []byte, error) {
-
-	// генерим ключ
-	key := Md5(DSha256([]byte(RandSeq(32) + randcandidateBlockHash)))
-
-	// шифруем ключ публичным ключем получателя
-	pub, err := BinToRsaPubKey(publicKey)
-	if err != nil {
-		return nil, nil, nil, ErrInfo(err)
-	}
-	encKey, err := rsa.EncryptPKCS1v15(crand.Reader, pub, key)
-	if err != nil {
-		return nil, nil, nil, ErrInfo(err)
-	}
-
-	// шифруем сам блок/тр-ии. Вначале encData добавляется IV
-	encData, iv, err := EncryptCFB(data, key, []byte(""))
-	if err != nil {
-		return nil, nil, nil, ErrInfo(err)
-	}
-	log.Debug("encData %x", encData)
-
-	// возвращаем ключ + IV + encData
-	return append(EncodeLengthPlusData(encKey), encData...), key, iv, nil
 }
 
 func strpad(text string) string {
@@ -1946,22 +1542,6 @@ func TcpConn(Addr string) (net.Conn, error) {
 	return conn, nil
 }
 
-func ProtectedCheckRemoteAddrAndGetHost(binaryData *[]byte, conn net.Conn) (string, error) {
-	if ok, _ := regexp.MatchString(`^192\.168`, conn.RemoteAddr().String()); !ok {
-		return "", ErrInfo("not local")
-	}
-	size := DecodeLength(&*binaryData)
-	if int64(len(*binaryData)) < size {
-		return "", ErrInfo("int64(len(binaryData)) < size")
-	}
-	host := string(BytesShift(&*binaryData, size))
-	if ok, _ := regexp.MatchString(`^(?i)[0-9a-z\_\.\-\]{1,100}:[0-9]+$`, host); !ok {
-		return "", ErrInfo("incorrect host " + host)
-	}
-	return host, nil
-
-}
-
 func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	// в 4-х байтах пишем размер данных, которые пошлем далее
 	size := DecToBin(len(binaryData), 4)
@@ -1975,23 +1555,6 @@ func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 		/*if len(binaryData) > 500000 {
 			ioutil.WriteFile("WriteSizeAndData-7-block-"+IntToStr(len(binaryData))+string(DSha256(binaryData)), binaryData, 0644)
 		}*/
-		_, err = conn.Write(binaryData)
-		if err != nil {
-			return ErrInfo(err)
-		}
-	}
-	return nil
-}
-
-func WriteSizeAndDataTCPConn(binaryData []byte, conn net.Conn) error {
-	// в 4-х байтах пишем размер данных, которые пошлем далее
-	size := DecToBin(len(binaryData), 4)
-	_, err := conn.Write(size)
-	if err != nil {
-		return ErrInfo(err)
-	}
-	// далее шлем сами данные
-	if len(binaryData) > 0 {
 		_, err = conn.Write(binaryData)
 		if err != nil {
 			return ErrInfo(err)
@@ -2087,52 +1650,6 @@ func JsonAnswer(err interface{}, answType string) *jsonAnswer {
 	return &jsonAnswer{errors.New(string(result))}
 }
 
-func TCPGetSizeAndData(conn net.Conn, maxSize int64) ([]byte, error) {
-	// получаем размер данных
-	buf := make([]byte, 4)
-	_, err := conn.Read(buf)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-	size := BinToDec(buf)
-	fmt.Println("size: ", size)
-
-	// получаем сами данные
-	if size > maxSize || size == 0 {
-		return nil, ErrInfo("incorrect size")
-	}
-	binaryData := make([]byte, size)
-	_, err = io.ReadFull(conn, binaryData)
-	if err != nil {
-		return nil, ErrInfo("incorrect binaryData")
-	}
-	return binaryData, nil
-}
-
-func ClearNullFloat64(number float64, n int) float64 {
-	return StrToFloat64(ClearNull(Float64ToStr(number), n))
-}
-
-func ClearNull(str string, n int) string {
-	//str := Float64ToStr(num)
-	ind := strings.Index(str, ".")
-	new := ""
-	if ind != -1 {
-		end := n
-		if len(str[ind+1:]) > 1 {
-			end = n + 1
-		}
-		if n > 0 {
-			new = str[:ind] + "." + str[ind+1:ind+end]
-		} else {
-			new = str[:ind]
-		}
-	} else {
-		new = str
-	}
-	return new
-}
-
 func WriteSelectiveLog(text interface{}) {
 	if *LogLevel == "DEBUG" {
 		var text_ string
@@ -2163,15 +1680,6 @@ func WriteSelectiveLog(text interface{}) {
 			panic(err)
 		}
 	}
-}
-
-func IPwoPort(ipport string) string {
-	r, _ := regexp.Compile(`^([0-9\.]+)`)
-	match := r.FindStringSubmatch(ipport)
-	if len(match) == 0 {
-		return ""
-	}
-	return match[1]
 }
 
 /*
