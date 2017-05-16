@@ -17,10 +17,15 @@
 package test
 
 import (
-	"time"
-	"math/rand"
 	"encoding/hex"
+	"math/rand"
+	"time"
 )
+
+type WantString struct {
+	Input string
+	Want  string
+}
 
 // Generates a random []bytes.
 func RandBytes(length int) ([]byte, int64) {
@@ -34,6 +39,6 @@ func RandBytes(length int) ([]byte, int64) {
 }
 
 func HexToBytes(input string) []byte {
-	ret,_ := hex.DecodeString(input)
+	ret, _ := hex.DecodeString(input)
 	return ret
 }

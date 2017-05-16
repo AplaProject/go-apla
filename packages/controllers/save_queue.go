@@ -22,6 +22,7 @@ import (
 	"time"
 
 	//	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -61,11 +62,12 @@ func (c *Controller) SaveQueue() (string, error) {
 	//	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
 	txType := utils.TypeInt(txType_)
 	sign := make([]byte, 0)
-	signature := utils.ConvertJSSign(c.r.FormValue("signature1"))
+	signature, err := lib.JSSignToBytes(c.r.FormValue("signature1"))
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
 	if len(signature) > 0 {
-		bsign, _ := hex.DecodeString(signature)
-		sign = append(sign, utils.EncodeLengthPlusData(bsign)...)
-		log.Debug("sign %x", sign)
+		sign = append(sign, utils.EncodeLengthPlusData(signature)...)
 	}
 	if len(sign) == 0 {
 		return `{"result":"signature is empty"}`, nil

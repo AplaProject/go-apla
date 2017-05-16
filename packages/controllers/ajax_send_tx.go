@@ -49,13 +49,11 @@ func (c *Controller) AjaxSendTx() interface{} {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
 		userId := uint64(c.SessWalletId)
 		sign := make([]byte, 0)
-		for i := 1; i <= 3; i++ {
-			signature := utils.ConvertJSSign(c.r.FormValue(fmt.Sprintf("signature%d", i)))
-			if i == 1 || len(signature) > 0 {
-				bsign, _ := hex.DecodeString(signature)
-				//				sign = append(sign, utils.EncodeLengthPlusData(bsign)...)
-				lib.EncodeLenByte(&sign, bsign)
-			}
+		signature, err := lib.JSSignToBytes(c.r.FormValue("signature1"))
+		if err != nil {
+			result.Error = err.Error()
+		} else if len(signature) > 0 {
+			lib.EncodeLenByte(&sign, signature)
 		}
 		var isPublic []byte
 		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
