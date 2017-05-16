@@ -22,8 +22,6 @@ import (
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -1372,59 +1370,6 @@ func BinToRsaPubKey(publicKey []byte) (*rsa.PublicKey, error) {
 }
 
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
-	return CheckECDSA(publicKeys, forSign, signs, nodeKeyOrLogin)
-}
-
-func ParseSign(sign string) (r, s *big.Int) {
-	//	var off int
-	parse := func(bsign []byte) []byte {
-		blen := int(bsign[1])
-		//		fmt.Printf("Parse %d %x\r\n", blen, bsign)
-		if blen > len(bsign)-2 {
-			return nil
-		}
-		ret := bsign[2 : 2+blen]
-		if len(ret) > 32 {
-			ret = ret[len(ret)-32:]
-		} else if len(ret) < 32 {
-			ret = append(bytes.Repeat([]byte{0}, 32-len(ret)), ret...)
-		}
-		return ret
-	}
-	if len(sign) > 128 {
-		bsign, err := hex.DecodeString(sign)
-		if err != nil {
-			return
-		}
-		//		fmt.Printf("In %d %x\r\n", bsign[1], bsign)
-		left := parse(bsign[2:])
-		if left == nil || int(bsign[3])+6 > len(bsign) {
-			return
-		}
-		right := parse(bsign[4+bsign[3]:])
-		if right == nil {
-			return
-		}
-		sign = hex.EncodeToString(append(left, right...))
-		//		fmt.Printf("sign %s\r\n", sign)
-		/*		off = 8
-				if sign[7] == '1' {
-					off = 10
-				}*/
-
-	} else if len(sign) < 128 {
-		return
-	}
-	all, err := hex.DecodeString(string(sign[:]))
-	if err != nil {
-		return
-	}
-	r = new(big.Int).SetBytes(all[:32])
-	s = new(big.Int).SetBytes(all[len(all)-32:])
-	return
-}
-
-func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("Panic CheckECDSA %v", r)
@@ -1452,38 +1397,7 @@ func CheckECDSA(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogi
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
-	log.Debug("publicKeys %x", publicKeys)
-	pubkeyCurve := elliptic.P256()
-	signhash := sha256.Sum256([]byte(forSign))
-
-	log.Debug("len(signsSlice) %d len(publicKeys) %d", len(signsSlice), len(publicKeys))
-
-	if len(signsSlice[0]) == 0 {
-		return false, fmt.Errorf("len(signsSlice[0]) == 0")
-	}
-	log.Debug("pubkey %x", publicKeys[0])
-	public := publicKeys[0]
-	pubkey := new(ecdsa.PublicKey)
-	pubkey.Curve = pubkeyCurve
-	pubkey.X = new(big.Int).SetBytes(public[0:32])
-	pubkey.Y = new(big.Int).SetBytes(public[32:])
-	log.Debug("pubkey %v", pubkey)
-	log.Debug("signhash %x", signhash)
-	log.Debug("signsSlice[0] %x", signsSlice[0])
-	r, s := ParseSign(hex.EncodeToString(signsSlice[0]))
-	if r == nil || s == nil {
-		log.Debug("r == nil || s == nil")
-		return false, fmt.Errorf("r == nil || s == nil")
-	}
-	log.Debug("r = %v  s = %v", r, s)
-	verifystatus := ecdsa.Verify(pubkey, signhash[:], r, s)
-	if !verifystatus {
-		log.Error("Check sign: %i %s\n", 0, signsSlice[0])
-		return false, ErrInfoFmt("incorrect sign:  hash = %x; forSign = %v, publicKeys[0] = %x, sign = %x",
-			signhash, forSign, publicKeys[0], signsSlice[0])
-	}
-
-	return true, nil
+	return lib.CheckECDSA(publicKeys[0], forSign, signsSlice[0])
 }
 
 func B54Decode(b54_ interface{}) string {
