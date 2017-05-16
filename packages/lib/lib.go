@@ -17,14 +17,9 @@
 package lib
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/sha256"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"math"
-	"math/big"
 	"reflect"
 	"strings"
 	"time"
@@ -324,61 +319,6 @@ func Float2Bytes(float float64) []byte {
 
 func StripTags(value string) string {
 	return strings.Replace(strings.Replace(value, `<`, `&lt;`, -1), `>`, `&gt;`, -1)
-}
-
-func GetSharedKey(private, public []byte) (shared []byte, err error) {
-	pubkeyCurve := elliptic.P256()
-
-	private = FillLeft(private)
-	public = FillLeft(public)
-	pub := new(ecdsa.PublicKey)
-	pub.Curve = pubkeyCurve
-	pub.X = new(big.Int).SetBytes(public[0:32])
-	pub.Y = new(big.Int).SetBytes(public[32:])
-
-	bi := new(big.Int).SetBytes(private)
-	priv := new(ecdsa.PrivateKey)
-	priv.PublicKey.Curve = pubkeyCurve
-	priv.D = bi
-	priv.PublicKey.X, priv.PublicKey.Y = pubkeyCurve.ScalarBaseMult(bi.Bytes())
-
-	if priv.Curve.IsOnCurve(pub.X, pub.Y) {
-		x, _ := pub.Curve.ScalarMult(pub.X, pub.Y, priv.D.Bytes())
-		key := sha256.Sum256([]byte(hex.EncodeToString(x.Bytes())))
-		shared = key[:]
-	} else {
-		err = fmt.Errorf("Not IsOnCurve")
-	}
-	return
-}
-
-// GetSharedHex generates a shared key from private and public keys. All keys are hex string.
-func GetSharedHex(private, public string) (string, error) {
-	priv, err := hex.DecodeString(private)
-	if err != nil {
-		return ``, err
-	}
-	pub, err := hex.DecodeString(public)
-	if err != nil {
-		return ``, err
-	}
-	shared, err := GetSharedKey(priv, pub)
-	if err != nil {
-		return ``, err
-	}
-	return hex.EncodeToString(shared), nil
-}
-
-// GetShared returns the combined key for the specified public key. If the text is encrypted
-// with this key then it can be decrypted with the key made from private key and the returned public key (pub).
-// All keys are hex strings.
-func GetShared(public string) (string, string, error) {
-	priv, pub, err := GenHexKeys()
-	if err != nil {
-		return ``, ``, err
-	}
-	shared, err := GetSharedHex(priv, public)
-	return shared, pub, err
 }
 
 // EGSMoney converts qEGS to EGS. For example, 123455000000000000000 => 123.455
