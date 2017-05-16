@@ -61,7 +61,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 		return result
 	}
 
-	if verify, _ := utils.CheckECDSA([][]byte{bkey}, msg, sign, true); !verify {
+	if verify, _ := utils.CheckSign([][]byte{bkey}, msg, sign, true); !verify {
 		result.Error = "incorrect signature"
 		return result
 	}
