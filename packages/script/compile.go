@@ -21,97 +21,100 @@ import (
 	"reflect"
 )
 
-type Oper struct {
-	Cmd      uint16
-	Priority uint16
+// operPrior contains command and its priority
+type operPrior struct {
+	Cmd      uint16 // identifier of the command
+	Priority uint16 // priority of the command
 }
 
-type State struct {
-	NewState int
-	Func     int
+// State contains a new state and a handle function
+type compileState struct {
+	NewState int // a new state
+	Func     int // a handle function
 }
 
-type StateLine map[int]State
+type stateLine map[int]compileState
 
-type States []StateLine
+// The list of compile states
+type compileStates []stateLine
 
-type FuncCompile func(*[]*Block, int, *Lexem) error
+type compileFunc func(*[]*Block, int, *Lexem) error
 
 const (
-	STATE_ROOT = iota
-	STATE_BODY
-	STATE_BLOCK
-	STATE_CONTRACT
-	STATE_FUNC
-	STATE_FPARAMS
-	STATE_FPARAM
-	STATE_FPARAMTYPE
-	STATE_FRESULT
-	//	STATE_IF
-	//	STATE_WHILE
-	STATE_VAR
-	STATE_VARTYPE
-	STATE_ASSIGNEVAL
-	STATE_ASSIGN
-	STATE_TX
-	STATE_FIELDS
+	// The list of state types
+	stateRoot = iota
+	stateBody
+	stateBlock
+	stateContract
+	stateFunc
+	stateFParams
+	stateFParam
+	stateFParamTYPE
+	stateFResult
+	stateVar
+	stateVarType
+	stateAssignEval
+	stateAssign
+	stateTX
+	stateFields
+	stateEval
 
-	STATE_EVAL
-
-	STATE_PUSH     = 0x0100
-	STATE_POP      = 0x0200
-	STATE_STAY     = 0x0400
-	STATE_TOBLOCK  = 0x0800
-	STATE_TOBODY   = 0x1000
-	STATE_FORK     = 0x2000
-	STATE_TOFORK   = 0x4000
-	STATE_LABEL    = 0x8000
-	STATE_MUSTEVAL = 0x010000
+	// The list of state flags
+	statePush     = 0x0100
+	statePop      = 0x0200
+	stateStay     = 0x0400
+	stateToBlock  = 0x0800
+	stateToBody   = 0x1000
+	stateFork     = 0x2000
+	stateToFork   = 0x4000
+	stateLabel    = 0x8000
+	stateMustEval = 0x010000
 )
 
 const (
-	ERR_NOERROR    = iota
-	ERR_UNKNOWNCMD // unknown command
-	ERR_MUSTNAME   // must be the name
-	ERR_MUSTLCURLY // must be '{'
-	ERR_MUSTRCURLY // must be '}'
-	ERR_PARAMS     // wrong parameters
-	ERR_VARS       // wrong variables
-	ERR_VARTYPE    // must be type
-	ERR_ASSIGN     // must be '='
+	errNoError    = iota
+	errUnknownCmd // unknown command
+	errMustName   // must be the name
+	errMustLCurly // must be '{'
+	errMustRCurly // must be '}'
+	errParams     // wrong parameters
+	errVars       // wrong variables
+	errVarType    // must be type
+	errAssign     // must be '='
 )
 
 const (
-	CF_NOTHING = iota
-	CF_ERROR
-	CF_NAMEBLOCK
-	CF_FRESULT
-	CF_RETURN
-	CF_IF
-	CF_ELSE
-	CF_FPARAM
-	CF_FTYPE
-	CF_ASSIGNVAR
-	CF_ASSIGN
-	CF_TX
-	CF_FIELD
-	CF_FIELDTYPE
-	CF_FIELDTAG
-	CF_WHILE
-	CF_CONTINUE
-	CF_BREAK
-	CF_CMDERROR
-	CF_EVAL
+	// Indexes of handle functions funcs = CompileFunc[]
+	cfNothing = iota
+	cfError
+	cfNameBlock
+	cfFResult
+	cfReturn
+	cfIf
+	cfElse
+	cfFParam
+	cfFType
+	cfAssignVar
+	cfAssign
+	cfTX
+	cfField
+	cfFieldType
+	cfFieldTag
+	cfWhile
+	cfContinue
+	cfBreak
+	cfCmdError
+	cfEval
 )
 
 var (
-	opers = map[uint32]Oper{
-		IS_OR: {cmdOr, 10}, IS_AND: {cmdAnd, 15}, IS_EQEQ: {cmdEqual, 20}, IS_NOTEQ: {cmdNotEq, 20},
-		IS_LESS: {cmdLess, 22}, IS_GREQ: {cmdNotLess, 22}, IS_GREAT: {cmdGreat, 22}, IS_LESSEQ: {cmdNotGreat, 22},
-		IS_PLUS: {cmdAdd, 25}, IS_MINUS: {cmdSub, 25}, IS_ASTERISK: {cmdMul, 30},
-		IS_SOLIDUS: {cmdDiv, 30}, IS_SIGN: {cmdSign, cmdUnary}, IS_NOT: {cmdNot, cmdUnary}, IS_LPAR: {cmdSys, 0xff}, IS_RPAR: {cmdSys, 0},
+	opers = map[uint32]operPrior{
+		isOr: {cmdOr, 10}, isAnd: {cmdAnd, 15}, isEqEq: {cmdEqual, 20}, isNotEq: {cmdNotEq, 20},
+		isLess: {cmdLess, 22}, isGrEq: {cmdNotLess, 22}, isGreat: {cmdGreat, 22}, isLessEq: {cmdNotGreat, 22},
+		isPlus: {cmdAdd, 25}, isMinus: {cmdSub, 25}, isAsterisk: {cmdMul, 30},
+		isSolidus: {cmdDiv, 30}, isSign: {cmdSign, cmdUnary}, isNot: {cmdNot, cmdUnary}, isLPar: {cmdSys, 0xff}, isRPar: {cmdSys, 0},
 	}
-	funcs = []FuncCompile{nil,
+	funcs = []compileFunc{nil,
 		fError,
 		fNameBlock,
 		fFuncResult,
@@ -131,138 +134,138 @@ var (
 		fBreak,
 		fCmdError,
 	}
-	states = States{
-		{ // STATE_ROOT
-			LEX_NEWLINE:                       {STATE_ROOT, 0},
-			LEX_KEYWORD | (KEY_CONTRACT << 8): {STATE_CONTRACT | STATE_PUSH, 0},
-			LEX_KEYWORD | (KEY_FUNC << 8):     {STATE_FUNC | STATE_PUSH, 0},
-			LEX_COMMENT:                       {STATE_ROOT, 0},
-			0:                                 {ERR_UNKNOWNCMD, CF_ERROR},
+	states = compileStates{
+		{ // stateRoot
+			lexNewLine:                      {stateRoot, 0},
+			lexKeyword | (keyContract << 8): {stateContract | statePush, 0},
+			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
+			lexComment:                      {stateRoot, 0},
+			0:                               {errUnknownCmd, cfError},
 		},
-		{ // STATE_BODY
-			LEX_NEWLINE:                       {STATE_BODY, 0},
-			LEX_KEYWORD | (KEY_FUNC << 8):     {STATE_FUNC | STATE_PUSH, 0},
-			LEX_KEYWORD | (KEY_RETURN << 8):   {STATE_EVAL, CF_RETURN},
-			LEX_KEYWORD | (KEY_CONTINUE << 8): {STATE_BODY, CF_CONTINUE},
-			LEX_KEYWORD | (KEY_BREAK << 8):    {STATE_BODY, CF_BREAK},
-			LEX_KEYWORD | (KEY_IF << 8):       {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK | STATE_MUSTEVAL, CF_IF},
-			LEX_KEYWORD | (KEY_WHILE << 8):    {STATE_EVAL | STATE_PUSH | STATE_TOBLOCK | STATE_LABEL | STATE_MUSTEVAL, CF_WHILE},
-			LEX_KEYWORD | (KEY_ELSE << 8):     {STATE_BLOCK | STATE_PUSH, CF_ELSE},
-			LEX_KEYWORD | (KEY_VAR << 8):      {STATE_VAR, 0},
-			LEX_KEYWORD | (KEY_TX << 8):       {STATE_TX, CF_TX},
-			LEX_KEYWORD | (KEY_ERROR << 8):    {STATE_EVAL, CF_CMDERROR},
-			LEX_KEYWORD | (KEY_WARNING << 8):  {STATE_EVAL, CF_CMDERROR},
-			LEX_KEYWORD | (KEY_INFO << 8):     {STATE_EVAL, CF_CMDERROR},
-			LEX_COMMENT:                       {STATE_BODY, 0},
-			LEX_IDENT:                         {STATE_ASSIGNEVAL | STATE_FORK, 0},
-			LEX_EXTEND:                        {STATE_ASSIGNEVAL | STATE_FORK, 0},
-			IS_RCURLY:                         {STATE_POP, 0},
-			0:                                 {ERR_MUSTRCURLY, CF_ERROR},
+		{ // stateBody
+			lexNewLine:                      {stateBody, 0},
+			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
+			lexKeyword | (keyReturn << 8):   {stateEval, cfReturn},
+			lexKeyword | (keyContinue << 8): {stateBody, cfContinue},
+			lexKeyword | (keyBreak << 8):    {stateBody, cfBreak},
+			lexKeyword | (keyIf << 8):       {stateEval | statePush | stateToBlock | stateMustEval, cfIf},
+			lexKeyword | (keyWhile << 8):    {stateEval | statePush | stateToBlock | stateLabel | stateMustEval, cfWhile},
+			lexKeyword | (keyElse << 8):     {stateBlock | statePush, cfElse},
+			lexKeyword | (keyVar << 8):      {stateVar, 0},
+			lexKeyword | (keyTX << 8):       {stateTX, cfTX},
+			lexKeyword | (keyError << 8):    {stateEval, cfCmdError},
+			lexKeyword | (keyWarning << 8):  {stateEval, cfCmdError},
+			lexKeyword | (keyInfo << 8):     {stateEval, cfCmdError},
+			lexComment:                      {stateBody, 0},
+			lexIdent:                        {stateAssignEval | stateFork, 0},
+			lexExtend:                       {stateAssignEval | stateFork, 0},
+			isRCurly:                        {statePop, 0},
+			0:                               {errMustRCurly, cfError},
 		},
-		{ // STATE_BLOCK
-			LEX_NEWLINE: {STATE_BLOCK, 0},
-			IS_LCURLY:   {STATE_BODY, 0},
-			0:           {ERR_MUSTLCURLY, CF_ERROR},
+		{ // stateBlock
+			lexNewLine: {stateBlock, 0},
+			isLCurly:   {stateBody, 0},
+			0:          {errMustLCurly, cfError},
 		},
-		{ // STATE_CONTRACT
-			LEX_NEWLINE: {STATE_CONTRACT, 0},
-			LEX_IDENT:   {STATE_BLOCK, CF_NAMEBLOCK},
-			0:           {ERR_MUSTNAME, CF_ERROR},
+		{ // stateContract
+			lexNewLine: {stateContract, 0},
+			lexIdent:   {stateBlock, cfNameBlock},
+			0:          {errMustName, cfError},
 		},
-		{ // STATE_FUNC
-			LEX_NEWLINE: {STATE_FUNC, 0},
-			LEX_IDENT:   {STATE_FPARAMS, CF_NAMEBLOCK},
-			0:           {ERR_MUSTNAME, CF_ERROR},
+		{ // stateFunc
+			lexNewLine: {stateFunc, 0},
+			lexIdent:   {stateFParams, cfNameBlock},
+			0:          {errMustName, cfError},
 		},
-		{ // STATE_FPARAMS
-			LEX_NEWLINE: {STATE_FPARAMS, 0},
-			IS_LPAR:     {STATE_FPARAM, 0},
-			0:           {STATE_FRESULT | STATE_STAY, 0},
+		{ // stateFParams
+			lexNewLine: {stateFParams, 0},
+			isLPar:     {stateFParam, 0},
+			0:          {stateFResult | stateStay, 0},
 		},
-		{ // STATE_FPARAM
-			LEX_NEWLINE: {STATE_FPARAM, 0},
-			LEX_IDENT:   {STATE_FPARAMTYPE, CF_FPARAM},
-			// LEX_TYPE:    {STATE_FPARAM, CF_FTYPE},
-			IS_COMMA: {STATE_FPARAM, 0},
-			IS_RPAR:  {STATE_FRESULT, 0},
-			0:        {ERR_PARAMS, CF_ERROR},
+		{ // stateFParam
+			lexNewLine: {stateFParam, 0},
+			lexIdent:   {stateFParamTYPE, cfFParam},
+			// lexType:    {stateFParam, cfFType},
+			isComma: {stateFParam, 0},
+			isRPar:  {stateFResult, 0},
+			0:       {errParams, cfError},
 		},
-		{ // STATE_FPARAMTYPE
-			LEX_IDENT: {STATE_FPARAMTYPE, CF_FPARAM},
-			LEX_TYPE:  {STATE_FPARAM, CF_FTYPE},
-			IS_COMMA:  {STATE_FPARAMTYPE, 0},
-			//			IS_RPAR:   {STATE_FRESULT, 0},
-			0: {ERR_VARTYPE, CF_ERROR},
+		{ // stateFParamTYPE
+			lexIdent: {stateFParamTYPE, cfFParam},
+			lexType:  {stateFParam, cfFType},
+			isComma:  {stateFParamTYPE, 0},
+			//			isRPar:   {stateFResult, 0},
+			0: {errVarType, cfError},
 		},
-		{ // STATE_FRESULT
-			LEX_NEWLINE: {STATE_FRESULT, 0},
-			LEX_TYPE:    {STATE_FRESULT, CF_FRESULT},
-			IS_COMMA:    {STATE_FRESULT, 0},
-			0:           {STATE_BLOCK | STATE_STAY, 0},
+		{ // stateFResult
+			lexNewLine: {stateFResult, 0},
+			lexType:    {stateFResult, cfFResult},
+			isComma:    {stateFResult, 0},
+			0:          {stateBlock | stateStay, 0},
 		},
-		/*		{ // STATE_IF
-					0: {STATE_EVAL | STATE_TOBLOCK | STATE_PUSH, CF_IF},
+		/*		{ // stateIF
+					0: {stateEval | stateToBlock | statePush, cfIf},
 				},
-				{ // STATE_WHILE
-					0: {STATE_EVAL | STATE_TOBLOCK | STATE_PUSH, CF_WHILE},
+				{ // stateWHILE
+					0: {stateEval | stateToBlock | statePush, cfWhile},
 				},*/
-		{ // STATE_VAR
-			LEX_NEWLINE: {STATE_BODY, 0},
-			LEX_IDENT:   {STATE_VARTYPE, CF_FPARAM},
-			//			LEX_IDENT:   {STATE_VAR, CF_FPARAM},
-			//			LEX_TYPE:    {STATE_VAR, CF_FTYPE},
-			IS_COMMA: {STATE_VAR, 0},
-			0:        {ERR_VARS, CF_ERROR},
+		{ // stateVar
+			lexNewLine: {stateBody, 0},
+			lexIdent:   {stateVarType, cfFParam},
+			//			lexIdent:   {stateVar, cfFParam},
+			//			lexType:    {stateVar, cfFType},
+			isComma: {stateVar, 0},
+			0:       {errVars, cfError},
 		},
-		{ // STATE_VARTYPE
-			LEX_IDENT: {STATE_VARTYPE, CF_FPARAM},
-			LEX_TYPE:  {STATE_VAR, CF_FTYPE},
-			IS_COMMA:  {STATE_VARTYPE, 0},
-			0:         {ERR_VARTYPE, CF_ERROR},
+		{ // stateVarType
+			lexIdent: {stateVarType, cfFParam},
+			lexType:  {stateVar, cfFType},
+			isComma:  {stateVarType, 0},
+			0:        {errVarType, cfError},
 		},
-		{ // STATE_ASSIGNEVAL
-			IS_LPAR:   {STATE_EVAL | STATE_TOFORK | STATE_TOBODY, 0},
-			IS_LBRACK: {STATE_EVAL | STATE_TOFORK | STATE_TOBODY, 0},
-			0:         {STATE_ASSIGN | STATE_TOFORK | STATE_STAY, 0},
+		{ // stateAssignEval
+			isLPar:   {stateEval | stateToFork | stateToBody, 0},
+			isLBrack: {stateEval | stateToFork | stateToBody, 0},
+			0:        {stateAssign | stateToFork | stateStay, 0},
 		},
-		{ // STATE_ASSIGN
-			IS_COMMA:   {STATE_ASSIGN, 0},
-			LEX_IDENT:  {STATE_ASSIGN, CF_ASSIGNVAR},
-			LEX_EXTEND: {STATE_ASSIGN, CF_ASSIGNVAR},
-			IS_EQ:      {STATE_EVAL | STATE_TOBODY, CF_ASSIGN},
-			0:          {ERR_ASSIGN, CF_ERROR},
+		{ // stateAssign
+			isComma:   {stateAssign, 0},
+			lexIdent:  {stateAssign, cfAssignVar},
+			lexExtend: {stateAssign, cfAssignVar},
+			isEq:      {stateEval | stateToBody, cfAssign},
+			0:         {errAssign, cfError},
 		},
-		{ // STATE_TX
-			LEX_NEWLINE: {STATE_TX, 0},
-			IS_LCURLY:   {STATE_FIELDS, 0},
-			0:           {ERR_MUSTLCURLY, CF_ERROR},
+		{ // stateTX
+			lexNewLine: {stateTX, 0},
+			isLCurly:   {stateFields, 0},
+			0:          {errMustLCurly, cfError},
 		},
-		{ // STATE_FIELDS
-			LEX_NEWLINE: {STATE_FIELDS, 0},
-			LEX_COMMENT: {STATE_FIELDS, 0},
-			IS_COMMA:    {STATE_FIELDS, 0},
-			LEX_IDENT:   {STATE_FIELDS, CF_FIELD},
-			LEX_TYPE:    {STATE_FIELDS, CF_FIELDTYPE},
-			LEX_STRING:  {STATE_FIELDS, CF_FIELDTAG},
-			IS_RCURLY:   {STATE_TOBODY, 0},
-			0:           {ERR_MUSTRCURLY, CF_ERROR},
+		{ // stateFields
+			lexNewLine: {stateFields, 0},
+			lexComment: {stateFields, 0},
+			isComma:    {stateFields, 0},
+			lexIdent:   {stateFields, cfField},
+			lexType:    {stateFields, cfFieldType},
+			lexString:  {stateFields, cfFieldTag},
+			isRCurly:   {stateToBody, 0},
+			0:          {errMustRCurly, cfError},
 		},
 	}
 )
 
 func fError(buf *[]*Block, state int, lexem *Lexem) error {
 	errors := []string{`no error`,
-		`unknown command`,  // ERR_UNKNOWNCMD
-		`must be the name`, // ERR_MUSTNAME
-		`must be '{'`,      // ERR_MUSTLCURLY
-		`must be '}'`,      // ERR_MUSTRCURLY
-		`wrong parameters`, // ERR_PARAMS
-		`wrong variables`,  // ERR_VARS
-		`must be type`,     // ERR_VARTYPE
-		`must be '='`,      // ERR_ASSIGN
+		`unknown command`,  // errUnknownCmd
+		`must be the name`, // errMustName
+		`must be '{'`,      // errMustLCurly
+		`must be '}'`,      // errMustRCurly
+		`wrong parameters`, // errParams
+		`wrong variables`,  // errVars
+		`must be type`,     // errVarType
+		`must be '='`,      // errAssign
 	}
 	fmt.Printf("%s %x %v [Ln:%d Col:%d]\r\n", errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
-	if lexem.Type == LEX_NEWLINE {
+	if lexem.Type == lexNewLine {
 		return fmt.Errorf(`%s (unexpected new line) [Ln:%d]`, errors[state], lexem.Line-1)
 	}
 	return fmt.Errorf(`%s %x %v [Ln:%d Col:%d]`, errors[state], lexem.Type, lexem.Value, lexem.Line, lexem.Column)
@@ -287,7 +290,7 @@ func fCmdError(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
-	if block.Type == OBJ_FUNC && (state == STATE_FPARAM || state == STATE_FPARAMTYPE) {
+	if block.Type == OBJ_FUNC && (state == stateFParam || state == stateFParamTYPE) {
 		fblock := block.Info.(*FuncInfo)
 		fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
 	}
@@ -301,7 +304,7 @@ func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
-	if block.Type == OBJ_FUNC && state == STATE_FPARAM {
+	if block.Type == OBJ_FUNC && state == stateFParam {
 		fblock := block.Info.(*FuncInfo)
 		for pkey, param := range fblock.Params {
 			if param == reflect.TypeOf(nil) {
@@ -344,7 +347,7 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 		prev []*VarInfo
 		ivar VarInfo
 	)
-	if lexem.Type == LEX_EXTEND {
+	if lexem.Type == lexExtend {
 		ivar = VarInfo{&ObjInfo{OBJ_EXTEND, lexem.Value.(string)}, nil}
 	} else {
 		objInfo, tobj := findVar(lexem.Value.(string), buf)
@@ -434,7 +437,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	fblock := (*buf)[len(*buf)-1]
 	name := lexem.Value.(string)
 	switch state {
-	case STATE_BLOCK:
+	case stateBlock:
 		itype = OBJ_CONTRACT
 		name = StateName((*buf)[0].Info.(uint32), name)
 		fblock.Info = &ContractInfo{Id: uint32(len(prev.Children) - 1), Name: name, Active: (*buf)[0].Active, TblId: (*buf)[0].TblId} //lexem.Value.(string)}
@@ -464,7 +467,7 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 
 	for i := 0; i < len(lexems); i++ {
 		var (
-			newState State
+			newState compileState
 			ok       bool
 		)
 		lexem := lexems[i]
@@ -472,11 +475,11 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 			newState = states[curState][0]
 		}
 		nextState := newState.NewState & 0xff
-		if (newState.NewState & STATE_FORK) > 0 {
+		if (newState.NewState & stateFork) > 0 {
 			fork = i
 			//			continue
 		}
-		if (newState.NewState & STATE_TOFORK) > 0 {
+		if (newState.NewState & stateToFork) > 0 {
 			i = fork
 			fork = 0
 			lexem = lexems[i]
@@ -484,26 +487,26 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 			//			continue
 		}
 
-		if (newState.NewState & STATE_STAY) > 0 {
+		if (newState.NewState & stateStay) > 0 {
 			curState = nextState
 			i--
 			continue
 		}
-		if nextState == STATE_EVAL {
-			if newState.NewState&STATE_LABEL > 0 {
+		if nextState == stateEval {
+			if newState.NewState&stateLabel > 0 {
 				(*blockstack[len(blockstack)-1]).Code = append((*blockstack[len(blockstack)-1]).Code, &ByteCode{cmdLabel, 0})
 			}
 			curlen := len((*blockstack[len(blockstack)-1]).Code)
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
 				return nil, err
 			}
-			if (newState.NewState&STATE_MUSTEVAL) > 0 && curlen == len((*blockstack[len(blockstack)-1]).Code) {
+			if (newState.NewState&stateMustEval) > 0 && curlen == len((*blockstack[len(blockstack)-1]).Code) {
 				return nil, fmt.Errorf("there is not eval expression")
 			}
 			nextState = curState
 			//			fmt.Println(`Block`, *blockstack[len(blockstack)-1], len(blockstack)-1)
 		}
-		if (newState.NewState & STATE_PUSH) > 0 {
+		if (newState.NewState & statePush) > 0 {
 			stack = append(stack, curState)
 			top := blockstack[len(blockstack)-1]
 			if top.Objects == nil {
@@ -514,9 +517,9 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 			blockstack = append(blockstack, block)
 			//			fmt.Println(`PUSH`, curState)
 		}
-		if (newState.NewState & STATE_POP) > 0 {
+		if (newState.NewState & statePop) > 0 {
 			if len(stack) == 0 {
-				return nil, fError(&blockstack, ERR_MUSTLCURLY, lexem)
+				return nil, fError(&blockstack, errMustLCurly, lexem)
 			}
 			nextState = stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
@@ -534,11 +537,11 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 			//	fmt.Println(`POP`, stack, newState.NewState)
 			//			continue
 		}
-		if (newState.NewState & STATE_TOBLOCK) > 0 {
-			nextState = STATE_BLOCK
+		if (newState.NewState & stateToBlock) > 0 {
+			nextState = stateBlock
 		}
-		if (newState.NewState & STATE_TOBODY) > 0 {
-			nextState = STATE_BODY
+		if (newState.NewState & stateToBody) > 0 {
+			nextState = stateBody
 		}
 		//fmt.Println(`LEX`, curState, lexem, stack)
 		if newState.Func > 0 {
@@ -550,7 +553,7 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 		curState = nextState
 	}
 	if len(stack) > 0 {
-		return nil, fError(&blockstack, ERR_MUSTRCURLY, lexems[len(lexems)-1])
+		return nil, fError(&blockstack, errMustRCurly, lexems[len(lexems)-1])
 	}
 	//	shift := len(vm.Children)
 	//	fmt.Println(`Root`, blockstack[0])
@@ -643,11 +646,11 @@ main:
 		lexem := (*lexems)[i]
 		//		fmt.Println(i, parcount, lexem)
 		switch lexem.Type {
-		case IS_RCURLY, IS_LCURLY:
+		case isRCurly, isLCurly:
 			i--
 			break main
-		case LEX_NEWLINE:
-			if i > 0 && ((*lexems)[i-1].Type == IS_COMMA || (*lexems)[i-1].Type == LEX_OPER) {
+		case lexNewLine:
+			if i > 0 && ((*lexems)[i-1].Type == isComma || (*lexems)[i-1].Type == lexOper) {
 				continue main
 			}
 			for k := len(buffer) - 1; k >= 0; k-- {
@@ -656,11 +659,11 @@ main:
 				}
 			}
 			break main
-		case IS_LPAR:
+		case isLPar:
 			buffer = append(buffer, &ByteCode{cmdSys, uint16(0xff)})
-		case IS_LBRACK:
+		case isLBrack:
 			buffer = append(buffer, &ByteCode{cmdSys, uint16(0xff)})
-		case IS_COMMA:
+		case isComma:
 			if len(parcount) > 0 {
 				parcount[len(parcount)-1]++
 			}
@@ -673,18 +676,17 @@ main:
 					buffer = buffer[:len(buffer)-1]
 				}
 			}
-		case IS_RPAR:
+		case isRPar:
 			for {
 				if len(buffer) == 0 {
 					return fmt.Errorf(`there is not pair`)
+				}
+				prev := buffer[len(buffer)-1]
+				buffer = buffer[:len(buffer)-1]
+				if prev.Value.(uint16) == 0xff {
+					break
 				} else {
-					prev := buffer[len(buffer)-1]
-					buffer = buffer[:len(buffer)-1]
-					if prev.Value.(uint16) == 0xff {
-						break
-					} else {
-						bytecode = append(bytecode, prev)
-					}
+					bytecode = append(bytecode, prev)
 				}
 			}
 			if len(buffer) > 0 {
@@ -698,24 +700,23 @@ main:
 					bytecode = append(bytecode, prev)
 				}
 			}
-		case IS_RBRACK:
+		case isRBrack:
 			for {
 				if len(buffer) == 0 {
 					return fmt.Errorf(`there is not pair`)
+				}
+				prev := buffer[len(buffer)-1]
+				buffer = buffer[:len(buffer)-1]
+				if prev.Value.(uint16) == 0xff {
+					break
 				} else {
-					prev := buffer[len(buffer)-1]
-					buffer = buffer[:len(buffer)-1]
-					if prev.Value.(uint16) == 0xff {
-						break
-					} else {
-						bytecode = append(bytecode, prev)
-					}
+					bytecode = append(bytecode, prev)
 				}
 			}
 			if len(buffer) > 0 {
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdIndex {
 					buffer = buffer[:len(buffer)-1]
-					if i < len(*lexems)-1 && (*lexems)[i+1].Type == IS_EQ {
+					if i < len(*lexems)-1 && (*lexems)[i+1].Type == isEq {
 						i++
 						setIndex = true
 						continue
@@ -723,10 +724,10 @@ main:
 					bytecode = append(bytecode, prev)
 				}
 			}
-		case LEX_OPER:
+		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
-				if oper.Cmd == cmdSub && (i == 0 || ((*lexems)[i-1].Type != LEX_NUMBER && (*lexems)[i-1].Type != LEX_IDENT &&
-					(*lexems)[i-1].Type != LEX_STRING && (*lexems)[i-1].Type != IS_RCURLY && (*lexems)[i-1].Type != IS_RBRACK)) {
+				if oper.Cmd == cmdSub && (i == 0 || ((*lexems)[i-1].Type != lexNumber && (*lexems)[i-1].Type != lexIdent &&
+					(*lexems)[i-1].Type != lexString && (*lexems)[i-1].Type != isRCurly && (*lexems)[i-1].Type != isRBrack)) {
 					oper.Cmd = cmdSign
 					oper.Priority = cmdUnary
 				}
@@ -757,13 +758,13 @@ main:
 			} else {
 				return fmt.Errorf(`unknown operator %s`, lexem.Value.(uint32))
 			}
-		case LEX_NUMBER, LEX_STRING:
+		case lexNumber, lexString:
 			cmd = &ByteCode{cmdPush, lexem.Value}
-		case LEX_EXTEND:
+		case lexExtend:
 			if i < len(*lexems)-2 {
-				if (*lexems)[i+1].Type == IS_LPAR {
+				if (*lexems)[i+1].Type == isLPar {
 					count := 0
-					if (*lexems)[i+2].Type != IS_RPAR {
+					if (*lexems)[i+2].Type != isRPar {
 						count++
 					}
 					parcount = append(parcount, count)
@@ -773,17 +774,17 @@ main:
 			}
 			if !call {
 				cmd = &ByteCode{cmdExtend, lexem.Value.(string)}
-				if (*lexems)[i+1].Type == IS_LBRACK {
+				if (*lexems)[i+1].Type == isLBrack {
 					buffer = append(buffer, &ByteCode{cmdIndex, 0})
 				}
 			}
-		case LEX_IDENT:
+		case lexIdent:
 			objInfo, tobj := vm.findObj(lexem.Value.(string), block)
-			if objInfo == nil && (!vm.Extern || i >= len(*lexems)-2 || (*lexems)[i+1].Type != IS_LPAR) {
+			if objInfo == nil && (!vm.Extern || i >= len(*lexems)-2 || (*lexems)[i+1].Type != isLPar) {
 				return fmt.Errorf(`unknown identifier %s`, lexem.Value.(string))
 			}
 			if i < len(*lexems)-2 {
-				if (*lexems)[i+1].Type == IS_LPAR {
+				if (*lexems)[i+1].Type == isLPar {
 					var isContract bool
 					if vm.Extern && objInfo == nil {
 						objInfo = &ObjInfo{Type: OBJ_CONTRACT}
@@ -802,7 +803,7 @@ main:
 						cmdCall = cmdCallVari
 					}
 					count := 0
-					if (*lexems)[i+2].Type != IS_RPAR {
+					if (*lexems)[i+2].Type != isRPar {
 						count++
 					}
 					buffer = append(buffer, &ByteCode{cmdCall, objInfo})
@@ -831,7 +832,7 @@ main:
 					parcount = append(parcount, count)
 					call = true
 				}
-				if (*lexems)[i+1].Type == IS_LBRACK {
+				if (*lexems)[i+1].Type == isLBrack {
 					if objInfo == nil || objInfo.Type != OBJ_VAR {
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
@@ -850,9 +851,8 @@ main:
 	for i := len(buffer) - 1; i >= 0; i-- {
 		if buffer[i].Cmd == cmdSys {
 			return fmt.Errorf(`there is not pair`)
-		} else {
-			bytecode = append(bytecode, buffer[i])
 		}
+		bytecode = append(bytecode, buffer[i])
 	}
 	if setIndex {
 		bytecode = append(bytecode, &ByteCode{cmdSetIndex, 0})

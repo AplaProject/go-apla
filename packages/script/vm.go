@@ -347,9 +347,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			status = STATUS_RETURN
 		case cmdError:
 			pattern := `%v`
-			if cmd.Value.(uint32) == KEY_WARNING {
+			if cmd.Value.(uint32) == keyWarning {
 				pattern = `!%v`
-			} else if cmd.Value.(uint32) == KEY_INFO {
+			} else if cmd.Value.(uint32) == keyInfo {
 				pattern = `*%v`
 			}
 			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
