@@ -108,7 +108,7 @@ func Extend(ext *script.ExtendData) {
 
 func Run(block *script.Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	var extcost int64
-	cost := script.COST_DEFAULT
+	cost := script.CostDefault
 	if ecost, ok := (*extend)[`txcost`]; ok {
 		cost = ecost.(int64)
 	}
@@ -126,7 +126,7 @@ func ActivateContract(tblid int64, prefix string, active bool) {
 		prefix = `0`
 	}
 	for i, item := range smartVM.Block.Children {
-		if item != nil && item.Type == script.OBJ_CONTRACT {
+		if item != nil && item.Type == script.ObjContract {
 			cinfo := item.Info.(*script.ContractInfo)
 			if cinfo.TblId == tblid && strings.HasPrefix(cinfo.Name, `@`+prefix) &&
 				(len(cinfo.Name) > len(prefix)+1 && cinfo.Name[len(prefix)+1] > '9') {
@@ -140,8 +140,8 @@ func ActivateContract(tblid int64, prefix string, active bool) {
 func GetContract(name string, state uint32 /*, data interface{}*/) *Contract {
 	name = script.StateName(state, name)
 	obj, ok := smartVM.Objects[name]
-	//	fmt.Println(`Get`, ok, obj, obj.Type, script.OBJ_CONTRACT)
-	if ok && obj.Type == script.OBJ_CONTRACT {
+	//	fmt.Println(`Get`, ok, obj, obj.Type, script.ObjContract)
+	if ok && obj.Type == script.ObjContract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
 	return nil
@@ -173,7 +173,7 @@ func GetUsedContracts(name string, state uint32, full bool) []string {
 // Returns true if the contract exists
 func GetContractById(id int32 /*, p *Parser*/) *Contract {
 	idcont := id // - CNTOFF
-	if len(smartVM.Children) <= int(idcont) || smartVM.Children[idcont].Type != script.OBJ_CONTRACT {
+	if len(smartVM.Children) <= int(idcont) || smartVM.Children[idcont].Type != script.ObjContract {
 		return nil
 	}
 	return &Contract{Name: smartVM.Children[idcont].Info.(*script.ContractInfo).Name,
@@ -181,7 +181,7 @@ func GetContractById(id int32 /*, p *Parser*/) *Contract {
 }
 
 func (contract *Contract) GetFunc(name string) *script.Block {
-	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.OBJ_FUNC {
+	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.ObjFunc {
 		return block.Value.(*script.Block)
 	}
 	return nil

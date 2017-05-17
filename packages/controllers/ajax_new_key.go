@@ -129,7 +129,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 
 	ctime := lib.Time32()
 	info := (*contract).Block.Info.(*script.ContractInfo)
-	forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.Id, ctime, uint64(idkey), stateId, flags)
+	forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(idkey), stateId, flags)
 	pubhex := hex.EncodeToString(pub)
 	forsign += fmt.Sprintf(",%v,%v", name, pubhex)
 
@@ -143,7 +143,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 	lib.EncodeLenByte(&sign, signature)
 	data := make([]byte, 0)
 	header := consts.TXHeader{
-		Type:     int32(contract.Block.Info.(*script.ContractInfo).Id),
+		Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
 		Time:     uint32(ctime),
 		WalletId: uint64(idkey),
 		StateId:  int32(stateId),

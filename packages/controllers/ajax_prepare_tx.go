@@ -134,7 +134,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		/*		if c.SessStateId > 0 {
 				userId = c.SessCitizenId
 			}*/
-		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.Id, result.Time, userId, c.SessStateId, flags)
+		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, result.Time, userId, c.SessStateId, flags)
 		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
 			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 				if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {

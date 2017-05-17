@@ -32,17 +32,18 @@ type ByteCode struct {
 type ByteCodes []*ByteCode
 
 const (
-	OBJ_UNKNOWN = iota
-	OBJ_CONTRACT
-	OBJ_FUNC
-	OBJ_EXTFUNC
-	OBJ_VAR
-	OBJ_EXTEND
+	// Type of the compiled objects
+	ObjUnknown = iota
+	ObjContract
+	ObjFunc
+	ObjExtFunc
+	ObjVar
+	ObjExtend
 
-	COST_CALL     = 50
-	COST_CONTRACT = 100
-	COST_EXTEND   = 10
-	COST_DEFAULT  = int64(10000000) // default maximum cost of F
+	CostCall     = 50
+	costContract = 100
+	costExtend   = 10
+	CostDefault  = int64(10000000) // default maximum cost of F
 )
 
 type ExtFuncInfo struct {
@@ -61,7 +62,7 @@ type FieldInfo struct {
 }
 
 type ContractInfo struct {
-	Id     uint32
+	ID     uint32
 	Name   string
 	Active bool
 	TblId  int64
@@ -162,8 +163,8 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	prevparent := (*rt.extend)[`parent`]
 	parent := ``
 	for i := len(rt.blocks) - 1; i >= 0; i-- {
-		if rt.blocks[i].Block.Type == OBJ_FUNC && rt.blocks[i].Block.Parent != nil &&
-			rt.blocks[i].Block.Parent.Type == OBJ_CONTRACT {
+		if rt.blocks[i].Block.Type == ObjFunc && rt.blocks[i].Block.Parent != nil &&
+			rt.blocks[i].Block.Parent.Type == ObjContract {
 			parent = rt.blocks[i].Block.Parent.Info.(*ContractInfo).Name
 			fid, fname := ParseContract(parent)
 			cid, _ := ParseContract(name)
@@ -177,7 +178,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 			break
 		}
 	}
-	rt.cost -= COST_CONTRACT
+	rt.cost -= costContract
 	var stackCont func(interface{}, string)
 	if stack, ok := (*rt.extend)[`stack_cont`]; ok && (*rt.extend)[`parser`] != nil {
 		stackCont = stack.(func(interface{}, string))
@@ -191,7 +192,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 		}
 	}
 	for _, method := range []string{`init`, `conditions`, `action`} {
-		if block, ok := (*cblock).Objects[method]; ok && block.Type == OBJ_FUNC {
+		if block, ok := (*cblock).Objects[method]; ok && block.Type == ObjFunc {
 			rtemp := rt.vm.RunInit(rt.cost)
 			(*rt.extend)[`parent`] = parent
 			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
@@ -240,7 +241,7 @@ func (vm *VM) Extend(ext *ExtendData) {
 				data.Results[i] = fobj.Out(i)
 			}
 			//			fmt.Println(`Extend`, data)
-			vm.Objects[key] = &ObjInfo{OBJ_EXTFUNC, data}
+			vm.Objects[key] = &ObjInfo{ObjExtFunc, data}
 		}
 	}
 }
@@ -258,7 +259,7 @@ func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
 		if i == len(names)-1 {
 			return
 		}
-		if ret.Type != OBJ_CONTRACT && ret.Type != OBJ_FUNC {
+		if ret.Type != ObjContract && ret.Type != ObjFunc {
 			return nil
 		}
 		block = ret.Value.(*Block)
@@ -276,7 +277,7 @@ func (vm *VM) getObjByNameExt(name string, state uint32) (ret *ObjInfo) {
 }
 
 func (vm *VM) getInParams(ret *ObjInfo) int {
-	if ret.Type == OBJ_EXTFUNC {
+	if ret.Type == ObjExtFunc {
 		return len(ret.Value.(ExtFuncInfo).Params)
 	}
 	return len(ret.Value.(*Block).Info.(*FuncInfo).Params)
@@ -293,10 +294,10 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 		return nil, fmt.Errorf(`unknown function`, name)
 	}
 	switch obj.Type {
-	case OBJ_FUNC:
-		rt := vm.RunInit(COST_DEFAULT)
+	case ObjFunc:
+		rt := vm.RunInit(CostDefault)
 		ret, err = rt.Run(obj.Value.(*Block), params, extend)
-	case OBJ_EXTFUNC:
+	case ObjExtFunc:
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)
 		var result []reflect.Value

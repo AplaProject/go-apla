@@ -25,17 +25,11 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-/*type ValStack struct {
-	Value interface{}
-}*/
-
 const (
-	STATUS_NORMAL = iota
-	STATUS_RETURN
-	STATUS_CONTINUE
-	STATUS_BREAK
-
-//	STATUS_ERROR
+	statusNormal = iota
+	statusReturn
+	statusContinue
+	statusBreak
 )
 
 type BlockStack struct {
@@ -67,7 +61,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 	} else {
 		count = in
 	}
-	if obj.Type == OBJ_FUNC {
+	if obj.Type == ObjFunc {
 		_, err = rt.RunCode(obj.Value.(*Block))
 	} else {
 		finfo := obj.Value.(ExtFuncInfo)
@@ -250,7 +244,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	for vkey, vpar := range block.Vars {
 		rt.cost--
 		var value interface{}
-		if block.Type == OBJ_FUNC && vkey < len(block.Info.(*FuncInfo).Params) {
+		if block.Type == ObjFunc && vkey < len(block.Info.(*FuncInfo).Params) {
 			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
 		} else {
 			value = reflect.New(vpar).Elem().Interface()
@@ -262,7 +256,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		}
 		rt.vars = append(rt.vars, value)
 	}
-	if block.Type == OBJ_FUNC {
+	if block.Type == ObjFunc {
 		start -= len(block.Info.(*FuncInfo).Params)
 	}
 	var assign []*VarInfo
@@ -300,29 +294,29 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 				newci := labels[len(labels)-1]
 				labels = labels[:len(labels)-1]
-				if status == STATUS_CONTINUE {
+				if status == statusContinue {
 					ci = newci - 1
-					status = STATUS_NORMAL
+					status = statusNormal
 					continue
 				}
-				if status == STATUS_BREAK {
-					status = STATUS_NORMAL
+				if status == statusBreak {
+					status = statusNormal
 					break
 				}
 			}
 		case cmdLabel:
 			labels = append(labels, ci)
 		case cmdContinue:
-			status = STATUS_CONTINUE
+			status = statusContinue
 		case cmdBreak:
-			status = STATUS_BREAK
+			status = statusBreak
 		case cmdAssignVar:
 			assign = cmd.Value.([]*VarInfo)
 		case cmdAssign:
 			count := len(assign)
 			for ivar, item := range assign {
 				if item.Owner == nil {
-					if (*item).Obj.Type == OBJ_EXTEND {
+					if (*item).Obj.Type == ObjExtend {
 						(*rt.extend)[(*item).Obj.Value.(string)] = rt.stack[len(rt.stack)-count+ivar]
 					}
 				} else {
@@ -344,7 +338,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			//			fmt.Println(`CMD ASSIGN`, count, rt.stack, rt.vars)
 		case cmdReturn:
-			status = STATUS_RETURN
+			status = statusReturn
 		case cmdError:
 			pattern := `%v`
 			if cmd.Value.(uint32) == keyWarning {
@@ -354,7 +348,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
 		case cmdCallVari, cmdCall:
-			if cmd.Value.(*ObjInfo).Type == OBJ_EXTFUNC {
+			if cmd.Value.(*ObjInfo).Type == ObjExtFunc {
 				finfo := cmd.Value.(*ObjInfo).Value.(ExtFuncInfo)
 				if rt.vm.ExtCost != nil {
 					cost := rt.vm.ExtCost(finfo.Name)
@@ -362,13 +356,13 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						rt.cost = 0
 						return 0, fmt.Errorf(`paid CPU resource is over`)
 					} else if cost == -1 {
-						rt.cost -= COST_CALL
+						rt.cost -= CostCall
 					} else {
 						rt.cost -= cost
 					}
 				}
 			} else {
-				rt.cost -= COST_CALL
+				rt.cost -= CostCall
 			}
 			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
 
@@ -388,7 +382,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
 		case cmdExtend, cmdCallExtend:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
-				rt.cost -= COST_EXTEND
+				rt.cost -= costExtend
 				if cmd.Cmd == cmdCallExtend {
 					err := rt.extendFunc(cmd.Value.(string))
 					if err != nil {
@@ -669,7 +663,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			//			status = STATUS_ERROR
 			break
 		}
-		if status == STATUS_RETURN || status == STATUS_CONTINUE || status == STATUS_BREAK {
+		if status == statusReturn || status == statusContinue || status == statusBreak {
 			break
 		}
 		if (cmd.Cmd >> 8) == 2 {
@@ -677,17 +671,17 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			rt.stack = rt.stack[:size-1]
 		}
 	}
-	/*	if status == STATUS_BREAK {
-		status = STATUS_NORMAL
+	/*	if status == statusBreak {
+		status = statusNormal
 	}*/
-	if status == STATUS_RETURN {
+	if status == statusReturn {
 		//		fmt.Println(`Status`, start, rt.stack)
-		if rt.blocks[len(rt.blocks)-1].Block.Type == OBJ_FUNC {
+		if rt.blocks[len(rt.blocks)-1].Block.Type == ObjFunc {
 			for count := len(rt.blocks[len(rt.blocks)-1].Block.Info.(*FuncInfo).Results); count > 0; count-- {
 				rt.stack[start] = rt.stack[len(rt.stack)-count]
 				start++
 			}
-			status = STATUS_NORMAL
+			status = statusNormal
 			rt.blocks = rt.blocks[:len(rt.blocks)-1]
 
 			//			fmt.Println(`Ret function`, start, rt.stack)

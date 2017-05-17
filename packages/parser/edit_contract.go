@@ -110,7 +110,7 @@ func (p *Parser) EditContract() error {
 		return p.ErrInfo(err)
 	}
 	for i, item := range root.Children {
-		if item.Type == script.OBJ_CONTRACT {
+		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).TblId = tblid
 			root.Children[i].Info.(*script.ContractInfo).Active = active
 		}

@@ -29,11 +29,11 @@ type Action map[string][]string
 type States map[string]Action
 
 const (
-	ALPHASIZE = 33 // The length of alphabet
+	AlphaSize = 33 // The length of alphabet
 )
 
 var (
-	table [][ALPHASIZE]uint32
+	table [][AlphaSize]uint32
 	lexem = map[string]uint32{``: 0, `sys`: 1, `oper`: 2, `number`: 3, `ident`: 4, `newline`: 5, `string`: 6,
 		`comment`: 7}
 	flags    = map[string]uint32{`next`: 1, `push`: 2, `pop`: 4, `skip`: 8}
@@ -148,7 +148,7 @@ func main() {
 	// This file was generated with /tools/lextable.go
 	
 var (
-		ALPHABET = []byte{`
+		alphabet = []byte{`
 	for i, ch := range alpha {
 		out += fmt.Sprintf(`%d,`, ch)
 		if i > 0 && i%24 == 0 {
@@ -167,7 +167,7 @@ var (
 				state2int[key] = uint(len(state2int))
 			}
 		}
-		table = make([][ALPHASIZE]uint32, len(state2int))
+		table = make([][AlphaSize]uint32, len(state2int))
 		for key, istate := range data {
 			curstate := state2int[key]
 			for i := range table[curstate] {
@@ -202,7 +202,7 @@ var (
 					case 'Q':
 						ind = 4
 					case 'r':
-						ind = ALPHASIZE - 1
+						ind = AlphaSize - 1
 					default:
 						for k, ach := range alphabet {
 							if ach == ch {
@@ -222,7 +222,7 @@ var (
 				}
 			}
 		}
-		out += "\t\tLEXTABLE = [][" + fmt.Sprint(ALPHASIZE) + "]uint32{\r\n"
+		out += "\t\tlexTable = [][" + fmt.Sprint(AlphaSize) + "]uint32{\r\n"
 		for _, line := range table {
 			out += "\t\t\t{"
 			for _, ival := range line {

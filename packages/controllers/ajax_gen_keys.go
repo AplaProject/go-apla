@@ -97,7 +97,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 
 		ctime := lib.Time32()
 		info := (*contract).Block.Info.(*script.ContractInfo)
-		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.Id, ctime, uint64(c.SessCitizenId), c.SessStateId, flags)
+		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(c.SessCitizenId), c.SessStateId, flags)
 		pubhex := hex.EncodeToString(pub)
 		forsign += fmt.Sprintf(",%v,%v", ``, pubhex)
 		signature, err := lib.SignECDSA(privKey, forsign)
@@ -110,7 +110,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		lib.EncodeLenByte(&sign, signature)
 		data := make([]byte, 0)
 		header := consts.TXHeader{
-			Type:     int32(contract.Block.Info.(*script.ContractInfo).Id),
+			Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
 			Time:     uint32(ctime),
 			WalletId: uint64(c.SessCitizenId),
 			StateId:  int32(c.SessStateId),

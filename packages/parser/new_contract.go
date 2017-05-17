@@ -115,7 +115,7 @@ func (p *Parser) NewContract() error {
 		return p.ErrInfo(err)
 	}
 	for i, item := range root.Children {
-		if item.Type == script.OBJ_CONTRACT {
+		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).TblId = utils.StrToInt64(tblid)
 		}
 	}

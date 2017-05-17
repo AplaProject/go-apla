@@ -121,23 +121,24 @@ type Lexem struct {
 // Lexems is a slice of lexems
 type Lexems []*Lexem
 
-func LexParser(input []rune) (Lexems, error) {
+// lexParser parsers the input language source code
+func lexParser(input []rune) (Lexems, error) {
 	var (
 		curState                                        uint8
 		length, line, off, offline, flags, start, lexID uint32
 	)
 
 	lexems := make(Lexems, 0, len(input)/4)
-	irune := len(ALPHABET) - 1
+	irune := len(alphabet) - 1
 
 	todo := func(r rune) {
 		var letter uint8
 		if r > 127 {
-			letter = ALPHABET[irune]
+			letter = alphabet[irune]
 		} else {
-			letter = ALPHABET[r]
+			letter = alphabet[r]
 		}
-		val := LEXTABLE[curState][letter]
+		val := lexTable[curState][letter]
 		curState = uint8(val >> 16)
 		lexID = (val >> 8) & 0xff
 		flags = val & 0xff

@@ -290,21 +290,21 @@ func fCmdError(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFparam(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
-	if block.Type == OBJ_FUNC && (state == stateFParam || state == stateFParamTYPE) {
+	if block.Type == ObjFunc && (state == stateFParam || state == stateFParamTYPE) {
 		fblock := block.Info.(*FuncInfo)
 		fblock.Params = append(fblock.Params, reflect.TypeOf(nil))
 	}
 	if block.Objects == nil {
 		block.Objects = make(map[string]*ObjInfo)
 	}
-	block.Objects[lexem.Value.(string)] = &ObjInfo{Type: OBJ_VAR, Value: len(block.Vars)}
+	block.Objects[lexem.Value.(string)] = &ObjInfo{Type: ObjVar, Value: len(block.Vars)}
 	block.Vars = append(block.Vars, reflect.TypeOf(nil))
 	return nil
 }
 
 func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 	block := (*buf)[len(*buf)-1]
-	if block.Type == OBJ_FUNC && state == stateFParam {
+	if block.Type == ObjFunc && state == stateFParam {
 		fblock := block.Info.(*FuncInfo)
 		for pkey, param := range fblock.Params {
 			if param == reflect.TypeOf(nil) {
@@ -348,10 +348,10 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 		ivar VarInfo
 	)
 	if lexem.Type == lexExtend {
-		ivar = VarInfo{&ObjInfo{OBJ_EXTEND, lexem.Value.(string)}, nil}
+		ivar = VarInfo{&ObjInfo{ObjExtend, lexem.Value.(string)}, nil}
 	} else {
 		objInfo, tobj := findVar(lexem.Value.(string), buf)
-		if objInfo == nil || objInfo.Type != OBJ_VAR {
+		if objInfo == nil || objInfo.Type != ObjVar {
 			return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 		}
 		//		fmt.Println(`Assign Var`, lexem.Value.(string), objInfo, objInfo.Type, reflect.TypeOf(objInfo.Value), tobj)
@@ -378,7 +378,7 @@ func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fTx(buf *[]*Block, state int, lexem *Lexem) error {
 	contract := (*buf)[len(*buf)-1]
-	if contract.Type != OBJ_CONTRACT {
+	if contract.Type != ObjContract {
 		return fmt.Errorf(`data can only be in contract`)
 	}
 	(*contract).Info.(*ContractInfo).Tx = new([]*FieldInfo)
@@ -438,11 +438,11 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	name := lexem.Value.(string)
 	switch state {
 	case stateBlock:
-		itype = OBJ_CONTRACT
+		itype = ObjContract
 		name = StateName((*buf)[0].Info.(uint32), name)
-		fblock.Info = &ContractInfo{Id: uint32(len(prev.Children) - 1), Name: name, Active: (*buf)[0].Active, TblId: (*buf)[0].TblId} //lexem.Value.(string)}
+		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name, Active: (*buf)[0].Active, TblId: (*buf)[0].TblId} //lexem.Value.(string)}
 	default:
-		itype = OBJ_FUNC
+		itype = ObjFunc
 		fblock.Info = &FuncInfo{}
 	}
 	fblock.Type = itype
@@ -452,7 +452,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 
 func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int64) (*Block, error) {
 	root := &Block{Info: idstate, Active: active, TblId: tblid}
-	lexems, err := LexParser(input)
+	lexems, err := lexParser(input)
 	if err != nil {
 		return nil, err
 	}
@@ -564,21 +564,21 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 func (vm *VM) FlushBlock(root *Block) {
 	shift := len(vm.Children)
 	for key, item := range root.Objects {
-		if cur, ok := vm.Objects[key]; ok && item.Type == OBJ_CONTRACT {
-			root.Objects[key].Value.(*Block).Info.(*ContractInfo).Id = cur.Value.(*Block).Info.(*ContractInfo).Id + 0xFFFF
+		if cur, ok := vm.Objects[key]; ok && item.Type == ObjContract {
+			root.Objects[key].Value.(*Block).Info.(*ContractInfo).ID = cur.Value.(*Block).Info.(*ContractInfo).ID + 0xFFFF
 		}
 		vm.Objects[key] = item
 	}
 	for _, item := range root.Children {
-		if item.Type == OBJ_CONTRACT {
-			if item.Info.(*ContractInfo).Id > 0xFFFF {
-				item.Info.(*ContractInfo).Id -= 0xFFFF
-				vm.Children[item.Info.(*ContractInfo).Id] = item
+		if item.Type == ObjContract {
+			if item.Info.(*ContractInfo).ID > 0xFFFF {
+				item.Info.(*ContractInfo).ID -= 0xFFFF
+				vm.Children[item.Info.(*ContractInfo).ID] = item
 				shift--
 				continue
 			}
 			item.Parent = &vm.Block
-			item.Info.(*ContractInfo).Id += uint32(shift)
+			item.Info.(*ContractInfo).ID += uint32(shift)
 		}
 		vm.Children = append(vm.Children, item)
 	}
@@ -787,19 +787,19 @@ main:
 				if (*lexems)[i+1].Type == isLPar {
 					var isContract bool
 					if vm.Extern && objInfo == nil {
-						objInfo = &ObjInfo{Type: OBJ_CONTRACT}
+						objInfo = &ObjInfo{Type: ObjContract}
 					}
-					if objInfo == nil || (objInfo.Type != OBJ_EXTFUNC && objInfo.Type != OBJ_FUNC &&
-						objInfo.Type != OBJ_CONTRACT) {
+					if objInfo == nil || (objInfo.Type != ObjExtFunc && objInfo.Type != ObjFunc &&
+						objInfo.Type != ObjContract) {
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))
 					}
-					if objInfo.Type == OBJ_CONTRACT {
+					if objInfo.Type == ObjContract {
 						objInfo, tobj = vm.findObj(`ExecContract`, block)
 						isContract = true
 					}
 					cmdCall := uint16(cmdCall)
-					if objInfo.Type == OBJ_EXTFUNC && objInfo.Value.(ExtFuncInfo).Variadic { /*||
-						(objInfo.Type == OBJ_FUNC && objInfo.Value.(*Block).Info.(FuncInfo).Variadic )*/
+					if objInfo.Type == ObjExtFunc && objInfo.Value.(ExtFuncInfo).Variadic { /*||
+						(objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(FuncInfo).Variadic )*/
 						cmdCall = cmdCallVari
 					}
 					count := 0
@@ -811,7 +811,7 @@ main:
 						name := StateName((*block)[0].Info.(uint32), lexem.Value.(string))
 						for i := len(*block) - 1; i >= 0; i-- {
 							topblock := (*block)[i]
-							if topblock.Type == OBJ_CONTRACT {
+							if topblock.Type == ObjContract {
 								if topblock.Info.(*ContractInfo).Used == nil {
 									topblock.Info.(*ContractInfo).Used = make(map[string]bool)
 								}
@@ -833,7 +833,7 @@ main:
 					call = true
 				}
 				if (*lexems)[i+1].Type == isLBrack {
-					if objInfo == nil || objInfo.Type != OBJ_VAR {
+					if objInfo == nil || objInfo.Type != ObjVar {
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
 					buffer = append(buffer, &ByteCode{cmdIndex, 0})

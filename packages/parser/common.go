@@ -571,10 +571,10 @@ func (p *Parser) GetContractLimit() (ret int64) {
 		TxWalletID       int64
 		TxStateID */
 	/*	if ret == 0 {
-		ret = script.COST_DEFAULT
+		ret = script.CostDefault
 	}*/
 	// default maximum cost of F
-	p.TxCost = script.COST_DEFAULT // ret * fuel
+	p.TxCost = script.CostDefault // ret * fuel
 	return p.TxCost
 }
 
