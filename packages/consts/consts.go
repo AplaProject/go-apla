@@ -99,9 +99,9 @@ var Countries = []string{"Afghanistan", "Albania", "Algeria", "American Samoa", 
 
 var TxTypes = map[int]string{
 	1:  "FirstBlock",
-	2:  "CitizenRequest",
-	3:  "NewCitizen",
-	4:  "TXNewCitizen",
+	2:  "Reserved1",
+	3:  "Reserved2",
+	4:  "Reserved3",
 	5:  "DLTTransfer",
 	6:  "DLTChangeHostVote",
 	7:  "UpdFullNodes",

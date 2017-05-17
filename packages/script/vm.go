@@ -61,7 +61,7 @@ func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
 	)
 	size := len(rt.stack)
 	in = rt.vm.getInParams(obj)
-	if cmd == CMD_CALLVARI {
+	if cmd == cmdCallVari {
 		count = rt.stack[size-1].(int)
 		size--
 	} else {
@@ -283,19 +283,19 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			top[i-1] = rt.stack[size-i]
 		}
 		switch cmd.Cmd {
-		case CMD_PUSH:
+		case cmdPush:
 			rt.stack = append(rt.stack, cmd.Value)
-		case CMD_PUSHSTR:
+		case cmdPushStr:
 			rt.stack = append(rt.stack, cmd.Value.(string))
-		case CMD_IF:
+		case cmdIf:
 			if valueToBool(rt.stack[len(rt.stack)-1]) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
-		case CMD_ELSE:
+		case cmdElse:
 			if !valueToBool(rt.stack[len(rt.stack)-1]) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 			}
-		case CMD_WHILE:
+		case cmdWhile:
 			if valueToBool(rt.stack[len(rt.stack)-1]) {
 				status, err = rt.RunCode(cmd.Value.(*Block))
 				newci := labels[len(labels)-1]
@@ -310,15 +310,15 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					break
 				}
 			}
-		case CMD_LABEL:
+		case cmdLabel:
 			labels = append(labels, ci)
-		case CMD_CONTINUE:
+		case cmdContinue:
 			status = STATUS_CONTINUE
-		case CMD_BREAK:
+		case cmdBreak:
 			status = STATUS_BREAK
-		case CMD_ASSIGNVAR:
+		case cmdAssignVar:
 			assign = cmd.Value.([]*VarInfo)
-		case CMD_ASSIGN:
+		case cmdAssign:
 			count := len(assign)
 			for ivar, item := range assign {
 				if item.Owner == nil {
@@ -343,9 +343,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 			}
 			//			fmt.Println(`CMD ASSIGN`, count, rt.stack, rt.vars)
-		case CMD_RETURN:
+		case cmdReturn:
 			status = STATUS_RETURN
-		case CMD_ERROR:
+		case cmdError:
 			pattern := `%v`
 			if cmd.Value.(uint32) == KEY_WARNING {
 				pattern = `!%v`
@@ -353,7 +353,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				pattern = `*%v`
 			}
 			err = fmt.Errorf(pattern, rt.stack[len(rt.stack)-1])
-		case CMD_CALLVARI, CMD_CALL:
+		case cmdCallVari, cmdCall:
 			if cmd.Value.(*ObjInfo).Type == OBJ_EXTFUNC {
 				finfo := cmd.Value.(*ObjInfo).Value.(ExtFuncInfo)
 				if rt.vm.ExtCost != nil {
@@ -372,7 +372,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
 
-		case CMD_VAR:
+		case cmdVar:
 			ivar := cmd.Value.(*VarInfo)
 			var i int
 			for i = len(rt.blocks) - 1; i >= 0; i-- {
@@ -386,10 +386,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			//			fmt.Println(`VAR`, voff, *ivar.Obj, ivar.Owner.Vars, rt.vars)
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
-		case CMD_EXTEND, CMD_CALLEXTEND:
+		case cmdExtend, cmdCallExtend:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
 				rt.cost -= COST_EXTEND
-				if cmd.Cmd == CMD_CALLEXTEND {
+				if cmd.Cmd == cmdCallExtend {
 					err := rt.extendFunc(cmd.Value.(string))
 					if err != nil {
 						return 0, fmt.Errorf(`extend function %s %s`, cmd.Value.(string), err.Error())
@@ -404,7 +404,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			} else {
 				err = fmt.Errorf(`unknown extend identifier %s`, cmd.Value.(string))
 			}
-		case CMD_INDEX:
+		case cmdIndex:
 			itype := reflect.TypeOf(rt.stack[size-2]).String()
 			switch {
 			case itype[:3] == `map`:
@@ -424,7 +424,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
 			}
-		case CMD_SETINDEX:
+		case cmdSetIndex:
 			itype := reflect.TypeOf(rt.stack[size-3]).String()
 			switch {
 			case itype[:3] == `map`:
@@ -462,17 +462,17 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
 			}
-		case CMD_SIGN:
+		case cmdSign:
 			switch top[0].(type) {
 			case float64:
 				rt.stack[size-1] = -top[0].(float64)
 			default:
 				rt.stack[size-1] = -top[0].(int64)
 			}
-		case CMD_NOT:
+		case cmdNot:
 			rt.stack[size-1] = !valueToBool(top[0])
 
-		case CMD_ADD:
+		case cmdAdd:
 			/*			fmt.Println(`Stack`)
 						for _, item := range rt.stack {
 							fmt.Printf("|%v|", item)
@@ -502,7 +502,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					bin = top[1].(decimal.Decimal).Add(ValueToDecimal(top[0]))
 				}
 			}
-		case CMD_SUB:
+		case cmdSub:
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -525,7 +525,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					bin = top[1].(decimal.Decimal).Sub(ValueToDecimal(top[0]))
 				}
 			}
-		case CMD_MUL:
+		case cmdMul:
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -556,7 +556,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					bin = top[1].(decimal.Decimal).Mul(ValueToDecimal(top[0]))
 				}
 			}
-		case CMD_DIV:
+		case cmdDiv:
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -582,11 +582,11 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					bin = top[1].(decimal.Decimal).Div(ValueToDecimal(top[0]))
 				}
 			}
-		case CMD_AND:
+		case cmdAnd:
 			bin = valueToBool(top[1]) && valueToBool(top[0])
-		case CMD_OR:
+		case cmdOr:
 			bin = valueToBool(top[1]) || valueToBool(top[0])
-		case CMD_EQUAL, CMD_NOTEQ:
+		case cmdEqual, cmdNotEq:
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -608,10 +608,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) == 0
 			}
-			if cmd.Cmd == CMD_NOTEQ {
+			if cmd.Cmd == cmdNotEq {
 				bin = !bin.(bool)
 			}
-		case CMD_LESS, CMD_NOTLESS:
+		case cmdLess, cmdNotLess:
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -633,10 +633,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) < 0
 			}
-			if cmd.Cmd == CMD_NOTLESS {
+			if cmd.Cmd == cmdNotLess {
 				bin = !bin.(bool)
 			}
-		case CMD_GREAT, CMD_NOTGREAT:
+		case cmdGreat, cmdNotGreat:
 			switch top[1].(type) {
 			case string:
 				switch top[0].(type) {
@@ -658,7 +658,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			default:
 				bin = top[1].(decimal.Decimal).Cmp(ValueToDecimal(top[0])) > 0
 			}
-			if cmd.Cmd == CMD_NOTGREAT {
+			if cmd.Cmd == cmdNotGreat {
 				bin = !bin.(bool)
 			}
 		default:

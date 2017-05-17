@@ -106,10 +106,10 @@ const (
 
 var (
 	opers = map[uint32]Oper{
-		IS_OR: {CMD_OR, 10}, IS_AND: {CMD_AND, 15}, IS_EQEQ: {CMD_EQUAL, 20}, IS_NOTEQ: {CMD_NOTEQ, 20},
-		IS_LESS: {CMD_LESS, 22}, IS_GREQ: {CMD_NOTLESS, 22}, IS_GREAT: {CMD_GREAT, 22}, IS_LESSEQ: {CMD_NOTGREAT, 22},
-		IS_PLUS: {CMD_ADD, 25}, IS_MINUS: {CMD_SUB, 25}, IS_ASTERISK: {CMD_MUL, 30},
-		IS_SOLIDUS: {CMD_DIV, 30}, IS_SIGN: {CMD_SIGN, UNARY}, IS_NOT: {CMD_NOT, UNARY}, IS_LPAR: {CMD_SYS, 0xff}, IS_RPAR: {CMD_SYS, 0},
+		IS_OR: {cmdOr, 10}, IS_AND: {cmdAnd, 15}, IS_EQEQ: {cmdEqual, 20}, IS_NOTEQ: {cmdNotEq, 20},
+		IS_LESS: {cmdLess, 22}, IS_GREQ: {cmdNotLess, 22}, IS_GREAT: {cmdGreat, 22}, IS_LESSEQ: {cmdNotGreat, 22},
+		IS_PLUS: {cmdAdd, 25}, IS_MINUS: {cmdSub, 25}, IS_ASTERISK: {cmdMul, 30},
+		IS_SOLIDUS: {cmdDiv, 30}, IS_SIGN: {cmdSign, cmdUnary}, IS_NOT: {cmdNot, cmdUnary}, IS_LPAR: {cmdSys, 0xff}, IS_RPAR: {cmdSys, 0},
 	}
 	funcs = []FuncCompile{nil,
 		fError,
@@ -276,12 +276,12 @@ func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
 	//	fblock := (*buf)[len(*buf)-1].Info.(*FuncInfo)
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_RETURN, 0}) //len(fblock.Results)})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdReturn, 0}) //len(fblock.Results)})
 	return nil
 }
 
 func fCmdError(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_ERROR, lexem.Value})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdError, lexem.Value})
 	return nil
 }
 
@@ -318,23 +318,23 @@ func fFtype(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fIf(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_IF, (*buf)[len(*buf)-1]})
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdIf, (*buf)[len(*buf)-1]})
 	return nil
 }
 
 func fWhile(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_WHILE, (*buf)[len(*buf)-1]})
-	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{CMD_CONTINUE, 0})
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdWhile, (*buf)[len(*buf)-1]})
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdContinue, 0})
 	return nil
 }
 
 func fContinue(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_CONTINUE, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdContinue, 0})
 	return nil
 }
 
 func fBreak(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_BREAK, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdBreak, 0})
 	return nil
 }
 
@@ -355,21 +355,21 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 		ivar = VarInfo{objInfo, tobj}
 	}
 	if len(block.Code) > 0 {
-		if block.Code[len(block.Code)-1].Cmd == CMD_ASSIGNVAR {
+		if block.Code[len(block.Code)-1].Cmd == cmdAssignVar {
 			prev = block.Code[len(block.Code)-1].Value.([]*VarInfo)
 		}
 	}
 	prev = append(prev, &ivar)
 	if len(prev) == 1 {
-		(*(*buf)[len(*buf)-1]).Code = append((*block).Code, &ByteCode{CMD_ASSIGNVAR, prev})
+		(*(*buf)[len(*buf)-1]).Code = append((*block).Code, &ByteCode{cmdAssignVar, prev})
 	} else {
-		(*(*buf)[len(*buf)-1]).Code[len(block.Code)-1] = &ByteCode{CMD_ASSIGNVAR, prev}
+		(*(*buf)[len(*buf)-1]).Code[len(block.Code)-1] = &ByteCode{cmdAssignVar, prev}
 	}
 	return nil
 }
 
 func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{CMD_ASSIGN, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdAssign, 0})
 	return nil
 }
 
@@ -411,10 +411,10 @@ func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 	code := (*(*buf)[len(*buf)-2]).Code
-	if code[len(code)-1].Cmd != CMD_IF {
+	if code[len(code)-1].Cmd != cmdIf {
 		return fmt.Errorf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column)
 	}
-	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{CMD_ELSE, (*buf)[len(*buf)-1]})
+	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{cmdElse, (*buf)[len(*buf)-1]})
 	return nil
 }
 
@@ -491,7 +491,7 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 		}
 		if nextState == STATE_EVAL {
 			if newState.NewState&STATE_LABEL > 0 {
-				(*blockstack[len(blockstack)-1]).Code = append((*blockstack[len(blockstack)-1]).Code, &ByteCode{CMD_LABEL, 0})
+				(*blockstack[len(blockstack)-1]).Code = append((*blockstack[len(blockstack)-1]).Code, &ByteCode{cmdLabel, 0})
 			}
 			curlen := len((*blockstack[len(blockstack)-1]).Code)
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
@@ -523,10 +523,10 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 
 			if len(blockstack) >= 2 {
 				prev := blockstack[len(blockstack)-2]
-				if len(prev.Code) > 0 && (*prev).Code[len((*prev).Code)-1].Cmd == CMD_CONTINUE {
+				if len(prev.Code) > 0 && (*prev).Code[len((*prev).Code)-1].Cmd == cmdContinue {
 					(*prev).Code = (*prev).Code[:len((*prev).Code)-1]
 					prev = blockstack[len(blockstack)-1]
-					(*prev).Code = append((*prev).Code, &ByteCode{CMD_CONTINUE, 0})
+					(*prev).Code = append((*prev).Code, &ByteCode{cmdContinue, 0})
 				}
 			}
 			blockstack = blockstack[:len(blockstack)-1]
@@ -651,22 +651,22 @@ main:
 				continue main
 			}
 			for k := len(buffer) - 1; k >= 0; k-- {
-				if buffer[k].Cmd == CMD_SYS {
+				if buffer[k].Cmd == cmdSys {
 					continue main
 				}
 			}
 			break main
 		case IS_LPAR:
-			buffer = append(buffer, &ByteCode{CMD_SYS, uint16(0xff)})
+			buffer = append(buffer, &ByteCode{cmdSys, uint16(0xff)})
 		case IS_LBRACK:
-			buffer = append(buffer, &ByteCode{CMD_SYS, uint16(0xff)})
+			buffer = append(buffer, &ByteCode{cmdSys, uint16(0xff)})
 		case IS_COMMA:
 			if len(parcount) > 0 {
 				parcount[len(parcount)-1]++
 			}
 			for len(buffer) > 0 {
 				prev := buffer[len(buffer)-1]
-				if prev.Cmd == CMD_SYS && prev.Value.(uint16) == 0xff {
+				if prev.Cmd == cmdSys && prev.Value.(uint16) == 0xff {
 					break
 				} else {
 					bytecode = append(bytecode, prev)
@@ -688,11 +688,11 @@ main:
 				}
 			}
 			if len(buffer) > 0 {
-				if prev := buffer[len(buffer)-1]; prev.Cmd == CMD_CALL || prev.Cmd == CMD_CALLVARI {
+				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdCall || prev.Cmd == cmdCallVari {
 					count := parcount[len(parcount)-1]
 					parcount = parcount[:len(parcount)-1]
-					if prev.Cmd == CMD_CALLVARI {
-						bytecode = append(bytecode, &ByteCode{CMD_PUSH, count})
+					if prev.Cmd == cmdCallVari {
+						bytecode = append(bytecode, &ByteCode{cmdPush, count})
 					}
 					buffer = buffer[:len(buffer)-1]
 					bytecode = append(bytecode, prev)
@@ -713,7 +713,7 @@ main:
 				}
 			}
 			if len(buffer) > 0 {
-				if prev := buffer[len(buffer)-1]; prev.Cmd == CMD_INDEX {
+				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdIndex {
 					buffer = buffer[:len(buffer)-1]
 					if i < len(*lexems)-1 && (*lexems)[i+1].Type == IS_EQ {
 						i++
@@ -725,10 +725,10 @@ main:
 			}
 		case LEX_OPER:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
-				if oper.Cmd == CMD_SUB && (i == 0 || ((*lexems)[i-1].Type != LEX_NUMBER && (*lexems)[i-1].Type != LEX_IDENT &&
+				if oper.Cmd == cmdSub && (i == 0 || ((*lexems)[i-1].Type != LEX_NUMBER && (*lexems)[i-1].Type != LEX_IDENT &&
 					(*lexems)[i-1].Type != LEX_STRING && (*lexems)[i-1].Type != IS_RCURLY && (*lexems)[i-1].Type != IS_RBRACK)) {
-					oper.Cmd = CMD_SIGN
-					oper.Priority = UNARY
+					oper.Cmd = cmdSign
+					oper.Priority = cmdUnary
 				}
 				byteOper := &ByteCode{oper.Cmd, oper.Priority}
 				for {
@@ -737,10 +737,10 @@ main:
 						break
 					} else {
 						prev := buffer[len(buffer)-1]
-						if prev.Value.(uint16) >= oper.Priority && oper.Priority != UNARY && prev.Cmd != CMD_SYS {
-							if prev.Value.(uint16) == UNARY { // Right to left
+						if prev.Value.(uint16) >= oper.Priority && oper.Priority != cmdUnary && prev.Cmd != cmdSys {
+							if prev.Value.(uint16) == cmdUnary { // Right to left
 								unar := len(buffer) - 1
-								for ; unar > 0 && buffer[unar-1].Value.(uint16) == UNARY; unar-- {
+								for ; unar > 0 && buffer[unar-1].Value.(uint16) == cmdUnary; unar-- {
 								}
 								bytecode = append(bytecode, buffer[unar:]...)
 								buffer = buffer[:unar]
@@ -758,7 +758,7 @@ main:
 				return fmt.Errorf(`unknown operator %s`, lexem.Value.(uint32))
 			}
 		case LEX_NUMBER, LEX_STRING:
-			cmd = &ByteCode{CMD_PUSH, lexem.Value}
+			cmd = &ByteCode{cmdPush, lexem.Value}
 		case LEX_EXTEND:
 			if i < len(*lexems)-2 {
 				if (*lexems)[i+1].Type == IS_LPAR {
@@ -767,14 +767,14 @@ main:
 						count++
 					}
 					parcount = append(parcount, count)
-					buffer = append(buffer, &ByteCode{CMD_CALLEXTEND, lexem.Value.(string)})
+					buffer = append(buffer, &ByteCode{cmdCallExtend, lexem.Value.(string)})
 					call = true
 				}
 			}
 			if !call {
-				cmd = &ByteCode{CMD_EXTEND, lexem.Value.(string)}
+				cmd = &ByteCode{cmdExtend, lexem.Value.(string)}
 				if (*lexems)[i+1].Type == IS_LBRACK {
-					buffer = append(buffer, &ByteCode{CMD_INDEX, 0})
+					buffer = append(buffer, &ByteCode{cmdIndex, 0})
 				}
 			}
 		case LEX_IDENT:
@@ -796,10 +796,10 @@ main:
 						objInfo, tobj = vm.findObj(`ExecContract`, block)
 						isContract = true
 					}
-					cmdCall := uint16(CMD_CALL)
+					cmdCall := uint16(cmdCall)
 					if objInfo.Type == OBJ_EXTFUNC && objInfo.Value.(ExtFuncInfo).Variadic { /*||
 						(objInfo.Type == OBJ_FUNC && objInfo.Value.(*Block).Info.(FuncInfo).Variadic )*/
-						cmdCall = CMD_CALLVARI
+						cmdCall = cmdCallVari
 					}
 					count := 0
 					if (*lexems)[i+2].Type != IS_RPAR {
@@ -817,16 +817,16 @@ main:
 								topblock.Info.(*ContractInfo).Used[name] = true
 							}
 						}
-						bytecode = append(bytecode, &ByteCode{CMD_PUSH, name})
+						bytecode = append(bytecode, &ByteCode{cmdPush, name})
 						if count == 0 {
 							count = 2
-							bytecode = append(bytecode, &ByteCode{CMD_PUSH, ""})
-							bytecode = append(bytecode, &ByteCode{CMD_PUSH, ""})
+							bytecode = append(bytecode, &ByteCode{cmdPush, ""})
+							bytecode = append(bytecode, &ByteCode{cmdPush, ""})
 						}
 						count++
 					}
 					if lexem.Value.(string) == `CallContract` {
-						bytecode = append(bytecode, &ByteCode{CMD_PUSH, (*block)[0].Info.(uint32)})
+						bytecode = append(bytecode, &ByteCode{cmdPush, (*block)[0].Info.(uint32)})
 					}
 					parcount = append(parcount, count)
 					call = true
@@ -835,11 +835,11 @@ main:
 					if objInfo == nil || objInfo.Type != OBJ_VAR {
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
-					buffer = append(buffer, &ByteCode{CMD_INDEX, 0})
+					buffer = append(buffer, &ByteCode{cmdIndex, 0})
 				}
 			}
 			if !call {
-				cmd = &ByteCode{CMD_VAR, &VarInfo{objInfo, tobj}}
+				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
 		}
 		if cmd != nil {
@@ -848,14 +848,14 @@ main:
 	}
 	*ind = i
 	for i := len(buffer) - 1; i >= 0; i-- {
-		if buffer[i].Cmd == CMD_SYS {
+		if buffer[i].Cmd == cmdSys {
 			return fmt.Errorf(`there is not pair`)
 		} else {
 			bytecode = append(bytecode, buffer[i])
 		}
 	}
 	if setIndex {
-		bytecode = append(bytecode, &ByteCode{CMD_SETINDEX, 0})
+		bytecode = append(bytecode, &ByteCode{cmdSetIndex, 0})
 	}
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil

@@ -29,7 +29,7 @@ type BlockHeader struct {
 	BlockId  uint32
 	Time     uint32
 	WalletId int64
-	StateId     byte
+	StateId  byte
 	Sign     []byte
 }
 
@@ -92,7 +92,7 @@ func MakeStruct(name string) interface{} {
 }
 
 func IsStruct(tx int) bool {
-	return tx > 0 && tx <= 4 /*TXNewCitizen*/
+	return tx == 1 // > 0 && tx <= 4 /*TXNewCitizen*/
 }
 
 func Header(v interface{}) TxHeader {
