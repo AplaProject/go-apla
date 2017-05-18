@@ -20,27 +20,29 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 )
 
-type EvalCode struct {
+type evalCode struct {
 	Source string
 	Code   *Block
 }
 
 var (
-	evals = make(map[uint64]*EvalCode)
+	evals = make(map[uint64]*evalCode)
 )
 
+// CompileEval compiles conditional exppression
 func (vm *VM) CompileEval(input string, state uint32) error {
 	source := `func eval bool { return ` + input + `}`
 	block, err := vm.CompileBlock([]rune(source), state, false, 0)
 	//	fmt.Println(`Compile Eval`, err, input)
 	if err == nil {
-		evals[lib.CRC64([]byte(input))] = &EvalCode{Source: input, Code: block}
+		evals[lib.CRC64([]byte(input))] = &evalCode{Source: input, Code: block}
 		return nil
 	}
 	return err
 
 }
 
+// EvalIf runs the conditional expression. It compiles the source code before that if that's necessary.
 func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (bool, error) {
 	if len(input) == 0 {
 		return true, nil

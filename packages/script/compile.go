@@ -72,21 +72,21 @@ const (
 )
 
 const (
-	errNoError    = iota
-	errUnknownCmd // unknown command
-	errMustName   // must be the name
-	errMustLCurly // must be '{'
-	errMustRCurly // must be '}'
-	errParams     // wrong parameters
-	errVars       // wrong variables
-	errVarType    // must be type
-	errAssign     // must be '='
+	//	errNoError    = iota
+	errUnknownCmd = iota + 1 // unknown command
+	errMustName              // must be the name
+	errMustLCurly            // must be '{'
+	errMustRCurly            // must be '}'
+	errParams                // wrong parameters
+	errVars                  // wrong variables
+	errVarType               // must be type
+	errAssign                // must be '='
 )
 
 const (
 	// Indexes of handle functions funcs = CompileFunc[]
-	cfNothing = iota
-	cfError
+	//	cfNothing = iota
+	cfError = iota + 1
 	cfNameBlock
 	cfFResult
 	cfReturn
@@ -104,7 +104,8 @@ const (
 	cfContinue
 	cfBreak
 	cfCmdError
-	cfEval
+
+//	cfEval
 )
 
 var (
@@ -421,7 +422,7 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
-// StateName checks the name of the contract and modifies it to @[state]name if it is neccessary.
+// StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
 	if name[0] != '@' {
 		return fmt.Sprintf(`@%d%s`, state, name)
@@ -441,7 +442,7 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	case stateBlock:
 		itype = ObjContract
 		name = StateName((*buf)[0].Info.(uint32), name)
-		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name, Active: (*buf)[0].Active, TblId: (*buf)[0].TblId} //lexem.Value.(string)}
+		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name, Active: (*buf)[0].Active, TableID: (*buf)[0].TableID} //lexem.Value.(string)}
 	default:
 		itype = ObjFunc
 		fblock.Info = &FuncInfo{}
@@ -451,8 +452,9 @@ func fNameBlock(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
+// CompileBlock compile the source code into the Block structure with a byte-code
 func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int64) (*Block, error) {
-	root := &Block{Info: idstate, Active: active, TblId: tblid}
+	root := &Block{Info: idstate, Active: active, TableID: tblid}
 	lexems, err := lexParser(input)
 	if err != nil {
 		return nil, err
@@ -557,6 +559,7 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 	return root, nil
 }
 
+// FlushBlock loads the compiled Block into the virtual machine
 func (vm *VM) FlushBlock(root *Block) {
 	shift := len(vm.Children)
 	for key, item := range root.Objects {
@@ -580,6 +583,7 @@ func (vm *VM) FlushBlock(root *Block) {
 	}
 }
 
+// FlushExtern switches off the extern mode of the compilation
 func (vm *VM) FlushExtern() (err error) {
 	/*	if !vm.Extern {
 		return
@@ -588,6 +592,7 @@ func (vm *VM) FlushExtern() (err error) {
 	return
 }
 
+// Compile compiles a source code and loads the byte-code into the virtual machine
 func (vm *VM) Compile(input []rune, state uint32, active bool, tblid int64) error {
 	root, err := vm.CompileBlock(input, state, active, tblid)
 	if err == nil {
@@ -609,9 +614,7 @@ func findVar(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
 }
 
 func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block) {
-	var sname string
-
-	sname = StateName((*block)[0].Info.(uint32), name)
+	sname := StateName((*block)[0].Info.(uint32), name)
 	ret, owner = findVar(name, block)
 	if ret != nil {
 		return
@@ -753,7 +756,7 @@ main:
 					}
 				}
 			} else {
-				return fmt.Errorf(`unknown operator %s`, lexem.Value.(uint32))
+				return fmt.Errorf(`unknown operator %d`, lexem.Value.(uint32))
 			}
 		case lexNumber, lexString:
 			cmd = &ByteCode{cmdPush, lexem.Value}
@@ -806,8 +809,8 @@ main:
 					buffer = append(buffer, &ByteCode{cmdCall, objInfo})
 					if isContract {
 						name := StateName((*block)[0].Info.(uint32), lexem.Value.(string))
-						for i := len(*block) - 1; i >= 0; i-- {
-							topblock := (*block)[i]
+						for j := len(*block) - 1; j >= 0; j-- {
+							topblock := (*block)[j]
 							if topblock.Type == ObjContract {
 								if topblock.Info.(*ContractInfo).Used == nil {
 									topblock.Info.(*ContractInfo).Used = make(map[string]bool)

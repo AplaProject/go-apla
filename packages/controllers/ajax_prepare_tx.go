@@ -101,7 +101,7 @@ func (c *Controller) checkTx(result *PrepareTxJson) (contract *smart.Contract, e
 						break
 					}
 				}
-				if fitem.Type.String() == `decimal.Decimal` {
+				if fitem.Type.String() == script.Decimal {
 					re := regexp.MustCompile(`^\d+$`) //`^\d+\.?\d+?$`
 					if !re.Match([]byte(val)) {
 						err = fmt.Errorf(`The value of money %s is not valid`, val)
@@ -159,7 +159,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 					val = strings.TrimSpace(c.r.FormValue(fitem.Name))
 					if strings.Index(fitem.Tags, `address`) >= 0 {
 						val = utils.Int64ToStr(lib.StringToAddress(val))
-					} else if fitem.Type.String() == `decimal.Decimal` {
+					} else if fitem.Type.String() == script.Decimal {
 						val = strings.TrimLeft(val, `0`)
 					}
 				}

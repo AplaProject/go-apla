@@ -692,7 +692,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TblId = utils.StrToInt64(cnt[`id`])
+			root.Children[i].Info.(*script.ContractInfo).TableID = utils.StrToInt64(cnt[`id`])
 			root.Children[i].Info.(*script.ContractInfo).Active = cnt[`active`] == `1`
 		}
 	}

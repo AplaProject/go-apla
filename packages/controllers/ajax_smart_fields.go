@@ -85,11 +85,11 @@ func (c *Controller) AjaxSmartFields() interface{} {
 							continue main
 						}
 					}
-					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
+					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == script.Decimal {
 						fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"textinput", "txType":"%s", "title":"%s"}`,
 							fitem.Name, fitem.Type.String(), fitem.Name))
 					}
-					/*					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `decimal.Decimal` {
+					/*					if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == script.Decimal {
 										fields = append(fields, fmt.Sprintf(`{"name":"%s", "htmlType":"textinput", "txType":"%s", "title":"%s"}`,
 											fitem.Name, fitem.Type.String(), fitem.Name))
 									}*/

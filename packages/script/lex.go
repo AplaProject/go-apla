@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	lexUnknown = iota
-	lexSys
+	//	lexUnknown = iota
+	lexSys = iota + 1
 	lexOper
 	lexNumber
 	lexIdent
@@ -76,8 +76,8 @@ const (
 
 const (
 	// The list of keyword identifiers
-	keyUnknown = iota
-	keyContract
+	//	keyUnknown = iota
+	keyContract = iota + 1
 	keyFunc
 	keyReturn
 	keyIf
@@ -110,7 +110,7 @@ var (
 		`float`: reflect.TypeOf(float64(0.0)), `string`: reflect.TypeOf(``)}
 )
 
-// Lexem contains infromation about language item
+// Lexem contains information about language item
 type Lexem struct {
 	Type   uint32      // Type of the lexem
 	Value  interface{} // Value of lexem
@@ -199,7 +199,7 @@ func lexParser(input []rune) (Lexems, error) {
 				value = binary.BigEndian.Uint32(append(make([]byte, 4-len(oper)), oper...))
 			case lexNumber:
 				name := string(input[lexOff:right])
-				if strings.IndexAny(name, `.`) >= 0 {
+				if strings.ContainsAny(name, `.`) {
 					if val, err := strconv.ParseFloat(name, 64); err == nil {
 						value = val
 					} else {

@@ -17,27 +17,26 @@
 package script
 
 const (
-	cmdUnknown    = iota // error
-	cmdPush              // Push value to stack
-	cmdVar               // Push variable to stack
-	cmdExtend            // Push extend variable to stack
-	cmdCallExtend        // Call extend function
-	cmdPushStr           // Push ident as string
-	cmdTable             // #table_name[id_column_name = value].column_name
-	cmdCall              // call a function
-	cmdCallVari          // call a variadic function
-	cmdReturn            // return from function
-	cmdIf                // run block if Value is true
-	cmdElse              // run block if Value is false
-	cmdAssignVar         // list of assigned var
-	cmdAssign            // assign
-	cmdLabel             // label for continue
-	cmdContinue          // continue from label
-	cmdWhile             // while
-	cmdBreak             // break
-	cmdIndex             // get index []
-	cmdSetIndex          // set index []
-	cmdError             // error command
+	//	cmdUnknown = iota // error
+	cmdPush       = iota + 1 // Push value to stack
+	cmdVar                   // Push variable to stack
+	cmdExtend                // Push extend variable to stack
+	cmdCallExtend            // Call extend function
+	cmdPushStr               // Push ident as string
+	cmdCall                  // call a function
+	cmdCallVari              // call a variadic function
+	cmdReturn                // return from function
+	cmdIf                    // run block if Value is true
+	cmdElse                  // run block if Value is false
+	cmdAssignVar             // list of assigned var
+	cmdAssign                // assign
+	cmdLabel                 // label for continue
+	cmdContinue              // continue from label
+	cmdWhile                 // while
+	cmdBreak                 // break
+	cmdIndex                 // get index []
+	cmdSetIndex              // set index []
+	cmdError                 // error command
 )
 
 const (

@@ -90,7 +90,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 						v = val
 					case `int64`:
 						v, err = lib.DecodeLenInt64(&input)
-					case `decimal.Decimal`:
+					case script.Decimal:
 						var s string
 						if err = lib.BinUnmarshal(&input, &s); err != nil {
 							return nil, err

@@ -46,15 +46,20 @@ const (
 	ObjExtFunc
 	// ObjVar is a variable. myvar
 	ObjVar
-	// ObjVar is an extended variable. $myvar
+	// ObjExtend is an extended variable. $myvar
 	ObjExtend
 
-	CostCall     = 50
+	// CostCall is the cost of the function calling
+	CostCall = 50
+	// CostContract is the cost of the contract calling
 	CostContract = 100
-	CostExtend   = 10
-	CostDefault  = int64(10000000) // default maximum cost of F
+	// CostExtend is the cost of the extend function calling
+	CostExtend = 10
+	// CostDefault is the default maximum cost of F
+	CostDefault = int64(10000000)
 )
 
+// ExtFuncInfo is the structure for the extrended function
 type ExtFuncInfo struct {
 	Name     string
 	Params   []reflect.Type
@@ -64,42 +69,48 @@ type ExtFuncInfo struct {
 	Func     interface{}
 }
 
+// FieldInfo describes the field of the data structure
 type FieldInfo struct {
 	Name string
 	Type reflect.Type
 	Tags string
 }
 
+// ContractInfo contains the contract information
 type ContractInfo struct {
-	ID     uint32
-	Name   string
-	Active bool
-	TblId  int64
-	Used   map[string]bool // Called contracts
-	Tx     *[]*FieldInfo
+	ID      uint32
+	Name    string
+	Active  bool
+	TableID int64
+	Used    map[string]bool // Called contracts
+	Tx      *[]*FieldInfo
 }
 
+// FuncInfo contains the function information
 type FuncInfo struct {
 	Params   []reflect.Type
 	Results  []reflect.Type
 	Variadic bool
 }
 
+// VarInfo contains the variable information
 type VarInfo struct {
 	Obj   *ObjInfo
 	Owner *Block
 }
 
+// ObjInfo is the common object type
 type ObjInfo struct {
 	Type  int
 	Value interface{}
 }
 
+// Block contains all information about compiled block {...} and its children
 type Block struct {
 	Objects  map[string]*ObjInfo
 	Type     int
 	Active   bool
-	TblId    int64
+	TableID  int64
 	Info     interface{}
 	Parent   *Block
 	Vars     []reflect.Type
@@ -107,19 +118,23 @@ type Block struct {
 	Children Blocks
 }
 
+// Blocks is a slice of blocks
 type Blocks []*Block
 
+// VM is the main type of the virtual machine
 type VM struct {
 	Block
 	ExtCost func(string) int64
 	Extern  bool // extern mode of compilation
 }
 
+// ExtendData is used for the definition of the extended functions and variables
 type ExtendData struct {
 	Objects  map[string]interface{}
 	AutoPars map[string]string
 }
 
+// ParseContract gets a state identifier and the name of the contract from the full name like @[id]name
 func ParseContract(in string) (id uint64, name string) {
 	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
 	ret := re.FindStringSubmatch(in)
@@ -130,6 +145,8 @@ func ParseContract(in string) (id uint64, name string) {
 	return
 }
 
+// ExecContract runs the name contract where txs contains the list of parameters and
+// params are the values of parameters
 func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	//fmt.Println(`ExecContract`, rt, name, txs, params)
 
@@ -219,6 +236,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 	return nil
 }
 
+// NewVM creates a new virtual machine
 func NewVM() *VM {
 	vm := VM{}
 	vm.Objects = make(map[string]*ObjInfo)
@@ -232,6 +250,7 @@ func NewVM() *VM {
 	return &vm
 }
 
+// Extend sets the extended variables and functions
 func (vm *VM) Extend(ext *ExtendData) {
 	for key, item := range ext.Objects {
 		fobj := reflect.ValueOf(item).Type()
@@ -277,8 +296,7 @@ func (vm *VM) getObjByName(name string) (ret *ObjInfo) {
 }
 
 func (vm *VM) getObjByNameExt(name string, state uint32) (ret *ObjInfo) {
-	var sname string
-	sname = StateName(state, name)
+	sname := StateName(state, name)
 	if ret = vm.getObjByName(name); ret == nil && len(sname) > 0 {
 		ret = vm.getObjByName(sname)
 	}
@@ -292,6 +310,7 @@ func (vm *VM) getInParams(ret *ObjInfo) int {
 	return len(ret.Value.(*Block).Info.(*FuncInfo).Params)
 }
 
+// Call executes the name object with the specified params and extended variables and functions
 func (vm *VM) Call(name string, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	var obj *ObjInfo
 	if state, ok := (*extend)[`rt_state`]; ok {
@@ -332,6 +351,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 	return ret, err
 }
 
+// ExContract executes the name contract in the state with spoecified parameters
 func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) error {
 
 	name = StateName(state, name)

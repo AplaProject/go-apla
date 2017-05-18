@@ -1507,7 +1507,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 					continue txlist
 				}
 			}
-			if fitem.Type.String() == `decimal.Decimal` {
+			if fitem.Type.String() == script.Decimal {
 				var count int
 				if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					count = StrToInt(ret[1])
@@ -1665,7 +1665,7 @@ txlist:
 			}
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
 				TxType: fitem.Type.String(), Title: title, Value: sellist})
-		} else if fitem.Type.String() == `decimal.Decimal` {
+		} else if fitem.Type.String() == script.Decimal {
 			var count int
 			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 				count = StrToInt(ret[1])

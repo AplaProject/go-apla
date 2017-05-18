@@ -128,7 +128,7 @@ func ActivateContract(tblid int64, prefix string, active bool) {
 	for i, item := range smartVM.Block.Children {
 		if item != nil && item.Type == script.ObjContract {
 			cinfo := item.Info.(*script.ContractInfo)
-			if cinfo.TblId == tblid && strings.HasPrefix(cinfo.Name, `@`+prefix) &&
+			if cinfo.TableID == tblid && strings.HasPrefix(cinfo.Name, `@`+prefix) &&
 				(len(cinfo.Name) > len(prefix)+1 && cinfo.Name[len(prefix)+1] > '9') {
 				smartVM.Children[i].Info.(*script.ContractInfo).Active = active
 			}

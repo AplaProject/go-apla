@@ -30,25 +30,32 @@ const (
 	statusReturn
 	statusContinue
 	statusBreak
+
+	// Decimal is the constant string for decimal type
+	Decimal = `decimal.Decimal`
+	// Interface is the constant string for interface type
+	Interface = `interface`
+
+	brackets = `[]`
 )
 
-type BlockStack struct {
+type blockStack struct {
 	Block  *Block
 	Offset int
 }
 
+// RunTime is needed for the execution of the byte-code
 type RunTime struct {
 	stack  []interface{}
-	blocks []*BlockStack
+	blocks []*blockStack
 	vars   []interface{}
 	extend *map[string]interface{}
 	vm     *VM
 	cost   int64
 	err    error
-	//	vars  *map[string]interface{}
 }
 
-func (rt *RunTime) CallFunc(cmd uint16, obj *ObjInfo) (err error) {
+func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	var (
 		count, in int
 		//		f         interface{}
@@ -184,6 +191,7 @@ func valueToBool(v interface{}) bool {
 	return false
 }
 
+// ValueToInt converts interface (string or int64) to int64
 func ValueToInt(v interface{}) (ret int64) {
 	switch val := v.(type) {
 	case int64:
@@ -196,6 +204,7 @@ func ValueToInt(v interface{}) (ret int64) {
 	return
 }
 
+// ValueToFloat converts interface (string, float64 or int64) to float64
 func ValueToFloat(v interface{}) (ret float64) {
 	switch val := v.(type) {
 	case float64:
@@ -210,6 +219,7 @@ func ValueToFloat(v interface{}) (ret float64) {
 	return
 }
 
+// ValueToDecimal converts interface (string, float64, Decimal or int64) to Decimal
 func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
 	switch val := v.(type) {
 	case float64:
@@ -224,23 +234,27 @@ func ValueToDecimal(v interface{}) (ret decimal.Decimal) {
 	return
 }
 
+// SetCost sets the max cost of the execution.
 func (rt *RunTime) SetCost(cost int64) {
 	rt.cost = cost
 }
 
+// Cost return the remain cost of the execution.
 func (rt *RunTime) Cost() int64 {
 	return rt.cost
 }
 
+// RunInit creates a new RunTime for the virtual machine
 func (vm *VM) RunInit(cost int64) *RunTime {
 	rt := RunTime{stack: make([]interface{}, 0, 1024), vm: vm, cost: cost}
 	return &rt
 }
 
+// RunCode executes Block
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	top := make([]interface{}, 8)
 	start := len(rt.stack)
-	rt.blocks = append(rt.blocks, &BlockStack{block, len(rt.vars)})
+	rt.blocks = append(rt.blocks, &blockStack{block, len(rt.vars)})
 	for vkey, vpar := range block.Vars {
 		rt.cost--
 		var value interface{}
@@ -326,7 +340,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 							//							fmt.Println(`Var`, item.Obj.Type, item.Obj.Value, rt.blocks[i].Block.Vars[item.Obj.Value.(int)])
 
 							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
-							case `decimal.Decimal`:
+							case Decimal:
 								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
 							default:
 								rt.vars[rt.blocks[i].Offset+item.Obj.Value.(int)] = rt.stack[len(rt.stack)-count+ivar]
@@ -364,7 +378,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			} else {
 				rt.cost -= CostCall
 			}
-			err = rt.CallFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
+			err = rt.callFunc(cmd.Cmd, cmd.Value.(*ObjInfo))
 
 		case cmdVar:
 			ivar := cmd.Value.(*VarInfo)
@@ -384,7 +398,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
 				rt.cost -= CostExtend
 				if cmd.Cmd == cmdCallExtend {
-					err := rt.extendFunc(cmd.Value.(string))
+					err = rt.extendFunc(cmd.Value.(string))
 					if err != nil {
 						return 0, fmt.Errorf(`extend function %s %s`, cmd.Value.(string), err.Error())
 					}
@@ -402,14 +416,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			itype := reflect.TypeOf(rt.stack[size-2]).String()
 			switch {
 			case itype[:3] == `map`:
-				if strings.Index(itype, `interface`) >= 0 {
+				if strings.Contains(itype, Interface) {
 					rt.stack[size-2] = rt.stack[size-2].(map[string]interface{})[rt.stack[size-1].(string)]
 				} else {
 					rt.stack[size-2] = rt.stack[size-2].(map[string]string)[rt.stack[size-1].(string)]
 				}
 				rt.stack = rt.stack[:size-1]
-			case itype[:2] == `[]`:
-				if strings.Index(itype, `interface`) >= 0 {
+			case itype[:2] == brackets:
+				if strings.Contains(itype, Interface) {
 					rt.stack[size-2] = rt.stack[size-2].([]interface{})[rt.stack[size-1].(int64)]
 				} else {
 					rt.stack[size-2] = rt.stack[size-2].([]map[string]string)[rt.stack[size-1].(int64)]
@@ -422,20 +436,20 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			itype := reflect.TypeOf(rt.stack[size-3]).String()
 			switch {
 			case itype[:3] == `map`:
-				if strings.Index(itype, `interface`) >= 0 {
+				if strings.Contains(itype, Interface) {
 					rt.stack[size-3].(map[string]interface{})[rt.stack[size-2].(string)] = rt.stack[size-1]
 				} else {
 					rt.stack[size-3].(map[string]string)[rt.stack[size-2].(string)] = rt.stack[size-1].(string)
 				}
 				rt.stack = rt.stack[:size-2]
-			case itype[:2] == `[]`:
+			case itype[:2] == brackets:
 				ind := rt.stack[size-2].(int64)
-				if strings.Index(itype, `interface`) >= 0 {
+				if strings.Contains(itype, Interface) {
 					slice := rt.stack[size-3].([]interface{})
 					if int(ind) >= len(slice) {
 						slice = append(slice, make([]interface{}, int(ind)-len(slice)+1)...)
 						for i := 0; i < len(rt.vars); i++ {
-							if reflect.TypeOf(rt.vars[i]).String()[:2] == `[]` {
+							if reflect.TypeOf(rt.vars[i]).String()[:2] == brackets {
 								if len(rt.stack[size-3].([]interface{})) == len(rt.vars[i].([]interface{})) &&
 									((len(rt.vars[i].([]interface{})) > 0 &&
 										&rt.stack[size-3].([]interface{})[0] == &rt.vars[i].([]interface{})[0]) ||
@@ -480,7 +494,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Add(top[0].(decimal.Decimal))
 					} else {
 						bin = top[1].(string) + top[0].(string)
@@ -492,7 +506,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(int64) + top[0].(int64)
 			default:
 				switch reflect.TypeOf(top[1]).String() {
-				case `decimal.Decimal`:
+				case Decimal:
 					bin = top[1].(decimal.Decimal).Add(ValueToDecimal(top[0]))
 				}
 			}
@@ -505,7 +519,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Sub(top[0].(decimal.Decimal))
 					}
 				}
@@ -515,7 +529,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(int64) - top[0].(int64)
 			default:
 				switch reflect.TypeOf(top[1]).String() {
-				case `decimal.Decimal`:
+				case Decimal:
 					bin = top[1].(decimal.Decimal).Sub(ValueToDecimal(top[0]))
 				}
 			}
@@ -528,25 +542,25 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) * top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
 					}
 				}
 			case float64:
-				if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+				if reflect.TypeOf(top[0]).String() == Decimal {
 					bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
 				} else {
 					bin = top[1].(float64) * ValueToFloat(top[0])
 				}
 			case int64:
-				if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+				if reflect.TypeOf(top[0]).String() == Decimal {
 					bin = ValueToDecimal(top[1]).Mul(top[0].(decimal.Decimal))
 				} else {
 					bin = top[1].(int64) * top[0].(int64)
 				}
 			default:
 				switch reflect.TypeOf(top[1]).String() {
-				case `decimal.Decimal`:
+				case Decimal:
 					bin = top[1].(decimal.Decimal).Mul(ValueToDecimal(top[0]))
 				}
 			}
@@ -559,7 +573,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) / top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Div(top[0].(decimal.Decimal))
 					}
 				}
@@ -572,7 +586,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				bin = top[1].(int64) / top[0].(int64)
 			default:
 				switch reflect.TypeOf(top[1]).String() {
-				case `decimal.Decimal`:
+				case Decimal:
 					bin = top[1].(decimal.Decimal).Div(ValueToDecimal(top[0]))
 				}
 			}
@@ -589,7 +603,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) == top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) == 0
 					} else {
 						bin = top[1].(string) == top[0].(string)
@@ -614,7 +628,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) < top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) < 0
 					} else {
 						bin = top[1].(string) < top[0].(string)
@@ -639,7 +653,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) > top[0].(float64)
 				default:
-					if reflect.TypeOf(top[0]).String() == `decimal.Decimal` {
+					if reflect.TypeOf(top[0]).String() == Decimal {
 						bin = ValueToDecimal(top[1]).Cmp(top[0].(decimal.Decimal)) > 0
 					} else {
 						bin = top[1].(string) > top[0].(string)
@@ -694,6 +708,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	return
 }
 
+// Run executes Block with the specified parameters and extended variables and functions
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -711,12 +726,3 @@ func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]in
 	}
 	return
 }
-
-/*
-func EvalIf(input string, vars *map[string]interface{}) (bool, error) {
-	ret := Eval(input, vars)
-	if err, ok := ret.(error); ok {
-		return false, err
-	}
-	return ValueToBool(ret), nil
-}*/
