@@ -57,7 +57,7 @@ func TestEncodeLenInt64(t *testing.T) {
 	for _, val := range testList {
 		off = len(buf)
 		EncodeLenInt64(&buf, val.value)
-		if bytes.Compare(buf[off:len(buf)], val.data) != 0 {
+		if bytes.Compare(buf[off:], val.data) != 0 {
 			t.Errorf("different slice %d", val.value)
 		}
 	}
