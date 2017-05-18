@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/EGaaS/go-egaas-mvp)](https://goreportcard.com/report/github.com/EGaaS/go-egaas-mvp)
+
 ### Installation v1.x - only egs-wallet
 
 Install golang >=1.6 https://golang.org/dl/<br>
