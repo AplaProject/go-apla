@@ -24,25 +24,34 @@ import (
 	"strings"
 )
 
+// ByteCode stores a command and an additional parameter.
 type ByteCode struct {
 	Cmd   uint16
 	Value interface{}
 }
 
+// ByteCodes is the slice of ByteCode items
 type ByteCodes []*ByteCode
 
 const (
-	// Type of the compiled objects
+	// Types of the compiled objects
+
+	// ObjUnknown is an unknown object. It means something wrong.
 	ObjUnknown = iota
+	// ObjContract is a contract object.
 	ObjContract
+	// ObjFunc is a function object. myfunc()
 	ObjFunc
+	// ObjExtFunc is an extended function object. $myfunc()
 	ObjExtFunc
+	// ObjVar is a variable. myvar
 	ObjVar
+	// ObjVar is an extended variable. $myvar
 	ObjExtend
 
 	CostCall     = 50
-	costContract = 100
-	costExtend   = 10
+	CostContract = 100
+	CostExtend   = 10
 	CostDefault  = int64(10000000) // default maximum cost of F
 )
 
@@ -178,7 +187,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) error {
 			break
 		}
 	}
-	rt.cost -= costContract
+	rt.cost -= CostContract
 	var stackCont func(interface{}, string)
 	if stack, ok := (*rt.extend)[`stack_cont`]; ok && (*rt.extend)[`parser`] != nil {
 		stackCont = stack.(func(interface{}, string))
@@ -291,7 +300,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 		obj = vm.getObjByName(name)
 	}
 	if obj == nil {
-		return nil, fmt.Errorf(`unknown function`, name)
+		return nil, fmt.Errorf(`unknown function %s`, name)
 	}
 	switch obj.Type {
 	case ObjFunc:
@@ -318,7 +327,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 			ret = append(ret, iret.Interface())
 		}
 	default:
-		return nil, fmt.Errorf(`unknown function`, name)
+		return nil, fmt.Errorf(`unknown function %s`, name)
 	}
 	return ret, err
 }
@@ -338,12 +347,12 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 	cblock := contract.Value.(*Block)
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
-			if val, ok := params[tx.Name]; !ok {
+			val, ok := params[tx.Name]
+			if !ok {
 				return fmt.Errorf(`%s is not defined`, tx.Name)
-			} else {
-				names = append(names, tx.Name)
-				vals = append(vals, val)
 			}
+			names = append(names, tx.Name)
+			vals = append(vals, val)
 		}
 	}
 	if len(vals) == 0 {

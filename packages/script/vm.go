@@ -382,7 +382,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			//rt.stack = append(rt.stack, rt.vars[voff+ivar.Obj.Value.(int)])
 		case cmdExtend, cmdCallExtend:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
-				rt.cost -= costExtend
+				rt.cost -= CostExtend
 				if cmd.Cmd == cmdCallExtend {
 					err := rt.extendFunc(cmd.Value.(string))
 					if err != nil {

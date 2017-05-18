@@ -421,6 +421,7 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 	return nil
 }
 
+// StateName checks the name of the contract and modifies it to @[state]name if it is neccessary.
 func StateName(state uint32, name string) string {
 	if name[0] != '@' {
 		return fmt.Sprintf(`@%d%s`, state, name)
@@ -515,7 +516,6 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 			block := &Block{Parent: top}
 			top.Children = append(top.Children, block)
 			blockstack = append(blockstack, block)
-			//			fmt.Println(`PUSH`, curState)
 		}
 		if (newState.NewState & statePop) > 0 {
 			if len(stack) == 0 {
@@ -533,9 +533,6 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 				}
 			}
 			blockstack = blockstack[:len(blockstack)-1]
-
-			//	fmt.Println(`POP`, stack, newState.NewState)
-			//			continue
 		}
 		if (newState.NewState & stateToBlock) > 0 {
 			nextState = stateBlock
@@ -548,7 +545,6 @@ func (vm *VM) CompileBlock(input []rune, idstate uint32, active bool, tblid int6
 			if err := funcs[newState.Func](&blockstack, nextState, lexem); err != nil {
 				return nil, err
 			}
-			//		fmt.Println(`Block Func`, *blockstack[len(blockstack)-1], len(blockstack)-1)
 		}
 		curState = nextState
 	}
@@ -727,6 +723,7 @@ main:
 		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
 				if oper.Cmd == cmdSub && (i == 0 || ((*lexems)[i-1].Type != lexNumber && (*lexems)[i-1].Type != lexIdent &&
+					(*lexems)[i-1].Type != lexExtend &&
 					(*lexems)[i-1].Type != lexString && (*lexems)[i-1].Type != isRCurly && (*lexems)[i-1].Type != isRBrack)) {
 					oper.Cmd = cmdSign
 					oper.Priority = cmdUnary
