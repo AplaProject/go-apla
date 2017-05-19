@@ -17,14 +17,21 @@
 package textproc
 
 import (
-	// "fmt"
 	"strings"
 	"unicode/utf8"
 )
 
+const (
+	null = `NULL`
+)
+
+// TextFunc is a function type with 1 - variables, 2... - parameters
 type TextFunc func(*map[string]string, ...string) string
+
+// MapFunc is a function type with 1 - variables, 2 - map of parameters
 type MapFunc func(*map[string]string, *map[string]string) string
 
+// TextProc is a strcuture for the text processing
 type TextProc struct {
 	syschar rune
 	funcs   map[string]TextFunc
@@ -145,22 +152,26 @@ func replace(input string, level int, vars *map[string]string) string {
 	return string(result)
 }
 
+// AddMaps appends MapFunc functions to the text processing engine
 func AddMaps(funcs *map[string]MapFunc) {
 	for key, ifunc := range *funcs {
 		engine.maps[key] = ifunc
 	}
 }
 
+// AddFuncs appends TextFunc functions to the text processing engine
 func AddFuncs(funcs *map[string]TextFunc) {
 	for key, ifunc := range *funcs {
 		engine.funcs[key] = ifunc
 	}
 }
 
+// Macro replaces macro variables in the input string and returns the result
 func Macro(input string, vars *map[string]string) string {
 	return replace(input, 0, vars)
 }
 
+// Split parses the input string as [[,,],[,,],[,,]]
 func Split(input string) *[][]string {
 	var isArray, Par int
 
@@ -209,7 +220,7 @@ func funcProcess(name string, params [][]rune, vars *map[string]string) string {
 		off := strings.Index(ipar, `#=`)
 		if off < 0 || off != strings.Index(ipar, `#`) {
 			val = Process(ipar, vars)
-			if val == `NULL` {
+			if val == null {
 				val = Macro(ipar, vars)
 			}
 		} else {
@@ -224,23 +235,24 @@ func mapProcess(name string, params *map[string]string, vars *map[string]string)
 	if strings.HasSuffix((*vars)[`ifs`], `0`) || strings.HasSuffix((*vars)[`ifs`], `-`) {
 		return ``
 	}
-	pars := make(map[string]string, 0)
+	pars := make(map[string]string)
 	for key, item := range *params {
 		var val string
 		//		ipar := strings.TrimSpace(string(item))
 		if len(item) > 0 && item[0] != '[' {
 			val = Process(item, vars)
-			if val == `NULL` {
+			if val == null {
 				val = Macro(item, vars)
 			}
 		} else {
-			val = string(item)
+			val = item
 		}
 		pars[key] = val
 	}
 	return engine.maps[name](vars, &pars)
 }
 
+// Process replaces variables and func calling in the input string and returns the result.
 func Process(input string, vars *map[string]string) (out string) {
 	var (
 		isFunc, isMap, isArr int
@@ -383,7 +395,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		}
 		if ch == '(' || ch == ':' {
 			if _, ok := engine.funcs[string(name)]; !ok {
-				return `NULL`
+				return null
 			}
 			noproc = false
 			params = make([][]rune, 1)
@@ -392,7 +404,7 @@ func Process(input string, vars *map[string]string) (out string) {
 			toLine = ch == ':'
 		} else if ch == '{' {
 			if _, ok := engine.maps[string(name)]; !ok {
-				return `NULL`
+				return null
 			}
 			pmap = make(map[string]string)
 			isKey = true
@@ -402,7 +414,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		} else {
 			name = append(name, ch)
 			if len(name) > 64 {
-				return `NULL`
+				return null
 			}
 		}
 	}
@@ -410,7 +422,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		out += funcProcess(string(name), params, vars) //+ "\r\n"
 	}
 	if noproc {
-		return `NULL`
+		return null
 	}
 	return
 }

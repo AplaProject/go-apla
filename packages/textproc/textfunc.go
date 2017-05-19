@@ -20,6 +20,7 @@ import (
 	"fmt"
 )
 
+// Link returns HREF tag where pars[0] - url, pars[1] - text, pars[2] - title
 func Link(vars *map[string]string, pars ...string) string {
 	var (
 		title, name string
@@ -32,12 +33,11 @@ func Link(vars *map[string]string, pars ...string) string {
 	}
 	if len(pars) > 2 {
 		title = pars[2]
-	} /*else {
-		title = name
-	}*/
+	}
 	return fmt.Sprintf(`<a href="%s" title="%s">%s</a>`, pars[0], title, name)
 }
 
+// Tag returns HTML tag where pars[0] - tag's name, pars[1] - body of the tag
 func Tag(vars *map[string]string, pars ...string) string {
 	if len(pars) != 2 || pars[0] == `script` {
 		return ``
@@ -45,6 +45,7 @@ func Tag(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<%s>%s</%[1]s>`, pars[0], pars[1])
 }
 
+// Break returns BR tag
 func Break(vars *map[string]string, pars ...string) string {
 	return `<br>`
 }
