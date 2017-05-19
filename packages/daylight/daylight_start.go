@@ -19,7 +19,7 @@ package daylight
 import (
 	"encoding/json"
 	"fmt"
-	_ "image/png"
+	//	_ "image/png"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -96,12 +96,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// читаем config.ini
 	configIni := make(map[string]string)
-	configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
+	fullConfigIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 	if err != nil {
 		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 		log.Error("%v", utils.ErrInfo(err))
 	} else {
-		configIni, err = configIni_.GetSection("default")
+		configIni, err = fullConfigIni.GetSection("default")
 	}
 
 	if *utils.TcpHost == "" {
@@ -208,15 +208,15 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	backendLeveled := logging.AddModuleLevel(backendFormatter)
 
-	logLevel_ := "DEBUG"
+	level := "DEBUG"
 	if *utils.LogLevel == "" {
-		logLevel_ = configIni["log_level"]
-		*utils.LogLevel = logLevel_
+		level = configIni["log_level"]
+		*utils.LogLevel = level
 	} else {
-		logLevel_ = *utils.LogLevel
+		level = *utils.LogLevel
 	}
 
-	logLevel, err := logging.LogLevel(logLevel_)
+	logLevel, err := logging.LogLevel(level)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 	}
@@ -360,9 +360,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// мониторим сигнал из БД о том, что демонам надо завершаться
 	go stopdaemons.WaitStopTime()
 
-	BrowserHttpHost := "http://localhost:" + *utils.ListenHttpPort
-	HandleHttpHost := ""
-	ListenHttpHost := *utils.TcpHost + ":" + *utils.ListenHttpPort
+	BrowserHTTPHost := "http://localhost:" + *utils.ListenHttpPort
+	HandleHTTPHost := ""
+	ListenHTTPHost := *utils.TcpHost + ":" + *utils.ListenHttpPort
 	go func() {
 		// уже прошли процесс инсталяции, где юзер указал БД и был перезапуск кошелька
 		if len(configIni["db_type"]) > 0 {
@@ -379,50 +379,50 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			if err := utils.LoadContracts(); err != nil {
 				log.Error(`Load Contracts`, err)
 			}
-			BrowserHttpHost, HandleHttpHost, ListenHttpHost = GetHttpHost()
+			BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost = GetHTTPHost()
 			// для ноды тоже нужна БД
 			tcpListener()
 		}
-		IosLog(fmt.Sprintf("BrowserHttpHost: %v, HandleHttpHost: %v, ListenHttpHost: %v", BrowserHttpHost, HandleHttpHost, ListenHttpHost))
-		fmt.Printf("BrowserHttpHost: %v, HandleHttpHost: %v, ListenHttpHost: %v\n", BrowserHttpHost, HandleHttpHost, ListenHttpHost)
+		IosLog(fmt.Sprintf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost))
+		fmt.Printf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost)
 		go controllers.GetChain()
 		// включаем листинг веб-сервером для клиентской части
-		http.HandleFunc(HandleHttpHost+"/", controllers.Index)
-		http.HandleFunc(HandleHttpHost+"/content", controllers.Content)
-		http.HandleFunc(HandleHttpHost+"/template", controllers.Template)
-		http.HandleFunc(HandleHttpHost+"/app", controllers.App)
-		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
-		http.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.API)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.API)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.API)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.API)
-		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
-		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
-		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
-		http.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
+		http.HandleFunc(HandleHTTPHost+"/", controllers.Index)
+		http.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
+		http.HandleFunc(HandleHTTPHost+"/template", controllers.Template)
+		http.HandleFunc(HandleHTTPHost+"/app", controllers.App)
+		http.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
+		http.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
+		http.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
+		http.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
+		http.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
+		http.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
+		//http.HandleFunc(HandleHTTPHost+"/ajaxjson", controllers.AjaxJson)
+		//http.HandleFunc(HandleHTTPHost+"/tools", controllers.Tools)
+		//http.Handle(HandleHTTPHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
+		http.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 		if len(*utils.Tls) > 0 {
-			http.Handle(HandleHttpHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))
+			http.Handle(HandleHTTPHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))
 			httpsMux := http.NewServeMux()
-			httpsMux.HandleFunc(HandleHttpHost+"/", controllers.Index)
-			httpsMux.HandleFunc(HandleHttpHost+"/content", controllers.Content)
-			httpsMux.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
-			httpsMux.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.API)
-			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
+			httpsMux.HandleFunc(HandleHTTPHost+"/", controllers.Index)
+			httpsMux.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
+			httpsMux.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
+			httpsMux.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
+			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
+			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
+			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
+			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
+			httpsMux.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
 		}
 
-		log.Debug("ListenHttpHost", ListenHttpHost)
+		log.Debug("ListenHTTPHost", ListenHTTPHost)
 
-		IosLog(fmt.Sprintf("ListenHttpHost: %v", ListenHttpHost))
+		IosLog(fmt.Sprintf("ListenHTTPHost: %v", ListenHTTPHost))
 
-		fmt.Println("ListenHttpHost", ListenHttpHost)
+		fmt.Println("ListenHTTPHost", ListenHTTPHost)
 
-		httpListener(ListenHttpHost, &BrowserHttpHost)
+		httpListener(ListenHTTPHost, &BrowserHTTPHost)
 		// for ipv6 server
 		httpListenerV6()
 
@@ -431,7 +431,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			if thrustWindowLoder != nil {
 				thrustWindowLoder.Close()
 				thrustWindow := thrust.NewWindow(thrust.WindowOptions{
-					RootUrl: BrowserHttpHost,
+					RootUrl: BrowserHTTPHost,
 					Size:    commands.SizeHW{Width: 1024, Height: 700},
 				})
 				if *utils.DevTools != 0 {
@@ -462,7 +462,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				thrustWindow.Show()
 				thrustWindow.Focus()
 			} else {
-				openBrowser(BrowserHttpHost)
+				openBrowser(BrowserHTTPHost)
 			}
 		}
 	}()

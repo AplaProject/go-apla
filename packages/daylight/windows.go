@@ -54,14 +54,11 @@ func KillPid(pid string) error {
 	}
 	if string(rez) == "" {
 		return fmt.Errorf("null")
-	} else {
-		log.Debug("%rez s", string(rez))
-		fmt.Println("rez", string(rez))
-		if ok, _ := regexp.MatchString(`(?i)PID`, string(rez)); !ok {
-			return fmt.Errorf("null")
-		} else {
-			return nil
-		}
+	}
+	log.Debug("%rez s", string(rez))
+	fmt.Println("rez", string(rez))
+	if ok, _ := regexp.MatchString(`(?i)PID`, string(rez)); !ok {
+		return fmt.Errorf("null")
 	}
 	//fmt.Printf("taskkill /pid %s: %s\n", pid, rez)
 	return nil

@@ -68,10 +68,10 @@ func (l *boundConn) Close() error {
 	return err
 }
 */
-func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
+func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 
 	i := 0
-	host := ListenHttpHost
+	host := ListenHTTPHost
 	var l net.Listener
 	var err error
 	for {
@@ -82,7 +82,7 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 		}
 		if i > 1 {
 			host = ":7" + utils.IntToStr(i) + "79"
-			*BrowserHttpHost = "http://" + host
+			*BrowserHTTPHost = "http://" + host
 		}
 		log.Debug("host", host)
 		l, err = net.Listen("tcp4", host)
@@ -92,7 +92,7 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 			/*if *utils.Console == 0 {
 				openBrowser(browser)
 			}*/
-			fmt.Println("BrowserHttpHost", host)
+			fmt.Println("BrowserHTTPHost", host)
 			break
 		} else {
 			log.Error(utils.ErrInfo(err).Error())
@@ -105,7 +105,7 @@ func httpListener(ListenHttpHost string, BrowserHttpHost *string) {
 		err = srv.Serve(l)
 		//		err = http.Serve( NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
 		if err != nil {
-			log.Error("Error listening:", err, ListenHttpHost)
+			log.Error("Error listening:", err, ListenHTTPHost)
 			panic(err)
 			//os.Exit(1)
 		}

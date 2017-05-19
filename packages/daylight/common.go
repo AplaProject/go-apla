@@ -19,7 +19,7 @@ package daylight
 import (
 	"encoding/hex"
 	"fmt"
-	_ "image/png"
+	//	_ "image/png"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -114,16 +114,16 @@ func noDirListing(h http.Handler) http.HandlerFunc {
 	})
 }
 
-func openBrowser(BrowserHttpHost string) {
+func openBrowser(BrowserHTTPHost string) {
 	log.Debug("runtime.GOOS: %v", runtime.GOOS)
 	var err error
 	switch runtime.GOOS {
 	case "linux":
-		err = exec.Command("xdg-open", BrowserHttpHost).Start()
+		err = exec.Command("xdg-open", BrowserHTTPHost).Start()
 	case "windows", "darwin":
-		err = exec.Command("open", BrowserHttpHost).Start()
+		err = exec.Command("open", BrowserHTTPHost).Start()
 		if err != nil {
-			exec.Command("cmd", "/c", "start", BrowserHttpHost).Start()
+			exec.Command("cmd", "/c", "start", BrowserHTTPHost).Start()
 		}
 	default:
 		err = fmt.Errorf("unsupported platform")
@@ -133,13 +133,13 @@ func openBrowser(BrowserHttpHost string) {
 	}
 }
 
-func GetHttpHost() (string, string, string) {
-	BrowserHttpHost := "http://localhost:" + *utils.ListenHttpPort
-	HandleHttpHost := ""
-	ListenHttpHost := ":" + *utils.ListenHttpPort
+func GetHTTPHost() (string, string, string) {
+	BrowserHTTPHost := "http://localhost:" + *utils.ListenHttpPort
+	HandleHTTPHost := ""
+	ListenHTTPHost := ":" + *utils.ListenHttpPort
 	if len(*utils.TcpHost) > 0 {
-		ListenHttpHost = *utils.TcpHost + ":" + *utils.ListenHttpPort
-		BrowserHttpHost = "http://" + *utils.TcpHost + ":" + *utils.ListenHttpPort
+		ListenHTTPHost = *utils.TcpHost + ":" + *utils.ListenHttpPort
+		BrowserHTTPHost = "http://" + *utils.TcpHost + ":" + *utils.ListenHttpPort
 	}
-	return BrowserHttpHost, HandleHttpHost, ListenHttpHost
+	return BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost
 }
