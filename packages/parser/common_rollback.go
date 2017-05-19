@@ -96,7 +96,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			if (i == 0 && !skipCurrent) || i > 0 {
 				log.Debug(MethodName + "Rollback")
 				if p.TxContract != nil {
-					if err := p.CallContract(smart.CALL_INIT | smart.CALL_ROLLBACK); err != nil {
+					if err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
 						return utils.ErrInfo(err)
 					}
 					if err = p.autoRollback(); err != nil {

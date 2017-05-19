@@ -22,11 +22,10 @@ import (
 	"strconv"
 	"strings"
 
-	//"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	//"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// Contract contains the information about the contract.
 type Contract struct {
 	Name          string
 	Called        uint32
@@ -41,10 +40,14 @@ type Contract struct {
 }
 
 const (
-	CALL_INIT     = 0x01
-	CALL_FRONT    = 0x02
-	CALL_MAIN     = 0x04
-	CALL_ROLLBACK = 0x08
+	// CallInit is a flag for calling init function of the contract
+	CallInit = 0x01
+	// CallCondition is a flag for calling condition function of the contract
+	CallCondition = 0x02
+	// CallAction is a flag for calling action function of the contract
+	CallAction = 0x04
+	// CallRollback is a flag for calling rollback function of the contract
+	CallRollback = 0x08
 )
 
 var (
@@ -54,58 +57,67 @@ var (
 func init() {
 	smartVM = script.NewVM()
 	smartVM.Extern = true
-	smartVM.Extend(&script.ExtendData{map[string]interface{}{
+	smartVM.Extend(&script.ExtendData{Objects: map[string]interface{}{
 		"Println": fmt.Println,
 		"Sprintf": fmt.Sprintf,
-		"TxJson":  TxJson,
+		"TxJson":  TxJSON,
 		"Float":   Float,
 		"Money":   script.ValueToDecimal,
-	}, map[string]string{
+	}, AutoPars: map[string]string{
 		`*smart.Contract`: `contract`,
 	}})
 }
 
-func Pref2state(prefix string) (state uint32) {
+func pref2state(prefix string) (state uint32) {
 	if prefix != `global` {
-		val, _ := strconv.ParseUint(prefix, 10, 32)
-		state = uint32(val)
+		if val, err := strconv.ParseUint(prefix, 10, 32); err == nil {
+			state = uint32(val)
+		}
 	}
 	return
 }
 
+// ExternOff switches off the extern compiling mode in smartVM
 func ExternOff() {
 	smartVM.FlushExtern()
 }
 
-// Compiles contract source code
+// Compile compiles contract source code in smartVM
 func Compile(src, prefix string, active bool, tblid int64) error {
-	return smartVM.Compile([]rune(src), Pref2state(prefix), active, tblid)
+	return smartVM.Compile([]rune(src), pref2state(prefix), active, tblid)
 }
 
+// CompileBlock calls CompileBlock for smartVM
 func CompileBlock(src, prefix string, active bool, tblid int64) (*script.Block, error) {
-	return smartVM.CompileBlock([]rune(src), Pref2state(prefix), active, tblid)
+	return smartVM.CompileBlock([]rune(src), pref2state(prefix), active, tblid)
 }
 
+// CompileEval calls CompileEval for smartVM
 func CompileEval(src string, prefix uint32) error {
 	return smartVM.CompileEval(src, prefix)
 }
 
+// EvalIf calls EvalIf for smartVM
 func EvalIf(src, prefix string, extend *map[string]interface{}) (bool, error) {
-	return smartVM.EvalIf(src, Pref2state(prefix), extend)
+	return smartVM.EvalIf(src, pref2state(prefix), extend)
 }
 
+// FlushBlock calls FlushBlock for smartVM
 func FlushBlock(root *script.Block) {
 	smartVM.FlushBlock(root)
 }
 
+// ExtendCost sets the cost of calling extended obj in smartVM
 func ExtendCost(ext func(string) int64) {
 	smartVM.ExtCost = ext
 }
 
+// Extend set extended variable and functions in smartVM
 func Extend(ext *script.ExtendData) {
 	smartVM.Extend(ext)
 }
 
+// Run executes Block in smartVM
 func Run(block *script.Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	var extcost int64
 	cost := script.CostDefault
@@ -121,6 +133,7 @@ func Run(block *script.Block, params []interface{}, extend *map[string]interface
 	return
 }
 
+// ActivateContract sets Active status of the contract in smartVM
 func ActivateContract(tblid int64, prefix string, active bool) {
 	if prefix == `global` {
 		prefix = `0`
@@ -136,17 +149,17 @@ func ActivateContract(tblid int64, prefix string, active bool) {
 	}
 }
 
-// Returns true if the contract exists
-func GetContract(name string, state uint32 /*, data interface{}*/) *Contract {
+// GetContract returns true if the contract exists in smartVM
+func GetContract(name string, state uint32) *Contract {
 	name = script.StateName(state, name)
 	obj, ok := smartVM.Objects[name]
-	//	fmt.Println(`Get`, ok, obj, obj.Type, script.ObjContract)
 	if ok && obj.Type == script.ObjContract {
 		return &Contract{Name: name, Block: obj.Value.(*script.Block)}
 	}
 	return nil
 }
 
+// GetUsedContracts returns the list of contracts which are called from the specified contract
 func GetUsedContracts(name string, state uint32, full bool) []string {
 	contract := GetContract(name, state)
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Used == nil {
@@ -170,16 +183,17 @@ func GetUsedContracts(name string, state uint32, full bool) []string {
 	return ret
 }
 
-// Returns true if the contract exists
-func GetContractById(id int32 /*, p *Parser*/) *Contract {
+// GetContractByID returns true if the contract exists
+func GetContractByID(id int32) *Contract {
 	idcont := id // - CNTOFF
 	if len(smartVM.Children) <= int(idcont) || smartVM.Children[idcont].Type != script.ObjContract {
 		return nil
 	}
 	return &Contract{Name: smartVM.Children[idcont].Info.(*script.ContractInfo).Name,
-		/*parser: p,*/ Block: smartVM.Children[idcont]}
+		Block: smartVM.Children[idcont]}
 }
 
+// GetFunc returns the block of the specified function in the contract
 func (contract *Contract) GetFunc(name string) *script.Block {
 	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.ObjFunc {
 		return block.Value.(*script.Block)
@@ -187,7 +201,8 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
-func TxJson(contract *Contract) string {
+// TxJSON returns JSON data which has been generated from Tx data and extended variables
+func TxJSON(contract *Contract) string {
 	lines := make([]string, 0)
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		switch fitem.Type.String() {
@@ -203,6 +218,7 @@ func TxJson(contract *Contract) string {
 	return `{` + strings.Join(lines, ",\r\n") + `}`
 }
 
+// Float converts int64, string to float64
 func Float(v interface{}) (ret float64) {
 	switch value := v.(type) {
 	case int64:
@@ -214,28 +230,3 @@ func Float(v interface{}) (ret float64) {
 	}
 	return
 }
-
-// Pre-defined functions
-/*
-func CheckAmount() {
-	amount, err := p.Single(`SELECT value FROM `+utils.Int64ToStr().TxVars[`state_code`]+`_state_parameters WHERE name = ?`, "citizenship_price").Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	amountAndCommission, err := p.checkSenderDLT(amount, consts.COMMISSION)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	if amount > amountAndCommission {
-		return p.ErrInfo("incorrect amount")
-	}
-	// вычитаем из wallets_buffer
-	// amount_and_commission взято из check_sender_money()
-	err = p.updateWalletsBuffer(amountAndCommission)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-}
-*/

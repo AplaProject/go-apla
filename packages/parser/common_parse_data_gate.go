@@ -100,7 +100,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 	// Operative transactions
 	MethodName := consts.TxTypes[p.dataType]
 	if p.TxContract != nil {
-		if err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT); err != nil {
+		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
 			return utils.ErrInfo(err)
 		}
 	} else {

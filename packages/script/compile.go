@@ -584,7 +584,7 @@ func (vm *VM) FlushBlock(root *Block) {
 }
 
 // FlushExtern switches off the extern mode of the compilation
-func (vm *VM) FlushExtern() (err error) {
+func (vm *VM) FlushExtern() {
 	/*	if !vm.Extern {
 		return
 	}*/

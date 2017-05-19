@@ -39,7 +39,7 @@ func TestNewContract(t *testing.T) {
 				MyVal  string
 			}
 			func conditions {
-				Println( "Front")//TxJson())
+				Println( "Front")//TxJSON())
 				//$tmp = "Test string"
 //				Println("NewCitizen Front", $tmp, $citizen, $state, $PublicKey )
 			}
@@ -60,7 +60,7 @@ func TestNewContract(t *testing.T) {
 	_, err := Run(cfunc, nil, &map[string]interface{}{})
 	fmt.Println(`Err`, err)
 	//
-	/*	if err = cnt.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
+	/*	if err = cnt.Call(CallInit | CallCondition | CallAction); err != nil {
 			t.Error(err.Error())
 	}*/
 	//	sign, _ := hex.DecodeString(`3276233276237115`)
@@ -74,7 +74,7 @@ func TestNewContract(t *testing.T) {
 		if cnt == nil {
 			t.Error(`GetContract error`)
 		}
-		if err = cnt.Call(CALL_INIT | CALL_FRONT | CALL_MAIN); err != nil {
+		if err = cnt.Call(CallInit | CallCondition | CallAction); err != nil {
 			t.Error(err.Error())
 		}*/
 }

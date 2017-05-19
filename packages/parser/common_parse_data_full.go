@@ -178,11 +178,11 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			p.TxCost = 0
 			if p.TxContract != nil {
 				// check that there are enough money in CallContract
-				err := p.CallContract(smart.CALL_INIT | smart.CALL_FRONT | smart.CALL_MAIN)
+				err := p.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
 				// pay for CPU resources
 				p.payFPrice()
 				if err != nil {
-					if p.TxContract.Called == smart.CALL_FRONT || p.TxContract.Called == smart.CALL_MAIN {
+					if p.TxContract.Called == smart.CallCondition || p.TxContract.Called == smart.CallAction {
 						err0 := p.RollbackTo(txForRollbackTo, false)
 						if err0 != nil {
 							log.Error("error: %v", err0)

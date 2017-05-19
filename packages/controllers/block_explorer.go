@@ -104,7 +104,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 						tmp[4-itype+i] = block[i+1]
 					}
 					idc := int32(binary.BigEndian.Uint32(tmp))
-					contract := smart.GetContractById(idc)
+					contract := smart.GetContractByID(idc)
 					if contract != nil {
 						name = contract.Name
 					} else {

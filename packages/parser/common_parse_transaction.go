@@ -64,7 +64,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				p.TxCitizenID = 0
 				p.TxWalletID = int64(p.TxPtr.(*consts.TXHeader).WalletId)
 			}
-			contract := smart.GetContractById(p.TxPtr.(*consts.TXHeader).Type)
+			contract := smart.GetContractByID(p.TxPtr.(*consts.TXHeader).Type)
 			if contract == nil {
 				return nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
 			}

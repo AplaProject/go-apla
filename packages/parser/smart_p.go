@@ -162,7 +162,7 @@ func StackCont(p interface{}, name string) {
 
 func (p *Parser) CallContract(flags int) (err error) {
 	var public []byte
-	if flags&smart.CALL_ROLLBACK == 0 {
+	if flags&smart.CallRollback == 0 {
 		//		fmt.Println(`TXHEADER`, p.TxPtr.(*consts.TXHeader).Flags, len(p.TxPtr.(*consts.TXHeader).Sign), p.TxPtr.(*consts.TXHeader))
 		if p.TxPtr.(*consts.TXHeader).Flags&consts.TxfPublic > 0 {
 			public = p.TxPtr.(*consts.TXHeader).Sign[len(p.TxPtr.(*consts.TXHeader).Sign)-64:]
@@ -221,7 +221,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 	if p.GetFuel().Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`Fuel rate must be greater than 0`)
 	}
-	/*	if (flags&smart.CALL_MAIN) > 0 && !p.CheckContractLimit(price) {
+	/*	if (flags&smart.CallAction) > 0 && !p.CheckContractLimit(price) {
 		return fmt.Errorf(`there are not enough money`)
 	}*/
 	if !p.TxContract.Block.Info.(*script.ContractInfo).Active {

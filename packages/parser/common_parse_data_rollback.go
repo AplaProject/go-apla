@@ -174,7 +174,7 @@ func (p *Parser) ParseDataRollback() error {
 				return p.ErrInfo(err)
 			}
 			if p.TxContract != nil {
-				if err := p.CallContract(smart.CALL_INIT | smart.CALL_ROLLBACK); err != nil {
+				if err := p.CallContract(smart.CallInit | smart.CallRollback); err != nil {
 					return utils.ErrInfo(err)
 				}
 				if err = p.autoRollback(); err != nil {

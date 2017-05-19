@@ -38,7 +38,7 @@ func (c *Controller) AjaxGetCnt() interface{} {
 
 	id := utils.StrToInt64(c.r.FormValue(`id`))
 	if id > 0 {
-		contract := smart.GetContractById(int32(id))
+		contract := smart.GetContractByID(int32(id))
 		if contract != nil {
 			result.Name = contract.Name
 		} else {

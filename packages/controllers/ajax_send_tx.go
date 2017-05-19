@@ -30,7 +30,7 @@ import (
 
 const ASendTx = `ajax_send_tx`
 
-type SendTxJson struct {
+type SendTxJSON struct {
 	Error string `json:"error"`
 	Hash  string `json:"hash"`
 }
@@ -41,7 +41,7 @@ func init() {
 
 func (c *Controller) AjaxSendTx() interface{} {
 	var (
-		result SendTxJson
+		result SendTxJSON
 		flags  uint8
 	)
 	contract, err := c.checkTx(nil)

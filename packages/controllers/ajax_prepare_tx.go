@@ -38,7 +38,7 @@ type TxSignJson struct {
 	Params  []SignRes `json:"params"`
 }
 
-type PrepareTxJson struct {
+type PrepareTxJSON struct {
 	ForSign string            `json:"forsign"`
 	Signs   []TxSignJson      `json:"signs"`
 	Values  map[string]string `json:"values"`
@@ -50,7 +50,7 @@ func init() {
 	newPage(APrepareTx, `json`)
 }
 
-func (c *Controller) checkTx(result *PrepareTxJson) (contract *smart.Contract, err error) {
+func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, err error) {
 	cntname := c.r.FormValue(`TxName`)
 	contract = smart.GetContract(cntname, uint32(c.SessStateId))
 	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
@@ -116,7 +116,7 @@ func (c *Controller) checkTx(result *PrepareTxJson) (contract *smart.Contract, e
 
 func (c *Controller) AjaxPrepareTx() interface{} {
 	var (
-		result PrepareTxJson
+		result PrepareTxJSON
 	)
 	result.Time = lib.Time32()
 	result.Values = make(map[string]string)
