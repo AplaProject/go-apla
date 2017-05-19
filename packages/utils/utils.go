@@ -107,7 +107,7 @@ var (
 	Upd                     = flag.Bool("update", false, "Update")
 	BoltDir                 = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
 	BoltPsw                 = flag.String("boltPsw", "", "Bolt password")
-	ApiToken                = flag.String("apiToken", "", "Api Token")
+	APIToken                = flag.String("apiToken", "", "API Token")
 	OneCountry              int64
 	PrivCountry             bool
 	OutFile                 *os.File

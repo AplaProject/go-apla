@@ -26,8 +26,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type HistOper struct {
-	BlockId string `json:"block_id"`
+type histOper struct {
+	BlockID string `json:"block_id"`
 	Dif     string `json:"dif"`
 	Amount  string `json:"amount"`
 	EGS     string `json:"egs"`
@@ -35,9 +35,10 @@ type HistOper struct {
 	//	Wallet  string `json:"wallet"`
 }
 
+// History is an answer structure for history request
 type History struct {
 	Error string     `json:"error"`
-	Items []HistOper `json:"history"`
+	Items []histOper `json:"history"`
 }
 
 func history(r *http.Request) interface{} {
@@ -57,7 +58,7 @@ func history(r *http.Request) interface{} {
 	if count > 200 {
 		count = 200
 	}
-	list := make([]HistOper, 0)
+	list := make([]histOper, 0)
 	current, err := utils.DB.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, wallet).String()
 	if err != nil {
 		result.Error = err.Error()
@@ -95,7 +96,7 @@ func history(r *http.Request) interface{} {
 				}
 				dt := time.Unix(utils.StrToInt64(prev[`time`]), 0)
 
-				list = append(list, HistOper{BlockId: prev[`block_id`], Dif: sign + lib.EGSMoney(dif.String()),
+				list = append(list, histOper{BlockID: prev[`block_id`], Dif: sign + lib.EGSMoney(dif.String()),
 					Amount: balance.String(), EGS: lib.EGSMoney(balance.String()), Time: dt.Format(`02.01.2006 15:04:05`)})
 				balance = val
 
@@ -110,7 +111,7 @@ func history(r *http.Request) interface{} {
 		}
 		if len(first) > 0 {
 			dt := time.Unix(utils.StrToInt64(first[`time`]), 0)
-			list = append(list, HistOper{BlockId: first[`block_id`], Dif: `+` + lib.EGSMoney(first[`amount`]),
+			list = append(list, histOper{BlockID: first[`block_id`], Dif: `+` + lib.EGSMoney(first[`amount`]),
 				Amount: first[`amount`],
 				EGS:    lib.EGSMoney(first[`amount`]), Time: dt.Format(`02.01.2006 15:04:05`)})
 		}

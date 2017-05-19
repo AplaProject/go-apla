@@ -29,6 +29,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// Send is a answer structure for send handle function
 type Send struct {
 	Error string `json:"error"`
 }

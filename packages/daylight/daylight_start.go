@@ -92,7 +92,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	fmt.Println("dcVersion:", consts.VERSION)
 	log.Debug("dcVersion: %v", consts.VERSION)
 
-	exchangeapi.InitApi()
+	exchangeapi.InitAPI()
 
 	// читаем config.ini
 	configIni := make(map[string]string)
@@ -393,10 +393,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		http.HandleFunc(HandleHttpHost+"/app", controllers.App)
 		http.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 		http.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.Api)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.Api)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.Api)
-		http.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.Api)
+		http.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.API)
+		http.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.API)
+		http.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.API)
+		http.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.API)
 		//http.HandleFunc(HandleHttpHost+"/ajaxjson", controllers.AjaxJson)
 		//http.HandleFunc(HandleHttpHost+"/tools", controllers.Tools)
 		//http.Handle(HandleHttpHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
@@ -408,10 +408,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			httpsMux.HandleFunc(HandleHttpHost+"/content", controllers.Content)
 			httpsMux.HandleFunc(HandleHttpHost+"/ajax", controllers.Ajax)
 			httpsMux.HandleFunc(HandleHttpHost+"/wschain", controllers.WsBlockchain)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.Api)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.Api)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.Api)
-			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.Api)
+			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/newkey", exchangeapi.API)
+			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/send", exchangeapi.API)
+			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/balance", exchangeapi.API)
+			httpsMux.HandleFunc(HandleHttpHost+"/exchangeapi/history", exchangeapi.API)
 			httpsMux.Handle(HandleHttpHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
 		}

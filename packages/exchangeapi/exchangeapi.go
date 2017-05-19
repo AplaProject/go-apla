@@ -39,11 +39,13 @@ var (
 	log      = logging.MustGetLogger("exchangeapi")
 )
 
-type DefaultApi struct {
+// DefaultAPI is the default answer structure
+type DefaultAPI struct {
 	Error string `json:"error"`
 }
 
-func InitApi() {
+// InitAPI initialize BoltDB database
+func InitAPI() {
 	var err error
 	boltDB, err = bolt.Open(*utils.BoltDir+"/exchangeapi.db", 0600, nil)
 	if err != nil {
@@ -61,14 +63,14 @@ func InitApi() {
 		encTest = tx.Bucket(settings).Get([]byte("EncTest"))
 		return nil
 	})
-	if len(*utils.ApiToken) > 0 {
+	if len(*utils.APIToken) > 0 {
 		err = boltDB.Update(func(tx *bolt.Tx) error {
-			err = tx.Bucket(settings).Put([]byte("Token"), []byte(*utils.ApiToken))
+			err = tx.Bucket(settings).Put([]byte("Token"), []byte(*utils.APIToken))
 			return err
 		})
 	} else {
 		err = boltDB.View(func(tx *bolt.Tx) error {
-			*utils.ApiToken = string(tx.Bucket(settings).Get([]byte("Token")))
+			*utils.APIToken = string(tx.Bucket(settings).Get([]byte("Token")))
 			return nil
 		})
 	}
@@ -173,7 +175,8 @@ func genNewKey() ([]byte, error) {
 	return pubKey, nil
 }
 
-func Api(w http.ResponseWriter, r *http.Request) {
+// API is a handle function for exchangeapi requests
+func API(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("exchangeapi Recovered", r)
@@ -184,7 +187,7 @@ func Api(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	token := r.FormValue("token")
-	if len(*utils.ApiToken) > 0 && token != *utils.ApiToken {
+	if len(*utils.APIToken) > 0 && token != *utils.APIToken {
 		w.Write([]byte(`{"error": "Invalid token"}`))
 		return
 	}
@@ -203,11 +206,11 @@ func Api(w http.ResponseWriter, r *http.Request) {
 	case `/exchangeapi/history`:
 		ret = history(r)
 	default:
-		ret = DefaultApi{`Unknown request`}
+		ret = DefaultAPI{`Unknown request`}
 	}
 	jsonData, err := json.Marshal(ret)
 	if err != nil {
-		ret = DefaultApi{err.Error()}
+		ret = DefaultAPI{err.Error()}
 	}
 	w.Write(jsonData)
 }

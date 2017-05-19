@@ -23,11 +23,12 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 )
 
+// NewKey is an answer structure for newKey request
 type NewKey struct {
 	Error    string `json:"error"`
 	Public   string `json:"public"`
 	Address  string `json:"address"`
-	WalletId int64  `json:"wallet_id"`
+	WalletID int64  `json:"wallet_id"`
 }
 
 func newKey(r *http.Request) interface{} {
@@ -38,8 +39,8 @@ func newKey(r *http.Request) interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	result.WalletId = int64(lib.Address(pub))
-	result.Address = lib.AddressToString(result.WalletId)
+	result.WalletID = int64(lib.Address(pub))
+	result.Address = lib.AddressToString(result.WalletID)
 	result.Public = hex.EncodeToString(pub)
 	return result
 }
