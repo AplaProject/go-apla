@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// Balance is the result structure of balamce handler
 type Balance struct {
 	Error  string `json:"error"`
 	Amount string `json:"amount"`

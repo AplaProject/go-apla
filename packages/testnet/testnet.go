@@ -38,16 +38,20 @@ import (
 )
 
 const (
+	// XForwardedFor is a header parameter
 	XForwardedFor = "X-Forwarded-For"
-	XRealIP       = "X-Real-IP"
+	// XRealIP is a header parameter
+	XRealIP = "X-Real-IP"
 )
 
+// Settings contains options of the program
 type Settings struct {
 	Port uint32
 	Path string
 	Node string
 }
 
+// TestnetPage is a structure for the template of testnet handler
 type TestnetPage struct {
 	List   []*TxInfo
 	Latest int64
@@ -55,6 +59,7 @@ type TestnetPage struct {
 	Node   string
 }
 
+// RegisterPage is a structure for the template of register handler
 type RegisterPage struct {
 	Available int64
 	Country   string
@@ -63,6 +68,7 @@ type RegisterPage struct {
 	Message   string
 }
 
+// NewStateResult is a structure for the answer of newState handler
 type NewStateResult struct {
 	Private string `json:"private"`
 	Wallet  string `json:"wallet"`
@@ -70,6 +76,7 @@ type NewStateResult struct {
 	Error   string `json:"error"`
 }
 
+// NewRegisterResult is a structure for the answer of newregister handler
 type NewRegisterResult struct {
 	Private string `json:"private"`
 	//	Wallet  string `json:"wallet"`
@@ -78,10 +85,11 @@ type NewRegisterResult struct {
 }
 
 var (
-	GSettings Settings
+	gSettings Settings
 	regMutex  = &sync.Mutex{}
 )
 
+// FileAsset returns the content of the file
 func FileAsset(name string) ([]byte, error) {
 	return static.Asset(name)
 }
@@ -121,7 +129,7 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 	var result NewStateResult
 
 	errFunc := func(msg string) {
-		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, lib.EscapeForJson(msg))))
+		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, lib.EscapeForJSON(msg))))
 	}
 
 	r.ParseForm()
@@ -170,33 +178,33 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 		result.Error = err.Error()
 	} else {
 		result.Result = utils.StrToInt64(id)
-		resp, err := http.Get(strings.TrimRight(GSettings.Node, `/`) + `/ajax?json=ajax_new_state&testnet=` + id)
+		resp, err := http.Get(strings.TrimRight(gSettings.Node, `/`) + `/ajax?json=ajax_new_state&testnet=` + id)
 		if err != nil {
 			errFunc(err.Error())
 			return
 		}
 		defer resp.Body.Close()
-		if answer, err := ioutil.ReadAll(resp.Body); err != nil {
+		var answer []byte
+		if answer, err = ioutil.ReadAll(resp.Body); err != nil {
 			errFunc(err.Error())
 			return
-		} else {
-			var answerJson NewStateResult
-			if err = json.Unmarshal(answer, &answerJson); err != nil {
-				errFunc(err.Error() + `; ` + string(answer))
-				return
-			}
-			if answerJson.Error != `success` {
-				errFunc(answerJson.Error)
-				return
-			}
-			upd, err := utils.DB.OneRow(`select private, wallet from testnet_emails where id=?`, id).String()
-			if err != nil {
-				errFunc(err.Error())
-				return
-			}
-			result.Private = upd[`private`]
-			result.Wallet = lib.AddressToString(uint64(utils.StrToInt64(upd[`wallet`])))
 		}
+		var answerJSON NewStateResult
+		if err = json.Unmarshal(answer, &answerJSON); err != nil {
+			errFunc(err.Error() + `; ` + string(answer))
+			return
+		}
+		if answerJSON.Error != `success` {
+			errFunc(answerJSON.Error)
+			return
+		}
+		upd, err := utils.DB.OneRow(`select private, wallet from testnet_emails where id=?`, id).String()
+		if err != nil {
+			errFunc(err.Error())
+			return
+		}
+		result.Private = upd[`private`]
+		result.Wallet = lib.AddressToString(utils.StrToInt64(upd[`wallet`]))
 	}
 
 	if jsonData, err := json.Marshal(result); err == nil {
@@ -210,7 +218,7 @@ func newregisterHandler(w http.ResponseWriter, r *http.Request) {
 	var result NewRegisterResult
 
 	errFunc := func(msg string) {
-		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, lib.EscapeForJson(msg))))
+		w.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, lib.EscapeForJSON(msg))))
 	}
 
 	r.ParseForm()
@@ -264,12 +272,12 @@ func testnetHandler(w http.ResponseWriter, r *http.Request) {
 	b := new(bytes.Buffer)
 	list := make([]*TxInfo, 0)
 	start := txTop
-	for start.Id > 0 && len(list) < 10 {
+	for start.ID > 0 && len(list) < 10 {
 		list = append(list, start)
 		start = start.prev
 	}
-	err = t.Execute(b, TestnetPage{Node: strings.TrimRight(GSettings.Node, `/`), List: list,
-		Latest: txTop.Id, Host: r.Host})
+	err = t.Execute(b, TestnetPage{Node: strings.TrimRight(gSettings.Node, `/`), List: list,
+		Latest: txTop.ID, Host: r.Host})
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
 	}
@@ -316,7 +324,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
 	}
 	b := new(bytes.Buffer)
-	err = t.Execute(b, RegisterPage{Node: strings.TrimRight(GSettings.Node, `/`), Available: available,
+	err = t.Execute(b, RegisterPage{Node: strings.TrimRight(gSettings.Node, `/`), Available: available,
 		Country: country, State: state, Message: message})
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
@@ -342,17 +350,17 @@ func main() {
 	if err != nil {
 		log.Fatalln(dir, `Settings.json`, err)
 	}
-	if err = json.Unmarshal(params, &GSettings); err != nil {
+	if err = json.Unmarshal(params, &gSettings); err != nil {
 		log.Fatalln(`Unmarshall`, err)
 	}
 	os.Chdir(dir)
-	*utils.Dir = GSettings.Path
+	*utils.Dir = gSettings.Path
 	configIni := make(map[string]string)
-	configIni_, err := config.NewConfig("ini", GSettings.Path+`/config.ini`)
+	fullConfigIni, err := config.NewConfig("ini", gSettings.Path+`/config.ini`)
 	if err != nil {
 		log.Fatalln(`Config`, err)
 	} else {
-		configIni, err = configIni_.GetSection("default")
+		configIni, err = fullConfigIni.GetSection("default")
 	}
 	if utils.DB, err = utils.NewDbConnect(configIni); err != nil {
 		log.Fatalln(`Utils connection`, err)
@@ -461,6 +469,9 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 	http.HandleFunc(`/wschain`, WsBlockchain)
 	http.Handle("/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 
-	http.ListenAndServe(fmt.Sprintf(":%d", GSettings.Port), nil)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", gSettings.Port), nil)
+	if err != nil {
+		log.Fatalln(`Listen`, err)
+	}
 	log.Println("Finish")
 }

@@ -32,11 +32,13 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// WsMsg is a structure for sending information about transactions.
 type WsMsg struct {
 	Data   []TxInfo `json:"data"`
 	Latest int64    `json:"latest"`
 }
 
+// WsBlockchain is a handle websocket function.
 func WsBlockchain(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -52,9 +54,9 @@ func WsBlockchain(w http.ResponseWriter, r *http.Request) {
 		if latest, err := strconv.ParseInt(string(msg), 10, 64); err == nil && latest >= 0 {
 			var answer WsMsg
 			answer.Data = make([]TxInfo, 0)
-			answer.Latest = txTop.Id
+			answer.Latest = txTop.ID
 			start := txTop
-			for start.Id > latest && len(answer.Data) < 20 {
+			for start.ID > latest && len(answer.Data) < 20 {
 				answer.Data = append(answer.Data, *start)
 				start = start.prev
 			}
@@ -66,5 +68,7 @@ func WsBlockchain(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	conn.Close()
+	if err = conn.Close(); err != nil {
+		fmt.Println(err)
+	}
 }

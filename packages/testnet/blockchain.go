@@ -30,14 +30,15 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-type GetCntJson struct {
+type getCntJSON struct {
 	Name  string `json:"name"`
 	Error string `json:"error"`
 }
 
+// TxInfo contains information about transaction
 type TxInfo struct {
-	Id      int64  `json:"id"`
-	BlockId int64  `json:"block"`
+	ID      int64  `json:"id"`
+	BlockID int64  `json:"block"`
 	Address string `json:"wallet"`
 	State   string `json:"state"`
 	Time    string `json:"time"`
@@ -52,18 +53,15 @@ const (
 )
 
 var (
-	txId          int64
-	txLatest      int64
-	txOff         int
+	txID     int64
+	txLatest int64
+	//	txOff         int
 	txList, txTop *TxInfo
 	txStates      = make(map[int64]string)
 	txContracts   = make(map[int32]string)
 )
 
-func DataToInfo(data []byte) {
-
-}
-
+// GetTx gets information about new transactions
 func GetTx() {
 	txList = &TxInfo{}
 	txTop = txList
@@ -133,7 +131,7 @@ func GetTx() {
 						if val, ok := txContracts[idc]; ok {
 							name = val
 						} else {
-							resp, err := http.Get(strings.TrimRight(GSettings.Node, `/`) +
+							resp, err := http.Get(strings.TrimRight(gSettings.Node, `/`) +
 								fmt.Sprintf(`/ajax?json=ajax_get_cnt&id=%d`, idc))
 							if err != nil {
 								break
@@ -142,16 +140,16 @@ func GetTx() {
 								resp.Body.Close()
 								break
 							} else {
-								var answerJson GetCntJson
+								var answerJSON getCntJSON
 								resp.Body.Close()
-								if err = json.Unmarshal(answer, &answerJson); err != nil {
+								if err = json.Unmarshal(answer, &answerJSON); err != nil {
 									break
 								}
 								var off int
-								for off < len(answerJson.Name) && answerJson.Name[off] < 'A' {
+								for off < len(answerJSON.Name) && answerJSON.Name[off] < 'A' {
 									off++
 								}
-								name = answerJson.Name[off:]
+								name = answerJSON.Name[off:]
 								txContracts[idc] = name
 							}
 						}
@@ -168,15 +166,15 @@ func GetTx() {
 					case `GenCitizen`:
 						comment = `1`
 					}
-					if name == `GenCitizen` && txTop.TxName == name && txTop.BlockId == utils.StrToInt64(item[`id`]) &&
-						txTop.Address == lib.AddressToString(uint64(wallet)) {
+					if name == `GenCitizen` && txTop.TxName == name && txTop.BlockID == utils.StrToInt64(item[`id`]) &&
+						txTop.Address == lib.AddressToString(wallet) {
 						txTop.Comment = fmt.Sprintf(`%d`, utils.StrToInt64(txTop.Comment)+1)
 					} else {
 						txTop = txTop.next
-						txId++
-						txTop.Id = txId
-						txTop.BlockId = utils.StrToInt64(item[`id`])
-						txTop.Address = lib.AddressToString(uint64(wallet))
+						txID++
+						txTop.ID = txID
+						txTop.BlockID = utils.StrToInt64(item[`id`])
+						txTop.Address = lib.AddressToString(wallet)
 						txTop.Comment = comment
 						txTop.TxName = name
 						txTop.Time = time.Unix(txtime, 0).String()[:19]

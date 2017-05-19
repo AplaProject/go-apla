@@ -24,7 +24,7 @@ import (
 
 const AGetCnt = `ajax_get_cnt`
 
-type GetCntJson struct {
+type GetCntJSON struct {
 	Name  string `json:"name"`
 	Error string `json:"error"`
 }
@@ -34,7 +34,7 @@ func init() {
 }
 
 func (c *Controller) AjaxGetCnt() interface{} {
-	var result GetCntJson
+	var result GetCntJSON
 
 	id := utils.StrToInt64(c.r.FormValue(`id`))
 	if id > 0 {
