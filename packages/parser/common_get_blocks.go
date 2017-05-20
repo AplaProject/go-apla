@@ -270,7 +270,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 			}
 			// если есть ошибка, то откатываем все предыдущие блоки из новой цепочки
 			if err != nil {
-				parser.BlockError(err)
+				parser.BlockError(err) // why?
 				log.Debug("there is an error is rolled back all previous blocks of a new chain: %v", err)
 
 				// баним на 1 час хост, который дал нам ложную цепочку
