@@ -136,8 +136,8 @@ BEGIN:
 			if config["first_load_blockchain"] == "file" /* && IsNotExistBlockChain*/ {
 
 				logger.Info("first_load_blockchain=file")
-				nodeConfig, err := d.GetNodeConfig()
-				blockchain_url := nodeConfig["first_load_blockchain_url"]
+				//nodeConfig, err := d.GetNodeConfig()
+				blockchain_url := config["first_load_blockchain_url"]
 				if len(blockchain_url) == 0 {
 					blockchain_url = consts.BLOCKCHAIN_URL
 				}
@@ -543,7 +543,7 @@ BEGIN:
 					continue BEGIN
 				}
 				// нужно привести данные в нашей БД в соответствие с данными у того, у кого качаем более свежий блок
-				err := parser.GetOldBlocks(blockData.WalletId, blockData.StateID, blockId-1, maxBlockIdHost, GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
+				err := parser.GetBlocks(blockId-1, maxBlockIdHost, "rollback_blocks_2", GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
 				if err != nil {
 					logger.Error("%v", err)
 					d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))
