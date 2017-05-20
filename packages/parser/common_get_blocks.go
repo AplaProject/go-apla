@@ -173,7 +173,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 	log.Debug("blocks", blocksSorted)
 
 	// получим наши транзакции в 1 бинарнике, просто для удобства
-	var transactions []byte
+	/*var transactions []byte
 	utils.WriteSelectiveLog(`SELECT data FROM transactions WHERE verified = 1 AND used = 0`)
 	all, err := p.GetAll(`SELECT data FROM transactions WHERE verified = 1 AND used = 0`, -1)
 	if err != nil {
@@ -201,7 +201,15 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 		if err != nil {
 			return utils.ErrInfo(err)
 		}*/
+	/*}*/
+
+	utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	if err != nil {
+		utils.WriteSelectiveLog(err)
+		return utils.ErrInfo(err)
 	}
+	utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 	// откатываем наши блоки до начала вилки
 	rows, err := p.Query(p.FormatQuery(`
@@ -346,7 +354,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 	log.Debug("remove the blocks and enter new block_chain")
 
 	// если всё занеслось без ошибок, то удаляем блоки из block_chain и заносим новые
-	affect, err := p.ExecSqlGetAffect("DELETE FROM block_chain WHERE id > ?", blockId)
+	affect, err = p.ExecSqlGetAffect("DELETE FROM block_chain WHERE id > ?", blockId)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
