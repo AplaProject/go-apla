@@ -26,25 +26,25 @@ const (
 
 type BlockHeader struct {
 	Type     byte
-	BlockId  uint32
+	BlockID  uint32
 	Time     uint32
-	WalletId int64
-	StateId  byte
+	WalletID int64
+	StateID  byte
 	Sign     []byte
 }
 
 type TxHeader struct {
 	Type      byte
 	Time      uint32
-	WalletId  int64
-	CitizenId int64
+	WalletID  int64
+	CitizenID int64
 }
 
 type TXHeader struct {
 	Type     int32 // byte < 128 system tx 129 - 1 byte 130 - 2 bytes 131 - 3 - bytes 132 - 4 bytes
 	Time     uint32
-	WalletId uint64
-	StateId  int32
+	WalletID uint64
+	StateID  int32
 	Flags    uint8
 	Sign     []byte
 }
@@ -63,13 +63,13 @@ type FirstBlock struct {
 
 type CitizenRequest struct {
 	TxHeader
-	StateId int64
+	StateID int64
 	Sign    []byte
 }
 
 type NewCitizen struct {
 	TxHeader
-	StateId   int64
+	StateID   int64
 	PublicKey []byte
 	Sign      []byte
 }

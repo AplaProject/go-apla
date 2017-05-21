@@ -123,8 +123,8 @@ func getCost(name string) int64 {
 func (p *Parser) getExtend() *map[string]interface{} {
 	head := p.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
 	var citizenId, walletId int64
-	citizenId = int64(head.WalletId)
-	walletId = int64(head.WalletId)
+	citizenId = int64(head.WalletID)
+	walletId = int64(head.WalletID)
 	// test
 	block := int64(0)
 	blockTime := int64(0)
@@ -134,7 +134,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		walletBlock = p.BlockData.WalletId
 		blockTime = p.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateId),
+	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateID),
 		`block`: block, `citizen`: citizenId, `wallet`: walletId, `wallet_block`: walletBlock,
 		`parent`: ``, `txcost`: p.GetContractLimit(),
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
@@ -170,7 +170,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		}
 		if len(p.PublicKeys) == 0 {
 			data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?",
-				int64(p.TxPtr.(*consts.TXHeader).WalletId)).String()
+				int64(p.TxPtr.(*consts.TXHeader).WalletID)).String()
 			if err != nil {
 				return err
 			}

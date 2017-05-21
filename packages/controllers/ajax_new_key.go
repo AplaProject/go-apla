@@ -145,8 +145,8 @@ func (c *Controller) AjaxNewKey() interface{} {
 	header := consts.TXHeader{
 		Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
 		Time:     uint32(ctime),
-		WalletId: uint64(idkey),
-		StateId:  int32(stateId),
+		WalletID: uint64(idkey),
+		StateID:  int32(stateId),
 		Flags:    flags,
 		Sign:     sign,
 	}

@@ -38,6 +38,7 @@ type Update struct {
 	URL     string
 }
 
+// CalculateMd5 calculates MD5 hash of the file
 func CalculateMd5(filePath string) ([]byte, error) {
 	var result []byte
 	file, err := os.Open(filePath)
@@ -54,6 +55,7 @@ func CalculateMd5(filePath string) ([]byte, error) {
 	return hash.Sum(result), nil
 }
 
+// FieldToBytes returns the value of n-th field of v as []byte
 func FieldToBytes(v interface{}, num int) []byte {
 	t := reflect.ValueOf(v)
 	ret := make([]byte, 0, 2048)
@@ -78,6 +80,7 @@ func FieldToBytes(v interface{}, num int) []byte {
 	return ret
 }
 
+//HexToInt64 converts hex int64 to int64
 func HexToInt64(input string) (ret int64) {
 	hex, _ := hex.DecodeString(input)
 	if length := len(hex); length <= 8 {

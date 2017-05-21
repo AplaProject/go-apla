@@ -55,14 +55,14 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				return nil, err
 			}
 			isStruct = false
-			p.TxStateID = uint32(p.TxPtr.(*consts.TXHeader).StateId)
+			p.TxStateID = uint32(p.TxPtr.(*consts.TXHeader).StateID)
 			p.TxStateIDStr = utils.UInt32ToStr(p.TxStateID)
 			if p.TxStateID > 0 {
-				p.TxCitizenID = int64(p.TxPtr.(*consts.TXHeader).WalletId)
+				p.TxCitizenID = int64(p.TxPtr.(*consts.TXHeader).WalletID)
 				p.TxWalletID = 0
 			} else {
 				p.TxCitizenID = 0
-				p.TxWalletID = int64(p.TxPtr.(*consts.TXHeader).WalletId)
+				p.TxWalletID = int64(p.TxPtr.(*consts.TXHeader).WalletID)
 			}
 			contract := smart.GetContractByID(p.TxPtr.(*consts.TXHeader).Type)
 			if contract == nil {
@@ -71,8 +71,8 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			//			log.Debug(`TRANDEB %d %d NAME: %s`, int64(p.TxPtr.(*consts.TXHeader).WalletId),
 			//				uint64(p.TxPtr.(*consts.TXHeader).WalletId), contract.Name)
 			forsign := fmt.Sprintf("%d,%d,%d,%d,%d", p.TxPtr.(*consts.TXHeader).Type,
-				p.TxPtr.(*consts.TXHeader).Time, p.TxPtr.(*consts.TXHeader).WalletId,
-				p.TxPtr.(*consts.TXHeader).StateId, p.TxPtr.(*consts.TXHeader).Flags)
+				p.TxPtr.(*consts.TXHeader).Time, p.TxPtr.(*consts.TXHeader).WalletID,
+				p.TxPtr.(*consts.TXHeader).StateID, p.TxPtr.(*consts.TXHeader).Flags)
 
 			p.TxContract = contract
 			p.TxData = make(map[string]interface{})
@@ -129,20 +129,20 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			p.TxVars = make(map[string]string)
 			if int(txType) == 4 { // TXNewCitizen
 				head := consts.HeaderNew(p.TxPtr)
-				p.TxStateID = uint32(head.StateId)
+				p.TxStateID = uint32(head.StateID)
 				p.TxStateIDStr = utils.UInt32ToStr(p.TxStateID)
-				if head.StateId > 0 {
-					p.TxCitizenID = int64(head.WalletId)
+				if head.StateID > 0 {
+					p.TxCitizenID = int64(head.WalletID)
 					p.TxWalletID = 0
 				} else {
 					p.TxCitizenID = 0
-					p.TxWalletID = int64(head.WalletId)
+					p.TxWalletID = int64(head.WalletID)
 				}
 				p.TxTime = int64(head.Time)
 			} else {
 				head := consts.Header(p.TxPtr)
-				p.TxCitizenID = head.CitizenId
-				p.TxWalletID = head.WalletId
+				p.TxCitizenID = head.CitizenID
+				p.TxWalletID = head.WalletID
 				p.TxTime = int64(head.Time)
 			}
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)

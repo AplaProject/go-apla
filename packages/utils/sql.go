@@ -1391,28 +1391,28 @@ func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, walletId_ interface
 	return nil
 }
 
-func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletId int64, citizenId int64) {
+func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
 	tmp := binaryBlock[:]
 	txType = BinToDecBytesShift(&binaryBlock, 1)
 	if consts.IsStruct(int(txType)) {
 		var txHead consts.TxHeader
 		lib.BinUnmarshal(&tmp, &txHead)
-		walletId = txHead.WalletId
-		citizenId = txHead.CitizenId
+		walletID = txHead.WalletID
+		citizenID = txHead.CitizenID
 	} else if txType > 127 {
 		header := consts.TXHeader{}
 		err := lib.BinUnmarshal(&tmp, &header)
 		if err == nil {
-			if header.StateId > 0 {
-				citizenId = int64(header.WalletId)
+			if header.StateID > 0 {
+				citizenID = int64(header.WalletID)
 			} else {
-				walletId = int64(header.WalletId)
+				walletID = int64(header.WalletID)
 			}
 		}
 	} else {
 		BytesShift(&binaryBlock, 4) // уберем время
-		walletId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
-		citizenId = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+		walletID = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
+		citizenID = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
 	}
 	return
 }
