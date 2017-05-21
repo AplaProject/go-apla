@@ -277,6 +277,7 @@ func EscapeName(name string) string {
 	return string(append(out, '"'))
 }
 
+// Escape deletes unaccessable characters
 func Escape(data string) string {
 	out := make([]byte, 0, len(data)+2)
 	available := `_ ,=!-'()"?*$<>: `
@@ -289,10 +290,12 @@ func Escape(data string) string {
 	return string(out)
 }
 
+// EscapeForJSON replaces quote to slash and quote
 func EscapeForJSON(data string) string {
 	return strings.Replace(data, `"`, `\"`, -1)
 }
 
+// NumString insert spaces between each three digits. 7123456 => 7 123 456
 func NumString(in string) string {
 	if strings.IndexByte(in, '.') >= 0 {
 		lr := strings.Split(in, `.`)
@@ -307,16 +310,19 @@ func NumString(in string) string {
 	return string(append(buf, out...))
 }
 
+// Bytes2Float converts []byte to float64
 func Bytes2Float(bytes []byte) float64 {
 	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
 }
 
+// Float2Bytes converts float64 to []byte
 func Float2Bytes(float float64) []byte {
 	bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bytes, math.Float64bits(float))
 	return bytes
 }
 
+// StripTags replaces < and > to &lt; and &gt;
 func StripTags(value string) string {
 	return strings.Replace(strings.Replace(value, `<`, `&lt;`, -1), `>`, `&gt;`, -1)
 }

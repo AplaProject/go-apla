@@ -17,31 +17,23 @@
 package daylight
 
 import (
-	"encoding/hex"
 	"fmt"
 	//	_ "image/png"
-	"io/ioutil"
-	"net/http"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
 )
 
 var (
-	log            = logging.MustGetLogger("daylight")
-	format         = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{color:reset} %{message}[" + consts.VERSION + "]" + string(byte(0)))
-	configIni      map[string]string
-	globalSessions *session.Manager
+	log       = logging.MustGetLogger("daylight")
+	format    = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{color:reset} %{message}[" + consts.VERSION + "]" + string(byte(0)))
+	configIni map[string]string
 )
 
+/*
 func firstBlock() {
 	if *utils.GenerateFirstBlock == 1 {
 
@@ -74,12 +66,12 @@ func firstBlock() {
 		var block, tx []byte
 		iAddress := int64(lib.Address(PublicKeyBytes))
 		now := lib.Time32()
-		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: iAddress})
+		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
 		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
-			Time: now, WalletId: iAddress, CitizenId: 0},
+			Time: now, WalletID: iAddress, CitizenID: 0},
 			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
@@ -113,7 +105,7 @@ func noDirListing(h http.Handler) http.HandlerFunc {
 		h.ServeHTTP(w, r)
 	})
 }
-
+*/
 func openBrowser(BrowserHTTPHost string) {
 	log.Debug("runtime.GOOS: %v", runtime.GOOS)
 	var err error

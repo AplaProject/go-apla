@@ -75,8 +75,8 @@ func (c *Controller) AjaxSendTx() interface{} {
 			header := consts.TXHeader{
 				Type:     int32(contract.Block.Info.(*script.ContractInfo).ID), /* + smart.CNTOFF*/
 				Time:     uint32(utils.StrToInt64(c.r.FormValue(`time`))),
-				WalletId: userId,
-				StateId:  int32(c.SessStateId),
+				WalletID: userId,
+				StateID:  int32(c.SessStateId),
 				Flags:    flags,
 				Sign:     sign,
 			}

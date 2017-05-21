@@ -22,31 +22,33 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AEncryptKey = `ajax_encrypt_key`
+const aEncryptKey = `ajax_encrypt_key`
 
+// EncryptKey is a structure for the answer of ajax_encrypt_key ajax request
 type EncryptKey struct {
 	Encrypted string `json:"encrypted"` //hex
 	Public    string `json:"public"`    //hex
-	WalletId  int64  `json:"wallet_id"`
+	WalletID  int64  `json:"wallet_id"`
 	Address   string `json:"address"`
 	Error     string `json:"error"`
 }
 
 func init() {
-	newPage(AEncryptKey, `json`)
+	newPage(aEncryptKey, `json`)
 }
 
-func EncryptNewKey(wallet_id string) (result EncryptKey) {
+// EncryptNewKey creates a shared key, generates and crypts a new private key
+func EncryptNewKey(walletID string) (result EncryptKey) {
 	var (
 		err error
 		id  int64
 	)
 
-	if len(wallet_id) == 0 {
+	if len(walletID) == 0 {
 		result.Error = `unknown wallet id`
 		return result
 	}
-	id = lib.StringToAddress(wallet_id)
+	id = lib.StringToAddress(walletID)
 	pubKey, err := utils.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
 	if err != nil {
 		result.Error = err.Error()
@@ -58,7 +60,7 @@ func EncryptNewKey(wallet_id string) (result EncryptKey) {
 	}
 	var private string
 
-	for result.WalletId == 0 {
+	for result.WalletID == 0 {
 		private, result.Public, _ = lib.GenHexKeys()
 
 		pub, _ := hex.DecodeString(result.Public)
@@ -70,7 +72,7 @@ func EncryptNewKey(wallet_id string) (result EncryptKey) {
 			return result
 		}
 		if exist == 0 {
-			result.WalletId = idnew
+			result.WalletID = idnew
 		}
 	}
 	priv, _ := hex.DecodeString(private)
@@ -80,11 +82,12 @@ func EncryptNewKey(wallet_id string) (result EncryptKey) {
 		return result
 	}
 	result.Encrypted = hex.EncodeToString(encrypted)
-	result.Address = lib.AddressToString(result.WalletId)
+	result.Address = lib.AddressToString(result.WalletID)
 
 	return
 }
 
+// AjaxEncryptKey is a controller of ajax_encrypt_key request
 func (c *Controller) AjaxEncryptKey() interface{} {
 	return EncryptNewKey(c.r.FormValue("wallet_id"))
 }

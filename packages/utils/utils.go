@@ -1947,12 +1947,12 @@ func FirstBlock(exit bool) {
 		var block, tx []byte
 		iAddress := int64(lib.Address(PublicKeyBytes))
 		now := lib.Time32()
-		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: iAddress})
+		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
 		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
-			Time: now, WalletId: iAddress, CitizenId: 0},
+			Time: now, WalletID: iAddress, CitizenID: 0},
 			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 		if err != nil {
 			log.Error("%v", ErrInfo(err))

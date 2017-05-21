@@ -25,20 +25,22 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AAddresses = `ajax_addresses`
+const aAddresses = `ajax_addresses`
 
-type AddressJson struct {
+// AddressJSON is a structure of the ajax_adresses ajax request
+type AddressJSON struct {
 	Address []string `json:"address"`
 	Error   string   `json:"error"`
 }
 
 func init() {
-	newPage(AAddresses, `json`)
+	newPage(aAddresses, `json`)
 }
 
+// AjaxAddresses is a controller of ajax_adresses request
 func (c *Controller) AjaxAddresses() interface{} {
 	var (
-		result AddressJson
+		result AddressJSON
 		err    error
 		req    []map[string]string
 	)

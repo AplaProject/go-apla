@@ -23,16 +23,18 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AAppProcess = `ajax_app_process`
+const aAppProcess = `ajax_app_process`
 
+// AppProcess is a structure of the ajax_app_process ajax request
 type AppProcess struct {
 	Error string `json:"error"`
 }
 
 func init() {
-	newPage(AAppProcess, `json`)
+	newPage(aAppProcess, `json`)
 }
 
+// AjaxAppProcess is a controller of ajax_app_process request
 func (c *Controller) AjaxAppProcess() interface{} {
 	var (
 		result AppProcess

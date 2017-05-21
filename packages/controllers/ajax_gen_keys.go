@@ -112,8 +112,8 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		header := consts.TXHeader{
 			Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
 			Time:     uint32(ctime),
-			WalletId: uint64(c.SessCitizenId),
-			StateId:  int32(c.SessStateId),
+			WalletID: uint64(c.SessCitizenId),
+			StateID:  int32(c.SessStateId),
 			Flags:    flags,
 			Sign:     sign,
 		}

@@ -129,8 +129,8 @@ func (c *Controller) Menu() (string, error) {
 			}
 		}
 	} else {
-		langs = []LangInfo{LangInfo{Title: `English (UK)`, Code: `gb`},
-			LangInfo{Title: `Nederlands (NL)`, Code: `nl`}}
+		langs = []LangInfo{{Title: `English (UK)`, Code: `gb`},
+			{Title: `Nederlands (NL)`, Code: `nl`}}
 	}
 	states, _ := c.AjaxStatesList()
 	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,

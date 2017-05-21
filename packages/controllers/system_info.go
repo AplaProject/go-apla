@@ -23,15 +23,15 @@ import (
 const NSystemInfo = `system_info`
 
 type systemInfoPage struct {
-	Data      *CommonPage
-	List      []map[string]string
-	Latest    int64
-	BlockId   int64
-	UpdFullNodes []map[string]string
-	MainLock []map[string]string
-	Rollback []map[string]string
-	FullNodes []map[string]string
-	Votes []map[string]string
+	Data             *CommonPage
+	List             []map[string]string
+	Latest           int64
+	BlockId          int64
+	UpdFullNodes     []map[string]string
+	MainLock         []map[string]string
+	Rollback         []map[string]string
+	FullNodes        []map[string]string
+	Votes            []map[string]string
 	SystemParameters []map[string]string
 }
 
@@ -72,7 +72,6 @@ func (c *Controller) SystemInfo() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-
 
 	return proceedTemplate(c, NSystemInfo, &pageData)
 }

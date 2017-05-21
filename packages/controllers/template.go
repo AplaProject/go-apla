@@ -66,7 +66,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("%v", err)
 	}
-	if err != nil || strings.HasPrefix(strings.TrimSpace(tpl),`NULL`) || len(tpl) == 0 {
+	if err != nil || strings.HasPrefix(strings.TrimSpace(tpl), `NULL`) || len(tpl) == 0 {
 		tpl = `Something is wrong. <a href="#" onclick="load_page('editPage', {name: '` + page +
 			`', global:'` + params[`global`] + `'})">Edit page</a>`
 	}
