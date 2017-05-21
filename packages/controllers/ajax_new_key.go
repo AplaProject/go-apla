@@ -32,8 +32,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const ANewKey = `ajax_new_key`
+const aNewKey = `ajax_new_key`
 
+// NewKey is a structure for the answer of ajax_new_key ajax request
 type NewKey struct {
 	//	Address string `json:"address"`
 	Private string `json:"private"`
@@ -44,9 +45,10 @@ type NewKey struct {
 var words []string
 
 func init() {
-	newPage(ANewKey, `json`)
+	newPage(aNewKey, `json`)
 }
 
+// AjaxNewKey is a controller of ajax_new_key request
 func (c *Controller) AjaxNewKey() interface{} {
 	var result NewKey
 
@@ -66,24 +68,24 @@ func (c *Controller) AjaxNewKey() interface{} {
 	var seed string
 	key := c.r.FormValue("key")
 	name := c.r.FormValue("name")
-	stateId := utils.StrToInt64(c.r.FormValue("state_id"))
+	stateID := utils.StrToInt64(c.r.FormValue("state_id"))
 	bkey, err := hex.DecodeString(key)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	if stateId == 0 {
+	if stateID == 0 {
 		result.Error = `state_id has not been specified`
 		return result
 	}
 	pubkey := lib.PrivateToPublic(bkey)
 	idkey := int64(lib.Address(pubkey))
-	gov_account, _ := utils.StateParam(stateId, `gov_account`)
-	if len(gov_account) == 0 {
-		result.Error = `unknown gov_account`
+	govAccount, _ := utils.StateParam(stateID, `govAccount`)
+	if len(govAccount) == 0 {
+		result.Error = `unknown govAccount`
 		return result
 	}
-	if utils.StrToInt64(gov_account) != idkey {
+	if utils.StrToInt64(govAccount) != idkey {
 		result.Error = `access denied`
 		return result
 	}
@@ -120,7 +122,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 		result.Error = `key already exists`
 		return result
 	}
-	contract := smart.GetContract(`GenCitizen`, uint32(stateId))
+	contract := smart.GetContract(`GenCitizen`, uint32(stateID))
 	if contract == nil {
 		result.Error = `GenCitizen contract has not been found`
 		return result
@@ -129,7 +131,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 
 	ctime := lib.Time32()
 	info := (*contract).Block.Info.(*script.ContractInfo)
-	forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(idkey), stateId, flags)
+	forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(idkey), stateID, flags)
 	pubhex := hex.EncodeToString(pub)
 	forsign += fmt.Sprintf(",%v,%v", name, pubhex)
 
@@ -146,7 +148,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 		Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
 		Time:     uint32(ctime),
 		WalletID: uint64(idkey),
-		StateID:  int32(stateId),
+		StateID:  int32(stateID),
 		Flags:    flags,
 		Sign:     sign,
 	}

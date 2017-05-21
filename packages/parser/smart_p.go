@@ -773,7 +773,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		return fmt.Errorf(`wrong signature`)
 	}
 
-	var sign controllers.TxSignJson
+	var sign controllers.TxSignJSON
 	err = json.Unmarshal([]byte(value), &sign)
 	if err != nil {
 		return err

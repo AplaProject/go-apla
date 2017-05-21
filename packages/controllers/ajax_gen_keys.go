@@ -27,8 +27,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AGenKeys = `ajax_gen_keys`
+const aGenKeys = `ajax_gen_keys`
 
+// GenKeys is a structure for the answer of ajax_gen_keys ajax request
 type GenKeys struct {
 	Generated int64  `json:"generated"`
 	Used      int64  `json:"used"`
@@ -37,9 +38,10 @@ type GenKeys struct {
 }
 
 func init() {
-	newPage(AGenKeys, `json`)
+	newPage(aGenKeys, `json`)
 }
 
+// AjaxGenKeys is a controller of ajax_gen_keys request
 func (c *Controller) AjaxGenKeys() interface{} {
 	var result GenKeys
 	var err error

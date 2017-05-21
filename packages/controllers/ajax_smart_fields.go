@@ -25,9 +25,10 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const ASmartFields = `ajax_smart_fields`
+const aSmartFields = `ajax_smart_fields`
 
-type SmartFieldsJson struct {
+// SmartFieldsJSON is a structure for the answer of ajax_smart_fields ajax request
+type SmartFieldsJSON struct {
 	Fields   string `json:"fields"`
 	Price    int64  `json:"price"`
 	Valid    bool   `json:"valid"`
@@ -36,23 +37,24 @@ type SmartFieldsJson struct {
 }
 
 func init() {
-	newPage(ASmartFields, `json`)
+	newPage(aSmartFields, `json`)
 }
 
+// AjaxSmartFields is a controller of ajax_smart_fields request
 func (c *Controller) AjaxSmartFields() interface{} {
 	var (
-		result SmartFieldsJson
+		result SmartFieldsJSON
 		err    error
 		amount int64
 		req    map[string]int64
 	)
-	stateId := utils.StrToInt64(c.r.FormValue(`state_id`))
-	stateStr := utils.Int64ToStr(stateId)
+	stateID := utils.StrToInt64(c.r.FormValue(`state_id`))
+	stateStr := utils.Int64ToStr(stateID)
 	if !c.IsTable(stateStr+`_citizens`) || !c.IsTable(stateStr+`_citizenship_requests`) {
 		result.Error = `Basic app is not installed`
 		return result
 	}
-	//	_, err = c.GetStateName(stateId)
+	//	_, err = c.GetStateName(stateID)
 	//	if err == nil {
 	if exist, err := c.Single(`select id from "`+stateStr+`_citizens" where id=?`, c.SessWalletId).Int64(); err != nil {
 		result.Error = err.Error()
@@ -68,7 +70,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 			result.Approved = req[`approved`]
 		} else {
 			cntname := c.r.FormValue(`contract_name`)
-			contract := smart.GetContract(cntname, uint32(stateId))
+			contract := smart.GetContract(cntname, uint32(stateID))
 			if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 				err = fmt.Errorf(`there is not %s contract`, cntname)
 			} else {
@@ -97,7 +99,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 				result.Fields = fmt.Sprintf(`[%s]`, strings.Join(fields, `,`))
 
 				if err == nil {
-					result.Price, err = c.Single(`SELECT value FROM "` + utils.Int64ToStr(stateId) + `_state_parameters" where name='citizenship_price'`).Int64()
+					result.Price, err = c.Single(`SELECT value FROM "` + utils.Int64ToStr(stateID) + `_state_parameters" where name='citizenship_price'`).Int64()
 					if err == nil {
 						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
 						result.Valid = (err == nil && amount >= result.Price)

@@ -23,9 +23,10 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AHistory = `ajax_history`
+const aHistory = `ajax_history`
 
-type HistoryJson struct {
+// HistoryJSON is a structure for the answer of ajax_history ajax request
+type HistoryJSON struct {
 	Draw     int                 `json:"draw"`
 	Total    int                 `json:"recordsTotal"`
 	Filtered int                 `json:"recordsFiltered"`
@@ -34,25 +35,26 @@ type HistoryJson struct {
 }
 
 func init() {
-	newPage(AHistory, `json`)
+	newPage(aHistory, `json`)
 }
 
+// AjaxHistory is a controller of ajax_history request
 func (c *Controller) AjaxHistory() interface{} {
 	var (
 		history []map[string]string
 		err     error
 	)
-	walletId := c.SessWalletId
-	result := HistoryJson{Draw: utils.StrToInt(c.r.FormValue("draw"))}
+	walletID := c.SessWalletId
+	result := HistoryJSON{Draw: utils.StrToInt(c.r.FormValue("draw"))}
 	length := utils.StrToInt(c.r.FormValue("length"))
 	if length == -1 {
 		length = 20
 	}
-	log.Debug("a/h walletId %s / c.SessAddress %s", walletId, c.SessAddress)
+	log.Debug("a/h walletId %s / c.SessAddress %s", walletID, c.SessAddress)
 	limit := fmt.Sprintf(`LIMIT %d OFFSET %d`, length, utils.StrToInt(c.r.FormValue("start")))
-	if walletId != 0 {
+	if walletID != 0 {
 		total, _ := c.Single(`SELECT count(id) FROM dlt_transactions where sender_wallet_id = ? OR
-		                       recipient_wallet_id = ? OR recipient_wallet_address = ?`, walletId, walletId, c.SessAddress).Int64()
+		                       recipient_wallet_id = ? OR recipient_wallet_address = ?`, walletID, walletID, c.SessAddress).Int64()
 		result.Total = int(total)
 		result.Filtered = int(total)
 		if length != 0 {
@@ -61,7 +63,7 @@ func (c *Controller) AjaxHistory() interface{} {
 		        left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id
 				where sender_wallet_id=? OR 
 		        recipient_wallet_id=?  OR
-		        recipient_wallet_address=? order by d.id desc  `+limit, -1, walletId, walletId, c.SessAddress)
+		        recipient_wallet_address=? order by d.id desc  `+limit, -1, walletID, walletID, c.SessAddress)
 			if err != nil {
 				log.Error("%s", err)
 			}

@@ -20,8 +20,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AGetMenu = `ajax_get_menu`
+const aGetMenu = `ajax_get_menu`
 
+// InterfaceMenu is a structure for ajax_get_menu ajax request
 type InterfaceMenu struct {
 	Name       string `json:"name"`
 	Value      string `json:"value"`
@@ -29,9 +30,10 @@ type InterfaceMenu struct {
 }
 
 func init() {
-	newPage(AGetMenu, `json`)
+	newPage(aGetMenu, `json`)
 }
 
+// AjaxGetMenu is a controller of ajax_get_menu
 func (c *Controller) AjaxGetMenu() interface{} {
 
 	var menu InterfaceMenu

@@ -27,16 +27,18 @@ import (
 	"io/ioutil"
 )
 
-const ANewState = `ajax_new_state`
+const aNewState = `ajax_new_state`
 
+// NewState is a structure for the answer of ajax_new_state ajax request
 type NewState struct {
 	Error string `json:"error"`
 }
 
 func init() {
-	newPage(ANewState, `json`)
+	newPage(aNewState, `json`)
 }
 
+// AjaxNewState is a controller of ajax_new_state request
 func (c *Controller) AjaxNewState() interface{} {
 	var (
 		result    NewState

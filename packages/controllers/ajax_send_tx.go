@@ -28,17 +28,19 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const ASendTx = `ajax_send_tx`
+const aSendTx = `ajax_send_tx`
 
+// SendTxJSON is a structure for the answer of ajax_send_tx ajax request
 type SendTxJSON struct {
 	Error string `json:"error"`
 	Hash  string `json:"hash"`
 }
 
 func init() {
-	newPage(ASendTx, `json`)
+	newPage(aSendTx, `json`)
 }
 
+// AjaxSendTx is a controller of ajax_send_tx request
 func (c *Controller) AjaxSendTx() interface{} {
 	var (
 		result SendTxJSON
@@ -47,7 +49,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 	contract, err := c.checkTx(nil)
 	if err == nil {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
-		userId := uint64(c.SessWalletId)
+		userID := uint64(c.SessWalletId)
 		sign := make([]byte, 0)
 		signature, err := lib.JSSignToBytes(c.r.FormValue("signature1"))
 		if err != nil {
@@ -75,7 +77,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 			header := consts.TXHeader{
 				Type:     int32(contract.Block.Info.(*script.ContractInfo).ID), /* + smart.CNTOFF*/
 				Time:     uint32(utils.StrToInt64(c.r.FormValue(`time`))),
-				WalletID: userId,
+				WalletID: userID,
 				StateID:  int32(c.SessStateId),
 				Flags:    flags,
 				Sign:     sign,
@@ -116,7 +118,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 					md5 := utils.Md5(data)
 					err = c.ExecSql(`INSERT INTO transactions_status (
 						hash, time,	type, wallet_id, citizen_id	) VALUES (
-						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(userId), int64(userId)) //c.SessStateId)
+						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(userID), int64(userID)) //c.SessStateId)
 					if err == nil {
 						log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", md5, hex.EncodeToString(data))
 						err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))

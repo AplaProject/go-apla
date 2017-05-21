@@ -22,17 +22,19 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AGetCnt = `ajax_get_cnt`
+const aGetCnt = `ajax_get_cnt`
 
+// GetCntJSON is a structure for the answer of ajax_citizen_fields ajax request
 type GetCntJSON struct {
 	Name  string `json:"name"`
 	Error string `json:"error"`
 }
 
 func init() {
-	newPage(AGetCnt, `json`)
+	newPage(aGetCnt, `json`)
 }
 
+// AjaxGetCnt is a controller of ajax_get_cnt request
 func (c *Controller) AjaxGetCnt() interface{} {
 	var result GetCntJSON
 

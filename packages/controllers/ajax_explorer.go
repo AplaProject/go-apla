@@ -24,22 +24,21 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AExplorer = `ajax_explorer`
+const aExplorer = `ajax_explorer`
 
-type ExplorerJson struct {
+// ExplorerJSON is a structure for the answer of ajax_explorer ajax request
+type ExplorerJSON struct {
 	Data   []map[string]string `json:"data"`
 	Latest int64               `json:"latest"`
 }
 
 func init() {
-	newPage(AExplorer, `json`)
+	newPage(aExplorer, `json`)
 }
 
+// AjaxExplorer is a controller of ajax_explorer request
 func (c *Controller) AjaxExplorer() interface{} {
-	/*var (
-	      err error
-	)*/
-	result := ExplorerJson{}
+	result := ExplorerJSON{}
 	latest := utils.StrToInt64(c.r.FormValue("latest"))
 	if latest > 0 {
 		result.Latest, _ = c.Single("select max(id) from block_chain").Int64()
@@ -54,16 +53,6 @@ func (c *Controller) AjaxExplorer() interface{} {
 					} else {
 						explorer[ind][`wallet_address`] = ``
 					}
-
-					/*					if explorer[ind][`tx`] == `[]` {
-											explorer[ind][`tx_count`] = `0`
-										} else {
-											var tx []string
-											json.Unmarshal([]byte(explorer[ind][`tx`]), &tx)
-											if tx != nil && len(tx) > 0 {
-												explorer[ind][`tx_count`] = utils.IntToStr(len(tx))
-											}
-										}*/
 				}
 				result.Data = explorer
 				if explorer != nil && len(explorer) > 0 {

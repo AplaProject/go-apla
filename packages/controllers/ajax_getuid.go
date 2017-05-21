@@ -23,22 +23,24 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AGetUid = `ajax_get_uid`
+const aGetUID = `ajax_get_uid`
 
-type GetUidJson struct {
-	Uid   string `json:"uid"`
+// GetUIDJSON is a structure for the answer of ajax_get_uid ajax request
+type GetUIDJSON struct {
+	UID   string `json:"uid"`
 	Error string `json:"error"`
 }
 
 func init() {
-	newPage(AGetUid, `json`)
+	newPage(aGetUID, `json`)
 }
 
+// AjaxGetUid is a controller of ajax_get_uid request
 func (c *Controller) AjaxGetUid() interface{} {
-	var result GetUidJson
+	var result GetUIDJSON
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	result.Uid = utils.Int64ToStr(r.Int63())
-	c.sess.Set("uid", result.Uid)
+	result.UID = utils.Int64ToStr(r.Int63())
+	c.sess.Set("uid", result.UID)
 	return result
 }

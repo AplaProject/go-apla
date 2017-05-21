@@ -29,25 +29,27 @@ import (
 	"regexp"
 )
 
-const APrepareTx = `ajax_prepare_tx`
+const aPrepareTx = `ajax_prepare_tx`
 
-type TxSignJson struct {
+// TxSignJSON is a structure for additional signs of transaction
+type TxSignJSON struct {
 	ForSign string    `json:"forsign"`
 	Field   string    `json:"field"`
 	Title   string    `json:"title"`
 	Params  []SignRes `json:"params"`
 }
 
+// PrepareTxJSON is a structure for the answer of ajax_prepare_tx ajax request
 type PrepareTxJSON struct {
 	ForSign string            `json:"forsign"`
-	Signs   []TxSignJson      `json:"signs"`
+	Signs   []TxSignJSON      `json:"signs"`
 	Values  map[string]string `json:"values"`
 	Time    uint32            `json:"time"`
 	Error   string            `json:"error"`
 }
 
 func init() {
-	newPage(APrepareTx, `json`)
+	newPage(aPrepareTx, `json`)
 }
 
 func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, err error) {
@@ -75,7 +77,7 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 						err = fmt.Errorf(`%s is unknown signature`, ret[1])
 						break
 					}
-					var sign TxSignJson
+					var sign TxSignJSON
 					err = json.Unmarshal([]byte(value), &sign)
 					if err != nil {
 						break
@@ -114,6 +116,7 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 	return
 }
 
+// AjaxPrepareTx is a controller of ajax_prepare_tx request
 func (c *Controller) AjaxPrepareTx() interface{} {
 	var (
 		result PrepareTxJSON
@@ -125,7 +128,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		var flags uint8
 		var isPublic []byte
 		info := (*contract).Block.Info.(*script.ContractInfo)
-		userId := uint64(c.SessWalletId)
+		userID := uint64(c.SessWalletId)
 		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
 		if err == nil && len(isPublic) == 0 {
 			flags |= consts.TxfPublic
@@ -134,7 +137,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 		/*		if c.SessStateId > 0 {
 				userId = c.SessCitizenId
 			}*/
-		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, result.Time, userId, c.SessStateId, flags)
+		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, result.Time, userID, c.SessStateId, flags)
 		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
 			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 				if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {

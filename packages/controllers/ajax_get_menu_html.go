@@ -22,6 +22,7 @@ import (
 	//	"strings"
 )
 
+// AjaxGetMenuHtml is a controller for AjaxGetMenuHtml
 func (c *Controller) AjaxGetMenuHtml() (string, error) {
 
 	pageName := c.r.FormValue("page")
