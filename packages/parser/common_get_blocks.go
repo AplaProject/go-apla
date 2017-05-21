@@ -262,14 +262,14 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 
 			// если вернулась ошибка, значит переданный блок уже откатился
 			// info_block и config.my_block_id обновляются только если ошибки не было
-			err = parser.ParseDataFull(false)
+			err0 := parser.ParseDataFull(false)
 			// для последующей обработки получим хэши и time
-			if err == nil {
+			if err0 == nil {
 				prevBlock[intBlockId] = parser.GetBlockInfo()
 				log.Debug("prevBlock[%d] = %v", intBlockId, prevBlock[intBlockId])
 			}
 			// если есть ошибка, то откатываем все предыдущие блоки из новой цепочки
-			if err != nil {
+			if err0 != nil {
 				parser.BlockError(err) // why?
 				log.Debug("there is an error is rolled back all previous blocks of a new chain: %v", err)
 
@@ -347,7 +347,7 @@ func (p *Parser) GetBlocks(blockId int64, host string, rollbackBlocks, goroutine
 					return utils.ErrInfo(err)
 				}
 				ClearTmp(blocks)
-				return utils.ErrInfo(err) // переходим к следующему блоку в queue_blocks
+				return utils.ErrInfo(err0) // переходим к следующему блоку в queue_blocks
 			}
 		}
 	}
