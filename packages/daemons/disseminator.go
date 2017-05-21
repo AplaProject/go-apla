@@ -64,8 +64,6 @@ BEGIN:
 			break BEGIN
 		}
 
-
-
 		hosts, err := d.GetHosts()
 		if err != nil {
 			logger.Error("%v", err)
@@ -74,7 +72,6 @@ BEGIN:
 		myStateID, myWalletId, err := d.GetMyStateIDAndWalletId();
 		logger.Debug("%v", myWalletId)
 		if err != nil {
-			d.dbUnlock()
 			logger.Error("%v", err)
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
@@ -86,7 +83,6 @@ BEGIN:
 		if myStateID > 0 {
 			delegate, err := d.CheckDelegateCB(myStateID)
 			if err != nil {
-				d.dbUnlock()
 				logger.Error("%v", err)
 				if d.dSleep(d.sleepTime) {
 					break BEGIN
@@ -102,7 +98,6 @@ BEGIN:
 		// Есть ли мы в списке тех, кто может генерить блоки
 		full_node_id, err:= d.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myStateID, myWalletId, myStateID, myWalletId).Int64()
 		if err != nil {
-			d.dbUnlock()
 			logger.Error("%v", err)
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
@@ -291,8 +286,6 @@ BEGIN:
 				}
 			}
 		}
-
-		d.dbUnlock()
 
 		if d.dSleep(d.sleepTime) {
 			break BEGIN
