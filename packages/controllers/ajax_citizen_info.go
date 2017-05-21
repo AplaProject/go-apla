@@ -25,7 +25,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const ACitizenInfo = `ajax_citizen_info`
+const aCitizenInfo = `ajax_citizen_info`
 
 /*
 type FieldInfo struct {
@@ -36,18 +36,20 @@ type FieldInfo struct {
 	Value    string `json:"value"`
 }*/
 
-type CitizenInfoJson struct {
+// CitizenInfoJSON is a structure for the answer of ajax_citizen_info ajax request
+type CitizenInfoJSON struct {
 	Result bool   `json:"result"`
 	Error  string `json:"error"`
 }
 
 func init() {
-	newPage(ACitizenInfo, `json`)
+	newPage(aCitizenInfo, `json`)
 }
 
+// AjaxCitizenInfo is a controller of ajax_citizen_info request
 func (c *Controller) AjaxCitizenInfo() interface{} {
 	var (
-		result CitizenInfoJson
+		result CitizenInfoJSON
 		err    error
 		data   map[string]string
 	)
@@ -67,7 +69,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 ]`, nil
 	vals := make(map[string]string)
 	time := c.r.FormValue(`time`)
-	walletId := c.r.FormValue(`walletId`)
+	walletID := c.r.FormValue(`walletId`)
 
 	if err == nil {
 		var (
@@ -82,11 +84,11 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 				}
 			}
 
-			data, err = c.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", walletId).String()
+			data, err = c.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", walletID).String()
 			if err == nil {
 				var PublicKeys [][]byte
 				PublicKeys = append(PublicKeys, []byte(data["public_key_0"]))
-				forSign := fmt.Sprintf("CitizenInfo,%s,%s", time, walletId)
+				forSign := fmt.Sprintf("CitizenInfo,%s,%s", time, walletID)
 				sign, err = hex.DecodeString(c.r.FormValue(`signature1`))
 
 				if err == nil {
@@ -99,11 +101,11 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		}
 	}
 	if err == nil {
-		data, err = c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(stateCode)+`_citizenship_requests" WHERE dlt_wallet_id = ? order by id desc`, walletId).String()
+		data, err = c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(stateCode)+`_citizenship_requests" WHERE dlt_wallet_id = ? order by id desc`, walletID).String()
 		if err != nil || data == nil || len(data) == 0 {
-			err = fmt.Errorf(`unknown request for wallet %s`, walletId)
-		} else {
-			/*var (
+			err = fmt.Errorf(`unknown request for wallet %s`, walletID)
+		} /*else {
+			var (
 				fval []byte
 			)
 			buf := new(bytes.Buffer)
@@ -117,8 +119,8 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 						if fval, err = json.Marshal(vals); err == nil {
 						err = c.ExecSql(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
 						data[`request_id`], fval, hex.EncodeToString(buf.Bytes()), c.r.FormValue(`publicKey`))
-					}*/
-		}
+					}
+		}*/
 	}
 	if err != nil {
 		result.Error = err.Error()

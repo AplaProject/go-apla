@@ -22,9 +22,10 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const ACitizenFields = `ajax_citizen_fields`
+const aCitizenFields = `ajax_citizen_fields`
 
-type CitizenFieldsJson struct {
+// CitizenFieldsJSON is a structure for the answer of ajax_citizen_fields ajax request
+type CitizenFieldsJSON struct {
 	Fields   string `json:"fields"`
 	Price    int64  `json:"price"`
 	Valid    bool   `json:"valid"`
@@ -33,19 +34,20 @@ type CitizenFieldsJson struct {
 }
 
 func init() {
-	newPage(ACitizenFields, `json`)
+	newPage(aCitizenFields, `json`)
 }
 
+// AjaxCitizenFields is a controller of ajax_citizen_fields request
 func (c *Controller) AjaxCitizenFields() interface{} {
 	var (
-		result CitizenFieldsJson
+		result CitizenFieldsJSON
 		err    error
 		amount int64
 	)
-	stateId := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
+	stateID := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateId)
 	//	if err == nil {
-	if req, err := c.OneRow(`select id, approved from "`+utils.Int64ToStr(stateId)+`_citizenship_requests" where dlt_wallet_id=? order by id desc`,
+	if req, err := c.OneRow(`select id, approved from "`+utils.Int64ToStr(stateID)+`_citizenship_requests" where dlt_wallet_id=? order by id desc`,
 		c.SessWalletId).Int64(); err == nil {
 		if len(req) > 0 && req[`id`] > 0 {
 			result.Approved = req[`approved`]
@@ -57,7 +59,7 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 ]`, nil
 			//				c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
 			if err == nil {
-				result.Price, err = c.Single(`SELECT value FROM "` + utils.Int64ToStr(stateId) + `_state_parameters" where name='citizenship_price'`).Int64()
+				result.Price, err = c.Single(`SELECT value FROM "` + utils.Int64ToStr(stateID) + `_state_parameters" where name='citizenship_price'`).Int64()
 				if err == nil {
 					amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletId).Int64()
 					result.Valid = (err == nil && amount >= result.Price)

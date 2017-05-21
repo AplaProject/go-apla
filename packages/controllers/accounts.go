@@ -24,8 +24,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NAccounts = `accounts`
+const nAccounts = `accounts`
 
+// AccountInfo is a structure for the list of the accounts
 type AccountInfo struct {
 	AccountID int64  `json:"account_id"`
 	Address   string `json:"address"`
@@ -42,9 +43,10 @@ type accountsPage struct {
 }
 
 func init() {
-	newPage(NAccounts)
+	newPage(nAccounts)
 }
 
+// Accounts is a controller for accounts page
 func (c *Controller) Accounts() (string, error) {
 
 	data := make([]AccountInfo, 0)
@@ -93,5 +95,5 @@ func (c *Controller) Accounts() (string, error) {
 	txType := "NewAccount"
 	pageData := accountsPage{Data: c.Data, List: data, Currency: currency, TxType: txType,
 		TxTypeID: utils.TypeInt(txType), Unique: ``}
-	return proceedTemplate(c, NAccounts, &pageData)
+	return proceedTemplate(c, nAccounts, &pageData)
 }
