@@ -131,24 +131,29 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 
 	//w.Header().Set("Access-Control-Allow-Origin", "*")
 	// Общие контролы для двух проверок
+	// The common controls for two checks
 	pages := "Install|AjaxGetMenuHtml|AjaxStatesList|SignIn|Updatedaylight|AlertFromAdmin|FreecoinProcess|RestartDb|ReloadDb|DebugInfo|CheckSetupPassword|AcceptNewKeyStatus|availableKeys|CfCatalog|CfPagePreview|CfStart|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SynchronizationBlockchain|UpdatingBlockchain|Menu|SignUpInPool|SignLogin"
 	// Почему CfCatalog,CfPagePreview,CfStart,Index,IndexCf,InstallStep0,InstallStep1,
+	// Why CfCatalog,CfPagePreview,CfStart,Index,IndexCf,InstallStep0,InstallStep1,
 	// InstallStep2,Login,UpdatingBlockchain были только во втором случае? Похоже не нужны больше.
+	// InstallStep2,Login,UpdatingBlockchain were in the second case only? They seem not need anymore.
 
 	if ok, _ := regexp.MatchString(`^(?i)`+pages+`|GetServerTime|TxStatus|AnonymHistory|RewritePrimaryKeySave|SendPromisedAmountToPool|SaveEmailAndSendTestMess|sendMobile|rewritePrimaryKey|EImportData|EDataBaseDump|Update|exchangeAdmin|exchangeSupport|exchangeUser|ETicket|newPhoto|NodeConfigControl|SaveDecryptComment|EncryptChatMessage|GetChatMessages|SendToTheChat|SaveToken|SendToPool|ClearDbLite|ClearDb|UploadVideo|daylightKey|PoolAddUsers|SaveQueue|AlertMessage|SaveHost|PoolDataBaseDump|GenerateNewPrimaryKey|GenerateNewNodeKey|SaveNotifications|ProgressBar|MinersMap|EncryptComment|Logout|SaveVideo|SaveShopData|SaveRaceCountry|MyNoticeData|HolidaysList|ClearVideo|CheckCfCurrency|WalletsListCfProject|SendTestEmail|SendSms|SaveUserCoords|SaveGeolocation|SaveEmailSms|Profile|DeleteVideo|CropPhoto$`, controllerName); !ok {
 		html = "Access denied 0"
 	} else {
-		if utils.Mobile() { // На IOS можно сгенерить ключ без сессии
+		if utils.Mobile() { // На IOS можно сгенерить ключ без сессии // It's possible to generate the key on IOS without session
 			pages += "|daylightKey"
 		}
 		if ok, _ := regexp.MatchString(`^(?i)`+pages+`$`, controllerName); !ok && c.SessWalletId <= 0 && c.SessCitizenId <= 0 && len(c.SessAddress) == 0 {
 			html = "Access denied 1"
 		} else {
 			// без БД будет выдавать панику
+			// without the DB it will give a panic
 			if ok, _ := regexp.MatchString(`^(?i)GetChatMessages$`, controllerName); ok && !dbInit {
 				html = "Please wait. nill dbInit"
 			} else {
 				// вызываем контроллер в зависимости от шаблона
+				// call the controller depending on template
 				html, err = CallController(c, controllerName)
 				if err != nil {
 					log.Error("ajax error: %v", err)
