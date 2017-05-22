@@ -199,8 +199,8 @@
 			'TxName' : '{{.TxName}}',
 		};
 		{{range .Fields}}
-			{{if ne .HtmlType "image"}}
-				{{if eq .HtmlType "money"}}
+			{{if ne .HTMLType "image"}}
+				{{if eq .HTMLType "money"}}
 					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Name}}{{$.Unique}}').val(), "{{.Param}}");
 				{{else}}
 					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
@@ -212,7 +212,7 @@
 
 function sendnet{{.Unique}}() {
 	{{range .Fields}}
-		{{if eq .HtmlType "image"}}
+		{{if eq .HTMLType "image"}}
 			predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Name}}{{$.Unique}}').val();
 		{{end}}
 	{{end}}
@@ -264,34 +264,34 @@ function sendnet{{.Unique}}() {
 		{{end}}
 		<div id="message" class="alert alert-danger"></div>
 		<div id="fields">
-			{{range .Fields}} {{if eq .HtmlType "textinput"}}
+			{{range .Fields}} {{if eq .HTMLType "textinput"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" class="form-control"></div>
-			{{end}}{{if eq .HtmlType "money"}}
+			{{end}}{{if eq .HTMLType "money"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}"
 				data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 'autoGroup': true, 'digits': {{.Param}}, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"
 				 class="inputmask form-control"></div>
-			{{end}}{{if eq .HtmlType "hidden"}}
+			{{end}}{{if eq .HTMLType "hidden"}}
 			<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="hidden" value="{{.Value}}">
-			{{end}} {{if eq .HtmlType "address"}}
+			{{end}} {{if eq .HTMLType "address"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<input id="{{.Name}}{{$.Unique}}" name="{{.Name}}" type="text" value="{{.Value}}" data-type="wallet" class="form-control address">
 				<ul class="parsley-errors-list">
 					<li class="parsley-required">Please enter the correct address</li>
 				</ul>
 			</div>
-			{{end}} {{if eq .HtmlType "text"}}
+			{{end}} {{if eq .HTMLType "text"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<textarea id="{{.Name}}{{$.Unique}}" name="{{.Name}}" style="height: 180px;" class="form-control">{{.Value}}</textarea></div>
-			{{end}} {{if eq .HtmlType "select"}}
+			{{end}} {{if eq .HTMLType "select"}}
 			<div class="form-group"><label for="{{.Name}}">{{.Title}}</label>
 				<select id="{{.Name}}{{$.Unique}}" class="selectbox form-control">
 				{{$cur := .Value.Cur}}
 				{{range $key, $val := .Value.List}}<option value="{{$key}}" {{if eq $cur $key}}selected{{end}}>{{$val}}</option>{{end}}
 				</select>
 			</div>
-			{{end}} {{if eq .HtmlType "map"}}
+			{{end}} {{if eq .HTMLType "map"}}
 			<div class="form-group"> <label>{{.Title}}</label>
 				<textarea class="form-control map" id="{{.Name}}{{$.Unique}}">{{.Value}}</textarea>
 				<!--div class="map" id="{{.Name}}">{{.Value}}</div>
@@ -301,7 +301,7 @@ function sendnet{{.Unique}}() {
 					<button type="button" onClick="openMap('{{.Name}}');" class="map btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
 				</div-->
 			</div>
-			{{end}}{{if eq .HtmlType "polymap"}}
+			{{end}}{{if eq .HTMLType "polymap"}}
 			<!--div class="form-group"> <label>{{.Title}}</label>
 				<textarea class="form-control polymap" id="{{.Name}}">{{.Value}}</textarea>
 			</div-->
@@ -313,12 +313,12 @@ function sendnet{{.Unique}}() {
 					<button type="button" onClick="openMap('{{.Name}}{{$.Unique}}');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button>
 				<!--</div>
 			</div>-->
-			{{end}}{{if eq .HtmlType "date"}}
+			{{end}}{{if eq .HTMLType "date"}}
 			<div class="form-group" style="position:relative;">
 				<label class="control-label" for="{{.Name}}">{{.Title}}</label>
 				<input type="text" class="datetimepicker form-control" id="{{.Name}}{{$.Unique}}" value="{{.Value}}">
 			</div>
-			{{end}} {{if eq .HtmlType "image"}} <img id="img{{.Name}}{{$.Unique}}" style="margin: 10px 0px;" src=""> {{if .Value}}<script>
+			{{end}} {{if eq .HTMLType "image"}} <img id="img{{.Name}}{{$.Unique}}" style="margin: 10px 0px;" src=""> {{if .Value}}<script>
 						document.getElementById('img{{.Name}}{{$.Unique}}').setAttribute( 'src', '{{.Value}}' );
 					</script>{{end}}
 			<div class="form-group"> <label>{{.Title}}</label>

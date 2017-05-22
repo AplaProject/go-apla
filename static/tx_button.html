@@ -14,11 +14,11 @@
 			'TxName' : '{{.TxName}}',
 		};
 		{{range .Fields}}
-			{{if ne .HtmlType "image"}}
-				{{if eq .HtmlType "money"}}
-					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.Id}}').val(), "{{.Param}}");
+			{{if ne .HTMLType "image"}}
+				{{if eq .HTMLType "money"}}
+					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.ID}}').val(), "{{.Param}}");
 				{{else}}
-					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.ID}}').val();
 				{{end}}
 			{{end}}
 		{{end}}
@@ -27,8 +27,8 @@
 
 function sendnet{{.Unique}}() {
 	{{range .Fields}}
-		{{if eq .HtmlType "image"}}
-			predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+		{{if eq .HTMLType "image"}}
+			predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.ID}}').val();
 		{{end}}
 	{{end}}
 	predata{{.Unique}}['public'] = GKey.Public;
@@ -51,8 +51,8 @@ function sendnet{{.Unique}}() {
 }
 	$('#send_to_net{{.Unique}}').bind('click', sendnet{{.Unique}}/*function () {
 		{{range .Fields}}
-			{{if eq .HtmlType "image"}}
-				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.Id}}').val();
+			{{if eq .HTMLType "image"}}
+				predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.ID}}').val();
 			{{end}}
 		{{end}}
 		predata{{.Unique}}['public'] = GKey.Public;
@@ -76,7 +76,7 @@ function sendnet{{.Unique}}() {
 <div class="clearfix">
 	<div class="pull-right">
 		{{range .Fields}}{{if .Value}}
-			<textarea id="{{.Id}}" style="display:none;">{{.Value}}</textarea>
+			<textarea id="{{.ID}}" style="display:none;">{{.Value}}</textarea>
 		{{end}}{{end}}
 		<button id="send{{.Unique}}" type="button" class="{{.ClassBtn}}" data-tool="panel-refresh" onClick="preloader(this);">{{.Name}}</button>
 	</div>

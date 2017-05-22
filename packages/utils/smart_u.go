@@ -35,9 +35,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// FieldInfo contains the information of contract data field
 type FieldInfo struct {
 	Name     string      `json:"name"`
-	HtmlType string      `json:"htmlType"`
+	HTMLType string      `json:"htmlType"`
 	TxType   string      `json:"txType"`
 	Title    string      `json:"title"`
 	Value    interface{} `json:"value"`
@@ -53,6 +54,7 @@ type FieldInfo struct {
 		StateName    string
 }*/
 
+// FormInfo contains parameters of TxForm function
 type FormInfo struct {
 	TxName    string
 	Unique    template.JS
@@ -63,14 +65,16 @@ type FormInfo struct {
 	//Data      FormCommon
 }
 
+// TxInfo contains the information of contract data field in TxButton function
 type TxInfo struct {
 	Name     string `json:"name"`
-	Id       string `json:"id"`
+	ID       string `json:"id"`
 	Value    string `json:"value"`
-	HtmlType string `json:"htmlType"`
+	HTMLType string `json:"htmlType"`
 	Param    string `json:"param"`
 }
 
+// TxButtonInfo contains parameters of TxButton function
 type TxButtonInfo struct {
 	TxName    string
 	Name      string
@@ -83,6 +87,7 @@ type TxButtonInfo struct {
 	Silent    bool
 }
 
+// TxBtnCont contains parameters of TxBtnCont function
 type TxBtnCont struct {
 	TxName    string
 	Name      string
@@ -95,6 +100,7 @@ type TxBtnCont struct {
 	Silent    bool
 }
 
+// CommonPage contains the common information for each template page
 type CommonPage struct {
 	Address   string
 	WalletId  int64
@@ -103,6 +109,7 @@ type CommonPage struct {
 	StateName string
 }
 
+// PageTpl is the main structure for the template page
 type PageTpl struct {
 	Page     string
 	Template string
@@ -110,35 +117,37 @@ type PageTpl struct {
 	Data     interface{} //*CommonPage
 }
 
+// SelList is a structure for selectable data
 type SelList struct {
 	Cur  int64          `json:"cur"`
 	List map[int]string `json:"list"`
 }
 
+// SelInfo is a structure for an item of selectable data
 type SelInfo struct {
-	Id   int64
+	ID   int64
 	Name string
 }
 
 func init() {
-	smart.Extend(&script.ExtendData{map[string]interface{}{
+	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
 		"Balance":    Balance,
 		"StateParam": StateParam,
 		/*		"DBInsert":   DBInsert,
 		 */
-	}, map[string]string{
+	}, AutoPars: map[string]string{
 	//		`*parser.Parser`: `parser`,
 	}})
 
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
-	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IdToAddress, `BtnEdit`: BtnEdit,
+	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IDToAddress, `BtnEdit`: BtnEdit,
 		`Image`: Image, `ImageInput`: ImageInput, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage, `UList`: UList, `UListEnd`: UListEnd, `Li`: Li,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
 		`PageEnd`: PageEnd, `StateVal`: StateVal, `Json`: JsonScript, `And`: And, `Or`: Or, `LiBegin`: LiBegin, `LiEnd`: LiEnd,
-		`TxId`: TxId, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
-		`ValueById`: ValueById, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance, `GetVar`: GetVar,
+		`TxId`: TxID, `SetVar`: SetVar, `GetList`: GetList, `GetRow`: GetRowVars, `GetOne`: GetOne, `TextHidden`: TextHidden,
+		`ValueById`: ValueByID, `FullScreen`: FullScreen, `Ring`: Ring, `WiBalance`: WiBalance, `GetVar`: GetVar,
 		`WiAccount`: WiAccount, `WiCitizen`: WiCitizen, `Map`: Map, `MapPoint`: MapPoint, `StateLink`: StateLink,
 		`If`: If, `IfEnd`: IfEnd, `Else`: Else, `ElseIf`: ElseIf, `Trim`: Trim, `Date`: Date, `DateTime`: DateTime, `Now`: Now, `Input`: Input,
 		`Textarea`: Textarea, `InputMoney`: InputMoney, `InputAddress`: InputAddress, `ForList`: ForList, `ForListEnd`: ForListEnd,
@@ -149,7 +158,7 @@ func init() {
 	})
 }
 
-// Reading and compiling contracts from smart_contracts tables
+// LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts() (err error) {
 	var states []map[string]string
 	prefix := []string{`global`}
@@ -170,7 +179,7 @@ func LoadContracts() (err error) {
 	return
 }
 
-// Reading and compiling contract of new state
+// LoadContract reads and compiles contract of new state
 func LoadContract(prefix string) (err error) {
 	var contracts []map[string]string
 	contracts, err = DB.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
@@ -189,6 +198,7 @@ func LoadContract(prefix string) (err error) {
 	return
 }
 
+// Balance returns teh balance of the wallet
 func Balance(wallet_id int64) (decimal.Decimal, error) {
 	balance, err := DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", wallet_id).String()
 	if err != nil {
@@ -197,14 +207,17 @@ func Balance(wallet_id int64) (decimal.Decimal, error) {
 	return decimal.NewFromString(balance)
 }
 
+// EGSRate returns egs_rate of the state
 func EGSRate(idstate int64) (float64, error) {
 	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
 }
 
+// StateParam returns the value of state parameters
 func StateParam(idstate int64, name string) (string, error) {
 	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
 }
 
+// Param returns the value of the specified varaible
 func Param(vars *map[string]string, pars ...string) string {
 	if val, ok := (*vars)[pars[0]]; ok {
 		return val
@@ -212,11 +225,13 @@ func Param(vars *map[string]string, pars ...string) string {
 	return ``
 }
 
+// LangRes returns the corresponding language resource of the specified parameter
 func LangRes(vars *map[string]string, pars ...string) string {
 	ret, _ := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
 	return ret
 }
 
+// LangJS return span tag for the language resource
 func LangJS(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<span class="lang" lang-id="%s"></span>`, pars[0])
 }
@@ -260,6 +275,7 @@ func ifValue(val string) bool {
 	return false
 }
 
+// Money returns the formated value of the specified money amount
 func Money(vars *map[string]string, pars ...string) string {
 	var cents int
 	if len(pars) > 1 {
@@ -280,6 +296,7 @@ func Money(vars *map[string]string, pars ...string) string {
 	return ret
 }
 
+// And is a logical AND function
 func And(vars *map[string]string, pars ...string) string {
 	for _, item := range pars {
 		if !ifValue(item) {
@@ -289,6 +306,7 @@ func And(vars *map[string]string, pars ...string) string {
 	return `1`
 }
 
+// Or is a logical OR function
 func Or(vars *map[string]string, pars ...string) string {
 	for _, item := range pars {
 		if ifValue(item) {
@@ -298,6 +316,7 @@ func Or(vars *map[string]string, pars ...string) string {
 	return `0`
 }
 
+// CmpTime compares two time. It returns 0 if they equal, -1 - left < right, 1 - left > right
 func CmpTime(vars *map[string]string, pars ...string) string {
 	if len(pars) < 2 {
 		return ``
@@ -1003,7 +1022,7 @@ func TextHidden(vars *map[string]string, pars ...string) (out string) {
 	return
 }
 
-func TxId(vars *map[string]string, pars ...string) string {
+func TxID(vars *map[string]string, pars ...string) string {
 	if len(pars) == 0 {
 		return `0`
 	}
@@ -1279,12 +1298,15 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 			<i class="fa fa-file-image-o"></i> &nbsp;Add/Edit Image</button>`, id, ratio, width, height)
 }
 
+// StateVal returns par[1]-th value of pars[0] state param
 func StateVal(vars *map[string]string, pars ...string) string {
 	val, _ := StateParam(StrToInt64((*vars)[`state_id`]), pars[0])
 	if len(pars) > 1 {
 		ind := StrToInt(pars[1])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 			val = LangRes(vars, alist[ind-1])
+		} else {
+			val = ``
 		}
 	}
 	return val
@@ -1373,7 +1395,7 @@ func GetVar(vars *map[string]string, pars ...string) (out string) {
 	return
 }
 
-func ValueById(vars *map[string]string, pars ...string) string {
+func ValueByID(vars *map[string]string, pars ...string) string {
 	// tablename, id of value, parameters
 	if len(pars) < 3 {
 		return ``
@@ -1503,7 +1525,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 			}
 			for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
 				if strings.Index(fitem.Tags, tag) >= 0 {
-					finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Id: idname, Value: value, HtmlType: tag})
+					finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, ID: idname, Value: value, HTMLType: tag})
 					continue txlist
 				}
 			}
@@ -1514,10 +1536,10 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 				} else {
 					count = StrToInt(StateVal(vars, `money_digit`))
 				}
-				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HtmlType: "money",
-					Id: idname, Param: IntToStr(count)})
+				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HTMLType: "money",
+					ID: idname, Param: IntToStr(count)})
 			} else {
-				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, Id: idname, HtmlType: "textinput"})
+				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, ID: idname, HTMLType: "textinput"})
 			}
 		}
 	}
@@ -1631,7 +1653,7 @@ txlist:
 			value = val
 		}
 		if strings.Index(fitem.Tags, `hidden`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: `hidden`,
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: `hidden`,
 				TxType: fitem.Type.String(), Title: ``, Value: value})
 			continue
 		}
@@ -1643,7 +1665,7 @@ txlist:
 				if tag == `date` {
 					(*vars)[`widate`] = `1`
 				}
-				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: tag,
+				finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: tag,
 					TxType: fitem.Type.String(), Title: title, Value: value})
 				continue txlist
 			}
@@ -1663,7 +1685,7 @@ txlist:
 					sellist.List[ind+1] = LangRes(vars, item)
 				}
 			}
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "select",
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: "select",
 				TxType: fitem.Type.String(), Title: title, Value: sellist})
 		} else if fitem.Type.String() == script.Decimal {
 			var count int
@@ -1673,11 +1695,11 @@ txlist:
 				count = StrToInt(StateVal(vars, `money_digit`))
 			}
 			value = Money(vars, value, IntToStr(count))
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "money",
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: "money",
 				TxType: fitem.Type.String(), Title: title, Value: value,
 				Param: IntToStr(count) /*`9{1,20}` + postfix*/})
 		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` {
-			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HtmlType: "textinput",
+			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: "textinput",
 				TxType: fitem.Type.String(), Title: title, Value: value})
 		}
 	}
@@ -1694,7 +1716,7 @@ txlist:
 	return out
 }
 
-func IdToAddress(vars *map[string]string, pars ...string) string {
+func IDToAddress(vars *map[string]string, pars ...string) string {
 	var idval string
 	if len(pars) == 0 || len(pars[0]) == 0 {
 		idval = (*vars)[`citizen`]
@@ -1913,12 +1935,12 @@ func Select(vars *map[string]string, pars ...string) string {
 				return err.Error()
 			} else if len(data) > 0 {
 				for _, item := range data {
-					list = append(list, SelInfo{Id: StrToInt64(item[id]), Name: lib.StripTags(item[name])})
+					list = append(list, SelInfo{ID: StrToInt64(item[id]), Name: lib.StripTags(item[name])})
 				}
 			}
 		} else if alist := strings.Split(StateVal(vars, pars[1]), `,`); len(alist) > 0 {
 			for ind, item := range alist {
-				list = append(list, SelInfo{Id: int64(ind + 1), Name: LangRes(vars, item)})
+				list = append(list, SelInfo{ID: int64(ind + 1), Name: LangRes(vars, item)})
 			}
 		}
 	}
@@ -1932,10 +1954,10 @@ func Select(vars *map[string]string, pars ...string) string {
 	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s">`, pars[0], class)
 	for _, item := range list {
 		var selected string
-		if item.Id == value {
+		if item.ID == value {
 			selected = `selected`
 		}
-		out += fmt.Sprintf(`<option value="%d" %s>%s</option>`, item.Id, selected, item.Name)
+		out += fmt.Sprintf(`<option value="%d" %s>%s</option>`, item.ID, selected, item.Name)
 
 	}
 	return out + `</select>`

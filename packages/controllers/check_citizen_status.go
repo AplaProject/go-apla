@@ -65,7 +65,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if fitem.Type.String() == `string` {
 				value := vals[`name`] //fitem.Name] //.(string)
-				fields = append(fields, utils.FieldInfo{Name: fitem.Name, HtmlType: "textinput",
+				fields = append(fields, utils.FieldInfo{Name: fitem.Name, HTMLType: "textinput",
 					TxType: fitem.Type.String(), Title: fitem.Name,
 					Value: value})
 			}

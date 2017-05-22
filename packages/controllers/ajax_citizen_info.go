@@ -30,7 +30,7 @@ const aCitizenInfo = `ajax_citizen_info`
 /*
 type FieldInfo struct {
 	Name     string `json:"name"`
-	HtmlType string `json:"htmlType"`
+	HTMLType string `json:"htmlType"`
 	TxType   string `json:"txType"`
 	Title    string `json:"title"`
 	Value    string `json:"value"`
@@ -79,7 +79,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		)
 		if err = json.Unmarshal([]byte(field), &fields); err == nil {
 			for _, ifield := range fields {
-				if ifield.HtmlType != `file` {
+				if ifield.HTMLType != `file` {
 					vals[ifield.Name] = c.r.FormValue(ifield.Name)
 				}
 			}

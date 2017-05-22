@@ -67,7 +67,7 @@ var (
 )
 
 func init() {
-	smart.Extend(&script.ExtendData{map[string]interface{}{
+	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
 		//		"CallContract":   ExContract,
 		"DBInsert":           DBInsert,
 		"DBUpdate":           DBUpdate,
@@ -106,7 +106,7 @@ func init() {
 		"UpdatePage":      UpdatePage,
 		"DBInsertReport":  DBInsertReport,
 		"check_signature": CheckSignature, // system function
-	}, map[string]string{
+	}, AutoPars: map[string]string{
 		`*parser.Parser`: `parser`,
 	}})
 	smart.ExtendCost(getCost)
@@ -122,9 +122,9 @@ func getCost(name string) int64 {
 
 func (p *Parser) getExtend() *map[string]interface{} {
 	head := p.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
-	var citizenId, walletId int64
-	citizenId = int64(head.WalletID)
-	walletId = int64(head.WalletID)
+	var citizenID, walletID int64
+	citizenID = int64(head.WalletID)
+	walletID = int64(head.WalletID)
 	// test
 	block := int64(0)
 	blockTime := int64(0)
@@ -135,7 +135,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		blockTime = p.BlockData.Time
 	}
 	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateID),
-		`block`: block, `citizen`: citizenId, `wallet`: walletId, `wallet_block`: walletBlock,
+		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
 		`parent`: ``, `txcost`: p.GetContractLimit(),
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
 	for key, val := range p.TxData {
@@ -823,6 +823,7 @@ func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 	return nil
 }
 
+// Len returns the length of the slice
 func Len(in []interface{}) int64 {
 	return int64(len(in))
 }
