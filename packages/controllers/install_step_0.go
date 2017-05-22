@@ -26,6 +26,7 @@ type installStep0Struct struct {
 }
 
 // Шаг 1 - выбор либо стандартных настроек (sqlite и блокчейн с сервера) либо расширенных - pg/mysql и загрузка с нодов
+// Step 1, select either standard settings (sqlite and blockchain from the server) or extended settings pg/mysql and upload from the nodes
 func (c *Controller) InstallStep0() (string, error) {
 
 	//keyPassword := c.r.FormValue("key_password")
