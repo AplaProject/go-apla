@@ -135,6 +135,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		if dbInit {
 			// отсутвие таблы выдаст ошибку, значит процесс инсталяции еще не пройден и надо выдать 0-й шаг
+			// the absence of table will show the mistake, this means that the process of installation is not finished and zero-step should be shown
 			_, err = c.DCDB.Single("SELECT progress FROM install").String()
 			if err != nil {
 				log.Error("%v", err)
@@ -167,11 +168,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Инфа о последнем блоке
+		// Information about the last block
 		blockData, err := c.DCDB.GetLastBlockData()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		//время последнего блока
+		// time of the last block
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
@@ -207,12 +210,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("tpl_name=", tplName)
 	// если в параметрах пришел язык, то установим его
+	// if the language has come in parameters, install it
 	newLang := utils.StrToInt(c.Parameters["lang"])
 	if newLang > 0 {
 		log.Debug("newLang", newLang)
 		SetLang(w, r, newLang)
 	}
 	// уведомления
+	// notifications
 	//if utils.CheckInputData(parameters["alert"], "alert") {
 	c.Alert = c.Parameters["alert"]
 	//}
@@ -232,10 +237,12 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	match, _ := regexp.MatchString("^(installStep[0-9_]+)|(blockExplorer)$", tplName)
 	// CheckInputData - гарантирует, что tplName чист
+	// CheckInputData - ensures that tplName is clean
 	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletId != 0 || sessCitizenId > 0 || len(sessAddress) > 0 || match) {
 		tplName = tplName
 	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
 		// первый запуск, еще не загружен блокчейн
+		// the first running, blockchain is not uploaded yet
 		tplName = "updatingBlockchain"
 	} else if dbInit && installProgress == "complete" && (sessWalletId != 0 || sessCitizenId > 0 || len(sessAddress) > 0) {
 		tplName = "dashboardAnonym"
@@ -244,12 +251,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			tplName = "login"
 		}
 	} else {
-		tplName = "installStep0" // самый первый запуск
+		tplName = "installStep0" // самый первый запуск // the very first launch
 	}
 	log.Debug("dbInit", dbInit, "installProgress", installProgress, "configExists", configExists)
 	log.Debug("tplName>>>>>>>>>>>>>>>>>>>>>>", tplName)
 
 	// идет загрузка блокчейна
+	// blockchain is loading
 	wTime := int64(2)
 	if configIni != nil && configIni["test_mode"] == "1" {
 		wTime = 2 * 365 * 86400
@@ -360,7 +368,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		/*		if dbInit {
 				// Если у юзера только 1 праймари ключ, то выдавать форму, где показываются данные для подписи и форма ввода подписи не нужно.
+				// If user has the only one primary key, there is no need to give the form where data for signatures and form for input are shown.
 				// Только если он сам не захочет, указав это в my_table
+				// But if he wants, he should point this into my_table
 				c.ShowSignData = false
 			}*/
 
@@ -376,6 +386,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Debug("tplName==", tplName)
 
 		// подсвечиваем красным номер блока, если идет процесс обновления
+		// We highlight the block number in red if the update process is in progress
 		var blockJs string
 		blockId, err := c.GetBlockId()
 		if err != nil {
@@ -400,9 +411,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// тем, кто не зареган на пуле не выдаем некоторые страницы
+		// тем, кто не зареган на пуле,не выдаем некоторые страницы
+		// We don't give some pages for ones who are not registered in the pool
 		if !utils.InSliceString(tplName, skipRestrictedUsers) {
 			// вызываем контроллер в зависимости от шаблона
+			// We call controller depending on template 
 			html, err := CallController(c, tplName)
 			if err != nil {
 				log.Error("%v", err)
@@ -417,12 +430,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Debug("tplName", tplName)
 		html := ""
 		// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
+		// if session has been resetted during the navigation of the admin area, instead of login we'll send to / to clear the menu
 		if len(r.FormValue("tpl_name")) > 0 && tplName == "login" {
 			log.Debug("window.location.href = /")
 			w.Write([]byte("<script language=\"javascript\">window.location.href = \"/\"</script>If you are not redirected automatically, follow the <a href=\"/\">/</a>"))
 			return
 		}
 		// вызываем контроллер в зависимости от шаблона
+		// We call controller depending on template 
 		html, err = CallController(c, tplName)
 		if err != nil {
 			log.Error("%v", err)
