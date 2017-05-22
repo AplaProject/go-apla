@@ -122,7 +122,7 @@ func (c *Controller) AjaxNewState() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	time.Sleep(1500 * time.Millisecond)
+	time.Sleep(2500 * time.Millisecond)
 	txType = utils.TypeInt(`NewState`)
 	txTime = time.Now().Unix()
 	forSign = fmt.Sprintf("%d,%d,%d,%s,%s", txType, txTime, wallet, current[`country`], current[`currency`])
