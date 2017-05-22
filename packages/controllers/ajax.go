@@ -26,6 +26,7 @@ import (
 	qrcode "github.com/skip2/go-qrcode"
 )
 
+// Ajax is a common handle function for ajax requests
 func Ajax(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -47,13 +48,13 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletId(sess)
-	sessCitizenId := GetSessCitizenId(sess)
-	sessStateId := GetSessInt64("state_id", sess)
+	sessWalletID := GetSessWalletId(sess)
+	sessCitizenID := GetSessCitizenId(sess)
+	sessStateID := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 
-	log.Debug("sessWalletId", sessWalletId)
-	log.Debug("sessCitizenId", sessCitizenId)
+	log.Debug("sessWalletId", sessWalletID)
+	log.Debug("sessCitizenId", sessCitizenID)
 
 	c := new(Controller)
 	c.r = r
@@ -64,10 +65,10 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		dbInit = true
 	}
 
-	c.SessWalletId = sessWalletId
-	c.SessCitizenId = sessCitizenId
+	c.SessWalletId = sessWalletID
+	c.SessCitizenId = sessCitizenID
 	c.SessAddress = sessAddress
-	c.SessStateId = sessStateId
+	c.SessStateId = sessStateID
 
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)
@@ -79,15 +80,15 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			dbInit = false
 		}
 	}
-	log.Debug("sessStateId", sessStateId)
-	if sessStateId > 0 {
-		stateName, err := c.GetStateName(sessStateId)
+	log.Debug("sessStateId", sessStateID)
+	if sessStateID > 0 {
+		stateName, err := c.GetStateName(sessStateID)
 		if err != nil {
 			log.Error("%v", err)
 		}
 		c.StateName = stateName
-		c.StateId = sessStateId
-		c.StateIdStr = utils.Int64ToStr(sessStateId)
+		c.StateId = sessStateID
+		c.StateIdStr = utils.Int64ToStr(sessStateID)
 	}
 	c.dbInit = dbInit
 

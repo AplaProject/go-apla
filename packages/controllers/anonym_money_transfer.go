@@ -26,18 +26,19 @@ type anonymMoneyTransferPage struct {
 	Lang       map[string]string
 	Title      string
 	TxType     string
-	TxTypeId   int64
+	TxTypeID   int64
 	TimeNow    int64
-	WalletId   int64
-	CitizenId  int64
+	WalletID   int64
+	CitizenID  int64
 	Commission string
 	Amount     string
 }
 
+// AnonymMoneyTransfer is a controller of the money transfer template page
 func (c *Controller) AnonymMoneyTransfer() (string, error) {
 
 	txType := "DLTTransfer"
-	txTypeId := utils.TypeInt(txType)
+	txTypeID := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	fPrice, err := c.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").Int64()
@@ -64,12 +65,12 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 		Lang:       c.Lang,
 		Title:      "anonymMoneyTransfer",
 		Amount:     amount,
-		WalletId:   c.SessWalletId,
-		CitizenId:  c.SessCitizenId,
+		WalletID:   c.SessWalletId,
+		CitizenID:  c.SessCitizenId,
 		Commission: commission.String(),
 		TimeNow:    timeNow,
 		TxType:     txType,
-		TxTypeId:   txTypeId})
+		TxTypeID:   txTypeID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

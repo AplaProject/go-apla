@@ -16,6 +16,7 @@
 
 package controllers
 
+// AlertMessage is reserved function
 func (c *Controller) AlertMessage() (string, error) {
 	return "", nil
 }

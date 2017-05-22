@@ -25,8 +25,9 @@ import (
 	"strings"
 )
 
-const NAppCatalog = `app_catalog`
+const nAppCatalog = `app_catalog`
 
+// AppInfo is a structure with information about the application
 type AppInfo struct {
 	Name  string
 	Title string
@@ -35,6 +36,7 @@ type AppInfo struct {
 	Done  int
 }
 
+// AppsList is a type for a slice of AppInfo
 type AppsList []AppInfo
 
 type appCatalogPage struct {
@@ -43,7 +45,7 @@ type appCatalogPage struct {
 }
 
 func init() {
-	newPage(NAppCatalog)
+	newPage(nAppCatalog)
 }
 
 func getPar(data string, name string) string {
@@ -64,6 +66,7 @@ func (a AppsList) Less(i, j int) bool {
 	return a[i].Done < a[j].Done
 }
 
+// AppCatalog is a controller of teh application list template page
 func (c *Controller) AppCatalog() (string, error) {
 
 	files, err := static.AssetDir(`static`)
@@ -110,5 +113,5 @@ func (c *Controller) AppCatalog() (string, error) {
 	}
 	sort.Sort(AppsList(list))
 	pageData := appCatalogPage{Data: c.Data, List: &list}
-	return proceedTemplate(c, NAppCatalog, &pageData)
+	return proceedTemplate(c, nAppCatalog, &pageData)
 }

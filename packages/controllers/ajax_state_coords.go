@@ -20,20 +20,22 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AStateCoords = `ajax_state_coords`
+const aStateCoords = `ajax_state_coords`
 
+// StateDetails is a structure for the answer of ajax_state_coords ajax request
 type StateDetails struct {
 	Coords string `json:"coords"`
 }
 
 func init() {
-	newPage(AStateCoords, `json`)
+	newPage(aStateCoords, `json`)
 }
 
+// AjaxStateCoords is a controller of ajax_state_coords request
 func (c *Controller) AjaxStateCoords() interface{} {
 
 	var stateDetails StateDetails
-	stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-	stateDetails.Coords, _ = c.Single(`SELECT coords FROM "` + utils.Int64ToStr(stateId) + `_state_details"`).String()
+	stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+	stateDetails.Coords, _ = c.Single(`SELECT coords FROM "` + utils.Int64ToStr(stateID) + `_state_details"`).String()
 	return stateDetails
 }

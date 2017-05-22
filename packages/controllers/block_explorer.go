@@ -28,31 +28,31 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NBlockExplorer = `block_explorer`
+const nBlockExplorer = `block_explorer`
 
 type blockExplorerPage struct {
 	Data       *CommonPage
 	List       []map[string]string
 	Latest     int64
-	BlockId    int64
+	BlockID    int64
 	BlockData  map[string]string
 	SinglePage int64
 	Host       string
 }
 
 func init() {
-	newPage(NBlockExplorer)
+	newPage(nBlockExplorer)
 }
 
+// BlockExplorer is a controller for block explorer template page
 func (c *Controller) BlockExplorer() (string, error) {
 	pageData := blockExplorerPage{Data: c.Data, Host: c.r.Host}
 
-	blockId := utils.StrToInt64(c.r.FormValue("blockId"))
+	blockID := utils.StrToInt64(c.r.FormValue("blockId"))
 	pageData.SinglePage = utils.StrToInt64(c.r.FormValue("singlePage"))
-	if blockId > 0 {
-		pageData.BlockId = blockId
-		blockInfo, err := c.OneRow(`SELECT b.* FROM block_chain as b
-		where b.id=?`, blockId).String()
+	if blockID > 0 {
+		pageData.BlockID = blockID
+		blockInfo, err := c.OneRow(`SELECT b.* FROM block_chain as b where b.id=?`, blockID).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -72,8 +72,8 @@ func (c *Controller) BlockExplorer() (string, error) {
 					out += ` `
 				}
 			}
-			if blockId > 1 {
-				parent, err := c.Single("SELECT hash FROM block_chain where id=?", blockId-1).String()
+			if blockID > 1 {
+				parent, err := c.Single("SELECT hash FROM block_chain where id=?", blockID-1).String()
 				if err == nil {
 					blockInfo[`parent`] = hex.EncodeToString([]byte(parent))
 				} else {
@@ -156,5 +156,5 @@ func (c *Controller) BlockExplorer() (string, error) {
 			pageData.Latest = utils.StrToInt64(blockExplorer[0][`id`])
 		}
 	}
-	return proceedTemplate(c, NBlockExplorer, &pageData)
+	return proceedTemplate(c, nBlockExplorer, &pageData)
 }

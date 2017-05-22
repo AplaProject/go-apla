@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// AjaxStatesList returns the list of states
 func (c *Controller) AjaxStatesList() (string, error) {
 
 	result := make(map[string]map[string]string)
@@ -38,22 +39,22 @@ func (c *Controller) AjaxStatesList() (string, error) {
 			continue
 		}
 
-		state_name, err := query(id, `state_name`)
+		stateName, err := query(id, `state_name`)
 		if err != nil {
 			return ``, err
 		}
-		state_flag, err := query(id, `state_flag`)
+		stateFlag, err := query(id, `state_flag`)
 		if err != nil {
 			return ``, err
 		}
-		state_coords, err := query(id, `state_coords`)
+		stateCoords, err := query(id, `state_coords`)
 		if err != nil {
 			return ``, err
 		}
 		result[id] = make(map[string]string)
-		result[id]["state_name"] = state_name
-		result[id]["state_flag"] = state_flag
-		result[id]["state_coords"] = state_coords
+		result[id]["state_name"] = stateName
+		result[id]["state_flag"] = stateFlag
+		result[id]["state_coords"] = stateCoords
 
 	}
 	jsondata, err := json.Marshal(result)

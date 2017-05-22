@@ -27,13 +27,14 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-type AppData struct {
+type appData struct {
 	utils.CommonPage
 	Done    bool
 	Proceed int
 	Blocks  []string
 }
 
+// App is a controller for application install template page
 func App(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -100,7 +101,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 			}
 			out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
 				Template: textproc.Process(string(data), &params), Unique: ``,
-				Data: &AppData{
+				Data: &appData{
 					CommonPage: utils.CommonPage{WalletId: GetSessWalletId(sess),
 						CitizenId: GetSessCitizenId(sess),
 						StateId:   GetSessInt64("state_id", sess),

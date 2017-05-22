@@ -16,16 +16,17 @@
 
 package controllers
 
-const NBackup = `backup`
+const nBackup = `backup`
 
 type backupPage struct {
 	Data *CommonPage
 }
 
 func init() {
-	newPage(NBackup)
+	newPage(nBackup)
 }
 
+// Backup is a controller for backup template page
 func (c *Controller) Backup() (string, error) {
-	return proceedTemplate(c, NBackup, &backupPage{c.Data})
+	return proceedTemplate(c, nBackup, &backupPage{c.Data})
 }
