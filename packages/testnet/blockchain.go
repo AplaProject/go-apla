@@ -159,8 +159,8 @@ func GetTx() {
 							break
 						}
 						txtime = int64(header.Time)
-						wallet = int64(header.WalletId)
-						state = int64(header.StateId)
+						wallet = int64(header.WalletID)
+						state = int64(header.StateID)
 					}
 					switch name {
 					case `GenCitizen`:
