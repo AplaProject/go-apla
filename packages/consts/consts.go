@@ -17,31 +17,39 @@
 package consts
 
 // текущая версия
+// Current version
 const VERSION = "0.1.6b9"
 
 const FIRST_QDLT = 1e+26
 const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 
 // используется в confirmations
+// is used in confirmations
 const COUNT_CONFIRMED_NODES = 5
 const WAIT_CONFIRMED_NODES = 10
 
 // У скольких нодов должен быть такой же блок как и у нас, чтобы считать, что блок у большей части DC-сети. для get_confirmed_block_id()
+// The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
 
 // примерный текущий крайний блок
+// Approximate current last block
 const LAST_BLOCK = 330000
 
 // примерный размер блокчейна
+// Approximate blockchain size
 const BLOCKCHAIN_SIZE = 1000
 
 // где лежит блокчейн. для тех, кто не хочет собирать его с нодов
+// Where is blockchain. For those who don't want to collect it from nodes
 const BLOCKCHAIN_URL = "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain"
 
 // на сколько может бежать время в тр-ии
+// How fast could the time of territory pass 
 const MAX_TX_FORW = 0
 
 // тр-ия может блуждать по сети сутки и потом попасть в блок
+// Territory may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
 
 const MAX_BLOCK_SIZE = 64 << 20
@@ -60,10 +68,12 @@ const ERROR_TIME = 1
 const ROUND_FIX = 0.00000000001
 
 // таймауты для TCP
+// timeouts for TCP
 const READ_TIMEOUT = 20
 const WRITE_TIMEOUT = 20
 
 // дефолтное знаение, со скольким нодами устанавляиваем связь
+// default value, with how many nodes we make the connection
 const OUT_CONNECTIONS = 10
 
 const GAPS_BETWEEN_BLOCKS = 3
@@ -79,7 +89,7 @@ const DATA_TYPE_BLOCK_BODY = 7
 
 const CHANGE_KEY_PERIOD = 86400 * 7
 
-const UPD_FULL_NODES_PERIOD = 3600 // на время тестов 3600, потом надо ставить 86400
+const UPD_FULL_NODES_PERIOD = 3600 // на время тестов 3600, потом надо ставить 86400 // 3600 is for the test time, then we have to put 86400
 
 const RATE_VOTING_PERIOD = 3600
 
