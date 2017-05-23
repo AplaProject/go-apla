@@ -458,8 +458,7 @@ func (p *Parser) AccessTable(table, action string) error {
 	}
 
 	if isCustom, err := p.IsCustomTable(table); err != nil {
-		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать // table != ... is left for compatibility temporarily. Remove new_state after rebuilding
-. Remove new_state after rebuilding 
+		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать // table != ... is left for compatibility temporarily. Remove new_state after rebuilding. Remove new_state after rebuilding
 	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
