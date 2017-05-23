@@ -28,10 +28,12 @@ import (
 /**
 фронт. проверка + занесение данных из блока в таблицы и info_block
 */
+// frontal check + adding the data from the block to a table and info_block
 func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
+		// parse only blocks
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
 	}
 	var err error
@@ -53,6 +55,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 	}
 
 	// проверим данные, указанные в заголовке блока
+	// check data pointed in the head of block
 	err = p.CheckBlockHeader()
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -72,6 +75,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 	if len(p.BinaryData) > 0 {
 		for {
 			// обработка тр-ий может занять много времени, нужно отметиться
+			// territory processing can take a lot of time, you need to be marked
 			p.UpdDaemonTime(p.GoroutineName)
 			log.Debug("&p.BinaryData", p.BinaryData)
 			transactionSize := utils.DecodeLength(&p.BinaryData)
@@ -80,6 +84,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 
 			// отчекрыжим одну транзакцию от списка транзакций
+			// separate one transaction from the list of transactions
 			//log.Debug("++p.BinaryData=%x\n", p.BinaryData)
 			//log.Debug("transactionSize", transactionSize)
 			transactionBinaryData := utils.BytesShift(&p.BinaryData, transactionSize)
@@ -87,6 +92,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			//ioutil.WriteFile("/tmp/dctx", transactionBinaryDataFull, 0644)
 			//ioutil.WriteFile("/tmp/dctxhash", utils.Md5(transactionBinaryDataFull), 0644)
 			// добавляем взятую тр-ию в набор тр-ий для RollbackTo, в котором пойдем в обратном порядке
+			// add the the territory in a set of territories for RollbackTo where we will go in reverse order
 			txForRollbackTo = append(txForRollbackTo, utils.EncodeLengthPlusData(transactionBinaryData)...)
 			//log.Debug("transactionBinaryData: %x\n", transactionBinaryData)
 			//log.Debug("txForRollbackTo: %x\n", txForRollbackTo)
@@ -128,6 +134,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			if p.BlockData.BlockId > 1 && p.TxContract == nil {
 				var userID int64
 				// txSlice[3] могут подсунуть пустой
+				// txSlice[3] could slip the empty one
 				if len(p.TxSlice) > 3 {
 					if !utils.CheckInputData(p.TxSlice[3], "int64") {
 						return utils.ErrInfo(fmt.Errorf("empty user_id"))
@@ -138,9 +145,11 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 
 				// считаем по каждому юзеру, сколько в блоке от него транзакций
+				// count for each user how many transactions from him are in the block 
 				txCounter[userID]++
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
+				// to prevent the possibility when 1 user could send a 10-gigabyte dos-block, which will fill with his own transactions
 				if txCounter[userID] > consts.MAX_BLOCK_USER_TXS {
 					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
@@ -151,7 +160,9 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			if p.TxContract == nil {
 				// время в транзакции не может быть больше, чем на MAX_TX_FORW сек времени блока
+				// time in the transaction couldn't be more than MAX_TX_FORW seconds of block time
 				// и  время в транзакции не может быть меньше времени блока -24ч.
+				// and time in transaction couldn't be less than -24 of block time
 				if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > p.BlockData.Time || utils.BytesToInt64(p.TxSlice[2]) < p.BlockData.Time-consts.MAX_TX_BACK {
 					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
@@ -161,6 +172,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 
 				// проверим, есть ли такой тип тр-ий
+				// check if such type of territory exists
 				_, ok := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 				if !ok {
 					return utils.ErrInfo(fmt.Errorf("nonexistent type"))
@@ -224,10 +236,12 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
+			// let user know that his territory is added in the block
 			p.ExecSql("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 
 			// Тут было time(). А значит если бы в цепочке блоков были блоки в которых были бы одинаковые хэши тр-ий, то ParseDataFull вернул бы error
+			// there was a time(). That means if blocks with the same hashes of territories were in the chain of blocks, ParseDataFull would return the error
 			err = p.InsertInLogTx(transactionBinaryDataFull, utils.BytesToInt64(p.TxMap["time"]))
 			if err != nil {
 				return utils.ErrInfo(err)
