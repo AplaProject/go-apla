@@ -66,11 +66,14 @@ func (p *Parser) RestoreAccessFront() error {
 
 	var txTime int64
 	if p.BlockData != nil { // тр-ия пришла в блоке
+		// transaction has come in the block
 		txTime = p.BlockData.Time
 	} else {
 		txTime = time.Now().Unix() - 30 // просто на всякий случай небольшой запас
+		// a small supply just in case
 	}
 	// прошел ли месяц с момента, когда кто-то запросил смену ключа
+	// whether the month passed from the moment when someone requested changing of a key
 	if txTime-data["change_key_time"] < consts.CHANGE_KEY_PERIOD {
 		return p.ErrInfo("CHANGE_KEY_PERIOD")
 	}
