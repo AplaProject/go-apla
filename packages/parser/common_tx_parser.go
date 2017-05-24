@@ -82,6 +82,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
 		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 		// вставляем с verified=1
+		// put with verified=1
 		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
 		if err != nil {
 			utils.WriteSelectiveLog(err)
@@ -90,6 +91,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		utils.WriteSelectiveLog("result insert")
 		log.Debug("INSERT INTO transactions - OK")
 		// удалим тр-ию из очереди (с verified=0)
+		// remove transaction from the turn (with verified=0)
 		err = p.DeleteQueueTx(hashHex)
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -107,6 +109,7 @@ func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 		return utils.ErrInfo(err)
 	}
 	// т.к. мы обрабатываем в queue_parser_tx тр-ии с verified=0, то после их обработки их нужно удалять.
+	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
 	utils.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex) + " AND verified=0 AND used = 0")
 	affect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE hex(hash) = ? AND verified=0 AND used = 0", hashHex)
 	if err != nil {
@@ -120,6 +123,7 @@ func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 func (p *Parser) AllTxParser() error {
 
 	// берем тр-ии
+	// take the transactions
 	all, err := p.GetAll(`
 			SELECT *
 			FROM (
