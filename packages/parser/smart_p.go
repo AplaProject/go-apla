@@ -36,13 +36,13 @@ import (
 
 var (
 	extendCost = map[string]int64{
-		"DBInsert":      200,
-		"InsertIndex":   50,
-		"DBUpdate":      100,
-		"DBUpdateExt":   100,
-		"DBGetList":     300,
-		"DBGetTable":    1000,
-		"DBTransfer":    200,
+		"DBInsert":    200,
+		"InsertIndex": 50,
+		"DBUpdate":    100,
+		"DBUpdateExt": 100,
+		"DBGetList":   300,
+		"DBGetTable":  1000,
+		//		"DBTransfer":    200,
 		"DBString":      100,
 		"DBInt":         100,
 		"DBStringExt":   100,
@@ -69,12 +69,12 @@ var (
 func init() {
 	smart.Extend(&script.ExtendData{Objects: map[string]interface{}{
 		//		"CallContract":   ExContract,
-		"DBInsert":           DBInsert,
-		"DBUpdate":           DBUpdate,
-		"DBUpdateExt":        DBUpdateExt,
-		"DBGetList":          DBGetList,
-		"DBGetTable":         DBGetTable,
-		"DBTransfer":         DBTransfer,
+		"DBInsert":    DBInsert,
+		"DBUpdate":    DBUpdate,
+		"DBUpdateExt": DBUpdateExt,
+		"DBGetList":   DBGetList,
+		"DBGetTable":  DBGetTable,
+		//		"DBTransfer":         DBTransfer,
 		"DBString":           DBString,
 		"DBInt":              DBInt,
 		"DBStringExt":        DBStringExt,
@@ -150,6 +150,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 	return &extend
 }
 
+// StackCont добавляет элемент в стэк вызовов контрактов или удаляет верхний элемент, когда name пустое
 func StackCont(p interface{}, name string) {
 	cont := p.(*Parser).TxContract
 	if len(name) > 0 {
@@ -160,6 +161,7 @@ func StackCont(p interface{}, name string) {
 	return
 }
 
+// CallContract вызывает функции контракта в соответствии с указанными флагами
 func (p *Parser) CallContract(flags int) (err error) {
 	var public []byte
 	if flags&smart.CallRollback == 0 {
@@ -247,6 +249,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 	return
 }
 
+// DBInsert вставляет запись в указанную таблицу БД
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) { // map[string]interface{}) {
 	//	fmt.Println(`DBInsert`, tblname, params, val, len(val))
 	if err = p.AccessTable(tblname, "insert"); err != nil {
@@ -267,14 +270,15 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 			return
 		}
 	}
-	var lastId string
-	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	var lastID string
+	lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
 	if err == nil {
-		ret, _ = strconv.ParseInt(lastId, 10, 64)
+		ret, _ = strconv.ParseInt(lastID, 10, 64)
 	}
 	return
 }
 
+// DBInsertReport вставляет запись в указанную таблицу отчета
 func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) {
 	names := strings.Split(tblname, `_`)
 	if names[0] != `global` {
@@ -292,10 +296,10 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
-	var lastId string
-	lastId, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	var lastID string
+	lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
 	if err == nil {
-		ret, _ = strconv.ParseInt(lastId, 10, 64)
+		ret, _ = strconv.ParseInt(lastID, 10, 64)
 	}
 	return
 }
@@ -307,8 +311,8 @@ func checkReport(tblname string) error {
 	return nil
 }
 
+// DBUpdate updates the item with the specified id in the table
 func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interface{}) (err error) { // map[string]interface{}) {
-	//	fmt.Println(`DBUpdate`, tblname, id, params, val, len(val))
 	/*	if err = p.AccessTable(tblname, "general_update"); err != nil {
 		return
 	}*/
@@ -323,6 +327,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 	return
 }
 
+// DBUpdateExt обновляет запись в указанной таблице. В params можно указывать where запрос и далее значения для этого запроса
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	var isIndex bool
 
@@ -344,8 +349,9 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 	return
 }
 
+/*
 func DBTransfer(p *Parser, tblname, columns string, idFrom, idTo int64, amount decimal.Decimal) (err error) { // map[string]interface{}) {
-	/*	cols := strings.Split(columns, `,`)
+		cols := strings.Split(columns, `,`)
 		idname := `id`
 		if len(cols) == 2 {
 			idname = cols[1]
@@ -363,10 +369,11 @@ func DBTransfer(p *Parser, tblname, columns string, idFrom, idTo int64, amount d
 		if _, err = p.selectiveLoggingAndUpd([]string{`+` + column}, []interface{}{value}, tblname, []string{idname},
 			[]string{utils.Int64ToStr(idTo)}, true); err != nil {
 			return
-		}*/
+		}
 	return
-}
+}*/
 
+// DBString возвращает значение поля у записи с указанным id
 func DBString(tblname string, name string, id int64) (string, error) {
 	if err := checkReport(tblname); err != nil {
 		return ``, err
@@ -375,10 +382,12 @@ func DBString(tblname string, name string, id int64) (string, error) {
 	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
 }
 
+// Sha256 возвращает значение хэша SHA256
 func Sha256(text string) string {
 	return string(utils.Sha256(text))
 }
 
+// PubToID возвращает числовой идентификатор для указанного в шестнадцатеричной форме публичного ключа.
 func PubToID(hexkey string) int64 {
 	pubkey, err := hex.DecodeString(hexkey)
 	if err != nil {
@@ -387,10 +396,12 @@ func PubToID(hexkey string) int64 {
 	return int64(lib.Address(pubkey))
 }
 
+// HexToBytes преобразует шестнадцатеричное представление в []byte
 func HexToBytes(hexdata string) ([]byte, error) {
 	return hex.DecodeString(hexdata)
 }
 
+// DBInt возвращает числовое значение колонки у записи с указанным id
 func DBInt(tblname string, name string, id int64) (int64, error) {
 	if err := checkReport(tblname); err != nil {
 		return 0, err
@@ -411,6 +422,7 @@ func getBytea(table string) map[string]bool {
 	return isBytea
 }
 
+// DBStringExt возвращает значение колонки name у записи с указанным значением поля idname
 func DBStringExt(tblname string, name string, id interface{}, idname string) (string, error) {
 	if err := checkReport(tblname); err != nil {
 		return ``, err
@@ -435,6 +447,7 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (st
 		lib.EscapeName(idname)+`=?`, id).String()
 }
 
+// DBIntExt возвращает числовое значение колонки name у записи с указанным значением поля idname
 func DBIntExt(tblname string, name string, id interface{}, idname string) (ret int64, err error) {
 	var val string
 	val, err = DBStringExt(tblname, name, id, idname)
@@ -447,6 +460,7 @@ func DBIntExt(tblname string, name string, id interface{}, idname string) (ret i
 	return strconv.ParseInt(val, 10, 64)
 }
 
+// DBFreeRequest бесплатная функция, которая пытается найти запись с указанным значением в колонке idname.
 func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) error {
 	if p.TxContract.FreeRequest {
 		return fmt.Errorf(`DBFreeRequest can be executed only once`)
@@ -462,6 +476,7 @@ func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, i
 	return fmt.Errorf(`DBFreeRequest: cannot find %v in %s of %s`, id, idname, tblname)
 }
 
+// DBStringWhere возвращет значение колонки исходя из условия where и значений params для этого условия
 func DBStringWhere(tblname string, name string, where string, params ...interface{}) (string, error) {
 	if err := checkReport(tblname); err != nil {
 		return ``, err
@@ -483,6 +498,7 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 		strings.Replace(lib.Escape(where), `$`, `?`, -1), params...).String()
 }
 
+// DBIntWhere возвращет числовое значение колонки исходя из условия where и значений params для этого условия
 func DBIntWhere(tblname string, name string, where string, params ...interface{}) (ret int64, err error) {
 	var val string
 	val, err = DBStringWhere(tblname, name, where, params...)
@@ -495,14 +511,17 @@ func DBIntWhere(tblname string, name string, where string, params ...interface{}
 	return strconv.ParseInt(val, 10, 64)
 }
 
+// StateTable добавляет префикс с номер государства к имени таблицы
 func StateTable(p *Parser, tblname string) string {
 	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
 }
 
+// StateTableTx добавляет префикс с номер государства к имени таблицы
 func StateTableTx(p *Parser, tblname string) string {
 	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
 }
 
+// ContractConditions вызывает функцию conditions для каждого из указанных в параметрах контрактов
 func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
@@ -530,6 +549,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 	return true, nil
 }
 
+// IsContract проверяет, совпадает ли имя выполняемого контракта с одним из имен, перечисленных в параметрах.
 func IsContract(p *Parser, names ...interface{}) bool {
 	for _, iname := range names {
 		name := iname.(string)
@@ -550,10 +570,12 @@ func IsContract(p *Parser, names ...interface{}) bool {
 	return false
 }
 
+// IsGovAccount проверяет является ли указанный аккаунт владельцем государства
 func IsGovAccount(p *Parser, citizen int64) bool {
 	return utils.StrToInt64(StateVal(p, `gov_account`)) == citizen
 }
 
+// AddressToID преобразует строковое представление номера кошелька в число
 func AddressToID(input string) (addr int64) {
 	input = strings.TrimSpace(input)
 	if len(input) < 2 {
@@ -573,6 +595,7 @@ func AddressToID(input string) (addr int64) {
 	return
 }
 
+// IDToAddress преобразует идентификатор аккаунта в строку вида XXXX-...-XXXX
 func IDToAddress(id int64) (out string) {
 	out = lib.AddressToString(id)
 	if !lib.IsValidAddress(out) {
@@ -581,6 +604,7 @@ func IDToAddress(id int64) (out string) {
 	return
 }
 
+// DBAmount возвращает значение колонки amount у записи со значением id в колонке column
 func DBAmount(tblname, column string, id int64) decimal.Decimal {
 	if err := checkReport(tblname); err != nil {
 		return decimal.New(0, 0)
@@ -594,6 +618,7 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 	return val
 }
 
+// EvalIf вычисляет и возвращает логическое значение указанного выражения
 func (p *Parser) EvalIf(conditions string) (bool, error) {
 	time := int64(0)
 	if p.TxPtr != nil {
@@ -615,15 +640,18 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 		`block_time`: blockTime, `time`: time})
 }
 
+// StateVal возвращает значение указанного параметра у государства
 func StateVal(p *Parser, name string) string {
 	val, _ := utils.StateParam(int64(p.TxStateID), name)
 	return val
 }
 
+// Int преобразует строку в число
 func Int(val string) int64 {
 	return utils.StrToInt64(val)
 }
 
+// Str преобразует значение в строку
 func Str(v interface{}) (ret string) {
 	switch val := v.(type) {
 	case float64:
@@ -634,14 +662,17 @@ func Str(v interface{}) (ret string) {
 	return
 }
 
+// Money преобразует значение в числовой тип для денег
 func Money(v interface{}) (ret decimal.Decimal) {
 	return script.ValueToDecimal(v)
 }
 
+// Float преобразует значение в float64
 func Float(v interface{}) (ret float64) {
 	return script.ValueToFloat(v)
 }
 
+// UpdateContract обновляет содержимое и условие контракта с указанным именем
 func UpdateContract(p *Parser, name, value, conditions string) error {
 	var (
 		fields []string
@@ -701,6 +732,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 	return nil
 }
 
+// UpdateParam обновляет значение и условие параметра с указанным именем у государства
 func UpdateParam(p *Parser, name, value, conditions string) error {
 	var (
 		fields []string
@@ -732,6 +764,7 @@ func UpdateParam(p *Parser, name, value, conditions string) error {
 	return nil
 }
 
+// UpdateMenu обновляет значение и условие для указанного меню
 func UpdateMenu(p *Parser, name, value, conditions string) error {
 	if err := p.AccessChange(`menu`, name); err != nil {
 		return err
@@ -753,6 +786,7 @@ func UpdateMenu(p *Parser, name, value, conditions string) error {
 	return nil
 }
 
+// CheckSignature проверяет дополнительные подписи у контракта
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
 	pref := utils.Int64ToStr(int64(state))
@@ -797,6 +831,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	return nil
 }
 
+// UpdatePage обновляет текст, меню и условие у указанной страницы
 func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 	if err := p.AccessChange(`pages`, name); err != nil {
 		return p.ErrInfo(err)
@@ -848,6 +883,7 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 	return strings.Replace(lib.Escape(where), `$`, `?`, -1), order, nil
 }
 
+// DBGetList возвращает список значений колонки с указанными offset, limit, where
 func DBGetList(tblname string, name string, offset, limit int64, order string,
 	where string, params ...interface{}) ([]interface{}, error) {
 
@@ -883,6 +919,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 	return result, err
 }
 
+// DBGetTable возвращает массив значений указанных столбцов при выборке с данными offset, limit, where
 func DBGetTable(tblname string, columns string, offset, limit int64, order string,
 	where string, params ...interface{}) ([]interface{}, error) {
 	var err error
@@ -908,6 +945,7 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 	return result, err
 }
 
+// NewStateFunc creates a new country
 func NewStateFunc(p *Parser, country, currency string) (err error) {
 	_, err = p.NewStateMain(country, currency)
 	return
