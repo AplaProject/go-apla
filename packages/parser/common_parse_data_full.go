@@ -75,7 +75,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 	if len(p.BinaryData) > 0 {
 		for {
 			// обработка тр-ий может занять много времени, нужно отметиться
-			// territory processing can take a lot of time, you need to be marked
+			// transactions processing can take a lot of time, you need to be marked
 			p.UpdDaemonTime(p.GoroutineName)
 			log.Debug("&p.BinaryData", p.BinaryData)
 			transactionSize := utils.DecodeLength(&p.BinaryData)
@@ -92,7 +92,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			//ioutil.WriteFile("/tmp/dctx", transactionBinaryDataFull, 0644)
 			//ioutil.WriteFile("/tmp/dctxhash", utils.Md5(transactionBinaryDataFull), 0644)
 			// добавляем взятую тр-ию в набор тр-ий для RollbackTo, в котором пойдем в обратном порядке
-			// add the the territory in a set of territories for RollbackTo where we will go in reverse order
+			// add the the transaction in a set of transactions for RollbackTo where we will go in reverse order
 			txForRollbackTo = append(txForRollbackTo, utils.EncodeLengthPlusData(transactionBinaryData)...)
 			//log.Debug("transactionBinaryData: %x\n", transactionBinaryData)
 			//log.Debug("txForRollbackTo: %x\n", txForRollbackTo)
@@ -172,7 +172,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 
 				// проверим, есть ли такой тип тр-ий
-				// check if such type of territory exists
+				// check if such type of transaction exists
 				_, ok := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 				if !ok {
 					return utils.ErrInfo(fmt.Errorf("nonexistent type"))
@@ -236,12 +236,12 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
-			// let user know that his territory is added in the block
+			// let user know that his transaction  is added in the block
 			p.ExecSql("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 
 			// Тут было time(). А значит если бы в цепочке блоков были блоки в которых были бы одинаковые хэши тр-ий, то ParseDataFull вернул бы error
-			// there was a time(). That means if blocks with the same hashes of territories were in the chain of blocks, ParseDataFull would return the error
+			// here was a time(). That means if blocks with the same hashes of transactions were in the chain of blocks, ParseDataFull would return the error
 			err = p.InsertInLogTx(transactionBinaryDataFull, utils.BytesToInt64(p.TxMap["time"]))
 			if err != nil {
 				return utils.ErrInfo(err)
