@@ -478,6 +478,7 @@ func (p *Parser) NewStateRollback() error {
 		return p.ErrInfo(err)
 	}
 	// обновляем AI
+	// update  the AI
 	err = p.SetAI("system_states", maxId+1)
 	if err != nil {
 		return p.ErrInfo(err)
