@@ -31,7 +31,7 @@ import (
 func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 
 	// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
-// in the beginning it is necessary to obtain the dimensions of all the territiries in order to go through them in reverse order
+// in the beginning it is necessary to obtain the sizes of all the transactions in order to go through them in reverse order
 	binForSize := p.BinaryData
 	var sizesSlice []int64
 	for {
@@ -41,7 +41,7 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 		}
 		sizesSlice = append(sizesSlice, txSize)
 		// удалим тр-ию
-// remove the territory
+// remove the transaction
 		utils.BytesShift(&binForSize, txSize)
 		if len(binForSize) == 0 {
 			break
@@ -50,7 +50,7 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 	sizesSlice = utils.SliceReverse(sizesSlice)
 	for i := 0; i < len(sizesSlice); i++ {
 		// обработка тр-ий может занять много времени, нужно отметиться
-// processing of the territories may take a lot of time, you need to be marked
+// processing of the transactions may take a lot of time, you need to be marked
 		p.UpdDaemonTime(p.GoroutineName)
 		// отделим одну транзакцию
 // separate one transaction
@@ -124,7 +124,7 @@ func (p *Parser) ParseDataRollback() error {
 	}
 	if len(p.BinaryData) > 0 {
 		// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
-		// in the beginning it is necessary to obtain the dimensions of all the territiries in order to go through them in reverse order
+		// in the beginning it is necessary to obtain the sizes of all the transactions in order to go through them in reverse order
 		binForSize := p.BinaryData
 		var sizesSlice []int64
 		for {
@@ -134,7 +134,7 @@ func (p *Parser) ParseDataRollback() error {
 			}
 			sizesSlice = append(sizesSlice, txSize)
 			// удалим тр-ию
-			// remove the territory
+			// remove the transaction
 			utils.BytesShift(&binForSize, txSize)
 			if len(binForSize) == 0 {
 				break
@@ -143,7 +143,7 @@ func (p *Parser) ParseDataRollback() error {
 		sizesSlice = utils.SliceReverse(sizesSlice)
 		for i := 0; i < len(sizesSlice); i++ {
 			// обработка тр-ий может занять много времени, нужно отметиться
-			// processing of the territories may take a lot of time, we need to be marked
+			// processing of the transaction may take a lot of time, we need to be marked
 			p.UpdDaemonTime(p.GoroutineName)
 			// отделим одну транзакцию
 			// separate one transaction
@@ -173,7 +173,7 @@ func (p *Parser) ParseDataRollback() error {
 				return p.ErrInfo(err)
 			}
 			// пишем тр-ию в очередь на проверку, авось пригодится
-			// put the territory in the turn for checking suddenly we will need it
+			// put the transaction in the turn for checking suddenly we will need it
 			dataHex := utils.BinToHex(transactionBinaryData)
 			log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", p.TxHash)
 			err = p.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", p.TxHash)
