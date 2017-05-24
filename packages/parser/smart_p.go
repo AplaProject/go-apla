@@ -411,6 +411,7 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // DBInt возвращает числовое значение колонки у записи с указанным id
+// DBInt returns the numeric value of the column for the record with the specified id
 func DBInt(tblname string, name string, id int64) (int64, error) {
 	if err := checkReport(tblname); err != nil {
 		return 0, err
@@ -432,6 +433,7 @@ func getBytea(table string) map[string]bool {
 }
 
 // DBStringExt возвращает значение колонки name у записи с указанным значением поля idname
+// DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field 
 func DBStringExt(tblname string, name string, id interface{}, idname string) (string, error) {
 	if err := checkReport(tblname); err != nil {
 		return ``, err
@@ -457,6 +459,7 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (st
 }
 
 // DBIntExt возвращает числовое значение колонки name у записи с указанным значением поля idname
+// DBIntExt returns the numeric value of the 'name' column for the record with the specified value of the 'idname' field
 func DBIntExt(tblname string, name string, id interface{}, idname string) (ret int64, err error) {
 	var val string
 	val, err = DBStringExt(tblname, name, id, idname)
@@ -470,6 +473,7 @@ func DBIntExt(tblname string, name string, id interface{}, idname string) (ret i
 }
 
 // DBFreeRequest бесплатная функция, которая пытается найти запись с указанным значением в колонке idname.
+// DBFreeRequest is a free function that is needed to find the record with the specified value in the 'idname' column.
 func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, idname string) error {
 	if p.TxContract.FreeRequest {
 		return fmt.Errorf(`DBFreeRequest can be executed only once`)
@@ -485,7 +489,8 @@ func DBFreeRequest(p *Parser, tblname string /*name string,*/, id interface{}, i
 	return fmt.Errorf(`DBFreeRequest: cannot find %v in %s of %s`, id, idname, tblname)
 }
 
-// DBStringWhere возвращет значение колонки исходя из условия where и значений params для этого условия
+// DBStringWhere возвращает значение колонки исходя из условия where и значений params для этого условия
+// DBStringWhere returns the column value based on the 'where' condition and 'params' values for this condition
 func DBStringWhere(tblname string, name string, where string, params ...interface{}) (string, error) {
 	if err := checkReport(tblname); err != nil {
 		return ``, err
@@ -508,6 +513,7 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 }
 
 // DBIntWhere возвращет числовое значение колонки исходя из условия where и значений params для этого условия
+// DBIntWhere returns the column value based on the 'where' condition and 'params' values for this condition
 func DBIntWhere(tblname string, name string, where string, params ...interface{}) (ret int64, err error) {
 	var val string
 	val, err = DBStringWhere(tblname, name, where, params...)
@@ -520,17 +526,20 @@ func DBIntWhere(tblname string, name string, where string, params ...interface{}
 	return strconv.ParseInt(val, 10, 64)
 }
 
-// StateTable добавляет префикс с номер государства к имени таблицы
+// StateTable добавляет префикс с номером государства к имени таблицы
+// StateTable adds a prefix with the state number to the table name
 func StateTable(p *Parser, tblname string) string {
 	return fmt.Sprintf("%d_%s", p.TxStateID, tblname)
 }
 
-// StateTableTx добавляет префикс с номер государства к имени таблицы
+// StateTableTx добавляет префикс с номером государства к имени таблицы
+// StateTable adds a prefix with the state number to the table name
 func StateTableTx(p *Parser, tblname string) string {
 	return fmt.Sprintf("%v_%s", p.TxData[`StateId`], tblname)
 }
 
 // ContractConditions вызывает функцию conditions для каждого из указанных в параметрах контрактов
+// ContractConditions calls the 'conditions' function for each of the contracts specified in the parameters
 func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
@@ -559,6 +568,7 @@ func ContractConditions(p *Parser, names ...interface{}) (bool, error) {
 }
 
 // IsContract проверяет, совпадает ли имя выполняемого контракта с одним из имен, перечисленных в параметрах.
+// IsContract checks whether the name of the executable contract matches one of the names listed in the parameters.
 func IsContract(p *Parser, names ...interface{}) bool {
 	for _, iname := range names {
 		name := iname.(string)
