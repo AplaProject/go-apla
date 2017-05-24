@@ -91,7 +91,7 @@ func (p *Parser) ParseDataFront() error {
 				}
 				if p.TxContract == nil {
 					// txSlice[4] могут подсунуть пустой
-// txSlice[4] could slip the empty
+// txSlice[4] could slip the empty one
 					if len(p.TxSlice) > 4 {
 						if !utils.CheckInputData(p.TxSlice[3], "int64") || !utils.CheckInputData(p.TxSlice[4], "int64") {
 							return utils.ErrInfo(fmt.Errorf("empty wallet_id or citizen_id"))
@@ -101,7 +101,7 @@ func (p *Parser) ParseDataFront() error {
 					}
 
 					// проверим, есть ли такой тип тр-ий
-// check if there is such a type of territory
+// check if such a type of transaction exists
 					_, ok := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 					if !ok {
 						return utils.ErrInfo(fmt.Errorf("nonexistent type"))
@@ -143,7 +143,7 @@ func (p *Parser) ParseDataFront() error {
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 				// даем юзеру понять, что его тр-ия попала в блок
-// let user to know that his territory got in the block
+// let user to know that his transaction got in the block
 				err = p.ExecSql("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 				if err != nil {
 					return utils.ErrInfo(err)
