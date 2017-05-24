@@ -192,7 +192,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					continue
 				}
 				if length == 0 || i >= 20 { // у нас нет тр-ий с более чем 20 элементами
-					// we don't have the territories with more than 20 elements
+					// we don't have the transactions with more than 20 elements
 					break
 				}
 			}
