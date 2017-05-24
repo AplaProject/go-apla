@@ -43,12 +43,15 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 	if len(*transactionBinaryData) > 0 {
 
 		// хэш транзакции
+		// hash of the transaction
 		transSlice = append(transSlice, utils.DSha256(*transactionBinaryData))
 		input := (*transactionBinaryData)[:]
 		// первый байт - тип транзакции
+		// the first byte is type of the transaction
 		txType := utils.BinToDecBytesShift(transactionBinaryData, 1)
 		isStruct := consts.IsStruct(int(txType))
 		if txType > 127 { // транзакция с контрактом
+			// transaction with the contract
 			var err error
 			p.TxPtr = &consts.TXHeader{}
 			if err = lib.BinUnmarshal(&input, p.TxPtr); err != nil {
@@ -152,12 +155,14 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
 		}
 		// следующие 4 байта - время транзакции
+		// the next 4 bytes are the tyme of the transaction
 		transSlice = append(transSlice, utils.Int64ToByte(utils.BinToDecBytesShift(transactionBinaryData, 4)))
 		if len(*transactionBinaryData) == 0 {
 			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
 		}
 		log.Debug("%s", transSlice)
 		// преобразуем бинарные данные транзакции в массив
+		// convert the binary data of transaction to an array
 		if txType > 127 {
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		} else if isStruct {
@@ -187,6 +192,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					continue
 				}
 				if length == 0 || i >= 20 { // у нас нет тр-ий с более чем 20 элементами
+					// we don't have the territories with more than 20 elements
 					break
 				}
 			}
