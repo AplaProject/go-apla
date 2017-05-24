@@ -46,6 +46,7 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	blocks := make([]map[string][]byte, 0, limit)
 	//	var blocks []map[string][]byte
 	// откатываем наши блоки
+	// roll back our blocks
 	for {
 		rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC LIMIT "+fmt.Sprintf(`%d`, limit)+` OFFSET 0`), blockId)
 		if err != nil {
@@ -69,6 +70,7 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 		fmt.Printf(`%s `, blocks[0]["id"])
 		for _, block := range blocks {
 			// Откатываем наши блоки до блока blockId
+			// roll back our blocks to the block blockId
 			parser.BinaryData = block["data"]
 			err = parser.ParseDataRollback()
 			if err != nil {
