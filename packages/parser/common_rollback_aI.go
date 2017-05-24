@@ -22,6 +22,7 @@ import (
 )
 
 // откатываем ID на кол-во затронутых строк
+// roll back the ID to the number of affected rows
 func (p *Parser) rollbackAI(table string, num int64) error {
 
 	if num == 0 {
@@ -35,6 +36,7 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 	tblname := lib.EscapeName(table)
 	log.Debug("AiID: %s", AiID)
 	// если табла была очищена, то тут будет 0, поэтому нелья чистить таблы под нуль
+	// if the table was cleaned up, then 0 appears, that's why we can not clean the tables to zero
 	current, err := p.Single("SELECT " + AiID + " FROM " + tblname + " ORDER BY " + AiID + " DESC LIMIT 1").Int64()
 	if err != nil {
 		return utils.ErrInfo(err)
