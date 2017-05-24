@@ -151,6 +151,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 }
 
 // StackCont добавляет элемент в стэк вызовов контрактов или удаляет верхний элемент, когда name пустое
+// StackCont adds an element to the stack of contract call or removes the top element when name is empty
 func StackCont(p interface{}, name string) {
 	cont := p.(*Parser).TxContract
 	if len(name) > 0 {
@@ -162,6 +163,7 @@ func StackCont(p interface{}, name string) {
 }
 
 // CallContract вызывает функции контракта в соответствии с указанными флагами
+// CallContract calls the contract functions according to the specified flags
 func (p *Parser) CallContract(flags int) (err error) {
 	var public []byte
 	if flags&smart.CallRollback == 0 {
@@ -250,6 +252,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 }
 
 // DBInsert вставляет запись в указанную таблицу БД
+// DBInsert inserts a record into the specified database table
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) { // map[string]interface{}) {
 	//	fmt.Println(`DBInsert`, tblname, params, val, len(val))
 	if err = p.AccessTable(tblname, "insert"); err != nil {
@@ -279,6 +282,7 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 }
 
 // DBInsertReport вставляет запись в указанную таблицу отчета
+// DBInsertReport inserts a record into the specified report table
 func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) {
 	names := strings.Split(tblname, `_`)
 	if names[0] != `global` {
@@ -328,6 +332,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 }
 
 // DBUpdateExt обновляет запись в указанной таблице. В params можно указывать where запрос и далее значения для этого запроса
+// DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
 func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, params string, val ...interface{}) (err error) { // map[string]interface{}) {
 	var isIndex bool
 
@@ -374,6 +379,7 @@ func DBTransfer(p *Parser, tblname, columns string, idFrom, idTo int64, amount d
 }*/
 
 // DBString возвращает значение поля у записи с указанным id
+// DBString returns the value of the field of the record with the specified id
 func DBString(tblname string, name string, id int64) (string, error) {
 	if err := checkReport(tblname); err != nil {
 		return ``, err
@@ -383,11 +389,13 @@ func DBString(tblname string, name string, id int64) (string, error) {
 }
 
 // Sha256 возвращает значение хэша SHA256
+// Sha256 returns SHA256 hash value
 func Sha256(text string) string {
 	return string(utils.Sha256(text))
 }
 
 // PubToID возвращает числовой идентификатор для указанного в шестнадцатеричной форме публичного ключа.
+// PubToID returns a numeric identifier for the public key specified in the hexadecimal form.
 func PubToID(hexkey string) int64 {
 	pubkey, err := hex.DecodeString(hexkey)
 	if err != nil {
@@ -397,6 +405,7 @@ func PubToID(hexkey string) int64 {
 }
 
 // HexToBytes преобразует шестнадцатеричное представление в []byte
+// HexToBytes converts the hexadecimal representation to []byte
 func HexToBytes(hexdata string) ([]byte, error) {
 	return hex.DecodeString(hexdata)
 }
