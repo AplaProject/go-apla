@@ -23,10 +23,11 @@ import (
 type changeNodeKeyPage struct {
 	Alert     string
 	Lang      map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletID  int64
+	CitizenID int64
+	NoPublic  bool
 	TxType    string
-	TxTypeId  int64
+	TxTypeID  int64
 	TimeNow   int64
 }
 
@@ -35,17 +36,23 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 	var err error
 
 	txType := "ChangeNodeKeyDLT"
-	txTypeId := utils.TypeInt(txType)
+	txTypeID := utils.TypeInt(txType)
 	timeNow := utils.Time()
+
+	public, err := c.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
 
 	TemplateStr, err := makeTemplate("change_node_key", "changeNodeKey", &changeNodeKeyPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletID:  c.SessWalletId,
+		CitizenID: c.SessCitizenId,
 		TimeNow:   timeNow,
 		TxType:    txType,
-		TxTypeId:  txTypeId})
+		NoPublic:  len(public) == 0,
+		TxTypeID:  txTypeID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
