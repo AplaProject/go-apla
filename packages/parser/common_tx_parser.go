@@ -37,6 +37,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 	if err != nil || len(fatalError) > 0 {
 		p.DeleteQueueTx(hashHex) // удалим тр-ию из очереди
+		// remove transaction from the turn
 	}
 	if err == nil && len(fatalError) > 0 {
 		err = errors.New(fatalError)
