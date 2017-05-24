@@ -19,11 +19,12 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
+	//	"crypto/rand"
 	"fmt"
-	"io"
+	//	"io"
 )
 
+// Decrypt decrypts the ciphertext by using key password
 func Decrypt(key, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -43,6 +44,7 @@ func Decrypt(key, ciphertext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+/*
 func Encrypt(key, plaintext []byte) ([]byte, error) {
 	if len(plaintext)%aes.BlockSize != 0 {
 		return nil, fmt.Errorf("plaintext is not a multiple of the block size")
@@ -59,4 +61,4 @@ func Encrypt(key, plaintext []byte) ([]byte, error) {
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
 	return ciphertext, nil
-}
+}*/

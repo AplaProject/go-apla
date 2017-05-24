@@ -1,14 +1,15 @@
 package main
 
 import (
-	"crypto/sha256"
 	"crypto/ecdsa"
- 	"crypto/elliptic"
+	"crypto/elliptic"
+	"crypto/sha256"
 	"encoding/hex"
-	"math/big"
 	"flag"
+	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"io/ioutil"
+	"math/big"
 )
 
 func main() {
@@ -40,7 +41,10 @@ func main() {
 				lib.FillLeft(priv.PublicKey.Y.Bytes())...))
 		}
 	} else {
-		privKey, pubKey = lib.GenKeys()
+		privKey, pubKey, err = lib.GenHexKeys()
+		if err != nil {
+			fmt.Println(`Error`, err)
+		}
 	}
 	if !*hexf {
 		ext = `.key`

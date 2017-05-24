@@ -38,7 +38,9 @@ import (
 )
 
 const (
-	KEY = `17a984259355caeaad8837f3fc0af12527b801c349677effdcbcaceb1398c54463d64d6cc7081bc94f0479013bf24521`
+	// Key is an encrypted private key
+	Key = `17a984259355caeaad8837f3fc0af12527b801c349677effdcbcaceb1398c54463d64d6cc7081bc94f0479013bf24521`
+	// CRC is a crc of the password
 	CRC = 3362054855
 )
 
@@ -46,6 +48,7 @@ var (
 	options Settings
 )
 
+// Settings is a structure for saving in update.json file
 type Settings struct {
 	Version  string
 	Domain   string
@@ -53,7 +56,7 @@ type Settings struct {
 	OutPath  string
 	File     string
 	ZipFile  string
-	JsonPath string
+	JSONPath string
 }
 
 func exit(err error) {
@@ -67,6 +70,7 @@ func exit(err error) {
 	}
 }
 
+// BytesInfoHeader returns file header for zip file
 func BytesInfoHeader(size int, filename string) (*zip.FileHeader, error) {
 	fh := &zip.FileHeader{
 		Name:               filename,
@@ -112,7 +116,7 @@ func main() {
 		exit(fmt.Errorf(`Wrong password`))
 	}
 
-	key, _ := hex.DecodeString(KEY)
+	key, _ := hex.DecodeString(Key)
 	pass := md5.Sum([]byte(psw))
 	privKey, err := Decrypt(pass[:], key)
 	if err != nil {
@@ -177,14 +181,14 @@ func main() {
 		f.Write(outzip)
 		z.Close()
 		zipf.Close()
-		upd.Url = set.Domain + set.ZipFile
+		upd.URL = set.Domain + set.ZipFile
 		out[key] = upd
 	}
 	//	fmt.Println(`Set`, out)
 
 	if updjson, err := json.Marshal(out); err != nil {
 		exit(err)
-	} else if err = ioutil.WriteFile(filepath.Join(options.JsonPath, `update.json`), updjson, 0644); err != nil {
+	} else if err = ioutil.WriteFile(filepath.Join(options.JSONPath, `update.json`), updjson, 0644); err != nil {
 		exit(err)
 	}
 	/*		if err = os.Chdir(srcPath); err != nil {

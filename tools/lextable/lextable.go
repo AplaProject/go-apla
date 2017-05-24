@@ -25,11 +25,15 @@ import (
 
 // The program creates packages/script/lex_table.go files.
 
+// Action is a map of actions
 type Action map[string][]string
+
+// States is a map of states
 type States map[string]Action
 
 const (
-	AlphaSize = 33 // The length of alphabet
+	// AlphaSize is the length of alphabet
+	AlphaSize = 33
 )
 
 var (
