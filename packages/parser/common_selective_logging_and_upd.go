@@ -26,6 +26,7 @@ import (
 )
 
 // не использовать для комментов
+// do not use for comments
 func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (string, error) {
 	var (
 		tableId  string
@@ -95,6 +96,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
 	// если есть, что логировать
+	// if there is something to log
 	logData, err := p.OneRow(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere).String()
 	if err != nil {
 		return tableId, err
