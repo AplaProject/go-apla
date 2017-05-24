@@ -590,11 +590,13 @@ func IsContract(p *Parser, names ...interface{}) bool {
 }
 
 // IsGovAccount проверяет является ли указанный аккаунт владельцем государства
+// IsGovAccount checks whether the specified account is the owner of the state
 func IsGovAccount(p *Parser, citizen int64) bool {
 	return utils.StrToInt64(StateVal(p, `gov_account`)) == citizen
 }
 
 // AddressToID преобразует строковое представление номера кошелька в число
+// AddressToID converts the string representation of the wallet number to a numeric
 func AddressToID(input string) (addr int64) {
 	input = strings.TrimSpace(input)
 	if len(input) < 2 {
@@ -615,6 +617,7 @@ func AddressToID(input string) (addr int64) {
 }
 
 // IDToAddress преобразует идентификатор аккаунта в строку вида XXXX-...-XXXX
+// IDToAddress converts the identifier of account to a string of the form XXXX -...- XXXX
 func IDToAddress(id int64) (out string) {
 	out = lib.AddressToString(id)
 	if !lib.IsValidAddress(out) {
@@ -624,6 +627,8 @@ func IDToAddress(id int64) (out string) {
 }
 
 // DBAmount возвращает значение колонки amount у записи со значением id в колонке column
+// DBAmount returns the value of the 'amount' column for the record with the 'id' value in the 'column' column
+85/5000
 func DBAmount(tblname, column string, id int64) decimal.Decimal {
 	if err := checkReport(tblname); err != nil {
 		return decimal.New(0, 0)
@@ -637,7 +642,8 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 	return val
 }
 
-// EvalIf вычисляет и возвращает логическое значение указанного выражения
+// EvalIf вычисляет и возвращает логическое значение указанного выражения 
+// EvalIf counts and returns the logical value of the specified expression
 func (p *Parser) EvalIf(conditions string) (bool, error) {
 	time := int64(0)
 	if p.TxPtr != nil {
@@ -660,17 +666,20 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 }
 
 // StateVal возвращает значение указанного параметра у государства
+// StateVal returns the value of the specified parameter for the state
 func StateVal(p *Parser, name string) string {
 	val, _ := utils.StateParam(int64(p.TxStateID), name)
 	return val
 }
 
 // Int преобразует строку в число
+// Int converts a string to a number
 func Int(val string) int64 {
 	return utils.StrToInt64(val)
 }
 
 // Str преобразует значение в строку
+// Str converts the value to a string
 func Str(v interface{}) (ret string) {
 	switch val := v.(type) {
 	case float64:
@@ -682,16 +691,19 @@ func Str(v interface{}) (ret string) {
 }
 
 // Money преобразует значение в числовой тип для денег
+// Money converts the value into a numeric type for money
 func Money(v interface{}) (ret decimal.Decimal) {
 	return script.ValueToDecimal(v)
 }
 
 // Float преобразует значение в float64
+// Float converts the value to float64
 func Float(v interface{}) (ret float64) {
 	return script.ValueToFloat(v)
 }
 
 // UpdateContract обновляет содержимое и условие контракта с указанным именем
+// UpdateContract updates the content and condition of contract with the specified name
 func UpdateContract(p *Parser, name, value, conditions string) error {
 	var (
 		fields []string
@@ -752,6 +764,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 }
 
 // UpdateParam обновляет значение и условие параметра с указанным именем у государства
+// UpdateParam updates the value and condition of parameter with the specified name for the state
 func UpdateParam(p *Parser, name, value, conditions string) error {
 	var (
 		fields []string
@@ -784,6 +797,7 @@ func UpdateParam(p *Parser, name, value, conditions string) error {
 }
 
 // UpdateMenu обновляет значение и условие для указанного меню
+// UpdateMenu updates the value and condition for the specified menu
 func UpdateMenu(p *Parser, name, value, conditions string) error {
 	if err := p.AccessChange(`menu`, name); err != nil {
 		return err
@@ -806,6 +820,7 @@ func UpdateMenu(p *Parser, name, value, conditions string) error {
 }
 
 // CheckSignature проверяет дополнительные подписи у контракта
+// CheckSignature checks the additional signatures for the contract
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
 	pref := utils.Int64ToStr(int64(state))
@@ -851,6 +866,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 }
 
 // UpdatePage обновляет текст, меню и условие у указанной страницы
+// UpdatePage updates the text, menu and condition of the specified page
 func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 	if err := p.AccessChange(`pages`, name); err != nil {
 		return p.ErrInfo(err)
@@ -903,6 +919,7 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 }
 
 // DBGetList возвращает список значений колонки с указанными offset, limit, where
+// DBGetList returns a list of column values with the specified 'offset', 'limit', 'where'
 func DBGetList(tblname string, name string, offset, limit int64, order string,
 	where string, params ...interface{}) ([]interface{}, error) {
 
@@ -939,6 +956,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 }
 
 // DBGetTable возвращает массив значений указанных столбцов при выборке с данными offset, limit, where
+// DBGetTable returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBGetTable(tblname string, columns string, offset, limit int64, order string,
 	where string, params ...interface{}) ([]interface{}, error) {
 	var err error
