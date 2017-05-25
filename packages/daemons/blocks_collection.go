@@ -354,7 +354,7 @@ BEGIN:
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				break BEGIN
 			}
-			conn, err := utils.TcpConn(hosts[i] + ":" + consts.TCP_PORT)
+			conn, err := utils.TCPConn(hosts[i] + ":" + consts.TCP_PORT)
 			if err != nil {
 				if d.dPrintSleep(err, 1) {
 					break BEGIN

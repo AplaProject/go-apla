@@ -72,7 +72,7 @@ func (c *Controller) Menu() (string, error) {
 	)
 
 	if strings.HasPrefix(c.r.Host, `localhost`) {
-		updinfo, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL)
+		updinfo, err := utils.GetUpdVerAndURL(consts.UPD_AND_VER_URL)
 		if err == nil && updinfo != nil {
 			updver = updinfo.Version
 		}

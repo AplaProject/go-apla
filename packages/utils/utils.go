@@ -33,7 +33,6 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
-	"math/big"
 	"math/rand"
 	"net"
 	"net/http"
@@ -84,35 +83,58 @@ var (
 	// FirstBlockNodePublicKey is the node private key
 	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
 	// FirstBlockHost is the host of the first block
-	FirstBlockHost     = flag.String("firstBlockHost", "", "FirstBlockHost")
-	WalletAddress      = flag.String("walletAddress", "", "walletAddress for forging ")
-	TcpHost            = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
-	ListenHttpPort     = flag.String("listenHttpPort", "7079", "ListenHttpPort")
+	FirstBlockHost = flag.String("firstBlockHost", "", "FirstBlockHost")
+	// WalletAddress is a wallet address for forging
+	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
+	// TCPHost is the tcp host
+	TCPHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
+	// ListenHTTPPort is HTTP port
+	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
+	// GenerateFirstBlock show if the first block must be generated
 	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
-	OldVersion         = flag.String("oldVersion", "", "")
-	TestRollBack       = flag.Int64("testRollBack", 0, "testRollBack")
-	Dir                = flag.String("dir", GetCurrentDir(), "DayLight directory")
-	OldFileName        = flag.String("oldFileName", "", "")
-	LogLevel           = flag.String("logLevel", "", "DayLight LogLevel")
-	Console            = flag.Int64("console", 0, "Start from console")
-	SqliteDbUrl        string
-	StartBlockID       = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
-	EndBlockID         = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
-	RollbackToBlockID  = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
-	Tls                = flag.String("tls", "", "Support https. Specify directory for .well-known")
-	DevTools           = flag.Int64("devtools", 0, "Devtools in thrust-shell")
-	Upd                = flag.Bool("update", false, "Update")
-	BoltDir            = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
-	BoltPsw            = flag.String("boltPsw", "", "Bolt password")
-	APIToken           = flag.String("apiToken", "", "API Token")
-	OneCountry         int64
-	PrivCountry        bool
-	OutFile            *os.File
-	LogoExt            = `png`
-	DltWalletId        = flag.Int64("dltWalletId", 0, "DltWalletId")
+	// OldVersion is the number of the old version
+	OldVersion = flag.String("oldVersion", "", "")
+	// TestRollBack equals 1 for testing rollback
+	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
+	// Dir is EGAAS folder
+	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
+	// OldFileName is the old file name
+	OldFileName = flag.String("oldFileName", "", "")
+	// LogLevel is the log level
+	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
+	// Console equals 1 for starting in console
+	Console = flag.Int64("console", 0, "Start from console")
+	// StartBlockID is the start block
+	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
+	// EndBlockID is the end block
+	EndBlockID = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
+	// RollbackToBlockID is the target block for rollback
+	RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
+	// TLS is a directory for .well-known and keys. It is required for https
+	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
+	// DevTools switches on dev tools in thrust shell
+	DevTools = flag.Int64("devtools", 0, "Devtools in thrust-shell")
+	// BoltDir is th edir for BoltDb folder
+	BoltDir = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
+	// BoltPsw is the password for BoltDB
+	BoltPsw = flag.String("boltPsw", "", "Bolt password")
+	// APIToken is an api token for exchange api
+	APIToken = flag.String("apiToken", "", "API Token")
+	// OneCountry is the country which is supported
+	OneCountry int64
+	// PrivCountry is protect system from registering
+	PrivCountry bool
+	//	OutFile            *os.File
 
+	// LogoExt is the extension of the logotype
+	LogoExt = `png`
+	// DltWalletID is the wallet identifier
+	DltWalletID = flag.Int64("dltWalletId", 0, "DltWalletID")
+
+	// DaemonsChans is a slice of DaemonsChansType
 	DaemonsChans []*DaemonsChansType
-	Thrust       bool
+	// Thrust is true for thrust shell
+	Thrust bool
 )
 
 func init() {
@@ -576,8 +598,8 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
-// GetHttpTextAnswer returns HTTP answer as a string
-func GetHttpTextAnswer(url string) (string, error) {
+// GetHTTPTextAnswer returns HTTP answer as a string
+func GetHTTPTextAnswer(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -593,7 +615,6 @@ func GetHttpTextAnswer(url string) (string, error) {
 	return string(htmlData), err
 }
 
-// без проверки на ошибки т.к. тут ошибки не могут навредить
 // StrToInt64 converts string to int64
 func StrToInt64(s string) int64 {
 	int64, _ := strconv.ParseInt(s, 10, 64)
@@ -657,6 +678,7 @@ func StrToMoney(str string) float64 {
 	return StrToFloat64(new)
 }
 
+// GetEndBlockID returns the end block id
 func GetEndBlockID() (int64, error) {
 
 	if _, err := os.Stat(*Dir + "/public/blockchain"); os.IsNotExist(err) {
@@ -815,6 +837,7 @@ func CallMethod(i interface{}, methodName string) interface{} {
 	return fmt.Errorf("method %s not found", methodName)
 }
 
+// Caller returns the name of the latest function
 func Caller(steps int) string {
 	name := "?"
 	if pc, _, num, ok := runtime.Caller(steps + 1); ok {
@@ -824,36 +847,7 @@ func Caller(steps int) string {
 	return name
 }
 
-func SliceInt64ToString(int64 []int64) []string {
-	result := make([]string, len(int64))
-	for i, v := range int64 {
-		result[i] = strconv.FormatInt(v, 10)
-	}
-	return result
-}
-
-func RemoveInt64Slice(slice *[]int64, pos int) {
-	sl := *slice
-	*slice = append(sl[:pos], sl[pos+1:]...)
-}
-
-func DelUserIdFromArray(array *[]int64, userId int64) {
-	for i, v := range *array {
-		if v == userId {
-			RemoveInt64Slice(&*array, i)
-		}
-	}
-}
-
-func InSliceInt64(search int64, slice []int64) bool {
-	for _, v := range slice {
-		if v == search {
-			return true
-		}
-	}
-	return false
-}
-
+// InSliceString searches the string in the slice of strings
 func InSliceString(search string, slice []string) bool {
 	for _, v := range slice {
 		if v == search {
@@ -863,6 +857,7 @@ func InSliceString(search string, slice []string) bool {
 	return false
 }
 
+// EncodeLengthPlusData encoding interface into []byte
 func EncodeLengthPlusData(idata interface{}) []byte {
 	var data []byte
 	switch idata.(type) {
@@ -875,75 +870,59 @@ func EncodeLengthPlusData(idata interface{}) []byte {
 	}
 	//log.Debug("data: %x", data)
 	//log.Debug("len data: %d", len(data))
-	return append(EncodeLength(int64(len(data))), data...)
+	return append(lib.EncodeLength(int64(len(data))), data...)
 }
 
-func DecToHex(dec int64) string {
-	return strconv.FormatInt(dec, 16)
-}
-
-func HexToDec(h string) int64 {
-	int64, _ := strconv.ParseInt(h, 16, 0)
-	return int64
-}
-
-func HexToDecBig(hex string) string {
-	i := new(big.Int)
-	i.SetString(hex, 16)
-	return fmt.Sprintf("%d", i)
-}
-
-func DecToHexBig(hex string) string {
-	i := new(big.Int)
-	i.SetString(hex, 10)
-	hex = fmt.Sprintf("%x", i)
-	if len(hex)%2 > 0 {
-		hex = "0" + hex
-	}
-	return hex
-}
-
+// UInt32ToStr converts uint32 to string
 func UInt32ToStr(num uint32) string {
 	return strconv.FormatInt(int64(num), 10)
 }
+
+// Int64ToStr converts int64 to string
 func Int64ToStr(num int64) string {
 	return strconv.FormatInt(num, 10)
 }
+
+// Int64ToByte converts int64 to []byte
 func Int64ToByte(num int64) []byte {
 	return []byte(strconv.FormatInt(num, 10))
 }
 
+// IntToStr converts integer to string
 func IntToStr(num int) string {
 	return strconv.Itoa(num)
 }
 
-func DecToBin(dec_ interface{}, sizeBytes int64) []byte {
+// DecToBin converts interface to []byte
+func DecToBin(v interface{}, sizeBytes int64) []byte {
 	var dec int64
-	switch dec_.(type) {
+	switch v.(type) {
 	case int:
-		dec = int64(dec_.(int))
+		dec = int64(v.(int))
 	case int64:
-		dec = dec_.(int64)
+		dec = v.(int64)
 	case string:
-		dec = StrToInt64(dec_.(string))
+		dec = StrToInt64(v.(string))
 	}
 	Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
-	//fmt.Println("Hex", Hex)
 	return HexToBin([]byte(Hex))
 }
-func BinToHex(bin_ interface{}) []byte {
+
+// BinToHex converts interface to hex []byte
+func BinToHex(v interface{}) []byte {
 	var bin []byte
-	switch bin_.(type) {
+	switch v.(type) {
 	case []byte:
-		bin = bin_.([]byte)
+		bin = v.([]byte)
 	case int64:
-		bin = Int64ToByte(bin_.(int64))
+		bin = Int64ToByte(v.(int64))
 	case string:
-		bin = []byte(bin_.(string))
+		bin = []byte(v.(string))
 	}
 	return []byte(fmt.Sprintf("%x", bin))
 }
 
+// HexToBin converts hex interface to binary []byte
 func HexToBin(ihexdata interface{}) []byte {
 	var hexdata string
 	switch ihexdata.(type) {
@@ -1081,6 +1060,7 @@ func CopyFileContents(src, dst string) error {
 	return ErrInfo(err)
 }
 
+// RandSeq generates a random string
 func RandSeq(n int) string {
 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	rand.Seed(time.Now().UnixNano())
@@ -1091,6 +1071,7 @@ func RandSeq(n int) string {
 	return string(b)
 }
 
+// CheckSign checks the signature
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1169,8 +1150,8 @@ func Sha256(v interface{}) []byte {
 	return []byte(fmt.Sprintf("%x", isha256.Sum(nil)))
 }
 
+// GetMrklroot returns MerkleTreeRoot
 func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
-
 	var mrklSlice [][]byte
 	var txSize int64
 	// [error] парсим после вызова функции
@@ -1215,6 +1196,7 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 	return MerkleTreeRoot(mrklSlice), nil
 }
 
+// SliceReverse reverses the slice of int64
 func SliceReverse(s []int64) []int64 {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
@@ -1222,10 +1204,9 @@ func SliceReverse(s []int64) []int64 {
 	return s
 }
 
+// MerkleTreeRoot rertun Merkle value
 func MerkleTreeRoot(dataArray [][]byte) []byte {
-
 	log.Debug("dataArray: %s", dataArray)
-
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
 		result[0] = append(result[0], DSha256(v))
@@ -1251,9 +1232,9 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 	}
 
 	log.Debug("result: %s", result)
-	result_ := result[int32(len(result)-1)]
-	log.Debug("result_: %s", result_)
-	return []byte(result_[0])
+	ret := result[int32(len(result)-1)]
+	log.Debug("result_: %s", ret)
+	return []byte(ret[0])
 }
 
 // TypeInt returns the identifier of the embedded transaction
@@ -1375,8 +1356,8 @@ func GetNetworkTime() (*time.Time, error) {
 
 }
 
+// SortMap sorts map to the slice of maps
 func SortMap(m map[int64]string) []map[int64]string {
-
 	var keys []int
 	for k := range m {
 		keys = append(keys, int(k))
@@ -1389,6 +1370,7 @@ func SortMap(m map[int64]string) []map[int64]string {
 	return result
 }
 
+// RSortMap sorts map to the reversed slice of maps
 func RSortMap(m map[int64]string) []map[int64]string {
 
 	var keys []int
@@ -1403,7 +1385,8 @@ func RSortMap(m map[int64]string) []map[int64]string {
 	return result
 }
 
-func TcpConn(Addr string) (net.Conn, error) {
+// TCPConn connects to the address
+func TCPConn(Addr string) (net.Conn, error) {
 	// шлем данные указанному хосту
 	/*tcpAddr, err := net.ResolveTCPAddr("tcp", Addr)
 	if err != nil {
@@ -1419,6 +1402,7 @@ func TcpConn(Addr string) (net.Conn, error) {
 	return conn, nil
 }
 
+// WriteSizeAndData writes []byte to the connection
 func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	// в 4-х байтах пишем размер данных, которые пошлем далее
 	size := DecToBin(len(binaryData), 4)
@@ -1440,6 +1424,7 @@ func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	return nil
 }
 
+// GetCurrentDir returns the current directory
 func GetCurrentDir() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -1448,9 +1433,9 @@ func GetCurrentDir() string {
 	return dir
 }
 
-func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, error) {
-
-	conn, err := TcpConn(host)
+// GetBlockBody gets the block data
+func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, error) {
+	conn, err := TCPConn(host)
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
@@ -1463,10 +1448,10 @@ func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, 
 		return nil, ErrInfo(err)
 	}
 
-	log.Debug("blockId: %v", blockId)
+	log.Debug("blockID: %v", blockID)
 
 	// шлем номер блока
-	_, err = conn.Write(DecToBin(blockId, 4))
+	_, err = conn.Write(DecToBin(blockID, 4))
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
@@ -1505,38 +1490,17 @@ func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, 
 
 }
 
-type jsonAnswer struct {
-	err error
-}
-
-func (r *jsonAnswer) String() string {
-	return fmt.Sprintf("%s", r.err)
-}
-func (r *jsonAnswer) Error() error {
-	return r.err
-}
-func JsonAnswer(err interface{}, answType string) *jsonAnswer {
-	var error_ string
-	switch err.(type) {
-	case string:
-		error_ = err.(string)
-	case error:
-		error_ = fmt.Sprintf("%v", err)
-	}
-	result, _ := json.Marshal(map[string]string{answType: fmt.Sprintf("%v", error_)})
-	return &jsonAnswer{errors.New(string(result))}
-}
-
+// WriteSelectiveLog writes info into SelectiveLog.txt
 func WriteSelectiveLog(text interface{}) {
 	if *LogLevel == "DEBUG" {
-		var text_ string
+		var stext string
 		switch text.(type) {
 		case string:
-			text_ = text.(string)
+			stext = text.(string)
 		case []byte:
-			text_ = string(text.([]byte))
+			stext = string(text.([]byte))
 		case error:
-			text_ = fmt.Sprintf("%v", text)
+			stext = fmt.Sprintf("%v", text)
 		}
 		allTransactionsStr := ""
 		allTransactions, _ := DB.GetAll("SELECT hex(hash) as hex_hash, verified, used, high_rate, for_self_use, user_id, third_var, counter, sent FROM transactions", 100)
@@ -1544,7 +1508,7 @@ func WriteSelectiveLog(text interface{}) {
 			allTransactionsStr += data["hex_hash"] + "|" + data["verified"] + "|" + data["used"] + "|" + data["high_rate"] + "|" + data["for_self_use"] + "|" + consts.TxTypes[StrToInt(data["type"])] + "|" + data["user_id"] + "|" + data["third_var"] + "|" + data["counter"] + "|" + data["sent"] + "\n"
 		}
 		t := time.Now()
-		data := allTransactionsStr + GetParent() + " ### " + t.Format(time.StampMicro) + " ### " + text_ + "\n\n"
+		data := allTransactionsStr + GetParent() + " ### " + t.Format(time.StampMicro) + " ### " + stext + "\n\n"
 		//ioutil.WriteFile(*Dir+"/SelectiveLog.txt", []byte(data), 0644)
 		f, err := os.OpenFile(*Dir+"/SelectiveLog.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
@@ -1569,9 +1533,10 @@ func DaylightRestart() error {
 	return nil
 }*/
 
-func GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error) {
+// GetUpdVerAndURL downloads the information about the version
+func GetUpdVerAndURL(host string) (updinfo *lib.Update, err error) {
 
-	update, err := GetHttpTextAnswer(host + "/update.json")
+	update, err := GetHTTPTextAnswer(host + "/update.json")
 	//update, err := ioutil.ReadFile(`c:\egaas\update.json`)
 	if len(update) > 0 {
 		updateData := make(map[string]lib.Update)
@@ -1586,6 +1551,7 @@ func GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error) {
 	return
 }
 
+// ShellExecute runs cmdline
 func ShellExecute(cmdline string) {
 	time.Sleep(500 * time.Millisecond)
 	switch runtime.GOOS {
@@ -1598,18 +1564,14 @@ func ShellExecute(cmdline string) {
 	}
 }
 
-// temporary
-func EncodeLength(length int64) []byte {
-	return lib.EncodeLength(length)
-}
-
+// DecodeLength decodes length from []byte
 func DecodeLength(buf *[]byte) (ret int64) {
 	ret, _ = lib.DecodeLength(buf)
 	return
 }
 
-// CreateHtmlFromTemplate gets the template of the page from the table and proceeds it
-func CreateHtmlFromTemplate(page string, citizenID, stateID int64, params *map[string]string) (string, error) {
+// CreateHTMLFromTemplate gets the template of the page from the table and proceeds it
+func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[string]string) (string, error) {
 	query := `SELECT value FROM "` + Int64ToStr(stateID) + `_pages" WHERE name = ?`
 	if (*params)[`global`] == `1` {
 		query = `SELECT value FROM global_pages WHERE name = ?`
@@ -1848,7 +1810,7 @@ func FirstBlock(exit bool) {
 
 // EgaasUpdate decompresses and updates executable file
 func EgaasUpdate(url string) error {
-	//	GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error)
+	//	GetUpdVerAndURL(host string) (updinfo *lib.Update, err error)
 
 	zipfile := filepath.Join(*Dir, "egaas.zip")
 	/*	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")

@@ -45,11 +45,11 @@ func (c *Controller) Install() (string, error) {
 	installType := c.r.FormValue("type")
 	tcpHost := c.r.FormValue("tcp_host")
 	if tcpHost != "" {
-		*utils.TcpHost = tcpHost
+		*utils.TCPHost = tcpHost
 	}
 	httpPort := c.r.FormValue("http_port")
 	if httpPort != "" {
-		*utils.ListenHttpPort = httpPort
+		*utils.ListenHTTPPort = httpPort
 	}
 	logLevel := c.r.FormValue("log_level")
 	if logLevel != "DEBUG" {
@@ -83,8 +83,8 @@ func (c *Controller) Install() (string, error) {
 	confIni.Set("log_level", logLevel)
 	confIni.Set("install_type", installType)
 	confIni.Set("dir", *utils.Dir)
-	confIni.Set("tcp_host", *utils.TcpHost)
-	confIni.Set("http_port", *utils.ListenHttpPort)
+	confIni.Set("tcp_host", *utils.TCPHost)
+	confIni.Set("http_port", *utils.ListenHTTPPort)
 	confIni.Set("first_block_dir", *utils.FirstBlockDir)
 	confIni.Set("db_type", dbType)
 	confIni.Set("db_user", dbUsername)
@@ -208,15 +208,15 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	if *utils.DltWalletId == 0 {
+	if *utils.DltWalletID == 0 {
 		PrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/PrivateKey")
 		PrivateHex, _ := hex.DecodeString(string(PrivateKey))
 		PublicKeyBytes2 := lib.PrivateToPublic(PrivateHex)
 		log.Debug("dlt_wallet_id %d", int64(lib.Address(PublicKeyBytes2)))
-		*utils.DltWalletId = int64(lib.Address(PublicKeyBytes2))
+		*utils.DltWalletID = int64(lib.Address(PublicKeyBytes2))
 	}
 
-	err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletId)
+	err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletID)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()

@@ -105,14 +105,14 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		configIni, err = fullConfigIni.GetSection("default")
 	}
 
-	if *utils.TcpHost == "" {
-		*utils.TcpHost = configIni["tcp_host"]
+	if *utils.TCPHost == "" {
+		*utils.TCPHost = configIni["tcp_host"]
 	}
 	if *utils.FirstBlockDir == "" {
 		*utils.FirstBlockDir = configIni["first_block_dir"]
 	}
-	if *utils.ListenHttpPort == "" {
-		*utils.ListenHttpPort = configIni["http_port"]
+	if *utils.ListenHTTPPort == "" {
+		*utils.ListenHTTPPort = configIni["http_port"]
 	}
 	if *utils.Dir == "" {
 		*utils.Dir = configIni["dir"]
@@ -369,9 +369,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// monitor the signal from the database that the daemons must be completed
 	go stopdaemons.WaitStopTime()
 
-	BrowserHTTPHost := "http://localhost:" + *utils.ListenHttpPort
+	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
 	HandleHTTPHost := ""
-	ListenHTTPHost := *utils.TcpHost + ":" + *utils.ListenHttpPort
+	ListenHTTPHost := *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	go func() {
 		// уже прошли процесс инсталяции, где юзер указал БД и был перезапуск кошелька
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
@@ -413,8 +413,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		//http.HandleFunc(HandleHTTPHost+"/tools", controllers.Tools)
 		//http.Handle(HandleHTTPHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
 		http.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
-		if len(*utils.Tls) > 0 {
-			http.Handle(HandleHTTPHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))
+		if len(*utils.TLS) > 0 {
+			http.Handle(HandleHTTPHost+"/.well-known/", http.FileServer(http.Dir(*utils.TLS)))
 			httpsMux := http.NewServeMux()
 			httpsMux.HandleFunc(HandleHTTPHost+"/", controllers.Index)
 			httpsMux.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
@@ -425,7 +425,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
 			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
 			httpsMux.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
-			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
+			go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, httpsMux)
 		}
 
 		log.Debug("ListenHTTPHost", ListenHTTPHost)

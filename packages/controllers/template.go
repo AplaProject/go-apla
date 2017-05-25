@@ -62,7 +62,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	params[`global`] = lib.Escape(r.FormValue("global"))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	//	fmt.Println(`PARAMS`, params)
-	tpl, err := utils.CreateHtmlFromTemplate(page, sessCitizenId, sessStateId, &params)
+	tpl, err := utils.CreateHTMLFromTemplate(page, sessCitizenId, sessStateId, &params)
 	if err != nil {
 		log.Error("%v", err)
 	}

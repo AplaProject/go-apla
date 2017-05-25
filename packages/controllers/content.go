@@ -402,7 +402,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		skipRestrictedUsers := []string{"cashRequestIn", "cashRequestOut", "upgrade", "notifications"}
 
 		if c.StateId > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
-			tpl, err := utils.CreateHtmlFromTemplate("dashboard_default", sessCitizenId, sessStateId, &map[string]string{})
+			tpl, err := utils.CreateHTMLFromTemplate("dashboard_default", sessCitizenId, sessStateId, &map[string]string{})
 			if err != nil {
 				log.Error("%v", err)
 				return

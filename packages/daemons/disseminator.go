@@ -253,7 +253,7 @@ BEGIN:
 
 						logger.Debug("host %v", host)
 
-						conn, err := utils.TcpConn(host)
+						conn, err := utils.TCPConn(host)
 						if err != nil {
 							logger.Error("%v", utils.ErrInfo(err))
 							return
@@ -299,7 +299,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 	logger.Debug("host %v", host)
 
 	// шлем данные указанному хосту
-	conn, err := utils.TcpConn(host)
+	conn, err := utils.TCPConn(host)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return

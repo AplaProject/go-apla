@@ -119,7 +119,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 
 	if c.dbInit {
 		if strings.HasPrefix(c.r.Host, `localhost`) { //c.NodeAdmin
-			if updinfo, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL); err == nil && updinfo != nil {
+			if updinfo, err := utils.GetUpdVerAndURL(consts.UPD_AND_VER_URL); err == nil && updinfo != nil {
 				newVersion = strings.Replace(c.Lang["new_version"], "[ver]", updinfo.Version, -1)
 			}
 		}

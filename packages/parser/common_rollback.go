@@ -20,6 +20,7 @@ import (
 	//	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -59,7 +60,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			transactionBinaryData_ := transactionBinaryData
 			// узнаем кол-во байт, которое занимает размер и удалим размер
 			// get to know the quantaty of bytes, which the size takes and remove it
-			utils.BytesShiftReverse(&binaryData, len(utils.EncodeLength(sizesSlice[i])))
+			utils.BytesShiftReverse(&binaryData, len(lib.EncodeLength(sizesSlice[i])))
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
 			if err != nil {
@@ -80,19 +81,19 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			// если дошли до тр-ии, которая вызвала ошибку, то откатываем только фронтальную проверку
 			// if we get to the transaction, which caused the error, then we roll back only the frontal check
 			/*if i == 0 {
-			/*if skipCurrent { // тр-ия, которая вызвала ошибку закончилась еще до фронт. проверки, т.е. откатывать по ней вообще нечего
-// transaction that caused the error was finished before frontal check, then there is nothing to rall back
-				continue
-			}*/
+						/*if skipCurrent { // тр-ия, которая вызвала ошибку закончилась еще до фронт. проверки, т.е. откатывать по ней вообще нечего
+			// transaction that caused the error was finished before frontal check, then there is nothing to rall back
+							continue
+						}*/
 			/*// если успели дойти только до половины фронтальной функции
-// If we reached only half of the frontal function
-			MethodNameRollbackFront := MethodName + "RollbackFront"
-			// откатываем только фронтальную проверку
-// roll back only frontal check
-			err_ = utils.CallMethod(p, MethodNameRollbackFront)
-			if _, ok := err_.(error); ok {
-				return utils.ErrInfo(err_.(error))
-			}*/
+			// If we reached only half of the frontal function
+						MethodNameRollbackFront := MethodName + "RollbackFront"
+						// откатываем только фронтальную проверку
+			// roll back only frontal check
+						err_ = utils.CallMethod(p, MethodNameRollbackFront)
+						if _, ok := err_.(error); ok {
+							return utils.ErrInfo(err_.(error))
+						}*/
 			/*} else if onlyFront {*/
 			/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
 			if _, ok := err_.(error); ok {

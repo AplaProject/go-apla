@@ -116,7 +116,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 // For ipv6 on the server
 func httpListenerV6() {
 	i := 0
-	port := *utils.ListenHttpPort
+	port := *utils.ListenHTTPPort
 	var l net.Listener
 	var err error
 	for {
@@ -164,11 +164,11 @@ func tcpListener() {
 			}
 		}
 
-		log.Debug("*utils.tcpHost: %v", *utils.TcpHost+":"+consts.TCP_PORT)
-		//if len(*utils.TcpHost) > 0 {
+		log.Debug("*utils.tcpHost: %v", *utils.TCPHost+":"+consts.TCP_PORT)
+		//if len(*utils.TCPHost) > 0 {
 		// включаем листинг TCP-сервером и обработку входящих запросов
 		// switch on the listing by TCP-server and the processing of incoming requests
-		l, err := net.Listen("tcp4", *utils.TcpHost+":"+consts.TCP_PORT)
+		l, err := net.Listen("tcp4", *utils.TCPHost+":"+consts.TCP_PORT)
 		if err != nil {
 			log.Error("Error listening:", err)
 			//panic(err)

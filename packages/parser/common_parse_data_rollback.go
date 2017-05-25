@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -26,7 +27,7 @@ import (
 /**
  * Откат таблиц rb_time_, которые были изменены транзакциями
 //Rollback of rb_time_ tables that have been modified by transactions
- */
+*/
 /*
 func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 
@@ -108,7 +109,7 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 /**
  * Откат БД по блокам
 // rollback of DB
- */
+*/
 func (p *Parser) ParseDataRollback() error {
 
 	p.dataPre()
@@ -150,7 +151,7 @@ func (p *Parser) ParseDataRollback() error {
 			transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
 			// узнаем кол-во байт, которое занимает размер и удалим размер
 			// we'll get know the quantaty of bytes which the size takes
-			utils.BytesShiftReverse(&p.BinaryData, len(utils.EncodeLength(sizesSlice[i])))
+			utils.BytesShiftReverse(&p.BinaryData, len(lib.EncodeLength(sizesSlice[i])))
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 
 			utils.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))

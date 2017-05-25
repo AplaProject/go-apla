@@ -46,19 +46,14 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 			downloadFile, blockUrl string
 			fileSize               int64
 		)
-		if len(utils.SqliteDbUrl) > 0 {
-			downloadFile = *utils.Dir + "/litedb.db"
-			blockUrl = utils.SqliteDbUrl
-		} else {
-			downloadFile = *utils.Dir + "/public/blockchain"
-			nodeConfig, err := c.GetNodeConfig()
-			if err != nil {
-				return "", err
-			}
-			blockUrl = nodeConfig["first_load_blockchain_url"]
-			if len(blockUrl) == 0 {
-				blockUrl = consts.BLOCKCHAIN_URL
-			}
+		downloadFile = *utils.Dir + "/public/blockchain"
+		nodeConfig, err := c.GetNodeConfig()
+		if err != nil {
+			return "", err
+		}
+		blockUrl = nodeConfig["first_load_blockchain_url"]
+		if len(blockUrl) == 0 {
+			blockUrl = consts.BLOCKCHAIN_URL
 		}
 		resp, err := http.Get(blockUrl)
 		if err != nil {
