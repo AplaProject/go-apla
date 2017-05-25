@@ -21,7 +21,9 @@ import (
 )
 
 /* Выдаем тело указанного блока
+// Give the body of the specified block
  * запрос шлет демон blocksCollection и queue_parser_blocks через p.GetBlocks()
+// blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
  */
 
 func (t *TcpServer) Type7() {
