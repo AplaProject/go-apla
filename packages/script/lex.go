@@ -157,6 +157,8 @@ func lexParser(input []rune) (Lexems, error) {
 
 	// Эта функция по очередному символу смотрит с помощью lexTable какое у нас будет новое состояние,
 	// получили ли лексему и какие флаги выставлены
+	// This function according to the next symbol looks with help of lexTable which new state we will have,
+	// whether we got the lexeme and what flags are displayed
 	todo := func(r rune) {
 		var letter uint8
 		if r > 127 {
@@ -174,6 +176,7 @@ func lexParser(input []rune) (Lexems, error) {
 	skip := false
 	for off < length {
 		// Здесь мы перебираем символы один за другим
+		// Here we go through the symbols one by one
 		if off == length-1 {
 			todo(rune(' '))
 		} else {
@@ -189,10 +192,14 @@ func lexParser(input []rune) (Lexems, error) {
 			continue
 		}
 		// Если у нас автомат определил законченную лексему, то мы записываем ее в список лексем.
+		// If machine determined the completed lexeme, we record it in the list of lexemes.
 		if lexID > 0 {
 			// Мы не заводим стэк для символов, а запоминаем смещение, когда начался разбор лексемы.
 			// Для получения строки лексемы мы берем подстроку от начального смещения до текущего.
 			// В качестве значений мы сразу пишем строку, число или двоичное представление операций.
+			// We do not start a stack for symbols but memorize the displacement when the parse of lexeme began.
+			// To get a string of a lexeme we take a substring from the initial displacement to the current one.
+			// We immediately write a string as values, a number or a binary representation of operations.
 			lexOff := off
 			if (flags & lexfPop) != 0 {
 				lexOff = start
