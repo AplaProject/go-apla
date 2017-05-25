@@ -28,20 +28,23 @@ import (
 
 // В данном файле реализован лексический анализ входящей программы. Это первый этап компиляции,
 // при котором входящий текст разбивается на последовательность лексем.
+// The lexical analysis of the incoming program is implemented in this file. It is the first phase of compilation
+// where the incoming text is divided into a sequence of lexemes.
 
 const (
 	//	lexUnknown = iota
 	// Здесь перечислены все создаваемые лексемы
-	lexSys     = iota + 1 // системныая лексема - это разные скобки, =, запятая и т.п.
-	lexOper               // Оператор - это всякие +, -, *, /
-	lexNumber             // Число
-	lexIdent              // Идентификатор
-	lexNewLine            // Перевод строки
-	lexString             // Строка
-	lexComment            // Комментарий
-	lexKeyword            // Ключевое слово
-	lexType               // Имя типа
-	lexExtend             // Обращение к внешней переменной или функции - $myname
+	// Here are all the created lexemes
+	lexSys     = iota + 1 // системная лексема - это разные скобки, =, запятая и т.п. // a system lexeme is a different bracket, =, comma, and so on.
+	lexOper               // Оператор - это всякие +, -, *, / // Operator is +, -, *, /
+	lexNumber             // Число // Number
+	lexIdent              // Идентификатор // Identifier
+	lexNewLine            // Перевод строки // Line translation
+	lexString             // Строка // String
+	lexComment            // Комментарий // Comment
+	lexKeyword            // Ключевое слово // Key word
+	lexType               // Имя типа // Name of the type
+	lexExtend             // Обращение к внешней переменной или функции - $myname // Referring to an external variable or function - $myname
 
 	lexError = 0xff
 	// flags of lexical states
@@ -51,6 +54,7 @@ const (
 	lexfSkip = 8
 
 	// System characters    константы для системных лексем
+	// Constants for system lexemes
 	isLPar   = 0x2801 // (
 	isRPar   = 0x2901 // )
 	isComma  = 0x2c01 // ,
@@ -61,6 +65,7 @@ const (
 	isRBrack = 0x5d01 // ]
 
 	// Operators  константы для операций
+	// Constants for operations
 	isNot      = 0x0021 // !
 	isAsterisk = 0x002a // *
 	isPlus     = 0x002b // +
@@ -81,6 +86,7 @@ const (
 const (
 	// The list of keyword identifiers
 	// Константы для ключевых слов
+	// Constants for keywords
 	//	keyUnknown = iota
 	keyContract = iota + 1
 	keyFunc
@@ -104,13 +110,16 @@ const (
 
 var (
 	// Список ключевых слов
+	// The list of key words
 	keywords = map[string]uint32{`contract`: keyContract, `func`: keyFunc, `return`: keyReturn,
 		`if`: keyIf, `else`: keyElse, `error`: keyError, `warning`: keyWarning, `info`: keyInfo,
 		`while`: keyWhile, `data`: keyTX, `nil`: keyNil, `action`: keyAction, `conditions`: keyCond,
 		`true`: keyTrue, `false`: keyFalse, `break`: keyBreak, `continue`: keyContinue, `var`: keyVar}
 	// list of available types
-	// Список типов которые хранит соответствующие reflect типы
-	types = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
+	// Список типов которые хранят соответствующие reflect типы
+	// The list of types which save the corresponding 'reflect' type
+	types = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `by
+tes`: reflect.TypeOf([]byte{}),
 		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
 		`array`: reflect.TypeOf([]interface{}{}),
 		`map`:   reflect.TypeOf(map[string]interface{}{}), `money`: reflect.TypeOf(decimal.New(0, 0)),
@@ -132,7 +141,10 @@ type Lexems []*Lexem
 // tools/lextable/lextable.go. lextable.go генерирует представление конечного автомата в виде массива
 // и записывает его в файл lex_table.go. По сути, массив lexTable - это набор состояний и
 // в зависимости от очередного символа автомат переходит в новое состояние.
-
+// The lexical analysis is based on the finite machine which is described in the file
+// tools/lextable/lextable.go. lextable.go generates a representation of a finite machine as an array
+// and records it in the file lex_table.go. In fact, the lexTable array is a set of states and
+// depending on the next sign, the machine goes into a new state.
 // lexParser parsers the input language source code
 func lexParser(input []rune) (Lexems, error) {
 	var (
