@@ -178,15 +178,16 @@ type ParamType struct {
 func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
 	// распарсим заголовок блока
+	// parse the heading of a block
 	/*
-		Заголовок
-		TYPE (0-блок, 1-тр-я)        1
+		Заголовок // heading
+		TYPE (0-блок, 1-тр-я)        1 // TYPE (0-block, 1-transaction)        1
 		BLOCK_ID   				       4
 		TIME       					       4
 		WALLET_ID                         1-8
 		state_id                              1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		Далее - тело блока (Тр-ии)
+		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+Далее - тело блока (Тр-ии) //further is the body of block (transaction)
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
@@ -259,6 +260,7 @@ func CheckInputData(data_ interface{}, dataType string) bool {
 }
 
 // функция проверки входящих данных
+// The function of checking the input data
 func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 	var data string
 	switch data_.(type) {
@@ -634,6 +636,7 @@ func RemoteAddrFix(addr string) string {
 }
 
 // без проверки на ошибки т.к. тут ошибки не могут навредить
+// without error check because errors aren't able to make harm
 func StrToInt64(s string) int64 {
 	int64, _ := strconv.ParseInt(s, 10, 64)
 	return int64
@@ -700,6 +703,7 @@ func GetEndBlockId() (int64, error) {
 	} else {
 
 		// размер блока, записанный в 5-и последних байтах файла blockchain
+		// the block size which is recorded in the last 5 bytes of 'blockchain' file
 		fname := *Dir + "/public/blockchain"
 		file, err := os.Open(fname)
 		if err != nil {
@@ -716,6 +720,7 @@ func GetEndBlockId() (int64, error) {
 		}
 
 		// размер блока, записанный в 5-и последних байтах файла blockchain
+		// the block size which is recorded in the last 5 bytes of 'blockchain' file
 		_, err = file.Seek(-5, 2)
 		if err != nil {
 			return 0, ErrInfo(err)
@@ -740,6 +745,7 @@ func GetEndBlockId() (int64, error) {
 			return 0, ErrInfo(err)
 		}
 		// размер (id блока + тело блока)
+		// size of id block + body block
 		BinToDecBytesShift(&dataBinary, 5)
 		blockId := BinToDecBytesShift(&dataBinary, 5)
 		return blockId, nil
@@ -1109,6 +1115,7 @@ func BytesShiftReverse(str *[]byte, index_ interface{}) []byte {
 
 func SleepDiff(sleep *int64, diff int64) {
 	// вычитаем уже прошедшее время
+	// subtract already passed time
 	if *sleep > diff {
 		*sleep = *sleep - diff
 	} else {
@@ -1179,6 +1186,7 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 		return false, ErrInfoFmt("len(signs) == 0")
 	}
 	// у нода всегда 1 подпись
+	// node always has olly one signature
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
