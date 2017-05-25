@@ -433,7 +433,7 @@ func getBytea(table string) map[string]bool {
 }
 
 // DBStringExt возвращает значение колонки name у записи с указанным значением поля idname
-// DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field 
+// DBStringExt returns the value of 'name' column for the record with the specified value of the 'idname' field
 func DBStringExt(tblname string, name string, id interface{}, idname string) (string, error) {
 	if err := checkReport(tblname); err != nil {
 		return ``, err
@@ -628,7 +628,6 @@ func IDToAddress(id int64) (out string) {
 
 // DBAmount возвращает значение колонки amount у записи со значением id в колонке column
 // DBAmount returns the value of the 'amount' column for the record with the 'id' value in the 'column' column
-85/5000
 func DBAmount(tblname, column string, id int64) decimal.Decimal {
 	if err := checkReport(tblname); err != nil {
 		return decimal.New(0, 0)
@@ -642,7 +641,7 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 	return val
 }
 
-// EvalIf вычисляет и возвращает логическое значение указанного выражения 
+// EvalIf вычисляет и возвращает логическое значение указанного выражения
 // EvalIf counts and returns the logical value of the specified expression
 func (p *Parser) EvalIf(conditions string) (bool, error) {
 	time := int64(0)
