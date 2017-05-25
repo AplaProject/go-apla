@@ -170,7 +170,7 @@ var (
 		fCmdError,
 	}
 	// states описывает конечный автомат с состояниями, на основе которого будет генерироваться байт-код
-	// states describes a finite machine with states on the base of which a bytecode will be generated
+	// states describe a finite machine with states on the base of which a bytecode will be generated
 	states = compileStates{
 		{ // stateRoot
 			lexNewLine:                      {stateRoot, 0},
