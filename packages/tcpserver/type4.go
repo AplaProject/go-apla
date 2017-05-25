@@ -22,6 +22,7 @@ import (
 
 /*
  * данные присылает демон confirmations
+// the data is sent by 'confirmations'daemon
  */
 
 func (t *TcpServer) Type4() {
@@ -35,6 +36,7 @@ func (t *TcpServer) Type4() {
 	blockId := utils.BinToDec(buf)
 	log.Debug("blockId %d", blockId)
 	// используется для учета кол-ва подвержденных блоков, т.е. тех, которые есть у большинства нодов
+	// it is used to account the number of affected blocks, those which belong to majority of nodes
 	hash, err := t.Single("SELECT hash FROM block_chain WHERE id = ?", blockId).String()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
