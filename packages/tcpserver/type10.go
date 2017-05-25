@@ -21,7 +21,9 @@ import (
 )
 
 /* Выдаем номер макс. блока
+// Give the number of max. block
  * запрос шлет демон blocksCollection
+// blocksCollection daemon sends the request
  */
 
 func (t *TcpServer) Type10() {
