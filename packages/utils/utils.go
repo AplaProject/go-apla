@@ -1454,6 +1454,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 
 	log.Debug("dataTypeBlockBody: %v", dataTypeBlockBody)
 	// шлем тип данных
+	// send the type of data
 	_, err = conn.Write(DecToBin(dataTypeBlockBody, 2))
 	if err != nil {
 		return nil, ErrInfo(err)
@@ -1469,7 +1470,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	}
 
 	// в ответ получаем размер данных, которые нам хочет передать сервер
-	// recieve the data size as a respose
+	// recieve the data size as a response
 	buf := make([]byte, 4)
 	n, err := conn.Read(buf)
 	if err != nil {
