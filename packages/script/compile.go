@@ -40,8 +40,29 @@ type compileStates []stateLine
 
 type compileFunc func(*[]*Block, int, *Lexem) error
 
+// Компилятор преобразует последоватлеьность лексем в байт-код с помощью конечного автомата, подобно тому как
+// это было реализовано при лексическом анализе. Отличие заключается в том, что мы не конвертируем список
+// состояний и переходов в промежуточный массив.
+
+/* Байт-код из себя представляет дерево - на самом верхнем уровне функции контракты, и далее идет вложенность
+ в соответствии с вложенностью фигурных скобок. Узлами дерева являются структуры типа Block.
+ Например,
+ func a {
+	 if b {
+		 while d {
+
+		 }
+	 }
+	 if c {
+	 }
+ }
+будет скомпилировано в Block(a) у которого будут два дочерних блока Block(b) и Block(c), которые
+      отвечают за выполнение байт-кода внутри if, а Block(b) в свою очередь будет иметь дочерний
+	  блок Block(d) с циклом.
+*/
+
 const (
-	// The list of state types
+	// The list of state types Список состояний
 	stateRoot = iota
 	stateBody
 	stateBlock
@@ -59,7 +80,7 @@ const (
 	stateFields
 	stateEval
 
-	// The list of state flags
+	// The list of state flags Список флагов
 	statePush     = 0x0100
 	statePop      = 0x0200
 	stateStay     = 0x0400
@@ -72,6 +93,7 @@ const (
 )
 
 const (
+	// Ошибки компиляции
 	//	errNoError    = iota
 	errUnknownCmd = iota + 1 // unknown command
 	errMustName              // must be the name
@@ -84,6 +106,7 @@ const (
 )
 
 const (
+	// Это список идентификаторов для функций, которые будут генерировать байт-код для соответствующих случаев
 	// Indexes of handle functions funcs = CompileFunc[]
 	//	cfNothing = iota
 	cfError = iota + 1
@@ -109,12 +132,14 @@ const (
 )
 
 var (
+	// Массив операций и их приоритет
 	opers = map[uint32]operPrior{
 		isOr: {cmdOr, 10}, isAnd: {cmdAnd, 15}, isEqEq: {cmdEqual, 20}, isNotEq: {cmdNotEq, 20},
 		isLess: {cmdLess, 22}, isGrEq: {cmdNotLess, 22}, isGreat: {cmdGreat, 22}, isLessEq: {cmdNotGreat, 22},
 		isPlus: {cmdAdd, 25}, isMinus: {cmdSub, 25}, isAsterisk: {cmdMul, 30},
 		isSolidus: {cmdDiv, 30}, isSign: {cmdSign, cmdUnary}, isNot: {cmdNot, cmdUnary}, isLPar: {cmdSys, 0xff}, isRPar: {cmdSys, 0},
 	}
+	// Массив функций, соответствующий константам cf...
 	funcs = []compileFunc{nil,
 		fError,
 		fNameBlock,
@@ -135,6 +160,7 @@ var (
 		fBreak,
 		fCmdError,
 	}
+	// states описывает конечный автомат с состояниями, на основе которого будет генерироваться байт-код
 	states = compileStates{
 		{ // stateRoot
 			lexNewLine:                      {stateRoot, 0},
@@ -204,12 +230,6 @@ var (
 			isComma:    {stateFResult, 0},
 			0:          {stateBlock | stateStay, 0},
 		},
-		/*		{ // stateIF
-					0: {stateEval | stateToBlock | statePush, cfIf},
-				},
-				{ // stateWHILE
-					0: {stateEval | stateToBlock | statePush, cfWhile},
-				},*/
 		{ // stateVar
 			lexNewLine: {stateBody, 0},
 			lexIdent:   {stateVarType, cfFParam},
@@ -629,6 +649,7 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 	return
 }
 
+// Данная фнукиця отвечает за компиляцию выражений
 func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	i := *ind
 	curBlock := (*block)[len(*block)-1]
