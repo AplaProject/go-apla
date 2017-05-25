@@ -187,16 +187,16 @@ func Sleep(sec time.Duration) {
 // ParseBlockHeader parses the header of the block
 func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
-	// распарсим заголовок блока
+	// распарсим заголовок блока // parse the heading of a block
 	/*
-		Заголовок
+		Заголовок // the heading
 		TYPE (0-блок, 1-тр-я)        1
 		BLOCK_ID   				       4
 		TIME       					       4
 		WALLET_ID                         1-8
 		state_id                              1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		Далее - тело блока (Тр-ии)
+		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+Далее - тело блока (Тр-ии) // further is body block (transaction)
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
@@ -686,6 +686,7 @@ func GetEndBlockID() (int64, error) {
 	}
 
 	// размер блока, записанный в 5-и последних байтах файла blockchain
+	// size of a block recorded into the last 5 bytes of blockchain file
 	fname := *Dir + "/public/blockchain"
 	file, err := os.Open(fname)
 	if err != nil {
@@ -702,6 +703,7 @@ func GetEndBlockID() (int64, error) {
 	}
 
 	// размер блока, записанный в 5-и последних байтах файла blockchain
+	// size of a block recorded into the last 5 bytes of blockchain file
 	_, err = file.Seek(-5, 2)
 	if err != nil {
 		return 0, ErrInfo(err)
@@ -716,6 +718,7 @@ func GetEndBlockID() (int64, error) {
 		return 0, ErrInfo("size > conts.MAX_BLOCK_SIZE")
 	}
 	// сам блок
+	// block itself
 	_, err = file.Seek(-(size + 5), 2)
 	if err != nil {
 		return 0, ErrInfo(err)
@@ -726,6 +729,7 @@ func GetEndBlockID() (int64, error) {
 		return 0, ErrInfo(err)
 	}
 	// размер (id блока + тело блока)
+	// size (block id + body of a block)
 	BinToDecBytesShift(&dataBinary, 5)
 	return BinToDecBytesShift(&dataBinary, 5), nil
 }
@@ -1155,9 +1159,11 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 	var mrklSlice [][]byte
 	var txSize int64
 	// [error] парсим после вызова функции
+	// parse [error] after the calling of a function
 	if len(binaryData) > 0 {
 		for {
 			// чтобы исключить атаку на переполнение памяти
+			// to exclude an attack on memory overflow
 			if !first {
 				if txSize > consts.MAX_TX_SIZE {
 					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
@@ -1166,6 +1172,7 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 			txSize = DecodeLength(&binaryData)
 
 			// отчекрыжим одну транзакцию от списка транзакций
+			// separate one transaction from the list of transactions
 			if txSize > 0 {
 				transactionBinaryData := BytesShift(&binaryData, txSize)
 				dSha256Hash := DSha256(transactionBinaryData)
@@ -1176,6 +1183,7 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 			}
 
 			// чтобы исключить атаку на переполнение памяти
+			// to exclude an attack on memory overflow
 			if !first {
 				if len(mrklSlice) > consts.MAX_TX_COUNT {
 					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), consts.MAX_TX_COUNT))
@@ -1388,6 +1396,7 @@ func RSortMap(m map[int64]string) []map[int64]string {
 // TCPConn connects to the address
 func TCPConn(Addr string) (net.Conn, error) {
 	// шлем данные указанному хосту
+	// send data to the specified host
 	/*tcpAddr, err := net.ResolveTCPAddr("tcp", Addr)
 	if err != nil {
 		return nil, ErrInfo(err)
@@ -1405,6 +1414,7 @@ func TCPConn(Addr string) (net.Conn, error) {
 // WriteSizeAndData writes []byte to the connection
 func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	// в 4-х байтах пишем размер данных, которые пошлем далее
+	// record the data size in 4 bytes, which will send further
 	size := DecToBin(len(binaryData), 4)
 	fmt.Println("len(binaryData)", len(binaryData))
 	_, err := conn.Write(size)
@@ -1412,6 +1422,7 @@ func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 		return ErrInfo(err)
 	}
 	// далее шлем сами данные
+	// further send data itself 
 	if len(binaryData) > 0 {
 		/*if len(binaryData) > 500000 {
 			ioutil.WriteFile("WriteSizeAndData-7-block-"+IntToStr(len(binaryData))+string(DSha256(binaryData)), binaryData, 0644)
@@ -1451,12 +1462,14 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	log.Debug("blockID: %v", blockID)
 
 	// шлем номер блока
+	// send the number of a block
 	_, err = conn.Write(DecToBin(blockID, 4))
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
 
 	// в ответ получаем размер данных, которые нам хочет передать сервер
+	// recieve the data size as a respose
 	buf := make([]byte, 4)
 	n, err := conn.Read(buf)
 	if err != nil {
@@ -1465,6 +1478,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	log.Debug("dataSize buf: %x / get: %v", buf, n)
 
 	// и если данных менее 10мб, то получаем их
+	// if the data size is less than 10mb, we will receive them
 	dataSize := BinToDec(buf)
 	var binaryBlock []byte
 	log.Debug("dataSize: %v", dataSize)
@@ -1883,7 +1897,9 @@ func Out(pars ...interface{}) {
 }*/
 
 // GetPrefix возвращает префикс у таблицы. При этом идет проверка, чтобы префикс был global или совпадал
+// GetPrefix returns the prefix of the table. In this case it is checked that the prefix was global or matched
 // с идентифкатором государства
+// with the identifier of the state
 func GetPrefix(tableName, stateID string) (string, error) {
 	s := strings.Split(tableName, "_")
 	if len(s) < 2 {
