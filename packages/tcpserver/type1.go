@@ -51,11 +51,11 @@ func (t *TcpServer) Type1() {
 		}
 		log.Debug("binaryData: %x", binaryData)
 		/*
-		 * принимаем список тр-ий от демона disseminator, которые есть у отправителя
+		 * принимаем список тр-ий от а disseminator, которые есть у отправителя
 		 * Блоки не качаем тут, т.к. может быть цепочка блоков, а их качать долго
 		 * тр-ии качаем тут, т.к. они мелкие и точно скачаются за 60 сек
 		 * */
-		// get the list of transactions which belong to the sender from 'disseminator' domain 
+		// get the list of transactions which belong to the sender from 'disseminator' daemon  
 		// do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 		// download the transactions here, because they are small and definitely will be downloaded in 60 sec
 
@@ -82,7 +82,7 @@ func (t *TcpServer) Type1() {
 		}
 		log.Debug("binaryData: %x", binaryData)
 		// full_node_id отправителя, чтобы знать у кого брать данные, когда они будут скачиваться другим демоном
-		// full_node_id of the sender to know where to take a data when it will be downloaded by another domain
+		// full_node_id of the sender to know where to take a data when it will be downloaded by another daemon 
 		fullNodeId := utils.BinToDecBytesShift(&binaryData, 2)
 		log.Debug("fullNodeId: %d", fullNodeId)
 		// если 0 - значит вначале идет инфа о блоке, если 1 - значит сразу идет набор хэшей тр-ий
