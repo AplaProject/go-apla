@@ -40,13 +40,17 @@ type compileStates []stateLine
 
 type compileFunc func(*[]*Block, int, *Lexem) error
 
-// Компилятор преобразует последоватлеьность лексем в байт-код с помощью конечного автомата, подобно тому как
+// Компилятор преобразует последовательность лексем в байт-код с помощью конечного автомата, подобно тому как
 // это было реализовано при лексическом анализе. Отличие заключается в том, что мы не конвертируем список
 // состояний и переходов в промежуточный массив.
+// The compiler converts the sequence of lexemes into the bytecodes using a finite state machine the same as
+// it was implemented in lexical analysis. The difference lays in that we do not convert the list of
+// states and transitions to the intermediate array.
 
 /* Байт-код из себя представляет дерево - на самом верхнем уровне функции контракты, и далее идет вложенность
  в соответствии с вложенностью фигурных скобок. Узлами дерева являются структуры типа Block.
  Например,
+// Byte code could be described as a tree where functions and contracts are on the top level and nesting goes further according to nesting of Bracketed brackets...
  func a {
 	 if b {
 		 while d {
