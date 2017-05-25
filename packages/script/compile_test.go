@@ -65,6 +65,7 @@ func getArray() []interface{} {
 				eeee
 
 3232 Комментарий
+// 3232 Comments
 				}
 			} else {
 				Println("FALSE temp function")
