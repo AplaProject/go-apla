@@ -22,7 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) RollbackToBlockId(blockId int64) error {
+func (p *Parser) RollbackToBlockID(blockId int64) error {
 
 	/*err := p.ExecSql("SET GLOBAL net_read_timeout = 86400")
 	if err != nil {

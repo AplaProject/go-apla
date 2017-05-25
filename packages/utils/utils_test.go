@@ -43,7 +43,7 @@ func TestDecryptCFB(t *testing.T) {
 
 func TestEncrypt(t *testing.T) {
 
-	privKey, _ := lib.GenKeys()
+	privKey, _, _ := lib.GenHexKeys()
 	password := Md5("111")
 
 	// encrypt

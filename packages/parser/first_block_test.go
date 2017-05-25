@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-
 	//"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -86,7 +85,7 @@ func LoadData(input []byte, t *testing.T) []*BlockTest {
 func TestFirstBlock(t *testing.T) {
 	/*fmt.Printf("%x %x %x\r\n",utils.EncodeLenInt64(1), utils.EncodeLenInt64(0), utils.EncodeLenInt64(65000))
 	b127 := append( utils.EncodeLenInt64(0))//, 1, 2, 3, 4)
-	fmt.Println(utils.DecodeLenInt64(&b127))
+	fmt.Println(lib.DecodeLenInt64(&b127))
 	fmt.Println(`b`, b127)
 	blocks = LoadData(input, t)
 	t.Log(`First Block`)*/

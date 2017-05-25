@@ -214,8 +214,8 @@ func (p *Parser) InsertIntoBlockchain() error {
 	// для локальных тестов
 	// for local tests
 	if p.BlockData.BlockId == 1 {
-		if *utils.StartBlockId != 0 {
-			p.BlockData.BlockId = *utils.StartBlockId
+		if *utils.StartBlockID != 0 {
+			p.BlockData.BlockId = *utils.StartBlockID
 		}
 	}
 	//mutex.Lock()

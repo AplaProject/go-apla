@@ -43,8 +43,8 @@ func (p *Parser) CheckBlockHeader() error {
 	// для локальных тестов
 	// for the local tests
 	if p.PrevBlock.BlockId == 1 {
-		if *utils.StartBlockId != 0 {
-			p.PrevBlock.BlockId = *utils.StartBlockId
+		if *utils.StartBlockID != 0 {
+			p.PrevBlock.BlockId = *utils.StartBlockID
 		}
 	}
 

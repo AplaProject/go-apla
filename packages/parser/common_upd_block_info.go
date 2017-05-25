@@ -27,8 +27,8 @@ func (p *Parser) UpdBlockInfo() {
 	// для локальных тестов
 	// for the local tests
 	if p.BlockData.BlockId == 1 {
-		if *utils.StartBlockId != 0 {
-			blockId = *utils.StartBlockId
+		if *utils.StartBlockID != 0 {
+			blockId = *utils.StartBlockID
 		}
 	}
 	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.StateID)

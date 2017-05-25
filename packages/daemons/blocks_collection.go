@@ -80,7 +80,7 @@ BEGIN:
 		logger.Debug("1")
 
 		// удалим то, что мешает
-		if *utils.StartBlockId > 0 {
+		if *utils.StartBlockID > 0 {
 			del := []string{"queue_tx", "my_notifications", "main_lock"}
 			for _, table := range del {
 				err := utils.DB.ExecSql(`DELETE FROM ` + table)
@@ -127,7 +127,7 @@ BEGIN:
 		parser := new(parser.Parser)
 		parser.DCDB = d.DCDB
 		parser.GoroutineName = GoroutineName
-		if currentBlockId == 0 || *utils.StartBlockId > 0 {
+		if currentBlockId == 0 || *utils.StartBlockID > 0 {
 			/*
 			   IsNotExistBlockChain := false
 			   if _, err := os.Stat(*utils.Dir+"/public/blockchain"); os.IsNotExist(err) {
@@ -215,7 +215,7 @@ BEGIN:
 						file.Read(data)
 						logger.Debug("data %x\n", data)
 						blockId := utils.BinToDec(data[0:5])
-						if *utils.EndBlockId > 0 && blockId == *utils.EndBlockId {
+						if *utils.EndBlockID > 0 && blockId == *utils.EndBlockID {
 							if d.dPrintSleep(err, d.sleepTime) {
 								break BEGIN
 							}
@@ -229,7 +229,7 @@ BEGIN:
 						blockBin := utils.BytesShift(&data2, length)
 						//logger.Debug("blockBin %x\n", blockBin)
 
-						if *utils.StartBlockId == 0 || (*utils.StartBlockId > 0 && blockId > *utils.StartBlockId) {
+						if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && blockId > *utils.StartBlockID) {
 
 							logger.Debug("block parsing")
 							// парсинг блока

@@ -28,10 +28,12 @@ type cacheLang struct {
 }
 
 var (
+	// LangList is the list of available languages. It stores two-bytes codes
 	LangList []string
 	lang     = make(map[int]*cacheLang)
 )
 
+// IsLang checks if there is a language with code name
 func IsLang(code string) bool {
 	if LangList == nil {
 		return true
@@ -44,6 +46,7 @@ func IsLang(code string) bool {
 	return false
 }
 
+// DefLang returns the default language
 func DefLang() string {
 	if LangList == nil {
 		return `en`
@@ -51,6 +54,7 @@ func DefLang() string {
 	return LangList[0]
 }
 
+// UpdateLang обновляет языковые ресурсы для указанного государства
 func UpdateLang(state int, name, value string) {
 	if _, ok := lang[state]; !ok {
 		return
@@ -62,6 +66,7 @@ func UpdateLang(state int, name, value string) {
 	}
 }
 
+// loadLang загружает языковые ресурсы из БД для данного государства
 func loadLang(state int) error {
 	list, err := DB.GetAll(fmt.Sprintf(`select * from "%d_languages"`, state), -1)
 	if err != nil {
@@ -78,7 +83,9 @@ func loadLang(state int) error {
 	return nil
 }
 
-func LangText(in string, state int, accept string) (string,bool) {
+// LangText ищет указанное слово среди языковых ресурсов и возвращает значение  ресурса,
+// если оно найдено. Поиск идет по указанным в accept языкам.
+func LangText(in string, state int, accept string) (string, bool) {
 	if strings.IndexByte(in, ' ') >= 0 {
 		return in, false
 	}
@@ -107,6 +114,8 @@ func LangText(in string, state int, accept string) (string,bool) {
 	return in, false
 }
 
+// LangMacro заменяет во входящем тексте все включения $resname$ на соответствующие языковые ресурсы,
+// если они существуют
 func LangMacro(input string, state int, accept string) string {
 	if len(input) == 0 {
 		return input

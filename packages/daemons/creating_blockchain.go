@@ -51,7 +51,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 		}
 
 		// пишем свежие блоки в резервный блокчейн
-		endBlockId, err := utils.GetEndBlockId()
+		endBlockId, err := utils.GetEndBlockID()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
