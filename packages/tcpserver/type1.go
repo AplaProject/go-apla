@@ -55,7 +55,7 @@ func (t *TcpServer) Type1() {
 		 * Блоки не качаем тут, т.к. может быть цепочка блоков, а их качать долго
 		 * тр-ии качаем тут, т.к. они мелкие и точно скачаются за 60 сек
 		 * */
-		// get the list of transaction which belong to the sender from 'disseminator' domain 
+		// get the list of transactions which belong to the sender from 'disseminator' domain 
 		// do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 		// download the transactions here, because they are small and definitely will be downloaded in 60 sec
 
