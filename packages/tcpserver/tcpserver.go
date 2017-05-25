@@ -73,6 +73,7 @@ func (t *TcpServer) HandleTcpRequest() {
 	mutex.Unlock()
 
 	// тип данных
+	// data type
 	buf := make([]byte, 2)
 	_, err = t.Conn.Read(buf)
 	if err != nil {
