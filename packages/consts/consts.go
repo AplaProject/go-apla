@@ -45,11 +45,11 @@ const BLOCKCHAIN_SIZE = 1000
 const BLOCKCHAIN_URL = "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain"
 
 // на сколько может бежать время в тр-ии
-// How fast could the time of territory pass 
+// How fast could the time of transaction pass 
 const MAX_TX_FORW = 0
 
 // тр-ия может блуждать по сети сутки и потом попасть в блок
-// Territory may wander in the net for a day and then get into a block
+// transaction may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
 
 const MAX_BLOCK_SIZE = 64 << 20
@@ -89,7 +89,8 @@ const DATA_TYPE_BLOCK_BODY = 7
 
 const CHANGE_KEY_PERIOD = 86400 * 7
 
-const UPD_FULL_NODES_PERIOD = 3600 // на время тестов 3600, потом надо ставить 86400 // 3600 is for the test time, then we have to put 86400
+const UPD_FULL_NODES_PERIOD = 3600 // на время тестов 3600, потом надо ставить 86400 
+// 3600 is for the test time, then we have to put 86400
 
 const RATE_VOTING_PERIOD = 3600
 
