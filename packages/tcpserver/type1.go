@@ -98,7 +98,7 @@ func (t *TcpServer) Type1() {
 			// there is no reason to accept the old blocks
 			if newDataBlockId >= blockId {
 				newDataHash := utils.BinToHex(utils.BytesShift(&binaryData, 32))
-				err = t.ExecSql(`
+				err = t.ExecSQL(`
 						INSERT INTO queue_blocks (
 							hash,
 							full_node_id,
@@ -254,7 +254,7 @@ func (t *TcpServer) Type1() {
 				}
 
 				log.Debug("INSERT INTO queue_tx (hash, data, from_gate) %s, %s, 1", utils.Md5(txBinData), txHex)
-				err = t.ExecSql(`INSERT INTO queue_tx (hash, data, from_gate) VALUES ([hex], [hex], 1)`, utils.Md5(txBinData), txHex)
+				err = t.ExecSQL(`INSERT INTO queue_tx (hash, data, from_gate) VALUES ([hex], [hex], 1)`, utils.Md5(txBinData), txHex)
 				if len(txBinData) == 0 {
 					log.Error("%v", utils.ErrInfo(err))
 					return

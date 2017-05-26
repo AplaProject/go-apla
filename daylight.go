@@ -62,7 +62,7 @@ func main() {
 			//			fmt.Println(fmt.Sprintf("======Event(%d) - Signaled by Command (%s)", cr.TargetID, cr.Type))
 			if cr.TargetID > 1 && cr.Type == "closed" {
 				if utils.DB != nil && utils.DB.DB != nil {
-					utils.DB.ExecSql(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+					utils.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
 				} else {
 					thrust.Exit()
 					system.FinishThrust(0)

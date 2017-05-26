@@ -97,7 +97,7 @@ BEGIN:
 		newBlockId := blockId + 1
 		logger.Debug("newBlockId: %v", newBlockId)
 
-		myStateID, myWalletId, err := d.GetMyStateIDAndWalletId()
+		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID()
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()

@@ -23,7 +23,7 @@ import (
 
 func (p *Parser) RollbackTransactions() error {
 
-	/*err := p.ExecSql("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	/*err := p.ExecSQL("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	if err != nil {
 		utils.WriteSelectiveLog(err)
 		return p.ErrInfo(err)
@@ -48,7 +48,7 @@ func (p *Parser) RollbackTransactions() error {
 		utils.WriteSelectiveLog(utils.BinToHex(hash))
 		blockBody = append(blockBody, utils.EncodeLengthPlusData(data)...)
 		utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE hex(hash) = " + string(utils.BinToHex(hash)))
-		affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE hex(hash) = ?", utils.BinToHex(hash))
+		affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE hex(hash) = ?", utils.BinToHex(hash))
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return p.ErrInfo(err)

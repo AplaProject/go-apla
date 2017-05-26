@@ -121,7 +121,7 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(`
+	err = c.DCDB.ExecSQL(`
 	DO $$ DECLARE
 	    r RECORD;
 	BEGIN
@@ -143,21 +143,21 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(string(schema))
+	err = c.DCDB.ExecSQL(string(schema))
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql("INSERT INTO config (first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?)", firstLoad, first_load_blockchain_url, 259200)
+	err = c.DCDB.ExecSQL("INSERT INTO config (first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?)", firstLoad, first_load_blockchain_url, 259200)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(`INSERT INTO install (progress) VALUES ('complete')`)
+	err = c.DCDB.ExecSQL(`INSERT INTO install (progress) VALUES ('complete')`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
@@ -201,7 +201,7 @@ func (c *Controller) Install() (string, error) {
 	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
 	NodePrivateKeyStr := strings.TrimSpace(string(NodePrivateKey))
 	npubkey := lib.PrivateToPublicHex(NodePrivateKeyStr)
-	err = c.DCDB.ExecSql(`INSERT INTO my_node_keys (private_key, public_key, block_id) VALUES (?, [hex], ?)`, NodePrivateKeyStr, npubkey, 1)
+	err = c.DCDB.ExecSQL(`INSERT INTO my_node_keys (private_key, public_key, block_id) VALUES (?, [hex], ?)`, NodePrivateKeyStr, npubkey, 1)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
@@ -216,7 +216,7 @@ func (c *Controller) Install() (string, error) {
 		*utils.DltWalletID = int64(lib.Address(PublicKeyBytes2))
 	}
 
-	err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletID)
+	err = c.DCDB.ExecSQL(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletID)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()

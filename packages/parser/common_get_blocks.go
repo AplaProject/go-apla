@@ -207,7 +207,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			// отмечаем, что эти тр-ии теперь нужно проверять по новой
 	// point that these territories is necessary to check one by one
 			utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-			affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 			if err != nil {
 				utils.WriteSelectiveLog(err)
 				return utils.ErrInfo(err)
@@ -224,7 +224,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 	/*}*/
 
 	utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-	affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	if err != nil {
 		utils.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
@@ -364,7 +364,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 				binary := []byte(lastMyBlock["data"])
 				utils.BytesShift(&binary, 1) // уберем 1-й байт - тип (блок/тр-я) // remove the first byte which is the type (block/territory)
 				lastMyBlockData := utils.ParseBlockHeader(&binary)
-				err = p.ExecSql(`
+				err = p.ExecSQL(`
 					UPDATE info_block
 					SET   hash = [hex],
 							block_id = ?,
@@ -374,7 +374,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
-				err = p.ExecSql(`UPDATE config SET my_block_id = ?`, lastMyBlockData.BlockId)
+				err = p.ExecSQL(`UPDATE config SET my_block_id = ?`, lastMyBlockData.BlockId)
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
@@ -387,7 +387,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 
 	// если всё занеслось без ошибок, то удаляем блоки из block_chain и заносим новые
 	// if all was recorded without errors, delete the blocks from block_chain and record new
-	affect, err = p.ExecSqlGetAffect("DELETE FROM block_chain WHERE id > ?", blockID)
+	affect, err = p.ExecSQLGetAffect("DELETE FROM block_chain WHERE id > ?", blockID)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -418,11 +418,11 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 
 			// пишем в цепочку блоков
 			// record in the chain of blocks
-			err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?, sent = 0", prevBlock[blockID].Hash, prevBlock[blockID].BlockId, prevBlock[blockID].Time, prevBlock[blockID].WalletId, prevBlock[blockID].StateID)
+			err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?, sent = 0", prevBlock[blockID].Hash, prevBlock[blockID].BlockId, prevBlock[blockID].Time, prevBlock[blockID].WalletId, prevBlock[blockID].StateID)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			err = p.ExecSql(`UPDATE config SET my_block_id = ?`, prevBlock[blockID].BlockId)
+			err = p.ExecSQL(`UPDATE config SET my_block_id = ?`, prevBlock[blockID].BlockId)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -434,7 +434,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 				return utils.ErrInfo(err)
 			}
 			if exists == 0 {
-				affect, err := p.ExecSqlGetAffect("INSERT INTO block_chain (id, hash, state_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockID, prevBlock[blockID].Hash, prevBlock[blockID].StateID, prevBlock[blockID].WalletId, prevBlock[blockID].Time, blockHex)
+				affect, err := p.ExecSQLGetAffect("INSERT INTO block_chain (id, hash, state_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockID, prevBlock[blockID].Hash, prevBlock[blockID].StateID, prevBlock[blockID].WalletId, prevBlock[blockID].Time, blockHex)
 				if err != nil {
 					return utils.ErrInfo(err)
 				}

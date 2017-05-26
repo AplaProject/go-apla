@@ -165,14 +165,14 @@ func (c *Controller) AjaxNewKey() interface{} {
 		fmt.Printf("NewKey Key %x %d\r\n", pubkey, len(pubkey))
 	*/
 	md5 := utils.Md5(data)
-	err = c.ExecSql(`INSERT INTO transactions_status (
+	err = c.ExecSQL(`INSERT INTO transactions_status (
 			hash, time,	type, wallet_id, citizen_id	) VALUES (
 			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(idkey), int64(idkey))
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
 	if err != nil {
 		result.Error = err.Error()
 		return result

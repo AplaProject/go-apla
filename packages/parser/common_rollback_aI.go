@@ -49,18 +49,18 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		err = p.ExecSql("ALTER SEQUENCE " + pgSerialSeq + " RESTART WITH " + utils.Int64ToStr(NewAi))
+		err = p.ExecSQL("ALTER SEQUENCE " + pgSerialSeq + " RESTART WITH " + utils.Int64ToStr(NewAi))
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	} else if p.ConfigIni["db_type"] == "mysql" {
-		err := p.ExecSql("ALTER TABLE " + tblname + " AUTO_INCREMENT = " + utils.Int64ToStr(NewAi))
+		err := p.ExecSQL("ALTER TABLE " + tblname + " AUTO_INCREMENT = " + utils.Int64ToStr(NewAi))
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	} else if p.ConfigIni["db_type"] == "sqlite" {
 		NewAi--
-		err := p.ExecSql("UPDATE SQLITE_SEQUENCE SET seq = ? WHERE name = ?", NewAi, table)
+		err := p.ExecSQL("UPDATE SQLITE_SEQUENCE SET seq = ? WHERE name = ?", NewAi, table)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

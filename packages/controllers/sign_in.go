@@ -76,7 +76,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	/*	err = c.ExecSql("UPDATE config SET dlt_wallet_id = ?", walletId)
+	/*	err = c.ExecSQL("UPDATE config SET dlt_wallet_id = ?", walletId)
 		if err != nil {
 			result.Error = err.Error()
 			return result
@@ -109,7 +109,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 	}
 	result.Result = true
 	/*	citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
-		err = c.ExecSql("UPDATE config SET citizen_id = ?", citizenId)
+		err = c.ExecSQL("UPDATE config SET citizen_id = ?", citizenId)
 		if err != nil {
 			result.Error = err.Error()
 			return result

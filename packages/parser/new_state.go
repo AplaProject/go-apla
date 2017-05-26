@@ -99,16 +99,16 @@ func (p *Parser) NewStateFront() error {
 }
 
 func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
-	id, err = p.ExecSqlGetLastInsertId(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
+	id, err = p.ExecSQLGetLastInsertID(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
 	if err != nil {
 		return
 	}
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "system_states", id)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "system_states", id)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_state_parameters" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_state_parameters" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"bytecode" bytea  NOT NULL DEFAULT '',
@@ -122,7 +122,7 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 	}
 	sid := "ContractConditions(`MainCondition`)" //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
-	err = p.ExecSql(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
@@ -164,7 +164,7 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
+	err = p.ExecSQL(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_smart_contracts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
 				"name" varchar(100)  NOT NULL DEFAULT '',
@@ -182,7 +182,7 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value, wallet_id, active) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_smart_contracts" (name, value, wallet_id, active) VALUES
 		(?, ?, ?, ?)`,
 		`MainCondition`, `contract MainCondition {
             data {}
@@ -199,12 +199,12 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`UPDATE "`+id+`_smart_contracts" SET conditions = ?`, sid)
+	err = p.ExecSQL(`UPDATE "`+id+`_smart_contracts" SET conditions = ?`, sid)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_tables" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_tables" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"columns_and_permissions" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -216,14 +216,14 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 		return
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
 		(?, ?, ?)`,
 		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_pages" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_pages" (
 				"name" varchar(255)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"menu" varchar(255)  NOT NULL DEFAULT '',
@@ -236,7 +236,7 @@ func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 		return
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `FullScreen(1)
@@ -301,7 +301,7 @@ PageEnd:
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_menu" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_menu" (
 				"name" varchar(255)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',
@@ -312,7 +312,7 @@ PageEnd:
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
 		`menu_default`, `MenuItem(Dashboard, dashboard_default)
@@ -335,7 +335,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_citizens" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_citizens" (
 				"id" bigint NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"block_id" bigint NOT NULL DEFAULT '0',
@@ -352,11 +352,11 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, utils.BinToHex(pKey))
+	err = p.ExecSQL(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, utils.BinToHex(pKey))
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`CREATE TABLE "` + id + `_languages" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_languages" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"res" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -367,7 +367,7 @@ MenuBack(Welcome)`, sid)
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`INSERT INTO "`+id+`_languages" (name, res, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_languages" (name, res, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?),
 		(?, ?, ?),
@@ -382,7 +382,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_signatures" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_signatures" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -394,7 +394,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_apps" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_apps" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"done" integer NOT NULL DEFAULT '0',
 				"blocks" text  NOT NULL DEFAULT ''
@@ -405,7 +405,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_anonyms" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_anonyms" (
 				"id_citizen" bigint NOT NULL DEFAULT '0',
 				"id_anonym" bigint NOT NULL DEFAULT '0',
 				"encrypted" bytea  NOT NULL DEFAULT ''
@@ -462,13 +462,13 @@ func (p *Parser) NewStateRollback() error {
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
 		`smart_contracts`, `state_parameters`, `apps`, `anonyms` /*, `citizenship_requests`*/} {
-		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
+		err = p.ExecSQL(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
-	err = p.ExecSql(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
+	err = p.ExecSQL(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -483,7 +483,7 @@ func (p *Parser) NewStateRollback() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql(`DELETE FROM "system_states" WHERE id = ?`, id)
+	err = p.ExecSQL(`DELETE FROM "system_states" WHERE id = ?`, id)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

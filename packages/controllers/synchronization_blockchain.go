@@ -111,7 +111,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		}
 	}
 
-	confirmedBlockId, err := c.GetConfirmedBlockId()
+	confirmedBlockId, err := c.GetConfirmedBlockID()
 	if err != nil {
 		return "", err
 	}

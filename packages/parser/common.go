@@ -128,7 +128,7 @@ func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interfa
 	if num >= limit {
 		return utils.ErrInfo(fmt.Errorf("[limit_requests] rb_time_%v %v >= %v", txType, num, limit))
 	} else {
-		err := p.ExecSql("INSERT INTO rb_time_"+txType+" (user_id, time) VALUES (?, ?)", p.TxUserID, time)
+		err := p.ExecSQL("INSERT INTO rb_time_"+txType+" (user_id, time) VALUES (?, ?)", p.TxUserID, time)
 		if err != nil {
 			return err
 		}
@@ -221,11 +221,11 @@ func (p *Parser) InsertIntoBlockchain() error {
 	//mutex.Lock()
 	// пишем в цепочку блоков
 	// record into the block chain
-	err := p.ExecSql("DELETE FROM block_chain WHERE id = ?", p.BlockData.BlockId)
+	err := p.ExecSQL("DELETE FROM block_chain WHERE id = ?", p.BlockData.BlockId)
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql("INSERT INTO block_chain (id, hash, data, state_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
+	err = p.ExecSQL("INSERT INTO block_chain (id, hash, data, state_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
 		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.StateID, p.BlockData.WalletId, p.BlockData.Time, p.TxIds)
 	if err != nil {
 		fmt.Println(err)
@@ -272,11 +272,11 @@ func (p *Parser) CheckInputData(data map[string]string) error {
 func (p *Parser) limitRequestsRollback(txType string) error {
 	time := p.TxMap["time"]
 	if p.ConfigIni["db_type"] == "mysql" {
-		return p.ExecSql("DELETE FROM rb_time_"+txType+" WHERE user_id = ? AND time = ? LIMIT 1", p.TxUserID, time)
+		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE user_id = ? AND time = ? LIMIT 1", p.TxUserID, time)
 	} else if p.ConfigIni["db_type"] == "postgresql" {
-		return p.ExecSql("DELETE FROM rb_time_"+txType+" WHERE ctid IN (SELECT ctid FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
+		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE ctid IN (SELECT ctid FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
 	} else {
-		return p.ExecSql("DELETE FROM rb_time_"+txType+" WHERE id IN (SELECT id FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
+		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE id IN (SELECT id FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
 	}
 	return nil
 }
@@ -340,7 +340,7 @@ func (p *Parser) ErrInfo(err_ interface{}) error {
 }
 
 func (p *Parser) limitRequestsMoneyOrdersRollback() error {
-	err := p.ExecSql("DELETE FROM rb_time_money_orders WHERE hex(tx_hash) = ?", p.TxHash)
+	err := p.ExecSQL("DELETE FROM rb_time_money_orders WHERE hex(tx_hash) = ?", p.TxHash)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -422,7 +422,7 @@ func (p *Parser) BlockError(err error) {
 	}
 	p.DeleteQueueTx([]byte(p.TxHash))
 	log.Debug("UPDATE transactions_status SET error = %s WHERE hex(hash) = %x", errText, p.TxHash)
-	p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
+	p.ExecSQL("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
 }
 
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
@@ -686,7 +686,7 @@ func (p *Parser) payFPrice() error {
 		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
 		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
 		commit;`, egs, fromId, egs-commission, toId, commission, consts.COMMISSION_WALLET)
-		if err := p.ExecSql(query); err != nil {
+		if err := p.ExecSQL(query); err != nil {
 			return err
 		}*/
 	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
@@ -716,12 +716,12 @@ func (p *Parser) payFPrice() error {
 				money = amount
 			}
 			if money > 0 {
-				if err = p.ExecSql(`update `+table+` set amount = amount - ? where citizen_id=?`, money, p.TxCitizenID); err != nil {
+				if err = p.ExecSQL(`update `+table+` set amount = amount - ? where citizen_id=?`, money, p.TxCitizenID); err != nil {
 					return err
 				}
-				if err = p.ExecSql(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxContract.TxGovAccount); err != nil {
+				if err = p.ExecSQL(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxContract.TxGovAccount); err != nil {
 					// refund payment
-					p.ExecSql(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxCitizenID)
+					p.ExecSQL(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxCitizenID)
 					return err
 				}
 			}

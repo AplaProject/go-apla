@@ -69,13 +69,13 @@ func (t *TcpServer) Type2() {
 			return
 		}
 		decryptedBinDataFull := decryptedBinData
-		err = t.ExecSql(`DELETE FROM queue_tx WHERE hex(hash) = ?`, utils.Md5(decryptedBinDataFull))
+		err = t.ExecSQL(`DELETE FROM queue_tx WHERE hex(hash) = ?`, utils.Md5(decryptedBinDataFull))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return
 		}
 		log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", utils.Md5(decryptedBinDataFull), utils.BinToHex(decryptedBinDataFull))
-		err = t.ExecSql(`INSERT INTO queue_tx (hash, data) VALUES ([hex], ?, [hex])`, utils.Md5(decryptedBinDataFull), utils.BinToHex(decryptedBinDataFull))
+		err = t.ExecSQL(`INSERT INTO queue_tx (hash, data) VALUES ([hex], ?, [hex])`, utils.Md5(decryptedBinDataFull), utils.BinToHex(decryptedBinDataFull))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return

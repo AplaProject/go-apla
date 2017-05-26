@@ -34,7 +34,7 @@ func WaitStopTime() {
 			continue
 		}
 		if !first {
-			err := utils.DB.ExecSql(`DELETE FROM stop_daemons`)
+			err := utils.DB.ExecSQL(`DELETE FROM stop_daemons`)
 			if err != nil {
 				log.Error(utils.ErrInfo(err).Error())
 			}

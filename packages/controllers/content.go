@@ -178,7 +178,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-		confirmedBlockId, err := c.GetConfirmedBlockId()
+		confirmedBlockId, err := c.GetConfirmedBlockID()
 		if err != nil {
 			log.Error("%v", err)
 		}

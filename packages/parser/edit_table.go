@@ -115,7 +115,7 @@ func (p *Parser) EditTable() error {
 	if err != nil {
 		return err
 	}
-	rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbId, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
 	if err != nil {
 		return err
 	}
@@ -127,18 +127,18 @@ func (p *Parser) EditTable() error {
 			return err
 		}
 		p.TxMaps.String[action] = strings.Replace(p.TxMaps.String[action], `"`, `\"`, -1)
-		err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`,
+		err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`,
 			`"`+p.TxMaps.String[action]+`"`, rbId, tblname)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	/*	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{general_update}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, rbId, p.TxMaps.String["table_name"])
+	/*	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{general_update}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, rbId, p.TxMaps.String["table_name"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}*/
 
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.TxMaps.String["table_name"])
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.TxMaps.String["table_name"])
 	if err != nil {
 		return err
 	}

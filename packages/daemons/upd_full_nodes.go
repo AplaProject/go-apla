@@ -84,7 +84,7 @@ BEGIN:
 			continue BEGIN
 		}
 
-		myStateID, myWalletId, err := d.GetMyStateIDAndWalletId();
+		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID();
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()

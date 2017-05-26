@@ -30,7 +30,7 @@ import (
 
 func KillPid(pid string) error {
 	if utils.DB != nil && utils.DB.DB != nil {
-		err := utils.DB.ExecSql(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+		err := utils.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return err

@@ -83,7 +83,7 @@ BEGIN:
 		if *utils.StartBlockID > 0 {
 			del := []string{"queue_tx", "my_notifications", "main_lock"}
 			for _, table := range del {
-				err := utils.DB.ExecSql(`DELETE FROM ` + table)
+				err := utils.DB.ExecSQL(`DELETE FROM ` + table)
 				fmt.Println(`DELETE FROM ` + table)
 				if err != nil {
 					fmt.Println(err)
@@ -191,7 +191,7 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				err = d.ExecSql(`UPDATE config SET current_load_blockchain = 'file'`)
+				err = d.ExecSQL(`UPDATE config SET current_load_blockchain = 'file'`)
 				if err != nil {
 					if d.unlockPrintSleep(err, d.sleepTime) {
 						break BEGIN
@@ -325,7 +325,7 @@ BEGIN:
 		d.dbUnlock()
 
 		logger.Debug("UPDATE config SET current_load_blockchain = 'nodes'")
-		err = d.ExecSql(`UPDATE config SET current_load_blockchain = 'nodes'`)
+		err = d.ExecSQL(`UPDATE config SET current_load_blockchain = 'nodes'`)
 		if err != nil {
 			//!!!			d.unlockPrintSleep(err, d.sleepTime) unlock был выше
 			if d.dPrintSleep(err, d.sleepTime) {
@@ -558,7 +558,7 @@ BEGIN:
 				logger.Info("plug found blockId=%v\n", blockId)
 
 				utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-				affect, err := d.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 				if err != nil {
 					utils.WriteSelectiveLog(err)
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -595,7 +595,7 @@ BEGIN:
 				if len(transactions) > 0 {
 					// отмечаем, что эти тр-ии теперь нужно проверять по новой
 					utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-					affect, err := d.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+					affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 					if err != nil {
 						utils.WriteSelectiveLog(err)
 						if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

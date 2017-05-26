@@ -58,10 +58,10 @@ func (c *Controller) AjaxAppProcess() interface{} {
 		return result
 	}
 	if len(cur) > 0 {
-		err = c.ExecSql(fmt.Sprintf(`update %s set done=?, blocks=concat(blocks, ',%d') where name=?`, table, block),
+		err = c.ExecSQL(fmt.Sprintf(`update %s set done=?, blocks=concat(blocks, ',%d') where name=?`, table, block),
 			done, name)
 	} else {
-		err = c.ExecSql(fmt.Sprintf(`insert into %s (name,done,blocks) values(?,?,'%d')`, table, block),
+		err = c.ExecSQL(fmt.Sprintf(`insert into %s (name,done,blocks) values(?,?,'%d')`, table, block),
 			name, done)
 	}
 	if err != nil {

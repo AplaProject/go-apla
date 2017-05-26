@@ -166,12 +166,12 @@ func (p *Parser) NewTable() error {
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
 	fmt.Println(sql)
-	err := p.ExecSql(sql)
+	err := p.ExecSQL(sql)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(sqlIndex)
+	err = p.ExecSQL(sqlIndex)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -180,7 +180,7 @@ func (p *Parser) NewTable() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-	err = p.ExecSql(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
+	err = p.ExecSQL(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
 		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSql2+`},
 		"insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`)
 	if err != nil {
@@ -201,13 +201,13 @@ func (p *Parser) NewTableRollback() error {
 	if p.TxMaps.Int64["global"] == 0 {
 		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
 	}
-	err = p.ExecSql(`DROP TABLE "` + tableName + `"`)
+	err = p.ExecSQL(`DROP TABLE "` + tableName + `"`)
 
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
 	}
-	err = p.ExecSql(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
+	err = p.ExecSQL(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

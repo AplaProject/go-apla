@@ -52,7 +52,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	var restartDb, standardInstall bool
 
 	if c.dbInit {
-		ConfirmedBlockId, err := c.DCDB.GetConfirmedBlockId()
+		ConfirmedBlockId, err := c.DCDB.GetConfirmedBlockID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}

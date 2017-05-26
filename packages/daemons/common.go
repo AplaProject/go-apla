@@ -228,11 +228,11 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 	fmt.Println("ClearDb() Stop_daemons from DB OK")
 
 	// на всякий случай пометим, что работаем
-	err = utils.DB.ExecSql("UPDATE main_lock SET script_name = 'cleaning_db'")
+	err = utils.DB.ExecSQL("UPDATE main_lock SET script_name = 'cleaning_db'")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	err = utils.DB.ExecSql("UPDATE config SET pool_tech_works = 1")
+	err = utils.DB.ExecSQL("UPDATE config SET pool_tech_works = 1")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -244,7 +244,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 		logger.Debug("table: %s", table)
 		if ok, _ := regexp.MatchString(`^[0-9_]*my_|^e_|install|^config|daemons|payment_systems|community|cf_lang|main_lock`, table); !ok {
 			logger.Debug("DELETE FROM %s", table)
-			err = utils.DB.ExecSql("DELETE FROM " + table)
+			err = utils.DB.ExecSQL("DELETE FROM " + table)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -258,7 +258,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 					return utils.ErrInfo(err)
 				}
 			} else if table == "admin" {
-				err = utils.DB.ExecSql("INSERT INTO admin (user_id) VALUES (1)")
+				err = utils.DB.ExecSQL("INSERT INTO admin (user_id) VALUES (1)")
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
@@ -277,7 +277,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 		}
 	}
 
-	err = utils.DB.ExecSql("DELETE FROM main_lock")
+	err = utils.DB.ExecSQL("DELETE FROM main_lock")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}

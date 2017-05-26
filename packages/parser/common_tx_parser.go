@@ -56,7 +56,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		log.Debug("fromGate %d", fromGate)
 		if fromGate == 0 {
 			log.Debug("UPDATE transactions_status SET error = %s WHERE hex(hash) = %s", errText, hashHex)
-			err = p.ExecSql("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, hashHex)
+			err = p.ExecSQL("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, hashHex)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -73,7 +73,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		utils.WriteSelectiveLog("counter: " + utils.Int64ToStr(counter))
 		counter++
 		utils.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex))
-		affect, err := p.ExecSqlGetAffect(`DELETE FROM transactions WHERE hex(hash) = ?`, hashHex)
+		affect, err := p.ExecSQLGetAffect(`DELETE FROM transactions WHERE hex(hash) = ?`, hashHex)
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)
@@ -84,7 +84,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 		// вставляем с verified=1
 		// put with verified=1
-		err = p.ExecSql(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
+		err = p.ExecSQL(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)
@@ -105,14 +105,14 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 
 	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", hashHex)
-	err := p.ExecSql("DELETE FROM queue_tx WHERE hex(hash) = ?", hashHex)
+	err := p.ExecSQL("DELETE FROM queue_tx WHERE hex(hash) = ?", hashHex)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	// т.к. мы обрабатываем в queue_parser_tx тр-ии с verified=0, то после их обработки их нужно удалять.
 	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
 	utils.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex) + " AND verified=0 AND used = 0")
-	affect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE hex(hash) = ? AND verified=0 AND used = 0", hashHex)
+	affect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE hex(hash) = ? AND verified=0 AND used = 0", hashHex)
 	if err != nil {
 		utils.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
@@ -145,7 +145,7 @@ func (p *Parser) AllTxParser() error {
 
 		err = p.TxParser([]byte(data["hash"]), []byte(data["data"]), false)
 		if err != nil {
-			err0 := p.ExecSql(`INSERT INTO incorrect_tx (time, hash, err) VALUES (?, [hex], ?)`, utils.Time(), utils.BinToHex(data["hash"]), fmt.Sprintf("%s", err))
+			err0 := p.ExecSQL(`INSERT INTO incorrect_tx (time, hash, err) VALUES (?, [hex], ?)`, utils.Time(), utils.BinToHex(data["hash"]), fmt.Sprintf("%s", err))
 			if err0 != nil {
 				log.Error("%v", utils.ErrInfo(err0))
 			}

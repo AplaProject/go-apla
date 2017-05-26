@@ -62,7 +62,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 	}
 
 	utils.WriteSelectiveLog("DELETE FROM transactions WHERE used = 1")
-	afect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE used = 1")
+	afect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE used = 1")
 	if err != nil {
 		utils.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
@@ -107,7 +107,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 
 			utils.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(utils.Md5(transactionBinaryDataFull)))
-			affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used=1 WHERE hex(hash) = ?", utils.Md5(transactionBinaryDataFull))
+			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=1 WHERE hex(hash) = ?", utils.Md5(transactionBinaryDataFull))
 			if err != nil {
 				utils.WriteSelectiveLog(err)
 				utils.WriteSelectiveLog("RollbackTo")
@@ -237,7 +237,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
 			// let user know that his transaction  is added in the block
-			p.ExecSql("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
+			p.ExecSQL("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 
 			// Тут было time(). А значит если бы в цепочке блоков были блоки в которых были бы одинаковые хэши тр-ий, то ParseDataFull вернул бы error

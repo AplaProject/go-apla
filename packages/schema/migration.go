@@ -36,7 +36,7 @@ func Migration() {
 	log.Debug("*utils.OldVersion %v", *utils.OldVersion)
 	if len(*utils.OldVersion) > 0 {
 
-		err = utils.DB.ExecSql(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, consts.VERSION, utils.Time())
+		err = utils.DB.ExecSQL(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, consts.VERSION, utils.Time())
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}

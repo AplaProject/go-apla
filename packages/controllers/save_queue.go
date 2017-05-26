@@ -575,7 +575,7 @@ func (c *Controller) SaveQueue() (string, error) {
 			return "", utils.ErrInfo(err)
 		}
 		if myWalletId == walletId {
-			err = c.ExecSql(`INSERT INTO my_node_keys (
+			err = c.ExecSQL(`INSERT INTO my_node_keys (
 									public_key,
 									private_key
 								)
@@ -636,7 +636,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		if len(encKey) == 0 {
 			return ``, fmt.Errorf(`incorrect encrypted key`)
 		}
-		err = c.ExecSql(fmt.Sprintf(`INSERT INTO "%d_anonyms" (id_citizen, id_anonym, encrypted)
+		err = c.ExecSQL(fmt.Sprintf(`INSERT INTO "%d_anonyms" (id_citizen, id_anonym, encrypted)
 			VALUES (?,?,[hex])`, stateId), userId, accountId, encKey)
 		if err != nil {
 			return "", utils.ErrInfo(err)
@@ -665,7 +665,7 @@ func (c *Controller) SaveQueue() (string, error) {
 			return "", utils.ErrInfo(err)
 		}
 		if myWalletId == walletId {
-			err = c.ExecSql(`INSERT INTO my_node_keys (
+			err = c.ExecSQL(`INSERT INTO my_node_keys (
 									public_key,
 									private_key
 								)
@@ -691,7 +691,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	}
 	md5 := utils.Md5(data)
 
-	err = c.ExecSql(`INSERT INTO transactions_status (
+	err = c.ExecSQL(`INSERT INTO transactions_status (
 				hash,
 				time,
 				type,
@@ -710,7 +710,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	}
 
 	log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", md5, utils.BinToHex(data))
-	err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, utils.BinToHex(data))
+	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, utils.BinToHex(data))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

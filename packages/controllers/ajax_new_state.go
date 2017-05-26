@@ -77,7 +77,7 @@ func (c *Controller) AjaxNewState() interface{} {
 		result.Error = `TestnetKey is absent`
 		return result
 	}
-	err = c.ExecSql(`update testnet_emails set wallet=?, private=? where id=?`, wallet, spriv, id)
+	err = c.ExecSQL(`update testnet_emails set wallet=?, private=? where id=?`, wallet, spriv, id)
 	if err != nil {
 		result.Error = err.Error()
 		return result

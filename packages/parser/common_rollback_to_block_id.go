@@ -24,11 +24,11 @@ import (
 
 func (p *Parser) RollbackToBlockID(blockId int64) error {
 
-	/*err := p.ExecSql("SET GLOBAL net_read_timeout = 86400")
+	/*err := p.ExecSQL("SET GLOBAL net_read_timeout = 86400")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql("SET GLOBAL max_connections  = 86400")
+	err = p.ExecSQL("SET GLOBAL max_connections  = 86400")
 	if err != nil {
 		return p.ErrInfo(err)
 	}*/
@@ -36,7 +36,7 @@ func (p *Parser) RollbackToBlockID(blockId int64) error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}*/
-	err := p.ExecSql("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	err := p.ExecSQL("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	if err != nil {
 		utils.WriteSelectiveLog(err)
 		return p.ErrInfo(err)
@@ -77,7 +77,7 @@ func (p *Parser) RollbackToBlockID(blockId int64) error {
 				return p.ErrInfo(err)
 			}
 
-			err = p.ExecSql("DELETE FROM block_chain WHERE id = ?", block["id"])
+			err = p.ExecSQL("DELETE FROM block_chain WHERE id = ?", block["id"])
 			if err != nil {
 				return p.ErrInfo(err)
 			}
@@ -95,11 +95,11 @@ func (p *Parser) RollbackToBlockID(blockId int64) error {
 	size := utils.DecodeLength(&data)
 	walletId := utils.BinToDecBytesShift(&data, size)
 	StateID := utils.BinToDecBytesShift(&data, 1)
-	err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?", utils.BinToHex(hash), block_id, time, walletId, StateID)
+	err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?", utils.BinToHex(hash), block_id, time, walletId, StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql("UPDATE config SET my_block_id = ?", block_id)
+	err = p.ExecSQL("UPDATE config SET my_block_id = ?", block_id)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

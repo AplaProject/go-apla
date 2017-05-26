@@ -131,7 +131,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 			result.Error = err.Error()
 			return result
 		}
-		err = c.ExecSql(`insert into testnet_keys (id, state_id, private, wallet) values(?,?,?,?)`,
+		err = c.ExecSQL(`insert into testnet_keys (id, state_id, private, wallet) values(?,?,?,?)`,
 			c.SessCitizenId, c.SessStateId, spriv, idnew)
 		if err != nil {
 			result.Error = err.Error()

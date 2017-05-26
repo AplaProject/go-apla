@@ -23,7 +23,6 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"encoding/hex"
-	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -44,29 +43,25 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// Mutex for locking DB
 var Mutex = &sync.Mutex{}
 var log = logging.MustGetLogger("daemons")
+
+// DB is a database variable
 var DB *DCDB
 
 //var cacheFuel int64
 //var fuelMutex = &sync.Mutex{}
 
+// DCDB is a database structure
 type DCDB struct {
 	*sql.DB
 	ConfigIni map[string]string
 	//GoroutineName string
 }
 
+// ReplQ preprocesses a database query
 func ReplQ(q string) string {
-	/*	q1 := strings.Split(q, "?")
-		result := ""
-		for i := 0; i < len(q1); i++ {
-			if i != len(q1)-1 {
-				result += q1[i] + "$" + IntToStr(i+1)
-			} else {
-				result += q1[i]
-			}
-		}*/
 	var quote, skip bool
 	ind := 1
 	in := []rune(q)
@@ -92,10 +87,10 @@ func ReplQ(q string) string {
 			ind++
 		}
 	}
-	//log.Debug("%v", result)
 	return string(out)
 }
 
+// NewDbConnect creates a new database connection
 func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	var db *sql.DB
 	var err error
@@ -110,14 +105,7 @@ func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	return &DCDB{db, ConfigIni}, err
 }
 
-func (db *DCDB) GetConfigIni(name string) string {
-	return db.ConfigIni[name]
-}
-
-func (db *DCDB) GetMainLockName() (string, error) {
-	return db.Single("SELECT script_name FROM main_lock").String()
-}
-
+// GetFirstColumnName returns the name of the first column in the table
 func (db *DCDB) GetFirstColumnName(table string) (string, error) {
 	rows, err := db.Query(`SELECT * FROM "` + table + `" LIMIT 1`)
 	if err != nil {
@@ -134,17 +122,10 @@ func (db *DCDB) GetFirstColumnName(table string) (string, error) {
 	return "", nil
 }
 
+// GetAllTables returns the list of the tables
 func (db *DCDB) GetAllTables() ([]string, error) {
 	var result []string
-	var sql string
-	switch db.ConfigIni["db_type"] {
-	case "sqlite":
-		sql = "SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'"
-	case "postgresql":
-		sql = "SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND    table_schema NOT IN ('pg_catalog', 'information_schema')"
-	case "mysql":
-		sql = "SHOW TABLES"
-	}
+	sql := "SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND    table_schema NOT IN ('pg_catalog', 'information_schema')"
 	result, err := db.GetList(sql).String()
 	if err != nil {
 		return result, err
@@ -152,6 +133,7 @@ func (db *DCDB) GetAllTables() ([]string, error) {
 	return result, nil
 }
 
+// GetFirstColumnNamesPg returns the first name of the column with PostgreSQL request
 func (db *DCDB) GetFirstColumnNamesPg(table string) (string, error) {
 	var result []string
 	result, err := db.GetList("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='" + table + "'").String()
@@ -176,6 +158,7 @@ type oneRow struct {
 	err    error
 }
 
+// Int64 converts all string values to int64
 func (r *listResult) Int64() ([]int64, error) {
 	var result []int64
 	if r.err != nil {
@@ -187,19 +170,7 @@ func (r *listResult) Int64() ([]int64, error) {
 	return result, nil
 }
 
-func (r *listResult) MapInt() (map[int]int, error) {
-	result := make(map[int]int)
-	if r.err != nil {
-		return result, r.err
-	}
-	i := 0
-	for _, v := range r.result {
-		result[i] = StrToInt(v)
-		i++
-	}
-	return result, nil
-}
-
+// String return the slice of strings
 func (r *listResult) String() ([]string, error) {
 	if r.err != nil {
 		return r.result, r.err
@@ -207,6 +178,7 @@ func (r *listResult) String() ([]string, error) {
 	return r.result, nil
 }
 
+//
 func (r *oneRow) String() (map[string]string, error) {
 	if r.err != nil {
 		return r.result, r.err
@@ -292,6 +264,7 @@ func (r *singleResult) Bytes() ([]byte, error) {
 	return r.result, nil
 }
 
+// Signle returns the single result of the query
 func (db *DCDB) Single(query string, args ...interface{}) *singleResult {
 
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
@@ -325,6 +298,7 @@ func (db *DCDB) Single(query string, args ...interface{}) *singleResult {
 	return &singleResult{result, nil}
 }
 
+// GetMap returns the map of strings as the result of query
 func (db *DCDB) GetMap(query string, name, value string, args ...interface{}) (map[string]string, error) {
 	result := make(map[string]string)
 	all, err := db.GetAll(query, -1, args...)
@@ -337,6 +311,7 @@ func (db *DCDB) GetMap(query string, name, value string, args ...interface{}) (m
 	return result, err
 }
 
+// GetList returns the result of the query as listResult variable
 func (db *DCDB) GetList(query string, args ...interface{}) *listResult {
 	var result []string
 	all, err := db.GetAll(query, -1, args...)
@@ -351,6 +326,7 @@ func (db *DCDB) GetList(query string, args ...interface{}) *listResult {
 	return &listResult{result, nil}
 }
 
+// GetParent возвращает информацию откуда произошел вызов функции
 func GetParent() string {
 	parent := ""
 	for i := 2; ; i++ {
@@ -368,6 +344,7 @@ func GetParent() string {
 	return parent
 }
 
+// GetAll returns the result of the query as slice of map[string]string
 func (db *DCDB) GetAll(query string, countRows int, args ...interface{}) ([]map[string]string, error) {
 
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
@@ -457,6 +434,7 @@ func (db *DCDB) GetAll(query string, countRows int, args ...interface{}) ([]map[
 	return result, nil
 }
 
+// OneRow returns the result of the query as one row
 func (db *DCDB) OneRow(query string, args ...interface{}) *oneRow {
 	result := make(map[string]string)
 	//log.Debug("%v", query, args)
@@ -471,9 +449,10 @@ func (db *DCDB) OneRow(query string, args ...interface{}) *oneRow {
 	return &oneRow{all[0], nil}
 }
 
+// InsertInLogTx insert md5 hash and time into log_transaction
 func (db *DCDB) InsertInLogTx(binaryTx []byte, time int64) error {
 	txMD5 := Md5(binaryTx)
-	err := db.ExecSql("INSERT INTO log_transactions (hash, time) VALUES ([hex], ?)", txMD5, time)
+	err := db.ExecSQL("INSERT INTO log_transactions (hash, time) VALUES ([hex], ?)", txMD5, time)
 	log.Debug("INSERT INTO log_transactions (hash, time) VALUES ([hex], %s)", txMD5)
 	if err != nil {
 		return ErrInfo(err)
@@ -481,9 +460,10 @@ func (db *DCDB) InsertInLogTx(binaryTx []byte, time int64) error {
 	return nil
 }
 
+// DelLogTx deletes a row with the specified md5 hash in log_transaction
 func (db *DCDB) DelLogTx(binaryTx []byte) error {
 	txMD5 := Md5(binaryTx)
-	affected, err := db.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", txMD5)
+	affected, err := db.ExecSQLGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", txMD5)
 	log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", txMD5, affected)
 	if err != nil {
 		return ErrInfo(err)
@@ -491,57 +471,16 @@ func (db *DCDB) DelLogTx(binaryTx []byte) error {
 	return nil
 }
 
-func (db *DCDB) GetJSON(query string, args ...interface{}) (string, error) {
-
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
-
-	rows, err := db.Query(newQuery, newArgs...)
-	if err != nil {
-		return "", err
-	}
-	defer rows.Close()
-	columns, err := rows.Columns()
-	if err != nil {
-		return "", err
-	}
-	count := len(columns)
-	tableData := make([]map[string]interface{}, 0)
-	values := make([]interface{}, count)
-	valuePtrs := make([]interface{}, count)
-	for rows.Next() {
-		for i := 0; i < count; i++ {
-			valuePtrs[i] = &values[i]
-		}
-		rows.Scan(valuePtrs...)
-		entry := make(map[string]interface{})
-		for i, col := range columns {
-			var v interface{}
-			val := values[i]
-			b, ok := val.([]byte)
-			if ok {
-				v = string(b)
-			} else {
-				v = val
-			}
-			entry[col] = v
-		}
-		tableData = append(tableData, entry)
-	}
-	jsonData, err := json.Marshal(tableData)
-	if err != nil {
-		return "", err
-	}
-	fmt.Println(string(jsonData))
-	return string(jsonData), nil
-}
-
+// QueryRows returns the result of the query
 func (db *DCDB) QueryRows(query string, args ...interface{}) (*sql.Rows, error) {
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	return db.Query(newQuery, newArgs...)
 }
-func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{}) (string, error) {
-	var lastId_ interface{}
-	var lastId string
+
+// ExecSQLGetLastInsertID insert a row and returns the last id
+func (db *DCDB) ExecSQLGetLastInsertID(query, table string, args ...interface{}) (string, error) {
+	var v interface{}
+	var lastID string
 	var err error
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	colName, err := db.GetFirstColumnNamesPg(table)
@@ -550,7 +489,7 @@ func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{})
 	}
 	newQuery = newQuery + " RETURNING " + colName
 	for {
-		err := db.QueryRow(newQuery, newArgs...).Scan(&lastId_)
+		err := db.QueryRow(newQuery, newArgs...).Scan(&v)
 		if err != nil {
 			if ok, _ := regexp.MatchString(`(?i)database is locked`, fmt.Sprintf("%s", err)); ok {
 				log.Error("database is locked %s / %s / %s", newQuery, newArgs, GetParent())
@@ -560,28 +499,29 @@ func (db *DCDB) ExecSqlGetLastInsertId(query, table string, args ...interface{})
 				return "", fmt.Errorf("%s in query %s %s %s", err, newQuery, newArgs, GetParent())
 			}
 		} else {
-			switch lastId_.(type) {
+			switch v.(type) {
 			case int:
-				lastId = IntToStr(lastId_.(int))
+				lastID = IntToStr(v.(int))
 			case int64:
-				lastId = Int64ToStr(lastId_.(int64))
+				lastID = Int64ToStr(v.(int64))
 			case float64:
-				lastId = Float64ToStr(lastId_.(float64))
+				lastID = Float64ToStr(v.(float64))
 			case string:
-				lastId = lastId_.(string)
+				lastID = v.(string)
 			case []byte:
-				lastId = string(lastId_.([]byte))
+				lastID = string(v.([]byte))
 			}
 			break
 		}
 	}
 
 	if db.ConfigIni["sql_log"] == "1" {
-		log.Debug("SQL: %s / LastInsertId=%d / %s", newQuery, lastId, newArgs)
+		log.Debug("SQL: %s / LastInsertId=%d / %s", newQuery, lastID, newArgs)
 	}
-	return lastId, nil
+	return lastID, nil
 }
 
+// FormatQueryArgs formats the query
 func FormatQueryArgs(q, dbType string, args ...interface{}) (string, []interface{}) {
 	var newArgs []interface{}
 
@@ -609,6 +549,7 @@ func FormatQueryArgs(q, dbType string, args ...interface{}) (string, []interface
 	return newQ, newArgs
 }
 
+// CheckInstall waits for the end of the installation
 func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, GoroutineName string) bool {
 	// Возможна ситуация, когда инсталяция еще не завершена. База данных может быть создана, а таблицы еще не занесены
 	// there could be the situation when installation is not over yet. Database could be created but tables are not inserted yet
@@ -641,7 +582,8 @@ func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, Gor
 	return true
 }
 
-func (db *DCDB) ExecSql(query string, args ...interface{}) error {
+// ExecSQL executes the query
+func (db *DCDB) ExecSQL(query string, args ...interface{}) error {
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	//var res sql.Result
 	var err error
@@ -661,15 +603,16 @@ func (db *DCDB) ExecSql(query string, args ...interface{}) error {
 		}
 	}
 	/*affect, err := res.RowsAffected()
-	lastId, err := res.LastInsertId()
+	lastID, err := res.LastInsertId()
 	if db.ConfigIni["sql_log"] == "1" {
 		parent := GetParent()
-		log.Debug("SQL: %v / RowsAffected=%d / LastInsertId=%d / %s / %s", newQuery, affect, lastId, newArgs, parent)
+		log.Debug("SQL: %v / RowsAffected=%d / LastInsertId=%d / %s / %s", newQuery, affect, lastID, newArgs, parent)
 	}*/
 	return nil
 }
 
-func (db *DCDB) ExecSqlGetAffect(query string, args ...interface{}) (int64, error) {
+// ExecSQLGetAffect executes the query and returns amount of affected rows
+func (db *DCDB) ExecSQLGetAffect(query string, args ...interface{}) (int64, error) {
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 	var res sql.Result
 	var err error
@@ -688,17 +631,17 @@ func (db *DCDB) ExecSqlGetAffect(query string, args ...interface{}) (int64, erro
 		}
 	}
 	affect, err := res.RowsAffected()
-	lastId, err := res.LastInsertId()
+	lastID, err := res.LastInsertId()
 	if db.ConfigIni["sql_log"] == "1" {
-		log.Debug("SQL: %s / RowsAffected=%d / LastInsertId=%d / %s", newQuery, affect, lastId, newArgs)
+		log.Debug("SQL: %s / RowsAffected=%d / LastInsertId=%d / %s", newQuery, affect, lastID, newArgs)
 	}
 	return affect, nil
 }
 
-// для юнит-тестов. снимок всех данных в БД
+/* для юнит-тестов. снимок всех данных в БД
 // for unit tests. snapshot of all data in database
 func (db *DCDB) HashTableData(table, where, orderBy string) (string, error) {
-	/*var columns string;
+	/var columns string;
 	rows, err := db.Query("select column_name from information_schema.columns where table_name= $1", table)
 	if err != nil {
 		fmt.Println(err)
@@ -718,7 +661,7 @@ func (db *DCDB) HashTableData(table, where, orderBy string) (string, error) {
 		if len(orderBy) > 0 {
 			orderBy = " ORDER BY "+orderBy;
 		}
-	}*/
+	}/
 	if len(orderBy) > 0 {
 		orderBy = " ORDER BY " + orderBy
 	}
@@ -743,7 +686,7 @@ func (db *DCDB) HashTableData(table, where, orderBy string) (string, error) {
 			return "", ErrInfo(err, q)
 		}
 	case "mysql":
-		err := db.ExecSql("SET @@group_concat_max_len = 4294967295")
+		err := db.ExecSQL("SET @@group_concat_max_len = 4294967295")
 		if err != nil {
 			return "", ErrInfo(err)
 		}
@@ -764,36 +707,37 @@ func (db *DCDB) HashTableData(table, where, orderBy string) (string, error) {
 	}
 	//fmt.Println(q)
 
-	/*if strings.Count(table, "my_table")>0 {
+	/if strings.Count(table, "my_table")>0 {
 		columns = strings.Replace(columns,",notification","",-1)
 		columns = strings.Replace(columns,"notification,","",-1)
 		q="SELECT md5(CAST((array_agg("+columns+" "+orderBy+")) AS text)) FROM \""+table+"\" "+where
-	}*/
-	/*if strings.Count(columns, "cron_checked_time")>0 {
+	}
+	if strings.Count(columns, "cron_checked_time")>0 {
 		columns = strings.Replace(columns, ",cron_checked_time", "", -1)
 		columns = strings.Replace(columns, "cron_checked_time,", "", -1)
 		q="SELECT md5(CAST((array_agg("+columns+" "+orderBy+")) AS text)) FROM \""+table+"\" "+where
-	}*/
+	}/
 
 	if logOff {
 		db.ConfigIni["sql_log"] = "1"
 	}
 	return hash, nil
-}
+}*/
 
+// GetLastBlockData returns the data of the latest block
 func (db *DCDB) GetLastBlockData() (map[string]int64, error) {
 	result := make(map[string]int64)
-	confirmedBlockId, err := db.GetConfirmedBlockId()
+	confirmedBlockID, err := db.GetConfirmedBlockID()
 	if err != nil {
 		return result, ErrInfo(err)
 	}
-	if confirmedBlockId == 0 {
-		confirmedBlockId = 1
+	if confirmedBlockID == 0 {
+		confirmedBlockID = 1
 	}
-	log.Debug("%v", "confirmedBlockId", confirmedBlockId)
+	log.Debug("%v", "confirmedBlockId", confirmedBlockID)
 	// получим время из последнего подвержденного блока
 	// obtain the time of the last affected block
-	lastBlockBin, err := db.Single("SELECT data FROM block_chain WHERE id = ?", confirmedBlockId).Bytes()
+	lastBlockBin, err := db.Single("SELECT data FROM block_chain WHERE id = ?", confirmedBlockID).Bytes()
 	if err != nil || len(lastBlockBin) == 0 {
 		return result, ErrInfo(err)
 	}
@@ -805,14 +749,7 @@ func (db *DCDB) GetLastBlockData() (map[string]int64, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetMyPublicKey(myPrefix string) ([]byte, error) {
-	result, err := db.Single("SELECT public_key FROM my_keys WHERE block_id = (SELECT max(block_id) FROM my_keys)").Bytes()
-	if err != nil {
-		return []byte(""), ErrInfo(err)
-	}
-	return result, nil
-}
-
+// GetNodePrivateKey returns the private key from my_nodes_key
 func (db *DCDB) GetNodePrivateKey() (string, error) {
 	var key string
 	key, err := db.Single("SELECT private_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
@@ -822,15 +759,7 @@ func (db *DCDB) GetNodePrivateKey() (string, error) {
 	return key, nil
 }
 
-func (db *DCDB) GetMyNodePublicKey(myPrefix string) (string, error) {
-	var key string
-	key, err := db.Single("SELECT public_key FROM my_node_keys WHERE block_id = (SELECT max(block_id) FROM my_node_keys)").String()
-	if err != nil {
-		return "", ErrInfo(err)
-	}
-	return key, nil
-}
-
+/*
 func (db *DCDB) GetPrivateKey(myPrefix string) (string, error) {
 	var key string
 	key, err := db.Single("SELECT private_key FROM my_keys WHERE block_id = (SELECT max(block_id) FROM my_keys)").String()
@@ -838,21 +767,19 @@ func (db *DCDB) GetPrivateKey(myPrefix string) (string, error) {
 		return "", ErrInfo(err)
 	}
 	return key, nil
-}
+}*/
 
+// GetNodeConfig returns config parameters
 func (db *DCDB) GetNodeConfig() (map[string]string, error) {
 	return db.OneRow("SELECT * FROM config").String()
 }
 
+// FormatQuery formats the query
 func (db *DCDB) FormatQuery(q string) string {
 
 	newQ := q
 	if ok, _ := regexp.MatchString(`CREATE TABLE`, newQ); !ok {
 		switch db.ConfigIni["db_type"] {
-		case "sqlite":
-			newQ = strings.Replace(newQ, "[hex]", "?", -1)
-			newQ = strings.Replace(newQ, "user,", "`user`,", -1)
-			newQ = strings.Replace(newQ, ", user ", ", `user` ", -1)
 		case "postgresql":
 			newQ = strings.Replace(newQ, "[hex]", "decode(?,'HEX')", -1)
 			newQ = strings.Replace(newQ, " authorization", ` "authorization"`, -1)
@@ -886,7 +813,8 @@ func (db *DCDB) FormatQuery(q string) string {
 	return newQ
 }
 
-func (db *DCDB) GetConfirmedBlockId() (int64, error) {
+// GetConfirmedBlockID returns the maximal block id from confirmations
+func (db *DCDB) GetConfirmedBlockID() (int64, error) {
 
 	result, err := db.Single("SELECT max(block_id) FROM confirmations WHERE good >= ?", consts.MIN_CONFIRMED_NODES).Int64()
 	if err != nil {
@@ -897,18 +825,20 @@ func (db *DCDB) GetConfirmedBlockId() (int64, error) {
 
 }
 
-func (db *DCDB) GetMyStateIDAndWalletId() (int64, int64, error) {
+// GetMyStateIDAndWalletID returns state id and wallet id from config
+func (db *DCDB) GetMyStateIDAndWalletID() (int64, int64, error) {
 	myStateID, err := db.GetMyStateID()
 	if err != nil {
 		return 0, 0, err
 	}
-	myWalletId, err := db.GetMyWalletId()
+	myWalletID, err := db.GetMyWalletId()
 	if err != nil {
 		return 0, 0, err
 	}
-	return myStateID, myWalletId, nil
+	return myStateID, myWalletID, nil
 }
 
+// GetHosts returns the list of hosts
 func (db *DCDB) GetHosts() ([]string, error) {
 	q := ""
 	if db.ConfigIni["db_type"] == "postgresql" {
@@ -1038,7 +968,7 @@ func (db *DCDB) GetPublicKeyWalletOrCitizen(wallet_id, citizen_id int64) ([]byte
 }
 
 func (db *DCDB) UpdMainLock() error {
-	return db.ExecSql("UPDATE main_lock SET lock_time = ?", time.Now().Unix())
+	return db.ExecSQL("UPDATE main_lock SET lock_time = ?", time.Now().Unix())
 }
 
 func (db *DCDB) CheckDaemonsRestart() bool {
@@ -1075,7 +1005,7 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 			return ErrInfo(err), false
 		}
 		if len(exists["script_name"]) == 0 {
-			err = db.ExecSql(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), goRoutineName, Caller(2))
+			err = db.ExecSQL(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), goRoutineName, Caller(2))
 			if err != nil {
 				Mutex.Unlock()
 				return ErrInfo(err), false
@@ -1086,7 +1016,7 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 			if Time()-t > 600 {
 				log.Error("%d %s %d", t, exists["script_name"], Time()-t)
 				if Mobile() {
-					db.ExecSql(`DELETE FROM main_lock`)
+					db.ExecSQL(`DELETE FROM main_lock`)
 				}
 			}
 		}
@@ -1110,7 +1040,7 @@ func (db *DCDB) DbLockGate(name string) error {
 			return ErrInfo(err)
 		}
 		if len(exists["script_name"]) == 0 {
-			err = db.ExecSql(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), name, Caller(1))
+			err = db.ExecSQL(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), name, Caller(1))
 			if err != nil {
 				Mutex.Unlock()
 				return ErrInfo(err)
@@ -1128,7 +1058,7 @@ func (db *DCDB) DbLockGate(name string) error {
 }
 
 func (db *DCDB) DeleteQueueBlock(hash_hex string) error {
-	return db.ExecSql("DELETE FROM queue_blocks WHERE hex(hash) = ?", hash_hex)
+	return db.ExecSQL("DELETE FROM queue_blocks WHERE hex(hash) = ?", hash_hex)
 }
 
 func (db *DCDB) SetAI(table string, AI int64) error {
@@ -1143,17 +1073,17 @@ func (db *DCDB) SetAI(table string, AI int64) error {
 		if err != nil {
 			return ErrInfo(err)
 		}
-		err = db.ExecSql("ALTER SEQUENCE " + pg_get_serial_sequence + " RESTART WITH " + Int64ToStr(AI))
+		err = db.ExecSQL("ALTER SEQUENCE " + pg_get_serial_sequence + " RESTART WITH " + Int64ToStr(AI))
 		if err != nil {
 			return ErrInfo(err)
 		}
 	} else if db.ConfigIni["db_type"] == "mysql" {
-		err := db.ExecSql("ALTER TABLE " + table + " AUTO_INCREMENT = " + Int64ToStr(AI))
+		err := db.ExecSQL("ALTER TABLE " + table + " AUTO_INCREMENT = " + Int64ToStr(AI))
 		if err != nil {
 			return ErrInfo(err)
 		}
 	} else if db.ConfigIni["db_type"] == "sqlite" {
-		err := db.ExecSql("UPDATE SQLITE_SEQUENCE SET seq = ? WHERE name = ?", AI, table)
+		err := db.ExecSQL("UPDATE SQLITE_SEQUENCE SET seq = ? WHERE name = ?", AI, table)
 		if err != nil {
 			return ErrInfo(err)
 		}
@@ -1193,7 +1123,7 @@ func (db *DCDB) DbUnlock(goRoutineName string) error {
 		}
 	}()
 	log.Debug("DbUnlock %v %v", Caller(2), goRoutineName)
-	affect, err := db.ExecSqlGetAffect("DELETE FROM main_lock WHERE script_name = ?", goRoutineName)
+	affect, err := db.ExecSQLGetAffect("DELETE FROM main_lock WHERE script_name = ?", goRoutineName)
 	log.Debug("main_lock affect: %d, goRoutineName: %s", affect, goRoutineName)
 	if err != nil {
 		log.Error("%s", ErrInfo(err))
@@ -1204,7 +1134,7 @@ func (db *DCDB) DbUnlock(goRoutineName string) error {
 
 func (db *DCDB) DbUnlockGate(name string) error {
 	log.Debug("DbUnlockGate %v %v", Caller(2), name)
-	return db.ExecSql("DELETE FROM main_lock WHERE script_name = ?", name)
+	return db.ExecSQL("DELETE FROM main_lock WHERE script_name = ?", name)
 }
 
 func (db *DCDB) UpdDaemonTime(name string) {
@@ -1499,25 +1429,25 @@ func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
 		return nil, ErrInfo(err)
 	}
 	/*	log.Debug("nodePrivateKey = %s", nodePrivateKey)
-		// подписываем нашим нод-ключем данные транзакции
-// sign the data of transaction by our node-key
-		privateKey, err := MakePrivateKey(nodePrivateKey)
-		if err != nil {
-			return nil, ErrInfo(err)
-		}
-		return rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, HashSha1(forSign))*/
+				// подписываем нашим нод-ключем данные транзакции
+		// sign the data of transaction by our node-key
+				privateKey, err := MakePrivateKey(nodePrivateKey)
+				if err != nil {
+					return nil, ErrInfo(err)
+				}
+				return rsa.SignPKCS1v15(crand.Reader, privateKey, crypto.SHA1, HashSha1(forSign))*/
 	return lib.SignECDSA(nodePrivateKey, forSign)
 }
 
 func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 
 	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", Md5(data))
-	err := db.ExecSql("DELETE FROM queue_tx WHERE hex(hash) = ?", Md5(data))
+	err := db.ExecSQL("DELETE FROM queue_tx WHERE hex(hash) = ?", Md5(data))
 	if err != nil {
 		return ErrInfo(err)
 	}
 	log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", Md5(data), BinToHex(data))
-	err = db.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", Md5(data), BinToHex(data))
+	err = db.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", Md5(data), BinToHex(data))
 	if err != nil {
 		return ErrInfo(err)
 	}
@@ -1728,13 +1658,13 @@ func (db *DCDB) IsTable(tblname string) bool {
 
 func (db *DCDB) SendTx(txType int64, adminWallet int64, data []byte) (err error) {
 	md5 := Md5(data)
-	err = db.ExecSql(`INSERT INTO transactions_status (
+	err = db.ExecSQL(`INSERT INTO transactions_status (
 			hash, time,	type, wallet_id, citizen_id	) VALUES (
 			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), txType, adminWallet, adminWallet)
 	if err != nil {
 		return err
 	}
-	err = db.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+	err = db.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
 	if err != nil {
 		return err
 	}

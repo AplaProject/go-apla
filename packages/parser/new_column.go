@@ -118,16 +118,16 @@ func (p *Parser) NewColumn() error {
 	if err != nil {
 		return err
 	}
-	rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbId, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbId, tblname)
+	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbId, tblname)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tblname)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tblname)
 	if err != nil {
 		return err
 	}
@@ -148,13 +148,13 @@ func (p *Parser) NewColumn() error {
 		colType = `double precision`
 	}
 
-	err = p.ExecSql(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` ` + colType)
+	err = p.ExecSQL(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` ` + colType)
 	if err != nil {
 		return err
 	}
 
 	if p.TxMaps.Int64["index"] == 1 {
-		err = p.ExecSql(`CREATE INDEX "` + tblname + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + tblname + `" (` + p.TxMaps.String["column_name"] + `)`)
+		err = p.ExecSQL(`CREATE INDEX "` + tblname + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + tblname + `" (` + p.TxMaps.String["column_name"] + `)`)
 		if err != nil {
 			return err
 		}
@@ -168,13 +168,13 @@ func (p *Parser) NewColumnRollback() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" DROP COLUMN ` + p.TxMaps.String["column_name"] + ``)
+	err = p.ExecSQL(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" DROP COLUMN ` + p.TxMaps.String["column_name"] + ``)
 	if err != nil {
 		return err
 	}
 	/*
 		if p.TxMaps.Int64["index"] == 1 {
-			err = p.ExecSql(`DROP INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index"`)
+			err = p.ExecSQL(`DROP INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index"`)
 			if err != nil {
 				return err
 			}

@@ -47,7 +47,7 @@ func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere
 	// если $rb_id = 0, значит восстанавливать нечего и нужно просто удалить запись
 	// if $rb_id = 0, then there is nothing to restore and you just need to delete the record
 	if logID == 0 {
-		err = p.ExecSql("DELETE FROM " + table + " " + where + addWhere)
+		err = p.ExecSQL("DELETE FROM " + table + " " + where + addWhere)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -82,13 +82,13 @@ func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere
 		// always write the previous rb_id
 		addSQL += fmt.Sprintf("rb_id = %v,", data["prev_rb_id"])
 		addSQL = addSQL[0 : len(addSQL)-1]
-		err = p.ExecSql("UPDATE " + table + " SET " + addSQL + where + addWhere)
+		err = p.ExecSQL("UPDATE " + table + " SET " + addSQL + where + addWhere)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 		// подчищаем log
 		// Clean up log
-		err = p.ExecSql("DELETE FROM rb_"+table+" WHERE rb_id= ?", logID)
+		err = p.ExecSQL("DELETE FROM rb_"+table+" WHERE rb_id= ?", logID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

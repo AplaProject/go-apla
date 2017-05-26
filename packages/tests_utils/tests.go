@@ -154,11 +154,11 @@ func MakeFrontTest(transactionArray [][]byte, time int64, dataForSign string, tx
 	var binSign []byte
 	if utils.InSliceString(txType, nodeArr) {
 
-		err := db.ExecSql("UPDATE my_node_keys SET private_key = ?", priv)
+		err := db.ExecSQL("UPDATE my_node_keys SET private_key = ?", priv)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		err = db.ExecSql("UPDATE miners_data SET node_public_key = [hex] WHERE user_id = ?", pub, userId)
+		err = db.ExecSQL("UPDATE miners_data SET node_public_key = [hex] WHERE user_id = ?", pub, userId)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -189,11 +189,11 @@ func MakeFrontTest(transactionArray [][]byte, time int64, dataForSign string, tx
 
 	} else {
 
-		err := db.ExecSql("UPDATE my_keys SET private_key = ?", priv)
+		err := db.ExecSQL("UPDATE my_keys SET private_key = ?", priv)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		err = db.ExecSql("UPDATE users SET public_key_0 = [hex]", pub)
+		err = db.ExecSQL("UPDATE users SET public_key_0 = [hex]", pub)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

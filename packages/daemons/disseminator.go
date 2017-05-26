@@ -69,7 +69,7 @@ BEGIN:
 			logger.Error("%v", err)
 		}
 
-		myStateID, myWalletId, err := d.GetMyStateIDAndWalletId();
+		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID();
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			logger.Error("%v", err)
@@ -126,7 +126,7 @@ BEGIN:
 				}
 				continue BEGIN
 			}
-			err = d.ExecSql("UPDATE info_block SET sent = 1")
+			err = d.ExecSQL("UPDATE info_block SET sent = 1")
 			if err != nil {
 				if d.dPrintSleep(err, d.sleepTime) {
 					break BEGIN
@@ -144,7 +144,7 @@ BEGIN:
 				toBeSent = append(toBeSent, utils.DecToBin(0, 1)...)
 				toBeSent = append(toBeSent, utils.DecToBin(utils.BytesToInt64(data["block_id"]), 3)...)
 				toBeSent = append(toBeSent, data["hash"]...)
-				err = d.ExecSql("UPDATE info_block SET sent = 1")
+				err = d.ExecSQL("UPDATE info_block SET sent = 1")
 				if err != nil {
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN
@@ -181,7 +181,7 @@ BEGIN:
 				toBeSent = append(toBeSent, []byte(data["hash"])...)
 				logger.Debug("hash %x", data["hash"])
 				utils.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hexHash))
-				affect, err := d.ExecSqlGetAffect("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", hexHash)
+				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", hexHash)
 				if err != nil {
 					utils.WriteSelectiveLog(err)
 					if d.dPrintSleep(err, d.sleepTime) {
@@ -231,7 +231,7 @@ BEGIN:
 				logger.Debug("hash %x", hash)
 				hashHex := utils.BinToHex(hash)
 				utils.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hashHex))
-				affect, err := d.ExecSqlGetAffect("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", hashHex)
+				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", hashHex)
 				if err != nil {
 					utils.WriteSelectiveLog(err)
 					rows.Close()

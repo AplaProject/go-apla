@@ -91,14 +91,14 @@ func (p *Parser) UpdFullNodes() error {
 	log.Debug("data %v", data[0]["rb_id"])
 	// логируем их в одну запись JSON
 	// log them into the one record JSON
-	rbId, err := p.ExecSqlGetLastInsertId(`INSERT INTO rb_full_nodes (full_nodes_wallet_json, block_id, prev_rb_id) VALUES (?, ?, ?)`, "rb_full_nodes", string(jsonData), p.BlockData.BlockId, data[0]["rb_id"])
+	rbId, err := p.ExecSQLGetLastInsertID(`INSERT INTO rb_full_nodes (full_nodes_wallet_json, block_id, prev_rb_id) VALUES (?, ?, ?)`, "rb_full_nodes", string(jsonData), p.BlockData.BlockId, data[0]["rb_id"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// удаляем где wallet_id
 	// delete where the wallet_id is
-	err = p.ExecSql(`DELETE FROM full_nodes WHERE wallet_id != 0`)
+	err = p.ExecSQL(`DELETE FROM full_nodes WHERE wallet_id != 0`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -127,7 +127,7 @@ func (p *Parser) UpdFullNodes() error {
 		}
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
 		// insert new data on wallet-nodes with the indication of the common rb_id
-		err = p.ExecSql(`INSERT INTO full_nodes (wallet_id, host, rb_id) VALUES (?, ?, ?)`, dlt_wallets["wallet_id"], dlt_wallets["host"], rbId)
+		err = p.ExecSQL(`INSERT INTO full_nodes (wallet_id, host, rb_id) VALUES (?, ?, ?)`, dlt_wallets["wallet_id"], dlt_wallets["host"], rbId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -172,7 +172,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 
 	// удаляем новые данные
 	// delete new data
-	err = p.ExecSql(`DELETE FROM full_nodes WHERE wallet_id != 0`)
+	err = p.ExecSQL(`DELETE FROM full_nodes WHERE wallet_id != 0`)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -195,7 +195,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 
 	// удаляем новые данные
 	// delete new data
-	err = p.ExecSql(`DELETE FROM rb_full_nodes WHERE rb_id = ?`, rbId)
+	err = p.ExecSQL(`DELETE FROM rb_full_nodes WHERE rb_id = ?`, rbId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -204,7 +204,7 @@ func (p *Parser) UpdFullNodesRollback() error {
 	for _, data := range full_nodes_wallet {
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
 		// insert new data on wallet-nodes with the indication of the common rb_id
-		err = p.ExecSql(`INSERT INTO full_nodes (id, host, wallet_id, state_id, final_delegate_wallet_id, final_delegate_state_id, rb_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, data["id"], data["host"], data["wallet_id"], data["state_id"], data["final_delegate_wallet_id"], data["final_delegate_state_id"], data["rb_id"])
+		err = p.ExecSQL(`INSERT INTO full_nodes (id, host, wallet_id, state_id, final_delegate_wallet_id, final_delegate_state_id, rb_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, data["id"], data["host"], data["wallet_id"], data["state_id"], data["final_delegate_wallet_id"], data["final_delegate_state_id"], data["rb_id"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}

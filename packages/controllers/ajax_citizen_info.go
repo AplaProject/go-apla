@@ -117,7 +117,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 				}
 			}
 						if fval, err = json.Marshal(vals); err == nil {
-						err = c.ExecSql(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
+						err = c.ExecSQL(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
 						data[`request_id`], fval, hex.EncodeToString(buf.Bytes()), c.r.FormValue(`publicKey`))
 					}
 		}*/

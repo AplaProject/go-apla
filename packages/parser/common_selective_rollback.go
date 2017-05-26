@@ -62,19 +62,19 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		//log.Debug("%v", logData["prev_rb_id"])
 		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where)
 		addSqlUpdate = addSqlUpdate[0 : len(addSqlUpdate)-1]
-		err = p.ExecSql("UPDATE " + tblname + " SET " + addSqlUpdate + " " + where)
+		err = p.ExecSQL("UPDATE " + tblname + " SET " + addSqlUpdate + " " + where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// подчищаем _log
 		// clean up the _log
-		err = p.ExecSql("DELETE FROM rollback WHERE rb_id = ?", rbId)
+		err = p.ExecSQL("DELETE FROM rollback WHERE rb_id = ?", rbId)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		p.rollbackAI("rollback", 1)
 	} else {
-		err = p.ExecSql("DELETE FROM " + tblname + " " + where)
+		err = p.ExecSQL("DELETE FROM " + tblname + " " + where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

@@ -44,7 +44,7 @@ func (p *Parser) ParseDataFront() error {
 		}
 
 		utils.WriteSelectiveLog("DELETE FROM transactions WHERE used=1")
-		affect, err := p.ExecSqlGetAffect("DELETE FROM transactions WHERE used = 1")
+		affect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE used = 1")
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return p.ErrInfo(err)
@@ -135,7 +135,7 @@ func (p *Parser) ParseDataFront() error {
 				}
 
 				utils.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(utils.Md5(transactionBinaryDataFull)))
-				affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used=1 WHERE hex(hash) = ?", utils.Md5(transactionBinaryDataFull))
+				affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=1 WHERE hex(hash) = ?", utils.Md5(transactionBinaryDataFull))
 				if err != nil {
 					utils.WriteSelectiveLog(err)
 					return utils.ErrInfo(err)
@@ -144,7 +144,7 @@ func (p *Parser) ParseDataFront() error {
 
 				// даем юзеру понять, что его тр-ия попала в блок
 // let user to know that his transaction got in the block
-				err = p.ExecSql("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
+				err = p.ExecSQL("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 				if err != nil {
 					return utils.ErrInfo(err)
 				}

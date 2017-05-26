@@ -80,7 +80,7 @@ BEGIN:
 		var startBlockId int64
 		// если последний проверенный был давно (пропасть более 5 блоков),
 		// то начинаем проверку последних 5 блоков
-		ConfirmedBlockId, err := d.GetConfirmedBlockId()
+		ConfirmedBlockId, err := d.GetConfirmedBlockID()
 		if err != nil {
 			logger.Error("%v", err)
 		}
@@ -151,13 +151,13 @@ BEGIN:
 			exists, err := d.Single("SELECT block_id FROM confirmations WHERE block_id= ?", blockId).Int64()
 			if exists > 0 {
 				logger.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockId)
-				err = d.ExecSql("UPDATE confirmations SET good = ?, bad = ?, time = ? WHERE block_id = ?", st1, st0, time.Now().Unix(), blockId)
+				err = d.ExecSQL("UPDATE confirmations SET good = ?, bad = ?, time = ? WHERE block_id = ?", st1, st0, time.Now().Unix(), blockId)
 				if err != nil {
 					logger.Error("%v", err)
 				}
 			} else {
 				logger.Debug("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( %v, %v, %v, %v )", blockId, st1, st0, time.Now().Unix())
-				err = d.ExecSql("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( ?, ?, ?, ? )", blockId, st1, st0, time.Now().Unix())
+				err = d.ExecSQL("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( ?, ?, ?, ? )", blockId, st1, st0, time.Now().Unix())
 				if err != nil {
 					logger.Error("%v", err)
 				}
