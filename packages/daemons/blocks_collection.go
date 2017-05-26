@@ -66,6 +66,7 @@ BEGIN:
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
 		// проверим, не нужно ли нам выйти из цикла
+		// check if we have to break the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
@@ -80,6 +81,7 @@ BEGIN:
 		logger.Debug("1")
 
 		// удалим то, что мешает
+		// remove that disturbs
 		if *utils.StartBlockID > 0 {
 			del := []string{"queue_tx", "my_notifications", "main_lock"}
 			for _, table := range del {
@@ -92,7 +94,7 @@ BEGIN:
 			}
 		}
 
-		restart, err := d.dbLock()
+		err, restart := d.dbLock()
 		if restart {
 			logger.Debug("restart true")
 			break BEGIN
@@ -107,6 +109,7 @@ BEGIN:
 		logger.Debug("2")
 
 		// если это первый запуск во время инсталяции
+		// if this is the first launch during the installation
 		currentBlockId, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {
@@ -119,6 +122,7 @@ BEGIN:
 		logger.Info("currentBlockId", currentBlockId)
 
 		// на время тестов
+		// for duration of the tests
 		/*if !cur {
 		    currentBlockId = 0
 		    cur = true
@@ -143,6 +147,7 @@ BEGIN:
 				}
 				logger.Debug("blockchain_url: %s", blockchain_url)
 				// возможно сервер отдаст блокчейн не с первой попытки
+				// probably server will not give the blockchain from the first attempt
 				var blockchainSize int64
 				for i := 0; i < 10; i++ {
 					logger.Debug("blockchain_url: %s, i: %d", blockchain_url, i)
@@ -169,6 +174,7 @@ BEGIN:
 
 				first := true
 				/*// блокчейн мог быть загружен ранее. проверим его размер
+// blockchain could be uploaded earlier, check it's size
 
 
 				  stat, err := file.Stat()
@@ -201,6 +207,7 @@ BEGIN:
 
 				for {
 					// проверим, не нужно ли нам выйти из цикла
+					// check if we have to break the cycle
 					if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 						d.unlockPrintSleep(fmt.Errorf("DaemonsRestart"), 0)
 						break BEGIN
@@ -256,6 +263,7 @@ BEGIN:
 							}
 
 							// отметимся, чтобы не спровоцировать очистку таблиц
+							// we have to be marked for not to cause the cleaning of tables
 							if err = parser.UpdMainLock(); err != nil {
 								if d.dPrintSleep(err, d.sleepTime) {
 									break BEGIN
@@ -272,6 +280,7 @@ BEGIN:
 							}
 						}
 						// ненужный тут размер в конце блока данных
+						// the size which is unnecessary here at the end of the data block
 						data = make([]byte, 5)
 						file.Read(data)
 					} else {
@@ -350,6 +359,7 @@ BEGIN:
 		maxBlockId := int64(1)
 		maxBlockIdHost := ""
 		// получим максимальный номер блока
+		// receive the maximum block number
 		for i := 0; i < len(hosts); i++ {
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				break BEGIN
@@ -365,6 +375,7 @@ BEGIN:
 			logger.Debug("conn", conn)
 
 			// шлем тип данных
+			// send the data type
 			_, err = conn.Write(utils.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
 			if err != nil {
 				conn.Close()
@@ -375,6 +386,7 @@ BEGIN:
 			}
 
 			// в ответ получаем номер блока
+			// obtain the block number as a response
 			blockIdBin := make([]byte, 4)
 			_, err = conn.Read(blockIdBin)
 			if err != nil {
@@ -400,8 +412,10 @@ BEGIN:
 		}
 
 		// получим наш текущий имеющийся номер блока
-		// ждем, пока разлочится и лочим сами, чтобы не попасть в тот момент, когда данные из блока уже занесены в БД, а info_block еще не успел обновиться
-		restart, err = d.dbLock()
+		// obtain our current bloch which we already have
+		// ждем, пока разблочится и лочим сами, чтобы не попасть в тот момент, когда данные из блока уже занесены в БД, а info_block еще не успел обновиться
+		// wait until it's unlocked and block it by ourselves. It's needed for not getting in the moment when data from block is already inserted in database and info_block is not updated yet
+		err, restart = d.dbLock()
 		if restart {
 			break BEGIN
 		}
@@ -431,6 +445,7 @@ BEGIN:
 
 		/////----///////
 		// в цикле собираем блоки, пока не дойдем до максимального
+		// we collect the blocks during the cycle, until we reach the maximum one
 		for blockId := currentBlockId + 1; blockId < maxBlockId+1; blockId++ {
 			d.UpdMainLock()
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
@@ -439,11 +454,14 @@ BEGIN:
 			}
 
 			// качаем тело блока с хоста maxBlockIdHost
+			// download the body of the block from the host maxBlockIdHost
 			binaryBlock, err := utils.GetBlockBody(maxBlockIdHost, blockId, consts.DATA_TYPE_BLOCK_BODY)
 
 			if len(binaryBlock) == 0 {
 				// баним на 1 час хост, который дал нам пустой блок, хотя должен был дать все до максимального
+				// ban host which gave us an empty block instead of all (to the maximum one) for 1 hour
 				// для тестов убрал, потом вставить.
+				// remove for the tests then paste
 				//nodes_ban ($db, $max_block_id_user_id, substr($binary_block, 0, 512)."\n".__FILE__.', '.__LINE__.', '. __FUNCTION__.', '.__CLASS__.', '. __METHOD__);
 				//p.NodesBan("len(binaryBlock) == 0")
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -452,12 +470,14 @@ BEGIN:
 				continue BEGIN
 			}
 			binaryBlockFull := binaryBlock
-			utils.BytesShift(&binaryBlock, 1) // уберем 1-й байт - тип (блок/тр-я)
+			utils.BytesShift(&binaryBlock, 1) // уберем 1-й байт - тип (блок/тр-я) // remove 1-st byte - type (block/transaction)
 			// распарсим заголовок блока
+			// parse the heading of a block
 			blockData := utils.ParseBlockHeader(&binaryBlock)
 			logger.Info("blockData: %v, blockId: %v", blockData, blockId)
 
 			// размер блока не может быть более чем max_block_size
+			// the size of a block couln't be more then max_block_size
 			if currentBlockId > 1 {
 				if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
 					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), consts.MAX_BLOCK_SIZE))
@@ -568,9 +588,34 @@ BEGIN:
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
-					//var transactions []byte
-					utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
-					count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
+				//var transactions []byte
+				utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
+				count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
+				if err != nil {
+					utils.WriteSelectiveLog(err)
+					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+						break BEGIN
+					}
+					continue BEGIN
+				}
+				for rows.Next() {
+					var data []byte
+					err = rows.Scan(&data)
+					utils.WriteSelectiveLog(utils.BinToHex(data))
+					if err != nil {
+						rows.Close()
+						if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+							break BEGIN
+						}
+						continue BEGIN
+					}
+					//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
+				}
+				rows.Close()
+				if len(transactions) > 0 {
+					// отмечаем, что эти тр-ии теперь нужно проверять по новой
+					utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+					affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 					if err != nil {
 						utils.WriteSelectiveLog(err)
 						if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -578,39 +623,14 @@ BEGIN:
 						}
 						continue BEGIN
 					}
-					for rows.Next() {
-						var data []byte
-						err = rows.Scan(&data)
-						utils.WriteSelectiveLog(utils.BinToHex(data))
-						if err != nil {
-							rows.Close()
-							if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-								break BEGIN
-							}
-							continue BEGIN
-						}
-						//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
-					}
-					rows.Close()
-					if len(transactions) > 0 {
-						// отмечаем, что эти тр-ии теперь нужно проверять по новой
-						utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-						affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-						if err != nil {
-							utils.WriteSelectiveLog(err)
-							if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-								break BEGIN
-							}
-							continue BEGIN
-						}
-						utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-						// откатываем по фронту все свежие тр-ии
-						/*parser.BinaryData = transactions
-						err = parser.ParseDataRollbackFront(false)
-						if err != nil {
-							utils.Sleep(1)
-							continue BEGIN
-						}*/
+					utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+					// откатываем по фронту все свежие тр-ии
+					/*parser.BinaryData = transactions
+					err = parser.ParseDataRollbackFront(false)
+					if err != nil {
+						utils.Sleep(1)
+						continue BEGIN
+					}*/
 				/*}*/
 			}
 
