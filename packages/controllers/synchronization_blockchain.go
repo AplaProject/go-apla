@@ -105,6 +105,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		log.Debug("lastBlockData[lastBlockTime]: %v", lastBlockData["lastBlockTime"])
 		log.Debug("time.Now().Unix(): %v", time.Now().Unix())
 		// если уже почти собрали все блоки
+		// if almost all blocks are collected
 		if time.Now().Unix()-lastBlockData["lastBlockTime"] < 600*wTimeReady {
 			blockId = "-1"
 			blockTime = "-1"
