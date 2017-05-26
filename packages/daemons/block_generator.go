@@ -70,13 +70,8 @@ BEGIN:
 		logger.Info(GoroutineName)
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
-<<<<<<< HEAD
 		// проверим, не нужно ли нам выйти из цикла
 		// Check, whether we need to get out of the cycle
-=======
-		// проверим, не нужно ли нам выйти из цикла 
-		// Check, whether we need to exit of the cycle 
->>>>>>> origin/master
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
@@ -321,11 +316,7 @@ BEGIN:
 			}
 			for rows.Next() {
 				// проверим, не нужно ли нам выйти из цикла
-<<<<<<< HEAD
 				// Check if we need to get out from the cycle
-=======
-				// check if we need to get out from the cycle 
->>>>>>> origin/master
 				if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 					break BEGIN
 				}
