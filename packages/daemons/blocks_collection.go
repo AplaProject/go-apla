@@ -94,7 +94,7 @@ BEGIN:
 			}
 		}
 
-		err, restart := d.dbLock()
+		restart, err := d.dbLock()
 		if restart {
 			logger.Debug("restart true")
 			break BEGIN
@@ -174,20 +174,20 @@ BEGIN:
 
 				first := true
 				/*// блокчейн мог быть загружен ранее. проверим его размер
-// blockchain could be uploaded earlier, check it's size
+				// blockchain could be uploaded earlier, check it's size
 
 
-				  stat, err := file.Stat()
-				  if err != nil {
-				      if d.unlockPrintSleep(err, d.sleepTime) {	break BEGIN }
-				      file.Close()
-				      continue BEGIN
-				  }
-				  if stat.Size() < consts.BLOCKCHAIN_SIZE {
-				      d.unlockPrintSleep(fmt.Errorf("%v < %v", stat.Size(), consts.BLOCKCHAIN_SIZE), 1)
-				      file.Close()
-				      continue BEGIN
-				  }*/
+								  stat, err := file.Stat()
+								  if err != nil {
+								      if d.unlockPrintSleep(err, d.sleepTime) {	break BEGIN }
+								      file.Close()
+								      continue BEGIN
+								  }
+								  if stat.Size() < consts.BLOCKCHAIN_SIZE {
+								      d.unlockPrintSleep(fmt.Errorf("%v < %v", stat.Size(), consts.BLOCKCHAIN_SIZE), 1)
+								      file.Close()
+								      continue BEGIN
+								  }*/
 
 				logger.Debug("GO!")
 				file, err = os.Open(*utils.Dir + "/public/blockchain")
@@ -416,7 +416,7 @@ BEGIN:
 		// obtain our current bloch which we already have
 		// ждем, пока разблочится и лочим сами, чтобы не попасть в тот момент, когда данные из блока уже занесены в БД, а info_block еще не успел обновиться
 		// wait until it's unlocked and block it by ourselves. It's needed for not getting in the moment when data from block is already inserted in database and info_block is not updated yet
-		err, restart = d.dbLock()
+		restart, err = d.dbLock()
 		if restart {
 			break BEGIN
 		}
@@ -597,51 +597,51 @@ BEGIN:
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
-				//var transactions []byte
-				utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
-				count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
-				if err != nil {
-					utils.WriteSelectiveLog(err)
-					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				for rows.Next() {
-					var data []byte
-					err = rows.Scan(&data)
-					utils.WriteSelectiveLog(utils.BinToHex(data))
-					if err != nil {
-						rows.Close()
-						if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-							break BEGIN
-						}
-						continue BEGIN
-					}
-					//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
-				}
-				rows.Close()
-				if len(transactions) > 0 {
-					// отмечаем, что эти тр-ии теперь нужно проверять по новой
-// mark that we have to check this transaction one more time
-					utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-					affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-					if err != nil {
-						utils.WriteSelectiveLog(err)
-						if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-							break BEGIN
-						}
-						continue BEGIN
-					}
-					utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-					// откатываем по фронту все свежие тр-ии
-// roll back all recent transactions on a front
-					/*parser.BinaryData = transactions
-					err = parser.ParseDataRollbackFront(false)
-					if err != nil {
-						utils.Sleep(1)
-						continue BEGIN
-					}*/
+								//var transactions []byte
+								utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
+								count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
+								if err != nil {
+									utils.WriteSelectiveLog(err)
+									if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+										break BEGIN
+									}
+									continue BEGIN
+								}
+								for rows.Next() {
+									var data []byte
+									err = rows.Scan(&data)
+									utils.WriteSelectiveLog(utils.BinToHex(data))
+									if err != nil {
+										rows.Close()
+										if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+											break BEGIN
+										}
+										continue BEGIN
+									}
+									//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
+								}
+								rows.Close()
+								if len(transactions) > 0 {
+									// отмечаем, что эти тр-ии теперь нужно проверять по новой
+				// mark that we have to check this transaction one more time
+									utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+									affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+									if err != nil {
+										utils.WriteSelectiveLog(err)
+										if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+											break BEGIN
+										}
+										continue BEGIN
+									}
+									utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+									// откатываем по фронту все свежие тр-ии
+				// roll back all recent transactions on a front
+									/*parser.BinaryData = transactions
+									err = parser.ParseDataRollbackFront(false)
+									if err != nil {
+										utils.Sleep(1)
+										continue BEGIN
+									}*/
 				/*}*/
 			}
 
@@ -663,7 +663,7 @@ BEGIN:
 				}
 			}
 			// начинаем всё с начала уже с другими нодами. Но у нас уже могут быть новые блоки до $block_id, взятые от нода, которого в итоге мы баним
-			// Start from the beginning already with other nodes. But we could have new blocks to $block_id taking from the node 
+			// Start from the beginning already with other nodes. But we could have new blocks to $block_id taking from the node
 			if err != nil {
 				logger.Error("%v", err)
 				parser.BlockError(err)
