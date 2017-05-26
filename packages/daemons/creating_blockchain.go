@@ -38,6 +38,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
 		// проверим, не нужно ли нам выйти из цикла
+		// check if we have to break the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
@@ -51,6 +52,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 		}
 
 		// пишем свежие блоки в резервный блокчейн
+		// record the newest blocks in reserve blockchain
 		endBlockId, err := utils.GetEndBlockID()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
