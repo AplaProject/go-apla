@@ -71,7 +71,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
 	publicKey := []byte(key)
-	walletId, err := c.GetWalletIdByPublicKey(publicKey)
+	walletId, err := c.GetWalletIDByPublicKey(publicKey)
 	if err != nil {
 		result.Error = err.Error()
 		return result

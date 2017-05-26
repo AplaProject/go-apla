@@ -75,7 +75,7 @@ func (t *TcpServer) Type1() {
 		 * tx_hash - 16 байт // tx_hash - 16 bytes
 		 * </>
 		 * */
-		blockId, err := t.GetBlockId()
+		blockId, err := t.GetBlockID()
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return

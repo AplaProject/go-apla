@@ -264,7 +264,7 @@ func (r *singleResult) Bytes() ([]byte, error) {
 	return r.result, nil
 }
 
-// Signle returns the single result of the query
+// Single returns the single result of the query
 func (db *DCDB) Single(query string, args ...interface{}) *singleResult {
 
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
@@ -831,7 +831,7 @@ func (db *DCDB) GetMyStateIDAndWalletID() (int64, int64, error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	myWalletID, err := db.GetMyWalletId()
+	myWalletID, err := db.GetMyWalletID()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -853,6 +853,7 @@ func (db *DCDB) GetHosts() ([]string, error) {
 	return hosts, nil
 }
 
+// CheckDelegateCB checks if the state is delegated
 func (db *DCDB) CheckDelegateCB(myStateID int64) (bool, error) {
 	delegate, err := db.OneRow("SELECT delegate_wallet_id, delegate_state_id FROM system_recognized_states WHERE state_id = ?", myStateID).Int64()
 	if err != nil {
@@ -866,31 +867,31 @@ func (db *DCDB) CheckDelegateCB(myStateID int64) (bool, error) {
 	return false, nil
 }
 
-func (db *DCDB) GetMyWalletId() (int64, error) {
-	walletId, err := db.Single("SELECT dlt_wallet_id FROM config").Int64()
+// GetMyWalletID returns wallet id from config
+func (db *DCDB) GetMyWalletID() (int64, error) {
+	walletID, err := db.Single("SELECT dlt_wallet_id FROM config").Int64()
 	if err != nil {
 		return 0, err
 	}
-	if walletId == 0 {
+	if walletID == 0 {
 		//		walletId, err = db.Single("SELECT wallet_id FROM dlt_wallets WHERE address = ?", *WalletAddress).Int64()
-		walletId = lib.StringToAddress(*WalletAddress)
+		walletID = lib.StringToAddress(*WalletAddress)
 	}
-	return walletId, nil
+	return walletID, nil
 }
 
+// GetMyStateID returns state id from config
 func (db *DCDB) GetMyStateID() (int64, error) {
 	return db.Single("SELECT state_id FROM config").Int64()
 }
 
-func (db *DCDB) GetBlockId() (int64, error) {
+// GetBlockID returns teh latest block id from info_block
+func (db *DCDB) GetBlockID() (int64, error) {
 	return db.Single("SELECT block_id FROM info_block").Int64()
 }
 
-func (db *DCDB) GetMyBlockId() (int64, error) {
-	return db.Single("SELECT my_block_id FROM config").Int64()
-}
-
-func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
+// GetWalletIDByPublicKey convert public key to wallet id
+func (db *DCDB) GetWalletIDByPublicKey(publicKey []byte) (int64, error) {
 	/*	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
 		log.Debug("publicKey %s", publicKey)
 		log.Debug("key %s", key)
@@ -905,14 +906,15 @@ func (db *DCDB) GetWalletIdByPublicKey(publicKey []byte) (int64, error) {
 	return int64(lib.Address(key)), nil
 }
 
-func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
+/*func (db *DCDB) GetCitizenIdByPublicKey(publicKey []byte) (int64, error) {
 	walletId, err := db.Single(`SELECT citizen_id FROM ea_citizens WHERE hex(public_key_0) = ?`, string(publicKey)).Int64()
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
 	return walletId, nil
-}
+}*/
 
+// GetInfoBlock return the information about the latest block
 func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	var result map[string]string
 	result, err := db.OneRow("SELECT * FROM info_block").String()
@@ -925,24 +927,27 @@ func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	return result, nil
 }
 
-func (db *DCDB) GetNodePublicKey(waletId int64) ([]byte, error) {
-	result, err := db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", waletId).Bytes()
+// GetNodePublicKey returns the node public key of the wallet id
+func (db *DCDB) GetNodePublicKey(waletID int64) ([]byte, error) {
+	result, err := db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", waletID).Bytes()
 	if err != nil {
 		return []byte(""), err
 	}
 	return result, nil
 }
-func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, state_id int64) ([]byte, error) {
+
+// GetNodePublicKeyWalletOrCB returns node public key of wallet id or state id
+func (db *DCDB) GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
 	var result []byte
 	var err error
-	if wallet_id != 0 {
-		log.Debug("wallet_id %v state_id %v", wallet_id, state_id)
-		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
+	if walletID != 0 {
+		log.Debug("wallet_id %v state_id %v", walletID, stateID)
+		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", walletID).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
 	} else {
-		result, err = db.Single("SELECT node_public_key FROM system_recognized_states WHERE state_id = ?", state_id).Bytes()
+		result, err = db.Single("SELECT node_public_key FROM system_recognized_states WHERE state_id = ?", stateID).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
@@ -950,16 +955,17 @@ func (db *DCDB) GetNodePublicKeyWalletOrCB(wallet_id, state_id int64) ([]byte, e
 	return result, nil
 }
 
-func (db *DCDB) GetPublicKeyWalletOrCitizen(wallet_id, citizen_id int64) ([]byte, error) {
+// GetPublicKeyWalletOrCitizen returns public key of the wallet id or citizen id
+func (db *DCDB) GetPublicKeyWalletOrCitizen(walletID, citizenID int64) ([]byte, error) {
 	var result []byte
 	var err error
-	if wallet_id != 0 {
-		result, err = db.Single("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", wallet_id).Bytes()
+	if walletID != 0 {
+		result, err = db.Single("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", walletID).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
 	} else {
-		result, err = db.Single("SELECT public_key_0 FROM ea_citizens WHERE citizen_is = ?", citizen_id).Bytes()
+		result, err = db.Single("SELECT public_key_0 FROM ea_citizens WHERE citizen_is = ?", citizenID).Bytes()
 		if err != nil {
 			return []byte(""), err
 		}
@@ -967,14 +973,17 @@ func (db *DCDB) GetPublicKeyWalletOrCitizen(wallet_id, citizen_id int64) ([]byte
 	return result, nil
 }
 
+// UpdMainLock updates the lock time
 func (db *DCDB) UpdMainLock() error {
 	return db.ExecSQL("UPDATE main_lock SET lock_time = ?", time.Now().Unix())
 }
 
+// CheckDaemonsRestart is reserved
 func (db *DCDB) CheckDaemonsRestart() bool {
 	return false
 }
 
+// DbLock locks deamons
 func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutineName string) (error, bool) {
 
 	defer func() {
@@ -1030,60 +1039,25 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 	return nil, false
 }
 
-func (db *DCDB) DbLockGate(name string) error {
-	var ok bool
-	for {
-		Mutex.Lock()
-		exists, err := db.OneRow("SELECT lock_time, script_name FROM main_lock").String()
-		if err != nil {
-			Mutex.Unlock()
-			return ErrInfo(err)
-		}
-		if len(exists["script_name"]) == 0 {
-			err = db.ExecSQL(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), name, Caller(1))
-			if err != nil {
-				Mutex.Unlock()
-				return ErrInfo(err)
-			}
-			ok = true
-		}
-		Mutex.Unlock()
-		if !ok {
-			time.Sleep(time.Duration(RandInt(300, 400)) * time.Millisecond)
-		} else {
-			break
-		}
-	}
-	return nil
+// DeleteQueueBlock deletes a row from queue_blocks with the specified hash
+func (db *DCDB) DeleteQueueBlock(hashHex string) error {
+	return db.ExecSQL("DELETE FROM queue_blocks WHERE hex(hash) = ?", hashHex)
 }
 
-func (db *DCDB) DeleteQueueBlock(hash_hex string) error {
-	return db.ExecSQL("DELETE FROM queue_blocks WHERE hex(hash) = ?", hash_hex)
-}
-
+// SetAI sets serial sequence for the table
 func (db *DCDB) SetAI(table string, AI int64) error {
 
-	AiId, err := db.GetAiId(table)
+	AiID, err := db.GetAiID(table)
 	if err != nil {
 		return ErrInfo(err)
 	}
 
 	if db.ConfigIni["db_type"] == "postgresql" {
-		pg_get_serial_sequence, err := db.Single("SELECT pg_get_serial_sequence('" + table + "', '" + AiId + "')").String()
+		pgGetSerialSequence, err := db.Single("SELECT pg_get_serial_sequence('" + table + "', '" + AiID + "')").String()
 		if err != nil {
 			return ErrInfo(err)
 		}
-		err = db.ExecSQL("ALTER SEQUENCE " + pg_get_serial_sequence + " RESTART WITH " + Int64ToStr(AI))
-		if err != nil {
-			return ErrInfo(err)
-		}
-	} else if db.ConfigIni["db_type"] == "mysql" {
-		err := db.ExecSQL("ALTER TABLE " + table + " AUTO_INCREMENT = " + Int64ToStr(AI))
-		if err != nil {
-			return ErrInfo(err)
-		}
-	} else if db.ConfigIni["db_type"] == "sqlite" {
-		err := db.ExecSQL("UPDATE SQLITE_SEQUENCE SET seq = ? WHERE name = ?", AI, table)
+		err = db.ExecSQL("ALTER SEQUENCE " + pgGetSerialSequence + " RESTART WITH " + Int64ToStr(AI))
 		if err != nil {
 			return ErrInfo(err)
 		}
@@ -1091,30 +1065,20 @@ func (db *DCDB) SetAI(table string, AI int64) error {
 	return nil
 }
 
-func (db *DCDB) PrintSleep(err_ interface{}, sleep time.Duration) {
+// PrintSleep writes the error to log and make a pause
+func (db *DCDB) PrintSleep(v interface{}, sleep time.Duration) {
 	var err error
-	switch err_.(type) {
+	switch v.(type) {
 	case string:
-		err = errors.New(err_.(string))
+		err = errors.New(v.(string))
 	case error:
-		err = err_.(error)
+		err = v.(error)
 	}
 	log.Error("%v (%v)", err, GetParent())
 	Sleep(sleep)
 }
 
-func (db *DCDB) PrintSleepInfo(err_ interface{}, sleep time.Duration) {
-	var err error
-	switch err_.(type) {
-	case string:
-		err = errors.New(err_.(string))
-	case error:
-		err = err_.(error)
-	}
-	log.Info("%v (%v)", err, GetParent())
-	Sleep(sleep)
-}
-
+// DbUnlock unlocks database
 func (db *DCDB) DbUnlock(goRoutineName string) error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1132,16 +1096,13 @@ func (db *DCDB) DbUnlock(goRoutineName string) error {
 	return nil
 }
 
-func (db *DCDB) DbUnlockGate(name string) error {
-	log.Debug("DbUnlockGate %v %v", Caller(2), name)
-	return db.ExecSQL("DELETE FROM main_lock WHERE script_name = ?", name)
-}
-
+// UpdDaemonTime is reserved
 func (db *DCDB) UpdDaemonTime(name string) {
 
 }
 
-func (db *DCDB) GetAiId(table string) (string, error) {
+// GetAiID returns auto increment column
+func (db *DCDB) GetAiID(table string) (string, error) {
 	exists := ""
 	column := "id"
 	if table == "users" {
@@ -1150,27 +1111,6 @@ func (db *DCDB) GetAiId(table string) (string, error) {
 		column = "miner_id"
 	} else {
 		switch db.ConfigIni["db_type"] {
-		case "sqlite":
-			err := db.QueryRow(db.FormatQuery("SELECT id FROM " + table)).Scan(&exists)
-			if err != nil {
-				if fmt.Sprintf("%x", err) == fmt.Sprintf("%x", fmt.Errorf("no such column: id")) {
-					err = db.QueryRow(db.FormatQuery("SELECT rb_id FROM " + table)).Scan(&exists)
-					if err != nil {
-						if ok, _ := regexp.MatchString(`no rows`, fmt.Sprintf("%s", err)); ok {
-							column = "rb_id"
-						} else {
-							return "", ErrInfo(err)
-						}
-					}
-					column = "rb_id"
-				} else {
-					if ok, _ := regexp.MatchString(`no rows`, fmt.Sprintf("%s", err)); ok {
-						column = "id"
-					} else {
-						return "", ErrInfo(err)
-					}
-				}
-			}
 		case "postgresql":
 			exists = ""
 			err := db.QueryRow("SELECT column_name FROM information_schema.columns WHERE table_name=$1 and column_name=$2", table, "id").Scan(&exists)
@@ -1187,32 +1127,18 @@ func (db *DCDB) GetAiId(table string) (string, error) {
 				}
 				column = "rb_id"
 			}
-		case "mysql":
-			exists = ""
-			err := db.QueryRow("SELECT TABLE_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name=? and column_name=?", db.ConfigIni["db_name"], table, "id").Scan(&exists)
-			if err != nil && err != sql.ErrNoRows {
-				return "", err
-			}
-			if len(exists) == 0 {
-				err := db.QueryRow("SELECT TABLE_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name=? and column_name=?", db.ConfigIni["db_name"], table, "rb_id").Scan(&exists)
-				if err != nil {
-					return "", err
-				}
-				if len(exists) == 0 {
-					return "", fmt.Errorf("no id, rb_id")
-				}
-				column = "rb_id"
-			}
 		}
 	}
 	return column, nil
 }
 
+// NodesBan is reserved
 func (db *DCDB) NodesBan(info string) error {
 
 	return nil
 }
 
+// GetBlockDataFromBlockChain returns the block information from the blockchain
 func (db *DCDB) GetBlockDataFromBlockChain(blockId int64) (*BlockData, error) {
 	BlockData := new(BlockData)
 	data, err := db.OneRow("SELECT * FROM block_chain WHERE id = ?", blockId).String()
@@ -1229,105 +1155,7 @@ func (db *DCDB) GetBlockDataFromBlockChain(blockId int64) (*BlockData, error) {
 	return BlockData, nil
 }
 
-func (db *DCDB) ClearIncompatibleTxSql(whereType interface{}, walletId int64, citizenId int64, waitError *string) {
-	var whereTypeID int64
-	switch whereType.(type) {
-	case string:
-		whereTypeID = TypeInt(whereType.(string))
-	case int64:
-		whereTypeID = whereType.(int64)
-	}
-	addSql := ""
-	if walletId > 0 {
-		addSql = "AND wallet_id = " + Int64ToStr(walletId)
-	}
-	if citizenId > 0 {
-		addSql = "AND citizen_id = " + Int64ToStr(citizenId)
-	}
-	num, err := db.Single(`
-					SELECT count(*)
-					FROM (
-				            SELECT hash
-				            FROM transactions
-				            WHERE type = ?
-				                          `+addSql+` AND
-				                         verified=1 AND
-				                         used = 0
-					)  AS x
-					`, whereTypeID, whereTypeID).Int64()
-	if err != nil {
-		*waitError = fmt.Sprintf("%v", ErrInfo(err))
-	}
-	if num > 0 {
-		*waitError = "wait_error"
-	}
-}
-
-func (db *DCDB) ClearIncompatibleTxSqlSet(typesArr []string, walletId_ interface{}, citizenId_ interface{}, waitError *string, thirdVar_ interface{}) error {
-
-	var walletId int64
-	switch walletId_.(type) {
-	case string:
-		walletId = StrToInt64(walletId_.(string))
-	case int64:
-		walletId = walletId_.(int64)
-	}
-
-	var citizenId int64
-	switch citizenId_.(type) {
-	case string:
-		citizenId = StrToInt64(citizenId_.(string))
-	case int64:
-		citizenId = citizenId_.(int64)
-	}
-
-	var thirdVar string
-	switch thirdVar_.(type) {
-	case string:
-		thirdVar = thirdVar_.(string)
-	case int64:
-		thirdVar = Int64ToStr(thirdVar_.(int64))
-	}
-
-	var whereType string
-	for _, txType := range typesArr {
-		whereType += Int64ToStr(TypeInt(txType)) + ","
-	}
-	whereType = whereType[:len(whereType)-1]
-
-	addSql := ""
-	if walletId > 0 {
-		addSql = "AND wallet_id = " + Int64ToStr(walletId)
-	}
-	if citizenId > 0 {
-		addSql = "AND citizen_id = " + Int64ToStr(citizenId)
-	}
-
-	addSql1 := ""
-	if len(thirdVar) > 0 {
-		addSql1 = "AND citizen_id = " + thirdVar
-	}
-
-	num, err := db.Single(`
-					SELECT count(*)
-					FROM (
-				            SELECT hash
-				            FROM transactions
-				            WHERE type IN (`+whereType+`)
-				                          `+addSql+` `+addSql1+` AND
-				                         verified=1 AND
-				                         used = 0
-					)  AS x
-					`, citizenId).Int64()
-	if err != nil {
-		*waitError = fmt.Sprintf("%v", ErrInfo(err))
-	}
-	if num > 0 {
-		*waitError = "wait_error"
-	}
-	return nil
-}
-
+// GetTxTypeAndUserId returns tx type, wallet and citizen id from the block data
 func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
 	tmp := binaryBlock[:]
 	txType = BinToDecBytesShift(&binaryBlock, 1)
@@ -1354,6 +1182,7 @@ func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletID int64, citiz
 	return
 }
 
+// DecryptData decrypts tx data
 func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 
 	if len(*binaryTx) == 0 {
@@ -1395,12 +1224,12 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, ErrInfo("No valid PEM data found")
 	}
 
-	private_key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, nil, nil, ErrInfo(err)
 	}
 
-	decKey, err := rsa.DecryptPKCS1v15(crand.Reader, private_key, encryptedKey)
+	decKey, err := rsa.DecryptPKCS1v15(crand.Reader, privateKey, encryptedKey)
 	if err != nil {
 		return nil, nil, nil, ErrInfo(err)
 	}

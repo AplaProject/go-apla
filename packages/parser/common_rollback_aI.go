@@ -29,7 +29,7 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 		return nil
 	}
 
-	AiID, err := p.GetAiId(table)
+	AiID, err := p.GetAiID(table)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}

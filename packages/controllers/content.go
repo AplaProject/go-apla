@@ -388,7 +388,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		// подсвечиваем красным номер блока, если идет процесс обновления
 		// We highlight the block number in red if the update process is in progress
 		var blockJs string
-		blockId, err := c.GetBlockId()
+		blockId, err := c.GetBlockID()
 		if err != nil {
 			log.Error("%v", err)
 		}

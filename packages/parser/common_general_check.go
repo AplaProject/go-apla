@@ -51,7 +51,7 @@ func (p *Parser) generalCheck(name string) error {
 			// probably user sent the key with territory
 			log.Debug("pubkey %s", p.TxMap["public_key"])
 			log.Debug("pubkey %x", p.TxMap["public_key"])
-			walletID, err := p.GetWalletIdByPublicKey(p.TxMap["public_key"])
+			walletID, err := p.GetWalletIDByPublicKey(p.TxMap["public_key"])
 			if err != nil {
 				return utils.ErrInfo(err)
 			}

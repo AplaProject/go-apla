@@ -107,7 +107,7 @@ BEGIN:
 		logger.Debug("2")
 
 		// если это первый запуск во время инсталяции
-		currentBlockId, err := d.GetBlockId()
+		currentBlockId, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN
@@ -412,7 +412,7 @@ BEGIN:
 			continue BEGIN
 		}
 
-		currentBlockId, err = d.GetBlockId()
+		currentBlockId, err = d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN

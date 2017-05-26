@@ -73,7 +73,7 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockId, err := d.GetBlockId()
+		blockId, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN

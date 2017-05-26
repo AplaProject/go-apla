@@ -42,7 +42,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 			break BEGIN
 		}
 
-		curBlockId, err := d.GetBlockId()
+		curBlockId, err := d.GetBlockID()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN

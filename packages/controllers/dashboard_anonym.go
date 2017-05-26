@@ -29,7 +29,7 @@ type dashboardAnonymPage struct {
 func (c *Controller) DashboardAnonym() (string, error) {
 	amount := `0`
 
-	/*	wallet_id,err := c.GetMyWalletId()
+	/*	wallet_id,err := c.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}*/

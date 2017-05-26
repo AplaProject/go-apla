@@ -570,7 +570,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		myWalletId, err := c.GetMyWalletId()
+		myWalletId, err := c.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -660,7 +660,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		myWalletId, err := c.GetMyWalletId()
+		myWalletId, err := c.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
