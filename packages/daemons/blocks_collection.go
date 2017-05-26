@@ -240,6 +240,7 @@ BEGIN:
 
 							logger.Debug("block parsing")
 							// парсинг блока
+							// parsing of a block
 							parser.BinaryData = blockBin
 
 							if first {
@@ -499,6 +500,7 @@ BEGIN:
 			}
 
 			// нам нужен хэш предыдущего блока, чтобы проверить подпись
+			// we need the hash of the previous block, to check the signature
 			prevBlockHash := ""
 			if blockId > 1 {
 				prevBlockHash, err = d.Single("SELECT hash FROM block_chain WHERE id = ?", blockId-1).String()
@@ -521,6 +523,7 @@ BEGIN:
 				first = true
 			}
 			// нам нужен меркель-рут текущего блока
+			// we need the mrklRoot of current block
 			mrklRoot, err := utils.GetMrklroot(binaryBlock, first)
 			if err != nil {
 				d.NodesBan(fmt.Sprintf(`%v`, err))
@@ -533,6 +536,7 @@ BEGIN:
 			logger.Debug("mrklRoot %s", mrklRoot)
 
 			// публичный ключ того, кто этот блок сгенерил
+			// public key of those who has generated this block
 			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.StateID)
 			if err != nil {
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -544,16 +548,20 @@ BEGIN:
 			logger.Debug("nodePublicKey %x", nodePublicKey)
 
 			// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
+			// SIGN from 128 bytes to 512 bytes. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
 			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.StateID, mrklRoot)
 			logger.Debug("forSign %v", forSign)
 
 			// проверяем подпись
+			// check the signature
 			if !first {
 				_, err = utils.CheckSign([][]byte{nodePublicKey}, forSign, blockData.Sign, true)
 			}
 
 			// качаем предыдущие блоки до тех пор, пока отличается хэш предыдущего.
+			// download the previous blocks until the hash of the previous one differs.
 			// другими словами, пока подпись с prevBlockHash будет неверной, т.е. пока что-то есть в $error
+			// in other words while the signature with prevBlockHash is incorrect, while there is something in $error
 			if err != nil {
 				logger.Error("%v", utils.ErrInfo(err))
 				if blockId < 1 {
@@ -563,6 +571,7 @@ BEGIN:
 					continue BEGIN
 				}
 				// нужно привести данные в нашей БД в соответствие с данными у того, у кого качаем более свежий блок
+				// it is necessary to make data in our database according with the data of the one who has the most recent block which we download
 				err := parser.GetBlocks(blockId-1, maxBlockIdHost, "rollback_blocks_2", GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
 				if err != nil {
 					logger.Error("%v", err)
@@ -614,6 +623,7 @@ BEGIN:
 				rows.Close()
 				if len(transactions) > 0 {
 					// отмечаем, что эти тр-ии теперь нужно проверять по новой
+// mark that we have to check this transaction one more time
 					utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 					affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 					if err != nil {
@@ -625,6 +635,7 @@ BEGIN:
 					}
 					utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 					// откатываем по фронту все свежие тр-ии
+// roll back all recent transactions on a front
 					/*parser.BinaryData = transactions
 					err = parser.ParseDataRollbackFront(false)
 					if err != nil {
@@ -636,6 +647,8 @@ BEGIN:
 
 			// теперь у нас в таблицах всё тоже самое, что у нода, у которого качаем блок
 			// и можем этот блок проверить и занести в нашу БД
+			// currently we have in out tables the same that the node has, where we download the node
+			// and we can check this node and insert into database
 			parser.BinaryData = binaryBlockFull
 
 			err = parser.ParseDataFull(false)
@@ -649,7 +662,8 @@ BEGIN:
 					continue BEGIN
 				}
 			}
-			// начинаем всё с начала уже с другими нодами. Но у нас уже могут быть новые блоки до $block_id, взятые от нода, которого с в итоге мы баним
+			// начинаем всё с начала уже с другими нодами. Но у нас уже могут быть новые блоки до $block_id, взятые от нода, которого в итоге мы баним
+			// Start from the beginning already with other nodes. But we could have new blocks to $block_id taking from the node 
 			if err != nil {
 				logger.Error("%v", err)
 				parser.BlockError(err)
