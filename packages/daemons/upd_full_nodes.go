@@ -18,9 +18,9 @@ package daemons
 
 import (
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 func UpdFullNodes(chBreaker chan bool, chAnswer chan string) {
@@ -59,7 +59,7 @@ BEGIN:
 			break BEGIN
 		}
 
-		err, restart := d.dbLock()
+		restart, err := d.dbLock()
 		if restart {
 			break BEGIN
 		}
@@ -84,7 +84,7 @@ BEGIN:
 			continue BEGIN
 		}
 
-		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID();
+		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID()
 		logger.Debug("%v", myWalletId)
 		if err != nil {
 			d.dbUnlock()
@@ -96,7 +96,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		full_node_id, err:= d.FindInFullNodes(myStateID, myWalletId)
+		full_node_id, err := d.FindInFullNodes(myStateID, myWalletId)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)

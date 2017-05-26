@@ -27,7 +27,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	var err error
 	var fatalError string
 	hashHex := utils.BinToHex(hash)
-	txType, walletId, citizenId := utils.GetTxTypeAndUserId(binaryTx)
+	txType, walletId, citizenId := utils.GetTxTypeAndUserID(binaryTx)
 	if walletId == 0 && citizenId == 0 {
 		fatalError = "undefined walletId and citizenId"
 	} else {

@@ -62,7 +62,7 @@ BEGIN:
 			break BEGIN
 		}
 
-		err, restart := d.dbLock()
+		restart, err := d.dbLock()
 		if restart {
 			break BEGIN
 		}

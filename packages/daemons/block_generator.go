@@ -64,19 +64,19 @@ BEGIN:
 
 		// full_node_id == 0 приводит к установке d.sleepTime = 10 в daemons/upd_full_nodes.go, тут надо обнулить, т.к. может быть первичная установка
 		// full_node_id == 0 leads to the installation of  d.sleepTime = 10 в daemons/upd_full_nodes.go, here it is necessary to reset, because it could happen a primary installation
-		
+
 		d.sleepTime = 1
 
 		logger.Info(GoroutineName)
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
-		// проверим, не нужно ли нам выйти из цикла 
-		// Check, whether we need to get out of the cycle 
+		// проверим, не нужно ли нам выйти из цикла
+		// Check, whether we need to get out of the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
 
-		err, restart := d.dbLock()
+		restart, err := d.dbLock()
 		if restart {
 			break BEGIN
 		}
@@ -132,7 +132,7 @@ BEGIN:
 		}
 
 		// Есть ли мы в списке тех, кто может генерить блоки
-		// If we are in the list of those who can generate blocks 
+		// If we are in the list of those who can generate blocks
 		my_full_node_id, err := d.FindInFullNodes(myStateID, myWalletId)
 		if err != nil {
 			d.dbUnlock()
@@ -192,7 +192,7 @@ BEGIN:
 		d.dbUnlock()
 
 		// учтем прошедшее время
- 		// take into account the passed time
+		// take into account the passed time
 		sleep := int64(sleepTime) - (utils.Time() - prevBlock["time"])
 		if sleep < 0 {
 			sleep = 0
@@ -210,7 +210,7 @@ BEGIN:
 
 		// пока мы спали последний блок, скорее всего, изменился. Но с большой вероятностью наше место в очереди не изменилось. А если изменилось, то ничего страшного не прозойдет.
 		// While we slept, most likely the last block has been changed. But probably our turn is not changed. Even if it is, dont't worry, nothing bad will happen.
-		err, restart = d.dbLock()
+		restart, err = d.dbLock()
 		if restart {
 			break BEGIN
 		}
@@ -255,7 +255,7 @@ BEGIN:
 		newBlockId = prevBlock["block_id"] + 1
 
 		// получим наш приватный нодовский ключ
-		// Recieve our private node key 
+		// Recieve our private node key
 		nodePrivateKey, err := d.GetNodePrivateKey()
 		if len(nodePrivateKey) < 1 {
 			logger.Debug("continue")
@@ -316,7 +316,7 @@ BEGIN:
 			}
 			for rows.Next() {
 				// проверим, не нужно ли нам выйти из цикла
-				// Check if we need to get out from the cycle 
+				// Check if we need to get out from the cycle
 				if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 					break BEGIN
 				}

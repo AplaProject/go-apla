@@ -19,14 +19,14 @@ package daemons
 import (
 	"errors"
 	"flag"
-	"github.com/astaxie/beego/config"
+	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/astaxie/beego/config"
 	"github.com/op/go-logging"
 	"os"
-	"strings"
 	"regexp"
-	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
-	"fmt"
+	"strings"
 )
 
 var (
@@ -39,15 +39,15 @@ var (
 
 type daemon struct {
 	*utils.DCDB
-	goRoutineName  string
+	goRoutineName string
 	/*DaemonCh       chan bool
 	AnswerDaemonCh chan string*/
 	chBreaker chan bool
-	chAnswer chan string
-	sleepTime      int
+	chAnswer  chan string
+	sleepTime int
 }
 
-func (d *daemon) dbLock() (error, bool) {
+func (d *daemon) dbLock() (bool, error) {
 	return d.DbLock(d.chBreaker, d.chAnswer, d.goRoutineName)
 }
 
@@ -75,7 +75,7 @@ func (d *daemon) dPrintSleep(err_ interface{}, sleep int) bool {
 		err = err_.(error)
 	}
 
-	if err!=nil {
+	if err != nil {
 		logger.Error("%v (%v)", err, utils.GetParent())
 	}
 	if d.dSleep(sleep) {
@@ -175,12 +175,11 @@ func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) 
 	return nil
 }
 
-
 func StartDaemons() {
 	utils.DaemonsChans = nil
-	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"CreatingBlockchain": CreatingBlockchain, "BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks,   "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection, "UpdFullNodes": UpdFullNodes}
+	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"CreatingBlockchain": CreatingBlockchain, "BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks, "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection, "UpdFullNodes": UpdFullNodes}
 	if utils.Mobile() {
-		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"QueueParserTx": QueueParserTx, "Disseminator": Disseminator, "Confirmations": Confirmations,"BlocksCollection": BlocksCollection}
+		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"QueueParserTx": QueueParserTx, "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection}
 	}
 	if *utils.TestRollBack == 1 {
 		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"BlocksCollection": BlocksCollection, "Confirmations": Confirmations}
@@ -209,17 +208,16 @@ func StartDaemons() {
 
 }
 
-
 func ClearDb(ChAnswer chan string, goroutineName string) error {
 
 	// остановим демонов, иначе будет паника, когда таблы обнулятся
 	fmt.Println("ClearDb() Stop_daemons from DB!")
 	for _, ch := range utils.DaemonsChans {
 		fmt.Println("ch.ChBreaker<-true")
-		ch.ChBreaker<-true
+		ch.ChBreaker <- true
 	}
 	if len(goroutineName) > 0 {
-		ChAnswer<-goroutineName
+		ChAnswer <- goroutineName
 	}
 	for _, ch := range utils.DaemonsChans {
 		fmt.Println(<-ch.ChAnswer)
@@ -286,8 +284,8 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 	StartDaemons()
 	stopdaemons.Signals()
 	utils.Sleep(1)
-// мониторим сигнал из БД о том, что демонам надо завершаться
-// Похоже это не нужно так как WaitStopTime не прекращает работу и от демонов не зависит
-//	go stopdaemons.WaitStopTime()
+	// мониторим сигнал из БД о том, что демонам надо завершаться
+	// Похоже это не нужно так как WaitStopTime не прекращает работу и от демонов не зависит
+	//	go stopdaemons.WaitStopTime()
 	return nil
 }

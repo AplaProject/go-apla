@@ -92,7 +92,7 @@ BEGIN:
 			}
 		}
 
-		err, restart := d.dbLock()
+		restart, err := d.dbLock()
 		if restart {
 			logger.Debug("restart true")
 			break BEGIN
@@ -401,7 +401,7 @@ BEGIN:
 
 		// получим наш текущий имеющийся номер блока
 		// ждем, пока разлочится и лочим сами, чтобы не попасть в тот момент, когда данные из блока уже занесены в БД, а info_block еще не успел обновиться
-		err, restart = d.dbLock()
+		restart, err = d.dbLock()
 		if restart {
 			break BEGIN
 		}
@@ -568,34 +568,9 @@ BEGIN:
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
-				//var transactions []byte
-				utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
-				count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
-				if err != nil {
-					utils.WriteSelectiveLog(err)
-					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				for rows.Next() {
-					var data []byte
-					err = rows.Scan(&data)
-					utils.WriteSelectiveLog(utils.BinToHex(data))
-					if err != nil {
-						rows.Close()
-						if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-							break BEGIN
-						}
-						continue BEGIN
-					}
-					//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
-				}
-				rows.Close()
-				if len(transactions) > 0 {
-					// отмечаем, что эти тр-ии теперь нужно проверять по новой
-					utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-					affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+					//var transactions []byte
+					utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
+					count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
 					if err != nil {
 						utils.WriteSelectiveLog(err)
 						if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -603,14 +578,39 @@ BEGIN:
 						}
 						continue BEGIN
 					}
-					utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-					// откатываем по фронту все свежие тр-ии
-					/*parser.BinaryData = transactions
-					err = parser.ParseDataRollbackFront(false)
-					if err != nil {
-						utils.Sleep(1)
-						continue BEGIN
-					}*/
+					for rows.Next() {
+						var data []byte
+						err = rows.Scan(&data)
+						utils.WriteSelectiveLog(utils.BinToHex(data))
+						if err != nil {
+							rows.Close()
+							if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+								break BEGIN
+							}
+							continue BEGIN
+						}
+						//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
+					}
+					rows.Close()
+					if len(transactions) > 0 {
+						// отмечаем, что эти тр-ии теперь нужно проверять по новой
+						utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+						affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+						if err != nil {
+							utils.WriteSelectiveLog(err)
+							if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+								break BEGIN
+							}
+							continue BEGIN
+						}
+						utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+						// откатываем по фронту все свежие тр-ии
+						/*parser.BinaryData = transactions
+						err = parser.ParseDataRollbackFront(false)
+						if err != nil {
+							utils.Sleep(1)
+							continue BEGIN
+						}*/
 				/*}*/
 			}
 

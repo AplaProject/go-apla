@@ -143,12 +143,14 @@ func (db *DCDB) GetFirstColumnNamesPg(table string) (string, error) {
 	return result[0], nil
 }
 
-type singleResult struct {
+// SingleResult is a structure for the single result
+type SingleResult struct {
 	result []byte
 	err    error
 }
 
-type listResult struct {
+// ListResult is a structure for the list result
+type ListResult struct {
 	result []string
 	err    error
 }
@@ -159,7 +161,7 @@ type oneRow struct {
 }
 
 // Int64 converts all string values to int64
-func (r *listResult) Int64() ([]int64, error) {
+func (r *ListResult) Int64() ([]int64, error) {
 	var result []int64
 	if r.err != nil {
 		return result, r.err
@@ -171,7 +173,7 @@ func (r *listResult) Int64() ([]int64, error) {
 }
 
 // String return the slice of strings
-func (r *listResult) String() ([]string, error) {
+func (r *ListResult) String() ([]string, error) {
 	if r.err != nil {
 		return r.result, r.err
 	}
@@ -230,34 +232,40 @@ func (r *oneRow) Int() (map[string]int, error) {
 	return result, nil
 }
 
-func (r *singleResult) Int64() (int64, error) {
+// Int64 converts bytes to int64
+func (r *SingleResult) Int64() (int64, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
 	return BytesToInt64(r.result), nil
 }
-func (r *singleResult) Int() (int, error) {
+
+// Int converts bytes to int
+func (r *SingleResult) Int() (int, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
 	return BytesToInt(r.result), nil
 }
 
-func (r *singleResult) Float64() (float64, error) {
+// Float64 converts string to float64
+func (r *SingleResult) Float64() (float64, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
 	return StrToFloat64(string(r.result)), nil
 }
 
-func (r *singleResult) String() (string, error) {
+// String returns string
+func (r *SingleResult) String() (string, error) {
 	if r.err != nil {
 		return "", r.err
 	}
 	return string(r.result), nil
 }
 
-func (r *singleResult) Bytes() ([]byte, error) {
+// Bytes returns []byte
+func (r *SingleResult) Bytes() ([]byte, error) {
 	if r.err != nil {
 		return []byte(""), r.err
 	}
@@ -265,7 +273,7 @@ func (r *singleResult) Bytes() ([]byte, error) {
 }
 
 // Single returns the single result of the query
-func (db *DCDB) Single(query string, args ...interface{}) *singleResult {
+func (db *DCDB) Single(query string, args ...interface{}) *SingleResult {
 
 	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
 
@@ -273,9 +281,9 @@ func (db *DCDB) Single(query string, args ...interface{}) *singleResult {
 	err := db.QueryRow(newQuery, newArgs...).Scan(&result)
 	switch {
 	case err == sql.ErrNoRows:
-		return &singleResult{[]byte(""), nil}
+		return &SingleResult{[]byte(""), nil}
 	case err != nil:
-		return &singleResult{[]byte(""), fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)}
+		return &SingleResult{[]byte(""), fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)}
 	}
 	if db.ConfigIni["sql_log"] == "1" {
 		/*parent := ""
@@ -295,7 +303,7 @@ func (db *DCDB) Single(query string, args ...interface{}) *singleResult {
 		parent := GetParent()
 		log.Debug("SQL: %s / %v / %v", newQuery, newArgs, parent)
 	}
-	return &singleResult{result, nil}
+	return &SingleResult{result, nil}
 }
 
 // GetMap returns the map of strings as the result of query
@@ -311,19 +319,19 @@ func (db *DCDB) GetMap(query string, name, value string, args ...interface{}) (m
 	return result, err
 }
 
-// GetList returns the result of the query as listResult variable
-func (db *DCDB) GetList(query string, args ...interface{}) *listResult {
+// GetList returns the result of the query as ListResult variable
+func (db *DCDB) GetList(query string, args ...interface{}) *ListResult {
 	var result []string
 	all, err := db.GetAll(query, -1, args...)
 	if err != nil {
-		return &listResult{result, err}
+		return &ListResult{result, err}
 	}
 	for _, v := range all {
 		for _, v2 := range v {
 			result = append(result, v2)
 		}
 	}
-	return &listResult{result, nil}
+	return &ListResult{result, nil}
 }
 
 // GetParent возвращает информацию откуда произошел вызов функции
@@ -984,7 +992,7 @@ func (db *DCDB) CheckDaemonsRestart() bool {
 }
 
 // DbLock locks deamons
-func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutineName string) (error, bool) {
+func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutineName string) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -1000,7 +1008,7 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		case <-DaemonCh:
 			log.Debug("Restart from DbLock")
 			AnswerDaemonCh <- goRoutineName
-			return ErrInfo("Restart from DbLock"), true
+			return true, ErrInfo("Restart from DbLock")
 		default:
 		}
 
@@ -1011,13 +1019,13 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		exists, err := db.OneRow("SELECT lock_time, script_name FROM main_lock").String()
 		if err != nil {
 			Mutex.Unlock()
-			return ErrInfo(err), false
+			return false, ErrInfo(err)
 		}
 		if len(exists["script_name"]) == 0 {
 			err = db.ExecSQL(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), goRoutineName, Caller(2))
 			if err != nil {
 				Mutex.Unlock()
-				return ErrInfo(err), false
+				return false, ErrInfo(err)
 			}
 			ok = true
 		} else {
@@ -1036,7 +1044,7 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 			break
 		}
 	}
-	return nil, false
+	return false, nil
 }
 
 // DeleteQueueBlock deletes a row from queue_blocks with the specified hash
@@ -1139,9 +1147,9 @@ func (db *DCDB) NodesBan(info string) error {
 }
 
 // GetBlockDataFromBlockChain returns the block information from the blockchain
-func (db *DCDB) GetBlockDataFromBlockChain(blockId int64) (*BlockData, error) {
+func (db *DCDB) GetBlockDataFromBlockChain(blockID int64) (*BlockData, error) {
 	BlockData := new(BlockData)
-	data, err := db.OneRow("SELECT * FROM block_chain WHERE id = ?", blockId).String()
+	data, err := db.OneRow("SELECT * FROM block_chain WHERE id = ?", blockID).String()
 	if err != nil {
 		return BlockData, ErrInfo(err)
 	}
@@ -1155,8 +1163,8 @@ func (db *DCDB) GetBlockDataFromBlockChain(blockId int64) (*BlockData, error) {
 	return BlockData, nil
 }
 
-// GetTxTypeAndUserId returns tx type, wallet and citizen id from the block data
-func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
+// GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
+func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
 	tmp := binaryBlock[:]
 	txType = BinToDecBytesShift(&binaryBlock, 1)
 	if consts.IsStruct(int(txType)) {
@@ -1191,8 +1199,8 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 
 	// вначале пишется user_id, чтобы в режиме пула можно было понять, кому шлется и чей ключ использовать
 	// at the beginning the user ID is written to know in the pool mode to whom it is sent and what key to use
-	myUserId := BinToDecBytesShift(&*binaryTx, 5)
-	log.Debug("myUserId: %d", myUserId)
+	myUserID := BinToDecBytesShift(&*binaryTx, 5)
+	log.Debug("myUserId: %d", myUserID)
 
 	// изымем зашифрванный ключ, а всё, что останется в $binary_tx - сами зашифрованные хэши тр-ий/блоков
 	// remove the encrypted key, and all that stay in $binary_tx will be encrypted keys of the transactions/blocks
@@ -1248,10 +1256,13 @@ func (db *DCDB) DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 	return decKey, iv, decrypted, nil
 }
 
-func (db *DCDB) FindInFullNodes(myStateID, myWalletId int64) (int64, error) {
-	return db.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myStateID, myWalletId, myStateID, myWalletId).Int64()
+// FindInFullNodes returns id of the node
+func (db *DCDB) FindInFullNodes(myStateID, myWalletID int64) (int64, error) {
+	return db.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?",
+		myStateID, myWalletID, myStateID, myWalletID).Int64()
 }
 
+// GetBinSign returns a signature made with node private key
 func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
 	nodePrivateKey, err := db.GetNodePrivateKey()
 	if err != nil {
@@ -1268,6 +1279,7 @@ func (db *DCDB) GetBinSign(forSign string) ([]byte, error) {
 	return lib.SignECDSA(nodePrivateKey, forSign)
 }
 
+// InsertReplaceTxInQueue replaces a row in queue_tx
 func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 
 	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", Md5(data))
@@ -1283,7 +1295,8 @@ func (db *DCDB) InsertReplaceTxInQueue(data []byte) error {
 	return nil
 }
 
-func (db *DCDB) GetSleepTime(myWalletId, myStateID, prevBlockStateID, prevBlockWalletId int64) (int64, error) {
+// GetSleepTime returns the waiting time for wallet id and state id
+func (db *DCDB) GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int64) (int64, error) {
 	// возьмем список всех full_nodes
 	// take the list of all full_nodes
 	fullNodesList, err := db.GetAll("SELECT id, wallet_id, state_id as state_id FROM full_nodes", -1)
@@ -1294,34 +1307,35 @@ func (db *DCDB) GetSleepTime(myWalletId, myStateID, prevBlockStateID, prevBlockW
 
 	// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
 	// determine full_node_id of the one, who had to generate a block (but could delegate this)
-	prevBlockFullNodeId, err := db.Single("SELECT id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockStateID, prevBlockWalletId).Int64()
+	prevBlockFullNodeID, err := db.Single("SELECT id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockStateID, prevBlockWalletID).Int64()
 	if err != nil {
 		return int64(0), ErrInfo(err)
 	}
-	log.Debug("prevBlockFullNodeId %d", prevBlockFullNodeId)
+	log.Debug("prevBlockFullNodeId %d", prevBlockFullNodeID)
 
-	log.Debug("%v %v", fullNodesList, prevBlockFullNodeId)
+	log.Debug("%v %v", fullNodesList, prevBlockFullNodeID)
 
-	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeId int64) int {
-		for i, full_nodes := range fullNodesList {
-			if StrToInt64(full_nodes["id"]) == prevBlockFullNodeId {
+	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeID int64) int {
+		for i, fullNodes := range fullNodesList {
+			if StrToInt64(fullNodes["id"]) == prevBlockFullNodeID {
 				return i
 			}
 		}
 		return -1
-	}(fullNodesList, prevBlockFullNodeId)
+	}(fullNodesList, prevBlockFullNodeID)
 	log.Debug("prevBlockFullNodePosition %d", prevBlockFullNodePosition)
 
 	// определим свое место (в том числе в delegate)
-	myPosition := func(fullNodesList []map[string]string, myWalletId, myStateID int64) int {
-		log.Debug("%v %v", fullNodesList, myWalletId)
-		for i, full_nodes := range fullNodesList {
-			if StrToInt64(full_nodes["state_id"]) == myStateID || StrToInt64(full_nodes["wallet_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_state_id"]) == myWalletId || StrToInt64(full_nodes["final_delegate_wallet_id"]) == myWalletId {
+	myPosition := func(fullNodesList []map[string]string, myWalletID, myStateID int64) int {
+		log.Debug("%v %v", fullNodesList, myWalletID)
+		for i, fullNodes := range fullNodesList {
+			if StrToInt64(fullNodes["state_id"]) == myStateID || StrToInt64(fullNodes["wallet_id"]) == myWalletID ||
+				StrToInt64(fullNodes["final_delegate_state_id"]) == myWalletID || StrToInt64(fullNodes["final_delegate_wallet_id"]) == myWalletID {
 				return i
 			}
 		}
 		return -1
-	}(fullNodesList, myWalletId, myStateID)
+	}(fullNodesList, myWalletID, myStateID)
 	log.Debug("myPosition %d", myPosition)
 
 	sleepTime := 0
@@ -1341,15 +1355,16 @@ func (db *DCDB) GetSleepTime(myWalletId, myStateID, prevBlockStateID, prevBlockW
 	return int64(sleepTime), nil
 }
 
-func (db *DCDB) GetStateName(stateId int64) (string, error) {
+//GetStateName returns the name of the state
+func (db *DCDB) GetStateName(stateID int64) (string, error) {
 	var err error
-	stateId_, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateId).String()
+	sID, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateID).String()
 	if err != nil {
 		return ``, err
 	}
 	stateName := ""
-	if stateId_ != "0" {
-		stateName, err = db.Single(`SELECT value FROM "` + stateId_ + `_state_parameters" WHERE name = 'state_name'`).String()
+	if sID != "0" {
+		stateName, err = db.Single(`SELECT value FROM "` + sID + `_state_parameters" WHERE name = 'state_name'`).String()
 		if err != nil {
 			return ``, err
 		}
@@ -1357,17 +1372,19 @@ func (db *DCDB) GetStateName(stateId int64) (string, error) {
 	return stateName, nil
 }
 
-func (db *DCDB) CheckStateName(stateId int64) (bool, error) {
-	stateId, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateId).Int64()
+// CheckStateName checks if the state id is valid
+func (db *DCDB) CheckStateName(stateID int64) (bool, error) {
+	stateID, err := db.Single(`SELECT id FROM system_states WHERE id = ?`, stateID).Int64()
 	if err != nil {
 		return false, err
 	}
-	if stateId > 0 {
+	if stateID > 0 {
 		return true, nil
 	}
 	return false, fmt.Errorf("null stateId")
 }
 
+// GetFuel returns the fuel rate
 func (db *DCDB) GetFuel() decimal.Decimal {
 	// fuel = qEGS/F
 	/*	fuelMutex.Lock()
@@ -1379,12 +1396,14 @@ func (db *DCDB) GetFuel() decimal.Decimal {
 	return cacheFuel
 }
 
+// UpdateFuel is reserved
 func (db *DCDB) UpdateFuel() {
 	/*	fuelMutex.Lock()
 		cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
 		fuelMutex.Unlock()*/
 }
 
+// IsIndex checks if the table has the index for the column
 func (db *DCDB) IsIndex(tblname, column string) (bool, error) {
 	/* Short version if index name = tablename_columnname
 		indexes, err := db.GetAll(`SELECT 1 FROM  pg_class c JOIN  pg_namespace n ON n.oid = c.relnamespace
@@ -1400,6 +1419,7 @@ func (db *DCDB) IsIndex(tblname, column string) (bool, error) {
 	return len(indexes) > 0, nil
 }
 
+// NumIndexes returns the amount of the indexes in the table
 func (db *DCDB) NumIndexes(tblname string) (int, error) {
 	indexes, err := db.Single(`select count( i.relname) from pg_class t, pg_class i, pg_index ix, pg_attribute a 
 	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
@@ -1410,6 +1430,7 @@ func (db *DCDB) NumIndexes(tblname string) (int, error) {
 	return int(indexes - 1), nil
 }
 
+// IsCustomTable checks if the table is created by the users
 func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
 	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
 		if off := strings.IndexByte(table, '_'); off > 0 {
@@ -1422,6 +1443,7 @@ func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
 	return
 }
 
+// GetColumnType returns the type of the column
 func GetColumnType(tblname, column string) (itype string) {
 	coltype, _ := DB.OneRow(`select data_type,character_maximum_length from information_schema.columns
 where table_name = ? and column_name = ?`, tblname, column).String()
@@ -1444,23 +1466,25 @@ where table_name = ? and column_name = ?`, tblname, column).String()
 	return
 }
 
+// IsState returns the identifier of the state
 func (db *DCDB) IsState(country string) (int64, error) {
 	data, err := db.GetList(`SELECT id FROM system_states`).Int64()
 	if err != nil {
 		return 0, err
 	}
 	for _, id := range data {
-		state_name, err := db.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = 'state_name'`, id)).String()
+		stateName, err := db.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = 'state_name'`, id)).String()
 		if err != nil {
 			return 0, err
 		}
-		if strings.ToLower(state_name) == strings.ToLower(country) {
+		if strings.ToLower(stateName) == strings.ToLower(country) {
 			return id, nil
 		}
 	}
 	return 0, nil
 }
 
+// IsNodeState checks if the state is specified as node_stat_id in config file
 func (db *DCDB) IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
@@ -1478,6 +1502,7 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 	return false
 }
 
+// IsTable checks if there is a table with this name
 func (db *DCDB) IsTable(tblname string) bool {
 	name, _ := db.Single(`SELECT table_name FROM information_schema.tables 
          WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')
@@ -1485,6 +1510,7 @@ func (db *DCDB) IsTable(tblname string) bool {
 	return name == tblname
 }
 
+// SendTx writes transaction info to transactions_status & queue_tx
 func (db *DCDB) SendTx(txType int64, adminWallet int64, data []byte) (err error) {
 	md5 := Md5(data)
 	err = db.ExecSQL(`INSERT INTO transactions_status (
