@@ -121,6 +121,7 @@ func (d *daemon) unlockPrintSleepInfo(err error, sleep int) bool {
 
 func ConfigInit() {
 	// мониторим config.ini на наличие изменений
+	// monitor config.ini for changes
 	go func() {
 		for {
 			logger.Debug("ConfigInit monitor")
@@ -211,6 +212,7 @@ func StartDaemons() {
 func ClearDb(ChAnswer chan string, goroutineName string) error {
 
 	// остановим демонов, иначе будет паника, когда таблы обнулятся
+	// stop daemos or panic will occur when tables reset to zero
 	fmt.Println("ClearDb() Stop_daemons from DB!")
 	for _, ch := range utils.DaemonsChans {
 		fmt.Println("ch.ChBreaker<-true")
@@ -226,6 +228,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 	fmt.Println("ClearDb() Stop_daemons from DB OK")
 
 	// на всякий случай пометим, что работаем
+	// in case mark the we work
 	err = utils.DB.ExecSQL("UPDATE main_lock SET script_name = 'cleaning_db'")
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -268,6 +271,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 					err = utils.DB.SetAI(table, 1)
 				}
 				// только логируем, т.к. тут ошибка - это норм
+				// only log in, because here is an error (it is normal)
 				if err != nil {
 					logger.Error("%v", err)
 				}
@@ -281,11 +285,14 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 	}
 
 	// запустим демонов
+	// start daemons
 	StartDaemons()
 	stopdaemons.Signals()
 	utils.Sleep(1)
 	// мониторим сигнал из БД о том, что демонам надо завершаться
+	// monitor signal from database that daemons have to be completed
 	// Похоже это не нужно так как WaitStopTime не прекращает работу и от демонов не зависит
+	// It doesn't seem need because WaitStopTime doesn't stop the work and doesn't depend on daemons
 	//	go stopdaemons.WaitStopTime()
 	return nil
 }
