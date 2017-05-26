@@ -61,6 +61,7 @@ func Confirmations(chBreaker chan bool, chAnswer chan string) {
 BEGIN:
 	for {
 		// первые 2 минуты спим по 10 сек, чтобы блоки успели собраться
+		// the first 2 minutes we sleep for 10 sec for blocks to be collected
 		s++
 
 		d.sleepTime = 1
@@ -73,6 +74,7 @@ BEGIN:
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
 		// проверим, не нужно ли нам выйти из цикла
+		// check if we have to break the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
@@ -80,6 +82,7 @@ BEGIN:
 		var startBlockId int64
 		// если последний проверенный был давно (пропасть более 5 блоков),
 		// то начинаем проверку последних 5 блоков
+		// if the last one checked was long ago (interval is more than 5 blocks)
 		ConfirmedBlockId, err := d.GetConfirmedBlockID()
 		if err != nil {
 			logger.Error("%v", err)
@@ -92,6 +95,7 @@ BEGIN:
 			startBlockId = ConfirmedBlockId + 1
 			d.sleepTime = 10
 			s = 0 // 2 минуты отчитываем с начала
+			// count 2 minutes from the beginning
 		}
 		if startBlockId == 0 {
 			startBlockId = LastBlockId - 1
@@ -101,6 +105,7 @@ BEGIN:
 		for blockId := LastBlockId; blockId > startBlockId; blockId-- {
 
 			// проверим, не нужно ли нам выйти из цикла
+			// check if we have to break the cycle
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				break BEGIN
 			}
@@ -195,6 +200,7 @@ func checkConf(host string, blockId int64) string {
 	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
 
 	// вначале шлем тип данных, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
+	// firstly send a data type for the receiving party could understand how exacetly to process the data sent
 	_, err = conn.Write(utils.DecToBin(4, 2))
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
@@ -202,6 +208,7 @@ func checkConf(host string, blockId int64) string {
 	}
 
 	// в 4-х байтах пишем ID блока, хэш которого хотим получить
+	// record the block ID that we want to recive in 4 bytes 
 	size := utils.DecToBin(blockId, 4)
 	_, err = conn.Write(size)
 	if err != nil {
@@ -210,6 +217,7 @@ func checkConf(host string, blockId int64) string {
 	}
 
 	// ответ всегда 32 байта
+	// the response is always 32 bytes
 	hash := make([]byte, 32)
 	_, err = conn.Read(hash)
 	if err != nil {
