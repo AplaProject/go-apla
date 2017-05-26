@@ -129,8 +129,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	    defer outfile.Close()
 		os.Stdout = outfile*/
 
-	// убьем ранее запущенный daylight
-	// kill previously run daylight
+	// убьем ранее запущенный eGaaS
+	// kill previously run eGaaS
 	if !utils.Mobile() {
 		fmt.Println("kill daylight.pid")
 		if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
