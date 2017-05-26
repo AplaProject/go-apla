@@ -360,6 +360,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}()
 
 	// сигналы демонам для выхода
+	// signals for daemons to exit
 	IosLog("signals")
 	stopdaemons.Signals()
 
@@ -373,7 +374,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	HandleHTTPHost := ""
 	ListenHTTPHost := *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	go func() {
-		// уже прошли процесс инсталяции, где юзер указал БД и был перезапуск кошелька
+		// уже прошел процесс инсталяции, где юзер указал БД и был перезапуск кошелька
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		if len(configIni["db_type"]) > 0 {
 			for {
@@ -482,7 +483,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// ожидает появления свежих записей в чате, затем ждет появления коннектов
 	// waits for new records in chat, then waits for connect 
 	// (заносятся из демеона connections и от тех, кто сам подключился к ноде)
-	//go utils.ChatOutput(utils.ChatNewTx)
+	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
+	// go utils.ChatOutput(utils.ChatNewTx)
 
 	log.Debug("ALL RIGHT")
 	IosLog("ALL RIGHT")
