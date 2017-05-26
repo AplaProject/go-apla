@@ -71,7 +71,7 @@ BEGIN:
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
 		// проверим, не нужно ли нам выйти из цикла 
-		// Check, whether we need to get out of the cycle 
+		// Check, whether we need to exit of the cycle 
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
@@ -119,7 +119,7 @@ BEGIN:
 				continue
 			}
 			// Если мы - государство и у нас указан delegate в system_recognized_states, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
-			// If we are the state and we have the record delegate specified at the system_recognized_states (it means we have delegated the authority to maintain the node to another user or state), in that case go out.
+			// If we are the state and we have the record delegate specified at the system_recognized_states (it means we have delegated the authority to maintain the node to another user or state), in that case exit.
 			if delegate {
 				d.dbUnlock()
 				logger.Debug("delegate > 0")
@@ -154,9 +154,9 @@ BEGIN:
 		}
 
 		// если дошли до сюда, значит мы есть в full_nodes. Надо определить в каком месте списка
-		// If we have reached here, we are in full_nodes. It is necessary to determine where in the list we are
 		// получим state_id, wallet_id и время последнего блока
-		// We will get state_id, wallet_id and the time of the last block
+		// If we have reached here, we are in full_nodes. It is necessary to determine where in the list we
+		// will get state_id, wallet_id and the time of the last block
 		prevBlock, err := d.OneRow("SELECT state_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
 		if err != nil {
 			d.dbUnlock()
@@ -287,7 +287,7 @@ BEGIN:
 		//Time := time.Now().Unix()
 
 		// переведем тр-ии в `verified` = 1
-		// Transfer the territories into `verified` = 1
+		// transfer the transactions into `verified` = 1
 		err = p.AllTxParser()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -305,7 +305,7 @@ BEGIN:
 			var mrklRoot []byte
 			var blockDataTx []byte
 			// берем все данные из очереди. Они уже были проверены ранее, и можно их не проверять, а просто брать
-			// Take all the data from the turn. It is tested already, you may not check them again but just take
+			// take all the data from the turn. It is tested already, you may not check them again but just take
 			rows, err := d.Query(d.FormatQuery("SELECT data, hex(hash), type, wallet_id, citizen_id, third_var FROM transactions WHERE used = 0 AND verified = 1"))
 			if err != nil {
 				utils.WriteSelectiveLog(err)
@@ -316,7 +316,7 @@ BEGIN:
 			}
 			for rows.Next() {
 				// проверим, не нужно ли нам выйти из цикла
-				// Check if we need to get out from the cycle 
+				// check if we need to get out from the cycle 
 				if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 					break BEGIN
 				}
@@ -366,7 +366,7 @@ BEGIN:
 			logger.Debug("mrklRoot: %s", mrklRoot)
 
 			// подписываем нашим нод-ключем заголовок блока
-			// Sign the heading of a block by our node-key
+			// sign the heading of a block by our node-key
 			var forSign string
 			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myStateID, string(mrklRoot))
 			//			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlock[`hash`], Time, myWalletId, myStateID, string(mrklRoot))
@@ -404,7 +404,7 @@ BEGIN:
 			logger.Debug("block %x", blockBin)
 
 			// теперь нужно разнести блок по таблицам и после этого мы будем его слать всем нодам демоном disseminator
-			// Now we have to spread the block into to the tables and then we'll sent it to the all nodes by the daemon disseminator
+			// now we have to spread the block into to the tables and then we'll sent it to the all nodes by the 'disseminator' daemon
 			p.BinaryData = blockBin
 			err = p.ParseDataFull(true)
 			if err != nil {
