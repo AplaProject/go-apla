@@ -82,6 +82,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 				for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
 					var v interface{}
+					var forv string
 					switch fitem.Type.String() {
 					case `uint64`:
 						var val uint64
@@ -111,6 +112,30 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 							return nil, err
 						}
 						v = hex.EncodeToString(b)
+					case `[]interface {}`:
+						count, err := lib.DecodeLength(&input)
+						if err != nil {
+							return nil, err
+						}
+						list := make([]string, 0)
+						for count > 0 {
+							length, err := lib.DecodeLength(&input)
+							if err != nil {
+								return nil, err
+							}
+							if len(input) < int(length) {
+								return nil, fmt.Errorf(`input slice is short`)
+							}
+							list = append(list, string(input[:length]))
+							input = input[length:]
+							count--
+						}
+						if len(list) > 0 {
+							forv = strings.Join(list, `,`)
+							v = list
+						} else {
+							v = ``
+						}
 					}
 					p.TxData[fitem.Name] = v
 					if err != nil {
@@ -118,6 +143,9 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					}
 					if strings.Index(fitem.Tags, `image`) >= 0 {
 						continue
+					}
+					if len(forv) > 0 {
+						v = forv
 					}
 					forsign += fmt.Sprintf(",%v", v)
 				}

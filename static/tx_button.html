@@ -18,7 +18,18 @@
 				{{if eq .HTMLType "money"}}
 					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.ID}}').val(), "{{.Param}}");
 				{{else}}
-					predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.ID}}').val();
+					{{if eq .HTMLType "array"}}
+						var list = [];
+						$("[array={{.ID}}]").each(function(){
+							var val = $(this).val();
+							if (val) { 
+								list.push(val);
+							}
+						});
+						predata{{$.Unique}}['{{.Name}}'] = list;//list.join(',');
+					{{else}}
+						predata{{$.Unique}}['{{.Name}}'] = $("#" + '{{.ID}}').val();
+					{{end}}
 				{{end}}
 			{{end}}
 		{{end}}

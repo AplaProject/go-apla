@@ -94,6 +94,20 @@ func (c *Controller) AjaxSendTx() interface{} {
 							val = utils.Int64ToStr(lib.StringToAddress(val))
 						}
 						switch fitem.Type.String() {
+						case `[]interface {}`:
+							var list []string
+							for key, values := range c.r.Form {
+								if key == fitem.Name+`[]` {
+									for _, value := range values {
+										list = append(list, value)
+									}
+								}
+							}
+							data = append(data, lib.EncodeLength(int64(len(list)))...)
+							for _, ilist := range list {
+								blist := []byte(ilist)
+								data = append(append(data, lib.EncodeLength(int64(len(blist)))...), blist...)
+							}
 						case `uint64`:
 							lib.BinMarshal(&data, utils.StrToUint64(val))
 							//					case `float64`:

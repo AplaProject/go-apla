@@ -158,6 +158,16 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 					}
 					result.Values[fitem.Name] = key.Encrypted
 					val = key.Encrypted
+				} else if fitem.Type.String() == `[]interface {}` {
+					for key, values := range c.r.Form {
+						if key == fitem.Name+`[]` {
+							var list []string
+							for _, value := range values {
+								list = append(list, value)
+							}
+							val = strings.Join(list, `,`)
+						}
+					}
 				} else {
 					val = strings.TrimSpace(c.r.FormValue(fitem.Name))
 					if strings.Index(fitem.Tags, `address`) >= 0 {

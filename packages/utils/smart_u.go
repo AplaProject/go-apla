@@ -461,11 +461,11 @@ func Textarea(vars *map[string]string, pars ...string) string {
 // Input return input HTML tag
 func Input(vars *map[string]string, pars ...string) string {
 	var (
-		class, value, placeholder string
+		class, value, more, placeholder string
 	)
 	itype := `text`
 	if len(pars) > 1 {
-		class = pars[1]
+		class, more = getClass(pars[1])
 	}
 	if len(pars) > 2 {
 		placeholder = LangRes(vars, pars[2])
@@ -476,8 +476,8 @@ func Input(vars *map[string]string, pars ...string) string {
 	if len(pars) > 4 {
 		value = pars[4]
 	}
-	return fmt.Sprintf(`<input type="%s" id="%s" placeholder="%s" class="%s" value="%s">`,
-		itype, pars[0], placeholder, class, value)
+	return fmt.Sprintf(`<input type="%s" id="%s" placeholder="%s" class="%s" value="%s" %s>`,
+		itype, pars[0], placeholder, class, value, more)
 }
 
 // InputDate returns input HTML tag with datepicker
@@ -1604,6 +1604,8 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 				}
 				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HTMLType: "money",
 					ID: idname, Param: IntToStr(count)})
+			} else if fitem.Type.String() == `[]interface {}` {
+				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, ID: idname, HTMLType: "array"})
 			} else {
 				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, ID: idname, HTMLType: "textinput"})
 			}
