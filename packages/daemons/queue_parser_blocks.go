@@ -23,16 +23,16 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/* Берем блок. Если блок имеет лучший хэш, то ищем, в каком блоке у нас пошла вилка
- * Если вилка пошла менее чем variables->rollback_blocks блоков назад, то
- *  - получаем всю цепочку блоков,
- *  - откатываем фронтальные данные от наших блоков,
- *  - заносим фронт. данные из новой цепочки
- *  - если нет ошибок, то откатываем наши данные из блоков
- *  - и заносим новые данные
- *  - если где-то есть ошибки, то откатываемся к нашим прежним данным
- * Если вилка была давно, то ничего не трогаем, и оставлеяем скрипту blocks_collection.php
- * Ограничение variables->rollback_blocks нужно для защиты от подставных блоков
+/* Берем блок. Если блок имеет лучший хэш, то ищем, в каком блоке у нас пошла вилка // Take the block. If the block has the best hash, then look for the block where the fork started
+ * Если вилка пошла менее чем variables->rollback_blocks блоков назад, то // If the fork begins less then variables->rollback_blocks blocks ago, than
+ *  - получаем всю цепочку блоков, // get the whole chain of blocks
+ *  - откатываем фронтальные данные от наших блоков, // roll back the frontal data from our blocks
+ *  - заносим фронт. данные из новой цепочки // insert the frontal data from a new chain
+ *  - если нет ошибок, то откатываем наши данные из блоков // if there is no error, then roll back our data from the blocks
+ *  - и заносим новые данные // and insert new data
+ *  - если где-то есть ошибки, то откатываемся к нашим прежним данным // if there are errors, then roll back to the former data
+ * Если вилка была давно, то ничего не трогаем, и оставлеяем скрипту blocks_collection.php // if the fork was long ago then do not touch anything and leave the script blocks_collection.php
+ * Ограничение variables->rollback_blocks нужно для защиты от подставных блоков // the limitation variables->rollback_blocks is needed for the protection against the false blocks
  *
  * */
 
@@ -69,6 +69,7 @@ BEGIN:
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
 		// проверим, не нужно ли нам выйти из цикла
+		// check if we have to break the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
@@ -110,8 +111,10 @@ BEGIN:
 		/*
 		 * Базовая проверка
 		 */
+		// basic check
 
-		// проверим, укладывается ли блок в лимит rollback_blocks_1
+		// проверим, укладывается ли блок в лимит 
+		// check if the block gets in the rollback_blocks_1 limit
 		if utils.StrToInt64(newBlockData["block_id"]) > utils.StrToInt64(prevBlockData["block_id"])+consts.RB_BLOCKS_1 {
 			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			if d.unlockPrintSleep(utils.ErrInfo("rollback_blocks_1"), 1) {
@@ -121,6 +124,7 @@ BEGIN:
 		}
 
 		// проверим не старый ли блок в очереди
+		// check whether the new block is in the turn
 		if utils.StrToInt64(newBlockData["block_id"]) <= utils.StrToInt64(prevBlockData["block_id"]) {
 			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			if d.unlockPrintSleepInfo(utils.ErrInfo("old block"), 1) {
@@ -132,6 +136,7 @@ BEGIN:
 		/*
 		 * Загрузка блоков для детальной проверки
 		 */
+		// download of the blocks for the detailed check
 		host, err := d.Single("SELECT host FROM full_nodes WHERE id = ?", newBlockData["full_node_id"]).String()
 		if err != nil {
 			d.DeleteQueueBlock(newBlockData["hash_hex"])
