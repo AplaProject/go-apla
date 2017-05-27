@@ -93,7 +93,9 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			return utils.ErrInfo(errors.New("len(binaryBlock) == 0"))
 		}
 		utils.BytesShift(&binaryBlock, 1) // уберем 1-й байт - тип (блок/тр-я)
+		// remove the 1st byte - type (block/transaction)
 		// распарсим заголовок блока
+		// parse the heading of a block
 		blockData := utils.ParseBlockHeader(&binaryBlock)
 		log.Debug("blockData", blockData)
 
@@ -122,7 +124,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 		}
 
 		// размер блока не может быть более чем max_block_size
-		// the block size couldn't be more than max_block_size
+		// the block size cannot be more than max_block_size
 		if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New(`len(binaryBlock) > variables.Int64["max_block_size"]`))
@@ -205,7 +207,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 		}
 		if len(transactions) > 0 {
 			// отмечаем, что эти тр-ии теперь нужно проверять по новой
-	// point that these territories is necessary to check one by one
+	// point that these transactions are necessary to check one by one
 			utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 			if err != nil {
@@ -214,7 +216,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			}
 			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 			// откатываем по фронту все свежие тр-ии
-	// we roll back all fresh territories on the front
+	// we roll back all recent transactions on the front
 			/*parser.GoroutineName = goroutineName
 			parser.BinaryData = transactions
 			err = parser.ParseDataRollbackFront(false)
@@ -287,6 +289,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			// если вернулась ошибка, значит переданный блок уже откатился
 			// If the error returned, then the transferred block has already rolled back
 			// info_block и config.my_block_id обновляются только если ошибки не было
+			// info_block и config.my_block_id are uploading only when there is no error
 			err0 := parser.ParseDataFull(false)
 			// для последующей обработки получим хэши и time
 			// we will get hashes and time for the further processing
@@ -328,7 +331,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 					}
 				}
 				// заносим наши данные из block_chain, которые были ранее
-				// we record from block_chain our data which was before
+				// we insert from block_chain our data which was before
 				log.Debug("We push data from our block_chain, which were previously")
 				rows, err := p.Query(p.FormatQuery(`
 					SELECT data
@@ -380,13 +383,14 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 				}
 				ClearTmp(blocks)
 				return utils.ErrInfo(err0) // переходим к следующему блоку в queue_blocks
+				// go to the next block in queue_blocks
 			}
 		}
 	}
 	log.Debug("remove the blocks and enter new block_chain")
 
 	// если всё занеслось без ошибок, то удаляем блоки из block_chain и заносим новые
-	// if all was recorded without errors, delete the blocks from block_chain and record new
+	// if all was recorded without errors, delete the blocks from block_chain and insert new
 	affect, err = p.ExecSQLGetAffect("DELETE FROM block_chain WHERE id > ?", blockID)
 	if err != nil {
 		return utils.ErrInfo(err)
