@@ -180,7 +180,7 @@ BEGIN:
 				continue BEGIN
 			}
 			// нет ни транзакций, ни блока для отправки...
-			// transaction and block for sending is absent
+			// transaction and block for sending are absent
 			if len(transactions) == 0 && len(toBeSent) < 10 {
 				//utils.WriteSelectiveLog("len(transactions) == 0")
 				//log.Debug("len(transactions) == 0")
