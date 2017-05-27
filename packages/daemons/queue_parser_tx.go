@@ -24,6 +24,7 @@ import (
 /*
  * Берем тр-ии из очереди и обрабатываем
  * */
+// take the transactions from the turn and process them
 
 func QueueParserTx(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
@@ -58,6 +59,7 @@ BEGIN:
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
 
 		// проверим, не нужно ли нам выйти из цикла
+		// check if we have to break the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
@@ -88,6 +90,7 @@ BEGIN:
 		}
 
 		// чистим зацикленные
+		// clean the looped
 		utils.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
 		affect, err := d.ExecSQLGetAffect("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
 		if err != nil {
