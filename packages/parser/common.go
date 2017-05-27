@@ -163,7 +163,7 @@ func (p *Parser) CheckLogTx(tx_binary []byte, transactions, queue_tx bool) error
 
 	if transactions {
 		// проверим, нет ли у нас такой тр-ии
-		// check whether we have such a territory
+		// check whether we have such a transaction
 		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ? and verified = 1", utils.Md5(tx_binary)).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
@@ -176,7 +176,7 @@ func (p *Parser) CheckLogTx(tx_binary []byte, transactions, queue_tx bool) error
 
 	if queue_tx {
 		// проверим, нет ли у нас такой тр-ии
-		// check whether we have such a territory
+		// check whether we have such a transaction
 		exists, err := p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
@@ -458,7 +458,8 @@ func (p *Parser) AccessTable(table, action string) error {
 	}
 
 	if isCustom, err := p.IsCustomTable(table); err != nil {
-		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать // table != ... is left for compatibility temporarily. Remove new_state after rebuilding. Remove new_state after rebuilding
+		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать 
+		// table != ... is left for compatibility temporarily. Remove new_state after rebuilding.
 	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
