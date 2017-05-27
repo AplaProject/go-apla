@@ -20,7 +20,7 @@
 				{{else}}
 					{{if eq .HTMLType "array"}}
 						var list = [];
-						$("[array={{.ID}}]").each(function(){
+						$("[name={{.ID}}]").each(function(){
 							var val = $(this).val();
 							if (val) { 
 								list.push(val);
