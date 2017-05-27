@@ -27,7 +27,7 @@ import (
 
 /**
 Обработка данных (блоков или транзакций), пришедших с гейта. Только проверка.
-Processing data (blocks or transactions) gotten from a gate. Just checking.
+Data processing (blocks or transactions) gotten from a gate. Just checking.
 */
 func (p *Parser) ParseDataGate(onlyTx bool) error {
 
@@ -39,11 +39,11 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 	log.Debug("p.dataType: %d", p.dataType)
 	// если это транзакции (type>0), а не блок (type==0)
-	// if it's transactions, but block
+	// if it's transactions (type>0), but block (type==0)
 	if p.dataType > 0 {
 
 		// проверим, есть ли такой тип тр-ий
-		// check if the transaction's type exist
+		// check if the transaction type exist
 		if p.dataType < 128 && len(consts.TxTypes[p.dataType]) == 0 {
 			return p.ErrInfo("Incorrect tx type " + utils.IntToStr(p.dataType))
 		}
@@ -53,7 +53,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		transactionBinaryDataFull = transactionBinaryData
 
 		// нет ли хэша этой тр-ии у нас в БД?
-		// Does the transaction's hash exist?
+		// Does the transaction hash exist?
 		err = p.CheckLogTx(transactionBinaryDataFull, true, false)
 		if err != nil {
 			return p.ErrInfo(err)
