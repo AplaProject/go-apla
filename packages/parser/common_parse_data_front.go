@@ -143,7 +143,7 @@ func (p *Parser) ParseDataFront() error {
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 				// даем юзеру понять, что его тр-ия попала в блок
-// let user to know that his transaction got in the block
+// let user know that his transaction got in the block
 				err = p.ExecSQL("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, utils.Md5(transactionBinaryDataFull))
 				if err != nil {
 					return utils.ErrInfo(err)
