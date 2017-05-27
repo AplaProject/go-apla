@@ -24,7 +24,7 @@ import (
 )
 
 // откат не всех полей, а только указанных, либо 1 строку, если нет where
-// the rollback not of all the fields but the specified ones or only 1 line if there is not 'where'
+// roll back not all the fields but the specified ones or only 1 line if there is not 'where'
 func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) error {
 	if len(where) > 0 {
 		where = " WHERE " + where
