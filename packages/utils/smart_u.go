@@ -198,7 +198,7 @@ func LoadContract(prefix string) (err error) {
 	return
 }
 
-// Balance returns teh balance of the wallet
+// Balance returns the balance of the wallet
 func Balance(walletID int64) (decimal.Decimal, error) {
 	balance, err := DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", walletID).String()
 	if err != nil {
@@ -231,7 +231,7 @@ func LangRes(vars *map[string]string, pars ...string) string {
 	return ret
 }
 
-// LangJS return span tag for the language resource
+// LangJS returns span tag for the language resource
 func LangJS(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<span class="lang" lang-id="%s"></span>`, pars[0])
 }
@@ -458,7 +458,7 @@ func Textarea(vars *map[string]string, pars ...string) string {
 		pars[0], class, value)
 }
 
-// Input return input HTML tag
+// Input returns input HTML tag
 func Input(vars *map[string]string, pars ...string) string {
 	var (
 		class, value, more, placeholder string
@@ -495,7 +495,7 @@ func InputDate(vars *map[string]string, pars ...string) string {
 	return fmt.Sprintf(`<input type="text" class="datetimepicker %s" id="%s" value="%s">`, class, pars[0], value)
 }
 
-// InputMoney return input HTML tag with a special money mask
+// InputMoney returns input HTML tag with a special money mask
 func InputMoney(vars *map[string]string, pars ...string) string {
 	var (
 		class, value string
@@ -879,7 +879,7 @@ func Tag(vars *map[string]string, pars ...string) (out string) {
 	return ``
 }
 
-// Div return div HTML tag
+// Div returns div HTML tag
 func Div(vars *map[string]string, pars ...string) (out string) {
 	if len((*vars)[`isrow`]) == 0 {
 		out = `<div class="row">`
