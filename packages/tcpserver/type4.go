@@ -22,7 +22,7 @@ import (
 
 /*
  * данные присылает демон confirmations
-// the data is sent by 'confirmations'daemon
+// the data is sent by 'confirmations' daemon
  */
 
 func (t *TcpServer) Type4() {
