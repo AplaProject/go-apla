@@ -335,6 +335,7 @@ func (db *DCDB) GetList(query string, args ...interface{}) *ListResult {
 }
 
 // GetParent возвращает информацию откуда произошел вызов функции
+// GetParent returns the information where the call of function happened
 func GetParent() string {
 	parent := ""
 	for i := 2; ; i++ {
@@ -457,7 +458,7 @@ func (db *DCDB) OneRow(query string, args ...interface{}) *oneRow {
 	return &oneRow{all[0], nil}
 }
 
-// InsertInLogTx insert md5 hash and time into log_transaction
+// InsertInLogTx inserts md5 hash and time into log_transaction
 func (db *DCDB) InsertInLogTx(binaryTx []byte, time int64) error {
 	txMD5 := Md5(binaryTx)
 	err := db.ExecSQL("INSERT INTO log_transactions (hash, time) VALUES ([hex], ?)", txMD5, time)
@@ -485,7 +486,7 @@ func (db *DCDB) QueryRows(query string, args ...interface{}) (*sql.Rows, error) 
 	return db.Query(newQuery, newArgs...)
 }
 
-// ExecSQLGetLastInsertID insert a row and returns the last id
+// ExecSQLGetLastInsertID inserts a row and returns the last id
 func (db *DCDB) ExecSQLGetLastInsertID(query, table string, args ...interface{}) (string, error) {
 	var v interface{}
 	var lastID string
@@ -675,7 +676,7 @@ func (db *DCDB) HashTableData(table, where, orderBy string) (string, error) {
 	}
 
 	// это у всех разное, а значит и хэши будут разные, а это будет вызывать путаницу
-	// this is different for every one and it means hashes will be different and this will cause confusion
+	// this is different for every one and it means hashes will be different as well and this will cause confusion
 	var logOff bool
 	if db.ConfigIni["sql_log"] == "1" {
 		db.ConfigIni["sql_log"] = "0"
@@ -893,12 +894,12 @@ func (db *DCDB) GetMyStateID() (int64, error) {
 	return db.Single("SELECT state_id FROM config").Int64()
 }
 
-// GetBlockID returns teh latest block id from info_block
+// GetBlockID return the latest block id from info_block
 func (db *DCDB) GetBlockID() (int64, error) {
 	return db.Single("SELECT block_id FROM info_block").Int64()
 }
 
-// GetWalletIDByPublicKey convert public key to wallet id
+// GetWalletIDByPublicKey converts public key to wallet id
 func (db *DCDB) GetWalletIDByPublicKey(publicKey []byte) (int64, error) {
 	/*	log.Debug("string(HashSha1Hex(publicKey) %s", string(HashSha1Hex(publicKey)))
 		log.Debug("publicKey %s", publicKey)
@@ -909,7 +910,7 @@ func (db *DCDB) GetWalletIDByPublicKey(publicKey []byte) (int64, error) {
 		if err != nil {
 			return 0, ErrInfo(err)
 		}
-		return walletId, nil*/
+		returns walletId, nil*/
 	key, _ := hex.DecodeString(string(publicKey))
 	return int64(lib.Address(key)), nil
 }
@@ -922,7 +923,7 @@ func (db *DCDB) GetWalletIDByPublicKey(publicKey []byte) (int64, error) {
 	return walletId, nil
 }*/
 
-// GetInfoBlock return the information about the latest block
+// GetInfoBlock returns the information about the latest block
 func (db *DCDB) GetInfoBlock() (map[string]string, error) {
 	var result map[string]string
 	result, err := db.OneRow("SELECT * FROM info_block").String()
@@ -1326,6 +1327,7 @@ func (db *DCDB) GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockW
 	log.Debug("prevBlockFullNodePosition %d", prevBlockFullNodePosition)
 
 	// определим свое место (в том числе в delegate)
+	// define our place (Including in the 'delegate')
 	myPosition := func(fullNodesList []map[string]string, myWalletID, myStateID int64) int {
 		log.Debug("%v %v", fullNodesList, myWalletID)
 		for i, fullNodes := range fullNodesList {
