@@ -35,7 +35,7 @@ const (
 	//	lexUnknown = iota
 	// Здесь перечислены все создаваемые лексемы
 	// Here are all the created lexemes
-	lexSys     = iota + 1 // системная лексема - это разные скобки, =, запятая и т.п. // a system lexeme is a different bracket, =, comma, and so on.
+	lexSys     = iota + 1 // системная лексема - это разные скобки, =, запятая и т.п. // a system lexeme is different bracket, =, comma and so on.
 	lexOper               // Оператор - это всякие +, -, *, / // Operator is +, -, *, /
 	lexNumber             // Число // Number
 	lexIdent              // Идентификатор // Identifier
@@ -157,7 +157,7 @@ func lexParser(input []rune) (Lexems, error) {
 
 	// Эта функция по очередному символу смотрит с помощью lexTable какое у нас будет новое состояние,
 	// получили ли лексему и какие флаги выставлены
-	// This function according to the next symbol looks with help of lexTable which new state we will have,
+	// This function according to the next symbol looks with help of lexTable what new state we will have,
 	// whether we got the lexeme and what flags are displayed
 	todo := func(r rune) {
 		var letter uint8
