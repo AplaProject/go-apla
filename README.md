@@ -23,8 +23,8 @@ Set GOPATH<br>
 Install git https://git-scm.com/
 ```
 go get -u github.com/jteeuwen/go-bindata/...
-git clone https://github.com/EGaaS/go-egaas-mvp.git
-cd go-egaas-mvp
+go get -u github.com/EGaaS/go-egaas-mvp
+cd $GOPATH/src/github.com/EGaaS/go-egaas-mvp
 $GOPATH/bin/go-bindata -o="packages/static/static.go" -pkg="static" static/..
 go build
 ./go-egaas-mvp
