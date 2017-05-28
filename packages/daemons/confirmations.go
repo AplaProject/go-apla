@@ -83,7 +83,7 @@ BEGIN:
 		// если последний проверенный был давно (пропасть более 5 блоков),
 		// то начинаем проверку последних 5 блоков
 		// if the last one checked was long ago (interval is more than 5 blocks)
-		ConfirmedBlockId, err := d.GetConfirmedBlockID()
+		ConfirmedBlockID, err := d.GetConfirmedBlockID()
 		if err != nil {
 			logger.Error("%v", err)
 		}
@@ -91,8 +91,8 @@ BEGIN:
 		if err != nil {
 			logger.Error("%v", err)
 		}
-		if LastBlockId-ConfirmedBlockId > 5 {
-			startBlockId = ConfirmedBlockId + 1
+		if LastBlockId-ConfirmedBlockID > 5 {
+			startBlockId = ConfirmedBlockID + 1
 			d.sleepTime = 10
 			s = 0 // 2 минуты отчитываем с начала
 			// count 2 minutes from the beginning

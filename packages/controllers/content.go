@@ -99,8 +99,8 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletId(sess)
-	sessCitizenId := GetSessCitizenId(sess)
+	sessWalletId := GetSessWalletID(sess)
+	sessCitizenId := GetSessCitizenID(sess)
 	sessStateId := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 	//	sessAccountId := GetSessInt64("account_id", sess)
@@ -182,7 +182,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.ConfirmedBlockId = confirmedBlockId
+		c.ConfirmedBlockID = confirmedBlockId
 
 	}
 	r.ParseForm()

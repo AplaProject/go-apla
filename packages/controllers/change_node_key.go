@@ -31,6 +31,7 @@ type changeNodeKeyPage struct {
 	TimeNow   int64
 }
 
+// ChangeNodeKey is a controller which changes a node key
 func (c *Controller) ChangeNodeKey() (string, error) {
 
 	var err error

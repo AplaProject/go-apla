@@ -40,6 +40,7 @@ import (
 
 var log = logging.MustGetLogger("controllers")
 
+// Controller is the main controller's structure
 type Controller struct {
 	dbInit bool
 	*utils.DCDB
@@ -65,7 +66,7 @@ type Controller struct {
 	NodeAdmin        bool
 	NodeConfig       map[string]string
 	CurrencyList     map[int64]string
-	ConfirmedBlockId int64
+	ConfirmedBlockID int64
 	Data             *CommonPage
 }
 
@@ -77,6 +78,7 @@ var (
 	globalLangReadOnly map[int]map[string]string
 )
 
+// SessInit initializes sessions
 func SessInit() {
 	var err error
 	/*path := *utils.Dir + `/tmp`
@@ -91,8 +93,8 @@ func SessInit() {
 	go globalSessions.GC()
 }
 
+// ConfigInit reads ini file
 func ConfigInit() {
-
 	// мониторим config.ini на наличие изменений
 	// We monitor config.ini for changes
 	go func() {
@@ -102,11 +104,11 @@ func ConfigInit() {
 				utils.Sleep(1)
 				continue
 			}
-			configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
+			config, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
-			configIni, err = configIni_.GetSection("default")
+			configIni, err = config.GetSection("default")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -122,12 +124,11 @@ func ConfigInit() {
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		iniconf_, err := config.NewConfigData("ini", []byte(data))
+		iniConf, err := config.NewConfigData("ini", []byte(data))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		//fmt.Println(iniconf_)
-		iniconf, err := iniconf_.GetSection("default")
+		iniconf, err := iniConf.GetSection("default")
 		globalLangReadOnly[v] = make(map[string]string)
 		globalLangReadOnly[v] = iniconf
 	}
@@ -137,6 +138,7 @@ func init() {
 	flag.Parse()
 }
 
+// CallController calls the method with this name
 func CallController(c *Controller, name string) (string, error) {
 	// имя экспортируемого метода должно начинаться с заглавной буквы
 	// the name of exported method must begin with a capital letter
@@ -153,6 +155,7 @@ func CallController(c *Controller, name string) (string, error) {
 	return html, err
 }
 
+// CallMethod calls the method
 func CallMethod(i interface{}, methodName string) (string, error) {
 	var ptr reflect.Value
 	var value reflect.Value
@@ -184,10 +187,10 @@ func CallMethod(i interface{}, methodName string) (string, error) {
 
 	if finalMethod.IsValid() {
 		x := finalMethod.Call([]reflect.Value{})
-		err_, found := x[1].Interface().(error)
+		ierr, found := x[1].Interface().(error)
 		var err error
 		if found {
-			err = err_
+			err = ierr
 		} else {
 			err = nil
 		}
@@ -198,6 +201,7 @@ func CallMethod(i interface{}, methodName string) (string, error) {
 	return "", fmt.Errorf("method not found")
 }
 
+/*
 func GetSessEUserId(sess session.SessionStore) int64 {
 	sessUserId := sess.Get("e_user_id")
 	log.Debug("sessUserId: %v", sessUserId)
@@ -212,50 +216,49 @@ func GetSessEUserId(sess session.SessionStore) int64 {
 		return 0
 	}
 	return 0
-}
-func GetSessWalletId(sess session.SessionStore) int64 {
-	sessUserId := sess.Get("wallet_id")
-	log.Debug("sessUserId: %v", sessUserId)
-	switch sessUserId.(type) {
+}*/
+
+// GetSessWalletID returns session's wallet id
+func GetSessWalletID(sess session.SessionStore) int64 {
+	sessUserID := sess.Get("wallet_id")
+	log.Debug("sessUserId: %v", sessUserID)
+	switch sessUserID.(type) {
 	case int64:
-		return sessUserId.(int64)
+		return sessUserID.(int64)
 	case int:
-		return int64(sessUserId.(int))
+		return int64(sessUserID.(int))
 	case string:
-		return utils.StrToInt64(sessUserId.(string))
-	default:
-		return 0
+		return utils.StrToInt64(sessUserID.(string))
 	}
 	return 0
 }
 
-func GetSessCitizenId(sess session.SessionStore) int64 {
-	sessUserId := sess.Get("citizen_id")
-	log.Debug("sessUserId: %v", sessUserId)
-	switch sessUserId.(type) {
+// GetSessCitizenID returns session's citizen id
+func GetSessCitizenID(sess session.SessionStore) int64 {
+	sessUserID := sess.Get("citizen_id")
+	log.Debug("sessUserId: %v", sessUserID)
+	switch sessUserID.(type) {
 	case int64:
-		return sessUserId.(int64)
+		return sessUserID.(int64)
 	case int:
-		return int64(sessUserId.(int))
+		return int64(sessUserID.(int))
 	case string:
-		return utils.StrToInt64(sessUserId.(string))
-	default:
-		return 0
+		return utils.StrToInt64(sessUserID.(string))
 	}
 	return 0
 }
 
+// GetSessInt64 returns the integer value of the session key
 func GetSessInt64(sessName string, sess session.SessionStore) int64 {
-	sess_ := sess.Get(sessName)
-	switch sess_.(type) {
-	default:
-		return 0
+	val := sess.Get(sessName)
+	switch val.(type) {
 	case int64:
-		return sess_.(int64)
+		return val.(int64)
 	}
 	return 0
 }
 
+// GetSessString returns the string value of the session key
 func GetSessString(sess session.SessionStore, name string) string {
 	sessVal := sess.Get(name)
 	switch sessVal.(type) {
@@ -265,23 +268,24 @@ func GetSessString(sess session.SessionStore, name string) string {
 	return ""
 }
 
+// GetSessPublicKey returns the session public key
 func GetSessPublicKey(sess session.SessionStore) string {
 	sessPublicKey := sess.Get("public_key")
 	switch sessPublicKey.(type) {
-	default:
-		return ""
 	case string:
 		return sessPublicKey.(string)
 	}
 	return ""
 }
 
+// SetLang sets lang cookie
 func SetLang(w http.ResponseWriter, r *http.Request, lang int) {
 	expiration := time.Now().Add(365 * 24 * time.Hour)
 	cookie := http.Cookie{Name: "lang", Value: strconv.Itoa(lang), Expires: expiration}
 	http.SetCookie(w, &cookie)
 }
 
+// CheckLang checks if there is a language with such id
 // если в lang прислали какую-то гадость
 // If some muck was sent in the lang
 func CheckLang(lang int) bool {
@@ -293,9 +297,9 @@ func CheckLang(lang int) bool {
 	return false
 }
 
+// GetLang returns the user's language
 func GetLang(w http.ResponseWriter, r *http.Request, parameters map[string]string) int {
-	var lang int = 1
-	lang = utils.StrToInt(parameters["lang"])
+	lang := utils.StrToInt(parameters["lang"])
 	if !CheckLang(lang) {
 		if langCookie, err := r.Cookie("lang"); err == nil {
 			lang, _ = strconv.Atoi(langCookie.Value)
@@ -330,7 +334,7 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	alert_success, err := static.Asset("static/alert_success.html")
+	alertSuccess, err := static.Asset("static/alert_success.html")
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -343,9 +347,8 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		"makeCurrencyName": func(currencyId int64) string {
 			if currencyId >= 1000 {
 				return ""
-			} else {
-				return "d"
 			}
+			return "d"
 		},
 		"div": func(a, b interface{}) float64 {
 			return utils.InterfaceToFloat64(a) / utils.InterfaceToFloat64(b)
@@ -425,11 +428,7 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 			return lang["progress_bar_pct_"+name]
 		},
 		"checkProjectPs": func(ProjectPs map[string]string, id string) bool {
-			if len(ProjectPs["ps"+id]) > 0 {
-				return true
-			} else {
-				return false
-			}
+			return len(ProjectPs["ps"+id]) > 0
 		},
 		"cfPageTypeLang": func(lang map[string]string, name string) string {
 			return lang["cf_"+name]
@@ -442,7 +441,7 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		},
 	}
 	t := template.Must(template.New("template").Funcs(funcMap).Parse(string(data)))
-	t = template.Must(t.Parse(string(alert_success)))
+	t = template.Must(t.Parse(string(alertSuccess)))
 	t = template.Must(t.Parse(string(signatures)))
 	b := new(bytes.Buffer)
 	err = t.ExecuteTemplate(b, name, tData)
@@ -452,16 +451,17 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 	return b.String(), nil
 }
 
+// GetParameters returns the map of parameters
 func (c *Controller) GetParameters() (map[string]string, error) {
 	parameters := make(map[string]string)
 	if len(c.r.PostFormValue("parameters")) > 0 {
-		parameters_ := make(map[string]interface{})
-		err := json.Unmarshal([]byte(c.r.PostFormValue("parameters")), &parameters_)
+		params := make(map[string]interface{})
+		err := json.Unmarshal([]byte(c.r.PostFormValue("parameters")), &params)
 		if err != nil {
 			return parameters, utils.ErrInfo(err)
 		}
-		log.Debug("parameters_=", parameters_)
-		for k, v := range parameters_ {
+		log.Debug("parameters_=", params)
+		for k, v := range params {
 			parameters[k] = utils.InterfaceToStr(v)
 		}
 	}

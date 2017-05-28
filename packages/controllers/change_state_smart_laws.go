@@ -32,6 +32,7 @@ type changeStateSmartLawsPage struct {
 	AllStateParameters []string
 }
 
+// ChangeStateSmartLaws is a controller which shows state parameters
 func (c *Controller) ChangeStateSmartLaws() (string, error) {
 
 	var err error

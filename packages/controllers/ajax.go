@@ -48,8 +48,8 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletID := GetSessWalletId(sess)
-	sessCitizenID := GetSessCitizenId(sess)
+	sessWalletID := GetSessWalletID(sess)
+	sessCitizenID := GetSessCitizenID(sess)
 	sessStateID := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 

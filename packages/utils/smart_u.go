@@ -2004,8 +2004,8 @@ func DateTime(vars *map[string]string, pars ...string) string {
 // Select returns select HTML tag
 func Select(vars *map[string]string, pars ...string) string {
 	var (
-		class string
-		value int64
+		class, more string
+		value       int64
 	)
 	list := make([]SelInfo, 0)
 	if len(pars) > 1 {
@@ -2024,13 +2024,13 @@ func Select(vars *map[string]string, pars ...string) string {
 		}
 	}
 	if len(pars) > 2 {
-		class = pars[2]
+		class, more = getClass(pars[2])
 	}
 	if len(pars) > 3 {
 		value = StrToInt64(pars[3])
 	}
 
-	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s">`, pars[0], class)
+	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s" %s>`, pars[0], class, more)
 	for _, item := range list {
 		var selected string
 		if item.ID == value {

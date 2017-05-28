@@ -64,8 +64,8 @@ func App(w http.ResponseWriter, r *http.Request) {
 
 	params[`name`] = page
 	params[`state_id`] = utils.Int64ToStr(GetSessInt64("state_id", sess))
-	params[`wallet_id`] = utils.Int64ToStr(GetSessWalletId(sess))
-	params[`citizen_id`] = utils.Int64ToStr(GetSessCitizenId(sess))
+	params[`wallet_id`] = utils.Int64ToStr(GetSessWalletID(sess))
+	params[`citizen_id`] = utils.Int64ToStr(GetSessCitizenID(sess))
 
 	var (
 		out  string
@@ -102,8 +102,8 @@ func App(w http.ResponseWriter, r *http.Request) {
 			out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
 				Template: textproc.Process(string(data), &params), Unique: ``,
 				Data: &appData{
-					CommonPage: utils.CommonPage{WalletId: GetSessWalletId(sess),
-						CitizenId: GetSessCitizenId(sess),
+					CommonPage: utils.CommonPage{WalletId: GetSessWalletID(sess),
+						CitizenId: GetSessCitizenID(sess),
 						StateId:   GetSessInt64("state_id", sess),
 					},
 					Blocks:  blocks,

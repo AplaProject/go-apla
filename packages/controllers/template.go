@@ -42,8 +42,8 @@ func Template(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletId(sess)
-	sessCitizenId := GetSessCitizenId(sess)
+	sessWalletId := GetSessWalletID(sess)
+	sessCitizenId := GetSessCitizenID(sess)
 	sessStateId := GetSessInt64("state_id", sess)
 	//	sessAccountId := GetSessInt64("account_id", sess)
 	//sessAddress := GetSessString(sess, "address")
