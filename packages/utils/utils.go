@@ -114,7 +114,7 @@ var (
 	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
 	// DevTools switches on dev tools in thrust shell
 	DevTools = flag.Int64("devtools", 0, "Devtools in thrust-shell")
-	// BoltDir is th edir for BoltDb folder
+	// BoltDir is the edir for BoltDb folder
 	BoltDir = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
 	// BoltPsw is the password for BoltDB
 	BoltPsw = flag.String("boltPsw", "", "Bolt password")
@@ -163,7 +163,7 @@ func Desktop() bool {
 	return false
 }
 
-// Mobile check if the app runs on Android or iOS
+// Mobile checks if the app runs on Android or iOS
 func Mobile() bool {
 	if IOS() || runtime.GOOS == "android" {
 		return true
@@ -171,7 +171,7 @@ func Mobile() bool {
 	return false
 }
 
-// Android check if the app runs on Android
+// Android checks if the app runs on Android
 func Android() bool {
 	if runtime.GOOS == "android" {
 		return true
@@ -190,7 +190,7 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	// распарсим заголовок блока // parse the heading of a block
 	/*
 		Заголовок // the heading
-		TYPE (0-блок, 1-тр-я)        1
+		TYPE (0-блок, 1-тр-я)        1 // TYPE(0-block, 1-transaction)
 		BLOCK_ID   				       4
 		TIME       					       4
 		WALLET_ID                         1-8
@@ -1094,7 +1094,7 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 		return false, ErrInfoFmt("len(signs) == 0")
 	}
 	// у нода всегда 1 подпись
-	// node always has olly one signature
+	// node always has olny one signature
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
@@ -1470,7 +1470,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	}
 
 	// в ответ получаем размер данных, которые нам хочет передать сервер
-	// recieve the data size as a response
+	// recieve the data size as a response that server wants to transfer
 	buf := make([]byte, 4)
 	n, err := conn.Read(buf)
 	if err != nil {
