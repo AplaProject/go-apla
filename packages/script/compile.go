@@ -50,7 +50,7 @@ type compileFunc func(*[]*Block, int, *Lexem) error
 /* Байт-код из себя представляет дерево - на самом верхнем уровне функции контракты, и далее идет вложенность
  в соответствии с вложенностью фигурных скобок. Узлами дерева являются структуры типа Block.
  Например,
-// Byte code could be described as a tree where functions and contracts are on the top level and nesting goes further according to nesting of Bracketed brackets. Tree nodes are structures of Block type. For instance,
+// Byte code could be described as a tree where functions and contracts are on the top level and nesting goes further according to nesting of bracketed brackets. Tree nodes are structures of 'Block' type. For instance,
  func a {
 	 if b {
 		 while d {
@@ -170,7 +170,7 @@ var (
 		fCmdError,
 	}
 	// states описывает конечный автомат с состояниями, на основе которого будет генерироваться байт-код
-	// states describe a finite machine with states on the base of which a bytecode will be generated
+	// 'states' describes a finite machine with states on the base of which a bytecode will be generated
 	states = compileStates{
 		{ // stateRoot
 			lexNewLine:                      {stateRoot, 0},
