@@ -44,7 +44,7 @@ func (c *Controller) AjaxHistory() interface{} {
 		history []map[string]string
 		err     error
 	)
-	walletID := c.SessWalletId
+	walletID := c.SessWalletID
 	result := HistoryJSON{Draw: utils.StrToInt(c.r.FormValue("draw"))}
 	length := utils.StrToInt(c.r.FormValue("length"))
 	if length == -1 {

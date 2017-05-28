@@ -50,7 +50,7 @@ func (c *Controller) NewTable() (string, error) {
 	TemplateStr, err := makeTemplate("new_table", "newTable", &newTablePage{
 		Alert:      c.Alert,
 		Lang:       c.Lang,
-		CitizenId:  c.SessCitizenId,
+		CitizenId:  c.SessCitizenID,
 		StateId:    c.StateId,
 		Global:     global,
 		TimeNow:    timeNow,

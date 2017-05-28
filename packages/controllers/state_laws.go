@@ -53,8 +53,8 @@ func (c *Controller) StateLaws() (string, error) {
 	TemplateStr, err := makeTemplate("state_laws", "stateLaws", &stateLawsPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletId,
-		CitizenId:          c.SessCitizenId,
+		WalletId:           c.SessWalletID,
+		CitizenId:          c.SessCitizenID,
 		StateLaws:          stateLaws,
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,

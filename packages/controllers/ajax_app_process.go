@@ -50,7 +50,7 @@ func (c *Controller) AjaxAppProcess() interface{} {
 	if strings.HasPrefix(name, `global`) {
 		table = `global_apps`
 	} else {
-		table = fmt.Sprintf(`"%d_apps"`, c.SessStateId)
+		table = fmt.Sprintf(`"%d_apps"`, c.SessStateID)
 	}
 	cur, err := c.OneRow(`select * from `+table+` where name=?`, name).String()
 	if err != nil {

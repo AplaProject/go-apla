@@ -41,8 +41,8 @@ func (c *Controller) NewState() (string, error) {
 	TemplateStr, err := makeTemplate("new_state", "newState", &newStatePage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:  c.SessWalletID,
+		CitizenId: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
 		TxTypeId:  txTypeId})

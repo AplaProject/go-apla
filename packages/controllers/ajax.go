@@ -65,10 +65,10 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		dbInit = true
 	}
 
-	c.SessWalletId = sessWalletID
-	c.SessCitizenId = sessCitizenID
+	c.SessWalletID = sessWalletID
+	c.SessCitizenID = sessCitizenID
 	c.SessAddress = sessAddress
-	c.SessStateId = sessStateID
+	c.SessStateID = sessStateID
 
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)
@@ -144,7 +144,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		if utils.Mobile() { // На IOS можно сгенерить ключ без сессии // It's possible to generate the key on IOS without session
 			pages += "|daylightKey"
 		}
-		if ok, _ := regexp.MatchString(`^(?i)`+pages+`$`, controllerName); !ok && c.SessWalletId <= 0 && c.SessCitizenId <= 0 && len(c.SessAddress) == 0 {
+		if ok, _ := regexp.MatchString(`^(?i)`+pages+`$`, controllerName); !ok && c.SessWalletID <= 0 && c.SessCitizenID <= 0 && len(c.SessAddress) == 0 {
 			html = "Access denied 1"
 		} else {
 			// без БД будет выдавать панику

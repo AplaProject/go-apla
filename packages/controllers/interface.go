@@ -50,8 +50,8 @@ func (c *Controller) Interface() (string, error) {
 	TemplateStr, err := makeTemplate("interface", "interface", &interfacePage{
 		Alert:          c.Alert,
 		Lang:           c.Lang,
-		WalletId:       c.SessWalletId,
-		CitizenId:      c.SessCitizenId,
+		WalletId:       c.SessWalletID,
+		CitizenId:      c.SessCitizenID,
 		InterfacePages: interface_pages,
 		Global:         global,
 		InterfaceMenu:  interface_menu})

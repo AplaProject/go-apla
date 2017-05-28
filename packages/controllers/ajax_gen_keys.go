@@ -51,16 +51,16 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		result.Error = `Count must be from 1 to 50`
 		return result
 	}
-	govAccount, err := utils.StateParam(int64(c.SessStateId), `gov_account`)
+	govAccount, err := utils.StateParam(int64(c.SessStateID), `gov_account`)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	if c.SessCitizenId != utils.StrToInt64(govAccount) || len(govAccount) == 0 {
+	if c.SessCitizenID != utils.StrToInt64(govAccount) || len(govAccount) == 0 {
 		result.Error = `Access denied`
 		return result
 	}
-	privKey, err := c.Single(`select private from testnet_emails where wallet=?`, c.SessCitizenId).String()
+	privKey, err := c.Single(`select private from testnet_emails where wallet=?`, c.SessCitizenID).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -72,7 +72,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 	//	bkey, err := hex.DecodeString(privKey)
 	//	pubkey := lib.PrivateToPublic(bkey)
 
-	contract := smart.GetContract(`GenCitizen`, uint32(c.SessStateId))
+	contract := smart.GetContract(`GenCitizen`, uint32(c.SessStateID))
 	if contract == nil {
 		result.Error = `GenCitizen contract has not been found`
 		return result
@@ -99,7 +99,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 
 		ctime := lib.Time32()
 		info := (*contract).Block.Info.(*script.ContractInfo)
-		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(c.SessCitizenId), c.SessStateId, flags)
+		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(c.SessCitizenID), c.SessStateID, flags)
 		pubhex := hex.EncodeToString(pub)
 		forsign += fmt.Sprintf(",%v,%v", ``, pubhex)
 		signature, err := lib.SignECDSA(privKey, forsign)
@@ -114,8 +114,8 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		header := consts.TXHeader{
 			Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
 			Time:     uint32(ctime),
-			WalletID: uint64(c.SessCitizenId),
-			StateID:  int32(c.SessStateId),
+			WalletID: uint64(c.SessCitizenID),
+			StateID:  int32(c.SessStateID),
 			Flags:    flags,
 			Sign:     sign,
 		}
@@ -126,25 +126,25 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		}
 		data = append(append(data, lib.EncodeLength(int64(len(``)))...), []byte(``)...)
 		data = append(append(data, lib.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
-		err = c.SendTx(int64(header.Type), c.SessCitizenId, data)
+		err = c.SendTx(int64(header.Type), c.SessCitizenID, data)
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
 		err = c.ExecSQL(`insert into testnet_keys (id, state_id, private, wallet) values(?,?,?,?)`,
-			c.SessCitizenId, c.SessStateId, spriv, idnew)
+			c.SessCitizenID, c.SessStateID, spriv, idnew)
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
 	}
 
-	result.Generated, err = c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenId, c.SessStateId).Int64()
+	result.Generated, err = c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenID, c.SessStateID).Int64()
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	result.Available, err = c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenId, c.SessStateId).Int64()
+	result.Available, err = c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenID, c.SessStateID).Int64()
 	if err != nil {
 		result.Error = err.Error()
 		return result

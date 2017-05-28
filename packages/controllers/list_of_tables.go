@@ -57,8 +57,8 @@ func (c *Controller) ListOfTables() (string, error) {
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:  c.SessWalletID,
+		CitizenId: c.SessCitizenID,
 		Tables:    tables})
 	if err != nil {
 		return "", utils.ErrInfo(err)

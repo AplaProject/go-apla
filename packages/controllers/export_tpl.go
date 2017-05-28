@@ -102,7 +102,7 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 	names := make([]string, 0)
 	for _, icontract := range contracts {
 		var state string
-		icontract, _, state = getState(c.SessStateId, icontract)
+		icontract, _, state = getState(c.SessStateID, icontract)
 		data, _ := c.OneRow(fmt.Sprintf(`select conditions,value from "%s_%s" where name=?`, state, name), icontract).String()
 		//		fmt.Println(`Data`, err, data)
 		if len(data) > 0 && len(data[`value`]) > 0 {
@@ -138,7 +138,7 @@ func (c *Controller) setData(name, prefix string) (out string) {
 			global         int
 		)
 		tblname = itable[strings.IndexByte(itable, '_')+1:]
-		itable, global, state = getState(c.SessStateId, itable)
+		itable, global, state = getState(c.SessStateID, itable)
 		contname := fmt.Sprintf(`Export%d_%s`, global, tblname)
 		fmt.Println(itable, global, state)
 		if global == 1 {
@@ -216,7 +216,7 @@ func (c *Controller) setAppend(name, prefix string) (out string) {
 		//		var state string
 
 		lr := strings.SplitN(ilist, `=`, 2)
-		iname, _, _ := getState(c.SessStateId, lr[0])
+		iname, _, _ := getState(c.SessStateID, lr[0])
 		if len(lr) > 1 {
 			names = append(names, prefix+`_`+iname)
 			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, iname, lr[1]))
@@ -229,7 +229,7 @@ func (c *Controller) setAppend(name, prefix string) (out string) {
 func (c *Controller) setLang() (out string) {
 	out = "SetVar(`l_lang #= "
 	list := make(map[string]string)
-	res, _ := c.GetAll(fmt.Sprintf(`select * from "%d_languages"`, c.SessStateId), -1)
+	res, _ := c.GetAll(fmt.Sprintf(`select * from "%d_languages"`, c.SessStateID), -1)
 	for _, ires := range res {
 		list[ires[`name`]] = ires[`res`]
 	}
@@ -282,8 +282,8 @@ func (c *Controller) ExportTpl() (string, error) {
 					continue
 				}
 				var global int
-				icontract, global, _ = getState(c.SessStateId, icontract)
-				state := c.SessStateId
+				icontract, global, _ = getState(c.SessStateID, icontract)
+				state := c.SessStateID
 				if global == 1 {
 					state = 0
 				}
@@ -352,7 +352,7 @@ func (c *Controller) ExportTpl() (string, error) {
 					state  string
 					global int
 				)
-				itable, global, state = getState(c.SessStateId, itable)
+				itable, global, state = getState(c.SessStateID, itable)
 				cols, _ := c.Single(fmt.Sprintf(`select columns_and_permissions->'update' from "%s_tables" where name=?`,
 					state), itable).String()
 				fmap := make(map[string]string)
@@ -458,7 +458,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					global  int
 				)
 				tblname = itable[strings.IndexByte(itable, '_')+1:]
-				itable, global, _ = getState(c.SessStateId, itable)
+				itable, global, _ = getState(c.SessStateID, itable)
 				contname := fmt.Sprintf(`Export%d_%s`, global, tblname)
 
 				list = append(list, fmt.Sprintf(`{
@@ -503,12 +503,12 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				if len(icontract) == 0 {
 					continue
 				}
-				icontract, global, _ = getState(c.SessStateId, icontract)
+				icontract, global, _ = getState(c.SessStateID, icontract)
 				var name string
 				if global > 0 {
 					name = `@0` + icontract
 				} else {
-					name = fmt.Sprintf(`@%d%s`, c.SessStateId, icontract)
+					name = fmt.Sprintf(`@%d%s`, c.SessStateID, icontract)
 				}
 				contracts = append(contracts, ExpContract{Contract: icontract, Global: global,
 					Name: name})
@@ -518,7 +518,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			for _, icont := range contracts {
 				global := icont.Global
 				icontract := icont.Contract
-				//				icontract, global, _ = getState(c.SessStateId, icontract)
+				//				icontract, global, _ = getState(c.SessStateID, icontract)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -561,7 +561,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					continue
 				}
 				//				var global int
-				iparam, _, _ = getState(c.SessStateId, iparam)
+				iparam, _, _ = getState(c.SessStateID, iparam)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'name,value,conditions',
 		Data: {
@@ -582,7 +582,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					continue
 				}
 				var global int
-				imenu, global, _ = getState(c.SessStateId, imenu)
+				imenu, global, _ = getState(c.SessStateID, imenu)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -604,8 +604,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					continue
 				}
 				var global int
-				ipage, global, _ = getState(c.SessStateId, ipage)
-				prefix := utils.Int64ToStr(c.SessStateId)
+				ipage, global, _ = getState(c.SessStateID, ipage)
+				prefix := utils.Int64ToStr(c.SessStateID)
 				if global == 1 {
 					prefix = `global`
 				}
@@ -648,7 +648,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				var iname string
 
 				lr := strings.SplitN(ilist, `=`, 2)
-				iname, global, _ = getState(c.SessStateId, lr[0])
+				iname, global, _ = getState(c.SessStateID, lr[0])
 				if len(lr) > 1 {
 					list = append(list, fmt.Sprintf(`{
 			Forsign: 'global,name,value',
@@ -670,7 +670,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				var iname string
 
 				lr := strings.SplitN(ilist, `=`, 2)
-				iname, global, _ = getState(c.SessStateId, lr[0])
+				iname, global, _ = getState(c.SessStateID, lr[0])
 				if len(lr) > 1 {
 					list = append(list, fmt.Sprintf(`{
 			Forsign: 'global,name,value',
@@ -694,7 +694,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			message = fmt.Sprintf(`File %s has been created`, tplname)
 		}
 	}
-	prefix := utils.Int64ToStr(c.SessStateId)
+	prefix := utils.Int64ToStr(c.SessStateID)
 	loadlist := func(name string) (*[]exportInfo, error) {
 		list, err := c.getList(name, prefix)
 		if err != nil {

@@ -65,8 +65,8 @@ func (c *Controller) Contracts() (string, error) {
 
 	TemplateStr, err := makeTemplate("contracts", "contracts", &contractsPage{
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletId,
-		CitizenId:          c.SessCitizenId,
+		WalletId:           c.SessWalletID,
+		CitizenId:          c.SessCitizenID,
 		StateSmartLaws:     stateSmartLaws,
 		Global:             global,
 		AllStateParameters: allStateParameters})

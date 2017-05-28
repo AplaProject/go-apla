@@ -38,7 +38,7 @@ func (c *Controller) GenCitizen() (string, error) {
 	message := ``
 	if len(name) > 0 {
 	}
-	//prefix := utils.Int64ToStr(c.SessStateId)
+	//prefix := utils.Int64ToStr(c.SessStateID)
 	pageData := genCitizenPage{Data: c.Data, Message: message, Unique: template.JS(`255`)}
 	return proceedTemplate(c, NGenCitizen, &pageData)
 }

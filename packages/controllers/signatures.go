@@ -46,8 +46,8 @@ func (c *Controller) Signatures() (string, error) {
 
 	TemplateStr, err := makeTemplate("signatures_list", "signatures_list", &signaturesPage{
 		Lang:       c.Lang,
-		WalletId:   c.SessWalletId,
-		CitizenId:  c.SessCitizenId,
+		WalletId:   c.SessWalletID,
+		CitizenId:  c.SessCitizenID,
 		Signatures: signatures,
 		Global:     global})
 	if err != nil {

@@ -69,9 +69,9 @@ func (c *Controller) EditColumn() (string, error) {
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
 		ColumnType:       utils.GetColumnType(tableName, columnName),
-		WalletId:         c.SessWalletId,
-		CitizenId:        c.SessCitizenId,
-		StateId:          c.SessStateId,
+		WalletId:         c.SessWalletID,
+		CitizenId:        c.SessCitizenID,
+		StateId:          c.SessStateID,
 		TimeNow:          timeNow,
 		TxType:           txType,
 		TxTypeId:         txTypeId})

@@ -40,7 +40,7 @@ func (c *Controller) RestoreAccess() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	data, err := c.OneRow("SELECT active FROM system_restore_access WHERE state_id  =  ?", c.SessStateId).Int64()
+	data, err := c.OneRow("SELECT active FROM system_restore_access WHERE state_id  =  ?", c.SessStateID).Int64()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -59,8 +59,8 @@ func (c *Controller) RestoreAccess() (string, error) {
 		TimeNow:   timeNow,
 		TxType:    txType,
 		TxTypeId:  txTypeId,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:  c.SessWalletID,
+		CitizenId: c.SessCitizenID,
 	})
 	if err != nil {
 		return "", utils.ErrInfo(err)

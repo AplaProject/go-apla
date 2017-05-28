@@ -33,13 +33,13 @@ func (c *Controller) NewContract() (string, error) {
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:  c.SessWalletID,
+		CitizenId: c.SessCitizenID,
 		TxType:    txType,
 		TxTypeId:  txTypeId,
 		Global:    global,
 		Data:      map[string]string{`conditions`: "ContractConditions(`MainCondition`)"},
-		StateId:   c.SessStateId})
+		StateId:   c.SessStateID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

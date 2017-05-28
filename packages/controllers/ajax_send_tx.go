@@ -49,7 +49,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 	contract, err := c.checkTx(nil)
 	if err == nil {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
-		userID := uint64(c.SessWalletId)
+		userID := uint64(c.SessWalletID)
 		sign := make([]byte, 0)
 		signature, err := lib.JSSignToBytes(c.r.FormValue("signature1"))
 		if err != nil {
@@ -58,7 +58,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 			lib.EncodeLenByte(&sign, signature)
 		}
 		var isPublic []byte
-		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
+		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletID).Bytes()
 		if err == nil && len(sign) > 0 && len(isPublic) == 0 {
 			flags |= consts.TxfPublic
 			public, _ := hex.DecodeString(c.r.FormValue(`public`))
@@ -78,7 +78,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 				Type:     int32(contract.Block.Info.(*script.ContractInfo).ID), /* + smart.CNTOFF*/
 				Time:     uint32(utils.StrToInt64(c.r.FormValue(`time`))),
 				WalletID: userID,
-				StateID:  int32(c.SessStateId),
+				StateID:  int32(c.SessStateID),
 				Flags:    flags,
 				Sign:     sign,
 			}
@@ -132,7 +132,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 					md5 := utils.Md5(data)
 					err = c.ExecSQL(`INSERT INTO transactions_status (
 						hash, time,	type, wallet_id, citizen_id	) VALUES (
-						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(userID), int64(userID)) //c.SessStateId)
+						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(userID), int64(userID)) //c.SessStateID)
 					if err == nil {
 						log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", md5, hex.EncodeToString(data))
 						err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))

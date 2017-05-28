@@ -47,8 +47,8 @@ func (c *Controller) StateParameters() (string, error) {
 	TemplateStr, err := makeTemplate("state_parameters", "stateParameters", &stateParametersPage{
 		Alert:           c.Alert,
 		Lang:            c.Lang,
-		WalletId:        c.SessWalletId,
-		CitizenId:       c.SessCitizenId,
+		WalletId:        c.SessWalletID,
+		CitizenId:       c.SessCitizenID,
 		StateParameters: stateParameters,
 		TimeNow:         timeNow,
 		TxType:          txType,

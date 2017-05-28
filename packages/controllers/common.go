@@ -53,12 +53,12 @@ type Controller struct {
 	ContentInc       bool
 	Periods          map[int64]string
 	Alert            string
-	SessStateId      int64
+	SessStateID      int64
 	StateName        string
 	StateId          int64
 	StateIdStr       string
-	SessCitizenId    int64
-	SessWalletId     int64
+	SessCitizenID    int64
+	SessWalletID     int64
 	SessAddress      string
 	MyNotice         map[string]string
 	Parameters       map[string]string

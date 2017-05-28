@@ -41,7 +41,7 @@ func (c *Controller) WalletHistory() (string, error) {
 	list := make([]map[string]interface{}, 0)
 	walletId := lib.StringToAddress(c.r.FormValue("wallet"))
 	if walletId == 0 {
-		walletId = c.SessWalletId
+		walletId = c.SessWalletID
 	}
 	current, err := c.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, walletId).String()
 	if err != nil {

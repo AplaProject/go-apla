@@ -40,8 +40,8 @@ func (c *Controller) ModalAnonym() (string, error) {
 	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	MyWalletData, err := c.OneRow("SELECT host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
-	MyWalletData[`address`] = lib.AddressToString(c.SessWalletId)
+	MyWalletData, err := c.OneRow("SELECT host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
+	MyWalletData[`address`] = lib.AddressToString(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -51,8 +51,8 @@ func (c *Controller) ModalAnonym() (string, error) {
 		Lang:         c.Lang,
 		MyWalletData: MyWalletData,
 		Title:        "modalAnonym",
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
+		WalletId:     c.SessWalletID,
+		CitizenId:    c.SessCitizenID,
 		Address:      c.SessAddress,
 		TimeNow:      timeNow,
 		TxType:       txType,

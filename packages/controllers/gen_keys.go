@@ -37,15 +37,15 @@ func init() {
 }
 
 func (c *Controller) GenKeys() (string, error) {
-	govAccount, _ := utils.StateParam(int64(c.SessStateId), `gov_account`)
-	if c.SessCitizenId != utils.StrToInt64(govAccount) {
+	govAccount, _ := utils.StateParam(int64(c.SessStateID), `gov_account`)
+	if c.SessCitizenID != utils.StrToInt64(govAccount) {
 		return ``, fmt.Errorf(`Access denied`)
 	}
-	generated, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenId, c.SessStateId).Int64()
+	generated, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenID, c.SessStateID).Int64()
 	if err != nil {
 		return ``, err
 	}
-	available, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenId, c.SessStateId).Int64()
+	available, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenID, c.SessStateID).Int64()
 	if err != nil {
 		return ``, err
 	}

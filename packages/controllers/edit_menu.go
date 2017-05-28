@@ -66,12 +66,12 @@ func (c *Controller) EditMenu() (string, error) {
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletId:  c.SessWalletID,
+		CitizenId: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
 		TxTypeId:  txTypeId,
-		StateId:   c.SessStateId,
+		StateId:   c.SessStateID,
 		DataMenu:  dataMenu})
 	if err != nil {
 		return "", utils.ErrInfo(err)

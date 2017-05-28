@@ -40,7 +40,7 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 	txTypeID := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	public, err := c.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
+	public, err := c.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -48,8 +48,8 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 	TemplateStr, err := makeTemplate("change_node_key", "changeNodeKey", &changeNodeKeyPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletID:  c.SessWalletId,
-		CitizenID: c.SessCitizenId,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
 		NoPublic:  len(public) == 0,

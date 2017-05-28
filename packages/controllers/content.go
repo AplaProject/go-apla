@@ -110,9 +110,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	c.r = r
 	c.w = w
 	c.sess = sess
-	c.SessWalletId = sessWalletId
-	c.SessCitizenId = sessCitizenId
-	c.SessStateId = sessStateId
+	c.SessWalletID = sessWalletId
+	c.SessCitizenID = sessCitizenId
+	c.SessStateID = sessStateId
 	c.SessAddress = sessAddress
 
 	c.ContentInc = true
@@ -341,9 +341,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	if len(pageName) > 0 && isPage(pageName, TPage) {
 		c.Data = &CommonPage{
 			Address:   c.SessAddress,
-			WalletId:  c.SessWalletId,
-			CitizenId: c.SessCitizenId,
-			StateId:   c.SessStateId,
+			WalletId:  c.SessWalletID,
+			CitizenId: c.SessCitizenID,
+			StateId:   c.SessStateID,
 			StateName: stateName,
 		}
 		w.Write([]byte(CallPage(c, pageName)))

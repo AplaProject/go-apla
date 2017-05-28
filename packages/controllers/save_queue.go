@@ -34,8 +34,8 @@ func (c *Controller) SaveQueue() (string, error) {
 	/*citizenId := utils.BytesToInt64([]byte(c.r.FormValue("citizenId")))
 	walletId := utils.BytesToInt64([]byte(c.r.FormValue("walletId")))*/
 
-	citizenId := c.SessCitizenId
-	walletId := c.SessWalletId
+	citizenId := c.SessCitizenID
+	walletId := c.SessWalletID
 
 	log.Debug("citizenId %d / walletId %d ", citizenId, walletId)
 

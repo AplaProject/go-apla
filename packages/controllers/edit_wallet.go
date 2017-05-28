@@ -70,7 +70,7 @@ func (c *Controller) EditWallet() (string, error) {
 			alert = fmt.Sprintf(`Address %s is not valid.`, idaddr)
 		}
 	} else {
-		id = c.SessWalletId
+		id = c.SessWalletID
 	}
 	if id != 0 {
 		data, err = c.OneRow(`SELECT * FROM "dlt_wallets" WHERE wallet_id = ?`, id).String()
@@ -97,7 +97,7 @@ func (c *Controller) EditWallet() (string, error) {
 			}
 		}
 	}
-	pageData := editWalletPage{Data: c.Data, StateId: c.SessStateId,
+	pageData := editWalletPage{Data: c.Data, StateId: c.SessStateID,
 		Alert: alert, TxType: txType, TxTypeId: txTypeId, Info: data, Unique: ``}
 	return proceedTemplate(c, NEditWallet, &pageData)
 }

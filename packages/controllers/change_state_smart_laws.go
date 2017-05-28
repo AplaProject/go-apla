@@ -56,8 +56,8 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 	TemplateStr, err := makeTemplate("change_state_smart_laws", "changeStateSmartLaws", &changeStateSmartLawsPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletId,
-		CitizenId:          c.SessCitizenId,
+		WalletId:           c.SessWalletID,
+		CitizenId:          c.SessCitizenID,
 		StateSmartLaws:     StateSmartLaws,
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,

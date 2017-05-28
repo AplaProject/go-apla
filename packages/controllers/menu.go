@@ -106,12 +106,12 @@ func (c *Controller) Menu() (string, error) {
 			return "", err
 		}
 
-		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenId).String()
+		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
 		if err != nil {
 			log.Error("%v", err)
 		}
 
-		citizenAvatar, err = c.Single(`SELECT avatar FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenId).String()
+		citizenAvatar, err = c.Single(`SELECT avatar FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
 		if err != nil {
 			log.Error("%v", err)
 		}

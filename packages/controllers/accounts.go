@@ -51,10 +51,10 @@ func (c *Controller) Accounts() (string, error) {
 
 	data := make([]AccountInfo, 0)
 
-	cents, _ := utils.StateParam(c.SessStateId, `money_digit`)
+	cents, _ := utils.StateParam(c.SessStateID, `money_digit`)
 	digit := utils.StrToInt(cents)
 
-	currency, _ := utils.StateParam(c.SessStateId, `currency_name`)
+	currency, _ := utils.StateParam(c.SessStateID, `currency_name`)
 
 	newAccount := func(account int64, amount string) {
 		if amount == `NULL` {
@@ -72,19 +72,19 @@ func (c *Controller) Accounts() (string, error) {
 	}
 
 	amount, err := c.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`,
-		c.SessStateId), c.SessCitizenId).String()
+		c.SessStateID), c.SessCitizenID).String()
 	if err != nil {
 		return ``, err
 	}
 	if len(amount) > 0 {
-		newAccount(c.SessCitizenId, amount)
+		newAccount(c.SessCitizenID, amount)
 	} else {
-		newAccount(c.SessCitizenId, `NULL`)
+		newAccount(c.SessCitizenID, `NULL`)
 	}
 
 	list, err := c.GetAll(fmt.Sprintf(`select anon.*, acc.amount from "%d_anonyms" as anon
 	left join "%[1]d_accounts" as acc on acc.citizen_id=anon.id_anonym
-	where anon.id_citizen=?`, c.SessStateId), -1, c.SessCitizenId)
+	where anon.id_citizen=?`, c.SessStateID), -1, c.SessCitizenID)
 	if err != nil {
 		return ``, err
 	}

@@ -84,7 +84,7 @@ func (c *Controller) AppCatalog() (string, error) {
 		}
 		return nil
 	}
-	err = loadapps(fmt.Sprintf(`"%d_apps"`, c.SessStateId))
+	err = loadapps(fmt.Sprintf(`"%d_apps"`, c.SessStateID))
 	if err != nil {
 		return ``, err
 	}

@@ -56,8 +56,8 @@ func (c *Controller) EditStateParameters() (string, error) {
 	TemplateStr, err := makeTemplate("edit_state_parameters", "editStateParameters", &editStateParametersPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletId,
-		CitizenId:          c.SessCitizenId,
+		WalletId:           c.SessWalletID,
+		CitizenId:          c.SessCitizenID,
 		StateId:            c.StateId,
 		StateParameters:    stateParameters,
 		AllStateParameters: allStateParameters,

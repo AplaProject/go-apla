@@ -76,13 +76,13 @@ func (c *Controller) RowHistory() (string, error) {
 	TemplateStr, err := makeTemplate("row_history", "rowHistory", &rowHistoryPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletId:  c.SessWalletId,
+		WalletId:  c.SessWalletID,
 		History:   history,
-		CitizenId: c.SessCitizenId,
+		CitizenId: c.SessCitizenID,
 		TableName: tableName,
 		Global:    global,
 		Columns:   columns,
-		StateId:   c.SessStateId})
+		StateId:   c.SessStateID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

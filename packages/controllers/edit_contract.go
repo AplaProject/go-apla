@@ -121,17 +121,17 @@ func (c *Controller) EditContract() (string, error) {
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:               c.Alert,
 		Lang:                c.Lang,
-		WalletId:            c.SessWalletId,
+		WalletId:            c.SessWalletID,
 		Data:                data,
 		DataContractHistory: dataContractHistory,
 		Global:              global,
-		CitizenId:           c.SessCitizenId,
+		CitizenId:           c.SessCitizenID,
 		TxType:              txType,
 		TxTypeId:            txTypeId,
-		Confirm:             c.SessWalletId == cont_wallet,
+		Confirm:             c.SessWalletID == cont_wallet,
 		TxActivateType:      `ActivateContract`,
 		TxActivateTypeId:    utils.TypeInt(`ActivateContract`),
-		StateId:             c.SessStateId})
+		StateId:             c.SessStateID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
