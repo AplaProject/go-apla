@@ -135,7 +135,7 @@ func (t *TcpServer) Type1() {
 		}
 		for {
 			if len(binaryData) == 0 { // если пришли сюда из continue, то binaryData может уже быть пустым
-				// if we came here from 'continue', then binaryData may already be empty
+				// if we came here from 'continue', then binaryData could already be empty
 				break
 			}
 			newDataTxHash := utils.BinToHex(utils.BytesShift(&binaryData, 16))
