@@ -9,7 +9,7 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.Data.WalletId}},{{.StateId}},{{.Info.wallet_id}},' + 
+			$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.Data.WalletId}},{{.StateID}},{{.Info.wallet_id}},' + 
               $("#spending_contract").val() + ',' + $("#conditions_change").val());
 			doSign();
 			send_to_net_wallet();
@@ -26,7 +26,7 @@
 				'spending_contract' : $("#spending_contract").val(),
 				'conditions_change' : $("#conditions_change").val(),
 				'type' : '{{.TxType}}',
-				'stateId' : '{{.StateId}}',
+				'stateId' : '{{.StateID}}',
 				'time' : serverTime,
 				'signature1': $('#signature1').val()
 			},
