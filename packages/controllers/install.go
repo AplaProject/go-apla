@@ -30,6 +30,7 @@ import (
 	"strings"
 )
 
+// Install is a controller for the installation
 func (c *Controller) Install() (string, error) {
 
 	c.r.ParseForm()
@@ -55,7 +56,7 @@ func (c *Controller) Install() (string, error) {
 	if logLevel != "DEBUG" {
 		logLevel = "ERROR"
 	}
-	first_load_blockchain_url := c.r.FormValue("first_load_blockchain_url")
+	firstLoadBlockchainURL := c.r.FormValue("first_load_blockchain_url")
 	firstLoad := c.r.FormValue("first_load")
 	dbType := c.r.FormValue("db_type")
 	dbHost := c.r.FormValue("host")
@@ -72,8 +73,8 @@ func (c *Controller) Install() (string, error) {
 		}
 	}
 
-	if len(first_load_blockchain_url) == 0 {
-		first_load_blockchain_url = consts.BLOCKCHAIN_URL
+	if len(firstLoadBlockchainURL) == 0 {
+		firstLoadBlockchainURL = consts.BLOCKCHAIN_URL
 	}
 
 	if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
@@ -150,7 +151,7 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSQL("INSERT INTO config (first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?)", firstLoad, first_load_blockchain_url, 259200)
+	err = c.DCDB.ExecSQL("INSERT INTO config (first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?)", firstLoad, firstLoadBlockchainURL, 259200)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()

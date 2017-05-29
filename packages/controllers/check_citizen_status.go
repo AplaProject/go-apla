@@ -25,30 +25,31 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NCheckCitizen = `check_citizen_status`
+const nCheckCitizen = `check_citizen_status`
 
 type checkPage struct {
 	Data     *CommonPage
 	TxType   string
-	TxTypeId int64
+	TxTypeID int64
 	Values   map[string]string
 	Fields   []utils.FieldInfo
 }
 
 func init() {
-	newPage(NCheckCitizen)
+	newPage(nCheckCitizen)
 }
 
+// CheckCitizenStatus is controller for changing citizen status
 func (c *Controller) CheckCitizenStatus() (string, error) {
 	var err error
-	var lastId int64
+	var lastID int64
 
 	//test
 	if len(c.r.FormValue(`last_id`)) > 0 {
-		lastId = utils.StrToInt64(c.r.FormValue(`last_id`))
+		lastID = utils.StrToInt64(c.r.FormValue(`last_id`))
 	}
 	//	field, err := c.Single(`SELECT value FROM ` + c.StateIDStr + `_state_parameters where parameter='citizen_fields'`).String()
-	vals, err := c.OneRow(`select * from "`+c.StateIDStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastId).String()
+	vals, err := c.OneRow(`select * from "`+c.StateIDStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastID).String()
 	if err != nil {
 		return ``, err
 	}
@@ -73,6 +74,6 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public_key_0`])) //.(string)
 	}
 	txType := "TXNewCitizen"
-	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals,
-		Fields: fields, TxType: txType, TxTypeId: utils.TypeInt(txType)})
+	return proceedTemplate(c, nCheckCitizen, &checkPage{Data: c.Data, Values: vals,
+		Fields: fields, TxType: txType, TxTypeID: utils.TypeInt(txType)})
 }

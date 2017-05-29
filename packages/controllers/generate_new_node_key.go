@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// GenerateNewNodeKey generates a new node private and public key
 func (c *Controller) GenerateNewNodeKey() (string, error) {
 
 	priv, pub, _ := lib.GenHexKeys()

@@ -50,6 +50,7 @@ type index struct {
 	LogoExt     string
 }
 
+// Index is a control for index page
 func Index(w http.ResponseWriter, r *http.Request) {
 
 	accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
@@ -60,16 +61,16 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "ref", Value: r.Form.Get(``), Expires: expiration})
 	}
 
-	parameters_ := make(map[string]interface{})
+	params := make(map[string]interface{})
 	if len(r.PostFormValue("parameters")) > 0 {
-		err := json.Unmarshal([]byte(r.PostFormValue("parameters")), &parameters_)
+		err := json.Unmarshal([]byte(r.PostFormValue("parameters")), &params)
 		if err != nil {
 			log.Error("%v", err)
 		}
-		log.Debug("parameters_=%", parameters_)
+		log.Debug("params=%", params)
 	}
 	parameters := make(map[string]string)
-	for k, v := range parameters_ {
+	for k, v := range params {
 		parameters[k] = utils.InterfaceToStr(v)
 	}
 

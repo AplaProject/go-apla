@@ -23,10 +23,10 @@ import (
 type changeStateSmartLawsPage struct {
 	Alert              string
 	Lang               map[string]string
-	WalletId           int64
-	CitizenId          int64
+	WalletID           int64
+	CitizenID          int64
 	TxType             string
-	TxTypeId           int64
+	TxTypeID           int64
 	TimeNow            int64
 	StateSmartLaws     map[string]string
 	AllStateParameters []string
@@ -38,7 +38,6 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 	var err error
 
 	txType := "ChangeStateSmartLaws"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	parameter := c.r.FormValue(`parameter`)
@@ -56,13 +55,13 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 	TemplateStr, err := makeTemplate("change_state_smart_laws", "changeStateSmartLaws", &changeStateSmartLawsPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletID,
-		CitizenId:          c.SessCitizenID,
+		WalletID:           c.SessWalletID,
+		CitizenID:          c.SessCitizenID,
 		StateSmartLaws:     StateSmartLaws,
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,
 		TxType:             txType,
-		TxTypeId:           txTypeId})
+		TxTypeID:           utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

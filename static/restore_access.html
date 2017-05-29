@@ -5,7 +5,7 @@
 
 	    if ($("#change_key_status").val()=='1') {
 			encrypted_message = 30;
-			$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},'+encrypted_message );
+			$("#for-signature").val( '{{.TxTypeID}},{{.TimeNow}},'+encrypted_message );
 			doSign();
 			$("#send_to_net").trigger("click");
 		 }
@@ -15,7 +15,7 @@
 						'comment' : $("#secret").val()
 					}, function (data) {
 						encrypted_message = data;
-						$("#for-signature").val( '{{.TxTypeId}},{{.TimeNow}},'+encrypted_message );
+						$("#for-signature").val( '{{.TxTypeID}},{{.TimeNow}},'+encrypted_message );
 						doSign();
 						$("#send_to_net").trigger("click");
 					});
