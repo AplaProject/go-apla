@@ -55,8 +55,8 @@ type Controller struct {
 	Alert            string
 	SessStateID      int64
 	StateName        string
-	StateId          int64
-	StateIdStr       string
+	StateID          int64
+	StateIDStr       string
 	SessCitizenID    int64
 	SessWalletID     int64
 	SessAddress      string

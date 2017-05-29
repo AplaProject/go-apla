@@ -16,7 +16,7 @@
 
 package controllers
 
+// Home is a controller for homepage
 func (c *Controller) Home() (string, error) {
-
 	return c.DashboardAnonym()
 }

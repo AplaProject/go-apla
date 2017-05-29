@@ -54,7 +54,7 @@ func (c *Controller) EditLanguage() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
 	if global == "" || global == "0" {
-		prefix = c.StateIdStr
+		prefix = c.StateIDStr
 		global = "0"
 	}
 	name := c.r.FormValue(`name`)

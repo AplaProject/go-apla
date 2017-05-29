@@ -33,7 +33,7 @@ type interfacePage struct {
 func (c *Controller) Interface() (string, error) {
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
+	prefix := c.StateIDStr
 	if global == "1" {
 		prefix = "global"
 	}

@@ -26,6 +26,7 @@ type dashboardAnonymPage struct {
 	Amount string
 }
 
+// DashboardAnonym is a handle function for the default dashboard page
 func (c *Controller) DashboardAnonym() (string, error) {
 	amount := `0`
 

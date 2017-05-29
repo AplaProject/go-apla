@@ -51,7 +51,7 @@ func (c *Controller) NewTable() (string, error) {
 		Alert:      c.Alert,
 		Lang:       c.Lang,
 		CitizenId:  c.SessCitizenID,
-		StateId:    c.StateId,
+		StateId:    c.StateID,
 		Global:     global,
 		TimeNow:    timeNow,
 		MaxColumns: consts.MAX_COLUMNS,

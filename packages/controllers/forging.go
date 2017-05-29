@@ -25,17 +25,17 @@ type forgingPage struct {
 	Lang         map[string]string
 	Title        string
 	MyWalletData map[string]string
-	WalletId     int64
-	CitizenId    int64
+	WalletID     int64
+	CitizenID    int64
 	TxType       string
-	TxTypeId     int64
+	TxTypeID     int64
 	TimeNow      int64
 }
 
+// Forging is a controller for DLTChangeHostVote transaction
 func (c *Controller) Forging() (string, error) {
 
 	txType := "DLTChangeHostVote"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	MyWalletData, err := c.OneRow("SELECT host, address_vote, fuel_rate FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
@@ -49,11 +49,11 @@ func (c *Controller) Forging() (string, error) {
 		Lang:         c.Lang,
 		MyWalletData: MyWalletData,
 		Title:        "modalAnonym",
-		WalletId:     c.SessWalletID,
-		CitizenId:    c.SessCitizenID,
+		WalletID:     c.SessWalletID,
+		CitizenID:    c.SessCitizenID,
 		TimeNow:      timeNow,
 		TxType:       txType,
-		TxTypeId:     txTypeId})
+		TxTypeID:     utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

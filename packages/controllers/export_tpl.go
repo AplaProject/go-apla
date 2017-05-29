@@ -32,14 +32,16 @@ import (
 	"regexp"
 )
 
-const NExportTpl = `export_tpl`
+const nExportTpl = `export_tpl`
 
+// ExpContract contains information about a contract
 type ExpContract struct {
 	Contract string
 	Global   int
 	Name     string
 }
 
+// ExpSlice is a slice of ExpContract
 type ExpSlice []ExpContract
 
 func (a ExpSlice) Len() int      { return len(a) }
@@ -75,7 +77,7 @@ type exportTplPage struct {
 }
 
 func init() {
-	newPage(NExportTpl)
+	newPage(nExportTpl)
 }
 
 func (c *Controller) getList(table, prefix string) (*[]exportInfo, error) {
@@ -238,8 +240,8 @@ func (c *Controller) setLang() (out string) {
 	return
 }
 
-func getState(stateId int64, name string) (out string, global int, state string) {
-	state = utils.Int64ToStr(stateId)
+func getState(stateID int64, name string) (out string, global int, state string) {
+	state = utils.Int64ToStr(stateID)
 	out = name
 	if strings.HasPrefix(name, `global_`) {
 		state = `global`
@@ -249,6 +251,7 @@ func getState(stateId int64, name string) (out string, global int, state string)
 	return
 }
 
+// ExportTpl is a handle function which can export different information
 func (c *Controller) ExportTpl() (string, error) {
 	name := c.r.FormValue(`name`)
 	message := ``
@@ -730,5 +733,5 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	//	fmt.Println(`Export`, contracts, pages, tables)
 	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables,
 		Menu: menu, Params: params, Message: message}
-	return proceedTemplate(c, NExportTpl, &pageData)
+	return proceedTemplate(c, nExportTpl, &pageData)
 }

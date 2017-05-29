@@ -79,17 +79,17 @@ func (c *Controller) Menu() (string, error) {
 	}
 
 	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
-	if c.StateIdStr != "" {
+	if c.StateIDStr != "" {
 		params := make(map[string]string)
-		params[`state_id`] = c.StateIdStr
+		params[`state_id`] = c.StateIDStr
 		params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
 
-		menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "main_menu").String()
+		menu, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_menu" WHERE name = ?`, "main_menu").String()
 		if err != nil {
 			return "", err
 		}
 		if len(menu) == 0 {
-			menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
+			menu, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_menu" WHERE name = ?`, "menu_default").String()
 			if err != nil {
 				return "", err
 			}
@@ -97,26 +97,26 @@ func (c *Controller) Menu() (string, error) {
 			isMain = true
 		}
 
-		stateName, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_name").String()
+		stateName, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_state_parameters" WHERE name = ?`, "state_name").String()
 		if err != nil {
 			return "", err
 		}
-		stateFlag, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_flag").String()
+		stateFlag, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_state_parameters" WHERE name = ?`, "state_flag").String()
 		if err != nil {
 			return "", err
 		}
 
-		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
+		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIDStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
 		if err != nil {
 			log.Error("%v", err)
 		}
 
-		citizenAvatar, err = c.Single(`SELECT avatar FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
+		citizenAvatar, err = c.Single(`SELECT avatar FROM "`+c.StateIDStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		//		menu = ReplaceMenu(menu)
-		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
+		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIDStr), params[`accept_lang`])
 	}
 	var langs []LangInfo
 	if len(utils.LangList) > 0 {

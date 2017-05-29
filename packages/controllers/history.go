@@ -16,17 +16,18 @@
 
 package controllers
 
-const NHistory = `history`
+const nHistory = `history`
 
 type historyPage struct {
 	Data *CommonPage
 }
 
 func init() {
-	newPage(NHistory)
+	newPage(nHistory)
 }
 
+// History is a controller for history page
 func (c *Controller) History() (string, error) {
 	pageData := historyPage{Data: c.Data}
-	return proceedTemplate(c, NHistory, &pageData)
+	return proceedTemplate(c, nHistory, &pageData)
 }

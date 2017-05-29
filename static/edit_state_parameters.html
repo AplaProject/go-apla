@@ -20,9 +20,9 @@
 			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;
 				if ($("#name").val()) {
-					$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+					$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
 				} else {
-					$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+					$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + $("#name").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
 				}
 				doSign();
 				$("#send_to_net").trigger("click");
@@ -41,8 +41,8 @@
 				'conditions' : $("#conditions").val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
-				'citizenId' : '{{.CitizenId}}',
-				'stateId' : '{{.StateId}}',
+				'citizenId' : '{{.CitizenID}}',
+				'stateId' : '{{.StateID}}',
 				'signature1': $('#signature1').val()
 			},
 			dataType: 'json',

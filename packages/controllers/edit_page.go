@@ -48,7 +48,7 @@ func (c *Controller) EditPage() (string, error) {
 	var err error
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
+	prefix := c.StateIDStr
 	if global == "1" {
 		prefix = "global"
 	} else {

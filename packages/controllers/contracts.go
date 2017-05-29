@@ -23,13 +23,14 @@ import (
 
 type contractsPage struct {
 	Lang               map[string]string
-	WalletId           int64
-	CitizenId          int64
+	WalletID           int64
+	CitizenID          int64
 	AllStateParameters []string
 	StateSmartLaws     []map[string]string
 	Global             string
 }
 
+// Contracts is a handle function for showing the list of contracts
 func (c *Controller) Contracts() (string, error) {
 
 	var err error
@@ -37,7 +38,7 @@ func (c *Controller) Contracts() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
 	if global == "" || global == "0" {
-		prefix = c.StateIdStr
+		prefix = c.StateIDStr
 		global = "0"
 	}
 
@@ -65,8 +66,8 @@ func (c *Controller) Contracts() (string, error) {
 
 	TemplateStr, err := makeTemplate("contracts", "contracts", &contractsPage{
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletID,
-		CitizenId:          c.SessCitizenID,
+		WalletID:           c.SessWalletID,
+		CitizenID:          c.SessCitizenID,
 		StateSmartLaws:     stateSmartLaws,
 		Global:             global,
 		AllStateParameters: allStateParameters})

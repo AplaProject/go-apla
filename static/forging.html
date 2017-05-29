@@ -11,7 +11,7 @@
 	$('#next').bind('click', function () {
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#host').val()+','+$('#addressVote').val()+','+$('#fuel_rate').val() );
+			$("#for-signature").val( '{{.TxTypeID}},'+serverTime+',{{.WalletID}},'+$('#host').val()+','+$('#addressVote').val()+','+$('#fuel_rate').val() );
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -24,7 +24,7 @@
 			data: {
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
-				'walletId' : '{{.WalletId}}',
+				'walletId' : '{{.WalletID}}',
 				'host' : $('#host').val(),
 				'fuelRate' : $('#fuel_rate').val(),
 				'addressVote' : $('#addressVote').val(),

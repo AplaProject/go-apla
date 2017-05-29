@@ -52,7 +52,7 @@ func (c *Controller) EditTable() (string, error) {
 		tableName = c.r.FormValue("name")
 	}
 
-	prefix, err := utils.GetPrefix(tableName, c.StateIdStr)
+	prefix, err := utils.GetPrefix(tableName, c.StateIDStr)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

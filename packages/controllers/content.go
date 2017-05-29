@@ -152,8 +152,8 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			log.Error("%v", err)
 		}
 		c.StateName = stateName
-		c.StateId = sessStateID
-		c.StateIdStr = utils.Int64ToStr(sessStateID)
+		c.StateID = sessStateID
+		c.StateIDStr = utils.Int64ToStr(sessStateID)
 	}
 
 	c.dbInit = dbInit
@@ -402,7 +402,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 								</script>`))
 		skipRestrictedUsers := []string{"cashRequestIn", "cashRequestOut", "upgrade", "notifications"}
 
-		if c.StateId > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
+		if c.StateID > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
 			tpl, err := utils.CreateHTMLFromTemplate("dashboard_default", sessCitizenID, sessStateID, &map[string]string{})
 			if err != nil {
 				log.Error("%v", err)

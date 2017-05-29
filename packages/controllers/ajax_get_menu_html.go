@@ -30,7 +30,7 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
 	if global == "" || global == "0" {
-		prefix = c.StateIdStr
+		prefix = c.StateIDStr
 	}
 	menuName := ``
 	menu := ``
@@ -55,10 +55,10 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 		return strings.Replace(strings.Replace(strings.Replace(menu, "\n", "", -1), "\r", "", -1), "\t", "", -1), nil
 	*/
 	params := make(map[string]string)
-	params[`state_id`] = c.StateIdStr
+	params[`state_id`] = c.StateIDStr
 	params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
 	if len(menu) > 0 {
-		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`]) +
+		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIDStr), params[`accept_lang`]) +
 			`<!--#` + menuName + `#-->`
 	}
 	return menu, nil

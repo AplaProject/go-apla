@@ -20,15 +20,15 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewStateParameters is a handle function for createing state parameters
 func (c *Controller) NewStateParameters() (string, error) {
 
 	var err error
 
 	txType := "NewStateParameters"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
-	allStateParameters, err := c.GetList(`SELECT name FROM "` + c.StateIdStr + `_state_parameters"`).String()
+	allStateParameters, err := c.GetList(`SELECT name FROM "` + c.StateIDStr + `_state_parameters"`).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -36,14 +36,14 @@ func (c *Controller) NewStateParameters() (string, error) {
 	TemplateStr, err := makeTemplate("edit_state_parameters", "editStateParameters", &editStateParametersPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletID,
-		CitizenId:          c.SessCitizenID,
-		StateId:            c.StateId,
+		WalletID:           c.SessWalletID,
+		CitizenID:          c.SessCitizenID,
+		StateID:            c.StateID,
 		StateParameters:    map[string]string{},
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,
 		TxType:             txType,
-		TxTypeId:           txTypeId})
+		TxTypeID:           utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

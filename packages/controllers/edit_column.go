@@ -37,6 +37,7 @@ type editColumnPage struct {
 	CanIndex         bool
 }
 
+// EditColumn is a handle function for editing columns
 func (c *Controller) EditColumn() (string, error) {
 
 	var err error
@@ -53,7 +54,7 @@ func (c *Controller) EditColumn() (string, error) {
 		return "", utils.ErrInfo("incorrect table name")
 	}
 	prefix := s[0]
-	if prefix != "global" && prefix != c.StateIdStr {
+	if prefix != "global" && prefix != c.StateIDStr {
 		return "", utils.ErrInfo("incorrect table name")
 	}
 

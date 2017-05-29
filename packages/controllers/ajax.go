@@ -87,8 +87,8 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			log.Error("%v", err)
 		}
 		c.StateName = stateName
-		c.StateId = sessStateID
-		c.StateIdStr = utils.Int64ToStr(sessStateID)
+		c.StateID = sessStateID
+		c.StateIDStr = utils.Int64ToStr(sessStateID)
 	}
 	c.dbInit = dbInit
 

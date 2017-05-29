@@ -27,7 +27,7 @@ func (c *Controller) NewPage() (string, error) {
 	timeNow := utils.Time()
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
+	prefix := c.StateIDStr
 	if global == "1" {
 		prefix = "global"
 	} else {
