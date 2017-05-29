@@ -23,10 +23,10 @@ import (
 type stateLawsPage struct {
 	Alert              string
 	Lang               map[string]string
-	WalletId           int64
-	CitizenId          int64
+	WalletID           int64
+	CitizenID          int64
 	TxType             string
-	TxTypeId           int64
+	TxTypeID           int64
 	TimeNow            int64
 	AllStateParameters []string
 	StateLaws          []map[string]string
@@ -37,7 +37,6 @@ func (c *Controller) StateLaws() (string, error) {
 	var err error
 
 	txType := "StateLaws"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	stateLaws, err := c.GetAll(`SELECT * FROM ea_state_laws`, -1)
@@ -53,13 +52,13 @@ func (c *Controller) StateLaws() (string, error) {
 	TemplateStr, err := makeTemplate("state_laws", "stateLaws", &stateLawsPage{
 		Alert:              c.Alert,
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletID,
-		CitizenId:          c.SessCitizenID,
+		WalletID:           c.SessWalletID,
+		CitizenID:          c.SessCitizenID,
 		StateLaws:          stateLaws,
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,
 		TxType:             txType,
-		TxTypeId:           txTypeId})
+		TxTypeID:           utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

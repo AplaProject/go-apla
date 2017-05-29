@@ -23,20 +23,20 @@ import (
 type stateParametersPage struct {
 	Alert           string
 	Lang            map[string]string
-	WalletId        int64
-	CitizenId       int64
+	WalletID        int64
+	CitizenID       int64
 	TxType          string
-	TxTypeId        int64
+	TxTypeID        int64
 	TimeNow         int64
 	StateParameters []map[string]string
 }
 
+// StateParameters is a controller for the list of state parameters
 func (c *Controller) StateParameters() (string, error) {
 
 	var err error
 
 	txType := "StateParameters"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	stateParameters, err := c.GetAll(`SELECT * FROM "`+c.StateIDStr+`_state_parameters" order by name`, -1)
@@ -47,12 +47,12 @@ func (c *Controller) StateParameters() (string, error) {
 	TemplateStr, err := makeTemplate("state_parameters", "stateParameters", &stateParametersPage{
 		Alert:           c.Alert,
 		Lang:            c.Lang,
-		WalletId:        c.SessWalletID,
-		CitizenId:       c.SessCitizenID,
+		WalletID:        c.SessWalletID,
+		CitizenID:       c.SessCitizenID,
 		StateParameters: stateParameters,
 		TimeNow:         timeNow,
 		TxType:          txType,
-		TxTypeId:        txTypeId})
+		TxTypeID:        utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

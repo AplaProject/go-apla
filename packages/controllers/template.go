@@ -26,6 +26,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// Template is a handle function for the template page
 func Template(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {

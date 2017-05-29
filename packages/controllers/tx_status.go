@@ -20,6 +20,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// TxStatus return the status of the transaction
 func (c *Controller) TxStatus() (string, error) {
 
 	hash := c.r.FormValue("hash")

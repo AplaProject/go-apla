@@ -20,19 +20,20 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const ASetState = `set_state`
+const aSetState = `set_state`
 
-type SetStateJson struct {
+type setStateJSON struct {
 	Error string `json:"error"`
 }
 
 func init() {
-	newPage(ASetState, `json`)
+	newPage(aSetState, `json`)
 }
 
+// SetState changes the state in the browser
 func (c *Controller) SetState() interface{} {
 
-	var result SetStateJson
+	var result setStateJSON
 
 	c.r.ParseForm()
 	c.sess.Set("state_id", utils.StrToInt64(c.r.FormValue("state_id")))

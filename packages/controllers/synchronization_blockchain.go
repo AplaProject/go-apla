@@ -33,6 +33,7 @@ var (
 	lastSTime   int64
 )
 
+// SynchronizationBlockchain synchronizes the blockchain
 func (c *Controller) SynchronizationBlockchain() (string, error) {
 
 	if c.DCDB == nil || c.DCDB.DB == nil {
@@ -43,7 +44,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		log.Error("%v", utils.ErrInfo(err))
 
 		var (
-			downloadFile, blockUrl string
+			downloadFile, blockURL string
 			fileSize               int64
 		)
 		downloadFile = *utils.Dir + "/public/blockchain"
@@ -51,11 +52,11 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		blockUrl = nodeConfig["first_load_blockchain_url"]
-		if len(blockUrl) == 0 {
-			blockUrl = consts.BLOCKCHAIN_URL
+		blockURL = nodeConfig["first_load_blockchain_url"]
+		if len(blockURL) == 0 {
+			blockURL = consts.BLOCKCHAIN_URL
 		}
-		resp, err := http.Get(blockUrl)
+		resp, err := http.Get(blockURL)
 		if err != nil {
 			return "", err
 		}
@@ -75,14 +76,13 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		if stat.Size() > 0 {
 			log.Debug("stat.Size(): %v", int(stat.Size()))
 			return `{"download": "` + utils.Int64ToStr(int64(utils.Round(float64((float64(stat.Size())/float64(fileSize))*100), 0))) + `"}`, nil
-		} else {
-			return `{"download": "0"}`, nil
 		}
+		return `{"download": "0"}`, nil
 	}
-	blockId := blockData["block_id"]
+	blockID := blockData["block_id"]
 	blockTime := blockData["time"]
-	if len(blockId) == 0 {
-		blockId = "0"
+	if len(blockID) == 0 {
+		blockID = "0"
 	}
 	if len(blockTime) == 0 {
 		blockTime = "0"
@@ -107,12 +107,12 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		// если уже почти собрали все блоки
 		// if almost all blocks are collected
 		if time.Now().Unix()-lastBlockData["lastBlockTime"] < 600*wTimeReady {
-			blockId = "-1"
+			blockID = "-1"
 			blockTime = "-1"
 		}
 	}
 
-	confirmedBlockId, err := c.GetConfirmedBlockID()
+	confirmedBlockID, err := c.GetConfirmedBlockID()
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +122,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		currentLoadBlockchain = c.NodeConfig["first_load_blockchain_url"]
 	}
 	var needReload string
-	iBlock := utils.StrToInt64(blockId)
+	iBlock := utils.StrToInt64(blockID)
 	if timeSynchro == 0 {
 		timeSynchro = utils.Time()
 		lastSBlock = iBlock
@@ -139,7 +139,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		}
 	}
 
-	result := map[string]string{"block_id": blockId, "confirmed_block_id": utils.Int64ToStr(confirmedBlockId),
+	result := map[string]string{"block_id": blockID, "confirmed_block_id": utils.Int64ToStr(confirmedBlockID),
 		"block_time": blockTime, "current_load_blockchain": currentLoadBlockchain,
 		"need_reload": needReload}
 	resultJ, _ := json.Marshal(result)

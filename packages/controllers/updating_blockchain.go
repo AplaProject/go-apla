@@ -31,7 +31,7 @@ type updatingBlockchainStruct struct {
 	Lang            map[string]string
 	WaitText        string
 	BlockTime       int64
-	BlockId         int64
+	BlockID         int64
 	StartDaemons    string
 	BlockMeter      int64
 	CheckTime       string
@@ -45,9 +45,10 @@ type updatingBlockchainStruct struct {
 	NewVersion      string
 }
 
+// UpdatingBlockchain is a controller which displays information about updating blockchain
 func (c *Controller) UpdatingBlockchain() (string, error) {
 
-	var blockTime, blockId, blockMeter int64
+	var blockTime, blockID, blockMeter int64
 	var waitText, startDaemons, checkTime string
 	var restartDb, standardInstall bool
 
@@ -72,15 +73,15 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 				return "", utils.ErrInfo(err)
 			}
 			blockTime = LastBlockData["lastBlockTime"]
-			blockId = LastBlockData["blockId"]
+			blockID = LastBlockData["blockId"]
 		}
 
 		nodeConfig, err := c.GetNodeConfig()
-		blockchain_url := nodeConfig["first_load_blockchain_url"]
-		if len(blockchain_url) == 0 {
-			blockchain_url = consts.BLOCKCHAIN_URL
+		blockchainURL := nodeConfig["first_load_blockchain_url"]
+		if len(blockchainURL) == 0 {
+			blockchainURL = consts.BLOCKCHAIN_URL
 		}
-		/*resp, err := http.Get(blockchain_url)
+		/*resp, err := http.Get(blockchainURL)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -90,9 +91,9 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		}
 		defer resp.Body.Close()*/
 
-		blockMeter = int64(utils.Round(float64((blockId/consts.LAST_BLOCK)*100), 0))
+		blockMeter = int64(utils.Round(float64((blockID/consts.LAST_BLOCK)*100), 0))
 		if blockMeter > 0 {
-			blockMeter -= 1
+			blockMeter--
 		}
 
 	} else {
@@ -143,7 +144,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	standardInstall = configIni[`install_type`] == `standard`
 
 	t.Execute(b, &updatingBlockchainStruct{SleepTime: sleepTime, StandardInstall: standardInstall, RestartDb: restartDb, Lang: c.Lang,
-		WaitText: waitText, BlockId: blockId, BlockTime: blockTime, StartDaemons: startDaemons,
+		WaitText: waitText, BlockID: blockID, BlockTime: blockTime, StartDaemons: startDaemons,
 		BlockMeter: blockMeter, CheckTime: checkTime, LastBlock: consts.LAST_BLOCK,
 		BlockChainSize: consts.BLOCKCHAIN_SIZE, Mobile: mobile, AlertTime: alertTime, NewVersion: newVersion})
 

@@ -18,38 +18,38 @@ package controllers
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const ASignIn = `ajax_sign_in`
+const aSignIn = `ajax_sign_in`
 
-type SignInJson struct {
+type SignInJSON struct {
 	Address string `json:"address"`
 	Result  bool   `json:"result"`
 	Error   string `json:"error"`
 }
 
 func init() {
-	newPage(ASignIn, `json`)
+	newPage(aSignIn, `json`)
 }
 
+// AjaxSignIn checks signed uid
 func (c *Controller) AjaxSignIn() interface{} {
-	var result SignInJson
+	var result SignInJSON
 
 	//	ret := `{"result":0}`
 	c.r.ParseForm()
 	key := c.r.FormValue("key")
 	bkey, err := hex.DecodeString(key)
-	stateId := utils.StrToInt64(c.r.FormValue("state_id"))
+	stateID := utils.StrToInt64(c.r.FormValue("state_id"))
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
 	if utils.PrivCountry && utils.OneCountry > 0 {
-		stateId = utils.OneCountry
+		stateID = utils.OneCountry
 	}
 	sign, _ := hex.DecodeString(c.r.FormValue("sign"))
 	var msg string
@@ -71,7 +71,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
 	publicKey := []byte(key)
-	walletId, err := c.GetWalletIDByPublicKey(publicKey)
+	walletID, err := c.GetWalletIDByPublicKey(publicKey)
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -81,22 +81,22 @@ func (c *Controller) AjaxSignIn() interface{} {
 			result.Error = err.Error()
 			return result
 		}*/
-	log.Debug("wallet_id : %d", walletId)
-	var citizenId int64
-	fmt.Println(`SingIN`, stateId)
-	if stateId > 0 {
+	log.Debug("wallet_id : %d", walletID)
+	var citizenID int64
+	//	fmt.Println(`SingIN`, stateID)
+	if stateID > 0 {
 		//result = SignInJson{}
-		log.Debug("stateId %v", stateId)
-		if _, err := c.CheckStateName(stateId); err == nil {
-			citizenId, err = c.Single(`SELECT id FROM "`+utils.Int64ToStr(stateId)+`_citizens" WHERE id = ?`,
-				walletId).Int64()
+		log.Debug("stateId %v", stateID)
+		if _, err := c.CheckStateName(stateID); err == nil {
+			citizenID, err = c.Single(`SELECT id FROM "`+utils.Int64ToStr(stateID)+`_citizens" WHERE id = ?`,
+				walletID).Int64()
 			if err != nil {
 				result.Error = err.Error()
 				return result
 			}
-			log.Debug("citizenId %v", citizenId)
-			if citizenId == 0 {
-				stateId = 0
+			log.Debug("citizenID %v", citizenID)
+			if citizenID == 0 {
+				stateID = 0
 				if utils.PrivCountry {
 					result.Error = "not a citizen"
 					return result
@@ -108,16 +108,16 @@ func (c *Controller) AjaxSignIn() interface{} {
 		}
 	}
 	result.Result = true
-	/*	citizenId, err := c.GetCitizenIdByPublicKey(publicKey)
-		err = c.ExecSQL("UPDATE config SET citizen_id = ?", citizenId)
+	/*	citizenID, err := c.GetCitizenIdByPublicKey(publicKey)
+		err = c.ExecSQL("UPDATE config SET citizen_id = ?", citizenID)
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}*/
-	c.sess.Set("wallet_id", walletId)
+	c.sess.Set("wallet_id", walletID)
 	c.sess.Set("address", result.Address)
-	c.sess.Set("citizen_id", citizenId)
-	c.sess.Set("state_id", stateId)
-	log.Debug("wallet_id %d citizen_id %d state_id %d", walletId, citizenId, stateId)
+	c.sess.Set("citizen_id", citizenID)
+	c.sess.Set("state_id", stateID)
+	log.Debug("wallet_id %d citizen_id %d state_id %d", walletID, citizenID, stateID)
 	return result //`{"result":1,"address": "` + address + `"}`, nil
 }
