@@ -42,12 +42,12 @@ func Template(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletID(sess)
-	sessCitizenId := GetSessCitizenID(sess)
-	sessStateId := GetSessInt64("state_id", sess)
+	sessWalletID := GetSessWalletID(sess)
+	sessCitizenID := GetSessCitizenID(sess)
+	sessStateID := GetSessInt64("state_id", sess)
 	//	sessAccountId := GetSessInt64("account_id", sess)
 	//sessAddress := GetSessString(sess, "address")
-	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
+	log.Debug("sessWalletID %v / sessCitizenID %v", sessWalletID, sessCitizenID)
 
 	r.ParseForm()
 	page := lib.Escape(r.FormValue("page"))
@@ -62,7 +62,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	params[`global`] = lib.Escape(r.FormValue("global"))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	//	fmt.Println(`PARAMS`, params)
-	tpl, err := utils.CreateHTMLFromTemplate(page, sessCitizenId, sessStateId, &params)
+	tpl, err := utils.CreateHTMLFromTemplate(page, sessCitizenID, sessStateID, &params)
 	if err != nil {
 		log.Error("%v", err)
 	}

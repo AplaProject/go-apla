@@ -28,22 +28,23 @@ type editContractPage struct {
 	Lang                map[string]string
 	Data                map[string]string
 	DataContractHistory []map[string]string
-	WalletId            int64
-	CitizenId           int64
+	WalletID            int64
+	CitizenID           int64
 	TxType              string
-	TxTypeId            int64
+	TxTypeID            int64
 	TxActivateType      string
-	TxActivateTypeId    int64
+	TxActivateTypeID    int64
 	Confirm             bool
 	TableName           string
-	StateId             int64
+	StateID             int64
 	Global              string
 }
 
+// EditContract is a handler function for editing contracts
 func (c *Controller) EditContract() (string, error) {
 
 	txType := "EditContract"
-	txTypeId := utils.TypeInt(txType)
+	txTypeID := utils.TypeInt(txType)
 
 	global := c.r.FormValue("global")
 	prefix := "global"
@@ -59,9 +60,9 @@ func (c *Controller) EditContract() (string, error) {
 		if len(name) > 0 && name[:1] == `@` {
 			name = name[1:]
 			r, _ := regexp.Compile(`([0-9]+)`)
-			stateId := r.FindString(name)
-			if len(stateId) > 0 {
-				prefix = stateId
+			stateID := r.FindString(name)
+			if len(stateID) > 0 {
+				prefix = stateID
 			}
 			r, _ = regexp.Compile(`([\w]+)`)
 			name = r.FindString(name)
@@ -73,9 +74,9 @@ func (c *Controller) EditContract() (string, error) {
 
 	var data map[string]string
 	var dataContractHistory []map[string]string
-	var rbId int64
+	var rbID int64
 	var err error
-	var cont_wallet int64
+	var contWallet int64
 	for i := 0; i < 10; i++ {
 		if i == 0 {
 			if id != 0 {
@@ -92,8 +93,8 @@ func (c *Controller) EditContract() (string, error) {
 			if data[`wallet_id`] == `NULL` {
 				data[`wallet`] = ``
 			} else {
-				cont_wallet = utils.StrToInt64(data[`wallet_id`])
-				data[`wallet`] = lib.AddressToString(cont_wallet)
+				contWallet = utils.StrToInt64(data[`wallet_id`])
+				data[`wallet`] = lib.AddressToString(contWallet)
 			}
 			if data[`active`] == `NULL` {
 				data[`active`] = ``
@@ -101,37 +102,37 @@ func (c *Controller) EditContract() (string, error) {
 			if len(data[`conditions`]) == 0 {
 				data[`conditions`] = "ContractConditions(`MainCondition`)"
 			}
-			rbId = utils.StrToInt64(data["rb_id"])
+			rbID = utils.StrToInt64(data["rb_id"])
 		} else {
-			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbId).String()
+			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
 			//			fmt.Printf("%s", messageMap)
-			rbId = utils.StrToInt64(messageMap["rb_id"])
+			rbID = utils.StrToInt64(messageMap["rb_id"])
 			messageMap["block_id"] = data["block_id"]
 			dataContractHistory = append(dataContractHistory, messageMap)
 		}
-		if rbId == 0 {
+		if rbID == 0 {
 			break
 		}
 	}
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:               c.Alert,
 		Lang:                c.Lang,
-		WalletId:            c.SessWalletID,
+		WalletID:            c.SessWalletID,
 		Data:                data,
 		DataContractHistory: dataContractHistory,
 		Global:              global,
-		CitizenId:           c.SessCitizenID,
+		CitizenID:           c.SessCitizenID,
 		TxType:              txType,
-		TxTypeId:            txTypeId,
-		Confirm:             c.SessWalletID == cont_wallet,
+		TxTypeID:            txTypeID,
+		Confirm:             c.SessWalletID == contWallet,
 		TxActivateType:      `ActivateContract`,
-		TxActivateTypeId:    utils.TypeInt(`ActivateContract`),
-		StateId:             c.SessStateID})
+		TxActivateTypeID:    utils.TypeInt(`ActivateContract`),
+		StateID:             c.SessStateID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -53,7 +53,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 
 	commission := decimal.New(fPrice, 0).Mul(fuelRate)
 
-	log.Debug("sessCitizenId %d SessWalletID %d SessStateID %d", c.SessCitizenID, c.SessWalletID, c.SessStateID)
+	log.Debug("sessCitizenID %d SessWalletID %d SessStateID %d", c.SessCitizenID, c.SessWalletID, c.SessStateID)
 	amount, err := c.Single("select amount from dlt_wallets where wallet_id = ?", c.SessWalletID).String()
 	if err != nil {
 		return "", utils.ErrInfo(err)

@@ -50,6 +50,7 @@ func genPass(length int) string {
 	return string(ret)
 }
 
+// IsPassValid checks password and update passwords list
 func IsPassValid(pass, psw string) bool {
 	passMutex.Lock()
 	defer passMutex.Unlock()
@@ -82,6 +83,7 @@ func IsPassValid(pass, psw string) bool {
 	return passwords[psw]
 }
 
+// Content is the main controller
 func Content(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -99,20 +101,20 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletID(sess)
-	sessCitizenId := GetSessCitizenID(sess)
-	sessStateId := GetSessInt64("state_id", sess)
+	sessWalletID := GetSessWalletID(sess)
+	sessCitizenID := GetSessCitizenID(sess)
+	sessStateID := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 	//	sessAccountId := GetSessInt64("account_id", sess)
-	log.Debug("sessWalletId %v / sessCitizenId %v / sessStateId %v", sessWalletId, sessCitizenId, sessStateId)
+	log.Debug("sessWalletID %v / sessCitizenID %v / sessStateID %v", sessWalletID, sessCitizenID, sessStateID)
 
 	c := new(Controller)
 	c.r = r
 	c.w = w
 	c.sess = sess
-	c.SessWalletID = sessWalletId
-	c.SessCitizenID = sessCitizenId
-	c.SessStateID = sessStateId
+	c.SessWalletID = sessWalletID
+	c.SessCitizenID = sessCitizenID
+	c.SessStateID = sessStateID
 	c.SessAddress = sessAddress
 
 	c.ContentInc = true
@@ -144,14 +146,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	stateName := ""
-	if sessStateId > 0 {
-		stateName, err = c.GetStateName(sessStateId)
+	if sessStateID > 0 {
+		stateName, err = c.GetStateName(sessStateID)
 		if err != nil {
 			log.Error("%v", err)
 		}
 		c.StateName = stateName
-		c.StateId = sessStateId
-		c.StateIdStr = utils.Int64ToStr(sessStateId)
+		c.StateId = sessStateID
+		c.StateIdStr = utils.Int64ToStr(sessStateID)
 	}
 
 	c.dbInit = dbInit
@@ -178,11 +180,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-		confirmedBlockId, err := c.GetConfirmedBlockID()
+		confirmedBlockID, err := c.GetConfirmedBlockID()
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.ConfirmedBlockID = confirmedBlockId
+		c.ConfirmedBlockID = confirmedBlockID
 
 	}
 	r.ParseForm()
@@ -238,13 +240,12 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	match, _ := regexp.MatchString("^(installStep[0-9_]+)|(blockExplorer)$", tplName)
 	// CheckInputData - гарантирует, что tplName чист
 	// CheckInputData - ensures that tplName is clean
-	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletId != 0 || sessCitizenId > 0 || len(sessAddress) > 0 || match) {
-		tplName = tplName
+	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletID != 0 || sessCitizenID > 0 || len(sessAddress) > 0 || match) {
 	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
 		// первый запуск, еще не загружен блокчейн
 		// the first running, blockchain is not uploaded yet
 		tplName = "updatingBlockchain"
-	} else if dbInit && installProgress == "complete" && (sessWalletId != 0 || sessCitizenId > 0 || len(sessAddress) > 0) {
+	} else if dbInit && installProgress == "complete" && (sessWalletID != 0 || sessCitizenID > 0 || len(sessAddress) > 0) {
 		tplName = "dashboardAnonym"
 	} else if dbInit && installProgress == "complete" {
 		if tplName != "loginECDSA" {
@@ -273,11 +274,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Debug("ConfigInit monitor")
 		if _, err := os.Stat(*utils.Dir + "/config.ini"); err == nil {
 
-			configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
+			confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
-			configIni, err = configIni_.GetSection("default")
+			configIni, err = confIni.GetSection("default")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -293,9 +294,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		tplName = "login"
 	}
 
-	log.Debug("tplName::", tplName, sessCitizenId, sessWalletId, installProgress)
+	log.Debug("tplName::", tplName, sessCitizenID, sessWalletID, installProgress)
 
-	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress)
+	fmt.Println("tplName::", tplName, sessCitizenID, sessWalletID, sessAddress)
 	controller := r.FormValue("controllerHTML")
 	if val, ok := configIni[`psw`]; ok && ((tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0) {
 		if psw, err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
@@ -349,7 +350,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(CallPage(c, pageName)))
 		return
 	}
-	if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId != 0 || len(sessAddress) > 0) && installProgress == "complete" {
+	if len(tplName) > 0 && (sessCitizenID > 0 || sessWalletID != 0 || len(sessAddress) > 0) && installProgress == "complete" {
 
 		if tplName == "login" {
 			tplName = "dashboard_anonym"
@@ -388,11 +389,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		// подсвечиваем красным номер блока, если идет процесс обновления
 		// We highlight the block number in red if the update process is in progress
 		var blockJs string
-		blockId, err := c.GetBlockID()
+		blockID, err := c.GetBlockID()
 		if err != nil {
 			log.Error("%v", err)
 		}
-		blockJs = "$('#block_id').html(" + utils.Int64ToStr(blockId) + ");$('#block_id').css('color', '#428BCA');"
+		blockJs = "$('#block_id').html(" + utils.Int64ToStr(blockID) + ");$('#block_id').css('color', '#428BCA');"
 
 		w.Write([]byte(`<script>
 								$( document ).ready(function() {
@@ -402,7 +403,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		skipRestrictedUsers := []string{"cashRequestIn", "cashRequestOut", "upgrade", "notifications"}
 
 		if c.StateId > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
-			tpl, err := utils.CreateHTMLFromTemplate("dashboard_default", sessCitizenId, sessStateId, &map[string]string{})
+			tpl, err := utils.CreateHTMLFromTemplate("dashboard_default", sessCitizenID, sessStateID, &map[string]string{})
 			if err != nil {
 				log.Error("%v", err)
 				return
@@ -415,7 +416,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		// We don't give some pages for ones who are not registered in the pool
 		if !utils.InSliceString(tplName, skipRestrictedUsers) {
 			// вызываем контроллер в зависимости от шаблона
-			// We call controller depending on template 
+			// We call controller depending on template
 			html, err := CallController(c, tplName)
 			if err != nil {
 				log.Error("%v", err)
@@ -437,7 +438,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// вызываем контроллер в зависимости от шаблона
-		// We call controller depending on template 
+		// We call controller depending on template
 		html, err = CallController(c, tplName)
 		if err != nil {
 			log.Error("%v", err)

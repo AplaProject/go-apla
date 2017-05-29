@@ -24,13 +24,13 @@ import (
 type editColumnPage struct {
 	Alert            string
 	Lang             map[string]string
-	WalletId         int64
-	CitizenId        int64
+	WalletID         int64
+	CitizenID        int64
 	TxType           string
-	TxTypeId         int64
+	TxTypeID         int64
 	TimeNow          int64
 	TableName        string
-	StateId          int64
+	StateID          int64
 	ColumnPermission string
 	ColumnName       string
 	ColumnType       string
@@ -42,7 +42,7 @@ func (c *Controller) EditColumn() (string, error) {
 	var err error
 
 	txType := "EditColumn"
-	txTypeId := utils.TypeInt(txType)
+	txTypeID := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	tableName := c.r.FormValue("tableName")
@@ -69,12 +69,12 @@ func (c *Controller) EditColumn() (string, error) {
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
 		ColumnType:       utils.GetColumnType(tableName, columnName),
-		WalletId:         c.SessWalletID,
-		CitizenId:        c.SessCitizenID,
-		StateId:          c.SessStateID,
+		WalletID:         c.SessWalletID,
+		CitizenID:        c.SessCitizenID,
+		StateID:          c.SessStateID,
 		TimeNow:          timeNow,
 		TxType:           txType,
-		TxTypeId:         txTypeId})
+		TxTypeID:         txTypeID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

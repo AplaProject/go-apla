@@ -60,7 +60,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	formdata := c.r.MultipartForm
 	defer formdata.RemoveAll()
 
-	//	fmt.Println(`FORM START`, formdata)
+	//	fmt.Println(`FORM Start`, formdata)
 	//field, err := c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateCode) + `_state_parameters where name='citizen_fields'`).String()
 	field, err := `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
 {"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},

@@ -42,7 +42,7 @@
 		colname = $('#column_name').val().toLowerCase();
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},{{.TableName}},'+colname+','+$('#permissions').val(){{if not .ColumnName}}+','+($("#index").is(":checked") ? "1" : "0")+','+$("#column_type").val(){{end}});
+			$("#for-signature").val('{{.TxTypeID}},'+serverTime+',{{.CitizenID}},{{.StateID}},{{.TableName}},'+colname+','+$('#permissions').val(){{if not .ColumnName}}+','+($("#index").is(":checked") ? "1" : "0")+','+$("#column_type").val(){{end}});
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -60,8 +60,8 @@
 				'column_type' : $('#column_type').val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
-				'citizenId' : '{{.CitizenId}}',
-				'stateId' : '{{.StateId}}',
+				'citizenId' : '{{.CitizenID}}',
+				'stateId' : '{{.StateID}}',
 				'signature1': $('#signature1').val()
 			},
 			dataType: 'json',

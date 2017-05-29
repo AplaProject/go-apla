@@ -38,15 +38,15 @@ func (c *Controller) NewColumn() (string, error) {
 		Alert:            c.Alert,
 		Lang:             c.Lang,
 		TableName:        tableName,
-		WalletId:         c.SessWalletID,
-		CitizenId:        c.SessCitizenID,
-		StateId:          c.SessStateID,
+		WalletID:         c.SessWalletID,
+		CitizenID:        c.SessCitizenID,
+		StateID:          c.SessStateID,
 		ColumnName:       "",
 		ColumnPermission: "",
 		CanIndex:         count < consts.MAX_INDEXES,
 		TimeNow:          timeNow,
 		TxType:           txType,
-		TxTypeId:         txTypeId})
+		TxTypeID:         txTypeId})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

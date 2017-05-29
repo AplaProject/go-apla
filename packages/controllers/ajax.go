@@ -53,8 +53,8 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	sessStateID := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 
-	log.Debug("sessWalletId", sessWalletID)
-	log.Debug("sessCitizenId", sessCitizenID)
+	log.Debug("sessWalletID", sessWalletID)
+	log.Debug("sessCitizenID", sessCitizenID)
 
 	c := new(Controller)
 	c.r = r
@@ -80,7 +80,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 			dbInit = false
 		}
 	}
-	log.Debug("sessStateId", sessStateID)
+	log.Debug("sessStateID", sessStateID)
 	if sessStateID > 0 {
 		stateName, err := c.GetStateName(sessStateID)
 		if err != nil {

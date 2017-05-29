@@ -20,11 +20,10 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewContract is a handle function for creating contracts
 func (c *Controller) NewContract() (string, error) {
 
 	txType := "NewContract"
-	txTypeId := utils.TypeInt(txType)
-
 	global := c.r.FormValue("global")
 	if global == "" || global == "0" {
 		global = "0"
@@ -33,13 +32,13 @@ func (c *Controller) NewContract() (string, error) {
 	TemplateStr, err := makeTemplate("edit_contract", "editContract", &editContractPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletId:  c.SessWalletID,
-		CitizenId: c.SessCitizenID,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		TxType:    txType,
-		TxTypeId:  txTypeId,
+		TxTypeID:  utils.TypeInt(txType),
 		Global:    global,
 		Data:      map[string]string{`conditions`: "ContractConditions(`MainCondition`)"},
-		StateId:   c.SessStateID})
+		StateID:   c.SessStateID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

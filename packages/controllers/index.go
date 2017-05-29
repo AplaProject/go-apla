@@ -81,8 +81,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sess.SessionRelease(w)
 
-	sessCitizenId := GetSessCitizenID(sess)
-	sessWalletId := GetSessWalletID(sess)
+	sessCitizenID := GetSessCitizenID(sess)
+	sessWalletID := GetSessWalletID(sess)
 	//	var key string
 
 	showIOSMenu := true
@@ -92,7 +92,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		showIOSMenu = false
 	}
 
-	if sessCitizenId == 0 && sessWalletId == 0 {
+	if sessCitizenID == 0 && sessWalletID == 0 {
 		showIOSMenu = false
 	}
 
