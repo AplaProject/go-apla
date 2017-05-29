@@ -20,7 +20,7 @@
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
-			$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$('#state_name').val()+','+$('#currency_name').val());
+			$("#for-signature").val( '{{.TxTypeID}},'+serverTime+',{{.WalletID}},'+$('#state_name').val()+','+$('#currency_name').val());
 			doSign();
 			$("#send_to_net").trigger("click");
 		}, "json" );
@@ -35,7 +35,7 @@
 				'currency_name' : $('#currency_name').val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
-				'walletId' : '{{.WalletId}}',
+				'walletId' : '{{.WalletID}}',
 				'signature1': $('#signature1').val()
 			},
 			dataType: 'json',
@@ -52,7 +52,7 @@
 
 
 	$('#go_to_the_state').bind('click', function () {
-		$.get( 'ajax?json=set_state&state_id='+$("#countries").val()+'&citizen_id={{.WalletId}}', function (data) {
+		$.get( 'ajax?json=set_state&state_id='+$("#countries").val()+'&citizen_id={{.WalletID}}', function (data) {
 			load_menu();
 			load_template("dashboard_default");
 		}, "json" );

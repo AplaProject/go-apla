@@ -84,7 +84,7 @@
 		}
 		
 		function ShowConfirm() {
-			var pref = '{{.StateId}}_';
+			var pref = '{{.StateID}}_';
 			if ({{.Global}} == 1) {
 				pref = 'global_';
 			}
@@ -122,7 +122,7 @@
 
 			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;
-				$("#for-signature").val('{{.TxTypeId}},'+serverTime+',{{.CitizenId}},{{.StateId}},'+$("#global").val()+
+				$("#for-signature").val('{{.TxTypeID}},'+serverTime+',{{.CitizenID}},{{.StateID}},'+$("#global").val()+
 						 ','+tblname+','+columns_json);
 			doSign();
 			$("#send_to_net").trigger("click");
@@ -140,8 +140,8 @@
 					'columns' : columns_json,
 					'type' : '{{.TxType}}',
 					'time' : serverTime,
-					'citizenId' : '{{.CitizenId}}',
-					'stateId' : '{{.StateId}}',
+					'citizenId' : '{{.CitizenID}}',
+					'stateId' : '{{.StateID}}',
 					'signature1': $('#signature1').val()
 				},
 				dataType: 'json',
