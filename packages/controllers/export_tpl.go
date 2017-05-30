@@ -277,7 +277,7 @@ func (c *Controller) ExportTpl() (string, error) {
 
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
 
-		signlist := make([]string, 0)
+		signlist := make(map[string]bool, 0)
 
 		if len(contracts) > 0 {
 			for _, icontract := range contracts {
@@ -313,7 +313,7 @@ func (c *Controller) ExportTpl() (string, error) {
 								list = append(list, fmt.Sprintf("`sign_%s #= %s`", ret[1], strings.Replace(sign[`value`], "`", `"`, -1)))
 								names = append(names, `signc_`+ret[1])
 								list = append(list, fmt.Sprintf("`signc_%s #= %s`", ret[1], strings.Replace(sign[`conditions`], "`", `"`, -1)))
-								signlist = append(signlist, fmt.Sprintf(`%d%s`, global, ret[1]))
+								signlist[fmt.Sprintf(`%d%s`, global, ret[1])] = true
 							}
 						}
 					}
@@ -544,7 +544,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	   }`, global, icontract))
 			}
 		}
-		for _, signitem := range signlist {
+		for signitem := range signlist {
 			list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
