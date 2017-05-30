@@ -38,6 +38,7 @@ type loginECDSAPage struct {
 	Private     string
 }
 
+// LoginECDSA is a control for the login page
 func (c *Controller) LoginECDSA() (string, error) {
 	var err error
 	var private []byte
@@ -69,16 +70,16 @@ func (c *Controller) LoginECDSA() (string, error) {
 	if len(pkey) > 0 {
 		private = []byte(pkey)
 	}
-	var state_id int64
+	var stateID int64
 	if len(state) > 0 {
-		state_id, err = strconv.ParseInt(state, 10, 64)
+		stateID, err = strconv.ParseInt(state, 10, 64)
 		if err != nil {
 			list, err := utils.DB.GetAllTables()
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
 			if utils.InSliceString(`global_states_list`, list) {
-				state_id, err = c.Single("select gstate_id from global_states_list where state_name=?", state).Int64()
+				stateID, err = c.Single("select gstate_id from global_states_list where state_name=?", state).Int64()
 				if err != nil {
 					return "", utils.ErrInfo(err)
 				}
@@ -89,7 +90,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 		Lang:        c.Lang,
 		Title:       "Login",
 		States:      states,
-		State:       state_id,
+		State:       stateID,
 		Key:         key,
 		Local:       local,
 		Import:      len(pkey) > 0,

@@ -23,13 +23,14 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// GetServerTime returns the current server time
 func (c *Controller) GetServerTime() (string, error) {
 	var more string
 	pub := c.r.FormValue(`pub`)
 	if len(pub) == 128 {
 		if key, err := hex.DecodeString(pub); err == nil {
-			if pubId := int64(lib.Address(key)); pubId != 0 {
-				more = fmt.Sprintf(`, "account": "%d"`, pubId)
+			if pubID := int64(lib.Address(key)); pubID != 0 {
+				more = fmt.Sprintf(`, "account": "%d"`, pubID)
 			}
 		}
 	}

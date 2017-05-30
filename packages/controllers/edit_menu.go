@@ -23,20 +23,20 @@ import (
 type editMenuPage struct {
 	Alert     string
 	Lang      map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletID  int64
+	CitizenID int64
 	TxType    string
-	TxTypeId  int64
+	TxTypeID  int64
 	TimeNow   int64
 	DataMenu  map[string]string
-	StateId   int64
+	StateID   int64
 	Global    string
 }
 
+// EditMenu is a controller for editing menu
 func (c *Controller) EditMenu() (string, error) {
 
 	txType := "EditMenu"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	var err error
@@ -66,12 +66,12 @@ func (c *Controller) EditMenu() (string, error) {
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletID,
-		CitizenId: c.SessCitizenID,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
-		TxTypeId:  txTypeId,
-		StateId:   c.SessStateID,
+		TxTypeID:  utils.TypeInt(txType),
+		StateID:   c.SessStateID,
 		DataMenu:  dataMenu})
 	if err != nil {
 		return "", utils.ErrInfo(err)

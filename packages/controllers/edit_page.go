@@ -25,24 +25,24 @@ import (
 type editPagePage struct {
 	Alert           string
 	Lang            map[string]string
-	WalletId        int64
-	CitizenId       int64
+	WalletID        int64
+	CitizenID       int64
 	TxType          string
-	TxTypeId        int64
+	TxTypeID        int64
 	TimeNow         int64
 	Name            string
 	DataMenu        map[string]string
 	DataPage        map[string]string
 	DataPageHistory []map[string]string
 	AllMenu         []map[string]string
-	StateId         int64
+	StateID         int64
 	Global          string
 }
 
+// EditPage is a controller for editing pages
 func (c *Controller) EditPage() (string, error) {
 
 	txType := "EditPage"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	var err error
@@ -62,7 +62,7 @@ func (c *Controller) EditPage() (string, error) {
 
 	var dataPageMain map[string]string
 	var dataPageHistory []map[string]string
-	var rbId int64
+	var rbID int64
 	for i := 0; i < 30; i++ {
 		if i == 0 {
 			dataPage, err := c.OneRow(`SELECT * FROM "`+prefix+`_pages" WHERE name = ?`, name).String()
@@ -73,21 +73,21 @@ func (c *Controller) EditPage() (string, error) {
 				dataPage[`conditions`] = "ContractConditions(`MainCondition`)"
 			}
 
-			rbId = utils.StrToInt64(dataPage["rb_id"])
+			rbID = utils.StrToInt64(dataPage["rb_id"])
 			dataPageMain = dataPage
 		} else {
-			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbId).String()
+			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
 			fmt.Printf("%s", messageMap)
-			rbId = utils.StrToInt64(messageMap["rb_id"])
+			rbID = utils.StrToInt64(messageMap["rb_id"])
 			messageMap["block_id"] = data["block_id"]
 			dataPageHistory = append(dataPageHistory, messageMap)
 		}
-		if rbId == 0 {
+		if rbID == 0 {
 			break
 		}
 	}
@@ -106,12 +106,12 @@ func (c *Controller) EditPage() (string, error) {
 		Alert:           c.Alert,
 		Lang:            c.Lang,
 		Global:          global,
-		WalletId:        c.SessWalletID,
-		CitizenId:       c.SessCitizenID,
+		WalletID:        c.SessWalletID,
+		CitizenID:       c.SessCitizenID,
 		TimeNow:         timeNow,
 		TxType:          txType,
-		TxTypeId:        txTypeId,
-		StateId:         c.SessStateID,
+		TxTypeID:        utils.TypeInt(txType),
+		StateID:         c.SessStateID,
 		AllMenu:         allMenu,
 		DataMenu:        dataMenu,
 		DataPage:        dataPageMain,

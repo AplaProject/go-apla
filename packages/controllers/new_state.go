@@ -23,29 +23,29 @@ import (
 type newStatePage struct {
 	Alert     string
 	Lang      map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletID  int64
+	CitizenID int64
 	TxType    string
-	TxTypeId  int64
+	TxTypeID  int64
 	TimeNow   int64
 }
 
+// NewState creates a new state
 func (c *Controller) NewState() (string, error) {
 
 	var err error
 
 	txType := "NewState"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	TemplateStr, err := makeTemplate("new_state", "newState", &newStatePage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletId:  c.SessWalletID,
-		CitizenId: c.SessCitizenID,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
-		TxTypeId:  txTypeId})
+		TxTypeID:  utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -22,7 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NGenKeys = `gen_keys`
+const nGenKeys = `gen_keys`
 
 type genKeysPage struct {
 	Data      *CommonPage
@@ -33,9 +33,10 @@ type genKeysPage struct {
 }
 
 func init() {
-	newPage(NGenKeys)
+	newPage(nGenKeys)
 }
 
+// GenKeys show information about generated and available keys
 func (c *Controller) GenKeys() (string, error) {
 	govAccount, _ := utils.StateParam(int64(c.SessStateID), `gov_account`)
 	if c.SessCitizenID != utils.StrToInt64(govAccount) {
@@ -50,5 +51,5 @@ func (c *Controller) GenKeys() (string, error) {
 		return ``, err
 	}
 	pageData := genKeysPage{Data: c.Data, Generated: generated, Available: available, Used: generated - available}
-	return proceedTemplate(c, NGenKeys, &pageData)
+	return proceedTemplate(c, nGenKeys, &pageData)
 }

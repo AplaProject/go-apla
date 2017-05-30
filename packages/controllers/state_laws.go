@@ -32,6 +32,7 @@ type stateLawsPage struct {
 	StateLaws          []map[string]string
 }
 
+// StateLaws shows ea state parameters
 func (c *Controller) StateLaws() (string, error) {
 
 	var err error

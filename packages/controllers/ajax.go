@@ -117,7 +117,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	if jsonName := r.FormValue(`json`); len(jsonName) > 0 && isPage(jsonName, TJson) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if dbInit {
-			w.Write(CallJson(c, jsonName))
+			w.Write(CallJSON(c, jsonName))
 		}
 		return
 	}

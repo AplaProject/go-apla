@@ -25,6 +25,7 @@ import (
 
 const aSignIn = `ajax_sign_in`
 
+// SignInJSON is a structure for the result of the sign in request
 type SignInJSON struct {
 	Address string `json:"address"`
 	Result  bool   `json:"result"`

@@ -25,8 +25,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NMenu = `menu`
+const nMenu = `menu`
 
+// LangInfo is a structure for language name and code
 type LangInfo struct {
 	Title string
 	Code  string
@@ -51,7 +52,7 @@ type menuPage struct {
 }
 
 func init() {
-	newPage(NMenu)
+	newPage(nMenu)
 }
 
 /*
@@ -64,6 +65,8 @@ func ReplaceMenu(menu string) string {
 	return qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_page('$2', {$3});\"><span>$1</span></a></li>")
 }
 */
+
+// Menu is controller for displaying the left menu
 func (c *Controller) Menu() (string, error) {
 	var (
 		err                                                            error
@@ -133,7 +136,7 @@ func (c *Controller) Menu() (string, error) {
 			{Title: `Nederlands (NL)`, Code: `nl`}}
 	}
 	states, _ := c.AjaxStatesList()
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
+	return proceedTemplate(c, nMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
 		States: states, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, LogoExt: utils.LogoExt,
 		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code})
 }

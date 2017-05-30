@@ -23,15 +23,16 @@ import (
 type listOfTablesPage struct {
 	Alert     string
 	Lang      map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletID  int64
+	CitizenID int64
 	TxType    string
-	TxTypeId  int64
+	TxTypeID  int64
 	TimeNow   int64
 	Global    string
 	Tables    []map[string]string
 }
 
+// ListOfTables show the list of custom tables
 func (c *Controller) ListOfTables() (string, error) {
 
 	var err error
@@ -57,8 +58,8 @@ func (c *Controller) ListOfTables() (string, error) {
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletID,
-		CitizenId: c.SessCitizenID,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		Tables:    tables})
 	if err != nil {
 		return "", utils.ErrInfo(err)

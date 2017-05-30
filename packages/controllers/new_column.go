@@ -22,12 +22,12 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewColumn show the form for creating new column
 func (c *Controller) NewColumn() (string, error) {
 
 	var err error
 
 	txType := "NewColumn"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	tableName := lib.Escape(c.r.FormValue("tableName"))
@@ -46,7 +46,7 @@ func (c *Controller) NewColumn() (string, error) {
 		CanIndex:         count < consts.MAX_INDEXES,
 		TimeNow:          timeNow,
 		TxType:           txType,
-		TxTypeID:         txTypeId})
+		TxTypeID:         utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

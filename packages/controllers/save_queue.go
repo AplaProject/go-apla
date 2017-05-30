@@ -26,29 +26,30 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// SaveQueue write a transaction in the queue of transactions
 func (c *Controller) SaveQueue() (string, error) {
 
 	var err error
 	c.r.ParseForm()
 
-	/*citizenId := utils.BytesToInt64([]byte(c.r.FormValue("citizenId")))
-	walletId := utils.BytesToInt64([]byte(c.r.FormValue("walletId")))*/
+	/*citizenID := utils.BytesToInt64([]byte(c.r.FormValue("citizenId")))
+	walletID := utils.BytesToInt64([]byte(c.r.FormValue("walletId")))*/
 
-	citizenId := c.SessCitizenID
-	walletId := c.SessWalletID
+	citizenID := c.SessCitizenID
+	walletID := c.SessWalletID
 
-	log.Debug("citizenId %d / walletId %d ", citizenId, walletId)
+	log.Debug("citizenID %d / walletID %d ", citizenID, walletID)
 
-	if citizenId <= 0 && walletId == 0 {
-		return `{"result":"incorrect citizenId || walletId"}`, nil
+	if citizenID <= 0 && walletID == 0 {
+		return `{"result":"incorrect citizenID || walletID"}`, nil
 	}
 
 	txTime := utils.StrToInt64(c.r.FormValue("time"))
 	if !utils.CheckInputData(txTime, "int") {
 		return `{"result":"incorrect time"}`, nil
 	}
-	txType_ := c.r.FormValue("type")
-	if !utils.CheckInputData(txType_, "type") {
+	itxType := c.r.FormValue("type")
+	if !utils.CheckInputData(itxType, "type") {
 		return `{"result":"incorrect type"}`, nil
 	}
 
@@ -60,7 +61,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		publicKey = []byte("null")
 	}
 	//	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
-	txType := utils.TypeInt(txType_)
+	txType := utils.TypeInt(itxType)
 	sign := make([]byte, 0)
 	signature, err := lib.JSSignToBytes(c.r.FormValue("signature1"))
 	if err != nil {
@@ -77,15 +78,15 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	log.Debug("binSignatures %x", binSignatures)
 	log.Debug("binSignatures %s", binSignatures)
-	log.Debug("txType_", txType_)
+	log.Debug("itxType", itxType)
 	log.Debug("txType", txType)
 
-	userId := walletId
-	stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-	if stateId > 0 {
-		userId = citizenId
+	userID := walletID
+	stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+	if stateID > 0 {
+		userID = citizenID
 	}
-	/*if stateId == 0 {
+	/*if stateID == 0 {
 		return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 	}*/
 
@@ -94,8 +95,8 @@ func (c *Controller) SaveQueue() (string, error) {
 		//		key  []byte
 	)
 	/*	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime),
-		WalletId: walletId, CitizenId: citizenId}*/
-	switch txType_ {
+		WalletId: walletID, CitizenId: citizenID}*/
+	switch itxType {
 	/*	case "CitizenRequest":
 			_, err = lib.BinMarshal(&data, &consts.CitizenRequest{TxHeader: txHead,
 				StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign})
@@ -107,12 +108,12 @@ func (c *Controller) SaveQueue() (string, error) {
 			}
 		case "TXNewCitizen":
 			// This will be common part
-			userId := uint64(walletId)
-			stateId := uint32(utils.StrToInt64(c.r.FormValue("stateId")))
+			userID := uint64(walletID)
+			stateID := uint32(utils.StrToInt64(c.r.FormValue("stateId")))
 			TXHead := consts.TXHeader{Type: int32(txType), Time: uint32(txTime),
-				WalletId: userId, StateId: int32(stateId), Sign: sign}
+				WalletId: userID, StateId: int32(stateID), Sign: sign}
 			// ---
-			if stateId == 0 {
+			if stateID == 0 {
 				return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 			}
 			if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
@@ -121,19 +122,19 @@ func (c *Controller) SaveQueue() (string, error) {
 			}*/
 	case "DLTTransfer":
 
-		stateId = 0
+		stateID = 0
 		walletAddress := []byte(c.r.FormValue("walletAddress"))
 		amount := []byte(c.r.FormValue("amount"))
 		commission := []byte(c.r.FormValue("commission"))
-		comment_ := c.r.FormValue("comment")
-		if len(comment_) == 0 {
-			comment_ = "null"
+		vcomment := c.r.FormValue("comment")
+		if len(vcomment) == 0 {
+			vcomment = "null"
 		}
-		comment := []byte(comment_)
+		comment := []byte(vcomment)
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(walletAddress)...)
 		data = append(data, utils.EncodeLengthPlusData(amount)...)
 		data = append(data, utils.EncodeLengthPlusData(commission)...)
@@ -143,12 +144,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "DLTChangeHostVote":
 
-		stateId = 0
+		stateID = 0
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("host")))...)
 		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("addressVote")))...)
 		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("fuelRate")))...)
@@ -157,14 +158,14 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewState":
 
-		stateId = 0
+		stateID = 0
 		stateName := []byte(c.r.FormValue("state_name"))
 		currencyName := []byte(c.r.FormValue("currency_name"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(stateName)...)
 		data = append(data, utils.EncodeLengthPlusData(currencyName)...)
 		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
@@ -172,12 +173,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewColumn":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -189,8 +190,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(tableName)...)
 		data = append(data, utils.EncodeLengthPlusData(columnName)...)
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
@@ -206,8 +207,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(tableName)...)
 		data = append(data, utils.EncodeLengthPlusData(columnName)...)
 		data = append(data, utils.EncodeLengthPlusData(permissions)...)
@@ -215,12 +216,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "AppendPage":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -230,8 +231,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -239,12 +240,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "AppendMenu":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -254,8 +255,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -263,12 +264,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "EditPage":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -280,8 +281,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -291,12 +292,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewPage":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -308,8 +309,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -319,38 +320,38 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "EditTable":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
-		table_name := []byte(c.r.FormValue("table_name"))
-		general_update := []byte(c.r.FormValue("general_update"))
+		tableName := []byte(c.r.FormValue("table_name"))
+		generalUpdate := []byte(c.r.FormValue("general_update"))
 		insert := []byte(c.r.FormValue("insert"))
-		new_column := []byte(c.r.FormValue("new_column"))
+		newColumn := []byte(c.r.FormValue("new_column"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(table_name)...)
-		data = append(data, utils.EncodeLengthPlusData(general_update)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
+		data = append(data, utils.EncodeLengthPlusData(tableName)...)
+		data = append(data, utils.EncodeLengthPlusData(generalUpdate)...)
 		data = append(data, utils.EncodeLengthPlusData(insert)...)
-		data = append(data, utils.EncodeLengthPlusData(new_column)...)
+		data = append(data, utils.EncodeLengthPlusData(newColumn)...)
 		data = append(data, binSignatures...)
 
 	case "EditStateParameters":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -360,8 +361,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
@@ -369,12 +370,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewStateParameters":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -384,8 +385,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
@@ -393,12 +394,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewContract":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -409,8 +410,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -419,12 +420,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "EditContract":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -435,8 +436,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(id)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -445,10 +446,10 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "ActivateContract":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
 
 		global := []byte(c.r.FormValue("global"))
@@ -456,20 +457,20 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(id)...)
 		data = append(data, binSignatures...)
 
 	case "NewMenu":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -480,8 +481,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -490,12 +491,12 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "EditMenu":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -506,8 +507,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -516,32 +517,32 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "EditWallet":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if userId == 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if userID == 0 {
+			userID = citizenID
 		}
-		wallet_id := []byte(c.r.FormValue("id"))
+		walletID := []byte(c.r.FormValue("id"))
 		spending := []byte(c.r.FormValue("spending_contract"))
 		conditions := []byte(c.r.FormValue("conditions_change"))
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(wallet_id)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
+		data = append(data, utils.EncodeLengthPlusData(walletID)...)
 		data = append(data, utils.EncodeLengthPlusData(spending)...)
 		data = append(data, utils.EncodeLengthPlusData(conditions)...)
 		data = append(data, binSignatures...)
 
 	case "NewTable":
 
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := utils.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
 
@@ -551,8 +552,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(tableName)...)
 		data = append(data, utils.EncodeLengthPlusData(columns)...)
@@ -560,7 +561,7 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "ChangeNodeKeyDLT":
 
-		stateId = 0
+		stateID = 0
 
 		publicKey := []byte(c.r.FormValue("publicKey"))
 		privateKey := []byte(c.r.FormValue("privateKey"))
@@ -570,11 +571,11 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		myWalletId, err := c.GetMyWalletID()
+		myWalletID, err := c.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		if myWalletId == walletId {
+		if myWalletID == walletID {
 			err = c.ExecSQL(`INSERT INTO my_node_keys (
 									public_key,
 									private_key
@@ -590,8 +591,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
 		data = append(data, binSignatures...)
 
@@ -602,8 +603,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(trans)...)
 		data = append(data, binSignatures...)
@@ -617,8 +618,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(userID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 		data = append(data, utils.EncodeLengthPlusData(global)...)
 		data = append(data, utils.EncodeLengthPlusData(name)...)
 		data = append(data, utils.EncodeLengthPlusData(value)...)
@@ -627,9 +628,9 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	case "NewAccount":
 
-		accountId := utils.StrToInt64(c.r.FormValue("accountId"))
+		accountID := utils.StrToInt64(c.r.FormValue("accountId"))
 		pubKey, err := hex.DecodeString(c.r.FormValue("pubkey"))
-		if accountId == 0 || stateId == 0 || userId == 0 || err != nil {
+		if accountID == 0 || stateID == 0 || userID == 0 || err != nil {
 			return ``, fmt.Errorf(`incorrect NewAccount parameters`)
 		}
 		encKey := c.r.FormValue("prvkey")
@@ -637,15 +638,15 @@ func (c *Controller) SaveQueue() (string, error) {
 			return ``, fmt.Errorf(`incorrect encrypted key`)
 		}
 		err = c.ExecSQL(fmt.Sprintf(`INSERT INTO "%d_anonyms" (id_citizen, id_anonym, encrypted)
-			VALUES (?,?,[hex])`, stateId), userId, accountId, encKey)
+			VALUES (?,?,[hex])`, stateID), userID, accountID, encKey)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(accountId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
+		data = append(data, utils.EncodeLengthPlusData(accountID)...)
+		data = append(data, utils.EncodeLengthPlusData(stateID)...)
 
 		data = append(data, utils.EncodeLengthPlusData(pubKey)...)
 		data = append(data, binSignatures...)
@@ -660,11 +661,11 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		myWalletId, err := c.GetMyWalletID()
+		myWalletID, err := c.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		if myWalletId == walletId {
+		if myWalletID == walletID {
 			err = c.ExecSQL(`INSERT INTO my_node_keys (
 									public_key,
 									private_key
@@ -680,8 +681,8 @@ func (c *Controller) SaveQueue() (string, error) {
 
 		data = utils.DecToBin(txType, 1)
 		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(walletId)...)
-		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
+		data = append(data, utils.EncodeLengthPlusData(walletID)...)
+		data = append(data, utils.EncodeLengthPlusData(citizenID)...)
 		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
 		data = append(data, binSignatures...)
 	}
@@ -704,7 +705,7 @@ func (c *Controller) SaveQueue() (string, error) {
 				?,
 				?,
 				?
-			)`, md5, time.Now().Unix(), txType, walletId, citizenId)
+			)`, md5, time.Now().Unix(), txType, walletID, citizenID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -718,6 +719,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	return `{"hash":"` + string(md5) + `"}`, nil
 }
 
+// CheckInputData calls utils.CheckInputData for the each item of the map
 func CheckInputData(data map[string]string) error {
 	for k, v := range data {
 		if !utils.CheckInputData(k, v) {

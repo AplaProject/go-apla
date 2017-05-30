@@ -20,10 +20,10 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewMenu is a controller for creating a new menu
 func (c *Controller) NewMenu() (string, error) {
 
 	txType := "NewMenu"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	global := c.r.FormValue("global")
@@ -35,12 +35,12 @@ func (c *Controller) NewMenu() (string, error) {
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletID,
-		CitizenId: c.SessCitizenID,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
-		TxTypeId:  txTypeId,
-		StateId:   c.SessStateID,
+		TxTypeID:  utils.TypeInt(txType),
+		StateID:   c.SessStateID,
 		DataMenu:  map[string]string{`conditions`: "ContractConditions(`MainCondition`)"}})
 	if err != nil {
 		return "", utils.ErrInfo(err)

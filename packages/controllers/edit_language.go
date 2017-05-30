@@ -23,8 +23,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NEditLanguage = `edit_language`
+const nEditLanguage = `edit_language`
 
+// LangRes contains the language resource
 type LangRes struct {
 	Lang string
 	Text string
@@ -36,20 +37,22 @@ type editLanguagePage struct {
 	List     []LangRes
 	Global   string
 	TxType   string
-	TxTypeId int64
+	TxTypeID int64
 	Unique   string
 }
 
+// ListLangRes is a slice of LangRes structures
 type ListLangRes []LangRes
 
 func init() {
-	newPage(NEditLanguage)
+	newPage(nEditLanguage)
 }
 
 func (a ListLangRes) Len() int           { return len(a) }
 func (a ListLangRes) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ListLangRes) Less(i, j int) bool { return a[i].Lang < a[j].Lang }
 
+// EditLanguage is a controller which edits language resources
 func (c *Controller) EditLanguage() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
@@ -78,7 +81,7 @@ func (c *Controller) EditLanguage() (string, error) {
 		sort.Sort(ListLangRes(list))
 		txType = "EditLang"
 	}
-	txTypeId := utils.TypeInt(txType)
-	pageData := editLanguagePage{Data: c.Data, Global: global, Name: name, List: list, TxType: txType, TxTypeId: txTypeId, Unique: ``}
-	return proceedTemplate(c, NEditLanguage, &pageData)
+	pageData := editLanguagePage{Data: c.Data, Global: global, Name: name, List: list, TxType: txType,
+		TxTypeID: utils.TypeInt(txType), Unique: ``}
+	return proceedTemplate(c, nEditLanguage, &pageData)
 }

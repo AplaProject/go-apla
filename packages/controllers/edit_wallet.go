@@ -24,27 +24,24 @@ import (
 	"strings"
 )
 
-const NEditWallet = `edit_wallet`
+const nEditWallet = `edit_wallet`
 
 type editWalletPage struct {
 	Alert    string
 	Data     *CommonPage
 	TxType   string
-	TxTypeId int64
+	TxTypeID int64
 	//	Lang                map[string]string
 	Info    map[string]string
 	Unique  string
-	StateId int64
-
-	/*	DataContractHistory []map[string]string
-		CitizenId           int64
-		TimeNow             int64*/
+	StateID int64
 }
 
 func init() {
-	newPage(NEditWallet)
+	newPage(nEditWallet)
 }
 
+// EditWallet is a controller for editing state's wallets
 func (c *Controller) EditWallet() (string, error) {
 
 	var (
@@ -54,7 +51,6 @@ func (c *Controller) EditWallet() (string, error) {
 	)
 
 	txType := "EditWallet"
-	txTypeId := utils.TypeInt(txType)
 
 	idaddr := lib.StripTags(c.r.FormValue("id"))
 	var id int64
@@ -97,7 +93,7 @@ func (c *Controller) EditWallet() (string, error) {
 			}
 		}
 	}
-	pageData := editWalletPage{Data: c.Data, StateId: c.SessStateID,
-		Alert: alert, TxType: txType, TxTypeId: txTypeId, Info: data, Unique: ``}
-	return proceedTemplate(c, NEditWallet, &pageData)
+	pageData := editWalletPage{Data: c.Data, StateID: c.SessStateID,
+		Alert: alert, TxType: txType, TxTypeID: utils.TypeInt(txType), Info: data, Unique: ``}
+	return proceedTemplate(c, nEditWallet, &pageData)
 }

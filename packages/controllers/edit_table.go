@@ -24,27 +24,27 @@ import (
 type editTablePage struct {
 	Alert      string
 	Lang       map[string]string
-	WalletId   int64
-	CitizenId  int64
+	WalletID   int64
+	CitizenID  int64
 	TableName  string
 	TxType     string
-	TxTypeId   int64
+	TxTypeID   int64
 	TimeNow    int64
 	CanColumns bool
 	TableData  map[string]string
 	//	Columns               map[string]string
 	ColumnsAndPermissions []map[string]string
-	StateId               int64
+	StateID               int64
 	TablePermission       map[string]string
 	Global                string
 }
 
+// EditTable is a controller for editing table
 func (c *Controller) EditTable() (string, error) {
 
 	var err error
 
 	txType := "EditTable"
-	txTypeId := utils.TypeInt(txType)
 	timeNow := utils.Time()
 
 	var tableName string
@@ -88,13 +88,13 @@ func (c *Controller) EditTable() (string, error) {
 	TemplateStr, err := makeTemplate("edit_table", "editTable", &editTablePage{
 		Alert:                 c.Alert,
 		Lang:                  c.Lang,
-		WalletId:              c.SessWalletID,
-		CitizenId:             c.SessCitizenID,
+		WalletID:              c.SessWalletID,
+		CitizenID:             c.SessCitizenID,
 		TableName:             tableName,
 		TimeNow:               timeNow,
 		TxType:                txType,
-		TxTypeId:              txTypeId,
-		StateId:               c.SessStateID,
+		TxTypeID:              utils.TypeInt(txType),
+		StateID:               c.SessStateID,
 		CanColumns:            count < consts.MAX_COLUMNS+2,
 		Global:                global,
 		TablePermission:       tablePermission,

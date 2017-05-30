@@ -20,21 +20,22 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NSmartRequestCitizen = `smart_request_citizen`
+const nSmartRequestCitizen = `smart_request_citizen`
 
 type citizenSmartPage struct {
 	Data     *CommonPage
 	Unique   string
 	TxType   string
-	TxTypeId int64
+	TxTypeID int64
 }
 
 func init() {
-	newPage(NSmartRequestCitizen)
+	newPage(nSmartRequestCitizen)
 }
 
+// SmartRequestCitizen is a control for requesting the citizenship
 func (c *Controller) SmartRequestCitizen() (string, error) {
 	txType := "TXCitizenRequest"
-	pageData := citizenSmartPage{Data: c.Data, TxType: txType, TxTypeId: utils.TypeInt(txType), Unique: ``}
-	return proceedTemplate(c, NSmartRequestCitizen, &pageData)
+	pageData := citizenSmartPage{Data: c.Data, TxType: txType, TxTypeID: utils.TypeInt(txType), Unique: ``}
+	return proceedTemplate(c, nSmartRequestCitizen, &pageData)
 }
