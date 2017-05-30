@@ -24,15 +24,13 @@ import (
 	//	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 func (c *Controller) SaveQueue() (string, error) {
-
 	var err error
 	c.r.ParseForm()
-
-	/*citizenId := utils.BytesToInt64([]byte(c.r.FormValue("citizenId")))
-	walletId := utils.BytesToInt64([]byte(c.r.FormValue("walletId")))*/
 
 	citizenId := c.SessCitizenId
 	walletId := c.SessWalletId
@@ -85,93 +83,17 @@ func (c *Controller) SaveQueue() (string, error) {
 	if stateId > 0 {
 		userId = citizenId
 	}
-	/*if stateId == 0 {
-		return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-	}*/
 
 	var (
 		data []byte
 		//		key  []byte
 	)
-	/*	txHead := consts.TxHeader{Type: uint8(txType), Time: uint32(txTime),
-		WalletId: walletId, CitizenId: citizenId}*/
+	var toSerialize interface{}
+	header := tx.Header{Type: 1, Time: txTime, UserID: userId, StateID: stateId, PublicKey: publicKey, BinSignatures: binSignatures}
 	switch txType_ {
-	/*	case "CitizenRequest":
-			_, err = lib.BinMarshal(&data, &consts.CitizenRequest{TxHeader: txHead,
-				StateId: utils.StrToInt64(c.r.FormValue("stateId")), Sign: sign})
-		case "NewCitizen":
-			if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
-				_, err = lib.BinMarshal(&data, &consts.NewCitizen{TxHeader: txHead,
-					StateId:   utils.StrToInt64(c.r.FormValue("stateId")),
-					PublicKey: key, Sign: sign})
-			}
-		case "TXNewCitizen":
-			// This will be common part
-			userId := uint64(walletId)
-			stateId := uint32(utils.StrToInt64(c.r.FormValue("stateId")))
-			TXHead := consts.TXHeader{Type: int32(txType), Time: uint32(txTime),
-				WalletId: userId, StateId: int32(stateId), Sign: sign}
-			// ---
-			if stateId == 0 {
-				return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-			}
-			if key, err = hex.DecodeString(c.r.FormValue("publicKey")); err == nil {
-				_, err = lib.BinMarshal(&data, &consts.TXNewCitizen{TXHeader: TXHead,
-					PublicKey: key})
-			}*/
-	case "DLTTransfer":
-
-		stateId = 0
-		walletAddress := []byte(c.r.FormValue("walletAddress"))
-		amount := []byte(c.r.FormValue("amount"))
-		commission := []byte(c.r.FormValue("commission"))
-		comment_ := c.r.FormValue("comment")
-		if len(comment_) == 0 {
-			comment_ = "null"
-		}
-		comment := []byte(comment_)
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(walletAddress)...)
-		data = append(data, utils.EncodeLengthPlusData(amount)...)
-		data = append(data, utils.EncodeLengthPlusData(commission)...)
-		data = append(data, utils.EncodeLengthPlusData(comment)...)
-		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
-		data = append(data, binSignatures...)
-
-	case "DLTChangeHostVote":
-
-		stateId = 0
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("host")))...)
-		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("addressVote")))...)
-		data = append(data, utils.EncodeLengthPlusData([]byte(c.r.FormValue("fuelRate")))...)
-		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
-		data = append(data, binSignatures...)
-
-	case "NewState":
-
-		stateId = 0
-		stateName := []byte(c.r.FormValue("state_name"))
-		currencyName := []byte(c.r.FormValue("currency_name"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateName)...)
-		data = append(data, utils.EncodeLengthPlusData(currencyName)...)
-		data = append(data, utils.EncodeLengthPlusData(publicKey)...)
-		data = append(data, binSignatures...)
-
-	case "NewColumn":
-
+	case "NewColumn", "AppendPage", "AppendMenu", "EditPage", "NewPage", "EditTable",
+		"EditStateParameters", "NewStateParameters", "NewContract", "EditContract", "NewMenu",
+		"EditMenu", "NewTable":
 		userId := walletId
 		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
 		if stateId > 0 {
@@ -180,453 +102,181 @@ func (c *Controller) SaveQueue() (string, error) {
 		if stateId == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
-
-		tableName := []byte(c.r.FormValue("table_name"))
-		columnName := []byte(c.r.FormValue("column_name"))
-		permissions := []byte(c.r.FormValue("permissions"))
-		index := []byte(c.r.FormValue("index"))
-		colType := []byte(c.r.FormValue("column_type"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(tableName)...)
-		data = append(data, utils.EncodeLengthPlusData(columnName)...)
-		data = append(data, utils.EncodeLengthPlusData(permissions)...)
-		data = append(data, utils.EncodeLengthPlusData(index)...)
-		data = append(data, utils.EncodeLengthPlusData(colType)...)
-		data = append(data, binSignatures...)
-
-	case "EditColumn":
-
-		tableName := []byte(c.r.FormValue("table_name"))
-		columnName := []byte(c.r.FormValue("column_name"))
-		permissions := []byte(c.r.FormValue("permissions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(tableName)...)
-		data = append(data, utils.EncodeLengthPlusData(columnName)...)
-		data = append(data, utils.EncodeLengthPlusData(permissions)...)
-		data = append(data, binSignatures...)
-
-	case "AppendPage":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, binSignatures...)
-
-	case "AppendMenu":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, binSignatures...)
-
-	case "EditPage":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		menu := []byte(c.r.FormValue("menu"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(menu)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "NewPage":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		menu := []byte(c.r.FormValue("menu"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(menu)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "EditTable":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		table_name := []byte(c.r.FormValue("table_name"))
-		general_update := []byte(c.r.FormValue("general_update"))
-		insert := []byte(c.r.FormValue("insert"))
-		new_column := []byte(c.r.FormValue("new_column"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(table_name)...)
-		data = append(data, utils.EncodeLengthPlusData(general_update)...)
-		data = append(data, utils.EncodeLengthPlusData(insert)...)
-		data = append(data, utils.EncodeLengthPlusData(new_column)...)
-		data = append(data, binSignatures...)
-
-	case "EditStateParameters":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "NewStateParameters":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "NewContract":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "EditContract":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		id := []byte(c.r.FormValue("id"))
-		value := []byte(c.r.FormValue("value"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(id)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "ActivateContract":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		id := []byte(c.r.FormValue("id"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(id)...)
-		data = append(data, binSignatures...)
-
-	case "NewMenu":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "EditMenu":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
-		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
-	case "EditWallet":
-
+		header.UserID = userId
+		header.StateID = stateId
+	case "DLTTransfer", "DLTChangeHostVote", "NewState", "ChangeNodeKeyDLT":
+		header.StateID = 0
+	case "EditWallet", "ActivateContract":
 		userId := walletId
 		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
 		if userId == 0 {
 			userId = citizenId
 		}
-		wallet_id := []byte(c.r.FormValue("id"))
-		spending := []byte(c.r.FormValue("spending_contract"))
-		conditions := []byte(c.r.FormValue("conditions_change"))
+		header.UserID = userId
+		header.StateID = stateId
+	default:
+	}
 
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(wallet_id)...)
-		data = append(data, utils.EncodeLengthPlusData(spending)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
+	switch txType_ {
+	case "DLTTransfer":
+		comment_ := c.r.FormValue("comment")
+		if len(comment_) == 0 {
+			comment_ = "null"
+		}
+		toSerialize = tx.DLTTransfer{
+			Header:        header,
+			WalletAddress: c.r.FormValue("walletAddress"),
+			Amount:        c.r.FormValue("amount"),
+			Commission:    c.r.FormValue("commission"),
+			Comment:       comment_,
+		}
+	case "DLTChangeHostVote":
+		toSerialize = tx.DLTChangeHostVote{
+			Header:      header,
+			Host:        c.r.FormValue("host"),
+			AddressVote: c.r.FormValue("addressVote"),
+			FuelRate:    c.r.FormValue("fuelRate"),
+		}
+	case "NewState":
+		toSerialize = tx.NewState{
+			Header:       header,
+			StateName:    c.r.FormValue("state_name"),
+			CurrencyName: c.r.FormValue("currency_name"),
+		}
+	case "NewColumn":
+		toSerialize = tx.NewColumn{Header: header,
+			TableName:   c.r.FormValue("table_name"),
+			ColumnName:  c.r.FormValue("column_name"),
+			ColumnType:  c.r.FormValue("column_type"),
+			Permissions: c.r.FormValue("permissions"),
+			Index:       c.r.FormValue("index"),
+		}
+	case "EditColumn":
+		toSerialize = tx.EditColumn{Header: header,
+			TableName:   c.r.FormValue("table_name"),
+			ColumnName:  c.r.FormValue("column_name"),
+			Permissions: c.r.FormValue("permissions"),
+		}
+	case "AppendPage":
+		toSerialize = tx.AppendPage{
+			Header: header,
+			Global: c.r.FormValue("global"),
+			Name:   c.r.FormValue("name"),
+			Value:  c.r.FormValue("value"),
+		}
+	case "AppendMenu":
+		toSerialize = tx.AppendMenu{
+			Header: header,
+			Global: c.r.FormValue("global"),
+			Name:   c.r.FormValue("name"),
+			Value:  c.r.FormValue("value"),
+		}
+	case "EditPage":
+		toSerialize = tx.EditPage{
+			Header:     header,
+			Global:     c.r.FormValue("global"),
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Menu:       c.r.FormValue("menu"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "NewPage":
+		toSerialize = tx.NewPage{Header: header,
+			Global:     c.r.FormValue("global"),
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Menu:       c.r.FormValue("menu"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "EditTable":
+		toSerialize = tx.EditTable{
+			Header:        header,
+			Name:          c.r.FormValue("table_name"),
+			GeneralUpdate: c.r.FormValue("general_update"),
+			Insert:        c.r.FormValue("insert"),
+			NewColumn:     c.r.FormValue("new_column"),
+		}
+	case "EditStateParameters":
+		toSerialize = tx.EditStateParameters{
+			Header:     header,
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "NewStateParameters":
+		toSerialize = tx.NewStateParameters{
+			Header:     header,
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "NewContract":
+		toSerialize = tx.NewContract{
+			Header:     header,
+			Global:     c.r.FormValue("global"),
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "EditContract":
+		toSerialize = tx.EditContract{
+			Header:     header,
+			Global:     c.r.FormValue("global"),
+			Id:         c.r.FormValue("id"),
+			Value:      c.r.FormValue("value"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "ActivateContract":
+		toSerialize = tx.ActivateContract{
+			Header: header,
+			Global: c.r.FormValue("global"),
+			Id:     c.r.FormValue("id"),
+		}
+	case "NewMenu":
+		toSerialize = tx.NewMenu{
+			Header:     header,
+			Global:     c.r.FormValue("global"),
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "EditMenu":
+		toSerialize = tx.EditMenu{
+			Header:     header,
+			Global:     c.r.FormValue("global"),
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Conditions: c.r.FormValue("conditions"),
+		}
+	case "EditWallet":
+		toSerialize = tx.EditWallet{
+			Header:           header,
+			WalletID:         c.r.FormValue("id"),
+			SpendingContract: c.r.FormValue("spending_contract"),
+			Conditions:       c.r.FormValue("conditions_change"),
+		}
 	case "NewTable":
-
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		toSerialize = tx.NewTable{
+			Header:  header,
+			Global:  c.r.FormValue("global"),
+			Name:    c.r.FormValue("table_name"),
+			Columns: c.r.FormValue("columns"),
 		}
-		if stateId == 0 {
-			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
-		}
-
-		global := []byte(c.r.FormValue("global"))
-		tableName := []byte(c.r.FormValue("table_name"))
-		columns := []byte(c.r.FormValue("columns"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(tableName)...)
-		data = append(data, utils.EncodeLengthPlusData(columns)...)
-		data = append(data, binSignatures...)
-
-	case "ChangeNodeKeyDLT":
-
-		stateId = 0
-
-		publicKey := []byte(c.r.FormValue("publicKey"))
-		privateKey := []byte(c.r.FormValue("privateKey"))
-
-		verifyData := map[string]string{c.r.FormValue("publicKey"): "public_key", c.r.FormValue("privateKey"): "private_key"}
-		err := CheckInputData(verifyData)
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}
-		myWalletId, err := c.GetMyWalletId()
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}
-		if myWalletId == walletId {
-			err = c.ExecSql(`INSERT INTO my_node_keys (
-									public_key,
-									private_key
-								)
-								VALUES (
-									[hex],
-									?
-								)`, publicKey, privateKey)
-			if err != nil {
-				return "", utils.ErrInfo(err)
-			}
-		}
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
-		data = append(data, binSignatures...)
-
 	case "EditLang", "NewLang":
-
-		name := []byte(c.r.FormValue("name"))
-		trans := []byte(c.r.FormValue("trans"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(trans)...)
-		data = append(data, binSignatures...)
-
+		toSerialize = tx.EditNewLang{
+			Header: header,
+			Name:   c.r.FormValue("name"),
+			Trans:  c.r.FormValue("trans"),
+		}
 	case "EditSign", "NewSign":
-
-		global := []byte(c.r.FormValue("global"))
-		name := []byte(c.r.FormValue("name"))
-		value := []byte(c.r.FormValue("value"))
-		conditions := []byte(c.r.FormValue("conditions"))
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(userId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-		data = append(data, utils.EncodeLengthPlusData(global)...)
-		data = append(data, utils.EncodeLengthPlusData(name)...)
-		data = append(data, utils.EncodeLengthPlusData(value)...)
-		data = append(data, utils.EncodeLengthPlusData(conditions)...)
-		data = append(data, binSignatures...)
-
+		toSerialize = tx.EditNewSign{
+			Header:     header,
+			Global:     c.r.FormValue("global"),
+			Name:       c.r.FormValue("name"),
+			Value:      c.r.FormValue("value"),
+			Conditions: c.r.FormValue("conditions"),
+		}
 	case "NewAccount":
-
 		accountId := utils.StrToInt64(c.r.FormValue("accountId"))
 		pubKey, err := hex.DecodeString(c.r.FormValue("pubkey"))
 		if accountId == 0 || stateId == 0 || userId == 0 || err != nil {
@@ -641,20 +291,12 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(accountId)...)
-		data = append(data, utils.EncodeLengthPlusData(stateId)...)
-
-		data = append(data, utils.EncodeLengthPlusData(pubKey)...)
-		data = append(data, binSignatures...)
-
-	case "ChangeNodeKey":
-
+		header.UserID = accountId
+		header.PublicKey = pubKey
+		toSerialize = tx.NewAccount{header}
+	case "ChangeNodeKey", "ChangeNodeKeyDLT":
 		publicKey := []byte(c.r.FormValue("publicKey"))
 		privateKey := []byte(c.r.FormValue("privateKey"))
-
 		verifyData := map[string]string{c.r.FormValue("publicKey"): "public_key", c.r.FormValue("privateKey"): "private_key"}
 		err := CheckInputData(verifyData)
 		if err != nil {
@@ -677,13 +319,16 @@ func (c *Controller) SaveQueue() (string, error) {
 				return "", utils.ErrInfo(err)
 			}
 		}
-
-		data = utils.DecToBin(txType, 1)
-		data = append(data, utils.DecToBin(txTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(walletId)...)
-		data = append(data, utils.EncodeLengthPlusData(citizenId)...)
-		data = append(data, utils.EncodeLengthPlusData(utils.HexToBin(publicKey))...)
-		data = append(data, binSignatures...)
+		header.PublicKey = publicKey
+		if txType_ == "ChangeNodeKeyDLT" {
+			toSerialize = tx.DLTChangeNodeKey{header}
+		} else {
+			toSerialize = tx.ChangeNodeKey{header}
+		}
+	}
+	data, err = msgpack.Marshal(toSerialize)
+	if err != nil {
+		return "", utils.ErrInfo(err)
 	}
 
 	if err != nil {

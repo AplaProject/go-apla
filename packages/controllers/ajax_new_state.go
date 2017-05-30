@@ -30,7 +30,7 @@ import (
 const aNewState = `ajax_new_state`
 
 // NewState is a structure for the answer of ajax_new_state ajax request
-type NewState struct {
+type NewStateAjax struct {
 	Error string `json:"error"`
 }
 
@@ -41,7 +41,7 @@ func init() {
 // AjaxNewState is a controller of ajax_new_state request
 func (c *Controller) AjaxNewState() interface{} {
 	var (
-		result    NewState
+		result    NewStateAjax
 		err       error
 		spriv     string
 		current   map[string]string
