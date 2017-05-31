@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditPageInit initializes EditPage transaction
 func (p *Parser) EditPageInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"menu": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) EditPageInit() error {
 	return nil
 }
 
+// EditPageFront checks conditions of EditPage transaction
 func (p *Parser) EditPageFront() error {
 
 	err := p.generalCheck(`edit_page`)
@@ -74,6 +76,7 @@ func (p *Parser) EditPageFront() error {
 	return nil
 }
 
+// EditPage proceeds EditPage transaction
 func (p *Parser) EditPage() error {
 
 	prefix := p.TxStateIDStr
@@ -89,10 +92,7 @@ func (p *Parser) EditPage() error {
 	return nil
 }
 
+// EditPageRollback rollbacks EditPage transaction
 func (p *Parser) EditPageRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditPageRollbackFront() error {
-	return nil
-}*/

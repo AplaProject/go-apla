@@ -26,6 +26,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditTableInit initializes EditTable transaction
 func (p *Parser) EditTableInit() error {
 
 	fields := []map[string]string{{"table_name": "string"}, {"general_update": "string"}, {"insert": "string"}, {"new_column": "string"}, {"sign": "bytes"}}
@@ -36,6 +37,7 @@ func (p *Parser) EditTableInit() error {
 	return nil
 }
 
+// EditTableFront checks conditions of EditTable transaction
 func (p *Parser) EditTableFront() error {
 	err := p.generalCheck(`edit_table`)
 	if err != nil {
@@ -84,6 +86,7 @@ func (p *Parser) EditTableFront() error {
 	return nil
 }
 
+// EditTable proceeds EditTable transaction
 func (p *Parser) EditTable() error {
 
 	s := strings.Split(p.TxMaps.String["table_name"], "_")
@@ -115,7 +118,7 @@ func (p *Parser) EditTable() error {
 	if err != nil {
 		return err
 	}
-	rbId, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
 	if err != nil {
 		return err
 	}
@@ -128,12 +131,12 @@ func (p *Parser) EditTable() error {
 		}
 		p.TxMaps.String[action] = strings.Replace(p.TxMaps.String[action], `"`, `\"`, -1)
 		err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`,
-			`"`+p.TxMaps.String[action]+`"`, rbId, tblname)
+			`"`+p.TxMaps.String[action]+`"`, rbID, tblname)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	/*	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{general_update}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, rbId, p.TxMaps.String["table_name"])
+	/*	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{general_update}', ?, true), rb_id = ? WHERE name = ?`, `"`+p.TxMaps.String["general_update"]+`"`, rbID, p.TxMaps.String["table_name"])
 		if err != nil {
 			return p.ErrInfo(err)
 		}*/
@@ -146,6 +149,7 @@ func (p *Parser) EditTable() error {
 	return nil
 }
 
+// EditTableRollback rollbacks EditTable transaction
 func (p *Parser) EditTableRollback() error {
 	err := p.autoRollback()
 	if err != nil {
@@ -153,8 +157,3 @@ func (p *Parser) EditTableRollback() error {
 	}
 	return nil
 }
-
-/*func (p *Parser) EditTableRollbackFront() error {
-
-	return nil
-}*/

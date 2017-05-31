@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewSignInit initializes NewSign transaction
 func (p *Parser) NewSignInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -32,6 +33,7 @@ func (p *Parser) NewSignInit() error {
 	return nil
 }
 
+// NewSignFront checks conditions of NewSign transaction
 func (p *Parser) NewSignFront() error {
 
 	err := p.generalCheck(`new_sign`)
@@ -70,6 +72,7 @@ func (p *Parser) NewSignFront() error {
 	return nil
 }
 
+// NewSign proceeds NewSign transaction
 func (p *Parser) NewSign() error {
 
 	prefix := `global`
@@ -83,6 +86,7 @@ func (p *Parser) NewSign() error {
 	return nil
 }
 
+// NewSignRollback rollbacks NewSign transaction
 func (p *Parser) NewSignRollback() error {
 	return p.autoRollback()
 }

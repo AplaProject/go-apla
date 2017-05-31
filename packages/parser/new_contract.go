@@ -26,6 +26,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewContractInit initializes NewContract transaction
 func (p *Parser) NewContractInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -36,6 +37,7 @@ func (p *Parser) NewContractInit() error {
 	return nil
 }
 
+// NewContractFront checks conditions of NewContract transaction
 func (p *Parser) NewContractFront() error {
 
 	err := p.generalCheck(`new_contract`)
@@ -90,6 +92,7 @@ func (p *Parser) NewContractFront() error {
 	return nil
 }
 
+// NewContract proceeds NewContract transaction
 func (p *Parser) NewContract() error {
 
 	prefix := `global`
@@ -124,11 +127,7 @@ func (p *Parser) NewContract() error {
 	return nil
 }
 
+// NewContractRollback rollbacks NewContract transaction
 func (p *Parser) NewContractRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) NewContractRollbackFront() error {
-	return nil
-}
-*/

@@ -27,6 +27,7 @@ import (
 Adding state tables should be spelled out in state settings
 */
 
+// NewStateParametersInit initializes NewStateParameters transaction
 func (p *Parser) NewStateParametersInit() error {
 
 	fields := []map[string]string{{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -37,6 +38,7 @@ func (p *Parser) NewStateParametersInit() error {
 	return nil
 }
 
+// NewStateParametersFront checks conditions of NewStateParameters transaction
 func (p *Parser) NewStateParametersFront() error {
 	err := p.generalCheck(`new_state_parameters`)
 	if err != nil {
@@ -106,6 +108,7 @@ func (p *Parser) NewStateParametersFront() error {
 	return nil
 }
 
+// NewStateParameters proceeds NewStateParameters transaction
 func (p *Parser) NewStateParameters() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", nil, nil, true)
@@ -115,12 +118,9 @@ func (p *Parser) NewStateParameters() error {
 	return nil
 }
 
+// NewStateParametersRollback rollbacks NewStateParameters transaction
 func (p *Parser) NewStateParametersRollback() error {
 	return p.autoRollback()
 }
 
-/*func (p *Parser) NewStateParametersRollbackFront() error {
 
-	return nil
-}
-*/

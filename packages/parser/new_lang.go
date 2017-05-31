@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewLangInit initializes NewLang transaction
 func (p *Parser) NewLangInit() error {
 
 	fields := []map[string]string{ /*{"global": "int64"},*/ {"name": "string"}, {"res": "string"}, {"sign": "bytes"}}
@@ -32,6 +33,7 @@ func (p *Parser) NewLangInit() error {
 	return nil
 }
 
+// NewLangFront checks conditions of NewLang transaction
 func (p *Parser) NewLangFront() error {
 
 	err := p.generalCheck(`new_lang`)
@@ -82,6 +84,7 @@ func (p *Parser) NewLangFront() error {
 	return nil
 }
 
+// NewLang proceeds NewLang transaction
 func (p *Parser) NewLang() error {
 
 	/*	prefix := `global`
@@ -115,6 +118,7 @@ func (p *Parser) NewLang() error {
 	return nil
 }
 
+// NewLangRollback rollbacks NewLang transaction
 func (p *Parser) NewLangRollback() error {
 	return p.autoRollback()
 }

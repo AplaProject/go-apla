@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditSignInit initializes EditSign transaction
 func (p *Parser) EditSignInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) EditSignInit() error {
 	return nil
 }
 
+// EditSignFront checks conditions of EditSign transaction
 func (p *Parser) EditSignFront() error {
 
 	err := p.generalCheck(`edit_sign`)
@@ -81,6 +83,7 @@ func (p *Parser) EditSignFront() error {
 	return nil
 }
 
+// EditSign proceeds EditSign transaction
 func (p *Parser) EditSign() error {
 
 	prefix := `global`
@@ -95,10 +98,7 @@ func (p *Parser) EditSign() error {
 	return nil
 }
 
+// EditSignRollback rollbacks EditSign transaction
 func (p *Parser) EditSignRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditContractRollbackFront() error {
-	return nil
-}*/

@@ -21,6 +21,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// RestoreAccessRequestInit initializes RestoreAccessRequest transaction
 func (p *Parser) RestoreAccessRequestInit() error {
 
 	fields := []map[string]string{{"sign": "bytes"}}
@@ -31,6 +32,7 @@ func (p *Parser) RestoreAccessRequestInit() error {
 	return nil
 }
 
+// RestoreAccessRequestFront checks conditions of RestoreAccessRequest transaction
 func (p *Parser) RestoreAccessRequestFront() error {
 	err := p.generalCheck(`system_restore_access_request`)
 	if err != nil {
@@ -62,6 +64,7 @@ func (p *Parser) RestoreAccessRequestFront() error {
 	return nil
 }
 
+// RestoreAccessRequest proceeds RestoreAccessRequest transaction
 func (p *Parser) RestoreAccessRequest() error {
 	_, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.TxCitizenID}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
@@ -70,6 +73,7 @@ func (p *Parser) RestoreAccessRequest() error {
 	return nil
 }
 
+// RestoreAccessRequestRollback rollbacks RestoreAccessRequest transaction
 func (p *Parser) RestoreAccessRequestRollback() error {
 	return p.autoRollback()
 }

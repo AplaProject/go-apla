@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewAccountInit initializes NewAccount transaction
 func (p *Parser) NewAccountInit() error {
 
 	fields := []map[string]string{{"pub": "bytes"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) NewAccountInit() error {
 	return nil
 }
 
+// NewAccountFront checks conditions of NewAccount transaction
 func (p *Parser) NewAccountFront() error {
 	p.PublicKeys = append(p.PublicKeys, p.TxMaps.Bytes["pub"])
 	forSign := fmt.Sprintf("%s,%s,%d,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID,
@@ -48,6 +50,7 @@ func (p *Parser) NewAccountFront() error {
 	return nil
 }
 
+// NewAccount proceeds NewAccount transaction
 func (p *Parser) NewAccount() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.TxMaps.Bytes["pub"])},
@@ -63,6 +66,7 @@ func (p *Parser) NewAccount() error {
 	return nil
 }
 
+// NewAccountRollback rollbacks NewAccount transaction
 func (p *Parser) NewAccountRollback() error {
 	return p.autoRollback()
 }

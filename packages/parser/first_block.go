@@ -24,6 +24,7 @@ import (
 	//	b58 "github.com/jbenet/go-base58"
 )
 
+// FirstBlockInit initializes FirstBlock transaction
 func (p *Parser) FirstBlockInit() error {
 	/*	err := p.GetTxMaps([]map[string]string{{"public_key": "bytes"}, {"node_public_key": "bytes"}, {"host": "string"}})
 		if err != nil {
@@ -34,10 +35,12 @@ func (p *Parser) FirstBlockInit() error {
 	return nil
 }
 
+// FirstBlockFront checks conditions of FirstBlock transaction
 func (p *Parser) FirstBlockFront() error {
 	return nil
 }
 
+// FirstBlock proceeds FirstBlock transaction
 func (p *Parser) FirstBlock() error {
 
 	data := p.TxPtr.(*consts.FirstBlock)
@@ -59,6 +62,7 @@ func (p *Parser) FirstBlock() error {
 	return nil
 }
 
+// FirstBlockRollback rollbacks FirstBlock transaction
 func (p *Parser) FirstBlockRollback() error {
 	return nil
 }

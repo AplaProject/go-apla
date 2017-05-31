@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditMenuInit initializes EditMenu transaction
 func (p *Parser) EditMenuInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) EditMenuInit() error {
 	return nil
 }
 
+// EditMenuFront checks conditions of EditMenu transaction
 func (p *Parser) EditMenuFront() error {
 
 	err := p.generalCheck(`edit_menu`)
@@ -76,6 +78,7 @@ func (p *Parser) EditMenuFront() error {
 	return nil
 }
 
+// EditMenu proceeds EditMenu transaction
 func (p *Parser) EditMenu() error {
 
 	prefix := p.TxStateIDStr
@@ -90,10 +93,7 @@ func (p *Parser) EditMenu() error {
 	return nil
 }
 
+// EditMenuRollback rollbacks EditMenu transaction
 func (p *Parser) EditMenuRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditMenuRollbackFront() error {
-	return nil
-}*/
