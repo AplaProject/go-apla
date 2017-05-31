@@ -22,14 +22,15 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// TxParser writes transactions into the queue
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 	var err error
 	var fatalError string
 	hashHex := utils.BinToHex(hash)
-	txType, walletId, citizenId := utils.GetTxTypeAndUserID(binaryTx)
-	if walletId == 0 && citizenId == 0 {
-		fatalError = "undefined walletId and citizenId"
+	txType, walletID, citizenID := utils.GetTxTypeAndUserID(binaryTx)
+	if walletID == 0 && citizenID == 0 {
+		fatalError = "undefined walletID and citizenID"
 	} else {
 		p.BinaryData = binaryTx
 		err = p.ParseDataGate(false)
@@ -80,11 +81,11 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		}
 		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
-		log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
+		log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hashHex, utils.BinToHex(binaryTx), 0, txType, walletID, citizenID, 0, counter)
 		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 		// вставляем с verified=1
 		// put with verified=1
-		err = p.ExecSQL(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), 0, txType, walletId, citizenId, 0, counter)
+		err = p.ExecSQL(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), 0, txType, walletID, citizenID, 0, counter)
 		if err != nil {
 			utils.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)
@@ -102,6 +103,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	return nil
 }
 
+// DeleteQueueTx deletes a transaction from the queue
 func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 
 	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", hashHex)
@@ -121,6 +123,7 @@ func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 	return nil
 }
 
+// AllTxParser parses new transactions
 func (p *Parser) AllTxParser() error {
 
 	// берем тр-ии

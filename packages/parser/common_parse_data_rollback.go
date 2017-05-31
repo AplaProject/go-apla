@@ -106,10 +106,12 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 }
 */
 
-/**
- * Откат БД по блокам
-// rollback of DB
+/* 
+Откат БД по блокам
+rollback of DB
 */
+
+// ParseDataRollback rollbacks blocks
 func (p *Parser) ParseDataRollback() error {
 
 	p.dataPre()

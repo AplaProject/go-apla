@@ -17,10 +17,10 @@
 package parser
 
 import (
-	//"github.com/EGaaS/go-egaas-mvp/packages/utils"
+//"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-
+// RollbackTransactions is reserved
 func (p *Parser) RollbackTransactions() error {
 
 	/*err := p.ExecSQL("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
@@ -69,4 +69,3 @@ func (p *Parser) RollbackTransactions() error {
 	}*/
 	return nil
 }
-

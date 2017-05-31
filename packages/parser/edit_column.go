@@ -26,6 +26,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditColumnInit initializes EditColumn transaction
 func (p *Parser) EditColumnInit() error {
 
 	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"sign": "bytes"}}
@@ -36,6 +37,7 @@ func (p *Parser) EditColumnInit() error {
 	return nil
 }
 
+// EditColumnFront checks conditions of EditColumn transaction
 func (p *Parser) EditColumnFront() error {
 	err := p.generalCheck(`edit_column`)
 	if err != nil {
@@ -76,6 +78,7 @@ func (p *Parser) EditColumnFront() error {
 	return nil
 }
 
+// EditColumn proceeds EditColumn transaction
 func (p *Parser) EditColumn() error {
 
 	table := p.TxStateIDStr + `_tables`
@@ -102,12 +105,12 @@ func (p *Parser) EditColumn() error {
 	if err != nil {
 		return err
 	}
-	rbId, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
 	if err != nil {
 		return err
 	}
 	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`,
-		`"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbId, p.TxMaps.String["table_name"])
+		`"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbID, p.TxMaps.String["table_name"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -120,6 +123,7 @@ func (p *Parser) EditColumn() error {
 	return nil
 }
 
+// EditColumnRollback rollbacks EditColumn transaction
 func (p *Parser) EditColumnRollback() error {
 	err := p.autoRollback()
 	if err != nil {

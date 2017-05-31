@@ -23,6 +23,7 @@ import (
 	"strings"
 )
 
+// AppendPageInit initialize AppendPage transaction
 func (p *Parser) AppendPageInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) AppendPageInit() error {
 	return nil
 }
 
+// AppendPageFront checks conditions of AppendPage transaction
 func (p *Parser) AppendPageFront() error {
 
 	err := p.generalCheck(`edit_page`)
@@ -69,6 +71,7 @@ func (p *Parser) AppendPageFront() error {
 	return nil
 }
 
+// AppendPage proceeds AppendPage transaction
 func (p *Parser) AppendPage() error {
 
 	prefix := p.TxStateIDStr
@@ -89,6 +92,7 @@ func (p *Parser) AppendPage() error {
 	return nil
 }
 
+// AppendPageRollback rollbacks AppendPage transaction
 func (p *Parser) AppendPageRollback() error {
 	return p.autoRollback()
 }

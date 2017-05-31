@@ -21,6 +21,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// ChangeNodeKeyInit initializes ChangeNodeKey transaction
 func (p *Parser) ChangeNodeKeyInit() error {
 
 	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) ChangeNodeKeyInit() error {
 	return nil
 }
 
+// ChangeNodeKeyFront checks conditions of ChangeNodeKey transaction
 func (p *Parser) ChangeNodeKeyFront() error {
 
 	/*err := p.generalCheck()
@@ -70,6 +72,7 @@ func (p *Parser) ChangeNodeKeyFront() error {
 	return nil
 }
 
+// ChangeNodeKey proceeds ChangeNodeKey transaction
 func (p *Parser) ChangeNodeKey() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
@@ -90,6 +93,7 @@ func (p *Parser) ChangeNodeKey() error {
 	return nil
 }
 
+// ChangeNodeKeyRollback rollbacks ChangeNodeKey transaction
 func (p *Parser) ChangeNodeKeyRollback() error {
 	return p.autoRollback()
 }

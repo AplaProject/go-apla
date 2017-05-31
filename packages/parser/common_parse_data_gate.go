@@ -25,10 +25,12 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/**
+/*
 Обработка данных (блоков или транзакций), пришедших с гейта. Только проверка.
 Data processing (blocks or transactions) gotten from a gate. Just checking.
 */
+
+// ParseDataGate checks conditions of transactions from the gate
 func (p *Parser) ParseDataGate(onlyTx bool) error {
 
 	var err error
@@ -105,17 +107,17 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		}
 	} else {
 		log.Debug("MethodName", MethodName+"Init")
-		err_ := utils.CallMethod(p, MethodName+"Init")
-		if _, ok := err_.(error); ok {
-			log.Error("%v", utils.ErrInfo(err_.(error)))
-			return utils.ErrInfo(err_.(error))
+		verr := utils.CallMethod(p, MethodName+"Init")
+		if _, ok := verr.(error); ok {
+			log.Error("%v", utils.ErrInfo(verr.(error)))
+			return utils.ErrInfo(verr.(error))
 		}
 
 		log.Debug("MethodName", MethodName+"Front")
-		err_ = utils.CallMethod(p, MethodName+"Front")
-		if _, ok := err_.(error); ok {
-			log.Error("%v", utils.ErrInfo(err_.(error)))
-			return utils.ErrInfo(err_.(error))
+		verr = utils.CallMethod(p, MethodName+"Front")
+		if _, ok := verr.(error); ok {
+			log.Error("%v", utils.ErrInfo(verr.(error)))
+			return utils.ErrInfo(verr.(error))
 		}
 	}
 	return nil

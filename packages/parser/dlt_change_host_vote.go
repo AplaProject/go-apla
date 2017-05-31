@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// DLTChangeHostVoteInit initializes DLTChangeHostVote transaction
 func (p *Parser) DLTChangeHostVoteInit() error {
 
 	fields := []map[string]string{{"host": "string"}, {"addressVote": "string"}, {"fuelRate": "int64"}, {"public_key": "bytes"}, {"sign": "bytes"}}
@@ -37,6 +38,7 @@ func (p *Parser) DLTChangeHostVoteInit() error {
 	return nil
 }
 
+// DLTChangeHostVoteFront checks conditions of DLTChangeHostVote transaction
 func (p *Parser) DLTChangeHostVoteFront() error {
 
 	err := p.generalCheck(`change_host_vote`)
@@ -86,6 +88,7 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 	return nil
 }
 
+// DLTChangeHostVote proceeds DLTChangeHostVote transaction
 func (p *Parser) DLTChangeHostVote() error {
 	var err error
 
@@ -108,6 +111,7 @@ func (p *Parser) DLTChangeHostVote() error {
 	return nil
 }
 
+// DLTChangeHostVoteRollback rollbacks DLTChangeHostVote transaction
 func (p *Parser) DLTChangeHostVoteRollback() error {
 	return p.autoRollback()
 }

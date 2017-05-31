@@ -24,6 +24,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// ActivateContractInit initialize ActivateContract transaction
 func (p *Parser) ActivateContractInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"sign": "bytes"}}
@@ -34,6 +35,7 @@ func (p *Parser) ActivateContractInit() error {
 	return nil
 }
 
+// ActivateContractFront checks conditions of ActivateContract transaction
 func (p *Parser) ActivateContractFront() error {
 	err := p.generalCheck(`activate_contract`)
 	if err != nil {
@@ -82,6 +84,7 @@ func (p *Parser) ActivateContractFront() error {
 	return nil
 }
 
+// ActivateContract is a main function of ActivateContract transaction
 func (p *Parser) ActivateContract() error {
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {
@@ -108,6 +111,7 @@ func (p *Parser) ActivateContract() error {
 	return nil
 }
 
+// ActivateContractRollback rollbacks ActivateContract transaction
 func (p *Parser) ActivateContractRollback() error {
 	return p.autoRollback()
 }
