@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditContractInit initializes EditContract transaction
 func (p *Parser) EditContractInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) EditContractInit() error {
 	return nil
 }
 
+// EditContractFront checks conditions of EditContract transaction
 func (p *Parser) EditContractFront() error {
 
 	err := p.generalCheck(`edit_contract`)
@@ -88,6 +90,7 @@ func (p *Parser) EditContractFront() error {
 	return nil
 }
 
+// EditContract proceeds EditContract transaction
 func (p *Parser) EditContract() error {
 
 	prefix := `global`
@@ -119,10 +122,7 @@ func (p *Parser) EditContract() error {
 	return nil
 }
 
+// EditContractRollback rollbacks EditContract transaction
 func (p *Parser) EditContractRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditContractRollbackFront() error {
-	return nil
-}*/

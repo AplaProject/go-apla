@@ -65,7 +65,7 @@ type Parser struct {
 	blockHashHex     []byte
 	dataType         int
 	blockHex         []byte
-	CurrentBlockId   int64
+	CurrentBlockID   int64
 	fullTxBinaryData []byte
 	TxHash           string
 	TxSlice          [][]byte
@@ -92,34 +92,37 @@ type Parser struct {
 	States     map[int64]string
 }
 
+// ClearTmp deletes temporary files
 func ClearTmp(blocks map[int64]string) {
 	for _, tmpFileName := range blocks {
 		os.Remove(tmpFileName)
 	}
 }
 
+// GetBlockInfo returns BlockData structure
 func (p *Parser) GetBlockInfo() *utils.BlockData {
 	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletId: p.BlockData.WalletId, StateID: p.BlockData.StateID, BlockId: p.BlockData.BlockId}
 }
 
-func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interface{}) error {
+/*
+func (p *Parser) limitRequest(vimit interface{}, txType string, vperiod interface{}) error {
 
 	var limit int
-	switch limit_.(type) {
+	switch vimit.(type) {
 	case string:
-		limit = utils.StrToInt(limit_.(string))
+		limit = utils.StrToInt(vimit.(string))
 	case int:
-		limit = limit_.(int)
+		limit = vimit.(int)
 	case int64:
-		limit = int(limit_.(int64))
+		limit = int(vimit.(int64))
 	}
 
 	var period int
-	switch period_.(type) {
+	switch vperiod.(type) {
 	case string:
-		period = utils.StrToInt(period_.(string))
+		period = utils.StrToInt(vperiod.(string))
 	case int:
-		period = period_.(int)
+		period = vperiod.(int)
 	}
 
 	time := utils.BytesToInt(p.TxMap["time"])
@@ -136,7 +139,7 @@ func (p *Parser) limitRequest(limit_ interface{}, txType string, period_ interfa
 		}
 	}
 	return nil
-}
+}*/
 
 func (p *Parser) dataPre() {
 	p.blockHashHex = utils.DSha256(p.BinaryData)
@@ -147,51 +150,53 @@ func (p *Parser) dataPre() {
 	log.Debug("dataType", p.dataType)
 }
 
+// CheckLogTx checks if this transaction exists
 // Это защита от dos, когда одну транзакцию можно было бы послать миллион раз,
 // This is protection against dos, when one transaction could be sent a million times
 // и она каждый раз успешно проходила бы фронтальную проверку
 // And it would have successfully passed a frontal test
-func (p *Parser) CheckLogTx(tx_binary []byte, transactions, queue_tx bool) error {
-	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, utils.Md5(tx_binary)).String()
-	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", utils.Md5(tx_binary))
+func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
+	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, utils.Md5(txBinary)).String()
+	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", utils.Md5(txBinary))
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
 	log.Debug("hash %x", hash)
 	if len(hash) > 0 {
-		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %s", utils.Md5(tx_binary)))
+		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %s", utils.Md5(txBinary)))
 	}
 
 	if transactions {
 		// проверим, нет ли у нас такой тр-ии
 		// check whether we have such a transaction
-		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ? and verified = 1", utils.Md5(tx_binary)).Int64()
+		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ? and verified = 1", utils.Md5(txBinary)).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx in transactions %s", utils.Md5(tx_binary)))
+			return utils.ErrInfo(fmt.Errorf("double tx in transactions %s", utils.Md5(txBinary)))
 		}
 	}
 
-	if queue_tx {
+	if txQueue {
 		// проверим, нет ли у нас такой тр-ии
 		// check whether we have such a transaction
-		exists, err := p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", utils.Md5(tx_binary)).Int64()
+		exists, err := p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", utils.Md5(txBinary)).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %s", utils.Md5(tx_binary)))
+			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %s", utils.Md5(txBinary)))
 		}
 	}
 
 	return nil
 }
 
+// GetInfoBlock returns the latest block
 func (p *Parser) GetInfoBlock() error {
 
 	// последний успешно записанный блок
@@ -211,6 +216,7 @@ func (p *Parser) GetInfoBlock() error {
 	return nil
 }
 
+// InsertIntoBlockchain inserts a block into the blockchain
 func (p *Parser) InsertIntoBlockchain() error {
 	//var mutex = &sync.Mutex{}
 	// для локальных тестов
@@ -239,7 +245,7 @@ func (p *Parser) InsertIntoBlockchain() error {
 
 // старое
 // the old
-func (p *Parser) GetTxMap(fields []string) (map[string][]byte, error) {
+/*func (p *Parser) GetTxMap(fields []string) (map[string][]byte, error) {
 	if len(p.TxSlice) != len(fields)+4 {
 		return nil, fmt.Errorf("bad transaction_array %d != %d (type=%d)", len(p.TxSlice), len(fields)+4, p.TxSlice[0])
 	}
@@ -258,8 +264,9 @@ func (p *Parser) GetTxMap(fields []string) (map[string][]byte, error) {
 	//log.Debug("TxMap[hash]", TxMap["hash"])
 	//log.Debug("p.TxSlice[0]", p.TxSlice[0])
 	return TxMap, nil
-}
+}*/
 
+// CheckInputData checks the each item of data
 func (p *Parser) CheckInputData(data map[string]string) error {
 
 	for k, v := range data {
@@ -271,6 +278,7 @@ func (p *Parser) CheckInputData(data map[string]string) error {
 	return nil
 }
 
+/*
 func (p *Parser) limitRequestsRollback(txType string) error {
 	time := p.TxMap["time"]
 	if p.ConfigIni["db_type"] == "mysql" {
@@ -290,8 +298,9 @@ func arrayIntersect(arr1, arr2 map[int]int) bool {
 		}
 	}
 	return false
-}
+}*/
 
+// FormatBlockData returns formated block data
 func (p *Parser) FormatBlockData() string {
 	result := ""
 	if p.BlockData != nil {
@@ -315,6 +324,7 @@ func (p *Parser) FormatBlockData() string {
 	return result
 }
 
+// FormatTxMap returns the formated TxMap
 func (p *Parser) FormatTxMap() string {
 	result := ""
 	for k, v := range p.TxMap {
@@ -328,17 +338,19 @@ func (p *Parser) FormatTxMap() string {
 	return result
 }
 
-func (p *Parser) ErrInfo(err_ interface{}) error {
+// ErrInfo returns the more detailed error
+func (p *Parser) ErrInfo(verr interface{}) error {
 	var err error
-	switch err_.(type) {
+	switch verr.(type) {
 	case error:
-		err = err_.(error)
+		err = verr.(error)
 	case string:
-		err = fmt.Errorf(err_.(string))
+		err = fmt.Errorf(verr.(string))
 	}
 	return fmt.Errorf("[ERROR] %s (%s)\n%s\n%s", err, utils.Caller(1), p.FormatBlockData(), p.FormatTxMap())
 }
 
+/*
 func (p *Parser) limitRequestsMoneyOrdersRollback() error {
 	err := p.ExecSQL("DELETE FROM rb_time_money_orders WHERE hex(tx_hash) = ?", p.TxHash)
 	if err != nil {
@@ -351,7 +363,7 @@ func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (
 	return consts.COMMISSION, nil
 
 }
-
+*/
 func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	wallet := p.TxWalletID
 	if wallet == 0 {
@@ -373,6 +385,7 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	return nil
 }
 
+/*
 func (p *Parser) MyTable(table, id_column string, id int64, ret_column string) (int64, error) {
 	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string") {
 		return 0, fmt.Errorf("!string")
@@ -390,7 +403,9 @@ func (p *Parser) MyTableChecking(table, id_column string, id int64, ret_column s
 	}
 	return false, nil
 }
+*/
 
+// CheckTableExists checks if the table exists
 func (p *Parser) CheckTableExists(table string) (bool, error) {
 	var q string
 	switch p.ConfigIni["db_type"] {
@@ -412,6 +427,7 @@ func (p *Parser) CheckTableExists(table string) (bool, error) {
 	return false, nil
 }
 
+// BlockError writes the error of the transaction in the transactions_status table
 func (p *Parser) BlockError(err error) {
 	if len(p.TxHash) == 0 {
 		return
@@ -425,6 +441,7 @@ func (p *Parser) BlockError(err error) {
 	p.ExecSQL("UPDATE transactions_status SET error = ? WHERE hex(hash) = ?", errText, p.TxHash)
 }
 
+// AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	param := `value`
 	if iscondition {
@@ -449,6 +466,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	return nil
 }
 
+// AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
 
 	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
@@ -485,6 +503,7 @@ func (p *Parser) AccessTable(table, action string) error {
 	return nil
 }
 
+// AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
 
 	//prefix := utils.Int64ToStr(int64(p.TxStateID))
@@ -518,6 +537,7 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	return nil
 }
 
+// AccessChange checks rights of changing the table
 func (p *Parser) AccessChange(table, name string) error {
 	/*	if p.TxStateID == 0 {
 		return nil
@@ -573,6 +593,7 @@ func (p *Parser) checkPrice(name string) error {
 	return nil
 }
 
+// GetContractLimit returns the default maximal cost of contract
 func (p *Parser) GetContractLimit() (ret int64) {
 	//	fuel := p.GetFuel()
 	/*	if p.TxStateID > 0 && p.TxCitizenID > 0 {
@@ -639,38 +660,38 @@ func (p *Parser) GetContractLimit() (ret int64) {
 
 func (p *Parser) payFPrice() error {
 	var (
-		fromId int64
+		fromID int64
 		err    error
 	)
 	//return nil
-	toId := p.BlockData.WalletId // account of node
+	toID := p.BlockData.WalletId // account of node
 	fuel := p.GetFuel()
 	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
 
 	if p.TxCost == 0 { // embedded transaction
-		fromId = p.TxWalletID
-		if fromId == 0 {
-			fromId = p.TxCitizenID
+		fromID = p.TxWalletID
+		if fromID == 0 {
+			fromID = p.TxCitizenID
 		}
 	} else { // contract
 		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
-			//fromId = p.TxContract.TxGovAccount
-			fromId = utils.StrToInt64(StateVal(p, `gov_account`))
+			//fromID = p.TxContract.TxGovAccount
+			fromID = utils.StrToInt64(StateVal(p, `gov_account`))
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			// write directly from dlt_wallets of user
-			fromId = p.TxWalletID
+			fromID = p.TxWalletID
 		}
 	}
 	egs := p.TxUsedCost.Mul(fuel)
-	fmt.Printf("Pay fuel=%v fromId=%d toId=%d cost=%v egs=%v", fuel, fromId, toId, p.TxUsedCost, egs)
+	fmt.Printf("Pay fuel=%v fromID=%d toID=%d cost=%v egs=%v", fuel, fromID, toID, p.TxUsedCost, egs)
 	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
 		return nil
 	}
 	var amount string
-	if amount, err = p.Single(`select amount from dlt_wallets where wallet_id=?`, fromId).String(); err != nil {
+	if amount, err = p.Single(`select amount from dlt_wallets where wallet_id=?`, fromID).String(); err != nil {
 		return err
 	}
 	damount, err := decimal.NewFromString(amount)
@@ -686,16 +707,16 @@ func (p *Parser) payFPrice() error {
 		update dlt_wallets set amount = amount - least(amount, '%d') where wallet_id='%d';
 		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
 		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
-		commit;`, egs, fromId, egs-commission, toId, commission, consts.COMMISSION_WALLET)
+		commit;`, egs, fromID, egs-commission, toID, commission, consts.COMMISSION_WALLET)
 		if err := p.ExecSQL(query); err != nil {
 			return err
 		}*/
 	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(fromId)}, true); err != nil {
+		[]string{utils.Int64ToStr(fromID)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(toId)}, true); err != nil {
+		[]string{utils.Int64ToStr(toID)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},

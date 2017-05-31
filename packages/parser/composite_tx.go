@@ -16,6 +16,7 @@
 
 package parser
 
+/*
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -62,8 +63,8 @@ func (p *Parser) CompositeTxFront() error {
 	return nil
 }
 
-func (p *Parser) CompositeTx() error {
-	/*
+func (p *Parser) CompositeTx() error {*/
+/*
 	   	retirees := getDataFromDB(ea_retirees)
 	   for data := range retirees {
 	     // пока что запрещаем всё, кроме:
@@ -83,15 +84,15 @@ func (p *Parser) CompositeTx() error {
 	     // условные операторы - надо понять, можно ли при помощи них сделать так, чтобы роллбек что-то не учел.
 // conditional operators - it is necessary to understand whether it is possible with the help of them the to make rollback not taking into account something.
 	   }
-	*/
-	return nil
+*/
+/*	return nil
 }
 
 func (p *Parser) CompositeTxRollback() error {
 
 	return nil
 }
-
+*/
 /*func (p *Parser) CompositeTxRollbackFront() error {
 
 	return nil

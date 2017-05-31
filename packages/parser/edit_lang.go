@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditLangInit initializes EditLang transaction
 func (p *Parser) EditLangInit() error {
 
 	fields := []map[string]string{ /*{"global": "int64"},*/ {"name": "string"}, {"res": "string"}, {"sign": "bytes"}}
@@ -32,6 +33,7 @@ func (p *Parser) EditLangInit() error {
 	return nil
 }
 
+// EditLangFront checks conditions of EditLang transaction
 func (p *Parser) EditLangFront() error {
 
 	err := p.generalCheck(`edit_lang`)
@@ -61,6 +63,7 @@ func (p *Parser) EditLangFront() error {
 	return nil
 }
 
+// EditLang proceeds EditLang transaction
 func (p *Parser) EditLang() error {
 
 	/*	prefix := `global`
@@ -77,6 +80,7 @@ func (p *Parser) EditLang() error {
 	return nil
 }
 
+// EditLangRollback rollbacks EditLang transaction
 func (p *Parser) EditLangRollback() error {
 	return p.autoRollback()
 }

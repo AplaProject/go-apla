@@ -24,6 +24,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// DLTTransferInit initializes DLTTransfer transaction
 func (p *Parser) DLTTransferInit() error {
 
 	fields := []map[string]string{{"walletAddress": "string"}, {"amount": "decimal"}, {"commission": "decimal"}, {"comment": "bytes"}, {"public_key": "bytes"}, {"sign": "bytes"}}
@@ -37,6 +38,7 @@ func (p *Parser) DLTTransferInit() error {
 	return nil
 }
 
+// DLTTransferFront checks conditions DLTTransfer transaction
 func (p *Parser) DLTTransferFront() error {
 	err := p.generalCheck(`dlt_transfer`)
 	if err != nil {
@@ -50,11 +52,11 @@ func (p *Parser) DLTTransferFront() error {
 	}
 
 	// public key need only when we don't have public_key in the dlt_wallets table
-	public_key_0, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
+	PublicKey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(public_key_0) == 0 {
+	if len(PublicKey) == 0 {
 		bkey, err := hex.DecodeString(string(p.TxMaps.Bytes["public_key"]))
 		if err != nil {
 			return p.ErrInfo(err)
@@ -121,15 +123,16 @@ func (p *Parser) DLTTransferFront() error {
 	return nil
 }
 
+// DLTTransfer proceeds DLTTransfer transaction
 func (p *Parser) DLTTransfer() error {
 	log.Debug("wallet address %s", p.TxMaps.String["walletAddress"])
 	address := lib.StringToAddress(p.TxMaps.String["walletAddress"])
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE wallet_id = ?`, address).Int64()
+	walletID, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE wallet_id = ?`, address).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	log.Debug("walletId %d", walletId)
-	//if walletId > 0 {
+	log.Debug("walletID %d", walletID)
+	//if walletID > 0 {
 	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -153,15 +156,15 @@ func (p *Parser) DLTTransfer() error {
 		return p.ErrInfo(err)
 	}
 
-	if walletId == 0 {
-		log.Debug("walletId == 0")
+	if walletID == 0 {
+		log.Debug("walletID == 0")
 		log.Debug("%s", string(p.TxMaps.String["walletAddress"]))
-		walletId = lib.StringToAddress(p.TxMaps.String["walletAddress"])
+		walletID = lib.StringToAddress(p.TxMaps.String["walletAddress"])
 		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets",
-			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletID)}, true)
 	} else {
 		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets",
-			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)
@@ -175,22 +178,22 @@ func (p *Parser) DLTTransfer() error {
 
 	// пишем в общую историю тр-ий
 	// record into the general transaction history
-	dlt_transactions_id, err := p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, walletId, lib.AddressToString(int64(utils.StrToUint64(p.TxMaps.String["walletAddress"]))), p.TxMaps.Decimal["amount"].String(), p.TxMaps.Decimal["commission"].String(), p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+	dltTransactionsID, err := p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
+		p.TxWalletID, walletID, lib.AddressToString(int64(utils.StrToUint64(p.TxMaps.String["walletAddress"]))), p.TxMaps.Decimal["amount"].String(), p.TxMaps.Decimal["commission"].String(), p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "dlt_transactions", dlt_transactions_id)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "dlt_transactions", dltTransactionsID)
 	if err != nil {
 		return err
 	}
 
-	dlt_transactions_id, err = p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
+	dltTransactionsID, err = p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
 		p.TxWalletID, p.BlockData.WalletId, lib.AddressToString(p.BlockData.WalletId), p.TxMaps.Decimal["commission"].String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "dlt_transactions", dlt_transactions_id)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "dlt_transactions", dltTransactionsID)
 	if err != nil {
 		return err
 	}
@@ -198,6 +201,7 @@ func (p *Parser) DLTTransfer() error {
 	return nil
 }
 
+// DLTTransferRollback rollbacks DLTTransfer transaction
 func (p *Parser) DLTTransferRollback() error {
 	return p.autoRollback()
 }
