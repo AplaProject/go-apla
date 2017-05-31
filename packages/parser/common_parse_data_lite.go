@@ -16,6 +16,7 @@
 
 package parser
 
+/*
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -67,3 +68,4 @@ func (p *Parser) ParseDataLite() error {
 
 	return nil
 }
+*/

@@ -21,38 +21,39 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// UpdBlockInfo updates info_block table
 func (p *Parser) UpdBlockInfo() {
 
-	blockId := p.BlockData.BlockId
+	blockID := p.BlockData.BlockId
 	// для локальных тестов
 	// for the local tests
 	if p.BlockData.BlockId == 1 {
 		if *utils.StartBlockID != 0 {
-			blockId = *utils.StartBlockID
+			blockID = *utils.StartBlockID
 		}
 	}
-	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockId, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.StateID)
+	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.StateID)
 	log.Debug("forSha", forSha)
 	p.BlockData.Hash = utils.DSha256(forSha)
 	log.Debug("%v", p.BlockData.Hash)
-	log.Debug("%v", blockId)
+	log.Debug("%v", blockID)
 	log.Debug("%v", p.BlockData.Time)
 	log.Debug("%v", p.CurrentVersion)
 
 	if p.BlockData.BlockId == 1 {
 		err := p.ExecSQL("INSERT INTO info_block (hash, block_id, time, state_id, wallet_id, current_version) VALUES ([hex], ?, ?, ?, ?, ?)",
-			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId, p.CurrentVersion)
-		if err!=nil {
+			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId, p.CurrentVersion)
+		if err != nil {
 			log.Error("%v", err)
 		}
 	} else {
 		err := p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, state_id = ?, wallet_id = ?, sent = 0",
-			p.BlockData.Hash, blockId, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId)
-		if err!=nil {
+			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId)
+		if err != nil {
 			log.Error("%v", err)
 		}
-		err = p.ExecSQL("UPDATE config SET my_block_id = ? WHERE my_block_id < ?", blockId, blockId)
-		if err!=nil {
+		err = p.ExecSQL("UPDATE config SET my_block_id = ? WHERE my_block_id < ?", blockID, blockID)
+		if err != nil {
 			log.Error("%v", err)
 		}
 	}

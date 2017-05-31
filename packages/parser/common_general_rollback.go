@@ -16,10 +16,12 @@
 
 package parser
 
+/*
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
+
 
 func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere string, AI bool) error {
 	var UserID int64
@@ -99,3 +101,4 @@ func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere
 	}
 	return nil
 }
+*/

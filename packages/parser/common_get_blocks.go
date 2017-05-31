@@ -30,7 +30,9 @@ import (
 /*
  * $get_block_script_name, $add_node_host используется только при работе в защищенном режиме и только из blocks_collection.php
  * */
-// * $get_block_script_name, $add_node_host is used only when working in protected mode and only from blocks_collection.php
+
+// GetOldBlocks gets previous blocks
+// $get_block_script_name, $add_node_host is used only when working in protected mode and only from blocks_collection.php
 func (p *Parser) GetOldBlocks(walletID, StateID, blockID int64, host string, goroutineName string, dataTypeBlockBody int64) error {
 	log.Debug("walletId", walletID, "StateID", StateID, "blockID", blockID)
 	err := p.GetBlocks(blockID, host, "rollback_blocks_2", goroutineName, dataTypeBlockBody)
@@ -41,6 +43,7 @@ func (p *Parser) GetOldBlocks(walletID, StateID, blockID int64, host string, gor
 	return nil
 }
 
+// GetBlocks gets blocks
 func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutineName string, dataTypeBlockBody int64) error {
 
 	log.Debug("blockID", blockID)
@@ -409,9 +412,9 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 
 	// проходимся по новым блокам
 	// go through new blocks
-	blocksSorted_ := utils.SortMap(blocks)
-	log.Debug("blocksSorted_", blocksSorted_)
-	for _, data := range blocksSorted_ {
+	bSorted := utils.SortMap(blocks)
+	log.Debug("blocksSorted_", bSorted)
+	for _, data := range bSorted {
 		for blockID, tmpFileName := range data {
 
 			block, err := ioutil.ReadFile(tmpFileName)

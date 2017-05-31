@@ -21,6 +21,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// AppendMenuInit initializes AppendMenu transaction
 func (p *Parser) AppendMenuInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
@@ -31,6 +32,7 @@ func (p *Parser) AppendMenuInit() error {
 	return nil
 }
 
+// AppendMenuFront checks conditions of AppendMenu transaction
 func (p *Parser) AppendMenuFront() error {
 
 	err := p.generalCheck(`edit_menu`)
@@ -67,6 +69,7 @@ func (p *Parser) AppendMenuFront() error {
 	return nil
 }
 
+// AppendMenu proceeds AppendMenu transaction
 func (p *Parser) AppendMenu() error {
 
 	prefix := p.TxStateIDStr
@@ -87,6 +90,7 @@ func (p *Parser) AppendMenu() error {
 	return nil
 }
 
+// AppendMenuRollback rollbacks AppendMenu transaction
 func (p *Parser) AppendMenuRollback() error {
 	return p.autoRollback()
 }

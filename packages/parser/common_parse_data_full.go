@@ -25,9 +25,11 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-/**
+/*
 фронт. проверка + занесение данных из блока в таблицы и info_block
 */
+
+// ParseDataFull checks the condiitions and proceeds of transactions
 // frontal check + adding the data from the block to a table and info_block
 func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
@@ -145,7 +147,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 
 				// считаем по каждому юзеру, сколько в блоке от него транзакций
-				// count for each user how many transactions from him are in the block 
+				// count for each user how many transactions from him are in the block
 				txCounter[userID]++
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями

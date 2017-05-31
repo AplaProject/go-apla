@@ -31,6 +31,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// ParseTransaction parses a transaction
 func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, error) {
 
 	var returnSlice [][]byte

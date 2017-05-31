@@ -20,6 +20,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// ParseInit is reserved
 func (p *Parser) ParseInit() error {
 	/*if p.States == nil {
 		p.States = make(map[int64]string)
@@ -34,6 +35,7 @@ func (p *Parser) ParseInit() error {
 	return nil
 }
 
+// ParseBlock starts to parse a block
 func (p *Parser) ParseBlock() error {
 	/*
 		Заголовок // Heading

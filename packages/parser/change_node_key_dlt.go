@@ -21,6 +21,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// ChangeNodeKeyDLTInit initializes ChangeNodeKeyDLT transaction
 func (p *Parser) ChangeNodeKeyDLTInit() error {
 
 	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) ChangeNodeKeyDLTInit() error {
 	return nil
 }
 
+// ChangeNodeKeyDLTFront check conditions of ChangeNodeKeyDLT transaction
 func (p *Parser) ChangeNodeKeyDLTFront() error {
 
 	err := p.generalCheck(`change_node`)
@@ -63,6 +65,7 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 	return nil
 }
 
+// ChangeNodeKeyDLT proceeds ChangeNodeKeyDLT transaction
 func (p *Parser) ChangeNodeKeyDLT() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
@@ -84,6 +87,7 @@ func (p *Parser) ChangeNodeKeyDLT() error {
 	return nil
 }
 
+// ChangeNodeKeyDLTRollback rollbacks ChangeNodeKeyDLT transaction
 func (p *Parser) ChangeNodeKeyDLTRollback() error {
 	return p.autoRollback()
 }

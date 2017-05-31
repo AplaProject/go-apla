@@ -22,7 +22,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) RollbackToBlockID(blockId int64) error {
+// RollbackToBlockID rollbacks blocks till blockID
+func (p *Parser) RollbackToBlockID(blockID int64) error {
 
 	/*err := p.ExecSQL("SET GLOBAL net_read_timeout = 86400")
 	if err != nil {
@@ -48,7 +49,7 @@ func (p *Parser) RollbackToBlockID(blockId int64) error {
 	// откатываем наши блоки
 	// roll back our blocks
 	for {
-		rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC LIMIT "+fmt.Sprintf(`%d`, limit)+` OFFSET 0`), blockId)
+		rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC LIMIT "+fmt.Sprintf(`%d`, limit)+` OFFSET 0`), blockID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -69,8 +70,8 @@ func (p *Parser) RollbackToBlockID(blockId int64) error {
 		}
 		fmt.Printf(`%s `, blocks[0]["id"])
 		for _, block := range blocks {
-			// Откатываем наши блоки до блока blockId
-			// roll back our blocks to the block blockId
+			// Откатываем наши блоки до блока blockID
+			// roll back our blocks to the block blockID
 			parser.BinaryData = block["data"]
 			err = parser.ParseDataRollback()
 			if err != nil {
@@ -85,21 +86,22 @@ func (p *Parser) RollbackToBlockID(blockId int64) error {
 		blocks = blocks[:0]
 	}
 	var hash, data []byte
-	err = p.QueryRow(p.FormatQuery("SELECT hash, data FROM block_chain WHERE id  =  ?"), blockId).Scan(&hash, &data)
+	err = p.QueryRow(p.FormatQuery("SELECT hash, data FROM block_chain WHERE id  =  ?"), blockID).Scan(&hash, &data)
 	if err != nil && err != sql.ErrNoRows {
 		return p.ErrInfo(err)
 	}
 	utils.BytesShift(&data, 1)
-	block_id := utils.BinToDecBytesShift(&data, 4)
+	iblock := utils.BinToDecBytesShift(&data, 4)
 	time := utils.BinToDecBytesShift(&data, 4)
 	size := utils.DecodeLength(&data)
-	walletId := utils.BinToDecBytesShift(&data, size)
+	walletID := utils.BinToDecBytesShift(&data, size)
 	StateID := utils.BinToDecBytesShift(&data, 1)
-	err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?", utils.BinToHex(hash), block_id, time, walletId, StateID)
+	err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?",
+		utils.BinToHex(hash), iblock, time, walletID, StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSQL("UPDATE config SET my_block_id = ?", block_id)
+	err = p.ExecSQL("UPDATE config SET my_block_id = ?", iblock)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -49,6 +49,8 @@ type txMapsType struct {
 	Money   map[string]float64
 	Decimal map[string]decimal.Decimal
 }
+
+// Parser is a structure for parsing transactions
 type Parser struct {
 	*utils.DCDB
 	TxMaps           *txMapsType
@@ -81,13 +83,13 @@ type Parser struct {
 	TxCost           int64           // Maximum cost of executing contract
 	TxUsedCost       decimal.Decimal // Used cost of CPU resources
 	nodePublicKey    []byte
-	newPublicKeysHex [3][]byte
-	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
-	TxData           map[string]interface{}
-	TxContract       *smart.Contract
-	TxVars           map[string]string
-	AllPkeys         map[string]string
-	States           map[int64]string
+	//	newPublicKeysHex [3][]byte
+	TxPtr      interface{} // Pointer to the corresponding struct in consts/struct.go
+	TxData     map[string]interface{}
+	TxContract *smart.Contract
+	TxVars     map[string]string
+	AllPkeys   map[string]string
+	States     map[int64]string
 }
 
 func ClearTmp(blocks map[int64]string) {
@@ -275,10 +277,8 @@ func (p *Parser) limitRequestsRollback(txType string) error {
 		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE user_id = ? AND time = ? LIMIT 1", p.TxUserID, time)
 	} else if p.ConfigIni["db_type"] == "postgresql" {
 		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE ctid IN (SELECT ctid FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
-	} else {
-		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE id IN (SELECT id FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
 	}
-	return nil
+	return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE id IN (SELECT id FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
 }
 
 func arrayIntersect(arr1, arr2 map[int]int) bool {
@@ -458,7 +458,7 @@ func (p *Parser) AccessTable(table, action string) error {
 	}
 
 	if isCustom, err := p.IsCustomTable(table); err != nil {
-		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать 
+		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать
 		// table != ... is left for compatibility temporarily. Remove new_state after rebuilding.
 	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
 		return fmt.Errorf(table + ` is not a custom table`)

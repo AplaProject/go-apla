@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// CheckBlockHeader checks the block header
 func (p *Parser) CheckBlockHeader() error {
 	var err error
 	// инфа о предыдущем блоке (т.е. последнем занесенном).
