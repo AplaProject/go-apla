@@ -1592,7 +1592,29 @@ function InitMobileTable() {
 	}
 }
 
+function getMapAddress(coords) {
+	getMapGeocode(coords, function(address){
+		console.log(address);
+	});
+}
+function getMapGeocode(coords, callback) {
+	var latlng = {};
+	var geocoder = new google.maps.Geocoder;
+	
+	latlng = {lat: parseFloat(coords.cords[0][0]), lng: parseFloat(coords.cords[0][1])};
+	
+	geocoder.geocode({'location': latlng}, function(results, status) {
+		if (status === 'OK') {
+			if (results[1]) {
+				callback(results[1].formatted_address);
+			}
+		}
+	});
+}
+
 $(document).ready(function () {
+	//var coords = {"center_point":["46.959213","32.056372"], "zoom":"21", "cords":[["46.959278","32.056239"],["46.959306","32.056325"],["46.959160","32.056418"],["46.959133","32.056336"]]};
+	//getMapAddress(coords)
 	var observeDOM = (function () {
 		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
 			eventListenerSupported = window.addEventListener;
