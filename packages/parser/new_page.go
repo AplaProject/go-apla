@@ -22,7 +22,11 @@ import (
 	"strings"
 )
 
-func (p *Parser) NewPageInit() error {
+type NewPageParser struct {
+	*Parser
+}
+
+func (p *NewPageParser) Init() error {
 
 	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"menu": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -32,7 +36,7 @@ func (p *Parser) NewPageInit() error {
 	return nil
 }
 
-func (p *Parser) NewPageFront() error {
+func (p *NewPageParser) Validate() error {
 
 	err := p.generalCheck(`new_page`)
 	if err != nil {
@@ -68,7 +72,7 @@ func (p *Parser) NewPageFront() error {
 	return nil
 }
 
-func (p *Parser) NewPage() error {
+func (p *NewPageParser) Action() error {
 
 	prefix := p.TxStateIDStr
 	if p.TxMaps.String["global"] == "1" {
@@ -78,14 +82,9 @@ func (p *Parser) NewPage() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
 	return nil
 }
 
-func (p *Parser) NewPageRollback() error {
+func (p *NewPageParser) Rollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) NewPageRollbackFront() error {
-	return nil
-}*/

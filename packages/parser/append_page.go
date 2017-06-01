@@ -23,7 +23,11 @@ import (
 	"strings"
 )
 
-func (p *Parser) AppendPageInit() error {
+type AppendPageParser struct {
+	*Parser
+}
+
+func (p *AppendPageParser) Init() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -33,7 +37,7 @@ func (p *Parser) AppendPageInit() error {
 	return nil
 }
 
-func (p *Parser) AppendPageFront() error {
+func (p *AppendPageParser) Validate() error {
 
 	err := p.generalCheck(`edit_page`)
 	if err != nil {
@@ -69,7 +73,7 @@ func (p *Parser) AppendPageFront() error {
 	return nil
 }
 
-func (p *Parser) AppendPage() error {
+func (p *AppendPageParser) Action() error {
 
 	prefix := p.TxStateIDStr
 	if p.TxMaps.Int64["global"] == 1 {
@@ -89,6 +93,6 @@ func (p *Parser) AppendPage() error {
 	return nil
 }
 
-func (p *Parser) AppendPageRollback() error {
+func (p *AppendPageParser) Rollback() error {
 	return p.autoRollback()
 }

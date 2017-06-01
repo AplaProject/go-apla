@@ -62,13 +62,17 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			var (
 				MethodName string
 				err_       interface{}
+				parser     ParserInterface
 			)
 			if p.TxContract == nil {
 				MethodName = consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				p.TxMap = map[string][]byte{}
-				err_ = utils.CallMethod(p, MethodName+"Init")
-				if _, ok := err_.(error); ok {
-					return utils.ErrInfo(err_.(error))
+				parser = GetParser(p, MethodName)
+				if parser != nil {
+					p.TxMap = map[string][]byte{}
+					err_ = parser.Init()
+					if _, ok := err_.(error); ok {
+						return utils.ErrInfo(err_.(error))
+					}
 				}
 			}
 			// если дошли до тр-ии, которая вызвала ошибку, то откатываем только фронтальную проверку
@@ -103,7 +107,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 						return p.ErrInfo(err)
 					}
 				} else {
-					err_ = utils.CallMethod(p, MethodName+"Rollback")
+					err_ = parser.Rollback()
 					if _, ok := err_.(error); ok {
 						return utils.ErrInfo(err_.(error))
 					}

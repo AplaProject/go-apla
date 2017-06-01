@@ -28,8 +28,11 @@ import (
 Adding state tables should be spelled out in state settings
 */
 
-func (p *Parser) NewTableInit() error {
+type NewTableParser struct {
+	*Parser
+}
 
+func (p *NewTableParser) Init() error {
 	fields := []map[string]string{{"global": "int64"}, {"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -38,8 +41,7 @@ func (p *Parser) NewTableInit() error {
 	return nil
 }
 
-func (p *Parser) NewTableFront() error {
-
+func (p *NewTableParser) Validate() error {
 	err := p.generalCheck(`add_table`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -117,7 +119,7 @@ func (p *Parser) NewTableFront() error {
 	return nil
 }
 
-func (p *Parser) NewTable() error {
+func (p *NewTableParser) Action() error {
 
 	tableName := `global_` + p.TxMaps.String["table_name"]
 	if p.TxMaps.Int64["global"] == 0 {
@@ -190,7 +192,7 @@ func (p *Parser) NewTable() error {
 	return nil
 }
 
-func (p *Parser) NewTableRollback() error {
+func (p *NewTableParser) Rollback() error {
 
 	err := p.autoRollback()
 	if err != nil {

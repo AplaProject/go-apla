@@ -41,6 +41,85 @@ func init() {
 	flag.Parse()
 }
 
+type ParserInterface interface {
+	Init() error
+	Validate() error
+	Action() error
+	Rollback() error
+}
+
+func GetParser(p *Parser, txType string) ParserInterface {
+	switch txType {
+	case "FirstBlock":
+		return &FirstBlockParser{p}
+	case "DLTTransfer":
+		return &DLTTransferParser{p}
+	case "DLTChangeHostVote":
+		return &DLTChangeHostVoteParser{p}
+	case "UpdFullNode":
+		return &UpdFullNodesParser{p}
+	case "ChangeNodeKey":
+		return &ChangeNodeKeyParser{p}
+	case "NewState":
+		return &NewStateParser{p}
+	case "NewColumn":
+		return &NewColumnParser{p}
+	case "NewTable":
+		return &NewTableParser{p}
+	case "EditPage":
+		return &EditPageParser{p}
+	case "EditMenu":
+		return &EditMenuParser{p}
+	case "EditContract":
+		return &EditContractParser{p}
+	case "NewContract":
+		return &NewContractParser{p}
+	case "EditColumn":
+		return &EditColumnParser{p}
+	case "EditTable":
+		return &EditTableParser{p}
+	case "EditStateParameters":
+		return &EditStateParametersParser{p}
+	case "NewStateParameters":
+		return &NewStateParametersParser{p}
+	case "NewPage":
+		return &NewPageParser{p}
+	case "NewMenu":
+		return &NewMenuParser{p}
+	case "ChangeNodeKeyDLT":
+		return &ChangeNodeKeyDLTParser{p}
+	case "AppendPage":
+		return &AppendPageParser{p}
+	case "RestoreAccessActive":
+		return &RestoreAccessActiveParser{p}
+	case "RestoreAccessClose":
+		return &RestoreAccessCloseParser{p}
+	case "RestoreAccessRequest":
+		return &RestoreAccessRequestParser{p}
+	case "RestoreAccess":
+		return &RestoreAccessParser{p}
+	case "NewLang":
+		return &NewLangParser{p}
+	case "EditLang":
+		return &EditLangParser{p}
+	case "AppendMenu":
+		return &AppendMenuParser{p}
+	case "NewSign":
+		return &NewSignParser{p}
+	case "EditSign":
+		return &EditSignParser{p}
+	case "EditWallet":
+		return &EditWalletParser{p}
+	case "ActivateContract":
+		return &ActivateContractParser{p}
+	case "NewAccount":
+		return &NewAccountParser{p}
+	default:
+		return nil
+	}
+	return nil
+}
+
 type txMapsType struct {
 	Int64   map[string]int64
 	String  map[string]string
@@ -49,6 +128,7 @@ type txMapsType struct {
 	Money   map[string]float64
 	Decimal map[string]decimal.Decimal
 }
+
 type Parser struct {
 	*utils.DCDB
 	TxMaps           *txMapsType

@@ -22,8 +22,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) RestoreAccessCloseInit() error {
+type RestoreAccessCloseParser struct {
+	*Parser
+}
 
+func (p *RestoreAccessCloseParser) Init() error {
 	fields := []map[string]string{{"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -32,7 +35,7 @@ func (p *Parser) RestoreAccessCloseInit() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessCloseFront() error {
+func (p *RestoreAccessCloseParser) Validate() error {
 	err := p.generalCheck(`system_restore_access_close`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -61,7 +64,7 @@ func (p *Parser) RestoreAccessCloseFront() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessClose() error {
+func (p *RestoreAccessCloseParser) Action() error {
 	_, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -69,6 +72,6 @@ func (p *Parser) RestoreAccessClose() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessCloseRollback() error {
+func (p *RestoreAccessCloseParser) Rollback() error {
 	return p.autoRollback()
 }

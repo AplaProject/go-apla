@@ -27,8 +27,11 @@ import (
 Adding state tables should be spelled out in state settings
 */
 
-func (p *Parser) NewStateParametersInit() error {
+type NewStateParametersParser struct {
+	*Parser
+}
 
+func (p *NewStateParametersParser) Init() error {
 	fields := []map[string]string{{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -37,7 +40,7 @@ func (p *Parser) NewStateParametersInit() error {
 	return nil
 }
 
-func (p *Parser) NewStateParametersFront() error {
+func (p *NewStateParametersParser) Validate() error {
 	err := p.generalCheck(`new_state_parameters`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -106,7 +109,7 @@ func (p *Parser) NewStateParametersFront() error {
 	return nil
 }
 
-func (p *Parser) NewStateParameters() error {
+func (p *NewStateParametersParser) Action() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", nil, nil, true)
 	if err != nil {
@@ -115,12 +118,6 @@ func (p *Parser) NewStateParameters() error {
 	return nil
 }
 
-func (p *Parser) NewStateParametersRollback() error {
+func (p *NewStateParametersParser) Rollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) NewStateParametersRollbackFront() error {
-
-	return nil
-}
-*/

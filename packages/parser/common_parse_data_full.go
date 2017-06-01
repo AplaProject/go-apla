@@ -192,15 +192,16 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 			} else {
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
+				parser := GetParser(p, MethodName)
 				log.Debug("MethodName", MethodName+"Init")
-				err := utils.CallMethod(p, MethodName+"Init")
+				err := parser.Init()
 				if _, ok := err.(error); ok {
 					log.Error("error: %v", err)
 					return utils.ErrInfo(err.(error))
 				}
 
 				log.Debug("MethodName", MethodName+"Front")
-				err = utils.CallMethod(p, MethodName+"Front")
+				err = parser.Validate()
 				if _, ok := err.(error); ok {
 					log.Error("error: %v", err)
 					err0 := p.RollbackTo(txForRollbackTo, true)
@@ -211,7 +212,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 
 				log.Debug("MethodName", MethodName)
-				err = utils.CallMethod(p, MethodName)
+				err = parser.Action()
 				// pay for CPU resources
 				p.payFPrice()
 				if _, ok := err.(error); ok {
@@ -243,7 +244,6 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 		p.InsertIntoBlockchain()
 	} else {
 		p.UpdBlockInfo()
-
 	}
 	return nil
 }

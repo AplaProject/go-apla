@@ -99,20 +99,21 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 	// Оперативные транзакции
 	// Operative transactions
 	MethodName := consts.TxTypes[p.dataType]
+	parser := GetParser(p, MethodName)
 	if p.TxContract != nil {
 		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
 			return utils.ErrInfo(err)
 		}
 	} else {
 		log.Debug("MethodName", MethodName+"Init")
-		err_ := utils.CallMethod(p, MethodName+"Init")
+		err_ := parser.Init()
 		if _, ok := err_.(error); ok {
 			log.Error("%v", utils.ErrInfo(err_.(error)))
 			return utils.ErrInfo(err_.(error))
 		}
 
 		log.Debug("MethodName", MethodName+"Front")
-		err_ = utils.CallMethod(p, MethodName+"Front")
+		err_ = parser.Validate()
 		if _, ok := err_.(error); ok {
 			log.Error("%v", utils.ErrInfo(err_.(error)))
 			return utils.ErrInfo(err_.(error))

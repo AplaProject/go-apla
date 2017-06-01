@@ -25,7 +25,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) NewColumnInit() error {
+type NewColumnParser struct {
+	*Parser
+}
+
+func (p *NewColumnParser) Init() error {
 
 	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"index": "int64"}, {"column_type": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -35,7 +39,7 @@ func (p *Parser) NewColumnInit() error {
 	return nil
 }
 
-func (p *Parser) NewColumnFront() error {
+func (p *NewColumnParser) Validate() error {
 	err := p.generalCheck(`new_column`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -90,15 +94,13 @@ func (p *Parser) NewColumnFront() error {
 	return nil
 }
 
-func (p *Parser) NewColumn() error {
-
+func (p *NewColumnParser) Action() error {
 	tblname := p.TxMaps.String["table_name"]
 	prefix, err := utils.GetPrefix(tblname, p.TxStateIDStr)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where name=?`, tblname).String()
 	if err != nil {
 		return err
@@ -163,7 +165,7 @@ func (p *Parser) NewColumn() error {
 	return nil
 }
 
-func (p *Parser) NewColumnRollback() error {
+func (p *NewColumnParser) Rollback() error {
 	err := p.autoRollback()
 	if err != nil {
 		return err

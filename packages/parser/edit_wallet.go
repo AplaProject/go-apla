@@ -24,7 +24,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditWalletInit() error {
+type EditWalletParser struct {
+	*Parser
+}
+
+func (p *EditWalletParser) Init() error {
 
 	fields := []map[string]string{{"id": "int64"}, {"spending_contract": "string"},
 		{"conditions_change": "string"}, {"sign": "bytes"}}
@@ -35,7 +39,7 @@ func (p *Parser) EditWalletInit() error {
 	return nil
 }
 
-func (p *Parser) checkContract(name string) string {
+func (p *EditWalletParser) checkContract(name string) string {
 	name = script.StateName(p.TxStateID, name)
 	if smart.GetContract(name, 0) == nil {
 		return ``
@@ -43,7 +47,7 @@ func (p *Parser) checkContract(name string) string {
 	return name
 }
 
-func (p *Parser) EditWalletFront() error {
+func (p *EditWalletParser) Validate() error {
 
 	err := p.generalCheck(`edit_wallet`)
 	if err != nil {
@@ -103,7 +107,7 @@ func (p *Parser) EditWalletFront() error {
 	return nil
 }
 
-func (p *Parser) EditWallet() error {
+func (p *EditWalletParser) Action() error {
 	var contract string
 
 	if len(p.TxMap["spending_contract"]) > 0 {
@@ -118,6 +122,6 @@ func (p *Parser) EditWallet() error {
 	return nil
 }
 
-func (p *Parser) EditWalletRollback() error {
+func (p *EditWalletParser) Rollback() error {
 	return p.autoRollback()
 }

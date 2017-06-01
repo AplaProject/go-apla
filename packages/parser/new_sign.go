@@ -17,13 +17,15 @@
 package parser
 
 import (
-	//	"encoding/json"
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) NewSignInit() error {
+type NewSignParser struct {
+	*Parser
+}
 
+func (p *NewSignParser) Init() error {
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -32,8 +34,7 @@ func (p *Parser) NewSignInit() error {
 	return nil
 }
 
-func (p *Parser) NewSignFront() error {
-
+func (p *NewSignParser) Validate() error {
 	err := p.generalCheck(`new_sign`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -70,8 +71,7 @@ func (p *Parser) NewSignFront() error {
 	return nil
 }
 
-func (p *Parser) NewSign() error {
-
+func (p *NewSignParser) Action() error {
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
@@ -83,6 +83,6 @@ func (p *Parser) NewSign() error {
 	return nil
 }
 
-func (p *Parser) NewSignRollback() error {
+func (p *NewSignParser) Rollback() error {
 	return p.autoRollback()
 }

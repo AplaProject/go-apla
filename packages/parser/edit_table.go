@@ -26,7 +26,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditTableInit() error {
+type EditTableParser struct {
+	*Parser
+}
+
+func (p *EditTableParser) Init() error {
 
 	fields := []map[string]string{{"table_name": "string"}, {"general_update": "string"}, {"insert": "string"}, {"new_column": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -36,7 +40,7 @@ func (p *Parser) EditTableInit() error {
 	return nil
 }
 
-func (p *Parser) EditTableFront() error {
+func (p *EditTableParser) Validate() error {
 	err := p.generalCheck(`edit_table`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -84,7 +88,7 @@ func (p *Parser) EditTableFront() error {
 	return nil
 }
 
-func (p *Parser) EditTable() error {
+func (p *EditTableParser) Action() error {
 
 	s := strings.Split(p.TxMaps.String["table_name"], "_")
 	if len(s) < 2 {
@@ -146,15 +150,10 @@ func (p *Parser) EditTable() error {
 	return nil
 }
 
-func (p *Parser) EditTableRollback() error {
+func (p *EditTableParser) Rollback() error {
 	err := p.autoRollback()
 	if err != nil {
 		return err
 	}
 	return nil
 }
-
-/*func (p *Parser) EditTableRollbackFront() error {
-
-	return nil
-}*/

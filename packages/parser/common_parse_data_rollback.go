@@ -183,18 +183,15 @@ func (p *Parser) ParseDataRollback() error {
 			} else {
 				p.dataType = utils.BytesToInt(p.TxSlice[1])
 				MethodName := consts.TxTypes[p.dataType]
-				result := utils.CallMethod(p, MethodName+"Init")
+				parser := GetParser(p, MethodName)
+				result := parser.Init()
 				if _, ok := result.(error); ok {
 					return p.ErrInfo(result.(error))
 				}
-				result = utils.CallMethod(p, MethodName+"Rollback")
+				result = parser.Rollback()
 				if _, ok := result.(error); ok {
 					return p.ErrInfo(result.(error))
 				}
-				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
-				if _, ok := err_.(error); ok {
-					return p.ErrInfo(err_.(error))
-				}*/
 			}
 		}
 	}

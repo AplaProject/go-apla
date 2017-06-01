@@ -25,7 +25,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) UpdFullNodesInit() error {
+type UpdFullNodesParser struct {
+	*Parser
+}
+
+func (p *UpdFullNodesParser) Init() error {
 	err := p.GetTxMaps([]map[string]string{{"sign": "bytes"}})
 	if err != nil {
 		return p.ErrInfo(err)
@@ -33,7 +37,7 @@ func (p *Parser) UpdFullNodesInit() error {
 	return nil
 }
 
-func (p *Parser) UpdFullNodesFront() error {
+func (p *UpdFullNodesParser) Validate() error {
 	err := p.generalCheck(`upd_full_nodes`) // undefined, cost=0
 	if err != nil {
 		return p.ErrInfo(err)
@@ -68,7 +72,7 @@ func (p *Parser) UpdFullNodesFront() error {
 	return nil
 }
 
-func (p *Parser) UpdFullNodes() error {
+func (p *UpdFullNodesParser) Action() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.BlockData.Time}, "upd_full_nodes", []string{`update`}, nil, false)
 	if err != nil {
@@ -141,7 +145,7 @@ func (p *Parser) UpdFullNodes() error {
 	return nil
 }
 
-func (p *Parser) UpdFullNodesRollback() error {
+func (p *UpdFullNodesParser) Rollback() error {
 	err := p.selectiveRollback("upd_full_nodes", "", false)
 	if err != nil {
 		return p.ErrInfo(err)

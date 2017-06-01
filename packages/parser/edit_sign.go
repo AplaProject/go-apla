@@ -23,7 +23,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditSignInit() error {
+type EditSignParser struct {
+	*Parser
+}
+
+func (p *EditSignParser) Init() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -33,7 +37,7 @@ func (p *Parser) EditSignInit() error {
 	return nil
 }
 
-func (p *Parser) EditSignFront() error {
+func (p *EditSignParser) Validate() error {
 
 	err := p.generalCheck(`edit_sign`)
 	if err != nil {
@@ -81,7 +85,7 @@ func (p *Parser) EditSignFront() error {
 	return nil
 }
 
-func (p *Parser) EditSign() error {
+func (p *EditSignParser) Action() error {
 
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {
@@ -95,10 +99,6 @@ func (p *Parser) EditSign() error {
 	return nil
 }
 
-func (p *Parser) EditSignRollback() error {
+func (p *EditSignParser) Rollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditContractRollbackFront() error {
-	return nil
-}*/

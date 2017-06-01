@@ -24,8 +24,11 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (p *Parser) ActivateContractInit() error {
+type ActivateContractParser struct {
+	*Parser
+}
 
+func (p *ActivateContractParser) Init() error {
 	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -34,7 +37,7 @@ func (p *Parser) ActivateContractInit() error {
 	return nil
 }
 
-func (p *Parser) ActivateContractFront() error {
+func (p *ActivateContractParser) Validate() error {
 	err := p.generalCheck(`activate_contract`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -82,7 +85,7 @@ func (p *Parser) ActivateContractFront() error {
 	return nil
 }
 
-func (p *Parser) ActivateContract() error {
+func (p *ActivateContractParser) Action() error {
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {
 		prefix = p.TxStateIDStr
@@ -108,6 +111,6 @@ func (p *Parser) ActivateContract() error {
 	return nil
 }
 
-func (p *Parser) ActivateContractRollback() error {
+func (p *ActivateContractParser) Rollback() error {
 	return p.autoRollback()
 }

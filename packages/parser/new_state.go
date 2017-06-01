@@ -30,7 +30,11 @@ var (
 Adding state tables should be spelled out in state settings
 */
 
-func (p *Parser) NewStateInit() error {
+type NewStateParser struct {
+	*Parser
+}
+
+func (p *NewStateParser) Init() error {
 
 	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -40,7 +44,7 @@ func (p *Parser) NewStateInit() error {
 	return nil
 }
 
-func (p *Parser) NewStateGlobal(country, currency string) error {
+func (p *NewStateParser) global(country, currency string) error {
 	if !isGlobal {
 		list, err := utils.DB.GetAllTables()
 		if err != nil {
@@ -63,7 +67,7 @@ func (p *Parser) NewStateGlobal(country, currency string) error {
 	return nil
 }
 
-func (p *Parser) NewStateFront() error {
+func (p *NewStateParser) Validate() error {
 	err := p.generalCheck(`new_state`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -91,14 +95,14 @@ func (p *Parser) NewStateFront() error {
 		return fmt.Errorf(`State %s already exists`, country)
 	}
 
-	err = p.NewStateGlobal(country, string(p.TxMap["currency_name"]))
+	err = p.global(country, string(p.TxMap["currency_name"]))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
+func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	id, err = p.ExecSqlGetLastInsertId(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
 	if err != nil {
 		return
@@ -419,11 +423,11 @@ MenuBack(Welcome)`, sid)
 	return
 }
 
-func (p *Parser) NewState() error {
+func (p *NewStateParser) Action() error {
 	var pkey string
 	country := string(p.TxMap["state_name"])
 	currency := string(p.TxMap["currency_name"])
-	id, err := p.NewStateMain(country, currency)
+	id, err := p.Main(country, currency)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -450,7 +454,7 @@ func (p *Parser) NewState() error {
 	return err
 }
 
-func (p *Parser) NewStateRollback() error {
+func (p *NewStateParser) Rollback() error {
 	id, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -489,9 +493,3 @@ func (p *Parser) NewStateRollback() error {
 
 	return nil
 }
-
-/*func (p *Parser) NewStateRollbackFront() error {
-
-	return nil
-}
-*/

@@ -909,6 +909,7 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 }
 
 func NewStateFunc(p *Parser, country, currency string) (err error) {
-	_, err = p.NewStateMain(country, currency)
+	newStateParser := NewStateParser{p}
+	_, err = newStateParser.Main(country, currency)
 	return
 }

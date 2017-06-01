@@ -21,8 +21,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) RestoreAccessActiveInit() error {
+type RestoreAccessActiveParser struct {
+	*Parser
+}
 
+func (p *RestoreAccessActiveParser) Init() error {
 	fields := []map[string]string{{"secret": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -39,7 +42,7 @@ func (p *Parser) RestoreAccessActiveInit() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessActiveFront() error {
+func (p *RestoreAccessActiveParser) Validate() error {
 	err := p.generalCheck(`system_restore_access_active`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -71,7 +74,7 @@ func (p *Parser) RestoreAccessActiveFront() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessActive() error {
+func (p *RestoreAccessActiveParser) Action() error {
 	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.TxMaps.Int64["active"], p.TxMaps.Bytes["secret"]}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -79,6 +82,6 @@ func (p *Parser) RestoreAccessActive() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessActiveRollback() error {
+func (p *RestoreAccessActiveParser) Rollback() error {
 	return p.autoRollback()
 }

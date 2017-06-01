@@ -23,7 +23,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) DLTChangeHostVoteInit() error {
+type DLTChangeHostVoteParser struct {
+	*Parser
+}
+
+func (p *DLTChangeHostVoteParser) Init() error {
 
 	fields := []map[string]string{{"host": "string"}, {"addressVote": "string"}, {"fuelRate": "int64"}, {"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -37,8 +41,7 @@ func (p *Parser) DLTChangeHostVoteInit() error {
 	return nil
 }
 
-func (p *Parser) DLTChangeHostVoteFront() error {
-
+func (p *DLTChangeHostVoteParser) Validate() error {
 	err := p.generalCheck(`change_host_vote`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -86,7 +89,7 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 	return nil
 }
 
-func (p *Parser) DLTChangeHostVote() error {
+func (p *DLTChangeHostVoteParser) Action() error {
 	var err error
 
 	log.Debug("p.TxMaps.String[addressVote] %s", p.TxMaps.String["addressVote"])
@@ -108,6 +111,6 @@ func (p *Parser) DLTChangeHostVote() error {
 	return nil
 }
 
-func (p *Parser) DLTChangeHostVoteRollback() error {
+func (p *DLTChangeHostVoteParser) Rollback() error {
 	return p.autoRollback()
 }

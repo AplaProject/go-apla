@@ -17,7 +17,6 @@
 package parser
 
 import (
-	//"encoding/json"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -26,7 +25,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditColumnInit() error {
+type EditColumnParser struct {
+	*Parser
+}
+
+func (p *EditColumnParser) Init() error {
 
 	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -36,7 +39,7 @@ func (p *Parser) EditColumnInit() error {
 	return nil
 }
 
-func (p *Parser) EditColumnFront() error {
+func (p *EditColumnParser) Validate() error {
 	err := p.generalCheck(`edit_column`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -76,7 +79,7 @@ func (p *Parser) EditColumnFront() error {
 	return nil
 }
 
-func (p *Parser) EditColumn() error {
+func (p *EditColumnParser) Action() error {
 
 	table := p.TxStateIDStr + `_tables`
 	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
@@ -120,16 +123,10 @@ func (p *Parser) EditColumn() error {
 	return nil
 }
 
-func (p *Parser) EditColumnRollback() error {
+func (p *EditColumnParser) Rollback() error {
 	err := p.autoRollback()
 	if err != nil {
 		return err
 	}
 	return nil
 }
-
-/*func (p *Parser) EditColumnRollbackFront() error {
-
-	return nil
-}
-*/

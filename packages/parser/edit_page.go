@@ -23,8 +23,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditPageInit() error {
+type EditPageParser struct {
+	*Parser
+}
 
+func (p *EditPageParser) Init() error {
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"menu": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -33,8 +36,7 @@ func (p *Parser) EditPageInit() error {
 	return nil
 }
 
-func (p *Parser) EditPageFront() error {
-
+func (p *EditPageParser) Validate() error {
 	err := p.generalCheck(`edit_page`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -74,7 +76,7 @@ func (p *Parser) EditPageFront() error {
 	return nil
 }
 
-func (p *Parser) EditPage() error {
+func (p *EditPageParser) Action() error {
 
 	prefix := p.TxStateIDStr
 	if p.TxMaps.Int64["global"] == 1 {
@@ -89,10 +91,6 @@ func (p *Parser) EditPage() error {
 	return nil
 }
 
-func (p *Parser) EditPageRollback() error {
+func (p *EditPageParser) Rollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditPageRollbackFront() error {
-	return nil
-}*/

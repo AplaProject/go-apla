@@ -23,8 +23,11 @@ import (
 	"time"
 )
 
-func (p *Parser) RestoreAccessInit() error {
+type RestoreAccessParser struct {
+	*Parser
+}
 
+func (p *RestoreAccessParser) Init() error {
 	fields := []map[string]string{{"state_id": "int64"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -33,7 +36,7 @@ func (p *Parser) RestoreAccessInit() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessFront() error {
+func (p *RestoreAccessParser) Validate() error {
 	err := p.generalCheck(`system_restore_access`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -87,7 +90,7 @@ func (p *Parser) RestoreAccessFront() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccess() error {
+func (p *RestoreAccessParser) Action() error {
 	citizen_id, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -108,6 +111,6 @@ func (p *Parser) RestoreAccess() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessRollback() error {
+func (p *RestoreAccessParser) Rollback() error {
 	return p.autoRollback()
 }

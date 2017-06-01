@@ -21,8 +21,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) RestoreAccessRequestInit() error {
+type RestoreAccessRequestParser struct {
+	*Parser
+}
 
+func (p *RestoreAccessRequestParser) Init() error {
 	fields := []map[string]string{{"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -31,7 +34,7 @@ func (p *Parser) RestoreAccessRequestInit() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessRequestFront() error {
+func (p *RestoreAccessRequestParser) Validate() error {
 	err := p.generalCheck(`system_restore_access_request`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -62,7 +65,7 @@ func (p *Parser) RestoreAccessRequestFront() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessRequest() error {
+func (p *RestoreAccessRequestParser) Action() error {
 	_, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.TxCitizenID}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -70,6 +73,6 @@ func (p *Parser) RestoreAccessRequest() error {
 	return nil
 }
 
-func (p *Parser) RestoreAccessRequestRollback() error {
+func (p *RestoreAccessRequestParser) Rollback() error {
 	return p.autoRollback()
 }

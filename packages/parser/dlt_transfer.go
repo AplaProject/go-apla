@@ -24,7 +24,11 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (p *Parser) DLTTransferInit() error {
+type DLTTransferParser struct {
+	*Parser
+}
+
+func (p *DLTTransferParser) Init() error {
 
 	fields := []map[string]string{{"walletAddress": "string"}, {"amount": "decimal"}, {"commission": "decimal"}, {"comment": "bytes"}, {"public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -37,7 +41,7 @@ func (p *Parser) DLTTransferInit() error {
 	return nil
 }
 
-func (p *Parser) DLTTransferFront() error {
+func (p *DLTTransferParser) Validate() error {
 	err := p.generalCheck(`dlt_transfer`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -120,7 +124,7 @@ func (p *Parser) DLTTransferFront() error {
 	return nil
 }
 
-func (p *Parser) DLTTransfer() error {
+func (p *DLTTransferParser) Action() error {
 	log.Debug("wallet address %s", p.TxMaps.String["walletAddress"])
 	address := lib.StringToAddress(p.TxMaps.String["walletAddress"])
 	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE wallet_id = ?`, address).Int64()
@@ -196,6 +200,6 @@ func (p *Parser) DLTTransfer() error {
 	return nil
 }
 
-func (p *Parser) DLTTransferRollback() error {
+func (p *DLTTransferParser) Rollback() error {
 	return p.autoRollback()
 }

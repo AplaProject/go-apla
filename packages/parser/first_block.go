@@ -21,24 +21,21 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	//	b58 "github.com/jbenet/go-base58"
 )
 
-func (p *Parser) FirstBlockInit() error {
-	/*	err := p.GetTxMaps([]map[string]string{{"public_key": "bytes"}, {"node_public_key": "bytes"}, {"host": "string"}})
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
-		p.TxMaps.Bytes["node_public_key"] = utils.BinToHex(p.TxMaps.Bytes["node_public_key"])*/
+type FirstBlockParser struct {
+	*Parser
+}
+
+func (p *FirstBlockParser) Init() error {
 	return nil
 }
 
-func (p *Parser) FirstBlockFront() error {
+func (p *FirstBlockParser) Validate() error {
 	return nil
 }
 
-func (p *Parser) FirstBlock() error {
+func (p *FirstBlockParser) Action() error {
 
 	data := p.TxPtr.(*consts.FirstBlock)
 	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
@@ -59,6 +56,6 @@ func (p *Parser) FirstBlock() error {
 	return nil
 }
 
-func (p *Parser) FirstBlockRollback() error {
+func (p *FirstBlockParser) Rollback() error {
 	return nil
 }

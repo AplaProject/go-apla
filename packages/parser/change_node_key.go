@@ -21,7 +21,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) ChangeNodeKeyInit() error {
+type ChangeNodeKeyParser struct {
+	*Parser
+}
+
+func (p *ChangeNodeKeyParser) Init() error {
 
 	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -33,7 +37,7 @@ func (p *Parser) ChangeNodeKeyInit() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyFront() error {
+func (p *ChangeNodeKeyParser) Validate() error {
 
 	/*err := p.generalCheck()
 	if err != nil {
@@ -70,7 +74,7 @@ func (p *Parser) ChangeNodeKeyFront() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKey() error {
+func (p *ChangeNodeKeyParser) Action() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
@@ -90,6 +94,6 @@ func (p *Parser) ChangeNodeKey() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyRollback() error {
+func (p *ChangeNodeKeyParser) Rollback() error {
 	return p.autoRollback()
 }

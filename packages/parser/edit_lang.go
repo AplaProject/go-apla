@@ -22,7 +22,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditLangInit() error {
+type EditLangParser struct {
+	*Parser
+}
+
+func (p *EditLangParser) Init() error {
 
 	fields := []map[string]string{ /*{"global": "int64"},*/ {"name": "string"}, {"res": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -32,7 +36,7 @@ func (p *Parser) EditLangInit() error {
 	return nil
 }
 
-func (p *Parser) EditLangFront() error {
+func (p *EditLangParser) Validate() error {
 
 	err := p.generalCheck(`edit_lang`)
 	if err != nil {
@@ -61,7 +65,7 @@ func (p *Parser) EditLangFront() error {
 	return nil
 }
 
-func (p *Parser) EditLang() error {
+func (p *EditLangParser) Action() error {
 
 	/*	prefix := `global`
 		if p.TxMaps.Int64["global"] == 0 {
@@ -77,6 +81,6 @@ func (p *Parser) EditLang() error {
 	return nil
 }
 
-func (p *Parser) EditLangRollback() error {
+func (p *EditLangParser) Rollback() error {
 	return p.autoRollback()
 }

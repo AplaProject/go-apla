@@ -21,7 +21,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) ChangeNodeKeyDLTInit() error {
+type ChangeNodeKeyDLTParser struct {
+	*Parser
+}
+
+func (p *ChangeNodeKeyDLTParser) Init() error {
 
 	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -33,7 +37,7 @@ func (p *Parser) ChangeNodeKeyDLTInit() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyDLTFront() error {
+func (p *ChangeNodeKeyDLTParser) Validate() error {
 
 	err := p.generalCheck(`change_node`)
 	if err != nil {
@@ -63,7 +67,7 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyDLT() error {
+func (p *ChangeNodeKeyDLTParser) Action() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
@@ -84,6 +88,6 @@ func (p *Parser) ChangeNodeKeyDLT() error {
 	return nil
 }
 
-func (p *Parser) ChangeNodeKeyDLTRollback() error {
+func (p *ChangeNodeKeyDLTParser) Rollback() error {
 	return p.autoRollback()
 }

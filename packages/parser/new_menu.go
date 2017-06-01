@@ -22,7 +22,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) NewMenuInit() error {
+type NewMenuParser struct {
+	*Parser
+}
+
+func (p *NewMenuParser) Init() error {
 
 	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
@@ -32,7 +36,7 @@ func (p *Parser) NewMenuInit() error {
 	return nil
 }
 
-func (p *Parser) NewMenuFront() error {
+func (p *NewMenuParser) Validate() error {
 
 	err := p.generalCheck(`new_menu`)
 	if err != nil {
@@ -64,7 +68,7 @@ func (p *Parser) NewMenuFront() error {
 	return nil
 }
 
-func (p *Parser) NewMenu() error {
+func (p *NewMenuParser) Action() error {
 
 	prefix := p.TxStateIDStr
 	if p.TxMaps.String["global"] == "1" {
@@ -78,10 +82,6 @@ func (p *Parser) NewMenu() error {
 	return nil
 }
 
-func (p *Parser) NewMenuRollback() error {
+func (p *NewMenuParser) Rollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) NewMenuRollbackFront() error {
-	return nil
-}*/

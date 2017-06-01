@@ -23,8 +23,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditMenuInit() error {
+type EditMenuParser struct {
+	*Parser
+}
 
+func (p *EditMenuParser) Init() error {
 	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -33,8 +36,7 @@ func (p *Parser) EditMenuInit() error {
 	return nil
 }
 
-func (p *Parser) EditMenuFront() error {
-
+func (p *EditMenuParser) Validate() error {
 	err := p.generalCheck(`edit_menu`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -76,8 +78,7 @@ func (p *Parser) EditMenuFront() error {
 	return nil
 }
 
-func (p *Parser) EditMenu() error {
-
+func (p *EditMenuParser) Action() error {
 	prefix := p.TxStateIDStr
 	if p.TxMaps.Int64["global"] == 1 {
 		prefix = "global"
@@ -90,10 +91,6 @@ func (p *Parser) EditMenu() error {
 	return nil
 }
 
-func (p *Parser) EditMenuRollback() error {
+func (p *EditMenuParser) Rollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditMenuRollbackFront() error {
-	return nil
-}*/

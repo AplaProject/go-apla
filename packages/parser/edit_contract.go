@@ -23,8 +23,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-func (p *Parser) EditContractInit() error {
+type EditContractParser struct {
+	*Parser
+}
 
+func (p *EditContractParser) Init() error {
 	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -33,8 +36,7 @@ func (p *Parser) EditContractInit() error {
 	return nil
 }
 
-func (p *Parser) EditContractFront() error {
-
+func (p *EditContractParser) Validate() error {
 	err := p.generalCheck(`edit_contract`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -88,7 +90,7 @@ func (p *Parser) EditContractFront() error {
 	return nil
 }
 
-func (p *Parser) EditContract() error {
+func (p *EditContractParser) Action() error {
 
 	prefix := `global`
 	if p.TxMaps.Int64["global"] == 0 {
@@ -119,10 +121,6 @@ func (p *Parser) EditContract() error {
 	return nil
 }
 
-func (p *Parser) EditContractRollback() error {
+func (p *EditContractParser) Rollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditContractRollbackFront() error {
-	return nil
-}*/
