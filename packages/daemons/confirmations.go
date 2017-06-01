@@ -19,8 +19,8 @@ package daemons
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"time"
 	"net"
+	"time"
 )
 
 /*
@@ -30,7 +30,7 @@ Using it for watching for forks
 Нужно чтобы следить за вилками
 */
 
-
+// Confirmations gets and checks blocks from nodes
 func Confirmations(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -79,7 +79,7 @@ BEGIN:
 			break BEGIN
 		}
 
-		var startBlockId int64
+		var startBlockID int64
 		// если последний проверенный был давно (пропасть более 5 блоков),
 		// то начинаем проверку последних 5 блоков
 		// if the last one checked was long ago (interval is more than 5 blocks)
@@ -87,22 +87,22 @@ BEGIN:
 		if err != nil {
 			logger.Error("%v", err)
 		}
-		LastBlockId, err := d.GetBlockID()
+		LastBlockID, err := d.GetBlockID()
 		if err != nil {
 			logger.Error("%v", err)
 		}
-		if LastBlockId-ConfirmedBlockID > 5 {
-			startBlockId = ConfirmedBlockID + 1
+		if LastBlockID-ConfirmedBlockID > 5 {
+			startBlockID = ConfirmedBlockID + 1
 			d.sleepTime = 10
 			s = 0 // 2 минуты отчитываем с начала
 			// count 2 minutes from the beginning
 		}
-		if startBlockId == 0 {
-			startBlockId = LastBlockId - 1
+		if startBlockID == 0 {
+			startBlockID = LastBlockID - 1
 		}
-		logger.Debug("startBlockId: %d / LastBlockId: %d", startBlockId, LastBlockId)
+		logger.Debug("startBlockID: %d / LastBlockID: %d", startBlockID, LastBlockID)
 
-		for blockId := LastBlockId; blockId > startBlockId; blockId-- {
+		for blockID := LastBlockID; blockID > startBlockID; blockID-- {
 
 			// проверим, не нужно ли нам выйти из цикла
 			// check if we have to break the cycle
@@ -110,9 +110,9 @@ BEGIN:
 				break BEGIN
 			}
 
-			logger.Debug("blockId: %d", blockId)
+			logger.Debug("blockID: %d", blockID)
 
-			hash, err := d.Single("SELECT hash FROM block_chain WHERE id = ?", blockId).String()
+			hash, err := d.Single("SELECT hash FROM block_chain WHERE id = ?", blockID).String()
 			if err != nil {
 				logger.Error("%v", err)
 			}
@@ -124,7 +124,7 @@ BEGIN:
 
 			var hosts []string
 			if d.ConfigIni["test_mode"] == "1" {
-				hosts = []string{"localhost:"+consts.TCP_PORT}
+				hosts = []string{"localhost:" + consts.TCP_PORT}
 			} else {
 				hosts, err = d.GetHosts()
 				if err != nil {
@@ -134,10 +134,10 @@ BEGIN:
 
 			ch := make(chan string)
 			for i := 0; i < len(hosts); i++ {
-				host := hosts[i]+":"+consts.TCP_PORT
+				host := hosts[i] + ":" + consts.TCP_PORT
 				logger.Info("host %v", host)
 				go func() {
-					IsReachable(host, blockId, ch)
+					IsReachable(host, blockID, ch)
 				}()
 			}
 			var answer string
@@ -153,22 +153,22 @@ BEGIN:
 				}
 				logger.Info("st0 %v  st1 %v", st0, st1)
 			}
-			exists, err := d.Single("SELECT block_id FROM confirmations WHERE block_id= ?", blockId).Int64()
+			exists, err := d.Single("SELECT block_id FROM confirmations WHERE block_id= ?", blockID).Int64()
 			if exists > 0 {
-				logger.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockId)
-				err = d.ExecSQL("UPDATE confirmations SET good = ?, bad = ?, time = ? WHERE block_id = ?", st1, st0, time.Now().Unix(), blockId)
+				logger.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockID)
+				err = d.ExecSQL("UPDATE confirmations SET good = ?, bad = ?, time = ? WHERE block_id = ?", st1, st0, time.Now().Unix(), blockID)
 				if err != nil {
 					logger.Error("%v", err)
 				}
 			} else {
-				logger.Debug("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( %v, %v, %v, %v )", blockId, st1, st0, time.Now().Unix())
-				err = d.ExecSQL("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( ?, ?, ?, ? )", blockId, st1, st0, time.Now().Unix())
+				logger.Debug("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( %v, %v, %v, %v )", blockID, st1, st0, time.Now().Unix())
+				err = d.ExecSQL("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( ?, ?, ?, ? )", blockID, st1, st0, time.Now().Unix())
 				if err != nil {
 					logger.Error("%v", err)
 				}
 			}
-			logger.Debug("blockId > startBlockId && st1 >= consts.MIN_CONFIRMED_NODES %d>%d && %d>=%d\n", blockId, startBlockId, st1, consts.MIN_CONFIRMED_NODES)
-			if blockId > startBlockId && st1 >= consts.MIN_CONFIRMED_NODES {
+			logger.Debug("blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES %d>%d && %d>=%d\n", blockID, startBlockID, st1, consts.MIN_CONFIRMED_NODES)
+			if blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES {
 				break
 			}
 		}
@@ -180,7 +180,7 @@ BEGIN:
 	logger.Debug("break BEGIN %v", GoroutineName)
 }
 
-func checkConf(host string, blockId int64) string {
+func checkConf(host string, blockID int64) string {
 
 	logger.Debug("host: %v", host)
 	/*tcpAddr, err := net.ResolveTCPAddr("tcp", host)
@@ -208,8 +208,8 @@ func checkConf(host string, blockId int64) string {
 	}
 
 	// в 4-х байтах пишем ID блока, хэш которого хотим получить
-	// record the block ID that we want to recive in 4 bytes 
-	size := utils.DecToBin(blockId, 4)
+	// record the block ID that we want to recive in 4 bytes
+	size := utils.DecToBin(blockID, 4)
 	_, err = conn.Write(size)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
@@ -227,11 +227,12 @@ func checkConf(host string, blockId int64) string {
 	return string(hash)
 }
 
-func IsReachable(host string, blockId int64, ch0 chan string) {
+// IsReachable checks if there is blockID on the host
+func IsReachable(host string, blockID int64, ch0 chan string) {
 	logger.Info("IsReachable %v", host)
 	ch := make(chan string, 1)
 	go func() {
-		ch <- checkConf(host, blockId)
+		ch <- checkConf(host, blockID)
 	}()
 	select {
 	case reachable := <-ch:

@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// UpdFullNodes sends UpdFullNodes transactions
 func UpdFullNodes(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -71,22 +72,22 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockId, err := d.GetBlockID()
+		blockID, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		if blockId == 0 {
-			if d.unlockPrintSleep(utils.ErrInfo("blockId == 0"), d.sleepTime) {
+		if blockID == 0 {
+			if d.unlockPrintSleep(utils.ErrInfo("blockID == 0"), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
 
-		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID()
-		logger.Debug("%v", myWalletId)
+		myStateID, myWalletID, err := d.GetMyStateIDAndWalletID()
+		logger.Debug("%v", myWalletID)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -98,7 +99,7 @@ BEGIN:
 
 		// Есть ли мы в списке тех, кто может генерить блоки
 		// If we are in the list of those who are able to generate the blocks
-		full_node_id, err := d.FindInFullNodes(myStateID, myWalletId)
+		fullNodeID, err := d.FindInFullNodes(myStateID, myWalletID)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -107,10 +108,10 @@ BEGIN:
 			}
 			continue
 		}
-		logger.Debug("full_node_id = %d", full_node_id)
-		if full_node_id == 0 {
+		logger.Debug("fullNodeID = %d", fullNodeID)
+		if fullNodeID == 0 {
 			d.dbUnlock()
-			logger.Debug("full_node_id == 0")
+			logger.Debug("fullNodeID == 0")
 			d.sleepTime = 10 // because 1s is too small for non-full nodes
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
@@ -122,21 +123,21 @@ BEGIN:
 
 		// проверим, прошло ли время с момента последнего обновления
 		// check if the time of the last updating passed
-		upd_full_nodes, err := d.Single("SELECT time FROM upd_full_nodes").Int64()
+		updFullNodes, err := d.Single("SELECT time FROM upd_full_nodes").Int64()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		if curTime-upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD {
+		if curTime-updFullNodes <= consts.UPD_FULL_NODES_PERIOD {
 			if d.unlockPrintSleep(utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO"), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
 
-		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletId, 0)
+		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
 		binSign, err := d.GetBinSign(forSign)
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -146,7 +147,7 @@ BEGIN:
 		}
 		data := utils.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
 		data = append(data, utils.DecToBin(curTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(myWalletId)...)
+		data = append(data, utils.EncodeLengthPlusData(myWalletID)...)
 		data = append(data, utils.EncodeLengthPlusData(0)...)
 		data = append(data, utils.EncodeLengthPlusData([]byte(binSign))...)
 

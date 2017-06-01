@@ -28,11 +28,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	_ "github.com/lib/pq"
 )
 
-var err error
+//var err error
 
+// BlockGenerator generates blocks
 func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -87,18 +87,18 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockId, err := d.GetBlockID()
+		blockID, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		newBlockId := blockId + 1
-		logger.Debug("newBlockId: %v", newBlockId)
+		newBlockID := blockID + 1
+		logger.Debug("newBlockID: %v", newBlockID)
 
-		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID()
-		logger.Debug("%v", myWalletId)
+		myStateID, myWalletID, err := d.GetMyStateIDAndWalletID()
+		logger.Debug("%v", myWalletID)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -133,7 +133,7 @@ BEGIN:
 
 		// Есть ли мы в списке тех, кто может генерить блоки
 		// If we are in the list of those who can generate blocks
-		my_full_node_id, err := d.FindInFullNodes(myStateID, myWalletId)
+		myFullNodeID, err := d.FindInFullNodes(myStateID, myWalletID)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -142,10 +142,10 @@ BEGIN:
 			}
 			continue
 		}
-		logger.Debug("my_full_node_id %d", my_full_node_id)
-		if my_full_node_id == 0 {
+		logger.Debug("myFullNodeID %d", myFullNodeID)
+		if myFullNodeID == 0 {
 			d.dbUnlock()
-			logger.Debug("my_full_node_id == 0")
+			logger.Debug("myFullNodeID == 0")
 			d.sleepTime = 10
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
@@ -179,7 +179,7 @@ BEGIN:
 				}
 				logger.Debug("prevBlockHash %s", prevBlockHash)*/
 
-		sleepTime, err := d.GetSleepTime(myWalletId, myStateID, prevBlock["state_id"], prevBlock["wallet_id"])
+		sleepTime, err := d.GetSleepTime(myWalletID, myStateID, prevBlock["state_id"], prevBlock["wallet_id"])
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -240,10 +240,10 @@ BEGIN:
 			continue BEGIN
 		}
 
-		logger.Debug("blockId %v", blockId)
+		logger.Debug("blockID %v", blockID)
 
 		logger.Debug("blockgeneration begin")
-		if blockId < 1 {
+		if blockID < 1 {
 			logger.Debug("continue")
 			d.dbUnlock()
 			if d.dSleep(d.sleepTime) {
@@ -252,7 +252,7 @@ BEGIN:
 			continue
 		}
 
-		newBlockId = prevBlock["block_id"] + 1
+		newBlockID = prevBlock["block_id"] + 1
 
 		// получим наш приватный нодовский ключ
 		// Recieve our private node key
@@ -273,8 +273,8 @@ BEGIN:
 		//##		 Form the block
 		//#####################################
 
-		if prevBlock["block_id"] >= newBlockId {
-			logger.Debug("continue %d >= %d", prevBlock["block_id"], newBlockId)
+		if prevBlock["block_id"] >= newBlockID {
+			logger.Debug("continue %d >= %d", prevBlock["block_id"], newBlockID)
 			d.dbUnlock()
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
@@ -323,10 +323,10 @@ BEGIN:
 				var data []byte
 				var hash string
 				var txType string
-				var txWalletId string
-				var txCitizenId string
+				var txWalletID string
+				var txCitizenID string
 				var thirdVar string
-				err = rows.Scan(&data, &hash, &txType, &txWalletId, &txCitizenId, &thirdVar)
+				err = rows.Scan(&data, &hash, &txType, &txWalletID, &txCitizenID, &thirdVar)
 				if err != nil {
 					rows.Close()
 					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -368,8 +368,8 @@ BEGIN:
 			// подписываем нашим нод-ключем заголовок блока
 			// sign the heading of a block by our node-key
 			var forSign string
-			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlockHash, Time, myWalletId, myStateID, string(mrklRoot))
-			//			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockId, prevBlock[`hash`], Time, myWalletId, myStateID, string(mrklRoot))
+			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockID, prevBlockHash, Time, myWalletID, myStateID, string(mrklRoot))
+			//			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockID, prevBlock[`hash`], Time, myWalletID, myStateID, string(mrklRoot))
 			logger.Debug("forSign: %v", forSign)
 			//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
 			bytes, err := lib.SignECDSA(nodePrivateKey, forSign)
@@ -385,17 +385,17 @@ BEGIN:
 
 			// готовим заголовок
 			// Prepare the heading
-			newBlockIdBinary := utils.DecToBin(newBlockId, 4)
+			newBlockIDBinary := utils.DecToBin(newBlockID, 4)
 			timeBinary := utils.DecToBin(Time, 4)
-			stateIdBinary := utils.DecToBin(myStateID, 1)
+			stateIDBinary := utils.DecToBin(myStateID, 1)
 
 			// заголовок
 			// heading
 			blockHeader := utils.DecToBin(0, 1)
-			blockHeader = append(blockHeader, newBlockIdBinary...)
+			blockHeader = append(blockHeader, newBlockIDBinary...)
 			blockHeader = append(blockHeader, timeBinary...)
-			lib.EncodeLenInt64(&blockHeader, myWalletId)
-			blockHeader = append(blockHeader, stateIdBinary...)
+			lib.EncodeLenInt64(&blockHeader, myWalletID)
+			blockHeader = append(blockHeader, stateIDBinary...)
 			blockHeader = append(blockHeader, utils.EncodeLengthPlusData(signatureBin)...)
 
 			// сам блок

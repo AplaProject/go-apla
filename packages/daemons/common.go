@@ -20,12 +20,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
 	"github.com/op/go-logging"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -33,7 +31,9 @@ var (
 	logger = logging.MustGetLogger("daemons")
 	/*DaemonCh        chan bool     = make(chan bool, 100)
 	AnswerDaemonCh  chan string   = make(chan string, 100)*/
-	MonitorDaemonCh chan []string = make(chan []string, 100)
+
+	// MonitorDaemonCh is a channel for daemons
+	MonitorDaemonCh = make(chan []string, 100)
 	configIni       map[string]string
 )
 
@@ -66,13 +66,13 @@ func (d *daemon) dSleep(sleep int) bool {
 	return false
 }
 
-func (d *daemon) dPrintSleep(err_ interface{}, sleep int) bool {
+func (d *daemon) dPrintSleep(verr interface{}, sleep int) bool {
 	var err error
-	switch err_.(type) {
+	switch verr.(type) {
 	case string:
-		err = errors.New(err_.(string))
+		err = errors.New(verr.(string))
 	case error:
-		err = err_.(error)
+		err = verr.(error)
 	}
 
 	if err != nil {
@@ -119,6 +119,7 @@ func (d *daemon) unlockPrintSleepInfo(err error, sleep int) bool {
 	return false
 }
 
+// ConfigInit regularly reads config.ini file
 func ConfigInit() {
 	// мониторим config.ini на наличие изменений
 	// monitor config.ini for changes
@@ -129,11 +130,11 @@ func ConfigInit() {
 				utils.Sleep(1)
 				continue
 			}
-			configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
+			confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 			if err != nil {
 				logger.Error("%v", utils.ErrInfo(err))
 			}
-			configIni, err = configIni_.GetSection("default")
+			configIni, err = confIni.GetSection("default")
 			if err != nil {
 				logger.Error("%v", utils.ErrInfo(err))
 			}
@@ -150,6 +151,7 @@ func init() {
 
 }
 
+// CheckDaemonsRestart restarts daemons
 func CheckDaemonsRestart(chBreaker chan bool, chAnswer chan string, goRoutineName string) bool {
 	logger.Debug("CheckDaemonsRestart %v %v", goRoutineName, utils.Caller(2))
 	select {
@@ -162,6 +164,7 @@ func CheckDaemonsRestart(chBreaker chan bool, chAnswer chan string, goRoutineNam
 	return false
 }
 
+// DbConnect returns DB connection
 func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) *utils.DCDB {
 	for {
 		if CheckDaemonsRestart(chBreaker, chAnswer, goRoutineName) {
@@ -170,12 +173,13 @@ func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) 
 		if utils.DB == nil || utils.DB.DB == nil {
 			utils.Sleep(1)
 		} else {
-			return utils.DB
+			break
 		}
 	}
-	return nil
+	return utils.DB
 }
 
+// StartDaemons starts daemons
 func StartDaemons() {
 	utils.DaemonsChans = nil
 	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"CreatingBlockchain": CreatingBlockchain, "BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks, "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection, "UpdFullNodes": UpdFullNodes}
@@ -191,17 +195,17 @@ func StartDaemons() {
 		for _, fns := range daemonsConf {
 			logger.Debug("start daemon %s", fns)
 			fmt.Println("start daemon ", fns)
-			var chBreaker chan bool = make(chan bool, 1)
-			var chAnswer chan string = make(chan string, 1)
+			chBreaker := make(chan bool, 1)
+			chAnswer := make(chan string, 1)
 			utils.DaemonsChans = append(utils.DaemonsChans, &utils.DaemonsChansType{ChBreaker: chBreaker, ChAnswer: chAnswer})
 			go daemonsStart[fns](chBreaker, chAnswer)
 		}
 	} else if configIni["daemons"] != "null" {
 		for dName, fns := range daemonsStart {
 			logger.Debug("start daemon %s", dName)
-			fmt.Println("start daemon ", fns)
-			var chBreaker chan bool = make(chan bool, 1)
-			var chAnswer chan string = make(chan string, 1)
+			//fmt.Println("start daemon ", fns)
+			chBreaker := make(chan bool, 1)
+			chAnswer := make(chan string, 1)
 			utils.DaemonsChans = append(utils.DaemonsChans, &utils.DaemonsChansType{ChBreaker: chBreaker, ChAnswer: chAnswer})
 			go fns(chBreaker, chAnswer)
 		}
@@ -209,6 +213,7 @@ func StartDaemons() {
 
 }
 
+/*
 func ClearDb(ChAnswer chan string, goroutineName string) error {
 
 	// остановим демонов, иначе будет паника, когда таблы обнулятся
@@ -296,3 +301,4 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 	//	go stopdaemons.WaitStopTime()
 	return nil
 }
+*/

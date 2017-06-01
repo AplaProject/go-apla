@@ -18,14 +18,15 @@ package stopdaemons
 
 import (
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/op/go-logging"
 	"os"
-	"github.com/EGaaS/go-egaas-mvp/packages/system"
 )
 
 var log = logging.MustGetLogger("stop_daemons")
 
+// WaitStopTime closes the database and stop daemons
 func WaitStopTime() {
 	var first bool
 	for {
@@ -49,7 +50,7 @@ func WaitStopTime() {
 			fmt.Println("Stop_daemons from DB!")
 			for _, ch := range utils.DaemonsChans {
 				fmt.Println("ch.ChBreaker<-true")
-				ch.ChBreaker<-true
+				ch.ChBreaker <- true
 			}
 			for _, ch := range utils.DaemonsChans {
 				fmt.Println(<-ch.ChAnswer)
