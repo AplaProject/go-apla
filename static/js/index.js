@@ -1592,9 +1592,10 @@ function InitMobileTable() {
 	}
 }
 
-function getMapAddress(coords) {
+function getMapAddress(elem, coords) {
 	getMapGeocode(coords, function(address){
-		console.log(address);
+		elem.val(address);
+		elem.text(address);
 	});
 }
 function getMapGeocode(coords, callback) {

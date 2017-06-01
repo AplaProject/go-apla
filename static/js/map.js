@@ -2531,6 +2531,12 @@ function saveMap() {
 	var points = '"cords":[' + $("#coords").val() + ']}';
 	
 	newCoordsContainer.val(center + zoom + points);
+	
+	if (!$("#" + newCoordsContainer.attr("id") + "_address").length) {
+		$('<div class="form-group"> <label>Address</label><input id="' + newCoordsContainer.attr("id") + '_address' + '" class="form-control" type="text" disabled></div>').insertAfter(newCoordsContainer.parent());
+	}
+	
+	getMapAddress($("#" + newCoordsContainer.attr("id") + "_address"), JSON.parse(newCoordsContainer.val()))
 }
 
 var miniMapNum = 0;
