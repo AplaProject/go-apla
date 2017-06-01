@@ -24,9 +24,10 @@ import (
 // Give the body of the specified block
  * запрос шлет демон blocksCollection и queue_parser_blocks через p.GetBlocks()
 // blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
- */
+*/
 
-func (t *TcpServer) Type7() {
+// Type7 writes the body of the specified block
+func (t *TCPServer) Type7() {
 
 	buf := make([]byte, 4)
 	_, err := t.Conn.Read(buf)
@@ -34,14 +35,14 @@ func (t *TcpServer) Type7() {
 		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	blockId := utils.BinToDec(buf)
-	block, err := t.Single("SELECT data FROM block_chain WHERE id  =  ?", blockId).Bytes()
+	blockID := utils.BinToDec(buf)
+	block, err := t.Single("SELECT data FROM block_chain WHERE id  =  ?", blockID).Bytes()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
 
-	log.Debug("blockId %d", blockId)
+	log.Debug("blockID %d", blockID)
 	log.Debug("block %x", block)
 	err = utils.WriteSizeAndData(block, t.Conn)
 	if err != nil {

@@ -28,6 +28,7 @@ import (
 	"regexp"
 )
 
+// KillPid kills the process with the specified pid
 func KillPid(pid string) error {
 	if utils.DB != nil && utils.DB.DB != nil {
 		err := utils.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())

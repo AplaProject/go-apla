@@ -21,7 +21,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-
+// Stop stops the program
 func Stop() {
 	log.Debug("Stop()")
 	IosLog("Stop()")

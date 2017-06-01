@@ -34,6 +34,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
+// IosLog is reserved
 func IosLog(text string) {
 }
 
@@ -184,10 +185,10 @@ func tcpListener() {
 						//os.Exit(1)
 					} else {
 						go func(conn net.Conn) {
-							t := new(tcpserver.TcpServer)
+							t := new(tcpserver.TCPServer)
 							t.DCDB = db
 							t.Conn = conn
-							t.HandleTcpRequest()
+							t.HandleTCPRequest()
 						}(conn)
 					}
 				}
