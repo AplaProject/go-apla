@@ -227,6 +227,7 @@
 // static/js/elliptic.min.js
 // static/js/index.js
 // static/js/keys.js
+// static/js/map.js
 // static/js/photoEditor/editor.js
 // static/js/triangles.js
 // static/lang/flags/flags.png
@@ -4380,6 +4381,24 @@ func staticJsKeysJs() (*asset, error) {
 	return a, err
 }
 
+// staticJsMapJs reads file data from disk. It returns an error on failure.
+func staticJsMapJs() (*asset, error) {
+	path := "static/js/map.js"
+	name := "static/js/map.js"
+	bytes, err := bindataRead(path, name)
+	if err != nil {
+		return nil, err
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
+	}
+
+	a := &asset{bytes: bytes, info: fi}
+	return a, err
+}
+
 // staticJsPhotoeditorEditorJs reads file data from disk. It returns an error on failure.
 func staticJsPhotoeditorEditorJs() (*asset, error) {
 	path := "static/js/photoEditor/editor.js"
@@ -5397,6 +5416,7 @@ var _bindata = map[string]func() (*asset, error){
 	"static/js/elliptic.min.js": staticJsEllipticMinJs,
 	"static/js/index.js": staticJsIndexJs,
 	"static/js/keys.js": staticJsKeysJs,
+	"static/js/map.js": staticJsMapJs,
 	"static/js/photoEditor/editor.js": staticJsPhotoeditorEditorJs,
 	"static/js/triangles.js": staticJsTrianglesJs,
 	"static/lang/flags/flags.png": staticLangFlagsFlagsPng,
@@ -5723,6 +5743,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"elliptic.min.js": &bintree{staticJsEllipticMinJs, map[string]*bintree{}},
 			"index.js": &bintree{staticJsIndexJs, map[string]*bintree{}},
 			"keys.js": &bintree{staticJsKeysJs, map[string]*bintree{}},
+			"map.js": &bintree{staticJsMapJs, map[string]*bintree{}},
 			"photoEditor": &bintree{nil, map[string]*bintree{
 				"editor.js": &bintree{staticJsPhotoeditorEditorJs, map[string]*bintree{}},
 			}},
