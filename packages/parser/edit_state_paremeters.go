@@ -27,6 +27,7 @@ import (
 Adding state tables should be spelled out in state settings
 */
 
+// EditStateParametersInit initializes EditStateParameters transaction
 func (p *Parser) EditStateParametersInit() error {
 
 	fields := []map[string]string{{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -37,6 +38,7 @@ func (p *Parser) EditStateParametersInit() error {
 	return nil
 }
 
+// EditStateParametersFront checks conditions of EditStateParameters transaction
 func (p *Parser) EditStateParametersFront() error {
 	err := p.generalCheck(`edit_state_parameters`)
 	if err != nil {
@@ -115,6 +117,7 @@ func (p *Parser) EditStateParametersFront() error {
 	return nil
 }
 
+// EditStateParameters proceeds EditStateParameters transaction
 func (p *Parser) EditStateParameters() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"],
@@ -126,12 +129,7 @@ func (p *Parser) EditStateParameters() error {
 	return nil
 }
 
+// EditStateParametersRollback rollbacks EditStateParameters transaction
 func (p *Parser) EditStateParametersRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) EditStateParametersRollbackFront() error {
-
-	return nil
-}
-*/

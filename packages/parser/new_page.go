@@ -22,6 +22,7 @@ import (
 	"strings"
 )
 
+// NewPageInit initializes NewPage transaction
 func (p *Parser) NewPageInit() error {
 
 	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"menu": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -32,6 +33,7 @@ func (p *Parser) NewPageInit() error {
 	return nil
 }
 
+// NewPageFront checks conditions of NewPage transaction
 func (p *Parser) NewPageFront() error {
 
 	err := p.generalCheck(`new_page`)
@@ -68,6 +70,7 @@ func (p *Parser) NewPageFront() error {
 	return nil
 }
 
+// NewPage proceeds NewPage transaction
 func (p *Parser) NewPage() error {
 
 	prefix := p.TxStateIDStr
@@ -82,10 +85,7 @@ func (p *Parser) NewPage() error {
 	return nil
 }
 
+// NewPageRollback rollbacks NewPage transaction
 func (p *Parser) NewPageRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) NewPageRollbackFront() error {
-	return nil
-}*/

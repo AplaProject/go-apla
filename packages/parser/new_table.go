@@ -28,6 +28,7 @@ import (
 Adding state tables should be spelled out in state settings
 */
 
+// NewTableInit initializes NewTable transaction
 func (p *Parser) NewTableInit() error {
 
 	fields := []map[string]string{{"global": "int64"}, {"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
@@ -38,6 +39,7 @@ func (p *Parser) NewTableInit() error {
 	return nil
 }
 
+// NewTableFront checks conditions of NewTable transaction
 func (p *Parser) NewTableFront() error {
 
 	err := p.generalCheck(`add_table`)
@@ -117,6 +119,7 @@ func (p *Parser) NewTableFront() error {
 	return nil
 }
 
+// NewTable proceeds NewTable transaction
 func (p *Parser) NewTable() error {
 
 	tableName := `global_` + p.TxMaps.String["table_name"]
@@ -127,8 +130,8 @@ func (p *Parser) NewTable() error {
 	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
 
 	//citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
-	colsSql := ""
-	colsSql2 := ""
+	colsSQL := ""
+	colsSQL2 := ""
 	sqlIndex := ""
 	for _, data := range cols {
 		colType := ``
@@ -149,18 +152,18 @@ func (p *Parser) NewTable() error {
 			colType = `decimal (30, 0)`
 			colDef = `NOT NULL DEFAULT '0'`
 		}
-		colsSql += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
-		colsSql2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
+		colsSQL += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
+		colsSQL2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
 		if data[2] == "1" {
 			sqlIndex += `CREATE INDEX "` + tableName + `_` + data[0] + `_index" ON "` + tableName + `" (` + data[0] + `);`
 		}
 	}
-	colsSql2 = colsSql2[:len(colsSql2)-1]
+	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
 
 	sql := `CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
 				CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
-				` + colsSql + `
+				` + colsSQL + `
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
@@ -181,7 +184,7 @@ func (p *Parser) NewTable() error {
 		prefix = p.TxStateIDStr
 	}
 	err = p.ExecSQL(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
-		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSql2+`},
+		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSQL2+`},
 		"insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -190,6 +193,7 @@ func (p *Parser) NewTable() error {
 	return nil
 }
 
+// NewTableRollback rollbacks NewTable transaction
 func (p *Parser) NewTableRollback() error {
 
 	err := p.autoRollback()

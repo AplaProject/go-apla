@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// EditWalletInit initializes EditWallet transaction
 func (p *Parser) EditWalletInit() error {
 
 	fields := []map[string]string{{"id": "int64"}, {"spending_contract": "string"},
@@ -43,6 +44,7 @@ func (p *Parser) checkContract(name string) string {
 	return name
 }
 
+// EditWalletFront checks conditions of EditWallet transaction
 func (p *Parser) EditWalletFront() error {
 
 	err := p.generalCheck(`edit_wallet`)
@@ -103,6 +105,7 @@ func (p *Parser) EditWalletFront() error {
 	return nil
 }
 
+// EditWallet proceeds EditWallet transaction
 func (p *Parser) EditWallet() error {
 	var contract string
 
@@ -118,6 +121,7 @@ func (p *Parser) EditWallet() error {
 	return nil
 }
 
+// EditWalletRollback rollbacks EditWallet transaction
 func (p *Parser) EditWalletRollback() error {
 	return p.autoRollback()
 }

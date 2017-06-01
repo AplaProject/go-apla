@@ -30,6 +30,7 @@ var (
 Adding state tables should be spelled out in state settings
 */
 
+// NewStateInit initializes NewState transaction
 func (p *Parser) NewStateInit() error {
 
 	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"public_key": "bytes"}, {"sign": "bytes"}}
@@ -40,6 +41,7 @@ func (p *Parser) NewStateInit() error {
 	return nil
 }
 
+// NewStateGlobal checks if the state or the currency exists
 func (p *Parser) NewStateGlobal(country, currency string) error {
 	if !isGlobal {
 		list, err := utils.DB.GetAllTables()
@@ -63,6 +65,7 @@ func (p *Parser) NewStateGlobal(country, currency string) error {
 	return nil
 }
 
+// NewStateFront checks conditions of NewState transaction
 func (p *Parser) NewStateFront() error {
 	err := p.generalCheck(`new_state`)
 	if err != nil {
@@ -98,6 +101,7 @@ func (p *Parser) NewStateFront() error {
 	return nil
 }
 
+// NewStateMain creates state tables in the database
 func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
 	id, err = p.ExecSQLGetLastInsertID(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
 	if err != nil {
@@ -419,6 +423,7 @@ MenuBack(Welcome)`, sid)
 	return
 }
 
+// NewState proceeds NewState transaction
 func (p *Parser) NewState() error {
 	var pkey string
 	country := string(p.TxMap["state_name"])
@@ -450,6 +455,7 @@ func (p *Parser) NewState() error {
 	return err
 }
 
+// NewStateRollback rollbacks NewState transaction
 func (p *Parser) NewStateRollback() error {
 	id, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
 	if err != nil {
@@ -473,13 +479,13 @@ func (p *Parser) NewStateRollback() error {
 		return p.ErrInfo(err)
 	}
 
-	maxId, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
+	maxID, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	// обновляем AI
 	// update  the AI
-	err = p.SetAI("system_states", maxId+1)
+	err = p.SetAI("system_states", maxID+1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -490,9 +496,3 @@ func (p *Parser) NewStateRollback() error {
 
 	return nil
 }
-
-/*func (p *Parser) NewStateRollbackFront() error {
-
-	return nil
-}
-*/

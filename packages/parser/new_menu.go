@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewMenuInit initializes NewMenu transaction
 func (p *Parser) NewMenuInit() error {
 
 	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
@@ -32,6 +33,7 @@ func (p *Parser) NewMenuInit() error {
 	return nil
 }
 
+// NewMenuFront checks conditions of NewMenu transaction
 func (p *Parser) NewMenuFront() error {
 
 	err := p.generalCheck(`new_menu`)
@@ -64,6 +66,7 @@ func (p *Parser) NewMenuFront() error {
 	return nil
 }
 
+// NewMenu proceeds NewMenu transaction
 func (p *Parser) NewMenu() error {
 
 	prefix := p.TxStateIDStr
@@ -78,10 +81,7 @@ func (p *Parser) NewMenu() error {
 	return nil
 }
 
+// NewMenuRollback rollbacks NewMenu transaction
 func (p *Parser) NewMenuRollback() error {
 	return p.autoRollback()
 }
-
-/*func (p *Parser) NewMenuRollbackFront() error {
-	return nil
-}*/

@@ -23,6 +23,7 @@ import (
 	"time"
 )
 
+// RestoreAccessInit initializes RestoreAccess transaction
 func (p *Parser) RestoreAccessInit() error {
 
 	fields := []map[string]string{{"state_id": "int64"}, {"sign": "bytes"}}
@@ -33,6 +34,7 @@ func (p *Parser) RestoreAccessInit() error {
 	return nil
 }
 
+// RestoreAccessFront checks conditions of RestoreAccess transaction
 func (p *Parser) RestoreAccessFront() error {
 	err := p.generalCheck(`system_restore_access`)
 	if err != nil {
@@ -90,12 +92,13 @@ func (p *Parser) RestoreAccessFront() error {
 	return nil
 }
 
+// RestoreAccess proceeds RestoreAccess transaction
 func (p *Parser) RestoreAccess() error {
-	citizen_id, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
+	citizenID, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	value := `$citizen=` + citizen_id
+	value := `$citizen=` + citizenID
 	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{value, value}, p.TxStateIDStr+"_state_parameters", []string{"name"}, []string{"changing_tables"}, true)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -111,6 +114,7 @@ func (p *Parser) RestoreAccess() error {
 	return nil
 }
 
+// RestoreAccessRollback rollbacks RestoreAccess transaction
 func (p *Parser) RestoreAccessRollback() error {
 	return p.autoRollback()
 }
