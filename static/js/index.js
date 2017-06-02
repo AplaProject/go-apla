@@ -1666,6 +1666,8 @@ $(document).ready(function () {
 
 					if (pts !== 0) {
 						$("#notificationCount").addClass("label label-danger").html(pts);
+					} else {
+						$("#notificationCount").removeClass("label label-danger").html("");
 					}
 				}
 			}
