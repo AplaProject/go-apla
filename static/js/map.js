@@ -2568,6 +2568,11 @@ function miniMap(elem, width, height) {
         if (!mapType) {
             mapType = 'terrain';
         }
+        var mapHeight = $(this).attr('hmap');
+        if (mapHeight)
+            mapHeight += 'px';
+        else
+            mapHeight = height;
         if ($(this).text()) {
             if ($(this).parents("[class*='col-']")) {
                 $(this).addClass("panel");
@@ -2589,7 +2594,7 @@ function miniMap(elem, width, height) {
             var canvas = document.createElement('div');
             canvas.setAttribute("id", "miniMap_" + miniMapNum);
             canvas.style.width = width;
-            canvas.style.height = height;
+            canvas.style.height = mapHeight;
             canvas.style.margin = "0px auto";
             this.appendChild(canvas);
 
@@ -2633,11 +2638,15 @@ function userLocation(elem, width, height) {
         if (!mapType) {
             mapType = 'terrain';
         }
-
+        var mapHeight = $(this).attr('hmap');
+        if (mapHeight)
+            mapHeight += 'px';
+        else
+            mapHeight = height;
 
         canvas.setAttribute("id", id);
         canvas.style.width = width;
-        canvas.style.height = height;
+        canvas.style.height = mapHeight;
         canvas.style.margin = "0px auto";
 
         if (tag !== "textarea") {
