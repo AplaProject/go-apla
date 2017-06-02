@@ -1643,34 +1643,40 @@ $(document).ready(function () {
 			InitMobileHead();
 			InitMobileTable();
 			if ($("#dl_content .notification").length) {
-				var cont = $("#notification");
-				cont.html("");
-				if (cont.length) {
-					$(".notification").attr("class", "list-group").appendTo(cont);
+				var interval = setInterval(function(){
+					$("#dl_content .notification").hide();
+					var cont = $("#notification");
+					//cont.html("");
+					if (cont.length) {
+						//$(".notification").attr("class", "list-group").appendTo(cont);
+						cont.html($(".notification").attr("class", "list-group").html());
 
-					var pts = 0;
+						var pts = 0;
 
-					if (cont.find(".more").length) {
-						pts = parseInt(cont.find(".more").html());
-					} else {
-						pts = cont.find("a.list-group-item").length;
+						if (cont.find(".more").length) {
+							pts = parseInt(cont.find(".more").html());
+						} else {
+							pts = cont.find("a.list-group-item").length;
+						}
+
+						var more = pts - 3;
+
+						if (more <= 0) {
+							cont.find(".more").parent().hide();
+						} else {
+							cont.find(".more").html(pts - 3);
+							cont.find(".more").parent().show();
+						}
+
+						if (pts !== 0) {
+							$("#notificationCount").addClass("label label-danger").html(pts);
+						} else {
+							$("#notificationCount").removeClass("label label-danger").html("");
+						}
+						
+						clearInterval(interval);
 					}
-
-					var more = pts - 3;
-
-					if (more <= 0) {
-						cont.find(".more").parent().hide();
-					} else {
-						cont.find(".more").html(pts - 3);
-						cont.find(".more").parent().show();
-					}
-
-					if (pts !== 0) {
-						$("#notificationCount").addClass("label label-danger").html(pts);
-					} else {
-						$("#notificationCount").removeClass("label label-danger").html("");
-					}
-				}
+				}, 1000)
 			}
 			if ($("[data-count]").length) {
 				countUp();
