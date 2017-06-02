@@ -662,7 +662,13 @@ var stateReload = false;
 			}, 100);
 		});
 		
+		$("#mmenu").on('click', function(){
+			$("#mmenu .mm-panels ul li a:not(.mm-next)").removeClass("mm-selected");
+		});
 		$("#mmenu .mm-panels ul li").on('click', function(){
+			$("#mmenu .mm-panels ul li a:not(.mm-next)").removeClass("mm-selected");
+		});
+		$("#mmenu .mm-panels ul li a:not(.mm-next)").on('click', function(){
 			$("#mmenu .mm-panels ul li a:not(.mm-next)").removeClass("mm-selected");
 		});
 	});
