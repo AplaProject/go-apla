@@ -895,6 +895,7 @@ function login_ok(result) {
 		if (result) {
 			//load_page("home");
 			$("#dl_content").load("content", { tpl_name: 'home' }, function () {
+				load_menu(undefined, 'dashboard_default');
 				NProgressStart.done();
 				updateLanguage("#dl_content .lang");
 			});
