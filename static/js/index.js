@@ -1701,7 +1701,7 @@ $(document).on('keydown', function (e) {
 	if (e.keyCode == 13 && $(".keyCode_13:visible").length) {
 		if (!$(".select2-container--focus").length) {
 			if (!$(".sweet-alert").is(":visible")) {
-				$(".submit:not(:disabled)").click();
+				$(".buttons:visible .submit:not(:disabled)").click();
 			} else {
 				$(".keyCode_13:visible").find(".sweet-alert:visible .confirm").click();
 				$("[data-sweet-alert]").removeClass("whirl standard");

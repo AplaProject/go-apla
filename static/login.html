@@ -684,7 +684,7 @@ $(document).ready(function(){
 });
 
 $(document).on('keydown', function(e){
-	if (e.keyCode == 13 && $(".keyCode_13").length) {
+	/*if (e.keyCode == 13 && $(".keyCode_13").length) {
 		if (!$(".select2-container--focus").length) {
 			if (!$(".sweet-alert").is(":visible")) {
 				$(".start_form:visible").find(".buttons:visible .submit").click();
@@ -694,7 +694,7 @@ $(document).on('keydown', function(e){
 			}
 			return false;
 		}
-	}
+	}*/
 	if (e.keyCode == 8 && $("#back:visible").length && !$("#register_form .form-control:focus").length) {
 		do_register_back();
 	}
