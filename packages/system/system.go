@@ -18,27 +18,28 @@ package system
 
 import (
 	"os"
-//	"time"
+	//	"time"
 	"github.com/go-thrust/thrust"
 )
 
-func finish( exit int, isthrust bool ) {
+func finish(exit int, isthrust bool) {
 	killChildProc()
 	if isthrust {
 		thrust.Exit()
 	}
-//	time.Sleep(1*time.Second)
+	//	time.Sleep(1*time.Second)
 	if exit != 0 {
 		os.Exit(exit)
 	}
-	
+
 }
 
+// Finish closes the program
 func Finish(exit int) {
 	finish(exit, false)
 }
 
+// FinishThrust closes thrust shell program
 func FinishThrust(exit int) {
 	finish(exit, true)
 }
-

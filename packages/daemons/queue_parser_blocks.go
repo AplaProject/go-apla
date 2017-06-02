@@ -36,6 +36,7 @@ import (
  *
  * */
 
+// QueueParserBlocks parses blocks from the queue
 func QueueParserBlocks(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -113,7 +114,7 @@ BEGIN:
 		 */
 		// basic check
 
-		// проверим, укладывается ли блок в лимит 
+		// проверим, укладывается ли блок в лимит
 		// check if the block gets in the rollback_blocks_1 limit
 		if utils.StrToInt64(newBlockData["block_id"]) > utils.StrToInt64(prevBlockData["block_id"])+consts.RB_BLOCKS_1 {
 			d.DeleteQueueBlock(newBlockData["hash_hex"])
@@ -145,12 +146,12 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		blockId := utils.StrToInt64(newBlockData["block_id"])
+		blockID := utils.StrToInt64(newBlockData["block_id"])
 
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		p.GoroutineName = GoroutineName
-		err = p.GetBlocks(blockId, host+":"+consts.TCP_PORT, "rollback_blocks_1", GoroutineName, 7)
+		err = p.GetBlocks(blockID, host+":"+consts.TCP_PORT, "rollback_blocks_1", GoroutineName, 7)
 		if err != nil {
 			logger.Error("v", err)
 			d.DeleteQueueBlock(newBlockData["hash_hex"])

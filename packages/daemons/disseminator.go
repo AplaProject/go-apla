@@ -17,9 +17,9 @@
 package daemons
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"io"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 /*
@@ -30,6 +30,8 @@ import (
 // just send to all who have hashes of block and transaction in nodes_connection
 // if we are not a miner, then send transaction totally, we are not able not send blocks
 // if we are a miner then send only hashes because we have the host where we can upload everything
+
+// Disseminator send hashes of block and transactions
 func Disseminator(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -73,8 +75,8 @@ BEGIN:
 			logger.Error("%v", err)
 		}
 
-		myStateID, myWalletId, err := d.GetMyStateIDAndWalletID();
-		logger.Debug("%v", myWalletId)
+		myStateID, myWalletID, err := d.GetMyStateIDAndWalletID()
+		logger.Debug("%v", myWalletID)
 		if err != nil {
 			logger.Error("%v", err)
 			if d.dSleep(d.sleepTime) {
@@ -102,7 +104,7 @@ BEGIN:
 
 		// Есть ли мы в списке тех, кто может генерить блоки
 		// if we are in the cycle of those who are able to generate blocks
-		full_node_id, err:= d.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myStateID, myWalletId, myStateID, myWalletId).Int64()
+		fullNodeID, err := d.Single("SELECT id FROM full_nodes WHERE final_delegate_state_id = ? OR final_delegate_wallet_id = ? OR state_id = ? OR wallet_id = ?", myStateID, myWalletID, myStateID, myWalletID).Int64()
 		if err != nil {
 			logger.Error("%v", err)
 			if d.dSleep(d.sleepTime) {
@@ -110,7 +112,7 @@ BEGIN:
 			}
 			continue
 		}
-		if full_node_id == 0 {
+		if fullNodeID == 0 {
 			fullNode = false
 		}
 
@@ -149,7 +151,7 @@ BEGIN:
 			 * */
 			// We compose the data for sending
 			toBeSent := []byte{}
-			toBeSent = append(toBeSent, utils.DecToBin(full_node_id, 2)...)
+			toBeSent = append(toBeSent, utils.DecToBin(fullNodeID, 2)...)
 			if len(data) > 0 { // блок // block
 				// если 0, то на приемнике будем читать блок, если = 1 , то сразу хэши тр-ий
 				// if 0, we will read the block on the receiver, if = 1, then immediately will read the hashes of transactions
@@ -278,7 +280,6 @@ BEGIN:
 						}
 						defer conn.Close()
 
-
 						// вначале шлем тип данных, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
 						// at first we send the data type to let the host understand how exactly it has to process the sent data
 						_, err = conn.Write(utils.DecToBin(dataType, 2))
@@ -303,7 +304,7 @@ BEGIN:
 							return
 						}
 
-					}(host+":"+consts.TCP_PORT)
+					}(host + ":" + consts.TCP_PORT)
 				}
 			}
 		}
@@ -422,7 +423,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 		}
 	} else if dataSize == 0 {
 		logger.Debug("dataSize == 0 (%v)", host)
-	} else  {
+	} else {
 		logger.Error("incorrect dataSize  (host : %v)", host)
 	}
 }

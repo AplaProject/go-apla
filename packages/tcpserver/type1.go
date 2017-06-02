@@ -17,16 +17,16 @@
 package tcpserver
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"io"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 /*
  * от disseminator
  */
 
-func (t *TcpServer) Type1() {
+func (t *TCPServer) Type1() {
 	log.Debug("dataType: 1")
 	// размер данных
 	// data size
@@ -55,14 +55,14 @@ func (t *TcpServer) Type1() {
 		 * Блоки не качаем тут, т.к. может быть цепочка блоков, а их качать долго
 		 * тр-ии качаем тут, т.к. они мелкие и точно скачаются за 60 сек
 		 * */
-		// get the list of transactions which belong to the sender from 'disseminator' daemon  
+		// get the list of transactions which belong to the sender from 'disseminator' daemon
 		// do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 		// download the transactions here, because they are small and definitely will be downloaded in 60 sec
 
 		/*
 		 * структура данных: // data structure
 		 * type - 1 байт. 0 - блок, 1 - список тр-ий // type - 1 byte. 0 - block, 1 - list of transactions
-		 * {если type==1}: // {if type==1}: 
+		 * {если type==1}: // {if type==1}:
 		 * <любое кол-во следующих наборов> // <any number of the next sets>
 		 * high_rate - 1 байт // high_rate - 1 byte
 		 * tx_hash - 16 байт // tx_hash - 16 bytes
@@ -75,16 +75,16 @@ func (t *TcpServer) Type1() {
 		 * tx_hash - 16 байт // tx_hash - 16 bytes
 		 * </>
 		 * */
-		blockId, err := t.GetBlockID()
+		blockID, err := t.GetBlockID()
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return
 		}
 		log.Debug("binaryData: %x", binaryData)
 		// full_node_id отправителя, чтобы знать у кого брать данные, когда они будут скачиваться другим демоном
-		// full_node_id of the sender to know where to take a data when it will be downloaded by another daemon 
-		fullNodeId := utils.BinToDecBytesShift(&binaryData, 2)
-		log.Debug("fullNodeId: %d", fullNodeId)
+		// full_node_id of the sender to know where to take a data when it will be downloaded by another daemon
+		fullNodeID := utils.BinToDecBytesShift(&binaryData, 2)
+		log.Debug("fullNodeID: %d", fullNodeID)
 		// если 0 - значит вначале идет инфа о блоке, если 1 - значит сразу идет набор хэшей тр-ий
 		// if 0, it means information about the block goes initially, if 1, it means the set of transactions hashes goes at first
 		newDataType := utils.BinToDecBytesShift(&binaryData, 1)
@@ -92,11 +92,11 @@ func (t *TcpServer) Type1() {
 		if newDataType == 0 {
 			// ID блока, чтобы не скачать старый блок
 			// block id for not to upload the old block
-			newDataBlockId := utils.BinToDecBytesShift(&binaryData, 3)
-			log.Debug("newDataBlockId: %d / blockId: %d", newDataBlockId, blockId)
+			newDataBlockID := utils.BinToDecBytesShift(&binaryData, 3)
+			log.Debug("newDataBlockID: %d / blockID: %d", newDataBlockID, blockID)
 			// нет смысла принимать старые блоки
 			// there is no reason to accept the old blocks
-			if newDataBlockId >= blockId {
+			if newDataBlockID >= blockID {
 				newDataHash := utils.BinToHex(utils.BytesShift(&binaryData, 32))
 				err = t.ExecSQL(`
 						INSERT INTO queue_blocks (
@@ -107,7 +107,7 @@ func (t *TcpServer) Type1() {
 							[hex],
 							?,
 							?
-						) ON CONFLICT DO NOTHING`, newDataHash, fullNodeId, newDataBlockId)
+						) ON CONFLICT DO NOTHING`, newDataHash, fullNodeID, newDataBlockID)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
 					return

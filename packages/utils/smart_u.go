@@ -2042,20 +2042,24 @@ func Select(vars *map[string]string, pars ...string) string {
 	return out + `</select>`
 }
 
+func mapOut(vars *map[string]string, mapClass string, pars []string) string {
+	class := ``
+	more := ``
+	if len(pars) > 1 {
+		class, more = getClass(pars[1])
+	}
+	(*vars)[mapClass] = `1`
+	return fmt.Sprintf(`<div class="%s %s" %s>%s</div>`, mapClass, class, more, pars[0])
+}
+
 // Map returns a map widget
 func Map(vars *map[string]string, pars ...string) string {
-	class := ``
-	if len(pars) > 1 {
-		class = pars[1]
-	}
-	(*vars)[`wimap`] = `1`
-	return fmt.Sprintf(`<div class="wimap %s">%s</div>`, class, pars[0])
+	return mapOut(vars, `wimap`, pars)
 }
 
 // MapPoint returns a map widget with a baloon
 func MapPoint(vars *map[string]string, pars ...string) string {
-	(*vars)[`wimappoint`] = `1`
-	return fmt.Sprintf(`<div class="wimappoint">%s</div>`, pars[0])
+	return mapOut(vars, `wimappoint`, pars)
 }
 
 // MenuGroup returns a group of the menu items

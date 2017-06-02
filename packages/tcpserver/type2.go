@@ -27,7 +27,7 @@ import (
 // from disseminator
  */
 
-func (t *TcpServer) Type2() {
+func (t *TCPServer) Type2() {
 	// размер данных
 	// data size
 	buf := make([]byte, 4)

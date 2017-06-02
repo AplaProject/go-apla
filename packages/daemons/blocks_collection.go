@@ -26,9 +26,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	_ "github.com/lib/pq"
 )
 
+// BlocksCollection collects and parses blocks
 func BlocksCollection(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -110,7 +110,7 @@ BEGIN:
 
 		// если это первый запуск во время инсталяции
 		// if this is the first launch during the installation
-		currentBlockId, err := d.GetBlockID()
+		currentBlockID, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN
@@ -119,19 +119,19 @@ BEGIN:
 		}
 
 		logger.Info("config", config)
-		logger.Info("currentBlockId", currentBlockId)
+		logger.Info("currentBlockID", currentBlockID)
 
 		// на время тестов
 		// for duration of the tests
 		/*if !cur {
-		    currentBlockId = 0
+		    currentBlockID = 0
 		    cur = true
 		}*/
 
 		parser := new(parser.Parser)
 		parser.DCDB = d.DCDB
 		parser.GoroutineName = GoroutineName
-		if currentBlockId == 0 || *utils.StartBlockID > 0 {
+		if currentBlockID == 0 || *utils.StartBlockID > 0 {
 			/*
 			   IsNotExistBlockChain := false
 			   if _, err := os.Stat(*utils.Dir+"/public/blockchain"); os.IsNotExist(err) {
@@ -141,17 +141,17 @@ BEGIN:
 
 				logger.Info("first_load_blockchain=file")
 				//nodeConfig, err := d.GetNodeConfig()
-				blockchain_url := config["first_load_blockchain_url"]
-				if len(blockchain_url) == 0 {
-					blockchain_url = consts.BLOCKCHAIN_URL
+				blockchainURL := config["first_load_blockchain_url"]
+				if len(blockchainURL) == 0 {
+					blockchainURL = consts.BLOCKCHAIN_URL
 				}
-				logger.Debug("blockchain_url: %s", blockchain_url)
+				logger.Debug("blockchainURL: %s", blockchainURL)
 				// возможно сервер отдаст блокчейн не с первой попытки
 				// probably server will not give the blockchain from the first attempt
 				var blockchainSize int64
 				for i := 0; i < 10; i++ {
-					logger.Debug("blockchain_url: %s, i: %d", blockchain_url, i)
-					blockchainSize, err = utils.DownloadToFile(blockchain_url, *utils.Dir+"/public/blockchain", 3600, chBreaker, chAnswer, GoroutineName)
+					logger.Debug("blockchainURL: %s, i: %d", blockchainURL, i)
+					blockchainSize, err = utils.DownloadToFile(blockchainURL, *utils.Dir+"/public/blockchain", 3600, chBreaker, chAnswer, GoroutineName)
 					if err != nil {
 						logger.Error("%v", utils.ErrInfo(err))
 					}
@@ -221,14 +221,14 @@ BEGIN:
 						data := make([]byte, dataSize)
 						file.Read(data)
 						logger.Debug("data %x\n", data)
-						blockId := utils.BinToDec(data[0:5])
-						if *utils.EndBlockID > 0 && blockId == *utils.EndBlockID {
+						blockID := utils.BinToDec(data[0:5])
+						if *utils.EndBlockID > 0 && blockID == *utils.EndBlockID {
 							if d.dPrintSleep(err, d.sleepTime) {
 								break BEGIN
 							}
 							continue BEGIN
 						}
-						logger.Info("blockId", blockId)
+						logger.Info("blockID", blockID)
 						data2 := data[5:]
 						length := utils.DecodeLength(&data2)
 						logger.Debug("length", length)
@@ -236,7 +236,7 @@ BEGIN:
 						blockBin := utils.BytesShift(&data2, length)
 						//logger.Debug("blockBin %x\n", blockBin)
 
-						if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && blockId > *utils.StartBlockID) {
+						if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && blockID > *utils.StartBlockID) {
 
 							logger.Debug("block parsing")
 							// парсинг блока
@@ -357,8 +357,8 @@ BEGIN:
 			continue
 		}
 
-		maxBlockId := int64(1)
-		maxBlockIdHost := ""
+		maxBlockID := int64(1)
+		maxBlockIDHost := ""
 		// получим максимальный номер блока
 		// receive the maximum block number
 		for i := 0; i < len(hosts); i++ {
@@ -388,8 +388,8 @@ BEGIN:
 
 			// в ответ получаем номер блока
 			// obtain the block number as a response
-			blockIdBin := make([]byte, 4)
-			_, err = conn.Read(blockIdBin)
+			blockIDBin := make([]byte, 4)
+			_, err = conn.Read(blockIDBin)
 			if err != nil {
 				conn.Close()
 				if d.dPrintSleep(err, 1) {
@@ -399,12 +399,12 @@ BEGIN:
 			}
 			conn.Close()
 
-			logger.Debug("blockIdBin %x", blockIdBin)
+			logger.Debug("blockIDBin %x", blockIDBin)
 
-			id := utils.BinToDec(blockIdBin)
-			if id > maxBlockId || i == 0 {
-				maxBlockId = id
-				maxBlockIdHost = hosts[i] + ":" + consts.TCP_PORT
+			id := utils.BinToDec(blockIDBin)
+			if id > maxBlockID || i == 0 {
+				maxBlockID = id
+				maxBlockIDHost = hosts[i] + ":" + consts.TCP_PORT
 			}
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				utils.Sleep(1)
@@ -427,36 +427,36 @@ BEGIN:
 			continue BEGIN
 		}
 
-		currentBlockId, err = d.GetBlockID()
+		currentBlockID, err = d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue
 		}
-		logger.Info("currentBlockId", currentBlockId, "maxBlockId", maxBlockId)
-		if maxBlockId <= currentBlockId {
-			if d.unlockPrintSleepInfo(utils.ErrInfo(errors.New("maxBlockId <= currentBlockId")), d.sleepTime) {
+		logger.Info("currentBlockID", currentBlockID, "maxBlockID", maxBlockID)
+		if maxBlockID <= currentBlockID {
+			if d.unlockPrintSleepInfo(utils.ErrInfo(errors.New("maxBlockID <= currentBlockID")), d.sleepTime) {
 				break BEGIN
 			}
 			continue
 		}
 
-		fmt.Printf("\nnode: %s curid=%d maxid=%d\n", maxBlockIdHost, currentBlockId, maxBlockId)
+		fmt.Printf("\nnode: %s curid=%d maxid=%d\n", maxBlockIDHost, currentBlockID, maxBlockID)
 
 		/////----///////
 		// в цикле собираем блоки, пока не дойдем до максимального
 		// we collect the blocks during the cycle, until we reach the maximum one
-		for blockId := currentBlockId + 1; blockId < maxBlockId+1; blockId++ {
+		for blockID := currentBlockID + 1; blockID < maxBlockID+1; blockID++ {
 			d.UpdMainLock()
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 				d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime)
 				break BEGIN
 			}
 
-			// качаем тело блока с хоста maxBlockIdHost
-			// download the body of the block from the host maxBlockIdHost
-			binaryBlock, err := utils.GetBlockBody(maxBlockIdHost, blockId, consts.DATA_TYPE_BLOCK_BODY)
+			// качаем тело блока с хоста maxBlockIDHost
+			// download the body of the block from the host maxBlockIDHost
+			binaryBlock, err := utils.GetBlockBody(maxBlockIDHost, blockID, consts.DATA_TYPE_BLOCK_BODY)
 
 			if len(binaryBlock) == 0 {
 				// баним на 1 час хост, который дал нам пустой блок, хотя должен был дать все до максимального
@@ -475,11 +475,11 @@ BEGIN:
 			// распарсим заголовок блока
 			// parse the heading of a block
 			blockData := utils.ParseBlockHeader(&binaryBlock)
-			logger.Info("blockData: %v, blockId: %v", blockData, blockId)
+			logger.Info("blockData: %v, blockID: %v", blockData, blockID)
 
 			// размер блока не может быть более чем max_block_size
 			// the size of a block couln't be more then max_block_size
-			if currentBlockId > 1 {
+			if currentBlockID > 1 {
 				if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
 					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), consts.MAX_BLOCK_SIZE))
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -489,10 +489,10 @@ BEGIN:
 				}
 			}
 
-			logger.Debug("currentBlockId %v", currentBlockId)
+			logger.Debug("currentBlockID %v", currentBlockID)
 
-			if blockData.BlockId != blockId {
-				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockId  %v > %v`, blockData.BlockId, blockId))
+			if blockData.BlockId != blockID {
+				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockID  %v > %v`, blockData.BlockId, blockID))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -502,8 +502,8 @@ BEGIN:
 			// нам нужен хэш предыдущего блока, чтобы проверить подпись
 			// we need the hash of the previous block, to check the signature
 			prevBlockHash := ""
-			if blockId > 1 {
-				prevBlockHash, err = d.Single("SELECT hash FROM block_chain WHERE id = ?", blockId-1).String()
+			if blockID > 1 {
+				prevBlockHash, err = d.Single("SELECT hash FROM block_chain WHERE id = ?", blockID-1).String()
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
@@ -519,7 +519,7 @@ BEGIN:
 
 			first :=
 				false
-			if blockId == 1 {
+			if blockID == 1 {
 				first = true
 			}
 			// нам нужен меркель-рут текущего блока
@@ -564,7 +564,7 @@ BEGIN:
 			// in other words while the signature with prevBlockHash is incorrect, while there is something in $error
 			if err != nil {
 				logger.Error("%v", utils.ErrInfo(err))
-				if blockId < 1 {
+				if blockID < 1 {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
@@ -572,10 +572,10 @@ BEGIN:
 				}
 				// нужно привести данные в нашей БД в соответствие с данными у того, у кого качаем более свежий блок
 				// it is necessary to make data in our database according with the data of the one who has the most recent block which we download
-				err := parser.GetBlocks(blockId-1, maxBlockIdHost, "rollback_blocks_2", GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
+				err := parser.GetBlocks(blockID-1, maxBlockIDHost, "rollback_blocks_2", GoroutineName, consts.DATA_TYPE_BLOCK_BODY)
 				if err != nil {
 					logger.Error("%v", err)
-					d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))
+					d.NodesBan(fmt.Sprintf(`blockID: %v / %v`, blockID, err))
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
@@ -584,7 +584,7 @@ BEGIN:
 
 			} else {
 
-				logger.Info("plug found blockId=%v\n", blockId)
+				logger.Info("plug found blockID=%v\n", blockID)
 
 				utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
@@ -597,35 +597,9 @@ BEGIN:
 				}
 				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
-								//var transactions []byte
-								utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
-								count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
-								if err != nil {
-									utils.WriteSelectiveLog(err)
-									if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-										break BEGIN
-									}
-									continue BEGIN
-								}
-								for rows.Next() {
-									var data []byte
-									err = rows.Scan(&data)
-									utils.WriteSelectiveLog(utils.BinToHex(data))
-									if err != nil {
-										rows.Close()
-										if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-											break BEGIN
-										}
-										continue BEGIN
-									}
-									//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
-								}
-								rows.Close()
-								if len(transactions) > 0 {
-									// отмечаем, что эти тр-ии теперь нужно проверять по новой
-				// mark that we have to check this transaction one more time
-									utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-									affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+									//var transactions []byte
+									utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
+									count, err := d.Query("SELECT data FROM transactions WHERE verified = 1 AND used = 0")
 									if err != nil {
 										utils.WriteSelectiveLog(err)
 										if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -633,15 +607,41 @@ BEGIN:
 										}
 										continue BEGIN
 									}
-									utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-									// откатываем по фронту все свежие тр-ии
-				// roll back all recent transactions on a front
-									/*parser.BinaryData = transactions
-									err = parser.ParseDataRollbackFront(false)
-									if err != nil {
-										utils.Sleep(1)
-										continue BEGIN
-									}*/
+									for rows.Next() {
+										var data []byte
+										err = rows.Scan(&data)
+										utils.WriteSelectiveLog(utils.BinToHex(data))
+										if err != nil {
+											rows.Close()
+											if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+												break BEGIN
+											}
+											continue BEGIN
+										}
+										//transactions = append(transactions, utils.EncodeLengthPlusData(data)...)
+									}
+									rows.Close()
+									if len(transactions) > 0 {
+										// отмечаем, что эти тр-ии теперь нужно проверять по новой
+					// mark that we have to check this transaction one more time
+										utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+										affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+										if err != nil {
+											utils.WriteSelectiveLog(err)
+											if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+												break BEGIN
+											}
+											continue BEGIN
+										}
+										utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+										// откатываем по фронту все свежие тр-ии
+					// roll back all recent transactions on a front
+										/*parser.BinaryData = transactions
+										err = parser.ParseDataRollbackFront(false)
+										if err != nil {
+											utils.Sleep(1)
+											continue BEGIN
+										}*/
 				/*}*/
 			}
 
@@ -667,7 +667,7 @@ BEGIN:
 			if err != nil {
 				logger.Error("%v", err)
 				parser.BlockError(err)
-				d.NodesBan(fmt.Sprintf(`blockId: %v / %v`, blockId, err))
+				d.NodesBan(fmt.Sprintf(`blockID: %v / %v`, blockID, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}

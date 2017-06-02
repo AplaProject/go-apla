@@ -49,6 +49,7 @@ import (
 	"github.com/op/go-logging"
 )
 
+// FileAsset returns the body of the file
 func FileAsset(name string) ([]byte, error) {
 
 	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.`+utils.LogoExt {
@@ -60,6 +61,7 @@ func FileAsset(name string) ([]byte, error) {
 	return static.Asset(name)
 }
 
+// Start starts the main code of the program
 func Start(dir string, thrustWindowLoder *window.Window) {
 
 	var err error
@@ -481,7 +483,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}()
 
 	// ожидает появления свежих записей в чате, затем ждет появления коннектов
-	// waits for new records in chat, then waits for connect 
+	// waits for new records in chat, then waits for connect
 	// (заносятся из демеона connections и от тех, кто сам подключился к ноде)
 	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
 	// go utils.ChatOutput(utils.ChatNewTx)

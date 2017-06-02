@@ -1,11 +1,12 @@
 package daemons
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"os"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
+// CreatingBlockchain writes blockchain
 func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -32,7 +33,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 		return
 	}
 
-	BEGIN:
+BEGIN:
 	for {
 		logger.Info(GoroutineName)
 		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
@@ -43,7 +44,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 			break BEGIN
 		}
 
-		curBlockId, err := d.GetBlockID()
+		curBlockID, err := d.GetBlockID()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
@@ -53,14 +54,14 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 
 		// пишем свежие блоки в резервный блокчейн
 		// record the newest blocks in reserve blockchain
-		endBlockId, err := utils.GetEndBlockID()
+		endBlockID, err := utils.GetEndBlockID()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 		}
-		logger.Debug("curBlockId: %v / endBlockId: %v", curBlockId, endBlockId)
-		if curBlockId-consts.COUNT_BLOCK_BEFORE_SAVE > endBlockId {
+		logger.Debug("curBlockID: %v / endBlockID: %v", curBlockID, endBlockID)
+		if curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE > endBlockID {
 			file, err := os.OpenFile(*utils.Dir+"/public/blockchain", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 			if err != nil {
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -73,7 +74,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 					FROM block_chain
 					WHERE id > ? AND id <= ?
 					ORDER BY id
-					`), endBlockId, curBlockId-consts.COUNT_BLOCK_BEFORE_SAVE )
+					`), endBlockID, curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE)
 			if err != nil {
 				file.Close()
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {

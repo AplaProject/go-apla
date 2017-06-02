@@ -26,6 +26,7 @@ import (
  * */
 // take the transactions from the turn and process them
 
+// QueueParserTx parses transaction from the queue
 func QueueParserTx(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -75,15 +76,15 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockId, err := d.GetBlockID()
+		blockID, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		if blockId == 0 {
-			if d.unlockPrintSleep(utils.ErrInfo("blockId == 0"), d.sleepTime) {
+		if blockID == 0 {
+			if d.unlockPrintSleep(utils.ErrInfo("blockID == 0"), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
