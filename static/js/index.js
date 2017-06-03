@@ -1592,9 +1592,23 @@ function InitMobileTable() {
 		});
 	}
 }
+function autoUpdate(id, period) {
+	var body = $("#auto" + id + "body").html();
+	if (body)
+		$.post('template?page=body', { body: body },
+			function (data) {
+				if (data == '') {
+					return;
+				}
+				if ($("#auto" + id)) {
+					$('#auto' + id).html(data);
+					setTimeout(function () { autoUpdate(id, period); }, period * 1000);
+				}
+			}, "html");
+}
 
 function getMapAddress(elem, coords) {
-	getMapGeocode(coords, function(address){
+	getMapGeocode(coords, function (address) {
 		elem.val(address);
 		elem.text(address);
 	});
@@ -1602,10 +1616,10 @@ function getMapAddress(elem, coords) {
 function getMapGeocode(coords, callback) {
 	var latlng = {};
 	var geocoder = new google.maps.Geocoder;
-	
-	latlng = {lat: parseFloat(coords.cords[0][0]), lng: parseFloat(coords.cords[0][1])};
-	
-	geocoder.geocode({'location': latlng}, function(results, status) {
+
+	latlng = { lat: parseFloat(coords.cords[0][0]), lng: parseFloat(coords.cords[0][1]) };
+
+	geocoder.geocode({ 'location': latlng }, function (results, status) {
 		if (status === 'OK') {
 			if (results[1]) {
 				callback(results[1].formatted_address);
@@ -1643,7 +1657,7 @@ $(document).ready(function () {
 			InitMobileHead();
 			InitMobileTable();
 			if ($("#dl_content .notification").length) {
-				var interval = setInterval(function(){
+				var interval = setInterval(function () {
 					$("#dl_content .notification").hide();
 					var cont = $("#notification");
 					//cont.html("");
@@ -1673,7 +1687,7 @@ $(document).ready(function () {
 						} else {
 							$("#notificationCount").removeClass("label label-danger").html("");
 						}
-						
+
 						clearInterval(interval);
 					}
 				}, 1000)

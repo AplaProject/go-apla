@@ -154,7 +154,9 @@ func init() {
 		`BlockInfo`: BlockInfo, `Back`: Back, `ListVal`: ListVal, `Tag`: Tag, `BtnContract`: BtnContract,
 		`Form`: Form, `FormEnd`: FormEnd, `Label`: Label, `Legend`: Legend, `Select`: Select, `Param`: Param, `Mult`: Mult,
 		`Money`: Money, `Source`: Source, `Val`: Val, `Lang`: LangRes, `LangJS`: LangJS, `InputDate`: InputDate,
-		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack, `WhiteMobileBg`: WhiteMobileBg, `Bin2Hex`: Bin2Hex, `MessageBoard`: MessageBoard,
+		`MenuGroup`: MenuGroup, `MenuEnd`: MenuEnd, `MenuItem`: MenuItem, `MenuPage`: MenuPage, `MenuBack`: MenuBack,
+		`WhiteMobileBg`: WhiteMobileBg, `Bin2Hex`: Bin2Hex, `MessageBoard`: MessageBoard, `AutoUpdate`: AutoUpdate,
+		`AutoUpdateEnd`: AutoUpdateEnd, `Include`: Include,
 	})
 }
 
@@ -717,6 +719,52 @@ func GetList(vars *map[string]string, pars ...string) string {
 	(*vars)[pars[0]+`_list`] = strings.Join(list, `|`)
 	(*vars)[pars[0]+`_columns`] = strings.Join(cols, `|`)
 	return ``
+}
+
+// AutoUpdate reloads inner commands each pars[0] seconds
+func AutoUpdate(vars *map[string]string, pars ...string) string {
+	time := StrToInt(pars[0])
+	if time == 0 {
+		time = 10
+	}
+	(*vars)[`auto_time`] = IntToStr(time)
+	(*vars)[`auto_loop`] = `1`
+	if len((*vars)[`auto_id`]) > 0 {
+		(*vars)[`auto_id`] = IntToStr(StrToInt((*vars)[`auto_id`]) + 1)
+	} else {
+		(*vars)[`auto_id`] = `1`
+	}
+	return fmt.Sprintf(`<div id="auto%s">`, (*vars)[`auto_id`])
+}
+
+// AutoUpdateEnd must be used with AutoUpdate for text processing
+func AutoUpdateEnd(vars *map[string]string, pars ...string) (out string) {
+	out = fmt.Sprintf(`</div><div id="auto%sbody" style="display:none;">%s</div>
+<script language="JavaScript" type="text/javascript">
+setTimeout( function(){ autoUpdate(%[1]s, %[3]s); }, %[3]s000 );
+</script>`, (*vars)[`auto_id`], (*vars)[`auto_body`], (*vars)[`auto_time`])
+	return
+}
+
+// Include returns the another template page
+func Include(vars *map[string]string, pars ...string) string {
+	params := make(map[string]string)
+	for i, val := range pars {
+		if i > 0 {
+			lr := strings.SplitN(val, `=`, 2)
+			if len(lr) == 2 {
+				params[lr[0]] = lr[1]
+			}
+		}
+	}
+	//	page := (*vars)[`page`]
+	out, err := CreateHTMLFromTemplate(pars[0], StrToInt64((*vars)[`citizen`]), StrToInt64((*vars)[`state_id`]),
+		&params)
+	if err != nil {
+		out = err.Error()
+	}
+	//	(*vars)[`page`] = page
+	return out
 }
 
 // ForList emulates for operator in text processing

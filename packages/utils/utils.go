@@ -189,14 +189,14 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
 	// распарсим заголовок блока // parse the heading of a block
 	/*
-		Заголовок // the heading
-		TYPE (0-блок, 1-тр-я)        1 // TYPE(0-block, 1-transaction)
-		BLOCK_ID   				       4
-		TIME       					       4
-		WALLET_ID                         1-8
-		state_id                              1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-Далее - тело блока (Тр-ии) // further is body block (transaction)
+			Заголовок // the heading
+			TYPE (0-блок, 1-тр-я)        1 // TYPE(0-block, 1-transaction)
+			BLOCK_ID   				       4
+			TIME       					       4
+			WALLET_ID                         1-8
+			state_id                              1
+			SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+	Далее - тело блока (Тр-ии) // further is body block (transaction)
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
@@ -1422,7 +1422,7 @@ func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 		return ErrInfo(err)
 	}
 	// далее шлем сами данные
-	// further send data itself 
+	// further send data itself
 	if len(binaryData) > 0 {
 		/*if len(binaryData) > 500000 {
 			ioutil.WriteFile("WriteSizeAndData-7-block-"+IntToStr(len(binaryData))+string(DSha256(binaryData)), binaryData, 0644)
@@ -1587,14 +1587,19 @@ func DecodeLength(buf *[]byte) (ret int64) {
 
 // CreateHTMLFromTemplate gets the template of the page from the table and proceeds it
 func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[string]string) (string, error) {
+	var data string
+	var err error
 	query := `SELECT value FROM "` + Int64ToStr(stateID) + `_pages" WHERE name = ?`
 	if (*params)[`global`] == `1` {
 		query = `SELECT value FROM global_pages WHERE name = ?`
 	}
-
-	data, err := DB.Single(query, page).String()
-	if err != nil {
-		return "", err
+	if page == `body` && len((*params)[`autobody`]) > 0 {
+		data = (*params)[`autobody`]
+	} else {
+		data, err = DB.Single(query, page).String()
+		if err != nil {
+			return "", err
+		}
 	}
 	/*	qrx := regexp.MustCompile(`CitizenId`)
 		data = qrx.ReplaceAllString(data, Int64ToStr(citizenId))

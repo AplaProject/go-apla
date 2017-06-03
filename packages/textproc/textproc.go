@@ -266,6 +266,7 @@ func Process(input string, vars *map[string]string) (out string) {
 	key := make([]rune, 0, 128)
 	value := make([]rune, 0, 128)
 	forbody := make([]rune, 0, 1024)
+	autobody := make([]rune, 0, 1024)
 	for off, ch := range input {
 		if (*vars)[`for_loop`] == `1` {
 			if off+10 < len(input) && input[off:off+10] == `ForListEnd` {
@@ -275,6 +276,16 @@ func Process(input string, vars *map[string]string) (out string) {
 			} else {
 				forbody = append(forbody, ch)
 				continue
+			}
+		}
+		if (*vars)[`auto_loop`] == `1` {
+			if off+13 < len(input) && input[off:off+13] == `AutoUpdateEnd` {
+				(*vars)[`auto_body`] = string(autobody)
+				autobody = autobody[:0]
+				(*vars)[`auto_loop`] = `0`
+			} else {
+				autobody = append(autobody, ch)
+				//	continue
 			}
 		}
 		if isMap > 0 {
