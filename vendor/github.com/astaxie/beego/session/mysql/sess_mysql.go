@@ -46,9 +46,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/session"
+	"github.com/EGaaS/go-egaas-mvp/vendor/github.com/astaxie/beego/session"
 
-	_ "github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/go-sql-driver/mysql"
+	_ "github.com/EGaaS/go-egaas-mvp/vendor/github.com/go-sql-driver/mysql"
 )
 
 var mysqlpder = &MysqlProvider{}

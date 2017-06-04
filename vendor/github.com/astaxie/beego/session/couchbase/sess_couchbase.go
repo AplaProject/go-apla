@@ -39,7 +39,7 @@ import (
 
 	"github.com/couchbaselabs/go-couchbase"
 
-	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/session"
+	"github.com/EGaaS/go-egaas-mvp/vendor/github.com/astaxie/beego/session"
 )
 
 var couchbpder = &CouchbaseProvider{}
