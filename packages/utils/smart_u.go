@@ -240,10 +240,12 @@ func LangJS(vars *map[string]string, pars ...string) string {
 
 func ifValue(val string) bool {
 	var sep string
-	for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
-		if strings.Index(val, item) >= 0 {
-			sep = item
-			break
+	if strings.Index(val, `;base64`) < 0 {
+		for _, item := range []string{`==`, `!=`, `<=`, `>=`, `<`, `>`} {
+			if strings.Index(val, item) >= 0 {
+				sep = item
+				break
+			}
 		}
 	}
 	cond := []string{val}
