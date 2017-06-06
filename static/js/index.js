@@ -439,6 +439,10 @@ function clearTempMenu() {
 var latestMenu = '';
 var curMenu = 'main_menu';
 
+function backMenu() {
+	curMenu = 'menu_default';
+}
+
 function ajaxMenu(page, parameters, customFunc) {
 	$.ajax({
 		url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
@@ -501,7 +505,7 @@ function ajaxMenu(page, parameters, customFunc) {
 					$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
 				} else {
 					$("#ultemporary").remove();
-					$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
+					$("#mmenu-panel li:first").next().append('<ul id="ul' + name + '">' + data + '</ul>');
 				}
 				updateLanguage($("#ul" + name + ' .lang'));
 				MenuAPI.initPanels($("#ul" + name));
@@ -531,6 +535,8 @@ function ajaxMenu(page, parameters, customFunc) {
 				else
 					$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
 			}
+			$(".mm-navbar-top .mm-title").attr('onclick', 'backMenu()');
+			$(".mm-navbar-top .mm-prev").attr('onclick', 'backMenu()');
 		}
 	});
 }
