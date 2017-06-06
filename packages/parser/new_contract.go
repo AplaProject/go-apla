@@ -24,23 +24,25 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 type NewContractParser struct {
 	*Parser
+	NewContract *tx.NewContract
 }
 
 func (p *NewContractParser) Init() error {
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newContract := &tx.NewContract{}
+	if err := msgpack.Unmarshal(p.BinaryData, newContract); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewContract = newContract
 	return nil
 }
 
 func (p *NewContractParser) Validate() error {
-	err := p.generalCheck(`new_contract`)
+	err := p.generalCheck(`new_contract`, &p.NewContract.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -49,10 +51,10 @@ func (p *NewContractParser) Validate() error {
 	// ...
 
 	// Check InputData
-	name := p.TxMaps.String["name"]
+	name := p.EditContract.Name
 	if off := strings.IndexByte(name, '#'); off > 0 {
-		p.TxMap["name"] = []byte(name[:off])
-		p.TxMaps.String["name"] = name[:off]
+		p.EditContract.Name = []byte(name[:off])
+		p.EditContract.Name = name[:off]
 		address := lib.StringToAddress(name[off+1:])
 		if address == 0 {
 			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, name[off+1:]))
@@ -66,43 +68,42 @@ func (p *NewContractParser) Validate() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], name, p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewContract.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.NewContract.Global, p.NewContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	if len(p.NewContract.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.NewContract.Conditions), uint32(p.NewContract.UserID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
-	if exist, err := p.Single(`select id from "`+prefix+"_smart_contracts"+`" where name=?`, p.TxMap["name"]).Int64(); err != nil {
+	if exist, err := p.Single(`select id from "`+prefix+"_smart_contracts"+`" where name=?`, p.NewContract.Name).Int64(); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {
-		return p.ErrInfo(fmt.Sprintf("The contract %s already exists", p.TxMap["name"]))
+		return p.ErrInfo(fmt.Sprintf("The contract %s already exists", p.NewContract.Name))
 	}
 	return nil
 }
 
 func (p *NewContractParser) Action() error {
 
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.NewContract.Global, p.NewContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
 	var wallet int64
-	if wallet = p.TxCitizenID; wallet == 0 {
+	if wallet = p.NewContract.UserID; wallet == 0 {
 		wallet = p.TxWalletID
 	}
-	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, 0)
+	root, err := smart.CompileBlock(p.NewContract.Value, prefix, false, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -111,7 +112,7 @@ func (p *NewContractParser) Action() error {
 	}
 
 	tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
-		[]interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"],
+		[]interface{}{p.NewContract.Name, p.NewContract.Value, p.NewContract.Conditions,
 			wallet}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)

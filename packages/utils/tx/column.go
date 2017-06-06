@@ -1,5 +1,7 @@
 package tx
 
+import "fmt"
+
 // Новая колонка в реестре
 type NewColumn struct {
 	Header
@@ -16,4 +18,8 @@ type EditColumn struct {
 	TableName   string
 	ColumnName  string
 	Permissions string
+}
+
+func (e EditColumn) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.TableName, e.ColumnName, e.Permissions)
 }

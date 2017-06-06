@@ -19,36 +19,27 @@ package parser
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 // общая проверка для всех _front
-func (p *Parser) generalCheck(name string) error {
+func (p *Parser) generalCheck(name string, header *tx.Header) error {
 	log.Debug("%s", p.TxMap)
-	if !utils.CheckInputData(p.TxMap["wallet_id"], "int64") {
-		return utils.ErrInfoFmt("incorrect wallet_id")
-	}
-	if !utils.CheckInputData(p.TxMap["citizen_id"], "int64") {
-		return utils.ErrInfoFmt("incorrect citizen_id")
-	}
-	if !utils.CheckInputData(p.TxMap["time"], "int") {
-		return utils.ErrInfoFmt("incorrect time")
-	}
-
 	// проверим, есть ли такой юзер и заодно получим public_key
-	if p.TxMaps.Int64["type"] == utils.TypeInt("DLTTransfer") || p.TxMaps.Int64["type"] == utils.TypeInt("NewState") || p.TxMaps.Int64["type"] == utils.TypeInt("DLTChangeHostVote") || p.TxMaps.Int64["type"] == utils.TypeInt("ChangeNodeKeyDLT") || p.TxMaps.Int64["type"] == utils.TypeInt("CitizenRequest") || p.TxMaps.Int64["type"] == utils.TypeInt("UpdFullNodes") {
+	txType := int64(header.Type)
+	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
 		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 		log.Debug("datausers", data)
 		if len(data["public_key_0"]) == 0 {
-			if len(p.TxMap["public_key"]) == 0 {
+			if len(header.PublicKey) == 0 {
 				return utils.ErrInfoFmt("incorrect public_key")
 			}
 			// возможно юзер послал ключ с тр-ией
-			log.Debug("pubkey %s", p.TxMap["public_key"])
-			log.Debug("pubkey %x", p.TxMap["public_key"])
-			walletID, err := p.GetWalletIdByPublicKey(p.TxMap["public_key"])
+			log.Debug("pubkey %x", header.PublicKey)
+			walletID, err := p.GetWalletIdByPublicKey(header.PublicKey)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -56,14 +47,14 @@ func (p *Parser) generalCheck(name string) error {
 			if walletID == 0 {
 				return utils.ErrInfoFmt("incorrect wallet_id or public_key")
 			}
-			p.PublicKeys = append(p.PublicKeys, utils.HexToBin(p.TxMap["public_key"]))
+			p.PublicKeys = append(p.PublicKeys, header.PublicKey)
 		} else {
 			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
 			log.Debug("data[public_key_0]", data["public_key_0"])
 		}
 	} else {
-		log.Debug(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = %d`, p.TxCitizenID)
-		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.Int64ToStr(p.TxCitizenID)).String()
+		log.Debug(`SELECT * FROM "`+utils.Int64ToStr(header.StateID)+`_citizens" WHERE id = %d`, header.UserID)
+		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", header.UserID).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

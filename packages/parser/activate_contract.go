@@ -21,51 +21,52 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/shopspring/decimal"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type ActivateContractParser struct {
 	*Parser
+	ActivateContract *tx.ActivateContract
 }
 
 func (p *ActivateContractParser) Init() error {
-	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	activateContract := &tx.ActivateContract{}
+	if err := msgpack.Unmarshal(p.BinaryData, activateContract); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.ActivateContract = activateContract
 	return nil
 }
 
 func (p *ActivateContractParser) Validate() error {
-	err := p.generalCheck(`activate_contract`)
+	err := p.generalCheck(`activate_contract`, &p.ActivateContract.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID,
-		p.TxStateID, p.TxMap["global"], p.TxMap["id"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.ActivateContract.ForSign(), p.ActivateContract.Header.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.ActivateContract.Global, p.ActivateContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	if len(p.TxMaps.String["id"]) == 0 {
+	if len(p.ActivateContract.Id) == 0 {
 		return p.ErrInfo("incorrect contract id")
 	}
-	if p.TxMaps.String["id"][0] > '9' {
-		p.TxMaps.String["id"], err = p.Single(`SELECT id FROM "`+prefix+`_smart_contracts" WHERE name = ?`, p.TxMaps.String["id"]).String()
-		if len(p.TxMaps.String["id"]) == 0 {
+	if p.ActivateContract.Id[0] > '9' {
+		p.ActivateContract.Id, err = p.Single(`SELECT id FROM "`+prefix+`_smart_contracts" WHERE name = ?`, p.ActivateContract.Id).String()
+		if len(p.ActivateContract.Id) == 0 {
 			return p.ErrInfo("incorrect contract name")
 		}
 	}
-	active, err := p.Single(`SELECT active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+	active, err := p.Single(`SELECT active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.ActivateContract.Id).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -86,9 +87,9 @@ func (p *ActivateContractParser) Validate() error {
 }
 
 func (p *ActivateContractParser) Action() error {
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.ActivateContract.Global, p.ActivateContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
 	wallet := p.TxWalletID
 	if wallet == 0 {
@@ -104,10 +105,10 @@ func (p *ActivateContractParser) Action() error {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`active`}, []interface{}{1}, prefix+`_smart_contracts`, []string{`id`},
-		[]string{p.TxMaps.String["id"]}, true); err != nil {
+		[]string{p.ActivateContract.Id}, true); err != nil {
 		return err
 	}
-	smart.ActivateContract(utils.StrToInt64(p.TxMaps.String["id"]), prefix, true)
+	smart.ActivateContract(utils.StrToInt64(p.ActivateContract.Id), prefix, true)
 	return nil
 }
 

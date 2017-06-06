@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -48,6 +49,18 @@ type ParserInterface interface {
 	Rollback() error
 }
 
+func GetTablePrefix(global string, stateId int64) (string, error) {
+	globalInt, err := strconv.Atoi(global)
+	if err != nil {
+		return "", err
+	}
+	stateIdStr := utils.Int64ToStr(stateId)
+	if globalInt == 1 {
+		return "global", nil
+	}
+	return stateIdStr, nil
+}
+
 func GetParser(p *Parser, txType string) ParserInterface {
 	switch txType {
 	case "FirstBlock":
@@ -71,11 +84,11 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "EditMenu":
 		return &EditMenuParser{p}
 	case "EditContract":
-		return &EditContractParser{p}
+		return &EditContractParser{p, nil}
 	case "NewContract":
-		return &NewContractParser{p}
+		return &NewContractParser{p, nil}
 	case "EditColumn":
-		return &EditColumnParser{p}
+		return &EditColumnParser{p, nil}
 	case "EditTable":
 		return &EditTableParser{p}
 	case "EditStateParameters":
@@ -89,7 +102,7 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "ChangeNodeKeyDLT":
 		return &ChangeNodeKeyDLTParser{p}
 	case "AppendPage":
-		return &AppendPageParser{p}
+		return &AppendPageParser{p, nil}
 	case "RestoreAccessActive":
 		return &RestoreAccessActiveParser{p}
 	case "RestoreAccessClose":
@@ -103,7 +116,7 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "EditLang":
 		return &EditLangParser{p}
 	case "AppendMenu":
-		return &AppendMenuParser{p}
+		return &AppendMenuParser{p, nil}
 	case "NewSign":
 		return &NewSignParser{p}
 	case "EditSign":
@@ -111,7 +124,7 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "EditWallet":
 		return &EditWalletParser{p}
 	case "ActivateContract":
-		return &ActivateContractParser{p}
+		return &ActivateContractParser{p, nil}
 	case "NewAccount":
 		return &NewAccountParser{p}
 	default:

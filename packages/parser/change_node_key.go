@@ -26,7 +26,6 @@ type ChangeNodeKeyParser struct {
 }
 
 func (p *ChangeNodeKeyParser) Init() error {
-
 	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
@@ -38,19 +37,6 @@ func (p *ChangeNodeKeyParser) Init() error {
 }
 
 func (p *ChangeNodeKeyParser) Validate() error {
-
-	/*err := p.generalCheck()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-
-	verifyData := map[string]string{"new_node_public_key": "public_key"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	*/
 	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.TxMaps.Int64["citizen_id"])
 	if err != nil || len(nodePublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")

@@ -18,45 +18,40 @@ package parser
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type EditColumnParser struct {
 	*Parser
+	EditColumn *tx.EditColumn
 }
 
 func (p *EditColumnParser) Init() error {
-
-	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	editColumn := &tx.EditColumn{}
+	if err := msgpack.Unmarshal(p.BinaryData, editColumn); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditColumn = editColumn
 	return nil
 }
 
 func (p *EditColumnParser) Validate() error {
-	err := p.generalCheck(`edit_column`)
+	err := p.generalCheck(`edit_column`, &p.EditColumn.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	/*verifyData := map[string]string{"table_name": "string", "column_name": "word", "permissions": "string"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	table := p.TxStateIDStr + `_tables`
-	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
+	stateIdStr := utils.Int64ToStr(p.EditColumn.Header.StateID)
+	table := stateIdStr + `_tables`
+	if strings.HasPrefix(stateIdStr, `global`) {
 		table = `global_tables`
 	}
-	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
+	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.EditColumn.ColumnName, p.EditColumn.TableName).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -64,15 +59,14 @@ func (p *EditColumnParser) Validate() error {
 		return p.ErrInfo(`column not exists`)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditColumn.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err = p.AccessTable(p.TxMaps.String["table_name"], `general_update`); err != nil {
+	if err = p.AccessTable(p.EditColumn.TableName, `general_update`); err != nil {
 		return err
 	}
 
@@ -80,13 +74,13 @@ func (p *EditColumnParser) Validate() error {
 }
 
 func (p *EditColumnParser) Action() error {
-
-	table := p.TxStateIDStr + `_tables`
-	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
+	stateIdStr := utils.Int64ToStr(p.EditColumn.Header.StateID)
+	table := stateIdStr + `_tables`
+	if strings.HasPrefix(p.EditColumn.TableName, `global`) {
 		table = `global_tables`
 	}
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`,
-		p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).String()
+		p.EditColumn.ColumnName, p.EditColumn.TableName).String()
 	if err != nil {
 		return err
 	}
@@ -109,13 +103,13 @@ func (p *EditColumnParser) Action() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`,
-		`"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbId, p.TxMaps.String["table_name"])
+	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.EditColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`,
+		`"`+lib.EscapeForJSON(p.EditColumn.Permissions)+`"`, rbId, p.EditColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.TxMaps.String["table_name"])
+	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.EditColumn.TableName)
 	if err != nil {
 		return err
 	}

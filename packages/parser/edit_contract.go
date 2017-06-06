@@ -17,27 +17,29 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type EditContractParser struct {
 	*Parser
+	EditContract *tx.EditContract
 }
 
 func (p *EditContractParser) Init() error {
-	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	editContract := &tx.EditContract{}
+	if err := msgpack.Unmarshal(p.BinaryData, editContract); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditContract = editContract
 	return nil
 }
 
 func (p *EditContractParser) Validate() error {
-	err := p.generalCheck(`edit_contract`)
+	err := p.generalCheck(`edit_contract`, &p.EditContract.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -53,25 +55,23 @@ func (p *EditContractParser) Validate() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["id"], p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditContract.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.EditContract.Global, p.EditContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	if len(p.EditContract.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.EditContract.Conditions), uint32(p.EditContract.Header.StateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.EditContract.Id).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -91,23 +91,23 @@ func (p *EditContractParser) Validate() error {
 }
 
 func (p *EditContractParser) Action() error {
-
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.EditContract.Global, p.EditContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	item, err := p.OneRow(`SELECT id, active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+
+	item, err := p.OneRow(`SELECT id, active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.EditContract.Id).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	tblid := utils.StrToInt64(item[`id`])
 	active := item[`active`] == `1`
-	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, utils.StrToInt64(p.TxMaps.String["id"]))
+	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, utils.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", []string{"id"}, []string{p.TxMaps.String["id"]}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditContract.Value, p.EditContract.Conditions}, prefix+"_smart_contracts", []string{"id"}, []string{p.EditContract.Id}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

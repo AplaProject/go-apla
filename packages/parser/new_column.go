@@ -30,7 +30,6 @@ type NewColumnParser struct {
 }
 
 func (p *NewColumnParser) Init() error {
-
 	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"index": "int64"}, {"column_type": "string"}, {"sign": "bytes"}}
 	err := p.GetTxMaps(fields)
 	if err != nil {
