@@ -17,28 +17,28 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type EditLangParser struct {
 	*Parser
+	EditLang *tx.EditNewLang
 }
 
 func (p *EditLangParser) Init() error {
-
-	fields := []map[string]string{ /*{"global": "int64"},*/ {"name": "string"}, {"res": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	editLang := &tx.EditNewLang{}
+	if err := msgpack.Unmarshal(p.BinaryData, editLang); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditLang = editLang
 	return nil
 }
 
 func (p *EditLangParser) Validate() error {
-
-	err := p.generalCheck(`edit_lang`)
+	err := p.generalCheck(`edit_lang`, &p.EditLang.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -50,9 +50,7 @@ func (p *EditLangParser) Validate() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID,
-		/*p.TxMap["global"],*/ p.TxMap["name"], p.TxMap["res"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditLang.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -66,18 +64,12 @@ func (p *EditLangParser) Validate() error {
 }
 
 func (p *EditLangParser) Action() error {
-
-	/*	prefix := `global`
-		if p.TxMaps.Int64["global"] == 0 {
-			prefix = p.TxStateIDStr
-		}
-	*/
-	prefix := p.TxStateIDStr
-	_, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.TxMaps.String["res"]}, prefix+"_languages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	prefix := utils.Int64ToStr(p.EditLang.Header.StateID)
+	_, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.EditLang.Trans}, prefix+"_languages", []string{"name"}, []string{p.EditLang.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	utils.UpdateLang(int(p.TxStateID), p.TxMaps.String["name"], p.TxMaps.String["res"])
+	utils.UpdateLang(int(p.EditLang.Header.StateID), p.EditLang.Name, p.EditLang.Trans)
 	return nil
 }
 

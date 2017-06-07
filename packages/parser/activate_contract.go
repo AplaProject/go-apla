@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
 	"github.com/shopspring/decimal"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )

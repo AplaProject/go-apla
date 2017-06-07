@@ -17,59 +17,47 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type EditMenuParser struct {
 	*Parser
+	EditMenu *tx.EditMenu
 }
 
 func (p *EditMenuParser) Init() error {
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	editMenu := &tx.EditMenu{}
+	if err := msgpack.Unmarshal(p.BinaryData, editMenu); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditMenu = editMenu
 	return nil
 }
 
 func (p *EditMenuParser) Validate() error {
-	err := p.generalCheck(`edit_menu`)
+	err := p.generalCheck(`edit_menu`, &p.EditMenu.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	/*verifyData := map[string]string{"name": "string", "value": "string", "menu": "string", "conditions": "string"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	/*
-		Check conditions
-		...
-	*/
-
-	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditMenu.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	if len(p.EditMenu.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.EditMenu.Conditions), uint32(p.EditMenu.Header.StateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
-	if err = p.AccessChange(`menu`, p.TxMaps.String["name"]); err != nil {
+	if err = p.AccessChange(`menu`, p.EditMenu.Name); err != nil {
 		if p.AccessRights(`changing_menu`, false) != nil {
 			return err
 		}
@@ -79,11 +67,11 @@ func (p *EditMenuParser) Validate() error {
 }
 
 func (p *EditMenuParser) Action() error {
-	prefix := p.TxStateIDStr
-	if p.TxMaps.Int64["global"] == 1 {
-		prefix = "global"
+	prefix, err := GetTablePrefix(p.EditMenu.Global, p.EditMenu.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_menu", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditMenu.Value, p.EditMenu.Conditions}, prefix+"_menu", []string{"name"}, []string{p.EditMenu.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

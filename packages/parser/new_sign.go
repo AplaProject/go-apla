@@ -18,24 +18,29 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type NewSignParser struct {
 	*Parser
+	NewSign *tx.EditNewSign
 }
 
 func (p *NewSignParser) Init() error {
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newSign := &tx.EditNewSign{}
+	if err := msgpack.Unmarshal(p.BinaryData, newSign); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewSign = newSign
 	return nil
 }
 
 func (p *NewSignParser) Validate() error {
-	err := p.generalCheck(`new_sign`)
+	err := p.generalCheck(`new_sign`, &p.NewSign.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -46,10 +51,7 @@ func (p *NewSignParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID,
-		p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewSign.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -59,24 +61,24 @@ func (p *NewSignParser) Validate() error {
 	if err = p.AccessRights(`changing_signature`, false); err != nil {
 		return p.ErrInfo(err)
 	}
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.NewSign.Global, p.NewSign.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	if exist, err := p.Single(`select name from "`+prefix+"_signatures"+`" where name=?`, p.TxMap["name"]).String(); err != nil {
+	if exist, err := p.Single(`select name from "`+prefix+"_signatures"+`" where name=?`, p.NewSign.Name).String(); err != nil {
 		return p.ErrInfo(err)
 	} else if len(exist) > 0 {
-		return p.ErrInfo(fmt.Sprintf("The signature %s already exists", p.TxMap["name"]))
+		return p.ErrInfo(fmt.Sprintf("The signature %s already exists", p.NewSign.Name))
 	}
 	return nil
 }
 
 func (p *NewSignParser) Action() error {
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.NewSign.Global, p.NewSign.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_signatures", nil, nil, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.NewSign.Name, p.NewSign.Value, p.NewSign.Conditions}, prefix+"_signatures", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

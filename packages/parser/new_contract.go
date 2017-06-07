@@ -25,6 +25,8 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type NewContractParser struct {
@@ -51,10 +53,10 @@ func (p *NewContractParser) Validate() error {
 	// ...
 
 	// Check InputData
-	name := p.EditContract.Name
+	name := p.NewContract.Name
 	if off := strings.IndexByte(name, '#'); off > 0 {
-		p.EditContract.Name = []byte(name[:off])
-		p.EditContract.Name = name[:off]
+		p.NewContract.Name = []byte(name[:off])
+		p.NewContract.Name = name[:off]
 		address := lib.StringToAddress(name[off+1:])
 		if address == 0 {
 			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, name[off+1:]))
@@ -94,7 +96,6 @@ func (p *NewContractParser) Validate() error {
 }
 
 func (p *NewContractParser) Action() error {
-
 	prefix, err := GetTablePrefix(p.NewContract.Global, p.NewContract.Header.StateID)
 	if err != nil {
 		return p.ErrInfo(err)

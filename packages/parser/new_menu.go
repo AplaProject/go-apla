@@ -17,47 +17,35 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type NewMenuParser struct {
 	*Parser
+	NewMenu *tx.NewMenu
 }
 
 func (p *NewMenuParser) Init() error {
-
-	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newMenu := &tx.NewMenu{}
+	if err := msgpack.Unmarshal(p.BinaryData, newMenu); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewMenu = newMenu
 	return nil
+
 }
 
 func (p *NewMenuParser) Validate() error {
-
-	err := p.generalCheck(`new_menu`)
+	err := p.generalCheck(`new_menu`, &p.NewMenu.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	/*verifyData := map[string]string{"name": "string", "value": "string", "menu": "string", "conditions": "string"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	/*
-		Check conditions
-		...
-	*/
-
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewMenu.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -69,12 +57,11 @@ func (p *NewMenuParser) Validate() error {
 }
 
 func (p *NewMenuParser) Action() error {
-
-	prefix := p.TxStateIDStr
-	if p.TxMaps.String["global"] == "1" {
-		prefix = "global"
+	prefix, err := GetTablePrefix(p.NewMenu.Global, p.NewMenu.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_menu", nil, nil, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.NewMenu.Name, p.NewMenu.Value, p.NewMenu.Conditions}, prefix+"_menu", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -19,24 +19,29 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type NewLangParser struct {
 	*Parser
+	NewLang *tx.EditNewLang
 }
 
 func (p *NewLangParser) Init() error {
-	fields := []map[string]string{ /*{"global": "int64"},*/ {"name": "string"}, {"res": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newLang := &tx.EditNewLang{}
+	if err := msgpack.Unmarshal(p.BinaryData, newLang); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewLang = newLang
 	return nil
 }
 
 func (p *NewLangParser) Validate() error {
-	err := p.generalCheck(`new_lang`)
+	err := p.generalCheck(`new_lang`, &p.NewLang.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -48,9 +53,7 @@ func (p *NewLangParser) Validate() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID,
-		/*p.TxMap["global"],*/ p.TxMap["name"], p.TxMap["res"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewLang.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -60,14 +63,10 @@ func (p *NewLangParser) Validate() error {
 	if err = p.AccessRights(`changing_language`, false); err != nil {
 		return p.ErrInfo(err)
 	}
-	/*	prefix := `global`
-		if p.TxMaps.Int64["global"] == 0 {
-			prefix = p.TxStateIDStr
-		}*/
-	prefix := p.TxStateIDStr
-	if len(p.TxMap["name"]) == 0 {
+	prefix := utils.Int64ToStr(p.NewLang.Header.StateID)
+	if len(p.NewLang.Name) == 0 {
 		var list map[string]string
-		err := json.Unmarshal([]byte(p.TxMap["res"]), &list)
+		err := json.Unmarshal([]byte(p.NewLang.Trans), &list)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -75,26 +74,20 @@ func (p *NewLangParser) Validate() error {
 			return fmt.Errorf(`empty lanuguage resource`)
 		}
 	} else {
-		if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, p.TxMap["name"]).String(); err != nil {
+		if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, p.NewLang.Name).String(); err != nil {
 			return p.ErrInfo(err)
 		} else if len(exist) > 0 {
-			return p.ErrInfo(fmt.Sprintf("The language resource %s already exists", p.TxMap["name"]))
+			return p.ErrInfo(fmt.Sprintf("The language resource %s already exists", p.NewLang.Name))
 		}
 	}
 	return nil
 }
 
 func (p *NewLangParser) Action() error {
-
-	/*	prefix := `global`
-		if p.TxMaps.Int64["global"] == 0 {
-			prefix = p.TxStateIDStr
-		}
-	*/
-	prefix := p.TxStateIDStr
-	if len(p.TxMap["name"]) == 0 {
+	prefix := utils.Int64ToStr(p.NewLang.Header.StateID)
+	if len(p.NewLang.Name) == 0 {
 		var list map[string]string
-		json.Unmarshal([]byte(p.TxMap["res"]), &list)
+		json.Unmarshal([]byte(p.NewLang.Trans), &list)
 		for name, res := range list {
 			if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, name).String(); err != nil {
 				return p.ErrInfo(err)
@@ -103,16 +96,16 @@ func (p *NewLangParser) Action() error {
 				if err != nil {
 					return p.ErrInfo(err)
 				}
-				utils.UpdateLang(int(p.TxStateID), name, res)
+				utils.UpdateLang(int(p.NewLang.Header.StateID), name, res)
 			}
 		}
 	} else {
-		_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.TxMaps.String["name"],
-			p.TxMaps.String["res"]}, prefix+"_languages", nil, nil, true)
+		_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.NewLang.Name,
+			p.NewLang.Trans}, prefix+"_languages", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		utils.UpdateLang(int(p.TxStateID), p.TxMaps.String["name"], p.TxMaps.String["res"])
+		utils.UpdateLang(int(p.NewLang.Header.StateID), p.NewLang.Name, p.NewLang.Trans)
 	}
 	return nil
 }

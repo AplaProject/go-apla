@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -80,9 +79,9 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "NewTable":
 		return &NewTableParser{p}
 	case "EditPage":
-		return &EditPageParser{p}
+		return &EditPageParser{p, nil}
 	case "EditMenu":
-		return &EditMenuParser{p}
+		return &EditMenuParser{p, nil}
 	case "EditContract":
 		return &EditContractParser{p, nil}
 	case "NewContract":
@@ -96,33 +95,33 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "NewStateParameters":
 		return &NewStateParametersParser{p}
 	case "NewPage":
-		return &NewPageParser{p}
+		return &NewPageParser{p, nil}
 	case "NewMenu":
-		return &NewMenuParser{p}
+		return &NewMenuParser{p, nil}
 	case "ChangeNodeKeyDLT":
 		return &ChangeNodeKeyDLTParser{p}
 	case "AppendPage":
 		return &AppendPageParser{p, nil}
 	case "RestoreAccessActive":
-		return &RestoreAccessActiveParser{p}
+		return &RestoreAccessActiveParser{p, nil}
 	case "RestoreAccessClose":
 		return &RestoreAccessCloseParser{p}
 	case "RestoreAccessRequest":
 		return &RestoreAccessRequestParser{p}
 	case "RestoreAccess":
-		return &RestoreAccessParser{p}
+		return &RestoreAccessParser{p, nil}
 	case "NewLang":
-		return &NewLangParser{p}
+		return &NewLangParser{p, nil}
 	case "EditLang":
-		return &EditLangParser{p}
+		return &EditLangParser{p, nil}
 	case "AppendMenu":
 		return &AppendMenuParser{p, nil}
 	case "NewSign":
-		return &NewSignParser{p}
+		return &NewSignParser{p, nil}
 	case "EditSign":
-		return &EditSignParser{p}
+		return &EditSignParser{p, nil}
 	case "EditWallet":
-		return &EditWalletParser{p}
+		return &EditWalletParser{p, nil}
 	case "ActivateContract":
 		return &ActivateContractParser{p, nil}
 	case "NewAccount":

@@ -17,27 +17,31 @@
 package parser
 
 import (
-	"fmt"
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"time"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type RestoreAccessParser struct {
 	*Parser
+	RestoreAccess *tx.RestoreAccess
 }
 
 func (p *RestoreAccessParser) Init() error {
-	fields := []map[string]string{{"state_id": "int64"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	restoreAccess := &tx.RestoreAccess{}
+	if err := msgpack.Unmarshal(p.BinaryData, restoreAccess); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.RestoreAccess = restoreAccess
 	return nil
 }
 
 func (p *RestoreAccessParser) Validate() error {
-	err := p.generalCheck(`system_restore_access`)
+	err := p.generalCheck(`system_restore_access`, &p.RestoreAccess.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -53,7 +57,7 @@ func (p *RestoreAccessParser) Validate() error {
 		return p.ErrInfo("p.TxWalletID != consts.RECOVERY_ADDRESS")
 	}
 
-	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.TxMaps.Int64["state_id"]).Int64()
+	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.RestoreAccess.StateID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -78,8 +82,7 @@ func (p *RestoreAccessParser) Validate() error {
 		return p.ErrInfo("CHANGE_KEY_PERIOD")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["state_id"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccess.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -91,7 +94,7 @@ func (p *RestoreAccessParser) Validate() error {
 }
 
 func (p *RestoreAccessParser) Action() error {
-	citizen_id, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
+	citizen_id, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.RestoreAccess.StateID).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -104,7 +107,7 @@ func (p *RestoreAccessParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.TxMaps.Int64["state_id"])}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccess.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

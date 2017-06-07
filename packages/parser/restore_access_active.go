@@ -17,50 +17,51 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type RestoreAccessActiveParser struct {
 	*Parser
+	RestoreAccessActive *tx.RestoreAccessActive
 }
 
 func (p *RestoreAccessActiveParser) Init() error {
-	fields := []map[string]string{{"secret": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	restoreAccessActive := &tx.RestoreAccessActive{}
+	if err := msgpack.Unmarshal(p.BinaryData, restoreAccessActive); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.TxMaps.Bytes["secret"]))
+	p.RestoreAccessActive = restoreAccessActive
+	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.RestoreAccessActive.Secret))
 	if p.TxMaps.String["secret_hex"] == "30" {
 		p.TxMaps.Int64["active"] = 0
 	} else {
 		p.TxMaps.Int64["active"] = 1
 	}
-	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.TxMaps.Bytes["secret"]))
-
+	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.RestoreAccessActive.Secret))
 	return nil
 }
 
 func (p *RestoreAccessActiveParser) Validate() error {
-	err := p.generalCheck(`system_restore_access_active`)
+	err := p.generalCheck(`system_restore_access_active`, &p.RestoreAccessActive.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(p.TxMaps.Bytes["secret"]) > 2048 {
+	if len(p.RestoreAccessActive.Secret) > 2048 {
 		return p.ErrInfo("len secret > 2048")
 	}
 
 	// check that there is no repeat shift
-	active, err := p.Single("SELECT active FROM system_restore_access WHERE state_id = ?", p.TxUserID).Int64()
+	active, err := p.Single("SELECT active FROM system_restore_access WHERE state_id = ?", p.RestoreAccessActive.Header.StateID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if active == p.TxMaps.Int64["active"] {
 		return p.ErrInfo("active")
 	}
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["secret_hex"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessActive.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -75,7 +76,7 @@ func (p *RestoreAccessActiveParser) Validate() error {
 }
 
 func (p *RestoreAccessActiveParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.TxMaps.Int64["active"], p.TxMaps.Bytes["secret"]}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.TxMaps.Int64["active"], p.RestoreAccessActive.Secret}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.RestoreAccessActive.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

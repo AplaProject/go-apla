@@ -17,27 +17,29 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type EditPageParser struct {
 	*Parser
+	EditPage *tx.EditPage
 }
 
 func (p *EditPageParser) Init() error {
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"menu": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	editPage := &tx.EditPage{}
+	if err := msgpack.Unmarshal(p.BinaryData, editPage); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditPage = editPage
 	return nil
 }
 
 func (p *EditPageParser) Validate() error {
-	err := p.generalCheck(`edit_page`)
+	err := p.generalCheck(`edit_page`, &p.EditPage.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -49,26 +51,19 @@ func (p *EditPageParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	/*
-		Check conditions
-		...
-	*/
-
-	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["menu"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditPage.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	if len(p.EditPage.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.EditPage.Conditions), uint32(p.EditPage.Header.StateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	if err = p.AccessChange(`pages`, p.TxMaps.String["name"]); err != nil {
+	if err = p.AccessChange(`pages`, p.EditPage.Name); err != nil {
 		if p.AccessRights(`changing_page`, false) != nil {
 			return err
 		}
@@ -77,13 +72,13 @@ func (p *EditPageParser) Validate() error {
 }
 
 func (p *EditPageParser) Action() error {
-
-	prefix := p.TxStateIDStr
-	if p.TxMaps.Int64["global"] == 1 {
-		prefix = "global"
+	prefix, err := GetTablePrefix(p.EditPage.Global, p.EditPage.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	log.Debug("value page", p.TxMaps.String["value"])
-	_, err := p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+
+	log.Debug("value page", p.EditPage.Value)
+	_, err = p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.EditPage.Value, p.EditPage.Menu, p.EditPage.Conditions}, prefix+"_pages", []string{"name"}, []string{p.EditPage.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
