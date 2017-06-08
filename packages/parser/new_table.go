@@ -19,9 +19,13 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 /*
@@ -30,19 +34,20 @@ Adding state tables should be spelled out in state settings
 
 type NewTableParser struct {
 	*Parser
+	NewTable *tx.NewTable
 }
 
 func (p *NewTableParser) Init() error {
-	fields := []map[string]string{{"global": "int64"}, {"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newTable := &tx.NewTable{}
+	if err := msgpack.Unmarshal(p.BinaryData, newTable); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewTable = newTable
 	return nil
 }
 
 func (p *NewTableParser) Validate() error {
-	err := p.generalCheck(`add_table`)
+	err := p.generalCheck(`add_table`, &p.NewTable.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -58,7 +63,7 @@ func (p *NewTableParser) Validate() error {
 	}
 
 	var cols [][]string
-	err = json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
+	err = json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -87,14 +92,18 @@ func (p *NewTableParser) Validate() error {
 		return fmt.Errorf(`Too many indexes. Limit is %d`, consts.MAX_INDEXES)
 	}
 
-	prefix := p.TxStateIDStr
-	table := p.TxStateIDStr + `_tables`
-	if p.TxMaps.Int64["global"] == 1 {
+	prefix := utils.Int64ToStr(p.NewTable.Header.StateID)
+	table := prefix + `_tables`
+	global, err := strconv.Atoi(p.NewTable.Global)
+	if err != nil {
+		return fmt.Errorf("Global is not int")
+	}
+	if global == 1 {
 		table = `global_tables`
 		prefix = `global`
 	}
 
-	exists, err := p.Single(`SELECT count(*) FROM "`+table+`" WHERE name = ?`, prefix+`_`+p.TxMaps.String["table_name"]).Int64()
+	exists, err := p.Single(`SELECT count(*) FROM "`+table+`" WHERE name = ?`, prefix+`_`+p.NewTable.Name).Int64()
 	log.Debug(`SELECT count(*) FROM "` + table + `" WHERE name = ?`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -104,8 +113,7 @@ func (p *NewTableParser) Validate() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["table_name"], p.TxMap["columns"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewTable.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -120,15 +128,14 @@ func (p *NewTableParser) Validate() error {
 }
 
 func (p *NewTableParser) Action() error {
-
-	tableName := `global_` + p.TxMaps.String["table_name"]
-	if p.TxMaps.Int64["global"] == 0 {
-		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
+	prefix, err := GetTablePrefix(p.NewTable.Global, p.NewTable.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
+	tableName := prefix + "_" + p.NewTable.Name
 	var cols [][]string
-	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
+	json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 
-	//citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
 	colsSql := ""
 	colsSql2 := ""
 	sqlIndex := ""
@@ -168,7 +175,7 @@ func (p *NewTableParser) Action() error {
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
 	fmt.Println(sql)
-	err := p.ExecSql(sql)
+	err = p.ExecSql(sql)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -178,10 +185,6 @@ func (p *NewTableParser) Action() error {
 		return p.ErrInfo(err)
 	}
 
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
-	}
 	err = p.ExecSql(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
 		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSql2+`},
 		"insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`)
@@ -193,22 +196,16 @@ func (p *NewTableParser) Action() error {
 }
 
 func (p *NewTableParser) Rollback() error {
-
 	err := p.autoRollback()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	tableName := `global_` + p.TxMaps.String["table_name"]
-	if p.TxMaps.Int64["global"] == 0 {
-		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
+	prefix, err := GetTablePrefix(p.NewTable.Global, p.NewTable.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
+	tableName := prefix + "_" + p.NewTable.Name
 	err = p.ExecSql(`DROP TABLE "` + tableName + `"`)
-
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
-	}
 	err = p.ExecSql(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
 	if err != nil {
 		return p.ErrInfo(err)

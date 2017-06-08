@@ -17,30 +17,33 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type RestoreAccessRequestParser struct {
 	*Parser
+	RestoreAccessRequest *tx.RestoreAccessRequest
 }
 
 func (p *RestoreAccessRequestParser) Init() error {
-	fields := []map[string]string{{"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	restoreAccessRequest := &tx.RestoreAccessRequest{}
+	if err := msgpack.Unmarshal(p.BinaryData, restoreAccessRequest); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.RestoreAccessRequest = restoreAccessRequest
 	return nil
 }
 
 func (p *RestoreAccessRequestParser) Validate() error {
-	err := p.generalCheck(`system_restore_access_request`)
+	err := p.generalCheck(`system_restore_access_request`, &p.RestoreAccessRequest.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.TxStateID).Int64()
+	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.RestoreAccessRequest.Header.StateID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -51,8 +54,7 @@ func (p *RestoreAccessRequestParser) Validate() error {
 		return p.ErrInfo("active=0")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID)
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessRequest.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -66,7 +68,7 @@ func (p *RestoreAccessRequestParser) Validate() error {
 }
 
 func (p *RestoreAccessRequestParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.TxCitizenID}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.RestoreAccessRequest.Header.UserID}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccessRequest.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

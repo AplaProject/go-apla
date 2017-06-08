@@ -23,23 +23,27 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type NewColumnParser struct {
 	*Parser
+	NewColumn *tx.NewColumn
 }
 
 func (p *NewColumnParser) Init() error {
-	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"index": "int64"}, {"column_type": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newColumn := &tx.NewColumn{}
+	if err := msgpack.Unmarshal(p.BinaryData, newColumn); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewColumn = newColumn
 	return nil
 }
 
 func (p *NewColumnParser) Validate() error {
-	err := p.generalCheck(`new_column`)
+	err := p.generalCheck(`new_column`, &p.NewColumn.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -51,13 +55,13 @@ func (p *NewColumnParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	prefix, err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
+	prefix, err := utils.GetPrefix(p.NewColumn.TableName, utils.Int64ToStr(p.NewColumn.Header.StateID))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
-	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"])
+	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName).Int64()
+	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -65,12 +69,12 @@ func (p *NewColumnParser) Validate() error {
 		return p.ErrInfo(`column exists`)
 	}
 
-	count, err := p.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", p.TxMaps.String["table_name"]).Int64()
+	count, err := p.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", p.NewColumn.TableName).Int64()
 	if count >= consts.MAX_COLUMNS+2 /*id + rb_id*/ {
 		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
 	}
 	if p.TxMaps.Int64["index"] > 0 {
-		count, err := p.NumIndexes(p.TxMaps.String["table_name"])
+		count, err := p.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -79,23 +83,22 @@ func (p *NewColumnParser) Validate() error {
 		}
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["index"], p.TxMap["column_type"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewColumn.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err := p.AccessTable(p.TxMaps.String["table_name"], "new_column"); err != nil {
+	if err := p.AccessTable(p.NewColumn.TableName, "new_column"); err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
 func (p *NewColumnParser) Action() error {
-	tblname := p.TxMaps.String["table_name"]
-	prefix, err := utils.GetPrefix(tblname, p.TxStateIDStr)
+	tblname := p.NewColumn.TableName
+	prefix, err := utils.GetPrefix(tblname, utils.Int64ToStr(p.NewColumn.StateID))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -123,7 +126,7 @@ func (p *NewColumnParser) Action() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbId, tblname)
+	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.NewColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJSON(p.NewColumn.Permissions)+`"`, rbId, tblname)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -134,7 +137,7 @@ func (p *NewColumnParser) Action() error {
 	}
 
 	colType := ``
-	switch p.TxMaps.String["column_type"] {
+	switch p.NewColumn.ColumnType {
 	case "text":
 		colType = `varchar(102400)`
 	case "int64":
@@ -149,13 +152,13 @@ func (p *NewColumnParser) Action() error {
 		colType = `double precision`
 	}
 
-	err = p.ExecSql(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` ` + colType)
+	err = p.ExecSql(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.NewColumn.ColumnName + ` ` + colType)
 	if err != nil {
 		return err
 	}
 
-	if p.TxMaps.Int64["index"] == 1 {
-		err = p.ExecSql(`CREATE INDEX "` + tblname + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + tblname + `" (` + p.TxMaps.String["column_name"] + `)`)
+	if p.NewColumn.Index == "1" {
+		err = p.ExecSql(`CREATE INDEX "` + tblname + `_` + p.NewColumn.ColumnName + `_index" ON "` + tblname + `" (` + p.NewColumn.ColumnName + `)`)
 		if err != nil {
 			return err
 		}
@@ -169,16 +172,9 @@ func (p *NewColumnParser) Rollback() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" DROP COLUMN ` + p.TxMaps.String["column_name"] + ``)
+	err = p.ExecSql(`ALTER TABLE "` + p.NewColumn.TableName + `" DROP COLUMN ` + p.NewColumn.ColumnName + ``)
 	if err != nil {
 		return err
 	}
-	/*
-		if p.TxMaps.Int64["index"] == 1 {
-			err = p.ExecSql(`DROP INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index"`)
-			if err != nil {
-				return err
-			}
-		}*/
 	return nil
 }

@@ -75,9 +75,9 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "NewState":
 		return &NewStateParser{p}
 	case "NewColumn":
-		return &NewColumnParser{p}
+		return &NewColumnParser{p, nil}
 	case "NewTable":
-		return &NewTableParser{p}
+		return &NewTableParser{p, nil}
 	case "EditPage":
 		return &EditPageParser{p, nil}
 	case "EditMenu":
@@ -89,7 +89,7 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "EditColumn":
 		return &EditColumnParser{p, nil}
 	case "EditTable":
-		return &EditTableParser{p}
+		return &EditTableParser{p, nil}
 	case "EditStateParameters":
 		return &EditStateParametersParser{p}
 	case "NewStateParameters":
@@ -105,9 +105,9 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "RestoreAccessActive":
 		return &RestoreAccessActiveParser{p, nil}
 	case "RestoreAccessClose":
-		return &RestoreAccessCloseParser{p}
+		return &RestoreAccessCloseParser{p, nil}
 	case "RestoreAccessRequest":
-		return &RestoreAccessRequestParser{p}
+		return &RestoreAccessRequestParser{p, nil}
 	case "RestoreAccess":
 		return &RestoreAccessParser{p, nil}
 	case "NewLang":

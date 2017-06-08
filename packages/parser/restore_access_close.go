@@ -17,32 +17,34 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type RestoreAccessCloseParser struct {
 	*Parser
+	RestoreAccessClose *tx.RestoreAccessClose
 }
 
 func (p *RestoreAccessCloseParser) Init() error {
-	fields := []map[string]string{{"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	restoreAccessClose := &tx.RestoreAccessClose{}
+	if err := msgpack.Unmarshal(p.BinaryData, restoreAccessClose); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.RestoreAccessClose = restoreAccessClose
 	return nil
 }
 
 func (p *RestoreAccessCloseParser) Validate() error {
-	err := p.generalCheck(`system_restore_access_close`)
+	err := p.generalCheck(`system_restore_access_close`, &p.RestoreAccessClose.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// check whether or not already close
-	close, err := p.Single("SELECT close FROM system_restore_access WHERE user_id  =  ? AND state_id = ?", p.TxUserID, p.TxUserID).Int64()
+	close, err := p.Single("SELECT close FROM system_restore_access WHERE user_id  =  ? AND state_id = ?", p.RestoreAccessClose.Header.UserID, p.RestoreAccessClose.Header.StateID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -50,8 +52,7 @@ func (p *RestoreAccessCloseParser) Validate() error {
 		return p.ErrInfo("close=1")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID)
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessClose.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -65,7 +66,7 @@ func (p *RestoreAccessCloseParser) Validate() error {
 }
 
 func (p *RestoreAccessCloseParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccessClose.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

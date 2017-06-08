@@ -12,6 +12,10 @@ type NewColumn struct {
 	Index       string
 }
 
+func (e NewColumn) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.TableName, e.ColumnName, e.Permissions, e.Index, e.ColumnType)
+}
+
 // Редактирование колонки в реестре
 type EditColumn struct {
 	Header
