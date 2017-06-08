@@ -17,29 +17,29 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type ChangeNodeKeyDLTParser struct {
 	*Parser
+	DLTChangeNodeKey *tx.DLTChangeNodeKey
 }
 
 func (p *ChangeNodeKeyDLTParser) Init() error {
-
-	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	changeNodeKey := &tx.DLTChangeNodeKey{}
+	if err := msgpack.Unmarshal(p.BinaryData, changeNodeKey); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["new_node_public_key"] = utils.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
-	p.TxMap["new_node_public_key"] = utils.BinToHex(p.TxMap["new_node_public_key"])
+	p.DLTChangeNodeKey = changeNodeKey
+	p.DLTChangeNodeKey.NewNodePublicKey = utils.BinToHex(p.DLTChangeNodeKey.NewNodePublicKey)
 	return nil
 }
 
 func (p *ChangeNodeKeyDLTParser) Validate() error {
-
-	err := p.generalCheck(`change_node`)
+	err := p.generalCheck(`change_node`, &p.DLTChangeNodeKey.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -50,7 +50,7 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	txTime := p.TxTime
+	txTime := p.DLTChangeNodeKey.Header.Time
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
@@ -59,7 +59,7 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["new_node_public_key"])
+	forSign := p.DLTChangeNodeKey.ForSign()
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
 	if err != nil || !CheckSignResult {
 		return p.ErrInfo("incorrect sign " + forSign)
@@ -68,13 +68,12 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 }
 
 func (p *ChangeNodeKeyDLTParser) Action() error {
-
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{utils.HexToBin(p.DLTChangeNodeKey.NewNodePublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.TxMaps.Bytes["new_node_public_key"]).Int64()
+	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.DLTChangeNodeKey.NewNodePublicKey).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

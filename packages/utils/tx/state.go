@@ -1,13 +1,13 @@
 package tx
 
-// Новое государство
+import "fmt"
+
 type NewState struct {
 	Header
 	StateName    string
 	CurrencyName string
 }
 
-// Редактировать параметры государства
 type EditStateParameters struct {
 	Header
 	Name       string
@@ -15,10 +15,17 @@ type EditStateParameters struct {
 	Conditions string
 }
 
-// Новые параметры государства
+func (n EditStateParameters) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.Header.StateID, n.Name, n.Value, n.Conditions)
+}
+
 type NewStateParameters struct {
 	Header
 	Name       string
 	Value      string
 	Conditions string
+}
+
+func (n NewStateParameters) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.Header.StateID, n.Name, n.Value, n.Conditions)
 }

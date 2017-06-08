@@ -41,4 +41,17 @@ type NewAccount struct {
 
 type ChangeNodeKey struct {
 	Header
+	NewNodePublicKey []byte
+}
+
+func (c ChangeNodeKey) ForSign() string {
+	return fmt.Sprintf("%s,%s,%s,%s", c.Header.Type, c.Header.Time, c.Header.UserID, c.NewNodePublicKey)
+}
+
+type UpdFullNodes struct {
+	Header
+}
+
+func (u UpdFullNodes) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%d", u.Header.Type, u.Header.Time, u.Header.UserID, 0)
 }

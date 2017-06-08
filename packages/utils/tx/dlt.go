@@ -1,6 +1,7 @@
 package tx
 
-// Трансфер с кошелька на кошелек
+import "fmt"
+
 type DLTTransfer struct {
 	Header
 	WalletAddress string
@@ -9,7 +10,6 @@ type DLTTransfer struct {
 	Comment       string
 }
 
-// Изменить голосующий хост
 type DLTChangeHostVote struct {
 	Header
 	Host        string
@@ -19,4 +19,9 @@ type DLTChangeHostVote struct {
 
 type DLTChangeNodeKey struct {
 	Header
+	NewNodePublicKey []byte
+}
+
+func (c DLTChangeNodeKey) ForSign() string {
+	return fmt.Sprintf("%s,%s,%s,%s", c.Header.Type, c.Header.Time, c.Header.UserID, c.NewNodePublicKey)
 }

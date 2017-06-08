@@ -69,9 +69,9 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "DLTChangeHostVote":
 		return &DLTChangeHostVoteParser{p}
 	case "UpdFullNode":
-		return &UpdFullNodesParser{p}
+		return &UpdFullNodesParser{p, nil}
 	case "ChangeNodeKey":
-		return &ChangeNodeKeyParser{p}
+		return &ChangeNodeKeyParser{p, nil}
 	case "NewState":
 		return &NewStateParser{p}
 	case "NewColumn":
@@ -91,15 +91,15 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "EditTable":
 		return &EditTableParser{p, nil}
 	case "EditStateParameters":
-		return &EditStateParametersParser{p}
+		return &EditStateParametersParser{p, nil}
 	case "NewStateParameters":
-		return &NewStateParametersParser{p}
+		return &NewStateParametersParser{p, nil}
 	case "NewPage":
 		return &NewPageParser{p, nil}
 	case "NewMenu":
 		return &NewMenuParser{p, nil}
 	case "ChangeNodeKeyDLT":
-		return &ChangeNodeKeyDLTParser{p}
+		return &ChangeNodeKeyDLTParser{p, nil}
 	case "AppendPage":
 		return &AppendPageParser{p, nil}
 	case "RestoreAccessActive":

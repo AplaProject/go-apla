@@ -17,56 +17,50 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type ChangeNodeKeyParser struct {
 	*Parser
+	ChangeNodeKey *tx.ChangeNodeKey
 }
 
 func (p *ChangeNodeKeyParser) Init() error {
-	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	changeNodeKey := &tx.ChangeNodeKey{}
+	if err := msgpack.Unmarshal(p.BinaryData, changeNodeKey); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["new_node_public_key"] = utils.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
-	p.TxMap["new_node_public_key"] = utils.BinToHex(p.TxMap["new_node_public_key"])
+	p.ChangeNodeKey = changeNodeKey
+	p.ChangeNodeKey.NewNodePublicKey = utils.BinToHex(p.ChangeNodeKey.NewNodePublicKey)
 	return nil
 }
 
 func (p *ChangeNodeKeyParser) Validate() error {
-	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.TxMaps.Int64["citizen_id"])
+	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.ChangeNodeKey.Header.UserID)
 	if err != nil || len(nodePublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["user_id"], p.TxMap["new_node_public_key"])
-	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, p.TxMap["sign"], true)
+	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, p.ChangeNodeKey.ForSign(), p.TxMap["sign"], true)
 	if err != nil || !CheckSignResult {
-		forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["user_id"], p.TxMap["new_node_public_key"])
-		CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.ChangeNodeKey.ForSign(), p.TxMap["sign"], false)
 		if err != nil || !CheckSignResult {
 			return p.ErrInfo("incorrect sign")
 		}
 	}
-
-	/*	err = p.limitRequest(p.Variables.Int64["limit_node_key"], "node_key", p.Variables.Int64["limit_node_key_period"])
-		if err != nil {
-			return p.ErrInfo(err)
-		}*/
-
 	return nil
 }
 
 func (p *ChangeNodeKeyParser) Action() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.ChangeNodeKey.NewNodePublicKey)}, "system_recognized_states", []string{"state_id"}, []string{utils.Int64ToStr(p.ChangeNodeKey.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.TxMaps.Bytes["new_node_public_key"]).Int64()
+	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.ChangeNodeKey.NewNodePublicKey).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

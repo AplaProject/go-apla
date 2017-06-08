@@ -17,10 +17,11 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 /*
@@ -29,76 +30,30 @@ Adding state tables should be spelled out in state settings
 
 type NewStateParametersParser struct {
 	*Parser
+	NewStateParameters *tx.NewStateParameters
 }
 
 func (p *NewStateParametersParser) Init() error {
-	fields := []map[string]string{{"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newStateParameters := &tx.NewStateParameters{}
+	if err := msgpack.Unmarshal(p.BinaryData, newStateParameters); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewStateParameters = newStateParameters
 	return nil
 }
 
 func (p *NewStateParametersParser) Validate() error {
-	err := p.generalCheck(`new_state_parameters`)
+	err := p.generalCheck(`new_state_parameters`, &p.NewStateParameters.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// Check the system limits. You can not send more than X time a day this TX
-	// ...
-
-	/*
-		// Check InputData
-		verifyData := map[string]string{}
-		err = p.CheckInputData(verifyData)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-	*/
-
-	/*// Check the condition that must be met to complete this transaction
-	conditions, err := p.Single(`SELECT change FROM `+utils.Int64ToStr(p.TxMaps.Int64["state_id"])+`_state_parameters WHERE parameter = ?`, p.TxMaps.String["parameter"]).String()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	vars := map[string]interface{}{
-		`citizenId`: 	p.TxCitizenID,
-		`walletId`: 	p.TxWalletID,
-		`Table`:     	p.MyTable,
-	}
-	out, err := script.EvalIf(conditions, &vars)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	if !out {
-		return p.ErrInfo("conditions false")
-	}
-
-	// Checking new condition
-	vars = map[string]interface{}{
-		`citizenId`: 	p.TxCitizenID,
-		`walletId`: 	p.TxWalletID,
-		`Table`:     	p.MyTableChecking,
-	}
-	out, err = script.EvalIf(p.TxMaps.String["conditions"], &vars)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	if !out {
-		return p.ErrInfo("conditions false")
-	}
-	*/
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	if len(p.NewStateParameters.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.NewStateParameters.Conditions), uint32(p.NewStateParameters.Header.StateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewStateParameters.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -110,8 +65,8 @@ func (p *NewStateParametersParser) Validate() error {
 }
 
 func (p *NewStateParametersParser) Action() error {
-
-	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", nil, nil, true)
+	txStateIDStr := utils.Int64ToStr(p.NewStateParameters.Header.StateID)
+	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.NewStateParameters.Name, p.NewStateParameters.Value, p.NewStateParameters.Conditions}, txStateIDStr+"_state_parameters", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -18,27 +18,31 @@ package parser
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type UpdFullNodesParser struct {
 	*Parser
+	UpdFullNodes *tx.UpdFullNodes
 }
 
 func (p *UpdFullNodesParser) Init() error {
-	err := p.GetTxMaps([]map[string]string{{"sign": "bytes"}})
-	if err != nil {
+	updFullNodes := &tx.UpdFullNodes{}
+	if err := msgpack.Unmarshal(p.BinaryData, updFullNodes); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.UpdFullNodes = updFullNodes
 	return nil
 }
 
 func (p *UpdFullNodesParser) Validate() error {
-	err := p.generalCheck(`upd_full_nodes`) // undefined, cost=0
+	err := p.generalCheck(`upd_full_nodes`, &p.UpdFullNodes.Header) // undefined, cost=0
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -48,7 +52,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	txTime := p.TxTime
+	txTime := p.UpdFullNodes.Header.Time
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
@@ -56,12 +60,11 @@ func (p *UpdFullNodesParser) Validate() error {
 		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
 	}
 
-	p.nodePublicKey, err = p.GetNodePublicKey(p.TxWalletID)
+	p.nodePublicKey, err = p.GetNodePublicKey(p.UpdFullNodes.UserID)
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, 0)
-	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, forSign, p.TxMap["sign"], true)
+	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.TxMap["sign"], true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -73,7 +76,6 @@ func (p *UpdFullNodesParser) Validate() error {
 }
 
 func (p *UpdFullNodesParser) Action() error {
-
 	_, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.BlockData.Time}, "upd_full_nodes", []string{`update`}, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)

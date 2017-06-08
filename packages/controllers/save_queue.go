@@ -321,9 +321,9 @@ func (c *Controller) SaveQueue() (string, error) {
 		}
 		header.PublicKey = publicKey
 		if txType_ == "ChangeNodeKeyDLT" {
-			toSerialize = tx.DLTChangeNodeKey{header}
+			toSerialize = tx.DLTChangeNodeKey{header, []byte(publicKey)}
 		} else {
-			toSerialize = tx.ChangeNodeKey{header}
+			toSerialize = tx.ChangeNodeKey{header, []byte(publicKey)}
 		}
 	}
 	data, err = msgpack.Marshal(toSerialize)
