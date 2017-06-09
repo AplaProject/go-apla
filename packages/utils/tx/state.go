@@ -8,6 +8,10 @@ type NewState struct {
 	CurrencyName string
 }
 
+func (n NewState) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%s,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.StateName, n.CurrencyName)
+}
+
 type EditStateParameters struct {
 	Header
 	Name       string

@@ -65,15 +65,15 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "FirstBlock":
 		return &FirstBlockParser{p}
 	case "DLTTransfer":
-		return &DLTTransferParser{p}
+		return &DLTTransferParser{p, nil}
 	case "DLTChangeHostVote":
-		return &DLTChangeHostVoteParser{p}
+		return &DLTChangeHostVoteParser{p, nil}
 	case "UpdFullNode":
 		return &UpdFullNodesParser{p, nil}
 	case "ChangeNodeKey":
 		return &ChangeNodeKeyParser{p, nil}
 	case "NewState":
-		return &NewStateParser{p}
+		return &NewStateParser{p, nil}
 	case "NewColumn":
 		return &NewColumnParser{p, nil}
 	case "NewTable":

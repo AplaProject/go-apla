@@ -20,27 +20,26 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 var (
 	isGlobal bool
 )
 
-/*
-Adding state tables should be spelled out in state settings
-*/
-
 type NewStateParser struct {
 	*Parser
+	NewState *tx.NewState
 }
 
 func (p *NewStateParser) Init() error {
-
-	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newState := &tx.NewState{}
+	if err := msgpack.Unmarshal(p.BinaryData, newState); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewState = newState
 	return nil
 }
 
@@ -68,7 +67,7 @@ func (p *NewStateParser) global(country, currency string) error {
 }
 
 func (p *NewStateParser) Validate() error {
-	err := p.generalCheck(`new_state`)
+	err := p.generalCheck(`new_state`, &p.NewState.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -80,22 +79,21 @@ func (p *NewStateParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["state_name"], p.TxMap["currency_name"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewState.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	country := string(p.TxMap["state_name"])
+	country := string(p.NewState.StateName)
 	if exist, err := p.IsState(country); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {
 		return fmt.Errorf(`State %s already exists`, country)
 	}
 
-	err = p.global(country, string(p.TxMap["currency_name"]))
+	err = p.global(country, string(p.NewState.CurrencyName))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -425,8 +423,8 @@ MenuBack(Welcome)`, sid)
 
 func (p *NewStateParser) Action() error {
 	var pkey string
-	country := string(p.TxMap["state_name"])
-	currency := string(p.TxMap["currency_name"])
+	country := string(p.NewState.StateName)
+	currency := string(p.NewState.CurrencyName)
 	id, err := p.Main(country, currency)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -447,8 +445,8 @@ func (p *NewStateParser) Action() error {
 
 	if pkey, err = p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
 		return p.ErrInfo(err)
-	} else if len(p.TxMaps.Bytes["public_key"]) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets",
+	} else if len(p.NewState.Header.PublicKey) > 30 && len(pkey) == 0 {
+		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{utils.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
 	return err

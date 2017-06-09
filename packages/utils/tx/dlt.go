@@ -10,11 +10,19 @@ type DLTTransfer struct {
 	Comment       string
 }
 
+func (d DLTTransfer) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%s,%s,%s,%s", d.Header.Type, d.Header.Time, d.Header.UserID, d.WalletAddress, d.Amount, d.Commission, d.Comment)
+}
+
 type DLTChangeHostVote struct {
 	Header
 	Host        string
 	AddressVote string
 	FuelRate    string
+}
+
+func (d DLTChangeHostVote) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%s,%s,%s", d.Header.Type, d.Header.Type, d.Header.UserID, d.Host, d.AddressVote, d.FuelRate)
 }
 
 type DLTChangeNodeKey struct {

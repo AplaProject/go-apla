@@ -33,14 +33,16 @@ func (p *Parser) CompositeTxInit() error {
 }
 
 func (p *Parser) CompositeTxFront() error {
-	err := p.generalCheck(`composite_tx`) // undefined, cost = 0
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+	/*
+		err := p.generalCheck(`composite_tx`) // undefined, cost = 0
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+	*/
 
 	// Check InputData
 	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
+	err := p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -18,31 +18,31 @@ package parser
 
 import (
 	"encoding/hex"
-	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type DLTChangeHostVoteParser struct {
 	*Parser
+	DLTChangeHostVote *tx.DLTChangeHostVote
 }
 
 func (p *DLTChangeHostVoteParser) Init() error {
-
-	fields := []map[string]string{{"host": "string"}, {"addressVote": "string"}, {"fuelRate": "int64"}, {"public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	dltChangeHostVote := &tx.DLTChangeHostVote{}
+	if err := msgpack.Unmarshal(p.BinaryData, dltChangeHostVote); err != nil {
 		return p.ErrInfo(err)
 	}
-
-	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
-	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
-	log.Debug("p.TxMaps.String[addressVote] %s", p.TxMaps.String["addressVote"])
+	p.DLTChangeHostVote = dltChangeHostVote
+	p.DLTChangeHostVote.PublicKey = utils.BinToHex(p.DLTChangeHostVote.Header.PublicKey)
 	return nil
 }
 
 func (p *DLTChangeHostVoteParser) Validate() error {
-	err := p.generalCheck(`change_host_vote`)
+	err := p.generalCheck(`change_host_vote`, &p.DLTChangeHostVote.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -59,7 +59,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	if len(publicKey) == 0 {
-		bkey, err := hex.DecodeString(string(p.TxMaps.Bytes["public_key"]))
+		bkey, err := hex.DecodeString(string(p.DLTChangeHostVote.PublicKey))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -77,8 +77,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 		return p.ErrInfo("txTime - lastForgingDataUpd < 600 sec")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["host"], p.TxMap["addressVote"], p.TxMap["fuelRate"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.DLTChangeHostVote.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -91,18 +90,16 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 
 func (p *DLTChangeHostVoteParser) Action() error {
 	var err error
-
 	log.Debug("p.TxMaps.String[addressVote] %s", p.TxMaps.String["addressVote"])
-
-	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE public_key_0 = [hex]`, p.TxMaps.Bytes["public_key"]).String()
+	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE public_key_0 = [hex]`, p.DLTChangeHostVote.Header.PublicKey).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "public_key_0", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.Int64["addressVote"]), string(p.TxMaps.String["fuelRate"]), utils.HexToBin(p.TxMaps.Bytes["public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	if len(p.DLTChangeHostVote.Header.PublicKey) > 0 && len(pkey) == 0 {
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "public_key_0", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, string(p.DLTChangeHostVote.AddressVote), string(p.DLTChangeHostVote.FuelRate), utils.HexToBin(p.DLTChangeHostVote.Header.PublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"], p.TxMaps.Int64["fuelRate"], p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, p.DLTChangeHostVote.AddressVote, p.DLTChangeHostVote.FuelRate, p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)

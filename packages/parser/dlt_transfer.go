@@ -19,30 +19,32 @@ package parser
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
 	"github.com/shopspring/decimal"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type DLTTransferParser struct {
 	*Parser
+	DLTTransfer *tx.DLTTransfer
 }
 
 func (p *DLTTransferParser) Init() error {
-
-	fields := []map[string]string{{"walletAddress": "string"}, {"amount": "decimal"}, {"commission": "decimal"}, {"comment": "bytes"}, {"public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	dltTransfer := &tx.DLTTransfer{}
+	if err := msgpack.Unmarshal(p.BinaryData, dltTransfer); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
-	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
-	p.TxMaps.Bytes["sign"] = utils.BinToHex(p.TxMaps.Bytes["sign"])
+	p.DLTTransfer = dltTransfer
+	p.DLTTransfer.PublicKey = utils.BinToHex(p.DLTTransfer.Header.PublicKey)
 	return nil
 }
 
 func (p *DLTTransferParser) Validate() error {
-	err := p.generalCheck(`dlt_transfer`)
+	err := p.generalCheck(`dlt_transfer`, &p.DLTTransfer.Header)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -59,7 +61,7 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	if len(public_key_0) == 0 {
-		bkey, err := hex.DecodeString(string(p.TxMaps.Bytes["public_key"]))
+		bkey, err := hex.DecodeString(string(p.DLTTransfer.Header.PublicKey))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -90,19 +92,21 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	commission := fPriceDecemal.Mul(fuelRate)
+	ourCommission, err := decimal.NewFromString(fPrice)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
-	if p.TxMaps.Decimal["commission"].Cmp(commission) < 0 {
-		return p.ErrInfo(fmt.Sprintf("commission %s < dltPrice %d", p.TxMaps.Decimal["commission"].String(), commission))
+	if ourCommission.Cmp(commission) < 0 {
+		return p.ErrInfo(fmt.Sprintf("commission %s < dltPrice %d", ourCommission.String(), commission))
 	}
 
-	if string(p.TxMap["comment"]) == "null" {
-		p.TxMap["comment"] = []byte("")
-		p.TxMaps.Bytes["comment"] = []byte("")
+	if p.DLTTransfer.Comment == "null" {
+		p.DLTTransfer.Comment = ""
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["walletAddress"], p.TxMap["amount"], p.TxMap["commission"], p.TxMap["comment"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.DLTTransfer.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -118,15 +122,19 @@ func (p *DLTTransferParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if totalAmountDecimal.Cmp(p.TxMaps.Decimal["amount"].Add(p.TxMaps.Decimal["commission"])) < 0 {
-		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", p.TxMaps.Decimal["amount"], p.TxMaps.Decimal["commission"], totalAmount))
+	ourAmount, err := decimal.NewFromString(p.DLTTransfer.Amount)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if totalAmountDecimal.Cmp(ourAmount.Add(ourCommission)) < 0 {
+		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", ourAmount, ourCommission, totalAmount))
 	}
 	return nil
 }
 
 func (p *DLTTransferParser) Action() error {
-	log.Debug("wallet address %s", p.TxMaps.String["walletAddress"])
-	address := lib.StringToAddress(p.TxMaps.String["walletAddress"])
+	log.Debug("wallet address %s", p.DLTTransfer.WalletAddress)
+	address := lib.StringToAddress(p.DLTTransfer.WalletAddress)
 	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE wallet_id = ?`, address).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -139,16 +147,24 @@ func (p *DLTTransferParser) Action() error {
 	}
 	log.Debug("pkey %x", pkey)
 
-	log.Debug("amount %s", p.TxMaps.Decimal["amount"])
-	log.Debug("commission %s", p.TxMaps.Decimal["commission"])
-	amountAndCommission := p.TxMaps.Decimal["amount"].Add(p.TxMaps.Decimal["commission"])
+	log.Debug("amount %s", p.DLTTransfer.Amount)
+	log.Debug("commission %s", p.DLTTransfer.Commission)
+	amount, err := decimal.NewFromString(p.DLTTransfer.Amount)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	commission, err := decimal.NewFromString(p.DLTTransfer.Commission)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	amountAndCommission := amount.Add(commission)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	log.Debug("amountAndCommission %s", amountAndCommission)
 	log.Debug("amountAndCommission %s", amountAndCommission.String())
-	if len(p.TxMaps.Bytes["public_key"]) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	if len(p.DLTTransfer.Header.PublicKey) > 30 && len(pkey) == 0 {
+		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), utils.HexToBin(p.DLTTransfer.PublicKey)}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	} else {
 		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amountAndCommission.String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
 	}
@@ -158,12 +174,12 @@ func (p *DLTTransferParser) Action() error {
 
 	if walletId == 0 {
 		log.Debug("walletId == 0")
-		log.Debug("%s", string(p.TxMaps.String["walletAddress"]))
-		walletId = lib.StringToAddress(p.TxMaps.String["walletAddress"])
-		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets",
+		log.Debug("%s", string(p.DLTTransfer.WalletAddress))
+		walletId = lib.StringToAddress(p.DLTTransfer.WalletAddress)
+		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["amount"].String()}, "dlt_wallets",
+		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
 	}
 	if err != nil {
@@ -171,14 +187,14 @@ func (p *DLTTransferParser) Action() error {
 	}
 
 	// node commission
-	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{p.TxMaps.Decimal["commission"].String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.BlockData.WalletId)}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{commission}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.BlockData.WalletId)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// пишем в общую историю тр-ий
 	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, walletId, lib.AddressToString(int64(utils.StrToUint64(p.TxMaps.String["walletAddress"]))), p.TxMaps.Decimal["amount"].String(), p.TxMaps.Decimal["commission"].String(), p.TxMaps.Bytes["comment"], p.BlockData.Time, p.BlockData.BlockId)
+		p.TxWalletID, walletId, lib.AddressToString(int64(utils.StrToUint64(p.DLTTransfer.WalletAddress))), amount.String(), commission.String(), p.DLTTransfer.Comment, p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -188,7 +204,7 @@ func (p *DLTTransferParser) Action() error {
 	}
 
 	dlt_transactions_id, err = p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, p.BlockData.WalletId, lib.AddressToString(p.BlockData.WalletId), p.TxMaps.Decimal["commission"].String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockId)
+		p.TxWalletID, p.BlockData.WalletId, lib.AddressToString(p.BlockData.WalletId), commission.String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockId)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -196,7 +212,6 @@ func (p *DLTTransferParser) Action() error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

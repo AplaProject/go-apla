@@ -55,7 +55,6 @@ func (p *NewContractParser) Validate() error {
 	// Check InputData
 	name := p.NewContract.Name
 	if off := strings.IndexByte(name, '#'); off > 0 {
-		p.NewContract.Name = []byte(name[:off])
 		p.NewContract.Name = name[:off]
 		address := lib.StringToAddress(name[off+1:])
 		if address == 0 {
