@@ -17,6 +17,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/aes"
 	"crypto/sha256"
 	"encoding/hex"
@@ -42,6 +43,7 @@ type Settings struct {
 	Cookie  string //*http.Cookie
 	Key     string // decrypted private key
 	Address int64  // wallet id
+	State   int64  // state id
 }
 
 var (
@@ -149,8 +151,14 @@ func login() error {
 	if err != nil {
 		return err
 	}
+	var state string
+	fmt.Println(`Enter a state id:`)
+	_, err = fmt.Scanln(&state)
+	if err != nil {
+		return err
+	}
 	form := url.Values{"key": {hex.EncodeToString(gPublic)}, "sign": {hex.EncodeToString(sign)},
-		`state_id`: {`0`}, `citizen_id`: {utils.Int64ToStr(gSettings.Address)}}
+		`state_id`: {utils.Int64ToStr(utils.StrToInt64(state))}, `citizen_id`: {utils.Int64ToStr(gSettings.Address)}}
 
 	ret, err = sendPost(`ajax_sign_in`, &form)
 	if err != nil {
@@ -203,21 +211,21 @@ func main() {
 	}
 	os.Chdir(dir)
 	/*	tmp := make(map[string]string)
-		tmp[`test`] = `Test string`
-		tmp[`param`] = `Test string
-	edededed
-	edededed
-	1111
-	 222
-	  3333`
-		tmp[`ok`] = `76436734`
-		err = map2yaml(tmp, `test.yaml`)
-		if err != nil {
-			fmt.Println(`YAML`, err)
-		}
-		var tmp2 map[string]string
-		err = yaml2map(`test.yaml`, &tmp2)
-		fmt.Println(`YAML`, tmp2)
+			tmp[`test`] = `Test string`
+			tmp[`param`] = `Test string
+		edededed
+		edededed
+		1111
+		 222
+		  3333`
+			tmp[`ok`] = `76436734`
+			err = map2yaml(tmp, `test.yaml`)
+			if err != nil {
+				fmt.Println(`YAML`, err)
+			}
+			var tmp2 map[string]string
+			err = yaml2map(`test.yaml`, &tmp2)
+			fmt.Println(`YAML`, tmp2)
 	*/
 	if !checkKey() {
 		return
@@ -230,14 +238,45 @@ func main() {
 cmd:
 	for {
 		var cmd string
+		var pars []string
+
 		fmt.Printf(`>`)
-		_, err := fmt.Scanln(&cmd)
-		if err != nil {
-			fmt.Println(err)
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		cmd = scanner.Text()
+		for _, val := range strings.Split(cmd, ` `) {
+			val = strings.TrimSpace(val)
+			if len(val) > 0 {
+				pars = append(pars, val)
+			}
+		}
+		if len(pars) == 0 {
 			continue
 		}
 		switch {
-		case cmd == `quit`:
+		case pars[0] == `cntfields`:
+			if len(pars) != 3 {
+				fmt.Println(`cntfields <ContractName> <Filename>`)
+			} else {
+				ret, err := sendPost(`ajax_contract_info`, &url.Values{`name`: {pars[1]}})
+				if err != nil {
+					fmt.Println(`ERROR`, err)
+				} else {
+					out := make([]string, 0)
+					out = append(out, fmt.Sprintf(`TxName: %s`, ret[`name`]))
+					for _, field := range ret[`fields`].([]interface{}) {
+						tmp := field.(map[string]interface{})
+						//	out = append(out, fmt.Sprintf(`%s: #%s %s`, field[`name`], field[`type`], field[`tagsb `]))
+						out = append(out, fmt.Sprintf(`%v: #%v %v`, tmp[`name`], tmp[`type`], tmp[`tags`]))
+					}
+					err = ioutil.WriteFile(pars[2], []byte(strings.Join(out, "\r\n")), 0600)
+					if err != nil {
+						fmt.Println(err)
+					}
+					//					fmt.Println(`RET`, ret)
+				}
+			}
+		case pars[0] == `quit`:
 			break cmd
 		default:
 			fmt.Println(`Unknown command`)
