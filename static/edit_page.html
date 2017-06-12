@@ -276,7 +276,7 @@
 	function Reload() {
 		load_page('editPage', {name: {{.DataPage.name}} , global: "{{.Global}}" });
 	}
-	
+	{{if not .Block}}
 	$('#page_menu').select2({
 		minimumResultsForSearch: Infinity,
 		theme: 'bootstrap'
@@ -288,7 +288,7 @@
 		menu = $(this).val();
 		SetMenu();
 	});
-	
+	{{end}}
 	$('#send').bind('click', function () {
 
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
@@ -352,7 +352,11 @@
 	});
 </script>
 	<div class="content-heading">
+		{{if .Block}}
+		{{if .DataPage.name}}<span class="lang" lang-id="edit_block">Edit Block</span>{{else}}<span class="lang" lang-id="new_block">New Block</span>{{end}}
+		{{else}}		
 		{{if .DataPage.name}}<span class="lang" lang-id="edit_page"></span>{{else}}<span class="lang" lang-id="new_page"></span>{{end}}
+		{{end}}
 	</div>
 	<ol class="breadcrumb">
 	   <li><a href='#' onclick="load_page('interface')" class="lang" lang-id="interface"></a></li>
@@ -365,7 +369,11 @@
 	
 		 <div class="panel-heading">
 			<div class="panel-title">
+				{{if .Block}}
+				<span class="lang" lang-id="block">Block</span>
+				{{else}}
 				<span class="lang" lang-id="page"></span>
+				{{end}}
 			</div>
 		 </div>
 		 <div class="panel-body">
@@ -383,6 +391,9 @@
 					</pre>
 				   <textarea id="page_value" class="form-control hidden"></textarea>
 			   </div>
+			   {{if .Block}}
+   				   <input type="hidden" name="menu" value="0" id="page_menu">
+			  {{else}}
 			   <div class="form-group">
 				   <label class="lang" lang-id="menu"></label>
 				   <select class="form-control" id="page_menu">
@@ -399,6 +410,7 @@
 					 {{end}}
 					</select>
 			   </div>
+			   {{end}}
 			   <div class="form-group">
 				   <label class="lang" lang-id="conditions_change"></label>
 				   <textarea class="form-control" id="page_conditions">{{.DataPage.conditions}}</textarea>
@@ -465,6 +477,7 @@
 			</div>
 		{{end}}
 	</div>
+	{{if not .Block}}
 	<div class="col-md-4 two_col">
 		<div class="panel panel-primary" data-sweet-alert>
 			<div class="panel-heading">
@@ -486,6 +499,7 @@
 		</div>
 		<!-- END panel-->
 	</div>
+	{{end}}
 </div>
 
 <div class="formConfirm" style="display:none;">

@@ -31,6 +31,7 @@ type editPagePage struct {
 	TxTypeID        int64
 	TimeNow         int64
 	Name            string
+	Block           bool
 	DataMenu        map[string]string
 	DataPage        map[string]string
 	DataPageHistory []map[string]string
@@ -63,6 +64,7 @@ func (c *Controller) EditPage() (string, error) {
 	var dataPageMain map[string]string
 	var dataPageHistory []map[string]string
 	var rbID int64
+	var block bool
 	for i := 0; i < 30; i++ {
 		if i == 0 {
 			dataPage, err := c.OneRow(`SELECT * FROM "`+prefix+`_pages" WHERE name = ?`, name).String()
@@ -75,6 +77,7 @@ func (c *Controller) EditPage() (string, error) {
 
 			rbID = utils.StrToInt64(dataPage["rb_id"])
 			dataPageMain = dataPage
+			block = dataPage[`menu`] == `0`
 		} else {
 			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
 			if err != nil {
@@ -115,6 +118,7 @@ func (c *Controller) EditPage() (string, error) {
 		AllMenu:         allMenu,
 		DataMenu:        dataMenu,
 		DataPage:        dataPageMain,
+		Block:           block,
 		DataPageHistory: dataPageHistory})
 	if err != nil {
 		return "", utils.ErrInfo(err)
