@@ -70,7 +70,7 @@ func (l *boundConn) Close() error {
 	return err
 }
 */
-func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
+func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) {
 
 	i := 0
 	host := ListenHTTPHost
@@ -103,7 +103,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 	}
 
 	go func() {
-		srv := &http.Server{} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
 		//		srv.SetKeepAlivesEnabled(false)
 		err = srv.Serve(l)
 		//		err = http.Serve( NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
@@ -116,7 +116,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 }
 
 // For ipv6 on the server
-func httpListenerV6() {
+func httpListenerV6(route http.Handler) {
 	i := 0
 	port := *utils.ListenHTTPPort
 	var l net.Listener
@@ -139,7 +139,7 @@ func httpListenerV6() {
 	}
 
 	go func() {
-		srv := &http.Server{} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
 		//		srv.SetKeepAlivesEnabled(false)
 		err = srv.Serve(l)
 		//		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))

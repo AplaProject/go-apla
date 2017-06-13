@@ -29,10 +29,12 @@ http://github.com/cratonica/trayhost
 package trayhost
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/op/go-logging"
 	"reflect"
 	"unsafe"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/op/go-logging"
 )
 
 /*
@@ -75,8 +77,8 @@ func EnterLoop(title string, imageData []byte) {
 
 	// If reached, user clicked Exit
 	isExiting = true
-	if utils.DB != nil && utils.DB.DB != nil {
-		err := utils.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+	if sql.DB != nil && sql.DB.DB != nil {
+		err := sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}

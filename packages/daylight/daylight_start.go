@@ -49,8 +49,36 @@ import (
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
+	"github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
 )
+
+const (
+	mGet  = 1
+	mPost = 2
+	mPut  = 4
+)
+
+// Route is a structure for specifying http router
+type Route struct {
+	Methods int
+	Path    string
+	Handle  func(http.ResponseWriter, *http.Request) //http.Handler
+}
+
+func setRoutes(route *httprouter.Router, list []Route) {
+	for _, item := range list {
+		if item.Methods&mGet != 0 {
+			route.HandlerFunc(`GET`, item.Path, item.Handle)
+		}
+		if item.Methods&mPost != 0 {
+			route.HandlerFunc(`POST`, item.Path, item.Handle)
+		}
+		/*		if item.Method & mPut != 0 {
+				route.HandlerFunc(`PUT`, item.Path, item.Handle)
+			}*/
+	}
+}
 
 // FileAsset returns the body of the file
 func FileAsset(name string) ([]byte, error) {
@@ -403,35 +431,48 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		IosLog(fmt.Sprintf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost))
 		fmt.Printf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost)
 		go controllers.GetChain()
+
+		route := httprouter.New()
+		setRoutes(route, []Route{
+			{mGet, `/`, controllers.Index},
+			{mGet | mPost, `/content`, controllers.Content},
+			{mGet | mPost, `/template`, controllers.Template},
+			{mGet | mPost, `/app`, controllers.App},
+			{mGet | mPost, `/ajax`, controllers.Ajax},
+			{mGet, `/wschain`, controllers.WsBlockchain},
+			{mGet | mPost, `/exchangeapi/:name`, exchangeapi.API},
+		})
+		route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
+		route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
+		//		{mGet, `/static`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""})},
 		// включаем листинг веб-сервером для клиентской части
 		// switch on the listing by web-server for client part
-		http.HandleFunc(HandleHTTPHost+"/", controllers.Index)
-		http.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
-		http.HandleFunc(HandleHTTPHost+"/template", controllers.Template)
-		http.HandleFunc(HandleHTTPHost+"/app", controllers.App)
-		http.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
-		http.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
-		//http.HandleFunc(HandleHTTPHost+"/ajaxjson", controllers.AjaxJson)
-		//http.HandleFunc(HandleHTTPHost+"/tools", controllers.Tools)
-		//http.Handle(HandleHTTPHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
-		http.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
-		if len(*utils.TLS) > 0 {
-			http.Handle(HandleHTTPHost+"/.well-known/", http.FileServer(http.Dir(*utils.TLS)))
-			httpsMux := http.NewServeMux()
-			httpsMux.HandleFunc(HandleHTTPHost+"/", controllers.Index)
-			httpsMux.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
-			httpsMux.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
-			httpsMux.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
-			httpsMux.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
-			go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, httpsMux)
+		/*		http.HandleFunc(HandleHTTPHost+"/", controllers.Index)
+				http.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
+				http.HandleFunc(HandleHTTPHost+"/template", controllers.Template)
+				http.HandleFunc(HandleHTTPHost+"/app", controllers.App)
+				http.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
+				http.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
+				http.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
+				http.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
+				http.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
+				http.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
+				//http.Handle(HandleHTTPHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
+				http.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
+		*/if len(*utils.TLS) > 0 {
+			/*			http.Handle(HandleHTTPHost+"/.well-known/", http.FileServer(http.Dir(*utils.TLS)))
+						httpsMux := http.NewServeMux()
+						httpsMux.HandleFunc(HandleHTTPHost+"/", controllers.Index)
+						httpsMux.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
+						httpsMux.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
+						httpsMux.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
+						httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
+						httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
+						httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
+						httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
+						httpsMux.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
+						go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, httpsMux)*/
+			go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
 		}
 
 		log.Debug("ListenHTTPHost", ListenHTTPHost)
@@ -440,9 +481,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		fmt.Println("ListenHTTPHost", ListenHTTPHost)
 
-		httpListener(ListenHTTPHost, &BrowserHTTPHost)
+		httpListener(ListenHTTPHost, &BrowserHTTPHost, route)
 		// for ipv6 server
-		httpListenerV6()
+		httpListenerV6(route)
 
 		if *utils.Console == 0 && !utils.Mobile() {
 			utils.Sleep(1)
