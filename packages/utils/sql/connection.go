@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"database/sql"
+	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
 )
 

@@ -30,7 +30,7 @@ import (
 )
 
 type appData struct {
-	CommonPage
+	template.CommonPage
 	Done    bool
 	Proceed int
 	Blocks  []string
@@ -104,7 +104,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 			out, _ = template.ProceedTemplate(`app_template`, &template.PageTpl{Page: page,
 				Template: textproc.Process(string(data), &params), Unique: ``,
 				Data: &appData{
-					CommonPage: CommonPage{WalletId: GetSessWalletID(sess),
+					CommonPage: template.CommonPage{WalletId: GetSessWalletID(sess),
 						CitizenId: GetSessCitizenID(sess),
 						StateId:   GetSessInt64("state_id", sess),
 					},
