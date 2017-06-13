@@ -33,7 +33,7 @@ function dlNav(e) {
 
 	var str = e.target.hash;
 	var page_match = str.match(/#(\w+)/i);
-	if (page_match && typeof page_match[1] != 'undefined' && page_match[1] != 'mmenu' && page_match[1] != 'mm' && page_match[1] != 'language' && page_match[1] != 'tab1' && page_match[1] != 'tab2' && page_match[1] != 'tab3' && page_match[1] != 'myModal' && page_match[1] != 'user') {
+	if (page_match && typeof page_match[1] != 'undefined' && page_match[1] != 'mmenu' && page_match[1] != 'mm' && page_match[1] != 'language' && page_match[1] != 'tab1' && page_match[1] != 'tab2' && page_match[1] != 'tab3' && page_match[1] != 'myModal' && page_match[1] != 'user' && page_match[1] != 'close') {
 
 		var page = page_match[1];
 		var param_match = str.match(/\/\w+=\w+/gi);

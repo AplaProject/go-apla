@@ -10273,6 +10273,7 @@
   right: 0;
   left: 0;
   z-index: 1030;
+  margin-top: 55px !important;
 }
 @media (min-width: 768px) {
   /* line 138, /Users/jan/devex/front-end/vendor/bootstrap-sass/assets/stylesheets/bootstrap/_navbar.scss */

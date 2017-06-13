@@ -41,7 +41,6 @@ body {
 
 .edit .demo {
   margin-left: 0px;
-  margin-top: 10px;
   padding: 30px 15px 15px;
   border-radius: 4px;
   position: relative;
@@ -65,11 +64,12 @@ body {
   width: 210px;
   left: 0px;
   bottom: 0;
-  top: 44px;
+  top: 55px;
   background: #464646;
+  overflow: hidden !important;
   padding: 9px 0;
-  z-index: 10;
-  overflow: auto;
+  z-index: 1100;
+  //overflow: auto;
   -webkit-transition: all 500ms ease;
   -moz-transition: all 500ms ease;
   -ms-transition: all 500ms ease;
@@ -128,6 +128,7 @@ body {
   width: 105px;
   padding: 0 10px;
   font-size: 10px;
+  color: #656565;
   line-height: 20px;
   height: 20px;
   position: relative;
@@ -168,7 +169,8 @@ body {
   z-index: 10; }
 
 .edit .demo .column .box .drag {
-  top: 5px; }
+  top: 4px;
+  height: 23px; }
 
 .edit .demo .column .box .configuration {
   position: absolute;
@@ -176,12 +178,21 @@ body {
   right: 140px;
   white-space: nowrap; }
 
+.edit .demo .column .box .configuration .btn {
+  height: 23px;
+  vertical-align: top; }
+
+.edit .demo .column .box .configuration .btn *:not(.caret) {
+  border: 0px !important;
+  outline: none !important; }
+
 .edit .demo .remove {
   position: absolute;
-  top: 5px;
+  top: 4px;
   right: 5px;
   z-index: 10;
-  color: #fff; }
+  color: #fff;
+  height: 23px; }
 
 .demo .configuration {
   filter: alpha(opacity=0);
@@ -236,7 +247,11 @@ body {
   border-radius: 4px 4px 4px 4px;
   margin: 15px 0;
   position: relative;
-  padding: 25px  14px 0; }
+  padding: 25px  14px 0;
+}
+.demo .row-fluid:last-of-type {
+	margin-bottom: 0px;
+}
 
 .edit .column:after {
   background-color: #F5F5F5;
