@@ -22,6 +22,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -32,7 +33,7 @@ type checkPage struct {
 	TxType   string
 	TxTypeID int64
 	Values   map[string]string
-	Fields   []utils.FieldInfo
+	Fields   []template.FieldInfo
 }
 
 func init() {
@@ -53,7 +54,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if err != nil {
 		return ``, err
 	}
-	fields := make([]utils.FieldInfo, 0)
+	fields := make([]template.FieldInfo, 0)
 	if len(vals) > 0 {
 		//		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
 		//		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
@@ -66,7 +67,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if fitem.Type.String() == `string` {
 				value := vals[`name`] //fitem.Name] //.(string)
-				fields = append(fields, utils.FieldInfo{Name: fitem.Name, HTMLType: "textinput",
+				fields = append(fields, template.FieldInfo{Name: fitem.Name, HTMLType: "textinput",
 					TxType: fitem.Type.String(), Title: fitem.Name,
 					Value: value})
 			}

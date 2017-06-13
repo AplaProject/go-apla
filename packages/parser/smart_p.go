@@ -30,7 +30,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/shopspring/decimal"
 )
 
@@ -344,7 +346,7 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 	if err = p.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	if isIndex, err = utils.DB.IsIndex(tblname, column); err != nil {
+	if isIndex, err = sql.DB.IsIndex(tblname, column); err != nil {
 		return
 	} else if !isIndex {
 		err = fmt.Errorf(`there is not index on %s`, column)
@@ -385,7 +387,7 @@ func DBString(tblname string, name string, id int64) (string, error) {
 		return ``, err
 	}
 
-	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
+	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
 }
 
 // Sha256 возвращает значение хэша SHA256
@@ -417,12 +419,12 @@ func DBInt(tblname string, name string, id int64) (int64, error) {
 		return 0, err
 	}
 
-	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
+	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
 }
 
 func getBytea(table string) map[string]bool {
 	isBytea := make(map[string]bool)
-	colTypes, err := utils.DB.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
+	colTypes, err := sql.DB.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
 	if err != nil {
 		return isBytea
 	}
@@ -449,12 +451,12 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (st
 		}
 	}
 
-	if isIndex, err := utils.DB.IsIndex(tblname, idname); err != nil {
+	if isIndex, err := sql.DB.IsIndex(tblname, idname); err != nil {
 		return ``, err
 	} else if !isIndex {
 		return ``, fmt.Errorf(`there is not index on %s`, idname)
 	}
-	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
+	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
 		lib.EscapeName(idname)+`=?`, id).String()
 }
 
@@ -502,13 +504,13 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 		if len(iret) != 2 {
 			continue
 		}
-		if isIndex, err := utils.DB.IsIndex(tblname, iret[1]); err != nil {
+		if isIndex, err := sql.DB.IsIndex(tblname, iret[1]); err != nil {
 			return ``, err
 		} else if !isIndex {
 			return ``, fmt.Errorf(`there is not index on %s`, iret[1])
 		}
 	}
-	return utils.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
+	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
 		strings.Replace(lib.Escape(where), `$`, `?`, -1), params...).String()
 }
 
@@ -633,7 +635,7 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 		return decimal.New(0, 0)
 	}
 
-	balance, err := utils.DB.Single("SELECT amount FROM "+lib.EscapeName(tblname)+" WHERE "+lib.EscapeName(column)+" = ?", id).String()
+	balance, err := sql.DB.Single("SELECT amount FROM "+lib.EscapeName(tblname)+" WHERE "+lib.EscapeName(column)+" = ?", id).String()
 	if err != nil {
 		return decimal.New(0, 0)
 	}
@@ -667,7 +669,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 // StateVal возвращает значение указанного параметра у государства
 // StateVal returns the value of the specified parameter for the state
 func StateVal(p *Parser, name string) string {
-	val, _ := utils.StateParam(int64(p.TxStateID), name)
+	val, _ := template.StateParam(int64(p.TxStateID), name)
 	return val
 }
 
@@ -905,7 +907,7 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 		if len(iret) != 2 {
 			continue
 		}
-		if isIndex, err := utils.DB.IsIndex(tblname, iret[1]); err != nil {
+		if isIndex, err := sql.DB.IsIndex(tblname, iret[1]); err != nil {
 			return ``, ``, err
 		} else if !isIndex {
 			return ``, ``, fmt.Errorf(`there is not index on %s`, iret[1])
@@ -933,7 +935,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 		if len(iret) != 2 {
 			continue
 		}
-		if isIndex, err := utils.DB.IsIndex(tblname, iret[1]); err != nil {
+		if isIndex, err := sql.DB.IsIndex(tblname, iret[1]); err != nil {
 			return nil, err
 		} else if !isIndex {
 			return nil, fmt.Errorf(`there is not index on %s`, iret[1])
@@ -945,7 +947,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 	if limit <= 0 {
 		limit = -1
 	}
-	list, err := utils.DB.GetAll(`select `+lib.Escape(name)+` from `+lib.EscapeName(tblname)+` where `+
+	list, err := sql.DB.GetAll(`select `+lib.Escape(name)+` from `+lib.EscapeName(tblname)+` where `+
 		strings.Replace(lib.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
@@ -968,7 +970,7 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 		limit = -1
 	}
 	cols := strings.Split(lib.Escape(columns), `,`)
-	list, err := utils.DB.GetAll(`select `+strings.Join(cols, `,`)+` from `+lib.EscapeName(tblname)+` where `+
+	list, err := sql.DB.GetAll(`select `+strings.Join(cols, `,`)+` from `+lib.EscapeName(tblname)+` where `+
 		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {

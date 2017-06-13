@@ -20,7 +20,7 @@ import (
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // Balance is the result structure of balamce handler
@@ -38,7 +38,7 @@ func balance(r *http.Request) interface{} {
 		result.Error = `Wallet is invalid`
 		return result
 	}
-	total, err := utils.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
+	total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result

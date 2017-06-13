@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -106,7 +107,7 @@ func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
 }
 */
 
-/* 
+/*
 Откат БД по блокам
 rollback of DB
 */
@@ -156,13 +157,13 @@ func (p *Parser) ParseDataRollback() error {
 			utils.BytesShiftReverse(&p.BinaryData, len(lib.EncodeLength(sizesSlice[i])))
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 
-			utils.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
+			logging.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
 			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
 			if err != nil {
-				utils.WriteSelectiveLog(err)
+				logging.WriteSelectiveLog(err)
 				return p.ErrInfo(err)
 			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+			logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 			affected, err := p.ExecSQLGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
 			log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 			if err != nil {

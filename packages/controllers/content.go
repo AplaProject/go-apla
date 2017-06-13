@@ -31,7 +31,9 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	tpl "github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 )
 
@@ -130,7 +132,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	if dbInit {
 		var err error
 		//c.DCDB, err = utils.NewDbConnect(configIni)
-		c.DCDB = utils.DB
+		c.DCDB = sql.DB
 		if c.DCDB.DB == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
@@ -403,7 +405,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		skipRestrictedUsers := []string{"cashRequestIn", "cashRequestOut", "upgrade", "notifications"}
 
 		if c.StateID > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
-			tpl, err := utils.CreateHTMLFromTemplate("dashboard_default", sessCitizenID, sessStateID, &map[string]string{})
+			tpl, err := tpl.CreateHTMLFromTemplate("dashboard_default", sessCitizenID, sessStateID, &map[string]string{})
 			if err != nil {
 				log.Error("%v", err)
 				return

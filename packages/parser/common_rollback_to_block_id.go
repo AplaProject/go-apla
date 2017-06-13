@@ -19,6 +19,7 @@ package parser
 import (
 	"database/sql"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -39,7 +40,7 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	}*/
 	err := p.ExecSQL("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	if err != nil {
-		utils.WriteSelectiveLog(err)
+		logging.WriteSelectiveLog(err)
 		return p.ErrInfo(err)
 	}
 

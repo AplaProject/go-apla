@@ -25,6 +25,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/boltdb/bolt"
 	"github.com/shopspring/decimal"
 )
@@ -79,12 +80,12 @@ func send(r *http.Request) interface{} {
 		return result
 	}
 
-	fPrice, err := utils.DB.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").String()
+	fPrice, err := sql.DB.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	fuelRate := utils.DB.GetFuel()
+	fuelRate := sql.DB.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		result.Error = `fuel rate must be greater than 0`
 		return result
@@ -96,7 +97,7 @@ func send(r *http.Request) interface{} {
 	}
 	commission := fPriceDecemal.Mul(fuelRate)
 
-	total, err := utils.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, sender).String()
+	total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, sender).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -135,7 +136,7 @@ func send(r *http.Request) interface{} {
 	data = append(data, utils.EncodeLengthPlusData([]byte(`api`))...)
 	data = append(data, utils.EncodeLengthPlusData(lib.PrivateToPublic(priv))...)
 	data = append(data, binsign...)
-	err = utils.DB.SendTx(txType, sender, data)
+	err = sql.DB.SendTx(txType, sender, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -51,10 +52,10 @@ func (c *Controller) Accounts() (string, error) {
 
 	data := make([]AccountInfo, 0)
 
-	cents, _ := utils.StateParam(c.SessStateID, `money_digit`)
+	cents, _ := template.StateParam(c.SessStateID, `money_digit`)
 	digit := utils.StrToInt(cents)
 
-	currency, _ := utils.StateParam(c.SessStateID, `currency_name`)
+	currency, _ := template.StateParam(c.SessStateID, `currency_name`)
 
 	newAccount := func(account int64, amount string) {
 		if amount == `NULL` {

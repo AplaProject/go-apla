@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"io"
 )
@@ -175,7 +176,7 @@ BEGIN:
 			//utils.WriteSelectiveLog("SELECT hash, high_rate FROM transactions WHERE sent = 0 AND for_self_use = 0")
 			transactions, err := d.GetAll("SELECT hash, high_rate FROM transactions WHERE sent = 0 AND for_self_use = 0", -1)
 			if err != nil {
-				utils.WriteSelectiveLog(err)
+				logging.WriteSelectiveLog(err)
 				if d.dPrintSleep(err, d.sleepTime) {
 					break BEGIN
 				}
@@ -196,16 +197,16 @@ BEGIN:
 				hexHash := utils.BinToHex([]byte(data["hash"]))
 				toBeSent = append(toBeSent, []byte(data["hash"])...)
 				logger.Debug("hash %x", data["hash"])
-				utils.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hexHash))
+				logging.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hexHash))
 				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", hexHash)
 				if err != nil {
-					utils.WriteSelectiveLog(err)
+					logging.WriteSelectiveLog(err)
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN
 					}
 					continue BEGIN
 				}
-				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+				logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 			}
 
 			logger.Debug("toBeSent %x", toBeSent)
@@ -228,10 +229,10 @@ BEGIN:
 			// here we record all the transactions which we will send to other nodes
 			// возьмем хэши и сами тр-ии
 			// take hashes and transactions themselve
-			utils.WriteSelectiveLog("SELECT hash, data FROM transactions WHERE sent  =  0")
+			logging.WriteSelectiveLog("SELECT hash, data FROM transactions WHERE sent  =  0")
 			rows, err := d.Query("SELECT hash, data FROM transactions WHERE sent  =  0")
 			if err != nil {
-				utils.WriteSelectiveLog(err)
+				logging.WriteSelectiveLog(err)
 				if d.dPrintSleep(err, d.sleepTime) {
 					break BEGIN
 				}
@@ -249,17 +250,17 @@ BEGIN:
 				}
 				logger.Debug("hash %x", hash)
 				hashHex := utils.BinToHex(hash)
-				utils.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hashHex))
+				logging.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hashHex))
 				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", hashHex)
 				if err != nil {
-					utils.WriteSelectiveLog(err)
+					logging.WriteSelectiveLog(err)
 					rows.Close()
 					if d.dPrintSleep(err, d.sleepTime) {
 						break BEGIN
 					}
 					continue BEGIN
 				}
-				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+				logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				toBeSent = append(toBeSent, data...)
 			}
 			rows.Close()
@@ -385,15 +386,15 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 			}
 			txHash = utils.BinToHex(txHash)
 			logger.Debug("txHash %s (host : %v)", txHash, host)
-			utils.WriteSelectiveLog("SELECT data FROM transactions WHERE hex(hash) = " + string(txHash))
+			logging.WriteSelectiveLog("SELECT data FROM transactions WHERE hex(hash) = " + string(txHash))
 			tx, err := d.Single("SELECT data FROM transactions WHERE hex(hash) = ?", txHash).Bytes()
 			logger.Debug("tx %x", tx)
 			if err != nil {
-				utils.WriteSelectiveLog(err)
+				logging.WriteSelectiveLog(err)
 				logger.Error("%v", utils.ErrInfo(err))
 				return
 			}
-			utils.WriteSelectiveLog("tx: " + string(utils.BinToHex(tx)))
+			logging.WriteSelectiveLog("tx: " + string(utils.BinToHex(tx)))
 			if len(tx) > 0 {
 				binaryTx = append(binaryTx, utils.EncodeLengthPlusData(tx)...)
 			}

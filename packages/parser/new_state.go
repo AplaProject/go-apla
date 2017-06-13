@@ -19,7 +19,9 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 var (
@@ -44,19 +46,19 @@ func (p *Parser) NewStateInit() error {
 // NewStateGlobal checks if the state or the currency exists
 func (p *Parser) NewStateGlobal(country, currency string) error {
 	if !isGlobal {
-		list, err := utils.DB.GetAllTables()
+		list, err := sql.DB.GetAllTables()
 		if err != nil {
 			return err
 		}
 		isGlobal = utils.InSliceString(`global_currencies_list`, list) && utils.InSliceString(`global_states_list`, list)
 	}
 	if isGlobal {
-		if id, err := utils.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
+		if id, err := sql.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`State %s already exists`, country)
 		}
-		if id, err := utils.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
+		if id, err := sql.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`Currency %s already exists`, currency)
@@ -419,7 +421,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = utils.LoadContract(id)
+	err = template.LoadContract(id)
 	return
 }
 

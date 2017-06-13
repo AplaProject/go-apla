@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 	"os"
 )
@@ -30,18 +31,18 @@ var log = logging.MustGetLogger("stop_daemons")
 func WaitStopTime() {
 	var first bool
 	for {
-		if utils.DB == nil || utils.DB.DB == nil {
+		if sql.DB == nil || sql.DB.DB == nil {
 			utils.Sleep(3)
 			continue
 		}
 		if !first {
-			err := utils.DB.ExecSQL(`DELETE FROM stop_daemons`)
+			err := sql.DB.ExecSQL(`DELETE FROM stop_daemons`)
 			if err != nil {
 				log.Error(utils.ErrInfo(err).Error())
 			}
 			first = true
 		}
-		dExists, err := utils.DB.Single(`SELECT stop_time FROM stop_daemons`).Int64()
+		dExists, err := sql.DB.Single(`SELECT stop_time FROM stop_daemons`).Int64()
 		if err != nil {
 			log.Error(utils.ErrInfo(err).Error())
 		}
@@ -56,7 +57,7 @@ func WaitStopTime() {
 				fmt.Println(<-ch.ChAnswer)
 			}
 			fmt.Println("Daemons killed")
-			err := utils.DB.Close()
+			err := sql.DB.Close()
 			if err != nil {
 				log.Error(utils.ErrInfo(err).Error())
 			}

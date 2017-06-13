@@ -17,6 +17,7 @@
 package daemons
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -92,16 +93,16 @@ BEGIN:
 
 		// чистим зацикленные
 		// clean the looped
-		utils.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
+		logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
 		affect, err := d.ExecSQLGetAffect("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
 		if err != nil {
-			utils.WriteSelectiveLog(err)
+			logging.WriteSelectiveLog(err)
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+		logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB

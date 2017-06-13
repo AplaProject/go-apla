@@ -17,15 +17,11 @@
 package daemons
 
 import (
-	//	"crypto"
-	//	"crypto/rand"
-	//	"crypto/rsa"
-	//	"crypto/x509"
-	//	"encoding/pem"
 	"fmt"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -308,7 +304,7 @@ BEGIN:
 			// take all the data from the turn. It is tested already, you may not check them again but just take
 			rows, err := d.Query(d.FormatQuery("SELECT data, hex(hash), type, wallet_id, citizen_id, third_var FROM transactions WHERE used = 0 AND verified = 1"))
 			if err != nil {
-				utils.WriteSelectiveLog(err)
+				logging.WriteSelectiveLog(err)
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -334,7 +330,7 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				utils.WriteSelectiveLog("hash: " + string(hash))
+				logging.WriteSelectiveLog("hash: " + string(hash))
 				logger.Debug("data %v", data)
 				logger.Debug("hash %v", hash)
 				transactionType := data[1:2]

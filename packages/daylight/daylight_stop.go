@@ -19,6 +19,7 @@ package daylight
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // Stop stops the program
@@ -26,16 +27,16 @@ func Stop() {
 	log.Debug("Stop()")
 	IosLog("Stop()")
 	var err error
-	utils.DB, err = utils.NewDbConnect(configIni)
-	log.Debug("DayLight Stop : %v", utils.DB)
-	IosLog("utils.DB:" + fmt.Sprintf("%v", utils.DB))
+	sql.DB, err = sql.NewDbConnect(configIni)
+	log.Debug("DayLight Stop : %v", sql.DB)
+	IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
 	if err != nil {
 		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 		log.Error("%v", utils.ErrInfo(err))
 		//panic(err)
 		//os.Exit(1)
 	}
-	err = utils.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+	err = sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
 	if err != nil {
 		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 		log.Error("%v", utils.ErrInfo(err))

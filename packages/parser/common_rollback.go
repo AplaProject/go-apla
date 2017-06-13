@@ -17,10 +17,9 @@
 package parser
 
 import (
-	//	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -126,20 +125,19 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				}
 				affect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE hex(hash) = ?", p.TxHash)
 				if err != nil {
-					utils.WriteSelectiveLog(err)
+					logging.WriteSelectiveLog(err)
 					return utils.ErrInfo(err)
 				}
-				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+				logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 			}
 
-			utils.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
+			logging.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
 			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
 			if err != nil {
-				utils.WriteSelectiveLog(err)
+				logging.WriteSelectiveLog(err)
 				return utils.ErrInfo(err)
 			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-
+			logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 		}
 	}
 	return err

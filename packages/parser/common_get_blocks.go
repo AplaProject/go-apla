@@ -24,6 +24,7 @@ import (
 	"os"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -228,13 +229,13 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 			}*/
 	/*}*/
 
-	utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	logging.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	if err != nil {
-		utils.WriteSelectiveLog(err)
+		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
 	}
-	utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+	logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 	// откатываем наши блоки до начала вилки
 	// we roll back our blocks before fork started

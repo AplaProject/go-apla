@@ -19,14 +19,64 @@ package daemons
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
+
+// downloadToFile downloads and saves the specified file
+func downloadToFile(url, file string, timeoutSec int64, DaemonCh chan bool, AnswerDaemonCh chan string, GoroutineName string) (int64, error) {
+	f, err := os.Create(file)
+	if err != nil {
+		return 0, utils.ErrInfo(err)
+	}
+	defer f.Close()
+
+	timeout := time.Duration(time.Duration(timeoutSec) * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+	resp, err := client.Get(url)
+	if err != nil {
+		return 0, utils.ErrInfo(err)
+	}
+	defer resp.Body.Close()
+
+	var offset int64
+	for {
+		if DaemonCh != nil {
+			select {
+			case <-DaemonCh:
+				if GoroutineName == "NodeVoting" {
+					sql.DB.DbUnlock(GoroutineName)
+				}
+				AnswerDaemonCh <- GoroutineName
+				return offset, fmt.Errorf("daemons restart")
+			default:
+			}
+		}
+		data, err := ioutil.ReadAll(io.LimitReader(resp.Body, 10000))
+		if err != nil {
+			return offset, utils.ErrInfo(err)
+		}
+		f.WriteAt(data, offset)
+		offset += int64(len(data))
+		if len(data) == 0 {
+			break
+		}
+		logger.Debug("read %s", url)
+	}
+	return offset, nil
+}
 
 // BlocksCollection collects and parses blocks
 func BlocksCollection(chBreaker chan bool, chAnswer chan string) {
@@ -85,7 +135,7 @@ BEGIN:
 		if *utils.StartBlockID > 0 {
 			del := []string{"queue_tx", "my_notifications", "main_lock"}
 			for _, table := range del {
-				err := utils.DB.ExecSQL(`DELETE FROM ` + table)
+				err := sql.DB.ExecSQL(`DELETE FROM ` + table)
 				fmt.Println(`DELETE FROM ` + table)
 				if err != nil {
 					fmt.Println(err)
@@ -151,7 +201,7 @@ BEGIN:
 				var blockchainSize int64
 				for i := 0; i < 10; i++ {
 					logger.Debug("blockchainURL: %s, i: %d", blockchainURL, i)
-					blockchainSize, err = utils.DownloadToFile(blockchainURL, *utils.Dir+"/public/blockchain", 3600, chBreaker, chAnswer, GoroutineName)
+					blockchainSize, err = downloadToFile(blockchainURL, *utils.Dir+"/public/blockchain", 3600, chBreaker, chAnswer, GoroutineName)
 					if err != nil {
 						logger.Error("%v", utils.ErrInfo(err))
 					}
@@ -586,16 +636,16 @@ BEGIN:
 
 				logger.Info("plug found blockID=%v\n", blockID)
 
-				utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+				logging.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 				if err != nil {
-					utils.WriteSelectiveLog(err)
+					logging.WriteSelectiveLog(err)
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
 					continue BEGIN
 				}
-				utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+				logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 				/*
 									//var transactions []byte
 									utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")

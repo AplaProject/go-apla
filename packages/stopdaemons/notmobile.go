@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -75,8 +76,8 @@ func Signals() {
 		}
 		log.Debug("Daemons killed")
 		fmt.Println("Daemons killed")
-		if utils.DB != nil && utils.DB.DB != nil {
-			err := utils.DB.Close()
+		if sql.DB != nil && sql.DB.DB != nil {
+			err := sql.DB.Close()
 			fmt.Println("DB Closed")
 			if err != nil {
 				log.Error(utils.ErrInfo(err).Error())

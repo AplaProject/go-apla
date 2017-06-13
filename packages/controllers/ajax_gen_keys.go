@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -51,7 +52,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		result.Error = `Count must be from 1 to 50`
 		return result
 	}
-	govAccount, err := utils.StateParam(int64(c.SessStateID), `gov_account`)
+	govAccount, err := template.StateParam(int64(c.SessStateID), `gov_account`)
 	if err != nil {
 		result.Error = err.Error()
 		return result

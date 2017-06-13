@@ -19,7 +19,9 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // TxParser writes transactions into the queue
@@ -28,7 +30,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	var err error
 	var fatalError string
 	hashHex := utils.BinToHex(hash)
-	txType, walletID, citizenID := utils.GetTxTypeAndUserID(binaryTx)
+	txType, walletID, citizenID := sql.GetTxTypeAndUserID(binaryTx)
 	if walletID == 0 && citizenID == 0 {
 		fatalError = "undefined walletID and citizenID"
 	} else {
@@ -65,32 +67,32 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	} else {
 
 		log.Debug("SELECT counter FROM transactions WHERE hex(hash) = ?", string(hashHex))
-		utils.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hashHex))
+		logging.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hashHex))
 		counter, err := p.Single("SELECT counter FROM transactions WHERE hex(hash) = ?", hashHex).Int64()
 		if err != nil {
-			utils.WriteSelectiveLog(err)
+			logging.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)
 		}
-		utils.WriteSelectiveLog("counter: " + utils.Int64ToStr(counter))
+		logging.WriteSelectiveLog("counter: " + utils.Int64ToStr(counter))
 		counter++
-		utils.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex))
+		logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex))
 		affect, err := p.ExecSQLGetAffect(`DELETE FROM transactions WHERE hex(hash) = ?`, hashHex)
 		if err != nil {
-			utils.WriteSelectiveLog(err)
+			logging.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)
 		}
-		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+		logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 
 		log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hashHex, utils.BinToHex(binaryTx), 0, txType, walletID, citizenID, 0, counter)
-		utils.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
+		logging.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 		// вставляем с verified=1
 		// put with verified=1
 		err = p.ExecSQL(`INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter, verified) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?, 1)`, hashHex, utils.BinToHex(binaryTx), 0, txType, walletID, citizenID, 0, counter)
 		if err != nil {
-			utils.WriteSelectiveLog(err)
+			logging.WriteSelectiveLog(err)
 			return utils.ErrInfo(err)
 		}
-		utils.WriteSelectiveLog("result insert")
+		logging.WriteSelectiveLog("result insert")
 		log.Debug("INSERT INTO transactions - OK")
 		// удалим тр-ию из очереди (с verified=0)
 		// remove transaction from the turn (with verified=0)
@@ -113,13 +115,13 @@ func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 	}
 	// т.к. мы обрабатываем в queue_parser_tx тр-ии с verified=0, то после их обработки их нужно удалять.
 	// Because we process transactions with verified=0 in queue_parser_tx, after processing we need to delete them
-	utils.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex) + " AND verified=0 AND used = 0")
+	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hashHex) + " AND verified=0 AND used = 0")
 	affect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE hex(hash) = ? AND verified=0 AND used = 0", hashHex)
 	if err != nil {
-		utils.WriteSelectiveLog(err)
+		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
 	}
-	utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+	logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 	return nil
 }
 

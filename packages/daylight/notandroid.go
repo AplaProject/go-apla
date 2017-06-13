@@ -26,6 +26,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	//"os"
 	//"regexp"
 	//	"time"
@@ -151,12 +152,12 @@ func httpListenerV6() {
 }
 
 func tcpListener() {
-	db := utils.DB
+	db := sql.DB
 	log.Debug("tcp")
 	go func() {
 		if db == nil || db.DB == nil {
 			for {
-				db = utils.DB
+				db = sql.DB
 				if db != nil && db.DB != nil {
 					break
 				} else {

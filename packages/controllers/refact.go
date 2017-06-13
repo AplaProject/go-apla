@@ -23,7 +23,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
 // CommonPage is a structure with common information about the user and state
@@ -127,5 +127,5 @@ func CallJSON(c *Controller, name string) []byte {
 }
 
 func proceedTemplate(с *Controller, html string, data interface{}) (string, error) {
-	return utils.ProceedTemplate(html, data)
+	return template.ProceedTemplate(html, data)
 }

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"strings"
 )
 
@@ -69,7 +70,7 @@ func (c *Controller) EditColumn() (string, error) {
 		TableName:        tableName,
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
-		ColumnType:       utils.GetColumnType(tableName, columnName),
+		ColumnType:       sql.GetColumnType(tableName, columnName),
 		WalletID:         c.SessWalletID,
 		CitizenID:        c.SessCitizenID,
 		StateID:          c.SessStateID,

@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -73,7 +74,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 
 	if err == nil {
 		var (
-			fields    []utils.FieldInfo
+			fields    []template.FieldInfo
 			sign      []byte
 			checkSign bool
 		)

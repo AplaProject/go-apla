@@ -34,13 +34,16 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/schema"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
@@ -122,7 +125,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	utils.OneCountry = utils.StrToInt64(configIni["one_country"])
 	utils.PrivCountry = configIni["priv_country"] == `1` || configIni["priv_country"] == `true`
 	if len(configIni["lang"]) > 0 {
-		utils.LangList = strings.Split(configIni["lang"], `,`)
+		language.LangList = strings.Split(configIni["lang"], `,`)
 	}
 	/*	outfile, err := os.Create("./out.txt")
 	    if err != nil {
@@ -147,7 +150,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
 
-			utils.DB, err = utils.NewDbConnect(configIni)
+			sql.DB, err = sql.NewDbConnect(configIni)
 
 			err = KillPid(pidMap["pid"])
 			if nil != err {
@@ -177,9 +180,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	go func() {
 		var err error
-		utils.DB, err = utils.NewDbConnect(configIni)
-		log.Debug("%v", utils.DB)
-		IosLog("utils.DB:" + fmt.Sprintf("%v", utils.DB))
+		sql.DB, err = sql.NewDbConnect(configIni)
+		log.Debug("%v", sql.DB)
+		IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
 		if err != nil {
 			IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 			log.Error("%v", utils.ErrInfo(err))
@@ -247,7 +250,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		// ждем подключения к БД
 		// waiting for connection to the database
 		for {
-			if utils.DB == nil || utils.DB.DB == nil {
+			if sql.DB == nil || sql.DB.DB == nil {
 				utils.Sleep(1)
 				continue
 			}
@@ -256,7 +259,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		schema.Migration()
 
 		if *utils.OldFileName != "" {
-			err = utils.DB.Close()
+			err = sql.DB.Close()
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -296,13 +299,13 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// откат БД до указанного блока
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
-		utils.DB, err = utils.NewDbConnect(configIni)
+		sql.DB, err = sql.NewDbConnect(configIni)
 
-		if err := utils.LoadContracts(); err != nil {
+		if err := template.LoadContracts(); err != nil {
 			log.Error(`Load Contracts`, err)
 		}
 		parser := new(parser.Parser)
-		parser.DCDB = utils.DB
+		parser.DCDB = sql.DB
 		err = parser.RollbackToBlockID(*utils.RollbackToBlockID)
 		if err != nil {
 			fmt.Println(err)
@@ -311,7 +314,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		fmt.Println("complete")
 		// получим стату по всем таблам
 		// we recieve the statistics of all tables
-		allTable, err := utils.DB.GetAllTables()
+		allTable, err := sql.DB.GetAllTables()
 		if err != nil {
 			fmt.Println(err)
 			panic(err)
@@ -319,7 +322,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
 		for _, table := range allTable {
-			count, err := utils.DB.Single(`SELECT count(*) FROM ` + lib.EscapeName(table)).Int64()
+			count, err := sql.DB.Single(`SELECT count(*) FROM ` + lib.EscapeName(table)).Int64()
 			if err != nil {
 				fmt.Println(err)
 				panic(err)
@@ -382,7 +385,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			for {
 				// ждем, пока произойдет подключение к БД в другой гоурутине
 				// wait while connection to a DB in other gourutina takes place
-				if utils.DB == nil || utils.DB.DB == nil {
+				if sql.DB == nil || sql.DB.DB == nil {
 					utils.Sleep(1)
 					fmt.Println("wait DB")
 				} else {
@@ -390,7 +393,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				}
 			}
 			fmt.Println("GET http host")
-			if err := utils.LoadContracts(); err != nil {
+			if err := template.LoadContracts(); err != nil {
 				log.Error(`Load Contracts`, err)
 			}
 			BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost = GetHTTPHost()

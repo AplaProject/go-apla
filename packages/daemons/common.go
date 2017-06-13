@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 	"github.com/op/go-logging"
 	"os"
@@ -38,7 +39,7 @@ var (
 )
 
 type daemon struct {
-	*utils.DCDB
+	*sql.DCDB
 	goRoutineName string
 	/*DaemonCh       chan bool
 	AnswerDaemonCh chan string*/
@@ -165,18 +166,18 @@ func CheckDaemonsRestart(chBreaker chan bool, chAnswer chan string, goRoutineNam
 }
 
 // DbConnect returns DB connection
-func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) *utils.DCDB {
+func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) *sql.DCDB {
 	for {
 		if CheckDaemonsRestart(chBreaker, chAnswer, goRoutineName) {
 			return nil
 		}
-		if utils.DB == nil || utils.DB.DB == nil {
+		if sql.DB == nil || sql.DB.DB == nil {
 			utils.Sleep(1)
 		} else {
 			break
 		}
 	}
-	return utils.DB
+	return sql.DB
 }
 
 // StartDaemons starts daemons

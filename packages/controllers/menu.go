@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -119,11 +120,11 @@ func (c *Controller) Menu() (string, error) {
 			log.Error("%v", err)
 		}
 		//		menu = ReplaceMenu(menu)
-		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIDStr), params[`accept_lang`])
+		menu = language.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIDStr), params[`accept_lang`])
 	}
 	var langs []LangInfo
-	if len(utils.LangList) > 0 {
-		for _, val := range utils.LangList {
+	if len(language.LangList) > 0 {
+		for _, val := range language.LangList {
 			if val == `en` {
 				langs = append(langs, LangInfo{Title: `English (UK)`, Code: `gb`})
 			}

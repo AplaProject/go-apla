@@ -18,7 +18,6 @@ package utils
 
 import (
 	"archive/zip"
-	"bytes"
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
@@ -29,7 +28,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"math"
@@ -39,14 +37,10 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/kardianos/osext"
-	//	_ "github.com/lib/pq"
 	"github.com/mcuadros/go-version"
+	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
-	//	"net/mail"
-	//  "net/smtp"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -58,6 +52,8 @@ import (
 	"strings"
 	"time"
 )
+
+var log = logging.MustGetLogger("daemons")
 
 // BlockData is a structure of the block's header
 type BlockData struct {
@@ -189,14 +185,14 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
 	// распарсим заголовок блока // parse the heading of a block
 	/*
-			Заголовок // the heading
-			TYPE (0-блок, 1-тр-я)        1 // TYPE(0-block, 1-transaction)
-			BLOCK_ID   				       4
-			TIME       					       4
-			WALLET_ID                         1-8
-			state_id                              1
-			SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-	Далее - тело блока (Тр-ии) // further is body block (transaction)
+				Заголовок // the heading
+				TYPE (0-блок, 1-тр-я)        1 // TYPE(0-block, 1-transaction)
+				BLOCK_ID   				       4
+				TIME       					       4
+				WALLET_ID                         1-8
+				state_id                              1
+				SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+		Далее - тело блока (Тр-ии) // further is body block (transaction)
 	*/
 	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
 	result.Time = BinToDecBytesShift(binaryBlock, 4)
@@ -227,7 +223,7 @@ func Round(f float64, places int) (float64) {
 }
 */
 
-func round(num float64) int64 {
+func RoundWithoutPrecision(num float64) int64 {
 	//log.Debug("num", num)
 	//num += ROUND_FIX
 	//	return int(StrToFloat64(Float64ToStr(num)) + math.Copysign(0.5, num))
@@ -239,7 +235,7 @@ func round(num float64) int64 {
 func Round(num float64, precision int) float64 {
 	num += consts.ROUND_FIX
 	output := math.Pow(10, float64(precision))
-	return float64(round(num*output)) / output
+	return float64(RoundWithoutPrecision(num*output)) / output
 }
 
 // RandInt returns a random integer between min and max
@@ -732,52 +728,6 @@ func GetEndBlockID() (int64, error) {
 	// size (block id + body of a block)
 	BinToDecBytesShift(&dataBinary, 5)
 	return BinToDecBytesShift(&dataBinary, 5), nil
-}
-
-// DownloadToFile downloads and saves the specified file
-func DownloadToFile(url, file string, timeoutSec int64, DaemonCh chan bool, AnswerDaemonCh chan string, GoroutineName string) (int64, error) {
-
-	f, err := os.Create(file)
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	defer f.Close()
-
-	timeout := time.Duration(time.Duration(timeoutSec) * time.Second)
-	client := http.Client{
-		Timeout: timeout,
-	}
-	resp, err := client.Get(url)
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	defer resp.Body.Close()
-
-	var offset int64
-	for {
-		if DaemonCh != nil {
-			select {
-			case <-DaemonCh:
-				if GoroutineName == "NodeVoting" {
-					DB.DbUnlock(GoroutineName)
-				}
-				AnswerDaemonCh <- GoroutineName
-				return offset, fmt.Errorf("daemons restart")
-			default:
-			}
-		}
-		data, err := ioutil.ReadAll(io.LimitReader(resp.Body, 10000))
-		if err != nil {
-			return offset, ErrInfo(err)
-		}
-		f.WriteAt(data, offset)
-		offset += int64(len(data))
-		if len(data) == 0 {
-			break
-		}
-		log.Debug("read %s", url)
-	}
-	return offset, nil
 }
 
 // ErrInfoFmt fomats the error message
@@ -1505,6 +1455,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 
 }
 
+/*
 // WriteSelectiveLog writes info into SelectiveLog.txt
 func WriteSelectiveLog(text interface{}) {
 	if *LogLevel == "DEBUG" {
@@ -1537,6 +1488,7 @@ func WriteSelectiveLog(text interface{}) {
 		}
 	}
 }
+*/
 
 /*
 func DaylightRestart() error {
@@ -1583,175 +1535,6 @@ func ShellExecute(cmdline string) {
 func DecodeLength(buf *[]byte) (ret int64) {
 	ret, _ = lib.DecodeLength(buf)
 	return
-}
-
-// CreateHTMLFromTemplate gets the template of the page from the table and proceeds it
-func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[string]string) (string, error) {
-	var data string
-	var err error
-	query := `SELECT value FROM "` + Int64ToStr(stateID) + `_pages" WHERE name = ?`
-	if (*params)[`global`] == `1` {
-		query = `SELECT value FROM global_pages WHERE name = ?`
-	}
-	if page == `body` && len((*params)[`autobody`]) > 0 {
-		data = (*params)[`autobody`]
-	} else {
-		data, err = DB.Single(query, page).String()
-		if err != nil {
-			return "", err
-		}
-	}
-	/*	qrx := regexp.MustCompile(`CitizenId`)
-		data = qrx.ReplaceAllString(data, Int64ToStr(citizenId))
-		qrx = regexp.MustCompile(`AccountId`)
-		data = qrx.ReplaceAllString(data, Int64ToStr(accountId))*/
-	(*params)[`page`] = page
-	(*params)[`state_id`] = Int64ToStr(stateID)
-	(*params)[`citizen`] = Int64ToStr(citizenID)
-	if len(data) > 0 {
-		templ := textproc.Process(data, params)
-		if (*params)[`isrow`] == `opened` {
-			templ += `</div>`
-			(*params)[`isrow`] = ``
-		}
-		templ = LangMacro(templ, int(stateID), (*params)[`accept_lang`])
-		getHeight := func() int64 {
-			height := int64(100)
-			if h, ok := (*params)[`hmap`]; ok {
-				height = StrToInt64(h)
-			}
-			return height
-		}
-		if len((*params)[`wisource`]) > 0 {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-			var editor = ace.edit("textEditor");
-	var ContractMode = ace.require("ace/mode/c_cpp").Mode;
-	ace.require("ace/ext/language_tools");
-	$(".textEditor code").html(editor.getValue());
-	$("#%s").val(editor.getValue());
-	editor.setTheme("ace/theme/chrome");
-    editor.session.setMode(new ContractMode());
-	editor.setShowPrintMargin(false);
-	editor.getSession().setTabSize(4);
-	editor.getSession().setUseWrapMode(true);
-	editor.getSession().on('change', function(e) {
-		$(".textEditor code").html(editor.getValue());
-		$("#%s").val(editor.getValue());
-		editor.resize();
-	});
-	editor.setOptions({
-		enableBasicAutocompletion: true,
-		enableSnippets: true,
-		enableLiveAutocompletion: true
-	});
-			</script>`, (*params)[`wisource`], (*params)[`wisource`])
-		}
-		if (*params)[`wimoney`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-				$(".inputmask").inputmask({'autoUnmask': true});</script>`)
-		}
-		if (*params)[`widate`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-						$(document).ready(function() {
-							$.datetimepicker.setLocale('en');
-							$(".datetimepicker").datetimepicker();
-						})
-				</script>`)
-		}
-		if (*params)[`wiaddress`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-				$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
-	$(".address").typeahead({
-		minLength: 1,
-		items: 10,
-		source: function (query, process) {
-			return $.get('ajax?json=ajax_addresses', { 'address': query }, function (data) {
-				return process(data.address);
-			});
-		}
-	}).focus();</script>`)
-		}
-		if (*params)[`wimap`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())
-		}
-		if (*params)[`wicitizen`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">(function($, window, document){
-'use strict';
-  var Selector = '[data-notify]',
-      autoloadSelector = '[data-onload]',
-      doc = $(document);
-
-  $(function() {
-    $(Selector).each(function(){
-      var $this  = $(this),
-          onload = $this.data('onload');
-      if(onload !== undefined) {
-        setTimeout(function(){
-          notifyNow($this);
-        }, 800);
-      }
-      $this.on('click', function (e) {
-        e.preventDefault();
-        notifyNow($this);
-      });
-    });
-  });
-  function notifyNow($element) {
-      var message = $element.data('message'),
-          options = $element.data('options');
- 	 if(!message)
-        $.error('Notify: No message specified');
-      $.notify(message, options || {});
-  }
-}(jQuery, window, document));</script>`)
-		}
-		if (*params)[`wimappoint`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
-		}
-		if (*params)[`wibtncont`] == `1` {
-			var unique int64
-			if uval, ok := (*params)[`tx_unique`]; ok {
-				unique = StrToInt64(uval) + 1
-			}
-			(*params)[`tx_unique`] = Int64ToStr(unique)
-			funcMap := template.FuncMap{
-				"sum": func(a, b interface{}) float64 {
-					return InterfaceToFloat64(a) + InterfaceToFloat64(b)
-				},
-				"noescape": func(s string) template.HTML {
-					return template.HTML(s)
-				},
-			}
-			data, err := static.Asset("static/tx_btncont.html")
-			if err != nil {
-				return ``, err
-			}
-			sign, err := static.Asset("static/signatures_new.html")
-			if err != nil {
-				return ``, err
-			}
-
-			t := template.New("template").Funcs(funcMap)
-			if t, err = t.Parse(string(data)); err != nil {
-				return ``, err
-			}
-			t = template.Must(t.Parse(string(sign)))
-			b := new(bytes.Buffer)
-
-			finfo := TxBtnCont{ //Class: class, ClassBtn: classBtn, Name: LangRes(vars, btnName),
-				Unique: template.JS((*params)[`tx_unique`]), // OnSuccess: template.JS(onsuccess),
-				//Fields: make([]TxInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`,
-				/*Silent: (*pars)[`Silent`] == `1`*/}
-			if err = t.Execute(b, finfo); err != nil {
-				return ``, err
-			}
-			templ += b.String()
-		}
-		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: templ})
-	}
-	return ``, nil
 }
 
 // FirstBlock generates the first block
@@ -1916,4 +1699,23 @@ func GetPrefix(tableName, stateID string) (string, error) {
 		return "", ErrInfo("incorrect table name")
 	}
 	return prefix, nil
+}
+
+// GetParent возвращает информацию откуда произошел вызов функции
+// GetParent returns the information where the call of function happened
+func GetParent() string {
+	parent := ""
+	for i := 2; ; i++ {
+		name := ""
+		if pc, _, num, ok := runtime.Caller(i); ok {
+			name = filepath.Base(runtime.FuncForPC(pc).Name())
+			file, line := runtime.FuncForPC(pc).FileLine(pc)
+			if i > 5 || name == "runtime.goexit" {
+				break
+			} else {
+				parent += fmt.Sprintf("%s:%d -> %s:%d / ", filepath.Base(file), line, name, num)
+			}
+		}
+	}
+	return parent
 }

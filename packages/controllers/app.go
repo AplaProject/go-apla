@@ -23,12 +23,14 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type appData struct {
-	utils.CommonPage
+	template.CommonPage
 	Done    bool
 	Proceed int
 	Blocks  []string
@@ -87,7 +89,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 		} else {
 			table = fmt.Sprintf(`"%d_apps"`, GetSessInt64("state_id", sess))
 		}
-		appinfo, err := utils.DB.OneRow(`select * from `+table+` where name=?`, page).String()
+		appinfo, err := sql.DB.OneRow(`select * from `+table+` where name=?`, page).String()
 		if err != nil {
 			out = err.Error()
 		} else {
@@ -99,10 +101,10 @@ func App(w http.ResponseWriter, r *http.Request) {
 			} else {
 				blocks = make([]string, 0)
 			}
-			out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
+			out, _ = template.ProceedTemplate(`app_template`, &template.PageTpl{Page: page,
 				Template: textproc.Process(string(data), &params), Unique: ``,
 				Data: &appData{
-					CommonPage: utils.CommonPage{WalletId: GetSessWalletID(sess),
+					CommonPage: template.CommonPage{WalletId: GetSessWalletID(sess),
 						CitizenId: GetSessCitizenID(sess),
 						StateId:   GetSessInt64("state_id", sess),
 					},

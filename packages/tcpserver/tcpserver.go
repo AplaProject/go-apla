@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
 
@@ -39,7 +40,7 @@ func init() {
 
 // TCPServer is a structure for TCP connecvtion
 type TCPServer struct {
-	*utils.DCDB
+	*sql.DCDB
 	Conn net.Conn
 }
 

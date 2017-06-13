@@ -19,6 +19,7 @@ package controllers
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type editTablePage struct {
@@ -77,7 +78,7 @@ func (c *Controller) EditTable() (string, error) {
 	}
 	list := make([]map[string]string, 0)
 	for key, value := range columnsAndPermissions {
-		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: utils.GetColumnType(tableName, key)})
+		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: sql.GetColumnType(tableName, key)})
 	}
 
 	count, err := c.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", tableName).Int64()
