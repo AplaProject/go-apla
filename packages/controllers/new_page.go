@@ -47,6 +47,7 @@ func (c *Controller) NewPage() (string, error) {
 		CitizenID: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
+		Block:     c.r.FormValue("block") == `1`,
 		TxTypeID:  utils.TypeInt(txType),
 		StateID:   c.SessStateID,
 		AllMenu:   allMenu,

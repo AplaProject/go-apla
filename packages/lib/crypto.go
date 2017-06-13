@@ -93,9 +93,12 @@ func PKCS7Padding(src []byte, blockSize int) []byte {
 }
 
 // PKCS7UnPadding realizes PKCS#7 decoding.
-func PKCS7UnPadding(src []byte) []byte {
+func PKCS7UnPadding(src []byte) ([]byte, error) {
 	length := len(src)
-	return src[:length-int(src[length-1])]
+	if length < int(src[length-1]) {
+		return nil, fmt.Errorf(`incorrect input of PKCS7UnPadding`)
+	}
+	return src[:length-int(src[length-1])], nil
 }
 
 // CBCEncrypt encrypts the text by using the key parameter. It uses CBC mode of AES.
@@ -133,8 +136,17 @@ func CBCDecrypt(key, ciphertext, iv []byte) ([]byte, error) {
 		iv = ciphertext[:aes.BlockSize]
 		ciphertext = ciphertext[aes.BlockSize:]
 	}
-	cipher.NewCBCDecrypter(block, iv[:aes.BlockSize]).CryptBlocks(ciphertext, ciphertext)
-	return PKCS7UnPadding(ciphertext), nil
+	ret := make([]byte, len(ciphertext))
+	cipher.NewCBCDecrypter(block, iv[:aes.BlockSize]).CryptBlocks(ret, ciphertext)
+	if ret, err = PKCS7UnPadding(ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	/*	cipher.NewCBCDecrypter(block, iv[:aes.BlockSize]).CryptBlocks(ciphertext, ciphertext)
+		if ciphertext, err = PKCS7UnPadding(ciphertext); err != nil {
+			return nil, err
+		}
+		return ciphertext, nil*/
 }
 
 // SharedEncrypt creates a shared key and encrypts text. The first 32 characters are the created public key.

@@ -21,13 +21,14 @@ import (
 )
 
 type interfacePage struct {
-	Alert          string
-	Lang           map[string]string
-	WalletID       int64
-	CitizenID      int64
-	InterfacePages []map[string]string
-	InterfaceMenu  []map[string]string
-	Global         string
+	Alert           string
+	Lang            map[string]string
+	WalletID        int64
+	CitizenID       int64
+	InterfacePages  []map[string]string
+	InterfaceMenu   []map[string]string
+	InterfaceBlocks []map[string]string
+	Global          string
 }
 
 // Interface is a controller for editing pages and menu
@@ -39,7 +40,11 @@ func (c *Controller) Interface() (string, error) {
 		prefix = "global"
 	}
 
-	interfacePages, err := c.GetAll(`SELECT * FROM "`+prefix+`_pages" order by name`, -1)
+	interfacePages, err := c.GetAll(`SELECT * FROM "`+prefix+`_pages" where menu!='0' order by name`, -1)
+	if err != nil {
+		return "", utils.ErrInfo(err)
+	}
+	interfaceBlocks, err := c.GetAll(`SELECT * FROM "`+prefix+`_pages" where menu='0' order by name`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -49,13 +54,14 @@ func (c *Controller) Interface() (string, error) {
 	}
 
 	TemplateStr, err := makeTemplate("interface", "interface", &interfacePage{
-		Alert:          c.Alert,
-		Lang:           c.Lang,
-		WalletID:       c.SessWalletID,
-		CitizenID:      c.SessCitizenID,
-		InterfacePages: interfacePages,
-		Global:         global,
-		InterfaceMenu:  interfaceMenu})
+		Alert:           c.Alert,
+		Lang:            c.Lang,
+		WalletID:        c.SessWalletID,
+		CitizenID:       c.SessCitizenID,
+		InterfacePages:  interfacePages,
+		InterfaceBlocks: interfaceBlocks,
+		Global:          global,
+		InterfaceMenu:   interfaceMenu})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
