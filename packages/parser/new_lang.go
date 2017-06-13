@@ -19,6 +19,7 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -104,7 +105,7 @@ func (p *Parser) NewLang() error {
 				if err != nil {
 					return p.ErrInfo(err)
 				}
-				utils.UpdateLang(int(p.TxStateID), name, res)
+				language.UpdateLang(int(p.TxStateID), name, res)
 			}
 		}
 	} else {
@@ -113,7 +114,7 @@ func (p *Parser) NewLang() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		utils.UpdateLang(int(p.TxStateID), p.TxMaps.String["name"], p.TxMaps.String["res"])
+		language.UpdateLang(int(p.TxStateID), p.TxMaps.String["name"], p.TxMaps.String["res"])
 	}
 	return nil
 }

@@ -19,13 +19,16 @@ package schema
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
+
 var (
 	log = logging.MustGetLogger("daemons")
 )
+
 func Migration() {
-	oldDbVersion, err := utils.DB.Single(`SELECT version FROM migration_history ORDER BY id DESC LIMIT 1`).String()
+	oldDbVersion, err := sql.DB.Single(`SELECT version FROM migration_history ORDER BY id DESC LIMIT 1`).String()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 	}
@@ -35,11 +38,9 @@ func Migration() {
 
 	log.Debug("*utils.OldVersion %v", *utils.OldVersion)
 	if len(*utils.OldVersion) > 0 {
-
-		err = utils.DB.ExecSQL(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, consts.VERSION, utils.Time())
+		err = sql.DB.ExecSQL(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, consts.VERSION, utils.Time())
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
 	}
 }
-

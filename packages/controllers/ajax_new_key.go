@@ -29,6 +29,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -80,7 +81,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 	}
 	pubkey := lib.PrivateToPublic(bkey)
 	idkey := int64(lib.Address(pubkey))
-	govAccount, _ := utils.StateParam(stateID, `govAccount`)
+	govAccount, _ := template.StateParam(stateID, `govAccount`)
 	if len(govAccount) == 0 {
 		result.Error = `unknown govAccount`
 		return result

@@ -19,7 +19,7 @@ package controllers
 import (
 	"encoding/hex"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 const aEncryptKey = `ajax_encrypt_key`
@@ -49,7 +49,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		return result
 	}
 	id = lib.StringToAddress(walletID)
-	pubKey, err := utils.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
+	pubKey, err := sql.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -66,7 +66,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		pub, _ := hex.DecodeString(result.Public)
 		idnew := int64(lib.Address(pub))
 
-		exist, err := utils.DB.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		exist, err := sql.DB.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
 		if err != nil {
 			result.Error = err.Error()
 			return result

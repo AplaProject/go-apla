@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
@@ -74,7 +75,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 	if len(state) > 0 {
 		stateID, err = strconv.ParseInt(state, 10, 64)
 		if err != nil {
-			list, err := utils.DB.GetAllTables()
+			list, err := sql.DB.GetAllTables()
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}

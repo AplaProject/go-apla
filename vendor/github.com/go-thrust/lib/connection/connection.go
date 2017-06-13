@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/go-thrust/lib/commands"
 	. "github.com/go-thrust/lib/common"
 )
@@ -104,8 +105,8 @@ func Clean() {
 
 func CleanExit() {
 	Clean()
-	if utils.DB != nil && utils.DB.DB != nil {
-		utils.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+	if sql.DB != nil && sql.DB.DB != nil {
+		sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
 	} else {
 		os.Exit(0)
 	}

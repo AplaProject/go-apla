@@ -33,6 +33,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
@@ -43,7 +44,7 @@ var log = logging.MustGetLogger("controllers")
 // Controller is the main controller's structure
 type Controller struct {
 	dbInit bool
-	*utils.DCDB
+	*sql.DCDB
 	r                *http.Request
 	w                http.ResponseWriter
 	sess             session.SessionStore

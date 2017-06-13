@@ -28,7 +28,9 @@ import (
 	//	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	db "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
 )
@@ -52,7 +54,7 @@ type txMapsType struct {
 
 // Parser is a structure for parsing transactions
 type Parser struct {
-	*utils.DCDB
+	*db.DCDB
 	TxMaps           *txMapsType
 	TxMap            map[string][]byte
 	TxMapS           map[string]string
@@ -470,7 +472,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 func (p *Parser) AccessTable(table, action string) error {
 
 	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
-	govAccount, _ := utils.StateParam(int64(p.TxStateID), `gov_account`)
+	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
 	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == utils.StrToInt64(govAccount) {
 		return nil
 	}

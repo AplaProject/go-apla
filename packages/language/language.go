@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package utils
+package language
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type cacheLang struct {
@@ -70,7 +72,7 @@ func UpdateLang(state int, name, value string) {
 // loadLang загружает языковые ресурсы из БД для данного государства
 // loadLang download the language sources from database for the state
 func loadLang(state int) error {
-	list, err := DB.GetAll(fmt.Sprintf(`select * from "%d_languages"`, state), -1)
+	list, err := sql.DB.GetAll(fmt.Sprintf(`select * from "%d_languages"`, state), -1)
 	if err != nil {
 		return err
 	}

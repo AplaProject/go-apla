@@ -28,8 +28,10 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type index struct {
@@ -89,7 +91,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	showIOSMenu := true
 	// Когда меню не выдаем
 	// When we don't give the menu
-	if utils.DB == nil || utils.DB.DB == nil {
+	if sql.DB == nil || sql.DB.DB == nil {
 		showIOSMenu = false
 	}
 
@@ -97,8 +99,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		showIOSMenu = false
 	}
 
-	if showIOSMenu && utils.DB != nil && utils.DB.DB != nil {
-		blockData, err := utils.DB.GetInfoBlock()
+	if showIOSMenu && sql.DB != nil && sql.DB.DB != nil {
+		blockData, err := sql.DB.GetInfoBlock()
 		if err != nil {
 			log.Error("%v", err)
 		}
@@ -108,7 +110,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		// если время менее 12 часов от текущего, то выдаем не подвержденные, а просто те, что есть в блокчейне
 		// if time differs less than for 12 hours from current time, give not affected but those which are in blockchain
 		if utils.Time()-utils.StrToInt64(blockData["time"]) < 3600*wTime {
-			lastBlockData, err := utils.DB.GetLastBlockData()
+			lastBlockData, err := sql.DB.GetLastBlockData()
 			if err != nil {
 				log.Error("%v", err)
 			}
@@ -158,8 +160,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	langs := ``
-	if len(utils.LangList) > 0 {
-		langs = strings.Join(utils.LangList, `,`)
+	if len(language.LangList) > 0 {
+		langs = strings.Join(language.LangList, `,`)
 	}
 	b := new(bytes.Buffer)
 	err = t.Execute(b, &index{

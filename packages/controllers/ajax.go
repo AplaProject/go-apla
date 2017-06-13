@@ -23,6 +23,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
@@ -73,9 +74,9 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)
 
-		c.DCDB = utils.DB
+		c.DCDB = sql.DB
 
-		if utils.DB == nil || utils.DB.DB == nil {
+		if sql.DB == nil || sql.DB.DB == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
@@ -137,7 +138,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	// InstallStep2,Login,UpdatingBlockchain были только во втором случае? Похоже не нужны больше.
 	// Why CfCatalog,CfPagePreview,CfStart,Index,IndexCf,InstallStep0,InstallStep1,
 	// InstallStep2,Login,UpdatingBlockchain were in the second case only? They seem not need anymore.
-	
+
 	if ok, _ := regexp.MatchString(`^(?i)`+pages+`|GetServerTime|TxStatus|AnonymHistory|RewritePrimaryKeySave|SendPromisedAmountToPool|SaveEmailAndSendTestMess|sendMobile|rewritePrimaryKey|EImportData|EDataBaseDump|Update|exchangeAdmin|exchangeSupport|exchangeUser|ETicket|newPhoto|NodeConfigControl|SaveDecryptComment|EncryptChatMessage|GetChatMessages|SendToTheChat|SaveToken|SendToPool|ClearDbLite|ClearDb|UploadVideo|daylightKey|PoolAddUsers|SaveQueue|AlertMessage|SaveHost|PoolDataBaseDump|GenerateNewPrimaryKey|GenerateNewNodeKey|SaveNotifications|ProgressBar|MinersMap|EncryptComment|Logout|SaveVideo|SaveShopData|SaveRaceCountry|MyNoticeData|HolidaysList|ClearVideo|CheckCfCurrency|WalletsListCfProject|SendTestEmail|SendSms|SaveUserCoords|SaveGeolocation|SaveEmailSms|Profile|DeleteVideo|CropPhoto$`, controllerName); !ok {
 		html = "Access denied 0"
 	} else {

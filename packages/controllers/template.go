@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
 // Template is a handle function for the template page
@@ -66,7 +66,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	params[`global`] = lib.Escape(r.FormValue("global"))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	//	fmt.Println(`PARAMS`, params)
-	tpl, err := utils.CreateHTMLFromTemplate(page, sessCitizenID, sessStateID, &params)
+	tpl, err := template.CreateHTMLFromTemplate(page, sessCitizenID, sessStateID, &params)
 	if err != nil {
 		log.Error("%v", err)
 	}

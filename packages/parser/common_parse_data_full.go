@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
@@ -63,13 +64,13 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 		return utils.ErrInfo(err)
 	}
 
-	utils.WriteSelectiveLog("DELETE FROM transactions WHERE used = 1")
+	logging.WriteSelectiveLog("DELETE FROM transactions WHERE used = 1")
 	afect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE used = 1")
 	if err != nil {
-		utils.WriteSelectiveLog(err)
+		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
 	}
-	utils.WriteSelectiveLog("afect: " + utils.Int64ToStr(afect))
+	logging.WriteSelectiveLog("afect: " + utils.Int64ToStr(afect))
 
 	txCounter := make(map[int64]int64)
 	p.fullTxBinaryData = p.BinaryData
@@ -108,18 +109,18 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				return utils.ErrInfo(err)
 			}
 
-			utils.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(utils.Md5(transactionBinaryDataFull)))
+			logging.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(utils.Md5(transactionBinaryDataFull)))
 			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=1 WHERE hex(hash) = ?", utils.Md5(transactionBinaryDataFull))
 			if err != nil {
-				utils.WriteSelectiveLog(err)
-				utils.WriteSelectiveLog("RollbackTo")
+				logging.WriteSelectiveLog(err)
+				logging.WriteSelectiveLog("RollbackTo")
 				err0 := p.RollbackTo(txForRollbackTo, true)
 				if err0 != nil {
 					log.Error("error: %v", err0)
 				}
 				return utils.ErrInfo(err)
 			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+			logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
 			//log.Debug("transactionBinaryData", transactionBinaryData)
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 			log.Debug("p.TxHash %s", p.TxHash)

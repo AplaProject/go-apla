@@ -14,26 +14,31 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package utils
+package template
 
 import (
 	"bytes"
 	"fmt"
 	"html/template"
-	//	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/op/go-logging"
 	"github.com/russross/blackfriday"
 	"github.com/shopspring/decimal"
 )
+
+var log = logging.MustGetLogger("daemons")
 
 // FieldInfo contains the information of contract data field
 type FieldInfo struct {
@@ -164,7 +169,7 @@ func init() {
 func LoadContracts() (err error) {
 	var states []map[string]string
 	prefix := []string{`global`}
-	states, err = DB.GetAll(`select id from system_states order by id`, -1)
+	states, err = sql.DB.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
 		return err
 	}
@@ -184,12 +189,12 @@ func LoadContracts() (err error) {
 // LoadContract reads and compiles contract of new state
 func LoadContract(prefix string) (err error) {
 	var contracts []map[string]string
-	contracts, err = DB.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
+	contracts, err = sql.DB.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
 	if err != nil {
 		return err
 	}
 	for _, item := range contracts {
-		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, StrToInt64(item[`id`])); err != nil {
+		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, utils.StrToInt64(item[`id`])); err != nil {
 			log.Error("Load Contract", item[`name`], err)
 			fmt.Println("Error Load Contract", item[`name`], err)
 			//return
@@ -202,7 +207,7 @@ func LoadContract(prefix string) (err error) {
 
 // Balance returns the balance of the wallet
 func Balance(walletID int64) (decimal.Decimal, error) {
-	balance, err := DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", walletID).String()
+	balance, err := sql.DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", walletID).String()
 	if err != nil {
 		return decimal.New(0, 0), err
 	}
@@ -211,12 +216,12 @@ func Balance(walletID int64) (decimal.Decimal, error) {
 
 // EGSRate returns egs_rate of the state
 func EGSRate(idstate int64) (float64, error) {
-	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
+	return sql.DB.Single(`SELECT value FROM "`+utils.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
 }
 
 // StateParam returns the value of state parameters
 func StateParam(idstate int64, name string) (string, error) {
-	return DB.Single(`SELECT value FROM "`+Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
+	return sql.DB.Single(`SELECT value FROM "`+utils.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
 }
 
 // Param returns the value of the specified varaible
@@ -229,7 +234,7 @@ func Param(vars *map[string]string, pars ...string) string {
 
 // LangRes returns the corresponding language resource of the specified parameter
 func LangRes(vars *map[string]string, pars ...string) string {
-	ret, _ := LangText(pars[0], int(StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	ret, _ := language.LangText(pars[0], int(utils.StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
 	return ret
 }
 
@@ -283,9 +288,9 @@ func ifValue(val string) bool {
 func Money(vars *map[string]string, pars ...string) string {
 	var cents int
 	if len(pars) > 1 {
-		cents = StrToInt(pars[1])
+		cents = utils.StrToInt(pars[1])
 	} else {
-		cents = StrToInt(StateVal(vars, `money_digit`))
+		cents = utils.StrToInt(StateVal(vars, `money_digit`))
 	}
 	ret := pars[0]
 	if ret == `NULL` {
@@ -437,7 +442,7 @@ func Now(vars *map[string]string, pars ...string) string {
 			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
 		}
 	}
-	ret, err := DB.Single(query).String()
+	ret, err := sql.DB.Single(query).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -509,12 +514,12 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 		class = pars[1]
 	}
 	if len(pars) > 3 {
-		digit = StrToInt(pars[3])
+		digit = utils.StrToInt(pars[3])
 	} else {
-		digit = StrToInt(StateVal(vars, `money_digit`))
+		digit = utils.StrToInt(StateVal(vars, `money_digit`))
 	}
 	if len(pars) > 2 {
-		value = Money(vars, pars[2], IntToStr(digit))
+		value = Money(vars, pars[2], utils.IntToStr(digit))
 	}
 	(*vars)["wimoney"] = `1`
 	return fmt.Sprintf(`<input id="%s" type="text" value="%s"
@@ -601,7 +606,7 @@ func Bin2Hex(vars *map[string]string, pars ...string) string {
 	if len(pars) == 0 {
 		return ``
 	}
-	return string(BinToHex(pars[0]))
+	return string(utils.BinToHex(pars[0]))
 }
 
 // WhiteBg switches flatPageMobile class
@@ -617,7 +622,7 @@ func WhiteBg(vars *map[string]string, pars ...string) string {
 
 // MessageBoard returns HTML source for displaying messages
 func MessageBoard(vars *map[string]string, pars ...string) string {
-	messages, err := DB.GetAll(`select * from "global_messages" order by id`, 100)
+	messages, err := sql.DB.GetAll(`select * from "global_messages" order by id`, 100)
 	if err != nil {
 		return ``
 	}
@@ -688,10 +693,10 @@ func GetList(vars *map[string]string, pars ...string) string {
 		order = ` order by ` + lib.EscapeName(pars[4])
 	}
 	if len(pars) >= 6 {
-		limit = StrToInt(pars[5])
+		limit = utils.StrToInt(pars[5])
 	}
 
-	value, err := DB.GetAll(`select `+fields+` from `+lib.EscapeName(pars[1])+where+order, limit)
+	value, err := sql.DB.GetAll(`select `+fields+` from `+lib.EscapeName(pars[1])+where+order, limit)
 	if err != nil {
 		return err.Error()
 	}
@@ -725,14 +730,14 @@ func GetList(vars *map[string]string, pars ...string) string {
 
 // AutoUpdate reloads inner commands each pars[0] seconds
 func AutoUpdate(vars *map[string]string, pars ...string) string {
-	time := StrToInt(pars[0])
+	time := utils.StrToInt(pars[0])
 	if time == 0 {
 		time = 10
 	}
-	(*vars)[`auto_time`] = IntToStr(time)
+	(*vars)[`auto_time`] = utils.IntToStr(time)
 	(*vars)[`auto_loop`] = `1`
 	if len((*vars)[`auto_id`]) > 0 {
-		(*vars)[`auto_id`] = IntToStr(StrToInt((*vars)[`auto_id`]) + 1)
+		(*vars)[`auto_id`] = utils.IntToStr(utils.StrToInt((*vars)[`auto_id`]) + 1)
 	} else {
 		(*vars)[`auto_id`] = `1`
 	}
@@ -760,7 +765,7 @@ func Include(vars *map[string]string, pars ...string) string {
 		}
 	}
 	//	page := (*vars)[`page`]
-	out, err := CreateHTMLFromTemplate(pars[0], StrToInt64((*vars)[`citizen`]), StrToInt64((*vars)[`state_id`]),
+	out, err := CreateHTMLFromTemplate(pars[0], utils.StrToInt64((*vars)[`citizen`]), utils.StrToInt64((*vars)[`state_id`]),
 		&params)
 	if err != nil {
 		out = err.Error()
@@ -815,7 +820,7 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 		where = ` where ` + lib.Escape(pars[2])
 	}
 	fmt.Println(`select * from ` + lib.EscapeName(pars[1]) + where)
-	value, err := DB.OneRow(`select * from ` + lib.EscapeName(pars[1]) + where).String()
+	value, err := sql.DB.OneRow(`select * from ` + lib.EscapeName(pars[1]) + where).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -839,7 +844,7 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	} else if len(pars) == 3 {
 		where = ` where ` + lib.Escape(pars[2])
 	}
-	value, err := DB.Single(`select ` + lib.Escape(pars[0]) + ` from ` + lib.EscapeName(pars[1]) + where).String()
+	value, err := sql.DB.Single(`select ` + lib.Escape(pars[0]) + ` from ` + lib.EscapeName(pars[1]) + where).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -1017,7 +1022,7 @@ func Divs(vars *map[string]string, pars ...string) (out string) {
 func DivsEnd(vars *map[string]string, pars ...string) (out string) {
 	if val, ok := (*vars)[`divs`]; ok && len(val) > 0 {
 		divs := strings.Split(val, `,`)
-		out = strings.Repeat(`</div>`, StrToInt(divs[len(divs)-1]))
+		out = strings.Repeat(`</div>`, utils.StrToInt(divs[len(divs)-1]))
 		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
 	}
 	return
@@ -1118,7 +1123,7 @@ func TxID(vars *map[string]string, pars ...string) string {
 	if len(pars) == 0 {
 		return `0`
 	}
-	return Int64ToStr(TypeInt(pars[0]))
+	return utils.Int64ToStr(utils.TypeInt(pars[0]))
 }
 
 // LinkPage returns the HTML link to the template page
@@ -1264,15 +1269,15 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
 		opar := strings.Split(val, `,`)
 		if len(opar) == 1 {
-			limit = fmt.Sprintf(` limit %d`, StrToInt64(opar[0]))
+			limit = fmt.Sprintf(` limit %d`, utils.StrToInt64(opar[0]))
 		} else {
-			limit = fmt.Sprintf(` offset %d limit %d`, StrToInt64(opar[0]), StrToInt64(opar[1]))
+			limit = fmt.Sprintf(` offset %d limit %d`, utils.StrToInt64(opar[0]), utils.StrToInt64(opar[1]))
 		}
 	}
 	if val, ok := (*pars)[`Fields`]; ok {
 		fields = lib.Escape(val)
 	}
-	list, err := DB.GetAll(fmt.Sprintf(`select %s from %s %s %s%s`, fields,
+	list, err := sql.DB.GetAll(fmt.Sprintf(`select %s from %s %s %s%s`, fields,
 		lib.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 	if err != nil {
 		return err.Error()
@@ -1377,15 +1382,15 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 	height := 100
 	ratio := `1/1`
 	if len(pars) > 1 {
-		width = StrToInt(pars[1])
+		width = utils.StrToInt(pars[1])
 	}
 	if len(pars) > 2 {
 		var w, h int
 		if lr := strings.Split(pars[2], `/`); len(lr) == 2 {
-			w, h = StrToInt(lr[0]), StrToInt(lr[1])
+			w, h = utils.StrToInt(lr[0]), utils.StrToInt(lr[1])
 			height = int(width * w / h)
 		} else {
-			height = StrToInt(pars[2])
+			height = utils.StrToInt(pars[2])
 			w, h = width, height
 			for _, i := range []int{2, 3, 5, 7} {
 				for (w%i) == 0 && (h%i) == 0 {
@@ -1403,9 +1408,9 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 
 // StateVal returns par[1]-th value of pars[0] state param
 func StateVal(vars *map[string]string, pars ...string) string {
-	val, _ := StateParam(StrToInt64((*vars)[`state_id`]), pars[0])
+	val, _ := StateParam(utils.StrToInt64((*vars)[`state_id`]), pars[0])
 	if len(pars) > 1 {
-		ind := StrToInt(pars[1])
+		ind := utils.StrToInt(pars[1])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 			val = LangRes(vars, alist[ind-1])
 		} else {
@@ -1515,7 +1520,7 @@ func ValueByID(vars *map[string]string, pars ...string) string {
 	if len(pars) < 3 {
 		return ``
 	}
-	value, err := DB.OneRow(`select * from ` + lib.EscapeName(pars[0]) + ` where id='` + lib.Escape(pars[1]) + `'`).String()
+	value, err := sql.DB.OneRow(`select * from ` + lib.EscapeName(pars[0]) + ` where id='` + lib.Escape(pars[1]) + `'`).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -1549,9 +1554,9 @@ func ValueByID(vars *map[string]string, pars ...string) string {
 func TXButton(vars *map[string]string, pars *map[string]string) string {
 	var unique int64
 	if uval, ok := (*vars)[`tx_unique`]; ok {
-		unique = StrToInt64(uval) + 1
+		unique = utils.StrToInt64(uval) + 1
 	}
-	(*vars)[`tx_unique`] = Int64ToStr(unique)
+	(*vars)[`tx_unique`] = utils.Int64ToStr(unique)
 	btnName := `Send`
 	if btn, ok := (*pars)[`Name`]; ok {
 		btnName = btn
@@ -1569,13 +1574,13 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	onsuccess := (*pars)[`OnSuccess`]
-	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
+	contract := smart.GetContract(name, uint32(utils.StrToUint64((*vars)[`state_id`])))
 	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
 		return fmt.Sprintf(`there is not %s contract`, name)
 	}
 	funcMap := template.FuncMap{
 		"sum": func(a, b interface{}) float64 {
-			return InterfaceToFloat64(a) + InterfaceToFloat64(b)
+			return utils.InterfaceToFloat64(a) + utils.InterfaceToFloat64(b)
 		},
 		"noescape": func(s string) template.HTML {
 			return template.HTML(s)
@@ -1648,12 +1653,12 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 			if fitem.Type.String() == script.Decimal {
 				var count int
 				if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-					count = StrToInt(ret[1])
+					count = utils.StrToInt(ret[1])
 				} else {
-					count = StrToInt(StateVal(vars, `money_digit`))
+					count = utils.StrToInt(StateVal(vars, `money_digit`))
 				}
 				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HTMLType: "money",
-					ID: idname, Param: IntToStr(count)})
+					ID: idname, Param: utils.IntToStr(count)})
 			} else if fitem.Type.String() == `[]interface {}` {
 				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, ID: idname, HTMLType: "array"})
 			} else {
@@ -1683,12 +1688,12 @@ func getSelect(linklist string) (data []map[string]string, id string, name strin
 	if len(tbl) > 2 {
 		id = tbl[2]
 	}
-	count, err = DB.Single(`select count(*) from ` + tblname).Int64()
+	count, err = sql.DB.Single(`select count(*) from ` + tblname).Int64()
 	if err != nil {
 		return
 	}
 	if count > 0 && count <= 50 {
-		data, err = DB.GetAll(fmt.Sprintf(`select %s, %s from %s order by %s`, id,
+		data, err = sql.DB.GetAll(fmt.Sprintf(`select %s, %s from %s order by %s`, id,
 			lib.EscapeName(name), tblname, lib.EscapeName(name)), -1)
 	}
 	return
@@ -1698,20 +1703,20 @@ func getSelect(linklist string) (data []map[string]string, id string, name strin
 func TXForm(vars *map[string]string, pars *map[string]string) string {
 	var unique int64
 	if uval, ok := (*vars)[`tx_unique`]; ok {
-		unique = StrToInt64(uval) + 1
+		unique = utils.StrToInt64(uval) + 1
 	}
-	(*vars)[`tx_unique`] = Int64ToStr(unique)
+	(*vars)[`tx_unique`] = utils.Int64ToStr(unique)
 	name := (*pars)[`Contract`]
 	//	init := (*pars)[`Init`]
 	//fmt.Println(`TXForm Init`, *vars)
 	onsuccess := (*pars)[`OnSuccess`]
-	contract := smart.GetContract(name, uint32(StrToUint64((*vars)[`state_id`])))
+	contract := smart.GetContract(name, uint32(utils.StrToUint64((*vars)[`state_id`])))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		return fmt.Sprintf(`there is not %s contract or parameters`, name)
 	}
 	funcMap := template.FuncMap{
 		"sum": func(a, b interface{}) float64 {
-			return InterfaceToFloat64(a) + InterfaceToFloat64(b)
+			return utils.InterfaceToFloat64(a) + utils.InterfaceToFloat64(b)
 		},
 		"noescape": func(s string) template.HTML {
 			return template.HTML(s)
@@ -1790,13 +1795,13 @@ txlist:
 			}
 		}
 		if len(linklist) > 0 {
-			sellist := SelList{StrToInt64(value), make(map[int]string)}
+			sellist := SelList{utils.StrToInt64(value), make(map[int]string)}
 			if strings.IndexByte(linklist, '.') >= 0 {
 				if data, id, name, err := getSelect(linklist); err != nil {
 					return err.Error()
 				} else if len(data) > 0 {
 					for _, item := range data {
-						sellist.List[int(StrToInt64(item[id]))] = lib.StripTags(item[name])
+						sellist.List[int(utils.StrToInt64(item[id]))] = lib.StripTags(item[name])
 					}
 				}
 			} else if alist := strings.Split(StateVal(vars, linklist), `,`); len(alist) > 0 {
@@ -1809,14 +1814,14 @@ txlist:
 		} else if fitem.Type.String() == script.Decimal {
 			var count int
 			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-				count = StrToInt(ret[1])
+				count = utils.StrToInt(ret[1])
 			} else {
-				count = StrToInt(StateVal(vars, `money_digit`))
+				count = utils.StrToInt(StateVal(vars, `money_digit`))
 			}
-			value = Money(vars, value, IntToStr(count))
+			value = Money(vars, value, utils.IntToStr(count))
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: "money",
 				TxType: fitem.Type.String(), Title: title, Value: value,
-				Param: IntToStr(count) /*`9{1,20}` + postfix*/})
+				Param: utils.IntToStr(count) /*`9{1,20}` + postfix*/})
 		} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` {
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: "textinput",
 				TxType: fitem.Type.String(), Title: title, Value: value})
@@ -1855,18 +1860,18 @@ func Ring(vars *map[string]string, pars ...string) string {
 	count := 0
 	size := 18
 	if len(pars) > 0 {
-		count = int(StrToInt64(pars[0]))
+		count = int(utils.StrToInt64(pars[0]))
 	}
 	if len(pars) > 1 {
-		size = int(StrToInt64(pars[1]))
+		size = int(utils.StrToInt64(pars[1]))
 	}
 	pct := 100
 	if len(pars) > 2 {
-		pct = int(StrToInt64(pars[2]))
+		pct = int(utils.StrToInt64(pars[2]))
 	}
 	speed := 1
 	if len(pars) > 3 {
-		speed = int(StrToInt64(pars[3]))
+		speed = int(utils.StrToInt64(pars[3]))
 	}
 	color := `23b7e5`
 	if len(pars) > 4 {
@@ -1878,11 +1883,11 @@ func Ring(vars *map[string]string, pars ...string) string {
 	}
 	width := 250
 	if len(pars) > 6 {
-		width = int(StrToInt64(pars[6]))
+		width = int(utils.StrToInt64(pars[6]))
 	}
 	thickness := 10
 	if len(pars) > 7 {
-		thickness = int(StrToInt64(pars[7]))
+		thickness = int(utils.StrToInt64(pars[7]))
 	}
 	prefix := ``
 	if len(pars) > 8 {
@@ -1967,7 +1972,7 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 	if len(pars) > 3 && len(pars[3]) > 0 {
 		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, pars[3])
 	}
-	address := lib.AddressToString(StrToInt64(pars[1]))
+	address := lib.AddressToString(utils.StrToInt64(pars[1]))
 	(*vars)["wicitizen"] = `1`
 	return fmt.Sprintf(`<div class="panel widget"><div class="panel-body">
 			<div class="row row-table"><div class="col-xs-6 text-center">
@@ -1993,7 +1998,7 @@ func Mult(vars *map[string]string, pars ...string) string {
 	if len(pars) != 2 {
 		return ``
 	}
-	return Int64ToStr(round(StrToFloat64(pars[0]) * StrToFloat64(pars[1])))
+	return utils.Int64ToStr(utils.RoundWithoutPrecision(utils.StrToFloat64(pars[0]) * utils.StrToFloat64(pars[1])))
 }
 
 // Date formats the date value
@@ -2064,7 +2069,7 @@ func Select(vars *map[string]string, pars ...string) string {
 				return err.Error()
 			} else if len(data) > 0 {
 				for _, item := range data {
-					list = append(list, SelInfo{ID: StrToInt64(item[id]), Name: lib.StripTags(item[name])})
+					list = append(list, SelInfo{ID: utils.StrToInt64(item[id]), Name: lib.StripTags(item[name])})
 				}
 			}
 		} else if alist := strings.Split(StateVal(vars, pars[1]), `,`); len(alist) > 0 {
@@ -2077,7 +2082,7 @@ func Select(vars *map[string]string, pars ...string) string {
 		class, more = getClass(pars[2])
 	}
 	if len(pars) > 3 {
-		value = StrToInt64(pars[3])
+		value = utils.StrToInt64(pars[3])
 	}
 
 	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s" %s>`, pars[0], class, more)
@@ -2188,7 +2193,7 @@ func MenuEnd(vars *map[string]string, pars ...string) string {
 
 // ChartBar returns bar chart with the information from the database
 func ChartBar(vars *map[string]string, pars *map[string]string) string {
-	id := fmt.Sprintf(`bar%d`, RandInt(0, 0xfffffff))
+	id := fmt.Sprintf(`bar%d`, utils.RandInt(0, 0xfffffff))
 	data := make([]string, 0)
 	labels := make([]string, 0)
 	//	if len((*pars)[`Data`]) > 0 {
@@ -2214,12 +2219,12 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
 	if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
 		opar := strings.Split(val, `,`)
 		if len(opar) == 1 {
-			limit = fmt.Sprintf(` limit %d`, StrToInt64(opar[0]))
+			limit = fmt.Sprintf(` limit %d`, utils.StrToInt64(opar[0]))
 		} else {
-			limit = fmt.Sprintf(` offset %d limit %d`, StrToInt64(opar[0]), StrToInt64(opar[1]))
+			limit = fmt.Sprintf(` offset %d limit %d`, utils.StrToInt64(opar[0]), utils.StrToInt64(opar[1]))
 		}
 	}
-	list, err := DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, lib.EscapeName(value), lib.EscapeName(label),
+	list, err := sql.DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, lib.EscapeName(value), lib.EscapeName(label),
 		lib.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 	if err != nil {
 		return err.Error()
@@ -2268,7 +2273,7 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
 
 // ChartPie returns pie chart with the information from the database
 func ChartPie(vars *map[string]string, pars *map[string]string) string {
-	id := fmt.Sprintf(`pie%d`, RandInt(0, 0xfffffff))
+	id := fmt.Sprintf(`pie%d`, utils.RandInt(0, 0xfffffff))
 	out := make([]string, 0)
 
 	if len((*pars)[`Data`]) > 0 {
@@ -2305,14 +2310,14 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
 		if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
 			opar := strings.Split(val, `,`)
 			if len(opar) == 1 {
-				limit = fmt.Sprintf(` limit %d`, StrToInt64(opar[0]))
+				limit = fmt.Sprintf(` limit %d`, utils.StrToInt64(opar[0]))
 			} else {
-				limit = fmt.Sprintf(` offset %d limit %d`, StrToInt64(opar[0]), StrToInt64(opar[1]))
+				limit = fmt.Sprintf(` offset %d limit %d`, utils.StrToInt64(opar[0]), utils.StrToInt64(opar[1]))
 			}
 		} else {
 			limit = fmt.Sprintf(` limit %d`, len(colors))
 		}
-		list, err := DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, lib.EscapeName(value), lib.EscapeName(label),
+		list, err := sql.DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, lib.EscapeName(value), lib.EscapeName(label),
 			lib.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 		if err != nil {
 			return err.Error()
@@ -2533,4 +2538,166 @@ func ProceedTemplate(html string, data interface{}) (string, error) {
 		return "", err
 	}
 	return b.String(), nil
+}
+
+// CreateHTMLFromTemplate gets the template of the page from the table and proceeds it
+func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[string]string) (string, error) {
+	var data string
+	var err error
+	query := `SELECT value FROM "` + utils.Int64ToStr(stateID) + `_pages" WHERE name = ?`
+	if (*params)[`global`] == `1` {
+		query = `SELECT value FROM global_pages WHERE name = ?`
+	}
+	if page == `body` && len((*params)[`autobody`]) > 0 {
+		data = (*params)[`autobody`]
+	} else {
+		data, err = sql.DB.Single(query, page).String()
+		if err != nil {
+			return "", err
+		}
+	}
+	(*params)[`page`] = page
+	(*params)[`state_id`] = utils.Int64ToStr(stateID)
+	(*params)[`citizen`] = utils.Int64ToStr(citizenID)
+	if len(data) > 0 {
+		templ := textproc.Process(data, params)
+		if (*params)[`isrow`] == `opened` {
+			templ += `</div>`
+			(*params)[`isrow`] = ``
+		}
+		templ = language.LangMacro(templ, int(stateID), (*params)[`accept_lang`])
+		getHeight := func() int64 {
+			height := int64(100)
+			if h, ok := (*params)[`hmap`]; ok {
+				height = utils.StrToInt64(h)
+			}
+			return height
+		}
+		if len((*params)[`wisource`]) > 0 {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			var editor = ace.edit("textEditor");
+	var ContractMode = ace.require("ace/mode/c_cpp").Mode;
+	ace.require("ace/ext/language_tools");
+	$(".textEditor code").html(editor.getValue());
+	$("#%s").val(editor.getValue());
+	editor.setTheme("ace/theme/chrome");
+    editor.session.setMode(new ContractMode());
+	editor.setShowPrintMargin(false);
+	editor.getSession().setTabSize(4);
+	editor.getSession().setUseWrapMode(true);
+	editor.getSession().on('change', function(e) {
+		$(".textEditor code").html(editor.getValue());
+		$("#%s").val(editor.getValue());
+		editor.resize();
+	});
+	editor.setOptions({
+		enableBasicAutocompletion: true,
+		enableSnippets: true,
+		enableLiveAutocompletion: true
+	});
+			</script>`, (*params)[`wisource`], (*params)[`wisource`])
+		}
+		if (*params)[`wimoney`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+				$(".inputmask").inputmask({'autoUnmask': true});</script>`)
+		}
+		if (*params)[`widate`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+						$(document).ready(function() {
+							$.datetimepicker.setLocale('en');
+							$(".datetimepicker").datetimepicker();
+						})
+				</script>`)
+		}
+		if (*params)[`wiaddress`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+				$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
+	$(".address").typeahead({
+		minLength: 1,
+		items: 10,
+		source: function (query, process) {
+			return $.get('ajax?json=ajax_addresses', { 'address': query }, function (data) {
+				return process(data.address);
+			});
+		}
+	}).focus();</script>`)
+		}
+		if (*params)[`wimap`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())
+		}
+		if (*params)[`wicitizen`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">(function($, window, document){
+'use strict';
+  var Selector = '[data-notify]',
+      autoloadSelector = '[data-onload]',
+      doc = $(document);
+
+  $(function() {
+    $(Selector).each(function(){
+      var $this  = $(this),
+          onload = $this.data('onload');
+      if(onload !== undefined) {
+        setTimeout(function(){
+          notifyNow($this);
+        }, 800);
+      }
+      $this.on('click', function (e) {
+        e.preventDefault();
+        notifyNow($this);
+      });
+    });
+  });
+  function notifyNow($element) {
+      var message = $element.data('message'),
+          options = $element.data('options');
+ 	 if(!message)
+        $.error('Notify: No message specified');
+      $.notify(message, options || {});
+  }
+}(jQuery, window, document));</script>`)
+		}
+		if (*params)[`wimappoint`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
+		}
+		if (*params)[`wibtncont`] == `1` {
+			var unique int64
+			if uval, ok := (*params)[`tx_unique`]; ok {
+				unique = utils.StrToInt64(uval) + 1
+			}
+			(*params)[`tx_unique`] = utils.Int64ToStr(unique)
+			funcMap := template.FuncMap{
+				"sum": func(a, b interface{}) float64 {
+					return utils.InterfaceToFloat64(a) + utils.InterfaceToFloat64(b)
+				},
+				"noescape": func(s string) template.HTML {
+					return template.HTML(s)
+				},
+			}
+			data, err := static.Asset("static/tx_btncont.html")
+			if err != nil {
+				return ``, err
+			}
+			sign, err := static.Asset("static/signatures_new.html")
+			if err != nil {
+				return ``, err
+			}
+
+			t := template.New("template").Funcs(funcMap)
+			if t, err = t.Parse(string(data)); err != nil {
+				return ``, err
+			}
+			t = template.Must(t.Parse(string(sign)))
+			b := new(bytes.Buffer)
+
+			finfo := TxBtnCont{Unique: template.JS((*params)[`tx_unique`])}
+			if err = t.Execute(b, finfo); err != nil {
+				return ``, err
+			}
+			templ += b.String()
+		}
+		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: templ})
+	}
+	return ``, nil
 }

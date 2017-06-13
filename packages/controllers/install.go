@@ -26,13 +26,13 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 	"strings"
 )
 
 // Install is a controller for the installation
 func (c *Controller) Install() (string, error) {
-
 	c.r.ParseForm()
 	dir := c.r.FormValue("dir")
 	if dir != "" {
@@ -107,8 +107,8 @@ func (c *Controller) Install() (string, error) {
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
-	var DB *utils.DCDB
-	DB, err = utils.NewDbConnect(configIni)
+	var DB *sql.DCDB
+	DB, err = sql.NewDbConnect(configIni)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
