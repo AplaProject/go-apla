@@ -99,7 +99,7 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		}
 		Mutex.Unlock()
 		if !ok {
-			utils.Sleep(time.Duration(utils.RandInt(300, 400)) * time.Millisecond)
+			time.Sleep(time.Duration(utils.RandInt(300, 400)) * time.Millisecond)
 		} else {
 			break
 		}
