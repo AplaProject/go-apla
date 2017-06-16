@@ -936,7 +936,7 @@ func Tag(vars *map[string]string, pars ...string) (out string) {
 
 // Div returns div HTML tag
 func Div(vars *map[string]string, pars ...string) (out string) {
-	if len((*vars)[`isrow`]) == 0 {
+	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` {
 		out = `<div class="row">`
 		(*vars)[`isrow`] = `opened`
 	}
