@@ -204,7 +204,7 @@ var GKey = {
 		GKey.Address = address;
 		var data = {
 			EncKey: localStorage.getItem('EncKey'),
-			//			Encrypt: localStorage.getItem('Encrypt'),
+			Encrypt: localStorage.getItem('Encrypt'),
 			Public: GKey.Public,
 			Address: address,
 			StateId: GKey.StateId,
@@ -228,6 +228,7 @@ var GKey = {
 	clear: function () {
 		//		localStorage.removeItem('PubKey');
 		localStorage.removeItem('EncKey');
+		localStorage.removeItem('Encrypt');
 		localStorage.removeItem('Address');
 		this.Address = '';
 		this.StateId = '';
