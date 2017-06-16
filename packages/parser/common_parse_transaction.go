@@ -147,16 +147,18 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			}
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)
 		}
+		parser := GetParser(p, consts.TxTypes[int(txType)])
+		err := parser.Init()
+		if err != nil {
+			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
+		}
+		header := parser.Header()
+		if header == nil {
+			return transSlice, utils.ErrInfo(fmt.Errorf("tx header is nil"))
+		}
 		transSlice = append(transSlice, utils.Int64ToByte(txType))
-		if len(*transactionBinaryData) == 0 {
-			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
-		}
 		// следующие 4 байта - время транзакции
-		transSlice = append(transSlice, utils.Int64ToByte(utils.BinToDecBytesShift(transactionBinaryData, 4)))
-		if len(*transactionBinaryData) == 0 {
-			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
-		}
-		log.Debug("%s", transSlice)
+		transSlice = append(transSlice, utils.Int64ToByte(header.Time))
 		// преобразуем бинарные данные транзакции в массив
 		if txType > 127 {
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
@@ -171,24 +173,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			for i := 1; i < t.NumField(); i++ {
 				data := lib.FieldToBytes(t.Interface(), i)
 				returnSlice = append(returnSlice, data)
-			}
-		} else {
-			i := 0
-			for {
-				length := utils.DecodeLength(transactionBinaryData)
-				i++
-				if length > 0 && length < consts.MAX_TX_SIZE {
-					data := utils.BytesShift(transactionBinaryData, length)
-					returnSlice = append(returnSlice, data)
-					log.Debug("%x", data)
-					log.Debug("%s", data)
-				} else if length == 0 && len(*transactionBinaryData) > 0 {
-					returnSlice = append(returnSlice, []byte{})
-					continue
-				}
-				if length == 0 || i >= 20 { // у нас нет тр-ий с более чем 20 элементами
-					break
-				}
 			}
 		}
 		if isStruct {
