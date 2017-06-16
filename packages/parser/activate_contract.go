@@ -116,3 +116,7 @@ func (p *ActivateContractParser) Action() error {
 func (p *ActivateContractParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p *ActivateContractParser) Header() *tx.Header {
+	return &p.ActivateContract.Header
+}

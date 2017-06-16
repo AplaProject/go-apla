@@ -178,3 +178,7 @@ func (p *NewColumnParser) Rollback() error {
 	}
 	return nil
 }
+
+func (p NewColumnParser) Header() *tx.Header {
+	return &p.NewColumn.Header
+}

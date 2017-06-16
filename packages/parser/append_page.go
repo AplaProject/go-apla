@@ -81,3 +81,7 @@ func (p *AppendPageParser) Action() error {
 func (p *AppendPageParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p AppendPageParser) Header() *tx.Header {
+	return &p.AppendPage.Header
+}

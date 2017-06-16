@@ -99,3 +99,7 @@ func (p *EditSignParser) Action() error {
 func (p *EditSignParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p EditSignParser) Header() *tx.Header {
+	return &p.EditSign.Header
+}

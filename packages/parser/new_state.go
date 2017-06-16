@@ -491,3 +491,7 @@ func (p *NewStateParser) Rollback() error {
 
 	return nil
 }
+
+func (p NewStateParser) Header() *tx.Header {
+	return &p.NewState.Header
+}

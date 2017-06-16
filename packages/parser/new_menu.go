@@ -72,3 +72,7 @@ func (p *NewMenuParser) Action() error {
 func (p *NewMenuParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p *NewMenuParser) Header() *tx.Header {
+	return &p.NewMenu.Header
+}

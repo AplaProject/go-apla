@@ -210,3 +210,7 @@ func (p *UpdFullNodesParser) Rollback() error {
 	}
 	return nil
 }
+
+func (p *UpdFullNodesParser) Header() *tx.Header {
+	return &p.UpdFullNodes.Header
+}

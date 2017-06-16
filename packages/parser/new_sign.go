@@ -88,3 +88,7 @@ func (p *NewSignParser) Action() error {
 func (p *NewSignParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p NewSignParser) Header() *tx.Header {
+	return &p.NewSign.Header
+}

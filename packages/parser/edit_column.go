@@ -125,3 +125,7 @@ func (p *EditColumnParser) Rollback() error {
 	}
 	return nil
 }
+
+func (p EditColumnParser) Header() *tx.Header {
+	return &p.EditColumn.Header
+}

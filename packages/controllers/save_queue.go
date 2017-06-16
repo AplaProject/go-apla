@@ -292,8 +292,7 @@ func (c *Controller) SaveQueue() (string, error) {
 			return "", utils.ErrInfo(err)
 		}
 		header.UserID = accountId
-		header.PublicKey = pubKey
-		toSerialize = tx.NewAccount{header}
+		toSerialize = tx.NewAccount{header, pubKey}
 	case "ChangeNodeKey", "ChangeNodeKeyDLT":
 		publicKey := []byte(c.r.FormValue("publicKey"))
 		privateKey := []byte(c.r.FormValue("privateKey"))

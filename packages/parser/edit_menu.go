@@ -82,3 +82,7 @@ func (p *EditMenuParser) Action() error {
 func (p *EditMenuParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p EditMenuParser) Header() *tx.Header {
+	return &p.EditMenu.Header
+}

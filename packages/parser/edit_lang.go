@@ -76,3 +76,7 @@ func (p *EditLangParser) Action() error {
 func (p *EditLangParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p EditLangParser) Header() *tx.Header {
+	return &p.EditLang.Header
+}

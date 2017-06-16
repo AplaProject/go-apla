@@ -1,6 +1,9 @@
 package tx
 
-import "fmt"
+import (
+	"encoding/hex"
+	"fmt"
+)
 
 type EditWallet struct {
 	Header
@@ -37,6 +40,11 @@ func (e *EditNewSign) ForSign() string {
 
 type NewAccount struct {
 	Header
+	PublicKey []byte
+}
+
+func (n NewAccount) ForSign() string {
+	return fmt.Sprintf("%s,%s,%d,%d,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.Header.StateID, hex.EncodeToString(n.PublicKey))
 }
 
 type ChangeNodeKey struct {

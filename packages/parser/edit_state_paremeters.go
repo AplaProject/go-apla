@@ -87,3 +87,7 @@ func (p *EditStateParametersParser) Action() error {
 func (p *EditStateParametersParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p EditStateParametersParser) Header() *tx.Header {
+	return &p.EditStateParameters.Header
+}

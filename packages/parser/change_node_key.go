@@ -77,3 +77,7 @@ func (p *ChangeNodeKeyParser) Action() error {
 func (p *ChangeNodeKeyParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p ChangeNodeKeyParser) Header() *tx.Header {
+	return &p.ChangeNodeKey.Header
+}

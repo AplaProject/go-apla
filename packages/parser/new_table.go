@@ -212,3 +212,7 @@ func (p *NewTableParser) Rollback() error {
 	}
 	return nil
 }
+
+func (p NewTableParser) Header() *tx.Header {
+	return &p.NewTable.Header
+}

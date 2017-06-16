@@ -89,3 +89,7 @@ func (p *EditPageParser) Action() error {
 func (p *EditPageParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p *EditPageParser) Header() *tx.Header {
+	return &p.EditPage.Header
+}

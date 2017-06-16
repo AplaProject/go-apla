@@ -111,3 +111,7 @@ func (p *DLTChangeHostVoteParser) Action() error {
 func (p *DLTChangeHostVoteParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p DLTChangeHostVoteParser) Header() *tx.Header {
+	return &p.DLTChangeHostVote.Header
+}

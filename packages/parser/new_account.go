@@ -18,47 +18,47 @@ package parser
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type NewAccountParser struct {
 	*Parser
+	NewAccount *tx.NewAccount
 }
 
 func (p *NewAccountParser) Init() error {
-	fields := []map[string]string{{"pub": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+	newAccount := &tx.NewAccount{}
+	if err := msgpack.Unmarshal(p.BinaryData, newAccount); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewAccount = newAccount
 	return nil
 }
 
 func (p *NewAccountParser) Validate() error {
-	p.PublicKeys = append(p.PublicKeys, p.TxMaps.Bytes["pub"])
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID,
-		p.TxStateID, hex.EncodeToString(p.TxMaps.Bytes["pub"]))
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	p.PublicKeys = append(p.PublicKeys, p.NewAccount.PublicKey)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewAccount.ForSign(), p.TxMap["sign"], false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-
 	return nil
 }
 
 func (p *NewAccountParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.TxMaps.Bytes["pub"])},
+	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.NewAccount.PublicKey)},
 		"dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxCitizenID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	_, err = p.selectiveLoggingAndUpd([]string{"citizen_id", "amount"}, []interface{}{p.TxCitizenID, 0},
-		p.TxStateIDStr+"_accounts", nil, nil, true)
+		utils.UInt32ToStr(p.TxStateID)+"_accounts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -67,4 +67,8 @@ func (p *NewAccountParser) Action() error {
 
 func (p *NewAccountParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p NewAccountParser) Header() *tx.Header {
+	return &p.NewAccount.Header
 }

@@ -29,6 +29,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
 )
@@ -46,6 +47,7 @@ type ParserInterface interface {
 	Validate() error
 	Action() error
 	Rollback() error
+	Header() *tx.Header
 }
 
 func GetTablePrefix(global string, stateId int64) (string, error) {
@@ -125,7 +127,7 @@ func GetParser(p *Parser, txType string) ParserInterface {
 	case "ActivateContract":
 		return &ActivateContractParser{p, nil}
 	case "NewAccount":
-		return &NewAccountParser{p}
+		return &NewAccountParser{p, nil}
 	default:
 		return nil
 	}

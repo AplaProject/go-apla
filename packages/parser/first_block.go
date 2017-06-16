@@ -21,6 +21,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 type FirstBlockParser struct {
@@ -57,5 +58,9 @@ func (p *FirstBlockParser) Action() error {
 }
 
 func (p *FirstBlockParser) Rollback() error {
+	return nil
+}
+
+func (p FirstBlockParser) Header() *tx.Header {
 	return nil
 }

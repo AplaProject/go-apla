@@ -124,3 +124,7 @@ func (p *EditContractParser) Action() error {
 func (p *EditContractParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p EditContractParser) Header() *tx.Header {
+	return &p.EditContract.Header
+}

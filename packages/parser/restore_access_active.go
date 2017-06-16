@@ -86,3 +86,7 @@ func (p *RestoreAccessActiveParser) Action() error {
 func (p *RestoreAccessActiveParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p RestoreAccessActiveParser) Header() *tx.Header {
+	return &p.RestoreAccessActive.Header
+}

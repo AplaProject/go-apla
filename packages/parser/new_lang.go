@@ -113,3 +113,7 @@ func (p *NewLangParser) Action() error {
 func (p *NewLangParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p NewLangParser) Header() *tx.Header {
+	return &p.NewLang.Header
+}

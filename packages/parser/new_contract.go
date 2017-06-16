@@ -130,3 +130,7 @@ func (p *NewContractParser) Action() error {
 func (p *NewContractParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p NewContractParser) Header() *tx.Header {
+	return &p.NewContract.Header
+}

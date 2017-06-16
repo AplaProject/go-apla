@@ -121,3 +121,7 @@ func (p *EditWalletParser) Action() error {
 func (p *EditWalletParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p *EditWalletParser) Header() *tx.Header {
+	return &p.EditWallet.Header
+}

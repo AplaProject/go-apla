@@ -151,3 +151,7 @@ func (p *EditTableParser) Rollback() error {
 	}
 	return nil
 }
+
+func (p EditTableParser) Header() *tx.Header {
+	return &p.EditTable.Header
+}

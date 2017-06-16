@@ -90,3 +90,7 @@ func (p *ChangeNodeKeyDLTParser) Action() error {
 func (p *ChangeNodeKeyDLTParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p ChangeNodeKeyDLTParser) Header() *tx.Header {
+	return &p.DLTChangeNodeKey.Header
+}

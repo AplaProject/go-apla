@@ -78,3 +78,7 @@ func (p *RestoreAccessRequestParser) Action() error {
 func (p *RestoreAccessRequestParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p RestoreAccessRequestParser) Header() *tx.Header {
+	return &p.RestoreAccessRequest.Header
+}

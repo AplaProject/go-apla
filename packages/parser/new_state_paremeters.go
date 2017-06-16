@@ -76,3 +76,7 @@ func (p *NewStateParametersParser) Action() error {
 func (p *NewStateParametersParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p NewStateParametersParser) Header() *tx.Header {
+	return &p.NewStateParameters.Header
+}

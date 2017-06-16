@@ -218,3 +218,7 @@ func (p *DLTTransferParser) Action() error {
 func (p *DLTTransferParser) Rollback() error {
 	return p.autoRollback()
 }
+
+func (p DLTTransferParser) Header() *tx.Header {
+	return &p.DLTTransfer.Header
+}
