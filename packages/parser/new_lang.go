@@ -33,7 +33,7 @@ type NewLangParser struct {
 
 func (p *NewLangParser) Init() error {
 	newLang := &tx.EditNewLang{}
-	if err := msgpack.Unmarshal(p.BinaryData, newLang); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newLang); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewLang = newLang

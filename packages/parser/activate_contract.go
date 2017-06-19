@@ -34,7 +34,7 @@ type ActivateContractParser struct {
 
 func (p *ActivateContractParser) Init() error {
 	activateContract := &tx.ActivateContract{}
-	if err := msgpack.Unmarshal(p.BinaryData, activateContract); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, activateContract); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.ActivateContract = activateContract

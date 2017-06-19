@@ -27,14 +27,15 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 )
 
-func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, error) {
-
+func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.Header, error) {
 	var returnSlice [][]byte
 	var transSlice [][]byte
+	var header *tx.Header
 	log.Debug("transactionBinaryData: %x", *transactionBinaryData)
 	log.Debug("transactionBinaryData: %s", *transactionBinaryData)
 	p.TxContract = nil
@@ -52,7 +53,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			var err error
 			p.TxPtr = &consts.TXHeader{}
 			if err = lib.BinUnmarshal(&input, p.TxPtr); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			isStruct = false
 			p.TxStateID = uint32(p.TxPtr.(*consts.TXHeader).StateID)
@@ -66,7 +67,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			}
 			contract := smart.GetContractByID(p.TxPtr.(*consts.TXHeader).Type)
 			if contract == nil {
-				return nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
+				return nil, nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
 			}
 			//			log.Debug(`TRANDEB %d %d NAME: %s`, int64(p.TxPtr.(*consts.TXHeader).WalletId),
 			//				uint64(p.TxPtr.(*consts.TXHeader).WalletId), contract.Name)
@@ -93,25 +94,25 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					case script.Decimal:
 						var s string
 						if err = lib.BinUnmarshal(&input, &s); err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						v, err = decimal.NewFromString(s)
 					case `string`:
 						var s string
 						if err = lib.BinUnmarshal(&input, &s); err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						v = s
 					case `[]uint8`:
 						var b []byte
 						if err = lib.BinUnmarshal(&input, &b); err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						v = hex.EncodeToString(b)
 					}
 					p.TxData[fitem.Name] = v
 					if err != nil {
-						return nil, err
+						return nil, nil, err
 					}
 					if strings.Index(fitem.Tags, `image`) >= 0 {
 						continue
@@ -124,7 +125,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		} else if isStruct {
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 			if err := lib.BinUnmarshal(&input, p.TxPtr); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			p.TxVars = make(map[string]string)
 			if int(txType) == 4 { // TXNewCitizen
@@ -150,15 +151,16 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		parser := GetParser(p, consts.TxTypes[int(txType)])
 		err := parser.Init()
 		if err != nil {
-			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
+			return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect tx"))
 		}
-		header := parser.Header()
+		header = parser.Header()
 		if header == nil {
-			return transSlice, utils.ErrInfo(fmt.Errorf("tx header is nil"))
+			return transSlice, nil, utils.ErrInfo(fmt.Errorf("tx header is nil"))
 		}
 		transSlice = append(transSlice, utils.Int64ToByte(txType))
 		// следующие 4 байта - время транзакции
 		transSlice = append(transSlice, utils.Int64ToByte(header.Time))
+		transSlice = append(transSlice, []byte{})
 		// преобразуем бинарные данные транзакции в массив
 		if txType > 127 {
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
@@ -179,8 +181,8 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		}
 		if len(*transactionBinaryData) > 0 {
-			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect transactionBinaryData %x", transactionBinaryData))
+			return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect transactionBinaryData %x", transactionBinaryData))
 		}
 	}
-	return append(transSlice, returnSlice...), nil
+	return append(transSlice, returnSlice...), header, nil
 }

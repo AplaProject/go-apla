@@ -154,6 +154,7 @@ type Parser struct {
 	BlockData        *utils.BlockData
 	PrevBlock        *utils.BlockData
 	BinaryData       []byte
+	TxBinaryData     []byte
 	blockHashHex     []byte
 	dataType         int
 	blockHex         []byte

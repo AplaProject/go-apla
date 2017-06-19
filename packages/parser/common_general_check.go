@@ -27,6 +27,17 @@ func (p *Parser) generalCheck(name string, header *tx.Header) error {
 	log.Debug("%s", p.TxMap)
 	// проверим, есть ли такой юзер и заодно получим public_key
 	txType := int64(header.Type)
+	if header.StateID > 0 {
+		p.TxStateID = uint32(header.StateID)
+		p.TxStateIDStr = utils.Int64ToStr(header.StateID)
+		p.TxCitizenID = header.UserID
+		p.TxWalletID = 0
+	} else {
+		p.TxStateID = 0
+		p.TxStateIDStr = ""
+		p.TxWalletID = header.UserID
+		p.TxCitizenID = 0
+	}
 	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
 		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
 		if err != nil {

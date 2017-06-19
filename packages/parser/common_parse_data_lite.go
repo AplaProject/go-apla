@@ -45,7 +45,7 @@ func (p *Parser) ParseDataLite() error {
 			transactionBinaryDataFull := transactionBinaryData
 
 			p.TxHash = string(utils.Md5(transactionBinaryData))
-			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
+			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 			parser := GetParser(p, MethodName)
@@ -63,6 +63,5 @@ func (p *Parser) ParseDataLite() error {
 			i++
 		}
 	}
-
 	return nil
 }

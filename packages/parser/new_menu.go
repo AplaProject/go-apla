@@ -30,7 +30,7 @@ type NewMenuParser struct {
 
 func (p *NewMenuParser) Init() error {
 	newMenu := &tx.NewMenu{}
-	if err := msgpack.Unmarshal(p.BinaryData, newMenu); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newMenu); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewMenu = newMenu

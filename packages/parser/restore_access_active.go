@@ -30,7 +30,7 @@ type RestoreAccessActiveParser struct {
 
 func (p *RestoreAccessActiveParser) Init() error {
 	restoreAccessActive := &tx.RestoreAccessActive{}
-	if err := msgpack.Unmarshal(p.BinaryData, restoreAccessActive); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, restoreAccessActive); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.RestoreAccessActive = restoreAccessActive

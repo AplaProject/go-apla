@@ -36,7 +36,7 @@ type NewContractParser struct {
 
 func (p *NewContractParser) Init() error {
 	newContract := &tx.NewContract{}
-	if err := msgpack.Unmarshal(p.BinaryData, newContract); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newContract); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewContract = newContract

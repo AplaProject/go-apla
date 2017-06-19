@@ -39,7 +39,7 @@ type NewTableParser struct {
 
 func (p *NewTableParser) Init() error {
 	newTable := &tx.NewTable{}
-	if err := msgpack.Unmarshal(p.BinaryData, newTable); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newTable); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewTable = newTable

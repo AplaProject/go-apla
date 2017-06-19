@@ -34,7 +34,7 @@ type EditColumnParser struct {
 
 func (p *EditColumnParser) Init() error {
 	editColumn := &tx.EditColumn{}
-	if err := msgpack.Unmarshal(p.BinaryData, editColumn); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editColumn); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditColumn = editColumn

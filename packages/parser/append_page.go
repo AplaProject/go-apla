@@ -31,7 +31,7 @@ type AppendPageParser struct {
 
 func (p *AppendPageParser) Init() error {
 	appendPage := &tx.AppendPage{}
-	if err := msgpack.Unmarshal(p.BinaryData, appendPage); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, appendPage); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.AppendPage = appendPage

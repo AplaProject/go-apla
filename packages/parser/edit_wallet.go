@@ -34,7 +34,7 @@ type EditWalletParser struct {
 
 func (p *EditWalletParser) Init() error {
 	editWallet := &tx.EditWallet{}
-	if err := msgpack.Unmarshal(p.BinaryData, editWallet); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editWallet); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditWallet = editWallet

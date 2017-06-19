@@ -34,7 +34,7 @@ type UpdFullNodesParser struct {
 
 func (p *UpdFullNodesParser) Init() error {
 	updFullNodes := &tx.UpdFullNodes{}
-	if err := msgpack.Unmarshal(p.BinaryData, updFullNodes); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, updFullNodes); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.UpdFullNodes = updFullNodes

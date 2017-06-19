@@ -30,7 +30,7 @@ type ChangeNodeKeyParser struct {
 
 func (p *ChangeNodeKeyParser) Init() error {
 	changeNodeKey := &tx.ChangeNodeKey{}
-	if err := msgpack.Unmarshal(p.BinaryData, changeNodeKey); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, changeNodeKey); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.ChangeNodeKey = changeNodeKey

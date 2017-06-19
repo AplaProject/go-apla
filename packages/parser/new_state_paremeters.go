@@ -35,7 +35,7 @@ type NewStateParametersParser struct {
 
 func (p *NewStateParametersParser) Init() error {
 	newStateParameters := &tx.NewStateParameters{}
-	if err := msgpack.Unmarshal(p.BinaryData, newStateParameters); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newStateParameters); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewStateParameters = newStateParameters

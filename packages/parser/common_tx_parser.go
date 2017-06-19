@@ -19,21 +19,24 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
-
 	var err error
 	var fatalError string
+	var header *tx.Header
 	hashHex := utils.BinToHex(hash)
 	txType, walletId, citizenId := utils.GetTxTypeAndUserId(binaryTx)
-	if walletId == 0 && citizenId == 0 {
-		fatalError = "undefined walletId and citizenId"
-	} else {
-		p.BinaryData = binaryTx
-		err = p.ParseDataGate(false)
+	if txType > 127 || consts.IsStruct(int(txType)) {
+		if walletId == 0 && citizenId == 0 {
+			fatalError = "undefined walletId and citizenId"
+		}
 	}
+	p.BinaryData = binaryTx
+	header, err = p.ParseDataGate(false)
 
 	if err != nil || len(fatalError) > 0 {
 		p.DeleteQueueTx(hashHex) // удалим тр-ию из очереди
@@ -61,6 +64,13 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 			}
 		}
 	} else {
+		if !(txType > 127 || consts.IsStruct(int(txType))) {
+			if header == nil {
+				return utils.ErrInfo(errors.New("header is nil"))
+			}
+			walletId = header.StateID
+			citizenId = header.UserID
+		}
 
 		log.Debug("SELECT counter FROM transactions WHERE hex(hash) = ?", string(hashHex))
 		utils.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hashHex))
@@ -95,12 +105,10 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 			return utils.ErrInfo(err)
 		}
 	}
-
 	return nil
 }
 
 func (p *Parser) DeleteQueueTx(hashHex []byte) error {
-
 	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", hashHex)
 	err := p.ExecSql("DELETE FROM queue_tx WHERE hex(hash) = ?", hashHex)
 	if err != nil {

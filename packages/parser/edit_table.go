@@ -35,7 +35,7 @@ type EditTableParser struct {
 
 func (p *EditTableParser) Init() error {
 	editTable := &tx.EditTable{}
-	if err := msgpack.Unmarshal(p.BinaryData, editTable); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editTable); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditTable = editTable

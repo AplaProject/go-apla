@@ -31,7 +31,7 @@ type EditPageParser struct {
 
 func (p *EditPageParser) Init() error {
 	editPage := &tx.EditPage{}
-	if err := msgpack.Unmarshal(p.BinaryData, editPage); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editPage); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditPage = editPage

@@ -30,7 +30,7 @@ type RestoreAccessRequestParser struct {
 
 func (p *RestoreAccessRequestParser) Init() error {
 	restoreAccessRequest := &tx.RestoreAccessRequest{}
-	if err := msgpack.Unmarshal(p.BinaryData, restoreAccessRequest); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, restoreAccessRequest); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.RestoreAccessRequest = restoreAccessRequest

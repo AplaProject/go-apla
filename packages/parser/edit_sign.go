@@ -30,7 +30,7 @@ type EditSignParser struct {
 
 func (p *EditSignParser) Init() error {
 	editSign := &tx.EditNewSign{}
-	if err := msgpack.Unmarshal(p.BinaryData, editSign); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editSign); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditSign = editSign

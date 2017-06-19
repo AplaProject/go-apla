@@ -31,7 +31,7 @@ type EditContractParser struct {
 
 func (p *EditContractParser) Init() error {
 	editContract := &tx.EditContract{}
-	if err := msgpack.Unmarshal(p.BinaryData, editContract); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editContract); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditContract = editContract

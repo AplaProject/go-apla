@@ -32,7 +32,7 @@ type NewAccountParser struct {
 
 func (p *NewAccountParser) Init() error {
 	newAccount := &tx.NewAccount{}
-	if err := msgpack.Unmarshal(p.BinaryData, newAccount); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newAccount); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewAccount = newAccount

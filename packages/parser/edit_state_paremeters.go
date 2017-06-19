@@ -37,7 +37,7 @@ type EditStateParametersParser struct {
 
 func (p *EditStateParametersParser) Init() error {
 	editStateParameters := &tx.EditStateParameters{}
-	if err := msgpack.Unmarshal(p.BinaryData, editStateParameters); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editStateParameters); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditStateParameters = editStateParameters

@@ -89,7 +89,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		//		key  []byte
 	)
 	var toSerialize interface{}
-	header := tx.Header{Type: 1, Time: txTime, UserID: userId, StateID: stateId, PublicKey: publicKey, BinSignatures: binSignatures}
+	header := tx.Header{Type: int(txType), Time: txTime, UserID: userId, StateID: stateId, PublicKey: publicKey, BinSignatures: binSignatures}
 	switch txType_ {
 	case "NewColumn", "AppendPage", "AppendMenu", "EditPage", "NewPage", "EditTable",
 		"EditStateParameters", "NewStateParameters", "NewContract", "EditContract", "NewMenu",
@@ -325,10 +325,12 @@ func (c *Controller) SaveQueue() (string, error) {
 			toSerialize = tx.ChangeNodeKey{header, []byte(publicKey)}
 		}
 	}
-	data, err = msgpack.Marshal(toSerialize)
+	transactionTypeBin := utils.DecToBin(txType, 1)
+	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	data = append(transactionTypeBin, serializedData...)
 
 	if err != nil {
 		return "", utils.ErrInfo(err)

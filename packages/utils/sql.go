@@ -1409,10 +1409,6 @@ func GetTxTypeAndUserId(binaryBlock []byte) (txType int64, walletID int64, citiz
 				walletID = int64(header.WalletID)
 			}
 		}
-	} else {
-		BytesShift(&binaryBlock, 4) // уберем время
-		walletID = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
-		citizenID = BytesToInt64(BytesShift(&binaryBlock, DecodeLength(&binaryBlock)))
 	}
 	return
 }

@@ -29,7 +29,7 @@ type AppendMenuParser struct {
 
 func (p *AppendMenuParser) Init() error {
 	appendMenu := &tx.AppendMenu{}
-	if err := msgpack.Unmarshal(p.BinaryData, appendMenu); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, appendMenu); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.AppendMenu = appendMenu

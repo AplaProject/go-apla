@@ -35,7 +35,7 @@ type NewColumnParser struct {
 
 func (p *NewColumnParser) Init() error {
 	newColumn := &tx.NewColumn{}
-	if err := msgpack.Unmarshal(p.BinaryData, newColumn); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newColumn); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewColumn = newColumn

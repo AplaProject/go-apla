@@ -30,7 +30,7 @@ type EditLangParser struct {
 
 func (p *EditLangParser) Init() error {
 	editLang := &tx.EditNewLang{}
-	if err := msgpack.Unmarshal(p.BinaryData, editLang); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editLang); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditLang = editLang

@@ -35,7 +35,7 @@ type DLTTransferParser struct {
 
 func (p *DLTTransferParser) Init() error {
 	dltTransfer := &tx.DLTTransfer{}
-	if err := msgpack.Unmarshal(p.BinaryData, dltTransfer); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, dltTransfer); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.DLTTransfer = dltTransfer

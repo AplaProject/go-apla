@@ -30,7 +30,7 @@ type ChangeNodeKeyDLTParser struct {
 
 func (p *ChangeNodeKeyDLTParser) Init() error {
 	changeNodeKey := &tx.DLTChangeNodeKey{}
-	if err := msgpack.Unmarshal(p.BinaryData, changeNodeKey); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, changeNodeKey); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.DLTChangeNodeKey = changeNodeKey

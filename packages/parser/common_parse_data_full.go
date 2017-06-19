@@ -29,16 +29,11 @@ import (
 фронт. проверка + занесение данных из блока в таблицы и info_block
 */
 func (p *Parser) ParseDataFull(blockGenerator bool) error {
-
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
 	}
 	var err error
-
-	//if len(p.BinaryData) > 500000 {
-	//	ioutil.WriteFile("block-"+string(utils.DSha256(p.BinaryData)), p.BinaryData, 0644)
-	//}
 
 	if blockGenerator {
 		err = p.GetInfoBlock()
@@ -115,7 +110,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			//log.Debug("transactionBinaryData", transactionBinaryData)
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 			log.Debug("p.TxHash %s", p.TxHash)
-			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
+			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
+			p.TxBinaryData = transactionBinaryData
 			log.Debug("p.TxSlice %v", p.TxSlice)
 			if err != nil {
 				err0 := p.RollbackTo(txForRollbackTo, true)

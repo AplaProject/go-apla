@@ -33,7 +33,7 @@ type NewPageParser struct {
 
 func (p *NewPageParser) Init() error {
 	newPage := &tx.NewPage{}
-	if err := msgpack.Unmarshal(p.BinaryData, newPage); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, newPage); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.NewPage = newPage

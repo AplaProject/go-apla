@@ -31,7 +31,7 @@ type EditMenuParser struct {
 
 func (p *EditMenuParser) Init() error {
 	editMenu := &tx.EditMenu{}
-	if err := msgpack.Unmarshal(p.BinaryData, editMenu); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, editMenu); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.EditMenu = editMenu

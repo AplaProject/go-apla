@@ -134,6 +134,7 @@ func (p *Parser) ParseDataRollback() error {
 			p.UpdDaemonTime(p.GoroutineName)
 			// отделим одну транзакцию
 			transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
+			p.TxBinaryData = transactionBinaryData
 			// узнаем кол-во байт, которое занимает размер и удалим размер
 			utils.BytesShiftReverse(&p.BinaryData, len(utils.EncodeLength(sizesSlice[i])))
 			p.TxHash = string(utils.Md5(transactionBinaryData))
@@ -169,7 +170,7 @@ func (p *Parser) ParseDataRollback() error {
 				return p.ErrInfo(err)
 			}
 
-			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
+			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			if err != nil {
 				return p.ErrInfo(err)
 			}

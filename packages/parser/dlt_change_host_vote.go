@@ -33,7 +33,7 @@ type DLTChangeHostVoteParser struct {
 
 func (p *DLTChangeHostVoteParser) Init() error {
 	dltChangeHostVote := &tx.DLTChangeHostVote{}
-	if err := msgpack.Unmarshal(p.BinaryData, dltChangeHostVote); err != nil {
+	if err := msgpack.Unmarshal(p.TxBinaryData, dltChangeHostVote); err != nil {
 		return p.ErrInfo(err)
 	}
 	p.DLTChangeHostVote = dltChangeHostVote
