@@ -1,0 +1,13 @@
+/*
+	Author	: Michael Janea (http://michaeljanea.com)
+	Version	: 2.2
+*/
+
+@import url('css/bootstrap.css');
+
+#glyphicons {overflow:auto; text-align:center; height:400px; width:100%;}
+#glyphicons div {width:140px; float:left; -webkit-box-sizing:border-box; -moz-box-sizing:border-box; box-sizing:border-box; margin-right:5px;}
+#glyphicons a, #glyphicons span {margin-bottom:.5em; text-align:center;}
+#glyphicons a {padding:.5em; display:block; float:left; width:100px; border:1px solid #fff; -webkit-border-radius:5px; border-radius:5px; white-space:normal; text-align:center; height:65px;}
+#glyphicons a:hover, #glyphicons a.active {border:1px solid #ddd; background:#eee;}
+#glyphicons span {display:block; width:100%; font-size:24px; color:#000;}
