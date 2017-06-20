@@ -45,7 +45,7 @@ func (p *EditPageParser) Validate() error {
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"name": "string", "menu": "string"}
+	verifyData := map[string][]interface{}{"string": []interface{}{p.EditPage.Name, p.EditPage.Menu}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)

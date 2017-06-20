@@ -73,7 +73,7 @@ func (p *NewStateParser) Validate() error {
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"state_name": "state_name", "currency_name": "currency_name"}
+	verifyData := map[string][]interface{}{"state_name": []interface{}{p.NewState.StateName}, "currency_name": []interface{}{p.NewState.CurrencyName}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)

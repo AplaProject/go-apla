@@ -56,7 +56,7 @@ func (p *NewTableParser) Validate() error {
 	// ...
 
 	// Check InputData
-	verifyData := map[string]string{"global": "int64", "table_name": "string"}
+	verifyData := map[string][]interface{}{"int64": []interface{}{p.NewTable.Global}, "string": []interface{}{p.NewTable.Name}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)

@@ -47,7 +47,7 @@ func (p *RestoreAccessParser) Validate() error {
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"state_id": "int64"}
+	verifyData := map[string][]interface{}{"int64": []interface{}{p.RestoreAccess.StateID}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)

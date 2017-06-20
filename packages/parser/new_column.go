@@ -49,7 +49,7 @@ func (p *NewColumnParser) Validate() error {
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"table_name": "string", "column_name": "string", "permissions": "conditions", "index": "int64", "column_type": "column_type"}
+	verifyData := map[string][]interface{}{"string": []interface{}{p.NewColumn.TableName, p.NewColumn.ColumnName}, "conditions": []interface{}{p.NewColumn.Permissions}, "int64": []interface{}{p.NewColumn.Index}, "column_type": []interface{}{p.NewColumn.ColumnType}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -73,7 +73,7 @@ func (p *NewColumnParser) Validate() error {
 	if count >= consts.MAX_COLUMNS+2 /*id + rb_id*/ {
 		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
 	}
-	if p.TxMaps.Int64["index"] > 0 {
+	if utils.StrToInt64(p.NewColumn.Index) > 0 {
 		count, err := p.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)

@@ -44,12 +44,6 @@ func (p *NewSignParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
 
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewSign.ForSign(), p.TxMap["sign"], false)
 	if err != nil {

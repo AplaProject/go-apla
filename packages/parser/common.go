@@ -344,12 +344,13 @@ func (p *Parser) GetTxMap(fields []string) (map[string][]byte, error) {
 	return TxMap, nil
 }
 
-func (p *Parser) CheckInputData(data map[string]string) error {
-
-	for k, v := range data {
-		fmt.Println("v==", v, p.TxMap[k])
-		if !utils.CheckInputData(p.TxMap[k], v) {
-			return fmt.Errorf("incorrect " + k + "(" + string(p.TxMap[k]) + " : " + v + ")")
+func (p *Parser) CheckInputData(data map[string][]interface{}) error {
+	for k, list := range data {
+		for _, v := range list {
+			fmt.Println("v==", v, k)
+			if !utils.CheckInputData(v, k) {
+				return fmt.Errorf("incorrect %s: %s", v, k)
+			}
 		}
 	}
 	return nil

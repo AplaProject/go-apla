@@ -44,16 +44,6 @@ func (p *EditContractParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	// Check the system limits. You can not send more than X time a day this TX
-	// ...
-
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	// must be supplemented
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditContract.ForSign(), p.TxMap["sign"], false)
 	if err != nil {

@@ -47,7 +47,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"host": "host", "addressVote": "walletAddress", "fuelRate": "int64", "public_key": "public_key"}
+	verifyData := map[string][]interface{}{"host": []interface{}{p.DLTChangeHostVote.Host}, "walletAddress": []interface{}{p.DLTChangeHostVote.AddressVote}, "int64": []interface{}{p.DLTChangeHostVote.FuelRate}, "public_key": []interface{}{p.DLTChangeHostVote.Header.PublicKey}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)

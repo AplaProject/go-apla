@@ -62,7 +62,7 @@ func (p *NewContractParser) Validate() error {
 		}
 		p.TxMaps.Int64["wallet_contract"] = address
 	}
-	verifyData := map[string]string{"global": "int64", "name": "string"}
+	verifyData := map[string][]interface{}{"int64": []interface{}{p.NewContract.Global}, "string": []interface{}{p.NewContract.Name}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)

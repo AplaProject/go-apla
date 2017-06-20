@@ -55,13 +55,6 @@ func (p *EditWalletParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	wallet := p.TxWalletID
 	if wallet == 0 {
 		wallet = p.TxCitizenID

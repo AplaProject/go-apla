@@ -40,13 +40,6 @@ func (p *Parser) CompositeTxFront() error {
 		}
 	*/
 
-	// Check InputData
-	verifyData := map[string]string{}
-	err := p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	// Check the condition that must be met to complete this transaction
 	// select front from composite_tx where name = "new_state_table"
 	// ...

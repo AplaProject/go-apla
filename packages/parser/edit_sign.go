@@ -43,13 +43,6 @@ func (p *EditSignParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	// must be supplemented
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditSign.ForSign(), p.TxMap["sign"], false)
 	if err != nil {

@@ -44,7 +44,7 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"new_node_public_key": "public_key"}
+	verifyData := map[string][]interface{}{"public_key": []interface{}{p.DLTChangeNodeKey.PublicKey}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
