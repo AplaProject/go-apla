@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -124,7 +124,7 @@ func (p *Parser) UpdFullNodes() error {
 		return p.ErrInfo(err)
 	}
 	for _, addressVote := range all {
-		dltWallets, err := p.OneRow(`SELECT host, wallet_id FROM dlt_wallets WHERE wallet_id = ?`, int64(lib.StringToAddress(addressVote))).String()
+		dltWallets, err := p.OneRow(`SELECT host, wallet_id FROM dlt_wallets WHERE wallet_id = ?`, int64(converter.StringToAddress(addressVote))).String()
 		if err != nil {
 			return p.ErrInfo(err)
 		}

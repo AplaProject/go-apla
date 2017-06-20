@@ -30,6 +30,7 @@ package trayhost
 
 import (
 	"reflect"
+	"time"
 	"unsafe"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -78,7 +79,7 @@ func EnterLoop(title string, imageData []byte) {
 	// If reached, user clicked Exit
 	isExiting = true
 	if sql.DB != nil && sql.DB.DB != nil {
-		err := sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+		err := sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}

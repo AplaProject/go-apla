@@ -22,10 +22,10 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
@@ -65,9 +65,9 @@ func App(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params[`name`] = page
-	params[`state_id`] = utils.Int64ToStr(GetSessInt64("state_id", sess))
-	params[`wallet_id`] = utils.Int64ToStr(GetSessWalletID(sess))
-	params[`citizen_id`] = utils.Int64ToStr(GetSessCitizenID(sess))
+	params[`state_id`] = converter.Int64ToStr(GetSessInt64("state_id", sess))
+	params[`wallet_id`] = converter.Int64ToStr(GetSessWalletID(sess))
+	params[`citizen_id`] = converter.Int64ToStr(GetSessCitizenID(sess))
 
 	var (
 		out  string

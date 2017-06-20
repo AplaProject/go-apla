@@ -17,8 +17,10 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -28,9 +30,9 @@ func (c *Controller) NewColumn() (string, error) {
 	var err error
 
 	txType := "NewColumn"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
-	tableName := lib.Escape(c.r.FormValue("tableName"))
+	tableName := converter.Escape(c.r.FormValue("tableName"))
 
 	count, _ := c.NumIndexes(tableName)
 

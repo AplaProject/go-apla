@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -58,7 +59,7 @@ func (p *Parser) EditSignFront() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := utils.Int64ToStr(int64(p.TxStateID))
+	prefix := converter.Int64ToStr(int64(p.TxStateID))
 	if len(p.TxMap["conditions"]) > 0 {
 		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
 			return p.ErrInfo(err)

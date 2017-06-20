@@ -22,13 +22,15 @@ import (
 	"io/ioutil"
 	"os"
 
+	"strings"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
-	"strings"
 )
 
 // Install is a controller for the installation
@@ -40,7 +42,7 @@ func (c *Controller) Install() (string, error) {
 	}
 	generateFirstBlock := c.r.FormValue("generate_first_block")
 	if generateFirstBlock != "" {
-		*utils.GenerateFirstBlock = utils.StrToInt64(generateFirstBlock)
+		*utils.GenerateFirstBlock = converter.StrToInt64(generateFirstBlock)
 	}
 
 	installType := c.r.FormValue("type")
@@ -173,7 +175,7 @@ func (c *Controller) Install() (string, error) {
 		if _, err := os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
 
 			if len(*utils.FirstBlockPublicKey) == 0 {
-				priv, pub, _ := lib.GenHexKeys()
+				priv, pub, _ := crypto.GenHexKeys()
 				err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
@@ -184,7 +186,7 @@ func (c *Controller) Install() (string, error) {
 
 		if _, err := os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
-				priv, pub, _ := lib.GenHexKeys()
+				priv, pub, _ := crypto.GenHexKeys()
 				fmt.Println("WriteFile " + *utils.Dir + "/NodePrivateKey")
 				err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 				if err != nil {
@@ -201,7 +203,10 @@ func (c *Controller) Install() (string, error) {
 
 	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
 	NodePrivateKeyStr := strings.TrimSpace(string(NodePrivateKey))
-	npubkey := lib.PrivateToPublicHex(NodePrivateKeyStr)
+	npubkey, err := crypto.PrivateToPublicHex(NodePrivateKeyStr)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = c.DCDB.ExecSQL(`INSERT INTO my_node_keys (private_key, public_key, block_id) VALUES (?, [hex], ?)`, NodePrivateKeyStr, npubkey, 1)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
@@ -212,9 +217,12 @@ func (c *Controller) Install() (string, error) {
 	if *utils.DltWalletID == 0 {
 		PrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/PrivateKey")
 		PrivateHex, _ := hex.DecodeString(string(PrivateKey))
-		PublicKeyBytes2 := lib.PrivateToPublic(PrivateHex)
-		log.Debug("dlt_wallet_id %d", int64(lib.Address(PublicKeyBytes2)))
-		*utils.DltWalletID = int64(lib.Address(PublicKeyBytes2))
+		PublicKeyBytes2, err := crypto.PrivateToPublic(PrivateHex)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Debug("dlt_wallet_id %d", crypto.Address(PublicKeyBytes2))
+		*utils.DltWalletID = crypto.Address(PublicKeyBytes2)
 	}
 
 	err = c.DCDB.ExecSQL(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletID)

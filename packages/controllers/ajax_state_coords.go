@@ -16,9 +16,7 @@
 
 package controllers
 
-import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-)
+import "github.com/EGaaS/go-egaas-mvp/packages/converter"
 
 const aStateCoords = `ajax_state_coords`
 
@@ -35,7 +33,7 @@ func init() {
 func (c *Controller) AjaxStateCoords() interface{} {
 
 	var stateDetails StateDetails
-	stateID := utils.StrToInt64(c.r.FormValue("stateId"))
-	stateDetails.Coords, _ = c.Single(`SELECT coords FROM "` + utils.Int64ToStr(stateID) + `_state_details"`).String()
+	stateID := converter.StrToInt64(c.r.FormValue("stateId"))
+	stateDetails.Coords, _ = c.Single(`SELECT coords FROM "` + converter.Int64ToStr(stateID) + `_state_details"`).String()
 	return stateDetails
 }

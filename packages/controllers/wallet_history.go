@@ -19,7 +19,7 @@ package controllers
 import (
 	"encoding/json"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
 )
@@ -40,7 +40,7 @@ func init() {
 // WalletHistory is a controller for displaying wallet's history
 func (c *Controller) WalletHistory() (string, error) {
 	list := make([]map[string]interface{}, 0)
-	walletID := lib.StringToAddress(c.r.FormValue("wallet"))
+	walletID := converter.StringToAddress(c.r.FormValue("wallet"))
 	if walletID == 0 {
 		walletID = c.SessWalletID
 	}
@@ -48,7 +48,7 @@ func (c *Controller) WalletHistory() (string, error) {
 	if err != nil {
 		return ``, utils.ErrInfo(err)
 	}
-	rb := utils.StrToInt64(current[`rb_id`])
+	rb := converter.StrToInt64(current[`rb_id`])
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
 		for len(list) <= 100 && rb > 0 {
@@ -60,7 +60,7 @@ func (c *Controller) WalletHistory() (string, error) {
 			if err = json.Unmarshal([]byte(prev[`data`]), &data); err != nil {
 				return ``, utils.ErrInfo(err)
 			}
-			rb = utils.StrToInt64(data[`rb_id`])
+			rb = converter.StrToInt64(data[`rb_id`])
 			if amount, ok := data[`amount`]; ok {
 				var dif decimal.Decimal
 				val, _ := decimal.NewFromString(amount)
@@ -69,12 +69,12 @@ func (c *Controller) WalletHistory() (string, error) {
 				} else {
 					dif = val.Sub(balance)
 				}
-				list = append(list, map[string]interface{}{`block_id`: prev[`block_id`], `amount`: lib.EGSMoney(dif.String()),
-					`balance`: lib.EGSMoney(balance.String()), `inc`: balance.Cmp(val) > 0})
+				list = append(list, map[string]interface{}{`block_id`: prev[`block_id`], `amount`: converter.EGSMoney(dif.String()),
+					`balance`: converter.EGSMoney(balance.String()), `inc`: balance.Cmp(val) > 0})
 				balance = val
 			}
 		}
 	}
-	pageData := walletPage{Data: c.Data, List: list, IsData: len(list) > 0, Wallet: lib.AddressToString(walletID)}
+	pageData := walletPage{Data: c.Data, List: list, IsData: len(list) > 0, Wallet: converter.AddressToString(walletID)}
 	return proceedTemplate(c, nWalletHistory, &pageData)
 }

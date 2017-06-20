@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -35,7 +35,7 @@ type modalAnonymPage struct {
 func (c *Controller) ModalAnonym() (string, error) {
 
 	MyWalletData, err := c.OneRow("SELECT host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
-	MyWalletData[`address`] = lib.AddressToString(c.SessWalletID)
+	MyWalletData[`address`] = converter.AddressToString(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

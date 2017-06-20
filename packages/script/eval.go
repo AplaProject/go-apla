@@ -17,7 +17,9 @@
 package script
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"log"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 )
 
 type evalCode struct {
@@ -35,7 +37,11 @@ func (vm *VM) CompileEval(input string, state uint32) error {
 	block, err := vm.CompileBlock([]rune(source), state, false, 0)
 	//	fmt.Println(`Compile Eval`, err, input)
 	if err == nil {
-		evals[lib.CRC64([]byte(input))] = &evalCode{Source: input, Code: block}
+		crc, err := crypto.CalcChecksum([]byte(input))
+		if err != nil {
+			log.Fatal(err)
+		}
+		evals[crc] = &evalCode{Source: input, Code: block}
 		return nil
 	}
 	return err
@@ -47,7 +53,10 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 	if len(input) == 0 {
 		return true, nil
 	}
-	crc := lib.CRC64([]byte(input))
+	crc, err := crypto.CalcChecksum([]byte(input))
+	if err != nil {
+		log.Fatal(err)
+	}
 	if eval, ok := evals[crc]; !ok || eval.Source != input {
 		if err := vm.CompileEval(input, state); err != nil {
 			return false, err

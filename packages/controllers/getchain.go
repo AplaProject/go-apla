@@ -19,8 +19,7 @@ package controllers
 import (
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
@@ -71,7 +70,7 @@ func GetChain() {
 			explorer, err := sql.DB.GetAll(`SELECT   b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
 			where b.id > $1	order by b.id desc limit 30 offset 0`, -1, chainLatest)
 			if err == nil && len(explorer) > 0 {
-				chainLatest = utils.StrToInt64(explorer[0][`id`])
+				chainLatest = converter.StrToInt64(explorer[0][`id`])
 				if chainOff+len(explorer) > chainLimit {
 					for i := 0; i < 50; i++ {
 						chainList[i] = chainList[chainOff-50+i]
@@ -80,13 +79,13 @@ func GetChain() {
 				}
 				for i := len(explorer); i > 0; i-- {
 					item := explorer[i-1]
-					walletID := utils.StrToInt64(item[`wallet_id`])
+					walletID := converter.StrToInt64(item[`wallet_id`])
 					address := ``
 					if walletID != 0 {
-						address = lib.AddressToString(walletID)
+						address = converter.AddressToString(walletID)
 					}
 
-					chainList[chainOff] = ChainInfo{ID: utils.StrToInt64(item[`id`]),
+					chainList[chainOff] = ChainInfo{ID: converter.StrToInt64(item[`id`]),
 						//Hash: hex.EncodeToString([]byte(item[`hash`])), Wallet: walletID,State: utils.StrToInt64(item[`state_id`]),
 						Address: address, Time: item[`time`], Tx: item[`tx`]}
 					chainOff++

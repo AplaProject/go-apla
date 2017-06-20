@@ -26,7 +26,8 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
@@ -69,7 +70,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 	var seed string
 	key := c.r.FormValue("key")
 	name := c.r.FormValue("name")
-	stateID := utils.StrToInt64(c.r.FormValue("state_id"))
+	stateID := converter.StrToInt64(c.r.FormValue("state_id"))
 	bkey, err := hex.DecodeString(key)
 	if err != nil {
 		result.Error = err.Error()
@@ -79,24 +80,27 @@ func (c *Controller) AjaxNewKey() interface{} {
 		result.Error = `state_id has not been specified`
 		return result
 	}
-	pubkey := lib.PrivateToPublic(bkey)
-	idkey := int64(lib.Address(pubkey))
+	pubkey, err := crypto.PrivateToPublic(bkey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	idkey := crypto.Address(pubkey)
 	govAccount, _ := template.StateParam(stateID, `govAccount`)
 	if len(govAccount) == 0 {
 		result.Error = `unknown govAccount`
 		return result
 	}
-	if utils.StrToInt64(govAccount) != idkey {
+	if converter.StrToInt64(govAccount) != idkey {
 		result.Error = `access denied`
 		return result
 	}
 	var priv []byte
 	if len(words) == 0 {
-		spriv, _, _ := lib.GenHexKeys()
+		spriv, _, _ := crypto.GenHexKeys()
 		priv, _ = hex.DecodeString(spriv)
 	} else {
 		phrase := make([]string, 0)
-		rand.Seed(int64(lib.Time32()))
+		rand.Seed(time.Now().Unix())
 		for len(phrase) < 15 {
 			rnd := rand.Intn(len(words))
 			if len(words[rnd]) > 0 {
@@ -111,8 +115,11 @@ func (c *Controller) AjaxNewKey() interface{} {
 		result.Error = `wrong private key`
 		return result
 	}
-	pub := lib.PrivateToPublic(priv)
-	idnew := int64(lib.Address(pub))
+	pub, err := crypto.PrivateToPublic(priv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	idnew := crypto.Address(pub)
 
 	exist, err := c.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
 	if err != nil {
@@ -130,20 +137,20 @@ func (c *Controller) AjaxNewKey() interface{} {
 	}
 	var flags uint8
 
-	ctime := lib.Time32()
+	ctime := time.Now().Unix()
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(idkey), stateID, flags)
 	pubhex := hex.EncodeToString(pub)
 	forsign += fmt.Sprintf(",%v,%v", name, pubhex)
 
-	signature, err := lib.SignECDSA(key, forsign)
+	signature, err := crypto.Sign(key, forsign)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
 
 	sign := make([]byte, 0)
-	lib.EncodeLenByte(&sign, signature)
+	converter.EncodeLenByte(&sign, signature)
 	data := make([]byte, 0)
 	header := consts.TXHeader{
 		Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
@@ -153,27 +160,31 @@ func (c *Controller) AjaxNewKey() interface{} {
 		Flags:    flags,
 		Sign:     sign,
 	}
-	_, err = lib.BinMarshal(&data, &header)
+	_, err = converter.BinMarshal(&data, &header)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	data = append(append(data, lib.EncodeLength(int64(len(name)))...), []byte(name)...)
-	data = append(append(data, lib.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
+	data = append(append(data, converter.EncodeLength(int64(len(name)))...), []byte(name)...)
+	data = append(append(data, converter.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
 
 	/*	fmt.Printf("NewKey For %s %d\r\n", forsign, len(forsign))
 		fmt.Printf("NewKey Sign %x %d\r\n", sign, len(sign))
 		fmt.Printf("NewKey Key %x %d\r\n", pubkey, len(pubkey))
 	*/
-	md5 := utils.Md5(data)
+	hash, err := crypto.Hash(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	hash = converter.BinToHex(data)
 	err = c.ExecSQL(`INSERT INTO transactions_status (
 			hash, time,	type, wallet_id, citizen_id	) VALUES (
-			[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(idkey), int64(idkey))
+			[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), header.Type, int64(idkey), int64(idkey))
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
 	if err != nil {
 		result.Error = err.Error()
 		return result

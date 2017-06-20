@@ -23,6 +23,7 @@ import (
 	//	"runtime"
 	"sync"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
@@ -82,7 +83,7 @@ func (t *TCPServer) HandleTCPRequest() {
 		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	dataType := utils.BinToDec(buf)
+	dataType := converter.BinToDec(buf)
 	log.Debug("dataType %v", dataType)
 	switch dataType {
 	case 1:

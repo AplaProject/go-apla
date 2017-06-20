@@ -17,6 +17,7 @@
 package tcpserver
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -35,7 +36,7 @@ func (t *TCPServer) Type7() {
 		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	blockID := utils.BinToDec(buf)
+	blockID := converter.BinToDec(buf)
 	block, err := t.Single("SELECT data FROM block_chain WHERE id  =  ?", blockID).Bytes()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))

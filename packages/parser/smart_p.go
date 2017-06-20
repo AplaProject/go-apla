@@ -25,9 +25,11 @@ import (
 	"strings"
 
 	"encoding/hex"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
@@ -288,7 +290,7 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (ret
 func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}) (ret int64, err error) {
 	names := strings.Split(tblname, `_`)
 	if names[0] != `global` {
-		state := utils.StrToInt64(names[0])
+		state := converter.StrToInt64(names[0])
 		if state != int64(p.TxStateID) {
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
 			return
@@ -329,7 +331,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 	if err = p.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{utils.Int64ToStr(id)}, true)
+	_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, true)
 	return
 }
 
@@ -387,13 +389,18 @@ func DBString(tblname string, name string, id int64) (string, error) {
 		return ``, err
 	}
 
-	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).String()
+	return sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).String()
 }
 
 // Sha256 возвращает значение хэша SHA256
 // Sha256 returns SHA256 hash value
 func Sha256(text string) string {
-	return string(utils.Sha256(text))
+	hash, err := crypto.Hash([]byte(text))
+	if err != nil {
+		log.Fatal(err)
+	}
+	hash = converter.BinToHex(hash)
+	return string(hash)
 }
 
 // PubToID возвращает числовой идентификатор для указанного в шестнадцатеричной форме публичного ключа.
@@ -403,7 +410,7 @@ func PubToID(hexkey string) int64 {
 	if err != nil {
 		return 0
 	}
-	return int64(lib.Address(pubkey))
+	return crypto.Address(pubkey)
 }
 
 // HexToBytes преобразует шестнадцатеричное представление в []byte
@@ -419,7 +426,7 @@ func DBInt(tblname string, name string, id int64) (int64, error) {
 		return 0, err
 	}
 
-	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where id=?`, id).Int64()
+	return sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).Int64()
 }
 
 func getBytea(table string) map[string]bool {
@@ -456,8 +463,8 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (st
 	} else if !isIndex {
 		return ``, fmt.Errorf(`there is not index on %s`, idname)
 	}
-	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
-		lib.EscapeName(idname)+`=?`, id).String()
+	return sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+
+		converter.EscapeName(idname)+`=?`, id).String()
 }
 
 // DBIntExt возвращает числовое значение колонки name у записи с указанным значением поля idname
@@ -510,8 +517,8 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 			return ``, fmt.Errorf(`there is not index on %s`, iret[1])
 		}
 	}
-	return sql.DB.Single(`select `+lib.EscapeName(name)+` from `+lib.EscapeName(tblname)+` where `+
-		strings.Replace(lib.Escape(where), `$`, `?`, -1), params...).String()
+	return sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+
+		strings.Replace(converter.Escape(where), `$`, `?`, -1), params...).String()
 }
 
 // DBIntWhere возвращет числовое значение колонки исходя из условия where и значений params для этого условия
@@ -583,7 +590,7 @@ func IsContract(p *Parser, names ...interface{}) bool {
 				return true
 			}
 		} else if len(p.TxSlice) > 1 {
-			if consts.TxTypes[utils.BytesToInt(p.TxSlice[1])] == name {
+			if consts.TxTypes[converter.BytesToInt(p.TxSlice[1])] == name {
 				return true
 			}
 		}
@@ -594,7 +601,7 @@ func IsContract(p *Parser, names ...interface{}) bool {
 // IsGovAccount проверяет является ли указанный аккаунт владельцем государства
 // IsGovAccount checks whether the specified account is the owner of the state
 func IsGovAccount(p *Parser, citizen int64) bool {
-	return utils.StrToInt64(StateVal(p, `gov_account`)) == citizen
+	return converter.StrToInt64(StateVal(p, `gov_account`)) == citizen
 }
 
 // AddressToID преобразует строковое представление номера кошелька в число
@@ -607,12 +614,12 @@ func AddressToID(input string) (addr int64) {
 	if input[0] == '-' {
 		addr, _ = strconv.ParseInt(input, 10, 64)
 	} else if strings.Count(input, `-`) == 4 {
-		addr = lib.StringToAddress(input)
+		addr = converter.StringToAddress(input)
 	} else {
 		uaddr, _ := strconv.ParseUint(input, 10, 64)
 		addr = int64(uaddr)
 	}
-	if !lib.IsValidAddress(lib.AddressToString(addr)) {
+	if !converter.IsValidAddress(converter.AddressToString(addr)) {
 		return 0
 	}
 	return
@@ -621,8 +628,8 @@ func AddressToID(input string) (addr int64) {
 // IDToAddress преобразует идентификатор аккаунта в строку вида XXXX-...-XXXX
 // IDToAddress converts the identifier of account to a string of the form XXXX -...- XXXX
 func IDToAddress(id int64) (out string) {
-	out = lib.AddressToString(id)
-	if !lib.IsValidAddress(out) {
+	out = converter.AddressToString(id)
+	if !converter.IsValidAddress(out) {
 		out = `invalid`
 	}
 	return
@@ -635,7 +642,7 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 		return decimal.New(0, 0)
 	}
 
-	balance, err := sql.DB.Single("SELECT amount FROM "+lib.EscapeName(tblname)+" WHERE "+lib.EscapeName(column)+" = ?", id).String()
+	balance, err := sql.DB.Single("SELECT amount FROM "+converter.EscapeName(tblname)+" WHERE "+converter.EscapeName(column)+" = ?", id).String()
 	if err != nil {
 		return decimal.New(0, 0)
 	}
@@ -661,7 +668,7 @@ func (p *Parser) EvalIf(conditions string) (bool, error) {
 		blockTime = p.BlockData.Time
 	}
 
-	return smart.EvalIf(conditions, utils.Int64ToStr(int64(p.TxStateID)), &map[string]interface{}{`state`: p.TxStateID,
+	return smart.EvalIf(conditions, converter.Int64ToStr(int64(p.TxStateID)), &map[string]interface{}{`state`: p.TxStateID,
 		`citizen`: p.TxCitizenID, `wallet`: p.TxWalletID, `parser`: p,
 		`block_time`: blockTime, `time`: time})
 }
@@ -676,7 +683,7 @@ func StateVal(p *Parser, name string) string {
 // Int преобразует строку в число
 // Int converts a string to a number
 func Int(val string) int64 {
-	return utils.StrToInt64(val)
+	return converter.StrToInt64(val)
 }
 
 // Str преобразует значение в строку
@@ -710,7 +717,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 		fields []string
 		values []interface{}
 	)
-	prefix := utils.Int64ToStr(int64(p.TxStateID))
+	prefix := converter.Int64ToStr(int64(p.TxStateID))
 	cnt, err := p.OneRow(`SELECT id,conditions, active FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
 	if err != nil {
 		return err
@@ -744,7 +751,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 	if len(fields) == 0 {
 		return fmt.Errorf(`empty value and condition`)
 	}
-	root, err := smart.CompileBlock(value, prefix, false, utils.StrToInt64(cnt["id"]))
+	root, err := smart.CompileBlock(value, prefix, false, converter.StrToInt64(cnt["id"]))
 	if err != nil {
 		return err
 	}
@@ -755,7 +762,7 @@ func UpdateContract(p *Parser, name, value, conditions string) error {
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TableID = utils.StrToInt64(cnt[`id`])
+			root.Children[i].Info.(*script.ContractInfo).TableID = converter.StrToInt64(cnt[`id`])
 			root.Children[i].Info.(*script.ContractInfo).Active = cnt[`active`] == `1`
 		}
 	}
@@ -790,7 +797,7 @@ func UpdateParam(p *Parser, name, value, conditions string) error {
 		return fmt.Errorf(`empty value and condition`)
 	}
 	_, err := p.selectiveLoggingAndUpd(fields, values,
-		utils.Int64ToStr(int64(p.TxStateID))+"_state_parameters", []string{"name"}, []string{name}, true)
+		converter.Int64ToStr(int64(p.TxStateID))+"_state_parameters", []string{"name"}, []string{name}, true)
 	if err != nil {
 		return err
 	}
@@ -812,7 +819,7 @@ func UpdateMenu(p *Parser, name, value, conditions string) error {
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
-	_, err := p.selectiveLoggingAndUpd(fields, values, utils.Int64ToStr(int64(p.TxStateID))+"_menu",
+	_, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_menu",
 		[]string{"name"}, []string{name}, true)
 	if err != nil {
 		return err
@@ -824,7 +831,7 @@ func UpdateMenu(p *Parser, name, value, conditions string) error {
 // CheckSignature checks the additional signatures for the contract
 func CheckSignature(i *map[string]interface{}, name string) error {
 	state, name := script.ParseContract(name)
-	pref := utils.Int64ToStr(int64(state))
+	pref := converter.Int64ToStr(int64(state))
 	if state == 0 {
 		pref = `global`
 	}
@@ -885,7 +892,7 @@ func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 		fields = append(fields, "menu")
 		values = append(values, menu)
 	}
-	_, err := p.selectiveLoggingAndUpd(fields, values, utils.Int64ToStr(int64(p.TxStateID))+"_pages",
+	_, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_pages",
 		[]string{"name"}, []string{name}, true)
 	if err != nil {
 		return err
@@ -914,9 +921,9 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 		}
 	}
 	if len(order) > 0 {
-		order = ` order by ` + lib.EscapeName(order)
+		order = ` order by ` + converter.EscapeName(order)
 	}
-	return strings.Replace(lib.Escape(where), `$`, `?`, -1), order, nil
+	return strings.Replace(converter.Escape(where), `$`, `?`, -1), order, nil
 }
 
 // DBGetList возвращает список значений колонки с указанными offset, limit, where
@@ -942,13 +949,13 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 		}
 	}
 	if len(order) > 0 {
-		order = ` order by ` + lib.EscapeName(order)
+		order = ` order by ` + converter.EscapeName(order)
 	}
 	if limit <= 0 {
 		limit = -1
 	}
-	list, err := sql.DB.GetAll(`select `+lib.Escape(name)+` from `+lib.EscapeName(tblname)+` where `+
-		strings.Replace(lib.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
+	list, err := sql.DB.GetAll(`select `+converter.Escape(name)+` from `+converter.EscapeName(tblname)+` where `+
+		strings.Replace(converter.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
 		result[i] = reflect.ValueOf(list[i]).Interface()
@@ -969,8 +976,8 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 	if limit <= 0 {
 		limit = -1
 	}
-	cols := strings.Split(lib.Escape(columns), `,`)
-	list, err := sql.DB.GetAll(`select `+strings.Join(cols, `,`)+` from `+lib.EscapeName(tblname)+` where `+
+	cols := strings.Split(converter.Escape(columns), `,`)
+	list, err := sql.DB.GetAll(`select `+strings.Join(cols, `,`)+` from `+converter.EscapeName(tblname)+` where `+
 		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {

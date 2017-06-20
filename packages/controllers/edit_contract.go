@@ -18,9 +18,10 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type editContractPage struct {
@@ -53,7 +54,7 @@ func (c *Controller) EditContract() (string, error) {
 		global = "0"
 	}
 
-	id := utils.StrToInt64(c.r.FormValue("id"))
+	id := converter.StrToInt64(c.r.FormValue("id"))
 	name := c.r.FormValue("name")
 	if id == 0 {
 		// @ - global or alien state
@@ -93,8 +94,8 @@ func (c *Controller) EditContract() (string, error) {
 			if data[`wallet_id`] == `NULL` {
 				data[`wallet`] = ``
 			} else {
-				contWallet = utils.StrToInt64(data[`wallet_id`])
-				data[`wallet`] = lib.AddressToString(contWallet)
+				contWallet = converter.StrToInt64(data[`wallet_id`])
+				data[`wallet`] = converter.AddressToString(contWallet)
 			}
 			if data[`active`] == `NULL` {
 				data[`active`] = ``
@@ -102,7 +103,7 @@ func (c *Controller) EditContract() (string, error) {
 			if len(data[`conditions`]) == 0 {
 				data[`conditions`] = "ContractConditions(`MainCondition`)"
 			}
-			rbID = utils.StrToInt64(data["rb_id"])
+			rbID = converter.StrToInt64(data["rb_id"])
 		} else {
 			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
 			if err != nil {
@@ -111,7 +112,7 @@ func (c *Controller) EditContract() (string, error) {
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
 			//			fmt.Printf("%s", messageMap)
-			rbID = utils.StrToInt64(messageMap["rb_id"])
+			rbID = converter.StrToInt64(messageMap["rb_id"])
 			messageMap["block_id"] = data["block_id"]
 			dataContractHistory = append(dataContractHistory, messageMap)
 		}

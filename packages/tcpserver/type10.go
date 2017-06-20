@@ -17,6 +17,7 @@
 package tcpserver
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -33,7 +34,7 @@ func (t *TCPServer) Type10() {
 		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	_, err = t.Conn.Write(utils.DecToBin(blockID, 4))
+	_, err = t.Conn.Write(converter.DecToBin(blockID, 4))
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		return

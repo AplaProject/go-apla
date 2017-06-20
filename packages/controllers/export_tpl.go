@@ -24,11 +24,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"regexp"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"regexp"
 )
 
 const nExportTpl = `export_tpl`
@@ -189,7 +190,7 @@ func action {
 				if val == `NULL` {
 					val = null[ipar]
 				}
-				params = append(params, fmt.Sprintf(`"%s"`, lib.EscapeForJSON(val)))
+				params = append(params, fmt.Sprintf(`"%s"`, converter.EscapeForJSON(val)))
 			}
 			lines = append(lines, fmt.Sprintf(`	DBInsert(tblname, fields, %s)`, strings.Join(params, `,`)))
 		}
@@ -240,7 +241,7 @@ func (c *Controller) setLang() (out string) {
 }
 
 func getState(stateID int64, name string) (out string, global int, state string) {
-	state = utils.Int64ToStr(stateID)
+	state = converter.Int64ToStr(stateID)
 	out = name
 	if strings.HasPrefix(name, `global_`) {
 		state = `global`
@@ -297,7 +298,7 @@ func (c *Controller) ExportTpl() (string, error) {
 					for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 						if strings.Index(fitem.Tags, `signature`) >= 0 {
 							if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-								pref := utils.Int64ToStr(state)
+								pref := converter.Int64ToStr(state)
 								if state == 0 {
 									pref = `global`
 								}
@@ -429,8 +430,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			insert: "%s",
 			new_column: "%s",
 			}
-	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], lib.EscapeForJSON(vals[`general_update`]),
-						lib.EscapeForJSON(vals[`insert`]), lib.EscapeForJSON(vals[`new_column`])))
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], converter.EscapeForJSON(vals[`general_update`]),
+						converter.EscapeForJSON(vals[`insert`]), converter.EscapeForJSON(vals[`new_column`])))
 				}
 				for key, field := range jperm[`update`].(map[string]interface{}) {
 					if !re.MatchString(field.(string)) {
@@ -443,7 +444,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			column_name: "%s",
 			permissions: "%s",
 			}
-	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], key, lib.EscapeForJSON(field.(string))))
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], key, converter.EscapeForJSON(field.(string))))
 					}
 				}
 			}
@@ -607,7 +608,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				}
 				var global int
 				ipage, global, _ = getState(c.SessStateID, ipage)
-				prefix := utils.Int64ToStr(c.SessStateID)
+				prefix := converter.Int64ToStr(c.SessStateID)
 				if global == 1 {
 					prefix = `global`
 				}
@@ -696,7 +697,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			message = fmt.Sprintf(`File %s has been created`, tplname)
 		}
 	}
-	prefix := utils.Int64ToStr(c.SessStateID)
+	prefix := converter.Int64ToStr(c.SessStateID)
 	loadlist := func(name string) (*[]exportInfo, error) {
 		list, err := c.getList(name, prefix)
 		if err != nil {

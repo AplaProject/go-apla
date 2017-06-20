@@ -17,12 +17,14 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type loginECDSAPage struct {
@@ -79,7 +81,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
-			if utils.InSliceString(`global_states_list`, list) {
+			if converter.InSliceString(`global_states_list`, list) {
 				stateID, err = c.Single("select gstate_id from global_states_list where state_name=?", state).Int64()
 				if err != nil {
 					return "", utils.ErrInfo(err)

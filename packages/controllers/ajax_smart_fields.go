@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const aSmartFields = `ajax_smart_fields`
@@ -48,8 +48,8 @@ func (c *Controller) AjaxSmartFields() interface{} {
 		amount int64
 		req    map[string]int64
 	)
-	stateID := utils.StrToInt64(c.r.FormValue(`state_id`))
-	stateStr := utils.Int64ToStr(stateID)
+	stateID := converter.StrToInt64(c.r.FormValue(`state_id`))
+	stateStr := converter.Int64ToStr(stateID)
 	if !c.IsTable(stateStr+`_citizens`) || !c.IsTable(stateStr+`_citizenship_requests`) {
 		result.Error = `Basic app is not installed`
 		return result
@@ -99,7 +99,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 				result.Fields = fmt.Sprintf(`[%s]`, strings.Join(fields, `,`))
 
 				if err == nil {
-					result.Price, err = c.Single(`SELECT value FROM "` + utils.Int64ToStr(stateID) + `_state_parameters" where name='citizenship_price'`).Int64()
+					result.Price, err = c.Single(`SELECT value FROM "` + converter.Int64ToStr(stateID) + `_state_parameters" where name='citizenship_price'`).Int64()
 					if err == nil {
 						amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletID).Int64()
 						result.Valid = (err == nil && amount >= result.Price)

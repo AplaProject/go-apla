@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -45,7 +47,7 @@ func (c *Controller) NewTable() (string, error) {
 	}
 
 	txType := "NewTable"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	TemplateStr, err := makeTemplate("new_table", "newTable", &newTablePage{
 		Alert:      c.Alert,

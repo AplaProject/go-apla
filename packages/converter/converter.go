@@ -308,11 +308,8 @@ func DecToBin(v interface{}, sizeBytes int64) []byte {
 	case string:
 		dec = StrToInt64(v.(string))
 	}
-	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buf, uint64(dec))
-	return buf
-	//Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
-	//return HexToBin([]byte(Hex))
+	Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
+	return HexToBin([]byte(Hex))
 }
 
 // BinToHex converts interface to hex []byte

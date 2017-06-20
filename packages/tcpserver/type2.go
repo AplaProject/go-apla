@@ -17,15 +17,18 @@
 package tcpserver
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"io"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 /*
  * от disseminator
 // from disseminator
- */
+*/
 
 func (t *TCPServer) Type2() {
 	// размер данных
@@ -36,7 +39,7 @@ func (t *TCPServer) Type2() {
 		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	size := utils.BinToDec(buf)
+	size := converter.BinToDec(buf)
 	log.Debug("size: %d", size)
 	if size < consts.MAX_TX_SIZE {
 		// сами данные
@@ -49,9 +52,9 @@ func (t *TCPServer) Type2() {
 			return
 		}
 		/*
-		 * Прием тр-ий от простых юзеров, а не нодов. Вызывается демоном disseminator
-// take the transactions from usual users but not nodes. It's called by 'disseminator' daemon 
-		 * */
+					 * Прием тр-ий от простых юзеров, а не нодов. Вызывается демоном disseminator
+			// take the transactions from usual users but not nodes. It's called by 'disseminator' daemon
+					 * */
 		_, _, decryptedBinData, err := t.DecryptData(&binaryData)
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
@@ -69,13 +72,18 @@ func (t *TCPServer) Type2() {
 			return
 		}
 		decryptedBinDataFull := decryptedBinData
-		err = t.ExecSQL(`DELETE FROM queue_tx WHERE hex(hash) = ?`, utils.Md5(decryptedBinDataFull))
+		hash, err := crypto.Hash(decryptedBinDataFull)
+		if err != nil {
+			log.Fatal(err)
+		}
+		hash = converter.BinToHex(hash)
+		err = t.ExecSQL(`DELETE FROM queue_tx WHERE hex(hash) = ?`, hash)
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return
 		}
-		log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", utils.Md5(decryptedBinDataFull), utils.BinToHex(decryptedBinDataFull))
-		err = t.ExecSQL(`INSERT INTO queue_tx (hash, data) VALUES ([hex], ?, [hex])`, utils.Md5(decryptedBinDataFull), utils.BinToHex(decryptedBinDataFull))
+		log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", hash, converter.BinToHex(decryptedBinDataFull))
+		err = t.ExecSQL(`INSERT INTO queue_tx (hash, data) VALUES ([hex], ?, [hex])`, hash, converter.BinToHex(decryptedBinDataFull))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return

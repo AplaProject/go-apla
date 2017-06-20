@@ -19,7 +19,8 @@ package controllers
 import (
 	"encoding/hex"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -44,7 +45,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 	c.r.ParseForm()
 	key := c.r.FormValue("key")
 	bkey, err := hex.DecodeString(key)
-	stateID := utils.StrToInt64(c.r.FormValue("state_id"))
+	stateID := converter.StrToInt64(c.r.FormValue("state_id"))
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -66,7 +67,8 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result.Error = "incorrect signature"
 		return result
 	}
-	result.Address = lib.KeyToAddress(bkey)
+	result.Address = crypto.KeyToAddress(bkey)
+
 	log.Debug("address : %s", result.Address)
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
@@ -89,7 +91,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 		//result = SignInJson{}
 		log.Debug("stateId %v", stateID)
 		if _, err := c.CheckStateName(stateID); err == nil {
-			citizenID, err = c.Single(`SELECT id FROM "`+utils.Int64ToStr(stateID)+`_citizens" WHERE id = ?`,
+			citizenID, err = c.Single(`SELECT id FROM "`+converter.Int64ToStr(stateID)+`_citizens" WHERE id = ?`,
 				walletID).Int64()
 			if err != nil {
 				result.Error = err.Error()

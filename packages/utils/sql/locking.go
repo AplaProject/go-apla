@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -33,7 +35,7 @@ func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, Gor
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
-			utils.Sleep(1)
+			time.Sleep(time.Second)
 		} else {
 			break
 		}
@@ -89,9 +91,10 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 			}
 			ok = true
 		} else {
-			t := utils.StrToInt64(exists["lock_time"])
-			if utils.Time()-t > 600 {
-				log.Error("%d %s %d", t, exists["script_name"], utils.Time()-t)
+			t := converter.StrToInt64(exists["lock_time"])
+			now := time.Now().Unix()
+			if now-t > 600 {
+				log.Error("%d %s %d", t, exists["script_name"], now-t)
 				if utils.Mobile() {
 					db.ExecSQL(`DELETE FROM main_lock`)
 				}
@@ -99,7 +102,7 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		}
 		Mutex.Unlock()
 		if !ok {
-			time.Sleep(time.Duration(utils.RandInt(300, 400)) * time.Millisecond)
+			time.Sleep(time.Duration(crypto.RandInt(300, 400)) * time.Millisecond)
 		} else {
 			break
 		}

@@ -54,19 +54,15 @@ var (
 	checksumProv = _CRC64
 )
 
-func Encrypt(msg []byte, key []byte, iv []byte) ([]byte, []byte, error) {
+func Encrypt(msg []byte, key []byte, iv []byte) ([]byte, error) {
 	if len(msg) == 0 {
 		log.Warn(EncryptingEmpty)
 	}
 	switch cryptoProv {
 	case _AESCBC:
-		res, err := encryptCBC(msg, key, iv)
-		if err != nil {
-			return nil, nil, err
-		}
-		return res, nil, nil
+		return encryptCBC(msg, key, iv)
 	default:
-		return nil, nil, UnknownProviderError
+		return nil, UnknownProviderError
 	}
 }
 
@@ -93,7 +89,7 @@ func SharedEncrypt(public, text []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	val, _, err := Encrypt(shared, text, pub)
+	val, err := Encrypt(shared, text, pub)
 	return val, err
 }
 
@@ -106,7 +102,7 @@ func SharedDecrypt(private, ciphertext []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	val, _, err := Encrypt(shared, ciphertext[64:], ciphertext[:aes.BlockSize])
+	val, err := Encrypt(shared, ciphertext[64:], ciphertext[:aes.BlockSize])
 	return val, err
 }
 

@@ -18,6 +18,8 @@ package parser
 
 import (
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -29,8 +31,8 @@ func (p *Parser) ChangeNodeKeyDLTInit() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["new_node_public_key"] = utils.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
-	p.TxMap["new_node_public_key"] = utils.BinToHex(p.TxMap["new_node_public_key"])
+	p.TxMaps.Bytes["new_node_public_key"] = converter.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
+	p.TxMap["new_node_public_key"] = converter.BinToHex(p.TxMap["new_node_public_key"])
 	return nil
 }
 
@@ -68,7 +70,7 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 // ChangeNodeKeyDLT proceeds ChangeNodeKeyDLT transaction
 func (p *Parser) ChangeNodeKeyDLT() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{converter.HexToBin(p.TxMaps.Bytes["new_node_public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -79,7 +81,7 @@ func (p *Parser) ChangeNodeKeyDLT() error {
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockId}, "my_node_keys", []string{"id"}, []string{utils.Int64ToStr(myKey)}, true)
+		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockId}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

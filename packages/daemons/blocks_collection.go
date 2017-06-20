@@ -25,7 +25,10 @@ import (
 	"os"
 	"time"
 
+	"log"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
@@ -113,7 +116,7 @@ BEGIN:
 			file = nil
 		}
 		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
+		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
 
 		// проверим, не нужно ли нам выйти из цикла
 		// check if we have to break the cycle
@@ -264,14 +267,14 @@ BEGIN:
 					}
 					b1 := make([]byte, 5)
 					file.Read(b1)
-					dataSize := utils.BinToDec(b1)
+					dataSize := converter.BinToDec(b1)
 					logger.Debug("dataSize", dataSize)
 					if dataSize > 0 {
 
 						data := make([]byte, dataSize)
 						file.Read(data)
 						logger.Debug("data %x\n", data)
-						blockID := utils.BinToDec(data[0:5])
+						blockID := converter.BinToDec(data[0:5])
 						if *utils.EndBlockID > 0 && blockID == *utils.EndBlockID {
 							if d.dPrintSleep(err, d.sleepTime) {
 								break BEGIN
@@ -280,10 +283,13 @@ BEGIN:
 						}
 						logger.Info("blockID", blockID)
 						data2 := data[5:]
-						length := utils.DecodeLength(&data2)
+						length, err := converter.DecodeLength(&data2)
+						if err != nil {
+							log.Fatal(err)
+						}
 						logger.Debug("length", length)
 						//logger.Debug("data2 %x\n", data2)
-						blockBin := utils.BytesShift(&data2, length)
+						blockBin := converter.BytesShift(&data2, length)
 						//logger.Debug("blockBin %x\n", blockBin)
 
 						if *utils.StartBlockID == 0 || (*utils.StartBlockID > 0 && blockID > *utils.StartBlockID) {
@@ -378,7 +384,7 @@ BEGIN:
 				}
 				logger.Debug("InsertIntoBlockchain ok")
 			}
-			utils.Sleep(1)
+			time.Sleep(time.Second)
 			d.dbUnlock()
 			continue BEGIN
 		}
@@ -427,7 +433,7 @@ BEGIN:
 
 			// шлем тип данных
 			// send the data type
-			_, err = conn.Write(utils.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
+			_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
 			if err != nil {
 				conn.Close()
 				if d.dPrintSleep(err, 1) {
@@ -451,13 +457,13 @@ BEGIN:
 
 			logger.Debug("blockIDBin %x", blockIDBin)
 
-			id := utils.BinToDec(blockIDBin)
+			id := converter.BinToDec(blockIDBin)
 			if id > maxBlockID || i == 0 {
 				maxBlockID = id
 				maxBlockIDHost = hosts[i] + ":" + consts.TCP_PORT
 			}
 			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-				utils.Sleep(1)
+				time.Sleep(time.Second)
 				break BEGIN
 			}
 		}
@@ -521,7 +527,7 @@ BEGIN:
 				continue BEGIN
 			}
 			binaryBlockFull := binaryBlock
-			utils.BytesShift(&binaryBlock, 1) // уберем 1-й байт - тип (блок/тр-я) // remove 1-st byte - type (block/transaction)
+			converter.BytesShift(&binaryBlock, 1) // уберем 1-й байт - тип (блок/тр-я) // remove 1-st byte - type (block/transaction)
 			// распарсим заголовок блока
 			// parse the heading of a block
 			blockData := utils.ParseBlockHeader(&binaryBlock)
@@ -560,7 +566,7 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				prevBlockHash = string(utils.BinToHex([]byte(prevBlockHash)))
+				prevBlockHash = string(converter.BinToHex([]byte(prevBlockHash)))
 			} else {
 				prevBlockHash = "0"
 			}
@@ -645,7 +651,7 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+				logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 				/*
 									//var transactions []byte
 									utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")

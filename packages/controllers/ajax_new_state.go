@@ -22,9 +22,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"io/ioutil"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const aNewState = `ajax_new_state`
@@ -48,12 +50,12 @@ func (c *Controller) AjaxNewState() interface{} {
 		priv, pub []byte
 		wallet    int64
 	)
-	id := utils.StrToInt64(c.r.FormValue("testnet"))
+	id := converter.StrToInt64(c.r.FormValue("testnet"))
 	if current, err = c.OneRow(`select country,currency,wallet, private from testnet_emails where id=?`, id).String(); err != nil {
 		result.Error = err.Error()
 	} else if len(current) == 0 {
 		result.Error = `unknown id`
-	} else if utils.StrToInt64(current[`wallet`]) > 0 || len(current[`private`]) > 0 {
+	} else if converter.StrToInt64(current[`wallet`]) > 0 || len(current[`private`]) > 0 {
 		result.Error = `duplicate of request`
 	}
 	if len(result.Error) > 0 {
@@ -61,10 +63,13 @@ func (c *Controller) AjaxNewState() interface{} {
 	}
 	exist := int64(1)
 	for exist != 0 {
-		spriv, _, _ = lib.GenHexKeys()
+		spriv, _, _ = crypto.GenHexKeys()
 		priv, _ = hex.DecodeString(spriv)
-		pub = lib.PrivateToPublic(priv)
-		wallet = int64(lib.Address(pub))
+		pub, err = crypto.PrivateToPublic(priv)
+		if err != nil {
+			log.Fatal(err)
+		}
+		wallet = crypto.Address(pub)
 
 		exist, err = c.Single(`select wallet_id from dlt_wallets where wallet_id=?`, wallet).Int64()
 		if err != nil {
@@ -87,14 +92,18 @@ func (c *Controller) AjaxNewState() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	adminWallet := int64(lib.Address(lib.PrivateToPublic(adminPriv)))
-	walletUser := strings.Replace(lib.AddressToString(wallet), `-`, ``, -1)
+	publicKey, err := crypto.PrivateToPublic(adminPriv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	adminWallet := crypto.Address(publicKey)
+	walletUser := strings.Replace(converter.AddressToString(wallet), `-`, ``, -1)
 
 	txType := utils.TypeInt(`DLTTransfer`)
 	txTime := time.Now().Unix()
 	forSign := fmt.Sprintf("%d,%d,%d,%s,%s,%s,%s", txType, txTime, adminWallet,
 		walletUser, `2e+21`, `1000000000000000`, `testnet`)
-	signature, err := lib.SignECDSA(string(adminKey), forSign)
+	signature, err := crypto.Sign(string(adminKey), forSign)
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -102,19 +111,19 @@ func (c *Controller) AjaxNewState() interface{} {
 	/*	fmt.Println(`FORIN`, forSign)
 		fmt.Println(`IN`, hex.EncodeToString(signature))*/
 	sign := make([]byte, 0)
-	sign = append(sign, utils.EncodeLengthPlusData(signature)...)
-	binsign := utils.EncodeLengthPlusData(sign)
+	sign = append(sign, converter.EncodeLengthPlusData(signature)...)
+	binsign := converter.EncodeLengthPlusData(sign)
 
 	data := make([]byte, 0)
-	data = utils.DecToBin(txType, 1)
-	data = append(data, utils.DecToBin(txTime, 4)...)
-	data = append(data, utils.EncodeLengthPlusData(adminWallet)...)
-	data = append(data, utils.EncodeLengthPlusData(0)...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(walletUser))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(`2e+21`))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(`1000000000000000`))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(`testnet`))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(``))...)
+	data = converter.DecToBin(txType, 1)
+	data = append(data, converter.DecToBin(txTime, 4)...)
+	data = append(data, converter.EncodeLengthPlusData(adminWallet)...)
+	data = append(data, converter.EncodeLengthPlusData(0)...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(walletUser))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(`2e+21`))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(`1000000000000000`))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(`testnet`))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(``))...)
 	data = append(data, binsign...)
 
 	err = c.SendTx(txType, adminWallet, data)
@@ -126,22 +135,22 @@ func (c *Controller) AjaxNewState() interface{} {
 	txType = utils.TypeInt(`NewState`)
 	txTime = time.Now().Unix()
 	forSign = fmt.Sprintf("%d,%d,%d,%s,%s", txType, txTime, wallet, current[`country`], current[`currency`])
-	signature, err = lib.SignECDSA(spriv, forSign)
+	signature, err = crypto.Sign(spriv, forSign)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
 
-	sign = utils.EncodeLengthPlusData(signature)
-	binsign = utils.EncodeLengthPlusData(sign)
+	sign = converter.EncodeLengthPlusData(signature)
+	binsign = converter.EncodeLengthPlusData(sign)
 	data = data[:0]
-	data = utils.DecToBin(txType, 1)
-	data = append(data, utils.DecToBin(txTime, 4)...)
-	data = append(data, utils.EncodeLengthPlusData(wallet)...)
-	data = append(data, utils.EncodeLengthPlusData(0)...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(current[`country`]))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(current[`currency`]))...)
-	data = append(data, utils.EncodeLengthPlusData(hex.EncodeToString(pub))...)
+	data = converter.DecToBin(txType, 1)
+	data = append(data, converter.DecToBin(txTime, 4)...)
+	data = append(data, converter.EncodeLengthPlusData(wallet)...)
+	data = append(data, converter.EncodeLengthPlusData(0)...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(current[`country`]))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(current[`currency`]))...)
+	data = append(data, converter.EncodeLengthPlusData(hex.EncodeToString(pub))...)
 	data = append(data, binsign...)
 	/*	pubkey := make([][]byte, 0)
 		pubkey = append(pubkey, pub)

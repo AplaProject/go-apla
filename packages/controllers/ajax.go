@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	qrcode "github.com/skip2/go-qrcode"
@@ -36,7 +36,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	if qr := r.FormValue("qr"); len(qr) > 0 {
-		if qr[0] == '1' || lib.IsValidAddress(qr) {
+		if qr[0] == '1' || converter.IsValidAddress(qr) {
 			png, _ := qrcode.Encode(qr, qrcode.Medium, 170)
 			w.Header().Set("Content-Type", "image/png")
 			w.Write(png)
@@ -89,7 +89,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		}
 		c.StateName = stateName
 		c.StateID = sessStateID
-		c.StateIDStr = utils.Int64ToStr(sessStateID)
+		c.StateIDStr = converter.Int64ToStr(sessStateID)
 	}
 	c.dbInit = dbInit
 

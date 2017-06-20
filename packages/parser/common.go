@@ -25,7 +25,9 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	//	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
@@ -144,11 +146,16 @@ func (p *Parser) limitRequest(vimit interface{}, txType string, vperiod interfac
 }*/
 
 func (p *Parser) dataPre() {
-	p.blockHashHex = utils.DSha256(p.BinaryData)
-	p.blockHex = utils.BinToHex(p.BinaryData)
+	hash, err := crypto.DoubleHash(p.BinaryData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	p.blockHashHex = converter.BinToHex(hash)
+
+	p.blockHex = converter.BinToHex(p.BinaryData)
 	// определим тип данных
 	// define the data type
-	p.dataType = int(utils.BinToDec(utils.BytesShift(&p.BinaryData, 1)))
+	p.dataType = int(converter.BinToDec(converter.BytesShift(&p.BinaryData, 1)))
 	log.Debug("dataType", p.dataType)
 }
 
@@ -158,40 +165,45 @@ func (p *Parser) dataPre() {
 // и она каждый раз успешно проходила бы фронтальную проверку
 // And it would have successfully passed a frontal test
 func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
-	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, utils.Md5(txBinary)).String()
-	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", utils.Md5(txBinary))
+	searchedHash, err := crypto.Hash(txBinary)
+	if err != nil {
+		log.Fatal(err)
+	}
+	searchedHash = converter.BinToHex(searchedHash)
+	hash, err := p.Single(`SELECT hash FROM log_transactions WHERE hex(hash) = ?`, searchedHash).String()
+	log.Debug("SELECT hash FROM log_transactions WHERE hex(hash) = %s", searchedHash)
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
 	log.Debug("hash %x", hash)
 	if len(hash) > 0 {
-		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %s", utils.Md5(txBinary)))
+		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %s", searchedHash))
 	}
 
 	if transactions {
 		// проверим, нет ли у нас такой тр-ии
 		// check whether we have such a transaction
-		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ? and verified = 1", utils.Md5(txBinary)).Int64()
+		exists, err := p.Single("SELECT count(hash) FROM transactions WHERE hex(hash) = ? and verified = 1", searchedHash).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx in transactions %s", utils.Md5(txBinary)))
+			return utils.ErrInfo(fmt.Errorf("double tx in transactions %s", searchedHash))
 		}
 	}
 
 	if txQueue {
 		// проверим, нет ли у нас такой тр-ии
 		// check whether we have such a transaction
-		exists, err := p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", utils.Md5(txBinary)).Int64()
+		exists, err := p.Single("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?", searchedHash).Int64()
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		if exists > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %s", utils.Md5(txBinary)))
+			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %s", searchedHash))
 		}
 	}
 
@@ -449,7 +461,7 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	if iscondition {
 		param = `conditions`
 	}
-	conditions, err := p.Single(`SELECT `+param+` FROM "`+utils.Int64ToStr(int64(p.TxStateID))+`_state_parameters" WHERE name = ?`,
+	conditions, err := p.Single(`SELECT `+param+` FROM "`+converter.Int64ToStr(int64(p.TxStateID))+`_state_parameters" WHERE name = ?`,
 		condition).String()
 	if err != nil {
 		return err
@@ -473,7 +485,7 @@ func (p *Parser) AccessTable(table, action string) error {
 
 	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
-	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == utils.StrToInt64(govAccount) {
+	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 		return nil
 	}
 
@@ -680,7 +692,7 @@ func (p *Parser) payFPrice() error {
 	} else { // contract
 		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
 			//fromID = p.TxContract.TxGovAccount
-			fromID = utils.StrToInt64(StateVal(p, `gov_account`))
+			fromID = converter.StrToInt64(StateVal(p, `gov_account`))
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			// write directly from dlt_wallets of user
@@ -714,15 +726,15 @@ func (p *Parser) payFPrice() error {
 			return err
 		}*/
 	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(fromID)}, true); err != nil {
+		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(toID)}, true); err != nil {
+		[]string{converter.Int64ToStr(toID)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
+		[]string{converter.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)

@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -38,7 +40,7 @@ type restoreAccessPage struct {
 func (c *Controller) RestoreAccess() (string, error) {
 
 	txType := "RestoreAccessActive"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	data, err := c.OneRow("SELECT active FROM system_restore_access WHERE state_id  =  ?", c.SessStateID).Int64()
 	if err != nil {

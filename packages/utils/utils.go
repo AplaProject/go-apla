@@ -18,11 +18,6 @@ package utils
 
 import (
 	"archive/zip"
-	"crypto"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/sha256"
-	//	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -30,27 +25,25 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
-	"math/rand"
 	"net"
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/kardianos/osext"
-	"github.com/mcuadros/go-version"
-	"github.com/op/go-logging"
-	"github.com/shopspring/decimal"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/kardianos/osext"
+	"github.com/mcuadros/go-version"
+	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("daemons")
@@ -175,11 +168,6 @@ func Android() bool {
 	return false
 }
 
-// Sleep makes a pause during sec seconds
-func Sleep(sec time.Duration) {
-	time.Sleep(sec * time.Second)
-}
-
 // ParseBlockHeader parses the header of the block
 func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
@@ -194,17 +182,20 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 				SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
 		Далее - тело блока (Тр-ии) // further is body block (transaction)
 	*/
-	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
-	result.Time = BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId, _ = lib.DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+	result.BlockId = converter.BinToDecBytesShift(binaryBlock, 4)
+	result.Time = converter.BinToDecBytesShift(binaryBlock, 4)
+	result.WalletId, _ = converter.DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	// Delete after re-build blocks
 	/*	if result.WalletId == 0x31 {
 		result.WalletId = 1
 	}*/
-	result.StateID = BinToDecBytesShift(binaryBlock, 1)
+	result.StateID = converter.BinToDecBytesShift(binaryBlock, 1)
 	if result.BlockId > 1 {
-		signSize := DecodeLength(binaryBlock)
-		result.Sign = BytesShift(binaryBlock, signSize)
+		signSize, err := converter.DecodeLength(binaryBlock)
+		if err != nil {
+			log.Fatal(err)
+		}
+		result.Sign = converter.BytesShift(binaryBlock, signSize)
 	} else {
 		*binaryBlock = (*binaryBlock)[1:]
 	}
@@ -212,50 +203,16 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	return result
 }
 
-/*
-func Round(f float64, places int) (float64) {
-	if places==0 {
-		return math.Floor(f + .5)
-	} else {
-		shift := math.Pow(10, float64(places))
-		return math.Floor((f * shift)+.5) / shift;
-	}
-}
-*/
-
-func RoundWithoutPrecision(num float64) int64 {
-	//log.Debug("num", num)
-	//num += ROUND_FIX
-	//	return int(StrToFloat64(Float64ToStr(num)) + math.Copysign(0.5, num))
-	//log.Debug("num", num)
-	return int64(num + math.Copysign(0.5, num))
-}
-
-// Round rounds float64 value
-func Round(num float64, precision int) float64 {
-	num += consts.ROUND_FIX
-	output := math.Pow(10, float64(precision))
-	return float64(RoundWithoutPrecision(num*output)) / output
-}
-
-// RandInt returns a random integer between min and max
-func RandInt(min int, max int) int {
-	if max-min <= 0 {
-		return 1
-	}
-	return min + rand.Intn(max-min)
-}
-
 // CheckInputData checks the input data
 func CheckInputData(idata interface{}, dataType string) bool {
 	var data string
 	switch idata.(type) {
 	case int:
-		data = IntToStr(idata.(int))
+		data = converter.IntToStr(idata.(int))
 	case int64:
-		data = Int64ToStr(idata.(int64))
+		data = converter.Int64ToStr(idata.(int64))
 	case float64:
-		data = Float64ToStr(idata.(float64))
+		data = converter.Float64ToStr(idata.(float64))
 	case string:
 		data = idata.(string)
 	case []byte:
@@ -284,55 +241,55 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		}
 	case "type":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if StrToInt(data) <= 30 {
+			if converter.StrToInt(data) <= 30 {
 				return true
 			}
 		}
 	case "word":
 		if ok, _ := regexp.MatchString(`^(?i)[a-z]+$`, data); ok {
-			if StrToInt(data) <= 1024 {
+			if converter.StrToInt(data) <= 1024 {
 				return true
 			}
 		}
 	case "currency_name", "state_name":
 		if ok, _ := regexp.MatchString(`^[\pL0-9\,\s\.\-\:\=\;\?\!\%\)\(\@\/\n\r]{1,20}$`, data); ok {
-			if StrToInt(data) <= 1024 {
+			if converter.StrToInt(data) <= 1024 {
 				return true
 			}
 		}
 	case "string":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if StrToInt(data) <= 1024 {
+			if converter.StrToInt(data) <= 1024 {
 				return true
 			}
 		}
 	case "referral":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,2}$`, data); ok {
-			if StrToInt(data) <= 30 {
+			if converter.StrToInt(data) <= 30 {
 				return true
 			}
 		}
 	case "currency_id":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if StrToInt(data) <= 255 {
+			if converter.StrToInt(data) <= 255 {
 				return true
 			}
 		}
 	case "system_commission":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if StrToInt(data) <= 15 && StrToInt(data) >= 5 {
+			if converter.StrToInt(data) <= 15 && converter.StrToInt(data) >= 5 {
 				return true
 			}
 		}
 	case "tinyint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if StrToInt(data) <= 127 {
+			if converter.StrToInt(data) <= 127 {
 				return true
 			}
 		}
 	case "smallint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,5}$`, data); ok {
-			if StrToInt(data) <= 65535 {
+			if converter.StrToInt(data) <= 65535 {
 				return true
 			}
 		}
@@ -553,7 +510,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 			return true
 		}
 	case "level":
-		if StrToInt(data) >= 0 && StrToInt(data) <= 34 {
+		if converter.StrToInt(data) >= 0 && converter.StrToInt(data) <= 34 {
 			return true
 		}
 	case "comment":
@@ -583,17 +540,6 @@ func CheckInputData(idata interface{}, dataType string) bool {
 	return false
 }
 
-// Time returns th ecurrent Unix time
-func Time() int64 {
-	return time.Now().Unix()
-}
-
-// ValidateEmail validates email
-func ValidateEmail(email string) bool {
-	Re := regexp.MustCompile(`^(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
-	return Re.MatchString(email)
-}
-
 // GetHTTPTextAnswer returns HTTP answer as a string
 func GetHTTPTextAnswer(url string) (string, error) {
 	resp, err := http.Get(url)
@@ -609,69 +555,6 @@ func GetHTTPTextAnswer(url string) (string, error) {
 		err = fmt.Errorf(`404`)
 	}
 	return string(htmlData), err
-}
-
-// StrToInt64 converts string to int64
-func StrToInt64(s string) int64 {
-	int64, _ := strconv.ParseInt(s, 10, 64)
-	return int64
-}
-
-// BytesToInt64 converts []bytes to int64
-func BytesToInt64(s []byte) int64 {
-	int64, _ := strconv.ParseInt(string(s), 10, 64)
-	return int64
-}
-
-// StrToUint64 converts string to the unsinged int64
-func StrToUint64(s string) uint64 {
-	ret, _ := strconv.ParseUint(s, 10, 64)
-	return ret
-}
-
-// StrToInt converts string to integer
-func StrToInt(s string) int {
-	i, _ := strconv.Atoi(s)
-	return i
-}
-
-// Float64ToStr converts float64 to string
-func Float64ToStr(f float64) string {
-	return strconv.FormatFloat(f, 'f', 13, 64)
-}
-
-// StrToFloat64 converts string to float64
-func StrToFloat64(s string) float64 {
-	Float64, _ := strconv.ParseFloat(s, 64)
-	return Float64
-}
-
-// BytesToFloat64 converts []byte to float64
-func BytesToFloat64(s []byte) float64 {
-	Float64, _ := strconv.ParseFloat(string(s), 64)
-	return Float64
-}
-
-// BytesToInt converts []byte to integer
-func BytesToInt(s []byte) int {
-	i, _ := strconv.Atoi(string(s))
-	return i
-}
-
-// StrToMoney rounds money string to float64
-func StrToMoney(str string) float64 {
-	ind := strings.Index(str, ".")
-	new := ""
-	if ind != -1 {
-		end := 2
-		if len(str[ind+1:]) > 1 {
-			end = 3
-		}
-		new = str[:ind] + "." + str[ind+1:ind+end]
-	} else {
-		new = str
-	}
-	return StrToFloat64(new)
 }
 
 // GetEndBlockID returns the end block id
@@ -709,7 +592,7 @@ func GetEndBlockID() (int64, error) {
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
-	size := BinToDec(buf)
+	size := converter.BinToDec(buf)
 	if size > consts.MAX_BLOCK_SIZE {
 		return 0, ErrInfo("size > conts.MAX_BLOCK_SIZE")
 	}
@@ -726,8 +609,8 @@ func GetEndBlockID() (int64, error) {
 	}
 	// размер (id блока + тело блока)
 	// size (block id + body of a block)
-	BinToDecBytesShift(&dataBinary, 5)
-	return BinToDecBytesShift(&dataBinary, 5), nil
+	converter.BinToDecBytesShift(&dataBinary, 5)
+	return converter.BinToDecBytesShift(&dataBinary, 5), nil
 }
 
 // ErrInfoFmt fomats the error message
@@ -801,195 +684,6 @@ func Caller(steps int) string {
 	return name
 }
 
-// InSliceString searches the string in the slice of strings
-func InSliceString(search string, slice []string) bool {
-	for _, v := range slice {
-		if v == search {
-			return true
-		}
-	}
-	return false
-}
-
-// EncodeLengthPlusData encoding interface into []byte
-func EncodeLengthPlusData(idata interface{}) []byte {
-	var data []byte
-	switch idata.(type) {
-	case int64:
-		data = Int64ToByte(idata.(int64))
-	case string:
-		data = []byte(idata.(string))
-	case []byte:
-		data = idata.([]byte)
-	}
-	//log.Debug("data: %x", data)
-	//log.Debug("len data: %d", len(data))
-	return append(lib.EncodeLength(int64(len(data))), data...)
-}
-
-// UInt32ToStr converts uint32 to string
-func UInt32ToStr(num uint32) string {
-	return strconv.FormatInt(int64(num), 10)
-}
-
-// Int64ToStr converts int64 to string
-func Int64ToStr(num int64) string {
-	return strconv.FormatInt(num, 10)
-}
-
-// Int64ToByte converts int64 to []byte
-func Int64ToByte(num int64) []byte {
-	return []byte(strconv.FormatInt(num, 10))
-}
-
-// IntToStr converts integer to string
-func IntToStr(num int) string {
-	return strconv.Itoa(num)
-}
-
-// DecToBin converts interface to []byte
-func DecToBin(v interface{}, sizeBytes int64) []byte {
-	var dec int64
-	switch v.(type) {
-	case int:
-		dec = int64(v.(int))
-	case int64:
-		dec = v.(int64)
-	case string:
-		dec = StrToInt64(v.(string))
-	}
-	Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
-	return HexToBin([]byte(Hex))
-}
-
-// BinToHex converts interface to hex []byte
-func BinToHex(v interface{}) []byte {
-	var bin []byte
-	switch v.(type) {
-	case []byte:
-		bin = v.([]byte)
-	case int64:
-		bin = Int64ToByte(v.(int64))
-	case string:
-		bin = []byte(v.(string))
-	}
-	return []byte(fmt.Sprintf("%x", bin))
-}
-
-// HexToBin converts hex interface to binary []byte
-func HexToBin(ihexdata interface{}) []byte {
-	var hexdata string
-	switch ihexdata.(type) {
-	case []byte:
-		hexdata = string(ihexdata.([]byte))
-	case int64:
-		hexdata = Int64ToStr(ihexdata.(int64))
-	case string:
-		hexdata = ihexdata.(string)
-	}
-	var str []byte
-	str, err := hex.DecodeString(hexdata)
-	if err != nil {
-		log.Error("%v / %v", err, GetParent())
-	}
-	return str
-}
-
-// BinToDec converts input binary []byte to int64
-func BinToDec(bin []byte) int64 {
-	var a uint64
-	l := len(bin)
-	for i, b := range bin {
-		shift := uint64((l - i - 1) * 8)
-		a |= uint64(b) << shift
-	}
-	return int64(a)
-}
-
-// BinToDecBytesShift converts the input binary []byte to int64 and shifts the input bin
-func BinToDecBytesShift(bin *[]byte, num int64) int64 {
-	return BinToDec(BytesShift(bin, num))
-}
-
-// BytesShift returns the index bytes of the input []byte and shift str pointer
-func BytesShift(str *[]byte, index int64) (ret []byte) {
-	if int64(len(*str)) < index || index == 0 {
-		*str = (*str)[:0]
-		return []byte{}
-	}
-	ret, *str = (*str)[:index], (*str)[index:]
-	return
-}
-
-// InterfaceToStr converts the interfaces to the string
-func InterfaceToStr(v interface{}) string {
-	var str string
-	switch v.(type) {
-	case int:
-		str = IntToStr(v.(int))
-	case float64:
-		str = Float64ToStr(v.(float64))
-	case int64:
-		str = Int64ToStr(v.(int64))
-	case string:
-		str = v.(string)
-	case []byte:
-		str = string(v.([]byte))
-	default:
-		if reflect.TypeOf(v).String() == `decimal.Decimal` {
-			str = v.(decimal.Decimal).String()
-		}
-	}
-	return str
-}
-
-// InterfaceSliceToStr converts the slice of interfaces to the slice of strings
-func InterfaceSliceToStr(i []interface{}) []string {
-	var str []string
-	for _, v := range i {
-		str = append(str, InterfaceToStr(v))
-	}
-	return str
-}
-
-// InterfaceToFloat64 converts the interfaces to the float64
-func InterfaceToFloat64(i interface{}) float64 {
-	var result float64
-	switch i.(type) {
-	case int:
-		result = float64(i.(int))
-	case float64:
-		result = i.(float64)
-	case int64:
-		result = float64(i.(int64))
-	case string:
-		result = StrToFloat64(i.(string))
-	case []byte:
-		result = BytesToFloat64(i.([]byte))
-	}
-	return result
-}
-
-// BytesShiftReverse gets []byte from the end of the input and cut the input pointer to []byte
-func BytesShiftReverse(str *[]byte, v interface{}) []byte {
-	var index int64
-	switch v.(type) {
-	case int:
-		index = int64(v.(int))
-	case int64:
-		index = v.(int64)
-	}
-
-	var substr []byte
-	slen := int64(len(*str))
-	if slen < index {
-		index = slen
-	}
-	substr = (*str)[slen-index:]
-	*str = (*str)[:slen-index]
-	return substr
-}
-
 // CopyFileContents copy files
 func CopyFileContents(src, dst string) error {
 	in, err := os.Open(src)
@@ -1012,17 +706,6 @@ func CopyFileContents(src, dst string) error {
 	}
 	err = out.Sync()
 	return ErrInfo(err)
-}
-
-// RandSeq generates a random string
-func RandSeq(n int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-	rand.Seed(time.Now().UnixNano())
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
 }
 
 // CheckSign checks the signature
@@ -1048,60 +731,18 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
-		if length := DecodeLength(&signs); length > 0 {
-			signsSlice = append(signsSlice, BytesShift(&signs, length))
+		length, err := converter.DecodeLength(&signs)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if length > 0 {
+			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
-	return lib.CheckECDSA(publicKeys[0], forSign, signsSlice[0])
-}
-
-// Md5 returns the hex MD5 hash
-func Md5(v interface{}) []byte {
-	var msg []byte
-	switch v.(type) {
-	case string:
-		msg = []byte(v.(string))
-	case []byte:
-		msg = v.([]byte)
-	}
-	sh := crypto.MD5.New()
-	sh.Write(msg)
-	hash := sh.Sum(nil)
-	return BinToHex(hash)
-}
-
-// DSha256 returns the double calculation of SHA256 hash
-func DSha256(v interface{}) []byte {
-	var data []byte
-	switch v.(type) {
-	case string:
-		data = []byte(v.(string))
-	case []byte:
-		data = v.([]byte)
-	}
-	isha256 := sha256.New()
-	isha256.Write(data)
-	hashSha256 := fmt.Sprintf("%x", isha256.Sum(nil))
-	isha256 = sha256.New()
-	isha256.Write([]byte(hashSha256))
-	return []byte(fmt.Sprintf("%x", isha256.Sum(nil)))
-}
-
-// Sha256 returns SHA256 hash
-func Sha256(v interface{}) []byte {
-	var data []byte
-	switch v.(type) {
-	case string:
-		data = []byte(v.(string))
-	case []byte:
-		data = v.([]byte)
-	}
-	isha256 := sha256.New()
-	isha256.Write(data)
-	return []byte(fmt.Sprintf("%x", isha256.Sum(nil)))
+	return crypto.CheckSign(publicKeys[0], forSign, signsSlice[0])
 }
 
 // GetMrklroot returns MerkleTreeRoot
@@ -1119,13 +760,20 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
 				}
 			}
-			txSize = DecodeLength(&binaryData)
+			txSize, err := converter.DecodeLength(&binaryData)
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			// отчекрыжим одну транзакцию от списка транзакций
 			// separate one transaction from the list of transactions
 			if txSize > 0 {
-				transactionBinaryData := BytesShift(&binaryData, txSize)
-				dSha256Hash := DSha256(transactionBinaryData)
+				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
+				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
+				if err != nil {
+					log.Fatal(err)
+				}
+				dSha256Hash = converter.BinToHex(dSha256Hash)
 				mrklSlice = append(mrklSlice, dSha256Hash)
 				//if len(transactionBinaryData) > 500000 {
 				//	ioutil.WriteFile(string(dSha256Hash)+"-"+Int64ToStr(txSize), transactionBinaryData, 0644)
@@ -1154,20 +802,17 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 	return MerkleTreeRoot(mrklSlice), nil
 }
 
-// SliceReverse reverses the slice of int64
-func SliceReverse(s []int64) []int64 {
-	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-		s[i], s[j] = s[j], s[i]
-	}
-	return s
-}
-
 // MerkleTreeRoot rertun Merkle value
 func MerkleTreeRoot(dataArray [][]byte) []byte {
 	log.Debug("dataArray: %s", dataArray)
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
-		result[0] = append(result[0], DSha256(v))
+		hash, err := crypto.DoubleHash(v)
+		if err != nil {
+			log.Fatal(err)
+		}
+		hash = converter.BinToHex(hash)
+		result[0] = append(result[0], hash)
 	}
 	var j int32
 	for len(result[j]) > 1 {
@@ -1180,9 +825,19 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 				}
 			} else {
 				if _, ok := result[j+1]; !ok {
-					result[j+1] = [][]byte{DSha256(append(result[j][i], result[j][i+1]...))}
+					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...))
+					if err != nil {
+						log.Fatal(err)
+					}
+					hash = converter.BinToHex(hash)
+					result[j+1] = [][]byte{hash}
 				} else {
-					result[j+1] = append(result[j+1], DSha256([]byte(append(result[j][i], result[j][i+1]...))))
+					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)))
+					if err != nil {
+						log.Fatal(err)
+					}
+					hash = converter.BinToHex(hash)
+					result[j+1] = append(result[j+1], hash)
 				}
 			}
 		}
@@ -1203,37 +858,6 @@ func TypeInt(txType string) int64 {
 		}
 	}
 	return 0
-}
-
-// EncryptCFB encrypts the text with AES CFB
-func EncryptCFB(text, key, iv []byte) ([]byte, []byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, nil, ErrInfo(err)
-	}
-	str := text
-	if len(iv) == 0 {
-		ciphertext := []byte(RandSeq(16))
-		iv = ciphertext[:16]
-	}
-	encrypter := cipher.NewCFBEncrypter(block, iv)
-	encrypted := make([]byte, len(str))
-	encrypter.XORKeyStream(encrypted, str)
-
-	return append(iv, encrypted...), iv, nil
-}
-
-// DecryptCFB decrypts the ciphertext with AES CFB
-func DecryptCFB(iv, encrypted, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	decrypter := cipher.NewCFBDecrypter(block, iv)
-	decrypted := make([]byte, len(encrypted))
-	decrypter.XORKeyStream(decrypted, encrypted)
-
-	return decrypted, nil
 }
 
 /*
@@ -1314,35 +938,6 @@ func GetNetworkTime() (*time.Time, error) {
 
 }
 
-// SortMap sorts map to the slice of maps
-func SortMap(m map[int64]string) []map[int64]string {
-	var keys []int
-	for k := range m {
-		keys = append(keys, int(k))
-	}
-	sort.Ints(keys)
-	var result []map[int64]string
-	for _, k := range keys {
-		result = append(result, map[int64]string{int64(k): m[int64(k)]})
-	}
-	return result
-}
-
-// RSortMap sorts map to the reversed slice of maps
-func RSortMap(m map[int64]string) []map[int64]string {
-
-	var keys []int
-	for k := range m {
-		keys = append(keys, int(k))
-	}
-	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
-	var result []map[int64]string
-	for _, k := range keys {
-		result = append(result, map[int64]string{int64(k): m[int64(k)]})
-	}
-	return result
-}
-
 // TCPConn connects to the address
 func TCPConn(Addr string) (net.Conn, error) {
 	// шлем данные указанному хосту
@@ -1365,7 +960,7 @@ func TCPConn(Addr string) (net.Conn, error) {
 func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	// в 4-х байтах пишем размер данных, которые пошлем далее
 	// record the data size in 4 bytes, which will send further
-	size := DecToBin(len(binaryData), 4)
+	size := converter.DecToBin(len(binaryData), 4)
 	fmt.Println("len(binaryData)", len(binaryData))
 	_, err := conn.Write(size)
 	if err != nil {
@@ -1405,7 +1000,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 	log.Debug("dataTypeBlockBody: %v", dataTypeBlockBody)
 	// шлем тип данных
 	// send the type of data
-	_, err = conn.Write(DecToBin(dataTypeBlockBody, 2))
+	_, err = conn.Write(converter.DecToBin(dataTypeBlockBody, 2))
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
@@ -1414,7 +1009,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 
 	// шлем номер блока
 	// send the number of a block
-	_, err = conn.Write(DecToBin(blockID, 4))
+	_, err = conn.Write(converter.DecToBin(blockID, 4))
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
@@ -1430,7 +1025,7 @@ func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, 
 
 	// и если данных менее 10мб, то получаем их
 	// if the data size is less than 10mb, we will receive them
-	dataSize := BinToDec(buf)
+	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
 	log.Debug("dataSize: %v", dataSize)
 	if dataSize < 10485760 && dataSize > 0 {
@@ -1531,12 +1126,6 @@ func ShellExecute(cmdline string) {
 	}
 }
 
-// DecodeLength decodes length from []byte
-func DecodeLength(buf *[]byte) (ret int64) {
-	ret, _ = lib.DecodeLength(buf)
-	return
-}
-
 // FirstBlock generates the first block
 func FirstBlock(exit bool) {
 	log.Debug("FirstBlock")
@@ -1547,7 +1136,7 @@ func FirstBlock(exit bool) {
 
 		if len(*FirstBlockPublicKey) == 0 {
 			log.Debug("len(*FirstBlockPublicKey) == 0")
-			priv, pub, _ := lib.GenHexKeys()
+			priv, pub, _ := crypto.GenHexKeys()
 			err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", ErrInfo(err))
@@ -1556,7 +1145,7 @@ func FirstBlock(exit bool) {
 		}
 		if len(*FirstBlockNodePublicKey) == 0 {
 			log.Debug("len(*FirstBlockNodePublicKey) == 0")
-			priv, pub, _ := lib.GenHexKeys()
+			priv, pub, _ := crypto.GenHexKeys()
 			err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", ErrInfo(err))
@@ -1579,19 +1168,19 @@ func FirstBlock(exit bool) {
 		}
 
 		var block, tx []byte
-		iAddress := int64(lib.Address(PublicKeyBytes))
-		now := lib.Time32()
-		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
+		iAddress := int64(crypto.Address(PublicKeyBytes))
+		now := uint32(time.Now().Unix())
+		_, err := converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
-		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
+		_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
 			Time: now, WalletID: iAddress, CitizenID: 0},
 			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
-		lib.EncodeLenByte(&block, tx)
+		converter.EncodeLenByte(&block, tx)
 
 		firstBlockDir := ""
 		if len(*FirstBlockDir) == 0 {
