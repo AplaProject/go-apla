@@ -70,121 +70,18 @@
                   <i class="fa fa-plus"></i> GRID SYSTEM
                 </li>
                 <li style="display: list-item;" class="rows" id="estRows">
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
+                  <div class="lyrow col-md-12 ui-draggable">
+                   	<span class="configuration">
+						<a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>
+						<span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
+					</span>
                     <div class="preview">
-                      <input value="12" type="text">
+                      <input id="getColumnGrid" type="text" placeholder="Column grid">
                     </div>
                     <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-12 column"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                    <div class="preview">
-                      <input value="4 4 4" type="text">
-                    </div>
-                    <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-4 column"></div>
-                        <div class="col-xs-4 column"></div>
-                        <div class="col-xs-4 column"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                    <div class="preview">
-                      <input value="2 10" type="text">
-                    </div>
-                    <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-2 column"></div>
-                        <div class="col-xs-10 column" ></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                    <div class="preview">
-                      <input value="3 9" type="text">
-                    </div>
-                    <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-3 column"></div>
-                        <div class="col-xs-9 column" ></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                    <div class="preview">
-                      <input value="4 8" type="text">
-                    </div>
-                    <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-4 column"></div>
-                        <div class="col-xs-8 column" ></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="lyrow ui-draggable">
-                   <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                   <div class="preview">
-                     <input value="6 6" type="text">
-                   </div>
-                   <div class="view">
-                     <div class="row-fluid clearfix">
-                       <div class="col-xs-6 column"></div>
-                       <div class="col-xs-6 column"></div>
-                     </div>
-                   </div>
-                 </div>
-
-
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                    <div class="preview">
-                      <input value="8 4" type="text">
-                    </div>
-                    <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-8 column" ></div>
-                        <div class="col-xs-4 column"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                    <div class="preview">
-                      <input value="9 3" type="text">
-                    </div>
-                    <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-9 column" ></div>
-                        <div class="col-xs-3 column"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="lyrow ui-draggable">
-                    <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                    <div class="preview">
-                      <input value="10 2" type="text">
-                    </div>
-                    <div class="view">
-                      <div class="row-fluid clearfix">
-                        <div class="col-xs-10 column" ></div>
-                        <div class="col-xs-2 column"></div>
-                      </div>
+                      <!--<div class="row-fluid clearfix">-->
+                        <div class="column"></div>
+                      <!--</div>-->
                     </div>
                   </div>
                 </li>
@@ -1555,9 +1452,11 @@
                           <li><a href="#" rel="btn-xs">Mini</a></li>
                         </ul>
                       </span>
-                      <a class="btn btn-info btn-xs" href="#" rel="btn-block">Block</a>
-					  <a class="btn btn-info btn-xs" href="#" rel="disabled">Disabled</a>
-                  	  <button type="button" class="btn btn-info btn-xs" data-target="#editorModal" role="button" data-toggle="modal">Editor</button>
+                      <span class="btn-group">
+						  <a class="btn btn-info btn-xs" href="#" rel="btn-block">Block</a>
+						  <a class="btn btn-info btn-xs" href="#" rel="disabled">Disabled</a>
+						  <button type="button" class="btn btn-info btn-xs" data-target="#editorModal" role="button" data-toggle="modal">Editor</button>
+                  	  </span>
                     </span>
                     <div class="preview">Button</div>
                     <div class="view">
@@ -2024,16 +1923,16 @@
             </div>
           </div>
           <!--/span-->
-          <div class="demo ui-sortable" style="min-height: 304px; ">
-            <div class="lyrow">
+          <div class="row demo ui-sortable">
+            <!--<div class="lyrow">
               <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>
               <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-              <div class="preview">9 3</div>
-              <div class="view">
-                <div class="row-fluid clearfix">
+              <div class="preview">9 3</div>-->
+              <!--<div class="view">
                   <div class="span12 column ui-sortable">
                     <div class="box box-element ui-draggable" style="display: block; ">
-                      <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a> <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
+                      <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>
+					  <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
                       <span class="configuration">
                       	<button type="button" class="btn btn-info btn-xs" data-target="#editorModal" role="button" data-toggle="modal">Editor</button>
                       	<a class="btn btn-info btn-xs" href="#" rel="well">Well</a>
@@ -2049,9 +1948,33 @@
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
+              </div>-->
+				<div class="lyrow col-md-12 ui-draggable">
+					<span class="configuration">
+						<a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>
+						<span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
+					</span>
+					<div class="view">
+						<div class="column">
+							<div class="panel panel-info elastic" data-sweet-alert="" style="display: flex;">
+								<div class="panel-heading" contenteditable="true">Hello, world!</div>
+								<div class="panel-body" contenteditable="true">
+									<p>This is a template for a simple marketing or informational website.</p>
+									<p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
+									<p>Use it as a starting point to create something more unique.</p>
+								</div>
+								<div class="panel-footer">
+									<div class="clearfix">
+										<div class="pull-right">
+											<button type="button" class="btn btn-primary" contenteditable="true">Button</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+            <!--</div>-->
           </div>
           <!-- end demo -->
           <!--/span-->
