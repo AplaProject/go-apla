@@ -147,7 +147,7 @@ func decryptBytes(input []byte) (output []byte, err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	output, err = crypto.Encrypt(make([]byte, 16), input, hash)
+	output, err = crypto.Decrypt(make([]byte, 16), input, hash)
 	return
 }
 

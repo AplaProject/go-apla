@@ -102,7 +102,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		}
 		var flags uint8
 
-		ctime := time.Now().Unix()
+		ctime := uint32(time.Now().Unix())
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(c.SessCitizenID), c.SessStateID, flags)
 		pubhex := hex.EncodeToString(pub)
