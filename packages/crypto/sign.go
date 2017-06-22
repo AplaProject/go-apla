@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"math/big"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
@@ -22,7 +20,7 @@ const (
 
 func Sign(privateKey string, data string) ([]byte, error) {
 	if len(data) == 0 {
-		log.Warn(SigningEmpty)
+		log.Debug(SigningEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
@@ -34,7 +32,7 @@ func Sign(privateKey string, data string) ([]byte, error) {
 
 func CheckSign(public []byte, data string, signature []byte) (bool, error) {
 	if len(public) == 0 {
-		log.Warn(CheckingSignEmpty)
+		log.Debug(CheckingSignEmpty.Error())
 	}
 	switch signProv {
 	case _ECDSA:
@@ -60,7 +58,7 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 	case elliptic256:
 		pubkeyCurve = elliptic.P256()
 	default:
-		log.Fatal(UnsupportedCurveSize)
+		log.Fatal(UnsupportedCurveSize.Error())
 	}
 
 	b, err := hex.DecodeString(privateKey)

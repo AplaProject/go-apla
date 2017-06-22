@@ -2,8 +2,6 @@ package crypto
 
 import (
 	"crypto/sha256"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type hashProvider int
@@ -14,7 +12,7 @@ const (
 
 func Hash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.Warn(HashingEmpty)
+		log.Debug(HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
@@ -26,7 +24,7 @@ func Hash(msg []byte) ([]byte, error) {
 
 func DoubleHash(msg []byte) ([]byte, error) {
 	if len(msg) == 0 {
-		log.Warn(HashingEmpty)
+		log.Debug(HashingEmpty.Error())
 	}
 	switch hashProv {
 	case _SHA256:
