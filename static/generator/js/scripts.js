@@ -218,13 +218,14 @@ function restoreData(){
 		if (window.demoHtml) {
 			//console.log($(".demo"));
 			$(".demo").html(window.demoHtml);
+			$(".demo").find(".ui-resizable-handle.ui-resizable-e").remove();
 		}
 	}
 }
 
 function initContainer(){
 	$(".demo, .demo .column").sortable({
-		connectWith: ".column",
+		//connectWith: ".column",
 		opacity: .35,
 		handle: ".drag",
 		placeholder: "portlet-placeholder ui-corner-all",
@@ -243,6 +244,29 @@ function initContainer(){
 			$(ui.item).find(".preview").remove();
 			if(stopsave>0) stopsave--;
 			startdrag = 0;
+		}
+	});
+	
+	$(".demo .lyrow").resizable({
+		handles: "e",
+		containment: "parent",
+		resize: function(event, ui) {
+			//console.log(ui);
+			var w = $(ui.element).parent().width();
+			var d = Math.ceil((ui.size.width * 12) / w);
+			if (d < 1) {
+				d = 1;
+			} else if (d > 12) {
+				d = 12;
+			}
+			var col = $(ui.element).attr("class").split(" ");
+			for (var i = 0; i < col.length; i++) {
+				var temp = col[i].split("-");
+				if (temp.length === 3 && temp[0] === "col") {
+					$(ui.element).removeClass("col-" + temp[1] + "-" + temp[2]);
+					$(ui.element).addClass("col-" + temp[1] + "-" + d);
+				}
+			}
 		}
 	});
 	configurationElm();
@@ -276,7 +300,7 @@ function initGenerator(){
 		stop: function(e, t) {
 			$(".demo .column").sortable({
 				opacity: .35,
-				connectWith: ".column",
+				//connectWith: ".column",
 				placeholder: "portlet-placeholder ui-corner-all",
 				start: function(e,t) {
 					if (!startdrag) stopsave++;
@@ -285,6 +309,28 @@ function initGenerator(){
 				stop: function(e,t) {
 					if(stopsave>0) stopsave--;
 					startdrag = 0;
+				}
+			});
+			$(".demo .lyrow").resizable({
+				handles: "e",
+				containment: "parent",
+				resize: function(event, ui) {
+					//console.log(ui);
+					var w = $(ui.element).parent().width();
+					var d = Math.ceil((ui.size.width * 12) / w);
+					if (d < 1) {
+						d = 1;
+					} else if (d > 12) {
+						d = 12;
+					}
+					var col = $(ui.element).attr("class").split(" ");
+					for (var i = 0; i < col.length; i++) {
+						var temp = col[i].split("-");
+						if (temp.length === 3 && temp[0] === "col") {
+							$(ui.element).removeClass("col-" + temp[1] + "-" + temp[2]);
+							$(ui.element).addClass("col-" + temp[1] + "-" + d);
+						}
+					}
 				}
 			});
 			if(stopsave>0) stopsave--;
