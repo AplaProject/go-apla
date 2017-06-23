@@ -36,6 +36,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		}
 	}
 	p.BinaryData = binaryTx
+	p.TxBinaryData = binaryTx
 	header, err = p.ParseDataGate(false)
 
 	if err != nil || len(fatalError) > 0 {

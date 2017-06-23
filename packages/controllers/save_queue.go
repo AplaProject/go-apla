@@ -71,10 +71,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		return `{"result":"signature is empty"}`, nil
 	}
 	fmt.Printf("Len sign %d\r\n", len(sign))
-	binSignatures := utils.EncodeLengthPlusData(sign)
-
-	log.Debug("binSignatures %x", binSignatures)
-	log.Debug("binSignatures %s", binSignatures)
 	log.Debug("txType_", txType_)
 	log.Debug("txType", txType)
 
@@ -89,7 +85,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		//		key  []byte
 	)
 	var toSerialize interface{}
-	header := tx.Header{Type: int(txType), Time: txTime, UserID: userId, StateID: stateId, PublicKey: publicKey, BinSignatures: binSignatures}
+	header := tx.Header{Type: int(txType), Time: txTime, UserID: userId, StateID: stateId, PublicKey: publicKey, BinSignatures: sign}
 	switch txType_ {
 	case "NewColumn", "AppendPage", "AppendMenu", "EditPage", "NewPage", "EditTable",
 		"EditStateParameters", "NewStateParameters", "NewContract", "EditContract", "NewMenu",

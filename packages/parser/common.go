@@ -62,76 +62,74 @@ func GetTablePrefix(global string, stateId int64) (string, error) {
 	return stateIdStr, nil
 }
 
-func GetParser(p *Parser, txType string) ParserInterface {
+func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	switch txType {
 	case "FirstBlock":
-		return &FirstBlockParser{p}
+		return &FirstBlockParser{p}, nil
 	case "DLTTransfer":
-		return &DLTTransferParser{p, nil}
+		return &DLTTransferParser{p, nil}, nil
 	case "DLTChangeHostVote":
-		return &DLTChangeHostVoteParser{p, nil}
-	case "UpdFullNode":
-		return &UpdFullNodesParser{p, nil}
+		return &DLTChangeHostVoteParser{p, nil}, nil
+	case "UpdFullNodes":
+		return &UpdFullNodesParser{p, nil}, nil
 	case "ChangeNodeKey":
-		return &ChangeNodeKeyParser{p, nil}
+		return &ChangeNodeKeyParser{p, nil}, nil
 	case "NewState":
-		return &NewStateParser{p, nil}
+		return &NewStateParser{p, nil}, nil
 	case "NewColumn":
-		return &NewColumnParser{p, nil}
+		return &NewColumnParser{p, nil}, nil
 	case "NewTable":
-		return &NewTableParser{p, nil}
+		return &NewTableParser{p, nil}, nil
 	case "EditPage":
-		return &EditPageParser{p, nil}
+		return &EditPageParser{p, nil}, nil
 	case "EditMenu":
-		return &EditMenuParser{p, nil}
+		return &EditMenuParser{p, nil}, nil
 	case "EditContract":
-		return &EditContractParser{p, nil}
+		return &EditContractParser{p, nil}, nil
 	case "NewContract":
-		return &NewContractParser{p, nil}
+		return &NewContractParser{p, nil}, nil
 	case "EditColumn":
-		return &EditColumnParser{p, nil}
+		return &EditColumnParser{p, nil}, nil
 	case "EditTable":
-		return &EditTableParser{p, nil}
+		return &EditTableParser{p, nil}, nil
 	case "EditStateParameters":
-		return &EditStateParametersParser{p, nil}
+		return &EditStateParametersParser{p, nil}, nil
 	case "NewStateParameters":
-		return &NewStateParametersParser{p, nil}
+		return &NewStateParametersParser{p, nil}, nil
 	case "NewPage":
-		return &NewPageParser{p, nil}
+		return &NewPageParser{p, nil}, nil
 	case "NewMenu":
-		return &NewMenuParser{p, nil}
+		return &NewMenuParser{p, nil}, nil
 	case "ChangeNodeKeyDLT":
-		return &ChangeNodeKeyDLTParser{p, nil}
+		return &ChangeNodeKeyDLTParser{p, nil}, nil
 	case "AppendPage":
-		return &AppendPageParser{p, nil}
+		return &AppendPageParser{p, nil}, nil
 	case "RestoreAccessActive":
-		return &RestoreAccessActiveParser{p, nil}
+		return &RestoreAccessActiveParser{p, nil}, nil
 	case "RestoreAccessClose":
-		return &RestoreAccessCloseParser{p, nil}
+		return &RestoreAccessCloseParser{p, nil}, nil
 	case "RestoreAccessRequest":
-		return &RestoreAccessRequestParser{p, nil}
+		return &RestoreAccessRequestParser{p, nil}, nil
 	case "RestoreAccess":
-		return &RestoreAccessParser{p, nil}
+		return &RestoreAccessParser{p, nil}, nil
 	case "NewLang":
-		return &NewLangParser{p, nil}
+		return &NewLangParser{p, nil}, nil
 	case "EditLang":
-		return &EditLangParser{p, nil}
+		return &EditLangParser{p, nil}, nil
 	case "AppendMenu":
-		return &AppendMenuParser{p, nil}
+		return &AppendMenuParser{p, nil}, nil
 	case "NewSign":
-		return &NewSignParser{p, nil}
+		return &NewSignParser{p, nil}, nil
 	case "EditSign":
-		return &EditSignParser{p, nil}
+		return &EditSignParser{p, nil}, nil
 	case "EditWallet":
-		return &EditWalletParser{p, nil}
+		return &EditWalletParser{p, nil}, nil
 	case "ActivateContract":
-		return &ActivateContractParser{p, nil}
+		return &ActivateContractParser{p, nil}, nil
 	case "NewAccount":
-		return &NewAccountParser{p, nil}
-	default:
-		return nil
+		return &NewAccountParser{p, nil}, nil
 	}
-	return nil
+	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
 
 type txMapsType struct {

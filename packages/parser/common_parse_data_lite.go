@@ -48,7 +48,10 @@ func (p *Parser) ParseDataLite() error {
 			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 
 			MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-			parser := GetParser(p, MethodName)
+			parser, err := GetParser(p, MethodName)
+			if err != nil {
+				return utils.ErrInfo(err)
+			}
 			log.Debug("MethodName", MethodName+"Init")
 			result := parser.Init()
 			if _, ok := result.(error); ok {

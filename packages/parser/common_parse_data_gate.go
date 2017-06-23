@@ -34,7 +34,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	p.dataPre()
 	p.ParseInit()
 	transactionBinaryData := p.BinaryData
-	p.TxBinaryData = p.BinaryData
+	p.TxBinaryData = transactionBinaryData
 	var transactionBinaryDataFull []byte
 	var header *tx.Header
 
@@ -100,7 +100,10 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	// Оперативные транзакции
 	// Operative transactions
 	MethodName := consts.TxTypes[p.dataType]
-	parser := GetParser(p, MethodName)
+	parser, err := GetParser(p, MethodName)
+	if err != nil {
+		return nil, utils.ErrInfo(err)
+	}
 	if p.TxContract != nil {
 		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
 			return nil, utils.ErrInfo(err)

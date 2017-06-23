@@ -862,7 +862,6 @@ func CallMethod(i interface{}, methodName string) interface{} {
 func Caller(steps int) string {
 	name := "?"
 	if pc, _, num, ok := runtime.Caller(steps + 1); ok {
-		//fmt.Println(num)
 		name = fmt.Sprintf("%s :  %d", filepath.Base(runtime.FuncForPC(pc).Name()), num)
 	}
 	return name
@@ -972,7 +971,6 @@ func DecToBin(dec_ interface{}, sizeBytes int64) []byte {
 		dec = StrToInt64(dec_.(string))
 	}
 	Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
-	//fmt.Println("Hex", Hex)
 	return HexToBin([]byte(Hex))
 }
 func BinToHex(bin_ interface{}) []byte {
@@ -1096,14 +1094,12 @@ func BytesShiftReverse(str *[]byte, index_ interface{}) []byte {
 	var str_ []byte
 	substr = *str
 	substr = substr[int64(len(substr))-index:]
-	//fmt.Println(substr)
 	str_ = *str
 	if int64(len(str_)) < int64(len(str_))-index {
 		return []byte("")
 	}
 	str_ = str_[0 : int64(len(str_))-index]
 	*str = str_
-	//fmt.Println(utils.BinToHex(str_))
 	return substr
 }
 
@@ -1951,9 +1947,10 @@ func FirstBlock(exit bool) {
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
-		_, err = lib.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
+		firstBlock := &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
 			Time: now, WalletID: iAddress, CitizenID: 0},
-			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
+			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)}
+		_, err = lib.BinMarshal(&tx, firstBlock)
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}

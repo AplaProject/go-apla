@@ -39,7 +39,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header) error {
 		p.TxCitizenID = 0
 	}
 	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
-		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
+		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", p.TxWalletID).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -77,8 +77,8 @@ func (p *Parser) generalCheck(name string, header *tx.Header) error {
 	}
 	// чтобы не записали слишком длинную подпись
 	// 128 - это нод-ключ
-	if len(p.TxMap["sign"]) < 64 || len(p.TxMap["sign"]) > 5120 {
-		return utils.ErrInfoFmt("incorrect sign size %d", len(p.TxMap["sign"]))
+	if len(header.BinSignatures) < 64 || len(header.BinSignatures) > 5120 {
+		return utils.ErrInfoFmt("incorrect sign size %d", len(header.BinSignatures))
 	}
 	for _, cond := range []string{`conditions`, `conditions_change`, `permissions`} {
 		if val, ok := p.TxMap[cond]; ok && len(val) == 0 {

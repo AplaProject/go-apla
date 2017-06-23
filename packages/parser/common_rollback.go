@@ -67,7 +67,10 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			)
 			if p.TxContract == nil {
 				MethodName = consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				parser = GetParser(p, MethodName)
+				parser, err = GetParser(p, MethodName)
+				if err != nil {
+					return utils.ErrInfo(err)
+				}
 				if parser != nil {
 					p.TxMap = map[string][]byte{}
 					err_ = parser.Init()

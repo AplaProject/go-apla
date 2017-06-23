@@ -110,8 +110,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			//log.Debug("transactionBinaryData", transactionBinaryData)
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 			log.Debug("p.TxHash %s", p.TxHash)
-			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			p.TxBinaryData = transactionBinaryData
+			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			log.Debug("p.TxSlice %v", p.TxSlice)
 			if err != nil {
 				err0 := p.RollbackTo(txForRollbackTo, true)
@@ -188,9 +188,12 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 			} else {
 				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
-				parser := GetParser(p, MethodName)
+				parser, err := GetParser(p, MethodName)
+				if err != nil {
+					return utils.ErrInfo(err)
+				}
 				log.Debug("MethodName", MethodName+"Init")
-				err := parser.Init()
+				err = parser.Init()
 				if _, ok := err.(error); ok {
 					log.Error("error: %v", err)
 					return utils.ErrInfo(err.(error))

@@ -42,7 +42,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 	p.TxPtr = nil
 	p.PublicKeys = nil
 	if len(*transactionBinaryData) > 0 {
-
 		// хэш транзакции
 		transSlice = append(transSlice, utils.DSha256(*transactionBinaryData))
 		input := (*transactionBinaryData)[:]
@@ -69,12 +68,9 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 			if contract == nil {
 				return nil, nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
 			}
-			//			log.Debug(`TRANDEB %d %d NAME: %s`, int64(p.TxPtr.(*consts.TXHeader).WalletId),
-			//				uint64(p.TxPtr.(*consts.TXHeader).WalletId), contract.Name)
 			forsign := fmt.Sprintf("%d,%d,%d,%d,%d", p.TxPtr.(*consts.TXHeader).Type,
 				p.TxPtr.(*consts.TXHeader).Time, p.TxPtr.(*consts.TXHeader).WalletID,
 				p.TxPtr.(*consts.TXHeader).StateID, p.TxPtr.(*consts.TXHeader).Flags)
-
 			p.TxContract = contract
 			p.TxData = make(map[string]interface{})
 			if contract.Block.Info.(*script.ContractInfo).Tx != nil {
@@ -148,23 +144,9 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 			}
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)
 		}
-		parser := GetParser(p, consts.TxTypes[int(txType)])
-		err := parser.Init()
-		if err != nil {
-			return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect tx"))
-		}
-		header = parser.Header()
-		if header == nil {
-			return transSlice, nil, utils.ErrInfo(fmt.Errorf("tx header is nil"))
-		}
-		transSlice = append(transSlice, utils.Int64ToByte(txType))
-		// следующие 4 байта - время транзакции
-		transSlice = append(transSlice, utils.Int64ToByte(header.Time))
-		transSlice = append(transSlice, []byte{})
-		// преобразуем бинарные данные транзакции в массив
-		if txType > 127 {
-			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
-		} else if isStruct {
+		if isStruct {
+			transSlice = append(transSlice, utils.Int64ToByte(txType))
+			transSlice = append(transSlice, utils.Int64ToByte(p.TxTime))
 			t := reflect.ValueOf(p.TxPtr).Elem()
 
 			//walletId & citizenId
@@ -176,8 +158,28 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 				data := lib.FieldToBytes(t.Interface(), i)
 				returnSlice = append(returnSlice, data)
 			}
-		}
-		if isStruct {
+			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
+		} else if txType > 127 {
+			// преобразуем бинарные данные транзакции в массив
+			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
+		} else {
+			parser, err := GetParser(p, consts.TxTypes[int(txType)])
+			if err != nil {
+				return transSlice, nil, utils.ErrInfo(err)
+			}
+			err = parser.Init()
+			if err != nil {
+				return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect tx:%s", err))
+			}
+			header = parser.Header()
+			if header == nil {
+				return transSlice, nil, utils.ErrInfo(fmt.Errorf("tx header is nil"))
+			}
+			transSlice = append(transSlice, utils.Int64ToByte(txType))
+			// следующие 4 байта - время транзакции
+			transSlice = append(transSlice, utils.Int64ToByte(header.Time))
+			transSlice = append(transSlice, utils.Int64ToByte(header.StateID))
+			transSlice = append(transSlice, utils.Int64ToByte(header.UserID))
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		}
 		if len(*transactionBinaryData) > 0 {
