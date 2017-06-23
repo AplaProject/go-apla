@@ -693,7 +693,6 @@ func (c *Controller) SaveQueue() (string, error) {
 	}
 
 	hash, err := crypto.Hash(data)
-	fmt.Println("hash", hash)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -715,9 +714,6 @@ func (c *Controller) SaveQueue() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-
-	fmt.Println("data", converter.BinToHex(data))
-	fmt.Println("str ", string(hash))
 
 	log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", hash, converter.BinToHex(data))
 	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, converter.BinToHex(data))
