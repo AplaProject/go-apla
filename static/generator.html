@@ -59,29 +59,54 @@
     </nav>
 
 
-    <div class="container-fluid">
-      <div class="changeDimension">
-        <div class="row-fluid">
-          <div class="">
-            <span></span>
+    <div id="LG" class="container-fluid changeDimension">
+	    <div class="checkbox c-checkbox">
+		  <label>
+			<input id="connect" class="hidden" type="checkbox">
+			<span class="fa fa-check"></span>
+		  	Connect column with other column
+		  </label>
+	    </div>
+        <!--<div class="row-fluid">-->
             <div class="sidebar-nav">
               <ul class="nav nav-list accordion-group">
                 <li class="nav-header">
                   <i class="fa fa-plus"></i> GRID SYSTEM
                 </li>
                 <li style="display: list-item;" class="rows" id="estRows">
-                  <div class="lyrow col-md-12 ui-draggable">
+                  <div class="lyrow col-md-6">
                    	<span class="configuration">
 						<a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>
-						<span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
+						<div class="drag column"></div>
 					</span>
-                    <div class="preview">
-                      <input id="getColumnGrid" type="text" placeholder="Column grid">
+                    <div class="preview clearfix">
+                      <div class="pull-left grid-system">
+						  <select id="getColumnViewport" class="form-control selectbox">
+							<option value="xs">xs</option>
+							<option value="sm">sm</option>
+							<option value="md" selected>md</option>
+							<option value="lg">lg</option>
+						  </select>
+                      </div>
+                      <div class="pull-left grid-system">
+						  <select id="getColumnGrid" class="form-control selectbox">
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+							<option value="4">4</option>
+							<option value="5">5</option>
+							<option value="6" selected>6</option>
+							<option value="7">7</option>
+							<option value="8">8</option>
+							<option value="9">9</option>
+							<option value="10">10</option>
+							<option value="11">11</option>
+							<option value="12">12</option>
+						  </select>
+                      </div>
                     </div>
                     <div class="view">
-                      <!--<div class="row-fluid clearfix">-->
                         <div class="column"></div>
-                      <!--</div>-->
                     </div>
                   </div>
                 </li>
@@ -1921,7 +1946,6 @@
                 </li>
               </ul>
             </div>
-          </div>
           <!--/span-->
           <div class="row demo ui-sortable">
             <!--<div class="lyrow">
@@ -1978,9 +2002,8 @@
           </div>
           <!-- end demo -->
           <!--/span-->
-        </div>
+        <!--</div>-->
         <!--/row-->
-      </div>
       <!--/.fluid-container-->
     </div>
   </div>
