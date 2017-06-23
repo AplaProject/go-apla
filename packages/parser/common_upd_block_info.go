@@ -18,6 +18,9 @@ package parser
 
 import (
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -34,7 +37,12 @@ func (p *Parser) UpdBlockInfo() {
 	}
 	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.StateID)
 	log.Debug("forSha", forSha)
-	p.BlockData.Hash = utils.DSha256(forSha)
+	hash, err := crypto.DoubleHash([]byte(forSha))
+	if err != nil {
+		log.Fatal(err)
+	}
+	hash = converter.BinToHex(hash)
+	p.BlockData.Hash = hash
 	log.Debug("%v", p.BlockData.Hash)
 	log.Debug("%v", blockID)
 	log.Debug("%v", p.BlockData.Time)

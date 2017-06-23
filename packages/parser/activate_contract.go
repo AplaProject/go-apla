@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
@@ -96,18 +97,18 @@ func (p *Parser) ActivateContract() error {
 	}
 	egs := p.TxMaps.String["activate_cost"]
 	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(wallet)}, true); err != nil {
+		[]string{converter.Int64ToStr(wallet)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(p.BlockData.WalletId)}, true); err != nil {
+		[]string{converter.Int64ToStr(p.BlockData.WalletId)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`active`}, []interface{}{1}, prefix+`_smart_contracts`, []string{`id`},
 		[]string{p.TxMaps.String["id"]}, true); err != nil {
 		return err
 	}
-	smart.ActivateContract(utils.StrToInt64(p.TxMaps.String["id"]), prefix, true)
+	smart.ActivateContract(converter.StrToInt64(p.TxMaps.String["id"]), prefix, true)
 	return nil
 }
 

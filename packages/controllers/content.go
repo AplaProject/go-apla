@@ -30,6 +30,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	tpl "github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -155,7 +156,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		c.StateName = stateName
 		c.StateID = sessStateID
-		c.StateIDStr = utils.Int64ToStr(sessStateID)
+		c.StateIDStr = converter.Int64ToStr(sessStateID)
 	}
 
 	c.dbInit = dbInit
@@ -215,7 +216,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	log.Debug("tpl_name=", tplName)
 	// если в параметрах пришел язык, то установим его
 	// if the language has come in parameters, install it
-	newLang := utils.StrToInt(c.Parameters["lang"])
+	newLang := converter.StrToInt(c.Parameters["lang"])
 	if newLang > 0 {
 		log.Debug("newLang", newLang)
 		SetLang(w, r, newLang)
@@ -267,10 +268,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Debug("%v", wTime)
 		log.Debug("%v", lastBlockTime)
 	}
-	if dbInit && tplName != "installStep0" && (utils.Time()-lastBlockTime > 3600*wTime) && len(configExists) > 0 {
+	now := time.Now().Unix()
+	if dbInit && tplName != "installStep0" && (now-lastBlockTime > 3600*wTime) && len(configExists) > 0 {
 		tplName = "updatingBlockchain"
 	}
-	log.Debug("lastBlockTime %v / utils.Time() %v / wTime %v", lastBlockTime, utils.Time(), wTime)
+	log.Debug("lastBlockTime %v / utils.Time() %v / wTime %v", lastBlockTime, now, wTime)
 
 	if tplName == "installStep0" {
 		log.Debug("ConfigInit monitor")
@@ -395,7 +397,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("%v", err)
 		}
-		blockJs = "$('#block_id').html(" + utils.Int64ToStr(blockID) + ");$('#block_id').css('color', '#428BCA');"
+		blockJs = "$('#block_id').html(" + converter.Int64ToStr(blockID) + ");$('#block_id').css('color', '#428BCA');"
 
 		w.Write([]byte(`<script>
 								$( document ).ready(function() {
@@ -416,7 +418,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		// тем, кто не зареган на пуле,не выдаем некоторые страницы
 		// We don't give some pages for ones who are not registered in the pool
-		if !utils.InSliceString(tplName, skipRestrictedUsers) {
+		if !converter.InSliceString(tplName, skipRestrictedUsers) {
 			// вызываем контроллер в зависимости от шаблона
 			// We call controller depending on template
 			html, err := CallController(c, tplName)

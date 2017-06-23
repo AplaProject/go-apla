@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
@@ -50,7 +51,7 @@ func (p *Parser) NewStateGlobal(country, currency string) error {
 		if err != nil {
 			return err
 		}
-		isGlobal = utils.InSliceString(`global_currencies_list`, list) && utils.InSliceString(`global_states_list`, list)
+		isGlobal = converter.InSliceString(`global_currencies_list`, list) && converter.InSliceString(`global_states_list`, list)
 	}
 	if isGlobal {
 		if id, err := sql.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
@@ -358,7 +359,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSQL(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, utils.BinToHex(pKey))
+	err = p.ExecSQL(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, converter.BinToHex(pKey))
 	if err != nil {
 		return
 	}
@@ -451,8 +452,8 @@ func (p *Parser) NewState() error {
 	if pkey, err = p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
 		return p.ErrInfo(err)
 	} else if len(p.TxMaps.Bytes["public_key"]) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets",
-			[]string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets",
+			[]string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	return err
 }

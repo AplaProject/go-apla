@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 // AjaxStatesList returns the list of states
@@ -35,7 +35,7 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		return c.Single(fmt.Sprintf(`SELECT value FROM "%s_state_parameters" WHERE name = ?`, id), name).String()
 	}
 	for _, id := range data {
-		if !c.IsNodeState(utils.StrToInt64(id), c.r.Host) {
+		if !c.IsNodeState(converter.StrToInt64(id), c.r.Host) {
 			continue
 		}
 

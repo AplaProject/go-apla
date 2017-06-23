@@ -22,7 +22,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
@@ -51,7 +51,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	log.Debug("sessWalletID %v / sessCitizenID %v", sessWalletID, sessCitizenID)
 
 	r.ParseForm()
-	page := lib.Escape(r.FormValue("page"))
+	page := converter.Escape(r.FormValue("page"))
 	params := make(map[string]string)
 	if len(page) == 0 {
 		log.Error("%v", len(page) == 0)
@@ -63,7 +63,7 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	if page == `body` {
 		params[`autobody`] = r.FormValue("body")
 	}
-	params[`global`] = lib.Escape(r.FormValue("global"))
+	params[`global`] = converter.Escape(r.FormValue("global"))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	//	fmt.Println(`PARAMS`, params)
 	tpl, err := template.CreateHTMLFromTemplate(page, sessCitizenID, sessStateID, &params)

@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"encoding/json"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -37,7 +39,7 @@ type rowHistoryPage struct {
 func (c *Controller) RowHistory() (string, error) {
 
 	var history []map[string]string
-	rbID := utils.StrToInt64(c.r.FormValue("rbId"))
+	rbID := converter.StrToInt64(c.r.FormValue("rbId"))
 	if rbID < 1 {
 		return "", utils.ErrInfo(`Incorrect rbId`)
 	}
@@ -66,7 +68,7 @@ func (c *Controller) RowHistory() (string, error) {
 		}
 		var messageMap map[string]string
 		json.Unmarshal([]byte(data["data"]), &messageMap)
-		rbID = utils.StrToInt64(messageMap["rb_id"])
+		rbID = converter.StrToInt64(messageMap["rb_id"])
 		messageMap["block_id"] = data["block_id"]
 		history = append(history, messageMap)
 		if rbID == 0 {

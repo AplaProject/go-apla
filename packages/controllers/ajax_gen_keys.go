@@ -19,13 +19,14 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const aGenKeys = `ajax_gen_keys`
@@ -47,7 +48,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 	var result GenKeys
 	var err error
 
-	count := utils.StrToInt64(c.r.FormValue("count"))
+	count := converter.StrToInt64(c.r.FormValue("count"))
 	if count < 1 || count > 50 {
 		result.Error = `Count must be from 1 to 50`
 		return result
@@ -57,7 +58,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	if c.SessCitizenID != utils.StrToInt64(govAccount) || len(govAccount) == 0 {
+	if c.SessCitizenID != converter.StrToInt64(govAccount) || len(govAccount) == 0 {
 		result.Error = `Access denied`
 		return result
 	}
@@ -81,11 +82,14 @@ func (c *Controller) AjaxGenKeys() interface{} {
 
 	for i := int64(0); i < count; i++ {
 		var priv []byte
-		spriv, _, _ := lib.GenHexKeys()
+		spriv, _, _ := crypto.GenHexKeys()
 		priv, _ = hex.DecodeString(spriv)
 
-		pub := lib.PrivateToPublic(priv)
-		idnew := int64(lib.Address(pub))
+		pub, err := crypto.PrivateToPublic(priv)
+		if err != nil {
+			log.Fatal(err)
+		}
+		idnew := int64(crypto.Address(pub))
 
 		exist, err := c.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
 		if err != nil {
@@ -98,19 +102,19 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		}
 		var flags uint8
 
-		ctime := lib.Time32()
+		ctime := uint32(time.Now().Unix())
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(c.SessCitizenID), c.SessStateID, flags)
 		pubhex := hex.EncodeToString(pub)
 		forsign += fmt.Sprintf(",%v,%v", ``, pubhex)
-		signature, err := lib.SignECDSA(privKey, forsign)
+		signature, err := crypto.Sign(privKey, forsign)
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
 
 		sign := make([]byte, 0)
-		lib.EncodeLenByte(&sign, signature)
+		converter.EncodeLenByte(&sign, signature)
 		data := make([]byte, 0)
 		header := consts.TXHeader{
 			Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
@@ -120,13 +124,13 @@ func (c *Controller) AjaxGenKeys() interface{} {
 			Flags:    flags,
 			Sign:     sign,
 		}
-		_, err = lib.BinMarshal(&data, &header)
+		_, err = converter.BinMarshal(&data, &header)
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
-		data = append(append(data, lib.EncodeLength(int64(len(``)))...), []byte(``)...)
-		data = append(append(data, lib.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
+		data = append(append(data, converter.EncodeLength(int64(len(``)))...), []byte(``)...)
+		data = append(append(data, converter.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
 		err = c.SendTx(int64(header.Type), c.SessCitizenID, data)
 		if err != nil {
 			result.Error = err.Error()

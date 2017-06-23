@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -51,7 +52,7 @@ func (c *Controller) ListOfTables() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		tables[i]["count"] = utils.Int64ToStr(count)
+		tables[i]["count"] = converter.Int64ToStr(count)
 	}
 
 	TemplateStr, err := makeTemplate("list_of_tables", "listOfTables", &listOfTablesPage{

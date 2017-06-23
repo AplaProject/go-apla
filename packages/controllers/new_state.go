@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -36,7 +38,7 @@ func (c *Controller) NewState() (string, error) {
 	var err error
 
 	txType := "NewState"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	TemplateStr, err := makeTemplate("new_state", "newState", &newStatePage{
 		Alert:     c.Alert,

@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -38,7 +40,7 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 	var err error
 
 	txType := "ChangeStateSmartLaws"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	parameter := c.r.FormValue(`parameter`)
 

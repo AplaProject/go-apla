@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -110,7 +110,7 @@ func (p *Parser) EditColumn() error {
 		return err
 	}
 	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`,
-		`"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbID, p.TxMaps.String["table_name"])
+		`"`+converter.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbID, p.TxMaps.String["table_name"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}

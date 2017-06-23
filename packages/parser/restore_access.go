@@ -18,9 +18,11 @@ package parser
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // RestoreAccessInit initializes RestoreAccess transaction
@@ -107,7 +109,7 @@ func (p *Parser) RestoreAccess() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.TxMaps.Int64["state_id"])}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.TxMaps.Int64["state_id"])}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -54,7 +55,7 @@ func (p *Parser) NewAccountFront() error {
 func (p *Parser) NewAccount() error {
 
 	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.TxMaps.Bytes["pub"])},
-		"dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxCitizenID)}, true)
+		"dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxCitizenID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

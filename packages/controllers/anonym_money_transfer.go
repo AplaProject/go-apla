@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
 )
@@ -39,7 +41,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 
 	txType := "DLTTransfer"
 	txTypeID := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	fPrice, err := c.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").Int64()
 	if err != nil {

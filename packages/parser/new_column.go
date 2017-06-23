@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -125,7 +125,7 @@ func (p *Parser) NewColumn() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbID, tblname)
+	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbID, tblname)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -18,6 +18,8 @@ package parser
 
 import (
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -29,13 +31,13 @@ func (p *Parser) RestoreAccessActiveInit() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.TxMaps.Bytes["secret"]))
+	p.TxMaps.String["secret_hex"] = string(converter.BinToHex(p.TxMaps.Bytes["secret"]))
 	if p.TxMaps.String["secret_hex"] == "30" {
 		p.TxMaps.Int64["active"] = 0
 	} else {
 		p.TxMaps.Int64["active"] = 1
 	}
-	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.TxMaps.Bytes["secret"]))
+	p.TxMaps.String["secret_hex"] = string(converter.BinToHex(p.TxMaps.Bytes["secret"]))
 
 	return nil
 }
@@ -75,7 +77,7 @@ func (p *Parser) RestoreAccessActiveFront() error {
 
 // RestoreAccessActive proceeds RestoreAccessActive transaction
 func (p *Parser) RestoreAccessActive() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.TxMaps.Int64["active"], p.TxMaps.Bytes["secret"]}, "system_restore_access", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.TxMaps.Int64["active"], p.TxMaps.Bytes["secret"]}, "system_restore_access", []string{"state_id"}, []string{converter.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

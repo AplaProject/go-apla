@@ -18,8 +18,9 @@ package controllers
 
 import (
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const aGetCnt = `ajax_get_cnt`
@@ -38,7 +39,7 @@ func init() {
 func (c *Controller) AjaxGetCnt() interface{} {
 	var result GetCntJSON
 
-	id := utils.StrToInt64(c.r.FormValue(`id`))
+	id := converter.StrToInt64(c.r.FormValue(`id`))
 	if id > 0 {
 		contract := smart.GetContractByID(int32(id))
 		if contract != nil {

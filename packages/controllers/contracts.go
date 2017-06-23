@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -50,7 +50,7 @@ func (c *Controller) Contracts() (string, error) {
 		if val[`wallet_id`] == `NULL` {
 			stateSmartLaws[ind][`wallet`] = ``
 		} else {
-			stateSmartLaws[ind][`wallet`] = lib.AddressToString(utils.StrToInt64(val[`wallet_id`]))
+			stateSmartLaws[ind][`wallet`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
 		}
 		if val[`active`] == `NULL` {
 			stateSmartLaws[ind][`active`] = ``

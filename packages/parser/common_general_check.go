@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -38,7 +39,7 @@ func (p *Parser) generalCheck(name string) error {
 	// проверим, есть ли такой юзер и заодно получим public_key
 	// check if such a user exists and at the same time we will get the public_key
 	if p.TxMaps.Int64["type"] == utils.TypeInt("DLTTransfer") || p.TxMaps.Int64["type"] == utils.TypeInt("NewState") || p.TxMaps.Int64["type"] == utils.TypeInt("DLTChangeHostVote") || p.TxMaps.Int64["type"] == utils.TypeInt("ChangeNodeKeyDLT") || p.TxMaps.Int64["type"] == utils.TypeInt("CitizenRequest") || p.TxMaps.Int64["type"] == utils.TypeInt("UpdFullNodes") {
-		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.BytesToInt64(p.TxMap["wallet_id"])).String()
+		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", converter.BytesToInt64(p.TxMap["wallet_id"])).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -59,14 +60,14 @@ func (p *Parser) generalCheck(name string) error {
 			if walletID == 0 {
 				return utils.ErrInfoFmt("incorrect wallet_id or public_key")
 			}
-			p.PublicKeys = append(p.PublicKeys, utils.HexToBin(p.TxMap["public_key"]))
+			p.PublicKeys = append(p.PublicKeys, converter.HexToBin(p.TxMap["public_key"]))
 		} else {
 			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
 			log.Debug("data[public_key_0]", data["public_key_0"])
 		}
 	} else {
-		log.Debug(`SELECT * FROM "`+utils.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = %d`, p.TxCitizenID)
-		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", utils.Int64ToStr(p.TxCitizenID)).String()
+		log.Debug(`SELECT * FROM "`+converter.UInt32ToStr(p.TxStateID)+`_citizens" WHERE id = %d`, p.TxCitizenID)
+		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", converter.Int64ToStr(p.TxCitizenID)).String()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -77,7 +78,7 @@ func (p *Parser) generalCheck(name string) error {
 		p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
 	}
 	// чтобы не записали слишком длинную подпись
-	// for not to record too long signature 
+	// for not to record too long signature
 	// 128 - это нод-ключ
 	// 128 is the node-key
 	if len(p.TxMap["sign"]) < 64 || len(p.TxMap["sign"]) > 5120 {

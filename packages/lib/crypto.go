@@ -16,27 +16,14 @@
 
 package lib
 
-import (
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-	"io"
-	"math/big"
-)
-
+/*
 // GetSharedKey creates and returns the shared key = private * public.
 // public must be the public key from the different private key.
 func GetSharedKey(private, public []byte) (shared []byte, err error) {
 	pubkeyCurve := elliptic.P256()
 
-	private = FillLeft(private)
-	public = FillLeft(public)
+	private = converter.FillLeft(private)
+	public = converter.FillLeft(public)
 	pub := new(ecdsa.PublicKey)
 	pub.Curve = pubkeyCurve
 	pub.X = new(big.Int).SetBytes(public[0:32])
@@ -78,99 +65,11 @@ func GetSharedHex(private, public string) (string, error) {
 // with this key then it can be decrypted with the shared key made from private key and the returned public key (pub).
 // All keys are hex strings.
 func GetShared(public string) (string, string, error) {
-	priv, pub, err := GenHexKeys()
+	priv, pub, err := crypto.GenHexKeys()
 	if err != nil {
 		return ``, ``, err
 	}
 	shared, err := GetSharedHex(priv, public)
 	return shared, pub, err
 }
-
-// PKCS7Padding realizes PKCS#7 encoding which is described in RFC 5652.
-func PKCS7Padding(src []byte, blockSize int) []byte {
-	padding := blockSize - len(src)%blockSize
-	return append(src, bytes.Repeat([]byte{byte(padding)}, padding)...)
-}
-
-// PKCS7UnPadding realizes PKCS#7 decoding.
-func PKCS7UnPadding(src []byte) ([]byte, error) {
-	length := len(src)
-	if length < int(src[length-1]) {
-		return nil, fmt.Errorf(`incorrect input of PKCS7UnPadding`)
-	}
-	return src[:length-int(src[length-1])], nil
-}
-
-// CBCEncrypt encrypts the text by using the key parameter. It uses CBC mode of AES.
-func CBCEncrypt(key, text, iv []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	plaintext := PKCS7Padding(text, aes.BlockSize)
-	if iv == nil {
-		iv = make([]byte, aes.BlockSize, aes.BlockSize+len(plaintext))
-		if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-			return nil, err
-		}
-	}
-	if len(iv) < aes.BlockSize {
-		return nil, fmt.Errorf(`wrong size of iv %d`, len(iv))
-	}
-	mode := cipher.NewCBCEncrypter(block, iv[:aes.BlockSize])
-	encrypted := make([]byte, len(plaintext))
-	mode.CryptBlocks(encrypted, plaintext)
-	return append(iv, encrypted...), nil
-}
-
-// CBCDecrypt decrypts the text by using key. It uses CBC mode of AES.
-func CBCDecrypt(key, ciphertext, iv []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	if len(ciphertext) < aes.BlockSize || len(ciphertext)%aes.BlockSize != 0 {
-		return nil, fmt.Errorf(`Wrong size of cipher %d`, len(ciphertext))
-	}
-	if iv == nil {
-		iv = ciphertext[:aes.BlockSize]
-		ciphertext = ciphertext[aes.BlockSize:]
-	}
-	ret := make([]byte, len(ciphertext))
-	cipher.NewCBCDecrypter(block, iv[:aes.BlockSize]).CryptBlocks(ret, ciphertext)
-	if ret, err = PKCS7UnPadding(ret); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	/*	cipher.NewCBCDecrypter(block, iv[:aes.BlockSize]).CryptBlocks(ciphertext, ciphertext)
-		if ciphertext, err = PKCS7UnPadding(ciphertext); err != nil {
-			return nil, err
-		}
-		return ciphertext, nil*/
-}
-
-// SharedEncrypt creates a shared key and encrypts text. The first 32 characters are the created public key.
-// The cipher text can be only decrypted with the original private key.
-func SharedEncrypt(public, text []byte) ([]byte, error) {
-	priv, pub, err := GenBytesKeys()
-	if err != nil {
-		return nil, err
-	}
-	shared, err := GetSharedKey(priv, public)
-	if err != nil {
-		return nil, err
-	}
-	return CBCEncrypt(shared, text, pub)
-}
-
-// SharedDecrypt decrypts the ciphertext by using private key.
-func SharedDecrypt(private, ciphertext []byte) ([]byte, error) {
-	if len(ciphertext) <= 64 {
-		return nil, fmt.Errorf(`too short cipher %d`, len(ciphertext))
-	}
-	shared, err := GetSharedKey(private, ciphertext[:64])
-	if err != nil {
-		return nil, err
-	}
-	return CBCDecrypt(shared, ciphertext[64:], ciphertext[:aes.BlockSize])
-}
+*/

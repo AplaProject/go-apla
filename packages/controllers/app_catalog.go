@@ -18,11 +18,12 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
 )
 
 const nAppCatalog = `app_catalog`
@@ -80,7 +81,7 @@ func (c *Controller) AppCatalog() (string, error) {
 			return err
 		}
 		for _, item := range data {
-			apps[item[`name`]] = utils.StrToInt(item[`done`])
+			apps[item[`name`]] = converter.StrToInt(item[`done`])
 		}
 		return nil
 	}

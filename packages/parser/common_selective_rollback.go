@@ -18,9 +18,9 @@ package parser
 
 import (
 	"encoding/json"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 // selectiveRollback rollbacks the specified fields
@@ -30,7 +30,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 	if len(where) > 0 {
 		where = " WHERE " + where
 	}
-	tblname := lib.EscapeName(table)
+	tblname := converter.EscapeName(table)
 	// получим rb_id, по которому можно найти данные, которые были до этого
 	// we obtain rb_id with help of that it is possible to find the data which was before
 	rbID, err := p.Single("SELECT rb_id FROM " + tblname + " " + where + " order by rb_id desc").Int64()
@@ -53,8 +53,8 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		//log.Debug("logData",logData)
 		addSQLUpdate := ""
 		for k, v := range jsonMap {
-			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
-				addSQLUpdate += k + `=decode('` + string(utils.BinToHex([]byte(v))) + `','HEX'),`
+			if converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
+				addSQLUpdate += k + `=decode('` + string(converter.BinToHex([]byte(v))) + `','HEX'),`
 			} else {
 				addSQLUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`
 			}

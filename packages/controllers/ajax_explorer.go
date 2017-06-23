@@ -20,8 +20,7 @@ import (
 	"encoding/hex"
 	//	"encoding/json"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 const aExplorer = `ajax_explorer`
@@ -39,7 +38,7 @@ func init() {
 // AjaxExplorer is a controller of ajax_explorer request
 func (c *Controller) AjaxExplorer() interface{} {
 	result := ExplorerJSON{}
-	latest := utils.StrToInt64(c.r.FormValue("latest"))
+	latest := converter.StrToInt64(c.r.FormValue("latest"))
 	if latest > 0 {
 		result.Latest, _ = c.Single("select max(id) from block_chain").Int64()
 		if result.Latest > latest {
@@ -49,14 +48,14 @@ func (c *Controller) AjaxExplorer() interface{} {
 				for ind := range explorer {
 					explorer[ind][`hash`] = hex.EncodeToString([]byte(explorer[ind][`hash`]))
 					if len(explorer[ind][`wallet_id`]) > 0 {
-						explorer[ind][`wallet_address`] = lib.AddressToString(utils.StrToInt64(explorer[ind][`wallet_id`]))
+						explorer[ind][`wallet_address`] = converter.AddressToString(converter.StrToInt64(explorer[ind][`wallet_id`]))
 					} else {
 						explorer[ind][`wallet_address`] = ``
 					}
 				}
 				result.Data = explorer
 				if explorer != nil && len(explorer) > 0 {
-					result.Latest = utils.StrToInt64(explorer[0][`id`])
+					result.Latest = converter.StrToInt64(explorer[0][`id`])
 				}
 			}
 		}

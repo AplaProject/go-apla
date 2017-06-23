@@ -20,7 +20,8 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 )
 
 // NewKey is an answer structure for newKey request
@@ -39,8 +40,8 @@ func newKey(r *http.Request) interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	result.WalletID = int64(lib.Address(pub))
-	result.Address = lib.AddressToString(result.WalletID)
+	result.WalletID = int64(crypto.Address(pub))
+	result.Address = converter.AddressToString(result.WalletID)
 	result.Public = hex.EncodeToString(pub)
 	return result
 }

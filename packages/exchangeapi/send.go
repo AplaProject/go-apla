@@ -23,7 +23,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/boltdb/bolt"
@@ -41,12 +42,12 @@ func send(r *http.Request) interface{} {
 		priv   []byte
 	)
 
-	sender := lib.StringToAddress(r.FormValue(`sender`))
+	sender := converter.StringToAddress(r.FormValue(`sender`))
 	if sender == 0 {
 		result.Error = `Sender is invalid`
 		return result
 	}
-	recipient := lib.StringToAddress(r.FormValue(`recipient`))
+	recipient := converter.StringToAddress(r.FormValue(`recipient`))
 	if recipient == 0 {
 		result.Error = `Recipient is invalid`
 		return result
@@ -65,7 +66,7 @@ func send(r *http.Request) interface{} {
 
 	err = boltDB.View(func(tx *bolt.Tx) error {
 		var err error
-		encpriv := tx.Bucket(bucket).Get([]byte(utils.Int64ToStr(sender)))
+		encpriv := tx.Bucket(bucket).Get([]byte(converter.Int64ToStr(sender)))
 		if len(encpriv) == 0 {
 			return fmt.Errorf(`Sender has not been found`)
 		}
@@ -111,30 +112,34 @@ func send(r *http.Request) interface{} {
 		result.Error = fmt.Sprintf(`There is not enough money. %v is less than %v`, totalAmount, amount.Add(commission))
 		return result
 	}
-	wallet := lib.AddressToString(recipient)
+	wallet := converter.AddressToString(recipient)
 	txType := utils.TypeInt(`DLTTransfer`)
 	txTime := time.Now().Unix()
 	forSign := fmt.Sprintf("%d,%d,%d,%s,%s,%s,%s", txType, txTime, sender,
 		wallet, amount.String(), commission.String(), `api`)
-	signature, err := lib.SignECDSA(hex.EncodeToString(priv), forSign)
+	signature, err := crypto.Sign(hex.EncodeToString(priv), forSign)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
 	sign := make([]byte, 0)
-	sign = append(sign, utils.EncodeLengthPlusData(signature)...)
-	binsign := utils.EncodeLengthPlusData(sign)
+	sign = append(sign, converter.EncodeLengthPlusData(signature)...)
+	binsign := converter.EncodeLengthPlusData(sign)
 
 	data := make([]byte, 0)
-	data = utils.DecToBin(txType, 1)
-	data = append(data, utils.DecToBin(txTime, 4)...)
-	data = append(data, utils.EncodeLengthPlusData(sender)...)
-	data = append(data, utils.EncodeLengthPlusData(0)...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(wallet))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(amount.String()))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(commission.String()))...)
-	data = append(data, utils.EncodeLengthPlusData([]byte(`api`))...)
-	data = append(data, utils.EncodeLengthPlusData(lib.PrivateToPublic(priv))...)
+	data = converter.DecToBin(txType, 1)
+	data = append(data, converter.DecToBin(txTime, 4)...)
+	data = append(data, converter.EncodeLengthPlusData(sender)...)
+	data = append(data, converter.EncodeLengthPlusData(0)...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(wallet))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(amount.String()))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(commission.String()))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(`api`))...)
+	pub, err := crypto.PrivateToPublic(priv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	data = append(data, converter.EncodeLengthPlusData(pub)...)
 	data = append(data, binsign...)
 	err = sql.DB.SendTx(txType, sender, data)
 	if err != nil {

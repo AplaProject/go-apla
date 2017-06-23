@@ -18,8 +18,10 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -132,30 +134,38 @@ func (p *Parser) ParseDataRollback() error {
 		binForSize := p.BinaryData
 		var sizesSlice []int64
 		for {
-			txSize := utils.DecodeLength(&binForSize)
+			txSize, err := converter.DecodeLength(&binForSize)
+			if err != nil {
+				log.Fatal(err)
+			}
 			if txSize == 0 {
 				break
 			}
 			sizesSlice = append(sizesSlice, txSize)
 			// удалим тр-ию
 			// remove the transaction
-			utils.BytesShift(&binForSize, txSize)
+			converter.BytesShift(&binForSize, txSize)
 			if len(binForSize) == 0 {
 				break
 			}
 		}
-		sizesSlice = utils.SliceReverse(sizesSlice)
+		sizesSlice = converter.SliceReverse(sizesSlice)
 		for i := 0; i < len(sizesSlice); i++ {
 			// обработка тр-ий может занять много времени, нужно отметиться
 			// processing of the transaction may take a lot of time, we need to be marked
 			p.UpdDaemonTime(p.GoroutineName)
 			// отделим одну транзакцию
 			// separate one transaction
-			transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
+			transactionBinaryData := converter.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
 			// узнаем кол-во байт, которое занимает размер и удалим размер
 			// we'll get know the quantaty of bytes which the size takes
-			utils.BytesShiftReverse(&p.BinaryData, len(lib.EncodeLength(sizesSlice[i])))
-			p.TxHash = string(utils.Md5(transactionBinaryData))
+			converter.BytesShiftReverse(&p.BinaryData, len(converter.EncodeLength(sizesSlice[i])))
+			hash, err := crypto.Hash(transactionBinaryData)
+			if err != nil {
+				log.Fatal(err)
+			}
+			hash = converter.BinToHex(hash)
+			p.TxHash = string(hash)
 
 			logging.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
 			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
@@ -163,7 +173,7 @@ func (p *Parser) ParseDataRollback() error {
 				logging.WriteSelectiveLog(err)
 				return p.ErrInfo(err)
 			}
-			logging.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+			logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 			affected, err := p.ExecSQLGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
 			log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 			if err != nil {
@@ -178,7 +188,7 @@ func (p *Parser) ParseDataRollback() error {
 			}
 			// пишем тр-ию в очередь на проверку, авось пригодится
 			// put the transaction in the turn for checking suddenly we will need it
-			dataHex := utils.BinToHex(transactionBinaryData)
+			dataHex := converter.BinToHex(transactionBinaryData)
 			log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", p.TxHash)
 			err = p.ExecSQL("DELETE FROM queue_tx  WHERE hex(hash) = ?", p.TxHash)
 			if err != nil {
@@ -202,7 +212,7 @@ func (p *Parser) ParseDataRollback() error {
 					return p.ErrInfo(err)
 				}
 			} else {
-				p.dataType = utils.BytesToInt(p.TxSlice[1])
+				p.dataType = converter.BytesToInt(p.TxSlice[1])
 				MethodName := consts.TxTypes[p.dataType]
 				result := utils.CallMethod(p, MethodName+"Init")
 				if _, ok := result.(error); ok {
