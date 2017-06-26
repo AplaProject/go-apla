@@ -44,7 +44,7 @@ func (p *EditLangParser) Validate() error {
 	}
 
 	// must be supplemented
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditLang.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditLang.ForSign(), p.EditLang.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

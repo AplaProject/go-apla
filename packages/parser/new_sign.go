@@ -45,7 +45,7 @@ func (p *NewSignParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewSign.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewSign.ForSign(), p.NewSign.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

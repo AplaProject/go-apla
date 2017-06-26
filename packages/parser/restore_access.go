@@ -82,7 +82,7 @@ func (p *RestoreAccessParser) Validate() error {
 		return p.ErrInfo("CHANGE_KEY_PERIOD")
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccess.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccess.ForSign(), p.RestoreAccess.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

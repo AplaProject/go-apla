@@ -61,7 +61,7 @@ func (p *EditColumnParser) Validate() error {
 		return p.ErrInfo(`column not exists`)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditColumn.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditColumn.ForSign(), p.EditColumn.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

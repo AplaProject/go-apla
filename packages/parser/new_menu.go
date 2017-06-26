@@ -46,7 +46,7 @@ func (p *NewMenuParser) Validate() error {
 	}
 
 	// must be supplemented
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewMenu.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewMenu.ForSign(), p.NewMenu.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

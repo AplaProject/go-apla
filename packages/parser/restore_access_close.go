@@ -52,7 +52,7 @@ func (p *RestoreAccessCloseParser) Validate() error {
 		return p.ErrInfo("close=1")
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessClose.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessClose.ForSign(), p.RestoreAccessClose.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

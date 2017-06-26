@@ -61,7 +61,7 @@ func (p *EditWalletParser) Validate() error {
 		wallet = p.TxCitizenID
 	}
 	// must be supplemented
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditWallet.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditWallet.ForSign(), p.EditWallet.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -41,7 +41,7 @@ func (p *NewAccountParser) Init() error {
 
 func (p *NewAccountParser) Validate() error {
 	p.PublicKeys = append(p.PublicKeys, p.NewAccount.PublicKey)
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewAccount.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewAccount.ForSign(), p.NewAccount.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

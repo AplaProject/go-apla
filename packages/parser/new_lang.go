@@ -47,7 +47,7 @@ func (p *NewLangParser) Validate() error {
 	}
 
 	// must be supplemented
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewLang.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewLang.ForSign(), p.NewLang.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

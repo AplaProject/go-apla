@@ -106,7 +106,7 @@ func (p *DLTTransferParser) Validate() error {
 		p.DLTTransfer.Comment = ""
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.DLTTransfer.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.DLTTransfer.ForSign(), p.DLTTransfer.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

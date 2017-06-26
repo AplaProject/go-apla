@@ -64,7 +64,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.TxMap["sign"], true)
+	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

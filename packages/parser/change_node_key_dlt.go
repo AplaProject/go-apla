@@ -60,7 +60,7 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 	}
 
 	forSign := p.DLTChangeNodeKey.ForSign()
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.DLTChangeNodeKey.BinSignatures, false)
 	if err != nil || !CheckSignResult {
 		return p.ErrInfo("incorrect sign " + forSign)
 	}

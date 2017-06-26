@@ -54,7 +54,7 @@ func (p *RestoreAccessRequestParser) Validate() error {
 		return p.ErrInfo("active=0")
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessRequest.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessRequest.ForSign(), p.RestoreAccessRequest.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

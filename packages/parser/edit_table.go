@@ -66,7 +66,7 @@ func (p *EditTableParser) Validate() error {
 		return p.ErrInfo(`not exists`)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditTable.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditTable.ForSign(), p.EditTable.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

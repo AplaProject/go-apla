@@ -54,7 +54,7 @@ func (p *NewStateParametersParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewStateParameters.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewStateParameters.ForSign(), p.NewStateParameters.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

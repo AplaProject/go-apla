@@ -77,7 +77,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 		return p.ErrInfo("txTime - lastForgingDataUpd < 600 sec")
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.DLTChangeHostVote.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.DLTChangeHostVote.ForSign(), p.DLTChangeHostVote.Header.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
