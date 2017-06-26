@@ -187,7 +187,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(err)
 				}
 			} else {
-				MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
+				MethodName := consts.TxTypes[int(utils.BinToDecBytesShift(&p.TxBinaryData, 1))]
+				//MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
 				parser, err := GetParser(p, MethodName)
 				if err != nil {
 					return utils.ErrInfo(err)
