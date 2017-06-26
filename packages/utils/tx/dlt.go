@@ -10,8 +10,8 @@ type DLTTransfer struct {
 	Comment       string
 }
 
-func (d DLTTransfer) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%s,%s,%s,%s", d.Header.Type, d.Header.Time, d.Header.UserID, d.WalletAddress, d.Amount, d.Commission, d.Comment)
+func (s DLTTransfer) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.WalletAddress, s.Amount, s.Commission, s.Comment)
 }
 
 type DLTChangeHostVote struct {
@@ -21,8 +21,8 @@ type DLTChangeHostVote struct {
 	FuelRate    string
 }
 
-func (d DLTChangeHostVote) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%s,%s,%s", d.Header.Type, d.Header.Type, d.Header.UserID, d.Host, d.AddressVote, d.FuelRate)
+func (s DLTChangeHostVote) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Type, s.Header.UserID, s.Host, s.AddressVote, s.FuelRate)
 }
 
 type DLTChangeNodeKey struct {
@@ -30,6 +30,6 @@ type DLTChangeNodeKey struct {
 	NewNodePublicKey []byte
 }
 
-func (c DLTChangeNodeKey) ForSign() string {
-	return fmt.Sprintf("%s,%s,%s,%s", c.Header.Type, c.Header.Time, c.Header.UserID, c.NewNodePublicKey)
+func (s DLTChangeNodeKey) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.NewNodePublicKey)
 }

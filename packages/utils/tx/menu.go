@@ -9,8 +9,8 @@ type AppendMenu struct {
 	Value  string
 }
 
-func (a AppendMenu) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", a.Header.Type, a.Header.Time, a.Header.UserID, a.Header.StateID, a.Global, a.Name, a.Value)
+func (s AppendMenu) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value)
 }
 
 type NewMenu struct {
@@ -21,8 +21,8 @@ type NewMenu struct {
 	Conditions string
 }
 
-func (a NewMenu) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", a.Header.Type, a.Header.Time, a.Header.UserID, a.Header.StateID, a.Global, a.Name, a.Value, a.Conditions)
+func (s NewMenu) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value, s.Conditions)
 }
 
 // Редактирование меню
@@ -34,6 +34,6 @@ type EditMenu struct {
 	Conditions string
 }
 
-func (a EditMenu) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", a.Header.Type, a.Header.Time, a.Header.UserID, a.Header.StateID, a.Global, a.Name, a.Value, a.Conditions)
+func (s EditMenu) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value, s.Conditions)
 }

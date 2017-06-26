@@ -8,8 +8,8 @@ type NewState struct {
 	CurrencyName string
 }
 
-func (n NewState) ForSign() string {
-	return fmt.Sprintf("%d,%d,%d,%s,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.StateName, n.CurrencyName)
+func (s NewState) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.StateName, s.CurrencyName)
 }
 
 type EditStateParameters struct {
@@ -19,8 +19,8 @@ type EditStateParameters struct {
 	Conditions string
 }
 
-func (n EditStateParameters) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.Header.StateID, n.Name, n.Value, n.Conditions)
+func (s EditStateParameters) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Name, s.Value, s.Conditions)
 }
 
 type NewStateParameters struct {
@@ -30,6 +30,6 @@ type NewStateParameters struct {
 	Conditions string
 }
 
-func (n NewStateParameters) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.Header.StateID, n.Name, n.Value, n.Conditions)
+func (s NewStateParameters) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Name, s.Value, s.Conditions)
 }

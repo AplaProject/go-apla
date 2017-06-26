@@ -12,8 +12,8 @@ type NewColumn struct {
 	Index       string
 }
 
-func (e NewColumn) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.TableName, e.ColumnName, e.Permissions, e.Index, e.ColumnType)
+func (s NewColumn) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.TableName, s.ColumnName, s.Permissions, s.Index, s.ColumnType)
 }
 
 // Редактирование колонки в реестре
@@ -24,6 +24,6 @@ type EditColumn struct {
 	Permissions string
 }
 
-func (e EditColumn) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.TableName, e.ColumnName, e.Permissions)
+func (s EditColumn) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.TableName, s.ColumnName, s.Permissions)
 }

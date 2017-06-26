@@ -12,8 +12,8 @@ type EditWallet struct {
 	Conditions       string
 }
 
-func (e EditWallet) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", e.Header.Type, e.Header.Time, e.WalletID, e.Header.StateID, e.WalletID, e.SpendingContract, e.Conditions)
+func (s EditWallet) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.WalletID, s.Header.StateID, s.WalletID, s.SpendingContract, s.Conditions)
 }
 
 type EditNewLang struct {
@@ -22,8 +22,8 @@ type EditNewLang struct {
 	Trans string
 }
 
-func (e EditNewLang) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.Name, e.Trans)
+func (s EditNewLang) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Name, s.Trans)
 }
 
 type EditNewSign struct {
@@ -34,8 +34,8 @@ type EditNewSign struct {
 	Conditions string
 }
 
-func (e *EditNewSign) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.Global, e.Name, e.Value, e.Conditions)
+func (s EditNewSign) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value, s.Conditions)
 }
 
 type NewAccount struct {
@@ -43,8 +43,8 @@ type NewAccount struct {
 	PublicKey []byte
 }
 
-func (n NewAccount) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.Header.StateID, hex.EncodeToString(n.PublicKey))
+func (s NewAccount) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, hex.EncodeToString(s.PublicKey))
 }
 
 type ChangeNodeKey struct {
@@ -52,14 +52,14 @@ type ChangeNodeKey struct {
 	NewNodePublicKey []byte
 }
 
-func (c ChangeNodeKey) ForSign() string {
-	return fmt.Sprintf("%s,%s,%s,%s", c.Header.Type, c.Header.Time, c.Header.UserID, c.NewNodePublicKey)
+func (s ChangeNodeKey) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.NewNodePublicKey)
 }
 
 type UpdFullNodes struct {
 	Header
 }
 
-func (u UpdFullNodes) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d", u.Header.Type, u.Header.Time, u.Header.UserID, 0)
+func (s UpdFullNodes) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d", s.Header.Type, s.Header.Time, s.Header.UserID, 0)
 }

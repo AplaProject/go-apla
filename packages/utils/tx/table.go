@@ -9,8 +9,8 @@ type NewTable struct {
 	Columns string
 }
 
-func (n NewTable) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", n.Header.Type, n.Header.Time, n.Header.UserID, n.Header.StateID, n.Global, n.Name, n.Columns)
+func (s NewTable) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Columns)
 }
 
 type EditTable struct {
@@ -21,6 +21,6 @@ type EditTable struct {
 	NewColumn     string
 }
 
-func (e EditTable) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.Name, e.GeneralUpdate, e.Insert, e.NewColumn)
+func (s EditTable) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Name, s.GeneralUpdate, s.Insert, s.NewColumn)
 }

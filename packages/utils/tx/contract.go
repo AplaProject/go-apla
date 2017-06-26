@@ -10,8 +10,8 @@ type NewContract struct {
 	Conditions string
 }
 
-func (e NewContract) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.Global, e.Name, e.Value, e.Conditions)
+func (s NewContract) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value, s.Conditions)
 }
 
 type EditContract struct {
@@ -22,8 +22,8 @@ type EditContract struct {
 	Conditions string
 }
 
-func (e EditContract) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", e.Header.Type, e.Header.Time, e.Header.UserID, e.Header.StateID, e.Global, e.Id, e.Value, e.Conditions)
+func (s EditContract) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Id, s.Value, s.Conditions)
 }
 
 type ActivateContract struct {
@@ -32,7 +32,7 @@ type ActivateContract struct {
 	Id     string
 }
 
-func (a ActivateContract) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s", a.Header.Type, a.Header.Time, a.Header.UserID,
-		a.Header.StateID, a.Global, a.Id)
+func (s ActivateContract) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID,
+		s.Header.StateID, s.Global, s.Id)
 }

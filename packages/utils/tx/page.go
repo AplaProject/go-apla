@@ -9,8 +9,8 @@ type AppendPage struct {
 	Value  string
 }
 
-func (a AppendPage) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", a.Header.Type, a.Header.Time, a.Header.UserID, a.Header.StateID, a.Global, a.Name, a.Value)
+func (s AppendPage) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value)
 }
 
 type EditPage struct {
@@ -22,8 +22,8 @@ type EditPage struct {
 	Conditions string
 }
 
-func (a EditPage) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", a.Header.Type, a.Header.Time, a.Header.UserID, a.Header.StateID, a.Global, a.Name, a.Value, a.Menu, a.Conditions)
+func (s EditPage) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value, s.Menu, s.Conditions)
 }
 
 type NewPage struct {
@@ -35,6 +35,6 @@ type NewPage struct {
 	Conditions string
 }
 
-func (a NewPage) ForSign() string {
-	return fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", a.Header.Type, a.Header.Time, a.Header.UserID, a.Header.StateID, a.Global, a.Name, a.Value, a.Menu, a.Conditions)
+func (s NewPage) ForSign() string {
+	return fmt.Sprintf("%d,%d,%d,%d,%s,%s,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Header.StateID, s.Global, s.Name, s.Value, s.Menu, s.Conditions)
 }
