@@ -39,6 +39,7 @@ func (p *NewMenuParser) Init() error {
 }
 
 func (p *NewMenuParser) Validate() error {
+	p.TxMap["conditions"] = []byte(p.NewMenu.Conditions)
 	err := p.generalCheck(`new_menu`, &p.NewMenu.Header)
 	if err != nil {
 		return p.ErrInfo(err)

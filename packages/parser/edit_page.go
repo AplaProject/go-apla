@@ -39,14 +39,8 @@ func (p *EditPageParser) Init() error {
 }
 
 func (p *EditPageParser) Validate() error {
+	p.TxMap["conditions"] = []byte(p.EditPage.Conditions)
 	err := p.generalCheck(`edit_page`, &p.EditPage.Header)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// Check InputData
-	verifyData := map[string][]interface{}{"string": []interface{}{p.EditPage.Name, p.EditPage.Menu}}
-	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

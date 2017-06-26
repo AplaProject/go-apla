@@ -41,6 +41,7 @@ func (p *NewPageParser) Init() error {
 }
 
 func (p *NewPageParser) Validate() error {
+	p.TxMap["conditions"] = []byte(p.NewPage.Conditions)
 	err := p.generalCheck(`new_page`, &p.NewPage.Header)
 	if err != nil {
 		return p.ErrInfo(err)

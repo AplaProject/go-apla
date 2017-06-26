@@ -50,6 +50,7 @@ func (p *EditWalletParser) checkContract(name string) string {
 }
 
 func (p *EditWalletParser) Validate() error {
+	p.TxMap["conditions"] = []byte(p.EditWallet.Conditions)
 	err := p.generalCheck(`edit_wallet`, &p.EditWallet.Header)
 	if err != nil {
 		return p.ErrInfo(err)

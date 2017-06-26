@@ -43,6 +43,7 @@ func (p *NewStateParametersParser) Init() error {
 }
 
 func (p *NewStateParametersParser) Validate() error {
+	p.TxMap["conditions"] = []byte(p.NewStateParameters.Conditions)
 	err := p.generalCheck(`new_state_parameters`, &p.NewStateParameters.Header)
 	if err != nil {
 		return p.ErrInfo(err)

@@ -42,6 +42,7 @@ func (p *EditColumnParser) Init() error {
 }
 
 func (p *EditColumnParser) Validate() error {
+	p.TxMap["permissions"] = []byte(p.EditColumn.Permissions)
 	err := p.generalCheck(`edit_column`, &p.EditColumn.Header)
 	if err != nil {
 		return p.ErrInfo(err)

@@ -30,6 +30,7 @@ type EditMenuParser struct {
 }
 
 func (p *EditMenuParser) Init() error {
+	p.TxMap["conditions"] = []byte(p.EditMenu.Conditions)
 	editMenu := &tx.EditMenu{}
 	if err := msgpack.Unmarshal(p.TxBinaryData, editMenu); err != nil {
 		return p.ErrInfo(err)

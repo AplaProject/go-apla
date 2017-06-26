@@ -39,6 +39,7 @@ func (p *EditContractParser) Init() error {
 }
 
 func (p *EditContractParser) Validate() error {
+	p.TxMap["conditions"] = []byte(p.EditContract.Conditions)
 	err := p.generalCheck(`edit_contract`, &p.EditContract.Header)
 	if err != nil {
 		return p.ErrInfo(err)
