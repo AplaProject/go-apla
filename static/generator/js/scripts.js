@@ -158,23 +158,29 @@ function configurationElm(e, t) {
 	});
 	$(".demo").delegate(".configuration .dropdown-menu a", "click", function(e) {
 		e.preventDefault();
+		
 		var t = $(this).parent().parent();
 		var n = t.parent().parent().next().next().children();
-		t.find("li").removeClass("active");
-		$(this).parent().addClass("active");
-		var r = "";
-		t.find("a").each(function() {
-			r += $(this).attr("rel") + " ";
-		});
-		t.parent().removeClass("open");
-		n.removeClass(r);
-		n.addClass($(this).attr("rel"));
+		
+		if ($(this).hasClass("remove") || $(this).hasClass("editor")) {
+			$(this).parent().removeClass("active");
+		} else {
+			t.find("li").removeClass("active");
+			$(this).parent().addClass("active");
+			var r = "";
+			t.find("a").each(function() {
+				r += $(this).attr("rel") + " ";
+			});
+			t.parent().removeClass("open");
+			n.removeClass(r);
+			n.addClass($(this).attr("rel"));
+		}
 	});
 }
 function removeElm() {
 	$(".demo").delegate(".remove", "click", function(e) {
 		e.preventDefault();
-		$(this).parent().parent().remove();
+		$(this).closest(".lyrow").remove();
 		/*if (!$(".demo .lyrow").length > 0) {
 			clearDemo();
 		}*/
@@ -228,7 +234,7 @@ function initContainer(){
 	$(".demo, .demo .column").sortable({
 		//connectWith: ".column",
 		opacity: .35,
-		handle: ".remove",
+		handle: ".drag",
 		placeholder: "portlet-placeholder ui-corner-all",
 		start: function(event, ui) {
 			var col = $(ui.item).attr("class").split(" ");
@@ -295,14 +301,17 @@ function initGenerator(){
   "use strict";
 	
 	restoreData();
-	if (!$("#cke_contenteditor").length) {
-		CKEDITOR.disableAutoInline = true;
-		var contenthandle = CKEDITOR.replace( 'contenteditor' ,{
-			language: 'en',
-			contentsCss: ['static/css/style.css'],
-			allowedContent: true
-		});
+	
+	if (CKEDITOR.instances.contenteditor) {
+		CKEDITOR.instances.contenteditor.destroy();
 	}
+	
+	CKEDITOR.disableAutoInline = true;
+	var contenthandle = CKEDITOR.replace( 'contenteditor' ,{
+		language: 'en',
+		contentsCss: ['static/css/style.css'],
+		allowedContent: true
+	});
 	
 	$("#getColumnViewport, #getColumnGrid").on('change', function(){
 		$(this).parent().parent().parent().attr("class", "col-" + $("#getColumnViewport").val() + "-" + $("#getColumnGrid").val() + " lyrow");
@@ -321,12 +330,23 @@ function initGenerator(){
 			ui.helper.width(400);
 		},
 		stop: function(event, ui) {
-			$(ui.helper).find(".preview").remove();
+			$(".demo .lyrow .preview").remove();
+			$(".demo .lyrow .drag").removeClass("column");
+
 			$(".demo .column").sortable({
 				opacity: .35,
-				handle: ".remove",
+				handle: ".drag",
 				placeholder: "portlet-placeholder ui-corner-all",
 				start: function(event, ui) {
+					var col = $(ui.item).attr("class").split(" ");
+					
+					for (var i = 0; i < col.length; i++) {
+						var temp = col[i].split("-");
+						if (temp.length === 3 && temp[0] === "col") {
+							$(ui.placeholder).addClass("col-" + temp[1] + "-" + temp[2]);
+						}
+					}
+					
 					if (!startdrag) stopsave++;
 					startdrag = 1;
 				},
@@ -389,7 +409,7 @@ function initGenerator(){
 	initContainer();
 	
 	$("#editorModal").on('show.bs.modal', function (e) {
-		currenteditor = $(e.relatedTarget).parent().parent().find('.view');
+		currenteditor = $(e.relatedTarget).closest(".lyrow").find('.view .column');
 		var eText = currenteditor.html();
 		contenthandle.setData(eText);
 	})
