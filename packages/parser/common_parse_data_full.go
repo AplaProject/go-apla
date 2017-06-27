@@ -29,6 +29,7 @@ import (
 фронт. проверка + занесение данных из блока в таблицы и info_block
 */
 func (p *Parser) ParseDataFull(blockGenerator bool) error {
+	var txType int
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
@@ -111,6 +112,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			p.TxHash = string(utils.Md5(transactionBinaryData))
 			log.Debug("p.TxHash %s", p.TxHash)
 			p.TxBinaryData = transactionBinaryData
+			txType = int(utils.BinToDecBytesShift(&p.TxBinaryData, 1))
 			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			log.Debug("p.TxSlice %v", p.TxSlice)
 			if err != nil {
@@ -187,8 +189,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(err)
 				}
 			} else {
-				MethodName := consts.TxTypes[int(utils.BinToDecBytesShift(&p.TxBinaryData, 1))]
-				//MethodName := consts.TxTypes[utils.BytesToInt(p.TxSlice[1])]
+				MethodName := consts.TxTypes[txType]
 				parser, err := GetParser(p, MethodName)
 				if err != nil {
 					return utils.ErrInfo(err)
