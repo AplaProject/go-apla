@@ -1,11 +1,7 @@
 var webpage = "";
+
 function supportstorage() {
 	return typeof window.localStorage === 'object';
-	/*if (typeof window.localStorage=='object') {
-		return true;
-	} else {
-		return false;
-	}*/
 }
 
 function handleSaveLayout() {
@@ -19,6 +15,7 @@ function handleSaveLayout() {
 }
 
 var layouthistory;
+
 function saveLayout(){
 	var data = layouthistory;
 	if (!data) {
@@ -132,52 +129,60 @@ function randomNumber() {
 function randomFromInterval(e, t) {
 	return Math.floor(Math.random() * (t - e + 1) + e);
 }
-/*function gridSystemGenerator() {
-	$(".lyrow .preview input").bind("keyup", function() {
-		var e = 0;
-		var t = "";
-		var n = $(this).val().split(" ", 12);
-		$.each(n, function(n, r) {
-			e = e + parseInt(r);
-			t += '<div class="span' + r + ' column"></div>';
-		});
-		if (e == 12) {
-			$(this).parent().next().children().html(t);
-			$(this).parent().prev().show();
-		} else {
-			$(this).parent().prev().hide();
-		}
-	});
-}*/
-function configurationElm(e, t) {
+
+function configurationElm() {
+	"use strict";
+	
 	$(".demo").delegate(".configuration > a", "click", function(e) {
 		e.preventDefault();
 		var t = $(this).parent().next().next().children();
 		$(this).toggleClass("active");
 		t.toggleClass($(this).attr("rel"));
 	});
+	
 	$(".demo").delegate(".configuration .dropdown-menu a", "click", function(e) {
 		e.preventDefault();
+		var style = "";
+		var cont = $(this).parent().parent();
+		var elem = cont.closest(".configuration").parent().find(".view .column").children();
 		
-		var t = $(this).parent().parent();
-		var n = t.parent().parent().next().next().children();
-		
-		if ($(this).hasClass("remove") || $(this).hasClass("editor")) {
+		if ($(this).hasClass("remove") || $(this).hasClass("editor") || $(this).hasClass("submenu")) {
+			if ($(this).hasClass("submenu")) {
+				return false;
+			}
 			$(this).parent().removeClass("active");
 		} else {
-			t.find("li").removeClass("active");
+			cont.find("> li").removeClass("active");
 			$(this).parent().addClass("active");
-			var r = "";
-			t.find("a").each(function() {
-				r += $(this).attr("rel") + " ";
+			
+			cont.find("a").each(function() {
+				style += $(this).attr("rel") + " ";
 			});
-			t.parent().removeClass("open");
-			n.removeClass(r);
-			n.addClass($(this).attr("rel"));
+			cont.parent().removeClass("open");
+			elem.removeClass(style);
+			elem.addClass($(this).attr("rel"));
 		}
+	});
+	
+	$(".demo").delegate(".configuration .dropdown-menu .styles", "mouseenter", function() {
+		var cont = $(this);
+		var pop = cont.find(".dropdown-menu:first");
+		
+		if (pop.is(":hidden")) {
+			pop.show();
+		}
+	});
+	
+	$(".demo").delegate(".configuration .dropdown-menu .styles", "mouseleave", function() {
+		var cont = $(this);
+		var pop = cont.find(".dropdown-menu:first");
+
+		pop.hide();
 	});
 }
 function removeElm() {
+	"use strict";
+	
 	$(".demo").delegate(".remove", "click", function(e) {
 		e.preventDefault();
 		$(this).closest(".lyrow").remove();
@@ -187,6 +192,8 @@ function removeElm() {
 	});
 }
 function clearDemo() {
+	"use strict";
+	
 	$(".demo").empty();
 	layouthistory = null;
 	if (supportstorage())
@@ -215,6 +222,8 @@ var connectedStatus = false;
 // });
 
 function restoreData(){
+	"use strict";
+	
 	if (supportstorage()) {
 		layouthistory = JSON.parse(localStorage.getItem("eGaaSEditor"));
 		if (!layouthistory) {
@@ -226,11 +235,14 @@ function restoreData(){
 			//console.log($(".demo"));
 			$(".demo").html(window.demoHtml);
 			$(".demo").find(".ui-resizable-handle.ui-resizable-e").remove();
+			$(".demo").find(".open").removeClass("open");
 		}
 	}
 }
 
 function initContainer(){
+	"use strict";
+	
 	$(".demo, .demo .column").sortable({
 		//connectWith: ".column",
 		opacity: .35,
@@ -498,6 +510,22 @@ function initGenerator(){
 }
 
 initGenerator();
+
+function resizeCanvas(size) {
+	var containerID = document.getElementsByClassName("changeDimension");
+	if (size == "lg") {
+		$(containerID).attr('id', "LG");
+	}
+	if (size == "md") {
+		$(containerID).attr('id', "MD");
+	}
+	if (size == "sm") {
+		$(containerID).attr('id', "SM");
+	}
+	if (size == "xs") {
+		$(containerID).attr('id', "XS");
+	}
+}
 
 function saveHtml()
 			{

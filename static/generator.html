@@ -1,240 +1,155 @@
-    <!--<link href="static/generator/css/toolbox.css" rel="stylesheet">-->
-    <!--<link href="static/generator/css/editor.css" rel="stylesheet">-->
-    <!--<link href="static/generator/css/docs.min.css" rel="stylesheet">-->
-    
-	<style>
-		span.fa-6{
-			font-size: 20em;
-		}
-		span.fa-5{
-			font-size: 12em;
-		}
-		span.fa-4{
-			font-size: 7em;
-		}
-		span.fa-3{
-			font-size: 4em;
-		}
-		span.fa-2{
-			font-size: 2em;
-		}
-		#dl_page {
-			z-index: 1000;
-		}
-		.wrapper > section {
-			padding-top: 0px !important;
-			margin-left: 0px !important;
-		}
-	</style>
-  <div id="eGaaSEditor" style="cursor: auto;" class="edit toolbox-reset">
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-3">
-        <ul class="nav navbar-nav navbar-left">
-          <li>
-            <div class="btn-group">
-              <button onclick="resizeCanvas('lg')" class="btn btn-primary navbar-btn"><i class="fa fa-desktop"></i> </button>
-              <button onclick="resizeCanvas('md')" class="btn btn-primary navbar-btn"><i class="fa fa-laptop"></i> </button>
-              <button onclick="resizeCanvas('sm')" class="btn btn-primary navbar-btn"><i class="fa fa-tablet"></i> </button>
-              <button onclick="resizeCanvas('xs')" class="btn btn-primary navbar-btn"><i class="fa fa-mobile-phone"></i> </button>
-            </div>
-          </li>
-        </ul>
-        <ul class="nav navbar-nav navbar-right">
-          <li>
-            <div class="btn-group">
-              <button class="btn btn-default navbar-btn" href="#clear" id="clear" color="#333;">
-                <i class="fa fa-trash-o" style="color: #333;"></i>Clear
-              </button>
-            </div>
-          </li>
-          <li>
-            <div class="btn-group" data-toggle="buttons-radio">
-              <button type="button" class="btn btn-default navbar-btn" id="sourcepreview">
-                <i class="fa fa-eye"></i> Preview
-              </button>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </nav>
-
-
-    <div id="LG" class="container-fluid changeDimension">
-	    <div class="checkbox c-checkbox">
-		  <label>
-			<input id="connect" class="hidden" type="checkbox">
-			<span class="fa fa-check"></span>
-		  	Connect column with other column
-		  </label>
-	    </div>
-        <!--<div class="row-fluid">-->
-            <div class="sidebar-nav">
-              <ul class="nav nav-list accordion-group">
-                <li class="nav-header">
-                  <i class="fa fa-plus"></i> GRID SYSTEM
-                </li>
-                <li style="display: list-item;" class="rows" id="estRows">
-                  <div class="lyrow col-md-6">
-                   	<span class="configuration">
-						<!--<a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>-->
-						<div class="drag column"></div>
-						<span class="settings btn-group">
-							<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
-							<ul class="dropdown-menu">
-							  <!--<li class="active"><a href="#" rel="">Default</a></li>
-							  <li class=""><a href="#" rel="text-left">Left</a></li>
-							  <li class=""><a href="#" rel="text-center">Center</a></li>
-							  <li class=""><a href="#" rel="text-right">Right</a></li>-->
-							  <li class=""><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Editor</a></li>
-							  <li class=""><a class="remove" href="#">Remove</a></li>
-							</ul>
+<style>
+	#dl_page {
+		z-index: 1000;
+	}
+	.wrapper > section {
+		padding-top: 0px !important;
+		margin-left: 0px !important;
+	}
+</style>
+ 
+<div id="eGaaSEditor" style="cursor: auto;" class="edit toolbox-reset">
+	<nav class="navbar navbar-default navbar-fixed-top">
+		<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-3">
+			<ul class="nav navbar-nav navbar-left">
+				<li>
+					<div class="btn-group">
+						<button onclick="resizeCanvas('lg')" class="btn btn-primary navbar-btn"><i class="fa fa-desktop"></i> </button>
+						<button onclick="resizeCanvas('md')" class="btn btn-primary navbar-btn"><i class="fa fa-laptop"></i> </button>
+						<button onclick="resizeCanvas('sm')" class="btn btn-primary navbar-btn"><i class="fa fa-tablet"></i> </button>
+						<button onclick="resizeCanvas('xs')" class="btn btn-primary navbar-btn"><i class="fa fa-mobile-phone"></i> </button>
+					</div>
+				</li>
+			</ul>
+			<ul class="nav navbar-nav navbar-right">
+				<li>
+					<div class="btn-group">
+						<button class="btn btn-default navbar-btn" href="#clear" id="clear" color="#333;"><i class="fa fa-trash-o" style="color: #333;"></i>Clear</button>
+					</div>
+				</li>
+				<li>
+					<div class="btn-group" data-toggle="buttons-radio">
+						<button type="button" class="btn btn-default navbar-btn" id="sourcepreview"><i class="fa fa-eye"></i> Preview</button>
+					</div>
+				</li>
+			</ul>
+		</div>
+	</nav>
+	<div id="LG" class="container-fluid changeDimension">
+		<div class="checkbox c-checkbox">
+			<label>
+				<input id="connect" class="hidden" type="checkbox">
+				<span class="fa fa-check"></span>
+				Connect column with other column
+			</label>
+		</div>
+		<div class="sidebar-nav">
+			<ul class="nav nav-list accordion-group">
+				<li class="nav-header">
+					<i class="fa fa-plus"></i> GRID SYSTEM
+				</li>
+				<li style="display: list-item;" class="rows" id="estRows">
+					<div class="lyrow col-md-6">
+						<span class="configuration">
+							<div class="drag column"></div>
+							<span class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</span>
 						</span>
+						<div class="preview clearfix">
+							<div class="pull-left grid-system">
+								<select id="getColumnViewport" class="form-control selectbox">
+									<option value="xs">xs</option>
+									<option value="sm">sm</option>
+									<option value="md" selected>md</option>
+									<option value="lg">lg</option>
+								</select>
+							</div>
+							<div class="pull-left grid-system">
+								<select id="getColumnGrid" class="form-control selectbox">
+									<option value="1">1</option>
+									<option value="2">2</option>
+									<option value="3">3</option>
+									<option value="4">4</option>
+									<option value="5">5</option>
+									<option value="6" selected>6</option>
+									<option value="7">7</option>
+									<option value="8">8</option>
+									<option value="9">9</option>
+									<option value="10">10</option>
+									<option value="11">11</option>
+									<option value="12">12</option>
+								</select>
+							</div>
+						</div>
+						<div class="view">
+							<div class="column"></div>
+						</div>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<div class="row demo">
+			<div class="lyrow col-md-12">
+				<span class="configuration">
+					<div class="drag"></div>
+					<span class="settings btn-group">
+						<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li class="styles">
+								<a class="submenu" href="#">Classes</a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Type</a>
+										<ul class="dropdown-menu">
+											<li class="active"><a href="#" rel="panel-default">Default</a></li>
+											<li><a href="#" rel="panel-primary">Primary</a></li>
+											<li><a href="#" rel="panel-success">Success</a></li>
+											<li><a href="#" rel="panel-info">Info</a></li>
+											<li><a href="#" rel="panel-warning">Warning</a></li>
+											<li><a href="#" rel="panel-danger">Danger</a></li>
+										</ul>
+									</li>
+									<li class="styles">
+										<a class="submenu" href="#">Addons style</a>
+										<ul class="dropdown-menu">
+											<li><a href="#" rel="elastic">Elastic</a></li>
+											<li><a href="#" rel="center">Center</a></li>
+										</ul>
+									</li>
+								</ul>
+							</li>
+							<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+							<li><a class="remove" href="#">Remove</a></li>
+						</ul>
 					</span>
-                    <div class="preview clearfix">
-                      <div class="pull-left grid-system">
-						  <select id="getColumnViewport" class="form-control selectbox">
-							<option value="xs">xs</option>
-							<option value="sm">sm</option>
-							<option value="md" selected>md</option>
-							<option value="lg">lg</option>
-						  </select>
-                      </div>
-                      <div class="pull-left grid-system">
-						  <select id="getColumnGrid" class="form-control selectbox">
-							<option value="1">1</option>
-							<option value="2">2</option>
-							<option value="3">3</option>
-							<option value="4">4</option>
-							<option value="5">5</option>
-							<option value="6" selected>6</option>
-							<option value="7">7</option>
-							<option value="8">8</option>
-							<option value="9">9</option>
-							<option value="10">10</option>
-							<option value="11">11</option>
-							<option value="12">12</option>
-						  </select>
-                      </div>
-                    </div>
-                    <div class="view">
-                        <div class="column" contenteditable="true"></div>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          <!--/span-->
-          <div class="row demo ui-sortable">
-            <!--<div class="lyrow">
-              <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>
-              <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-              <div class="preview">9 3</div>-->
-              <!--<div class="view">
-                  <div class="span12 column ui-sortable">
-                    <div class="box box-element ui-draggable" style="display: block; ">
-                      <a href="#close" class="remove btn btn-xs bg-danger-dark"><i class="fa fa-times"></i>Remove</a>
-					  <span class="drag btn btn-xs bg-gray-dark"><i class="fa fa-arrows"></i>Drag</span>
-                      <span class="configuration">
-                      	<button type="button" class="btn btn-info btn-xs" data-target="#editorModal" role="button" data-toggle="modal">Editor</button>
-                      	<a class="btn btn-info btn-xs" href="#" rel="well">Well</a>
-					  </span>
-                      <div class="preview">Jumbotron</div>
-                      <div class="view">
-                        <div class="hero-unit" contenteditable="true">
-                          <h1>Hello, world!</h1>
-                          <p>This is a template for a simple marketing or informational website.</p>
-                          <p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
-                          <p>Use it as a starting point to create something more unique.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-              </div>-->
-				<div class="lyrow col-md-12 ui-draggable">
-					<span class="configuration">
-						<span class="drag"></span>
-						<span class="settings btn-group">
-							<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
-							<ul class="dropdown-menu">
-							  <!--<li class="active"><a href="#" rel="">Default</a></li>
-							  <li class=""><a href="#" rel="text-left">Left</a></li>
-							  <li class=""><a href="#" rel="text-center">Center</a></li>
-							  <li class=""><a href="#" rel="text-right">Right</a></li>-->
-							  <li class=""><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Editor</a></li>
-							  <li class=""><a class="remove" href="#">Remove</a></li>
-							</ul>
-						</span>
-					</span>
-					<div class="view">
-						<div class="column" contenteditable="true">
-							<div class="panel panel-info elastic" data-sweet-alert="">
-								<div class="panel-heading">Hello, world!</div>
-								<div class="panel-body">
-									<p>This is a template for a simple marketing or informational website.</p>
-									<p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
-									<p>Use it as a starting point to create something more unique.</p>
-								</div>
-								<div class="panel-footer">
-									<div class="clearfix">
-										<div class="pull-right">
-											<button type="button" class="btn btn-primary">Button</button>
-										</div>
+				</span>
+				<div class="view">
+					<div class="column">
+						<div class="panel panel-info" data-sweet-alert="">
+							<div class="panel-heading">Hello, world!</div>
+							<div class="panel-body">
+								<p>This is a template for a simple marketing or informational website.</p>
+								<p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
+								<p>Use it as a starting point to create something more unique.</p>
+							</div>
+							<div class="panel-footer">
+								<div class="clearfix">
+									<div class="pull-right">
+										<button type="button" class="btn btn-primary">Button</button>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-            <!--</div>-->
-          </div>
-          <!-- end demo -->
-          <!--/span-->
-        <!--</div>-->
-        <!--/row-->
-      <!--/.fluid-container-->
-    </div>
-  </div>
-  
-  	<!--<script type="text/javascript" src="static/generator/js/jquery-2.0.0.min.js"></script>
-    <script type="text/javascript" src="static/generator/js/bootstrap.min.js"></script>-->
-    <script type="text/javascript" src="static/generator/js/jquery-ui.js"></script>
-    <script type="text/javascript" src="static/generator/js/jquery.ui.touch-punch.min.js"></script>
-    <!--<script type="text/javascript" src="static/generator/js/jquery.htmlClean.js"></script>-->
-    <!--<script type="text/javascript" src="static/generator/ckeditor/ckeditor.js"></script>
-    <script type="text/javascript" src="static/generator/ckeditor/config.js"></script>-->
-    <script type="text/javascript" src="static/generator/js/scripts.js"></script>
-    <!--<script type="text/javascript" src="static/generator/js/FileSaver.js"></script>
-    <script type="text/javascript" src="static/generator/js/blob.js"></script>
-    <script type="text/javascript" src="static/generator/js/docs.min.js"></script>-->
-<script>
-	function resizeCanvas(size) {
-		var containerID = document.getElementsByClassName("changeDimension");
-		//var containerDownload = document.getElementById("download-layout").getElementsByClassName("container-fluid")[0];
-		//var row = document.getElementsByClassName("demo ui-sortable");
-		//var container1 = document.getElementsByClassName("container1");
-		if (size == "lg") {
-			$(containerID).attr('id', "LG");
-			//$(row).attr('id', "LG");
-			//$(container1).attr('id', "LG");
-			//$(containerDownload).attr('id', "LG");
-		}
-		if (size == "md") {
-			$(containerID).attr('id', "MD");
-			//$(row).attr('id', "MD");
-			//$(container1).attr('id', "MD");
-			//$(containerDownload).attr('id', "MD");
-		}
-		if (size == "sm") {
-			$(containerID).attr('id', "SM");
-			//$(row).attr('id', "SM");
-			//$(container1).attr('id', "SM");
-			//$(containerDownload).attr('id', "SM");
-		}
-		if (size == "xs") {
-			$(containerID).attr('id', "XS");
-			//$(row).attr('id', "XS");
-			//$(container1).attr('id', "XS");
-			//$(containerDownload).attr('id', "XS");
-		}
-	}
-</script>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="static/generator/js/scripts.js"></script>
