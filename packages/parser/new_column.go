@@ -84,7 +84,7 @@ func (p *NewColumnParser) Validate() error {
 		}
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewColumn.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewColumn.ForSign(), p.NewColumn.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

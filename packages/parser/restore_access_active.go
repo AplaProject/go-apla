@@ -61,7 +61,7 @@ func (p *RestoreAccessActiveParser) Validate() error {
 	if active == p.TxMaps.Int64["active"] {
 		return p.ErrInfo("active")
 	}
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessActive.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessActive.ForSign(), p.RestoreAccessActive.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

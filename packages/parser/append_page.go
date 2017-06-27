@@ -44,7 +44,7 @@ func (p *AppendPageParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.AppendPage.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.AppendPage.ForSign(), p.AppendPage.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

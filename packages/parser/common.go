@@ -63,6 +63,9 @@ func GetTablePrefix(global string, stateId int64) (string, error) {
 }
 
 func GetParser(p *Parser, txType string) (ParserInterface, error) {
+	if len(p.TxMap) == 0 {
+		p.TxMap = map[string][]byte{}
+	}
 	switch txType {
 	case "FirstBlock":
 		return &FirstBlockParser{p}, nil

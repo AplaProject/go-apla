@@ -70,7 +70,7 @@ func (p *NewContractParser) Validate() error {
 	}
 
 	// must be supplemented
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewContract.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewContract.ForSign(), p.NewContract.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

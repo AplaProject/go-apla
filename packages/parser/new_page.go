@@ -49,7 +49,7 @@ func (p *NewPageParser) Validate() error {
 	if strings.HasPrefix(string(p.NewPage.Name), `sys-`) || strings.HasPrefix(string(p.NewPage.Name), `app-`) {
 		return fmt.Errorf(`The name cannot start with sys- or app-`)
 	}
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewPage.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewPage.ForSign(), p.NewPage.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

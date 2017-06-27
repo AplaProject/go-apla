@@ -45,7 +45,7 @@ func (p *EditMenuParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditMenu.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditMenu.ForSign(), p.EditMenu.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
