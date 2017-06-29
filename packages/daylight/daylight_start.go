@@ -30,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/api"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -419,6 +420,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
 		setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
 		setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
+		api.Route(route)
 		route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 		route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
 		if len(*utils.TLS) > 0 {
