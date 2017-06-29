@@ -32,15 +32,15 @@ func auth(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	case string:
 		msg = uid
 	default:
-		return errConflict(w, "unknown uid")
+		return errorAPI(w, "unknown uid", http.StatusConflict)
 	}
 	pubkey := data.params[`pubkey`].([]byte)
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
-		return errConflict(w, err.Error())
+		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 	if !verify {
-		return errConflict(w, `signature is incorrect`)
+		return errorAPI(w, `signature is incorrect`, http.StatusConflict)
 	}
 
 	data.result = &authResult{Address: crypto.KeyToAddress(pubkey)}

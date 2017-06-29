@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	//	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/astaxie/beego/session"
@@ -55,13 +54,8 @@ func SetSession(s *session.Manager) {
 	apiSess = s
 }
 
-func errConflict(w http.ResponseWriter, msg string) error {
-	http.Error(w, msg, http.StatusConflict)
-	return fmt.Errorf(msg)
-}
-
-func errBadRequest(w http.ResponseWriter, msg string) error {
-	http.Error(w, msg, http.StatusBadRequest)
+func errorAPI(w http.ResponseWriter, msg string, code int) error {
+	http.Error(w, msg, code)
 	return fmt.Errorf(msg)
 }
 
@@ -78,13 +72,13 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			}
 		}()
 		if apiSess == nil {
-			errConflict(w, `Session is undefined`)
+			errorAPI(w, `Session is undefined`, http.StatusConflict)
 			return
 		}
 
 		data.sess, err = apiSess.SessionStart(w, r)
 		if err != nil {
-			errConflict(w, err.Error())
+			errorAPI(w, err.Error(), http.StatusConflict)
 			return
 		}
 		defer data.sess.SessionRelease(w)
@@ -95,7 +89,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
-				errBadRequest(w, fmt.Sprintf(`Value %s is undefined`, key))
+				errorAPI(w, fmt.Sprintf(`Value %s is undefined`, key), http.StatusBadRequest)
 				return
 			}
 			switch par & 0xff {
@@ -104,7 +98,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
-					errBadRequest(w, err.Error())
+					errorAPI(w, err.Error(), http.StatusBadRequest)
 					return
 				}
 				data.params[key] = bin
@@ -117,7 +111,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		jsonResult, err := json.Marshal(data.result)
 		if err != nil {
-			errConflict(w, err.Error())
+			errorAPI(w, err.Error(), http.StatusConflict)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

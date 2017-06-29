@@ -22,37 +22,10 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 )
 
+// Route sets routing pathes
 func Route(route *hr.Router) {
 	anyMethod := func(method, pattern, pars string, handler apiHandle) {
-		params := make(map[string]int)
-		for _, par := range strings.Split(pars, `,`) {
-			var vtype int
-			types := strings.Split(par, `:`)
-			if len(types) != 2 {
-				continue
-			}
-			switch types[1] {
-			case `hex`:
-				vtype = pHex
-			case `int64`:
-				vtype = pInt64
-			default:
-				continue
-			}
-			vars := strings.Split(types[0], ` `)
-			for _, v := range vars {
-				if len(v) > 0 {
-					if v[0] == '?' {
-						if len(v) > 1 {
-							params[v[1:]] = vtype | pOptional
-						}
-					} else {
-						params[v] = vtype
-					}
-				}
-			}
-		}
-		route.Handle(method, `/api/v1/`+pattern, DefaultHandler(params, handler))
+		route.Handle(method, `/api/v1/`+pattern, DefaultHandler(processParams(pars), handler))
 	}
 	get := func(pattern, params string, handler apiHandle) {
 		anyMethod(`GET`, pattern, params, handler)
@@ -62,4 +35,42 @@ func Route(route *hr.Router) {
 	}
 	get(`getuid`, ``, getUID)
 	post(`auth`, `pubkey signature:hex,?state:int64`, auth)
+}
+
+func processParams(input string) (params map[string]int) {
+	if len(input) == 0 {
+		return
+	}
+	params = make(map[string]int)
+	for _, par := range strings.Split(input, `,`) {
+		var vtype int
+		types := strings.Split(par, `:`)
+		if len(types) != 2 {
+			log.Fatalf(`Incorrect api route parameters: "%s"`, par)
+		}
+		switch types[1] {
+		case `hex`:
+			vtype = pHex
+		case `int64`:
+			vtype = pInt64
+		default:
+			log.Fatalf(`Unknown type of api route parameter: "%s"`, par)
+		}
+		vars := strings.Split(types[0], ` `)
+		for _, v := range vars {
+			if len(v) == 0 {
+				continue
+			}
+			if v[0] == '?' {
+				if len(v) > 1 {
+					params[v[1:]] = vtype | pOptional
+				} else {
+					log.Fatalf(`Incorrect name of api route parameter: "%s"`, par)
+				}
+			} else {
+				params[v] = vtype
+			}
+		}
+	}
+	return
 }
