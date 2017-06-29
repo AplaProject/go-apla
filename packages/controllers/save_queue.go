@@ -316,9 +316,9 @@ func (c *Controller) SaveQueue() (string, error) {
 		}
 		header.PublicKey = publicKey
 		if txType_ == "ChangeNodeKeyDLT" {
-			toSerialize = tx.DLTChangeNodeKey{header, []byte(publicKey)}
+			toSerialize = tx.DLTChangeNodeKey{header, utils.HexToBin(publicKey)}
 		} else {
-			toSerialize = tx.ChangeNodeKey{header, []byte(publicKey)}
+			toSerialize = tx.ChangeNodeKey{header, utils.HexToBin(publicKey)}
 		}
 	}
 	transactionTypeBin := utils.DecToBin(txType, 1)
