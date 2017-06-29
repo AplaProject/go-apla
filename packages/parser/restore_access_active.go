@@ -26,6 +26,8 @@ import (
 type RestoreAccessActiveParser struct {
 	*Parser
 	RestoreAccessActive *tx.RestoreAccessActive
+	SecretHex           string
+	Active              int64
 }
 
 func (p *RestoreAccessActiveParser) Init() error {
@@ -34,13 +36,12 @@ func (p *RestoreAccessActiveParser) Init() error {
 		return p.ErrInfo(err)
 	}
 	p.RestoreAccessActive = restoreAccessActive
-	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.RestoreAccessActive.Secret))
-	if p.TxMaps.String["secret_hex"] == "30" {
-		p.TxMaps.Int64["active"] = 0
+	p.SecretHex = string(utils.BinToHex(p.RestoreAccessActive.Secret))
+	if p.SecretHex == "30" {
+		p.Active = 0
 	} else {
-		p.TxMaps.Int64["active"] = 1
+		p.Active = 1
 	}
-	p.TxMaps.String["secret_hex"] = string(utils.BinToHex(p.RestoreAccessActive.Secret))
 	return nil
 }
 
@@ -58,7 +59,7 @@ func (p *RestoreAccessActiveParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if active == p.TxMaps.Int64["active"] {
+	if active == p.Active {
 		return p.ErrInfo("active")
 	}
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessActive.ForSign(), p.RestoreAccessActive.BinSignatures, false)
@@ -76,7 +77,7 @@ func (p *RestoreAccessActiveParser) Validate() error {
 }
 
 func (p *RestoreAccessActiveParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.TxMaps.Int64["active"], p.RestoreAccessActive.Secret}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccessActive.Header.StateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.Active, p.RestoreAccessActive.Secret}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccessActive.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

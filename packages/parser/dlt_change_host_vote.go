@@ -90,7 +90,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 
 func (p *DLTChangeHostVoteParser) Action() error {
 	var err error
-	log.Debug("p.TxMaps.String[addressVote] %s", p.TxMaps.String["addressVote"])
+	log.Debug("p.TxMaps.String[addressVote] %s", p.DLTChangeHostVote.AddressVote)
 	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE public_key_0 = [hex]`, p.DLTChangeHostVote.Header.PublicKey).String()
 	if err != nil {
 		return p.ErrInfo(err)

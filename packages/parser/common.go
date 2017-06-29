@@ -87,7 +87,7 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	case "EditContract":
 		return &EditContractParser{p, nil}, nil
 	case "NewContract":
-		return &NewContractParser{p, nil}, nil
+		return &NewContractParser{p, nil, nil}, nil
 	case "EditColumn":
 		return &EditColumnParser{p, nil}, nil
 	case "EditTable":
@@ -105,7 +105,7 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	case "AppendPage":
 		return &AppendPageParser{p, nil}, nil
 	case "RestoreAccessActive":
-		return &RestoreAccessActiveParser{p, nil}, nil
+		return &RestoreAccessActiveParser{p, nil, "", 0}, nil
 	case "RestoreAccessClose":
 		return &RestoreAccessCloseParser{p, nil}, nil
 	case "RestoreAccessRequest":
@@ -125,7 +125,7 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	case "EditWallet":
 		return &EditWalletParser{p, nil}, nil
 	case "ActivateContract":
-		return &ActivateContractParser{p, nil}, nil
+		return &ActivateContractParser{p, nil, ""}, nil
 	case "NewAccount":
 		return &NewAccountParser{p, nil}, nil
 	}

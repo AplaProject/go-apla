@@ -71,7 +71,11 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	zero, _ := decimal.NewFromString("0")
-	if p.TxMaps.Decimal["amount"].Cmp(zero) <= 0 {
+	amount, err := decimal.NewFromString(p.DLTTransfer.Commission)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if amount.Cmp(zero) <= 0 {
 		return p.ErrInfo("amount<=0")
 	}
 

@@ -31,7 +31,8 @@ import (
 
 type NewContractParser struct {
 	*Parser
-	NewContract *tx.NewContract
+	NewContract    *tx.NewContract
+	walletContract *int64
 }
 
 func (p *NewContractParser) Init() error {
@@ -60,7 +61,7 @@ func (p *NewContractParser) Validate() error {
 		if address == 0 {
 			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, name[off+1:]))
 		}
-		p.TxMaps.Int64["wallet_contract"] = address
+		p.walletContract = &address
 	}
 	verifyData := map[string][]interface{}{"int64": []interface{}{p.NewContract.Global}, "string": []interface{}{p.NewContract.Name}}
 	err = p.CheckInputData(verifyData)
@@ -107,8 +108,8 @@ func (p *NewContractParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if val, ok := p.TxMaps.Int64["wallet_contract"]; ok {
-		wallet = val
+	if p.walletContract != nil {
+		wallet = *p.walletContract
 	}
 
 	tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},

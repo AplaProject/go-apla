@@ -30,6 +30,7 @@ import (
 type ActivateContractParser struct {
 	*Parser
 	ActivateContract *tx.ActivateContract
+	activateCost     string
 }
 
 func (p *ActivateContractParser) Init() error {
@@ -83,7 +84,7 @@ func (p *ActivateContractParser) Validate() error {
 	if err := p.checkSenderDLT(cost, decimal.New(0, 0)); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.String["activate_cost"] = cost.String()
+	p.activateCost = cost.String()
 	return nil
 }
 
@@ -96,7 +97,7 @@ func (p *ActivateContractParser) Action() error {
 	if wallet == 0 {
 		wallet = p.TxCitizenID
 	}
-	egs := p.TxMaps.String["activate_cost"]
+	egs := p.activateCost
 	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{utils.Int64ToStr(wallet)}, true); err != nil {
 		return err
