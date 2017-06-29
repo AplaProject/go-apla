@@ -24,83 +24,10 @@ import (
 )
 
 /**
- * Откат таблиц rb_time_, которые были изменены транзакциями
- */
-/*
-func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
-
-	// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
-	binForSize := p.BinaryData
-	var sizesSlice []int64
-	for {
-		txSize := utils.DecodeLength(&binForSize)
-		if txSize == 0 {
-			break
-		}
-		sizesSlice = append(sizesSlice, txSize)
-		// удалим тр-ию
-		utils.BytesShift(&binForSize, txSize)
-		if len(binForSize) == 0 {
-			break
-		}
-	}
-	sizesSlice = utils.SliceReverse(sizesSlice)
-	for i := 0; i < len(sizesSlice); i++ {
-		// обработка тр-ий может занять много времени, нужно отметиться
-		p.UpdDaemonTime(p.GoroutineName)
-		// отделим одну транзакцию
-		transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
-		// узнаем кол-во байт, которое занимает размер
-		size_ := len(utils.EncodeLength(sizesSlice[i]))
-		// удалим размер
-		utils.BytesShiftReverse(&p.BinaryData, size_)
-		p.TxHash = string(utils.Md5(transactionBinaryData))
-
-		// инфа о предыдущем блоке (т.е. последнем занесенном)
-		err := p.GetInfoBlock()
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		if txcandidateBlock {
-			utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-			affect, err := p.ExecSqlGetAffect("UPDATE transactions SET verified = 0 WHERE hex(hash) = ?", p.TxHash)
-			if err != nil {
-				utils.WriteSelectiveLog(err)
-				return p.ErrInfo(err)
-			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-		}
-		/*affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
-		log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
-		if err != nil {
-			return p.ErrInfo(err)
-		}*/
-/*
-		p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		p.dataType = utils.BytesToInt(p.TxSlice[1])
-		//userId := p.TxSlice[3]
-		MethodName := consts.TxTypes[p.dataType]
-		err_ := utils.CallMethod(p, MethodName+"Init")
-		if _, ok := err_.(error); ok {
-			return p.ErrInfo(err_.(error))
-		}
-		err_ = utils.CallMethod(p, MethodName+"RollbackFront")
-		if _, ok := err_.(error); ok {
-			return p.ErrInfo(err_.(error))
-		}
-	}
-
-	return nil
-}
-*/
-
-/**
  * Откат БД по блокам
  */
 func (p *Parser) ParseDataRollback() error {
+	var txType int
 
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
@@ -135,6 +62,7 @@ func (p *Parser) ParseDataRollback() error {
 			// отделим одну транзакцию
 			transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
 			p.TxBinaryData = transactionBinaryData
+			txType = int(utils.BinToDecBytesShift(&p.TxBinaryData, 1))
 			// узнаем кол-во байт, которое занимает размер и удалим размер
 			utils.BytesShiftReverse(&p.BinaryData, len(utils.EncodeLength(sizesSlice[i])))
 			p.TxHash = string(utils.Md5(transactionBinaryData))
@@ -182,8 +110,7 @@ func (p *Parser) ParseDataRollback() error {
 					return p.ErrInfo(err)
 				}
 			} else {
-				p.dataType = utils.BytesToInt(p.TxSlice[1])
-				MethodName := consts.TxTypes[p.dataType]
+				MethodName := consts.TxTypes[txType]
 				parser, err := GetParser(p, MethodName)
 				if err != nil {
 					return p.ErrInfo(err)
