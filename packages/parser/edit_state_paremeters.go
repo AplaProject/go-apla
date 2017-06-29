@@ -45,8 +45,7 @@ func (p *EditStateParametersParser) Init() error {
 }
 
 func (p *EditStateParametersParser) Validate() error {
-	p.TxMap["conditions"] = []byte(p.EditStateParameters.Conditions)
-	err := p.generalCheck(`edit_state_parameters`, &p.EditStateParameters.Header)
+	err := p.generalCheck(`edit_state_parameters`, &p.EditStateParameters.Header, map[string]string{"conditions": p.EditStateParameters.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

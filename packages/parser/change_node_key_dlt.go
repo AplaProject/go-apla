@@ -39,7 +39,7 @@ func (p *ChangeNodeKeyDLTParser) Init() error {
 }
 
 func (p *ChangeNodeKeyDLTParser) Validate() error {
-	err := p.generalCheck(`change_node`, &p.DLTChangeNodeKey.Header)
+	err := p.generalCheck(`change_node`, &p.DLTChangeNodeKey.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

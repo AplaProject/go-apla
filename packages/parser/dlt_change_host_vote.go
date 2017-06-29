@@ -42,7 +42,7 @@ func (p *DLTChangeHostVoteParser) Init() error {
 }
 
 func (p *DLTChangeHostVoteParser) Validate() error {
-	err := p.generalCheck(`change_host_vote`, &p.DLTChangeHostVote.Header)
+	err := p.generalCheck(`change_host_vote`, &p.DLTChangeHostVote.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

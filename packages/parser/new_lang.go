@@ -41,7 +41,7 @@ func (p *NewLangParser) Init() error {
 }
 
 func (p *NewLangParser) Validate() error {
-	err := p.generalCheck(`new_lang`, &p.NewLang.Header)
+	err := p.generalCheck(`new_lang`, &p.NewLang.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

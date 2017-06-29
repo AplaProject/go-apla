@@ -732,8 +732,8 @@ func UpdateParam(p *Parser, name, value, conditions string) error {
 	return nil
 }
 
-func UpdateMenu(p *Parser, name, value, conditions string) error {
-	if err := p.AccessChange(`menu`, name); err != nil {
+func UpdateMenu(p *Parser, name, value, conditions, global string, stateID int64) error {
+	if err := p.AccessChange(`menu`, p.TxStateIDStr, global, stateID); err != nil {
 		return err
 	}
 	fields := []string{"value"}
@@ -797,8 +797,8 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	return nil
 }
 
-func UpdatePage(p *Parser, name, value, menu, conditions string) error {
-	if err := p.AccessChange(`pages`, name); err != nil {
+func UpdatePage(p *Parser, name, value, menu, conditions, global string, stateID int64) error {
+	if err := p.AccessChange(`pages`, name, global, stateID); err != nil {
 		return p.ErrInfo(err)
 	}
 	fields := []string{"value"}

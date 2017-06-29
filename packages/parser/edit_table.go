@@ -43,7 +43,7 @@ func (p *EditTableParser) Init() error {
 }
 
 func (p *EditTableParser) Validate() error {
-	err := p.generalCheck(`edit_table`, &p.EditTable.Header)
+	err := p.generalCheck(`edit_table`, &p.EditTable.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

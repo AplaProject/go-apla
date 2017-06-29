@@ -43,8 +43,7 @@ func (p *NewColumnParser) Init() error {
 }
 
 func (p *NewColumnParser) Validate() error {
-	p.TxMap["permissions"] = []byte(p.NewColumn.Permissions)
-	err := p.generalCheck(`new_column`, &p.NewColumn.Header)
+	err := p.generalCheck(`new_column`, &p.NewColumn.Header, map[string]string{"permissions": p.NewColumn.Permissions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -44,7 +44,7 @@ func (p *DLTTransferParser) Init() error {
 }
 
 func (p *DLTTransferParser) Validate() error {
-	err := p.generalCheck(`dlt_transfer`, &p.DLTTransfer.Header)
+	err := p.generalCheck(`dlt_transfer`, &p.DLTTransfer.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

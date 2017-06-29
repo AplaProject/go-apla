@@ -40,7 +40,7 @@ func (p *NewSignParser) Init() error {
 }
 
 func (p *NewSignParser) Validate() error {
-	err := p.generalCheck(`new_sign`, &p.NewSign.Header)
+	err := p.generalCheck(`new_sign`, &p.NewSign.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

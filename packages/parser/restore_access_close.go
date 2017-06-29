@@ -38,7 +38,7 @@ func (p *RestoreAccessCloseParser) Init() error {
 }
 
 func (p *RestoreAccessCloseParser) Validate() error {
-	err := p.generalCheck(`system_restore_access_close`, &p.RestoreAccessClose.Header)
+	err := p.generalCheck(`system_restore_access_close`, &p.RestoreAccessClose.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

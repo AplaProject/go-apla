@@ -38,8 +38,7 @@ func (p *EditSignParser) Init() error {
 }
 
 func (p *EditSignParser) Validate() error {
-	p.TxMap["conditions"] = []byte(p.EditSign.Conditions)
-	err := p.generalCheck(`edit_sign`, &p.EditSign.Header)
+	err := p.generalCheck(`edit_sign`, &p.EditSign.Header, map[string]string{"conditions": p.EditSign.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

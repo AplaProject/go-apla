@@ -47,7 +47,7 @@ func (p *NewTableParser) Init() error {
 }
 
 func (p *NewTableParser) Validate() error {
-	err := p.generalCheck(`add_table`, &p.NewTable.Header)
+	err := p.generalCheck(`add_table`, &p.NewTable.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

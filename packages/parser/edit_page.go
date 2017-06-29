@@ -39,13 +39,12 @@ func (p *EditPageParser) Init() error {
 }
 
 func (p *EditPageParser) Validate() error {
-	p.TxMap["conditions"] = []byte(p.EditPage.Conditions)
-	err := p.generalCheck(`edit_page`, &p.EditPage.Header)
+	err := p.generalCheck(`edit_page`, &p.EditPage.Header, map[string]string{"conditions": p.EditPage.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditPage.ForSign(), p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditPage.ForSign(), p.EditPage.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -57,7 +56,7 @@ func (p *EditPageParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	if err = p.AccessChange(`pages`, p.EditPage.Name); err != nil {
+	if err = p.AccessChange(`pages`, p.EditPage.Name, p.EditPage.Global, p.EditPage.Header.StateID); err != nil {
 		if p.AccessRights(`changing_page`, false) != nil {
 			return err
 		}

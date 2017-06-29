@@ -67,7 +67,7 @@ func (p *NewStateParser) global(country, currency string) error {
 }
 
 func (p *NewStateParser) Validate() error {
-	err := p.generalCheck(`new_state`, &p.NewState.Header)
+	err := p.generalCheck(`new_state`, &p.NewState.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -38,7 +38,7 @@ func (p *EditLangParser) Init() error {
 }
 
 func (p *EditLangParser) Validate() error {
-	err := p.generalCheck(`edit_lang`, &p.EditLang.Header)
+	err := p.generalCheck(`edit_lang`, &p.EditLang.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

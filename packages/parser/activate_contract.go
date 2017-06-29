@@ -42,7 +42,7 @@ func (p *ActivateContractParser) Init() error {
 }
 
 func (p *ActivateContractParser) Validate() error {
-	err := p.generalCheck(`activate_contract`, &p.ActivateContract.Header)
+	err := p.generalCheck(`activate_contract`, &p.ActivateContract.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

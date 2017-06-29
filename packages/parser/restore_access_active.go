@@ -45,7 +45,7 @@ func (p *RestoreAccessActiveParser) Init() error {
 }
 
 func (p *RestoreAccessActiveParser) Validate() error {
-	err := p.generalCheck(`system_restore_access_active`, &p.RestoreAccessActive.Header)
+	err := p.generalCheck(`system_restore_access_active`, &p.RestoreAccessActive.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}

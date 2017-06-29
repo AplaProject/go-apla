@@ -39,7 +39,7 @@ func (p *AppendPageParser) Init() error {
 }
 
 func (p *AppendPageParser) Validate() error {
-	err := p.generalCheck(`edit_page`, &p.AppendPage.Header)
+	err := p.generalCheck(`edit_page`, &p.AppendPage.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -51,7 +51,7 @@ func (p *AppendPageParser) Validate() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err = p.AccessChange(`pages`, p.AppendPage.Name); err != nil {
+	if err = p.AccessChange(`pages`, p.AppendPage.Name, p.AppendPage.Global, p.AppendPage.StateID); err != nil {
 		if p.AccessRights(`changing_page`, false) != nil {
 			return err
 		}

@@ -63,9 +63,6 @@ func GetTablePrefix(global string, stateId int64) (string, error) {
 }
 
 func GetParser(p *Parser, txType string) (ParserInterface, error) {
-	if len(p.TxMap) == 0 {
-		p.TxMap = map[string][]byte{}
-	}
 	switch txType {
 	case "FirstBlock":
 		return &FirstBlockParser{p}, nil
@@ -604,15 +601,11 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	return nil
 }
 
-func (p *Parser) AccessChange(table, name string) error {
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
+	prefix, err := GetTablePrefix(global, stateId)
+	if err != nil {
+		return err
 	}
-	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
 	if err != nil {
 		return err

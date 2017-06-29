@@ -37,7 +37,7 @@ func (p *AppendMenuParser) Init() error {
 }
 
 func (p *AppendMenuParser) Validate() error {
-	err := p.generalCheck(`edit_menu`, &p.AppendMenu.Header)
+	err := p.generalCheck(`edit_menu`, &p.AppendMenu.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -50,7 +50,7 @@ func (p *AppendMenuParser) Validate() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err = p.AccessChange(`menu`, p.AppendMenu.Name); err != nil {
+	if err = p.AccessChange(`menu`, p.AppendMenu.Name, p.AppendMenu.Global, p.AppendMenu.StateID); err != nil {
 		if p.AccessRights(`changing_menu`, false) != nil {
 			return err
 		}

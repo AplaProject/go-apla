@@ -42,7 +42,7 @@ func (p *UpdFullNodesParser) Init() error {
 }
 
 func (p *UpdFullNodesParser) Validate() error {
-	err := p.generalCheck(`upd_full_nodes`, &p.UpdFullNodes.Header) // undefined, cost=0
+	err := p.generalCheck(`upd_full_nodes`, &p.UpdFullNodes.Header, map[string]string{}) // undefined, cost=0
 	if err != nil {
 		return p.ErrInfo(err)
 	}

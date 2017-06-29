@@ -30,7 +30,6 @@ type EditMenuParser struct {
 }
 
 func (p *EditMenuParser) Init() error {
-	p.TxMap["conditions"] = []byte(p.EditMenu.Conditions)
 	editMenu := &tx.EditMenu{}
 	if err := msgpack.Unmarshal(p.TxBinaryData, editMenu); err != nil {
 		return p.ErrInfo(err)
@@ -40,7 +39,7 @@ func (p *EditMenuParser) Init() error {
 }
 
 func (p *EditMenuParser) Validate() error {
-	err := p.generalCheck(`edit_menu`, &p.EditMenu.Header)
+	err := p.generalCheck(`edit_menu`, &p.EditMenu.Header, map[string]string{"conditions": p.EditMenu.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -58,7 +57,7 @@ func (p *EditMenuParser) Validate() error {
 		}
 	}
 
-	if err = p.AccessChange(`menu`, p.EditMenu.Name); err != nil {
+	if err = p.AccessChange(`menu`, p.EditMenu.Name, p.EditMenu.Global, p.EditMenu.StateID); err != nil {
 		if p.AccessRights(`changing_menu`, false) != nil {
 			return err
 		}

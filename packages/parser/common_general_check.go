@@ -23,8 +23,7 @@ import (
 )
 
 // общая проверка для всех _front
-func (p *Parser) generalCheck(name string, header *tx.Header) error {
-	log.Debug("%s", p.TxMap)
+func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck map[string]string) error {
 	// проверим, есть ли такой юзер и заодно получим public_key
 	txType := int64(header.Type)
 	if header.StateID > 0 {
@@ -81,10 +80,10 @@ func (p *Parser) generalCheck(name string, header *tx.Header) error {
 		return utils.ErrInfoFmt("incorrect sign size %d", len(header.BinSignatures))
 	}
 	for _, cond := range []string{`conditions`, `conditions_change`, `permissions`} {
-		if val, ok := p.TxMap[cond]; ok && len(val) == 0 {
+		if val, ok := conditionsCheck[cond]; ok && len(val) == 0 {
 			return utils.ErrInfoFmt("Conditions cannot be empty")
 		}
-		if err := smart.CompileEval(string(p.TxMap[cond]), uint32(p.TxStateID)); err != nil {
+		if err := smart.CompileEval(string(conditionsCheck[cond]), uint32(p.TxStateID)); err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
