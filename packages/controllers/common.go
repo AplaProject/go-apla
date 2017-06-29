@@ -30,6 +30,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/api"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -93,6 +94,7 @@ func SessInit() {
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 	}
+	api.SetSession(globalSessions)
 	go globalSessions.GC()
 }
 
