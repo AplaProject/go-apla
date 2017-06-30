@@ -8,7 +8,7 @@
 	}
 </style>
  
-<div id="eGaaSEditor" style="cursor: auto;" class="edit toolbox-reset">
+<div id="eGaaSEditor" style="cursor: auto;" class="edit">
 	<nav class="navbar navbar-default navbar-fixed-top">
 		<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-3">
 			<ul class="nav navbar-nav navbar-left">
@@ -48,7 +48,7 @@
 				<li class="nav-header">
 					<i class="fa fa-plus"></i> GRID SYSTEM
 				</li>
-				<li style="display: list-item;" class="rows" id="estRows">
+				<li style="display: list-item;" class="rows">
 					<div class="lyrow col-md-6">
 						<span class="configuration">
 							<div class="drag column"></div>
@@ -92,6 +92,65 @@
 					</div>
 				</li>
 			</ul>
+			<ul class="nav nav-list accordion-group">
+				<li class="nav-header">
+					<i class="fa fa-plus"></i> BLOCKS
+				</li>
+				<li style="display: list-item;" class="rows">
+					<div class="lyrow">
+						<span class="configuration">
+							<div class="drag">New Panel</div>
+							<span class="settings">
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Type</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="panel-default">Default</a></li>
+													<li><a href="#" rel="panel-primary">Primary</a></li>
+													<li><a href="#" rel="panel-success">Success</a></li>
+													<li><a href="#" rel="panel-info">Info</a></li>
+													<li><a href="#" rel="panel-warning">Warning</a></li>
+													<li><a href="#" rel="panel-danger">Danger</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li><a class="toggle" href="#" rel="elastic">Elastic</a></li>
+													<li><a class="toggle" href="#" rel="center">Center</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+								</ul>
+							</span>
+						</span>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<div class="panel panel-default" data-sweet-alert="">
+									<div class="panel-heading" contenteditable="true">Hello, world!</div>
+									<div class="panel-body" contenteditable="true">
+										<p>This is a template for a simple marketing or informational website.</p>
+										<p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
+										<p>Use it as a starting point to create something more unique.</p>
+									</div>
+									<div class="panel-footer">
+										<div class="clearfix">
+											<div class="pull-right">
+												<button type="button" class="btn btn-primary" contenteditable="true">Button</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</li>
+			</ul>
 		</div>
 		<div class="row demo">
 			<div class="lyrow col-md-12">
@@ -106,10 +165,10 @@
 									<li class="styles">
 										<a class="submenu" href="#">Type</a>
 										<ul class="dropdown-menu">
-											<li class="active"><a href="#" rel="panel-default">Default</a></li>
+											<li><a href="#" rel="panel-default">Default</a></li>
 											<li><a href="#" rel="panel-primary">Primary</a></li>
 											<li><a href="#" rel="panel-success">Success</a></li>
-											<li><a href="#" rel="panel-info">Info</a></li>
+											<li class="active"><a href="#" rel="panel-info">Info</a></li>
 											<li><a href="#" rel="panel-warning">Warning</a></li>
 											<li><a href="#" rel="panel-danger">Danger</a></li>
 										</ul>
@@ -117,8 +176,8 @@
 									<li class="styles">
 										<a class="submenu" href="#">Addons style</a>
 										<ul class="dropdown-menu">
-											<li><a href="#" rel="elastic">Elastic</a></li>
-											<li><a href="#" rel="center">Center</a></li>
+											<li><a class="toggle" href="#" rel="elastic">Elastic</a></li>
+											<li><a class="toggle" href="#" rel="center">Center</a></li>
 										</ul>
 									</li>
 								</ul>
@@ -131,8 +190,8 @@
 				<div class="view">
 					<div class="column">
 						<div class="panel panel-info" data-sweet-alert="">
-							<div class="panel-heading">Hello, world!</div>
-							<div class="panel-body">
+							<div class="panel-heading" contenteditable="true">Hello, world!</div>
+							<div class="panel-body" contenteditable="true">
 								<p>This is a template for a simple marketing or informational website.</p>
 								<p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
 								<p>Use it as a starting point to create something more unique.</p>
@@ -140,7 +199,7 @@
 							<div class="panel-footer">
 								<div class="clearfix">
 									<div class="pull-right">
-										<button type="button" class="btn btn-primary">Button</button>
+										<button type="button" class="btn btn-primary" contenteditable="true">Button</button>
 									</div>
 								</div>
 							</div>

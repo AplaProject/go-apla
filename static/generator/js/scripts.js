@@ -133,12 +133,12 @@ function randomFromInterval(e, t) {
 function configurationElm() {
 	"use strict";
 	
-	$(".demo").delegate(".configuration > a", "click", function(e) {
+	/*$(".demo").delegate(".configuration > a", "click", function(e) {
 		e.preventDefault();
 		var t = $(this).parent().next().next().children();
 		$(this).toggleClass("active");
 		t.toggleClass($(this).attr("rel"));
-	});
+	});*/
 	
 	$(".demo").delegate(".configuration .dropdown-menu a", "click", function(e) {
 		e.preventDefault();
@@ -146,11 +146,17 @@ function configurationElm() {
 		var cont = $(this).parent().parent();
 		var elem = cont.closest(".configuration").parent().find(".view .column").children();
 		
-		if ($(this).hasClass("remove") || $(this).hasClass("editor") || $(this).hasClass("submenu")) {
-			if ($(this).hasClass("submenu")) {
+		if ($(this).hasClass("remove") || $(this).hasClass("editor") || $(this).hasClass("submenu") || $(this).hasClass("toggle")) {
+			if ($(this).hasClass("toggle")) {
+				$(this).parent().toggleClass("active");
+				elem.toggleClass($(this).attr("rel"));
 				return false;
+			} else {
+				if ($(this).hasClass("submenu")) {
+					return false;
+				}
+				$(this).parent().removeClass("active");
 			}
-			$(this).parent().removeClass("active");
 		} else {
 			cont.find("> li").removeClass("active");
 			$(this).parent().addClass("active");
@@ -158,9 +164,12 @@ function configurationElm() {
 			cont.find("a").each(function() {
 				style += $(this).attr("rel") + " ";
 			});
+			
 			cont.parent().removeClass("open");
 			elem.removeClass(style);
 			elem.addClass($(this).attr("rel"));
+			
+			return false;
 		}
 	});
 	
@@ -329,6 +338,7 @@ function initGenerator(){
 		$(this).parent().parent().parent().attr("class", "col-" + $("#getColumnViewport").val() + "-" + $("#getColumnGrid").val() + " lyrow");
 	});
 	
+	var innerContainer;
 	$(".sidebar-nav .lyrow").draggable({
 		connectToSortable: ".demo",
 		helper: "clone",
@@ -339,12 +349,34 @@ function initGenerator(){
 			startdrag = 1;
 		},
 		drag: function(event, ui) {
+			innerContainer = $(".portlet-placeholder").parent();
 			ui.helper.width(400);
 		},
 		stop: function(event, ui) {
 			$(".demo .lyrow .preview").remove();
 			$(".demo .lyrow .drag").removeClass("column");
-
+			//console.log(ui.helper);
+			
+			if ($("#connect").prop("checked") === true) {
+				var grid = false;
+				var el = $(ui.helper).find(".column").html();
+				var settings = $(ui.helper).find(".settings ul").html();
+				var col = ui.helper[0].classList;
+				
+				for (var i = 0; i < col.length; i++) {
+					var temp = col[i].split("-");
+					if (temp.length === 3 && temp[0] === "col") {
+						grid = true;
+					}
+				}
+				
+				if (!grid) {
+					innerContainer.find(".lyrow").remove();
+					innerContainer.closest(".lyrow").find(".settings ul").prepend(settings);
+					innerContainer.html(el);
+				}
+			}
+			
 			$(".demo .column").sortable({
 				opacity: .35,
 				handle: ".drag",
