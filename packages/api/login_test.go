@@ -108,7 +108,7 @@ func TestAuth(t *testing.T) {
 			return
 		}
 		form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
-		ret, err = sendPost(`auth`, &form)
+		ret, err = sendPost(`login`, &form)
 		if err != nil {
 			t.Error(err)
 			return
@@ -118,7 +118,7 @@ func TestAuth(t *testing.T) {
 
 func TestBadRequest(t *testing.T) {
 	form := url.Values{"pubkey": {`001122`}}
-	ret, err := sendPost(`auth`, &form)
+	ret, err := sendPost(`login`, &form)
 	if ret != nil {
 		t.Error(fmt.Errorf(`must be 400 error`))
 		return
@@ -139,4 +139,13 @@ func TestPageNotFound(t *testing.T) {
 		t.Error(fmt.Errorf(`wrong error: "%s"`, err.Error()))
 		return
 	}
+}
+
+func TestBalance(t *testing.T) {
+	ret, err := sendGet(`balance/qwert`, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(`RET`, ret)
 }

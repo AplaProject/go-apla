@@ -17,12 +17,28 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
-func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.sess.Get("wallet") == nil {
-		errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+type balanceResult struct {
+	Amount string `json:"amount"`
+	EGS    string `json:"egs"`
+}
+
+func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
+
+	wallet := converter.StringToAddress(data.params[`wallet`].(string))
+	if wallet == 0 {
+		return errorAPI(w, fmt.Sprintf(`Wallet %s is invalid`, data.params[`wallet`].(string)), http.StatusBadRequest)
 	}
+	total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	data.result = &balanceResult{Amount: total, EGS: converter.EGSMoney(total)}
 	return nil
 }

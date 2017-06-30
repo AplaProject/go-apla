@@ -24,17 +24,19 @@ import (
 
 // Route sets routing pathes
 func Route(route *hr.Router) {
-	anyMethod := func(method, pattern, pars string, handler apiHandle) {
-		route.Handle(method, `/api/v1/`+pattern, DefaultHandler(processParams(pars), handler))
+	anyMethod := func(method, pattern, pars string, handler ...apiHandle) {
+		route.Handle(method, `/api/v1/`+pattern, DefaultHandler(processParams(pars), handler...))
 	}
-	get := func(pattern, params string, handler apiHandle) {
-		anyMethod(`GET`, pattern, params, handler)
+	get := func(pattern string, handler ...apiHandle) {
+		anyMethod(`GET`, pattern, ``, handler...)
 	}
-	post := func(pattern, params string, handler apiHandle) {
-		anyMethod(`POST`, pattern, params, handler)
+	post := func(pattern, params string, handler ...apiHandle) {
+		anyMethod(`POST`, pattern, params, handler...)
 	}
-	get(`getuid`, ``, getUID)
-	post(`auth`, `pubkey signature:hex,?state:int64`, auth)
+	get(`balance/:wallet`, authWallet, balance)
+	get(`getuid`, getUID)
+
+	post(`login`, `pubkey signature:hex,?state:int64`, login)
 }
 
 func processParams(input string) (params map[string]int) {

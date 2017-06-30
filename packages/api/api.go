@@ -104,6 +104,9 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 				data.params[key] = bin
 			}
 		}
+		for _, par := range ps {
+			data.params[par.Key] = par.Value
+		}
 		for _, handler := range handlers {
 			if handler(w, r, &data) != nil {
 				return
