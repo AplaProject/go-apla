@@ -19,7 +19,8 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
-
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -57,7 +58,7 @@ func (p *NewLangParser) Validate() error {
 	if err = p.AccessRights(`changing_language`, false); err != nil {
 		return p.ErrInfo(err)
 	}
-	prefix := utils.Int64ToStr(p.NewLang.Header.StateID)
+	prefix := converter.Int64ToStr(p.NewLang.Header.StateID)
 	if len(p.NewLang.Name) == 0 {
 		var list map[string]string
 		err := json.Unmarshal([]byte(p.NewLang.Trans), &list)
@@ -78,7 +79,7 @@ func (p *NewLangParser) Validate() error {
 }
 
 func (p *NewLangParser) Action() error {
-	prefix := utils.Int64ToStr(p.NewLang.Header.StateID)
+	prefix := converter.Int64ToStr(p.NewLang.Header.StateID)
 	if len(p.NewLang.Name) == 0 {
 		var list map[string]string
 		json.Unmarshal([]byte(p.NewLang.Trans), &list)
@@ -90,7 +91,7 @@ func (p *NewLangParser) Action() error {
 				if err != nil {
 					return p.ErrInfo(err)
 				}
-				utils.UpdateLang(int(p.NewLang.Header.StateID), name, res)
+				language.UpdateLang(int(p.NewLang.Header.StateID), name, res)
 			}
 		}
 	} else {
@@ -99,7 +100,7 @@ func (p *NewLangParser) Action() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		utils.UpdateLang(int(p.NewLang.Header.StateID), p.NewLang.Name, p.NewLang.Trans)
+		language.UpdateLang(int(p.NewLang.Header.StateID), p.NewLang.Name, p.NewLang.Trans)
 	}
 	return nil
 }

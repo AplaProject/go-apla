@@ -143,8 +143,8 @@ func TestBinMarshal(t *testing.T) {
 	host := `Unicode текст`
 	now := Time32()
 	node := test.HexToBytes(`20304350647f8f96a8`)
-	_, err = BinMarshal(&out, &consts.BlockHeader{Type: 0, BlockId: 1, Time: now, WalletId: 1})
-	_, err = BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1, Time: now, WalletId: 1, CitizenId: 0},
+	_, err = BinMarshal(&out, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: 1})
+	_, err = BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1, Time: now, WalletID: 1, CitizenID: 0},
 		PublicKey:     test.HexToBytes(`0102300040fffa6789`),
 		NodePublicKey: node,
 		Host:          host})
@@ -168,7 +168,7 @@ func TestBinMarshal(t *testing.T) {
 	if err = BinUnmarshal(&out, &first); err != nil {
 		t.Errorf(err.Error())
 	}
-	if first.Time != now || first.Host != host || first.WalletId != 1 ||
+	if first.Time != now || first.Host != host || first.WalletID != 1 ||
 		bytes.Compare(first.NodePublicKey, node) != 0 {
 		t.Errorf(`different unmarshaled %v`, first)
 	}
@@ -179,7 +179,7 @@ func TestBinMarshal(t *testing.T) {
 	inter = consts.MakeStruct(`FirstBlock`)
 	err = BinUnmarshal(&dup, inter)
 	p := inter.(*consts.FirstBlock)
-	if p.Time != now || p.Host != host || p.WalletId != 1 ||
+	if p.Time != now || p.Host != host || p.WalletID != 1 ||
 		bytes.Compare(p.NodePublicKey, node) != 0 {
 		t.Errorf(`different unmarshaled %v`, p)
 	}
@@ -190,7 +190,7 @@ func TestHeader(t *testing.T) {
 	now := Time32()
 	sign := test.HexToBytes(`0056575879`)
 	_, err := BinMarshal(&tx, &consts.CitizenRequest{TxHeader: consts.TxHeader{Type: 45, Time: now,
-		WalletId: 123, CitizenId: 456}, StateId: 78, Sign: sign})
+		WalletID: 123, CitizenID: 456}, StateID: 78, Sign: sign})
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -216,7 +216,7 @@ func TestHeader(t *testing.T) {
 
 func TestFieldToBytes(t *testing.T) {
 	first := consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1, Time: 2345,
-		WalletId: 67, CitizenId: 89},
+		WalletID: 67, CitizenID: 89},
 		PublicKey:     []byte(`010203`),
 		NodePublicKey: []byte(`040506`),
 		Host:          `070809`}

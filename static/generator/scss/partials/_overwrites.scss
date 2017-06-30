@@ -1,0 +1,25 @@
+.toolbox-reset {
+  background: inherit;
+  color: inherit;
+  display: inherit;
+  line-height: inherit;
+  margin: inherit;
+  padding: inherit;
+  -webkit-text-size-adjust: inherit;
+  -ms-text-size-adjust: inherit;
+
+  .collapse {
+    display: block;
+  }
+
+  .modal {
+    left: inherit;
+  }
+
+  .box i {
+    color: inherit; 
+    border: inherit; 
+    font-size: inherit; 
+    padding: inherit;
+  }
+}

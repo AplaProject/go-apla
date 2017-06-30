@@ -23,9 +23,10 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
+// CommonPage is a structure with common information about the user and state
 type CommonPage struct {
 	//Lang   map[string]string
 	Address   string
@@ -36,7 +37,9 @@ type CommonPage struct {
 }
 
 const ( // Type of pages
+	// TPage - template page
 	TPage = iota
+	// TJson - ajax json request
 	TJson
 )
 
@@ -77,6 +80,7 @@ func isPage(name string, itype uint8) bool {
 	return ok
 }
 
+// CallPage calls the page controller
 func CallPage(c *Controller, name string) string {
 	html, err := CallMethod(c, globPages[name].Name)
 	if err != nil {
@@ -86,7 +90,8 @@ func CallPage(c *Controller, name string) string {
 	return html
 }
 
-func CallJson(c *Controller, name string) []byte {
+// CallJSON calls the ajax controller
+func CallJSON(c *Controller, name string) []byte {
 	methodName := globPages[name].Name
 
 	var (
@@ -122,5 +127,5 @@ func CallJson(c *Controller, name string) []byte {
 }
 
 func proceedTemplate(с *Controller, html string, data interface{}) (string, error) {
-	return utils.ProceedTemplate(html, data)
+	return template.ProceedTemplate(html, data)
 }

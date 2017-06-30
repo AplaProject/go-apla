@@ -21,8 +21,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/shopspring/decimal"
 )
 
@@ -46,12 +46,12 @@ func history(r *http.Request) interface{} {
 		result History
 	)
 
-	wallet := lib.StringToAddress(r.FormValue(`wallet`))
+	wallet := converter.StringToAddress(r.FormValue(`wallet`))
 	if wallet == 0 {
 		result.Error = `Wallet is invalid`
 		return result
 	}
-	count := int(utils.StrToInt64(r.FormValue(`count`)))
+	count := int(converter.StrToInt64(r.FormValue(`count`)))
 	if count == 0 {
 		count = 50
 	}
@@ -59,17 +59,17 @@ func history(r *http.Request) interface{} {
 		count = 200
 	}
 	list := make([]histOper, 0)
-	current, err := utils.DB.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, wallet).String()
+	current, err := sql.DB.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, wallet).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	rb := utils.StrToInt64(current[`rb_id`])
+	rb := converter.StrToInt64(current[`rb_id`])
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
 		for len(list) < count && rb > 0 {
 			var data map[string]string
-			prev, err := utils.DB.OneRow(`select r.*, b.time from rollback as r
+			prev, err := sql.DB.OneRow(`select r.*, b.time from rollback as r
 			left join block_chain as b on b.id=r.block_id
 			where r.rb_id=?`, rb).String()
 			if err != nil {
@@ -80,7 +80,7 @@ func history(r *http.Request) interface{} {
 				result.Error = err.Error()
 				return result
 			}
-			rb = utils.StrToInt64(data[`rb_id`])
+			rb = converter.StrToInt64(data[`rb_id`])
 			//			fmt.Println(`DATA`, prev)
 			if amount, ok := data[`amount`]; ok {
 				var dif decimal.Decimal
@@ -94,26 +94,26 @@ func history(r *http.Request) interface{} {
 				if balance.Cmp(val) < 0 {
 					sign = `-`
 				}
-				dt := time.Unix(utils.StrToInt64(prev[`time`]), 0)
+				dt := time.Unix(converter.StrToInt64(prev[`time`]), 0)
 
-				list = append(list, histOper{BlockID: prev[`block_id`], Dif: sign + lib.EGSMoney(dif.String()),
-					Amount: balance.String(), EGS: lib.EGSMoney(balance.String()), Time: dt.Format(`02.01.2006 15:04:05`)})
+				list = append(list, histOper{BlockID: prev[`block_id`], Dif: sign + converter.EGSMoney(dif.String()),
+					Amount: balance.String(), EGS: converter.EGSMoney(balance.String()), Time: dt.Format(`02.01.2006 15:04:05`)})
 				balance = val
 
 			}
 		}
 	}
 	if rb == 0 {
-		first, err := utils.DB.OneRow(`select * from dlt_transactions where recipient_wallet_id=? order by id`, wallet).String()
+		first, err := sql.DB.OneRow(`select * from dlt_transactions where recipient_wallet_id=? order by id`, wallet).String()
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
 		if len(first) > 0 {
-			dt := time.Unix(utils.StrToInt64(first[`time`]), 0)
-			list = append(list, histOper{BlockID: first[`block_id`], Dif: `+` + lib.EGSMoney(first[`amount`]),
+			dt := time.Unix(converter.StrToInt64(first[`time`]), 0)
+			list = append(list, histOper{BlockID: first[`block_id`], Dif: `+` + converter.EGSMoney(first[`amount`]),
 				Amount: first[`amount`],
-				EGS:    lib.EGSMoney(first[`amount`]), Time: dt.Format(`02.01.2006 15:04:05`)})
+				EGS:    converter.EGSMoney(first[`amount`]), Time: dt.Format(`02.01.2006 15:04:05`)})
 		}
 	}
 	result.Items = list

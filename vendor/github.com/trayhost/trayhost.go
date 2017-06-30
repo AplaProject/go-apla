@@ -30,8 +30,11 @@ package trayhost
 
 import (
 	"reflect"
+	"time"
 	"unsafe"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
 
@@ -49,7 +52,6 @@ import "C"
 var isExiting bool
 var urlPtr unsafe.Pointer
 var log = logging.MustGetLogger("controllers")
-
 
 // Run the host system's event loop
 func EnterLoop(title string, imageData []byte) {
@@ -76,8 +78,8 @@ func EnterLoop(title string, imageData []byte) {
 
 	// If reached, user clicked Exit
 	isExiting = true
-	if utils.DB != nil && utils.DB.DB != nil {
-		err := utils.DB.ExecSql(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+	if sql.DB != nil && sql.DB.DB != nil {
+		err := sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}

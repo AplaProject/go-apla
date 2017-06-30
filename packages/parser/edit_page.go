@@ -86,3 +86,8 @@ func (p *EditPageParser) Rollback() error {
 func (p *EditPageParser) Header() *tx.Header {
 	return &p.EditPage.Header
 }
+
+// EditPageRollback rollbacks EditPage transaction
+func (p *Parser) EditPageRollback() error {
+	return p.autoRollback()
+}

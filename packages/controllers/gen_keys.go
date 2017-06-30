@@ -18,11 +18,12 @@ package controllers
 
 import (
 	"fmt"
-	//	"encoding/json"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
-const NGenKeys = `gen_keys`
+const nGenKeys = `gen_keys`
 
 type genKeysPage struct {
 	Data      *CommonPage
@@ -33,22 +34,23 @@ type genKeysPage struct {
 }
 
 func init() {
-	newPage(NGenKeys)
+	newPage(nGenKeys)
 }
 
+// GenKeys show information about generated and available keys
 func (c *Controller) GenKeys() (string, error) {
-	govAccount, _ := utils.StateParam(int64(c.SessStateId), `gov_account`)
-	if c.SessCitizenId != utils.StrToInt64(govAccount) {
+	govAccount, _ := template.StateParam(int64(c.SessStateID), `gov_account`)
+	if c.SessCitizenID != converter.StrToInt64(govAccount) {
 		return ``, fmt.Errorf(`Access denied`)
 	}
-	generated, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenId, c.SessStateId).Int64()
+	generated, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenID, c.SessStateID).Int64()
 	if err != nil {
 		return ``, err
 	}
-	available, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenId, c.SessStateId).Int64()
+	available, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenID, c.SessStateID).Int64()
 	if err != nil {
 		return ``, err
 	}
 	pageData := genKeysPage{Data: c.Data, Generated: generated, Available: available, Used: generated - available}
-	return proceedTemplate(c, NGenKeys, &pageData)
+	return proceedTemplate(c, nGenKeys, &pageData)
 }

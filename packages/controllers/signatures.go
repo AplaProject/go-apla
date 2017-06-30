@@ -22,12 +22,13 @@ import (
 
 type signaturesPage struct {
 	Lang       map[string]string
-	WalletId   int64
-	CitizenId  int64
+	WalletID   int64
+	CitizenID  int64
 	Signatures []map[string]string
 	Global     string
 }
 
+// Signatures shows the list of the additional signatures
 func (c *Controller) Signatures() (string, error) {
 
 	var err error
@@ -35,7 +36,7 @@ func (c *Controller) Signatures() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
 	if global == "" || global == "0" {
-		prefix = c.StateIdStr
+		prefix = c.StateIDStr
 		global = "0"
 	}
 
@@ -46,8 +47,8 @@ func (c *Controller) Signatures() (string, error) {
 
 	TemplateStr, err := makeTemplate("signatures_list", "signatures_list", &signaturesPage{
 		Lang:       c.Lang,
-		WalletId:   c.SessWalletId,
-		CitizenId:  c.SessCitizenId,
+		WalletID:   c.SessWalletID,
+		CitizenID:  c.SessCitizenID,
 		Signatures: signatures,
 		Global:     global})
 	if err != nil {

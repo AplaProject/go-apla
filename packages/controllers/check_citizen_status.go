@@ -20,39 +20,42 @@ import (
 	"encoding/hex"
 	//	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NCheckCitizen = `check_citizen_status`
+const nCheckCitizen = `check_citizen_status`
 
 type checkPage struct {
 	Data     *CommonPage
 	TxType   string
-	TxTypeId int64
+	TxTypeID int64
 	Values   map[string]string
-	Fields   []utils.FieldInfo
+	Fields   []template.FieldInfo
 }
 
 func init() {
-	newPage(NCheckCitizen)
+	newPage(nCheckCitizen)
 }
 
+// CheckCitizenStatus is controller for changing citizen status
 func (c *Controller) CheckCitizenStatus() (string, error) {
 	var err error
-	var lastId int64
+	var lastID int64
 
 	//test
 	if len(c.r.FormValue(`last_id`)) > 0 {
-		lastId = utils.StrToInt64(c.r.FormValue(`last_id`))
+		lastID = converter.StrToInt64(c.r.FormValue(`last_id`))
 	}
-	//	field, err := c.Single(`SELECT value FROM ` + c.StateIdStr + `_state_parameters where parameter='citizen_fields'`).String()
-	vals, err := c.OneRow(`select * from "`+c.StateIdStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastId).String()
+	//	field, err := c.Single(`SELECT value FROM ` + c.StateIDStr + `_state_parameters where parameter='citizen_fields'`).String()
+	vals, err := c.OneRow(`select * from "`+c.StateIDStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastID).String()
 	if err != nil {
 		return ``, err
 	}
-	fields := make([]utils.FieldInfo, 0)
+	fields := make([]template.FieldInfo, 0)
 	if len(vals) > 0 {
 		//		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
 		//		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
@@ -61,11 +64,11 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		/*		if err = json.Unmarshal([]byte(vals[`data`]), &data); err != nil {
 				return ``, err
 			}*/
-		contract := smart.GetContract(`TXCitizenRequest`, uint32(utils.StrToUint64(c.StateIdStr)))
+		contract := smart.GetContract(`TXCitizenRequest`, uint32(converter.StrToUint64(c.StateIDStr)))
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if fitem.Type.String() == `string` {
 				value := vals[`name`] //fitem.Name] //.(string)
-				fields = append(fields, utils.FieldInfo{Name: fitem.Name, HTMLType: "textinput",
+				fields = append(fields, template.FieldInfo{Name: fitem.Name, HTMLType: "textinput",
 					TxType: fitem.Type.String(), Title: fitem.Name,
 					Value: value})
 			}
@@ -73,6 +76,6 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public_key_0`])) //.(string)
 	}
 	txType := "TXNewCitizen"
-	return proceedTemplate(c, NCheckCitizen, &checkPage{Data: c.Data, Values: vals,
-		Fields: fields, TxType: txType, TxTypeId: utils.TypeInt(txType)})
+	return proceedTemplate(c, nCheckCitizen, &checkPage{Data: c.Data, Values: vals,
+		Fields: fields, TxType: txType, TxTypeID: utils.TypeInt(txType)})
 }

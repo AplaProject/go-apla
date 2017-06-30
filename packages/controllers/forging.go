@@ -17,7 +17,9 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -25,21 +27,21 @@ type forgingPage struct {
 	Lang         map[string]string
 	Title        string
 	MyWalletData map[string]string
-	WalletId     int64
-	CitizenId    int64
+	WalletID     int64
+	CitizenID    int64
 	TxType       string
-	TxTypeId     int64
+	TxTypeID     int64
 	TimeNow      int64
 }
 
+// Forging is a controller for DLTChangeHostVote transaction
 func (c *Controller) Forging() (string, error) {
 
 	txType := "DLTChangeHostVote"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
-	MyWalletData, err := c.OneRow("SELECT host, address_vote, fuel_rate FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
-	MyWalletData[`address`] = lib.AddressToString(c.SessWalletId)
+	MyWalletData, err := c.OneRow("SELECT host, address_vote, fuel_rate FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
+	MyWalletData[`address`] = converter.AddressToString(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -49,11 +51,11 @@ func (c *Controller) Forging() (string, error) {
 		Lang:         c.Lang,
 		MyWalletData: MyWalletData,
 		Title:        "modalAnonym",
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
+		WalletID:     c.SessWalletID,
+		CitizenID:    c.SessCitizenID,
 		TimeNow:      timeNow,
 		TxType:       txType,
-		TxTypeId:     txTypeId})
+		TxTypeID:     utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

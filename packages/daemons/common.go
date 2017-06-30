@@ -19,35 +19,38 @@ package daemons
 import (
 	"errors"
 	"flag"
-	"github.com/astaxie/beego/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/op/go-logging"
+	"fmt"
 	"os"
 	"strings"
-	"regexp"
-	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
-	"fmt"
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/astaxie/beego/config"
+	"github.com/op/go-logging"
 )
 
 var (
 	logger = logging.MustGetLogger("daemons")
 	/*DaemonCh        chan bool     = make(chan bool, 100)
 	AnswerDaemonCh  chan string   = make(chan string, 100)*/
-	MonitorDaemonCh chan []string = make(chan []string, 100)
+
+	// MonitorDaemonCh is a channel for daemons
+	MonitorDaemonCh = make(chan []string, 100)
 	configIni       map[string]string
 )
 
 type daemon struct {
-	*utils.DCDB
-	goRoutineName  string
+	*sql.DCDB
+	goRoutineName string
 	/*DaemonCh       chan bool
 	AnswerDaemonCh chan string*/
 	chBreaker chan bool
-	chAnswer chan string
-	sleepTime      int
+	chAnswer  chan string
+	sleepTime int
 }
 
-func (d *daemon) dbLock() (error, bool) {
+func (d *daemon) dbLock() (bool, error) {
 	return d.DbLock(d.chBreaker, d.chAnswer, d.goRoutineName)
 }
 
@@ -61,21 +64,21 @@ func (d *daemon) dSleep(sleep int) bool {
 		if CheckDaemonsRestart(d.chBreaker, d.chAnswer, d.goRoutineName) {
 			return true
 		}
-		utils.Sleep(1)
+		time.Sleep(time.Second)
 	}
 	return false
 }
 
-func (d *daemon) dPrintSleep(err_ interface{}, sleep int) bool {
+func (d *daemon) dPrintSleep(verr interface{}, sleep int) bool {
 	var err error
-	switch err_.(type) {
+	switch verr.(type) {
 	case string:
-		err = errors.New(err_.(string))
+		err = errors.New(verr.(string))
 	case error:
-		err = err_.(error)
+		err = verr.(error)
 	}
 
-	if err!=nil {
+	if err != nil {
 		logger.Error("%v (%v)", err, utils.GetParent())
 	}
 	if d.dSleep(sleep) {
@@ -96,7 +99,7 @@ func (d *daemon) unlockPrintSleep(err error, sleep int) bool {
 		if CheckDaemonsRestart(d.chBreaker, d.chAnswer, d.goRoutineName) {
 			return true
 		}
-		utils.Sleep(1)
+		time.Sleep(time.Second)
 	}
 	return false
 }
@@ -114,32 +117,34 @@ func (d *daemon) unlockPrintSleepInfo(err error, sleep int) bool {
 		if CheckDaemonsRestart(d.chBreaker, d.chAnswer, d.goRoutineName) {
 			return true
 		}
-		utils.Sleep(1)
+		time.Sleep(time.Second)
 	}
 	return false
 }
 
+// ConfigInit regularly reads config.ini file
 func ConfigInit() {
 	// мониторим config.ini на наличие изменений
+	// monitor config.ini for changes
 	go func() {
 		for {
 			logger.Debug("ConfigInit monitor")
 			if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
-				utils.Sleep(1)
+				time.Sleep(time.Second)
 				continue
 			}
-			configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
+			confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 			if err != nil {
 				logger.Error("%v", utils.ErrInfo(err))
 			}
-			configIni, err = configIni_.GetSection("default")
+			configIni, err = confIni.GetSection("default")
 			if err != nil {
 				logger.Error("%v", utils.ErrInfo(err))
 			}
 			if len(configIni["db_type"]) > 0 {
 				break
 			}
-			utils.Sleep(3)
+			time.Sleep(time.Second * 3)
 		}
 	}()
 }
@@ -149,6 +154,7 @@ func init() {
 
 }
 
+// CheckDaemonsRestart restarts daemons
 func CheckDaemonsRestart(chBreaker chan bool, chAnswer chan string, goRoutineName string) bool {
 	logger.Debug("CheckDaemonsRestart %v %v", goRoutineName, utils.Caller(2))
 	select {
@@ -161,26 +167,27 @@ func CheckDaemonsRestart(chBreaker chan bool, chAnswer chan string, goRoutineNam
 	return false
 }
 
-func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) *utils.DCDB {
+// DbConnect returns DB connection
+func DbConnect(chBreaker chan bool, chAnswer chan string, goRoutineName string) *sql.DCDB {
 	for {
 		if CheckDaemonsRestart(chBreaker, chAnswer, goRoutineName) {
 			return nil
 		}
-		if utils.DB == nil || utils.DB.DB == nil {
-			utils.Sleep(1)
+		if sql.DB == nil || sql.DB.DB == nil {
+			time.Sleep(time.Second)
 		} else {
-			return utils.DB
+			break
 		}
 	}
-	return nil
+	return sql.DB
 }
 
-
+// StartDaemons starts daemons
 func StartDaemons() {
 	utils.DaemonsChans = nil
-	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"CreatingBlockchain": CreatingBlockchain, "BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks,   "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection, "UpdFullNodes": UpdFullNodes}
+	daemonsStart := map[string]func(chBreaker chan bool, chAnswer chan string){"CreatingBlockchain": CreatingBlockchain, "BlockGenerator": BlockGenerator, "QueueParserTx": QueueParserTx, "QueueParserBlocks": QueueParserBlocks, "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection, "UpdFullNodes": UpdFullNodes}
 	if utils.Mobile() {
-		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"QueueParserTx": QueueParserTx, "Disseminator": Disseminator, "Confirmations": Confirmations,"BlocksCollection": BlocksCollection}
+		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"QueueParserTx": QueueParserTx, "Disseminator": Disseminator, "Confirmations": Confirmations, "BlocksCollection": BlocksCollection}
 	}
 	if *utils.TestRollBack == 1 {
 		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"BlocksCollection": BlocksCollection, "Confirmations": Confirmations}
@@ -191,17 +198,17 @@ func StartDaemons() {
 		for _, fns := range daemonsConf {
 			logger.Debug("start daemon %s", fns)
 			fmt.Println("start daemon ", fns)
-			var chBreaker chan bool = make(chan bool, 1)
-			var chAnswer chan string = make(chan string, 1)
+			chBreaker := make(chan bool, 1)
+			chAnswer := make(chan string, 1)
 			utils.DaemonsChans = append(utils.DaemonsChans, &utils.DaemonsChansType{ChBreaker: chBreaker, ChAnswer: chAnswer})
 			go daemonsStart[fns](chBreaker, chAnswer)
 		}
 	} else if configIni["daemons"] != "null" {
 		for dName, fns := range daemonsStart {
 			logger.Debug("start daemon %s", dName)
-			fmt.Println("start daemon ", fns)
-			var chBreaker chan bool = make(chan bool, 1)
-			var chAnswer chan string = make(chan string, 1)
+			//fmt.Println("start daemon ", fns)
+			chBreaker := make(chan bool, 1)
+			chAnswer := make(chan string, 1)
 			utils.DaemonsChans = append(utils.DaemonsChans, &utils.DaemonsChansType{ChBreaker: chBreaker, ChAnswer: chAnswer})
 			go fns(chBreaker, chAnswer)
 		}
@@ -209,17 +216,18 @@ func StartDaemons() {
 
 }
 
-
+/*
 func ClearDb(ChAnswer chan string, goroutineName string) error {
 
 	// остановим демонов, иначе будет паника, когда таблы обнулятся
+	// stop daemos or panic will occur when tables reset to zero
 	fmt.Println("ClearDb() Stop_daemons from DB!")
 	for _, ch := range utils.DaemonsChans {
 		fmt.Println("ch.ChBreaker<-true")
-		ch.ChBreaker<-true
+		ch.ChBreaker <- true
 	}
 	if len(goroutineName) > 0 {
-		ChAnswer<-goroutineName
+		ChAnswer <- goroutineName
 	}
 	for _, ch := range utils.DaemonsChans {
 		fmt.Println(<-ch.ChAnswer)
@@ -228,11 +236,12 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 	fmt.Println("ClearDb() Stop_daemons from DB OK")
 
 	// на всякий случай пометим, что работаем
-	err = utils.DB.ExecSql("UPDATE main_lock SET script_name = 'cleaning_db'")
+	// in case mark the we work
+	err = utils.DB.ExecSQL("UPDATE main_lock SET script_name = 'cleaning_db'")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	err = utils.DB.ExecSql("UPDATE config SET pool_tech_works = 1")
+	err = utils.DB.ExecSQL("UPDATE config SET pool_tech_works = 1")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -244,7 +253,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 		logger.Debug("table: %s", table)
 		if ok, _ := regexp.MatchString(`^[0-9_]*my_|^e_|install|^config|daemons|payment_systems|community|cf_lang|main_lock`, table); !ok {
 			logger.Debug("DELETE FROM %s", table)
-			err = utils.DB.ExecSql("DELETE FROM " + table)
+			err = utils.DB.ExecSQL("DELETE FROM " + table)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -258,7 +267,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 					return utils.ErrInfo(err)
 				}
 			} else if table == "admin" {
-				err = utils.DB.ExecSql("INSERT INTO admin (user_id) VALUES (1)")
+				err = utils.DB.ExecSQL("INSERT INTO admin (user_id) VALUES (1)")
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
@@ -270,6 +279,7 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 					err = utils.DB.SetAI(table, 1)
 				}
 				// только логируем, т.к. тут ошибка - это норм
+				// only log in, because here is an error (it is normal)
 				if err != nil {
 					logger.Error("%v", err)
 				}
@@ -277,17 +287,21 @@ func ClearDb(ChAnswer chan string, goroutineName string) error {
 		}
 	}
 
-	err = utils.DB.ExecSql("DELETE FROM main_lock")
+	err = utils.DB.ExecSQL("DELETE FROM main_lock")
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 
 	// запустим демонов
+	// start daemons
 	StartDaemons()
 	stopdaemons.Signals()
 	utils.Sleep(1)
-// мониторим сигнал из БД о том, что демонам надо завершаться
-// Похоже это не нужно так как WaitStopTime не прекращает работу и от демонов не зависит
-//	go stopdaemons.WaitStopTime()
+	// мониторим сигнал из БД о том, что демонам надо завершаться
+	// monitor signal from database that daemons have to be completed
+	// Похоже это не нужно так как WaitStopTime не прекращает работу и от демонов не зависит
+	// It doesn't seem need because WaitStopTime doesn't stop the work and doesn't depend on daemons
+	//	go stopdaemons.WaitStopTime()
 	return nil
 }
+*/

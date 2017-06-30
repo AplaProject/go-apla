@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -27,21 +27,15 @@ type modalAnonymPage struct {
 	CountSign    int
 	MyWalletData map[string]string
 	Address      string
-	WalletId     int64
-	CitizenId    int64
-	TxType       string
-	TxTypeId     int64
-	TimeNow      int64
+	WalletID     int64
+	CitizenID    int64
 }
 
+// ModalAnonym shows QR code of the wallet
 func (c *Controller) ModalAnonym() (string, error) {
 
-	txType := "DLTChangeHostVote"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
-
-	MyWalletData, err := c.OneRow("SELECT host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletId).String()
-	MyWalletData[`address`] = lib.AddressToString(c.SessWalletId)
+	MyWalletData, err := c.OneRow("SELECT host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
+	MyWalletData[`address`] = converter.AddressToString(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -51,12 +45,10 @@ func (c *Controller) ModalAnonym() (string, error) {
 		Lang:         c.Lang,
 		MyWalletData: MyWalletData,
 		Title:        "modalAnonym",
-		WalletId:     c.SessWalletId,
-		CitizenId:    c.SessCitizenId,
+		WalletID:     c.SessWalletID,
+		CitizenID:    c.SessCitizenID,
 		Address:      c.SessAddress,
-		TimeNow:      timeNow,
-		TxType:       txType,
-		TxTypeId:     txTypeId})
+	})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -19,12 +19,13 @@ package controllers
 import (
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
+// ChainInfo contains infromation about transaction
 type ChainInfo struct {
-	Id int64 `json:"id"`
+	ID int64 `json:"id"`
 	//	Hash    string `json:"hash"`
 	//	Wallet  int64  `json:"wallet_id"`
 	Address string `json:"wallet_address"`
@@ -33,6 +34,7 @@ type ChainInfo struct {
 	Tx   string `json:"tx"`
 }
 
+// ChainMsg contains latest transactions
 type ChainMsg struct {
 	Data   []ChainInfo `json:"data"`
 	Latest int64       `json:"latest"`
@@ -48,25 +50,27 @@ var (
 	chainList   = make([]ChainInfo, chainLimit)
 )
 
+// UpdateChain returns the latest transactions
 func UpdateChain(latest int64) (answer ChainMsg) {
 	answer.Data = make([]ChainInfo, 0)
-	for i := chainOff - 1; i >= 0 && len(answer.Data) < 10 && chainList[i].Id > latest; i-- {
+	for i := chainOff - 1; i >= 0 && len(answer.Data) < 10 && chainList[i].ID > latest; i-- {
 		answer.Data = append(answer.Data, chainList[i])
 		if i == chainOff-1 {
-			answer.Latest = chainList[i].Id
+			answer.Latest = chainList[i].ID
 		}
 	}
 	return
 }
 
+// GetChain updates information about transactions
 func GetChain() {
 	for {
-		if utils.DB.DB != nil {
+		if sql.DB.DB != nil {
 			// b.hash, b.state_id,
-			explorer, err := utils.DB.GetAll(`SELECT   b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
+			explorer, err := sql.DB.GetAll(`SELECT   b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
 			where b.id > $1	order by b.id desc limit 30 offset 0`, -1, chainLatest)
 			if err == nil && len(explorer) > 0 {
-				chainLatest = utils.StrToInt64(explorer[0][`id`])
+				chainLatest = converter.StrToInt64(explorer[0][`id`])
 				if chainOff+len(explorer) > chainLimit {
 					for i := 0; i < 50; i++ {
 						chainList[i] = chainList[chainOff-50+i]
@@ -75,14 +79,14 @@ func GetChain() {
 				}
 				for i := len(explorer); i > 0; i-- {
 					item := explorer[i-1]
-					wallet_id := utils.StrToInt64(item[`wallet_id`])
+					walletID := converter.StrToInt64(item[`wallet_id`])
 					address := ``
-					if wallet_id != 0 {
-						address = lib.AddressToString(wallet_id)
+					if walletID != 0 {
+						address = converter.AddressToString(walletID)
 					}
 
-					chainList[chainOff] = ChainInfo{Id: utils.StrToInt64(item[`id`]),
-						//Hash: hex.EncodeToString([]byte(item[`hash`])), Wallet: wallet_id,State: utils.StrToInt64(item[`state_id`]),
+					chainList[chainOff] = ChainInfo{ID: converter.StrToInt64(item[`id`]),
+						//Hash: hex.EncodeToString([]byte(item[`hash`])), Wallet: walletID,State: utils.StrToInt64(item[`state_id`]),
 						Address: address, Time: item[`time`], Tx: item[`tx`]}
 					chainOff++
 				}

@@ -17,19 +17,20 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type contractsPage struct {
 	Lang               map[string]string
-	WalletId           int64
-	CitizenId          int64
+	WalletID           int64
+	CitizenID          int64
 	AllStateParameters []string
 	StateSmartLaws     []map[string]string
 	Global             string
 }
 
+// Contracts is a handle function for showing the list of contracts
 func (c *Controller) Contracts() (string, error) {
 
 	var err error
@@ -37,7 +38,7 @@ func (c *Controller) Contracts() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
 	if global == "" || global == "0" {
-		prefix = c.StateIdStr
+		prefix = c.StateIDStr
 		global = "0"
 	}
 
@@ -49,7 +50,7 @@ func (c *Controller) Contracts() (string, error) {
 		if val[`wallet_id`] == `NULL` {
 			stateSmartLaws[ind][`wallet`] = ``
 		} else {
-			stateSmartLaws[ind][`wallet`] = lib.AddressToString(utils.StrToInt64(val[`wallet_id`]))
+			stateSmartLaws[ind][`wallet`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
 		}
 		if val[`active`] == `NULL` {
 			stateSmartLaws[ind][`active`] = ``
@@ -65,8 +66,8 @@ func (c *Controller) Contracts() (string, error) {
 
 	TemplateStr, err := makeTemplate("contracts", "contracts", &contractsPage{
 		Lang:               c.Lang,
-		WalletId:           c.SessWalletId,
-		CitizenId:          c.SessCitizenId,
+		WalletID:           c.SessWalletID,
+		CitizenID:          c.SessCitizenID,
 		StateSmartLaws:     stateSmartLaws,
 		Global:             global,
 		AllStateParameters: allStateParameters})

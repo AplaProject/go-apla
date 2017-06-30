@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"encoding/json"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -25,19 +27,20 @@ type rowHistoryPage struct {
 	Alert     string
 	Lang      map[string]string
 	History   []map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletID  int64
+	CitizenID int64
 	TableName string
-	StateId   int64
+	StateID   int64
 	Global    string
 	Columns   map[string]string
 }
 
+// RowHistory returns rollback data of the table
 func (c *Controller) RowHistory() (string, error) {
 
 	var history []map[string]string
-	rbId := utils.StrToInt64(c.r.FormValue("rbId"))
-	if rbId < 1 {
+	rbID := converter.StrToInt64(c.r.FormValue("rbId"))
+	if rbID < 1 {
 		return "", utils.ErrInfo(`Incorrect rbId`)
 	}
 	var tableName string
@@ -46,7 +49,7 @@ func (c *Controller) RowHistory() (string, error) {
 	}
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
+	prefix := c.StateIDStr
 	if global == "1" {
 		prefix = "global"
 	} else {
@@ -59,16 +62,16 @@ func (c *Controller) RowHistory() (string, error) {
 	columns["id"] = ""
 	columns["block_id"] = ""
 	for i := 0; i < 100; i++ {
-		data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbId).String()
+		data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		var messageMap map[string]string
 		json.Unmarshal([]byte(data["data"]), &messageMap)
-		rbId = utils.StrToInt64(messageMap["rb_id"])
+		rbID = converter.StrToInt64(messageMap["rb_id"])
 		messageMap["block_id"] = data["block_id"]
 		history = append(history, messageMap)
-		if rbId == 0 {
+		if rbID == 0 {
 			break
 		}
 	}
@@ -76,13 +79,13 @@ func (c *Controller) RowHistory() (string, error) {
 	TemplateStr, err := makeTemplate("row_history", "rowHistory", &rowHistoryPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		WalletId:  c.SessWalletId,
+		WalletID:  c.SessWalletID,
 		History:   history,
-		CitizenId: c.SessCitizenId,
+		CitizenID: c.SessCitizenID,
 		TableName: tableName,
 		Global:    global,
 		Columns:   columns,
-		StateId:   c.SessStateId})
+		StateID:   c.SessStateID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

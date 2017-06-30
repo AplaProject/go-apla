@@ -18,5 +18,6 @@
 
 package sendnotif
 
+// SendMobileNotification is reserved
 func SendMobileNotification(title, text string) {
 }

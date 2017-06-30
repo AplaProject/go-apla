@@ -17,27 +17,29 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type listOfTablesPage struct {
 	Alert     string
 	Lang      map[string]string
-	WalletId  int64
-	CitizenId int64
+	WalletID  int64
+	CitizenID int64
 	TxType    string
-	TxTypeId  int64
+	TxTypeID  int64
 	TimeNow   int64
 	Global    string
 	Tables    []map[string]string
 }
 
+// ListOfTables show the list of custom tables
 func (c *Controller) ListOfTables() (string, error) {
 
 	var err error
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
+	prefix := c.StateIDStr
 	if global == "1" {
 		prefix = "global"
 	}
@@ -50,15 +52,15 @@ func (c *Controller) ListOfTables() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		tables[i]["count"] = utils.Int64ToStr(count)
+		tables[i]["count"] = converter.Int64ToStr(count)
 	}
 
 	TemplateStr, err := makeTemplate("list_of_tables", "listOfTables", &listOfTablesPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		Tables:    tables})
 	if err != nil {
 		return "", utils.ErrInfo(err)

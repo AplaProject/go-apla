@@ -21,32 +21,33 @@ import (
 	"fmt"
 	"time"
 
-	//	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+// SaveQueue write a transaction in the queue of transactions
 func (c *Controller) SaveQueue() (string, error) {
 	var err error
 	c.r.ParseForm()
 
-	citizenId := c.SessCitizenId
-	walletId := c.SessWalletId
+	citizenID := c.SessCitizenID
+	walletID := c.SessWalletID
 
-	log.Debug("citizenId %d / walletId %d ", citizenId, walletId)
+	log.Debug("citizenID %d / walletID %d ", citizenID, walletID)
 
-	if citizenId <= 0 && walletId == 0 {
-		return `{"result":"incorrect citizenId || walletId"}`, nil
+	if citizenID <= 0 && walletID == 0 {
+		return `{"result":"incorrect citizenID || walletID"}`, nil
 	}
 
-	txTime := utils.StrToInt64(c.r.FormValue("time"))
+	txTime := converter.StrToInt64(c.r.FormValue("time"))
 	if !utils.CheckInputData(txTime, "int") {
 		return `{"result":"incorrect time"}`, nil
 	}
-	txType_ := c.r.FormValue("type")
-	if !utils.CheckInputData(txType_, "type") {
+	itxType := c.r.FormValue("type")
+	if !utils.CheckInputData(itxType, "type") {
 		return `{"result":"incorrect type"}`, nil
 	}
 
@@ -58,26 +59,26 @@ func (c *Controller) SaveQueue() (string, error) {
 		publicKey = []byte("null")
 	}
 	//	fmt.Printf("PublicKey %d %x\r\n", lenpub, publicKey)
-	txType := utils.TypeInt(txType_)
+	txType := utils.TypeInt(itxType)
 	sign := make([]byte, 0)
-	signature, err := lib.JSSignToBytes(c.r.FormValue("signature1"))
+	signature, err := crypto.JSSignToBytes(c.r.FormValue("signature1"))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 	if len(signature) > 0 {
-		sign = append(sign, utils.EncodeLengthPlusData(signature)...)
+		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
 	}
 	if len(sign) == 0 {
 		return `{"result":"signature is empty"}`, nil
 	}
 	fmt.Printf("Len sign %d\r\n", len(sign))
-	log.Debug("txType_", txType_)
-	log.Debug("txType", txType)
+	log.Debug("txType_", itxType)
+	log.Debug("txType", itxType)
 
-	userId := walletId
-	stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-	if stateId > 0 {
-		userId = citizenId
+	userID := walletID
+	stateID := converter.StrToInt64(c.r.FormValue("stateId"))
+	if stateID > 0 {
+		userID = citizenID
 	}
 
 	var (
@@ -85,35 +86,35 @@ func (c *Controller) SaveQueue() (string, error) {
 		//		key  []byte
 	)
 	var toSerialize interface{}
-	header := tx.Header{Type: int(txType), Time: txTime, UserID: userId, StateID: stateId, PublicKey: publicKey, BinSignatures: sign}
-	switch txType_ {
+	header := tx.Header{Type: int(txType), Time: txTime, UserID: userID, StateID: stateID, PublicKey: publicKey, BinSignatures: sign}
+	switch itxType {
 	case "NewColumn", "AppendPage", "AppendMenu", "EditPage", "NewPage", "EditTable",
 		"EditStateParameters", "NewStateParameters", "NewContract", "EditContract", "NewMenu",
 		"EditMenu", "NewTable":
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if stateId > 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := converter.StrToInt64(c.r.FormValue("stateId"))
+		if stateID > 0 {
+			userID = citizenID
 		}
-		if stateId == 0 {
+		if stateID == 0 {
 			return "", utils.ErrInfo(fmt.Errorf(`StateId is not defined`))
 		}
-		header.UserID = userId
-		header.StateID = stateId
+		header.UserID = userID
+		header.StateID = stateID
 	case "DLTTransfer", "DLTChangeHostVote", "NewState", "ChangeNodeKeyDLT":
 		header.StateID = 0
 	case "EditWallet", "ActivateContract":
-		userId := walletId
-		stateId := utils.StrToInt64(c.r.FormValue("stateId"))
-		if userId == 0 {
-			userId = citizenId
+		userID := walletID
+		stateID := converter.StrToInt64(c.r.FormValue("stateId"))
+		if userID == 0 {
+			userID = citizenID
 		}
-		header.UserID = userId
-		header.StateID = stateId
+		header.UserID = userID
+		header.StateID = stateID
 	default:
 	}
 
-	switch txType_ {
+	switch itxType {
 	case "DLTTransfer":
 		comment_ := c.r.FormValue("comment")
 		if len(comment_) == 0 {
@@ -273,21 +274,21 @@ func (c *Controller) SaveQueue() (string, error) {
 			Conditions: c.r.FormValue("conditions"),
 		}
 	case "NewAccount":
-		accountId := utils.StrToInt64(c.r.FormValue("accountId"))
+		accountID := converter.StrToInt64(c.r.FormValue("accountId"))
 		pubKey, err := hex.DecodeString(c.r.FormValue("pubkey"))
-		if accountId == 0 || stateId == 0 || userId == 0 || err != nil {
+		if accountID == 0 || stateID == 0 || userID == 0 || err != nil {
 			return ``, fmt.Errorf(`incorrect NewAccount parameters`)
 		}
 		encKey := c.r.FormValue("prvkey")
 		if len(encKey) == 0 {
 			return ``, fmt.Errorf(`incorrect encrypted key`)
 		}
-		err = c.ExecSql(fmt.Sprintf(`INSERT INTO "%d_anonyms" (id_citizen, id_anonym, encrypted)
-			VALUES (?,?,[hex])`, stateId), userId, accountId, encKey)
+		err = c.ExecSQL(fmt.Sprintf(`INSERT INTO "%d_anonyms" (id_citizen, id_anonym, encrypted)
+			VALUES (?,?,[hex])`, stateID), userID, accountID, encKey)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		header.UserID = accountId
+		header.UserID = accountID
 		toSerialize = tx.NewAccount{header, pubKey}
 	case "ChangeNodeKey", "ChangeNodeKeyDLT":
 		publicKey := []byte(c.r.FormValue("publicKey"))
@@ -297,12 +298,12 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		myWalletId, err := c.GetMyWalletId()
+		myWalletID, err := c.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		if myWalletId == walletId {
-			err = c.ExecSql(`INSERT INTO my_node_keys (
+		if myWalletID == walletID {
+			err = c.ExecSQL(`INSERT INTO my_node_keys (
 									public_key,
 									private_key
 								)
@@ -315,13 +316,13 @@ func (c *Controller) SaveQueue() (string, error) {
 			}
 		}
 		header.PublicKey = publicKey
-		if txType_ == "ChangeNodeKeyDLT" {
-			toSerialize = tx.DLTChangeNodeKey{header, utils.HexToBin(publicKey)}
+		if itxType == "ChangeNodeKeyDLT" {
+			toSerialize = tx.DLTChangeNodeKey{header, converter.HexToBin(publicKey)}
 		} else {
-			toSerialize = tx.ChangeNodeKey{header, utils.HexToBin(publicKey)}
+			toSerialize = tx.ChangeNodeKey{header, converter.HexToBin(publicKey)}
 		}
 	}
-	transactionTypeBin := utils.DecToBin(txType, 1)
+	transactionTypeBin := converter.DecToBin(txType, 1)
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		return "", utils.ErrInfo(err)
@@ -331,9 +332,13 @@ func (c *Controller) SaveQueue() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	md5 := utils.Md5(data)
 
-	err = c.ExecSql(`INSERT INTO transactions_status (
+	hash, err := crypto.Hash(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	hash = converter.BinToHex(hash)
+	err = c.ExecSQL(`INSERT INTO transactions_status (
 				hash,
 				time,
 				type,
@@ -346,20 +351,21 @@ func (c *Controller) SaveQueue() (string, error) {
 				?,
 				?,
 				?
-			)`, md5, time.Now().Unix(), txType, walletId, citizenId)
+			)`, hash, time.Now().Unix(), txType, walletID, citizenID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", md5, utils.BinToHex(data))
-	err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, utils.BinToHex(data))
+	log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", hash, converter.BinToHex(data))
+	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, converter.BinToHex(data))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	return `{"hash":"` + string(md5) + `"}`, nil
+	return `{"hash":"` + string(hash) + `"}`, nil
 }
 
+// CheckInputData calls utils.CheckInputData for the each item of the map
 func CheckInputData(data map[string]string) error {
 	for k, v := range data {
 		if !utils.CheckInputData(k, v) {

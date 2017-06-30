@@ -30,8 +30,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	tpl "github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 )
 
@@ -50,6 +53,7 @@ func genPass(length int) string {
 	return string(ret)
 }
 
+// IsPassValid checks password and update passwords list
 func IsPassValid(pass, psw string) bool {
 	passMutex.Lock()
 	defer passMutex.Unlock()
@@ -82,6 +86,7 @@ func IsPassValid(pass, psw string) bool {
 	return passwords[psw]
 }
 
+// Content is the main controller
 func Content(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -99,20 +104,20 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletId(sess)
-	sessCitizenId := GetSessCitizenId(sess)
-	sessStateId := GetSessInt64("state_id", sess)
+	sessWalletID := GetSessWalletID(sess)
+	sessCitizenID := GetSessCitizenID(sess)
+	sessStateID := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 	//	sessAccountId := GetSessInt64("account_id", sess)
-	log.Debug("sessWalletId %v / sessCitizenId %v / sessStateId %v", sessWalletId, sessCitizenId, sessStateId)
+	log.Debug("sessWalletID %v / sessCitizenID %v / sessStateID %v", sessWalletID, sessCitizenID, sessStateID)
 
 	c := new(Controller)
 	c.r = r
 	c.w = w
 	c.sess = sess
-	c.SessWalletId = sessWalletId
-	c.SessCitizenId = sessCitizenId
-	c.SessStateId = sessStateId
+	c.SessWalletID = sessWalletID
+	c.SessCitizenID = sessCitizenID
+	c.SessStateID = sessStateID
 	c.SessAddress = sessAddress
 
 	c.ContentInc = true
@@ -128,13 +133,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	if dbInit {
 		var err error
 		//c.DCDB, err = utils.NewDbConnect(configIni)
-		c.DCDB = utils.DB
+		c.DCDB = sql.DB
 		if c.DCDB.DB == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
 		if dbInit {
 			// отсутвие таблы выдаст ошибку, значит процесс инсталяции еще не пройден и надо выдать 0-й шаг
+			// the absence of table will show the mistake, this means that the process of installation is not finished and zero-step should be shown
 			_, err = c.DCDB.Single("SELECT progress FROM install").String()
 			if err != nil {
 				log.Error("%v", err)
@@ -143,14 +149,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	stateName := ""
-	if sessStateId > 0 {
-		stateName, err = c.GetStateName(sessStateId)
+	if sessStateID > 0 {
+		stateName, err = c.GetStateName(sessStateID)
 		if err != nil {
 			log.Error("%v", err)
 		}
 		c.StateName = stateName
-		c.StateId = sessStateId
-		c.StateIdStr = utils.Int64ToStr(sessStateId)
+		c.StateID = sessStateID
+		c.StateIDStr = converter.Int64ToStr(sessStateID)
 	}
 
 	c.dbInit = dbInit
@@ -167,19 +173,21 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Инфа о последнем блоке
+		// Information about the last block
 		blockData, err := c.DCDB.GetLastBlockData()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		//время последнего блока
+		// time of the last block
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-		confirmedBlockId, err := c.GetConfirmedBlockId()
+		confirmedBlockID, err := c.GetConfirmedBlockID()
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.ConfirmedBlockId = confirmedBlockId
+		c.ConfirmedBlockID = confirmedBlockID
 
 	}
 	r.ParseForm()
@@ -207,12 +215,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("tpl_name=", tplName)
 	// если в параметрах пришел язык, то установим его
-	newLang := utils.StrToInt(c.Parameters["lang"])
+	// if the language has come in parameters, install it
+	newLang := converter.StrToInt(c.Parameters["lang"])
 	if newLang > 0 {
 		log.Debug("newLang", newLang)
 		SetLang(w, r, newLang)
 	}
 	// уведомления
+	// notifications
 	//if utils.CheckInputData(parameters["alert"], "alert") {
 	c.Alert = c.Parameters["alert"]
 	//}
@@ -232,44 +242,47 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	match, _ := regexp.MatchString("^(installStep[0-9_]+)|(blockExplorer)$", tplName)
 	// CheckInputData - гарантирует, что tplName чист
-	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletId != 0 || sessCitizenId > 0 || len(sessAddress) > 0 || match) {
-		tplName = tplName
+	// CheckInputData - ensures that tplName is clean
+	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletID != 0 || sessCitizenID > 0 || len(sessAddress) > 0 || match) {
 	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
 		// первый запуск, еще не загружен блокчейн
+		// the first running, blockchain is not uploaded yet
 		tplName = "updatingBlockchain"
-	} else if dbInit && installProgress == "complete" && (sessWalletId != 0 || sessCitizenId > 0 || len(sessAddress) > 0) {
+	} else if dbInit && installProgress == "complete" && (sessWalletID != 0 || sessCitizenID > 0 || len(sessAddress) > 0) {
 		tplName = "dashboardAnonym"
 	} else if dbInit && installProgress == "complete" {
 		if tplName != "loginECDSA" {
 			tplName = "login"
 		}
 	} else {
-		tplName = "installStep0" // самый первый запуск
+		tplName = "installStep0" // самый первый запуск // the very first launch
 	}
 	log.Debug("dbInit", dbInit, "installProgress", installProgress, "configExists", configExists)
 	log.Debug("tplName>>>>>>>>>>>>>>>>>>>>>>", tplName)
 
 	// идет загрузка блокчейна
+	// blockchain is loading
 	wTime := int64(2)
 	if configIni != nil && configIni["test_mode"] == "1" {
 		wTime = 2 * 365 * 86400
 		log.Debug("%v", wTime)
 		log.Debug("%v", lastBlockTime)
 	}
-	if dbInit && tplName != "installStep0" && (utils.Time()-lastBlockTime > 3600*wTime) && len(configExists) > 0 {
+	now := time.Now().Unix()
+	if dbInit && tplName != "installStep0" && (now-lastBlockTime > 3600*wTime) && len(configExists) > 0 {
 		tplName = "updatingBlockchain"
 	}
-	log.Debug("lastBlockTime %v / utils.Time() %v / wTime %v", lastBlockTime, utils.Time(), wTime)
+	log.Debug("lastBlockTime %v / utils.Time() %v / wTime %v", lastBlockTime, now, wTime)
 
 	if tplName == "installStep0" {
 		log.Debug("ConfigInit monitor")
 		if _, err := os.Stat(*utils.Dir + "/config.ini"); err == nil {
 
-			configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
+			confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
-			configIni, err = configIni_.GetSection("default")
+			configIni, err = confIni.GetSection("default")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -285,9 +298,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		tplName = "login"
 	}
 
-	log.Debug("tplName::", tplName, sessCitizenId, sessWalletId, installProgress)
+	log.Debug("tplName::", tplName, sessCitizenID, sessWalletID, installProgress)
 
-	fmt.Println("tplName::", tplName, sessCitizenId, sessWalletId, sessAddress)
+	fmt.Println("tplName::", tplName, sessCitizenID, sessWalletID, sessAddress)
 	controller := r.FormValue("controllerHTML")
 	if val, ok := configIni[`psw`]; ok && ((tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0) {
 		if psw, err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
@@ -333,15 +346,15 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	if len(pageName) > 0 && isPage(pageName, TPage) {
 		c.Data = &CommonPage{
 			Address:   c.SessAddress,
-			WalletId:  c.SessWalletId,
-			CitizenId: c.SessCitizenId,
-			StateId:   c.SessStateId,
+			WalletId:  c.SessWalletID,
+			CitizenId: c.SessCitizenID,
+			StateId:   c.SessStateID,
 			StateName: stateName,
 		}
 		w.Write([]byte(CallPage(c, pageName)))
 		return
 	}
-	if len(tplName) > 0 && (sessCitizenId > 0 || sessWalletId != 0 || len(sessAddress) > 0) && installProgress == "complete" {
+	if len(tplName) > 0 && (sessCitizenID > 0 || sessWalletID != 0 || len(sessAddress) > 0) && installProgress == "complete" {
 
 		if tplName == "login" {
 			tplName = "dashboard_anonym"
@@ -360,7 +373,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		/*		if dbInit {
 				// Если у юзера только 1 праймари ключ, то выдавать форму, где показываются данные для подписи и форма ввода подписи не нужно.
+				// If user has the only one primary key, there is no need to give the form where data for signatures and form for input are shown.
 				// Только если он сам не захочет, указав это в my_table
+				// But if he wants, he should point this into my_table
 				c.ShowSignData = false
 			}*/
 
@@ -376,12 +391,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Debug("tplName==", tplName)
 
 		// подсвечиваем красным номер блока, если идет процесс обновления
+		// We highlight the block number in red if the update process is in progress
 		var blockJs string
-		blockId, err := c.GetBlockId()
+		blockID, err := c.GetBlockID()
 		if err != nil {
 			log.Error("%v", err)
 		}
-		blockJs = "$('#block_id').html(" + utils.Int64ToStr(blockId) + ");$('#block_id').css('color', '#428BCA');"
+		blockJs = "$('#block_id').html(" + converter.Int64ToStr(blockID) + ");$('#block_id').css('color', '#428BCA');"
 
 		w.Write([]byte(`<script>
 								$( document ).ready(function() {
@@ -390,8 +406,8 @@ func Content(w http.ResponseWriter, r *http.Request) {
 								</script>`))
 		skipRestrictedUsers := []string{"cashRequestIn", "cashRequestOut", "upgrade", "notifications"}
 
-		if c.StateId > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
-			tpl, err := utils.CreateHtmlFromTemplate("dashboard_default", sessCitizenId, sessStateId, &map[string]string{})
+		if c.StateID > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
+			tpl, err := tpl.CreateHTMLFromTemplate("dashboard_default", sessCitizenID, sessStateID, &map[string]string{})
 			if err != nil {
 				log.Error("%v", err)
 				return
@@ -400,9 +416,11 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// тем, кто не зареган на пуле не выдаем некоторые страницы
-		if !utils.InSliceString(tplName, skipRestrictedUsers) {
+		// тем, кто не зареган на пуле,не выдаем некоторые страницы
+		// We don't give some pages for ones who are not registered in the pool
+		if !converter.InSliceString(tplName, skipRestrictedUsers) {
 			// вызываем контроллер в зависимости от шаблона
+			// We call controller depending on template
 			html, err := CallController(c, tplName)
 			if err != nil {
 				log.Error("%v", err)
@@ -417,12 +435,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		log.Debug("tplName", tplName)
 		html := ""
 		// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
+		// if session has been resetted during the navigation of the admin area, instead of login we'll send to / to clear the menu
 		if len(r.FormValue("tpl_name")) > 0 && tplName == "login" {
 			log.Debug("window.location.href = /")
 			w.Write([]byte("<script language=\"javascript\">window.location.href = \"/\"</script>If you are not redirected automatically, follow the <a href=\"/\">/</a>"))
 			return
 		}
 		// вызываем контроллер в зависимости от шаблона
+		// We call controller depending on template
 		html, err = CallController(c, tplName)
 		if err != nil {
 			log.Error("%v", err)

@@ -32,6 +32,7 @@
 		  <div class="pull-right">
 			  <button type="button" class="btn btn-green" onclick="load_page('interface', {global: 1})"><em class="fa fa-globe fa-fw mr-sm"></em><span class="lang" lang-id="global"></span></button>
 			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}} } )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_page"></span></button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}}, block: 1} )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_block">Add block</span></button>
 			  <button type="button" class="btn btn-default" onclick="load_page('newMenu', {global: {{.Global}}} )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_menu"></span></button>
 		  </div>
 		  <span class="lang" lang-id="interface"></span>
@@ -40,6 +41,7 @@
 		<div class="content-heading">
 		  <div class="pull-right">
 			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}} } )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_page"></span></button>
+			  <button type="button" class="btn btn-default" onclick="load_page('newPage', {global: {{.Global}}, block: 1 } )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_block">Add block</span></button>
 			  <button type="button" class="btn btn-default" onclick="load_page('newMenu', {global: {{.Global}}} )"><em class="fa fa-plus-circle fa-fw mr-sm"></em><span class="lang" lang-id="add_menu"></span></button>
 		  </div>
 		  <span class="lang" lang-id="global"></span>
@@ -72,7 +74,7 @@
 			 </div>
 			</div>
 		</div>
-		<div class="col-md-4 two_col">
+		<div class="col-md-4 two_col align-content-start">
 			<div class="panel panel-primary">
 				<div class="panel-heading">
 					<div class="panel-title">
@@ -90,6 +92,27 @@
 							 </tr>
 						  {{end}}
 						  </tbody>
+					   </table>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<div class="panel-title">
+						<span class="lang" lang-id="blocks">Blocks</span>
+					</div>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+					   <table class="table table-striped table-bordered table-hover">
+						  <tbody>
+						{{ range $value := .InterfaceBlocks }}
+						 <tr>
+							 <td><strong>{{$value.name}}</strong></td>
+							 <td width="50"><button type="button" class="btn btn-labeled btn-default" onclick="load_page('editPage', {name: {{$value.name}}, global: {{$.Global}} } )"><span class="btn-label"><em class="fa fa-edit"></em></span></button></td>
+						 </tr>
+					  {{end}}						  </tbody>
 					   </table>
 					</div>
 				</div>

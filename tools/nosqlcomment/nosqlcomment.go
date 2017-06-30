@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
@@ -16,15 +16,15 @@ func main() {
 	flag.Parse()
 	outfile := filepath.Base(*sql)
 	ext := filepath.Ext(outfile)
-	outfile = filepath.Dir(*sql) +`/` + outfile[:len(outfile)-len(ext)] + `-new` + ext
+	outfile = filepath.Dir(*sql) + `/` + outfile[:len(outfile)-len(ext)] + `-new` + ext
 	if sqlText, err := ioutil.ReadFile(*sql); err != nil {
-		fmt.Println( err.Error())
+		fmt.Println(err.Error())
 	} else {
 		tmp := strings.Replace(string(sqlText), ` COMMENT=`, ` COMMENT =`, -1)
-		parts := strings.Split( strings.Replace(tmp, ` comment=`, ` COMMENT =`, -1), ` COMMENT`)
-		pattern := regexp.MustCompile( `(?i)^[=\s]+'[^']*'`) //`^\s*"[^"]*"\s*,`)
+		parts := strings.Split(strings.Replace(tmp, ` comment=`, ` COMMENT =`, -1), ` COMMENT`)
+		pattern := regexp.MustCompile(`(?i)^[=\s]+'[^']*'`) //`^\s*"[^"]*"\s*,`)
 		output := ``
-		for _,item := range parts {
+		for _, item := range parts {
 			found := pattern.FindStringIndex(item)
 			if found == nil {
 				output += item
@@ -33,7 +33,7 @@ func main() {
 			}
 		}
 		if err := ioutil.WriteFile(outfile, []byte(output), 0644); err != nil {
-			fmt.Println( err.Error())
-		} 
+			fmt.Println(err.Error())
+		}
 	}
 }

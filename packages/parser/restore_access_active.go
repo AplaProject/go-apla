@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -36,7 +37,7 @@ func (p *RestoreAccessActiveParser) Init() error {
 		return p.ErrInfo(err)
 	}
 	p.RestoreAccessActive = restoreAccessActive
-	p.SecretHex = string(utils.BinToHex(p.RestoreAccessActive.Secret))
+	p.SecretHex = string(converter.BinToHex(p.RestoreAccessActive.Secret))
 	if p.SecretHex == "30" {
 		p.Active = 0
 	} else {
@@ -77,7 +78,7 @@ func (p *RestoreAccessActiveParser) Validate() error {
 }
 
 func (p *RestoreAccessActiveParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.Active, p.RestoreAccessActive.Secret}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccessActive.Header.StateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.Active, p.RestoreAccessActive.Secret}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccessActive.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

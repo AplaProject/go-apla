@@ -26,18 +26,25 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// В данном файле реализован лексический анализ входящей программы. Это первый этап компиляции,
+// при котором входящий текст разбивается на последовательность лексем.
+// The lexical analysis of the incoming program is implemented in this file. It is the first phase of compilation
+// where the incoming text is divided into a sequence of lexemes.
+
 const (
 	//	lexUnknown = iota
-	lexSys = iota + 1
-	lexOper
-	lexNumber
-	lexIdent
-	lexNewLine
-	lexString
-	lexComment
-	lexKeyword
-	lexType
-	lexExtend
+	// Здесь перечислены все создаваемые лексемы
+	// Here are all the created lexemes
+	lexSys     = iota + 1 // системная лексема - это разные скобки, =, запятая и т.п. // a system lexeme is different bracket, =, comma and so on.
+	lexOper               // Оператор - это всякие +, -, *, / // Operator is +, -, *, /
+	lexNumber             // Число // Number
+	lexIdent              // Идентификатор // Identifier
+	lexNewLine            // Перевод строки // Line translation
+	lexString             // Строка // String
+	lexComment            // Комментарий // Comment
+	lexKeyword            // Ключевое слово // Key word
+	lexType               // Имя типа // Name of the type
+	lexExtend             // Обращение к внешней переменной или функции - $myname // Referring to an external variable or function - $myname
 
 	lexError = 0xff
 	// flags of lexical states
@@ -46,7 +53,8 @@ const (
 	lexfPop  = 4
 	lexfSkip = 8
 
-	// System characters
+	// System characters    константы для системных лексем
+	// Constants for system lexemes
 	isLPar   = 0x2801 // (
 	isRPar   = 0x2901 // )
 	isComma  = 0x2c01 // ,
@@ -56,7 +64,8 @@ const (
 	isLBrack = 0x5b01 // [
 	isRBrack = 0x5d01 // ]
 
-	// Operators
+	// Operators  константы для операций
+	// Constants for operations
 	isNot      = 0x0021 // !
 	isAsterisk = 0x002a // *
 	isPlus     = 0x002b // +
@@ -76,6 +85,8 @@ const (
 
 const (
 	// The list of keyword identifiers
+	// Константы для ключевых слов
+	// Constants for keywords
 	//	keyUnknown = iota
 	keyContract = iota + 1
 	keyFunc
@@ -98,12 +109,17 @@ const (
 )
 
 var (
+	// Список ключевых слов
+	// The list of key words
 	keywords = map[string]uint32{`contract`: keyContract, `func`: keyFunc, `return`: keyReturn,
 		`if`: keyIf, `else`: keyElse, `error`: keyError, `warning`: keyWarning, `info`: keyInfo,
 		`while`: keyWhile, `data`: keyTX, `nil`: keyNil, `action`: keyAction, `conditions`: keyCond,
 		`true`: keyTrue, `false`: keyFalse, `break`: keyBreak, `continue`: keyContinue, `var`: keyVar}
 	// list of available types
-	types = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
+	// Список типов которые хранят соответствующие reflect типы
+	// The list of types which save the corresponding 'reflect' type
+	types = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `by
+tes`: reflect.TypeOf([]byte{}),
 		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
 		`array`: reflect.TypeOf([]interface{}{}),
 		`map`:   reflect.TypeOf(map[string]interface{}{}), `money`: reflect.TypeOf(decimal.New(0, 0)),
@@ -121,6 +137,14 @@ type Lexem struct {
 // Lexems is a slice of lexems
 type Lexems []*Lexem
 
+// Лексический разбор происходит на основе конечного автомата, который описан в файле
+// tools/lextable/lextable.go. lextable.go генерирует представление конечного автомата в виде массива
+// и записывает его в файл lex_table.go. По сути, массив lexTable - это набор состояний и
+// в зависимости от очередного символа автомат переходит в новое состояние.
+// The lexical analysis is based on the finite machine which is described in the file
+// tools/lextable/lextable.go. lextable.go generates a representation of a finite machine as an array
+// and records it in the file lex_table.go. In fact, the lexTable array is a set of states and
+// depending on the next sign, the machine goes into a new state.
 // lexParser parsers the input language source code
 func lexParser(input []rune) (Lexems, error) {
 	var (
@@ -131,6 +155,10 @@ func lexParser(input []rune) (Lexems, error) {
 	lexems := make(Lexems, 0, len(input)/4)
 	irune := len(alphabet) - 1
 
+	// Эта функция по очередному символу смотрит с помощью lexTable какое у нас будет новое состояние,
+	// получили ли лексему и какие флаги выставлены
+	// This function according to the next symbol looks with help of lexTable what new state we will have,
+	// whether we got the lexeme and what flags are displayed
 	todo := func(r rune) {
 		var letter uint8
 		if r > 127 {
@@ -147,6 +175,8 @@ func lexParser(input []rune) (Lexems, error) {
 	line = 1
 	skip := false
 	for off < length {
+		// Здесь мы перебираем символы один за другим
+		// Here we go through the symbols one by one
 		if off == length-1 {
 			todo(rune(' '))
 		} else {
@@ -161,8 +191,15 @@ func lexParser(input []rune) (Lexems, error) {
 			skip = true
 			continue
 		}
-
+		// Если у нас автомат определил законченную лексему, то мы записываем ее в список лексем.
+		// If machine determined the completed lexeme, we record it in the list of lexemes.
 		if lexID > 0 {
+			// Мы не заводим стэк для символов, а запоминаем смещение, когда начался разбор лексемы.
+			// Для получения строки лексемы мы берем подстроку от начального смещения до текущего.
+			// В качестве значений мы сразу пишем строку, число или двоичное представление операций.
+			// We do not start a stack for symbols but memorize the displacement when the parse of lexeme began.
+			// To get a string of a lexeme we take a substring from the initial displacement to the current one.
+			// We immediately write a string as values, a number or a binary representation of operations.
 			lexOff := off
 			if (flags & lexfPop) != 0 {
 				lexOff = start

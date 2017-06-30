@@ -17,9 +17,9 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
-
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -34,7 +34,7 @@ func (p *ChangeNodeKeyParser) Init() error {
 		return p.ErrInfo(err)
 	}
 	p.ChangeNodeKey = changeNodeKey
-	p.ChangeNodeKey.NewNodePublicKey = utils.BinToHex(p.ChangeNodeKey.NewNodePublicKey)
+	p.ChangeNodeKey.NewNodePublicKey = converter.BinToHex(p.ChangeNodeKey.NewNodePublicKey)
 	return nil
 }
 
@@ -56,7 +56,7 @@ func (p *ChangeNodeKeyParser) Validate() error {
 
 func (p *ChangeNodeKeyParser) Action() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.ChangeNodeKey.NewNodePublicKey)}, "system_recognized_states", []string{"state_id"}, []string{utils.Int64ToStr(p.ChangeNodeKey.Header.StateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{converter.HexToBin(p.ChangeNodeKey.NewNodePublicKey)}, "system_recognized_states", []string{"state_id"}, []string{converter.Int64ToStr(p.ChangeNodeKey.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -66,7 +66,7 @@ func (p *ChangeNodeKeyParser) Action() error {
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockId}, "my_node_keys", []string{"id"}, []string{utils.Int64ToStr(myKey)}, true)
+		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

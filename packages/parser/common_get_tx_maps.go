@@ -18,10 +18,12 @@ package parser
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/shopspring/decimal"
 )
 
+// GetTxMaps initializes TxMap and TxMaps structures
 func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	log.Debug("p.TxSlice %s", p.TxSlice)
 
@@ -35,11 +37,11 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	p.TxMaps.String = make(map[string]string)
 	p.TxMaps.Decimal = make(map[string]decimal.Decimal)
 	p.TxMaps.Bytes["hash"] = p.TxSlice[0]
-	p.TxMaps.Int64["type"] = utils.BytesToInt64(p.TxSlice[1])
-	p.TxMaps.Int64["time"] = utils.BytesToInt64(p.TxSlice[2])
-	p.TxMaps.Int64["user_id"] = utils.BytesToInt64(p.TxSlice[3])
-	p.TxMaps.Int64["state_id"] = utils.BytesToInt64(p.TxSlice[4])
-	p.TxMaps.Int64["_id"] = utils.BytesToInt64(p.TxSlice[4])
+	p.TxMaps.Int64["type"] = converter.BytesToInt64(p.TxSlice[1])
+	p.TxMaps.Int64["time"] = converter.BytesToInt64(p.TxSlice[2])
+	p.TxMaps.Int64["user_id"] = converter.BytesToInt64(p.TxSlice[3])
+	p.TxMaps.Int64["state_id"] = converter.BytesToInt64(p.TxSlice[4])
+	p.TxMaps.Int64["_id"] = converter.BytesToInt64(p.TxSlice[4])
 	p.TxMap["hash"] = p.TxSlice[0]
 	p.TxMap["type"] = p.TxSlice[1]
 	p.TxMap["time"] = p.TxSlice[2]
@@ -48,12 +50,12 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 
 	if p.TxMaps.Int64["state_id"] > 0 {
 		p.TxStateID = uint32(p.TxMaps.Int64["state_id"])
-		p.TxStateIDStr = utils.Int64ToStr(p.TxMaps.Int64["state_id"])
+		p.TxStateIDStr = converter.Int64ToStr(p.TxMaps.Int64["state_id"])
 		p.TxMap["citizen_id"] = p.TxMap["user_id"]
 		p.TxMaps.Int64["citizen_id"] = p.TxMaps.Int64["user_id"]
 		p.TxCitizenID = p.TxMaps.Int64["user_id"]
 		p.TxWalletID = 0
-		p.TxMap["wallet_id"] = utils.Int64ToByte(0)
+		p.TxMap["wallet_id"] = converter.Int64ToByte(0)
 		p.TxMaps.Int64["wallet_id"] = 0
 	} else {
 		p.TxStateID = 0
@@ -62,7 +64,7 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 		p.TxMaps.Int64["wallet_id"] = p.TxMaps.Int64["user_id"]
 		p.TxWalletID = p.TxMaps.Int64["user_id"]
 		p.TxCitizenID = 0
-		p.TxMap["citizen_id"] = utils.Int64ToByte(0)
+		p.TxMap["citizen_id"] = converter.Int64ToByte(0)
 		p.TxMaps.Int64["citizen_id"] = 0
 	}
 
@@ -73,23 +75,24 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 	var allFields []map[string]string
 	allFields = append(allFields, fields...)
 	/*	if  p.TxMaps.Int64["type"] <= int64(len(consts.TxTypes)) && consts.TxTypes[int(p.TxMaps.Int64["type"])] == "new_citizen" {
-		// получим набор доп. полей, которые должны быть в данной тр-ии
-		additionalFields, err := p.Single(`SELECT fields FROM citizen_fields WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).Bytes()
-		if err != nil {
-			return p.ErrInfo(err)
-		}
+				// получим набор доп. полей, которые должны быть в данной тр-ии
+		// we will obtain a set of additional fields, which should be in this transaction
+				additionalFields, err := p.Single(`SELECT fields FROM citizen_fields WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).Bytes()
+				if err != nil {
+					return p.ErrInfo(err)
+				}
 
-		additionalFieldsMap := []map[string]string{}
-		err = json.Unmarshal(additionalFields, &additionalFieldsMap)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
+				additionalFieldsMap := []map[string]string{}
+				err = json.Unmarshal(additionalFields, &additionalFieldsMap)
+				if err != nil {
+					return p.ErrInfo(err)
+				}
 
-		for _, date := range additionalFieldsMap {
-			allFields = append(allFields, map[string]string{date["name"]: date["txType"]})
-		}
-		allFields = append(allFields, map[string]string{"sign": "bytes"})
-	}*/
+				for _, date := range additionalFieldsMap {
+					allFields = append(allFields, map[string]string{date["name"]: date["txType"]})
+				}
+				allFields = append(allFields, map[string]string{"sign": "bytes"})
+			}*/
 	log.Debug("%v", allFields)
 	log.Debug("%d %d", len(allFields), len(p.TxSlice))
 	log.Debug("%s", p.TxMap)
@@ -101,18 +104,18 @@ func (p *Parser) GetTxMaps(fields []map[string]string) error {
 			p.TxMap[field] = p.TxSlice[i+5]
 			switch fType {
 			case "int64":
-				p.TxMaps.Int64[field] = utils.BytesToInt64(p.TxSlice[i+5])
+				p.TxMaps.Int64[field] = converter.BytesToInt64(p.TxSlice[i+5])
 			case "float64":
-				p.TxMaps.Float64[field] = utils.BytesToFloat64(p.TxSlice[i+5])
+				p.TxMaps.Float64[field] = converter.BytesToFloat64(p.TxSlice[i+5])
 			case "money":
-				p.TxMaps.Money[field] = utils.StrToMoney(string(p.TxSlice[i+5]))
+				p.TxMaps.Money[field] = converter.StrToMoney(string(p.TxSlice[i+5]))
 			case "bytes":
 				p.TxMaps.Bytes[field] = p.TxSlice[i+5]
 			case "string":
 				p.TxMaps.String[field] = string(p.TxSlice[i+5])
 			case "decimal":
 				dec, err := decimal.NewFromString(string(p.TxSlice[i+5]))
-				if err!=nil {
+				if err != nil {
 					return err
 				}
 				p.TxMaps.Decimal[field] = dec

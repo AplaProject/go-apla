@@ -17,6 +17,10 @@
 package daemons
 
 import (
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -24,7 +28,9 @@ import (
 /*
  * Берем тр-ии из очереди и обрабатываем
  * */
+// take the transactions from the turn and process them
 
+// QueueParserTx parses transaction from the queue
 func QueueParserTx(chBreaker chan bool, chAnswer chan string) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -55,14 +61,15 @@ func QueueParserTx(chBreaker chan bool, chAnswer chan string) {
 BEGIN:
 	for {
 		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
+		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
 
 		// проверим, не нужно ли нам выйти из цикла
+		// check if we have to break the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
 
-		err, restart := d.dbLock()
+		restart, err := d.dbLock()
 		if restart {
 			break BEGIN
 		}
@@ -73,31 +80,32 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockId, err := d.GetBlockId()
+		blockID, err := d.GetBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		if blockId == 0 {
-			if d.unlockPrintSleep(utils.ErrInfo("blockId == 0"), d.sleepTime) {
+		if blockID == 0 {
+			if d.unlockPrintSleep(utils.ErrInfo("blockID == 0"), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
 
 		// чистим зацикленные
-		utils.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
-		affect, err := d.ExecSqlGetAffect("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
+		// clean the looped
+		logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
+		affect, err := d.ExecSQLGetAffect("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
 		if err != nil {
-			utils.WriteSelectiveLog(err)
+			logging.WriteSelectiveLog(err)
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
+		logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB

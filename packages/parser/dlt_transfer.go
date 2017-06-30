@@ -20,7 +20,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -39,7 +40,7 @@ func (p *DLTTransferParser) Init() error {
 		return p.ErrInfo(err)
 	}
 	p.DLTTransfer = dltTransfer
-	p.DLTTransfer.PublicKey = utils.BinToHex(p.DLTTransfer.Header.PublicKey)
+	p.DLTTransfer.PublicKey = converter.BinToHex(p.DLTTransfer.Header.PublicKey)
 	return nil
 }
 
@@ -56,16 +57,16 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	// public key need only when we don't have public_key in the dlt_wallets table
-	public_key_0, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
+	PublicKey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(public_key_0) == 0 {
+	if len(PublicKey) == 0 {
 		bkey, err := hex.DecodeString(string(p.DLTTransfer.Header.PublicKey))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if lib.KeyToAddress(bkey) != lib.AddressToString(p.TxWalletID) {
+		if crypto.KeyToAddress(bkey) != converter.AddressToString(p.TxWalletID) {
 			return p.ErrInfo("incorrect public_key")
 		}
 	}
@@ -138,13 +139,13 @@ func (p *DLTTransferParser) Validate() error {
 
 func (p *DLTTransferParser) Action() error {
 	log.Debug("wallet address %s", p.DLTTransfer.WalletAddress)
-	address := lib.StringToAddress(p.DLTTransfer.WalletAddress)
-	walletId, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE wallet_id = ?`, address).Int64()
+	address := converter.StringToAddress(p.DLTTransfer.WalletAddress)
+	walletID, err := p.Single(`SELECT wallet_id FROM dlt_wallets WHERE wallet_id = ?`, address).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	log.Debug("walletId %d", walletId)
-	//if walletId > 0 {
+	log.Debug("walletID %d", walletID)
+	//if walletID > 0 {
 	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -168,51 +169,51 @@ func (p *DLTTransferParser) Action() error {
 	log.Debug("amountAndCommission %s", amountAndCommission)
 	log.Debug("amountAndCommission %s", amountAndCommission.String())
 	if len(p.DLTTransfer.Header.PublicKey) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), utils.HexToBin(p.DLTTransfer.PublicKey)}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), converter.HexToBin(p.DLTTransfer.PublicKey)}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amountAndCommission.String()}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amountAndCommission.String()}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	if walletId == 0 {
+	if walletID == 0 {
 		log.Debug("walletId == 0")
 		log.Debug("%s", string(p.DLTTransfer.WalletAddress))
-		walletId = lib.StringToAddress(p.DLTTransfer.WalletAddress)
+		walletID = converter.StringToAddress(p.DLTTransfer.WalletAddress)
 		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
-			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+			[]string{"wallet_id"}, []string{converter.Int64ToStr(walletID)}, true)
 	} else {
 		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
-			[]string{"wallet_id"}, []string{utils.Int64ToStr(walletId)}, true)
+			[]string{"wallet_id"}, []string{converter.Int64ToStr(walletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// node commission
-	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{commission}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.BlockData.WalletId)}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{commission}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.BlockData.WalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// пишем в общую историю тр-ий
-	dlt_transactions_id, err := p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, walletId, lib.AddressToString(int64(utils.StrToUint64(p.DLTTransfer.WalletAddress))), amount.String(), commission.String(), p.DLTTransfer.Comment, p.BlockData.Time, p.BlockData.BlockId)
+	// record into the general transaction history
+	dltTransactionsID, err := p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
+		p.TxWalletID, walletID, converter.AddressToString(int64(converter.StrToUint64(p.DLTTransfer.WalletAddress))), amount.String(), commission.String(), p.DLTTransfer.Comment, p.BlockData.Time, p.BlockData.BlockID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "dlt_transactions", dlt_transactions_id)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, "dlt_transactions", dltTransactionsID)
 	if err != nil {
 		return err
 	}
 
-	dlt_transactions_id, err = p.ExecSqlGetLastInsertId(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, p.BlockData.WalletId, lib.AddressToString(p.BlockData.WalletId), commission.String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockId)
+	dltTransactionsID, err = p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
+		p.TxWalletID, p.BlockData.WalletID, converter.AddressToString(p.BlockData.WalletID), commission.String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "dlt_transactions", dlt_transactions_id)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, "dlt_transactions", dltTransactionsID)
 	if err != nil {
 		return err
 	}

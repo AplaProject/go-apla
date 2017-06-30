@@ -19,6 +19,7 @@ package parser
 import (
 	"encoding/hex"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -53,12 +54,12 @@ func (p *NewAccountParser) Validate() error {
 
 func (p *NewAccountParser) Action() error {
 	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.NewAccount.PublicKey)},
-		"dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxCitizenID)}, true)
+		"dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxCitizenID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	_, err = p.selectiveLoggingAndUpd([]string{"citizen_id", "amount"}, []interface{}{p.TxCitizenID, 0},
-		utils.UInt32ToStr(p.TxStateID)+"_accounts", nil, nil, true)
+		converter.UInt32ToStr(p.TxStateID)+"_accounts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

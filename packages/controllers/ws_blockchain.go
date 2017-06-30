@@ -32,6 +32,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// WsBlockchain is a handle function for WebSocket
 func WsBlockchain(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

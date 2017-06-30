@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -55,7 +55,7 @@ func (p *NewColumnParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	prefix, err := utils.GetPrefix(p.NewColumn.TableName, utils.Int64ToStr(p.NewColumn.Header.StateID))
+	prefix, err := utils.GetPrefix(p.NewColumn.TableName, converter.Int64ToStr(p.NewColumn.Header.StateID))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -73,7 +73,7 @@ func (p *NewColumnParser) Validate() error {
 	if count >= consts.MAX_COLUMNS+2 /*id + rb_id*/ {
 		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
 	}
-	if utils.StrToInt64(p.NewColumn.Index) > 0 {
+	if converter.StrToInt64(p.NewColumn.Index) > 0 {
 		count, err := p.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)
@@ -98,7 +98,7 @@ func (p *NewColumnParser) Validate() error {
 
 func (p *NewColumnParser) Action() error {
 	tblname := p.NewColumn.TableName
-	prefix, err := utils.GetPrefix(tblname, utils.Int64ToStr(p.NewColumn.StateID))
+	prefix, err := utils.GetPrefix(tblname, converter.Int64ToStr(p.NewColumn.StateID))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -122,16 +122,16 @@ func (p *NewColumnParser) Action() error {
 	if err != nil {
 		return err
 	}
-	rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.NewColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+lib.EscapeForJSON(p.NewColumn.Permissions)+`"`, rbId, tblname)
+	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.NewColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(p.NewColumn.Permissions)+`"`, rbID, tblname)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tblname)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, tblname)
 	if err != nil {
 		return err
 	}
@@ -152,13 +152,13 @@ func (p *NewColumnParser) Action() error {
 		colType = `double precision`
 	}
 
-	err = p.ExecSql(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.NewColumn.ColumnName + ` ` + colType)
+	err = p.ExecSQL(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.NewColumn.ColumnName + ` ` + colType)
 	if err != nil {
 		return err
 	}
 
 	if p.NewColumn.Index == "1" {
-		err = p.ExecSql(`CREATE INDEX "` + tblname + `_` + p.NewColumn.ColumnName + `_index" ON "` + tblname + `" (` + p.NewColumn.ColumnName + `)`)
+		err = p.ExecSQL(`CREATE INDEX "` + tblname + `_` + p.NewColumn.ColumnName + `_index" ON "` + tblname + `" (` + p.NewColumn.ColumnName + `)`)
 		if err != nil {
 			return err
 		}
@@ -172,7 +172,7 @@ func (p *NewColumnParser) Rollback() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`ALTER TABLE "` + p.NewColumn.TableName + `" DROP COLUMN ` + p.NewColumn.ColumnName + ``)
+	err = p.ExecSQL(`ALTER TABLE "` + p.NewColumn.TableName + `" DROP COLUMN ` + p.NewColumn.ColumnName + ``)
 	if err != nil {
 		return err
 	}

@@ -17,42 +17,45 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type editTablePage struct {
 	Alert      string
 	Lang       map[string]string
-	WalletId   int64
-	CitizenId  int64
+	WalletID   int64
+	CitizenID  int64
 	TableName  string
 	TxType     string
-	TxTypeId   int64
+	TxTypeID   int64
 	TimeNow    int64
 	CanColumns bool
 	TableData  map[string]string
 	//	Columns               map[string]string
 	ColumnsAndPermissions []map[string]string
-	StateId               int64
+	StateID               int64
 	TablePermission       map[string]string
 	Global                string
 }
 
+// EditTable is a controller for editing table
 func (c *Controller) EditTable() (string, error) {
 
 	var err error
 
 	txType := "EditTable"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	var tableName string
 	if utils.CheckInputData(c.r.FormValue("name"), "string") {
 		tableName = c.r.FormValue("name")
 	}
 
-	prefix, err := utils.GetPrefix(tableName, c.StateIdStr)
+	prefix, err := utils.GetPrefix(tableName, c.StateIDStr)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -77,7 +80,7 @@ func (c *Controller) EditTable() (string, error) {
 	}
 	list := make([]map[string]string, 0)
 	for key, value := range columnsAndPermissions {
-		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: utils.GetColumnType(tableName, key)})
+		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: sql.GetColumnType(tableName, key)})
 	}
 
 	count, err := c.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", tableName).Int64()
@@ -88,13 +91,13 @@ func (c *Controller) EditTable() (string, error) {
 	TemplateStr, err := makeTemplate("edit_table", "editTable", &editTablePage{
 		Alert:                 c.Alert,
 		Lang:                  c.Lang,
-		WalletId:              c.SessWalletId,
-		CitizenId:             c.SessCitizenId,
+		WalletID:              c.SessWalletID,
+		CitizenID:             c.SessCitizenID,
 		TableName:             tableName,
 		TimeNow:               timeNow,
 		TxType:                txType,
-		TxTypeId:              txTypeId,
-		StateId:               c.SessStateId,
+		TxTypeID:              utils.TypeInt(txType),
+		StateID:               c.SessStateID,
 		CanColumns:            count < consts.MAX_COLUMNS+2,
 		Global:                global,
 		TablePermission:       tablePermission,

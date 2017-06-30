@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -66,7 +67,7 @@ func (p *RestoreAccessCloseParser) Validate() error {
 }
 
 func (p *RestoreAccessCloseParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccessClose.Header.StateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccessClose.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

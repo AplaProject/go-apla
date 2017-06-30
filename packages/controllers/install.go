@@ -22,16 +22,19 @@ import (
 	"io/ioutil"
 	"os"
 
+	"strings"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
-	"strings"
 )
 
+// Install is a controller for the installation
 func (c *Controller) Install() (string, error) {
-
 	c.r.ParseForm()
 	dir := c.r.FormValue("dir")
 	if dir != "" {
@@ -39,23 +42,23 @@ func (c *Controller) Install() (string, error) {
 	}
 	generateFirstBlock := c.r.FormValue("generate_first_block")
 	if generateFirstBlock != "" {
-		*utils.GenerateFirstBlock = utils.StrToInt64(generateFirstBlock)
+		*utils.GenerateFirstBlock = converter.StrToInt64(generateFirstBlock)
 	}
 
 	installType := c.r.FormValue("type")
 	tcpHost := c.r.FormValue("tcp_host")
 	if tcpHost != "" {
-		*utils.TcpHost = tcpHost
+		*utils.TCPHost = tcpHost
 	}
 	httpPort := c.r.FormValue("http_port")
 	if httpPort != "" {
-		*utils.ListenHttpPort = httpPort
+		*utils.ListenHTTPPort = httpPort
 	}
 	logLevel := c.r.FormValue("log_level")
 	if logLevel != "DEBUG" {
 		logLevel = "ERROR"
 	}
-	first_load_blockchain_url := c.r.FormValue("first_load_blockchain_url")
+	firstLoadBlockchainURL := c.r.FormValue("first_load_blockchain_url")
 	firstLoad := c.r.FormValue("first_load")
 	dbType := c.r.FormValue("db_type")
 	dbHost := c.r.FormValue("host")
@@ -72,8 +75,8 @@ func (c *Controller) Install() (string, error) {
 		}
 	}
 
-	if len(first_load_blockchain_url) == 0 {
-		first_load_blockchain_url = consts.BLOCKCHAIN_URL
+	if len(firstLoadBlockchainURL) == 0 {
+		firstLoadBlockchainURL = consts.BLOCKCHAIN_URL
 	}
 
 	if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
@@ -83,8 +86,8 @@ func (c *Controller) Install() (string, error) {
 	confIni.Set("log_level", logLevel)
 	confIni.Set("install_type", installType)
 	confIni.Set("dir", *utils.Dir)
-	confIni.Set("tcp_host", *utils.TcpHost)
-	confIni.Set("http_port", *utils.ListenHttpPort)
+	confIni.Set("tcp_host", *utils.TCPHost)
+	confIni.Set("http_port", *utils.ListenHTTPPort)
 	confIni.Set("first_block_dir", *utils.FirstBlockDir)
 	confIni.Set("db_type", dbType)
 	confIni.Set("db_user", dbUsername)
@@ -106,8 +109,8 @@ func (c *Controller) Install() (string, error) {
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
-	var DB *utils.DCDB
-	DB, err = utils.NewDbConnect(configIni)
+	var DB *sql.DCDB
+	DB, err = sql.NewDbConnect(configIni)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
@@ -121,7 +124,7 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(`
+	err = c.DCDB.ExecSQL(`
 	DO $$ DECLARE
 	    r RECORD;
 	BEGIN
@@ -143,21 +146,21 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(string(schema))
+	err = c.DCDB.ExecSQL(string(schema))
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql("INSERT INTO config (first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?)", firstLoad, first_load_blockchain_url, 259200)
+	err = c.DCDB.ExecSQL("INSERT INTO config (first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?)", firstLoad, firstLoadBlockchainURL, 259200)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
 
-	err = c.DCDB.ExecSql(`INSERT INTO install (progress) VALUES ('complete')`)
+	err = c.DCDB.ExecSQL(`INSERT INTO install (progress) VALUES ('complete')`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
@@ -172,7 +175,7 @@ func (c *Controller) Install() (string, error) {
 		if _, err := os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
 
 			if len(*utils.FirstBlockPublicKey) == 0 {
-				priv, pub, _ := lib.GenHexKeys()
+				priv, pub, _ := crypto.GenHexKeys()
 				err := ioutil.WriteFile(*utils.Dir+"/PrivateKey", []byte(priv), 0644)
 				if err != nil {
 					log.Error("%v", utils.ErrInfo(err))
@@ -183,7 +186,7 @@ func (c *Controller) Install() (string, error) {
 
 		if _, err := os.Stat(*utils.Dir + "/NodePrivateKey"); os.IsNotExist(err) {
 			if len(*utils.FirstBlockNodePublicKey) == 0 {
-				priv, pub, _ := lib.GenHexKeys()
+				priv, pub, _ := crypto.GenHexKeys()
 				fmt.Println("WriteFile " + *utils.Dir + "/NodePrivateKey")
 				err := ioutil.WriteFile(*utils.Dir+"/NodePrivateKey", []byte(priv), 0644)
 				if err != nil {
@@ -200,23 +203,29 @@ func (c *Controller) Install() (string, error) {
 
 	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
 	NodePrivateKeyStr := strings.TrimSpace(string(NodePrivateKey))
-	npubkey := lib.PrivateToPublicHex(NodePrivateKeyStr)
-	err = c.DCDB.ExecSql(`INSERT INTO my_node_keys (private_key, public_key, block_id) VALUES (?, [hex], ?)`, NodePrivateKeyStr, npubkey, 1)
+	npubkey, err := crypto.PrivateToPublicHex(NodePrivateKeyStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = c.DCDB.ExecSQL(`INSERT INTO my_node_keys (private_key, public_key, block_id) VALUES (?, [hex], ?)`, NodePrivateKeyStr, npubkey, 1)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()
 		return "", utils.ErrInfo(err)
 	}
 
-	if *utils.DltWalletId == 0 {
+	if *utils.DltWalletID == 0 {
 		PrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/PrivateKey")
 		PrivateHex, _ := hex.DecodeString(string(PrivateKey))
-		PublicKeyBytes2 := lib.PrivateToPublic(PrivateHex)
-		log.Debug("dlt_wallet_id %d", int64(lib.Address(PublicKeyBytes2)))
-		*utils.DltWalletId = int64(lib.Address(PublicKeyBytes2))
+		PublicKeyBytes2, err := crypto.PrivateToPublic(PrivateHex)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Debug("dlt_wallet_id %d", crypto.Address(PublicKeyBytes2))
+		*utils.DltWalletID = crypto.Address(PublicKeyBytes2)
 	}
 
-	err = c.DCDB.ExecSql(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletId)
+	err = c.DCDB.ExecSQL(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletID)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		dropConfig()

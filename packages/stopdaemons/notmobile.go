@@ -17,12 +17,13 @@
 package stopdaemons
 
 import (
-	"os"
-	"syscall"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"fmt"
-	"os/signal"
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 /*
@@ -50,13 +51,14 @@ func go_callback_int() {
 	SigChan <- syscall.Signal(1)
 }
 
+// SigChan is a channel
 var SigChan chan os.Signal
-
 
 func waitSig() {
 	C.waitSig()
 }
 
+// Signals waits for Interrupt os.Kill signals
 func Signals() {
 	SigChan = make(chan os.Signal, 1)
 	waitSig()
@@ -67,15 +69,15 @@ func Signals() {
 		fmt.Println("KILL SIGNAL")
 		for _, ch := range utils.DaemonsChans {
 			fmt.Println("ch.ChBreaker<-true")
-			ch.ChBreaker<-true
+			ch.ChBreaker <- true
 		}
 		for _, ch := range utils.DaemonsChans {
 			fmt.Println(<-ch.ChAnswer)
 		}
 		log.Debug("Daemons killed")
 		fmt.Println("Daemons killed")
-		if utils.DB != nil && utils.DB.DB != nil {
-			err := utils.DB.Close()
+		if sql.DB != nil && sql.DB.DB != nil {
+			err := sql.DB.Close()
 			fmt.Println("DB Closed")
 			if err != nil {
 				log.Error(utils.ErrInfo(err).Error())

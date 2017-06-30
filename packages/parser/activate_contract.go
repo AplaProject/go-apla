@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -99,18 +100,18 @@ func (p *ActivateContractParser) Action() error {
 	}
 	egs := p.activateCost
 	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(wallet)}, true); err != nil {
+		[]string{converter.Int64ToStr(wallet)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{utils.Int64ToStr(p.BlockData.WalletId)}, true); err != nil {
+		[]string{converter.Int64ToStr(p.BlockData.WalletID)}, true); err != nil {
 		return err
 	}
 	if _, err := p.selectiveLoggingAndUpd([]string{`active`}, []interface{}{1}, prefix+`_smart_contracts`, []string{`id`},
 		[]string{p.ActivateContract.Id}, true); err != nil {
 		return err
 	}
-	smart.ActivateContract(utils.StrToInt64(p.ActivateContract.Id), prefix, true)
+	smart.ActivateContract(converter.StrToInt64(p.ActivateContract.Id), prefix, true)
 	return nil
 }
 

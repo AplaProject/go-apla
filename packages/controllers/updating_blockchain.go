@@ -21,8 +21,10 @@ import (
 	"html/template"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -31,7 +33,7 @@ type updatingBlockchainStruct struct {
 	Lang            map[string]string
 	WaitText        string
 	BlockTime       int64
-	BlockId         int64
+	BlockID         int64
 	StartDaemons    string
 	BlockMeter      int64
 	CheckTime       string
@@ -45,18 +47,19 @@ type updatingBlockchainStruct struct {
 	NewVersion      string
 }
 
+// UpdatingBlockchain is a controller which displays information about updating blockchain
 func (c *Controller) UpdatingBlockchain() (string, error) {
 
-	var blockTime, blockId, blockMeter int64
+	var blockTime, blockID, blockMeter int64
 	var waitText, startDaemons, checkTime string
 	var restartDb, standardInstall bool
 
 	if c.dbInit {
-		ConfirmedBlockId, err := c.DCDB.GetConfirmedBlockId()
+		ConfirmedBlockID, err := c.DCDB.GetConfirmedBlockID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		if ConfirmedBlockId == 0 {
+		if ConfirmedBlockID == 0 {
 			firstLoadBlockchain, err := c.DCDB.Single("SELECT first_load_blockchain FROM config").String()
 			if err != nil {
 				return "", utils.ErrInfo(err)
@@ -72,15 +75,15 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 				return "", utils.ErrInfo(err)
 			}
 			blockTime = LastBlockData["lastBlockTime"]
-			blockId = LastBlockData["blockId"]
+			blockID = LastBlockData["blockId"]
 		}
 
 		nodeConfig, err := c.GetNodeConfig()
-		blockchain_url := nodeConfig["first_load_blockchain_url"]
-		if len(blockchain_url) == 0 {
-			blockchain_url = consts.BLOCKCHAIN_URL
+		blockchainURL := nodeConfig["first_load_blockchain_url"]
+		if len(blockchainURL) == 0 {
+			blockchainURL = consts.BLOCKCHAIN_URL
 		}
-		/*resp, err := http.Get(blockchain_url)
+		/*resp, err := http.Get(blockchainURL)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -90,9 +93,9 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		}
 		defer resp.Body.Close()*/
 
-		blockMeter = int64(utils.Round(float64((blockId/consts.LAST_BLOCK)*100), 0))
+		blockMeter = int64(converter.RoundWithPrecision(float64((blockID/consts.LAST_BLOCK)*100), 0))
 		if blockMeter > 0 {
-			blockMeter -= 1
+			blockMeter--
 		}
 
 	} else {
@@ -108,10 +111,10 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	diff := int64(math.Abs(float64(utils.Time() - networkTime.Unix())))
+	diff := int64(math.Abs(float64(time.Now().Unix() - networkTime.Unix())))
 	var alertTime string
 	if c.dbInit && diff > consts.ALERT_ERROR_TIME {
-		alertTime = strings.Replace(c.Lang["alert_time"], "[sec]", utils.Int64ToStr(diff), -1)
+		alertTime = strings.Replace(c.Lang["alert_time"], "[sec]", converter.Int64ToStr(diff), -1)
 	}
 
 	sleepTime := int64(1500)
@@ -119,7 +122,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 
 	if c.dbInit {
 		if strings.HasPrefix(c.r.Host, `localhost`) { //c.NodeAdmin
-			if updinfo, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL); err == nil && updinfo != nil {
+			if updinfo, err := utils.GetUpdVerAndURL(consts.UPD_AND_VER_URL); err == nil && updinfo != nil {
 				newVersion = strings.Replace(c.Lang["new_version"], "[ver]", updinfo.Version, -1)
 			}
 		}
@@ -143,7 +146,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	standardInstall = configIni[`install_type`] == `standard`
 
 	t.Execute(b, &updatingBlockchainStruct{SleepTime: sleepTime, StandardInstall: standardInstall, RestartDb: restartDb, Lang: c.Lang,
-		WaitText: waitText, BlockId: blockId, BlockTime: blockTime, StartDaemons: startDaemons,
+		WaitText: waitText, BlockID: blockID, BlockTime: blockTime, StartDaemons: startDaemons,
 		BlockMeter: blockMeter, CheckTime: checkTime, LastBlock: consts.LAST_BLOCK,
 		BlockChainSize: consts.BLOCKCHAIN_SIZE, Mobile: mobile, AlertTime: alertTime, NewVersion: newVersion})
 

@@ -23,17 +23,19 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const AStorage = `ajax_storage`
+const aStorage = `ajax_storage`
 
+// LocStorage is a structure for answer of ajax_storage request
 type LocStorage struct {
 	Accounts string `json:"accounts"`
 	Error    string `json:"error"`
 }
 
 func init() {
-	newPage(AStorage, `json`)
+	newPage(aStorage, `json`)
 }
 
+// AjaxStorage is a controller of ajax_storage request
 func (c *Controller) AjaxStorage() interface{} {
 	var result LocStorage
 	if accounts := c.r.FormValue(`accounts`); len(accounts) > 0 {

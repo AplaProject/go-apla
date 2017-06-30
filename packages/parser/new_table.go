@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -92,7 +93,7 @@ func (p *NewTableParser) Validate() error {
 		return fmt.Errorf(`Too many indexes. Limit is %d`, consts.MAX_INDEXES)
 	}
 
-	prefix := utils.Int64ToStr(p.NewTable.Header.StateID)
+	prefix := converter.Int64ToStr(p.NewTable.Header.StateID)
 	table := prefix + `_tables`
 	global, err := strconv.Atoi(p.NewTable.Global)
 	if err != nil {
@@ -136,8 +137,8 @@ func (p *NewTableParser) Action() error {
 	var cols [][]string
 	json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 
-	colsSql := ""
-	colsSql2 := ""
+	colsSQL := ""
+	colsSQL2 := ""
 	sqlIndex := ""
 	for _, data := range cols {
 		colType := ``
@@ -158,35 +159,35 @@ func (p *NewTableParser) Action() error {
 			colType = `decimal (30, 0)`
 			colDef = `NOT NULL DEFAULT '0'`
 		}
-		colsSql += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
-		colsSql2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
+		colsSQL += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
+		colsSQL2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
 		if data[2] == "1" {
 			sqlIndex += `CREATE INDEX "` + tableName + `_` + data[0] + `_index" ON "` + tableName + `" (` + data[0] + `);`
 		}
 	}
-	colsSql2 = colsSql2[:len(colsSql2)-1]
+	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
 
 	sql := `CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
 				CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
-				` + colsSql + `
+				` + colsSQL + `
 				"rb_id" bigint NOT NULL DEFAULT '0'
 				);
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
 	fmt.Println(sql)
-	err = p.ExecSql(sql)
+	err = p.ExecSQL(sql)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(sqlIndex)
+	err = p.ExecSQL(sqlIndex)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
-		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSql2+`},
+	err = p.ExecSQL(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
+		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSQL2+`},
 		"insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -205,8 +206,8 @@ func (p *NewTableParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 	tableName := prefix + "_" + p.NewTable.Name
-	err = p.ExecSql(`DROP TABLE "` + tableName + `"`)
-	err = p.ExecSql(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
+	err = p.ExecSQL(`DROP TABLE "` + tableName + `"`)
+	err = p.ExecSQL(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

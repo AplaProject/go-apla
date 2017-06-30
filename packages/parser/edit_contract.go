@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -90,9 +91,9 @@ func (p *EditContractParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	tblid := utils.StrToInt64(item[`id`])
+	tblid := converter.StrToInt64(item[`id`])
 	active := item[`active`] == `1`
-	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, utils.StrToInt64(p.EditContract.Id))
+	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, converter.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
 	}

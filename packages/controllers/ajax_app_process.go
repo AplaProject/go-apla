@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 const aAppProcess = `ajax_app_process`
@@ -41,8 +41,8 @@ func (c *Controller) AjaxAppProcess() interface{} {
 		table  string
 	)
 	name := c.r.FormValue("name")
-	block := utils.StrToInt64(c.r.FormValue("block"))
-	done := utils.StrToInt(c.r.FormValue("done"))
+	block := converter.StrToInt64(c.r.FormValue("block"))
+	done := converter.StrToInt(c.r.FormValue("done"))
 	if block == 0 {
 		result.Error = `wrong block id`
 		return result
@@ -50,7 +50,7 @@ func (c *Controller) AjaxAppProcess() interface{} {
 	if strings.HasPrefix(name, `global`) {
 		table = `global_apps`
 	} else {
-		table = fmt.Sprintf(`"%d_apps"`, c.SessStateId)
+		table = fmt.Sprintf(`"%d_apps"`, c.SessStateID)
 	}
 	cur, err := c.OneRow(`select * from `+table+` where name=?`, name).String()
 	if err != nil {
@@ -58,10 +58,10 @@ func (c *Controller) AjaxAppProcess() interface{} {
 		return result
 	}
 	if len(cur) > 0 {
-		err = c.ExecSql(fmt.Sprintf(`update %s set done=?, blocks=concat(blocks, ',%d') where name=?`, table, block),
+		err = c.ExecSQL(fmt.Sprintf(`update %s set done=?, blocks=concat(blocks, ',%d') where name=?`, table, block),
 			done, name)
 	} else {
-		err = c.ExecSql(fmt.Sprintf(`insert into %s (name,done,blocks) values(?,?,'%d')`, table, block),
+		err = c.ExecSQL(fmt.Sprintf(`insert into %s (name,done,blocks) values(?,?,'%d')`, table, block),
 			name, done)
 	}
 	if err != nil {

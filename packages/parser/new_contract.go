@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -57,7 +57,7 @@ func (p *NewContractParser) Validate() error {
 	name := p.NewContract.Name
 	if off := strings.IndexByte(name, '#'); off > 0 {
 		p.NewContract.Name = name[:off]
-		address := lib.StringToAddress(name[off+1:])
+		address := converter.StringToAddress(name[off+1:])
 		if address == 0 {
 			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, name[off+1:]))
 		}
@@ -120,7 +120,7 @@ func (p *NewContractParser) Action() error {
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TableID = utils.StrToInt64(tblid)
+			root.Children[i].Info.(*script.ContractInfo).TableID = converter.StrToInt64(tblid)
 		}
 	}
 

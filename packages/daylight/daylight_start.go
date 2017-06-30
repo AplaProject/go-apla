@@ -30,25 +30,37 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/api"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/schema"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
+	"github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
 )
 
+func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
+	for _, method := range methods {
+		route.HandlerFunc(method, path, handle)
+	}
+}
+
+// FileAsset returns the body of the file
 func FileAsset(name string) ([]byte, error) {
 
 	if name := strings.Replace(name, "\\", "/", -1); name == `static/img/logo.`+utils.LogoExt {
@@ -60,6 +72,7 @@ func FileAsset(name string) ([]byte, error) {
 	return static.Asset(name)
 }
 
+// Start starts the main code of the program
 func Start(dir string, thrustWindowLoder *window.Window) {
 
 	var err error
@@ -95,6 +108,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	exchangeapi.InitAPI()
 
 	// читаем config.ini
+	// read the config.ini
 	configIni := make(map[string]string)
 	fullConfigIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 	if err != nil {
@@ -104,22 +118,22 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		configIni, err = fullConfigIni.GetSection("default")
 	}
 
-	if *utils.TcpHost == "" {
-		*utils.TcpHost = configIni["tcp_host"]
+	if *utils.TCPHost == "" {
+		*utils.TCPHost = configIni["tcp_host"]
 	}
 	if *utils.FirstBlockDir == "" {
 		*utils.FirstBlockDir = configIni["first_block_dir"]
 	}
-	if *utils.ListenHttpPort == "" {
-		*utils.ListenHttpPort = configIni["http_port"]
+	if *utils.ListenHTTPPort == "" {
+		*utils.ListenHTTPPort = configIni["http_port"]
 	}
 	if *utils.Dir == "" {
 		*utils.Dir = configIni["dir"]
 	}
-	utils.OneCountry = utils.StrToInt64(configIni["one_country"])
+	utils.OneCountry = converter.StrToInt64(configIni["one_country"])
 	utils.PrivCountry = configIni["priv_country"] == `1` || configIni["priv_country"] == `true`
 	if len(configIni["lang"]) > 0 {
-		utils.LangList = strings.Split(configIni["lang"], `,`)
+		language.LangList = strings.Split(configIni["lang"], `,`)
 	}
 	/*	outfile, err := os.Create("./out.txt")
 	    if err != nil {
@@ -128,7 +142,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	    defer outfile.Close()
 		os.Stdout = outfile*/
 
-	// убьем ранее запущенный daylight
+	// убьем ранее запущенный eGaaS
+	// kill previously run eGaaS
 	if !utils.Mobile() {
 		fmt.Println("kill daylight.pid")
 		if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
@@ -143,7 +158,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
 
-			utils.DB, err = utils.NewDbConnect(configIni)
+			sql.DB, err = sql.NewDbConnect(configIni)
 
 			err = KillPid(pidMap["pid"])
 			if nil != err {
@@ -153,12 +168,13 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			if fmt.Sprintf("%s", err) != "null" {
 				fmt.Println(fmt.Sprintf("%s", err))
 				// даем 15 сек, чтобы завершиться предыдущему процессу
+				// give 15 sec to end the previous process
 				for i := 0; i < 15; i++ {
 					log.Debug("waiting killer %d", i)
 					if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
 						fmt.Println("waiting killer")
-						utils.Sleep(1)
-					} else { // если daylight.pid нет, значит завершился
+						time.Sleep(time.Second)
+					} else { // если daylight.pid нет, значит завершился // if there is no daylight.pid, so it is finished
 						break
 					}
 				}
@@ -172,9 +188,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	go func() {
 		var err error
-		utils.DB, err = utils.NewDbConnect(configIni)
-		log.Debug("%v", utils.DB)
-		IosLog("utils.DB:" + fmt.Sprintf("%v", utils.DB))
+		sql.DB, err = sql.NewDbConnect(configIni)
+		log.Debug("%v", sql.DB)
+		IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
 		if err != nil {
 			IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 			log.Error("%v", utils.ErrInfo(err))
@@ -227,6 +243,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// если есть OldFileName, значит работаем под именем dc.tmp и нужно перезапуститься под нормальным именем
+	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
 	log.Debug("OldFileName %v", *utils.OldFileName)
 	if *utils.OldFileName != "" || len(configIni) != 0 {
 
@@ -238,9 +255,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 		}
 		// ждем подключения к БД
+		// waiting for connection to the database
 		for {
-			if utils.DB == nil || utils.DB.DB == nil {
-				utils.Sleep(1)
+			if sql.DB == nil || sql.DB.DB == nil {
+				time.Sleep(time.Second)
 				continue
 			}
 			break
@@ -248,7 +266,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		schema.Migration()
 
 		if *utils.OldFileName != "" {
-			err = utils.DB.Close()
+			err = sql.DB.Close()
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -271,9 +289,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	// сохраним текущий pid и версию
+	// save the current pid and version
 	if !utils.Mobile() {
 		pid := os.Getpid()
-		PidAndVer, err := json.Marshal(map[string]string{"pid": utils.IntToStr(pid), "version": consts.VERSION})
+		PidAndVer, err := json.Marshal(map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION})
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
@@ -285,22 +304,24 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	// откат БД до указанного блока
-	if *utils.RollbackToBlockId > 0 {
-		utils.DB, err = utils.NewDbConnect(configIni)
+	// database rollback to the specified block
+	if *utils.RollbackToBlockID > 0 {
+		sql.DB, err = sql.NewDbConnect(configIni)
 
-		if err := utils.LoadContracts(); err != nil {
+		if err := template.LoadContracts(); err != nil {
 			log.Error(`Load Contracts`, err)
 		}
 		parser := new(parser.Parser)
-		parser.DCDB = utils.DB
-		err = parser.RollbackToBlockId(*utils.RollbackToBlockId)
+		parser.DCDB = sql.DB
+		err = parser.RollbackToBlockID(*utils.RollbackToBlockID)
 		if err != nil {
 			fmt.Println(err)
 			panic(err)
 		}
 		fmt.Println("complete")
 		// получим стату по всем таблам
-		allTable, err := utils.DB.GetAllTables()
+		// we recieve the statistics of all tables
+		allTable, err := sql.DB.GetAllTables()
 		if err != nil {
 			fmt.Println(err)
 			panic(err)
@@ -308,7 +329,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
 		for _, table := range allTable {
-			count, err := utils.DB.Single(`SELECT count(*) FROM ` + lib.EscapeName(table)).Int64()
+			count, err := sql.DB.Single(`SELECT count(*) FROM ` + converter.EscapeName(table)).Int64()
 			if err != nil {
 				fmt.Println(err)
 				panic(err)
@@ -344,75 +365,65 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		for {
 			daemonNameAndTime := <-daemons.MonitorDaemonCh
 			daemonsTable[daemonNameAndTime[0]] = daemonNameAndTime[1]
-			if utils.Time()%10 == 0 {
+			if time.Now().Unix()%10 == 0 {
 				log.Debug("daemonsTable: %v\n", daemonsTable)
 			}
 		}
 	}()
 
 	// сигналы демонам для выхода
+	// signals for daemons to exit
 	IosLog("signals")
 	stopdaemons.Signals()
 
-	utils.Sleep(1)
+	time.Sleep(time.Second)
 
 	// мониторим сигнал из БД о том, что демонам надо завершаться
+	// monitor the signal from the database that the daemons must be completed
 	go stopdaemons.WaitStopTime()
 
-	BrowserHTTPHost := "http://localhost:" + *utils.ListenHttpPort
+	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
 	HandleHTTPHost := ""
-	ListenHTTPHost := *utils.TcpHost + ":" + *utils.ListenHttpPort
+	ListenHTTPHost := *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	go func() {
-		// уже прошли процесс инсталяции, где юзер указал БД и был перезапуск кошелька
+		// уже прошел процесс инсталяции, где юзер указал БД и был перезапуск кошелька
+		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		if len(configIni["db_type"]) > 0 {
 			for {
 				// ждем, пока произойдет подключение к БД в другой гоурутине
-				if utils.DB == nil || utils.DB.DB == nil {
-					utils.Sleep(1)
+				// wait while connection to a DB in other gourutina takes place
+				if sql.DB == nil || sql.DB.DB == nil {
+					time.Sleep(time.Second)
 					fmt.Println("wait DB")
 				} else {
 					break
 				}
 			}
 			fmt.Println("GET http host")
-			if err := utils.LoadContracts(); err != nil {
+			if err := template.LoadContracts(); err != nil {
 				log.Error(`Load Contracts`, err)
 			}
 			BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost = GetHTTPHost()
-			// для ноды тоже нужна БД
+			// для ноды тоже нужна БД // DB is needed for node as well
 			tcpListener()
 		}
 		IosLog(fmt.Sprintf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost))
 		fmt.Printf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost)
 		go controllers.GetChain()
-		// включаем листинг веб-сервером для клиентской части
-		http.HandleFunc(HandleHTTPHost+"/", controllers.Index)
-		http.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
-		http.HandleFunc(HandleHTTPHost+"/template", controllers.Template)
-		http.HandleFunc(HandleHTTPHost+"/app", controllers.App)
-		http.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
-		http.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
-		http.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
-		//http.HandleFunc(HandleHTTPHost+"/ajaxjson", controllers.AjaxJson)
-		//http.HandleFunc(HandleHTTPHost+"/tools", controllers.Tools)
-		//http.Handle(HandleHTTPHost+"/public/", noDirListing(http.FileServer(http.Dir(*utils.Dir))))
-		http.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
-		if len(*utils.Tls) > 0 {
-			http.Handle(HandleHTTPHost+"/.well-known/", http.FileServer(http.Dir(*utils.Tls)))
-			httpsMux := http.NewServeMux()
-			httpsMux.HandleFunc(HandleHTTPHost+"/", controllers.Index)
-			httpsMux.HandleFunc(HandleHTTPHost+"/content", controllers.Content)
-			httpsMux.HandleFunc(HandleHTTPHost+"/ajax", controllers.Ajax)
-			httpsMux.HandleFunc(HandleHTTPHost+"/wschain", controllers.WsBlockchain)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/newkey", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/send", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/balance", exchangeapi.API)
-			httpsMux.HandleFunc(HandleHTTPHost+"/exchangeapi/history", exchangeapi.API)
-			httpsMux.Handle(HandleHTTPHost+"/static/", http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
-			go http.ListenAndServeTLS(":443", *utils.Tls+`/fullchain.pem`, *utils.Tls+`/privkey.pem`, httpsMux)
+
+		route := httprouter.New()
+		setRoute(route, `/`, controllers.Index, `GET`)
+		setRoute(route, `/content`, controllers.Content, `GET`, `POST`)
+		setRoute(route, `/template`, controllers.Template, `GET`, `POST`)
+		setRoute(route, `/app`, controllers.App, `GET`, `POST`)
+		setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
+		setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
+		setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
+		api.Route(route)
+		route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
+		route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
+		if len(*utils.TLS) > 0 {
+			go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
 		}
 
 		log.Debug("ListenHTTPHost", ListenHTTPHost)
@@ -421,12 +432,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		fmt.Println("ListenHTTPHost", ListenHTTPHost)
 
-		httpListener(ListenHTTPHost, &BrowserHTTPHost)
+		httpListener(ListenHTTPHost, &BrowserHTTPHost, route)
 		// for ipv6 server
-		httpListenerV6()
+		httpListenerV6(route)
 
 		if *utils.Console == 0 && !utils.Mobile() {
-			utils.Sleep(1)
+			time.Sleep(time.Second)
 			if thrustWindowLoder != nil {
 				thrustWindowLoder.Close()
 				thrustWindow := thrust.NewWindow(thrust.WindowOptions{
@@ -467,12 +478,14 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}()
 
 	// ожидает появления свежих записей в чате, затем ждет появления коннектов
+	// waits for new records in chat, then waits for connect
 	// (заносятся из демеона connections и от тех, кто сам подключился к ноде)
-	//go utils.ChatOutput(utils.ChatNewTx)
+	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
+	// go utils.ChatOutput(utils.ChatNewTx)
 
 	log.Debug("ALL RIGHT")
 	IosLog("ALL RIGHT")
 	fmt.Println("ALL RIGHT")
-	utils.Sleep(3600 * 24 * 90)
+	time.Sleep(time.Second * 3600 * 24 * 90)
 	log.Debug("EXIT")
 }

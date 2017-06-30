@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -47,7 +47,7 @@ func (p *EditColumnParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	stateIdStr := utils.Int64ToStr(p.EditColumn.Header.StateID)
+	stateIdStr := converter.Int64ToStr(p.EditColumn.Header.StateID)
 	table := stateIdStr + `_tables`
 	if strings.HasPrefix(stateIdStr, `global`) {
 		table = `global_tables`
@@ -75,7 +75,7 @@ func (p *EditColumnParser) Validate() error {
 }
 
 func (p *EditColumnParser) Action() error {
-	stateIdStr := utils.Int64ToStr(p.EditColumn.Header.StateID)
+	stateIdStr := converter.Int64ToStr(p.EditColumn.Header.StateID)
 	table := stateIdStr + `_tables`
 	if strings.HasPrefix(p.EditColumn.TableName, `global`) {
 		table = `global_tables`
@@ -100,17 +100,17 @@ func (p *EditColumnParser) Action() error {
 	if err != nil {
 		return err
 	}
-	rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
 	if err != nil {
 		return err
 	}
-	err = p.ExecSql(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.EditColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`,
-		`"`+lib.EscapeForJSON(p.EditColumn.Permissions)+`"`, rbId, p.EditColumn.TableName)
+	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.EditColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`,
+		`"`+converter.EscapeForJSON(p.EditColumn.Permissions)+`"`, rbID, p.EditColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.EditColumn.TableName)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, p.EditColumn.TableName)
 	if err != nil {
 		return err
 	}
@@ -119,11 +119,7 @@ func (p *EditColumnParser) Action() error {
 }
 
 func (p *EditColumnParser) Rollback() error {
-	err := p.autoRollback()
-	if err != nil {
-		return err
-	}
-	return nil
+	return p.autoRollback()
 }
 
 func (p EditColumnParser) Header() *tx.Header {

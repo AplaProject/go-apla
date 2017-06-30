@@ -16,10 +16,12 @@
 
 package parser
 
+/*
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
+
 
 func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere string, AI bool) error {
 	var UserID int64
@@ -39,18 +41,21 @@ func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere
 		where = fmt.Sprintf(" WHERE user_id = %d ", UserID)
 	}
 	// получим rb_id, по которому можно найти данные, которые были до этого
+	// will get rb_id with help of which it is possible to find data that was before
 	logID, err := p.Single("SELECT rb_id FROM " + table + " " + where + addWhere).Int64()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	// если $rb_id = 0, значит восстанавливать нечего и нужно просто удалить запись
+	// if $rb_id = 0, then there is nothing to restore and you just need to delete the record
 	if logID == 0 {
-		err = p.ExecSql("DELETE FROM " + table + " " + where + addWhere)
+		err = p.ExecSQL("DELETE FROM " + table + " " + where + addWhere)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	} else {
 		// данные, которые восстановим
+		// data that will be restored
 		data, err := p.OneRow("SELECT * FROM rb_"+table+" WHERE rb_id = ?", logID).String()
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -58,6 +63,7 @@ func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere
 		addSQL := ""
 		for k, v := range data {
 			// block_id т.к. в rb_ он нужен для удаления старых данных, а в обычной табле не нужен
+			// block_id (because it is needed for removement of old data in rb_ but in usual table there is no need in it)
 			if k == "rb_id" || k == "prev_rb_id" || k == "block_id" {
 				continue
 			}
@@ -75,14 +81,16 @@ func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere
 			}
 		}
 		// всегда пишем предыдущий rb_id
+		// always write the previous rb_id
 		addSQL += fmt.Sprintf("rb_id = %v,", data["prev_rb_id"])
 		addSQL = addSQL[0 : len(addSQL)-1]
-		err = p.ExecSql("UPDATE " + table + " SET " + addSQL + where + addWhere)
+		err = p.ExecSQL("UPDATE " + table + " SET " + addSQL + where + addWhere)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 		// подчищаем log
-		err = p.ExecSql("DELETE FROM rb_"+table+" WHERE rb_id= ?", logID)
+		// Clean up log
+		err = p.ExecSQL("DELETE FROM rb_"+table+" WHERE rb_id= ?", logID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -93,3 +101,4 @@ func (p *Parser) generalRollback(table string, whereUserID interface{}, addWhere
 	}
 	return nil
 }
+*/

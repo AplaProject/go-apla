@@ -19,7 +19,10 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -45,19 +48,19 @@ func (p *NewStateParser) Init() error {
 
 func (p *NewStateParser) global(country, currency string) error {
 	if !isGlobal {
-		list, err := utils.DB.GetAllTables()
+		list, err := sql.DB.GetAllTables()
 		if err != nil {
 			return err
 		}
-		isGlobal = utils.InSliceString(`global_currencies_list`, list) && utils.InSliceString(`global_states_list`, list)
+		isGlobal = converter.InSliceString(`global_currencies_list`, list) && converter.InSliceString(`global_states_list`, list)
 	}
 	if isGlobal {
-		if id, err := utils.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
+		if id, err := sql.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`State %s already exists`, country)
 		}
-		if id, err := utils.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
+		if id, err := sql.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
 			return err
 		} else if id > 0 {
 			return fmt.Errorf(`Currency %s already exists`, currency)
@@ -101,16 +104,16 @@ func (p *NewStateParser) Validate() error {
 }
 
 func (p *NewStateParser) Main(country, currency string) (id string, err error) {
-	id, err = p.ExecSqlGetLastInsertId(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
+	id, err = p.ExecSQLGetLastInsertID(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
 	if err != nil {
 		return
 	}
-	err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "system_states", id)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, "system_states", id)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_state_parameters" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_state_parameters" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"bytecode" bytea  NOT NULL DEFAULT '',
@@ -124,7 +127,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	}
 	sid := "ContractConditions(`MainCondition`)" //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
-	err = p.ExecSql(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
@@ -166,7 +169,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
+	err = p.ExecSQL(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
 				CREATE TABLE "` + id + `_smart_contracts" (
 				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
 				"name" varchar(100)  NOT NULL DEFAULT '',
@@ -184,7 +187,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`INSERT INTO "`+id+`_smart_contracts" (name, value, wallet_id, active) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_smart_contracts" (name, value, wallet_id, active) VALUES
 		(?, ?, ?, ?)`,
 		`MainCondition`, `contract MainCondition {
             data {}
@@ -201,12 +204,12 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`UPDATE "`+id+`_smart_contracts" SET conditions = ?`, sid)
+	err = p.ExecSQL(`UPDATE "`+id+`_smart_contracts" SET conditions = ?`, sid)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_tables" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_tables" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"columns_and_permissions" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -218,14 +221,14 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		return
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
 		(?, ?, ?)`,
 		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_pages" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_pages" (
 				"name" varchar(255)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"menu" varchar(255)  NOT NULL DEFAULT '',
@@ -238,7 +241,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		return
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?)`,
 		`dashboard_default`, `FullScreen(1)
@@ -303,7 +306,7 @@ PageEnd:
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_menu" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_menu" (
 				"name" varchar(255)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"conditions" bytea  NOT NULL DEFAULT '',
@@ -314,7 +317,7 @@ PageEnd:
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?)`,
 		`menu_default`, `MenuItem(Dashboard, dashboard_default)
@@ -337,7 +340,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_citizens" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_citizens" (
 				"id" bigint NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"block_id" bigint NOT NULL DEFAULT '0',
@@ -354,11 +357,11 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, utils.BinToHex(pKey))
+	err = p.ExecSQL(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, converter.BinToHex(pKey))
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`CREATE TABLE "` + id + `_languages" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_languages" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"res" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -369,7 +372,7 @@ MenuBack(Welcome)`, sid)
 	if err != nil {
 		return
 	}
-	err = p.ExecSql(`INSERT INTO "`+id+`_languages" (name, res, conditions) VALUES
+	err = p.ExecSQL(`INSERT INTO "`+id+`_languages" (name, res, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?),
 		(?, ?, ?),
@@ -384,7 +387,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_signatures" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_signatures" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -396,7 +399,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_apps" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_apps" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"done" integer NOT NULL DEFAULT '0',
 				"blocks" text  NOT NULL DEFAULT ''
@@ -407,7 +410,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = p.ExecSql(`CREATE TABLE "` + id + `_anonyms" (
+	err = p.ExecSQL(`CREATE TABLE "` + id + `_anonyms" (
 				"id_citizen" bigint NOT NULL DEFAULT '0',
 				"id_anonym" bigint NOT NULL DEFAULT '0',
 				"encrypted" bytea  NOT NULL DEFAULT ''
@@ -417,7 +420,7 @@ MenuBack(Welcome)`, sid)
 		return
 	}
 
-	err = utils.LoadContract(id)
+	err = template.LoadContract(id)
 	return
 }
 
@@ -446,8 +449,8 @@ func (p *NewStateParser) Action() error {
 	if pkey, err = p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
 		return p.ErrInfo(err)
 	} else if len(p.NewState.Header.PublicKey) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{utils.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
-			[]string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
+			[]string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	return err
 }
@@ -464,27 +467,28 @@ func (p *NewStateParser) Rollback() error {
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
 		`smart_contracts`, `state_parameters`, `apps`, `anonyms` /*, `citizenship_requests`*/} {
-		err = p.ExecSql(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
+		err = p.ExecSQL(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
-	err = p.ExecSql(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
+	err = p.ExecSQL(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	maxId, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
+	maxID, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	// обновляем AI
-	err = p.SetAI("system_states", maxId+1)
+	// update  the AI
+	err = p.SetAI("system_states", maxID+1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql(`DELETE FROM "system_states" WHERE id = ?`, id)
+	err = p.ExecSQL(`DELETE FROM "system_states" WHERE id = ?`, id)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

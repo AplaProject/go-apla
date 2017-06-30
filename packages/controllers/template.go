@@ -22,10 +22,11 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
+// Template is a handle function for the template page
 func Template(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -42,15 +43,15 @@ func Template(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletId(sess)
-	sessCitizenId := GetSessCitizenId(sess)
-	sessStateId := GetSessInt64("state_id", sess)
+	sessWalletID := GetSessWalletID(sess)
+	sessCitizenID := GetSessCitizenID(sess)
+	sessStateID := GetSessInt64("state_id", sess)
 	//	sessAccountId := GetSessInt64("account_id", sess)
 	//sessAddress := GetSessString(sess, "address")
-	log.Debug("sessWalletId %v / sessCitizenId %v", sessWalletId, sessCitizenId)
+	log.Debug("sessWalletID %v / sessCitizenID %v", sessWalletID, sessCitizenID)
 
 	r.ParseForm()
-	page := lib.Escape(r.FormValue("page"))
+	page := converter.Escape(r.FormValue("page"))
 	params := make(map[string]string)
 	if len(page) == 0 {
 		log.Error("%v", len(page) == 0)
@@ -59,10 +60,13 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	for name := range r.Form {
 		params[name] = r.FormValue(name)
 	}
-	params[`global`] = lib.Escape(r.FormValue("global"))
+	if page == `body` {
+		params[`autobody`] = r.FormValue("body")
+	}
+	params[`global`] = converter.Escape(r.FormValue("global"))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	//	fmt.Println(`PARAMS`, params)
-	tpl, err := utils.CreateHtmlFromTemplate(page, sessCitizenId, sessStateId, &params)
+	tpl, err := template.CreateHTMLFromTemplate(page, sessCitizenID, sessStateID, &params)
 	if err != nil {
 		log.Error("%v", err)
 	}

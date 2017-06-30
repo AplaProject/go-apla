@@ -19,13 +19,16 @@ package parser
 import (
 	"database/sql"
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 )
 
-func (p *Parser) RollbackToBlockId(blockId int64) error {
-	err := p.ExecSql("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+// RollbackToBlockID rollbacks blocks till blockID
+func (p *Parser) RollbackToBlockID(blockID int64) error {
+	err := p.ExecSQL("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	if err != nil {
-		utils.WriteSelectiveLog(err)
+		logging.WriteSelectiveLog(err)
 		return p.ErrInfo(err)
 	}
 
@@ -33,8 +36,9 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 	blocks := make([]map[string][]byte, 0, limit)
 	//	var blocks []map[string][]byte
 	// откатываем наши блоки
+	// roll back our blocks
 	for {
-		rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC LIMIT "+fmt.Sprintf(`%d`, limit)+` OFFSET 0`), blockId)
+		rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC LIMIT "+fmt.Sprintf(`%d`, limit)+` OFFSET 0`), blockID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -55,14 +59,15 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 		}
 		fmt.Printf(`%s `, blocks[0]["id"])
 		for _, block := range blocks {
-			// Откатываем наши блоки до блока blockId
+			// Откатываем наши блоки до блока blockID
+			// roll back our blocks to the block blockID
 			parser.BinaryData = block["data"]
 			err = parser.ParseDataRollback()
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 
-			err = p.ExecSql("DELETE FROM block_chain WHERE id = ?", block["id"])
+			err = p.ExecSQL("DELETE FROM block_chain WHERE id = ?", block["id"])
 			if err != nil {
 				return p.ErrInfo(err)
 			}
@@ -70,21 +75,25 @@ func (p *Parser) RollbackToBlockId(blockId int64) error {
 		blocks = blocks[:0]
 	}
 	var hash, data []byte
-	err = p.QueryRow(p.FormatQuery("SELECT hash, data FROM block_chain WHERE id  =  ?"), blockId).Scan(&hash, &data)
+	err = p.QueryRow(p.FormatQuery("SELECT hash, data FROM block_chain WHERE id  =  ?"), blockID).Scan(&hash, &data)
 	if err != nil && err != sql.ErrNoRows {
 		return p.ErrInfo(err)
 	}
-	utils.BytesShift(&data, 1)
-	block_id := utils.BinToDecBytesShift(&data, 4)
-	time := utils.BinToDecBytesShift(&data, 4)
-	size := utils.DecodeLength(&data)
-	walletId := utils.BinToDecBytesShift(&data, size)
-	StateID := utils.BinToDecBytesShift(&data, 1)
-	err = p.ExecSql("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?", utils.BinToHex(hash), block_id, time, walletId, StateID)
+	converter.BytesShift(&data, 1)
+	iblock := converter.BinToDecBytesShift(&data, 4)
+	time := converter.BinToDecBytesShift(&data, 4)
+	size, err := converter.DecodeLength(&data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	walletID := converter.BinToDecBytesShift(&data, size)
+	StateID := converter.BinToDecBytesShift(&data, 1)
+	err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?",
+		converter.BinToHex(hash), iblock, time, walletID, StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSql("UPDATE config SET my_block_id = ?", block_id)
+	err = p.ExecSQL("UPDATE config SET my_block_id = ?", iblock)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

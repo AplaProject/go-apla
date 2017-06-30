@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -25,22 +27,22 @@ type restoreAccessPage struct {
 	Active             int64
 	Request            int64
 	Lang               map[string]string
-	WalletId           int64
-	CitizenId          int64
+	WalletID           int64
+	CitizenID          int64
 	TxType             string
-	TxTypeId           int64
+	TxTypeID           int64
 	TimeNow            int64
 	StateSmartLaws     map[string]string
 	AllStateParameters []string
 }
 
+// RestoreAccess is a restore access control
 func (c *Controller) RestoreAccess() (string, error) {
 
 	txType := "RestoreAccessActive"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
-	data, err := c.OneRow("SELECT active FROM system_restore_access WHERE state_id  =  ?", c.SessStateId).Int64()
+	data, err := c.OneRow("SELECT active FROM system_restore_access WHERE state_id  =  ?", c.SessStateID).Int64()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -58,9 +60,9 @@ func (c *Controller) RestoreAccess() (string, error) {
 		Request:   request,
 		TimeNow:   timeNow,
 		TxType:    txType,
-		TxTypeId:  txTypeId,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		TxTypeID:  utils.TypeInt(txType),
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 	})
 	if err != nil {
 		return "", utils.ErrInfo(err)

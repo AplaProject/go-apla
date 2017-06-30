@@ -17,33 +17,37 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"strings"
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type editColumnPage struct {
 	Alert            string
 	Lang             map[string]string
-	WalletId         int64
-	CitizenId        int64
+	WalletID         int64
+	CitizenID        int64
 	TxType           string
-	TxTypeId         int64
+	TxTypeID         int64
 	TimeNow          int64
 	TableName        string
-	StateId          int64
+	StateID          int64
 	ColumnPermission string
 	ColumnName       string
 	ColumnType       string
 	CanIndex         bool
 }
 
+// EditColumn is a handle function for editing columns
 func (c *Controller) EditColumn() (string, error) {
 
 	var err error
 
 	txType := "EditColumn"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	txTypeID := utils.TypeInt(txType)
+	timeNow := time.Now().Unix()
 
 	tableName := c.r.FormValue("tableName")
 	columnName := c.r.FormValue("columnName")
@@ -53,7 +57,7 @@ func (c *Controller) EditColumn() (string, error) {
 		return "", utils.ErrInfo("incorrect table name")
 	}
 	prefix := s[0]
-	if prefix != "global" && prefix != c.StateIdStr {
+	if prefix != "global" && prefix != c.StateIDStr {
 		return "", utils.ErrInfo("incorrect table name")
 	}
 
@@ -68,13 +72,13 @@ func (c *Controller) EditColumn() (string, error) {
 		TableName:        tableName,
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
-		ColumnType:       utils.GetColumnType(tableName, columnName),
-		WalletId:         c.SessWalletId,
-		CitizenId:        c.SessCitizenId,
-		StateId:          c.SessStateId,
+		ColumnType:       sql.GetColumnType(tableName, columnName),
+		WalletID:         c.SessWalletID,
+		CitizenID:        c.SessCitizenID,
+		StateID:          c.SessStateID,
 		TimeNow:          timeNow,
 		TxType:           txType,
-		TxTypeId:         txTypeId})
+		TxTypeID:         txTypeID})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

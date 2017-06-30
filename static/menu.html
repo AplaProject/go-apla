@@ -125,7 +125,7 @@
 		  {{end}}
 		  <!-- END Language menu-->
 		  <!-- START Alert menu-->
-		  <li class="dropdown dropdown-list hidden-xs">
+		  <li class="dropdown dropdown-list">
 			 <a href="#" data-toggle="dropdown">
 				<em class="icon-bell"></em>
 				<div id="notificationCount"></div>
@@ -662,7 +662,13 @@ var stateReload = false;
 			}, 100);
 		});
 		
+		$("#mmenu").on('click', function(){
+			$("#mmenu .mm-panels ul li a:not(.mm-next)").removeClass("mm-selected");
+		});
 		$("#mmenu .mm-panels ul li").on('click', function(){
+			$("#mmenu .mm-panels ul li a:not(.mm-next)").removeClass("mm-selected");
+		});
+		$("#mmenu .mm-panels ul li a:not(.mm-next)").on('click', function(){
 			$("#mmenu .mm-panels ul li a:not(.mm-next)").removeClass("mm-selected");
 		});
 	});

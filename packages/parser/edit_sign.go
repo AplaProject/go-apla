@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -51,7 +52,7 @@ func (p *EditSignParser) Validate() error {
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := utils.Int64ToStr(int64(p.EditSign.Header.StateID))
+	prefix := converter.Int64ToStr(int64(p.EditSign.Header.StateID))
 	if len(p.EditSign.Conditions) > 0 {
 		if err := smart.CompileEval(string(p.EditSign.Conditions), uint32(p.EditSign.Header.StateID)); err != nil {
 			return p.ErrInfo(err)

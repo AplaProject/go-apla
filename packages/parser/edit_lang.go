@@ -17,6 +17,8 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -58,12 +60,12 @@ func (p *EditLangParser) Validate() error {
 }
 
 func (p *EditLangParser) Action() error {
-	prefix := utils.Int64ToStr(p.EditLang.Header.StateID)
+	prefix := converter.Int64ToStr(p.EditLang.Header.StateID)
 	_, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.EditLang.Trans}, prefix+"_languages", []string{"name"}, []string{p.EditLang.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	utils.UpdateLang(int(p.EditLang.Header.StateID), p.EditLang.Name, p.EditLang.Trans)
+	language.UpdateLang(int(p.EditLang.Header.StateID), p.EditLang.Name, p.EditLang.Trans)
 	return nil
 }
 

@@ -17,17 +17,19 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewPage creates a new page
 func (c *Controller) NewPage() (string, error) {
 
 	txType := "NewPage"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
+	prefix := c.StateIDStr
 	if global == "1" {
 		prefix = "global"
 	} else {
@@ -43,12 +45,13 @@ func (c *Controller) NewPage() (string, error) {
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
-		TxTypeId:  txTypeId,
-		StateId:   c.SessStateId,
+		Block:     c.r.FormValue("block") == `1`,
+		TxTypeID:  utils.TypeInt(txType),
+		StateID:   c.SessStateID,
 		AllMenu:   allMenu,
 		Name:      c.r.FormValue("name"),
 		DataMenu:  map[string]string{},

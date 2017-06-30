@@ -19,12 +19,12 @@ package controllers
 import (
 	"encoding/json"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
 )
 
-const NWalletHistory = `wallet_history`
+const nWalletHistory = `wallet_history`
 
 type walletPage struct {
 	Data   *CommonPage
@@ -34,20 +34,21 @@ type walletPage struct {
 }
 
 func init() {
-	newPage(NWalletHistory)
+	newPage(nWalletHistory)
 }
 
+// WalletHistory is a controller for displaying wallet's history
 func (c *Controller) WalletHistory() (string, error) {
 	list := make([]map[string]interface{}, 0)
-	walletId := lib.StringToAddress(c.r.FormValue("wallet"))
-	if walletId == 0 {
-		walletId = c.SessWalletId
+	walletID := converter.StringToAddress(c.r.FormValue("wallet"))
+	if walletID == 0 {
+		walletID = c.SessWalletID
 	}
-	current, err := c.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, walletId).String()
+	current, err := c.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, walletID).String()
 	if err != nil {
 		return ``, utils.ErrInfo(err)
 	}
-	rb := utils.StrToInt64(current[`rb_id`])
+	rb := converter.StrToInt64(current[`rb_id`])
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
 		for len(list) <= 100 && rb > 0 {
@@ -59,7 +60,7 @@ func (c *Controller) WalletHistory() (string, error) {
 			if err = json.Unmarshal([]byte(prev[`data`]), &data); err != nil {
 				return ``, utils.ErrInfo(err)
 			}
-			rb = utils.StrToInt64(data[`rb_id`])
+			rb = converter.StrToInt64(data[`rb_id`])
 			if amount, ok := data[`amount`]; ok {
 				var dif decimal.Decimal
 				val, _ := decimal.NewFromString(amount)
@@ -68,12 +69,12 @@ func (c *Controller) WalletHistory() (string, error) {
 				} else {
 					dif = val.Sub(balance)
 				}
-				list = append(list, map[string]interface{}{`block_id`: prev[`block_id`], `amount`: lib.EGSMoney(dif.String()),
-					`balance`: lib.EGSMoney(balance.String()), `inc`: balance.Cmp(val) > 0})
+				list = append(list, map[string]interface{}{`block_id`: prev[`block_id`], `amount`: converter.EGSMoney(dif.String()),
+					`balance`: converter.EGSMoney(balance.String()), `inc`: balance.Cmp(val) > 0})
 				balance = val
 			}
 		}
 	}
-	pageData := walletPage{Data: c.Data, List: list, IsData: len(list) > 0, Wallet: lib.AddressToString(walletId)}
-	return proceedTemplate(c, NWalletHistory, &pageData)
+	pageData := walletPage{Data: c.Data, List: list, IsData: len(list) > 0, Wallet: converter.AddressToString(walletID)}
+	return proceedTemplate(c, nWalletHistory, &pageData)
 }

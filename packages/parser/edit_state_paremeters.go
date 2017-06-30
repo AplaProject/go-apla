@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -76,7 +77,7 @@ func (p *EditStateParametersParser) Validate() error {
 
 func (p *EditStateParametersParser) Action() error {
 	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditStateParameters.Value,
-		p.EditStateParameters.Conditions}, utils.Int64ToStr(p.EditStateParameters.Header.StateID)+"_state_parameters", []string{"name"},
+		p.EditStateParameters.Conditions}, converter.Int64ToStr(p.EditStateParameters.Header.StateID)+"_state_parameters", []string{"name"},
 		[]string{p.EditStateParameters.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)

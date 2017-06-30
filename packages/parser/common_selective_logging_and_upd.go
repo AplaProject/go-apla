@@ -22,13 +22,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
+// selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
 // не использовать для комментов
-func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (string, error) {
+// do not use for comments
+func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (string, error) {
 	var (
-		tableId  string
+		tableID  string
 		isCustom bool
 		err      error
 	)
@@ -42,7 +44,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		return ``, err
 	}
 
-	for i, v := range values_ {
+	for i, v := range ivalues {
 		if len(fields) > i && isBytea[fields[i]] {
 			var vlen int
 			switch v.(type) {
@@ -50,7 +52,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				vlen = len(v.([]byte))
 			case string:
 				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
-					values_[i] = vbyte
+					ivalues[i] = vbyte
 					vlen = len(vbyte)
 				} else {
 					vlen = len(v.(string))
@@ -62,7 +64,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 	}
 
-	values := utils.InterfaceSliceToStr(values_)
+	values := converter.InterfaceSliceToStr(ivalues)
 
 	addSQLFields := p.AllPkeys[table]
 	if len(addSQLFields) > 0 {
@@ -95,9 +97,10 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
 	}
 	// если есть, что логировать
+	// if there is something to log
 	logData, err := p.OneRow(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere).String()
 	if err != nil {
-		return tableId, err
+		return tableID, err
 	}
 	log.Debug(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere)
 	if whereFields != nil && len(logData) > 0 {
@@ -106,8 +109,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 			if k == p.AllPkeys[table] {
 				continue
 			}
-			if (isBytea[k] || utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
-				jsonMap[k] = string(utils.BinToHex([]byte(v)))
+			if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
+				jsonMap[k] = string(converter.BinToHex([]byte(v)))
 			} else {
 				jsonMap[k] = v
 			}
@@ -124,13 +127,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		}
 		jsonData, _ := json.Marshal(jsonMap)
 		if err != nil {
-			return tableId, err
+			return tableID, err
 		}
-		rbId, err := p.ExecSqlGetLastInsertId("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+		rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
 		if err != nil {
-			return tableId, err
+			return tableID, err
 		}
-		log.Debug("string(jsonData) %s / rbId %d", string(jsonData), rbId)
+		log.Debug("string(jsonData) %s / rbID %d", string(jsonData), rbID)
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			// utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}
@@ -150,13 +153,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
-		err = p.ExecSql(`UPDATE "`+table+`" SET `+addSQLUpdate+` rb_id = ? `+addSQLWhere, rbId)
+		err = p.ExecSQL(`UPDATE "`+table+`" SET `+addSQLUpdate+` rb_id = ? `+addSQLWhere, rbID)
 		log.Debug(`UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
-			return tableId, err
+			return tableID, err
 		}
-		tableId = logData[p.AllPkeys[table]]
+		tableID = logData[p.AllPkeys[table]]
 	} else {
 		addSQLIns0 := ""
 		addSQLIns1 := ""
@@ -190,16 +193,16 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, values_ []interface{}, 
 		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
-		tableId, err = p.ExecSqlGetLastInsertId(`INSERT INTO "`+table+`" (`+addSQLIns0+`) VALUES (`+addSQLIns1+`)`, table)
+		tableID, err = p.ExecSQLGetLastInsertID(`INSERT INTO "`+table+`" (`+addSQLIns0+`) VALUES (`+addSQLIns1+`)`, table)
 		if err != nil {
-			return tableId, err
+			return tableID, err
 		}
 	}
 	if generalRollback {
-		err = p.ExecSql("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tableId)
+		err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, tableID)
 		if err != nil {
-			return tableId, err
+			return tableID, err
 		}
 	}
-	return tableId, nil
+	return tableID, nil
 }

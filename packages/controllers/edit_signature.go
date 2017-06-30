@@ -22,8 +22,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NEditSignature = `edit_signature`
+const nEditSignature = `edit_signature`
 
+//SignRes contains the data of the signature
 type SignRes struct {
 	Param string `json:"name"`
 	Text  string `json:"text"`
@@ -37,19 +38,20 @@ type editSignaturePage struct {
 	List       []SignRes
 	Global     string
 	TxType     string
-	TxTypeId   int64
+	TxTypeID   int64
 	Unique     string
 }
 
 func init() {
-	newPage(NEditSignature)
+	newPage(nEditSignature)
 }
 
+// EditSignature is a controller fo editing additional signatures
 func (c *Controller) EditSignature() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
 	if global == "" || global == "0" {
-		prefix = c.StateIdStr
+		prefix = c.StateIDStr
 		global = "0"
 	}
 	name := c.r.FormValue(`name`)
@@ -81,8 +83,7 @@ func (c *Controller) EditSignature() (string, error) {
 			txType = "EditSign"
 		}
 	}
-	txTypeId := utils.TypeInt(txType)
 	pageData := editSignaturePage{Data: c.Data, List: list, Title: title, Conditions: cond,
-		Global: global, Name: name, TxType: txType, TxTypeId: txTypeId, Unique: ``}
-	return proceedTemplate(c, NEditSignature, &pageData)
+		Global: global, Name: name, TxType: txType, TxTypeID: utils.TypeInt(txType), Unique: ``}
+	return proceedTemplate(c, nEditSignature, &pageData)
 }

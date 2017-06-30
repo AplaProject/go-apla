@@ -22,6 +22,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -54,13 +56,13 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		data   map[string]string
 	)
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
-	stateCode := utils.StrToInt64(c.r.FormValue(`stateId`))
+	stateCode := converter.StrToInt64(c.r.FormValue(`stateId`))
 	_, err = c.CheckStateName(stateCode)
 	c.r.ParseMultipartForm(16 << 20) // Max memory 16 MiB
 	formdata := c.r.MultipartForm
 	defer formdata.RemoveAll()
 
-	//	fmt.Println(`FORM START`, formdata)
+	//	fmt.Println(`FORM Start`, formdata)
 	//field, err := c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateCode) + `_state_parameters where name='citizen_fields'`).String()
 	field, err := `[{"name":"name", "htmlType":"textinput", "txType":"string", "title":"First Name"},
 {"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
@@ -73,7 +75,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 
 	if err == nil {
 		var (
-			fields    []utils.FieldInfo
+			fields    []template.FieldInfo
 			sign      []byte
 			checkSign bool
 		)
@@ -101,7 +103,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		}
 	}
 	if err == nil {
-		data, err = c.OneRow(`SELECT * FROM "`+utils.Int64ToStr(stateCode)+`_citizenship_requests" WHERE dlt_wallet_id = ? order by id desc`, walletID).String()
+		data, err = c.OneRow(`SELECT * FROM "`+converter.Int64ToStr(stateCode)+`_citizenship_requests" WHERE dlt_wallet_id = ? order by id desc`, walletID).String()
 		if err != nil || data == nil || len(data) == 0 {
 			err = fmt.Errorf(`unknown request for wallet %s`, walletID)
 		} /*else {
@@ -117,7 +119,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 				}
 			}
 						if fval, err = json.Marshal(vals); err == nil {
-						err = c.ExecSql(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
+						err = c.ExecSQL(`INSERT INTO `+utils.Int64ToStr(stateCode)+`_citizens_requests_private ( request_id, fields, binary, public ) VALUES ( ?, ?, [hex], [hex] )`,
 						data[`request_id`], fval, hex.EncodeToString(buf.Bytes()), c.r.FormValue(`publicKey`))
 					}
 		}*/

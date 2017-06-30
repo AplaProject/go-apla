@@ -52,13 +52,14 @@ func openBrowser(BrowserHTTPHost string) {
 	}
 }
 
+// GetHTTPHost returns program's hosts
 func GetHTTPHost() (string, string, string) {
-	BrowserHTTPHost := "http://localhost:" + *utils.ListenHttpPort
+	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
 	HandleHTTPHost := ""
-	ListenHTTPHost := ":" + *utils.ListenHttpPort
-	if len(*utils.TcpHost) > 0 {
-		ListenHTTPHost = *utils.TcpHost + ":" + *utils.ListenHttpPort
-		BrowserHTTPHost = "http://" + *utils.TcpHost + ":" + *utils.ListenHttpPort
+	ListenHTTPHost := ":" + *utils.ListenHTTPPort
+	if len(*utils.TCPHost) > 0 {
+		ListenHTTPHost = *utils.TCPHost + ":" + *utils.ListenHTTPPort
+		BrowserHTTPHost = "http://" + *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	}
 	return BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost
 }

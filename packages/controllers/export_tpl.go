@@ -17,29 +17,31 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"sort"
 	"strings"
-	//	"strconv"
-	"encoding/json"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"regexp"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"regexp"
 )
 
-const NExportTpl = `export_tpl`
+const nExportTpl = `export_tpl`
 
+// ExpContract contains information about a contract
 type ExpContract struct {
 	Contract string
 	Global   int
 	Name     string
 }
 
+// ExpSlice is a slice of ExpContract
 type ExpSlice []ExpContract
 
 func (a ExpSlice) Len() int      { return len(a) }
@@ -75,7 +77,7 @@ type exportTplPage struct {
 }
 
 func init() {
-	newPage(NExportTpl)
+	newPage(nExportTpl)
 }
 
 func (c *Controller) getList(table, prefix string) (*[]exportInfo, error) {
@@ -102,7 +104,7 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 	names := make([]string, 0)
 	for _, icontract := range contracts {
 		var state string
-		icontract, _, state = getState(c.SessStateId, icontract)
+		icontract, _, state = getState(c.SessStateID, icontract)
 		data, _ := c.OneRow(fmt.Sprintf(`select conditions,value from "%s_%s" where name=?`, state, name), icontract).String()
 		//		fmt.Println(`Data`, err, data)
 		if len(data) > 0 && len(data[`value`]) > 0 {
@@ -138,7 +140,7 @@ func (c *Controller) setData(name, prefix string) (out string) {
 			global         int
 		)
 		tblname = itable[strings.IndexByte(itable, '_')+1:]
-		itable, global, state = getState(c.SessStateId, itable)
+		itable, global, state = getState(c.SessStateID, itable)
 		contname := fmt.Sprintf(`Export%d_%s`, global, tblname)
 		fmt.Println(itable, global, state)
 		if global == 1 {
@@ -188,7 +190,7 @@ func action {
 				if val == `NULL` {
 					val = null[ipar]
 				}
-				params = append(params, fmt.Sprintf(`"%s"`, lib.EscapeForJSON(val)))
+				params = append(params, fmt.Sprintf(`"%s"`, converter.EscapeForJSON(val)))
 			}
 			lines = append(lines, fmt.Sprintf(`	DBInsert(tblname, fields, %s)`, strings.Join(params, `,`)))
 		}
@@ -216,7 +218,7 @@ func (c *Controller) setAppend(name, prefix string) (out string) {
 		//		var state string
 
 		lr := strings.SplitN(ilist, `=`, 2)
-		iname, _, _ := getState(c.SessStateId, lr[0])
+		iname, _, _ := getState(c.SessStateID, lr[0])
 		if len(lr) > 1 {
 			names = append(names, prefix+`_`+iname)
 			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, iname, lr[1]))
@@ -229,7 +231,7 @@ func (c *Controller) setAppend(name, prefix string) (out string) {
 func (c *Controller) setLang() (out string) {
 	out = "SetVar(`l_lang #= "
 	list := make(map[string]string)
-	res, _ := c.GetAll(fmt.Sprintf(`select * from "%d_languages"`, c.SessStateId), -1)
+	res, _ := c.GetAll(fmt.Sprintf(`select * from "%d_languages"`, c.SessStateID), -1)
 	for _, ires := range res {
 		list[ires[`name`]] = ires[`res`]
 	}
@@ -238,8 +240,8 @@ func (c *Controller) setLang() (out string) {
 	return
 }
 
-func getState(stateId int64, name string) (out string, global int, state string) {
-	state = utils.Int64ToStr(stateId)
+func getState(stateID int64, name string) (out string, global int, state string) {
+	state = converter.Int64ToStr(stateID)
 	out = name
 	if strings.HasPrefix(name, `global_`) {
 		state = `global`
@@ -249,6 +251,7 @@ func getState(stateId int64, name string) (out string, global int, state string)
 	return
 }
 
+// ExportTpl is a handle function which can export different information
 func (c *Controller) ExportTpl() (string, error) {
 	name := c.r.FormValue(`name`)
 	message := ``
@@ -274,7 +277,7 @@ func (c *Controller) ExportTpl() (string, error) {
 
 		contracts := strings.Split(c.r.FormValue("smart_contracts"), `,`)
 
-		signlist := make([]string, 0)
+		signlist := make(map[string]bool, 0)
 
 		if len(contracts) > 0 {
 			for _, icontract := range contracts {
@@ -282,8 +285,8 @@ func (c *Controller) ExportTpl() (string, error) {
 					continue
 				}
 				var global int
-				icontract, global, _ = getState(c.SessStateId, icontract)
-				state := c.SessStateId
+				icontract, global, _ = getState(c.SessStateID, icontract)
+				state := c.SessStateID
 				if global == 1 {
 					state = 0
 				}
@@ -295,7 +298,7 @@ func (c *Controller) ExportTpl() (string, error) {
 					for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 						if strings.Index(fitem.Tags, `signature`) >= 0 {
 							if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-								pref := utils.Int64ToStr(state)
+								pref := converter.Int64ToStr(state)
 								if state == 0 {
 									pref = `global`
 								}
@@ -310,7 +313,7 @@ func (c *Controller) ExportTpl() (string, error) {
 								list = append(list, fmt.Sprintf("`sign_%s #= %s`", ret[1], strings.Replace(sign[`value`], "`", `"`, -1)))
 								names = append(names, `signc_`+ret[1])
 								list = append(list, fmt.Sprintf("`signc_%s #= %s`", ret[1], strings.Replace(sign[`conditions`], "`", `"`, -1)))
-								signlist = append(signlist, fmt.Sprintf(`%d%s`, global, ret[1]))
+								signlist[fmt.Sprintf(`%d%s`, global, ret[1])] = true
 							}
 						}
 					}
@@ -352,7 +355,7 @@ func (c *Controller) ExportTpl() (string, error) {
 					state  string
 					global int
 				)
-				itable, global, state = getState(c.SessStateId, itable)
+				itable, global, state = getState(c.SessStateID, itable)
 				cols, _ := c.Single(fmt.Sprintf(`select columns_and_permissions->'update' from "%s_tables" where name=?`,
 					state), itable).String()
 				fmap := make(map[string]string)
@@ -427,8 +430,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			insert: "%s",
 			new_column: "%s",
 			}
-	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], lib.EscapeForJSON(vals[`general_update`]),
-						lib.EscapeForJSON(vals[`insert`]), lib.EscapeForJSON(vals[`new_column`])))
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], converter.EscapeForJSON(vals[`general_update`]),
+						converter.EscapeForJSON(vals[`insert`]), converter.EscapeForJSON(vals[`new_column`])))
 				}
 				for key, field := range jperm[`update`].(map[string]interface{}) {
 					if !re.MatchString(field.(string)) {
@@ -441,7 +444,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			column_name: "%s",
 			permissions: "%s",
 			}
-	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], key, lib.EscapeForJSON(field.(string))))
+	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], key, converter.EscapeForJSON(field.(string))))
 					}
 				}
 			}
@@ -458,7 +461,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					global  int
 				)
 				tblname = itable[strings.IndexByte(itable, '_')+1:]
-				itable, global, _ = getState(c.SessStateId, itable)
+				itable, global, _ = getState(c.SessStateID, itable)
 				contname := fmt.Sprintf(`Export%d_%s`, global, tblname)
 
 				list = append(list, fmt.Sprintf(`{
@@ -503,12 +506,12 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				if len(icontract) == 0 {
 					continue
 				}
-				icontract, global, _ = getState(c.SessStateId, icontract)
+				icontract, global, _ = getState(c.SessStateID, icontract)
 				var name string
 				if global > 0 {
 					name = `@0` + icontract
 				} else {
-					name = fmt.Sprintf(`@%d%s`, c.SessStateId, icontract)
+					name = fmt.Sprintf(`@%d%s`, c.SessStateID, icontract)
 				}
 				contracts = append(contracts, ExpContract{Contract: icontract, Global: global,
 					Name: name})
@@ -518,7 +521,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			for _, icont := range contracts {
 				global := icont.Global
 				icontract := icont.Contract
-				//				icontract, global, _ = getState(c.SessStateId, icontract)
+				//				icontract, global, _ = getState(c.SessStateID, icontract)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -541,7 +544,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	   }`, global, icontract))
 			}
 		}
-		for _, signitem := range signlist {
+		for signitem := range signlist {
 			list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -561,7 +564,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					continue
 				}
 				//				var global int
-				iparam, _, _ = getState(c.SessStateId, iparam)
+				iparam, _, _ = getState(c.SessStateID, iparam)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'name,value,conditions',
 		Data: {
@@ -582,7 +585,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					continue
 				}
 				var global int
-				imenu, global, _ = getState(c.SessStateId, imenu)
+				imenu, global, _ = getState(c.SessStateID, imenu)
 				list = append(list, fmt.Sprintf(`{
 		Forsign: 'global,name,value,conditions',
 		Data: {
@@ -604,8 +607,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 					continue
 				}
 				var global int
-				ipage, global, _ = getState(c.SessStateId, ipage)
-				prefix := utils.Int64ToStr(c.SessStateId)
+				ipage, global, _ = getState(c.SessStateID, ipage)
+				prefix := converter.Int64ToStr(c.SessStateID)
 				if global == 1 {
 					prefix = `global`
 				}
@@ -648,7 +651,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				var iname string
 
 				lr := strings.SplitN(ilist, `=`, 2)
-				iname, global, _ = getState(c.SessStateId, lr[0])
+				iname, global, _ = getState(c.SessStateID, lr[0])
 				if len(lr) > 1 {
 					list = append(list, fmt.Sprintf(`{
 			Forsign: 'global,name,value',
@@ -670,7 +673,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				var iname string
 
 				lr := strings.SplitN(ilist, `=`, 2)
-				iname, global, _ = getState(c.SessStateId, lr[0])
+				iname, global, _ = getState(c.SessStateID, lr[0])
 				if len(lr) > 1 {
 					list = append(list, fmt.Sprintf(`{
 			Forsign: 'global,name,value',
@@ -694,7 +697,7 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 			message = fmt.Sprintf(`File %s has been created`, tplname)
 		}
 	}
-	prefix := utils.Int64ToStr(c.SessStateId)
+	prefix := converter.Int64ToStr(c.SessStateID)
 	loadlist := func(name string) (*[]exportInfo, error) {
 		list, err := c.getList(name, prefix)
 		if err != nil {
@@ -730,5 +733,5 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	//	fmt.Println(`Export`, contracts, pages, tables)
 	pageData := exportTplPage{Data: c.Data, Contracts: contracts, Pages: pages, Tables: tables,
 		Menu: menu, Params: params, Message: message}
-	return proceedTemplate(c, NExportTpl, &pageData)
+	return proceedTemplate(c, nExportTpl, &pageData)
 }

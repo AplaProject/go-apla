@@ -128,10 +128,10 @@
 				</fieldset>
 				<fieldset id="countries" class="form-group phrase" {{if .OneCountry}}style="display:none;"{{end}}>
 					<label class="col-sm-3 control-label lang" for="phrase" lang-id="country"></label>
-					<div class="col-sm-9">
+					<div class="col-sm-9" id="login_state"><div id="state_box">
 						<select id="state_id" class="form-control">
 							<option value="0" class="no_citizenship lang" selected="selected" lang-id="no_citizenship">No citizenship</option>
-						</select>
+						</select></div>
 					</div>
 				</fieldset>
 				<fieldset class="s-box form-group" id="field-address">
@@ -191,12 +191,18 @@
 							<span class="lang" lang-id="select_privatekey_file"></span>
 							<input type="file"  id="upload_key" value="" style="visibility:hidden;position:absolute;">
 						</div>
+						
 						<div class="clearfix">
 							<button id="genseed" class="btn btn-default noimport pull-left lang" type="button" onclick="return do_phrase();" lang-id="generate_new_seed"></button>
 							<button id="saveseed" class="btn btn-default noimport pull-right" type="button" data-clipboard-action="copy" data-clipboard-target="#phrase" onclick="return save_phrase(this);"></button>
 						</div>
 					</div>
 				</fieldset>
+				<fieldset class="form-group noregister" {{if .OneCountry}}style="display:none;"{{end}}>
+					<label class="col-sm-3 control-label lang" for="phrase" lang-id="country"></label>
+					<div class="col-sm-9" id="import_state">
+					</div>
+				</fieldset>				
 				<fieldset class="form-group pass">
 					<label id="lpass" class="col-sm-3 control-label lang" for="pass" lang-id="password"></label>
 					<div class="col-sm-9">
@@ -362,6 +368,10 @@ function login_form() {
 	$("#login_form").show();
 	$("#address").val(GKey.Address ? GKey.Address : '');
 	$("#login_form").removeClass("whirl standard");
+	if ($("#login_state #state_box")) {
+		$("#state_box").detach().appendTo('#login_state');		
+	}
+	
 /*	if ($("#accounts li").length) {
 		$("#accounts li a").each(function() {
 			
@@ -414,6 +424,9 @@ function import_form() {
 	$("#rep_pass").val('');
 	$("#login_form").hide();
 	$(".noimport").hide();
+	if ($("#login_state #state_box")) {
+		$("#state_box").detach().appendTo('#import_state');
+	}
 	$("#register_form").show();
 	$(".noregister").show();
 	if (!$("#accounts li").length) {
@@ -684,7 +697,7 @@ $(document).ready(function(){
 });
 
 $(document).on('keydown', function(e){
-	if (e.keyCode == 13 && $(".keyCode_13").length) {
+	/*if (e.keyCode == 13 && $(".keyCode_13").length) {
 		if (!$(".select2-container--focus").length) {
 			if (!$(".sweet-alert").is(":visible")) {
 				$(".start_form:visible").find(".buttons:visible .submit").click();
@@ -694,7 +707,7 @@ $(document).on('keydown', function(e){
 			}
 			return false;
 		}
-	}
+	}*/
 	if (e.keyCode == 8 && $("#back:visible").length && !$("#register_form .form-control:focus").length) {
 		do_register_back();
 	}

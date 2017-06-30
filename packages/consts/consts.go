@@ -17,31 +17,39 @@
 package consts
 
 // текущая версия
+// Current version
 const VERSION = "0.1.6b9"
 
 const FIRST_QDLT = 1e+26
 const EGS_DIGIT = 18 //money_digit for EGS 1000000000000000000
 
 // используется в confirmations
+// is used in confirmations
 const COUNT_CONFIRMED_NODES = 5
 const WAIT_CONFIRMED_NODES = 10
 
 // У скольких нодов должен быть такой же блок как и у нас, чтобы считать, что блок у большей части DC-сети. для get_confirmed_block_id()
+// The number of nodes which should have the same block as we have for regarding this block belongs to the major part of DC-net. For get_confirmed_block_id()
 const MIN_CONFIRMED_NODES = 0
 
 // примерный текущий крайний блок
+// Approximate current last block
 const LAST_BLOCK = 330000
 
 // примерный размер блокчейна
+// Approximate blockchain size
 const BLOCKCHAIN_SIZE = 1000
 
 // где лежит блокчейн. для тех, кто не хочет собирать его с нодов
+// Where is blockchain. For those who don't want to collect it from nodes
 const BLOCKCHAIN_URL = "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain"
 
 // на сколько может бежать время в тр-ии
+// How fast could the time of transaction pass
 const MAX_TX_FORW = 0
 
 // тр-ия может блуждать по сети сутки и потом попасть в блок
+// transaction may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
 
 const MAX_BLOCK_SIZE = 64 << 20
@@ -60,10 +68,12 @@ const ERROR_TIME = 1
 const ROUND_FIX = 0.00000000001
 
 // таймауты для TCP
+// timeouts for TCP
 const READ_TIMEOUT = 20
 const WRITE_TIMEOUT = 20
 
 // дефолтное знаение, со скольким нодами устанавляиваем связь
+// default value, with how many nodes we make the connection
 const OUT_CONNECTIONS = 10
 
 const GAPS_BETWEEN_BLOCKS = 3
@@ -80,6 +90,7 @@ const DATA_TYPE_BLOCK_BODY = 7
 const CHANGE_KEY_PERIOD = 86400 * 7
 
 const UPD_FULL_NODES_PERIOD = 3600 // на время тестов 3600, потом надо ставить 86400
+// 3600 is for the test time, then we have to put 86400
 
 const RATE_VOTING_PERIOD = 3600
 
@@ -93,10 +104,13 @@ const ALERT_KEY = `30820122300d06092a864886f70d01010105000382010f003082010a02820
 const UPD_AND_VER_URL = "http://egaas.org"
 const GOOGLE_API_KEY = "AIzaSyBLZlUPgd9uhX05OrsFU68yJOZFrYhZe84"
 
+// LangMap contains supported languages
 var LangMap = map[string]int{"en": 1, "ru": 42}
 
+// Countries is the list of the countries
 var Countries = []string{"Afghanistan", "Albania", "Algeria", "American Samoa", "Andorra", "Angola", "Anguilla", "Antarctica", "Antigua and Barbuda", "Argentina", "Armenia", "Aruba", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Bouvet Island", "Brazil", "British Indian Ocean Territory", "British Virgin Islands", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada", "Cape Verde", "Cayman Islands", "Central African Republic", "Chad", "Chile", "China", "Christmas Island", "Cocos [Keeling] Islands", "Colombia", "Comoros", "Congo [DRC]", "Congo [Republic]", "Cook Islands", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Côte d\"Ivoire", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Falkland Islands [Islas Malvinas]", "Faroe Islands", "Fiji", "Finland", "France", "French Guiana", "French Polynesia", "French Southern Territories", "Gabon", "Gambia", "Gaza Strip", "Georgia", "Germany", "Ghana", "Gibraltar", "Greece", "Greenland", "Grenada", "Guadeloupe", "Guam", "Guatemala", "Guernsey", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Heard Island and McDonald Islands", "Honduras", "Hong Kong", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Isle of Man", "Israel", "Italy", "Jamaica", "Japan", "Jersey", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macau", "Macedonia [FYROM]", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Martinique", "Mauritania", "Mauritius", "Mayotte", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", "Morocco", "Mozambique", "Myanmar [Burma]", "Namibia", "Nauru", "Nepal", "Netherlands", "Netherlands Antilles", "New Caledonia", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Niue", "Norfolk Island", "North Korea", "Northern Mariana Islands", "Norway", "Oman", "Pakistan", "Palau", "Palestinian Territories", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Pitcairn Islands", "Poland", "Portugal", "Puerto Rico", "Qatar", "Romania", "Russia", "Rwanda", "Réunion", "Saint Helena", "Saint Kitts and Nevis", "Saint Lucia", "Saint Pierre and Miquelon", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Georgia and the South Sandwich Islands", "South Korea", "Spain", "Sri Lanka", "Sudan", "Suriname", "Svalbard and Jan Mayen", "Swaziland", "Sweden", "Switzerland", "Syria", "São Tomé and Príncipe", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tokelau", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Turks and Caicos Islands", "Tuvalu", "U.S. Minor Outlying Islands", "U.S. Virgin Islands", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Wallis and Futuna", "Western Sahara", "Yemen", "Zambia", "Zimbabwe"}
 
+// TxTypes is the list of the embedded transactions
 var TxTypes = map[int]string{
 	1:  "FirstBlock",
 	2:  "Reserved1",

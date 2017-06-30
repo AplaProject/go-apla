@@ -26,17 +26,18 @@ type dashboardAnonymPage struct {
 	Amount string
 }
 
+// DashboardAnonym is a handle function for the default dashboard page
 func (c *Controller) DashboardAnonym() (string, error) {
 	amount := `0`
 
-	/*	wallet_id,err := c.GetMyWalletId()
+	/*	wallet_id,err := c.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}*/
 
-	if c.SessWalletId > 0 || len(c.SessAddress) > 0 {
+	if c.SessWalletID > 0 || len(c.SessAddress) > 0 {
 		var err error
-		amount, err = c.Single("select amount from dlt_wallets where wallet_id = ?", c.SessWalletId).String()
+		amount, err = c.Single("select amount from dlt_wallets where wallet_id = ?", c.SessWalletID).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}

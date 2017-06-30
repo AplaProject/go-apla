@@ -24,16 +24,22 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	//"os"
 	//"regexp"
 	//	"time"
 
 	"fmt"
+
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
+// IosLog is reserved
 func IosLog(text string) {
 }
 
@@ -68,7 +74,7 @@ func (l *boundConn) Close() error {
 	return err
 }
 */
-func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
+func httpListener(ListenHTTPHost string, BrowserHTTPHost *string, route http.Handler) {
 
 	i := 0
 	host := ListenHTTPHost
@@ -81,7 +87,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 			panic("Error listening ")
 		}
 		if i > 1 {
-			host = ":7" + utils.IntToStr(i) + "79"
+			host = ":7" + converter.IntToStr(i) + "79"
 			*BrowserHTTPHost = "http://" + host
 		}
 		log.Debug("host", host)
@@ -89,6 +95,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 		log.Debug("l", l)
 		if err == nil {
 			// Если это повторный запуск и он не из консоли, то открываем окно браузера, т.к. скорее всего юзер тыкнул по иконке
+			// If this is a restart and it is made not from the console, then open the browser window, because user most likely pressed the icon
 			/*if *utils.Console == 0 {
 				openBrowser(browser)
 			}*/
@@ -100,7 +107,7 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 	}
 
 	go func() {
-		srv := &http.Server{} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
 		//		srv.SetKeepAlivesEnabled(false)
 		err = srv.Serve(l)
 		//		err = http.Serve( NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
@@ -113,9 +120,9 @@ func httpListener(ListenHTTPHost string, BrowserHTTPHost *string) {
 }
 
 // For ipv6 on the server
-func httpListenerV6() {
+func httpListenerV6(route http.Handler) {
 	i := 0
-	port := *utils.ListenHttpPort
+	port := *utils.ListenHTTPPort
 	var l net.Listener
 	var err error
 	for {
@@ -124,7 +131,7 @@ func httpListenerV6() {
 			panic("Error listening ")
 		}
 		if i > 0 {
-			port = "7" + utils.IntToStr(i) + "79"
+			port = "7" + converter.IntToStr(i) + "79"
 		}
 		i++
 		l, err = net.Listen("tcp6", ":"+port)
@@ -136,7 +143,7 @@ func httpListenerV6() {
 	}
 
 	go func() {
-		srv := &http.Server{} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
+		srv := &http.Server{Handler: route} //Handler: http.TimeoutHandler(http.DefaultServeMux, time.Duration(120*time.Second), "Your request has timed out")}
 		//		srv.SetKeepAlivesEnabled(false)
 		err = srv.Serve(l)
 		//		err = http.Serve(NewBoundListener(100, l), http.TimeoutHandler(http.DefaultServeMux, time.Duration(600*time.Second), "Your request has timed out"))
@@ -149,24 +156,25 @@ func httpListenerV6() {
 }
 
 func tcpListener() {
-	db := utils.DB
+	db := sql.DB
 	log.Debug("tcp")
 	go func() {
 		if db == nil || db.DB == nil {
 			for {
-				db = utils.DB
+				db = sql.DB
 				if db != nil && db.DB != nil {
 					break
 				} else {
-					utils.Sleep(3)
+					time.Sleep(time.Second * 3)
 				}
 			}
 		}
 
-		log.Debug("*utils.tcpHost: %v", *utils.TcpHost+":"+consts.TCP_PORT)
-		//if len(*utils.TcpHost) > 0 {
+		log.Debug("*utils.tcpHost: %v", *utils.TCPHost+":"+consts.TCP_PORT)
+		//if len(*utils.TCPHost) > 0 {
 		// включаем листинг TCP-сервером и обработку входящих запросов
-		l, err := net.Listen("tcp4", *utils.TcpHost+":"+consts.TCP_PORT)
+		// switch on the listing by TCP-server and the processing of incoming requests
+		l, err := net.Listen("tcp4", *utils.TCPHost+":"+consts.TCP_PORT)
 		if err != nil {
 			log.Error("Error listening:", err)
 			//panic(err)
@@ -177,15 +185,15 @@ func tcpListener() {
 					conn, err := l.Accept()
 					if err != nil {
 						log.Error("Error accepting:", err)
-						utils.Sleep(1)
+						time.Sleep(time.Second)
 						//panic(err)
 						//os.Exit(1)
 					} else {
 						go func(conn net.Conn) {
-							t := new(tcpserver.TcpServer)
+							t := new(tcpserver.TCPServer)
 							t.DCDB = db
 							t.Conn = conn
-							t.HandleTcpRequest()
+							t.HandleTCPRequest()
 						}(conn)
 					}
 				}

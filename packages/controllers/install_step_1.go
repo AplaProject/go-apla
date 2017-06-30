@@ -24,6 +24,7 @@ type installStep1Struct struct {
 	Lang map[string]string
 }
 
+// InstallStep1 is a controller for the second step of the installation
 func (c *Controller) InstallStep1() (string, error) {
 
 	TemplateStr, err := makeTemplate("install_step_1", "installStep1", &installStep1Struct{

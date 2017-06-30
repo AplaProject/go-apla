@@ -21,12 +21,15 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NMenu = `menu`
+const nMenu = `menu`
 
+// LangInfo is a structure for language name and code
 type LangInfo struct {
 	Title string
 	Code  string
@@ -51,7 +54,7 @@ type menuPage struct {
 }
 
 func init() {
-	newPage(NMenu)
+	newPage(nMenu)
 }
 
 /*
@@ -64,6 +67,8 @@ func ReplaceMenu(menu string) string {
 	return qrx.ReplaceAllString(menu, "<li class='citizen_$2'><a href='#' onclick=\"load_page('$2', {$3});\"><span>$1</span></a></li>")
 }
 */
+
+// Menu is controller for displaying the left menu
 func (c *Controller) Menu() (string, error) {
 	var (
 		err                                                            error
@@ -72,24 +77,24 @@ func (c *Controller) Menu() (string, error) {
 	)
 
 	if strings.HasPrefix(c.r.Host, `localhost`) {
-		updinfo, err := utils.GetUpdVerAndUrl(consts.UPD_AND_VER_URL)
+		updinfo, err := utils.GetUpdVerAndURL(consts.UPD_AND_VER_URL)
 		if err == nil && updinfo != nil {
 			updver = updinfo.Version
 		}
 	}
 
 	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
-	if c.StateIdStr != "" {
+	if c.StateIDStr != "" {
 		params := make(map[string]string)
-		params[`state_id`] = c.StateIdStr
+		params[`state_id`] = c.StateIDStr
 		params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
 
-		menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "main_menu").String()
+		menu, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_menu" WHERE name = ?`, "main_menu").String()
 		if err != nil {
 			return "", err
 		}
 		if len(menu) == 0 {
-			menu, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_menu" WHERE name = ?`, "menu_default").String()
+			menu, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_menu" WHERE name = ?`, "menu_default").String()
 			if err != nil {
 				return "", err
 			}
@@ -97,30 +102,30 @@ func (c *Controller) Menu() (string, error) {
 			isMain = true
 		}
 
-		stateName, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_name").String()
+		stateName, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_state_parameters" WHERE name = ?`, "state_name").String()
 		if err != nil {
 			return "", err
 		}
-		stateFlag, err = c.Single(`SELECT value FROM "`+c.StateIdStr+`_state_parameters" WHERE name = ?`, "state_flag").String()
+		stateFlag, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_state_parameters" WHERE name = ?`, "state_flag").String()
 		if err != nil {
 			return "", err
 		}
 
-		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenId).String()
+		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIDStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
 		if err != nil {
 			log.Error("%v", err)
 		}
 
-		citizenAvatar, err = c.Single(`SELECT avatar FROM "`+c.StateIdStr+`_citizens" WHERE id = ?`, c.SessCitizenId).String()
+		citizenAvatar, err = c.Single(`SELECT avatar FROM "`+c.StateIDStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		//		menu = ReplaceMenu(menu)
-		menu = utils.LangMacro(textproc.Process(menu, &params), utils.StrToInt(c.StateIdStr), params[`accept_lang`])
+		menu = language.LangMacro(textproc.Process(menu, &params), converter.StrToInt(c.StateIDStr), params[`accept_lang`])
 	}
 	var langs []LangInfo
-	if len(utils.LangList) > 0 {
-		for _, val := range utils.LangList {
+	if len(language.LangList) > 0 {
+		for _, val := range language.LangList {
 			if val == `en` {
 				langs = append(langs, LangInfo{Title: `English (UK)`, Code: `gb`})
 			}
@@ -133,7 +138,7 @@ func (c *Controller) Menu() (string, error) {
 			{Title: `Nederlands (NL)`, Code: `nl`}}
 	}
 	states, _ := c.AjaxStatesList()
-	return proceedTemplate(c, NMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
+	return proceedTemplate(c, nMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
 		States: states, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, LogoExt: utils.LogoExt,
 		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code})
 }

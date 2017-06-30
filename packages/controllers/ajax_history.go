@@ -19,8 +19,7 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 const aHistory = `ajax_history`
@@ -44,14 +43,14 @@ func (c *Controller) AjaxHistory() interface{} {
 		history []map[string]string
 		err     error
 	)
-	walletID := c.SessWalletId
-	result := HistoryJSON{Draw: utils.StrToInt(c.r.FormValue("draw"))}
-	length := utils.StrToInt(c.r.FormValue("length"))
+	walletID := c.SessWalletID
+	result := HistoryJSON{Draw: converter.StrToInt(c.r.FormValue("draw"))}
+	length := converter.StrToInt(c.r.FormValue("length"))
 	if length == -1 {
 		length = 20
 	}
 	log.Debug("a/h walletId %s / c.SessAddress %s", walletID, c.SessAddress)
-	limit := fmt.Sprintf(`LIMIT %d OFFSET %d`, length, utils.StrToInt(c.r.FormValue("start")))
+	limit := fmt.Sprintf(`LIMIT %d OFFSET %d`, length, converter.StrToInt(c.r.FormValue("start")))
 	if walletID != 0 {
 		total, _ := c.Single(`SELECT count(id) FROM dlt_transactions where sender_wallet_id = ? OR
 		                       recipient_wallet_id = ? OR recipient_wallet_address = ?`, walletID, walletID, c.SessAddress).Int64()
@@ -69,13 +68,13 @@ func (c *Controller) AjaxHistory() interface{} {
 			}
 			for ind := range history {
 				max, _ := c.Single(`select max(id) from block_chain`).Int64()
-				history[ind][`confirm`] = utils.Int64ToStr(max - utils.StrToInt64(history[ind][`block_id`]))
-				history[ind][`sender_address`] = lib.AddressToString(utils.StrToInt64(history[ind][`sw`]))
+				history[ind][`confirm`] = converter.Int64ToStr(max - converter.StrToInt64(history[ind][`block_id`]))
+				history[ind][`sender_address`] = converter.AddressToString(converter.StrToInt64(history[ind][`sw`]))
 				recipient := history[ind][`rw`]
 				if len(recipient) < 10 {
 					recipient = history[ind][`recipient_wallet_address`]
 				}
-				history[ind][`recipient_address`] = lib.AddressToString(lib.StringToAddress(recipient))
+				history[ind][`recipient_address`] = converter.AddressToString(converter.StringToAddress(recipient))
 			}
 		}
 	}

@@ -16,11 +16,7 @@
 
 package controllers
 
-import (
-//	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-)
-
-const NLanguages = `languages`
+const nLanguages = `languages`
 
 type languagesPage struct {
 	Data   *CommonPage
@@ -29,14 +25,15 @@ type languagesPage struct {
 }
 
 func init() {
-	newPage(NLanguages)
+	newPage(nLanguages)
 }
 
+// Languages is a controller for displaying language resources
 func (c *Controller) Languages() (string, error) {
 	global := c.r.FormValue("global")
 	prefix := "global"
 	if global == "" || global == "0" {
-		prefix = c.StateIdStr
+		prefix = c.StateIDStr
 		global = "0"
 	}
 	list, err := c.GetAll(`SELECT name, res FROM "`+prefix+`_languages" order by name`, -1)
@@ -45,5 +42,5 @@ func (c *Controller) Languages() (string, error) {
 	}
 
 	pageData := languagesPage{Data: c.Data, Global: global, List: list}
-	return proceedTemplate(c, NLanguages, &pageData)
+	return proceedTemplate(c, nLanguages, &pageData)
 }

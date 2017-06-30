@@ -18,25 +18,29 @@ package parser
 
 import (
 	"encoding/json"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
+// selectiveRollback rollbacks the specified fields
 // откат не всех полей, а только указанных, либо 1 строку, если нет where
+// roll back not all the fields but the specified ones or only 1 line if there is not 'where'
 func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) error {
 	if len(where) > 0 {
 		where = " WHERE " + where
 	}
-	tblname := lib.EscapeName(table)
+	tblname := converter.EscapeName(table)
 	// получим rb_id, по которому можно найти данные, которые были до этого
-	rbId, err := p.Single("SELECT rb_id FROM " + tblname + " " + where + " order by rb_id desc").Int64()
+	// we obtain rb_id with help of that it is possible to find the data which was before
+	rbID, err := p.Single("SELECT rb_id FROM " + tblname + " " + where + " order by rb_id desc").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if rbId > 0 {
+	if rbID > 0 {
 		// данные, которые восстановим
-		rbData, err := p.OneRow("SELECT * FROM rollback WHERE rb_id  =  ?", rbId).String()
+		// data that we will be restored
+		rbData, err := p.OneRow("SELECT * FROM rollback WHERE rb_id  =  ?", rbID).String()
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -47,30 +51,31 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 			return p.ErrInfo(err)
 		}
 		//log.Debug("logData",logData)
-		addSqlUpdate := ""
+		addSQLUpdate := ""
 		for k, v := range jsonMap {
-			if utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
-				addSqlUpdate += k + `=decode('` + string(utils.BinToHex([]byte(v))) + `','HEX'),`
+			if converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"}) && len(v) != 0 {
+				addSQLUpdate += k + `=decode('` + string(converter.BinToHex([]byte(v))) + `','HEX'),`
 			} else {
-				addSqlUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`
+				addSQLUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`
 			}
 		}
 		//log.Debug("%v", logData)
 		//log.Debug("%v", logData["prev_rb_id"])
-		//log.Debug("UPDATE "+table+" SET "+addSqlUpdate+" rb_id = ? "+where)
-		addSqlUpdate = addSqlUpdate[0 : len(addSqlUpdate)-1]
-		err = p.ExecSql("UPDATE " + tblname + " SET " + addSqlUpdate + " " + where)
+		//log.Debug("UPDATE "+table+" SET "+addSQLUpdate+" rb_id = ? "+where)
+		addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
+		err = p.ExecSQL("UPDATE " + tblname + " SET " + addSQLUpdate + " " + where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// подчищаем _log
-		err = p.ExecSql("DELETE FROM rollback WHERE rb_id = ?", rbId)
+		// clean up the _log
+		err = p.ExecSQL("DELETE FROM rollback WHERE rb_id = ?", rbID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		p.rollbackAI("rollback", 1)
 	} else {
-		err = p.ExecSql("DELETE FROM " + tblname + " " + where)
+		err = p.ExecSQL("DELETE FROM " + tblname + " " + where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

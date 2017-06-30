@@ -74,14 +74,14 @@
 		$.get( 'ajax?controllerName=GetServerTime', function (data) {
 			serverTime = data.time;
 			if ($("#id").val()) {
-				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#global").val() + ',' + $("#id").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
+				$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + $("#global").val() + ',' + $("#id").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
 			} else {
 				nameContract = $("#name").val()
 				wallet = $("#walletAddress").val();
 				if (wallet) {
 					nameContract = nameContract + '#' + wallet
 				}
-				$("#for-signature").val('{{.TxTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + $("#global").val()+','+nameContract + ',' + $("#value").val() + ',' + $("#conditions").val());
+				$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + $("#global").val()+','+nameContract + ',' + $("#value").val() + ',' + $("#conditions").val());
 			}
 			doSign();
 			$("#send_to_net").trigger("click");
@@ -101,8 +101,8 @@
 				'conditions' : $("#conditions").val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
-				'citizenId' : '{{.CitizenId}}',
-				'stateId' : '{{.StateId}}',
+				'citizenId' : '{{.CitizenID}}',
+				'stateId' : '{{.StateID}}',
 				'signature1': $('#signature1').val()
 			},
 			dataType: 'json',
@@ -123,8 +123,8 @@
 				'id' : $("#id").val(),
 				'type' : '{{.TxActivateType}}',
 				'time' : serverTime,
-				'citizenId' : '{{.CitizenId}}',
-				'stateId' : '{{.StateId}}',
+				'citizenId' : '{{.CitizenID}}',
+				'stateId' : '{{.StateID}}',
 				'signature1': $('#signature1').val()
 			},
 			dataType: 'json',
@@ -142,7 +142,7 @@
 		if (id) {
 			$.get( 'ajax?controllerName=GetServerTime', function (data) {
 				serverTime = data.time;
-				$("#for-signature").val('{{.TxActivateTypeId}},' + serverTime + ',{{.CitizenId}},{{.StateId}},' + 
+				$("#for-signature").val('{{.TxActivateTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + 
 				   $("#global").val() + ',' + id);
 				doSign();
 				send_activate();

@@ -27,10 +27,10 @@ import (
 type showTablePage struct {
 	Alert                 string
 	Lang                  map[string]string
-	WalletId              int64
-	CitizenId             int64
+	WalletID              int64
+	CitizenID             int64
 	TxType                string
-	TxTypeId              int64
+	TxTypeID              int64
 	TimeNow               int64
 	TableData             []map[string]string
 	Columns               map[string]string
@@ -39,6 +39,7 @@ type showTablePage struct {
 	Global                string
 }
 
+// ShowTable shows data of the table
 func (c *Controller) ShowTable() (string, error) {
 
 	var err error
@@ -49,7 +50,7 @@ func (c *Controller) ShowTable() (string, error) {
 	}
 
 	global := c.r.FormValue("global")
-	prefix := c.StateIdStr
+	prefix := c.StateIDStr
 	if global == "1" {
 		prefix = "global"
 	} else {
@@ -93,8 +94,8 @@ func (c *Controller) ShowTable() (string, error) {
 		Alert:     c.Alert,
 		Lang:      c.Lang,
 		Global:    global,
-		WalletId:  c.SessWalletId,
-		CitizenId: c.SessCitizenId,
+		WalletID:  c.SessWalletID,
+		CitizenID: c.SessCitizenID,
 		Columns:   columns,
 		//tableData : columnsAndPermissions,
 		TableName: tableName,

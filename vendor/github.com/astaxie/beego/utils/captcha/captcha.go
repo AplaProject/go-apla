@@ -64,10 +64,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego"
-	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/cache"
-	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/context"
-	"github.com/EGaaS/go-egaas-mvp/vendor/src/github.com/astaxie/beego/utils"
+	"github.com/EGaaS/go-egaas-mvp/vendor/github.com/astaxie/beego"
+	"github.com/EGaaS/go-egaas-mvp/vendor/github.com/astaxie/beego/cache"
+	"github.com/EGaaS/go-egaas-mvp/vendor/github.com/astaxie/beego/context"
+	"github.com/EGaaS/go-egaas-mvp/vendor/github.com/astaxie/beego/utils"
 )
 
 var (

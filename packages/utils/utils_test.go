@@ -43,7 +43,7 @@ func TestDecryptCFB(t *testing.T) {
 
 func TestEncrypt(t *testing.T) {
 
-	privKey, _ := lib.GenKeys()
+	privKey, _, _ := lib.GenHexKeys()
 	password := Md5("111")
 
 	// encrypt
@@ -54,7 +54,7 @@ func TestEncrypt(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println(iv)
-	plaintext := PKCS5Padding([]byte(privKey), c.BlockSize())
+	plaintext := lib.PKCS7Padding([]byte(privKey), c.BlockSize())
 	cfbdec := cipher.NewCBCEncrypter(c, iv)
 	EncPrivateKeyBin := make([]byte, len(plaintext))
 	cfbdec.CryptBlocks(EncPrivateKeyBin, plaintext)
@@ -79,6 +79,6 @@ func TestEncrypt(t *testing.T) {
 	mode := cipher.NewCBCDecrypter(c, iv)
 	mode.CryptBlocks(privateKeyBin, privateKeyBin)
 	fmt.Printf("nodelpad %s\n", privateKeyBin)
-	privateKeyBin = PKCS5UnPadding(privateKeyBin)
+	privateKeyBin = lib.PKCS7UnPadding(privateKeyBin)
 	fmt.Printf("delpad %s\n", privateKeyBin)
 }

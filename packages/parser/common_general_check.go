@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -28,7 +29,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 	txType := int64(header.Type)
 	if header.StateID > 0 {
 		p.TxStateID = uint32(header.StateID)
-		p.TxStateIDStr = utils.Int64ToStr(header.StateID)
+		p.TxStateIDStr = converter.Int64ToStr(header.StateID)
 		p.TxCitizenID = header.UserID
 		p.TxWalletID = 0
 	} else {
@@ -49,7 +50,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			}
 			// возможно юзер послал ключ с тр-ией
 			log.Debug("pubkey %x", header.PublicKey)
-			walletID, err := p.GetWalletIdByPublicKey(header.PublicKey)
+			walletID, err := p.GetWalletIDByPublicKey(header.PublicKey)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -63,7 +64,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			log.Debug("data[public_key_0]", data["public_key_0"])
 		}
 	} else {
-		log.Debug(`SELECT * FROM "`+utils.Int64ToStr(header.StateID)+`_citizens" WHERE id = %d`, header.UserID)
+		log.Debug(`SELECT * FROM "`+converter.Int64ToStr(header.StateID)+`_citizens" WHERE id = %d`, header.UserID)
 		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", header.UserID).String()
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -75,6 +76,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
 	}
 	// чтобы не записали слишком длинную подпись
+	// for not to record too long signature
 	// 128 - это нод-ключ
 	if len(header.BinSignatures) < 64 || len(header.BinSignatures) > 5120 {
 		return utils.ErrInfoFmt("incorrect sign size %d", len(header.BinSignatures))

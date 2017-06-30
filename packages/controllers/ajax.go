@@ -21,11 +21,13 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
+// Ajax is a common handle function for ajax requests
 func Ajax(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -34,7 +36,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	if qr := r.FormValue("qr"); len(qr) > 0 {
-		if qr[0] == '1' || lib.IsValidAddress(qr) {
+		if qr[0] == '1' || converter.IsValidAddress(qr) {
 			png, _ := qrcode.Encode(qr, qrcode.Medium, 170)
 			w.Header().Set("Content-Type", "image/png")
 			w.Write(png)
@@ -47,13 +49,13 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	defer sess.SessionRelease(w)
-	sessWalletId := GetSessWalletId(sess)
-	sessCitizenId := GetSessCitizenId(sess)
-	sessStateId := GetSessInt64("state_id", sess)
+	sessWalletID := GetSessWalletID(sess)
+	sessCitizenID := GetSessCitizenID(sess)
+	sessStateID := GetSessInt64("state_id", sess)
 	sessAddress := GetSessString(sess, "address")
 
-	log.Debug("sessWalletId", sessWalletId)
-	log.Debug("sessCitizenId", sessCitizenId)
+	log.Debug("sessWalletID", sessWalletID)
+	log.Debug("sessCitizenID", sessCitizenID)
 
 	c := new(Controller)
 	c.r = r
@@ -64,30 +66,30 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		dbInit = true
 	}
 
-	c.SessWalletId = sessWalletId
-	c.SessCitizenId = sessCitizenId
+	c.SessWalletID = sessWalletID
+	c.SessCitizenID = sessCitizenID
 	c.SessAddress = sessAddress
-	c.SessStateId = sessStateId
+	c.SessStateID = sessStateID
 
 	if dbInit {
 		//c.DCDB, err = utils.NewDbConnect(configIni)
 
-		c.DCDB = utils.DB
+		c.DCDB = sql.DB
 
-		if utils.DB == nil || utils.DB.DB == nil {
+		if sql.DB == nil || sql.DB.DB == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
 	}
-	log.Debug("sessStateId", sessStateId)
-	if sessStateId > 0 {
-		stateName, err := c.GetStateName(sessStateId)
+	log.Debug("sessStateID", sessStateID)
+	if sessStateID > 0 {
+		stateName, err := c.GetStateName(sessStateID)
 		if err != nil {
 			log.Error("%v", err)
 		}
 		c.StateName = stateName
-		c.StateId = sessStateId
-		c.StateIdStr = utils.Int64ToStr(sessStateId)
+		c.StateID = sessStateID
+		c.StateIDStr = converter.Int64ToStr(sessStateID)
 	}
 	c.dbInit = dbInit
 
@@ -116,7 +118,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	if jsonName := r.FormValue(`json`); len(jsonName) > 0 && isPage(jsonName, TJson) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if dbInit {
-			w.Write(CallJson(c, jsonName))
+			w.Write(CallJSON(c, jsonName))
 		}
 		return
 	}
@@ -130,24 +132,29 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 
 	//w.Header().Set("Access-Control-Allow-Origin", "*")
 	// Общие контролы для двух проверок
+	// The common controls for two checks
 	pages := "Install|AjaxGetMenuHtml|AjaxStatesList|SignIn|Updatedaylight|AlertFromAdmin|FreecoinProcess|RestartDb|ReloadDb|DebugInfo|CheckSetupPassword|AcceptNewKeyStatus|availableKeys|CfCatalog|CfPagePreview|CfStart|CheckNode|GetBlock|GetMinerData|GetMinerDataMap|GetSellerData|Index|IndexCf|InstallStep0|InstallStep1|InstallStep2|Login|SynchronizationBlockchain|UpdatingBlockchain|Menu|SignUpInPool|SignLogin"
 	// Почему CfCatalog,CfPagePreview,CfStart,Index,IndexCf,InstallStep0,InstallStep1,
 	// InstallStep2,Login,UpdatingBlockchain были только во втором случае? Похоже не нужны больше.
+	// Why CfCatalog,CfPagePreview,CfStart,Index,IndexCf,InstallStep0,InstallStep1,
+	// InstallStep2,Login,UpdatingBlockchain were in the second case only? They seem not need anymore.
 
 	if ok, _ := regexp.MatchString(`^(?i)`+pages+`|GetServerTime|TxStatus|AnonymHistory|RewritePrimaryKeySave|SendPromisedAmountToPool|SaveEmailAndSendTestMess|sendMobile|rewritePrimaryKey|EImportData|EDataBaseDump|Update|exchangeAdmin|exchangeSupport|exchangeUser|ETicket|newPhoto|NodeConfigControl|SaveDecryptComment|EncryptChatMessage|GetChatMessages|SendToTheChat|SaveToken|SendToPool|ClearDbLite|ClearDb|UploadVideo|daylightKey|PoolAddUsers|SaveQueue|AlertMessage|SaveHost|PoolDataBaseDump|GenerateNewPrimaryKey|GenerateNewNodeKey|SaveNotifications|ProgressBar|MinersMap|EncryptComment|Logout|SaveVideo|SaveShopData|SaveRaceCountry|MyNoticeData|HolidaysList|ClearVideo|CheckCfCurrency|WalletsListCfProject|SendTestEmail|SendSms|SaveUserCoords|SaveGeolocation|SaveEmailSms|Profile|DeleteVideo|CropPhoto$`, controllerName); !ok {
 		html = "Access denied 0"
 	} else {
-		if utils.Mobile() { // На IOS можно сгенерить ключ без сессии
+		if utils.Mobile() { // На IOS можно сгенерить ключ без сессии // It's possible to generate the key on IOS without session
 			pages += "|daylightKey"
 		}
-		if ok, _ := regexp.MatchString(`^(?i)`+pages+`$`, controllerName); !ok && c.SessWalletId <= 0 && c.SessCitizenId <= 0 && len(c.SessAddress) == 0 {
+		if ok, _ := regexp.MatchString(`^(?i)`+pages+`$`, controllerName); !ok && c.SessWalletID <= 0 && c.SessCitizenID <= 0 && len(c.SessAddress) == 0 {
 			html = "Access denied 1"
 		} else {
 			// без БД будет выдавать панику
+			// without the DB it will give a panic
 			if ok, _ := regexp.MatchString(`^(?i)GetChatMessages$`, controllerName); ok && !dbInit {
 				html = "Please wait. nill dbInit"
 			} else {
 				// вызываем контроллер в зависимости от шаблона
+				// call the controller depending on template
 				html, err = CallController(c, controllerName)
 				if err != nil {
 					log.Error("ajax error: %v", err)

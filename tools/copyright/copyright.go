@@ -15,6 +15,7 @@ var (
 	copyright []byte
 )
 
+// ProcessDir proceeds the specified directory and inserts the copyright at the beginning of the files
 func ProcessDir(dir string, recurse bool) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {

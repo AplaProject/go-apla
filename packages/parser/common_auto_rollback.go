@@ -44,7 +44,7 @@ func (p *Parser) autoRollback() error {
 			return p.ErrInfo(err)
 		}
 	}
-	err = p.ExecSql("DELETE FROM rollback_tx WHERE tx_hash = [hex]", p.TxHash)
+	err = p.ExecSQL("DELETE FROM rollback_tx WHERE tx_hash = [hex]", p.TxHash)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

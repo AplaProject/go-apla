@@ -17,29 +17,31 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type stateParametersPage struct {
 	Alert           string
 	Lang            map[string]string
-	WalletId        int64
-	CitizenId       int64
+	WalletID        int64
+	CitizenID       int64
 	TxType          string
-	TxTypeId        int64
+	TxTypeID        int64
 	TimeNow         int64
 	StateParameters []map[string]string
 }
 
+// StateParameters is a controller for the list of state parameters
 func (c *Controller) StateParameters() (string, error) {
 
 	var err error
 
 	txType := "StateParameters"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
-	stateParameters, err := c.GetAll(`SELECT * FROM "`+c.StateIdStr+`_state_parameters" order by name`, -1)
+	stateParameters, err := c.GetAll(`SELECT * FROM "`+c.StateIDStr+`_state_parameters" order by name`, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -47,12 +49,12 @@ func (c *Controller) StateParameters() (string, error) {
 	TemplateStr, err := makeTemplate("state_parameters", "stateParameters", &stateParametersPage{
 		Alert:           c.Alert,
 		Lang:            c.Lang,
-		WalletId:        c.SessWalletId,
-		CitizenId:       c.SessCitizenId,
+		WalletID:        c.SessWalletID,
+		CitizenID:       c.SessCitizenID,
 		StateParameters: stateParameters,
 		TimeNow:         timeNow,
 		TxType:          txType,
-		TxTypeId:        txTypeId})
+		TxTypeID:        utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

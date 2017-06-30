@@ -20,13 +20,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
+
+	"regexp"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"regexp"
 )
 
 const aPrepareTx = `ajax_prepare_tx`
@@ -54,7 +55,7 @@ func init() {
 
 func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, err error) {
 	cntname := c.r.FormValue(`TxName`)
-	contract = smart.GetContract(cntname, uint32(c.SessStateId))
+	contract = smart.GetContract(cntname, uint32(c.SessStateID))
 	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
 		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
 	} else if contract.Block.Info.(*script.ContractInfo).Tx != nil {
@@ -64,8 +65,8 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 			}
 			if strings.Index(fitem.Tags, `signature`) >= 0 && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-					pref := utils.Int64ToStr(c.SessStateId)
-					if c.SessStateId == 0 {
+					pref := converter.Int64ToStr(c.SessStateID)
+					if c.SessStateID == 0 {
 						pref = `global`
 					}
 					var value string
@@ -82,7 +83,7 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 					if err != nil {
 						break
 					}
-					sign.ForSign = fmt.Sprintf(`%d,%d`, (*result).Time, uint64(c.SessWalletId))
+					sign.ForSign = fmt.Sprintf(`%d,%d`, (*result).Time, uint64(c.SessWalletID))
 					for _, isign := range sign.Params {
 						val := strings.TrimSpace(c.r.FormValue(isign.Param))
 						sign.ForSign += fmt.Sprintf(`,%v`, val)
@@ -97,7 +98,7 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 					break
 				}
 				if strings.Index(fitem.Tags, `address`) >= 0 {
-					addr := lib.StringToAddress(val)
+					addr := converter.StringToAddress(val)
 					if addr == 0 {
 						err = fmt.Errorf(`Address %s is not valid`, val)
 						break
@@ -121,23 +122,23 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 	var (
 		result PrepareTxJSON
 	)
-	result.Time = lib.Time32()
+	result.Time = uint32(time.Now().Unix())
 	result.Values = make(map[string]string)
 	contract, err := c.checkTx(&result)
 	if err == nil {
 		var flags uint8
 		var isPublic []byte
 		info := (*contract).Block.Info.(*script.ContractInfo)
-		userID := uint64(c.SessWalletId)
-		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
+		userID := uint64(c.SessWalletID)
+		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletID).Bytes()
 		if err == nil && len(isPublic) == 0 {
 			flags |= consts.TxfPublic
 		}
-		fmt.Println(`Prepare`, c.SessWalletId, c.SessCitizenId, c.SessStateId)
-		/*		if c.SessStateId > 0 {
-				userId = c.SessCitizenId
+		fmt.Println(`Prepare`, c.SessWalletID, c.SessCitizenID, c.SessStateID)
+		/*		if c.SessStateID > 0 {
+				userId = c.SessCitizenID
 			}*/
-		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, result.Time, userID, c.SessStateId, flags)
+		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, result.Time, userID, c.SessStateID, flags)
 		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
 			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 				if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
@@ -149,7 +150,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 					if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 						wallet = c.r.FormValue(ret[1])
 					} else {
-						wallet = utils.Int64ToStr(c.SessWalletId)
+						wallet = converter.Int64ToStr(c.SessWalletID)
 					}
 					key := EncryptNewKey(wallet)
 					if len(key.Error) != 0 {
@@ -158,10 +159,20 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 					}
 					result.Values[fitem.Name] = key.Encrypted
 					val = key.Encrypted
+				} else if fitem.Type.String() == `[]interface {}` {
+					for key, values := range c.r.Form {
+						if key == fitem.Name+`[]` {
+							var list []string
+							for _, value := range values {
+								list = append(list, value)
+							}
+							val = strings.Join(list, `,`)
+						}
+					}
 				} else {
 					val = strings.TrimSpace(c.r.FormValue(fitem.Name))
 					if strings.Index(fitem.Tags, `address`) >= 0 {
-						val = utils.Int64ToStr(lib.StringToAddress(val))
+						val = converter.Int64ToStr(converter.StringToAddress(val))
 					} else if fitem.Type.String() == script.Decimal {
 						val = strings.TrimLeft(val, `0`)
 					}

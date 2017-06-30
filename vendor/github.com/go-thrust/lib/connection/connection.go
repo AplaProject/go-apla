@@ -10,10 +10,11 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/go-thrust/lib/commands"
 	. "github.com/go-thrust/lib/common"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const (
@@ -104,8 +105,8 @@ func Clean() {
 
 func CleanExit() {
 	Clean()
-	if utils.DB != nil && utils.DB.DB != nil {
-		utils.DB.ExecSql(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+	if sql.DB != nil && sql.DB.DB != nil {
+		sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
 	} else {
 		os.Exit(0)
 	}

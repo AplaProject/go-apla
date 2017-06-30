@@ -20,7 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -51,10 +52,10 @@ func (c *Controller) Accounts() (string, error) {
 
 	data := make([]AccountInfo, 0)
 
-	cents, _ := utils.StateParam(c.SessStateId, `money_digit`)
-	digit := utils.StrToInt(cents)
+	cents, _ := template.StateParam(c.SessStateID, `money_digit`)
+	digit := converter.StrToInt(cents)
 
-	currency, _ := utils.StateParam(c.SessStateId, `currency_name`)
+	currency, _ := template.StateParam(c.SessStateID, `currency_name`)
 
 	newAccount := func(account int64, amount string) {
 		if amount == `NULL` {
@@ -67,30 +68,30 @@ func (c *Controller) Accounts() (string, error) {
 				amount = amount[:len(amount)-digit] + `.` + amount[len(amount)-digit:]
 			}
 		}
-		data = append(data, AccountInfo{AccountID: account, Address: lib.AddressToString(account),
+		data = append(data, AccountInfo{AccountID: account, Address: converter.AddressToString(account),
 			Amount: amount})
 	}
 
 	amount, err := c.Single(fmt.Sprintf(`select amount from "%d_accounts" where citizen_id=?`,
-		c.SessStateId), c.SessCitizenId).String()
+		c.SessStateID), c.SessCitizenID).String()
 	if err != nil {
 		return ``, err
 	}
 	if len(amount) > 0 {
-		newAccount(c.SessCitizenId, amount)
+		newAccount(c.SessCitizenID, amount)
 	} else {
-		newAccount(c.SessCitizenId, `NULL`)
+		newAccount(c.SessCitizenID, `NULL`)
 	}
 
 	list, err := c.GetAll(fmt.Sprintf(`select anon.*, acc.amount from "%d_anonyms" as anon
 	left join "%[1]d_accounts" as acc on acc.citizen_id=anon.id_anonym
-	where anon.id_citizen=?`, c.SessStateId), -1, c.SessCitizenId)
+	where anon.id_citizen=?`, c.SessStateID), -1, c.SessCitizenID)
 	if err != nil {
 		return ``, err
 	}
 
 	for _, item := range list {
-		newAccount(utils.StrToInt64(item[`id_anonym`]), item[`amount`])
+		newAccount(converter.StrToInt64(item[`id_anonym`]), item[`amount`])
 	}
 	txType := "NewAccount"
 	pageData := accountsPage{Data: c.Data, List: data, Currency: currency, TxType: txType,

@@ -28,8 +28,11 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type index struct {
@@ -50,6 +53,7 @@ type index struct {
 	LogoExt     string
 }
 
+// Index is a control for index page
 func Index(w http.ResponseWriter, r *http.Request) {
 
 	accounts, _ := ioutil.ReadFile(filepath.Join(*utils.Dir, `accounts.txt`))
@@ -60,17 +64,17 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "ref", Value: r.Form.Get(``), Expires: expiration})
 	}
 
-	parameters_ := make(map[string]interface{})
+	params := make(map[string]interface{})
 	if len(r.PostFormValue("parameters")) > 0 {
-		err := json.Unmarshal([]byte(r.PostFormValue("parameters")), &parameters_)
+		err := json.Unmarshal([]byte(r.PostFormValue("parameters")), &params)
 		if err != nil {
 			log.Error("%v", err)
 		}
-		log.Debug("parameters_=%", parameters_)
+		log.Debug("params=%", params)
 	}
 	parameters := make(map[string]string)
-	for k, v := range parameters_ {
-		parameters[k] = utils.InterfaceToStr(v)
+	for k, v := range params {
+		parameters[k] = converter.InterfaceToStr(v)
 	}
 
 	lang := GetLang(w, r, parameters)
@@ -81,37 +85,40 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sess.SessionRelease(w)
 
-	sessCitizenId := GetSessCitizenId(sess)
-	sessWalletId := GetSessWalletId(sess)
+	sessCitizenID := GetSessCitizenID(sess)
+	sessWalletID := GetSessWalletID(sess)
 	//	var key string
 
 	showIOSMenu := true
 	// Когда меню не выдаем
-	if utils.DB == nil || utils.DB.DB == nil {
+	// When we don't give the menu
+	if sql.DB == nil || sql.DB.DB == nil {
 		showIOSMenu = false
 	}
 
-	if sessCitizenId == 0 && sessWalletId == 0 {
+	if sessCitizenID == 0 && sessWalletID == 0 {
 		showIOSMenu = false
 	}
 
-	if showIOSMenu && utils.DB != nil && utils.DB.DB != nil {
-		blockData, err := utils.DB.GetInfoBlock()
+	if showIOSMenu && sql.DB != nil && sql.DB.DB != nil {
+		blockData, err := sql.DB.GetInfoBlock()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		wTime := int64(12)
 		wTimeReady := int64(2)
-		log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, utils.Time(), utils.StrToInt64(blockData["time"]))
+		now := time.Now().Unix()
+		log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, converter.StrToInt64(blockData["time"]))
 		// если время менее 12 часов от текущего, то выдаем не подвержденные, а просто те, что есть в блокчейне
-		if utils.Time()-utils.StrToInt64(blockData["time"]) < 3600*wTime {
-			lastBlockData, err := utils.DB.GetLastBlockData()
+		// if time differs less than for 12 hours from current time, give not affected but those which are in blockchain
+		if now-converter.StrToInt64(blockData["time"]) < 3600*wTime {
+			lastBlockData, err := sql.DB.GetLastBlockData()
 			if err != nil {
 				log.Error("%v", err)
 			}
 			log.Debug("lastBlockData[lastBlockTime]: %v", lastBlockData["lastBlockTime"])
-			log.Debug("time.Now().Unix(): %v", utils.Time())
-			if utils.Time()-lastBlockData["lastBlockTime"] >= 3600*wTimeReady {
+			log.Debug("time.Now().Unix(): %v", now)
+			if now-lastBlockData["lastBlockTime"] >= 3600*wTimeReady {
 				showIOSMenu = false
 			}
 		} else {
@@ -155,8 +162,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		log.Error("%v", err)
 	}
 	langs := ``
-	if len(utils.LangList) > 0 {
-		langs = strings.Join(utils.LangList, `,`)
+	if len(language.LangList) > 0 {
+		langs = strings.Join(language.LangList, `,`)
 	}
 	b := new(bytes.Buffer)
 	err = t.Execute(b, &index{

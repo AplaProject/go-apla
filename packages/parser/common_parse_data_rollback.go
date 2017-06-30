@@ -18,7 +18,11 @@ package parser
 
 import (
 	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -28,9 +32,9 @@ import (
  */
 func (p *Parser) ParseDataRollback() error {
 	var txType int
-
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
+		// parse only blocks
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
 	}
 	var err error
@@ -41,59 +45,73 @@ func (p *Parser) ParseDataRollback() error {
 	}
 	if len(p.BinaryData) > 0 {
 		// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
+		// in the beginning it is necessary to obtain the sizes of all the transactions in order to go through them in reverse order
 		binForSize := p.BinaryData
 		var sizesSlice []int64
 		for {
-			txSize := utils.DecodeLength(&binForSize)
+			txSize, err := converter.DecodeLength(&binForSize)
+			if err != nil {
+				log.Fatal(err)
+			}
 			if txSize == 0 {
 				break
 			}
 			sizesSlice = append(sizesSlice, txSize)
 			// удалим тр-ию
-			utils.BytesShift(&binForSize, txSize)
+			// remove the transaction
+			converter.BytesShift(&binForSize, txSize)
 			if len(binForSize) == 0 {
 				break
 			}
 		}
-		sizesSlice = utils.SliceReverse(sizesSlice)
+		sizesSlice = converter.SliceReverse(sizesSlice)
 		for i := 0; i < len(sizesSlice); i++ {
 			// обработка тр-ий может занять много времени, нужно отметиться
+			// processing of the transaction may take a lot of time, we need to be marked
 			p.UpdDaemonTime(p.GoroutineName)
 			// отделим одну транзакцию
-			transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
+			transactionBinaryData := converter.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
 			p.TxBinaryData = transactionBinaryData
-			txType = int(utils.BinToDecBytesShift(&p.TxBinaryData, 1))
+			txType = int(converter.BinToDecBytesShift(&p.TxBinaryData, 1))
 			// узнаем кол-во байт, которое занимает размер и удалим размер
-			utils.BytesShiftReverse(&p.BinaryData, len(utils.EncodeLength(sizesSlice[i])))
-			p.TxHash = string(utils.Md5(transactionBinaryData))
-
-			utils.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-			affect, err := p.ExecSqlGetAffect("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
+			// we'll get know the quantaty of bytes which the size takes
+			converter.BytesShiftReverse(&p.BinaryData, len(converter.EncodeLength(sizesSlice[i])))
+			hash, err := crypto.Hash(transactionBinaryData)
 			if err != nil {
-				utils.WriteSelectiveLog(err)
+				log.Fatal(err)
+			}
+			hash = converter.BinToHex(hash)
+			p.TxHash = string(hash)
+
+			logging.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
+			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
+			if err != nil {
+				logging.WriteSelectiveLog(err)
 				return p.ErrInfo(err)
 			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			affected, err := p.ExecSqlGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
+			logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
+			affected, err := p.ExecSQLGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
 			log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 			// даем юзеру понять, что его тр-ия не в блоке
-			err = p.ExecSql("UPDATE transactions_status SET block_id = 0 WHERE hex(hash) = ?", p.TxHash)
+			// let user know that his territory isn't in the block
+			err = p.ExecSQL("UPDATE transactions_status SET block_id = 0 WHERE hex(hash) = ?", p.TxHash)
 			log.Debug("UPDATE transactions_status SET block_id = 0 WHERE hex(hash) = %s", p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 			// пишем тр-ию в очередь на проверку, авось пригодится
-			dataHex := utils.BinToHex(transactionBinaryData)
+			// put the transaction in the turn for checking suddenly we will need it
+			dataHex := converter.BinToHex(transactionBinaryData)
 			log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", p.TxHash)
-			err = p.ExecSql("DELETE FROM queue_tx  WHERE hex(hash) = ?", p.TxHash)
+			err = p.ExecSQL("DELETE FROM queue_tx  WHERE hex(hash) = ?", p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 			log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", p.TxHash, dataHex)
-			err = p.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", p.TxHash, dataHex)
+			err = p.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", p.TxHash, dataHex)
 			if err != nil {
 				return p.ErrInfo(err)
 			}

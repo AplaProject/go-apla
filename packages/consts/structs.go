@@ -21,9 +21,11 @@ import (
 )
 
 const (
+	// TxfPublic is the flag of TXHeader
 	TxfPublic = 0x01 // Append PublicKey to Sign in TXHeader
 )
 
+// BlockHeader is a structure of the block header
 type BlockHeader struct {
 	Type     byte
 	BlockID  uint32
@@ -33,6 +35,7 @@ type BlockHeader struct {
 	Sign     []byte
 }
 
+// TxHeader is the old version of the transaction header
 type TxHeader struct {
 	Type      byte
 	Time      uint32
@@ -40,6 +43,7 @@ type TxHeader struct {
 	CitizenID int64
 }
 
+// TXHeader is the header of the contract's transactions
 type TXHeader struct {
 	Type     int32 // byte < 128 system tx 129 - 1 byte 130 - 2 bytes 131 - 3 - bytes 132 - 4 bytes
 	Time     uint32
@@ -49,11 +53,13 @@ type TXHeader struct {
 	Sign     []byte
 }
 
+// TXNewCitizen isn't used
 type TXNewCitizen struct {
 	TXHeader
 	PublicKey []byte
 }
 
+// FirstBlock is the header of FirstBlock transaction
 type FirstBlock struct {
 	TxHeader
 	PublicKey     []byte
@@ -61,12 +67,14 @@ type FirstBlock struct {
 	Host          string
 }
 
+// CitizenRequest isn't used
 type CitizenRequest struct {
 	TxHeader
 	StateID int64
 	Sign    []byte
 }
 
+// NewCitizen isn't used
 type NewCitizen struct {
 	TxHeader
 	StateID   int64
@@ -86,23 +94,28 @@ func init() {
 	}
 }
 
+// MakeStruct is only used for FirstBlock now
 func MakeStruct(name string) interface{} {
 	v := reflect.New(blockStructs[name]) //.Elem()
 	return v.Interface()
 }
 
+// IsStruct is only used for FirstBlock now
 func IsStruct(tx int) bool {
 	return tx == 1 // > 0 && tx <= 4 /*TXNewCitizen*/
 }
 
+// Header returns TxHeader
 func Header(v interface{}) TxHeader {
 	return reflect.ValueOf(v).Elem().Field(0).Interface().(TxHeader)
 }
 
+// HeaderNew returns TXHeader
 func HeaderNew(v interface{}) TXHeader {
 	return reflect.ValueOf(v).Elem().Field(0).Interface().(TXHeader)
 }
 
+// Sign returns the signature attached to the header
 func Sign(v interface{}) (sign []byte) {
 	field := reflect.ValueOf(v).Elem().FieldByName(`Sign`)
 	if field.IsValid() && field.Kind() == reflect.Slice {

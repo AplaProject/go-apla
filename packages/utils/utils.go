@@ -18,262 +18,207 @@ package utils
 
 import (
 	"archive/zip"
-	"bytes"
-	"crypto"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/sha256"
-	//	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
-	"math"
-	"math/big"
-	"math/rand"
 	"net"
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
-	"github.com/kardianos/osext"
-	_ "github.com/lib/pq"
-	"github.com/mcuadros/go-version"
-	"github.com/shopspring/decimal"
-	//	"net/mail"
-	//  "net/smtp"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime"
-	"sort"
-	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/kardianos/osext"
+	"github.com/mcuadros/go-version"
+	"github.com/op/go-logging"
 )
 
+var log = logging.MustGetLogger("daemons")
+
+// BlockData is a structure of the block's header
 type BlockData struct {
-	BlockId       int64
-	Time          int64
-	WalletId      int64
-	StateID       int64
-	CurrentUserId int64
-	Sign          []byte
-	Hash          []byte
+	BlockID  int64
+	Time     int64
+	WalletID int64
+	StateID  int64
+	Sign     []byte
+	Hash     []byte
 }
 
-type prevBlockType struct {
-	Hash     string
-	HeadHash string
-	BlockId  int64
-	Time     int64
-	Level    int64
-}
+// DaemonsChansType is a structure for deamons
 type DaemonsChansType struct {
 	ChBreaker chan bool
 	ChAnswer  chan string
 }
 
 var (
-	FirstBlockDir           = flag.String("firstBlockDir", "", "FirstBlockDir")
-	FirstBlockPublicKey     = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
+	// FirstBlockDir is a folder where 1block file will be stored
+	FirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
+	// FirstBlockPublicKey is the private key
+	FirstBlockPublicKey = flag.String("firstBlockPublicKey", "", "FirstBlockPublicKey")
+	// FirstBlockNodePublicKey is the node private key
 	FirstBlockNodePublicKey = flag.String("firstBlockNodePublicKey", "", "FirstBlockNodePublicKey")
-	FirstBlockHost          = flag.String("firstBlockHost", "", "FirstBlockHost")
-	WalletAddress           = flag.String("walletAddress", "", "walletAddress for forging ")
-	TcpHost                 = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
-	ListenHttpPort          = flag.String("listenHttpPort", "7079", "ListenHttpPort")
-	GenerateFirstBlock      = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
-	OldVersion              = flag.String("oldVersion", "", "")
-	TestRollBack            = flag.Int64("testRollBack", 0, "testRollBack")
-	Dir                     = flag.String("dir", GetCurrentDir(), "DayLight directory")
-	OldFileName             = flag.String("oldFileName", "", "")
-	LogLevel                = flag.String("logLevel", "", "DayLight LogLevel")
-	Console                 = flag.Int64("console", 0, "Start from console")
-	SqliteDbUrl             string
-	StartBlockId            = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
-	EndBlockId              = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
-	RollbackToBlockId       = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
-	Tls                     = flag.String("tls", "", "Support https. Specify directory for .well-known")
-	DevTools                = flag.Int64("devtools", 0, "Devtools in thrust-shell")
-	Upd                     = flag.Bool("update", false, "Update")
-	BoltDir                 = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
-	BoltPsw                 = flag.String("boltPsw", "", "Bolt password")
-	APIToken                = flag.String("apiToken", "", "API Token")
-	OneCountry              int64
-	PrivCountry             bool
-	OutFile                 *os.File
-	LogoExt                 = `png`
-	DltWalletId             = flag.Int64("dltWalletId", 0, "DltWalletId")
+	// FirstBlockHost is the host of the first block
+	FirstBlockHost = flag.String("firstBlockHost", "", "FirstBlockHost")
+	// WalletAddress is a wallet address for forging
+	WalletAddress = flag.String("walletAddress", "", "walletAddress for forging ")
+	// TCPHost is the tcp host
+	TCPHost = flag.String("tcpHost", "", "tcpHost (e.g. 127.0.0.1)")
+	// ListenHTTPPort is HTTP port
+	ListenHTTPPort = flag.String("listenHttpPort", "7079", "ListenHTTPPort")
+	// GenerateFirstBlock show if the first block must be generated
+	GenerateFirstBlock = flag.Int64("generateFirstBlock", 0, "generateFirstBlock")
+	// OldVersion is the number of the old version
+	OldVersion = flag.String("oldVersion", "", "")
+	// TestRollBack equals 1 for testing rollback
+	TestRollBack = flag.Int64("testRollBack", 0, "testRollBack")
+	// Dir is EGAAS folder
+	Dir = flag.String("dir", GetCurrentDir(), "DayLight directory")
+	// OldFileName is the old file name
+	OldFileName = flag.String("oldFileName", "", "")
+	// LogLevel is the log level
+	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
+	// Console equals 1 for starting in console
+	Console = flag.Int64("console", 0, "Start from console")
+	// StartBlockID is the start block
+	StartBlockID = flag.Int64("startBlockId", 0, "Start block for blockCollection daemon")
+	// EndBlockID is the end block
+	EndBlockID = flag.Int64("endBlockId", 0, "End block for blockCollection daemon")
+	// RollbackToBlockID is the target block for rollback
+	RollbackToBlockID = flag.Int64("rollbackToBlockId", 0, "Rollback to block_id")
+	// TLS is a directory for .well-known and keys. It is required for https
+	TLS = flag.String("tls", "", "Support https. Specify directory for .well-known")
+	// DevTools switches on dev tools in thrust shell
+	DevTools = flag.Int64("devtools", 0, "Devtools in thrust-shell")
+	// BoltDir is the edir for BoltDb folder
+	BoltDir = flag.String("boltDir", GetCurrentDir(), "Bolt directory")
+	// BoltPsw is the password for BoltDB
+	BoltPsw = flag.String("boltPsw", "", "Bolt password")
+	// APIToken is an api token for exchange api
+	APIToken = flag.String("apiToken", "", "API Token")
+	// OneCountry is the country which is supported
+	OneCountry int64
+	// PrivCountry is protect system from registering
+	PrivCountry bool
+	//	OutFile            *os.File
 
+	// LogoExt is the extension of the logotype
+	LogoExt = `png`
+	// DltWalletID is the wallet identifier
+	DltWalletID = flag.Int64("dltWalletId", 0, "DltWalletID")
+
+	// DaemonsChans is a slice of DaemonsChansType
 	DaemonsChans []*DaemonsChansType
-	eWallets     = &sync.Mutex{}
-	Thrust       bool
+	// Thrust is true for thrust shell
+	Thrust bool
 )
 
 func init() {
 	flag.Parse()
 }
 
+// IOS checks if the app runs on iOS
 func IOS() bool {
 	if (runtime.GOARCH == "arm" || runtime.GOARCH == "arm64") && runtime.GOOS == "darwin" {
 		return true
 	}
 	return false
 }
+
+// Desktop checks if the app runs on the desktop with thrust_shell
 func Desktop() bool {
-	thrust_shell := "thrust_shell"
+	thrustShell := "thrust_shell"
 	if runtime.GOOS == "windows" {
-		thrust_shell = "thrust_shell.exe"
+		thrustShell = "thrust_shell.exe"
 	} else if runtime.GOOS == "darwin" {
-		thrust_shell = "ThrustShell"
+		thrustShell = "ThrustShell"
 	}
-	if _, err := os.Stat(*Dir + "/" + thrust_shell); err == nil {
+	if _, err := os.Stat(*Dir + "/" + thrustShell); err == nil {
 		return true
 	}
 	return false
 }
+
+// Mobile checks if the app runs on Android or iOS
 func Mobile() bool {
 	if IOS() || runtime.GOOS == "android" {
 		return true
 	}
 	return false
 }
+
+// Android checks if the app runs on Android
 func Android() bool {
 	if runtime.GOOS == "android" {
 		return true
 	}
 	return false
 }
-func Sleep(sec time.Duration) {
-	//log.Debug("time.Duration(sec): %v / %v",sec, GetParent())
-	time.Sleep(sec * time.Second)
-}
 
-type SortCfCatalog []map[string]string
-
-func (s SortCfCatalog) Len() int {
-	return len(s)
-}
-func (s SortCfCatalog) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-func (s SortCfCatalog) Less(i, j int) bool {
-	return s[i]["name"] < s[j]["name"]
-}
-
-type ParamType struct {
-	X, Y, Width, Height int64
-	Bg_path             string
-}
-
+// ParseBlockHeader parses the header of the block
 func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	result := new(BlockData)
-	// распарсим заголовок блока
+	// распарсим заголовок блока // parse the heading of a block
 	/*
-		Заголовок
-		TYPE (0-блок, 1-тр-я)        1
-		BLOCK_ID   				       4
-		TIME       					       4
-		WALLET_ID                         1-8
-		state_id                              1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		Далее - тело блока (Тр-ии)
+				Заголовок // the heading
+				TYPE (0-блок, 1-тр-я)        1 // TYPE(0-block, 1-transaction)
+				BLOCK_ID   				       4
+				TIME       					       4
+				WALLET_ID                         1-8
+				state_id                              1
+				SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+		Далее - тело блока (Тр-ии) // further is body block (transaction)
 	*/
-	result.BlockId = BinToDecBytesShift(binaryBlock, 4)
-	result.Time = BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId, _ = DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+	result.BlockID = converter.BinToDecBytesShift(binaryBlock, 4)
+	result.Time = converter.BinToDecBytesShift(binaryBlock, 4)
+	result.WalletID, _ = converter.DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	// Delete after re-build blocks
 	/*	if result.WalletId == 0x31 {
 		result.WalletId = 1
 	}*/
-	result.StateID = BinToDecBytesShift(binaryBlock, 1)
-	if result.BlockId > 1 {
-		signSize := DecodeLength(binaryBlock)
-		result.Sign = BytesShift(binaryBlock, signSize)
+	result.StateID = converter.BinToDecBytesShift(binaryBlock, 1)
+	if result.BlockID > 1 {
+		signSize, err := converter.DecodeLength(binaryBlock)
+		if err != nil {
+			log.Fatal(err)
+		}
+		result.Sign = converter.BytesShift(binaryBlock, signSize)
 	} else {
 		*binaryBlock = (*binaryBlock)[1:]
 	}
-	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.StateID, result.Sign)
+	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockID, result.Time, result.WalletID, result.StateID, result.Sign)
 	return result
 }
 
-/*
-func Round(f float64, places int) (float64) {
-	if places==0 {
-		return math.Floor(f + .5)
-	} else {
-		shift := math.Pow(10, float64(places))
-		return math.Floor((f * shift)+.5) / shift;
-	}
-}
-*/
-
-type resultArrType struct {
-	num_sec int64
-	pct     float64
-	amount  float64
-}
-
-type pctAmount struct {
-	pct    float64
-	amount float64
-}
-
-func round(num float64) int64 {
-	//log.Debug("num", num)
-	//num += ROUND_FIX
-	//	return int(StrToFloat64(Float64ToStr(num)) + math.Copysign(0.5, num))
-	//log.Debug("num", num)
-	return int64(num + math.Copysign(0.5, num))
-}
-
-func Round(num float64, precision int) float64 {
-	num += consts.ROUND_FIX
-	//log.Debug("num", num)
-	//num = StrToFloat64(Float64ToStr(num))
-	//log.Debug("precision", precision)
-	//log.Debug("float64(precision)", float64(precision))
-	output := math.Pow(10, float64(precision))
-	//log.Debug("output", output)
-	return float64(round(num*output)) / output
-}
-
-func RandInt(min int, max int) int {
-	if max-min <= 0 {
-		return 1
-	}
-	return min + rand.Intn(max-min)
-}
-
-func CheckInputData(data_ interface{}, dataType string) bool {
-	return CheckInputData_(data_, dataType, "")
-}
-
-// функция проверки входящих данных
-func CheckInputData_(data_ interface{}, dataType string, info string) bool {
+// CheckInputData checks the input data
+func CheckInputData(idata interface{}, dataType string) bool {
 	var data string
-	switch data_.(type) {
+	switch idata.(type) {
 	case int:
-		data = IntToStr(data_.(int))
+		data = converter.IntToStr(idata.(int))
 	case int64:
-		data = Int64ToStr(data_.(int64))
+		data = converter.Int64ToStr(idata.(int64))
 	case float64:
-		data = Float64ToStr(data_.(float64))
+		data = converter.Float64ToStr(idata.(float64))
 	case string:
-		data = data_.(string)
+		data = idata.(string)
 	case []byte:
-		data = string(data_.([]byte))
+		data = string(idata.([]byte))
 	}
-	log.Debug("CheckInputData_:" + data)
+	log.Debug("CheckInputData:" + data)
 	log.Debug("dataType:" + dataType)
 	switch dataType {
 	case "arbitration_trust_list":
@@ -296,55 +241,55 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 	case "type":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if StrToInt(data) <= 30 {
+			if converter.StrToInt(data) <= 30 {
 				return true
 			}
 		}
 	case "word":
 		if ok, _ := regexp.MatchString(`^(?i)[a-z]+$`, data); ok {
-			if StrToInt(data) <= 1024 {
+			if converter.StrToInt(data) <= 1024 {
 				return true
 			}
 		}
 	case "currency_name", "state_name":
 		if ok, _ := regexp.MatchString(`^[\pL0-9\,\s\.\-\:\=\;\?\!\%\)\(\@\/\n\r]{1,20}$`, data); ok {
-			if StrToInt(data) <= 1024 {
+			if converter.StrToInt(data) <= 1024 {
 				return true
 			}
 		}
 	case "string":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if StrToInt(data) <= 1024 {
+			if converter.StrToInt(data) <= 1024 {
 				return true
 			}
 		}
 	case "referral":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,2}$`, data); ok {
-			if StrToInt(data) <= 30 {
+			if converter.StrToInt(data) <= 30 {
 				return true
 			}
 		}
 	case "currency_id":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if StrToInt(data) <= 255 {
+			if converter.StrToInt(data) <= 255 {
 				return true
 			}
 		}
 	case "system_commission":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if StrToInt(data) <= 15 && StrToInt(data) >= 5 {
+			if converter.StrToInt(data) <= 15 && converter.StrToInt(data) >= 5 {
 				return true
 			}
 		}
 	case "tinyint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if StrToInt(data) <= 127 {
+			if converter.StrToInt(data) <= 127 {
 				return true
 			}
 		}
 	case "smallint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,5}$`, data); ok {
-			if StrToInt(data) <= 65535 {
+			if converter.StrToInt(data) <= 65535 {
 				return true
 			}
 		}
@@ -499,7 +444,7 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 		}
 	case "coords":
 		xy := `\[\d{1,3}\,\d{1,3}\]`
-		r := `^\[(` + xy + `\,){` + info + `}` + xy + `\]$`
+		r := `^\[(` + xy + `\,){}` + xy + `\]$`
 		if ok, _ := regexp.MatchString(r, data); ok {
 			return true
 		}
@@ -565,7 +510,7 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 			return true
 		}
 	case "level":
-		if StrToInt(data) >= 0 && StrToInt(data) <= 34 {
+		if converter.StrToInt(data) >= 0 && converter.StrToInt(data) <= 34 {
 			return true
 		}
 	case "comment":
@@ -595,21 +540,8 @@ func CheckInputData_(data_ interface{}, dataType string, info string) bool {
 	return false
 }
 
-func Time() int64 {
-	return time.Now().Unix()
-}
-
-func TimeF(timeFormat string) string {
-	t := time.Unix(time.Now().Unix(), 0)
-	return t.Format(timeFormat)
-}
-
-func ValidateEmail(email string) bool {
-	Re := regexp.MustCompile(`^(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
-	return Re.MatchString(email)
-}
-
-func GetHttpTextAnswer(url string) (string, error) {
+// GetHTTPTextAnswer returns HTTP answer as a string
+func GetHTTPTextAnswer(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -625,203 +557,86 @@ func GetHttpTextAnswer(url string) (string, error) {
 	return string(htmlData), err
 }
 
-func RemoteAddrFix(addr string) string {
-	if ok, _ := regexp.MatchString(`(\:\:)|(127\.0\.0\.1)`, addr); ok {
-		return ""
-	} else {
-		return addr
-	}
-}
-
-// без проверки на ошибки т.к. тут ошибки не могут навредить
-func StrToInt64(s string) int64 {
-	int64, _ := strconv.ParseInt(s, 10, 64)
-	return int64
-}
-func BytesToInt64(s []byte) int64 {
-	int64, _ := strconv.ParseInt(string(s), 10, 64)
-	return int64
-}
-func StrToUint64(s string) uint64 {
-	ret, _ := strconv.ParseUint(s, 10, 64)
-	return ret
-}
-func StrToInt(s string) int {
-	int_, _ := strconv.Atoi(s)
-	return int_
-}
-func Float64ToStr(f float64) string {
-	return strconv.FormatFloat(f, 'f', 13, 64)
-}
-func Float64ToStrGeo(f float64) string {
-	return strconv.FormatFloat(f, 'f', 5, 64)
-}
-func Float64ToBytes(f float64) []byte {
-	return []byte(strconv.FormatFloat(f, 'f', 13, 64))
-}
-func Float64ToStrPct(f float64) string {
-	if f == 0 {
-		return "0"
-	} else {
-		return strconv.FormatFloat(f, 'f', 2, 64)
-	}
-}
-func StrToFloat64(s string) float64 {
-	Float64, _ := strconv.ParseFloat(s, 64)
-	return Float64
-}
-func BytesToFloat64(s []byte) float64 {
-	Float64, _ := strconv.ParseFloat(string(s), 64)
-	return Float64
-}
-func BytesToInt(s []byte) int {
-	int_, _ := strconv.Atoi(string(s))
-	return int_
-}
-func StrToMoney(str string) float64 {
-	ind := strings.Index(str, ".")
-	new := ""
-	if ind != -1 {
-		end := 2
-		if len(str[ind+1:]) > 1 {
-			end = 3
-		}
-		new = str[:ind] + "." + str[ind+1:ind+end]
-	} else {
-		new = str
-	}
-	return StrToFloat64(new)
-}
-
-func GetEndBlockId() (int64, error) {
+// GetEndBlockID returns the end block id
+func GetEndBlockID() (int64, error) {
 
 	if _, err := os.Stat(*Dir + "/public/blockchain"); os.IsNotExist(err) {
 		return 0, nil
-	} else {
-
-		// размер блока, записанный в 5-и последних байтах файла blockchain
-		fname := *Dir + "/public/blockchain"
-		file, err := os.Open(fname)
-		if err != nil {
-			return 0, ErrInfo(err)
-		}
-		defer file.Close()
-
-		fi, err := file.Stat()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if fi.Size() == 0 {
-			return 0, ErrInfo("/public/blockchain size=0")
-		}
-
-		// размер блока, записанный в 5-и последних байтах файла blockchain
-		_, err = file.Seek(-5, 2)
-		if err != nil {
-			return 0, ErrInfo(err)
-		}
-		buf := make([]byte, 5)
-		_, err = file.Read(buf)
-		if err != nil {
-			return 0, ErrInfo(err)
-		}
-		size := BinToDec(buf)
-		if size > consts.MAX_BLOCK_SIZE {
-			return 0, ErrInfo("size > conts.MAX_BLOCK_SIZE")
-		}
-		// сам блок
-		_, err = file.Seek(-(size + 5), 2)
-		if err != nil {
-			return 0, ErrInfo(err)
-		}
-		dataBinary := make([]byte, size+5)
-		_, err = file.Read(dataBinary)
-		if err != nil {
-			return 0, ErrInfo(err)
-		}
-		// размер (id блока + тело блока)
-		BinToDecBytesShift(&dataBinary, 5)
-		blockId := BinToDecBytesShift(&dataBinary, 5)
-		return blockId, nil
-
 	}
-	return 0, nil
-}
 
-func DownloadToFile(url, file string, timeoutSec int64, DaemonCh chan bool, AnswerDaemonCh chan string, GoroutineName string) (int64, error) {
-
-	f, err := os.Create(file)
+	// размер блока, записанный в 5-и последних байтах файла blockchain
+	// size of a block recorded into the last 5 bytes of blockchain file
+	fname := *Dir + "/public/blockchain"
+	file, err := os.Open(fname)
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
-	defer f.Close()
+	defer file.Close()
 
-	timeout := time.Duration(time.Duration(timeoutSec) * time.Second)
-	client := http.Client{
-		Timeout: timeout,
+	fi, err := file.Stat()
+	if err != nil {
+		log.Fatal(err)
 	}
-	resp, err := client.Get(url)
+	if fi.Size() == 0 {
+		return 0, ErrInfo("/public/blockchain size=0")
+	}
+
+	// размер блока, записанный в 5-и последних байтах файла blockchain
+	// size of a block recorded into the last 5 bytes of blockchain file
+	_, err = file.Seek(-5, 2)
 	if err != nil {
 		return 0, ErrInfo(err)
 	}
-	defer resp.Body.Close()
-
-	var offset int64
-	for {
-		if DaemonCh != nil {
-			select {
-			case <-DaemonCh:
-				if GoroutineName == "NodeVoting" {
-					DB.DbUnlock(GoroutineName)
-				}
-				AnswerDaemonCh <- GoroutineName
-				return offset, fmt.Errorf("daemons restart")
-			default:
-			}
-		}
-		data, err := ioutil.ReadAll(io.LimitReader(resp.Body, 10000))
-		if err != nil {
-			return offset, ErrInfo(err)
-		}
-		f.WriteAt(data, offset)
-		offset += int64(len(data))
-		if len(data) == 0 {
-			break
-		}
-		log.Debug("read %s", url)
-	}
-	return offset, nil
-}
-
-func CheckErr(err error) {
+	buf := make([]byte, 5)
+	_, err = file.Read(buf)
 	if err != nil {
-		panic(fmt.Sprintf("%s", err))
+		return 0, ErrInfo(err)
 	}
+	size := converter.BinToDec(buf)
+	if size > consts.MAX_BLOCK_SIZE {
+		return 0, ErrInfo("size > conts.MAX_BLOCK_SIZE")
+	}
+	// сам блок
+	// block itself
+	_, err = file.Seek(-(size + 5), 2)
+	if err != nil {
+		return 0, ErrInfo(err)
+	}
+	dataBinary := make([]byte, size+5)
+	_, err = file.Read(dataBinary)
+	if err != nil {
+		return 0, ErrInfo(err)
+	}
+	// размер (id блока + тело блока)
+	// size (block id + body of a block)
+	converter.BinToDecBytesShift(&dataBinary, 5)
+	return converter.BinToDecBytesShift(&dataBinary, 5), nil
 }
 
+// ErrInfoFmt fomats the error message
 func ErrInfoFmt(err string, a ...interface{}) error {
-	err_ := fmt.Sprintf(err, a...)
-	return fmt.Errorf("%s (%s)", err_, Caller(1))
+	return fmt.Errorf("%s (%s)", fmt.Sprintf(err, a...), Caller(1))
 }
 
-func ErrInfo(err_ interface{}, additionally ...string) error {
+// ErrInfo formats the error message
+func ErrInfo(verr interface{}, additionally ...string) error {
 	var err error
-	switch err_.(type) {
+	switch verr.(type) {
 	case error:
-		err = err_.(error)
+		err = verr.(error)
 	case string:
-		err = errors.New(err_.(string))
+		err = errors.New(verr.(string))
 	}
 	if err != nil {
 		if len(additionally) > 0 {
 			return fmt.Errorf("%s # %s (%s)", err, additionally, Caller(1))
-		} else {
-			return fmt.Errorf("%s (%s)", err, Caller(1))
 		}
+		return fmt.Errorf("%s (%s)", err, Caller(1))
 	}
 	return err
 }
 
+// CallMethod calls the function by its name
 func CallMethod(i interface{}, methodName string) interface{} {
 	var ptr reflect.Value
 	var value reflect.Value
@@ -859,6 +674,7 @@ func CallMethod(i interface{}, methodName string) interface{} {
 	return fmt.Errorf("method %s not found", methodName)
 }
 
+// Caller returns the name of the latest function
 func Caller(steps int) string {
 	name := "?"
 	if pc, _, num, ok := runtime.Caller(steps + 1); ok {
@@ -867,251 +683,7 @@ func Caller(steps int) string {
 	return name
 }
 
-func SliceInt64ToString(int64 []int64) []string {
-	result := make([]string, len(int64))
-	for i, v := range int64 {
-		result[i] = strconv.FormatInt(v, 10)
-	}
-	return result
-}
-
-func RemoveInt64Slice(slice *[]int64, pos int) {
-	sl := *slice
-	*slice = append(sl[:pos], sl[pos+1:]...)
-}
-
-func DelUserIdFromArray(array *[]int64, userId int64) {
-	for i, v := range *array {
-		if v == userId {
-			RemoveInt64Slice(&*array, i)
-		}
-	}
-}
-
-func InSliceInt64(search int64, slice []int64) bool {
-	for _, v := range slice {
-		if v == search {
-			return true
-		}
-	}
-	return false
-}
-
-func InSliceString(search string, slice []string) bool {
-	for _, v := range slice {
-		if v == search {
-			return true
-		}
-	}
-	return false
-}
-
-func EncodeLengthPlusData(data_ interface{}) []byte {
-	var data []byte
-	switch data_.(type) {
-	case int64:
-		data = Int64ToByte(data_.(int64))
-	case string:
-		data = []byte(data_.(string))
-	case []byte:
-		data = data_.([]byte)
-	}
-	//log.Debug("data: %x", data)
-	//log.Debug("len data: %d", len(data))
-	return append(EncodeLength(int64(len(data))), data...)
-}
-
-func DecToHex(dec int64) string {
-	return strconv.FormatInt(dec, 16)
-}
-
-func HexToDec(h string) int64 {
-	int64, _ := strconv.ParseInt(h, 16, 0)
-	return int64
-}
-
-func HexToDecBig(hex string) string {
-	i := new(big.Int)
-	i.SetString(hex, 16)
-	return fmt.Sprintf("%d", i)
-}
-
-func DecToHexBig(hex string) string {
-	i := new(big.Int)
-	i.SetString(hex, 10)
-	hex = fmt.Sprintf("%x", i)
-	if len(hex)%2 > 0 {
-		hex = "0" + hex
-	}
-	return hex
-}
-
-func UInt32ToStr(num uint32) string {
-	return strconv.FormatInt(int64(num), 10)
-}
-func Int64ToStr(num int64) string {
-	return strconv.FormatInt(num, 10)
-}
-func Int64ToByte(num int64) []byte {
-	return []byte(strconv.FormatInt(num, 10))
-}
-
-func IntToStr(num int) string {
-	return strconv.Itoa(num)
-}
-
-func DecToBin(dec_ interface{}, sizeBytes int64) []byte {
-	var dec int64
-	switch dec_.(type) {
-	case int:
-		dec = int64(dec_.(int))
-	case int64:
-		dec = dec_.(int64)
-	case string:
-		dec = StrToInt64(dec_.(string))
-	}
-	Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
-	return HexToBin([]byte(Hex))
-}
-func BinToHex(bin_ interface{}) []byte {
-	var bin []byte
-	switch bin_.(type) {
-	case []byte:
-		bin = bin_.([]byte)
-	case int64:
-		bin = Int64ToByte(bin_.(int64))
-	case string:
-		bin = []byte(bin_.(string))
-	}
-	return []byte(fmt.Sprintf("%x", bin))
-}
-
-func HexToBin(hexdata_ interface{}) []byte {
-	var hexdata string
-	switch hexdata_.(type) {
-	case []byte:
-		hexdata = string(hexdata_.([]byte))
-	case int64:
-		hexdata = Int64ToStr(hexdata_.(int64))
-	case string:
-		hexdata = hexdata_.(string)
-	}
-	var str []byte
-	str, err := hex.DecodeString(hexdata)
-	if err != nil {
-		log.Error("%v / %v", err, GetParent())
-	}
-	return str
-}
-
-func BinToDec(bin []byte) int64 {
-	var a uint64
-	l := len(bin)
-	for i, b := range bin {
-		shift := uint64((l - i - 1) * 8)
-		a |= uint64(b) << shift
-	}
-	return int64(a)
-}
-
-func BinToDecBytesShift(bin *[]byte, num int64) int64 {
-	return BinToDec(BytesShift(bin, num))
-}
-
-func BytesShift(str *[]byte, index int64) (ret []byte) {
-	if int64(len(*str)) < index || index == 0 {
-		*str = (*str)[:0]
-		return []byte{}
-	}
-	ret, *str = (*str)[:index], (*str)[index:]
-	/*	var substr []byte
-		var str_ []byte
-		substr = *str
-		substr = substr[0:index]
-		str_ = *str
-		str_ = str_[index:]
-		*str = str_
-		return substr
-	*/
-	return
-}
-
-func InterfaceToStr(v interface{}) string {
-	var str string
-	switch v.(type) {
-	case int:
-		str = IntToStr(v.(int))
-	case float64:
-		str = Float64ToStr(v.(float64))
-	case int64:
-		str = Int64ToStr(v.(int64))
-	case string:
-		str = v.(string)
-	case []byte:
-		str = string(v.([]byte))
-	default:
-		if reflect.TypeOf(v).String() == `decimal.Decimal` {
-			str = v.(decimal.Decimal).String()
-		}
-	}
-	return str
-}
-func InterfaceSliceToStr(i []interface{}) []string {
-	var str []string
-	for _, v := range i {
-		str = append(str, InterfaceToStr(v))
-	}
-	return str
-}
-
-func InterfaceToFloat64(i interface{}) float64 {
-	var result float64
-	switch i.(type) {
-	case int:
-		result = float64(i.(int))
-	case float64:
-		result = i.(float64)
-	case int64:
-		result = float64(i.(int64))
-	case string:
-		result = StrToFloat64(i.(string))
-	case []byte:
-		result = BytesToFloat64(i.([]byte))
-	}
-	return result
-}
-
-func BytesShiftReverse(str *[]byte, index_ interface{}) []byte {
-	var index int64
-	switch index_.(type) {
-	case int:
-		index = int64(index_.(int))
-	case int64:
-		index = index_.(int64)
-	}
-
-	var substr []byte
-	var str_ []byte
-	substr = *str
-	substr = substr[int64(len(substr))-index:]
-	str_ = *str
-	if int64(len(str_)) < int64(len(str_))-index {
-		return []byte("")
-	}
-	str_ = str_[0 : int64(len(str_))-index]
-	*str = str_
-	return substr
-}
-
-func SleepDiff(sleep *int64, diff int64) {
-	// вычитаем уже прошедшее время
-	if *sleep > diff {
-		*sleep = *sleep - diff
-	} else {
-		*sleep = 0
-	}
-}
-
+// CopyFileContents copy files
 func CopyFileContents(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
@@ -1135,28 +707,7 @@ func CopyFileContents(src, dst string) error {
 	return ErrInfo(err)
 }
 
-func PKCS5Padding(src []byte, blockSize int) []byte {
-	padding := blockSize - len(src)%blockSize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(src, padtext...)
-}
-
-func PKCS5UnPadding(src []byte) []byte {
-	length := len(src)
-	unpadding := int(src[length-1])
-	return src[:(length - unpadding)]
-}
-
-func RandSeq(n int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-	rand.Seed(time.Now().UnixNano())
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
-}
-
+// CheckSign checks the signature
 func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1175,81 +726,53 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 		return false, ErrInfoFmt("len(signs) == 0")
 	}
 	// у нода всегда 1 подпись
+	// node always has olny one signature
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
-		if length := DecodeLength(&signs); length > 0 {
-			signsSlice = append(signsSlice, BytesShift(&signs, length))
+		length, err := converter.DecodeLength(&signs)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if length > 0 {
+			signsSlice = append(signsSlice, converter.BytesShift(&signs, length))
 		}
 		if len(publicKeys) != len(signsSlice) {
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
-	return lib.CheckECDSA(publicKeys[0], forSign, signsSlice[0])
+	return crypto.CheckSign(publicKeys[0], forSign, signsSlice[0])
 }
 
-func Md5(msg_ interface{}) []byte {
-	var msg []byte
-	switch msg_.(type) {
-	case string:
-		msg = []byte(msg_.(string))
-	case []byte:
-		msg = msg_.([]byte)
-	}
-	sh := crypto.MD5.New()
-	sh.Write(msg)
-	hash := sh.Sum(nil)
-	return BinToHex(hash)
-}
-
-func DSha256(data_ interface{}) []byte {
-	var data []byte
-	switch data_.(type) {
-	case string:
-		data = []byte(data_.(string))
-	case []byte:
-		data = data_.([]byte)
-	}
-	sha256_ := sha256.New()
-	sha256_.Write(data)
-	hashSha256 := fmt.Sprintf("%x", sha256_.Sum(nil))
-	sha256_ = sha256.New()
-	sha256_.Write([]byte(hashSha256))
-	return []byte(fmt.Sprintf("%x", sha256_.Sum(nil)))
-}
-
-func Sha256(data_ interface{}) []byte {
-	var data []byte
-	switch data_.(type) {
-	case string:
-		data = []byte(data_.(string))
-	case []byte:
-		data = data_.([]byte)
-	}
-	sha256_ := sha256.New()
-	sha256_.Write(data)
-	return []byte(fmt.Sprintf("%x", sha256_.Sum(nil)))
-}
-
+// GetMrklroot returns MerkleTreeRoot
 func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
-
 	var mrklSlice [][]byte
 	var txSize int64
 	// [error] парсим после вызова функции
+	// parse [error] after the calling of a function
 	if len(binaryData) > 0 {
 		for {
 			// чтобы исключить атаку на переполнение памяти
+			// to exclude an attack on memory overflow
 			if !first {
 				if txSize > consts.MAX_TX_SIZE {
 					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
 				}
 			}
-			txSize = DecodeLength(&binaryData)
+			txSize, err := converter.DecodeLength(&binaryData)
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			// отчекрыжим одну транзакцию от списка транзакций
+			// separate one transaction from the list of transactions
 			if txSize > 0 {
-				transactionBinaryData := BytesShift(&binaryData, txSize)
-				dSha256Hash := DSha256(transactionBinaryData)
+				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
+				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
+				if err != nil {
+					log.Fatal(err)
+				}
+				dSha256Hash = converter.BinToHex(dSha256Hash)
 				mrklSlice = append(mrklSlice, dSha256Hash)
 				//if len(transactionBinaryData) > 500000 {
 				//	ioutil.WriteFile(string(dSha256Hash)+"-"+Int64ToStr(txSize), transactionBinaryData, 0644)
@@ -1257,6 +780,7 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 			}
 
 			// чтобы исключить атаку на переполнение памяти
+			// to exclude an attack on memory overflow
 			if !first {
 				if len(mrklSlice) > consts.MAX_TX_COUNT {
 					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), consts.MAX_TX_COUNT))
@@ -1277,20 +801,17 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 	return MerkleTreeRoot(mrklSlice), nil
 }
 
-func SliceReverse(s []int64) []int64 {
-	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-		s[i], s[j] = s[j], s[i]
-	}
-	return s
-}
-
+// MerkleTreeRoot rertun Merkle value
 func MerkleTreeRoot(dataArray [][]byte) []byte {
-
 	log.Debug("dataArray: %s", dataArray)
-
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
-		result[0] = append(result[0], DSha256(v))
+		hash, err := crypto.DoubleHash(v)
+		if err != nil {
+			log.Fatal(err)
+		}
+		hash = converter.BinToHex(hash)
+		result[0] = append(result[0], hash)
 	}
 	var j int32
 	for len(result[j]) > 1 {
@@ -1303,9 +824,19 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 				}
 			} else {
 				if _, ok := result[j+1]; !ok {
-					result[j+1] = [][]byte{DSha256(append(result[j][i], result[j][i+1]...))}
+					hash, err := crypto.DoubleHash(append(result[j][i], result[j][i+1]...))
+					if err != nil {
+						log.Fatal(err)
+					}
+					hash = converter.BinToHex(hash)
+					result[j+1] = [][]byte{hash}
 				} else {
-					result[j+1] = append(result[j+1], DSha256([]byte(append(result[j][i], result[j][i+1]...))))
+					hash, err := crypto.DoubleHash([]byte(append(result[j][i], result[j][i+1]...)))
+					if err != nil {
+						log.Fatal(err)
+					}
+					hash = converter.BinToHex(hash)
+					result[j+1] = append(result[j+1], hash)
 				}
 			}
 		}
@@ -1313,26 +844,12 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 	}
 
 	log.Debug("result: %s", result)
-	result_ := result[int32(len(result)-1)]
-	log.Debug("result_: %s", result_)
-	return []byte(result_[0])
+	ret := result[int32(len(result)-1)]
+	log.Debug("result_: %s", ret)
+	return []byte(ret[0])
 }
 
-func DbClose(c *DCDB) {
-	err := c.Close()
-	if err != nil {
-		log.Debug("%v", err)
-	}
-}
-
-func TypesToIds(arr []string) []int64 {
-	var result []int64
-	for _, v := range arr {
-		result = append(result, TypeInt(v))
-	}
-	return result
-}
-
+// TypeInt returns the identifier of the embedded transaction
 func TypeInt(txType string) int64 {
 	for k, v := range consts.TxTypes {
 		if v == txType {
@@ -1342,82 +859,7 @@ func TypeInt(txType string) int64 {
 	return 0
 }
 
-func IntSliceToStr(Int []int) []string {
-	var result []string
-	for _, v := range Int {
-		result = append(result, IntToStr(v))
-	}
-	return result
-}
-
-func JoinInt64Slice(arr []int64, sep string) string {
-	var arrStr []string
-	for _, v := range arr {
-		arrStr = append(arrStr, Int64ToStr(v))
-	}
-	return strings.Join(arrStr, sep)
-}
-
-func MakeLastTx(lastTx []map[string]string, lng map[string]string) (string, map[int64]int64) {
-	pendingTx := make(map[int64]int64)
-	result := `<h3>` + lng["transactions"] + `</h3><table class="table" style="width:500px;">`
-	result += `<tr><th>` + lng["time"] + `</th><th>` + lng["result"] + `</th></tr>`
-	for _, data := range lastTx {
-		result += "<tr>"
-		result += "<td class='unixtime'>" + data["time_int"] + "</td>"
-		if StrToInt64(data["block_id"]) > 0 {
-			result += "<td>" + lng["in_the_block"] + " " + data["block_id"] + "</td>"
-		} else if len(data["error"]) > 0 {
-			result += "<td>Error: " + data["error"] + "</td>"
-		} else if (len(data["queue_tx"]) == 0 && len(data["tx"]) == 0) || time.Now().Unix()-StrToInt64(data["time_int"]) > 7200 {
-			result += "<td>" + lng["lost"] + "</td>"
-		} else {
-			result += "<td>" + lng["status_pending"] + "</td>"
-			pendingTx[StrToInt64(data["type"])] = 1
-		}
-		result += "</tr>"
-	}
-	result += "</table>"
-	return result, pendingTx
-}
-
-func EncryptCFB(text, key, iv []byte) ([]byte, []byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, nil, ErrInfo(err)
-	}
-	str := text
-	if len(iv) == 0 {
-		ciphertext := []byte(RandSeq(16))
-		iv = ciphertext[:16]
-	}
-	encrypter := cipher.NewCFBEncrypter(block, iv)
-	encrypted := make([]byte, len(str))
-	encrypter.XORKeyStream(encrypted, str)
-
-	return append(iv, encrypted...), iv, nil
-}
-
-func DecryptCFB(iv, encrypted, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	decrypter := cipher.NewCFBDecrypter(block, iv)
-	decrypted := make([]byte, len(encrypted))
-	decrypter.XORKeyStream(decrypted, encrypted)
-
-	return decrypted, nil
-}
-
-func strpad(text string) string {
-	length := aes.BlockSize - (len(text) % aes.BlockSize)
-	for i := 0; i < length; i++ {
-		text += "0"
-	}
-	return text
-}
-
+/*
 // http://stackoverflow.com/a/18411978
 func VersionOrdinal(version string) string {
 	// ISO/IEC 14651:2011
@@ -1446,8 +888,9 @@ func VersionOrdinal(version string) string {
 		vo[j]++
 	}
 	return string(vo)
-}
+}*/
 
+// GetNetworkTime returns the network time
 func GetNetworkTime() (*time.Time, error) {
 
 	ntpAddr := []string{"0.pool.ntp.org", "europe.pool.ntp.org", "asia.pool.ntp.org", "oceania.pool.ntp.org", "north-america.pool.ntp.org", "south-america.pool.ntp.org", "africa.pool.ntp.org"}
@@ -1494,36 +937,10 @@ func GetNetworkTime() (*time.Time, error) {
 
 }
 
-func SortMap(m map[int64]string) []map[int64]string {
-
-	var keys []int
-	for k := range m {
-		keys = append(keys, int(k))
-	}
-	sort.Ints(keys)
-	var result []map[int64]string
-	for _, k := range keys {
-		result = append(result, map[int64]string{int64(k): m[int64(k)]})
-	}
-	return result
-}
-
-func RSortMap(m map[int64]string) []map[int64]string {
-
-	var keys []int
-	for k := range m {
-		keys = append(keys, int(k))
-	}
-	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
-	var result []map[int64]string
-	for _, k := range keys {
-		result = append(result, map[int64]string{int64(k): m[int64(k)]})
-	}
-	return result
-}
-
-func TcpConn(Addr string) (net.Conn, error) {
+// TCPConn connects to the address
+func TCPConn(Addr string) (net.Conn, error) {
 	// шлем данные указанному хосту
+	// send data to the specified host
 	/*tcpAddr, err := net.ResolveTCPAddr("tcp", Addr)
 	if err != nil {
 		return nil, ErrInfo(err)
@@ -1538,15 +955,18 @@ func TcpConn(Addr string) (net.Conn, error) {
 	return conn, nil
 }
 
+// WriteSizeAndData writes []byte to the connection
 func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	// в 4-х байтах пишем размер данных, которые пошлем далее
-	size := DecToBin(len(binaryData), 4)
+	// record the data size in 4 bytes, which will send further
+	size := converter.DecToBin(len(binaryData), 4)
 	fmt.Println("len(binaryData)", len(binaryData))
 	_, err := conn.Write(size)
 	if err != nil {
 		return ErrInfo(err)
 	}
 	// далее шлем сами данные
+	// further send data itself
 	if len(binaryData) > 0 {
 		/*if len(binaryData) > 500000 {
 			ioutil.WriteFile("WriteSizeAndData-7-block-"+IntToStr(len(binaryData))+string(DSha256(binaryData)), binaryData, 0644)
@@ -1559,6 +979,7 @@ func WriteSizeAndData(binaryData []byte, conn net.Conn) error {
 	return nil
 }
 
+// GetCurrentDir returns the current directory
 func GetCurrentDir() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -1567,9 +988,9 @@ func GetCurrentDir() string {
 	return dir
 }
 
-func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, error) {
-
-	conn, err := TcpConn(host)
+// GetBlockBody gets the block data
+func GetBlockBody(host string, blockID int64, dataTypeBlockBody int64) ([]byte, error) {
+	conn, err := TCPConn(host)
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
@@ -1577,20 +998,23 @@ func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, 
 
 	log.Debug("dataTypeBlockBody: %v", dataTypeBlockBody)
 	// шлем тип данных
-	_, err = conn.Write(DecToBin(dataTypeBlockBody, 2))
+	// send the type of data
+	_, err = conn.Write(converter.DecToBin(dataTypeBlockBody, 2))
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
 
-	log.Debug("blockId: %v", blockId)
+	log.Debug("blockID: %v", blockID)
 
 	// шлем номер блока
-	_, err = conn.Write(DecToBin(blockId, 4))
+	// send the number of a block
+	_, err = conn.Write(converter.DecToBin(blockID, 4))
 	if err != nil {
 		return nil, ErrInfo(err)
 	}
 
 	// в ответ получаем размер данных, которые нам хочет передать сервер
+	// recieve the data size as a response that server wants to transfer
 	buf := make([]byte, 4)
 	n, err := conn.Read(buf)
 	if err != nil {
@@ -1599,7 +1023,8 @@ func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, 
 	log.Debug("dataSize buf: %x / get: %v", buf, n)
 
 	// и если данных менее 10мб, то получаем их
-	dataSize := BinToDec(buf)
+	// if the data size is less than 10mb, we will receive them
+	dataSize := converter.BinToDec(buf)
 	var binaryBlock []byte
 	log.Debug("dataSize: %v", dataSize)
 	if dataSize < 10485760 && dataSize > 0 {
@@ -1624,38 +1049,18 @@ func GetBlockBody(host string, blockId int64, dataTypeBlockBody int64) ([]byte, 
 
 }
 
-type jsonAnswer struct {
-	err error
-}
-
-func (r *jsonAnswer) String() string {
-	return fmt.Sprintf("%s", r.err)
-}
-func (r *jsonAnswer) Error() error {
-	return r.err
-}
-func JsonAnswer(err interface{}, answType string) *jsonAnswer {
-	var error_ string
-	switch err.(type) {
-	case string:
-		error_ = err.(string)
-	case error:
-		error_ = fmt.Sprintf("%v", err)
-	}
-	result, _ := json.Marshal(map[string]string{answType: fmt.Sprintf("%v", error_)})
-	return &jsonAnswer{errors.New(string(result))}
-}
-
+/*
+// WriteSelectiveLog writes info into SelectiveLog.txt
 func WriteSelectiveLog(text interface{}) {
 	if *LogLevel == "DEBUG" {
-		var text_ string
+		var stext string
 		switch text.(type) {
 		case string:
-			text_ = text.(string)
+			stext = text.(string)
 		case []byte:
-			text_ = string(text.([]byte))
+			stext = string(text.([]byte))
 		case error:
-			text_ = fmt.Sprintf("%v", text)
+			stext = fmt.Sprintf("%v", text)
 		}
 		allTransactionsStr := ""
 		allTransactions, _ := DB.GetAll("SELECT hex(hash) as hex_hash, verified, used, high_rate, for_self_use, user_id, third_var, counter, sent FROM transactions", 100)
@@ -1663,7 +1068,7 @@ func WriteSelectiveLog(text interface{}) {
 			allTransactionsStr += data["hex_hash"] + "|" + data["verified"] + "|" + data["used"] + "|" + data["high_rate"] + "|" + data["for_self_use"] + "|" + consts.TxTypes[StrToInt(data["type"])] + "|" + data["user_id"] + "|" + data["third_var"] + "|" + data["counter"] + "|" + data["sent"] + "\n"
 		}
 		t := time.Now()
-		data := allTransactionsStr + GetParent() + " ### " + t.Format(time.StampMicro) + " ### " + text_ + "\n\n"
+		data := allTransactionsStr + GetParent() + " ### " + t.Format(time.StampMicro) + " ### " + stext + "\n\n"
 		//ioutil.WriteFile(*Dir+"/SelectiveLog.txt", []byte(data), 0644)
 		f, err := os.OpenFile(*Dir+"/SelectiveLog.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
@@ -1677,6 +1082,7 @@ func WriteSelectiveLog(text interface{}) {
 		}
 	}
 }
+*/
 
 /*
 func DaylightRestart() error {
@@ -1688,9 +1094,10 @@ func DaylightRestart() error {
 	return nil
 }*/
 
-func GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error) {
+// GetUpdVerAndURL downloads the information about the version
+func GetUpdVerAndURL(host string) (updinfo *lib.Update, err error) {
 
-	update, err := GetHttpTextAnswer(host + "/update.json")
+	update, err := GetHTTPTextAnswer(host + "/update.json")
 	//update, err := ioutil.ReadFile(`c:\egaas\update.json`)
 	if len(update) > 0 {
 		updateData := make(map[string]lib.Update)
@@ -1705,6 +1112,7 @@ func GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error) {
 	return
 }
 
+// ShellExecute runs cmdline
 func ShellExecute(cmdline string) {
 	time.Sleep(500 * time.Millisecond)
 	switch runtime.GOOS {
@@ -1717,190 +1125,8 @@ func ShellExecute(cmdline string) {
 	}
 }
 
-// temporary
-
-func EncodeLength(length int64) []byte {
-	return lib.EncodeLength(length)
-}
-
-func DecodeLength(buf *[]byte) (ret int64) {
-	ret, _ = lib.DecodeLength(buf)
-	return
-}
-
-func DecodeLenInt64(data *[]byte) (int64, error) {
-	return lib.DecodeLenInt64(data)
-}
-
-func FillLeft(slice []byte) []byte {
-	return lib.FillLeft(slice)
-}
-
-func CreateHtmlFromTemplate(page string, citizenId, stateId int64, params *map[string]string) (string, error) {
-	query := `SELECT value FROM "` + Int64ToStr(stateId) + `_pages" WHERE name = ?`
-	if (*params)[`global`] == `1` {
-		query = `SELECT value FROM global_pages WHERE name = ?`
-	}
-
-	data, err := DB.Single(query, page).String()
-	if err != nil {
-		return "", err
-	}
-	/*	qrx := regexp.MustCompile(`CitizenId`)
-		data = qrx.ReplaceAllString(data, Int64ToStr(citizenId))
-		qrx = regexp.MustCompile(`AccountId`)
-		data = qrx.ReplaceAllString(data, Int64ToStr(accountId))*/
-	(*params)[`page`] = page
-	(*params)[`state_id`] = Int64ToStr(stateId)
-	(*params)[`citizen`] = Int64ToStr(citizenId)
-	if len(data) > 0 {
-		templ := textproc.Process(data, params)
-		if (*params)[`isrow`] == `opened` {
-			templ += `</div>`
-			(*params)[`isrow`] = ``
-		}
-		templ = LangMacro(templ, int(stateId), (*params)[`accept_lang`])
-		getHeight := func() int64 {
-			height := int64(100)
-			if h, ok := (*params)[`hmap`]; ok {
-				height = StrToInt64(h)
-			}
-			return height
-		}
-		if len((*params)[`wisource`]) > 0 {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-			var editor = ace.edit("textEditor");
-	var ContractMode = ace.require("ace/mode/c_cpp").Mode;
-	ace.require("ace/ext/language_tools");
-	$(".textEditor code").html(editor.getValue());
-	$("#%s").val(editor.getValue());
-	editor.setTheme("ace/theme/chrome");
-    editor.session.setMode(new ContractMode());
-	editor.setShowPrintMargin(false);
-	editor.getSession().setTabSize(4);
-	editor.getSession().setUseWrapMode(true);
-	editor.getSession().on('change', function(e) {
-		$(".textEditor code").html(editor.getValue());
-		$("#%s").val(editor.getValue());
-		editor.resize();
-	});
-	editor.setOptions({
-		enableBasicAutocompletion: true,
-		enableSnippets: true,
-		enableLiveAutocompletion: true
-	});
-			</script>`, (*params)[`wisource`], (*params)[`wisource`])
-		}
-		if (*params)[`wimoney`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-				$(".inputmask").inputmask({'autoUnmask': true});</script>`)
-		}
-		if (*params)[`widate`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-						$(document).ready(function() {
-							$.datetimepicker.setLocale('en');
-							$(".datetimepicker").datetimepicker();
-						})
-				</script>`)
-		}
-		if (*params)[`wiaddress`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-				$(".address").prop("autocomplete", "off").inputmask({mask: "9999-9999-9999-9999-9999", autoUnmask: true }).focus();
-	$(".address").typeahead({
-		minLength: 1,
-		items: 10,
-		source: function (query, process) {
-			return $.get('ajax?json=ajax_addresses', { 'address': query }, function (data) {
-				return process(data.address);
-			});
-		}
-	}).focus();</script>`)
-		}
-		if (*params)[`wimap`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-			miniMap("wimap", "100%%", "%dpx");</script>`, getHeight())
-		}
-		if (*params)[`wicitizen`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">(function($, window, document){
-'use strict';
-  var Selector = '[data-notify]',
-      autoloadSelector = '[data-onload]',
-      doc = $(document);
-
-  $(function() {
-    $(Selector).each(function(){
-      var $this  = $(this),
-          onload = $this.data('onload');
-      if(onload !== undefined) {
-        setTimeout(function(){
-          notifyNow($this);
-        }, 800);
-      }
-      $this.on('click', function (e) {
-        e.preventDefault();
-        notifyNow($this);
-      });
-    });
-  });
-  function notifyNow($element) {
-      var message = $element.data('message'),
-          options = $element.data('options');
- 	 if(!message)
-        $.error('Notify: No message specified');
-      $.notify(message, options || {});
-  }
-}(jQuery, window, document));</script>`)
-		}
-		if (*params)[`wimappoint`] == `1` {
-			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
-		}
-		if (*params)[`wibtncont`] == `1` {
-			var unique int64
-			if uval, ok := (*params)[`tx_unique`]; ok {
-				unique = StrToInt64(uval) + 1
-			}
-			(*params)[`tx_unique`] = Int64ToStr(unique)
-			funcMap := template.FuncMap{
-				"sum": func(a, b interface{}) float64 {
-					return InterfaceToFloat64(a) + InterfaceToFloat64(b)
-				},
-				"noescape": func(s string) template.HTML {
-					return template.HTML(s)
-				},
-			}
-			data, err := static.Asset("static/tx_btncont.html")
-			if err != nil {
-				return ``, err
-			}
-			sign, err := static.Asset("static/signatures_new.html")
-			if err != nil {
-				return ``, err
-			}
-
-			t := template.New("template").Funcs(funcMap)
-			if t, err = t.Parse(string(data)); err != nil {
-				return ``, err
-			}
-			t = template.Must(t.Parse(string(sign)))
-			b := new(bytes.Buffer)
-
-			finfo := TxBtnCont{ //Class: class, ClassBtn: classBtn, Name: LangRes(vars, btnName),
-				Unique: template.JS((*params)[`tx_unique`]), // OnSuccess: template.JS(onsuccess),
-				//Fields: make([]TxInfo, 0), AutoClose: (*pars)[`AutoClose`] != `0`,
-				/*Silent: (*pars)[`Silent`] == `1`*/}
-			if err = t.Execute(b, finfo); err != nil {
-				return ``, err
-			}
-			templ += b.String()
-		}
-		return ProceedTemplate(`page_template`, &PageTpl{Page: page, Template: templ})
-	}
-	return ``, nil
-}
-
+// FirstBlock generates the first block
 func FirstBlock(exit bool) {
-
 	log.Debug("FirstBlock")
 
 	if *GenerateFirstBlock == 1 {
@@ -1909,7 +1135,7 @@ func FirstBlock(exit bool) {
 
 		if len(*FirstBlockPublicKey) == 0 {
 			log.Debug("len(*FirstBlockPublicKey) == 0")
-			priv, pub, _ := lib.GenHexKeys()
+			priv, pub, _ := crypto.GenHexKeys()
 			err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", ErrInfo(err))
@@ -1918,7 +1144,7 @@ func FirstBlock(exit bool) {
 		}
 		if len(*FirstBlockNodePublicKey) == 0 {
 			log.Debug("len(*FirstBlockNodePublicKey) == 0")
-			priv, pub, _ := lib.GenHexKeys()
+			priv, pub, _ := crypto.GenHexKeys()
 			err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
 			if err != nil {
 				log.Error("%v", ErrInfo(err))
@@ -1941,20 +1167,19 @@ func FirstBlock(exit bool) {
 		}
 
 		var block, tx []byte
-		iAddress := int64(lib.Address(PublicKeyBytes))
-		now := lib.Time32()
-		_, err := lib.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
+		iAddress := int64(crypto.Address(PublicKeyBytes))
+		now := uint32(time.Now().Unix())
+		_, err := converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
-		firstBlock := &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
+		_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
 			Time: now, WalletID: iAddress, CitizenID: 0},
-			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)}
-		_, err = lib.BinMarshal(&tx, firstBlock)
+			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
-		lib.EncodeLenByte(&block, tx)
+		converter.EncodeLenByte(&block, tx)
 
 		firstBlockDir := ""
 		if len(*FirstBlockDir) == 0 {
@@ -1974,18 +1199,16 @@ func FirstBlock(exit bool) {
 	}
 }
 
+// EgaasUpdate decompresses and updates executable file
 func EgaasUpdate(url string) error {
-
-	//	GetUpdVerAndUrl(host string) (updinfo *lib.Update, err error)
+	//	GetUpdVerAndURL(host string) (updinfo *lib.Update, err error)
 
 	zipfile := filepath.Join(*Dir, "egaas.zip")
-
 	/*	_, err := DownloadToFile(url, zipfile, 3600, nil, nil, "upd")
 		if err != nil {
 			return ErrInfo(err)
 		}
 		fmt.Println(zipfile)*/
-
 	reader, err := zip.OpenReader(zipfile)
 	if err != nil {
 		return ErrInfo(err)
@@ -1993,8 +1216,8 @@ func EgaasUpdate(url string) error {
 	appname := filepath.Base(os.Args[0])
 	tmpname := filepath.Join(*Dir, `tmp_`+appname)
 
-	f_ := reader.Reader.File
-	f := f_[0]
+	ftemp := reader.Reader.File
+	f := ftemp[0]
 	zipped, err := f.Open()
 	if err != nil {
 		return ErrInfo(err)
@@ -2039,6 +1262,7 @@ func EgaasUpdate(url string) error {
 	return nil
 }
 
+/*
 func OutInit() {
 	odir, _ := filepath.Abs(os.Args[0])
 	OutFile, _ = os.OpenFile(odir+`.txt`, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -2047,16 +1271,39 @@ func OutInit() {
 
 func Out(pars ...interface{}) {
 	OutFile.WriteString(fmt.Sprint(pars...) + "\r\n")
-}
+}*/
 
-func GetPrefix(tableName, stateId string) (string, error) {
+// GetPrefix возвращает префикс у таблицы. При этом идет проверка, чтобы префикс был global или совпадал
+// GetPrefix returns the prefix of the table. In this case it is checked that the prefix was global or matched
+// с идентифкатором государства
+// with the identifier of the state
+func GetPrefix(tableName, stateID string) (string, error) {
 	s := strings.Split(tableName, "_")
 	if len(s) < 2 {
 		return "", ErrInfo("incorrect table name")
 	}
 	prefix := s[0]
-	if prefix != "global" && prefix != stateId {
+	if prefix != "global" && prefix != stateID {
 		return "", ErrInfo("incorrect table name")
 	}
 	return prefix, nil
+}
+
+// GetParent возвращает информацию откуда произошел вызов функции
+// GetParent returns the information where the call of function happened
+func GetParent() string {
+	parent := ""
+	for i := 2; ; i++ {
+		name := ""
+		if pc, _, num, ok := runtime.Caller(i); ok {
+			name = filepath.Base(runtime.FuncForPC(pc).Name())
+			file, line := runtime.FuncForPC(pc).FileLine(pc)
+			if i > 5 || name == "runtime.goexit" {
+				break
+			} else {
+				parent += fmt.Sprintf("%s:%d -> %s:%d / ", filepath.Base(file), line, name, num)
+			}
+		}
+	}
+	return parent
 }

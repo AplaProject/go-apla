@@ -22,18 +22,21 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
-type AppData struct {
-	utils.CommonPage
+type appData struct {
+	template.CommonPage
 	Done    bool
 	Proceed int
 	Blocks  []string
 }
 
+// App is a controller for application install template page
 func App(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -62,9 +65,9 @@ func App(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params[`name`] = page
-	params[`state_id`] = utils.Int64ToStr(GetSessInt64("state_id", sess))
-	params[`wallet_id`] = utils.Int64ToStr(GetSessWalletId(sess))
-	params[`citizen_id`] = utils.Int64ToStr(GetSessCitizenId(sess))
+	params[`state_id`] = converter.Int64ToStr(GetSessInt64("state_id", sess))
+	params[`wallet_id`] = converter.Int64ToStr(GetSessWalletID(sess))
+	params[`citizen_id`] = converter.Int64ToStr(GetSessCitizenID(sess))
 
 	var (
 		out  string
@@ -86,7 +89,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 		} else {
 			table = fmt.Sprintf(`"%d_apps"`, GetSessInt64("state_id", sess))
 		}
-		appinfo, err := utils.DB.OneRow(`select * from `+table+` where name=?`, page).String()
+		appinfo, err := sql.DB.OneRow(`select * from `+table+` where name=?`, page).String()
 		if err != nil {
 			out = err.Error()
 		} else {
@@ -98,11 +101,11 @@ func App(w http.ResponseWriter, r *http.Request) {
 			} else {
 				blocks = make([]string, 0)
 			}
-			out, _ = utils.ProceedTemplate(`app_template`, &utils.PageTpl{Page: page,
+			out, _ = template.ProceedTemplate(`app_template`, &template.PageTpl{Page: page,
 				Template: textproc.Process(string(data), &params), Unique: ``,
-				Data: &AppData{
-					CommonPage: utils.CommonPage{WalletId: GetSessWalletId(sess),
-						CitizenId: GetSessCitizenId(sess),
+				Data: &appData{
+					CommonPage: template.CommonPage{WalletId: GetSessWalletID(sess),
+						CitizenId: GetSessCitizenID(sess),
 						StateId:   GetSessInt64("state_id", sess),
 					},
 					Blocks:  blocks,

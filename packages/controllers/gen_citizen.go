@@ -21,7 +21,7 @@ import (
 	//"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NGenCitizen = `gen_citizen`
+const nGenCitizen = `gen_citizen`
 
 type genCitizenPage struct {
 	Data    *CommonPage
@@ -30,15 +30,16 @@ type genCitizenPage struct {
 }
 
 func init() {
-	newPage(NGenCitizen)
+	newPage(nGenCitizen)
 }
 
+// GenCitizen is a control for creating a new citizen
 func (c *Controller) GenCitizen() (string, error) {
 	name := c.r.FormValue(`name`)
 	message := ``
 	if len(name) > 0 {
 	}
-	//prefix := utils.Int64ToStr(c.SessStateId)
+	//prefix := utils.Int64ToStr(c.SessStateID)
 	pageData := genCitizenPage{Data: c.Data, Message: message, Unique: template.JS(`255`)}
-	return proceedTemplate(c, NGenCitizen, &pageData)
+	return proceedTemplate(c, nGenCitizen, &pageData)
 }

@@ -31,8 +31,9 @@ func TestPKCS7(t *testing.T) {
 		size := 1 + rand.Intn(1024)
 		src, _ := test.RandBytes(size)
 		pad := PKCS7Padding(src, blockSize)
-		if len(pad)%blockSize != 0 || !bytes.Equal(PKCS7UnPadding(pad), src) {
-			t.Errorf("PKCS7 %x != %x blocksize: %d", src, PKCS7UnPadding(pad), blockSize)
+		unpad, _ := PKCS7UnPadding(pad)
+		if len(pad)%blockSize != 0 || !bytes.Equal(unpad, src) {
+			t.Errorf("PKCS7 %x != %x blocksize: %d", src, unpad, blockSize)
 		}
 	}
 }

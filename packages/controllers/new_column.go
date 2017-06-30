@@ -17,20 +17,22 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
+// NewColumn show the form for creating new column
 func (c *Controller) NewColumn() (string, error) {
 
 	var err error
 
 	txType := "NewColumn"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
-	tableName := lib.Escape(c.r.FormValue("tableName"))
+	tableName := converter.Escape(c.r.FormValue("tableName"))
 
 	count, _ := c.NumIndexes(tableName)
 
@@ -38,15 +40,15 @@ func (c *Controller) NewColumn() (string, error) {
 		Alert:            c.Alert,
 		Lang:             c.Lang,
 		TableName:        tableName,
-		WalletId:         c.SessWalletId,
-		CitizenId:        c.SessCitizenId,
-		StateId:          c.SessStateId,
+		WalletID:         c.SessWalletID,
+		CitizenID:        c.SessCitizenID,
+		StateID:          c.SessStateID,
 		ColumnName:       "",
 		ColumnPermission: "",
 		CanIndex:         count < consts.MAX_INDEXES,
 		TimeNow:          timeNow,
 		TxType:           txType,
-		TxTypeId:         txTypeId})
+		TxTypeID:         utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

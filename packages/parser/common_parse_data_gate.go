@@ -18,16 +18,19 @@ package parser
 
 import (
 	"errors"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
-/**
+/*
 Обработка данных (блоков или транзакций), пришедших с гейта. Только проверка.
-Processing data (blocks or transactions) gotten from a gate. Just checking.
+Data processing (blocks or transactions) gotten from a gate. Just checking.
 */
 func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	var err error
@@ -40,27 +43,31 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 
 	log.Debug("p.dataType: %d", p.dataType)
 	// если это транзакции (type>0), а не блок (type==0)
-	// if it's transactions, but block
+	// if it's transactions (type>0), but block (type==0)
 	if p.dataType > 0 {
 
 		// проверим, есть ли такой тип тр-ий
-		// check if the transaction's type exist
+		// check if the transaction type exist
 		if p.dataType < 128 && len(consts.TxTypes[p.dataType]) == 0 {
-			return nil, p.ErrInfo("Incorrect tx type " + utils.IntToStr(p.dataType))
+			return nil, p.ErrInfo("Incorrect tx type " + converter.IntToStr(p.dataType))
 		}
 
 		log.Debug("p.dataType: %d", p.dataType)
-		transactionBinaryData = append(utils.DecToBin(int64(p.dataType), 1), transactionBinaryData...)
+		transactionBinaryData = append(converter.DecToBin(int64(p.dataType), 1), transactionBinaryData...)
 		transactionBinaryDataFull = transactionBinaryData
 
 		// нет ли хэша этой тр-ии у нас в БД?
-		// Does the transaction's hash exist?
+		// Does the transaction hash exist?
 		err = p.CheckLogTx(transactionBinaryDataFull, true, false)
 		if err != nil {
 			return nil, p.ErrInfo(err)
 		}
 
-		p.TxHash = string(utils.Md5(transactionBinaryData))
+		hash, err := crypto.Hash(transactionBinaryData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		p.TxHash = string(hash)
 
 		// преобразуем бинарные данные транзакции в массив
 		// transforming binary data of the transaction to an array
@@ -82,13 +89,13 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 		// Time of transaction can be slightly longer than time of a node.
 		// A node can use wrong time
 		// Time of a transaction used only for fighting off attacks of yesterday transactions
-		curTime := utils.Time()
+		curTime := time.Now().Unix()
 		if p.TxContract != nil {
 			if int64(p.TxPtr.(*consts.TXHeader).Time)-consts.MAX_TX_FORW > curTime || int64(p.TxPtr.(*consts.TXHeader).Time) < curTime-consts.MAX_TX_BACK {
 				return nil, p.ErrInfo(errors.New("incorrect tx time"))
 			}
 		} else {
-			if utils.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > curTime || utils.BytesToInt64(p.TxSlice[2]) < curTime-consts.MAX_TX_BACK {
+			if converter.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > curTime || converter.BytesToInt64(p.TxSlice[2]) < curTime-consts.MAX_TX_BACK {
 				return nil, p.ErrInfo(errors.New("incorrect tx time"))
 			}
 			// $this->transaction_array[3] могут подсунуть пустой

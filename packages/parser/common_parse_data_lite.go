@@ -16,6 +16,7 @@
 
 package parser
 
+/*
 import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -25,6 +26,7 @@ import (
 func (p *Parser) ParseDataLite() error {
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
+		// parse only blocks
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
 	}
 
@@ -41,6 +43,7 @@ func (p *Parser) ParseDataLite() error {
 				return utils.ErrInfo(fmt.Errorf("empty BinaryData"))
 			}
 			// отчекрыжим одну транзакцию от списка транзакций
+			// separate the transaction from the list of transactions
 			transactionBinaryData := utils.BytesShift(&p.BinaryData, transactionSize)
 			transactionBinaryDataFull := transactionBinaryData
 
@@ -68,3 +71,4 @@ func (p *Parser) ParseDataLite() error {
 	}
 	return nil
 }
+*/

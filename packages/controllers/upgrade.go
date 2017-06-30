@@ -23,7 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NUpgrade = `upgrade`
+const nUpgrade = `upgrade`
 
 type upgradePage struct {
 	Data    *CommonPage
@@ -31,9 +31,10 @@ type upgradePage struct {
 }
 
 func init() {
-	newPage(NUpgrade)
+	newPage(nUpgrade)
 }
 
+// Upgrade is a controller for update page
 func (c *Controller) Upgrade() (string, error) {
 	var msg string
 
@@ -44,5 +45,5 @@ func (c *Controller) Upgrade() (string, error) {
 	} else {
 		msg = `Esaag is not on localhost`
 	}
-	return proceedTemplate(c, NUpgrade, &upgradePage{c.Data, msg})
+	return proceedTemplate(c, nUpgrade, &upgradePage{c.Data, msg})
 }

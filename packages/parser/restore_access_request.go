@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -68,7 +69,7 @@ func (p *RestoreAccessRequestParser) Validate() error {
 }
 
 func (p *RestoreAccessRequestParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.RestoreAccessRequest.Header.UserID}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccessRequest.StateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.RestoreAccessRequest.Header.UserID}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccessRequest.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

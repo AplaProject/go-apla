@@ -19,19 +19,22 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 )
 
+// GetServerTime returns the current server time
 func (c *Controller) GetServerTime() (string, error) {
 	var more string
 	pub := c.r.FormValue(`pub`)
 	if len(pub) == 128 {
 		if key, err := hex.DecodeString(pub); err == nil {
-			if pubId := int64(lib.Address(key)); pubId != 0 {
-				more = fmt.Sprintf(`, "account": "%d"`, pubId)
+			if pubID := int64(crypto.Address(key)); pubID != 0 {
+				more = fmt.Sprintf(`, "account": "%d"`, pubID)
 			}
 		}
 	}
-	return fmt.Sprintf(`{"time":"%s" %s}`, utils.Int64ToStr(utils.Time()), more), nil
+	return fmt.Sprintf(`{"time":"%s" %s}`, converter.Int64ToStr(time.Now().Unix()), more), nil
 }

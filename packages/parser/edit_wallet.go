@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -72,7 +73,7 @@ func (p *EditWalletParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	id := utils.StrToInt64(string(p.EditWallet.WalletID))
+	id := converter.StrToInt64(string(p.EditWallet.WalletID))
 	conditions, err := p.Single(`SELECT conditions_change FROM "dlt_wallets" WHERE wallet_id = ?`, id).String()
 	if err != nil {
 		return p.ErrInfo(err)

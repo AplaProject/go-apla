@@ -19,8 +19,8 @@ package exchangeapi
 import (
 	"net/http"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // Balance is the result structure of balamce handler
@@ -33,17 +33,17 @@ type Balance struct {
 func balance(r *http.Request) interface{} {
 	var result Balance
 
-	wallet := lib.StringToAddress(r.FormValue(`wallet`))
+	wallet := converter.StringToAddress(r.FormValue(`wallet`))
 	if wallet == 0 {
 		result.Error = `Wallet is invalid`
 		return result
 	}
-	total, err := utils.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
+	total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
 	result.Amount = total
-	result.EGS = lib.EGSMoney(total)
+	result.EGS = converter.EGSMoney(total)
 	return result
 }

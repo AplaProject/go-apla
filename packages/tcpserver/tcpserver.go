@@ -23,7 +23,9 @@ import (
 	//	"runtime"
 	"sync"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
 
@@ -37,12 +39,13 @@ func init() {
 	flag.Parse()
 }
 
-type TcpServer struct {
-	*utils.DCDB
+// TCPServer is a structure for TCP connecvtion
+type TCPServer struct {
+	*sql.DCDB
 	Conn net.Conn
 }
 
-func (t *TcpServer) deferClose() {
+func (t *TCPServer) deferClose() {
 	t.Conn.Close()
 	mutex.Lock()
 	counter--
@@ -50,7 +53,8 @@ func (t *TcpServer) deferClose() {
 	mutex.Unlock()
 }
 
-func (t *TcpServer) HandleTcpRequest() {
+// HandleTCPRequest proceed TCP requests
+func (t *TCPServer) HandleTCPRequest() {
 
 	/*	fmt.Println("NumCPU:", runtime.NumCPU(),
 		" NumGoRoutine:", runtime.NumGoroutine(),
@@ -58,7 +62,7 @@ func (t *TcpServer) HandleTcpRequest() {
 	*/
 	var err error
 
-	log.Debug("HandleTcpRequest from %v", t.Conn.RemoteAddr())
+	log.Debug("HandleTCPRequest from %v", t.Conn.RemoteAddr())
 	defer t.deferClose()
 
 	mutex.Lock()
@@ -66,20 +70,20 @@ func (t *TcpServer) HandleTcpRequest() {
 		t.Conn.Close()
 		mutex.Unlock()
 		return
-	} else {
-		counter++
-		//		fmt.Println("++", counter)
 	}
+	counter++
+	//		fmt.Println("++", counter)
 	mutex.Unlock()
 
 	// тип данных
+	// data type
 	buf := make([]byte, 2)
 	_, err = t.Conn.Read(buf)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	dataType := utils.BinToDec(buf)
+	dataType := converter.BinToDec(buf)
 	log.Debug("dataType %v", dataType)
 	switch dataType {
 	case 1:

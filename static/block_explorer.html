@@ -15,7 +15,7 @@
 	updateLanguage("#block_explorer .lang");
 </script>
 
-{{if .BlockId}}
+{{if .BlockID}}
 	<style>
 		.thead {
 			width:105px;
@@ -38,7 +38,7 @@
 			  <tbody>
 				 <tr>
 					<td class="thead lang" lang-id="block_id"></td>
-					<td><strong><a class="edit" href="#" data-type="text" data-pk="1">{{.BlockId}}</a></strong></td>
+					<td><strong><a class="edit" href="#" data-type="text" data-pk="1">{{.BlockID}}</a></strong></td>
 				 </tr>
 				{{if .BlockData}}
 				 <tr>
@@ -49,7 +49,7 @@
 					<td class="thead lang" lang-id="hash"></td>
 					<td>{{.BlockData.hash}}</td>
 				 </tr>
-				{{if gt .BlockId 1}}
+				{{if gt .BlockID 1}}
 				 <tr>
 					<td class="thead lang" lang-id="parent_hash"></td>
 					<td><a onclick="return prev_block()" style="cursor:pointer;">{{.BlockData.parent}}</a></td>
@@ -88,7 +88,7 @@
 	 <div class="panel-footer">
 	   <div class="clearfix">
 		  <div class="pull-left">
-			{{if gt .BlockId 1}}
+			{{if gt .BlockID 1}}
 			 <a href="#" onclick="return prev_block()" class="btn btn-primary"><span class="fa fa-angle-left"></span> &nbsp; <span class="lang" lang-id="prev_block"></span></a>
 			{{end}}
 		  </div>
@@ -161,13 +161,13 @@
 		return false;
 	}
 
-{{if .BlockId}}
+{{if .BlockID}}
 	function prev_block() {
-		return block_detail( {{.BlockId}} - 1 );
+		return block_detail( {{.BlockID}} - 1 );
 	}
 
 	function next_block() {
-		return block_detail( {{.BlockId}} + 1 );
+		return block_detail( {{.BlockID}} + 1 );
 	}
 	
 	$(document).ready(function() {

@@ -20,13 +20,13 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NSystemInfo = `system_info`
+const nSystemInfo = `system_info`
 
 type systemInfoPage struct {
 	Data             *CommonPage
 	List             []map[string]string
 	Latest           int64
-	BlockId          int64
+	BlockID          int64
 	UpdFullNodes     []map[string]string
 	MainLock         []map[string]string
 	Rollback         []map[string]string
@@ -36,9 +36,10 @@ type systemInfoPage struct {
 }
 
 func init() {
-	newPage(NSystemInfo)
+	newPage(nSystemInfo)
 }
 
+// SystemInfo shows the system information about the blockchain
 func (c *Controller) SystemInfo() (string, error) {
 	var err error
 	pageData := systemInfoPage{Data: c.Data}
@@ -73,5 +74,5 @@ func (c *Controller) SystemInfo() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	return proceedTemplate(c, NSystemInfo, &pageData)
+	return proceedTemplate(c, nSystemInfo, &pageData)
 }

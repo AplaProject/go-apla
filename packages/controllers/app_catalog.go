@@ -18,15 +18,17 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/static"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/static"
 )
 
-const NAppCatalog = `app_catalog`
+const nAppCatalog = `app_catalog`
 
+// AppInfo is a structure with information about the application
 type AppInfo struct {
 	Name  string
 	Title string
@@ -35,6 +37,7 @@ type AppInfo struct {
 	Done  int
 }
 
+// AppsList is a type for a slice of AppInfo
 type AppsList []AppInfo
 
 type appCatalogPage struct {
@@ -43,7 +46,7 @@ type appCatalogPage struct {
 }
 
 func init() {
-	newPage(NAppCatalog)
+	newPage(nAppCatalog)
 }
 
 func getPar(data string, name string) string {
@@ -64,6 +67,7 @@ func (a AppsList) Less(i, j int) bool {
 	return a[i].Done < a[j].Done
 }
 
+// AppCatalog is a controller of teh application list template page
 func (c *Controller) AppCatalog() (string, error) {
 
 	files, err := static.AssetDir(`static`)
@@ -77,11 +81,11 @@ func (c *Controller) AppCatalog() (string, error) {
 			return err
 		}
 		for _, item := range data {
-			apps[item[`name`]] = utils.StrToInt(item[`done`])
+			apps[item[`name`]] = converter.StrToInt(item[`done`])
 		}
 		return nil
 	}
-	err = loadapps(fmt.Sprintf(`"%d_apps"`, c.SessStateId))
+	err = loadapps(fmt.Sprintf(`"%d_apps"`, c.SessStateID))
 	if err != nil {
 		return ``, err
 	}
@@ -110,5 +114,5 @@ func (c *Controller) AppCatalog() (string, error) {
 	}
 	sort.Sort(AppsList(list))
 	pageData := appCatalogPage{Data: c.Data, List: &list}
-	return proceedTemplate(c, NAppCatalog, &pageData)
+	return proceedTemplate(c, nAppCatalog, &pageData)
 }

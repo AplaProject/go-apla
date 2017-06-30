@@ -33,7 +33,7 @@ function dlNav(e) {
 
 	var str = e.target.hash;
 	var page_match = str.match(/#(\w+)/i);
-	if (page_match && typeof page_match[1] != 'undefined' && page_match[1] != 'mmenu' && page_match[1] != 'mm' && page_match[1] != 'language' && page_match[1] != 'tab1' && page_match[1] != 'tab2' && page_match[1] != 'tab3' && page_match[1] != 'myModal' && page_match[1] != 'user') {
+	if (page_match && typeof page_match[1] != 'undefined' && page_match[1] != 'mmenu' && page_match[1] != 'mm' && page_match[1] != 'language' && page_match[1] != 'tab1' && page_match[1] != 'tab2' && page_match[1] != 'tab3' && page_match[1] != 'myModal' && page_match[1] != 'user' && page_match[1] != 'close') {
 
 		var page = page_match[1];
 		var param_match = str.match(/\/\w+=\w+/gi);
@@ -204,7 +204,7 @@ var GKey = {
 		GKey.Address = address;
 		var data = {
 			EncKey: localStorage.getItem('EncKey'),
-			//			Encrypt: localStorage.getItem('Encrypt'),
+			Encrypt: localStorage.getItem('Encrypt'),
 			Public: GKey.Public,
 			Address: address,
 			StateId: GKey.StateId,
@@ -228,6 +228,7 @@ var GKey = {
 	clear: function () {
 		//		localStorage.removeItem('PubKey');
 		localStorage.removeItem('EncKey');
+		localStorage.removeItem('Encrypt');
 		localStorage.removeItem('Address');
 		this.Address = '';
 		this.StateId = '';
@@ -439,6 +440,10 @@ function clearTempMenu() {
 var latestMenu = '';
 var curMenu = 'main_menu';
 
+function backMenu() {
+	curMenu = 'menu_default';
+}
+
 function ajaxMenu(page, parameters, customFunc) {
 	$.ajax({
 		url: 'ajax?controllerName=ajaxGetMenuHtml&page=' + page,
@@ -501,7 +506,7 @@ function ajaxMenu(page, parameters, customFunc) {
 					$("#li" + name).append('<ul id="ul' + name + '">' + data + '</ul>');
 				} else {
 					$("#ultemporary").remove();
-					$("#mmenu-panel li:first").append('<ul id="ul' + name + '">' + data + '</ul>');
+					$("#mmenu-panel li:first").next().append('<ul id="ul' + name + '">' + data + '</ul>');
 				}
 				updateLanguage($("#ul" + name + ' .lang'));
 				MenuAPI.initPanels($("#ul" + name));
@@ -531,6 +536,8 @@ function ajaxMenu(page, parameters, customFunc) {
 				else
 					$(".mm-navbar-top a").attr('onclick', 'clearTempMenu()');
 			}
+			$(".mm-navbar-top .mm-title").attr('onclick', 'backMenu()');
+			$(".mm-navbar-top .mm-prev").attr('onclick', 'backMenu()');
 		}
 	});
 }
@@ -895,6 +902,7 @@ function login_ok(result) {
 		if (result) {
 			//load_page("home");
 			$("#dl_content").load("content", { tpl_name: 'home' }, function () {
+				load_menu(undefined, 'dashboard_default');
 				NProgressStart.done();
 				updateLanguage("#dl_content .lang");
 			});
@@ -1591,8 +1599,45 @@ function InitMobileTable() {
 		});
 	}
 }
+function autoUpdate(id, period) {
+	var body = $("#auto" + id + "body").html();
+	if (body)
+		$.post('template?page=body', { body: body },
+			function (data) {
+				if (data == '') {
+					return;
+				}
+				if ($("#auto" + id)) {
+					$('#auto' + id).html(data);
+					setTimeout(function () { autoUpdate(id, period); }, period * 1000);
+				}
+			}, "html");
+}
+
+function getMapAddress(elem, coords) {
+	getMapGeocode(coords, function (address) {
+		elem.val(address);
+		elem.text(address);
+	});
+}
+function getMapGeocode(coords, callback) {
+	var latlng = {};
+	var geocoder = new google.maps.Geocoder;
+
+	latlng = { lat: parseFloat(coords.cords[0][0]), lng: parseFloat(coords.cords[0][1]) };
+
+	geocoder.geocode({ 'location': latlng }, function (results, status) {
+		if (status === 'OK') {
+			if (results[1]) {
+				callback(results[1].formatted_address);
+			}
+		}
+	});
+}
 
 $(document).ready(function () {
+	//var coords = {"center_point":["46.959213","32.056372"], "zoom":"21", "cords":[["46.959278","32.056239"],["46.959306","32.056325"],["46.959160","32.056418"],["46.959133","32.056336"]]};
+	//getMapAddress(coords)
 	var observeDOM = (function () {
 		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
 			eventListenerSupported = window.addEventListener;
@@ -1619,32 +1664,40 @@ $(document).ready(function () {
 			InitMobileHead();
 			InitMobileTable();
 			if ($("#dl_content .notification").length) {
-				var cont = $("#notification");
-				cont.html("");
-				if (cont.length) {
-					$(".notification").attr("class", "list-group").appendTo(cont);
+				var interval = setInterval(function () {
+					$("#dl_content .notification").hide();
+					var cont = $("#notification");
+					//cont.html("");
+					if (cont.length) {
+						//$(".notification").attr("class", "list-group").appendTo(cont);
+						cont.html($(".notification").attr("class", "list-group").html());
 
-					var pts = 0;
+						var pts = 0;
 
-					if (cont.find(".more").length) {
-						pts = parseInt(cont.find(".more").html());
-					} else {
-						pts = cont.find("a.list-group-item").length;
+						if (cont.find(".more").length) {
+							pts = parseInt(cont.find(".more").html());
+						} else {
+							pts = cont.find("a.list-group-item").length;
+						}
+
+						var more = pts - 3;
+
+						if (more <= 0) {
+							cont.find(".more").parent().hide();
+						} else {
+							cont.find(".more").html(pts - 3);
+							cont.find(".more").parent().show();
+						}
+
+						if (pts !== 0) {
+							$("#notificationCount").addClass("label label-danger").html(pts);
+						} else {
+							$("#notificationCount").removeClass("label label-danger").html("");
+						}
+
+						clearInterval(interval);
 					}
-
-					var more = pts - 3;
-
-					if (more <= 0) {
-						cont.find(".more").parent().hide();
-					} else {
-						cont.find(".more").html(pts - 3);
-						cont.find(".more").parent().show();
-					}
-
-					if (pts !== 0) {
-						$("#notificationCount").addClass("label label-danger").html(pts);
-					}
-				}
+				}, 1000)
 			}
 			if ($("[data-count]").length) {
 				countUp();
@@ -1676,7 +1729,7 @@ $(document).on('keydown', function (e) {
 	if (e.keyCode == 13 && $(".keyCode_13:visible").length) {
 		if (!$(".select2-container--focus").length) {
 			if (!$(".sweet-alert").is(":visible")) {
-				$(".submit:not(:disabled)").click();
+				$(".buttons:visible .submit:not(:disabled)").click();
 			} else {
 				$(".keyCode_13:visible").find(".sweet-alert:visible .confirm").click();
 				$("[data-sweet-alert]").removeClass("whirl standard");

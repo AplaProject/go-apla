@@ -23,9 +23,9 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const aSendTx = `ajax_send_tx`
@@ -49,16 +49,16 @@ func (c *Controller) AjaxSendTx() interface{} {
 	contract, err := c.checkTx(nil)
 	if err == nil {
 		//		info := (*contract).Block.Info.(*script.ContractInfo)
-		userID := uint64(c.SessWalletId)
+		userID := uint64(c.SessWalletID)
 		sign := make([]byte, 0)
-		signature, err := lib.JSSignToBytes(c.r.FormValue("signature1"))
+		signature, err := crypto.JSSignToBytes(c.r.FormValue("signature1"))
 		if err != nil {
 			result.Error = err.Error()
 		} else if len(signature) > 0 {
-			lib.EncodeLenByte(&sign, signature)
+			converter.EncodeLenByte(&sign, signature)
 		}
 		var isPublic []byte
-		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletId).Bytes()
+		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletID).Bytes()
 		if err == nil && len(sign) > 0 && len(isPublic) == 0 {
 			flags |= consts.TxfPublic
 			public, _ := hex.DecodeString(c.r.FormValue(`public`))
@@ -76,54 +76,72 @@ func (c *Controller) AjaxSendTx() interface{} {
 			//			)
 			header := consts.TXHeader{
 				Type:     int32(contract.Block.Info.(*script.ContractInfo).ID), /* + smart.CNTOFF*/
-				Time:     uint32(utils.StrToInt64(c.r.FormValue(`time`))),
+				Time:     uint32(converter.StrToInt64(c.r.FormValue(`time`))),
 				WalletID: userID,
-				StateID:  int32(c.SessStateId),
+				StateID:  int32(c.SessStateID),
 				Flags:    flags,
 				Sign:     sign,
 			}
 			//fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
 			//			fmt.Println(`Header`, header)
-			_, err = lib.BinMarshal(&data, &header)
+			_, err = converter.BinMarshal(&data, &header)
 			if err == nil {
 				if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 				fields:
 					for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
 						val := strings.TrimSpace(c.r.FormValue(fitem.Name))
 						if strings.Index(fitem.Tags, `address`) >= 0 {
-							val = utils.Int64ToStr(lib.StringToAddress(val))
+							val = converter.Int64ToStr(converter.StringToAddress(val))
 						}
 						switch fitem.Type.String() {
+						case `[]interface {}`:
+							var list []string
+							for key, values := range c.r.Form {
+								if key == fitem.Name+`[]` {
+									for _, value := range values {
+										list = append(list, value)
+									}
+								}
+							}
+							data = append(data, converter.EncodeLength(int64(len(list)))...)
+							for _, ilist := range list {
+								blist := []byte(ilist)
+								data = append(append(data, converter.EncodeLength(int64(len(blist)))...), blist...)
+							}
 						case `uint64`:
-							lib.BinMarshal(&data, utils.StrToUint64(val))
+							converter.BinMarshal(&data, converter.StrToUint64(val))
 							//					case `float64`:
 							//						lib.BinMarshal(&data, utils.StrToFloat64(val))
 						case `int64`:
-							lib.EncodeLenInt64(&data, utils.StrToInt64(val))
+							converter.EncodeLenInt64(&data, converter.StrToInt64(val))
 						case `float64`:
-							lib.BinMarshal(&data, utils.StrToFloat64(val))
+							converter.BinMarshal(&data, converter.StrToFloat64(val))
 						case `string`, script.Decimal:
-							data = append(append(data, lib.EncodeLength(int64(len(val)))...), []byte(val)...)
+							data = append(append(data, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
 						case `[]uint8`:
 							var bytes []byte
 							bytes, err = hex.DecodeString(val)
 							if err != nil {
 								break fields
 							}
-							data = append(append(data, lib.EncodeLength(int64(len(bytes)))...), bytes...)
+							data = append(append(data, converter.EncodeLength(int64(len(bytes)))...), bytes...)
 						}
 					}
 				}
 				if err == nil {
-					md5 := utils.Md5(data)
-					err = c.ExecSql(`INSERT INTO transactions_status (
+					hash, err := crypto.Hash(data)
+					if err != nil {
+						log.Fatal(err)
+					}
+					hash = converter.BinToHex(hash)
+					err = c.ExecSQL(`INSERT INTO transactions_status (
 						hash, time,	type, wallet_id, citizen_id	) VALUES (
-						[hex], ?, ?, ?, ? )`, md5, time.Now().Unix(), header.Type, int64(userID), int64(userID)) //c.SessStateId)
+						[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), header.Type, int64(userID), int64(userID)) //c.SessStateID)
 					if err == nil {
-						log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", md5, hex.EncodeToString(data))
-						err = c.ExecSql("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", md5, hex.EncodeToString(data))
+						log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", hash, hex.EncodeToString(data))
+						err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
 						if err == nil {
-							result.Hash = string(md5)
+							result.Hash = string(hash)
 						}
 					}
 				}

@@ -30,9 +30,13 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/api"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
@@ -40,9 +44,10 @@ import (
 
 var log = logging.MustGetLogger("controllers")
 
+// Controller is the main controller's structure
 type Controller struct {
 	dbInit bool
-	*utils.DCDB
+	*sql.DCDB
 	r                *http.Request
 	w                http.ResponseWriter
 	sess             session.SessionStore
@@ -52,12 +57,12 @@ type Controller struct {
 	ContentInc       bool
 	Periods          map[int64]string
 	Alert            string
-	SessStateId      int64
+	SessStateID      int64
 	StateName        string
-	StateId          int64
-	StateIdStr       string
-	SessCitizenId    int64
-	SessWalletId     int64
+	StateID          int64
+	StateIDStr       string
+	SessCitizenID    int64
+	SessWalletID     int64
 	SessAddress      string
 	MyNotice         map[string]string
 	Parameters       map[string]string
@@ -65,7 +70,7 @@ type Controller struct {
 	NodeAdmin        bool
 	NodeConfig       map[string]string
 	CurrencyList     map[int64]string
-	ConfirmedBlockId int64
+	ConfirmedBlockID int64
 	Data             *CommonPage
 }
 
@@ -73,9 +78,11 @@ var (
 	configIni      map[string]string
 	globalSessions *session.Manager
 	// в гоурутинах используется только для чтения
+	// In gourutin is used only for reading
 	globalLangReadOnly map[int]map[string]string
 )
 
+// SessInit initializes sessions
 func SessInit() {
 	var err error
 	/*path := *utils.Dir + `/tmp`
@@ -87,31 +94,33 @@ func SessInit() {
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 	}
+	api.SetSession(globalSessions)
 	go globalSessions.GC()
 }
 
+// ConfigInit reads ini file
 func ConfigInit() {
-
 	// мониторим config.ini на наличие изменений
+	// We monitor config.ini for changes
 	go func() {
 		for {
 			log.Debug("ConfigInit monitor")
 			if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
-				utils.Sleep(1)
+				time.Sleep(time.Second)
 				continue
 			}
-			configIni_, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
+			config, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
-			configIni, err = configIni_.GetSection("default")
+			configIni, err = config.GetSection("default")
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
 			if len(configIni["db_type"]) > 0 {
 				break
 			}
-			utils.Sleep(3)
+			time.Sleep(time.Second * 3)
 		}
 	}()
 	globalLangReadOnly = make(map[int]map[string]string)
@@ -120,12 +129,11 @@ func ConfigInit() {
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		iniconf_, err := config.NewConfigData("ini", []byte(data))
+		iniConf, err := config.NewConfigData("ini", []byte(data))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		//fmt.Println(iniconf_)
-		iniconf, err := iniconf_.GetSection("default")
+		iniconf, err := iniConf.GetSection("default")
 		globalLangReadOnly[v] = make(map[string]string)
 		globalLangReadOnly[v] = iniconf
 	}
@@ -135,8 +143,10 @@ func init() {
 	flag.Parse()
 }
 
+// CallController calls the method with this name
 func CallController(c *Controller, name string) (string, error) {
 	// имя экспортируемого метода должно начинаться с заглавной буквы
+	// the name of exported method must begin with a capital letter
 	a := []rune(name)
 	a[0] = unicode.ToUpper(a[0])
 	name = string(a)
@@ -150,6 +160,7 @@ func CallController(c *Controller, name string) (string, error) {
 	return html, err
 }
 
+// CallMethod calls the method
 func CallMethod(i interface{}, methodName string) (string, error) {
 	var ptr reflect.Value
 	var value reflect.Value
@@ -181,10 +192,10 @@ func CallMethod(i interface{}, methodName string) (string, error) {
 
 	if finalMethod.IsValid() {
 		x := finalMethod.Call([]reflect.Value{})
-		err_, found := x[1].Interface().(error)
+		ierr, found := x[1].Interface().(error)
 		var err error
 		if found {
-			err = err_
+			err = ierr
 		} else {
 			err = nil
 		}
@@ -195,6 +206,7 @@ func CallMethod(i interface{}, methodName string) (string, error) {
 	return "", fmt.Errorf("method not found")
 }
 
+/*
 func GetSessEUserId(sess session.SessionStore) int64 {
 	sessUserId := sess.Get("e_user_id")
 	log.Debug("sessUserId: %v", sessUserId)
@@ -209,50 +221,49 @@ func GetSessEUserId(sess session.SessionStore) int64 {
 		return 0
 	}
 	return 0
-}
-func GetSessWalletId(sess session.SessionStore) int64 {
-	sessUserId := sess.Get("wallet_id")
-	log.Debug("sessUserId: %v", sessUserId)
-	switch sessUserId.(type) {
+}*/
+
+// GetSessWalletID returns session's wallet id
+func GetSessWalletID(sess session.SessionStore) int64 {
+	sessUserID := sess.Get("wallet_id")
+	log.Debug("sessUserId: %v", sessUserID)
+	switch sessUserID.(type) {
 	case int64:
-		return sessUserId.(int64)
+		return sessUserID.(int64)
 	case int:
-		return int64(sessUserId.(int))
+		return int64(sessUserID.(int))
 	case string:
-		return utils.StrToInt64(sessUserId.(string))
-	default:
-		return 0
+		return converter.StrToInt64(sessUserID.(string))
 	}
 	return 0
 }
 
-func GetSessCitizenId(sess session.SessionStore) int64 {
-	sessUserId := sess.Get("citizen_id")
-	log.Debug("sessUserId: %v", sessUserId)
-	switch sessUserId.(type) {
+// GetSessCitizenID returns session's citizen id
+func GetSessCitizenID(sess session.SessionStore) int64 {
+	sessUserID := sess.Get("citizen_id")
+	log.Debug("sessUserId: %v", sessUserID)
+	switch sessUserID.(type) {
 	case int64:
-		return sessUserId.(int64)
+		return sessUserID.(int64)
 	case int:
-		return int64(sessUserId.(int))
+		return int64(sessUserID.(int))
 	case string:
-		return utils.StrToInt64(sessUserId.(string))
-	default:
-		return 0
+		return converter.StrToInt64(sessUserID.(string))
 	}
 	return 0
 }
 
+// GetSessInt64 returns the integer value of the session key
 func GetSessInt64(sessName string, sess session.SessionStore) int64 {
-	sess_ := sess.Get(sessName)
-	switch sess_.(type) {
-	default:
-		return 0
+	val := sess.Get(sessName)
+	switch val.(type) {
 	case int64:
-		return sess_.(int64)
+		return val.(int64)
 	}
 	return 0
 }
 
+// GetSessString returns the string value of the session key
 func GetSessString(sess session.SessionStore, name string) string {
 	sessVal := sess.Get(name)
 	switch sessVal.(type) {
@@ -262,24 +273,26 @@ func GetSessString(sess session.SessionStore, name string) string {
 	return ""
 }
 
+// GetSessPublicKey returns the session public key
 func GetSessPublicKey(sess session.SessionStore) string {
 	sessPublicKey := sess.Get("public_key")
 	switch sessPublicKey.(type) {
-	default:
-		return ""
 	case string:
 		return sessPublicKey.(string)
 	}
 	return ""
 }
 
+// SetLang sets lang cookie
 func SetLang(w http.ResponseWriter, r *http.Request, lang int) {
 	expiration := time.Now().Add(365 * 24 * time.Hour)
 	cookie := http.Cookie{Name: "lang", Value: strconv.Itoa(lang), Expires: expiration}
 	http.SetCookie(w, &cookie)
 }
 
+// CheckLang checks if there is a language with such id
 // если в lang прислали какую-то гадость
+// If some muck was sent in the lang
 func CheckLang(lang int) bool {
 	for _, v := range consts.LangMap {
 		if lang == v {
@@ -289,9 +302,9 @@ func CheckLang(lang int) bool {
 	return false
 }
 
+// GetLang returns the user's language
 func GetLang(w http.ResponseWriter, r *http.Request, parameters map[string]string) int {
-	var lang int = 1
-	lang = utils.StrToInt(parameters["lang"])
+	lang := converter.StrToInt(parameters["lang"])
 	if !CheckLang(lang) {
 		if langCookie, err := r.Cookie("lang"); err == nil {
 			lang, _ = strconv.Atoi(langCookie.Value)
@@ -326,7 +339,7 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	alert_success, err := static.Asset("static/alert_success.html")
+	alertSuccess, err := static.Asset("static/alert_success.html")
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -339,18 +352,17 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		"makeCurrencyName": func(currencyId int64) string {
 			if currencyId >= 1000 {
 				return ""
-			} else {
-				return "d"
 			}
+			return "d"
 		},
 		"div": func(a, b interface{}) float64 {
-			return utils.InterfaceToFloat64(a) / utils.InterfaceToFloat64(b)
+			return converter.InterfaceToFloat64(a) / converter.InterfaceToFloat64(b)
 		},
 		"mult": func(a, b interface{}) float64 {
-			return utils.InterfaceToFloat64(a) * utils.InterfaceToFloat64(b)
+			return converter.InterfaceToFloat64(a) * converter.InterfaceToFloat64(b)
 		},
 		"round": func(a interface{}, num int) float64 {
-			return utils.Round(utils.InterfaceToFloat64(a), num)
+			return converter.RoundWithPrecision(converter.InterfaceToFloat64(a), num)
 		},
 		"len": func(s []map[string]string) int {
 			return len(s)
@@ -359,10 +371,10 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 			return len(s)
 		},
 		"sum": func(a, b interface{}) float64 {
-			return utils.InterfaceToFloat64(a) + utils.InterfaceToFloat64(b)
+			return converter.InterfaceToFloat64(a) + converter.InterfaceToFloat64(b)
 		},
 		"minus": func(a, b interface{}) float64 {
-			return utils.InterfaceToFloat64(a) - utils.InterfaceToFloat64(b)
+			return converter.InterfaceToFloat64(a) - converter.InterfaceToFloat64(b)
 		},
 		"noescape": func(s string) template.HTML {
 			return template.HTML(s)
@@ -374,34 +386,34 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 			return strings.Join(s, sep)
 		},
 		"strToInt64": func(text string) int64 {
-			return utils.StrToInt64(text)
+			return converter.StrToInt64(text)
 		},
 		"strToInt": func(text string) int {
-			return utils.StrToInt(text)
+			return converter.StrToInt(text)
 		},
 		"bin2hex": func(text string) string {
-			return string(utils.BinToHex([]byte(text)))
+			return string(converter.BinToHex([]byte(text)))
 		},
 		"int64ToStr": func(text int64) string {
-			return utils.Int64ToStr(text)
+			return converter.Int64ToStr(text)
 		},
 		"intToStr": func(text int) string {
-			return utils.IntToStr(text)
+			return converter.IntToStr(text)
 		},
 		"intToInt64": func(text int) int64 {
 			return int64(text)
 		},
 		"rand": func() int {
-			return utils.RandInt(0, 99999999)
+			return crypto.RandInt(0, 99999999)
 		},
 		"append": func(args ...interface{}) string {
 			var result string
 			for _, value := range args {
 				switch value.(type) {
 				case int64:
-					result += utils.Int64ToStr(value.(int64))
+					result += converter.Int64ToStr(value.(int64))
 				case float64:
-					result += utils.Float64ToStr(value.(float64))
+					result += converter.Float64ToStr(value.(float64))
 				case string:
 					result += value.(string)
 				}
@@ -421,11 +433,7 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 			return lang["progress_bar_pct_"+name]
 		},
 		"checkProjectPs": func(ProjectPs map[string]string, id string) bool {
-			if len(ProjectPs["ps"+id]) > 0 {
-				return true
-			} else {
-				return false
-			}
+			return len(ProjectPs["ps"+id]) > 0
 		},
 		"cfPageTypeLang": func(lang map[string]string, name string) string {
 			return lang["cf_"+name]
@@ -438,7 +446,7 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		},
 	}
 	t := template.Must(template.New("template").Funcs(funcMap).Parse(string(data)))
-	t = template.Must(t.Parse(string(alert_success)))
+	t = template.Must(t.Parse(string(alertSuccess)))
 	t = template.Must(t.Parse(string(signatures)))
 	b := new(bytes.Buffer)
 	err = t.ExecuteTemplate(b, name, tData)
@@ -448,17 +456,18 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 	return b.String(), nil
 }
 
+// GetParameters returns the map of parameters
 func (c *Controller) GetParameters() (map[string]string, error) {
 	parameters := make(map[string]string)
 	if len(c.r.PostFormValue("parameters")) > 0 {
-		parameters_ := make(map[string]interface{})
-		err := json.Unmarshal([]byte(c.r.PostFormValue("parameters")), &parameters_)
+		params := make(map[string]interface{})
+		err := json.Unmarshal([]byte(c.r.PostFormValue("parameters")), &params)
 		if err != nil {
 			return parameters, utils.ErrInfo(err)
 		}
-		log.Debug("parameters_=", parameters_)
-		for k, v := range parameters_ {
-			parameters[k] = utils.InterfaceToStr(v)
+		log.Debug("parameters_=", params)
+		for k, v := range params {
+			parameters[k] = converter.InterfaceToStr(v)
 		}
 	}
 	return parameters, nil

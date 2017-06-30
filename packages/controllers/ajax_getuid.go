@@ -20,7 +20,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 const aGetUID = `ajax_get_uid`
@@ -40,7 +40,7 @@ func (c *Controller) AjaxGetUid() interface{} {
 	var result GetUIDJSON
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	result.UID = utils.Int64ToStr(r.Int63())
+	result.UID = converter.Int64ToStr(r.Int63())
 	c.sess.Set("uid", result.UID)
 	return result
 }

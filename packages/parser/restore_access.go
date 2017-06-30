@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -73,11 +74,14 @@ func (p *RestoreAccessParser) Validate() error {
 
 	var txTime int64
 	if p.BlockData != nil { // тр-ия пришла в блоке
+		// transaction has come in the block
 		txTime = p.BlockData.Time
 	} else {
 		txTime = time.Now().Unix() - 30 // просто на всякий случай небольшой запас
+		// a small supply just in case
 	}
 	// прошел ли месяц с момента, когда кто-то запросил смену ключа
+	// whether the month passed from the moment when someone requested changing of a key
 	if txTime-data["change_key_time"] < consts.CHANGE_KEY_PERIOD {
 		return p.ErrInfo("CHANGE_KEY_PERIOD")
 	}
@@ -94,11 +98,11 @@ func (p *RestoreAccessParser) Validate() error {
 }
 
 func (p *RestoreAccessParser) Action() error {
-	citizen_id, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.RestoreAccess.StateID).String()
+	citizenID, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.RestoreAccess.StateID).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	value := `$citizen=` + citizen_id
+	value := `$citizen=` + citizenID
 	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{value, value}, p.TxStateIDStr+"_state_parameters", []string{"name"}, []string{"changing_tables"}, true)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -107,7 +111,7 @@ func (p *RestoreAccessParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{utils.Int64ToStr(p.RestoreAccess.StateID)}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccess.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

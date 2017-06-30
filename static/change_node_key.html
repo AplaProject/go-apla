@@ -15,7 +15,7 @@
 				//$("#sign").css("display", "block");
 				$("#public_key").val( keys.public_key );
 				$("#private_key").val( keys.private_key );
-				$("#for-signature").val( '{{.TxTypeId}},'+serverTime+',{{.WalletId}},'+$("#public_key").val() );
+				$("#for-signature").val( '{{.TxTypeID}},'+serverTime+',{{.WalletID}},'+$("#public_key").val() );
 				doSign();
 				$("#send_to_net").trigger("click");
 
@@ -29,8 +29,8 @@
 			data: {
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
-				'walletId' : '{{.WalletId}}',
-				'citizenId' : '{{.CitizenId}}',
+				'walletId' : '{{.WalletID}}',
+				'citizenId' : '{{.CitizenID}}',
 				'publicKey' : $('#public_key').val(),
 				'privateKey' : $('#private_key').val(),
 				'pubkey' : GKey.Public,
@@ -52,11 +52,13 @@
    <li><a href="#" onclick="dl_navigate0('forging')" class="lang" lang-id="forging"></a></li>
 </ol>
 {{template "alertSuccess".}}
-
+{{if .NoPublic}}
+<div class="alert alert-warning">You don't have rights for changing node key.</div>
+{{else}}
 <div id="generate" data-sweet-alert>
 	<button class="btn btn-danger lang" type="button" data-tool="panel-refresh" data-toggle="tooltip" data-spinner="standard" onClick="preloader(this);" id="generate_change_node_key" lang-id="generate_new_node_key"></button>
 </div>
-
+{{end}}
 {{template "signatures".}}
 
 <input type="hidden" id="public_key">

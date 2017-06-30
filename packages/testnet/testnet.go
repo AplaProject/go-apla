@@ -172,7 +172,7 @@ func newstateHandler(w http.ResponseWriter, r *http.Request) {
 		errFunc(fmt.Sprintf(`The same request has been already sent`))
 		return
 	}
-	id, err := utils.DB.ExecSqlGetLastInsertId(`insert into testnet_emails (email,country,currency) 
+	id, err := utils.DB.ExecSQLGetLastInsertID(`insert into testnet_emails (email,country,currency) 
 				values(?,?,?)`, `testnet_emails`, email, country, currency)
 	if err != nil {
 		result.Error = err.Error()
@@ -241,7 +241,7 @@ func newregisterHandler(w http.ResponseWriter, r *http.Request) {
 		errFunc(`There are not available keys`)
 		return
 	}
-	err = utils.DB.ExecSql(`update testnet_keys set status=1 where id=? and state_id=? and status=0 and wallet=?`,
+	err = utils.DB.ExecSQL(`update testnet_keys set status=1 where id=? and state_id=? and status=0 and wallet=?`,
 		key[`id`], state, key[`wallet`])
 	if err != nil {
 		errFunc(err.Error())
@@ -370,7 +370,7 @@ func main() {
 		log.Fatalln(`GetAllTables`, err)
 	}
 	if !utils.InSliceString(`testnet_emails`, list) {
-		if err = utils.DB.ExecSql(`CREATE SEQUENCE testnet_emails_id_seq START WITH 1;
+		if err = utils.DB.ExecSQL(`CREATE SEQUENCE testnet_emails_id_seq START WITH 1;
 CREATE TABLE "testnet_emails" (
 "id" integer NOT NULL DEFAULT nextval('testnet_emails_id_seq'),
 "email" varchar(128) NOT NULL DEFAULT '',
@@ -389,7 +389,7 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 		}
 	}
 	/*	if !utils.InSliceString(`global_currencies_list`, list) {
-				if err = utils.DB.ExecSql(`CREATE SEQUENCE global_currencies_list_id_seq START WITH 1;
+				if err = utils.DB.ExecSQL(`CREATE SEQUENCE global_currencies_list_id_seq START WITH 1;
 		CREATE TABLE "global_currencies_list" (
 		"id" integer NOT NULL DEFAULT nextval('global_currencies_list_id_seq'),
 		"currency_code" varchar(32) NOT NULL DEFAULT '',
@@ -409,7 +409,7 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 						if code, err := utils.DB.Single(`select value from "` + table + `" where name='currency_name'`).String(); err != nil {
 							log.Fatalln(err)
 						} else {
-							if err = utils.DB.ExecSql(`insert into global_currencies_list (currency_code, settings_table)
+							if err = utils.DB.ExecSQL(`insert into global_currencies_list (currency_code, settings_table)
 							    values(?,?)`, code, table); err != nil {
 								log.Fatalln(err)
 							}
@@ -418,7 +418,7 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 				}
 			}
 			if !utils.InSliceString(`global_states_list`, list) {
-				if err = utils.DB.ExecSql(`CREATE SEQUENCE global_states_list_id_seq START WITH 1;
+				if err = utils.DB.ExecSQL(`CREATE SEQUENCE global_states_list_id_seq START WITH 1;
 		CREATE TABLE "global_states_list" (
 		"id" integer NOT NULL DEFAULT nextval('global_states_list_id_seq'),
 		"state_id" bigint NOT NULL DEFAULT '0',
@@ -438,7 +438,7 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 						if state, err := utils.DB.Single(`select value from "` + table + `" where name='state_name'`).String(); err != nil {
 							log.Fatalln(err)
 						} else {
-							if err = utils.DB.ExecSql(`insert into global_states_list (state_id, state_name)
+							if err = utils.DB.ExecSQL(`insert into global_states_list (state_id, state_name)
 							    values(?,?)`, item[`id`], state); err != nil {
 								log.Fatalln(err)
 							}
@@ -448,7 +448,7 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 
 			}*/
 	if !utils.InSliceString(`testnet_keys`, list) {
-		if err = utils.DB.ExecSql(`CREATE TABLE "testnet_keys" (
+		if err = utils.DB.ExecSQL(`CREATE TABLE "testnet_keys" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"state_id" integer NOT NULL DEFAULT '0',
 		"private" varchar(64) NOT NULL DEFAULT '',

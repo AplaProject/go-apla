@@ -18,33 +18,31 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NEditWallet = `edit_wallet`
+const nEditWallet = `edit_wallet`
 
 type editWalletPage struct {
 	Alert    string
 	Data     *CommonPage
 	TxType   string
-	TxTypeId int64
+	TxTypeID int64
 	//	Lang                map[string]string
 	Info    map[string]string
 	Unique  string
-	StateId int64
-
-	/*	DataContractHistory []map[string]string
-		CitizenId           int64
-		TimeNow             int64*/
+	StateID int64
 }
 
 func init() {
-	newPage(NEditWallet)
+	newPage(nEditWallet)
 }
 
+// EditWallet is a controller for editing state's wallets
 func (c *Controller) EditWallet() (string, error) {
 
 	var (
@@ -54,23 +52,22 @@ func (c *Controller) EditWallet() (string, error) {
 	)
 
 	txType := "EditWallet"
-	txTypeId := utils.TypeInt(txType)
 
-	idaddr := lib.StripTags(c.r.FormValue("id"))
+	idaddr := converter.StripTags(c.r.FormValue("id"))
 	var id int64
 	if len(idaddr) > 0 {
 		if idaddr[0] == '-' {
-			id = utils.StrToInt64(idaddr)
+			id = converter.StrToInt64(idaddr)
 		} else if strings.IndexByte(idaddr, '-') < 0 {
-			id = int64(utils.StrToUint64(idaddr))
+			id = int64(converter.StrToUint64(idaddr))
 		} else {
-			id = lib.StringToAddress(idaddr)
+			id = converter.StringToAddress(idaddr)
 		}
 		if id == 0 {
 			alert = fmt.Sprintf(`Address %s is not valid.`, idaddr)
 		}
 	} else {
-		id = c.SessWalletId
+		id = c.SessWalletID
 	}
 	if id != 0 {
 		data, err = c.OneRow(`SELECT * FROM "dlt_wallets" WHERE wallet_id = ?`, id).String()
@@ -88,7 +85,7 @@ func (c *Controller) EditWallet() (string, error) {
 				ret = ret[:len(ret)-consts.EGS_DIGIT] + `.` + ret[len(ret)-consts.EGS_DIGIT:]
 				data[`amount`] = ret
 			}
-			data[`address`] = lib.AddressToString(id)
+			data[`address`] = converter.AddressToString(id)
 			if data[`spending_contract`] == `NULL` {
 				data[`spending_contract`] = ``
 			}
@@ -97,7 +94,7 @@ func (c *Controller) EditWallet() (string, error) {
 			}
 		}
 	}
-	pageData := editWalletPage{Data: c.Data, StateId: c.SessStateId,
-		Alert: alert, TxType: txType, TxTypeId: txTypeId, Info: data, Unique: ``}
-	return proceedTemplate(c, NEditWallet, &pageData)
+	pageData := editWalletPage{Data: c.Data, StateID: c.SessStateID,
+		Alert: alert, TxType: txType, TxTypeID: utils.TypeInt(txType), Info: data, Unique: ``}
+	return proceedTemplate(c, nEditWallet, &pageData)
 }

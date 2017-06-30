@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -24,16 +26,17 @@ import (
 type newTablePage struct {
 	Alert      string
 	Lang       map[string]string
-	CitizenId  int64
-	StateId    int64
+	CitizenID  int64
+	StateID    int64
 	TxType     string
-	TxTypeId   int64
+	TxTypeID   int64
 	TimeNow    int64
 	MaxColumns int
 	MaxIndexes int
 	Global     string
 }
 
+// NewTable creates a new table
 func (c *Controller) NewTable() (string, error) {
 
 	var err error
@@ -44,20 +47,19 @@ func (c *Controller) NewTable() (string, error) {
 	}
 
 	txType := "NewTable"
-	txTypeId := utils.TypeInt(txType)
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	TemplateStr, err := makeTemplate("new_table", "newTable", &newTablePage{
 		Alert:      c.Alert,
 		Lang:       c.Lang,
-		CitizenId:  c.SessCitizenId,
-		StateId:    c.StateId,
+		CitizenID:  c.SessCitizenID,
+		StateID:    c.StateID,
 		Global:     global,
 		TimeNow:    timeNow,
 		MaxColumns: consts.MAX_COLUMNS,
 		MaxIndexes: consts.MAX_INDEXES,
 		TxType:     txType,
-		TxTypeId:   txTypeId})
+		TxTypeID:   utils.TypeInt(txType)})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

@@ -23,44 +23,44 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-const NBlockExplorer = `block_explorer`
+const nBlockExplorer = `block_explorer`
 
 type blockExplorerPage struct {
 	Data       *CommonPage
 	List       []map[string]string
 	Latest     int64
-	BlockId    int64
+	BlockID    int64
 	BlockData  map[string]string
 	SinglePage int64
 	Host       string
 }
 
 func init() {
-	newPage(NBlockExplorer)
+	newPage(nBlockExplorer)
 }
 
+// BlockExplorer is a controller for block explorer template page
 func (c *Controller) BlockExplorer() (string, error) {
 	pageData := blockExplorerPage{Data: c.Data, Host: c.r.Host}
 
-	blockId := utils.StrToInt64(c.r.FormValue("blockId"))
-	pageData.SinglePage = utils.StrToInt64(c.r.FormValue("singlePage"))
-	if blockId > 0 {
-		pageData.BlockId = blockId
-		blockInfo, err := c.OneRow(`SELECT b.* FROM block_chain as b
-		where b.id=?`, blockId).String()
+	blockID := converter.StrToInt64(c.r.FormValue("blockId"))
+	pageData.SinglePage = converter.StrToInt64(c.r.FormValue("singlePage"))
+	if blockID > 0 {
+		pageData.BlockID = blockID
+		blockInfo, err := c.OneRow(`SELECT b.* FROM block_chain as b where b.id=?`, blockID).String()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		if len(blockInfo) > 0 {
 			blockInfo[`hash`] = hex.EncodeToString([]byte(blockInfo[`hash`]))
-			blockInfo[`size`] = utils.IntToStr(len(blockInfo[`data`]))
+			blockInfo[`size`] = converter.IntToStr(len(blockInfo[`data`]))
 			if len(blockInfo[`wallet_id`]) > 0 {
-				blockInfo[`wallet_address`] = lib.AddressToString(utils.StrToInt64(blockInfo[`wallet_id`]))
+				blockInfo[`wallet_address`] = converter.AddressToString(converter.StrToInt64(blockInfo[`wallet_id`]))
 			} else {
 				blockInfo[`wallet_address`] = ``
 			}
@@ -72,8 +72,8 @@ func (c *Controller) BlockExplorer() (string, error) {
 					out += ` `
 				}
 			}
-			if blockId > 1 {
-				parent, err := c.Single("SELECT hash FROM block_chain where id=?", blockId-1).String()
+			if blockID > 1 {
+				parent, err := c.Single("SELECT hash FROM block_chain where id=?", blockID-1).String()
 				if err == nil {
 					blockInfo[`parent`] = hex.EncodeToString([]byte(parent))
 				} else {
@@ -85,7 +85,11 @@ func (c *Controller) BlockExplorer() (string, error) {
 			utils.ParseBlockHeader(&block)
 			//			fmt.Printf("Block OK %v sign=%d %d %x", *pblock, len((*pblock).Sign), len(block), block)
 			for len(block) > 0 {
-				size := int(utils.DecodeLength(&block))
+				length, err := converter.DecodeLength(&block)
+				if err != nil {
+					log.Fatal(err)
+				}
+				size := int(length)
 				if size == 0 || len(block) < size {
 					break
 				}
@@ -122,7 +126,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 			return proceedTemplate(c, `modal_block_detail`, &pageData)
 		}
 	} else {
-		latest := utils.StrToInt64(c.r.FormValue("latest"))
+		latest := converter.StrToInt64(c.r.FormValue("latest"))
 		if latest > 0 {
 			curid, _ := c.Single("select max(id) from block_chain").Int64()
 			if curid <= latest {
@@ -137,7 +141,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		for ind := range blockExplorer {
 			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
 			if len(blockExplorer[ind][`wallet_id`]) > 0 {
-				blockExplorer[ind][`wallet_address`] = lib.AddressToString(utils.StrToInt64(blockExplorer[ind][`wallet_id`]))
+				blockExplorer[ind][`wallet_address`] = converter.AddressToString(converter.StrToInt64(blockExplorer[ind][`wallet_id`]))
 			} else {
 				blockExplorer[ind][`wallet_address`] = ``
 			}
@@ -153,8 +157,8 @@ func (c *Controller) BlockExplorer() (string, error) {
 		}
 		pageData.List = blockExplorer
 		if blockExplorer != nil && len(blockExplorer) > 0 {
-			pageData.Latest = utils.StrToInt64(blockExplorer[0][`id`])
+			pageData.Latest = converter.StrToInt64(blockExplorer[0][`id`])
 		}
 	}
-	return proceedTemplate(c, NBlockExplorer, &pageData)
+	return proceedTemplate(c, nBlockExplorer, &pageData)
 }
