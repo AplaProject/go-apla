@@ -148,6 +148,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IDToAddress, `BtnEdit`: BtnEdit,
+		`InputMap`: InputMap, `InputMapPoly`: InputMapPoly,
 		`Image`: Image, `ImageInput`: ImageInput, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage, `UList`: UList, `UListEnd`: UListEnd, `Li`: Li,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -1371,6 +1372,45 @@ func Image(vars *map[string]string, pars ...string) string {
 		rez = fmt.Sprintf(`<img src="%s" class="%s" %s alt="%s" stylex="display:block;">`, pars[0], class, more, alt)
 	}
 	return rez
+}
+
+// InputMap returns HTML tags for map point
+func InputMap(vars *map[string]string, pars ...string) string {
+	var coords string
+	id := pars[0]
+	if len(id) == 0 {
+		return ``
+	}
+	if len(pars) > 1 {
+		coords = strings.Replace(pars[1], `<`, `&lt;`, -1)
+	}
+	(*vars)[`inmappoint`] = `1`
+	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control inmap" id="%s">%s
+		</textarea></div>`, id, coords)
+	if len(pars) > 2 {
+		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control" 
+		        id="%s_address" value="%s"></div>`, id, strings.Replace(pars[2], `<`, `&lt;`, -1))
+	}
+	return out
+}
+
+// InputMapPoly returns HTML tags for polygon map
+func InputMapPoly(vars *map[string]string, pars ...string) string {
+	var coords string
+	id := pars[0]
+	if len(id) == 0 {
+		return ``
+	}
+	if len(pars) > 1 {
+		coords = strings.Replace(pars[1], `<`, `&lt;`, -1)
+	}
+	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control" id="%s">%s
+		</textarea><button type="button" onClick="openMap('%[1]s');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button></div>`, id, coords)
+	if len(pars) > 2 {
+		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control" 
+		        id="%s_address" value="%s"></div>`, id, strings.Replace(pars[2], `<`, `&lt;`, -1))
+	}
+	return out
 }
 
 // ImageInput returns HTML tags for uploading image
@@ -2661,6 +2701,10 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 		if (*params)[`wimappoint`] == `1` {
 			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
+		}
+		if (*params)[`inmappoint`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			userLocation("inmap", "100%%", "%dpx");</script>`, getHeight())
 		}
 		if (*params)[`wibtncont`] == `1` {
 			var unique int64
