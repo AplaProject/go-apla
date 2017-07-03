@@ -17,7 +17,9 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -36,10 +38,10 @@ type forgingPage struct {
 func (c *Controller) Forging() (string, error) {
 
 	txType := "DLTChangeHostVote"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	MyWalletData, err := c.OneRow("SELECT host, address_vote, fuel_rate FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
-	MyWalletData[`address`] = lib.AddressToString(c.SessWalletID)
+	MyWalletData[`address`] = converter.AddressToString(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

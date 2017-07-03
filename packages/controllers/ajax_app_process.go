@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 const aAppProcess = `ajax_app_process`
@@ -41,8 +41,8 @@ func (c *Controller) AjaxAppProcess() interface{} {
 		table  string
 	)
 	name := c.r.FormValue("name")
-	block := utils.StrToInt64(c.r.FormValue("block"))
-	done := utils.StrToInt(c.r.FormValue("done"))
+	block := converter.StrToInt64(c.r.FormValue("block"))
+	done := converter.StrToInt(c.r.FormValue("done"))
 	if block == 0 {
 		result.Error = `wrong block id`
 		return result

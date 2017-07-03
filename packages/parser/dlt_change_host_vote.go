@@ -19,7 +19,9 @@ package parser
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -32,8 +34,8 @@ func (p *Parser) DLTChangeHostVoteInit() error {
 		return p.ErrInfo(err)
 	}
 
-	p.TxMaps.Bytes["public_key"] = utils.BinToHex(p.TxMaps.Bytes["public_key"])
-	p.TxMap["public_key"] = utils.BinToHex(p.TxMap["public_key"])
+	p.TxMaps.Bytes["public_key"] = converter.BinToHex(p.TxMaps.Bytes["public_key"])
+	p.TxMap["public_key"] = converter.BinToHex(p.TxMap["public_key"])
 	log.Debug("p.TxMaps.String[addressVote] %s", p.TxMaps.String["addressVote"])
 	return nil
 }
@@ -62,7 +64,7 @@ func (p *Parser) DLTChangeHostVoteFront() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if lib.KeyToAddress(bkey) != lib.AddressToString(p.TxWalletID) {
+		if crypto.KeyToAddress(bkey) != converter.AddressToString(p.TxWalletID) {
 			return p.ErrInfo("incorrect public_key")
 		}
 	}
@@ -100,9 +102,9 @@ func (p *Parser) DLTChangeHostVote() error {
 	}
 
 	if len(p.TxMaps.Bytes["public_key"]) > 0 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "public_key_0", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.Int64["addressVote"]), string(p.TxMaps.String["fuelRate"]), utils.HexToBin(p.TxMaps.Bytes["public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "public_key_0", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], string(p.TxMaps.Int64["addressVote"]), string(p.TxMaps.String["fuelRate"]), converter.HexToBin(p.TxMaps.Bytes["public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"], p.TxMaps.Int64["fuelRate"], p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{utils.Int64ToStr(p.TxWalletID)}, true)
+		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "last_forging_data_upd"}, []interface{}{p.TxMaps.String["host"], p.TxMaps.String["addressVote"], p.TxMaps.Int64["fuelRate"], p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)

@@ -18,8 +18,9 @@ package controllers
 
 import (
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const nGenKeys = `gen_keys`
@@ -39,7 +40,7 @@ func init() {
 // GenKeys show information about generated and available keys
 func (c *Controller) GenKeys() (string, error) {
 	govAccount, _ := template.StateParam(int64(c.SessStateID), `gov_account`)
-	if c.SessCitizenID != utils.StrToInt64(govAccount) {
+	if c.SessCitizenID != converter.StrToInt64(govAccount) {
 		return ``, fmt.Errorf(`Access denied`)
 	}
 	generated, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenID, c.SessStateID).Int64()

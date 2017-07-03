@@ -1,9 +1,12 @@
 package daemons
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"os"
+	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // CreatingBlockchain writes blockchain
@@ -36,7 +39,7 @@ func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
 BEGIN:
 	for {
 		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
+		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
 
 		// проверим, не нужно ли нам выйти из цикла
 		// check if we have to break the cycle
@@ -94,10 +97,10 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				blockData := append(utils.DecToBin(id, 5), utils.EncodeLengthPlusData(data)...)
-				sizeAndData := append(utils.DecToBin(len(blockData), 5), blockData...)
+				blockData := append(converter.DecToBin(id, 5), converter.EncodeLengthPlusData(data)...)
+				sizeAndData := append(converter.DecToBin(len(blockData), 5), blockData...)
 				//err := ioutil.WriteFile(*utils.Dir+"/public/blockchain", append(sizeAndData, utils.DecToBin(len(sizeAndData), 5)...), 0644)
-				if _, err = file.Write(append(sizeAndData, utils.DecToBin(len(sizeAndData), 5)...)); err != nil {
+				if _, err = file.Write(append(sizeAndData, converter.DecToBin(len(sizeAndData), 5)...)); err != nil {
 					rows.Close()
 					file.Close()
 					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {

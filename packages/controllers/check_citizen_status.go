@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	//	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
@@ -47,7 +48,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 
 	//test
 	if len(c.r.FormValue(`last_id`)) > 0 {
-		lastID = utils.StrToInt64(c.r.FormValue(`last_id`))
+		lastID = converter.StrToInt64(c.r.FormValue(`last_id`))
 	}
 	//	field, err := c.Single(`SELECT value FROM ` + c.StateIDStr + `_state_parameters where parameter='citizen_fields'`).String()
 	vals, err := c.OneRow(`select * from "`+c.StateIDStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastID).String()
@@ -63,7 +64,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		/*		if err = json.Unmarshal([]byte(vals[`data`]), &data); err != nil {
 				return ``, err
 			}*/
-		contract := smart.GetContract(`TXCitizenRequest`, uint32(utils.StrToUint64(c.StateIDStr)))
+		contract := smart.GetContract(`TXCitizenRequest`, uint32(converter.StrToUint64(c.StateIDStr)))
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 			if fitem.Type.String() == `string` {
 				value := vals[`name`] //fitem.Name] //.(string)

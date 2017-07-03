@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -24,7 +26,7 @@ import (
 func (c *Controller) NewMenu() (string, error) {
 
 	txType := "NewMenu"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	global := c.r.FormValue("global")
 	if global != "1" {

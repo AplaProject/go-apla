@@ -21,8 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 const aAddresses = `ajax_addresses`
@@ -49,11 +48,11 @@ func (c *Controller) AjaxAddresses() interface{} {
 	state := c.r.FormValue(`state`)
 	var request string
 	if len(state) == 0 {
-		request = `select id from "` + utils.Int64ToStr(c.SessStateID) + `_citizens" where id>=? order by id`
+		request = `select id from "` + converter.Int64ToStr(c.SessStateID) + `_citizens" where id>=? order by id`
 	} else if state == `0` {
 		request = `select wallet_id as id from dlt_wallets where wallet_id>=? order by wallet_id`
 	} else {
-		request = `select id from "` + lib.EscapeName(state) + `_citizens" where id>=? order by id`
+		request = `select id from "` + converter.EscapeName(state) + `_citizens" where id>=? order by id`
 	}
 	ret, _ := strconv.ParseUint(addr+strings.Repeat(`0`, 20-len(addr)), 10, 64)
 	req, err = c.GetAll(request, 7, int64(ret))
@@ -62,7 +61,7 @@ func (c *Controller) AjaxAddresses() interface{} {
 		result.Error = err.Error()
 	} else {
 		for _, ireq := range req {
-			result.Address = append(result.Address, lib.AddressToString(utils.StrToInt64(ireq[`id`])))
+			result.Address = append(result.Address, converter.AddressToString(converter.StrToInt64(ireq[`id`])))
 		}
 	}
 	return result

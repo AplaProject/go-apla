@@ -20,7 +20,8 @@ import (
 	"encoding/hex"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	//	b58 "github.com/jbenet/go-base58"
 )
 
@@ -45,11 +46,11 @@ func (p *Parser) FirstBlock() error {
 
 	data := p.TxPtr.(*consts.FirstBlock)
 	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
-	myAddress := lib.Address(data.PublicKey)
+	myAddress := crypto.Address(data.PublicKey)
 	log.Debug("data.PublicKey %s", data.PublicKey)
 	log.Debug("data.PublicKey %x", data.PublicKey)
 	err := p.ExecSQL(`INSERT INTO dlt_wallets (wallet_id, host, address_vote, public_key_0, node_public_key, amount) VALUES (?, ?, ?, [hex], [hex], ?)`,
-		myAddress, data.Host, lib.AddressToString(myAddress), hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_QDLT)
+		myAddress, data.Host, converter.AddressToString(myAddress), hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_QDLT)
 	//p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"], consts.FIRST_DLT)
 	if err != nil {
 		return p.ErrInfo(err)

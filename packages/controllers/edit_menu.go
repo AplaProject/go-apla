@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -37,7 +39,7 @@ type editMenuPage struct {
 func (c *Controller) EditMenu() (string, error) {
 
 	txType := "EditMenu"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	var err error
 

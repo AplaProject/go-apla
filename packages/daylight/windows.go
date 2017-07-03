@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
@@ -33,7 +34,7 @@ import (
 // KillPid kills the process with the specified pid
 func KillPid(pid string) error {
 	if sql.DB != nil && sql.DB.DB != nil {
-		err := sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, utils.Time())
+		err := sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			return err

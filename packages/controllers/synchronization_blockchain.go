@@ -18,11 +18,13 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 var (
@@ -75,7 +77,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		}
 		if stat.Size() > 0 {
 			log.Debug("stat.Size(): %v", int(stat.Size()))
-			return `{"download": "` + utils.Int64ToStr(int64(utils.Round(float64((float64(stat.Size())/float64(fileSize))*100), 0))) + `"}`, nil
+			return `{"download": "` + converter.Int64ToStr(int64(converter.RoundWithPrecision(float64((float64(stat.Size())/float64(fileSize))*100), 0))) + `"}`, nil
 		}
 		return `{"download": "0"}`, nil
 	}
@@ -94,10 +96,11 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		wTime = 2 * 365 * 86400
 		wTimeReady = 2 * 365 * 86400
 	}
-	log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, utils.Time(), utils.StrToInt64(blockData["time"]))
+	now := time.Now().Unix()
+	log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, converter.StrToInt64(blockData["time"]))
 	// если время менее 12 часов от текущего, то выдаем не подвержденные, а просто те, что есть в блокчейне
 	// if time differs less than for 12 hours from current time, give not affected but those which are in blockchain
-	if utils.Time()-utils.StrToInt64(blockData["time"]) < 3600*wTime {
+	if now-converter.StrToInt64(blockData["time"]) < 3600*wTime {
 		lastBlockData, err := c.DCDB.GetLastBlockData()
 		if err != nil {
 			return "", err
@@ -122,24 +125,24 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		currentLoadBlockchain = c.NodeConfig["first_load_blockchain_url"]
 	}
 	var needReload string
-	iBlock := utils.StrToInt64(blockID)
+	iBlock := converter.StrToInt64(blockID)
 	if timeSynchro == 0 {
-		timeSynchro = utils.Time()
+		timeSynchro = time.Now().Unix()
 		lastSBlock = iBlock
-		lastSTime = utils.Time()
-	} else if utils.Time()-timeSynchro > 300 { // Тут можно поставить минут 20 или меньше // Here is possible to set 20 minutes or less
+		lastSTime = time.Now().Unix()
+	} else if time.Now().Unix()-timeSynchro > 300 { // Тут можно поставить минут 20 или меньше // Here is possible to set 20 minutes or less
 		if lastSBlock != iBlock {
 			lastSBlock = iBlock
-			lastSTime = utils.Time()
-		} else if utils.Time()-lastSTime > 60 { // Ставим timeout на очередной блок в 60 секунд // Set the timeout in 60 seconds on the next block
+			lastSTime = time.Now().Unix()
+		} else if time.Now().Unix()-lastSTime > 60 { // Ставим timeout на очередной блок в 60 секунд // Set the timeout in 60 seconds on the next block
 			// Имеет смысл проверять последний блок // There is a sence to check the last block
-			if utils.Time()-utils.StrToInt64(blockTime) > 3600 {
+			if time.Now().Unix()-converter.StrToInt64(blockTime) > 3600 {
 				needReload = `1`
 			}
 		}
 	}
 
-	result := map[string]string{"block_id": blockID, "confirmed_block_id": utils.Int64ToStr(confirmedBlockID),
+	result := map[string]string{"block_id": blockID, "confirmed_block_id": converter.Int64ToStr(confirmedBlockID),
 		"block_time": blockTime, "current_load_blockchain": currentLoadBlockchain,
 		"need_reload": needReload}
 	resultJ, _ := json.Marshal(result)

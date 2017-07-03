@@ -30,12 +30,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/api"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/schema"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
@@ -129,7 +130,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if *utils.Dir == "" {
 		*utils.Dir = configIni["dir"]
 	}
-	utils.OneCountry = utils.StrToInt64(configIni["one_country"])
+	utils.OneCountry = converter.StrToInt64(configIni["one_country"])
 	utils.PrivCountry = configIni["priv_country"] == `1` || configIni["priv_country"] == `true`
 	if len(configIni["lang"]) > 0 {
 		language.LangList = strings.Split(configIni["lang"], `,`)
@@ -172,7 +173,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 					log.Debug("waiting killer %d", i)
 					if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
 						fmt.Println("waiting killer")
-						utils.Sleep(1)
+						time.Sleep(time.Second)
 					} else { // если daylight.pid нет, значит завершился // if there is no daylight.pid, so it is finished
 						break
 					}
@@ -258,7 +259,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		// waiting for connection to the database
 		for {
 			if sql.DB == nil || sql.DB.DB == nil {
-				utils.Sleep(1)
+				time.Sleep(time.Second)
 				continue
 			}
 			break
@@ -292,7 +293,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// save the current pid and version
 	if !utils.Mobile() {
 		pid := os.Getpid()
-		PidAndVer, err := json.Marshal(map[string]string{"pid": utils.IntToStr(pid), "version": consts.VERSION})
+		PidAndVer, err := json.Marshal(map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION})
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
@@ -329,7 +330,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
 		for _, table := range allTable {
-			count, err := sql.DB.Single(`SELECT count(*) FROM ` + lib.EscapeName(table)).Int64()
+			count, err := sql.DB.Single(`SELECT count(*) FROM ` + converter.EscapeName(table)).Int64()
 			if err != nil {
 				fmt.Println(err)
 				panic(err)
@@ -365,7 +366,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		for {
 			daemonNameAndTime := <-daemons.MonitorDaemonCh
 			daemonsTable[daemonNameAndTime[0]] = daemonNameAndTime[1]
-			if utils.Time()%10 == 0 {
+			if time.Now().Unix()%10 == 0 {
 				log.Debug("daemonsTable: %v\n", daemonsTable)
 			}
 		}
@@ -376,7 +377,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	IosLog("signals")
 	stopdaemons.Signals()
 
-	utils.Sleep(1)
+	time.Sleep(time.Second)
 
 	// мониторим сигнал из БД о том, что демонам надо завершаться
 	// monitor the signal from the database that the daemons must be completed
@@ -393,7 +394,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				// ждем, пока произойдет подключение к БД в другой гоурутине
 				// wait while connection to a DB in other gourutina takes place
 				if sql.DB == nil || sql.DB.DB == nil {
-					utils.Sleep(1)
+					time.Sleep(time.Second)
 					fmt.Println("wait DB")
 				} else {
 					break
@@ -419,6 +420,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
 		setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
 		setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
+		api.Route(route)
 		route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
 		route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
 		if len(*utils.TLS) > 0 {
@@ -436,7 +438,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		httpListenerV6(route)
 
 		if *utils.Console == 0 && !utils.Mobile() {
-			utils.Sleep(1)
+			time.Sleep(time.Second)
 			if thrustWindowLoder != nil {
 				thrustWindowLoder.Close()
 				thrustWindow := thrust.NewWindow(thrust.WindowOptions{
@@ -485,6 +487,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	log.Debug("ALL RIGHT")
 	IosLog("ALL RIGHT")
 	fmt.Println("ALL RIGHT")
-	utils.Sleep(3600 * 24 * 90)
+	time.Sleep(time.Second * 3600 * 24 * 90)
 	log.Debug("EXIT")
 }

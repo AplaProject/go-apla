@@ -18,6 +18,8 @@ package parser
 
 import (
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -101,9 +103,9 @@ func (p *Parser) EditContract() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	tblid := utils.StrToInt64(item[`id`])
+	tblid := converter.StrToInt64(item[`id`])
 	active := item[`active`] == `1`
-	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, utils.StrToInt64(p.TxMaps.String["id"]))
+	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, converter.StrToInt64(p.TxMaps.String["id"]))
 	if err != nil {
 		return p.ErrInfo(err)
 	}

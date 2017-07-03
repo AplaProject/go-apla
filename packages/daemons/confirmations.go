@@ -17,10 +17,12 @@
 package daemons
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"net"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 /*
@@ -71,7 +73,7 @@ BEGIN:
 		}
 
 		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
+		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
 
 		// проверим, не нужно ли нам выйти из цикла
 		// check if we have to break the cycle
@@ -201,7 +203,7 @@ func checkConf(host string, blockID int64) string {
 
 	// вначале шлем тип данных, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
 	// firstly send a data type for the receiving party could understand how exacetly to process the data sent
-	_, err = conn.Write(utils.DecToBin(4, 2))
+	_, err = conn.Write(converter.DecToBin(4, 2))
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return "0"
@@ -209,7 +211,7 @@ func checkConf(host string, blockID int64) string {
 
 	// в 4-х байтах пишем ID блока, хэш которого хотим получить
 	// record the block ID that we want to recive in 4 bytes
-	size := utils.DecToBin(blockID, 4)
+	size := converter.DecToBin(blockID, 4)
 	_, err = conn.Write(size)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))

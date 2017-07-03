@@ -18,7 +18,10 @@ package daemons
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -67,7 +70,7 @@ func QueueParserBlocks(chBreaker chan bool, chAnswer chan string) {
 BEGIN:
 	for {
 		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
+		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
 
 		// проверим, не нужно ли нам выйти из цикла
 		// check if we have to break the cycle
@@ -106,8 +109,8 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		newBlockData["hash_hex"] = string(utils.BinToHex(newBlockData["hash"]))
-		prevBlockData["hash_hex"] = string(utils.BinToHex(prevBlockData["hash"]))
+		newBlockData["hash_hex"] = string(converter.BinToHex(newBlockData["hash"]))
+		prevBlockData["hash_hex"] = string(converter.BinToHex(prevBlockData["hash"]))
 
 		/*
 		 * Базовая проверка
@@ -116,7 +119,7 @@ BEGIN:
 
 		// проверим, укладывается ли блок в лимит
 		// check if the block gets in the rollback_blocks_1 limit
-		if utils.StrToInt64(newBlockData["block_id"]) > utils.StrToInt64(prevBlockData["block_id"])+consts.RB_BLOCKS_1 {
+		if converter.StrToInt64(newBlockData["block_id"]) > converter.StrToInt64(prevBlockData["block_id"])+consts.RB_BLOCKS_1 {
 			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			if d.unlockPrintSleep(utils.ErrInfo("rollback_blocks_1"), 1) {
 				break BEGIN
@@ -126,7 +129,7 @@ BEGIN:
 
 		// проверим не старый ли блок в очереди
 		// check whether the new block is in the turn
-		if utils.StrToInt64(newBlockData["block_id"]) <= utils.StrToInt64(prevBlockData["block_id"]) {
+		if converter.StrToInt64(newBlockData["block_id"]) <= converter.StrToInt64(prevBlockData["block_id"]) {
 			d.DeleteQueueBlock(newBlockData["hash_hex"])
 			if d.unlockPrintSleepInfo(utils.ErrInfo("old block"), 1) {
 				break BEGIN
@@ -146,7 +149,7 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		blockID := utils.StrToInt64(newBlockData["block_id"])
+		blockID := converter.StrToInt64(newBlockData["block_id"])
 
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB

@@ -18,7 +18,13 @@ package daemons
 
 import (
 	"fmt"
+	"time"
+
+	"log"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -53,7 +59,7 @@ func UpdFullNodes(chBreaker chan bool, chAnswer chan string) {
 BEGIN:
 	for {
 		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, utils.Int64ToStr(utils.Time())}
+		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
 
 		// проверим, не нужно ли нам выйти из цикла
 		// check if we have to break the cycle
@@ -119,7 +125,7 @@ BEGIN:
 			continue
 		}
 
-		curTime := utils.Time()
+		curTime := time.Now().Unix()
 
 		// проверим, прошло ли время с момента последнего обновления
 		// check if the time of the last updating passed
@@ -145,11 +151,11 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		data := utils.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
-		data = append(data, utils.DecToBin(curTime, 4)...)
-		data = append(data, utils.EncodeLengthPlusData(myWalletID)...)
-		data = append(data, utils.EncodeLengthPlusData(0)...)
-		data = append(data, utils.EncodeLengthPlusData([]byte(binSign))...)
+		data := converter.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
+		data = append(data, converter.DecToBin(curTime, 4)...)
+		data = append(data, converter.EncodeLengthPlusData(myWalletID)...)
+		data = append(data, converter.EncodeLengthPlusData(0)...)
+		data = append(data, converter.EncodeLengthPlusData([]byte(binSign))...)
 
 		err = d.InsertReplaceTxInQueue(data)
 		if err != nil {
@@ -161,7 +167,12 @@ BEGIN:
 
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB
-		err = p.TxParser(utils.HexToBin(utils.Md5(data)), data, true)
+		hash, err := crypto.Hash(data)
+		if err != nil {
+			log.Fatal(err)
+		}
+		hash = converter.BinToHex(hash)
+		err = p.TxParser(converter.HexToBin(hash), data, true)
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN

@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -20,7 +21,7 @@ func (r *SingleResult) Int64() (int64, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
-	return utils.BytesToInt64(r.result), nil
+	return converter.BytesToInt64(r.result), nil
 }
 
 // Int converts bytes to int
@@ -28,7 +29,7 @@ func (r *SingleResult) Int() (int, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
-	return utils.BytesToInt(r.result), nil
+	return converter.BytesToInt(r.result), nil
 }
 
 // Float64 converts string to float64
@@ -36,7 +37,7 @@ func (r *SingleResult) Float64() (float64, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
-	return utils.StrToFloat64(string(r.result)), nil
+	return converter.StrToFloat64(string(r.result)), nil
 }
 
 // String returns string
@@ -68,7 +69,7 @@ func (r *ListResult) Int64() ([]int64, error) {
 		return result, r.err
 	}
 	for _, v := range r.result {
-		result = append(result, utils.StrToInt64(v))
+		result = append(result, converter.StrToInt64(v))
 	}
 	return result, nil
 }
@@ -110,7 +111,7 @@ func (r *oneRow) Int64() (map[string]int64, error) {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = utils.StrToInt64(v)
+		result[k] = converter.StrToInt64(v)
 	}
 	return result, nil
 }
@@ -121,7 +122,7 @@ func (r *oneRow) Float64() (map[string]float64, error) {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = utils.StrToFloat64(v)
+		result[k] = converter.StrToFloat64(v)
 	}
 	return result, nil
 }
@@ -132,7 +133,7 @@ func (r *oneRow) Int() (map[string]int, error) {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = utils.StrToInt(v)
+		result[k] = converter.StrToInt(v)
 	}
 	return result, nil
 }
@@ -347,11 +348,11 @@ func (db *DCDB) ExecSQLGetLastInsertID(query, table string, args ...interface{})
 		} else {
 			switch v.(type) {
 			case int:
-				lastID = utils.IntToStr(v.(int))
+				lastID = converter.IntToStr(v.(int))
 			case int64:
-				lastID = utils.Int64ToStr(v.(int64))
+				lastID = converter.Int64ToStr(v.(int64))
 			case float64:
-				lastID = utils.Float64ToStr(v.(float64))
+				lastID = converter.Float64ToStr(v.(float64))
 			case string:
 				lastID = v.(string)
 			case []byte:

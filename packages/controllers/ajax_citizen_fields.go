@@ -19,7 +19,7 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 const aCitizenFields = `ajax_citizen_fields`
@@ -47,7 +47,7 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 	stateID := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateId)
 	//	if err == nil {
-	if req, err := c.OneRow(`select id, approved from "`+utils.Int64ToStr(stateID)+`_citizenship_requests" where dlt_wallet_id=? order by id desc`,
+	if req, err := c.OneRow(`select id, approved from "`+converter.Int64ToStr(stateID)+`_citizenship_requests" where dlt_wallet_id=? order by id desc`,
 		c.SessWalletID).Int64(); err == nil {
 		if len(req) > 0 && req[`id`] > 0 {
 			result.Approved = req[`approved`]
@@ -59,7 +59,7 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 ]`, nil
 			//				c.Single(`SELECT value FROM ` + utils.Int64ToStr(stateId) + `_state_parameters where parameter='citizen_fields'`).String()
 			if err == nil {
-				result.Price, err = c.Single(`SELECT value FROM "` + utils.Int64ToStr(stateID) + `_state_parameters" where name='citizenship_price'`).Int64()
+				result.Price, err = c.Single(`SELECT value FROM "` + converter.Int64ToStr(stateID) + `_state_parameters" where name='citizenship_price'`).Int64()
 				if err == nil {
 					amount, err = c.Single("select amount from dlt_wallets where wallet_id=?", c.SessWalletID).Int64()
 					result.Valid = (err == nil && amount >= result.Price)

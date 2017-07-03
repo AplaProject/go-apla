@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -73,7 +74,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	parameters := make(map[string]string)
 	for k, v := range params {
-		parameters[k] = utils.InterfaceToStr(v)
+		parameters[k] = converter.InterfaceToStr(v)
 	}
 
 	lang := GetLang(w, r, parameters)
@@ -106,17 +107,18 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		}
 		wTime := int64(12)
 		wTimeReady := int64(2)
-		log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, utils.Time(), utils.StrToInt64(blockData["time"]))
+		now := time.Now().Unix()
+		log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, converter.StrToInt64(blockData["time"]))
 		// если время менее 12 часов от текущего, то выдаем не подвержденные, а просто те, что есть в блокчейне
 		// if time differs less than for 12 hours from current time, give not affected but those which are in blockchain
-		if utils.Time()-utils.StrToInt64(blockData["time"]) < 3600*wTime {
+		if now-converter.StrToInt64(blockData["time"]) < 3600*wTime {
 			lastBlockData, err := sql.DB.GetLastBlockData()
 			if err != nil {
 				log.Error("%v", err)
 			}
 			log.Debug("lastBlockData[lastBlockTime]: %v", lastBlockData["lastBlockTime"])
-			log.Debug("time.Now().Unix(): %v", utils.Time())
-			if utils.Time()-lastBlockData["lastBlockTime"] >= 3600*wTimeReady {
+			log.Debug("time.Now().Unix(): %v", now)
+			if now-lastBlockData["lastBlockTime"] >= 3600*wTimeReady {
 				showIOSMenu = false
 			}
 		} else {

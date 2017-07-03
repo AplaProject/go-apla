@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 // selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
@@ -64,7 +64,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 	}
 
-	values := utils.InterfaceSliceToStr(ivalues)
+	values := converter.InterfaceSliceToStr(ivalues)
 
 	addSQLFields := p.AllPkeys[table]
 	if len(addSQLFields) > 0 {
@@ -109,8 +109,8 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			if k == p.AllPkeys[table] {
 				continue
 			}
-			if (isBytea[k] || utils.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
-				jsonMap[k] = string(utils.BinToHex([]byte(v)))
+			if (isBytea[k] || converter.InSliceString(k, []string{"hash", "tx_hash", "public_key_0", "node_public_key"})) && v != "" {
+				jsonMap[k] = string(converter.BinToHex([]byte(v)))
 			} else {
 				jsonMap[k] = v
 			}

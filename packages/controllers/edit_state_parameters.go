@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -39,7 +41,7 @@ func (c *Controller) EditStateParameters() (string, error) {
 	var err error
 
 	txType := "EditStateParameters"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	name := c.r.FormValue(`name`)
 

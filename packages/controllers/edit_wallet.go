@@ -18,10 +18,11 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/lib"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const nEditWallet = `edit_wallet`
@@ -52,15 +53,15 @@ func (c *Controller) EditWallet() (string, error) {
 
 	txType := "EditWallet"
 
-	idaddr := lib.StripTags(c.r.FormValue("id"))
+	idaddr := converter.StripTags(c.r.FormValue("id"))
 	var id int64
 	if len(idaddr) > 0 {
 		if idaddr[0] == '-' {
-			id = utils.StrToInt64(idaddr)
+			id = converter.StrToInt64(idaddr)
 		} else if strings.IndexByte(idaddr, '-') < 0 {
-			id = int64(utils.StrToUint64(idaddr))
+			id = int64(converter.StrToUint64(idaddr))
 		} else {
-			id = lib.StringToAddress(idaddr)
+			id = converter.StringToAddress(idaddr)
 		}
 		if id == 0 {
 			alert = fmt.Sprintf(`Address %s is not valid.`, idaddr)
@@ -84,7 +85,7 @@ func (c *Controller) EditWallet() (string, error) {
 				ret = ret[:len(ret)-consts.EGS_DIGIT] + `.` + ret[len(ret)-consts.EGS_DIGIT:]
 				data[`amount`] = ret
 			}
-			data[`address`] = lib.AddressToString(id)
+			data[`address`] = converter.AddressToString(id)
 			if data[`spending_contract`] == `NULL` {
 				data[`spending_contract`] = ``
 			}

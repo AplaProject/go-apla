@@ -18,6 +18,8 @@ package parser
 
 import (
 	"fmt"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -29,8 +31,8 @@ func (p *Parser) ChangeNodeKeyInit() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["new_node_public_key"] = utils.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
-	p.TxMap["new_node_public_key"] = utils.BinToHex(p.TxMap["new_node_public_key"])
+	p.TxMaps.Bytes["new_node_public_key"] = converter.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
+	p.TxMap["new_node_public_key"] = converter.BinToHex(p.TxMap["new_node_public_key"])
 	return nil
 }
 
@@ -75,7 +77,7 @@ func (p *Parser) ChangeNodeKeyFront() error {
 // ChangeNodeKey proceeds ChangeNodeKey transaction
 func (p *Parser) ChangeNodeKey() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{utils.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{utils.UInt32ToStr(p.TxStateID)}, true)
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{converter.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{converter.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -85,7 +87,7 @@ func (p *Parser) ChangeNodeKey() error {
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockId}, "my_node_keys", []string{"id"}, []string{utils.Int64ToStr(myKey)}, true)
+		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockId}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -38,7 +40,7 @@ func (c *Controller) StateLaws() (string, error) {
 	var err error
 
 	txType := "StateLaws"
-	timeNow := utils.Time()
+	timeNow := time.Now().Unix()
 
 	stateLaws, err := c.GetAll(`SELECT * FROM ea_state_laws`, -1)
 	if err != nil {
