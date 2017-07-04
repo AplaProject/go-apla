@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/astaxie/beego/session"
@@ -35,9 +36,19 @@ type apiData struct {
 	sess   session.SessionStore
 }
 
+type forSign struct {
+	Time    string `json:"time"`
+	ForSign string `json:"forsign"`
+}
+
+type hashTx struct {
+	Hash string `json:"hash"`
+}
+
 const (
 	pInt64 = iota
 	pHex
+	pString
 
 	pOptional = 0x100
 )
@@ -68,6 +79,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		)
 		defer func() {
 			if r := recover(); r != nil {
+				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
 				log.Error("API Recovered", r)
 			}
 		}()
@@ -102,6 +114,8 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 					return
 				}
 				data.params[key] = bin
+			case pString:
+				data.params[key] = val
 			}
 		}
 		for _, par := range ps {

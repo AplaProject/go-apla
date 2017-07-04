@@ -2545,10 +2545,15 @@ function saveMap() {
     newCoordsContainer.val(center + zoom + points);
 
     if (!$("#" + newCoordsContainer.attr("id") + "_address").length) {
-        $('<div class="form-group"> <label>Address</label><input id="' + newCoordsContainer.attr("id") + '_address' + '" class="form-control" type="text" disabled></div>').insertAfter(newCoordsContainer.parent());
+        $('<div class="form-group"> <label>Address</label><input id="' + newCoordsContainer.attr("id") + '_address' + '" class="form-control" type="text"></div>').insertAfter(newCoordsContainer.parent());
     }
-
-    getMapAddress($("#" + newCoordsContainer.attr("id") + "_address"), JSON.parse(newCoordsContainer.val()))
+	
+	if (!$("#" + newCoordsContainer.attr("id") + "_area").length) {
+		$('<div class="form-group"> <label>Area (sq meters)</label><input id="' + newCoordsContainer.attr("id") + '_area' + '" class="form-control" type="text"></div>').insertAfter(newCoordsContainer.parent());
+    }
+	
+    getMapAddress($("#" + newCoordsContainer.attr("id") + "_address"), JSON.parse(newCoordsContainer.val()));
+	getMapAddressSquare($("#" + newCoordsContainer.attr("id") + "_area"), JSON.parse(newCoordsContainer.val()));
 }
 
 var miniMapNum = 0;

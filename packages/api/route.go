@@ -34,9 +34,14 @@ func Route(route *hr.Router) {
 		anyMethod(`POST`, pattern, params, handler...)
 	}
 	get(`balance/:wallet`, authWallet, balance)
+	get(`content/:object/:name/:global`, authState, content)
+	get(`content/:object/:name`, authState, content)
 	get(`getuid`, getUID)
+	get(`txstatus/:hash`, authWallet, txstatus)
 
 	post(`login`, `pubkey signature:hex,?state:int64`, login)
+	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
+	post(`sendegs`, `pubkey:hex, signature time recipient amount commission ?comment:string`, authWallet, sendEGS)
 }
 
 func processParams(input string) (params map[string]int) {
@@ -53,6 +58,8 @@ func processParams(input string) (params map[string]int) {
 		switch types[1] {
 		case `hex`:
 			vtype = pHex
+		case `string`:
+			vtype = pString
 		case `int64`:
 			vtype = pInt64
 		default:
