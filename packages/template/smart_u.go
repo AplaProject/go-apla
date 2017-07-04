@@ -1385,8 +1385,8 @@ func InputMap(vars *map[string]string, pars ...string) string {
 		coords = strings.Replace(pars[1], `<`, `&lt;`, -1)
 	}
 	(*vars)[`inmappoint`] = `1`
-	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control inmap" id="%s">%s
-		</textarea></div>`, id, coords)
+	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control inmap" id="%s">%s</textarea></div>`, 
+			   id, coords)
 	if len(pars) > 2 {
 		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control" 
 		        id="%s_address" value="%s"></div>`, id, strings.Replace(pars[2], `<`, `&lt;`, -1))
@@ -1404,8 +1404,8 @@ func InputMapPoly(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		coords = strings.Replace(pars[1], `<`, `&lt;`, -1)
 	}
-	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control" id="%s">%s
-		</textarea><button type="button" onClick="openMap('%[1]s');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button></div>`, id, coords)
+	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control" id="%s">%s</textarea>
+         <button type="button" onClick="openMap('%[1]s');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button></div>`, id, coords)
 	if len(pars) > 2 {
 		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control" 
 		        id="%s_address" value="%s"></div>`, id, strings.Replace(pars[2], `<`, `&lt;`, -1))
