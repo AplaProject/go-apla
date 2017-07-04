@@ -1620,6 +1620,17 @@ function getMapAddress(elem, coords) {
 		elem.text(address);
 	});
 }
+
+function getMapAddressSquare(elem, coords) {
+	var area = [];
+	for (i = 0; i < coords.length; i++) {
+		area.push(new google.maps.LatLng(coords[i][0], coords[i][1]));
+	}
+	
+	elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(2));
+	elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(2));
+}
+
 function getMapGeocode(coords, callback) {
 	var latlng = {};
 	var geocoder = new google.maps.Geocoder;

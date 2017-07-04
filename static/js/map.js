@@ -2548,17 +2548,12 @@ function saveMap() {
         $('<div class="form-group"> <label>Address</label><input id="' + newCoordsContainer.attr("id") + '_address' + '" class="form-control" type="text"></div>').insertAfter(newCoordsContainer.parent());
     }
 	
-	var coords = JSON.parse(newCoordsContainer.val()).cords;
-	var area = [];
-	for (i = 0; i < coords.length; i++) {
-		area.push(new google.maps.LatLng(coords[i][0], coords[i][1]));
-	}
-	
 	if (!$("#" + newCoordsContainer.attr("id") + "_area").length) {
-		$('<div class="form-group"> <label>Area (sq meters)</label><input id="' + newCoordsContainer.attr("id") + '_area' + '" class="form-control" type="text" value="' + google.maps.geometry.spherical.computeArea(area).toFixed(2) + '"></div>').insertAfter(newCoordsContainer.parent());
+		$('<div class="form-group"> <label>Area (sq meters)</label><input id="' + newCoordsContainer.attr("id") + '_area' + '" class="form-control" type="text"></div>').insertAfter(newCoordsContainer.parent());
     }
 	
     getMapAddress($("#" + newCoordsContainer.attr("id") + "_address"), JSON.parse(newCoordsContainer.val()));
+	getMapAddressSquare($("#" + newCoordsContainer.attr("id") + "_area"), JSON.parse(newCoordsContainer.val()).cords);
 }
 
 var miniMapNum = 0;
