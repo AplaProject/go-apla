@@ -2553,7 +2553,7 @@ function saveMap() {
     }
 	
     getMapAddress($("#" + newCoordsContainer.attr("id") + "_address"), JSON.parse(newCoordsContainer.val()));
-	getMapAddressSquare($("#" + newCoordsContainer.attr("id") + "_area"), JSON.parse(newCoordsContainer.val()).cords);
+	getMapAddressSquare($("#" + newCoordsContainer.attr("id") + "_area"), JSON.parse(newCoordsContainer.val()));
 }
 
 var miniMapNum = 0;

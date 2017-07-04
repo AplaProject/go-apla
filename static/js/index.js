@@ -1623,6 +1623,8 @@ function getMapAddress(elem, coords) {
 
 function getMapAddressSquare(elem, coords) {
 	var area = [];
+	coords = coords.cords;
+	
 	for (i = 0; i < coords.length; i++) {
 		area.push(new google.maps.LatLng(coords[i][0], coords[i][1]));
 	}
