@@ -149,6 +149,9 @@ function configurationElm() {
 		if ($(this).hasClass("remove") || $(this).hasClass("editor") || $(this).hasClass("submenu") || $(this).hasClass("toggle")) {
 			if ($(this).hasClass("toggle")) {
 				$(this).parent().toggleClass("active");
+				if (elem.hasClass("table-responsive")) {
+					elem = elem.children();
+				}
 				elem.toggleClass($(this).attr("rel"));
 				return false;
 			} else {
@@ -252,7 +255,7 @@ function restoreData(){
 function initContainer(){
 	"use strict";
 	
-	$(".demo, .demo .column").sortable({
+	$(".demo, .demo .column, .demo .panel-body").sortable({
 		//connectWith: ".column",
 		opacity: .35,
 		handle: ".drag",
@@ -426,19 +429,28 @@ function initGenerator(){
 		}
 	});
 	$(".sidebar-nav .box").draggable({
-		connectToSortable: ".column",
+		connectToSortable: ".panel-body",
 		helper: "clone",
 		handle: ".drag",
 		placeholder: "portlet-placeholder ui-corner-all",
-		start: function(e,t) {
+		start: function(event, ui) {
 			if (!startdrag) stopsave++;
 			startdrag = 1;
 		},
-		drag: function(e, t) {
-			t.helper.width(400);
+		drag: function(event, ui) {
+			innerContainer = $(".portlet-placeholder").parent();
+			ui.helper.width(400);
 		},
-		stop: function() {
-			handleJsIds();
+		stop: function(event, ui) {
+			var settings = $(ui.helper).find(".settings ul").html();
+			var el = $(ui.helper).find(".column").html();
+			
+			$(".demo .box .preview").remove();
+			$(".demo .box .drag").removeClass("column");
+			$(el).insertBefore(innerContainer.find(".box"));
+			innerContainer.find(".box").remove();
+			innerContainer.closest(".lyrow").find(".settings ul:first").prepend(settings);
+			
 			if(stopsave>0) stopsave--;
 			startdrag = 0;
 		}
