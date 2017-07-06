@@ -17,28 +17,58 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	/*	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-		"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"*/)
 
-/*type balanceResult struct {
-	Amount string `json:"amount"`
-	EGS    string `json:"egs"`
-}*/
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/template"
+	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+)
 
-func content(w http.ResponseWriter, r *http.Request, data *apiData) error {
+type contentResult struct {
+	HTML string `json:"html"`
+}
 
-	/*	wallet := converter.StringToAddress(data.params[`wallet`].(string))
-		if wallet == 0 {
-			return errorAPI(w, fmt.Sprintf(`Wallet %s is invalid`, data.params[`wallet`].(string)), http.StatusBadRequest)
-		}
-		total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
-		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusConflict)
-		}
-		data.result = &balanceResult{Amount: total, EGS: converter.EGSMoney(total)}*/
+func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
-	fmt.Println(`Content`, data.params)
+	params := make(map[string]string)
+	for name := range r.Form {
+		params[name] = r.FormValue(name)
+	}
+	page := data.params[`page`].(string)
+	if page == `body` {
+		params[`autobody`] = r.FormValue("body")
+	}
+	if _, ok := data.params[`global`]; ok {
+		params[`global`] = `1`
+	} else {
+		params[`global`] = `0`
+	}
+	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
+	tpl, err := template.CreateHTMLFromTemplate(page, data.sess.Get(`citizen`).(int64),
+		data.sess.Get(`state`).(int64), &params)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	data.result = &contentResult{HTML: string(tpl)}
+	return nil
+}
+
+func contentMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+
+	prefix := getPrefix(data)
+	menu, err := sql.DB.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, data.params[`name`].(string)).String()
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	params := make(map[string]string)
+	params[`state_id`] = converter.Int64ToStr(data.sess.Get(`state`).(int64))
+	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
+	if len(menu) > 0 {
+		menu = language.LangMacro(textproc.Process(menu, &params), int(data.sess.Get(`state`).(int64)), params[`accept_lang`]) +
+			`<!--#` + data.params[`name`].(string) + `#-->`
+	}
+	data.result = &contentResult{HTML: menu}
 	return nil
 }

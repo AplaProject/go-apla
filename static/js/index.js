@@ -1614,10 +1614,17 @@ function autoUpdate(id, period) {
 			}, "html");
 }
 
+var tempCoordsAddress;
+var tempCoordsArea;
+
 function getMapAddress(elem, coords) {
 	getMapGeocode(coords, function (address) {
-		elem.val(address);
-		elem.text(address);
+		if (elem.val() === "" || elem.text() === ""/* || arraysEqual(coords, tempCoordsAddress) === false*/) {
+			elem.val(address);
+			elem.text(address);
+		}
+		
+		tempCoordsAddress = coords;
 	});
 }
 
@@ -1629,8 +1636,16 @@ function getMapAddressSquare(elem, coords) {
 		area.push(new google.maps.LatLng(coords[i][0], coords[i][1]));
 	}
 	
-	elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(2));
-	elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(2));
+	if (elem.val() === "" || elem.text() === "" || arraysEqual(coords, tempCoordsArea) === false) {
+		elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(2));
+		elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(2));
+	}
+	
+	tempCoordsArea = coords;
+}
+
+function arraysEqual(a, b) {
+	return JSON.stringify(a) === JSON.stringify(b);
 }
 
 function getMapGeocode(coords, callback) {

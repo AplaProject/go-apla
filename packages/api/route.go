@@ -33,15 +33,39 @@ func Route(route *hr.Router) {
 	post := func(pattern, params string, handler ...apiHandle) {
 		anyMethod(`POST`, pattern, params, handler...)
 	}
+	put := func(pattern, params string, handler ...apiHandle) {
+		anyMethod(`PUT`, pattern, params, handler...)
+	}
+	getGlobal := func(url string, handler apiHandle) {
+		get(url+`/:global`, authState, handler)
+		get(url, authState, handler)
+	}
+	postTx := func(url string, params string, preHandle, handle apiHandle) {
+		post(`prepare/`+url, params, authState, preHandle)
+		post(url, `signature:hex, time:string, `+params, authState, handle)
+	}
+	putTx := func(url string, params string, preHandle, handle apiHandle) {
+		put(`prepare/`+url, params, authState, preHandle)
+		put(url, `signature:hex, time:string, `+params, authState, handle)
+	}
+
 	get(`balance/:wallet`, authWallet, balance)
-	get(`content/:object/:name/:global`, authState, content)
-	get(`content/:object/:name`, authState, content)
 	get(`getuid`, getUID)
 	get(`txstatus/:hash`, authWallet, txstatus)
+	getGlobal(`content/page/:page`, contentPage)
+	getGlobal(`content/menu/:name`, contentMenu)
+	getGlobal(`menu/:name`, getMenu)
 
 	post(`login`, `pubkey signature:hex,?state:int64`, login)
+	//	post(`prepare/menu`, `name value conditions:string, global:int64`, authState, prePostMenu)
+	//	post(`menu`, `signature:hex, time name value conditions:string, global:int64`, authState, postMenu)
+	postTx(`menu`, `name value conditions:string, global:int64`, prePostMenu, postMenu)
 	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
-	post(`sendegs`, `pubkey:hex, signature time recipient amount commission ?comment:string`, authWallet, sendEGS)
+	post(`sendegs`, `pubkey signature:hex, time recipient amount commission ?comment:string`, authWallet, sendEGS)
+
+	//	put(`prepare/menu/:name`, `value conditions:string`, authState, prePutMenu)
+	//	put(`menu/:name`, `signature:hex, time value conditions:string`, authState, putMenu)
+	putTx(`menu/:name`, `value conditions:string, global:int64`, prePutMenu, putMenu)
 }
 
 func processParams(input string) (params map[string]int) {

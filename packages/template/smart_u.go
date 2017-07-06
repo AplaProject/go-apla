@@ -766,6 +766,7 @@ func Include(vars *map[string]string, pars ...string) string {
 			}
 		}
 	}
+	params[`norow`] = `1`
 	//	page := (*vars)[`page`]
 	out, err := CreateHTMLFromTemplate(pars[0], converter.StrToInt64((*vars)[`citizen`]), converter.StrToInt64((*vars)[`state_id`]),
 		&params)
@@ -1003,7 +1004,7 @@ func Strong(vars *map[string]string, pars ...string) (out string) {
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
 
-	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` {
+	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` && (*vars)[`norow`] != `1` {
 		out = `<div class="row">`
 		(*vars)[`isrow`] = `opened`
 	}
@@ -1396,7 +1397,7 @@ func InputMap(vars *map[string]string, pars ...string) string {
 
 // InputMapPoly returns HTML tags for polygon map
 func InputMapPoly(vars *map[string]string, pars ...string) string {
-	var coords string
+	var coords, idaddress, idsquare string
 	id := pars[0]
 	if len(id) == 0 {
 		return ``
@@ -1404,16 +1405,15 @@ func InputMapPoly(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		coords = strings.Replace(pars[1], `<`, `&lt;`, -1)
 	}
-	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control" id="%s">%s</textarea>
-	<button type="button" onClick="openMap('%[1]s');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button></div>`, id, coords)
 	if len(pars) > 2 {
-		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control" 
-		        id="%s_address" value="%s"></div>`, id, strings.Replace(pars[2], `<`, `&lt;`, -1))
+		idaddress = converter.Escape(pars[2])
 	}
 	if len(pars) > 3 {
-		out += fmt.Sprintf(`<div class="form-group"><label>Square</label><input type="text" class="form-control" 
-		        id="%s_area" value="%s"></div>`, id, strings.Replace(pars[3], `<`, `&lt;`, -1))
+		idsquare = converter.Escape(pars[3])
 	}
+	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control" id="%s">%s</textarea>
+	<button type="button" onClick="openMap('%[1]s', '%[3]s', '%s');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button></div>`,
+		id, coords, idaddress, idsquare)
 	return out
 }
 

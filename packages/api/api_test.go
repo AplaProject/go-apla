@@ -38,6 +38,11 @@ var (
 	gPrivate, gPublic string
 )
 
+type global struct {
+	url   string
+	value string
+}
+
 func sendRequest(rtype, url string, form *url.Values) (map[string]interface{}, error) {
 	client := &http.Client{}
 	var ioform io.Reader
@@ -69,7 +74,7 @@ func sendRequest(rtype, url string, form *url.Values) (map[string]interface{}, e
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(`ANSWER`, resp.StatusCode, strings.TrimSpace(string(data)))
+	//	fmt.Println(`ANSWER`, resp.StatusCode, strings.TrimSpace(string(data)), `<<<`)
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
@@ -89,8 +94,16 @@ func sendPost(url string, form *url.Values) (map[string]interface{}, error) {
 	return sendRequest("POST", url, form)
 }
 
-func keyLogin() (err error) {
-	var key, sign []byte
+func sendPut(url string, form *url.Values) (map[string]interface{}, error) {
+	return sendRequest("PUT", url, form)
+}
+
+func keyLogin(state int64) (err error) {
+	var (
+		key, sign []byte
+		uid       interface{}
+		ok        bool
+	)
 
 	key, err = ioutil.ReadFile(`key`)
 	if err != nil {
@@ -100,7 +113,7 @@ func keyLogin() (err error) {
 	if err != nil {
 		return
 	}
-	if uid, ok := ret[`uid`]; !ok {
+	if uid, ok = ret[`uid`]; !ok {
 		return fmt.Errorf(`getuid has returned empty uid`)
 	}
 
@@ -114,7 +127,8 @@ func keyLogin() (err error) {
 	if err != nil {
 		return
 	}
-	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
+	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
+		`state`: {converter.Int64ToStr(state)}}
 	ret, err = sendPost(`login`, &form)
 	if err != nil {
 		return
@@ -176,4 +190,44 @@ func getBalance(wallet string) (decimal.Decimal, error) {
 		return decimal.New(0, 0), err
 	}
 	return val, nil
+}
+
+func randName(prefix string) string {
+	return fmt.Sprintf(`%s%d`, prefix, time.Now().Unix())
+}
+
+func postTx(txname string, form *url.Values) error {
+	ret, err := sendPost(`prepare/`+txname, form)
+	if err != nil {
+		return err
+	}
+	if err = appendSign(ret, form); err != nil {
+		return err
+	}
+	ret, err = sendPost(txname, form)
+	if err != nil {
+		return err
+	}
+	if _, err = waitTx(ret[`hash`].(string)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func putTx(txname string, form *url.Values) error {
+	ret, err := sendPut(`prepare/`+txname, form)
+	if err != nil {
+		return err
+	}
+	if err = appendSign(ret, form); err != nil {
+		return err
+	}
+	ret, err = sendPut(txname, form)
+	if err != nil {
+		return err
+	}
+	if _, err = waitTx(ret[`hash`].(string)); err != nil {
+		return err
+	}
+	return nil
 }

@@ -17,20 +17,50 @@
 package api
 
 import (
+	"fmt"
 	"testing"
 )
 
-func TestBalance(t *testing.T) {
-	if err := keyLogin(); err != nil {
+func TestContent(t *testing.T) {
+
+	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
-	ret, err := sendGet(`balance/`+gAddress, nil)
+	ret, err := sendGet(`content/page/government`, nil)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if len(ret[`amount`].(string)) < 10 {
-		t.Error(`too low balance`, ret)
+	if ret[`html`].(string) == `NULL` || len(ret[`html`].(string)) == 0 {
+		t.Error(fmt.Errorf(`empty page`))
+		return
+	}
+	ret, err = sendGet(`content/page/government/global`, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret[`html`].(string)) != 0 {
+		t.Error(fmt.Errorf(`not empty global page`))
+		return
+	}
+	ret, err = sendGet(`content/menu/government`, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if ret[`html`].(string) == `NULL` || len(ret[`html`].(string)) == 0 {
+		t.Error(fmt.Errorf(`empty menu`))
+		return
+	}
+	ret, err = sendGet(`content/menu/government/global`, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret[`html`].(string)) != 0 {
+		t.Error(fmt.Errorf(`not empty global menu`))
+		return
 	}
 }

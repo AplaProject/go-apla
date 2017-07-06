@@ -17,7 +17,6 @@
 package api
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"time"
@@ -39,7 +38,6 @@ func preSendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func sendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	txTime := converter.StrToInt64(data.params[`time`].(string))
 	publicKey := data.params[`pubkey`].([]byte)
 	lenpub := len(publicKey)
 	if lenpub > 64 {
@@ -47,11 +45,10 @@ func sendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	} else if lenpub == 0 {
 		publicKey = []byte("null")
 	}
+
+	txTime := converter.StrToInt64(data.params[`time`].(string))
 	sign := make([]byte, 0)
-	signature, err := hex.DecodeString(data.params[`signature`].(string))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
+	signature := data.params[`signature`].([]byte)
 	if len(signature) > 0 {
 		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
 	}

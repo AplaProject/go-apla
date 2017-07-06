@@ -21,7 +21,7 @@ import (
 )
 
 func TestBalance(t *testing.T) {
-	if err := keyLogin(); err != nil {
+	if err := keyLogin(0); err != nil {
 		t.Error(err)
 		return
 	}

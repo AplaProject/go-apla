@@ -23,7 +23,7 @@ import (
 )
 
 func TestSendEGS(t *testing.T) {
-	if err := keyLogin(); err != nil {
+	if err := keyLogin(0); err != nil {
 		t.Error(err)
 		return
 	}
@@ -40,21 +40,7 @@ func TestSendEGS(t *testing.T) {
 	fmt.Println("Before", inBefore, outBefore)
 	form := url.Values{"recipient": {`0080-2194-0302-1823-2313`}, "amount": {`1234567890000000000`},
 		"commission": {`2000000000000000`}, `comment`: {"Test"}, `pubkey`: {gPublic}}
-	ret, err := sendPost(`prepare/sendegs`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if err = appendSign(ret, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	ret, err = sendPost(`sendegs`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if _, err = waitTx(ret[`hash`].(string)); err != nil {
+	if err := postTx(`sendegs`, &form); err != nil {
 		t.Error(err)
 		return
 	}

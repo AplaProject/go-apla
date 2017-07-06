@@ -258,7 +258,7 @@ func Process(input string, vars *map[string]string) (out string) {
 		isFunc, isMap, isArr int
 		params               [][]rune
 		pmap                 map[string]string
-		isKey, toLine        bool
+		isKey, toLine, skip  bool
 		pair                 rune
 	)
 	noproc := true
@@ -288,12 +288,21 @@ func Process(input string, vars *map[string]string) (out string) {
 				continue
 			}
 		}
+		if skip {
+			skip = false
+			continue
+		}
 		if isMap > 0 {
 			if pair > 0 {
 				if ch != pair {
 					value = append(value, ch)
 				} else {
-					pair = 0
+					if off+1 == len(input) || rune(input[off+1]) != pair {
+						pair = 0
+					} else {
+						value = append(value, ch)
+						skip = true
+					}
 				}
 				continue
 			}
@@ -350,7 +359,12 @@ func Process(input string, vars *map[string]string) (out string) {
 				if ch != pair {
 					params[len(params)-1] = append(params[len(params)-1], ch)
 				} else {
-					pair = 0
+					if off+1 == len(input) || rune(input[off+1]) != pair {
+						pair = 0
+					} else {
+						params[len(params)-1] = append(params[len(params)-1], ch)
+						skip = true
+					}
 				}
 				continue
 			}

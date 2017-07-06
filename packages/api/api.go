@@ -70,6 +70,15 @@ func errorAPI(w http.ResponseWriter, msg string, code int) error {
 	return fmt.Errorf(msg)
 }
 
+func getPrefix(data *apiData) (prefix string) {
+	if _, ok := data.params[`global`]; ok {
+		prefix = `global`
+	} else {
+		prefix = converter.Int64ToStr(data.sess.Get(`state`).(int64))
+	}
+	return
+}
+
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
