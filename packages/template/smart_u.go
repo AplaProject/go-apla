@@ -766,6 +766,7 @@ func Include(vars *map[string]string, pars ...string) string {
 			}
 		}
 	}
+	params[`norow`] = `1`
 	//	page := (*vars)[`page`]
 	out, err := CreateHTMLFromTemplate(pars[0], converter.StrToInt64((*vars)[`citizen`]), converter.StrToInt64((*vars)[`state_id`]),
 		&params)
@@ -1003,7 +1004,7 @@ func Strong(vars *map[string]string, pars ...string) (out string) {
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
 
-	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` {
+	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` && (*vars)[`norow`] != `1` {
 		out = `<div class="row">`
 		(*vars)[`isrow`] = `opened`
 	}
