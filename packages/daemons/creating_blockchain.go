@@ -1,107 +1,197 @@
 package daemons
 
 import (
-	"os"
-	"time"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	"context"
+	"log"
+	"os"
+	"time"
+
+	"io"
 )
 
-// CreatingBlockchain writes blockchain
-func CreatingBlockchain(chBreaker chan bool, chAnswer chan string) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
-			panic(r)
-		}
-	}()
+func CreatingBlockchain(d *daemon, ctx context.Context) error {
+	d.sleepTime = 10 * time.Second
+	return writeNextBlocks(*utils.Dir + "/public/blockchain")
+}
 
-	const GoroutineName = "CreatingBlockchain"
-	d := new(daemon)
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
-	}
-	d.goRoutineName = GoroutineName
-	d.chAnswer = chAnswer
-	d.chBreaker = chBreaker
-	d.sleepTime = 10
-	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
-		return
-	}
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+func writeNextBlocks(fileName string) error {
+	lastSavedBlockID, err := getLastBlockID(fileName)
+	if err != nil {
+		return err
 	}
 
-BEGIN:
-	for {
-		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
+	infoBlock := &model.InfoBlock{}
+	err = infoBlock.GetInfoBlock()
+	if err != nil {
+		return err
+	}
 
-		// проверим, не нужно ли нам выйти из цикла
-		// check if we have to break the cycle
-		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-			break BEGIN
-		}
+	curBlockID := infoBlock.BlockID
 
-		infoBlock := &model.InfoBlock{}
-		err := infoBlock.GetInfoBlock()
+	if curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE <= lastSavedBlockID {
+		// not enough blocks to save, just return
+		return nil
+	}
+
+	// write the newest blocks to reserved blockchain
+	// ??? curBlockID - COUNT_BLOCK_BEFORE_SAVE ???
+	blocks, err := model.GetBlockchain(lastSavedBlockID, curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	for _, b := range blocks {
+		buff := marshallFileBlock(blockData{ID: b.ID, Data: b.Data})
+
+		_, err := file.Write(buff)
 		if err != nil {
-			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		curBlockID := infoBlock.BlockID
-
-		// пишем свежие блоки в резервный блокчейн
-		// record the newest blocks in reserve blockchain
-		endBlockID, err := utils.GetEndBlockID()
-		if err != nil {
-			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-		}
-		logger.Debug("curBlockID: %v / endBlockID: %v", curBlockID, endBlockID)
-		if curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE > endBlockID {
-			file, err := os.OpenFile(*utils.Dir+"/public/blockchain", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-			if err != nil {
-				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			blockchain, err := model.GetBlockchain(endBlockID, curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE)
-			if err != nil {
-				file.Close()
-				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-
-			for _, block := range blockchain {
-				blockData := append(converter.DecToBin(block.ID, 5), converter.EncodeLengthPlusData(block.Data)...)
-				sizeAndData := append(converter.DecToBin(len(blockData), 5), blockData...)
-				//err := ioutil.WriteFile(*utils.Dir+"/public/blockchain", append(sizeAndData, utils.DecToBin(len(sizeAndData), 5)...), 0644)
-				if _, err = file.Write(append(sizeAndData, converter.DecToBin(len(sizeAndData), 5)...)); err != nil {
-					file.Close()
-					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-			}
-			file.Close()
-		}
-
-		if d.dSleep(d.sleepTime) {
-			break BEGIN
+			return err
 		}
 	}
-	logger.Debug("break BEGIN %v", GoroutineName)
+
+	return nil
+}
+
+/*
+Block record format:
+ block len - 5 bytes
+ block id - 5 bytes
+ block data len - variable
+ block data - block data len bytes
+ full len - 5 bytes (for read from end of file)
+*/
+
+const (
+	WordSize = 5 // size of word in file
+)
+
+type blockData struct {
+	ID   int64
+	Data []byte
+}
+
+func readBlock(r io.Reader) (*blockData, error) {
+	var err error
+	buf := make([]byte, WordSize)
+
+	if _, err = r.Read(buf); err != nil {
+		return nil, err
+	}
+
+	size := converter.BinToDec(buf)
+	if size > consts.MAX_BLOCK_SIZE {
+		return nil, utils.ErrInfo("size > conts.MAX_BLOCK_SIZE")
+	}
+
+	if size == 0 {
+		return nil, nil
+	}
+
+	dataBinary := make([]byte, size+WordSize)
+	if _, err = r.Read(dataBinary); err != nil {
+		return nil, utils.ErrInfo(err)
+	}
+
+	// parse the block
+	block, err := unmarshallFileBlock(dataBinary)
+	if err != nil {
+		return nil, utils.ErrInfo(err)
+	}
+
+	return &block, nil
+}
+
+// read last block from file
+func getLastBlockID(fileName string) (int64, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		// if file doesn't exist create new one
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, utils.ErrInfo(err)
+	}
+	defer file.Close()
+
+	fi, err := file.Stat()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if fi.Size() == 0 {
+		return 0, utils.ErrInfo("empty blockchain file")
+	}
+
+	// size of a block recorded into the last 5 bytes of blockchain file
+	_, err = file.Seek(-WordSize, os.SEEK_END)
+	if err != nil {
+		return 0, utils.ErrInfo(err)
+	}
+
+	buf := make([]byte, WordSize)
+	_, err = file.Read(buf)
+	if err != nil {
+		return 0, utils.ErrInfo(err)
+	}
+	size := converter.BinToDec(buf)
+	if size > consts.MAX_BLOCK_SIZE {
+		return 0, utils.ErrInfo("size > conts.MAX_BLOCK_SIZE")
+	}
+
+	// read the block
+	_, err = file.Seek(-(size + WordSize), os.SEEK_END)
+	if err != nil {
+		return 0, utils.ErrInfo(err)
+	}
+
+	block, err := readBlock(file)
+	if err != nil {
+		return 0, utils.ErrInfo(err)
+	}
+
+	return block.ID, nil
+}
+
+// TODO:
+func unmarshallFileBlock(buff []byte) (blockData, error) {
+	// size (block id + body of a block)
+	blockLen := converter.BinToDec(buff[:WordSize])
+	buff = buff[WordSize:]
+
+	if int(blockLen)+WordSize != len(buff) {
+		return blockData{}, utils.ErrInfo("bad block")
+	}
+
+	blockID := converter.BinToDec(buff[:WordSize])
+	buff = buff[WordSize:]
+
+	// DecodeLength moves the pointer to the data field
+	blockDataLen, err := converter.DecodeLength(&buff)
+	if err != nil {
+		return blockData{}, utils.ErrInfo(err)
+	}
+
+	return blockData{
+		ID:   blockID,
+		Data: buff[:blockDataLen],
+	}, nil
+}
+
+// TODO: rewrite this
+func marshallFileBlock(b blockData) []byte {
+
+	data := append(converter.DecToBin(b.ID, WordSize), converter.EncodeLengthPlusData(b.Data)...)
+	sizeAndData := append(converter.DecToBin(len(data), WordSize), data...)
+
+	return sizeAndData
 }

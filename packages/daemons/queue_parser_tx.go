@@ -17,7 +17,7 @@
 package daemons
 
 import (
-	"time"
+	"context"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
@@ -26,105 +26,40 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/*
- * Берем тр-ии из очереди и обрабатываем
- * */
-// take the transactions from the turn and process them
-
 // QueueParserTx parses transaction from the queue
-func QueueParserTx(chBreaker chan bool, chAnswer chan string) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
-			panic(r)
-		}
-	}()
+func QueueParserTx(d *daemon, ctx context.Context) error {
 
-	const GoroutineName = "QueueParserTx"
-	d := new(daemon)
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	lock, err := d.DbLock(ctx, d.goRoutineName)
+	if !lock || err != nil {
+		return err
 	}
-	d.goRoutineName = GoroutineName
-	d.chAnswer = chAnswer
-	d.chBreaker = chBreaker
-	d.sleepTime = 1
+	defer d.DbUnlock(d.goRoutineName)
 
-	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
-		return
+	infoBlock := &model.InfoBlock{}
+	err = infoBlock.GetInfoBlock()
+	if err != nil {
+		return err
 	}
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	if infoBlock.BlockID == 0 {
+		return utils.ErrInfo("blockID == 0")
 	}
 
-BEGIN:
-	for {
-		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
-
-		// проверим, не нужно ли нам выйти из цикла
-		// check if we have to break the cycle
-		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-			break BEGIN
-		}
-
-		restart, err := d.dbLock()
-		if restart {
-			break BEGIN
-		}
-		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		infoBlock := &model.InfoBlock{}
-		err = infoBlock.GetInfoBlock()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		if infoBlock.BlockID == 0 {
-			if d.unlockPrintSleep(utils.ErrInfo("blockID == 0"), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		// чистим зацикленные
-		// clean the looped
-		logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
-		affect, err := model.DeleteLoopedTransactions()
-		if err != nil {
-			logging.WriteSelectiveLog(err)
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
-
-		p := new(parser.Parser)
-		p.DCDB = d.DCDB
-		err = p.AllTxParser()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		d.dbUnlock()
-
-		if d.dSleep(d.sleepTime) {
-			break BEGIN
-		}
+	// чистим зацикленные
+	// clean the looped
+	logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
+	affect, err := model.DeleteLoopedTransactions()
+	if err != nil {
+		logging.WriteSelectiveLog(err)
+		return err
 	}
-	logger.Debug("break BEGIN %v", GoroutineName)
+	logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 
+	p := new(parser.Parser)
+	p.DCDB = d.DCDB
+	err = p.AllTxParser()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

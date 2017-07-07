@@ -18,13 +18,14 @@ package daemons
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	"context"
 )
 
 /* Берем блок. Если блок имеет лучший хэш, то ищем, в каком блоке у нас пошла вилка // Take the block. If the block has the best hash, then look for the block where the fork started
@@ -41,141 +42,64 @@ import (
  * */
 
 // QueueParserBlocks parses blocks from the queue
-func QueueParserBlocks(chBreaker chan bool, chAnswer chan string) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
-			panic(r)
-		}
-	}()
+func QueueParserBlocks(d *daemon, ctx context.Context) error {
 
-	const GoroutineName = "QueueParserBlocks"
-	d := new(daemon)
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	locked, err := d.DbLock(ctx, d.goRoutineName)
+	if !locked || err != nil {
+		return err
 	}
-	d.goRoutineName = GoroutineName
-	d.chAnswer = chAnswer
-	d.chBreaker = chBreaker
-	d.sleepTime = 1
+	defer d.DbUnlock(d.goRoutineName)
 
-	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
-		return
+	infoBlock := &model.InfoBlock{}
+	err = infoBlock.GetInfoBlock()
+	if err != nil {
+		return err
 	}
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	queueBlock := &model.QueueBlocks{}
+	err = queueBlock.GetQueueBlock()
+	if err != nil {
+		return err
+	}
+	if len(queueBlock.Hash) == 0 {
+		return err
+	}
+	queueBlock.Hash = converter.BinToHex(queueBlock.Hash)
+	infoBlock.Hash = converter.BinToHex(infoBlock.Hash)
+
+	// check if the block gets in the rollback_blocks_1 limit
+	if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
+		queueBlock.Delete()
+		return utils.ErrInfo("rollback_blocks_1")
 	}
 
-BEGIN:
-	for {
-		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
-
-		// проверим, не нужно ли нам выйти из цикла
-		// check if we have to break the cycle
-		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-			break BEGIN
-		}
-
-		restart, err := d.dbLock()
-		if restart {
-			break BEGIN
-		}
-		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		infoBlock := &model.InfoBlock{}
-		err = infoBlock.GetInfoBlock()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		queueBlock := &model.QueueBlocks{}
-		err = queueBlock.GetQueueBlock()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		if len(queueBlock.Hash) == 0 {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		queueBlock.Hash = converter.BinToHex(queueBlock.Hash)
-		infoBlock.Hash = converter.BinToHex(infoBlock.Hash)
-
-		/*
-		 * Базовая проверка
-		 */
-		// basic check
-
-		// проверим, укладывается ли блок в лимит
-		// check if the block gets in the rollback_blocks_1 limit
-		if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
-			queueBlock.Delete()
-			if d.unlockPrintSleep(utils.ErrInfo("rollback_blocks_1"), 1) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		// проверим не старый ли блок в очереди
-		// check whether the new block is in the turn
-		if queueBlock.BlockID <= infoBlock.BlockID {
-			queueBlock.Delete()
-			if d.unlockPrintSleepInfo(utils.ErrInfo("old block"), 1) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		/*
-		 * Загрузка блоков для детальной проверки
-		 */
-		// download of the blocks for the detailed check
-		fullNode := &model.FullNodes{}
-
-		err = fullNode.FindNodeByID(queueBlock.FullNodeID)
-		if err != nil {
-			queueBlock.Delete()
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		blockID := queueBlock.BlockID
-
-		p := new(parser.Parser)
-		p.DCDB = d.DCDB
-		p.GoroutineName = GoroutineName
-		err = p.GetBlocks(blockID, fullNode.Host+":"+consts.TCP_PORT, "rollback_blocks_1", GoroutineName, 7)
-		if err != nil {
-			logger.Error("v", err)
-			queueBlock.Delete()
-			d.NodesBan(fmt.Sprintf("%v", err))
-			if d.unlockPrintSleep(utils.ErrInfo(err), 1) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		d.dbUnlock()
-
-		if d.dSleep(d.sleepTime) {
-			break BEGIN
-		}
+	// is it old block in queue ?
+	if queueBlock.BlockID <= infoBlock.BlockID {
+		queueBlock.Delete()
+		return utils.ErrInfo("old block")
 	}
-	logger.Debug("break BEGIN %v", GoroutineName)
 
+	// download blocks for check
+	fullNode := &model.FullNodes{}
+
+	err = fullNode.FindNodeByID(queueBlock.FullNodeID)
+	if err != nil {
+		queueBlock.Delete()
+		return utils.ErrInfo(err)
+	}
+
+	blockID := queueBlock.BlockID
+
+	p := new(parser.Parser)
+	p.DCDB = d.DCDB
+	p.GoroutineName = d.goRoutineName
+
+	err = p.GetBlocks(blockID, fullNode.Host+":"+consts.TCP_PORT, "rollback_blocks_1", d.goRoutineName, 7)
+	if err != nil {
+		logger.Error("v", err)
+		queueBlock.Delete()
+		d.NodesBan(fmt.Sprintf("%v", err))
+		return utils.ErrInfo(err)
+	}
+
+	return nil
 }

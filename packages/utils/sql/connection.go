@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"database/sql"
+
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
 )
@@ -39,4 +40,9 @@ func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	}
 	log.Debug("return")
 	return &DCDB{db, ConfigIni}, err
+}
+
+func GetCurrentDB() *DCDB {
+	// TODO:  should be atomic.Pointer ??
+	return DB
 }

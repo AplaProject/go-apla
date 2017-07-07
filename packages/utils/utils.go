@@ -18,6 +18,7 @@ package utils
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -27,7 +28,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -122,6 +122,7 @@ var (
 
 	// DaemonsChans is a slice of DaemonsChansType
 	DaemonsChans []*DaemonsChansType
+	CancelFunc   context.CancelFunc
 	// Thrust is true for thrust shell
 	Thrust bool
 )

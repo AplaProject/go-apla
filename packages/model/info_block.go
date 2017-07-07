@@ -15,11 +15,11 @@ func (ib *InfoBlock) GetInfoBlock() error {
 	return DBConn.First(ib).Error
 }
 
-func (ib *InfoBlock) GetUnsended() error {
+func (ib *InfoBlock) GetUnsent() error {
 	return DBConn.Where("sent = ?", "0").First(&ib).Error
 }
 
-func (ib *InfoBlock) MarkSended() error {
+func (ib *InfoBlock) MarkSent() error {
 	return DBConn.Model(ib).Update("sent", "1").Error
 }
 

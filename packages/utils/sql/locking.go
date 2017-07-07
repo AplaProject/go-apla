@@ -1,44 +1,39 @@
 package sql
 
 import (
-	"fmt"
-	"regexp"
+	"context"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-// CheckInstall waits for the end of the installation
-func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, GoroutineName string) bool {
-	// Возможна ситуация, когда инсталяция еще не завершена. База данных может быть создана, а таблицы еще не занесены
+// WaitDB waits for the end of the installation
+func WaitDB(ctx context.Context) (*DCDB, error) {
 	// there could be the situation when installation is not over yet. Database could be created but tables are not inserted yet
+	tick := time.NewTicker(1 * time.Second)
 	for {
 		select {
-		case <-DaemonCh:
-			log.Debug("Restart from CheckInstall")
-			AnswerDaemonCh <- GoroutineName
-			return false
-		default:
-		}
-		progress, err := db.Single("SELECT progress FROM install").String()
-		if err != nil || progress != "complete" {
-			// возможно попасть на тот момент, когда БД закрыта и идет скачивание готовой БД с сервера
-			// the moment could happen when the database is closed and there is a download of the completed database from the server
-			if ok, _ := regexp.MatchString(`database is closed`, fmt.Sprintf("%s", err)); ok {
-				if DB != nil {
-					db = DB
+		case <-tick.C:
+			db := GetCurrentDB()
+			if db != nil {
+				if db.CheckDB() {
+					return db, nil
 				}
 			}
-			//log.Debug("%v", `progress != "complete"`, db.GoroutineName)
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			time.Sleep(time.Second)
-		} else {
-			break
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
+	}
+}
+
+func (db *DCDB) CheckDB() bool {
+	progress, err := db.Single("SELECT progress FROM install").String()
+	if err != nil || progress != "complete" {
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+		}
+		return false
 	}
 	return true
 }
@@ -54,7 +49,7 @@ func (db *DCDB) CheckDaemonsRestart() bool {
 }
 
 // DbLock locks deamons
-func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutineName string) (bool, error) {
+func (db *DCDB) DbLock(ctx context.Context, goRoutineName string) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -63,48 +58,46 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		}
 	}()
 
-	log.Debug("DbLock")
-	var ok bool
-	for {
+	ok, err := db.tryLock(goRoutineName)
+
+	ticker := time.NewTicker(1 * time.Second)
+
+	for ok || err != nil {
 		select {
-		case <-DaemonCh:
-			log.Debug("Restart from DbLock")
-			AnswerDaemonCh <- goRoutineName
-			return true, utils.ErrInfo("Restart from DbLock")
-		default:
+		case <-ticker.C:
+			ok, err = db.tryLock(goRoutineName)
+		case <-ctx.Done():
+			return false, ctx.Err()
 		}
 
-		Mutex.Lock()
+	}
+	return ok, err
+}
 
-		log.Debug("DbLock Mutex.Lock()")
+func (db *DCDB) tryLock(goRoutineName string) (bool, error) {
+	Mutex.Lock()
+	defer Mutex.Unlock()
 
-		exists, err := db.OneRow("SELECT lock_time, script_name FROM main_lock").String()
+	exists, err := db.OneRow("SELECT lock_time, script_name FROM main_lock").String()
+	if err != nil {
+		return false, utils.ErrInfo(err)
+	}
+
+	if len(exists["script_name"]) == 0 {
+		err = db.ExecSQL(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), goRoutineName, utils.Caller(2))
 		if err != nil {
-			Mutex.Unlock()
 			return false, utils.ErrInfo(err)
 		}
-		if len(exists["script_name"]) == 0 {
-			err = db.ExecSQL(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), goRoutineName, utils.Caller(2))
-			if err != nil {
-				Mutex.Unlock()
-				return false, utils.ErrInfo(err)
+		return true, nil
+
+	} else {
+		t := converter.StrToInt64(exists["lock_time"])
+		now := time.Now().Unix()
+		if now-t > 600 {
+			log.Error("%d %s %d", t, exists["script_name"], now-t)
+			if utils.Mobile() {
+				db.ExecSQL(`DELETE FROM main_lock`)
 			}
-			ok = true
-		} else {
-			t := converter.StrToInt64(exists["lock_time"])
-			now := time.Now().Unix()
-			if now-t > 600 {
-				log.Error("%d %s %d", t, exists["script_name"], now-t)
-				if utils.Mobile() {
-					db.ExecSQL(`DELETE FROM main_lock`)
-				}
-			}
-		}
-		Mutex.Unlock()
-		if !ok {
-			time.Sleep(time.Duration(crypto.RandInt(300, 400)) * time.Millisecond)
-		} else {
-			break
 		}
 	}
 	return false, nil

@@ -20,7 +20,8 @@ func GetAllUnusedTransactions() (*[]Transactions, error) {
 	return transactions, nil
 }
 
-func GetAllUnsendedTransactions() (*[]Transactions, error) {
+// TODO forSelfUse ???
+func GetAllUnsentTransactions(forSelfUse bool) (*[]Transactions, error) {
 	transactions := new([]Transactions)
 	if err := DBConn.Where("sent = ?", "0").Find(&transactions).Error; err != nil {
 		return nil, err
@@ -33,7 +34,7 @@ func DeleteLoopedTransactions() (int64, error) {
 	return query.RowsAffected, query.Error
 }
 
-func MarkTransactionSended(transactionHash []byte) (int64, error) {
+func MarkTransactionSent(transactionHash []byte) (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
