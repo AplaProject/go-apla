@@ -112,6 +112,10 @@ func ExtendCost(ext func(string) int64) {
 	smartVM.ExtCost = ext
 }
 
+func FuncCallsDB(funcCallsDB map[string]struct{}) {
+	smartVM.FuncCallsDB = funcCallsDB
+}
+
 // Extend set extended variable and functions in smartVM
 func Extend(ext *script.ExtendData) {
 	smartVM.Extend(ext)
