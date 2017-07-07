@@ -27,41 +27,43 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
-type menuResult struct {
+type pageResult struct {
 	Name       string `json:"name"`
+	Menu       string `json:"menu"`
 	Value      string `json:"value"`
 	Conditions string `json:"conditions"`
 }
 
-func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
-	dataMenu, err := sql.DB.OneRow(`SELECT * FROM "`+getPrefix(data)+`_menu" WHERE name = ?`,
+	dataPage, err := sql.DB.OneRow(`SELECT * FROM "`+getPrefix(data)+`_pages" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-	data.result = &menuResult{Name: dataMenu["name"], Value: dataMenu["value"], Conditions: dataMenu["conditions"]}
+	data.result = &pageResult{Name: dataPage["name"], Menu: dataPage["menu"],
+		Value: dataPage["value"], Conditions: dataPage["conditions"]}
 	return nil
 }
 
-func txPreMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func txPrePage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	timeNow := time.Now().Unix()
-	name := `NewMenu`
+	name := `NewPage`
 	if r.Method == `PUT` {
-		name = `EditMenu`
+		name = `EditPage`
 	}
 	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(name), timeNow, data.sess.Get(`citizen`).(int64),
 		data.sess.Get(`state`).(int64))
-	forsign += fmt.Sprintf(`%d,%s,%s,%s`, data.params[`global`].(int64), data.params[`name`].(string),
-		data.params[`value`].(string), data.params[`conditions`].(string))
+	forsign += fmt.Sprintf(`%d,%s,%s,%s,%s`, data.params[`global`].(int64), data.params[`name`].(string),
+		data.params[`value`].(string), data.params[`menu`].(string), data.params[`conditions`].(string))
 	data.result = &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign}
 	return nil
 }
 
-func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	txName := `NewMenu`
+func txPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	txName := `NewPage`
 	if r.Method == `PUT` {
-		txName = `EditMenu`
+		txName = `EditPage`
 	}
 	txTime := converter.StrToInt64(data.params[`time`].(string))
 	sign := make([]byte, 0)
@@ -83,6 +85,7 @@ func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	global := []byte(converter.Int64ToStr(data.params[`global`].(int64)))
 	name := []byte(data.params[`name`].(string))
 	value := []byte(data.params[`value`].(string))
+	menu := []byte(data.params[`menu`].(string))
 	conditions := []byte(data.params[`conditions`].(string))
 
 	idata = converter.DecToBin(utils.TypeInt(txName), 1)
@@ -93,6 +96,7 @@ func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	idata = append(idata, converter.EncodeLengthPlusData(global)...)
 	idata = append(idata, converter.EncodeLengthPlusData(name)...)
 	idata = append(idata, converter.EncodeLengthPlusData(value)...)
+	idata = append(idata, converter.EncodeLengthPlusData(menu)...)
 	idata = append(idata, converter.EncodeLengthPlusData(conditions)...)
 	idata = append(idata, binSignatures...)
 
@@ -130,85 +134,3 @@ func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	return nil
 }
-
-/*
-func prePutMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	timeNow := time.Now().Unix()
-	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(`EditMenu`), timeNow, data.sess.Get(`citizen`).(int64),
-		data.sess.Get(`state`).(int64))
-	forsign += fmt.Sprintf(`%d,%s,%s,%s`, data.params[`global`].(int64), data.params[`name`].(string),
-		data.params[`value`].(string), data.params[`conditions`].(string))
-	data.result = &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign}
-	return nil
-}
-
-func putMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
-	txTime := converter.StrToInt64(data.params[`time`].(string))
-	sign := make([]byte, 0)
-	signature := data.params[`signature`].([]byte)
-	if len(signature) > 0 {
-		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
-	}
-	if len(sign) == 0 {
-		return errorAPI(w, "signature is empty", http.StatusConflict)
-	}
-	binSignatures := converter.EncodeLengthPlusData(sign)
-
-	userID := data.sess.Get(`wallet`).(int64)
-	stateID := data.sess.Get(`state`).(int64)
-
-	var (
-		idata []byte
-	)
-	global := []byte(converter.Int64ToStr(data.params[`global`].(int64)))
-	name := []byte(data.params[`name`].(string))
-	value := []byte(data.params[`value`].(string))
-	conditions := []byte(data.params[`conditions`].(string))
-
-	idata = converter.DecToBin(13, 1)
-
-	idata = append(idata, converter.DecToBin(txTime, 4)...)
-	idata = append(idata, converter.EncodeLengthPlusData(userID)...)
-	idata = append(idata, converter.EncodeLengthPlusData(stateID)...)
-	idata = append(idata, converter.EncodeLengthPlusData(global)...)
-	idata = append(idata, converter.EncodeLengthPlusData(name)...)
-	idata = append(idata, converter.EncodeLengthPlusData(value)...)
-	idata = append(idata, converter.EncodeLengthPlusData(conditions)...)
-	idata = append(idata, binSignatures...)
-
-	hash, err := crypto.Hash(idata)
-
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-
-	hash = converter.BinToHex(hash)
-	err = sql.DB.ExecSQL(`INSERT INTO transactions_status (
-				hash,
-				time,
-				type,
-				wallet_id,
-				citizen_id
-			)
-			VALUES (
-				[hex],
-				?,
-				?,
-				?,
-				?
-			)`, hash, time.Now().Unix(), 5, userID, userID)
-
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-
-	err = sql.DB.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, converter.BinToHex(idata))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-	data.result = &hashTx{Hash: string(hash)}
-
-	return nil
-}
-*/
