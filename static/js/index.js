@@ -1394,7 +1394,7 @@ function FormValidate(form, input, btn) {
 
 	form.find("." + input + ":visible").each(function () {
 		var val = $(this).val();
-		if (val == "") {
+		if (val == "" && $(this).prop("required") === true) {
 			i += 1;
 		}
 	});
