@@ -1637,8 +1637,8 @@ function getMapAddressSquare(elem, coords) {
 	}
 	
 	if (elem.val() === "" || elem.text() === "" || arraysEqual(coords, tempCoordsArea) === false) {
-		elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(2));
-		elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(2));
+		elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(0));
+		elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(0));
 	}
 	
 	tempCoordsArea = coords;
