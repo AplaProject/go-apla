@@ -21,25 +21,30 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // TxParser writes transactions into the queue
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
-
 	var err error
 	var fatalError string
+	var header *tx.Header
 	hashHex := converter.BinToHex(hash)
 	txType, walletID, citizenID := sql.GetTxTypeAndUserID(binaryTx)
-	if walletID == 0 && citizenID == 0 {
-		fatalError = "undefined walletID and citizenID"
-	} else {
-		p.BinaryData = binaryTx
-		err = p.ParseDataGate(false)
+	if txType > 127 || consts.IsStruct(int(txType)) {
+		if walletID == 0 && citizenID == 0 {
+			fatalError = "undefined walletId and citizenId"
+		}
 	}
+	p.BinaryData = binaryTx
+	p.TxBinaryData = binaryTx
+	header, err = p.ParseDataGate(false)
 
 	if err != nil || len(fatalError) > 0 {
 		p.DeleteQueueTx(hashHex) // удалим тр-ию из очереди
@@ -68,6 +73,13 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 			}
 		}
 	} else {
+		if !(txType > 127 || consts.IsStruct(int(txType))) {
+			if header == nil {
+				return utils.ErrInfo(errors.New("header is nil"))
+			}
+			walletID = header.StateID
+			citizenID = header.UserID
+		}
 
 		log.Debug("SELECT counter FROM transactions WHERE hex(hash) = ?", string(hashHex))
 		logging.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hashHex))
@@ -104,13 +116,11 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 			return utils.ErrInfo(err)
 		}
 	}
-
 	return nil
 }
 
 // DeleteQueueTx deletes a transaction from the queue
 func (p *Parser) DeleteQueueTx(hashHex []byte) error {
-
 	log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", hashHex)
 	err := p.ExecSQL("DELETE FROM queue_tx WHERE hex(hash) = ?", hashHex)
 	if err != nil {

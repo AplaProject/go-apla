@@ -18,56 +18,58 @@ package parser
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// NewAccountInit initializes NewAccount transaction
-func (p *Parser) NewAccountInit() error {
+type NewAccountParser struct {
+	*Parser
+	NewAccount *tx.NewAccount
+}
 
-	fields := []map[string]string{{"pub": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *NewAccountParser) Init() error {
+	newAccount := &tx.NewAccount{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, newAccount); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewAccount = newAccount
 	return nil
 }
 
-// NewAccountFront checks conditions of NewAccount transaction
-func (p *Parser) NewAccountFront() error {
-	p.PublicKeys = append(p.PublicKeys, p.TxMaps.Bytes["pub"])
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID,
-		p.TxStateID, hex.EncodeToString(p.TxMaps.Bytes["pub"]))
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+func (p *NewAccountParser) Validate() error {
+	p.PublicKeys = append(p.PublicKeys, p.NewAccount.PublicKey)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewAccount.ForSign(), p.NewAccount.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-
 	return nil
 }
 
-// NewAccount proceeds NewAccount transaction
-func (p *Parser) NewAccount() error {
-
-	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.TxMaps.Bytes["pub"])},
+func (p *NewAccountParser) Action() error {
+	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.NewAccount.PublicKey)},
 		"dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxCitizenID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	_, err = p.selectiveLoggingAndUpd([]string{"citizen_id", "amount"}, []interface{}{p.TxCitizenID, 0},
-		p.TxStateIDStr+"_accounts", nil, nil, true)
+		converter.UInt32ToStr(p.TxStateID)+"_accounts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// NewAccountRollback rollbacks NewAccount transaction
-func (p *Parser) NewAccountRollback() error {
+func (p *NewAccountParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p NewAccountParser) Header() *tx.Header {
+	return &p.NewAccount.Header
 }

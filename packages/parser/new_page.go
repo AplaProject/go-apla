@@ -18,74 +18,62 @@ package parser
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// NewPageInit initializes NewPage transaction
-func (p *Parser) NewPageInit() error {
+type NewPageParser struct {
+	*Parser
+	NewPage *tx.NewPage
+}
 
-	fields := []map[string]string{{"global": "string"}, {"name": "string"}, {"value": "string"}, {"menu": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *NewPageParser) Init() error {
+	newPage := &tx.NewPage{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, newPage); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewPage = newPage
 	return nil
 }
 
-// NewPageFront checks conditions of NewPage transaction
-func (p *Parser) NewPageFront() error {
-
-	err := p.generalCheck(`new_page`)
+func (p *NewPageParser) Validate() error {
+	err := p.generalCheck(`new_page`, &p.NewPage.Header, map[string]string{"conditions": p.NewPage.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	if strings.HasPrefix(string(p.TxMap["name"]), `sys-`) || strings.HasPrefix(string(p.TxMap["name"]), `app-`) {
+	if strings.HasPrefix(string(p.NewPage.Name), `sys-`) || strings.HasPrefix(string(p.NewPage.Name), `app-`) {
 		return fmt.Errorf(`The name cannot start with sys- or app-`)
 	}
-
-	// Check InputData
-	/*verifyData := map[string]string{"name": "string", "value": "string", "menu": "string", "conditions": "string"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	/*
-		Check conditions
-		...
-	*/
-
-	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["menu"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewPage.ForSign(), p.NewPage.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-
 	return nil
 }
 
-// NewPage proceeds NewPage transaction
-func (p *Parser) NewPage() error {
-
-	prefix := p.TxStateIDStr
-	if p.TxMaps.String["global"] == "1" {
-		prefix = "global"
-	}
-	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "menu", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["menu"], p.TxMaps.String["conditions"]}, prefix+"_pages", nil, nil, true)
+func (p *NewPageParser) Action() error {
+	prefix, err := GetTablePrefix(p.NewPage.Global, p.NewPage.Header.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "menu", "conditions"}, []interface{}{p.NewPage.Name, p.NewPage.Value, p.NewPage.Menu, p.NewPage.Conditions}, prefix+"_pages", nil, nil, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
-// NewPageRollback rollbacks NewPage transaction
-func (p *Parser) NewPageRollback() error {
+func (p *NewPageParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p NewPageParser) Header() *tx.Header {
+	return &p.NewPage.Header
 }

@@ -17,41 +17,36 @@
 package parser
 
 import (
-	"fmt"
-
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// EditLangInit initializes EditLang transaction
-func (p *Parser) EditLangInit() error {
+type EditLangParser struct {
+	*Parser
+	EditLang *tx.EditNewLang
+}
 
-	fields := []map[string]string{ /*{"global": "int64"},*/ {"name": "string"}, {"res": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *EditLangParser) Init() error {
+	editLang := &tx.EditNewLang{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, editLang); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditLang = editLang
 	return nil
 }
 
-// EditLangFront checks conditions of EditLang transaction
-func (p *Parser) EditLangFront() error {
-
-	err := p.generalCheck(`edit_lang`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
+func (p *EditLangParser) Validate() error {
+	err := p.generalCheck(`edit_lang`, &p.EditLang.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID,
-		/*p.TxMap["global"],*/ p.TxMap["name"], p.TxMap["res"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditLang.ForSign(), p.EditLang.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -64,24 +59,20 @@ func (p *Parser) EditLangFront() error {
 	return nil
 }
 
-// EditLang proceeds EditLang transaction
-func (p *Parser) EditLang() error {
-
-	/*	prefix := `global`
-		if p.TxMaps.Int64["global"] == 0 {
-			prefix = p.TxStateIDStr
-		}
-	*/
-	prefix := p.TxStateIDStr
-	_, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.TxMaps.String["res"]}, prefix+"_languages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+func (p *EditLangParser) Action() error {
+	prefix := converter.Int64ToStr(p.EditLang.Header.StateID)
+	_, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.EditLang.Trans}, prefix+"_languages", []string{"name"}, []string{p.EditLang.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	language.UpdateLang(int(p.TxStateID), p.TxMaps.String["name"], p.TxMaps.String["res"])
+	language.UpdateLang(int(p.EditLang.Header.StateID), p.EditLang.Name, p.EditLang.Trans)
 	return nil
 }
 
-// EditLangRollback rollbacks EditLang transaction
-func (p *Parser) EditLangRollback() error {
+func (p *EditLangParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p EditLangParser) Header() *tx.Header {
+	return &p.EditLang.Header
 }

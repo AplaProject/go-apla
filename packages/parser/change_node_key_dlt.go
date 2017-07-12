@@ -17,40 +17,41 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// ChangeNodeKeyDLTInit initializes ChangeNodeKeyDLT transaction
-func (p *Parser) ChangeNodeKeyDLTInit() error {
+type ChangeNodeKeyDLTParser struct {
+	*Parser
+	DLTChangeNodeKey *tx.DLTChangeNodeKey
+}
 
-	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *ChangeNodeKeyDLTParser) Init() error {
+	changeNodeKey := &tx.DLTChangeNodeKey{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, changeNodeKey); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["new_node_public_key"] = converter.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
-	p.TxMap["new_node_public_key"] = converter.BinToHex(p.TxMap["new_node_public_key"])
+	p.DLTChangeNodeKey = changeNodeKey
+	p.DLTChangeNodeKey.NewNodePublicKey = converter.BinToHex(p.DLTChangeNodeKey.NewNodePublicKey)
 	return nil
 }
 
-// ChangeNodeKeyDLTFront check conditions of ChangeNodeKeyDLT transaction
-func (p *Parser) ChangeNodeKeyDLTFront() error {
-
-	err := p.generalCheck(`change_node`)
+func (p *ChangeNodeKeyDLTParser) Validate() error {
+	err := p.generalCheck(`change_node`, &p.DLTChangeNodeKey.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	verifyData := map[string]string{"new_node_public_key": "public_key"}
+	verifyData := map[string][]interface{}{"public_key": []interface{}{p.DLTChangeNodeKey.PublicKey}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	txTime := p.TxTime
+	txTime := p.DLTChangeNodeKey.Header.Time
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
@@ -59,29 +60,27 @@ func (p *Parser) ChangeNodeKeyDLTFront() error {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["new_node_public_key"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	forSign := p.DLTChangeNodeKey.ForSign()
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.DLTChangeNodeKey.BinSignatures, false)
 	if err != nil || !CheckSignResult {
 		return p.ErrInfo("incorrect sign " + forSign)
 	}
 	return nil
 }
 
-// ChangeNodeKeyDLT proceeds ChangeNodeKeyDLT transaction
-func (p *Parser) ChangeNodeKeyDLT() error {
-
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{converter.HexToBin(p.TxMaps.Bytes["new_node_public_key"]), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
+func (p *ChangeNodeKeyDLTParser) Action() error {
+	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{converter.HexToBin(p.DLTChangeNodeKey.NewNodePublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.TxMaps.Bytes["new_node_public_key"]).Int64()
+	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.DLTChangeNodeKey.NewNodePublicKey).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockId}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
+		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -89,7 +88,10 @@ func (p *Parser) ChangeNodeKeyDLT() error {
 	return nil
 }
 
-// ChangeNodeKeyDLTRollback rollbacks ChangeNodeKeyDLT transaction
-func (p *Parser) ChangeNodeKeyDLTRollback() error {
+func (p *ChangeNodeKeyDLTParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p ChangeNodeKeyDLTParser) Header() *tx.Header {
+	return &p.DLTChangeNodeKey.Header
 }
