@@ -24,9 +24,11 @@ import (
 	"runtime/debug"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/session"
 	hr "github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type apiData struct {
@@ -77,6 +79,19 @@ func getPrefix(data *apiData) (prefix string) {
 		prefix = converter.Int64ToStr(data.sess.Get(`state`).(int64))
 	}
 	return
+}
+
+func sendEmbeddedTx(txType, userID int64, toSerialize interface{}) (*hashTx, error) {
+	var hash []byte
+	serializedData, err := msgpack.Marshal(toSerialize)
+	if err != nil {
+		return nil, err
+	}
+	if hash, err = sql.DB.SendTx(txType, userID,
+		append(converter.DecToBin(txType, 1), serializedData...)); err != nil {
+		return nil, err
+	}
+	return &hashTx{Hash: string(hash)}, nil
 }
 
 // DefaultHandler is a common handle function for api requests

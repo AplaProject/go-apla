@@ -53,11 +53,11 @@ func TestContract(t *testing.T) {
 			return
 		}
 		value = fmt.Sprintf(`contract %s {
-			conditions {
-				Println("Test")
-			}
-			action {}
-	}`, name)
+						conditions {
+							Println("Test")
+						}
+						action {}
+				}`, name)
 		form = url.Values{"value": {value}, "conditions": {`true`}, `global`: {glob.value}}
 
 		if err := putTx(`contract/`+ret[`id`].(string), &form); err != nil {

@@ -69,6 +69,7 @@ func Route(route *hr.Router) {
 	get(`balance/:wallet`, authWallet, balance)
 	get(`getuid`, getUID)
 	get(`txstatus/:hash`, authWallet, txstatus)
+	get(`smartcontract/:name`, authState, getSmartContract)
 	getOptional(`content/page/:page/:?global`, contentPage)
 	getOptional(`content/menu/:name/:?global`, contentMenu)
 	getOptional(`menu/:name/:?global`, getMenu)
@@ -80,6 +81,7 @@ func Route(route *hr.Router) {
 	postTx(`menu`, `name value conditions:string, global:int64`, txPreMenu, txMenu)
 	postTx(`page`, `name menu value conditions:string, global:int64`, txPrePage, txPage)
 	postTx(`contract`, `name value conditions:string, ?wallet global:int64`, txPreContract, txContract)
+	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
 	post(`sendegs`, `pubkey signature:hex, time recipient amount commission ?comment:string`, authWallet, sendEGS)
 

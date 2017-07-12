@@ -74,7 +74,7 @@ func sendRequest(rtype, url string, form *url.Values) (map[string]interface{}, e
 	if err != nil {
 		return nil, err
 	}
-	//	fmt.Println(`ANSWER`, resp.StatusCode, strings.TrimSpace(string(data)), `<<<`)
+	//fmt.Println(`ANSWER`, resp.StatusCode, strings.TrimSpace(string(data)), `<<<`)
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(`%d %s`, resp.StatusCode, strings.TrimSpace(string(data)))
 	}
@@ -161,7 +161,7 @@ func appendSign(ret map[string]interface{}, form *url.Values) error {
 }
 
 func waitTx(hash string) (int64, error) {
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 15; i++ {
 		ret, err := sendGet(`txstatus/`+hash, nil)
 		if err != nil {
 			return 0, err

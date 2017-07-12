@@ -22,9 +22,9 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 type contractResult struct {
@@ -120,62 +120,37 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if len(sign) == 0 {
 		return errorAPI(w, "signature is empty", http.StatusConflict)
 	}
-	binSignatures := converter.EncodeLengthPlusData(sign)
 
 	userID := data.sess.Get(`wallet`).(int64)
 	stateID := data.sess.Get(`state`).(int64)
+	txType := utils.TypeInt(txName)
 
-	var (
-		idata []byte
-	)
-	global := []byte(converter.Int64ToStr(data.params[`global`].(int64)))
-	name := []byte(data.params[`name`].(string))
-	value := []byte(data.params[`value`].(string))
-	conditions := []byte(data.params[`conditions`].(string))
+	var toSerialize interface{}
+	header := tx.Header{Type: int(txType), Time: txTime, UserID: userID, StateID: stateID,
+		PublicKey: []byte(`null`), BinSignatures: sign}
 
-	idata = converter.DecToBin(utils.TypeInt(txName), 1)
-
-	idata = append(idata, converter.DecToBin(txTime, 4)...)
-	idata = append(idata, converter.EncodeLengthPlusData(userID)...)
-	idata = append(idata, converter.EncodeLengthPlusData(stateID)...)
-	idata = append(idata, converter.EncodeLengthPlusData(global)...)
-	idata = append(idata, converter.EncodeLengthPlusData(name)...)
-	idata = append(idata, converter.EncodeLengthPlusData(value)...)
-	idata = append(idata, converter.EncodeLengthPlusData(conditions)...)
-	idata = append(idata, binSignatures...)
-
-	hash, err := crypto.Hash(idata)
-
+	if txName == `EditContract` {
+		toSerialize = tx.EditContract{
+			Header:     header,
+			Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+			Id:         data.params[`name`].(string),
+			Value:      data.params[`value`].(string),
+			Conditions: data.params[`conditions`].(string),
+		}
+	} else {
+		toSerialize = tx.NewContract{
+			Header:     header,
+			Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+			Name:       data.params[`name`].(string),
+			Value:      data.params[`value`].(string),
+			Conditions: data.params[`conditions`].(string),
+		}
+	}
+	hash, err := sendEmbeddedTx(txType, userID, toSerialize)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-
-	hash = converter.BinToHex(hash)
-	err = sql.DB.ExecSQL(`INSERT INTO transactions_status (
-				hash,
-				time,
-				type,
-				wallet_id,
-				citizen_id
-			)
-			VALUES (
-				[hex],
-				?,
-				?,
-				?,
-				?
-			)`, hash, time.Now().Unix(), 5, userID, userID)
-
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-
-	err = sql.DB.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, converter.BinToHex(idata))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-	data.result = &hashTx{Hash: string(hash)}
-
+	data.result = hash
 	return nil
 }
 
@@ -213,61 +188,32 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 	if len(sign) == 0 {
 		return errorAPI(w, "signature is empty", http.StatusConflict)
 	}
-	binSignatures := converter.EncodeLengthPlusData(sign)
-
 	userID := data.sess.Get(`wallet`).(int64)
 	stateID := data.sess.Get(`state`).(int64)
+	txType := utils.TypeInt(txName)
 
 	var (
-		idata  []byte
-		global string
+		global      string
+		toSerialize interface{}
 	)
 	if _, ok := data.params[`global`]; ok {
 		global = `1`
 	} else {
 		global = `0`
 	}
-	idata = converter.DecToBin(utils.TypeInt(txName), 1)
+	header := tx.Header{Type: int(txType), Time: txTime, UserID: userID, StateID: stateID,
+		PublicKey: []byte(`null`), BinSignatures: sign}
 
-	idata = append(idata, converter.DecToBin(txTime, 4)...)
-	idata = append(idata, converter.EncodeLengthPlusData(userID)...)
-	idata = append(idata, converter.EncodeLengthPlusData(stateID)...)
-	idata = append(idata, converter.EncodeLengthPlusData([]byte(global))...)
-	idata = append(idata, converter.EncodeLengthPlusData(id)...)
-	idata = append(idata, binSignatures...)
-
-	hash, err := crypto.Hash(idata)
-
+	toSerialize = tx.ActivateContract{
+		Header: header,
+		Global: global,
+		Id:     id,
+	}
+	hash, err := sendEmbeddedTx(txType, userID, toSerialize)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-
-	hash = converter.BinToHex(hash)
-	err = sql.DB.ExecSQL(`INSERT INTO transactions_status (
-				hash,
-				time,
-				type,
-				wallet_id,
-				citizen_id
-			)
-			VALUES (
-				[hex],
-				?,
-				?,
-				?,
-				?
-			)`, hash, time.Now().Unix(), 5, userID, userID)
-
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-
-	err = sql.DB.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, converter.BinToHex(idata))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-	data.result = &hashTx{Hash: string(hash)}
-
+	data.result = hash
 	return nil
 }
 
