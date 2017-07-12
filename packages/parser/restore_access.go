@@ -17,34 +17,38 @@
 package parser
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// RestoreAccessInit initializes RestoreAccess transaction
-func (p *Parser) RestoreAccessInit() error {
+type RestoreAccessParser struct {
+	*Parser
+	RestoreAccess *tx.RestoreAccess
+}
 
-	fields := []map[string]string{{"state_id": "int64"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *RestoreAccessParser) Init() error {
+	restoreAccess := &tx.RestoreAccess{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, restoreAccess); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.RestoreAccess = restoreAccess
 	return nil
 }
 
-// RestoreAccessFront checks conditions of RestoreAccess transaction
-func (p *Parser) RestoreAccessFront() error {
-	err := p.generalCheck(`system_restore_access`)
+func (p *RestoreAccessParser) Validate() error {
+	err := p.generalCheck(`system_restore_access`, &p.RestoreAccess.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"state_id": "int64"}
+	verifyData := map[string][]interface{}{"int64": []interface{}{p.RestoreAccess.StateID}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -54,7 +58,7 @@ func (p *Parser) RestoreAccessFront() error {
 		return p.ErrInfo("p.TxWalletID != consts.RECOVERY_ADDRESS")
 	}
 
-	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.TxMaps.Int64["state_id"]).Int64()
+	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.RestoreAccess.StateID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -82,8 +86,7 @@ func (p *Parser) RestoreAccessFront() error {
 		return p.ErrInfo("CHANGE_KEY_PERIOD")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["state_id"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccess.ForSign(), p.RestoreAccess.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -94,9 +97,8 @@ func (p *Parser) RestoreAccessFront() error {
 	return nil
 }
 
-// RestoreAccess proceeds RestoreAccess transaction
-func (p *Parser) RestoreAccess() error {
-	citizenID, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.TxMaps.Int64["state_id"]).String()
+func (p *RestoreAccessParser) Action() error {
+	citizenID, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.RestoreAccess.StateID).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -109,14 +111,17 @@ func (p *Parser) RestoreAccess() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.TxMaps.Int64["state_id"])}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccess.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// RestoreAccessRollback rollbacks RestoreAccess transaction
-func (p *Parser) RestoreAccessRollback() error {
+func (p *RestoreAccessParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p *RestoreAccessParser) Header() *tx.Header {
+	return &p.RestoreAccess.Header
 }

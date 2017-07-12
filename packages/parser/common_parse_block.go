@@ -38,21 +38,21 @@ func (p *Parser) ParseInit() error {
 // ParseBlock starts to parse a block
 func (p *Parser) ParseBlock() error {
 	/*
-		Заголовок // Heading
-		TYPE (0-блок, 1-тр-я)     1 // TYPE (0-block, 1-transaction)     1
-		BLOCK_ID   				       4
-		TIME       					       4
-		WALLET_ID                         1-8
-		state_id                         1
-		SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-// from 128 to 512 bytes. Signaature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-Далее - тело блока (Тр-ии) 
-// Futher - the body of a block (transaction)
+				Заголовок // Heading
+				TYPE (0-блок, 1-тр-я)     1 // TYPE (0-block, 1-transaction)     1
+				BLOCK_ID   				       4
+				TIME       					       4
+				WALLET_ID                         1-8
+				state_id                         1
+				SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+		// from 128 to 512 bytes. Signaature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+		Далее - тело блока (Тр-ии)
+		// Futher - the body of a block (transaction)
 	*/
 	p.BlockData = utils.ParseBlockHeader(&p.BinaryData)
 	log.Debug("%v", p.BlockData)
 
-	p.CurrentBlockID = p.BlockData.BlockId
+	p.CurrentBlockID = p.BlockData.BlockID
 
 	// Until then let it be. Get tables p_keys. then it is necessary to update only when you change tables
 	allTables, err := p.GetAllTables()

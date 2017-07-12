@@ -18,25 +18,31 @@ package parser
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// UpdFullNodesInit initializes UpdFullNodes transaction
-func (p *Parser) UpdFullNodesInit() error {
-	err := p.GetTxMaps([]map[string]string{{"sign": "bytes"}})
-	if err != nil {
+type UpdFullNodesParser struct {
+	*Parser
+	UpdFullNodes *tx.UpdFullNodes
+}
+
+func (p *UpdFullNodesParser) Init() error {
+	updFullNodes := &tx.UpdFullNodes{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, updFullNodes); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.UpdFullNodes = updFullNodes
 	return nil
 }
 
-// UpdFullNodesFront checks conditions of UpdFullNodes transaction
-func (p *Parser) UpdFullNodesFront() error {
-	err := p.generalCheck(`upd_full_nodes`) // undefined, cost=0
+func (p *UpdFullNodesParser) Validate() error {
+	err := p.generalCheck(`upd_full_nodes`, &p.UpdFullNodes.Header, map[string]string{}) // undefined, cost=0
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -46,7 +52,7 @@ func (p *Parser) UpdFullNodesFront() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	txTime := p.TxTime
+	txTime := p.UpdFullNodes.Header.Time
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
@@ -54,12 +60,11 @@ func (p *Parser) UpdFullNodesFront() error {
 		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
 	}
 
-	p.nodePublicKey, err = p.GetNodePublicKey(p.TxWalletID)
+	p.nodePublicKey, err = p.GetNodePublicKey(p.UpdFullNodes.UserID)
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, 0)
-	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, forSign, p.TxMap["sign"], true)
+	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -70,9 +75,7 @@ func (p *Parser) UpdFullNodesFront() error {
 	return nil
 }
 
-// UpdFullNodes proceeds UpdFullNodes transaction
-func (p *Parser) UpdFullNodes() error {
-
+func (p *UpdFullNodesParser) Action() error {
 	_, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.BlockData.Time}, "upd_full_nodes", []string{`update`}, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -94,7 +97,7 @@ func (p *Parser) UpdFullNodes() error {
 	log.Debug("data %v", data[0]["rb_id"])
 	// логируем их в одну запись JSON
 	// log them into the one record JSON
-	rbID, err := p.ExecSQLGetLastInsertID(`INSERT INTO rb_full_nodes (full_nodes_wallet_json, block_id, prev_rb_id) VALUES (?, ?, ?)`, "rb_full_nodes", string(jsonData), p.BlockData.BlockId, data[0]["rb_id"])
+	rbID, err := p.ExecSQLGetLastInsertID(`INSERT INTO rb_full_nodes (full_nodes_wallet_json, block_id, prev_rb_id) VALUES (?, ?, ?)`, "rb_full_nodes", string(jsonData), p.BlockData.BlockID, data[0]["rb_id"])
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -150,8 +153,7 @@ func (p *Parser) UpdFullNodes() error {
 	return nil
 }
 
-// UpdFullNodesRollback rollbacks UpdFullNodes transaction
-func (p *Parser) UpdFullNodesRollback() error {
+func (p *UpdFullNodesParser) Rollback() error {
 	err := p.selectiveRollback("upd_full_nodes", "", false)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -219,4 +221,8 @@ func (p *Parser) UpdFullNodesRollback() error {
 		return err
 	}
 	return nil
+}
+
+func (p *UpdFullNodesParser) Header() *tx.Header {
+	return &p.UpdFullNodes.Header
 }

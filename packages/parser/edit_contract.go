@@ -17,63 +17,52 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// EditContractInit initializes EditContract transaction
-func (p *Parser) EditContractInit() error {
+type EditContractParser struct {
+	*Parser
+	EditContract *tx.EditContract
+}
 
-	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *EditContractParser) Init() error {
+	editContract := &tx.EditContract{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, editContract); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditContract = editContract
 	return nil
 }
 
-// EditContractFront checks conditions of EditContract transaction
-func (p *Parser) EditContractFront() error {
-
-	err := p.generalCheck(`edit_contract`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// Check the system limits. You can not send more than X time a day this TX
-	// ...
-
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
+func (p *EditContractParser) Validate() error {
+	err := p.generalCheck(`edit_contract`, &p.EditContract.Header, map[string]string{"conditions": p.EditContract.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["id"], p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditContract.ForSign(), p.EditContract.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.EditContract.Global, p.EditContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	if len(p.EditContract.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.EditContract.Conditions), uint32(p.EditContract.Header.StateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.EditContract.Id).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -92,25 +81,24 @@ func (p *Parser) EditContractFront() error {
 	return nil
 }
 
-// EditContract proceeds EditContract transaction
-func (p *Parser) EditContract() error {
-
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+func (p *EditContractParser) Action() error {
+	prefix, err := GetTablePrefix(p.EditContract.Global, p.EditContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	item, err := p.OneRow(`SELECT id, active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+
+	item, err := p.OneRow(`SELECT id, active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.EditContract.Id).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	tblid := converter.StrToInt64(item[`id`])
 	active := item[`active`] == `1`
-	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, converter.StrToInt64(p.TxMaps.String["id"]))
+	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, converter.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_smart_contracts", []string{"id"}, []string{p.TxMaps.String["id"]}, true)
+	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditContract.Value, p.EditContract.Conditions}, prefix+"_smart_contracts", []string{"id"}, []string{p.EditContract.Id}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -124,7 +112,10 @@ func (p *Parser) EditContract() error {
 	return nil
 }
 
-// EditContractRollback rollbacks EditContract transaction
-func (p *Parser) EditContractRollback() error {
+func (p *EditContractParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p EditContractParser) Header() *tx.Header {
+	return &p.EditContract.Header
 }

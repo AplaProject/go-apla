@@ -129,7 +129,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		if err != nil {
 			return tableID, err
 		}
-		rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+		rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
 		if err != nil {
 			return tableID, err
 		}
@@ -199,7 +199,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 	}
 	if generalRollback {
-		err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tableID)
+		err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, tableID)
 		if err != nil {
 			return tableID, err
 		}
