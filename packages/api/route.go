@@ -22,41 +22,59 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 )
 
+func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
+	route.Handle(method, `/api/v1/`+pattern, DefaultHandler(processParams(pars), handler...))
+}
+
+func optionalRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
+	var url string
+	path := strings.Split(pattern, `/:?`)
+	for _, item := range path {
+		if len(url) > 0 {
+			url += `/:`
+		}
+		url += item
+		methodRoute(route, method, url, pars, handler...)
+	}
+}
+
 // Route sets routing pathes
 func Route(route *hr.Router) {
-	anyMethod := func(method, pattern, pars string, handler ...apiHandle) {
-		route.Handle(method, `/api/v1/`+pattern, DefaultHandler(processParams(pars), handler...))
-	}
 	get := func(pattern string, handler ...apiHandle) {
-		anyMethod(`GET`, pattern, ``, handler...)
+		optionalRoute(route, `GET`, pattern, ``, handler...)
 	}
 	post := func(pattern, params string, handler ...apiHandle) {
-		anyMethod(`POST`, pattern, params, handler...)
+		methodRoute(route, `POST`, pattern, params, handler...)
 	}
-	put := func(pattern, params string, handler ...apiHandle) {
+	/*	put := func(pattern, params string, handler ...apiHandle) {
 		anyMethod(`PUT`, pattern, params, handler...)
+	}*/
+	getOptional := func(url string, handler apiHandle) {
+		optionalRoute(route, `GET`, url, ``, authState, handler)
 	}
-	getGlobal := func(url string, handler apiHandle) {
-		get(url+`/:global`, authState, handler)
-		get(url, authState, handler)
+	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
+		optionalRoute(route, method, `prepare/`+pattern, pars, authState, preHandle)
+		if len(pars) > 0 {
+			pars = `,` + pars
+		}
+		optionalRoute(route, method, pattern, `signature:hex, time:string`+pars, authState, handle)
 	}
 	postTx := func(url string, params string, preHandle, handle apiHandle) {
-		post(`prepare/`+url, params, authState, preHandle)
-		post(url, `signature:hex, time:string, `+params, authState, handle)
+		anyTx(`POST`, url, params, preHandle, handle)
 	}
 	putTx := func(url string, params string, preHandle, handle apiHandle) {
-		put(`prepare/`+url, params, authState, preHandle)
-		put(url, `signature:hex, time:string, `+params, authState, handle)
+		anyTx(`PUT`, url, params, preHandle, handle)
 	}
 
 	get(`balance/:wallet`, authWallet, balance)
 	get(`getuid`, getUID)
 	get(`txstatus/:hash`, authWallet, txstatus)
-	getGlobal(`content/page/:page`, contentPage)
-	getGlobal(`content/menu/:name`, contentMenu)
-	getGlobal(`menu/:name`, getMenu)
-	getGlobal(`page/:name`, getPage)
-	getGlobal(`contract/:id`, getContract)
+	getOptional(`content/page/:page/:?global`, contentPage)
+	getOptional(`content/menu/:name/:?global`, contentMenu)
+	getOptional(`menu/:name/:?global`, getMenu)
+	getOptional(`page/:name/:?global`, getPage)
+	getOptional(`contract/:id/:?global`, getContract)
+	getOptional(`contractlist/:?limit/:?offset/:?global`, contractList)
 
 	post(`login`, `pubkey signature:hex,?state:int64`, login)
 	postTx(`menu`, `name value conditions:string, global:int64`, txPreMenu, txMenu)
@@ -65,6 +83,7 @@ func Route(route *hr.Router) {
 	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
 	post(`sendegs`, `pubkey signature:hex, time recipient amount commission ?comment:string`, authWallet, sendEGS)
 
+	putTx(`activatecontract/:id/:?global`, ``, txPreActivateContract, txActivateContract)
 	putTx(`contract/:id`, `value conditions:string, global:int64`, txPreContract, txContract)
 	putTx(`menu/:name`, `value conditions:string, global:int64`, txPreMenu, txMenu)
 	putTx(`page/:name`, `menu value conditions:string, global:int64`, txPrePage, txPage)

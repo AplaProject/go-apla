@@ -1601,7 +1601,7 @@ function InitMobileTable() {
 }
 function autoUpdate(id, period) {
 	var body = $("#auto" + id + "body").html();
-	if (body)
+	if (body && GKey.StateId) {
 		$.post('template?page=body', { body: body },
 			function (data) {
 				if (data == '') {
@@ -1612,6 +1612,7 @@ function autoUpdate(id, period) {
 					setTimeout(function () { autoUpdate(id, period); }, period * 1000);
 				}
 			}, "html");
+	}
 }
 
 var tempCoordsAddress;
@@ -1623,7 +1624,7 @@ function getMapAddress(elem, coords) {
 			elem.val(address);
 			elem.text(address);
 		}
-		
+
 		tempCoordsAddress = coords;
 	});
 }
@@ -1631,16 +1632,16 @@ function getMapAddress(elem, coords) {
 function getMapAddressSquare(elem, coords) {
 	var area = [];
 	coords = coords.cords;
-	
+
 	for (i = 0; i < coords.length; i++) {
 		area.push(new google.maps.LatLng(coords[i][0], coords[i][1]));
 	}
-	
+
 	if (elem.val() === "" || elem.text() === "" || arraysEqual(coords, tempCoordsArea) === false) {
 		elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(0));
 		elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(0));
 	}
-	
+
 	tempCoordsArea = coords;
 }
 

@@ -36,14 +36,33 @@ type contractResult struct {
 	Conditions string `json:"conditions"`
 }
 
-func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var err error
-	id := data.params[`id`].(string)
+type contractItem struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Active string `json:"active"`
+	Wallet string `json:"wallet"`
+}
+
+type contractListResult struct {
+	Count string         `json:"count"`
+	List  []contractItem `json:"list"`
+}
+
+func checkID(data *apiData) (id string, err error) {
+	id = data.params[`id`].(string)
 	if id[0] > '9' {
 		id, err = sql.DB.Single(`SELECT id FROM "`+getPrefix(data)+`_smart_contracts" WHERE name = ?`, id).String()
-		if len(id) == 0 {
-			return errorAPI(w, `incorrect id of the contract`, http.StatusBadRequest)
+		if err == nil && len(id) == 0 {
+			err = fmt.Errorf(`incorrect id %s of the contract`, data.params[`id`].(string))
 		}
+	}
+	return
+}
+
+func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	id, err := checkID(data)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	dataContract, err := sql.DB.OneRow(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" WHERE id = ?`, id).String()
 	if err != nil {
@@ -81,7 +100,11 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	if r.Method == `PUT` {
 		txName = `EditContract`
-		data.params[`name`] = data.params[`id`].(string)
+		id, err := checkID(data)
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusBadRequest)
+		}
+		data.params[`name`] = id
 	} else {
 		txName = `NewContract`
 		if data.params[`wallet`].(int64) > 0 {
@@ -153,5 +176,130 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	data.result = &hashTx{Hash: string(hash)}
 
+	return nil
+}
+
+func txPreActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	var global int64
+	id, err := checkID(data)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
+	}
+	timeNow := time.Now().Unix()
+	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(`ActivateContract`), timeNow, data.sess.Get(`citizen`).(int64),
+		data.sess.Get(`state`).(int64))
+	if _, ok := data.params[`global`]; ok {
+		global = 1
+	}
+	forsign += fmt.Sprintf(`%d,%s`, global, id)
+	data.result = &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign}
+	return nil
+}
+
+func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+
+	txName := `ActivateContract`
+	fmt.Println(`Activate`, data.params)
+	id, err := checkID(data)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
+	}
+	txTime := converter.StrToInt64(data.params[`time`].(string))
+	sign := make([]byte, 0)
+	signature := data.params[`signature`].([]byte)
+	if len(signature) > 0 {
+		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
+	}
+	if len(sign) == 0 {
+		return errorAPI(w, "signature is empty", http.StatusConflict)
+	}
+	binSignatures := converter.EncodeLengthPlusData(sign)
+
+	userID := data.sess.Get(`wallet`).(int64)
+	stateID := data.sess.Get(`state`).(int64)
+
+	var (
+		idata  []byte
+		global string
+	)
+	if _, ok := data.params[`global`]; ok {
+		global = `1`
+	} else {
+		global = `0`
+	}
+	idata = converter.DecToBin(utils.TypeInt(txName), 1)
+
+	idata = append(idata, converter.DecToBin(txTime, 4)...)
+	idata = append(idata, converter.EncodeLengthPlusData(userID)...)
+	idata = append(idata, converter.EncodeLengthPlusData(stateID)...)
+	idata = append(idata, converter.EncodeLengthPlusData([]byte(global))...)
+	idata = append(idata, converter.EncodeLengthPlusData(id)...)
+	idata = append(idata, binSignatures...)
+
+	hash, err := crypto.Hash(idata)
+
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+
+	hash = converter.BinToHex(hash)
+	err = sql.DB.ExecSQL(`INSERT INTO transactions_status (
+				hash,
+				time,
+				type,
+				wallet_id,
+				citizen_id
+			)
+			VALUES (
+				[hex],
+				?,
+				?,
+				?,
+				?
+			)`, hash, time.Now().Unix(), 5, userID, userID)
+
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+
+	err = sql.DB.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, converter.BinToHex(idata))
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	data.result = &hashTx{Hash: string(hash)}
+
+	return nil
+}
+
+func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
+
+	limit := -1
+	if val, ok := data.params[`limit`]; ok {
+		limit = converter.StrToInt(val.(string))
+	}
+	outList := make([]contractItem, 0)
+	count, err := sql.DB.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_smart_contracts"`).String()
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+
+	if limit != 0 {
+		list, err := sql.DB.GetAll(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" order by id`, limit)
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusConflict)
+		}
+
+		for _, val := range list {
+			var wallet, active string
+			if val[`wallet_id`] != `NULL` {
+				wallet = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
+			}
+			if val[`active`] != `NULL` {
+				active = `1`
+			}
+			outList = append(outList, contractItem{ID: val[`id`], Name: val[`name`], Wallet: wallet, Active: active})
+		}
+	}
+	data.result = &contractListResult{Count: count, List: outList}
 	return nil
 }

@@ -766,7 +766,7 @@ func Include(vars *map[string]string, pars ...string) string {
 			}
 		}
 	}
-	params[`norow`] = `1`
+	// params[`norow`] = `1`
 	//	page := (*vars)[`page`]
 	out, err := CreateHTMLFromTemplate(pars[0], converter.StrToInt64((*vars)[`citizen`]), converter.StrToInt64((*vars)[`state_id`]),
 		&params)
