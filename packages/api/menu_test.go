@@ -38,7 +38,7 @@ func TestMenu(t *testing.T) {
 		t.Error(fmt.Errorf(`empty get menu`))
 		return
 	}
-	for _, glob := range []global{{``, `0`}, {`/global`, `1`}} {
+	for _, glob := range []global{{`?global=0`, `0`}, {`?global=1`, `1`}} {
 		value := `MenuItem(Test,test)`
 
 		form := url.Values{"name": {name}, "value": {value},

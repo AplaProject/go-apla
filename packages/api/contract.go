@@ -139,15 +139,11 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var global int64
 	id, err := checkID(data)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
-	if _, ok := data.params[`global`]; ok {
-		global = 1
-	}
-	data.result = getForSign(`ActivateContract`, data, fmt.Sprintf(`%d,%s`, global, id))
+	data.result = getForSign(`ActivateContract`, data, fmt.Sprintf(`%d,%s`, data.params[`global`].(int64), id))
 	return nil
 }
 
@@ -163,18 +159,11 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 
-	var (
-		global      string
-		toSerialize interface{}
-	)
-	if _, ok := data.params[`global`]; ok {
-		global = `1`
-	} else {
-		global = `0`
-	}
+	var toSerialize interface{}
+
 	toSerialize = tx.ActivateContract{
 		Header: header,
-		Global: global,
+		Global: converter.Int64ToStr(data.params[`global`].(int64)),
 		Id:     id,
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
@@ -187,9 +176,11 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 
 func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
-	limit := -1
-	if val, ok := data.params[`limit`]; ok {
-		limit = converter.StrToInt(val.(string))
+	limit := int(data.params[`limit`].(int64))
+	if limit == 0 {
+		limit = 25
+	} else if limit < 0 {
+		limit = -1
 	}
 	outList := make([]contractItem, 0)
 	count, err := sql.DB.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_smart_contracts"`).String()
@@ -197,22 +188,21 @@ func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 
-	if limit != 0 {
-		list, err := sql.DB.GetAll(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" order by id`, limit)
-		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusConflict)
-		}
+	list, err := sql.DB.GetAll(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" order by id`+
+		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
 
-		for _, val := range list {
-			var wallet, active string
-			if val[`wallet_id`] != `NULL` {
-				wallet = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
-			}
-			if val[`active`] != `NULL` {
-				active = `1`
-			}
-			outList = append(outList, contractItem{ID: val[`id`], Name: val[`name`], Wallet: wallet, Active: active})
+	for _, val := range list {
+		var wallet, active string
+		if val[`wallet_id`] != `NULL` {
+			wallet = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
 		}
+		if val[`active`] != `NULL` {
+			active = `1`
+		}
+		outList = append(outList, contractItem{ID: val[`id`], Name: val[`name`], Wallet: wallet, Active: active})
 	}
 	data.result = &contractListResult{Count: count, List: outList}
 	return nil

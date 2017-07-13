@@ -31,7 +31,7 @@ func TestContract(t *testing.T) {
 		return
 	}
 	name := randName(`cnt`)
-	for _, glob := range []global{{``, `0`}, {`/global`, `1`}} {
+	for _, glob := range []global{{``, `0`}, {`?global=1`, `1`}} {
 		value := fmt.Sprintf(`contract %s {
 			conditions {}
 			action {}
@@ -92,7 +92,7 @@ func TestContractList(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	for _, glob := range []string{``, `/10/0/global`} {
+	for _, glob := range []string{``, `?limit=10&global=1`} {
 		ret, err := sendGet(`contractlist`+glob, nil)
 		if err != nil {
 			t.Error(err)

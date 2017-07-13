@@ -40,11 +40,7 @@ func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if page == `body` {
 		params[`autobody`] = r.FormValue("body")
 	}
-	if _, ok := data.params[`global`]; ok {
-		params[`global`] = `1`
-	} else {
-		params[`global`] = `0`
-	}
+	params[`global`] = converter.Int64ToStr(data.params[`global`].(int64))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	tpl, err := template.CreateHTMLFromTemplate(page, data.sess.Get(`citizen`).(int64),
 		data.sess.Get(`state`).(int64), &params)
@@ -64,6 +60,7 @@ func contentMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	params := make(map[string]string)
 	params[`state_id`] = converter.Int64ToStr(data.sess.Get(`state`).(int64))
+	params[`global`] = converter.Int64ToStr(data.params[`global`].(int64))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	if len(menu) > 0 {
 		menu = language.LangMacro(textproc.Process(menu, &params), int(data.sess.Get(`state`).(int64)), params[`accept_lang`]) +

@@ -36,7 +36,7 @@ func TestContent(t *testing.T) {
 		t.Error(fmt.Errorf(`empty page`))
 		return
 	}
-	ret, err = sendGet(`content/page/government/global`, nil)
+	ret, err = sendGet(`content/page/government?global=1`, nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -54,7 +54,7 @@ func TestContent(t *testing.T) {
 		t.Error(fmt.Errorf(`empty menu`))
 		return
 	}
-	ret, err = sendGet(`content/menu/government/global`, nil)
+	ret, err = sendGet(`content/menu/government?global=1`, nil)
 	if err != nil {
 		t.Error(err)
 		return

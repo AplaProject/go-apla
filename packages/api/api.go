@@ -76,7 +76,7 @@ func errorAPI(w http.ResponseWriter, msg string, code int) error {
 }
 
 func getPrefix(data *apiData) (prefix string) {
-	if _, ok := data.params[`global`]; ok {
+	if glob, ok := data.params[`global`].(int64); ok && glob > 0 {
 		prefix = `global`
 	} else {
 		prefix = converter.Int64ToStr(data.sess.Get(`state`).(int64))
@@ -93,12 +93,8 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 			publicKey = publicKey[lenpub-64:]
 		}
 	}
-	sign := make([]byte, 0)
 	signature := data.params[`signature`].([]byte)
-	if len(signature) > 0 {
-		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
-	}
-	if len(sign) == 0 {
+	if len(signature) == 0 {
 		return tx.Header{}, fmt.Errorf("signature is empty")
 	}
 	var stateID int64
@@ -107,7 +103,8 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		stateID = data.sess.Get(`state`).(int64)
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		UserID: userID, StateID: stateID, PublicKey: publicKey, BinSignatures: sign}, nil
+		UserID: userID, StateID: stateID, PublicKey: publicKey,
+		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
 func getForSign(txName string, data *apiData, append string) *forSign {

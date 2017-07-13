@@ -30,7 +30,7 @@ func TestPage(t *testing.T) {
 	}
 	name := randName(`page`)
 	menu := `government`
-	for _, glob := range []global{{``, `0`}, {`/global`, `1`}} {
+	for _, glob := range []global{{``, `0`}, {`?global=1`, `1`}} {
 		value := `P(test,test paragraph)`
 
 		form := url.Values{"name": {name}, "value": {value},
