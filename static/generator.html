@@ -48,7 +48,7 @@
 				<li class="nav-header">
 					<i class="fa fa-plus"></i> GRID SYSTEM
 				</li>
-				<li style="display: list-item;" class="rows">
+				<li>
 					<div class="lyrow col-md-6">
 						<span class="configuration">
 							<div class="drag column"></div>
@@ -98,7 +98,7 @@
 				</li>
 				<li>
 					<div class="lyrow">
-						<span class="configuration">
+						<span class="configuration" contenteditable="false">
 							<div class="drag">New Panel</div>
 							<span class="settings">
 								<ul class="dropdown-menu">
@@ -133,7 +133,7 @@
 							<div class="column">
 								<div class="panel panel-default" data-sweet-alert="">
 									<div class="panel-heading" contenteditable="true">Hello, world!</div>
-									<div class="panel-body" contenteditable="true">
+									<div class="panel-body">
 										<p>This is a template for a simple marketing or informational website.</p>
 										<p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
 										<p>Use it as a starting point to create something more unique.</p>
@@ -150,11 +150,17 @@
 						</div>
 					</div>
 				</li>
+			</ul>
+			<ul class="nav nav-list accordion-group">
+				<li class="nav-header">
+					<i class="fa fa-plus"></i> Elements
+				</li>
 				<li>
-					<div class="box">
-						<span class="configuration">
+					<div class="box" egaas-class="table">
+						<span class="configuration" contenteditable="false">
 							<div class="drag">New table</div>
-							<span class="settings">
+							<span class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
 								<ul class="dropdown-menu">
 									<li class="styles">
 										<a class="submenu" href="#">Classes</a>
@@ -169,6 +175,8 @@
 											</li>
 										</ul>
 									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
 								</ul>
 							</span>
 						</span>
@@ -207,6 +215,120 @@
 									  </tbody>
 								   </table>
 								</div>
+							</div>
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="box" egaas-class="button">
+						<span class="configuration" contenteditable="false">
+							<div class="drag">New button</div>
+							<span class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Styles</a>
+												<ul class="dropdown-menu">
+													<li><a href="#" rel="">Default</a></li>
+													<li class="active"><a href="#" rel="btn-primary">Primary</a></li>
+													<li><a href="#" rel="btn-success">Success</a></li>
+													<li><a href="#" rel="btn-info">Info</a></li>
+													<li><a href="#" rel="btn-warning">Warning</a></li>
+													<li><a href="#" rel="btn-danger">Danger</a></li>
+													<li><a href="#" rel="btn-inverse">Inverse</a></li>
+													<li><a href="#" rel="btn-green">Green</a></li>
+													<li><a href="#" rel="btn-purple">Purple</a></li>
+													<li><a href="#" rel="btn-pink">Pink</a></li>
+													<li><a href="#" rel="btn-link">Link</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Types</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="btn-outline">Outline</a></li>
+													<li><a href="#" rel="btn-oval">Oval</a></li>
+													<li><a href="#" rel="btn-pill-left">Pill left</a></li>
+													<li><a href="#" rel="btn-pill-right">Pill right</a></li>
+													<li><a href="#" rel="btn-square">Square</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Size</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="">Default</a></li>
+													  <li><a href="#" rel="btn-lg">Large</a></li>
+													  <li><a href="#" rel="btn-sm">Small</a></li>
+													  <li><a href="#" rel="btn-xs">Extra small</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li><a class="toggle" href="#" rel="btn-block">Block</a></li>
+													<li><a class="toggle" href="#" rel="disabled">Disabled</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</span>
+						</span>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<button class="btn btn-primary" type="button" contenteditable="true">Button</button>
+							</div>
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="box" egaas-class="input">
+						<span class="configuration" contenteditable="false">
+							<div class="drag">New input</div>
+							<span class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Types</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="form-control-rounded">Rounded</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Size</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="">Default</a></li>
+													  <li><a href="#" rel="input-lg">Large</a></li>
+													  <li><a href="#" rel="input-sm">Small</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li><a class="toggle" href="#" rel="disabled">Disabled</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</span>
+						</span>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<input class="form-control" type="text">
 							</div>
 						</div>
 					</div>
@@ -252,7 +374,7 @@
 					<div class="column">
 						<div class="panel panel-info" data-sweet-alert="">
 							<div class="panel-heading" contenteditable="true">Hello, world!</div>
-							<div class="panel-body" contenteditable="true">
+							<div class="panel-body">
 								<p>This is a template for a simple marketing or informational website.</p>
 								<p> It includes a large callout called the hero unit and three supporting pieces of content.</p>
 								<p>Use it as a starting point to create something more unique.</p>

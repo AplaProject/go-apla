@@ -1580,7 +1580,7 @@ function InitMobileTable() {
 				}
 				title.addClass("ui-table-title");
 			});
-			if (_this.hasClass("ui-table")) {
+			if (_this.hasClass("ui-table") && !(_this.closest("table").parent().attr("egaas-id") || _this.closest(".box").hasClass("ui-draggable"))) {
 				_this.closest("table").table("refresh").trigger("create");
 				//console.log('reload table');
 			} else {
