@@ -19,10 +19,8 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
@@ -86,12 +84,9 @@ func txPreContract(w http.ResponseWriter, r *http.Request, data *apiData) error 
 			data.params[par] = fmt.Sprintf(`%s#%d`, data.params[par].(string), data.params[`wallet`].(int64))
 		}
 	}
-	timeNow := time.Now().Unix()
-	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(name), timeNow, data.sess.Get(`citizen`).(int64),
-		data.sess.Get(`state`).(int64))
-	forsign += fmt.Sprintf(`%d,%v,%s,%s`, data.params[`global`].(int64), data.params[par].(string),
+	forsign := fmt.Sprintf(`%d,%v,%s,%s`, data.params[`global`].(int64), data.params[par].(string),
 		data.params[`value`].(string), data.params[`conditions`].(string))
-	data.result = &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign}
+	data.result = getForSign(name, data, forsign)
 	return nil
 }
 
@@ -111,23 +106,12 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			data.params[`name`] = fmt.Sprintf(`%s#%d`, data.params[`name`].(string), data.params[`wallet`].(int64))
 		}
 	}
-	txTime := converter.StrToInt64(data.params[`time`].(string))
-	sign := make([]byte, 0)
-	signature := data.params[`signature`].([]byte)
-	if len(signature) > 0 {
-		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
+	header, err := getHeader(txName, data)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-	if len(sign) == 0 {
-		return errorAPI(w, "signature is empty", http.StatusConflict)
-	}
-
-	userID := data.sess.Get(`wallet`).(int64)
-	stateID := data.sess.Get(`state`).(int64)
-	txType := utils.TypeInt(txName)
 
 	var toSerialize interface{}
-	header := tx.Header{Type: int(txType), Time: txTime, UserID: userID, StateID: stateID,
-		PublicKey: []byte(`null`), BinSignatures: sign}
 
 	if txName == `EditContract` {
 		toSerialize = tx.EditContract{
@@ -146,7 +130,7 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			Conditions: data.params[`conditions`].(string),
 		}
 	}
-	hash, err := sendEmbeddedTx(txType, userID, toSerialize)
+	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
@@ -160,37 +144,24 @@ func txPreActivateContract(w http.ResponseWriter, r *http.Request, data *apiData
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
-	timeNow := time.Now().Unix()
-	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(`ActivateContract`), timeNow, data.sess.Get(`citizen`).(int64),
-		data.sess.Get(`state`).(int64))
 	if _, ok := data.params[`global`]; ok {
 		global = 1
 	}
-	forsign += fmt.Sprintf(`%d,%s`, global, id)
-	data.result = &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign}
+	data.result = getForSign(`ActivateContract`, data, fmt.Sprintf(`%d,%s`, global, id))
 	return nil
 }
 
 func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	txName := `ActivateContract`
-	fmt.Println(`Activate`, data.params)
 	id, err := checkID(data)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
-	txTime := converter.StrToInt64(data.params[`time`].(string))
-	sign := make([]byte, 0)
-	signature := data.params[`signature`].([]byte)
-	if len(signature) > 0 {
-		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
+	header, err := getHeader(txName, data)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-	if len(sign) == 0 {
-		return errorAPI(w, "signature is empty", http.StatusConflict)
-	}
-	userID := data.sess.Get(`wallet`).(int64)
-	stateID := data.sess.Get(`state`).(int64)
-	txType := utils.TypeInt(txName)
 
 	var (
 		global      string
@@ -201,15 +172,12 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 	} else {
 		global = `0`
 	}
-	header := tx.Header{Type: int(txType), Time: txTime, UserID: userID, StateID: stateID,
-		PublicKey: []byte(`null`), BinSignatures: sign}
-
 	toSerialize = tx.ActivateContract{
 		Header: header,
 		Global: global,
 		Id:     id,
 	}
-	hash, err := sendEmbeddedTx(txType, userID, toSerialize)
+	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}

@@ -22,9 +22,12 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/astaxie/beego/session"
 	hr "github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
@@ -81,14 +84,47 @@ func getPrefix(data *apiData) (prefix string) {
 	return
 }
 
-func sendEmbeddedTx(txType, userID int64, toSerialize interface{}) (*hashTx, error) {
+func getHeader(txName string, data *apiData) (tx.Header, error) {
+	publicKey := []byte("null")
+	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
+		publicKey = data.params[`pubkey`].([]byte)
+		lenpub := len(publicKey)
+		if lenpub > 64 {
+			publicKey = publicKey[lenpub-64:]
+		}
+	}
+	sign := make([]byte, 0)
+	signature := data.params[`signature`].([]byte)
+	if len(signature) > 0 {
+		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
+	}
+	if len(sign) == 0 {
+		return tx.Header{}, fmt.Errorf("signature is empty")
+	}
+	var stateID int64
+	userID := data.sess.Get(`wallet`).(int64)
+	if data.sess.Get(`state`) != nil {
+		stateID = data.sess.Get(`state`).(int64)
+	}
+	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
+		UserID: userID, StateID: stateID, PublicKey: publicKey, BinSignatures: sign}, nil
+}
+
+func getForSign(txName string, data *apiData, append string) *forSign {
+	timeNow := time.Now().Unix()
+	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(txName), timeNow, data.sess.Get(`citizen`).(int64),
+		data.sess.Get(`state`).(int64))
+	return &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign + append}
+}
+
+func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx, error) {
 	var hash []byte
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		return nil, err
 	}
-	if hash, err = sql.DB.SendTx(txType, userID,
-		append(converter.DecToBin(txType, 1), serializedData...)); err != nil {
+	if hash, err = sql.DB.SendTx(int64(txType), userID,
+		append(converter.DecToBin(int64(txType), 1), serializedData...)); err != nil {
 		return nil, err
 	}
 	return &hashTx{Hash: string(hash)}, nil

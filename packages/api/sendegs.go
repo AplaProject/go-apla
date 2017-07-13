@@ -22,9 +22,8 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 func preSendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -38,81 +37,29 @@ func preSendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func sendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	publicKey := data.params[`pubkey`].([]byte)
-	lenpub := len(publicKey)
-	if lenpub > 64 {
-		publicKey = publicKey[lenpub-64:]
-	} else if lenpub == 0 {
-		publicKey = []byte("null")
+	header, err := getHeader(`DLTTransfer`, data)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
+	header.StateID = 0
 
-	txTime := converter.StrToInt64(data.params[`time`].(string))
-	sign := make([]byte, 0)
-	signature := data.params[`signature`].([]byte)
-	if len(signature) > 0 {
-		sign = append(sign, converter.EncodeLengthPlusData(signature)...)
-	}
-	if len(sign) == 0 {
-		return errorAPI(w, "signature is empty", http.StatusConflict)
-	}
-	binSignatures := converter.EncodeLengthPlusData(sign)
+	var toSerialize interface{}
 
-	userID := data.sess.Get(`wallet`).(int64)
-	stateID := 0
-
-	var (
-		idata []byte
-	)
-	walletAddress := []byte(data.params[`recipient`].(string))
-	amount := []byte(data.params[`amount`].(string))
-	commission := []byte(data.params[`commission`].(string))
 	vcomment := data.params[`comment`].(string)
 	if len(vcomment) == 0 {
 		vcomment = "null"
 	}
-
-	comment := []byte(vcomment)
-	idata = converter.DecToBin(5, 1)
-	idata = append(idata, converter.DecToBin(txTime, 4)...)
-	idata = append(idata, converter.EncodeLengthPlusData(userID)...)
-	idata = append(idata, converter.EncodeLengthPlusData(stateID)...)
-	idata = append(idata, converter.EncodeLengthPlusData(walletAddress)...)
-	idata = append(idata, converter.EncodeLengthPlusData(amount)...)
-	idata = append(idata, converter.EncodeLengthPlusData(commission)...)
-	idata = append(idata, converter.EncodeLengthPlusData(comment)...)
-	idata = append(idata, converter.EncodeLengthPlusData(publicKey)...)
-	idata = append(idata, binSignatures...)
-
-	hash, err := crypto.Hash(idata)
-
+	toSerialize = tx.DLTTransfer{
+		Header:        header,
+		WalletAddress: data.params[`recipient`].(string),
+		Amount:        data.params[`amount`].(string),
+		Commission:    data.params[`commission`].(string),
+		Comment:       vcomment,
+	}
+	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-
-	hash = converter.BinToHex(hash)
-	err = sql.DB.ExecSQL(`INSERT INTO transactions_status (
-				hash,
-				time,
-				type,
-				wallet_id,
-				citizen_id
-			)
-			VALUES (
-				[hex],
-				?,
-				?,
-				?,
-				?
-			)`, hash, time.Now().Unix(), 5, userID, userID)
-
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-
-	err = sql.DB.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, converter.BinToHex(idata))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-	data.result = &hashTx{Hash: string(hash)}
+	data.result = hash
 	return nil
 }

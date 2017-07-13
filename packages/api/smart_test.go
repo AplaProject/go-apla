@@ -42,22 +42,5 @@ func TestSmartFields(t *testing.T) {
 		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, ret[`name`].(string)))
 		return
 	}
-	//fmt.Println(`RET`, ret)
-	/*	for _, glob := range []string{``, `/10/0/global`} {
-		ret, err := sendGet(`contractlist`+glob, nil)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		count := converter.StrToInt64(ret[`count`].(string))
-		if len(glob) == 0 {
-			if count == 0 {
-				t.Error(fmt.Errorf(`empty contract list`))
-			}
-		} else {
-			if count == 0 || len(ret[`list`].([]interface{})) == 0 || len(ret[`list`].([]interface{})) > 10 {
-				t.Error(fmt.Errorf(`wrong global contract list`))
-			}
-		}
-	}*/
+
 }
