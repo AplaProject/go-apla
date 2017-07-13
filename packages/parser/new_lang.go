@@ -101,7 +101,7 @@ func (p *Parser) NewLang() error {
 			if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, name).String(); err != nil {
 				return p.ErrInfo(err)
 			} else if len(exist) == 0 {
-				_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{name, res}, prefix+"_languages", nil, nil, true)
+				_, _, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{name, res}, prefix+"_languages", nil, nil, true)
 				if err != nil {
 					return p.ErrInfo(err)
 				}
@@ -109,7 +109,7 @@ func (p *Parser) NewLang() error {
 			}
 		}
 	} else {
-		_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.TxMaps.String["name"],
+		_, _, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.TxMaps.String["name"],
 			p.TxMaps.String["res"]}, prefix+"_languages", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)

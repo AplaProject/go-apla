@@ -120,7 +120,7 @@ func (p *Parser) EditStateParametersFront() error {
 // EditStateParameters proceeds EditStateParameters transaction
 func (p *Parser) EditStateParameters() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"],
+	_, _, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"],
 		p.TxMaps.String["conditions"]}, p.TxStateIDStr+"_state_parameters", []string{"name"},
 		[]string{p.TxMaps.String["name"]}, true)
 	if err != nil {

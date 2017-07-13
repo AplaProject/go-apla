@@ -73,7 +73,7 @@ func (p *Parser) NewMenu() error {
 	if p.TxMaps.String["global"] == "1" {
 		prefix = "global"
 	}
-	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_menu", nil, nil, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"]}, prefix+"_menu", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

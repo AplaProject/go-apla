@@ -624,54 +624,6 @@ func (p *Parser) GetContractLimit() (ret int64) {
 	return p.TxCost
 }
 
-/*func (p *Parser) CheckContractLimit(price int64) bool {
-	return true
-	var balance decimal.Decimal
-	fuel := p.GetFuel()
-	if fuel <= 0 {
-		return false
-	}
-	need := p.TxCost * fuel // need qEGS = F*fuel
-	//	wallet := p.TxWalletID
-	if p.TxStateID > 0 && p.TxCitizenID != 0 {
-		var needuser int64
-		rate, _ := utils.EGSRate(int64(p.TxStateID)) // money/egs
-		tableAccounts, _ := utils.StateParam(int64(p.TxStateID), `table_accounts`)
-		tableAccounts = lib.Escape(tableAccounts)
-		if len(tableAccounts) == 0 {
-			tableAccounts = `accounts`
-		}
-		if rate == 0 {
-			rate = 1.0
-		}
-		p.TxContract.EGSRate = rate
-		p.TxContract.TableAccounts = tableAccounts
-
-		if price >= 0 {
-			needuser = int64(float64(price) * rate)
-		} else {
-			needuser = int64(float64(need) * rate)
-		}
-		p.TxContract.TxGovAccount = utils.StrToInt64(StateVal(p, `gov_account`))
-		if needuser > 0 {
-			if money, _ := p.Single(fmt.Sprintf(`select amount from "%d_%s" where citizen_id=?`, p.TxStateID, tableAccounts),
-				p.TxCitizenID).Int64(); money < needuser {
-				return false
-			}
-		}
-		// Check if government has enough money
-		balance, _ = utils.Balance(p.TxContract.TxGovAccount)
-		//wallet = p.TxCitizenID
-	} else {
-		//if balance.Cmp(decimal.New(0, 0)) == 0 {
-		balance, _ = utils.Balance(p.TxWalletID)
-	}
-	/*		TxCitizenID      int64
-			TxWalletID       int64
-			TxStateID
-	return balance.Cmp(decimal.New(need, 0)) > 0
-}*/
-
 func (p *Parser) payFPrice() error {
 	var (
 		fromID int64
@@ -716,51 +668,18 @@ func (p *Parser) payFPrice() error {
 		egs = damount
 	}
 	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	//	fmt.Printf("Commission %v %v \r\n", commission, egs)
-	/*	query := fmt.Sprintf(`begin;
-		update dlt_wallets set amount = amount - least(amount, '%d') where wallet_id='%d';
-		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
-		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
-		commit;`, egs, fromID, egs-commission, toID, commission, consts.COMMISSION_WALLET)
-		if err := p.ExecSQL(query); err != nil {
-			return err
-		}*/
-	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(toID)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)
 	return nil
-	/*	if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
-			// Это все уберется, гос-во будет снимать деньги с граждан внутри контрактов
-			// All these will be removed, state will withdraw money from citizens within contracts
-			table := fmt.Sprintf(`"%d_%s"`, p.TxStateID, p.TxContract.TableAccounts)
-			amount, err := p.Single(`select amount from `+table+` where citizen_id=?`, p.TxCitizenID).Int64()
-			money := int64(float64(egs) * p.TxContract.EGSRate)
-			if p.TxContract.TxPrice >= 0 {
-				money = int64(float64(p.TxContract.TxPrice) * p.TxContract.EGSRate)
-			}
-			if amount < money {
-				money = amount
-			}
-			if money > 0 {
-				if err = p.ExecSQL(`update `+table+` set amount = amount - ? where citizen_id=?`, money, p.TxCitizenID); err != nil {
-					return err
-				}
-				if err = p.ExecSQL(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxContract.TxGovAccount); err != nil {
-					// refund payment
-					p.ExecSQL(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxCitizenID)
-					return err
-				}
-			}
-		}
-		return nil*/
 }

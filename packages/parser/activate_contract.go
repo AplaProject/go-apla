@@ -96,15 +96,15 @@ func (p *Parser) ActivateContract() error {
 		wallet = p.TxCitizenID
 	}
 	egs := p.TxMaps.String["activate_cost"]
-	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(wallet)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(p.BlockData.WalletId)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`active`}, []interface{}{1}, prefix+`_smart_contracts`, []string{`id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`active`}, []interface{}{1}, prefix+`_smart_contracts`, []string{`id`},
 		[]string{p.TxMaps.String["id"]}, true); err != nil {
 		return err
 	}

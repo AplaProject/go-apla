@@ -82,7 +82,7 @@ func (p *Parser) AppendMenu() error {
 		return p.ErrInfo(err)
 	}
 	new := page + "\r\n" + p.TxMaps.String["value"]
-	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_menu", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_menu", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

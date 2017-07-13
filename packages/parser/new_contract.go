@@ -111,7 +111,7 @@ func (p *Parser) NewContract() error {
 		wallet = val
 	}
 
-	tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
+	_, tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
 		[]interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"],
 			wallet}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {

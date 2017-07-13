@@ -66,7 +66,7 @@ func (p *Parser) RestoreAccessCloseFront() error {
 
 // RestoreAccessClose proceeds RestoreAccessClose transaction
 func (p *Parser) RestoreAccessClose() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.UInt32ToStr(p.TxStateID)}, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.UInt32ToStr(p.TxStateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

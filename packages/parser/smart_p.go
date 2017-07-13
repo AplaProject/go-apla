@@ -254,28 +254,18 @@ func (p *Parser) CallContract(flags int) (err error) {
 // DBInsert вставляет запись в указанную таблицу БД
 // DBInsert inserts a record into the specified database table
 func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) { // map[string]interface{}) {
-	qcost = 0
-	//	fmt.Println(`DBInsert`, tblname, params, val, len(val))
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
-	var (
-		cost int64
-		ind  int
-	)
+	var ind int
+	var lastID string
 	if ind, err = p.NumIndexes(tblname); err != nil {
 		return
-	} else if ind > 0 {
-		cost = int64(ind) * getCost("InsertIndex")
-		if (*p.TxContract.Extend)[`txcost`].(int64) > cost {
-			(*p.TxContract.Extend)[`txcost`] = (*p.TxContract.Extend)[`txcost`].(int64) - cost
-		} else {
-			err = fmt.Errorf(`paid CPU resource is over`)
-			return
-		}
 	}
-	var lastID string
-	lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	qcost, lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	if ind > 0 {
+		qcost *= int64(ind)
+	}
 	if err == nil {
 		ret, _ = strconv.ParseInt(lastID, 10, 64)
 	}
@@ -303,7 +293,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 		return
 	}
 	var lastID string
-	lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
+	qcost, lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
 	if err == nil {
 		ret, _ = strconv.ParseInt(lastID, 10, 64)
 	}
@@ -330,7 +320,7 @@ func DBUpdate(p *Parser, tblname string, id int64, params string, val ...interfa
 	if err = p.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, true)
+	qcost, _, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{`id`}, []string{converter.Int64ToStr(id)}, true)
 	return
 }
 
@@ -353,7 +343,7 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 	} else if !isIndex {
 		err = fmt.Errorf(`there is not index on %s`, column)
 	} else {
-		_, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
+		qcost, _, err = p.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, true)
 	}
 	return
 }
@@ -364,9 +354,12 @@ func DBString(tblname string, name string, id int64) (int64, string, error) {
 	if err := checkReport(tblname); err != nil {
 		return 0, ``, err
 	}
-
+	cost, err := sql.DB.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
+	if err != nil {
+		return 0, "", nil
+	}
 	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).String()
-	return 0, res, err
+	return cost, res, err
 }
 
 // Sha256 возвращает значение хэша SHA256
@@ -402,9 +395,12 @@ func DBInt(tblname string, name string, id int64) (int64, int64, error) {
 	if err := checkReport(tblname); err != nil {
 		return 0, 0, err
 	}
-
+	cost, err := sql.DB.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
+	if err != nil {
+		return 0, 0, err
+	}
 	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).Int64()
-	return 0, res, err
+	return cost, res, err
 }
 
 func getBytea(table string) map[string]bool {
@@ -441,9 +437,12 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (in
 	} else if !isIndex {
 		return 0, ``, fmt.Errorf(`there is not index on %s`, idname)
 	}
-	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+
-		converter.EscapeName(idname)+`=?`, id).String()
-	return 0, res, err
+	cost, err := sql.DB.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
+	if err != nil {
+		return 0, "", err
+	}
+	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id).String()
+	return cost, res, err
 }
 
 // DBIntExt возвращает числовое значение колонки name у записи с указанным значением поля idname
@@ -498,9 +497,16 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 			return 0, ``, fmt.Errorf(`there is not index on %s`, iret[1])
 		}
 	}
-	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+
-		strings.Replace(converter.Escape(where), `$`, `?`, -1), params...).String()
-	return 0, res, err
+	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
+	qcost, err := sql.DB.GetQueryTotalCost(selectQuery, params...)
+	if err != nil {
+		return 0, "", err
+	}
+	res, err := sql.DB.Single(selectQuery, params).String()
+	if err != nil {
+		return 0, "", err
+	}
+	return qcost, res, err
 }
 
 // DBIntWhere возвращет числовое значение колонки исходя из условия where и значений params для этого условия
@@ -738,7 +744,7 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	_, err = p.selectiveLoggingAndUpd(fields, values,
+	_, _, err = p.selectiveLoggingAndUpd(fields, values,
 		prefix+"_smart_contracts", []string{"id"}, []string{cnt["id"]}, true)
 	if err != nil {
 		return 0, err
@@ -779,7 +785,7 @@ func UpdateParam(p *Parser, name, value, conditions string) (int64, error) {
 	if len(fields) == 0 {
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	_, err := p.selectiveLoggingAndUpd(fields, values,
+	_, _, err := p.selectiveLoggingAndUpd(fields, values,
 		converter.Int64ToStr(int64(p.TxStateID))+"_state_parameters", []string{"name"}, []string{name}, true)
 	if err != nil {
 		return 0, err
@@ -802,7 +808,7 @@ func UpdateMenu(p *Parser, name, value, conditions string) (int64, error) {
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
-	_, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_menu",
+	_, _, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_menu",
 		[]string{"name"}, []string{name}, true)
 	if err != nil {
 		return 0, err
@@ -875,7 +881,7 @@ func UpdatePage(p *Parser, name, value, menu, conditions string) error {
 		fields = append(fields, "menu")
 		values = append(values, menu)
 	}
-	_, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_pages",
+	_, _, err := p.selectiveLoggingAndUpd(fields, values, converter.Int64ToStr(int64(p.TxStateID))+"_pages",
 		[]string{"name"}, []string{name}, true)
 	if err != nil {
 		return err

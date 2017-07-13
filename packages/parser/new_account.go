@@ -54,12 +54,12 @@ func (p *Parser) NewAccountFront() error {
 // NewAccount proceeds NewAccount transaction
 func (p *Parser) NewAccount() error {
 
-	_, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.TxMaps.Bytes["pub"])},
+	_, _, err := p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{hex.EncodeToString(p.TxMaps.Bytes["pub"])},
 		"dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxCitizenID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"citizen_id", "amount"}, []interface{}{p.TxCitizenID, 0},
+	_, _, err = p.selectiveLoggingAndUpd([]string{"citizen_id", "amount"}, []interface{}{p.TxCitizenID, 0},
 		p.TxStateIDStr+"_accounts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)

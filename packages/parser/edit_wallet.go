@@ -113,7 +113,7 @@ func (p *Parser) EditWallet() error {
 	if len(p.TxMap["spending_contract"]) > 0 {
 		contract = p.checkContract(string(p.TxMap["spending_contract"]))
 	}
-	_, err := p.selectiveLoggingAndUpd([]string{"spending_contract", "conditions_change"},
+	_, _, err := p.selectiveLoggingAndUpd([]string{"spending_contract", "conditions_change"},
 		[]interface{}{contract, string(p.TxMap["conditions_change"])}, "dlt_wallets",
 		[]string{"wallet_id"}, []string{string(p.TxMap["id"])}, true)
 	if err != nil {

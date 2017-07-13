@@ -73,7 +73,7 @@ func (p *Parser) EditLang() error {
 		}
 	*/
 	prefix := p.TxStateIDStr
-	_, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.TxMaps.String["res"]}, prefix+"_languages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.TxMaps.String["res"]}, prefix+"_languages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
