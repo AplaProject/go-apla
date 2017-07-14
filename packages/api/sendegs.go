@@ -17,22 +17,21 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 func preSendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
-	timeNow := time.Now().Unix()
-	forsign := fmt.Sprintf(`%d,%d,%d,`, utils.TypeInt(`DLTTransfer`), timeNow, data.sess.Get(`wallet`).(int64))
-	forsign += fmt.Sprintf(`%s,%s,%s,%s`, data.params[`recipient`].(string), data.params[`amount`].(string),
-		data.params[`commission`].(string), data.params[`comment`].(string))
-	data.result = &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign}
+	v := tx.DLTTransfer{
+		Header:        getSignHeader(`DLTTransfer`, data),
+		WalletAddress: data.params[`recipient`].(string),
+		Amount:        data.params[`amount`].(string),
+		Commission:    data.params[`commission`].(string),
+		Comment:       data.params[`comment`].(string),
+	}
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
 	return nil
 }
 

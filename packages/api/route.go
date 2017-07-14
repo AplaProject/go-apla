@@ -60,17 +60,17 @@ func Route(route *hr.Router) {
 	get(`contractlist`, `?limit ?offset ?global:int64`, contractList)
 
 	post(`login`, `pubkey signature:hex,?state:int64`, login)
-	postTx(`menu`, `name value conditions:string, global:int64`, txPreMenu, txMenu)
-	postTx(`page`, `name menu value conditions:string, global:int64`, txPrePage, txPage)
-	postTx(`contract`, `name value conditions:string, ?wallet global:int64`, txPreContract, txContract)
+	postTx(`menu`, `name value conditions:string, global:int64`, txPreNewMenu, txMenu)
+	postTx(`page`, `name menu value conditions:string, global:int64`, txPreNewPage, txPage)
+	postTx(`contract`, `name value conditions:string, ?wallet global:int64`, txPreNewContract, txContract)
 	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
 	post(`sendegs`, `pubkey signature:hex, time recipient amount commission ?comment:string`, authWallet, sendEGS)
 
 	putTx(`activatecontract/:id`, `?global:int64`, txPreActivateContract, txActivateContract)
-	putTx(`contract/:id`, `value conditions:string, global:int64`, txPreContract, txContract)
-	putTx(`menu/:name`, `value conditions:string, global:int64`, txPreMenu, txMenu)
-	putTx(`page/:name`, `menu value conditions:string, global:int64`, txPrePage, txPage)
+	putTx(`contract/:id`, `value conditions:string, global:int64`, txPreEditContract, txContract)
+	putTx(`menu/:name`, `value conditions:string, global:int64`, txPreEditMenu, txMenu)
+	putTx(`page/:name`, `menu value conditions:string, global:int64`, txPreEditPage, txPage)
 }
 
 func processParams(input string) (params map[string]int) {

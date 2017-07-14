@@ -84,6 +84,17 @@ func getPrefix(data *apiData) (prefix string) {
 	return
 }
 
+func getSignHeader(txName string, data *apiData) tx.Header {
+	var stateID int64
+
+	userID := data.sess.Get(`wallet`).(int64)
+	if data.sess.Get(`state`) != nil {
+		stateID = data.sess.Get(`state`).(int64)
+	}
+	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
+		UserID: userID, StateID: stateID}
+}
+
 func getHeader(txName string, data *apiData) (tx.Header, error) {
 	publicKey := []byte("null")
 	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {

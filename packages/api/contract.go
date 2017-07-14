@@ -71,22 +71,30 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	return nil
 }
 
-func txPreContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var name, par string
-
-	if r.Method == `PUT` {
-		name = `EditContract`
-		par = `id`
-	} else {
-		name = `NewContract`
-		par = `name`
-		if data.params[`wallet`].(int64) > 0 {
-			data.params[par] = fmt.Sprintf(`%s#%d`, data.params[par].(string), data.params[`wallet`].(int64))
-		}
+func txPreNewContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	if data.params[`wallet`].(int64) > 0 {
+		data.params[`name`] = fmt.Sprintf(`%s#%d`, data.params[`name`].(string), data.params[`wallet`].(int64))
 	}
-	forsign := fmt.Sprintf(`%d,%v,%s,%s`, data.params[`global`].(int64), data.params[par].(string),
-		data.params[`value`].(string), data.params[`conditions`].(string))
-	data.result = getForSign(name, data, forsign)
+	v := tx.NewContract{
+		Header:     getSignHeader(`NewContract`, data),
+		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+		Name:       data.params[`name`].(string),
+		Value:      data.params[`value`].(string),
+		Conditions: data.params[`conditions`].(string),
+	}
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
+	return nil
+}
+
+func txPreEditContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	v := tx.EditContract{
+		Header:     getSignHeader(`EditContract`, data),
+		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+		Id:         data.params[`id`].(string),
+		Value:      data.params[`value`].(string),
+		Conditions: data.params[`conditions`].(string),
+	}
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
 	return nil
 }
 
@@ -143,7 +151,12 @@ func txPreActivateContract(w http.ResponseWriter, r *http.Request, data *apiData
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
-	data.result = getForSign(`ActivateContract`, data, fmt.Sprintf(`%d,%s`, data.params[`global`].(int64), id))
+	v := tx.ActivateContract{
+		Header: getSignHeader(`ActivateContract`, data),
+		Global: converter.Int64ToStr(data.params[`global`].(int64)),
+		Id:     id,
+	}
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
 	return nil
 }
 

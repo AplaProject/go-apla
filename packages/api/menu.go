@@ -17,7 +17,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -42,14 +41,27 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	return nil
 }
 
-func txPreMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	name := `NewMenu`
-	if r.Method == `PUT` {
-		name = `EditMenu`
+func txPreNewMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	v := tx.NewMenu{
+		Header:     getSignHeader(`NewMenu`, data),
+		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+		Name:       data.params[`name`].(string),
+		Value:      data.params[`value`].(string),
+		Conditions: data.params[`conditions`].(string),
 	}
-	forsign := fmt.Sprintf(`%d,%s,%s,%s`, data.params[`global`].(int64), data.params[`name`].(string),
-		data.params[`value`].(string), data.params[`conditions`].(string))
-	data.result = getForSign(name, data, forsign)
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
+	return nil
+}
+
+func txPreEditMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	v := tx.EditMenu{
+		Header:     getSignHeader(`EditMenu`, data),
+		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+		Name:       data.params[`name`].(string),
+		Value:      data.params[`value`].(string),
+		Conditions: data.params[`conditions`].(string),
+	}
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
 	return nil
 }
 

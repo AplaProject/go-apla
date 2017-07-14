@@ -17,7 +17,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -44,14 +43,29 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	return nil
 }
 
-func txPrePage(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	name := `NewPage`
-	if r.Method == `PUT` {
-		name = `EditPage`
+func txPreNewPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	v := tx.NewPage{
+		Header:     getSignHeader(`NewPage`, data),
+		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+		Name:       data.params[`name`].(string),
+		Value:      data.params[`value`].(string),
+		Menu:       data.params[`menu`].(string),
+		Conditions: data.params[`conditions`].(string),
 	}
-	forsign := fmt.Sprintf(`%d,%s,%s,%s,%s`, data.params[`global`].(int64), data.params[`name`].(string),
-		data.params[`value`].(string), data.params[`menu`].(string), data.params[`conditions`].(string))
-	data.result = getForSign(name, data, forsign)
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
+	return nil
+}
+
+func txPreEditPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	v := tx.EditPage{
+		Header:     getSignHeader(`EditPage`, data),
+		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
+		Name:       data.params[`name`].(string),
+		Value:      data.params[`value`].(string),
+		Menu:       data.params[`menu`].(string),
+		Conditions: data.params[`conditions`].(string),
+	}
+	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
 	return nil
 }
 
