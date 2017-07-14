@@ -58,7 +58,6 @@ var (
 		"UpdateMenu":     struct{}{},
 		"UpdatePage":     struct{}{},
 		"DBInsertReport": struct{}{},
-		"StateVal":       struct{}{},
 	}
 	extendCost = map[string]int64{
 		"AddressToId": 10,
@@ -66,6 +65,7 @@ var (
 		"NewState":    1000, // ?? What cost must be?
 		"Sha256":      50,
 		"PubToID":     10,
+		"StateVal":    10,
 	}
 )
 

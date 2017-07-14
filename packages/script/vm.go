@@ -725,7 +725,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf(`runtime panic error`)
+			err = fmt.Errorf(`runtime panic error: %s`, r)
 		}
 	}()
 	info := block.Info.(*FuncInfo)
