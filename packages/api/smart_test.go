@@ -18,7 +18,7 @@ package api
 
 import (
 	"fmt"
-	//	"net/url"
+	"net/url"
 	"testing"
 	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
@@ -42,5 +42,12 @@ func TestSmartFields(t *testing.T) {
 		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, ret[`name`].(string)))
 		return
 	}
-
+	if err := postTx(`smartcontract/MainCondition`, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(`smartcontract/Test`, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	}
 }

@@ -118,13 +118,6 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
-func getForSign(txName string, data *apiData, append string) *forSign {
-	timeNow := time.Now().Unix()
-	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(txName), timeNow, data.sess.Get(`citizen`).(int64),
-		data.sess.Get(`state`).(int64))
-	return &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign + append}
-}
-
 func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx, error) {
 	var hash []byte
 	serializedData, err := msgpack.Marshal(toSerialize)

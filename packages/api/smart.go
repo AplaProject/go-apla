@@ -17,6 +17,7 @@
 package api
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -24,7 +25,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
@@ -62,8 +65,17 @@ type PrepareTxJSON struct {
 	ForSign string            `json:"forsign"`
 	Signs   []TxSignJSON      `json:"signs"`
 	Values  map[string]string `json:"values"`
-	Time    uint32            `json:"time"`
+	Time    string            `json:"time"`
 	//	Error   string            `json:"error"`
+}
+
+// EncryptKey is a structure for the answer of ajax_encrypt_key ajax request
+type EncryptKey struct {
+	Encrypted string `json:"encrypted"` //hex
+	Public    string `json:"public"`    //hex
+	WalletID  int64  `json:"wallet_id"`
+	Address   string `json:"address"`
+	Error     string `json:"error"`
 }
 
 func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -177,20 +189,241 @@ func validateSmartContract(data *apiData, result *PrepareTxJSON) (contract *smar
 	return
 }
 
+// EncryptNewKey creates a shared key, generates and crypts a new private key
+func EncryptNewKey(walletID string) (result EncryptKey) {
+	var (
+		err error
+		id  int64
+	)
+
+	if len(walletID) == 0 {
+		result.Error = `unknown wallet id`
+		return result
+	}
+	id = converter.StringToAddress(walletID)
+	pubKey, err := sql.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	if len(pubKey) == 0 {
+		result.Error = `unknown wallet id`
+		return result
+	}
+	var private string
+
+	for result.WalletID == 0 {
+		private, result.Public, _ = crypto.GenHexKeys()
+
+		pub, _ := hex.DecodeString(result.Public)
+		idnew := crypto.Address(pub)
+
+		exist, err := sql.DB.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		if err != nil {
+			result.Error = err.Error()
+			return result
+		}
+		if exist == 0 {
+			result.WalletID = idnew
+		}
+	}
+	priv, _ := hex.DecodeString(private)
+	encrypted, err := crypto.SharedEncrypt([]byte(pubKey), priv)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	result.Encrypted = hex.EncodeToString(encrypted)
+	result.Address = converter.AddressToString(result.WalletID)
+
+	return
+}
+
 func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var (
-		result PrepareTxJSON
+		result          PrepareTxJSON
+		flags           uint8
+		isPublic        []byte
+		stateID, userID int64
 	)
-	result.Time = uint32(time.Now().Unix())
+	result.Time = converter.Int64ToStr(time.Now().Unix())
 	result.Values = make(map[string]string)
 	contract, err := validateSmartContract(data, &result)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
-	fmt.Println(`preSmart`, contract)
+	if data.sess.Get(`state`) != nil {
+		stateID = data.sess.Get(`state`).(int64)
+	}
+	userID = data.sess.Get(`wallet`).(int64)
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	isPublic, err = sql.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, userID).Bytes()
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	if len(isPublic) == 0 {
+		flags |= consts.TxfPublic
+	}
+	forsign := fmt.Sprintf("%d,%s,%d,%d,%d", info.ID, result.Time, uint64(userID), stateID, flags)
+	if info.Tx != nil {
+		for _, fitem := range *info.Tx {
+			if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
+				continue
+			}
+			var val string
+			if strings.Index(fitem.Tags, `crypt`) >= 0 {
+				var wallet string
+				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
+					wallet = data.params[ret[1]].(string)
+				} else {
+					wallet = converter.Int64ToStr(userID)
+				}
+				key := EncryptNewKey(wallet)
+				if len(key.Error) != 0 {
+					return errorAPI(w, key.Error, http.StatusConflict)
+				}
+				result.Values[fitem.Name] = key.Encrypted
+				val = key.Encrypted
+			} else if fitem.Type.String() == `[]interface {}` {
+				for key, values := range data.params {
+					if key == fitem.Name+`[]` {
+						var list []string
+						for _, value := range values.([]string) {
+							list = append(list, value)
+						}
+						val = strings.Join(list, `,`)
+					}
+				}
+			} else {
+				val = strings.TrimSpace(data.params[fitem.Name].(string))
+				if strings.Index(fitem.Tags, `address`) >= 0 {
+					val = converter.Int64ToStr(converter.StringToAddress(val))
+				} else if fitem.Type.String() == script.Decimal {
+					val = strings.TrimLeft(val, `0`)
+				}
+			}
+			forsign += fmt.Sprintf(",%v", val)
+		}
+	}
+	result.ForSign = forsign
+	data.result = result
 	return nil
 }
 
 func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	var (
+		flags           uint8
+		stateID, userID int64
+		isPublic, hash  []byte
+	)
+	contract, err := validateSmartContract(data, nil)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
+	}
+	info := (*contract).Block.Info.(*script.ContractInfo)
+	if data.sess.Get(`state`) != nil {
+		stateID = data.sess.Get(`state`).(int64)
+	}
+	userID = data.sess.Get(`wallet`).(int64)
+
+	sign := make([]byte, 0)
+	signature := data.params[`signature`].([]byte)
+	if len(signature) == 0 {
+		return errorAPI(w, `signature is empty`, http.StatusBadRequest)
+	}
+	//	signature, err := crypto.JSSignToBytes(data.params["signature"].(string))
+	converter.EncodeLenByte(&sign, signature)
+
+	isPublic, err = sql.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, userID).Bytes()
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	if len(isPublic) == 0 {
+		flags |= consts.TxfPublic
+		public := data.params[`pubkey`].([]byte)
+		if len(public) == 0 {
+			return errorAPI(w, `empty public key`, http.StatusConflict)
+		}
+		if len(public) > 64 {
+			public = public[len(public)-64:]
+		}
+		sign = append(sign, public...)
+	}
+	idata := make([]byte, 0)
+	header := consts.TXHeader{
+		Type:     int32(info.ID), /* + smart.CNTOFF*/
+		Time:     uint32(converter.StrToInt64(data.params[`time`].(string))),
+		WalletID: uint64(userID),
+		StateID:  int32(stateID),
+		Flags:    flags,
+		Sign:     sign,
+	}
+	//fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
+	fmt.Println(`Header`, header)
+	_, err = converter.BinMarshal(&idata, &header)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	fmt.Println(`IDATA`, len(idata))
+	if info.Tx != nil {
+	fields:
+		for _, fitem := range *info.Tx {
+			val := strings.TrimSpace(r.FormValue(fitem.Name))
+			if strings.Index(fitem.Tags, `address`) >= 0 {
+				val = converter.Int64ToStr(converter.StringToAddress(val))
+			}
+			switch fitem.Type.String() {
+			case `[]interface {}`:
+				var list []string
+				for key, values := range r.Form {
+					if key == fitem.Name+`[]` {
+						for _, value := range values {
+							list = append(list, value)
+						}
+					}
+				}
+				idata = append(idata, converter.EncodeLength(int64(len(list)))...)
+				for _, ilist := range list {
+					blist := []byte(ilist)
+					idata = append(append(idata, converter.EncodeLength(int64(len(blist)))...), blist...)
+				}
+			case `uint64`:
+				converter.BinMarshal(&idata, converter.StrToUint64(val))
+			case `int64`:
+				converter.EncodeLenInt64(&idata, converter.StrToInt64(val))
+			case `float64`:
+				converter.BinMarshal(&idata, converter.StrToFloat64(val))
+			case `string`, script.Decimal:
+				idata = append(append(idata, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
+			case `[]uint8`:
+				var bytes []byte
+				bytes, err = hex.DecodeString(val)
+				if err != nil {
+					break fields
+				}
+				idata = append(append(idata, converter.EncodeLength(int64(len(bytes)))...), bytes...)
+			}
+		}
+	}
+	if hash, err = sql.DB.SendTx(int64(header.Type), userID, idata); err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	data.result = &hashTx{Hash: string(hash)}
+	/*					hash, err := crypto.Hash(data)
+						if err != nil {
+							log.Fatal(err)
+						}
+						hash = converter.BinToHex(hash)
+						err = c.ExecSQL(`INSERT INTO transactions_status (
+							hash, time,	type, wallet_id, citizen_id	) VALUES (
+							[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), header.Type, int64(userID), int64(userID)) //c.SessStateID)
+						if err == nil {
+							log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", hash, hex.EncodeToString(data))
+							err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
+							if err == nil {
+								result.Hash = string(hash)
+							}
+						}*/
+	//			fmt.Printf("Data error: %v lendata: %d hash: %s", err, len(data), result.Hash)
 	return nil
 }
