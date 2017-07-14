@@ -126,7 +126,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, converter.EncodeLengthPlusData([]byte(``))...)
 	data = append(data, binsign...)
 
-	err = c.SendTx(txType, adminWallet, data)
+	_, err = c.SendTx(txType, adminWallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -157,7 +157,7 @@ func (c *Controller) AjaxNewState() interface{} {
 		CheckSignResult, err := utils.CheckSign(pubkey, forSign, sign, false)
 		fmt.Println(`CHECK`, CheckSignResult, err)*/
 
-	err = c.SendTx(txType, wallet, data)
+	_, err = c.SendTx(txType, wallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result
