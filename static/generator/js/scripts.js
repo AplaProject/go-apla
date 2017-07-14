@@ -531,6 +531,82 @@ function initGenerator(){
 		handle: ".drag",
 		placeholder: "portlet-placeholder ui-corner-all",
 		start: function(event, ui) {
+			if ($(ui.helper).attr("egaas-class") === "table") {
+				if ($("#getTableType").val() === '0') {
+					$(ui.helper).find(".table-responsive").append(
+						'<table class="table" data-role="table">' +
+							'<thead>' +
+								'<tr>' +
+									'<th>#</th>' +
+									'<th>First Name</th>' +
+									'<th>Last Name</th>' +
+									'<th>Username</th>' +
+								'</tr>' +
+							'</thead>' +
+							'<tbody>' +
+								'<tr>' +
+									'<td>1</td>' +
+									'<td>Mark</td>' +
+									'<td>Otto</td>' +
+									'<td>@mdo</td>' +
+								'</tr>' +
+								'<tr>' +
+									'<td>2</td>' +
+									'<td>Jacob</td>' +
+									'<td>Thornton</td>' +
+									'<td>@fat</td>' +
+								'</tr>' +
+								'<tr>' +
+									'<td>3</td>' +
+									'<td>Larry</td>' +
+									'<td>the Bird</td>' +
+									'<td>@twitter</td>' +
+								'</tr>' +
+							'</tbody>' +
+						'</table>'
+					);
+				} else {
+					var name = $("#getTableDataName").val();
+					var order = $("#getTableDataOrder").val() ? 'Order: ' + $("#getTableDataOrder").val() + ' ' : "";
+					var where = $("#getTableDataWhere").val() ? 'Where: ' + $("#getTableDataWhere").val() + ' ' : "";
+					var columns = "";
+					
+					$("#getTableData").find(".Columns").each(function(index, element){
+						var col = "";
+						
+						$(element).find(".form-control").each(function(index, elem){
+							if ($(elem).val()) {
+								//col.push($(elem).val());
+								if (index === 0) {
+									col = '[' + $(elem).val();
+								/*} else if (index === $(element).find(".form-control").length - 1) {
+									col = col + ', ' + $(elem).val() + ']';*/
+								} else {
+									col = col + ', ' + $(elem).val();
+								}
+							}
+						});
+						//columns.push(col);
+						if (index === 0) {
+							columns = col + ']';
+						} else {
+							columns = columns + ', ' + col + ']';
+						}
+					});
+					
+					$(ui.helper).find(".table-responsive").append(
+						'Table {' +
+							'Class: data-role="table"' +
+							'Table: ' + name + ' ' + 
+							order +
+							where +
+							'Columns: [' +
+								columns +
+							']' +
+						'}'
+					);
+				}
+			}
 			if (!startdrag) stopsave++;
 			startdrag = 1;
 		},
@@ -673,6 +749,22 @@ function initGenerator(){
 			clearInterval(handleSaveLayoutInterval);
 		}
 	}, timerSave);
+	
+	
+	$("#getTableType").on('change', function() {
+		var type = $(this).val();
+		
+		if (type === '0') {
+			$("#getTableData").hide();
+		} else {
+			$("#getTableData").show();
+		}
+	});
+	$("#AddColumn").on('click', function() {
+		var arr = $(this).prev().clone();
+		arr.find(".form-control").val("");
+		arr.insertBefore($(this));
+	});
 }
 
 initGenerator();

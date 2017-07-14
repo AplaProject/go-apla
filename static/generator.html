@@ -180,41 +180,28 @@
 								</ul>
 							</span>
 						</span>
-						<div class="preview"></div>
+						<div class="preview clearfix">
+							<select id="getTableType" class="form-control selectbox">
+								<option value="0" selected>Default</option>
+								<option value="1">Advanced (with data)</option>
+							</select>
+							<div id="getTableData" class="dataMaster">
+								<label>Data configuration</label>
+								<input id="getTableDataName" class="form-control" type="text" placeholder="Name">
+								<input id="getTableDataOrder" class="form-control" type="text" placeholder="Order">
+								<input id="getTableDataWhere" class="form-control" type="text" placeholder="Where">
+								<label>Columns</label>
+								<div class="Columns">
+									<input class="form-control" type="text" placeholder="Column title">
+									<input class="form-control" type="text" placeholder="Column value">
+									<input class="form-control" type="text" placeholder="Column class">
+								</div>
+								<button id="AddColumn" class="btn btn-primary" type="button">Add column</button>
+							</div>
+						</div>
 						<div class="view">
 							<div class="column">
-								<div class="table-responsive">
-								   <table class="table" data-role="table">
-									  <thead>
-										 <tr>
-											<th>#</th>
-											<th>First Name</th>
-											<th>Last Name</th>
-											<th>Username</th>
-										 </tr>
-									  </thead>
-									  <tbody>
-										 <tr>
-											<td>1</td>
-											<td>Mark</td>
-											<td>Otto</td>
-											<td>@mdo</td>
-										 </tr>
-										 <tr>
-											<td>2</td>
-											<td>Jacob</td>
-											<td>Thornton</td>
-											<td>@fat</td>
-										 </tr>
-										 <tr>
-											<td>3</td>
-											<td>Larry</td>
-											<td>the Bird</td>
-											<td>@twitter</td>
-										 </tr>
-									  </tbody>
-								   </table>
-								</div>
+								<div class="table-responsive"></div>
 							</div>
 						</div>
 					</div>
