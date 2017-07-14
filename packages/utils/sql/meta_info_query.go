@@ -10,8 +10,8 @@ import (
 
 func (db *DCDB) GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 	var planStr string
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"])
-	err := db.QueryRow(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", newQuery), newArgs).Scan(&planStr)
+	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	err := db.QueryRow(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", newQuery), newArgs...).Scan(&planStr)
 	switch {
 	case err == sql.ErrNoRows:
 		return 0, errors.New("No rows")
@@ -20,6 +20,7 @@ func (db *DCDB) GetQueryTotalCost(query string, args ...interface{}) (int64, err
 	}
 	var queryPlan []map[string]interface{}
 	dec := json.NewDecoder(strings.NewReader(planStr))
+	dec.UseNumber()
 	if err := dec.Decode(&queryPlan); err != nil {
 		return 0, err
 	}
@@ -38,7 +39,11 @@ func (db *DCDB) GetQueryTotalCost(query string, args ...interface{}) (int64, err
 	}
 	if totalCost, ok := planMap["Total Cost"]; ok {
 		if totalCostNum, ok := totalCost.(json.Number); ok {
-			return totalCostNum.Int64()
+			if totalCostF64, err := totalCostNum.Float64(); err != nil {
+				return 0, err
+			} else {
+				return int64(totalCostF64), nil
+			}
 		} else {
 			return 0, errors.New("Total cost is not a number")
 		}
