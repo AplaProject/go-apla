@@ -119,11 +119,11 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 				return utils.ErrInfo(err)
 			}
 		}
-		if badBlocks[blockData.BlockId] == string(converter.BinToHex(blockData.Sign)) {
+		if badBlocks[blockData.BlockID] == string(converter.BinToHex(blockData.Sign)) {
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New("bad block"))
 		}
-		if blockData.BlockId != blockID {
+		if blockData.BlockID != blockID {
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New("bad block_data['block_id']"))
 		}
@@ -153,14 +153,14 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 
 		// публичный ключ того, кто этот блок сгенерил
 		// the public key of the one who has generated this block
-		nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.StateID)
+		nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(blockData.WalletID, blockData.StateID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 
 		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
 		// SIGN from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.StateID, mrklRoot)
+		forSign := fmt.Sprintf("0,%v,%x,%v,%v,%v,%s", blockData.BlockID, prevBlockHash, blockData.Time, blockData.WalletID, blockData.StateID, mrklRoot)
 		log.Debug("forSign", forSign)
 
 		// проверяем подпись
@@ -186,7 +186,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 		// другими словами, пока подпись с prevBlockHash будет неверной, т.е. пока что-то есть в okSignErr
 		// in other words, while the signature with prevBlockHash is incorrect, so far there is something in okSignErr
 		if okSignErr == nil {
-			log.Debug("plug found blockID=%v\n", blockData.BlockId)
+			log.Debug("plug found blockID=%v\n", blockData.BlockID)
 			break
 		}
 	}
@@ -288,7 +288,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 				log.Debug("prevBlock[intBlockID-1] != nil : %v", prevBlock[intBlockID-1])
 				parser.PrevBlock.Hash = prevBlock[intBlockID-1].Hash
 				parser.PrevBlock.Time = prevBlock[intBlockID-1].Time
-				parser.PrevBlock.BlockId = prevBlock[intBlockID-1].BlockId
+				parser.PrevBlock.BlockID = prevBlock[intBlockID-1].BlockID
 			}
 
 			// если вернулась ошибка, значит переданный блок уже откатился
@@ -378,11 +378,11 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 							block_id = ?,
 							time = ?,
 							sent = 0
-					`, converter.BinToHex(lastMyBlock["hash"]), lastMyBlockData.BlockId, lastMyBlockData.Time)
+					`, converter.BinToHex(lastMyBlock["hash"]), lastMyBlockData.BlockID, lastMyBlockData.Time)
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
-				err = p.ExecSQL(`UPDATE config SET my_block_id = ?`, lastMyBlockData.BlockId)
+				err = p.ExecSQL(`UPDATE config SET my_block_id = ?`, lastMyBlockData.BlockID)
 				if err != nil {
 					return utils.ErrInfo(err)
 				}
@@ -427,11 +427,11 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 
 			// пишем в цепочку блоков
 			// record in the chain of blocks
-			err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?, sent = 0", prevBlock[blockID].Hash, prevBlock[blockID].BlockId, prevBlock[blockID].Time, prevBlock[blockID].WalletId, prevBlock[blockID].StateID)
+			err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?, sent = 0", prevBlock[blockID].Hash, prevBlock[blockID].BlockID, prevBlock[blockID].Time, prevBlock[blockID].WalletID, prevBlock[blockID].StateID)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
-			err = p.ExecSQL(`UPDATE config SET my_block_id = ?`, prevBlock[blockID].BlockId)
+			err = p.ExecSQL(`UPDATE config SET my_block_id = ?`, prevBlock[blockID].BlockID)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -443,7 +443,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 				return utils.ErrInfo(err)
 			}
 			if exists == 0 {
-				affect, err := p.ExecSQLGetAffect("INSERT INTO block_chain (id, hash, state_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockID, prevBlock[blockID].Hash, prevBlock[blockID].StateID, prevBlock[blockID].WalletId, prevBlock[blockID].Time, blockHex)
+				affect, err := p.ExecSQLGetAffect("INSERT INTO block_chain (id, hash, state_id, wallet_id, time, data) VALUES (?, [hex], ?, ?, ?, [hex])", blockID, prevBlock[blockID].Hash, prevBlock[blockID].StateID, prevBlock[blockID].WalletID, prevBlock[blockID].Time, blockHex)
 				if err != nil {
 					return utils.ErrInfo(err)
 				}

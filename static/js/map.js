@@ -1018,13 +1018,13 @@ function clearMap(full) {
     newstart(full);
     placemarks = [];
     createplacemarkobject();
-    gob('coords').value = '';
+    gob('eGaaSCoords').value = '';
 }
 function newstart(full) {
     if (!full && StateCoords) {
         polyPoints = [];
         pointsArray = [];
-        gob('coords').value = '';
+        gob('eGaaSCoords').value = '';
         polyPoints = StateCoords;
         for (var i = 0; i < StateCoords.length; i++) {
             var point = '"' + StateCoords[i].lat + '","' + StateCoords[i].lng + '"';
@@ -1179,7 +1179,7 @@ function holecreator() {
             polyPoints = [];
             preparePolyline();
             //gob('stepdiv').innerHTML = "Step 1";
-            /*gob('coords').value = 'You may now draw the outer boundary. When finished, click Hole to move on to the next step.'
+            /*gob('eGaaSCoords').value = 'You may now draw the outer boundary. When finished, click Hole to move on to the next step.'
             +' Remember, you do not have to let start and end meet.'
             +' The API will close the shape in the finished polygon.';*/
         }
@@ -1194,13 +1194,13 @@ function holecreator() {
             outerShape = polyShape; // store polyShape in outerShape. polyShape will be reused for inner lines
         }
         /*gob('stepdiv').innerHTML = "Step 2";
-        gob('coords').value = 'You may now draw an inner boundary. Click Hole again to see the finished polygon. '+
+        gob('eGaaSCoords').value = 'You may now draw an inner boundary. Click Hole again to see the finished polygon. '+
         'You may draw more than one hole: Click Next hole and draw before you click Hole.';*/
         if (anotherhole == true) { // set to true in nexthole
             // a hole has been drawn, another is about to be drawn
             if (polyShape && polyPoints.length == 0) {
                 polyShape.setMap(null);
-                /*gob('coords').value = 'Oops! Not programmed yet, but you may continue drawing holes. '+
+                /*gob('eGaaSCoords').value = 'Oops! Not programmed yet, but you may continue drawing holes. '+
                 'Everything you have created will show up when you click Hole again.';*/
             } else {
                 polyPoints.insertAt(polyPoints.length, startpoint);
@@ -1561,11 +1561,11 @@ function showKML() {
         codeID = gob('codechoice').value = 1; // set KML
         setCode();
     }
-    gob('coords').value = kmlheading();
+    gob('eGaaSCoords').value = kmlheading();
     for (var i = 0; i < placemarks.length; i++) {
-        gob('coords').value += placemarks[i].plmtext;
+        gob('eGaaSCoords').value += placemarks[i].plmtext;
     }
-    gob('coords').value += kmlend();
+    gob('eGaaSCoords').value += kmlend();
 }
 function showAddress(address) {
     geocoder.geocode({ 'address': address }, function (results, status) {
@@ -1715,8 +1715,8 @@ function showCodeintextarea() {
 }
 // the copy part may not work with all web browsers
 function copyTextarea() {
-    gob('coords').focus();
-    gob('coords').select();
+    gob('eGaaSCoords').focus();
+    gob('eGaaSCoords').select();
     copiedTxt = document.selection.createRange();
     copiedTxt.execCommand("Copy");
 }
@@ -2147,12 +2147,12 @@ function logCode1() {
     placemarks[plmcur].poly = "pl";
     placemarks[plmcur].jscode = pointsArray;
     placemarks[plmcur].kmlcode = pointsArrayKml;
-    gob('coords').value = kmlheading() + kmltext1 + code + kmltext2 + kmlend();
+    gob('eGaaSCoords').value = kmlheading() + kmltext1 + code + kmltext2 + kmlend();
 }
 // write kml for Directions in text area
 function logCode1a() {
     if (notext === true) return;
-    gob('coords').value = "";
+    gob('eGaaSCoords').value = "";
     var code = "";
     //var kmlMarker = "";
     //var kmlMarkers = "";
@@ -2171,7 +2171,7 @@ function logCode1a() {
     kmltext2 = '</coordinates>\n</LineString>\n</Placemark>\n';
     placemarks[dirline].plmtext = kmltext1 + code + kmltext2;
     placemarks[dirline].poly = "pl";
-    gob('coords').value = kmlheading() + kmltext1 + code + kmltext2;
+    gob('eGaaSCoords').value = kmlheading() + kmltext1 + code + kmltext2;
 
     if (markersArrayKml.length != 0) {
         for (i = 0; i < markersArrayKml.length; i++) {
@@ -2186,11 +2186,11 @@ function logCode1a() {
             placemarks[m + i].jscode = markersArray[i];
             placemarks[m + i].kmlcode = markersArrayKml[i];
             placemarks[m + i].plmtext = kmlMarker;
-            gob('coords').value += kmlMarker;
+            gob('eGaaSCoords').value += kmlMarker;
         }
     }
     //placemarks[dirline].plmtext = kmlcode = kmltext1+code+kmltext2+kmlMarkers;
-    gob('coords').value += kmlend();
+    gob('eGaaSCoords').value += kmlend();
 }
 // write kml for polygon in text area
 function logCode2() {
@@ -2213,7 +2213,7 @@ function logCode2() {
     kmltext2 = '</coordinates></LinearRing></outerBoundaryIs>\n</Polygon>\n</Placemark>\n';
     placemarks[plmcur].plmtext = kmlcode = kmltext1 + code + kmltext2;
     placemarks[plmcur].poly = "pg";
-    gob('coords').value = kmlheading() + kmltext1 + code + kmltext2 + kmlend();
+    gob('eGaaSCoords').value = kmlheading() + kmltext1 + code + kmltext2 + kmlend();
 }
 // write kml for polygon with hole
 function logCode3() {
@@ -2246,36 +2246,36 @@ function logCode3() {
     }
     kmltext += '</Polygon>\n</Placemark>\n';
     placemarks[plmcur].plmtext = kmlcode = kmltext;
-    gob('coords').value = kmlheading() + kmltext + kmlend();
+    gob('eGaaSCoords').value = kmlheading() + kmltext + kmlend();
 }
 // write javascript
 function logCode4() {
     if (notext === true) return;
-    gob('coords').value = '';
+    gob('eGaaSCoords').value = '';
     for (var i = 0; i < pointsArray.length; i++) {
         if (i == pointsArray.length - 1) {
-            //gob('coords').value += 'new google.maps.LatLng('+pointsArray[i] + ')\n';
-            gob('coords').value += '[' + pointsArray[i] + ']';
+            //gob('eGaaSCoords').value += 'new google.maps.LatLng('+pointsArray[i] + ')\n';
+            gob('eGaaSCoords').value += '[' + pointsArray[i] + ']';
         } else {
-            //gob('coords').value += 'new google.maps.LatLng('+pointsArray[i] + '),\n';
-            gob('coords').value += '[' + pointsArray[i] + '],';
+            //gob('eGaaSCoords').value += 'new google.maps.LatLng('+pointsArray[i] + '),\n';
+            gob('eGaaSCoords').value += '[' + pointsArray[i] + '],';
         }
     }
     if (toolID == 1) {
-        gob('coords').value += '];\n';
+        gob('eGaaSCoords').value += '];\n';
         var options = 'var polyOptions = {\n'
             + 'path: myCoordinates,\n'
             + 'strokeColor: "' + polylinestyles[lcur].color + '",\n'
             + 'strokeOpacity: ' + polylinestyles[lcur].lineopac + ',\n'
             + 'strokeWeight: ' + polylinestyles[lcur].width + '\n'
             + '}\n';
-        gob('coords').value += options;
-        gob('coords').value += 'var it = new google.maps.Polyline(polyOptions);\n'
+        gob('eGaaSCoords').value += options;
+        gob('eGaaSCoords').value += 'var it = new google.maps.Polyline(polyOptions);\n'
             + 'it.setMap(map);\n';
         placemarks[plmcur].poly = "pl";
     }
     if (toolID == 2) {
-        gob('coords').value += '';/* += '];\n';
+        gob('eGaaSCoords').value += '';/* += '];\n';
         var options = 'var polyOptions = {\n'
         +'path: myCoordinates,\n'
         +'strokeColor: "'+polygonstyles[pcur].color+'",\n'
@@ -2284,42 +2284,42 @@ function logCode4() {
         +'fillColor: "'+polygonstyles[pcur].fill+'",\n'
         +'fillOpacity: '+polygonstyles[pcur].fillopac+'\n'
         +'}\n';
-        gob('coords').value += options;
-        gob('coords').value +='var it = new google.maps.Polygon(polyOptions);\n'
+        gob('eGaaSCoords').value += options;
+        gob('eGaaSCoords').value +='var it = new google.maps.Polygon(polyOptions);\n'
         +'it.setMap(map);\n';
         placemarks[plmcur].poly = "pg";*/
     }
-    javacode = gob('coords').value;
+    javacode = gob('eGaaSCoords').value;
 }
 // write javascript for polygon with hole
 function logCode5() {
     if (notext === true) return;
     var hstring = "";
-    gob('coords').value = 'var outerPoints = [\n';
+    gob('eGaaSCoords').value = 'var outerPoints = [\n';
     for (var i = 0; i < outerArray.length; i++) {
         if (i == outerArray.length - 1) {
-            gob('coords').value += 'new google.maps.LatLng(' + outerArray[i] + ')\n'; // without trailing comma
+            gob('eGaaSCoords').value += 'new google.maps.LatLng(' + outerArray[i] + ')\n'; // without trailing comma
         } else {
-            gob('coords').value += 'new google.maps.LatLng(' + outerArray[i] + '),\n';
+            gob('eGaaSCoords').value += 'new google.maps.LatLng(' + outerArray[i] + '),\n';
         }
     }
-    gob('coords').value += '];\n';
+    gob('eGaaSCoords').value += '];\n';
     for (var m = 0; m < innerArrays.length; m++) {
-        gob('coords').value += 'var innerPoints' + m + ' = [\n';
+        gob('eGaaSCoords').value += 'var innerPoints' + m + ' = [\n';
         var holestring = 'innerPoints' + m;
         if (m < innerArrays.length - 1) holestring += ',';
         hstring += holestring;
         for (i = 0; i < innerArrays[m].length; i++) {
             if (i == innerArrays[m].length - 1) {
-                gob('coords').value += 'new google.maps.LatLng(' + innerArrays[m][i] + ')\n';
+                gob('eGaaSCoords').value += 'new google.maps.LatLng(' + innerArrays[m][i] + ')\n';
             } else {
-                gob('coords').value += 'new google.maps.LatLng(' + innerArrays[m][i] + '),\n';
+                gob('eGaaSCoords').value += 'new google.maps.LatLng(' + innerArrays[m][i] + '),\n';
             }
         }
-        gob('coords').value += '];\n';
+        gob('eGaaSCoords').value += '];\n';
     }
-    gob('coords').value += 'var myCoordinates = [outerPoints,' + hstring + '];\n';
-    gob('coords').value += 'var polyOptions = {\n'
+    gob('eGaaSCoords').value += 'var myCoordinates = [outerPoints,' + hstring + '];\n';
+    gob('eGaaSCoords').value += 'var polyOptions = {\n'
         + 'paths: myCoordinates,\n'
         + 'strokeColor: "' + polygonstyles[pcur].color + '",\n'
         + 'strokeOpacity: ' + polygonstyles[pcur].lineopac + ',\n'
@@ -2330,14 +2330,14 @@ function logCode5() {
         + 'var it = new google.maps.Polygon(polyOptions);\n'
         + 'it.setMap(map);\n';
     placemarks[plmcur].poly = "pgh";
-    javacode = gob('coords').value;
+    javacode = gob('eGaaSCoords').value;
 }
 // write javascript or kml for rectangle
 function logCode6() {
     if (notext === true) return;
     //placemarks[plmcur].style = polygonstyles[pcur].name;
     if (codeID == 2) { // javascript
-        gob('coords').value = 'var rectangle = new google.maps.Rectangle({\n'
+        gob('eGaaSCoords').value = 'var rectangle = new google.maps.Rectangle({\n'
             + 'map: map,\n'
             + 'fillColor: ' + polygonstyles[pcur].fill + ',\n'
             + 'fillOpacity: ' + polygonstyles[pcur].fillopac + ',\n'
@@ -2345,28 +2345,28 @@ function logCode6() {
             + 'strokeOpacity: ' + polygonstyles[pcur].lineopac + ',\n'
             + 'strokeWeight: ' + polygonstyles[pcur].width + '\n'
             + '});\n';
-        gob('coords').value += 'var sWest = new google.maps.LatLng(' + southWest.lat().toFixed(6) + ',' + southWest.lng().toFixed(6) + ');\n'
+        gob('eGaaSCoords').value += 'var sWest = new google.maps.LatLng(' + southWest.lat().toFixed(6) + ',' + southWest.lng().toFixed(6) + ');\n'
             + 'var nEast = new google.maps.LatLng(' + northEast.lat().toFixed(6) + ',' + northEast.lng().toFixed(6) + ');\n'
             + 'var bounds = new google.maps.LatLngBounds(sWest,nEast);\n'
             + 'rectangle.setBounds(bounds);\n';
-        gob('coords').value += '\n\\\\ Code for polyline rectangle\n';
-        gob('coords').value += 'var myCoordinates = [\n';
-        gob('coords').value += southWest.lat().toFixed(6) + ',' + southWest.lng().toFixed(6) + ',\n' +
+        gob('eGaaSCoords').value += '\n\\\\ Code for polyline rectangle\n';
+        gob('eGaaSCoords').value += 'var myCoordinates = [\n';
+        gob('eGaaSCoords').value += southWest.lat().toFixed(6) + ',' + southWest.lng().toFixed(6) + ',\n' +
             southWest.lat().toFixed(6) + ',' + northEast.lng().toFixed(6) + ',\n' +
             northEast.lat().toFixed(6) + ',' + northEast.lng().toFixed(6) + ',\n' +
             northEast.lat().toFixed(6) + ',' + southWest.lng().toFixed(6) + ',\n' +
             southWest.lat().toFixed(6) + ',' + southWest.lng().toFixed(6) + '\n';
-        gob('coords').value += '];\n';
+        gob('eGaaSCoords').value += '];\n';
         var options = 'var polyOptions = {\n'
             + 'path: myCoordinates,\n'
             + 'strokeColor: "' + polygonstyles[pcur].color + '",\n'
             + 'strokeOpacity: ' + polygonstyles[pcur].lineopac + ',\n'
             + 'strokeWeight: ' + polygonstyles[pcur].width + '\n'
             + '}\n';
-        gob('coords').value += options;
-        gob('coords').value += 'var it = new google.maps.Polyline(polyOptions);\n'
+        gob('eGaaSCoords').value += options;
+        gob('eGaaSCoords').value += 'var it = new google.maps.Polyline(polyOptions);\n'
             + 'it.setMap(map);\n';
-        javacode = gob('coords').value;
+        javacode = gob('eGaaSCoords').value;
     }
     if (codeID == 1) { // kml
         var kmltext = '<Placemark><name>' + placemarks[plmcur].name + '</name>\n' +
@@ -2382,13 +2382,13 @@ function logCode6() {
             southWest.lng().toFixed(6) + ',' + southWest.lat().toFixed(6) + ',0.0 \n';
         kmltext += '</coordinates></LinearRing></outerBoundaryIs>\n</Polygon>\n</Placemark>\n';
         placemarks[plmcur].plmtext = kmlcode = kmltext;
-        gob('coords').value = kmlheading() + kmltext + kmlend();
+        gob('eGaaSCoords').value = kmlheading() + kmltext + kmlend();
     }
 }
 function logCode7() { // javascript for circle
     if (notext === true) return;
     //placemarks[plmcur].style = circlestyles[ccur].name;
-    gob('coords').value = 'var circle = new google.maps.Circle({\n'
+    gob('eGaaSCoords').value = 'var circle = new google.maps.Circle({\n'
         + 'map: map,\n'
         + 'center: new google.maps.LatLng(' + centerPoint.lat().toFixed(6) + ',' + centerPoint.lng().toFixed(6) + '),\n'
         + 'fillColor: ' + circlestyles[ccur].fill + ',\n'
@@ -2397,8 +2397,8 @@ function logCode7() { // javascript for circle
         + 'strokeOpacity: ' + circlestyles[ccur].lineopac + ',\n'
         + 'strokeWeight: ' + circlestyles[ccur].width + '\n'
         + '});\n';
-    gob('coords').value += 'circle.setRadius(' + calc + ');\n';
-    javacode = gob('coords').value;
+    gob('eGaaSCoords').value += 'circle.setRadius(' + calc + ');\n';
+    javacode = gob('eGaaSCoords').value;
 }
 function logCode8() { //javascript for Marker
     if (notext === true) return;
@@ -2410,12 +2410,12 @@ function logCode8() { //javascript for Marker
         + '});\n'
         + '//Your content for the infowindow\n'
         + 'var html = \'<b>' + placemarks[plmcur].name + '</b> <br/>' + placemarks[plmcur].desc + '\';';
-    gob('coords').value = text;
-    javacode = gob('coords').value;
+    gob('eGaaSCoords').value = text;
+    javacode = gob('eGaaSCoords').value;
 }
 function logCode9() { //KML for marker
     if (notext === true) return;
-    gob('coords').value = "";
+    gob('eGaaSCoords').value = "";
     var kmlMarkers = "";
     kmlMarkers += '<Placemark><name>' + placemarks[plmcur].name + '</name>\n' +
         '<description>' + placemarks[plmcur].desc + '</description>\n' +
@@ -2425,27 +2425,27 @@ function logCode9() { //KML for marker
     kmlMarkers += '</coordinates>\n</Point>\n</Placemark>\n';
     //placemarks[plmcur].poly = "pl";
     placemarks[plmcur].plmtext = kmlcode = kmlMarkers;
-    gob('coords').value = kmlheading() + kmlMarkers + kmlend();
+    gob('eGaaSCoords').value = kmlheading() + kmlMarkers + kmlend();
 }
 
 
 function directionsintroduction() {
-    gob('coords').value;
+    gob('eGaaSCoords').value;
 }
 function markerintroduction() {
-    gob('coords').value;
+    gob('eGaaSCoords').value;
 }
 function polylineintroduction() {
-    gob('coords').value;
+    gob('eGaaSCoords').value;
 }
 function polygonintroduction() {
-    gob('coords').value;
+    gob('eGaaSCoords').value;
 }
 function rectangleintroduction() {
-    gob('coords').value;
+    gob('eGaaSCoords').value;
 }
 function circleintroduction() {
-    gob('coords').value;
+    gob('eGaaSCoords').value;
 }
 
 var StateCoords = [];
@@ -2496,11 +2496,15 @@ function regMap(coords, render) {
 }
 
 var newCoordsContainer;
+var newAddressContainer;
+var newAreaContainer;
 
-function openMap(container) {
-    newCoordsContainer = $("#" + container);
+function openMap(container, address, area) {
     StateCoords = [];
-
+    newCoordsContainer = $("#" + container);
+	newAddressContainer = address ? address : container + "_address";
+	newAreaContainer = area ? area : container + "_area";
+	
     $("#dl_modal").load("content?controllerHTML=modal_map", {}, function () {
         var modal = $("#modal_map");
         updateLanguage("#dl_modal .lang");
@@ -2540,15 +2544,22 @@ function saveMap() {
 
     var center = '{"center_point":[' + $("#centerofmap").val() + '], ';
     var zoom = '"zoom":"' + $("#myzoom").val() + '", ';
-    var points = '"cords":[' + $("#coords").val() + ']}';
+    var points = '"cords":[' + $("#eGaaSCoords").val() + ']}';
 
     newCoordsContainer.val(center + zoom + points);
 
-    if (!$("#" + newCoordsContainer.attr("id") + "_address").length) {
-        $('<div class="form-group"> <label>Address</label><input id="' + newCoordsContainer.attr("id") + '_address' + '" class="form-control" type="text" disabled></div>').insertAfter(newCoordsContainer.parent());
+    if (!$("#" + newAddressContainer).length) {
+        $('<div class="form-group"> <label>Address</label><input id="' + newAddressContainer + '" class="form-control" type="text"></div>').insertAfter(newCoordsContainer.parent());
     }
-
-    getMapAddress($("#" + newCoordsContainer.attr("id") + "_address"), JSON.parse(newCoordsContainer.val()))
+	
+	if (!$("#" + newAreaContainer).length) {
+		$('<div class="form-group"> <label>Area (sq meters)</label><input id="' + newAreaContainer + '" class="form-control" type="text"></div>').insertAfter(newCoordsContainer.parent());
+    }
+	
+	setTimeout(function(){
+		getMapAddress($("#" + newAddressContainer), JSON.parse(newCoordsContainer.val()));
+		getMapAddressSquare($("#" + newAreaContainer), JSON.parse(newCoordsContainer.val()));
+	}, 0)
 }
 
 var miniMapNum = 0;

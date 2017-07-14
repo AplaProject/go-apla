@@ -24,23 +24,28 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// NewContractInit initializes NewContract transaction
-func (p *Parser) NewContractInit() error {
+type NewContractParser struct {
+	*Parser
+	NewContract    *tx.NewContract
+	walletContract *int64
+}
 
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *NewContractParser) Init() error {
+	newContract := &tx.NewContract{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, newContract); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewContract = newContract
 	return nil
 }
 
-// NewContractFront checks conditions of NewContract transaction
-func (p *Parser) NewContractFront() error {
-
-	err := p.generalCheck(`new_contract`)
+func (p *NewContractParser) Validate() error {
+	err := p.generalCheck(`new_contract`, &p.NewContract.Header, map[string]string{"conditions": p.NewContract.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -49,70 +54,66 @@ func (p *Parser) NewContractFront() error {
 	// ...
 
 	// Check InputData
-	name := p.TxMaps.String["name"]
+	name := p.NewContract.Name
 	if off := strings.IndexByte(name, '#'); off > 0 {
-		p.TxMap["name"] = []byte(name[:off])
-		p.TxMaps.String["name"] = name[:off]
+		p.NewContract.Name = name[:off]
 		address := converter.StringToAddress(name[off+1:])
 		if address == 0 {
 			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, name[off+1:]))
 		}
-		p.TxMaps.Int64["wallet_contract"] = address
+		p.walletContract = &address
 	}
-	verifyData := map[string]string{"global": "int64", "name": "string"}
+	verifyData := map[string][]interface{}{"int64": []interface{}{p.NewContract.Global}, "string": []interface{}{p.NewContract.Name}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], name, p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewContract.ForSign(), p.NewContract.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.NewContract.Global, p.NewContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	if len(p.NewContract.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.NewContract.Conditions), uint32(p.NewContract.UserID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
-	if exist, err := p.Single(`select id from "`+prefix+"_smart_contracts"+`" where name=?`, p.TxMap["name"]).Int64(); err != nil {
+	if exist, err := p.Single(`select id from "`+prefix+"_smart_contracts"+`" where name=?`, p.NewContract.Name).Int64(); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {
-		return p.ErrInfo(fmt.Sprintf("The contract %s already exists", p.TxMap["name"]))
+		return p.ErrInfo(fmt.Sprintf("The contract %s already exists", p.NewContract.Name))
 	}
 	return nil
 }
 
-// NewContract proceeds NewContract transaction
-func (p *Parser) NewContract() error {
-
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
-	}
-	var wallet int64
-	if wallet = p.TxCitizenID; wallet == 0 {
-		wallet = p.TxWalletID
-	}
-	root, err := smart.CompileBlock(p.TxMaps.String["value"], prefix, false, 0)
+func (p *NewContractParser) Action() error {
+	prefix, err := GetTablePrefix(p.NewContract.Global, p.NewContract.Header.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if val, ok := p.TxMaps.Int64["wallet_contract"]; ok {
-		wallet = val
+	var wallet int64
+	if wallet = p.NewContract.UserID; wallet == 0 {
+		wallet = p.TxWalletID
+	}
+	root, err := smart.CompileBlock(p.NewContract.Value, prefix, false, 0)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	if p.walletContract != nil {
+		wallet = *p.walletContract
 	}
 
 	_, tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
-		[]interface{}{p.TxMaps.String["name"], p.TxMaps.String["value"], p.TxMaps.String["conditions"],
+		[]interface{}{p.NewContract.Name, p.NewContract.Value, p.NewContract.Conditions,
 			wallet}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -127,7 +128,10 @@ func (p *Parser) NewContract() error {
 	return nil
 }
 
-// NewContractRollback rollbacks NewContract transaction
-func (p *Parser) NewContractRollback() error {
+func (p *NewContractParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p NewContractParser) Header() *tx.Header {
+	return &p.NewContract.Header
 }

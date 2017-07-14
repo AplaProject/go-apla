@@ -161,7 +161,7 @@
 									<option value="file" selected>Testnet Url</option>
 								</select>
 								<div>
-									<input class="form-control" type="text" id="url" value="https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain">
+									<input class="form-control" type="text" id="url" value="https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain" required>
 								</div>
 							</div>
 						</fieldset>
@@ -180,7 +180,7 @@
 						<fieldset id="first_block" class="form-group" style="display:none;">
 							<label class="col-sm-3 control-label" for="first_block_dir">First block dir</label>
 							<div class="col-sm-9">
-								<input id="first_block_dir" class="form-control" type="text" value="">
+								<input id="first_block_dir" class="form-control" type="text" value="" required>
 							</div>
 						</fieldset>
 						<fieldset class="form-group">
@@ -200,25 +200,25 @@
 							<fieldset class="form-group db_settings">
 								<label class="col-sm-3 control-label lang" lang-id="host" for="host"></label>
 								<div class="col-sm-9">
-									<input id="host" class="form-control" type="text" value="localhost">
+									<input id="host" class="form-control" type="text" value="localhost" required>
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">
 								<label class="col-sm-3 control-label lang" lang-id="port" for="port"></label>
 								<div class="col-sm-9">
-									<input id="port" class="form-control" type="text" value="5432">
+									<input id="port" class="form-control" type="text" value="5432" required>
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">
 								<label class="col-sm-3 control-label lang" lang-id="db_name" for="db_name"></label>
 								<div class="col-sm-9">
-									<input id="db_name" class="form-control" type="text" value="">
+									<input id="db_name" class="form-control" type="text" value="" required>
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">
 								<label class="col-sm-3 control-label lang" lang-id="username" for="username"></label>
 								<div class="col-sm-9">
-									<input id="username" class="form-control" type="text" value="postgres">
+									<input id="username" class="form-control" type="text" value="postgres" required>
 								</div>
 							</fieldset>
 							<fieldset class="form-group db_settings">

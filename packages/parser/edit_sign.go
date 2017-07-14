@@ -17,55 +17,48 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// EditSignInit initializes EditSign transaction
-func (p *Parser) EditSignInit() error {
+type EditSignParser struct {
+	*Parser
+	EditSign *tx.EditNewSign
+}
 
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"conditions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *EditSignParser) Init() error {
+	editSign := &tx.EditNewSign{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, editSign); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditSign = editSign
 	return nil
 }
 
-// EditSignFront checks conditions of EditSign transaction
-func (p *Parser) EditSignFront() error {
-
-	err := p.generalCheck(`edit_sign`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
+func (p *EditSignParser) Validate() error {
+	err := p.generalCheck(`edit_sign`, &p.EditSign.Header, map[string]string{"conditions": p.EditSign.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"], p.TxMap["conditions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditSign.ForSign(), p.EditSign.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := converter.Int64ToStr(int64(p.TxStateID))
-	if len(p.TxMap["conditions"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions"]), uint32(p.TxStateID)); err != nil {
+	prefix := converter.Int64ToStr(int64(p.EditSign.Header.StateID))
+	if len(p.EditSign.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.EditSign.Conditions), uint32(p.EditSign.Header.StateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_signatures" WHERE name = ?`, p.TxMaps.String["name"]).String()
+	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_signatures" WHERE name = ?`, p.EditSign.Name).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -84,22 +77,23 @@ func (p *Parser) EditSignFront() error {
 	return nil
 }
 
-// EditSign proceeds EditSign transaction
-func (p *Parser) EditSign() error {
-
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+func (p *EditSignParser) Action() error {
+	prefix, err := GetTablePrefix(p.EditSign.Global, p.EditSign.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	_, _, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.TxMaps.String["value"],
-		p.TxMaps.String["conditions"]}, prefix+"_signatures", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditSign.Value,
+		p.EditSign.Conditions}, prefix+"_signatures", []string{"name"}, []string{p.EditSign.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// EditSignRollback rollbacks EditSign transaction
-func (p *Parser) EditSignRollback() error {
+func (p *EditSignParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p EditSignParser) Header() *tx.Header {
+	return &p.EditSign.Header
 }

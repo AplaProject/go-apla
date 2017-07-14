@@ -17,51 +17,40 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// AppendMenuInit initializes AppendMenu transaction
-func (p *Parser) AppendMenuInit() error {
+type AppendMenuParser struct {
+	*Parser
+	AppendMenu *tx.AppendMenu
+}
 
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *AppendMenuParser) Init() error {
+	appendMenu := &tx.AppendMenu{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, appendMenu); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.AppendMenu = appendMenu
 	return nil
 }
 
-// AppendMenuFront checks conditions of AppendMenu transaction
-func (p *Parser) AppendMenuFront() error {
-
-	err := p.generalCheck(`edit_menu`)
+func (p *AppendMenuParser) Validate() error {
+	err := p.generalCheck(`edit_menu`, &p.AppendMenu.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	/*verifyData := map[string]string{"name": "string", "value": "string", "menu": "string", "conditions": "string"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	/*
-		Check conditions
-		...
-	*/
-
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.AppendMenu.ForSign(), p.AppendMenu.Header.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err = p.AccessChange(`menu`, p.TxMaps.String["name"]); err != nil {
+	if err = p.AccessChange(`menu`, p.AppendMenu.Name, p.AppendMenu.Global, p.AppendMenu.StateID); err != nil {
 		if p.AccessRights(`changing_menu`, false) != nil {
 			return err
 		}
@@ -69,28 +58,28 @@ func (p *Parser) AppendMenuFront() error {
 	return nil
 }
 
-// AppendMenu proceeds AppendMenu transaction
-func (p *Parser) AppendMenu() error {
-
-	prefix := p.TxStateIDStr
-	if p.TxMaps.Int64["global"] == 1 {
-		prefix = "global"
-	}
-	log.Debug("value page", p.TxMaps.String["value"])
-	page, err := p.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, p.TxMaps.String["name"]).String()
+func (p *AppendMenuParser) Action() error {
+	prefix, err := GetTablePrefix(p.AppendMenu.Global, p.AppendMenu.Header.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	new := page + "\r\n" + p.TxMaps.String["value"]
-	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_menu", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	log.Debug("value page", p.AppendMenu.Value)
+	page, err := p.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, p.AppendMenu.Name).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	new := page + "\r\n" + p.AppendMenu.Value
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_menu", []string{"name"}, []string{p.AppendMenu.Name}, true)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
 	return nil
 }
 
-// AppendMenuRollback rollbacks AppendMenu transaction
-func (p *Parser) AppendMenuRollback() error {
+func (p *AppendMenuParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p AppendMenuParser) Header() *tx.Header {
+	return &p.AppendMenu.Header
 }

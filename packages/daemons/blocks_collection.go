@@ -547,8 +547,8 @@ BEGIN:
 
 			logger.Debug("currentBlockID %v", currentBlockID)
 
-			if blockData.BlockId != blockID {
-				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockID  %v > %v`, blockData.BlockId, blockID))
+			if blockData.BlockID != blockID {
+				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockID  %v > %v`, blockData.BlockID, blockID))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -593,7 +593,7 @@ BEGIN:
 
 			// публичный ключ того, кто этот блок сгенерил
 			// public key of those who has generated this block
-			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.StateID)
+			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletID, blockData.StateID)
 			if err != nil {
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -605,7 +605,7 @@ BEGIN:
 
 			// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
 			// SIGN from 128 bytes to 512 bytes. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.StateID, mrklRoot)
+			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockID, prevBlockHash, blockData.Time, blockData.WalletID, blockData.StateID, mrklRoot)
 			logger.Debug("forSign %v", forSign)
 
 			// проверяем подпись

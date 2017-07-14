@@ -109,7 +109,7 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 		//		fmt.Println(`Data`, err, data)
 		if len(data) > 0 && len(data[`value`]) > 0 {
 			names = append(names, prefix+`_`+icontract)
-			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, data[`value`]))
+			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, strings.Replace(data[`value`], "`", "``", -1)))
 			names = append(names, prefix+`c_`+icontract)
 			list = append(list, fmt.Sprintf("`%sc_%s #= %s`", prefix, icontract, strings.Replace(data[`conditions`], "`", `"`, -1)))
 			/*			if prefix == `p` {

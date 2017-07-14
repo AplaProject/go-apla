@@ -22,50 +22,54 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
 	"github.com/shopspring/decimal"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// ActivateContractInit initialize ActivateContract transaction
-func (p *Parser) ActivateContractInit() error {
+type ActivateContractParser struct {
+	*Parser
+	ActivateContract *tx.ActivateContract
+	activateCost     string
+}
 
-	fields := []map[string]string{{"global": "int64"}, {"id": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *ActivateContractParser) Init() error {
+	activateContract := &tx.ActivateContract{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, activateContract); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.ActivateContract = activateContract
 	return nil
 }
 
-// ActivateContractFront checks conditions of ActivateContract transaction
-func (p *Parser) ActivateContractFront() error {
-	err := p.generalCheck(`activate_contract`)
+func (p *ActivateContractParser) Validate() error {
+	err := p.generalCheck(`activate_contract`, &p.ActivateContract.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID,
-		p.TxStateID, p.TxMap["global"], p.TxMap["id"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.ActivateContract.ForSign(), p.ActivateContract.Header.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+	prefix, err := GetTablePrefix(p.ActivateContract.Global, p.ActivateContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
-	if len(p.TxMaps.String["id"]) == 0 {
+	if len(p.ActivateContract.Id) == 0 {
 		return p.ErrInfo("incorrect contract id")
 	}
-	if p.TxMaps.String["id"][0] > '9' {
-		p.TxMaps.String["id"], err = p.Single(`SELECT id FROM "`+prefix+`_smart_contracts" WHERE name = ?`, p.TxMaps.String["id"]).String()
-		if len(p.TxMaps.String["id"]) == 0 {
+	if p.ActivateContract.Id[0] > '9' {
+		p.ActivateContract.Id, err = p.Single(`SELECT id FROM "`+prefix+`_smart_contracts" WHERE name = ?`, p.ActivateContract.Id).String()
+		if len(p.ActivateContract.Id) == 0 {
 			return p.ErrInfo("incorrect contract name")
 		}
 	}
-	active, err := p.Single(`SELECT active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.TxMaps.String["id"]).String()
+	active, err := p.Single(`SELECT active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.ActivateContract.Id).String()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -81,38 +85,40 @@ func (p *Parser) ActivateContractFront() error {
 	if err := p.checkSenderDLT(cost, decimal.New(0, 0)); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.String["activate_cost"] = cost.String()
+	p.activateCost = cost.String()
 	return nil
 }
 
-// ActivateContract is a main function of ActivateContract transaction
-func (p *Parser) ActivateContract() error {
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+func (p *ActivateContractParser) Action() error {
+	prefix, err := GetTablePrefix(p.ActivateContract.Global, p.ActivateContract.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
 	wallet := p.TxWalletID
 	if wallet == 0 {
 		wallet = p.TxCitizenID
 	}
-	egs := p.TxMaps.String["activate_cost"]
+	egs := p.activateCost
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(wallet)}, true); err != nil {
 		return err
 	}
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(p.BlockData.WalletId)}, true); err != nil {
+		[]string{converter.Int64ToStr(p.BlockData.WalletID)}, true); err != nil {
 		return err
 	}
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`active`}, []interface{}{1}, prefix+`_smart_contracts`, []string{`id`},
-		[]string{p.TxMaps.String["id"]}, true); err != nil {
+		[]string{p.ActivateContract.Id}, true); err != nil {
 		return err
 	}
-	smart.ActivateContract(converter.StrToInt64(p.TxMaps.String["id"]), prefix, true)
+	smart.ActivateContract(converter.StrToInt64(p.ActivateContract.Id), prefix, true)
 	return nil
 }
 
-// ActivateContractRollback rollbacks ActivateContract transaction
-func (p *Parser) ActivateContractRollback() error {
+func (p *ActivateContractParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p *ActivateContractParser) Header() *tx.Header {
+	return &p.ActivateContract.Header
 }

@@ -148,6 +148,7 @@ func init() {
 	textproc.AddMaps(&map[string]textproc.MapFunc{`Table`: Table, `TxForm`: TxForm, `TxButton`: TXButton,
 		`ChartPie`: ChartPie, `ChartBar`: ChartBar})
 	textproc.AddFuncs(&map[string]textproc.TextFunc{`Address`: IDToAddress, `BtnEdit`: BtnEdit,
+		`InputMap`: InputMap, `InputMapPoly`: InputMapPoly,
 		`Image`: Image, `ImageInput`: ImageInput, `Div`: Div, `P`: Par, `Em`: Em, `Small`: Small, `A`: A, `Span`: Span, `Strong`: Strong, `Divs`: Divs, `DivsEnd`: DivsEnd,
 		`LiTemplate`: LiTemplate, `LinkPage`: LinkPage, `BtnPage`: BtnPage, `UList`: UList, `UListEnd`: UListEnd, `Li`: Li,
 		`CmpTime`: CmpTime, `Title`: Title, `MarkDown`: MarkDown, `Navigation`: Navigation, `PageTitle`: PageTitle,
@@ -765,6 +766,7 @@ func Include(vars *map[string]string, pars ...string) string {
 			}
 		}
 	}
+	params[`norow`] = `1`
 	//	page := (*vars)[`page`]
 	out, err := CreateHTMLFromTemplate(pars[0], converter.StrToInt64((*vars)[`citizen`]), converter.StrToInt64((*vars)[`state_id`]),
 		&params)
@@ -1002,7 +1004,7 @@ func Strong(vars *map[string]string, pars ...string) (out string) {
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
 
-	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` {
+	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` && (*vars)[`norow`] != `1` {
 		out = `<div class="row">`
 		(*vars)[`isrow`] = `opened`
 	}
@@ -1371,6 +1373,48 @@ func Image(vars *map[string]string, pars ...string) string {
 		rez = fmt.Sprintf(`<img src="%s" class="%s" %s alt="%s" stylex="display:block;">`, pars[0], class, more, alt)
 	}
 	return rez
+}
+
+// InputMap returns HTML tags for map point
+func InputMap(vars *map[string]string, pars ...string) string {
+	var coords string
+	id := pars[0]
+	if len(id) == 0 {
+		return ``
+	}
+	if len(pars) > 1 {
+		coords = strings.Replace(pars[1], `<`, `&lt;`, -1)
+	}
+	(*vars)[`inmappoint`] = `1`
+	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control inmap" id="%s">%s</textarea></div>`,
+		id, coords)
+	if len(pars) > 2 {
+		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control" 
+		        id="%s_address" value="%s"></div>`, id, strings.Replace(pars[2], `<`, `&lt;`, -1))
+	}
+	return out
+}
+
+// InputMapPoly returns HTML tags for polygon map
+func InputMapPoly(vars *map[string]string, pars ...string) string {
+	var coords, idaddress, idsquare string
+	id := pars[0]
+	if len(id) == 0 {
+		return ``
+	}
+	if len(pars) > 1 {
+		coords = strings.Replace(pars[1], `<`, `&lt;`, -1)
+	}
+	if len(pars) > 2 {
+		idaddress = converter.Escape(pars[2])
+	}
+	if len(pars) > 3 {
+		idsquare = converter.Escape(pars[3])
+	}
+	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control" id="%s">%s</textarea>
+	<button type="button" onClick="openMap('%[1]s', '%[3]s', '%s');" class="btn btn-primary"><i class="fa fa-map-marker"></i> &nbsp;Add/Edit Coords</button></div>`,
+		id, coords, idaddress, idsquare)
+	return out
 }
 
 // ImageInput returns HTML tags for uploading image
@@ -2004,7 +2048,7 @@ func Mult(vars *map[string]string, pars ...string) string {
 
 // Date formats the date value
 func Date(vars *map[string]string, pars ...string) string {
-	if len(pars) == 0 || pars[0] == `NULL` {
+	if len(pars) == 0 || pars[0] == `NULL` || len(pars[0]) < 19 {
 		return ``
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, pars[0][:19])
@@ -2030,7 +2074,7 @@ func Date(vars *map[string]string, pars ...string) string {
 
 // DateTime formats the date/time value
 func DateTime(vars *map[string]string, pars ...string) string {
-	if len(pars) == 0 || pars[0] == `NULL` {
+	if len(pars) == 0 || pars[0] == `NULL` || len(pars[0]) < 19 {
 		return ``
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, pars[0][:19])
@@ -2661,6 +2705,10 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 		if (*params)[`wimappoint`] == `1` {
 			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
 			userLocation("wimappoint", "100%%", "%dpx");</script>`, getHeight())
+		}
+		if (*params)[`inmappoint`] == `1` {
+			templ += fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
+			userLocation("inmap", "100%%", "%dpx");</script>`, getHeight())
 		}
 		if (*params)[`wibtncont`] == `1` {
 			var unique int64

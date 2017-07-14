@@ -1394,7 +1394,7 @@ function FormValidate(form, input, btn) {
 
 	form.find("." + input + ":visible").each(function () {
 		var val = $(this).val();
-		if (val == "") {
+		if (val == "" && $(this).prop("required") === true) {
 			i += 1;
 		}
 	});
@@ -1614,12 +1614,40 @@ function autoUpdate(id, period) {
 			}, "html");
 }
 
+var tempCoordsAddress;
+var tempCoordsArea;
+
 function getMapAddress(elem, coords) {
 	getMapGeocode(coords, function (address) {
-		elem.val(address);
-		elem.text(address);
+		if (elem.val() === "" || elem.text() === ""/* || arraysEqual(coords, tempCoordsAddress) === false*/) {
+			elem.val(address);
+			elem.text(address);
+		}
+		
+		tempCoordsAddress = coords;
 	});
 }
+
+function getMapAddressSquare(elem, coords) {
+	var area = [];
+	coords = coords.cords;
+	
+	for (i = 0; i < coords.length; i++) {
+		area.push(new google.maps.LatLng(coords[i][0], coords[i][1]));
+	}
+	
+	if (elem.val() === "" || elem.text() === "" || arraysEqual(coords, tempCoordsArea) === false) {
+		elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(0));
+		elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(0));
+	}
+	
+	tempCoordsArea = coords;
+}
+
+function arraysEqual(a, b) {
+	return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function getMapGeocode(coords, callback) {
 	var latlng = {};
 	var geocoder = new google.maps.Geocoder;

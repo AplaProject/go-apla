@@ -17,32 +17,35 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// RestoreAccessCloseInit initializes RestoreAccessClose transaction
-func (p *Parser) RestoreAccessCloseInit() error {
+type RestoreAccessCloseParser struct {
+	*Parser
+	RestoreAccessClose *tx.RestoreAccessClose
+}
 
-	fields := []map[string]string{{"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *RestoreAccessCloseParser) Init() error {
+	restoreAccessClose := &tx.RestoreAccessClose{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, restoreAccessClose); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.RestoreAccessClose = restoreAccessClose
 	return nil
 }
 
-// RestoreAccessCloseFront checks conditions of RestoreAccessClose transaction
-func (p *Parser) RestoreAccessCloseFront() error {
-	err := p.generalCheck(`system_restore_access_close`)
+func (p *RestoreAccessCloseParser) Validate() error {
+	err := p.generalCheck(`system_restore_access_close`, &p.RestoreAccessClose.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// check whether or not already close
-	close, err := p.Single("SELECT close FROM system_restore_access WHERE user_id  =  ? AND state_id = ?", p.TxUserID, p.TxUserID).Int64()
+	close, err := p.Single("SELECT close FROM system_restore_access WHERE user_id  =  ? AND state_id = ?", p.RestoreAccessClose.Header.UserID, p.RestoreAccessClose.Header.StateID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -50,8 +53,7 @@ func (p *Parser) RestoreAccessCloseFront() error {
 		return p.ErrInfo("close=1")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID)
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessClose.ForSign(), p.RestoreAccessClose.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -64,16 +66,18 @@ func (p *Parser) RestoreAccessCloseFront() error {
 	return nil
 }
 
-// RestoreAccessClose proceeds RestoreAccessClose transaction
-func (p *Parser) RestoreAccessClose() error {
-	_, _, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.UInt32ToStr(p.TxStateID)}, true)
+func (p *RestoreAccessCloseParser) Action() error {
+	_, _, err := p.selectiveLoggingAndUpd([]string{"close"}, []interface{}{"1"}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccessClose.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// RestoreAccessCloseRollback rollbacks RestoreAccessClose transaction
-func (p *Parser) RestoreAccessCloseRollback() error {
+func (p *RestoreAccessCloseParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p *RestoreAccessCloseParser) Header() *tx.Header {
+	return &p.RestoreAccessClose.Header
 }
