@@ -25,6 +25,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -86,18 +87,20 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockID, err := d.GetBlockID()
+		infoBlock := &model.InfoBlock{}
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		newBlockID := blockID + 1
+		newBlockID := infoBlock.BlockID + 1
 		logger.Debug("newBlockID: %v", newBlockID)
 
-		myStateID, myWalletID, err := d.GetMyStateIDAndWalletID()
-		logger.Debug("%v", myWalletID)
+		config := &model.Config{}
+		err = config.GetConfig()
+		//logger.Debug("%v", myWalletID)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -106,9 +109,12 @@ BEGIN:
 			}
 			continue
 		}
+		myStateID := config.StateID
+		myWalletID := config.DltWalletID
 
 		if myStateID > 0 {
-			delegate, err := d.CheckDelegateCB(myStateID)
+			systemState := &model.SystemRecognizedStates{}
+			delegate, err := systemState.IsDelegated(myStateID)
 			if err != nil {
 				d.dbUnlock()
 				logger.Error("%v", err)
@@ -132,7 +138,8 @@ BEGIN:
 
 		// Есть ли мы в списке тех, кто может генерить блоки
 		// If we are in the list of those who can generate blocks
-		myFullNodeID, err := d.FindInFullNodes(myStateID, myWalletID)
+		fullNodes := &model.FullNodes{}
+		err = fullNodes.FindNode(myStateID, myWalletID, myStateID, myWalletID)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -141,6 +148,8 @@ BEGIN:
 			}
 			continue
 		}
+
+		myFullNodeID := fullNodes.ID
 		logger.Debug("myFullNodeID %d", myFullNodeID)
 		if myFullNodeID == 0 {
 			d.dbUnlock()
@@ -156,16 +165,15 @@ BEGIN:
 		// получим state_id, wallet_id и время последнего блока
 		// If we have reached here, we are in full_nodes. It is necessary to determine where in the list we
 		// will get state_id, wallet_id and the time of the last block
-		prevBlock, err := d.OneRow("SELECT state_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
+		infoBlock = &model.InfoBlock{}
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
+			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		logger.Debug("prevBlock %v", prevBlock)
+		logger.Debug("prevBlock %v", infoBlock)
 
 		/*		prevBlockHash, err := d.Single("SELECT hex(hash) as hash FROM info_block").String()
 				if err != nil {
@@ -178,7 +186,7 @@ BEGIN:
 				}
 				logger.Debug("prevBlockHash %s", prevBlockHash)*/
 
-		sleepTime, err := d.GetSleepTime(myWalletID, myStateID, prevBlock["state_id"], prevBlock["wallet_id"])
+		sleepTime, err := d.GetSleepTime(myWalletID, myStateID, infoBlock.StateID, infoBlock.WalletID)
 		if err != nil {
 			d.dbUnlock()
 			logger.Error("%v", err)
@@ -192,12 +200,12 @@ BEGIN:
 
 		// учтем прошедшее время
 		// take into account the passed time
-		sleep := int64(sleepTime) - (time.Now().Unix() - prevBlock["time"])
+		sleep := int64(sleepTime) - (time.Now().Unix() - int64(infoBlock.Time))
 		if sleep < 0 {
 			sleep = 0
 		}
 
-		logger.Debug("time.Now().Unix*() %v / prevBlock[time] %v", time.Now().Unix(), prevBlock["time"])
+		logger.Debug("time.Now().Unix*() %v / prevBlock[time] %v", time.Now().Unix(), infoBlock.Time)
 
 		logger.Debug("sleep %v", sleep)
 
@@ -219,30 +227,20 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		prevBlock, err = d.OneRow("SELECT state_id, wallet_id, block_id, time, hex(hash) as hash FROM info_block").Int64()
+		infoBlock = &model.InfoBlock{}
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
+			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		logger.Debug("prevBlock %v", prevBlock)
-		prevBlockHash, err := d.Single("SELECT hex(hash) as hash FROM info_block").String()
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
+		logger.Debug("prevBlock %v", infoBlock)
 
-		logger.Debug("blockID %v", blockID)
+		logger.Debug("blockID %v", infoBlock.BlockID)
 
 		logger.Debug("blockgeneration begin")
-		if blockID < 1 {
+		if infoBlock.BlockID < 1 {
 			logger.Debug("continue")
 			d.dbUnlock()
 			if d.dSleep(d.sleepTime) {
@@ -251,12 +249,20 @@ BEGIN:
 			continue
 		}
 
-		newBlockID = prevBlock["block_id"] + 1
+		newBlockID = infoBlock.BlockID + 1
 
 		// получим наш приватный нодовский ключ
 		// Recieve our private node key
-		nodePrivateKey, err := d.GetNodePrivateKey()
-		if len(nodePrivateKey) < 1 {
+		myNodeKeys := &model.MyNodeKeys{}
+		err = myNodeKeys.GetNodeWithMaxBlockID()
+		if err != nil {
+			if d.unlockPrintSleep(err, d.sleepTime) {
+				break BEGIN
+			}
+			continue BEGIN
+		}
+
+		if len(myNodeKeys.PrivateKey) < 1 {
 			logger.Debug("continue")
 			d.dbUnlock()
 			if d.dSleep(d.sleepTime) {
@@ -272,8 +278,8 @@ BEGIN:
 		//##		 Form the block
 		//#####################################
 
-		if prevBlock["block_id"] >= newBlockID {
-			logger.Debug("continue %d >= %d", prevBlock["block_id"], newBlockID)
+		if infoBlock.BlockID >= newBlockID {
+			logger.Debug("continue %d >= %d", infoBlock.BlockID, newBlockID)
 			d.dbUnlock()
 			if d.dSleep(d.sleepTime) {
 				break BEGIN
@@ -300,12 +306,11 @@ BEGIN:
 
 			Time := time.Now().Unix()
 			var mrklArray [][]byte
-			var usedTransactions string
 			var mrklRoot []byte
 			var blockDataTx []byte
 			// берем все данные из очереди. Они уже были проверены ранее, и можно их не проверять, а просто брать
 			// take all the data from the turn. It is tested already, you may not check them again but just take
-			rows, err := d.Query(d.FormatQuery("SELECT data, hex(hash), type, wallet_id, citizen_id, third_var FROM transactions WHERE used = 0 AND verified = 1"))
+			transactions, err := model.GetAllUnusedAndVerifiedTransactions()
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -313,33 +318,19 @@ BEGIN:
 				}
 				continue
 			}
-			for rows.Next() {
-				// проверим, не нужно ли нам выйти из цикла
+			for _, transaction := range *transactions {
 				// Check if we need to get out from the cycle
 				if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 					break BEGIN
 				}
-				var data []byte
-				var hash string
-				var txType string
-				var txWalletID string
-				var txCitizenID string
-				var thirdVar string
-				err = rows.Scan(&data, &hash, &txType, &txWalletID, &txCitizenID, &thirdVar)
-				if err != nil {
-					rows.Close()
-					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				logging.WriteSelectiveLog("hash: " + string(hash))
-				logger.Debug("data %v", data)
-				logger.Debug("hash %v", hash)
-				transactionType := data[1:2]
+
+				logging.WriteSelectiveLog("hash: " + string(transaction.Hash))
+				logger.Debug("data %v", transaction.Data)
+				logger.Debug("hash %v", transaction.Hash)
+				transactionType := transaction.Data[1:2]
 				logger.Debug("%v", transactionType)
 				logger.Debug("%x", transactionType)
-				doubleHash, err := crypto.DoubleHash([]byte(data))
+				doubleHash, err := crypto.DoubleHash(transaction.Data)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -347,24 +338,17 @@ BEGIN:
 				mrklArray = append(mrklArray, doubleHash)
 				logger.Debug("mrklArray %v", mrklArray)
 
-				oneMoreHash, err := crypto.Hash([]byte(data))
+				oneMoreHash, err := crypto.Hash(transaction.Data)
 				if err != nil {
 					log.Fatal(err)
 				}
 				logger.Debug("hash: %s", oneMoreHash)
 
-				dataHex := fmt.Sprintf("%x", data)
+				dataHex := fmt.Sprintf("%x", transaction.Data)
 				logger.Debug("dataHex %v", dataHex)
 
-				blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(data))...)
-
-				if configIni["db_type"] == "postgresql" {
-					usedTransactions += "decode('" + hash + "', 'hex'),"
-				} else {
-					usedTransactions += "x'" + hash + "',"
-				}
+				blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData(transaction.Data)...)
 			}
-			rows.Close()
 
 			if len(mrklArray) == 0 {
 				mrklArray = append(mrklArray, []byte("0"))
@@ -375,11 +359,11 @@ BEGIN:
 			// подписываем нашим нод-ключем заголовок блока
 			// sign the heading of a block by our node-key
 			var forSign string
-			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockID, prevBlockHash, Time, myWalletID, myStateID, string(mrklRoot))
+			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockID, infoBlock.Hash, Time, myWalletID, myStateID, string(mrklRoot))
 			//			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockID, prevBlock[`hash`], Time, myWalletID, myStateID, string(mrklRoot))
 			logger.Debug("forSign: %v", forSign)
 			//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
-			bytes, err := crypto.Sign(nodePrivateKey, forSign)
+			bytes, err := crypto.Sign(string(myNodeKeys.PrivateKey), forSign)
 			if err != nil {
 				if d.dPrintSleep(fmt.Sprintf("err %v %v", err, utils.GetParent()), d.sleepTime) {
 					break BEGIN

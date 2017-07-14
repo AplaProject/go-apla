@@ -22,6 +22,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -85,14 +86,18 @@ BEGIN:
 		// если последний проверенный был давно (пропасть более 5 блоков),
 		// то начинаем проверку последних 5 блоков
 		// if the last one checked was long ago (interval is more than 5 blocks)
-		ConfirmedBlockID, err := d.GetConfirmedBlockID()
+		confirmations := &model.Confirmations{}
+		err := confirmations.GetMaxGoodBlock(consts.MIN_CONFIRMED_NODES)
 		if err != nil {
 			logger.Error("%v", err)
 		}
-		LastBlockID, err := d.GetBlockID()
+		ConfirmedBlockID := confirmations.BlockID
+		infoBlock := &model.InfoBlock{}
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
 			logger.Error("%v", err)
 		}
+		LastBlockID := infoBlock.BlockID
 		if LastBlockID-ConfirmedBlockID > 5 {
 			startBlockID = ConfirmedBlockID + 1
 			d.sleepTime = 10
@@ -114,10 +119,12 @@ BEGIN:
 
 			logger.Debug("blockID: %d", blockID)
 
-			hash, err := d.Single("SELECT hash FROM block_chain WHERE id = ?", blockID).String()
+			block := model.Block{}
+			err := block.GetBlock(blockID)
 			if err != nil {
 				logger.Error("%v", err)
 			}
+			hash := string(block.Hash)
 			logger.Info("hash: %x", hash)
 			if len(hash) == 0 {
 				logger.Debug("len(hash) == 0")
@@ -128,7 +135,7 @@ BEGIN:
 			if d.ConfigIni["test_mode"] == "1" {
 				hosts = []string{"localhost:" + consts.TCP_PORT}
 			} else {
-				hosts, err = d.GetHosts()
+				hosts, err = model.GetFullNodesHosts()
 				if err != nil {
 					logger.Error("%v", err)
 				}
@@ -155,16 +162,23 @@ BEGIN:
 				}
 				logger.Info("st0 %v  st1 %v", st0, st1)
 			}
-			exists, err := d.Single("SELECT block_id FROM confirmations WHERE block_id= ?", blockID).Int64()
-			if exists > 0 {
+			confirmation := &model.Confirmations{}
+			err = confirmation.GetConfirmation(blockID)
+			if err == nil {
 				logger.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockID)
-				err = d.ExecSQL("UPDATE confirmations SET good = ?, bad = ?, time = ? WHERE block_id = ?", st1, st0, time.Now().Unix(), blockID)
+				confirmation.Good = int32(st1)
+				confirmation.Bad = int32(st0)
+				confirmation.Time = int32(time.Now().Unix())
+				err = confirmation.Save()
 				if err != nil {
 					logger.Error("%v", err)
 				}
 			} else {
+				confirmation.Good = int32(st1)
+				confirmation.Bad = int32(st0)
+				confirmation.Time = int32(time.Now().Unix())
 				logger.Debug("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( %v, %v, %v, %v )", blockID, st1, st0, time.Now().Unix())
-				err = d.ExecSQL("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( ?, ?, ?, ? )", blockID, st1, st0, time.Now().Unix())
+				err = confirmation.Save()
 				if err != nil {
 					logger.Error("%v", err)
 				}

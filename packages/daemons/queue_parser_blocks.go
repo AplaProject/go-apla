@@ -22,6 +22,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -89,28 +90,30 @@ BEGIN:
 			continue BEGIN
 		}
 
-		prevBlockData, err := d.OneRow("SELECT * FROM info_block").String()
+		infoBlock := &model.InfoBlock{}
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		newBlockData, err := d.OneRow("SELECT * FROM queue_blocks").String()
+		queueBlock := &model.QueueBlocks{}
+		err = queueBlock.GetQueueBlock()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		if len(newBlockData) == 0 {
+		if len(queueBlock.Hash) == 0 {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		newBlockData["hash_hex"] = string(converter.BinToHex(newBlockData["hash"]))
-		prevBlockData["hash_hex"] = string(converter.BinToHex(prevBlockData["hash"]))
+		queueBlock.Hash = converter.BinToHex(queueBlock.Hash)
+		infoBlock.Hash = converter.BinToHex(infoBlock.Hash)
 
 		/*
 		 * Базовая проверка
@@ -119,8 +122,8 @@ BEGIN:
 
 		// проверим, укладывается ли блок в лимит
 		// check if the block gets in the rollback_blocks_1 limit
-		if converter.StrToInt64(newBlockData["block_id"]) > converter.StrToInt64(prevBlockData["block_id"])+consts.RB_BLOCKS_1 {
-			d.DeleteQueueBlock(newBlockData["hash_hex"])
+		if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {
+			queueBlock.Delete()
 			if d.unlockPrintSleep(utils.ErrInfo("rollback_blocks_1"), 1) {
 				break BEGIN
 			}
@@ -129,8 +132,8 @@ BEGIN:
 
 		// проверим не старый ли блок в очереди
 		// check whether the new block is in the turn
-		if converter.StrToInt64(newBlockData["block_id"]) <= converter.StrToInt64(prevBlockData["block_id"]) {
-			d.DeleteQueueBlock(newBlockData["hash_hex"])
+		if queueBlock.BlockID <= infoBlock.BlockID {
+			queueBlock.Delete()
 			if d.unlockPrintSleepInfo(utils.ErrInfo("old block"), 1) {
 				break BEGIN
 			}
@@ -141,23 +144,25 @@ BEGIN:
 		 * Загрузка блоков для детальной проверки
 		 */
 		// download of the blocks for the detailed check
-		host, err := d.Single("SELECT host FROM full_nodes WHERE id = ?", newBlockData["full_node_id"]).String()
+		fullNode := &model.FullNodes{}
+
+		err = fullNode.FindNodeByID(queueBlock.FullNodeID)
 		if err != nil {
-			d.DeleteQueueBlock(newBlockData["hash_hex"])
+			queueBlock.Delete()
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		blockID := converter.StrToInt64(newBlockData["block_id"])
+		blockID := queueBlock.BlockID
 
 		p := new(parser.Parser)
 		p.DCDB = d.DCDB
 		p.GoroutineName = GoroutineName
-		err = p.GetBlocks(blockID, host+":"+consts.TCP_PORT, "rollback_blocks_1", GoroutineName, 7)
+		err = p.GetBlocks(blockID, fullNode.Host+":"+consts.TCP_PORT, "rollback_blocks_1", GoroutineName, 7)
 		if err != nil {
 			logger.Error("v", err)
-			d.DeleteQueueBlock(newBlockData["hash_hex"])
+			queueBlock.Delete()
 			d.NodesBan(fmt.Sprintf("%v", err))
 			if d.unlockPrintSleep(utils.ErrInfo(err), 1) {
 				break BEGIN

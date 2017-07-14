@@ -21,6 +21,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -80,14 +81,15 @@ BEGIN:
 			continue BEGIN
 		}
 
-		blockID, err := d.GetBlockID()
+		infoBlock := &model.InfoBlock{}
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		if blockID == 0 {
+		if infoBlock.BlockID == 0 {
 			if d.unlockPrintSleep(utils.ErrInfo("blockID == 0"), d.sleepTime) {
 				break BEGIN
 			}
@@ -97,7 +99,7 @@ BEGIN:
 		// чистим зацикленные
 		// clean the looped
 		logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
-		affect, err := d.ExecSQLGetAffect("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
+		affect, err := model.DeleteLoopedTransactions()
 		if err != nil {
 			logging.WriteSelectiveLog(err)
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

@@ -30,6 +30,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -124,7 +125,8 @@ BEGIN:
 			break BEGIN
 		}
 		logger.Debug("0")
-		config, err := d.GetNodeConfig()
+		config := &model.Config{}
+		err := config.GetConfig()
 		if err != nil {
 			if d.dPrintSleep(err, d.sleepTime) {
 				break BEGIN
@@ -136,14 +138,18 @@ BEGIN:
 		// удалим то, что мешает
 		// remove that disturbs
 		if *utils.StartBlockID > 0 {
-			del := []string{"queue_tx", "my_notifications", "main_lock"}
-			for _, table := range del {
-				err := sql.DB.ExecSQL(`DELETE FROM ` + table)
-				fmt.Println(`DELETE FROM ` + table)
-				if err != nil {
-					fmt.Println(err)
-					panic(err)
-				}
+			err = model.DeleteQueueTx()
+			fmt.Println(`DELETE FROM queue_tx`)
+			if err != nil {
+				fmt.Println(err)
+				panic(err)
+			}
+
+			err = model.DeleteMainLock()
+			fmt.Println(`DELETE FROM main_lock`)
+			if err != nil {
+				fmt.Println(err)
+				panic(err)
 			}
 		}
 
@@ -163,13 +169,15 @@ BEGIN:
 
 		// если это первый запуск во время инсталяции
 		// if this is the first launch during the installation
-		currentBlockID, err := d.GetBlockID()
+		infoBlock := &model.InfoBlock{}
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
+		currentBlockID := infoBlock.BlockID
 
 		logger.Info("config", config)
 		logger.Info("currentBlockID", currentBlockID)
@@ -190,11 +198,11 @@ BEGIN:
 			   if _, err := os.Stat(*utils.Dir+"/public/blockchain"); os.IsNotExist(err) {
 			       IsNotExistBlockChain = true
 			   }*/
-			if config["first_load_blockchain"] == "file" /* && IsNotExistBlockChain*/ {
+			if config.FirstLoadBlockchain == "file" /* && IsNotExistBlockChain*/ {
 
 				logger.Info("first_load_blockchain=file")
 				//nodeConfig, err := d.GetNodeConfig()
-				blockchainURL := config["first_load_blockchain_url"]
+				blockchainURL := config.FirstLoadBlockchainURL
 				if len(blockchainURL) == 0 {
 					blockchainURL = consts.BLOCKCHAIN_URL
 				}
@@ -250,7 +258,8 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				err = d.ExecSQL(`UPDATE config SET current_load_blockchain = 'file'`)
+				config.CurrentLoadBlockchain = "file"
+				err = config.Save()
 				if err != nil {
 					if d.unlockPrintSleep(err, d.sleepTime) {
 						break BEGIN
@@ -391,7 +400,8 @@ BEGIN:
 		d.dbUnlock()
 
 		logger.Debug("UPDATE config SET current_load_blockchain = 'nodes'")
-		err = d.ExecSQL(`UPDATE config SET current_load_blockchain = 'nodes'`)
+		config.CurrentLoadBlockchain = "nodes"
+		err = config.Save()
 		if err != nil {
 			//!!!			d.unlockPrintSleep(err, d.sleepTime) unlock был выше
 			if d.dPrintSleep(err, d.sleepTime) {
@@ -483,13 +493,14 @@ BEGIN:
 			continue BEGIN
 		}
 
-		currentBlockID, err = d.GetBlockID()
+		err = infoBlock.GetInfoBlock()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue
 		}
+		currentBlockID = infoBlock.BlockID
 		logger.Info("currentBlockID", currentBlockID, "maxBlockID", maxBlockID)
 		if maxBlockID <= currentBlockID {
 			if d.unlockPrintSleepInfo(utils.ErrInfo(errors.New("maxBlockID <= currentBlockID")), d.sleepTime) {
@@ -559,14 +570,15 @@ BEGIN:
 			// we need the hash of the previous block, to check the signature
 			prevBlockHash := ""
 			if blockID > 1 {
-				prevBlockHash, err = d.Single("SELECT hash FROM block_chain WHERE id = ?", blockID-1).String()
+				block := &model.Block{}
+				err = block.GetBlock(blockID - 1)
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
 					continue BEGIN
 				}
-				prevBlockHash = string(converter.BinToHex([]byte(prevBlockHash)))
+				prevBlockHash = string(converter.BinToHex(block.Hash))
 			} else {
 				prevBlockHash = "0"
 			}
@@ -593,12 +605,28 @@ BEGIN:
 
 			// публичный ключ того, кто этот блок сгенерил
 			// public key of those who has generated this block
-			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.StateID)
-			if err != nil {
-				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
+
+			var nodePublicKey []byte
+			if blockData.WalletId != 0 {
+				wallet := model.NewWallet()
+				err = wallet.GetWallet(blockData.WalletId)
+				if err != nil {
+					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+						break BEGIN
+					}
+					continue BEGIN
 				}
-				continue BEGIN
+				nodePublicKey = wallet.PublicKey
+			} else {
+				systemState := &model.SystemRecognizedStates{}
+				err = systemState.GetState(blockData.StateID)
+				if err != nil {
+					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+						break BEGIN
+					}
+					continue BEGIN
+				}
+				nodePublicKey = systemState.NodePublickKey
 			}
 
 			logger.Debug("nodePublicKey %x", nodePublicKey)
@@ -643,7 +671,7 @@ BEGIN:
 				logger.Info("plug found blockID=%v\n", blockID)
 
 				logging.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-				affect, err := d.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+				affect, err := model.MarkTransactionsUnverified()
 				if err != nil {
 					logging.WriteSelectiveLog(err)
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

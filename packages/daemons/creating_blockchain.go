@@ -6,6 +6,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -47,13 +48,15 @@ BEGIN:
 			break BEGIN
 		}
 
-		curBlockID, err := d.GetBlockID()
+		infoBlock := &model.InfoBlock{}
+		err := infoBlock.GetInfoBlock()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
+		curBlockID := infoBlock.BlockID
 
 		// пишем свежие блоки в резервный блокчейн
 		// record the newest blocks in reserve blockchain
@@ -72,12 +75,7 @@ BEGIN:
 				}
 				continue BEGIN
 			}
-			rows, err := d.Query(d.FormatQuery(`
-					SELECT id, data
-					FROM block_chain
-					WHERE id > ? AND id <= ?
-					ORDER BY id
-					`), endBlockID, curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE)
+			blockchain, err := model.GetBlockchain(endBlockID, curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE)
 			if err != nil {
 				file.Close()
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -86,30 +84,11 @@ BEGIN:
 				continue BEGIN
 			}
 
-			for rows.Next() {
-				var id, data string
-				err = rows.Scan(&id, &data)
-				if err != nil {
-					rows.Close()
-					file.Close()
-					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				blockData := append(converter.DecToBin(id, 5), converter.EncodeLengthPlusData(data)...)
+			for _, block := range blockchain {
+				blockData := append(converter.DecToBin(block.ID, 5), converter.EncodeLengthPlusData(block.Data)...)
 				sizeAndData := append(converter.DecToBin(len(blockData), 5), blockData...)
 				//err := ioutil.WriteFile(*utils.Dir+"/public/blockchain", append(sizeAndData, utils.DecToBin(len(sizeAndData), 5)...), 0644)
 				if _, err = file.Write(append(sizeAndData, converter.DecToBin(len(sizeAndData), 5)...)); err != nil {
-					rows.Close()
-					file.Close()
-					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				if err != nil {
-					rows.Close()
 					file.Close()
 					if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
@@ -117,7 +96,6 @@ BEGIN:
 					continue BEGIN
 				}
 			}
-			rows.Close()
 			file.Close()
 		}
 
