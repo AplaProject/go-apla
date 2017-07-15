@@ -33,7 +33,7 @@
 		crossDomain: true,
 		success: function(data) {
 			selectboxState(data);
-			regMap(JSON.parse(data[1].state_coords));
+			regMap(JSON.parse(data[0].state_coords));
 		},
 		error: function(xhr, status, error) {
 			Alert("Error", error, "error");
@@ -71,7 +71,12 @@
 			dataType: 'json',
 			crossDomain: true,
 			success: function(data) {
-				regMap(JSON.parse(data[id].state_coords));
+				for (var i in data) {
+					if (data[i].id == id) {
+						regMap(JSON.parse(data[i].state_coords));
+						break;
+					}
+				}
 			},
 			error: function(xhr, status, error) {
 				Alert("Error", error, "error");
