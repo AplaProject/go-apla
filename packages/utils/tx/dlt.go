@@ -22,7 +22,7 @@ type DLTChangeHostVote struct {
 }
 
 func (s DLTChangeHostVote) ForSign() string {
-	return fmt.Sprintf("%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Type, s.Header.UserID, s.Host, s.AddressVote, s.FuelRate)
+	return fmt.Sprintf("%d,%d,%d,%s,%s,%s", s.Header.Type, s.Header.Time, s.Header.UserID, s.Host, s.AddressVote, s.FuelRate)
 }
 
 type DLTChangeNodeKey struct {

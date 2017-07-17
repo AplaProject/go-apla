@@ -22,19 +22,55 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 )
 
+func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
+	route.Handle(method, `/api/v1/`+pattern, DefaultHandler(processParams(pars), handler...))
+}
+
 // Route sets routing pathes
 func Route(route *hr.Router) {
-	anyMethod := func(method, pattern, pars string, handler apiHandle) {
-		route.Handle(method, `/api/v1/`+pattern, DefaultHandler(processParams(pars), handler))
+	get := func(pattern, params string, handler ...apiHandle) {
+		methodRoute(route, `GET`, pattern, params, handler...)
 	}
-	get := func(pattern, params string, handler apiHandle) {
-		anyMethod(`GET`, pattern, params, handler)
+	post := func(pattern, params string, handler ...apiHandle) {
+		methodRoute(route, `POST`, pattern, params, handler...)
 	}
-	post := func(pattern, params string, handler apiHandle) {
-		anyMethod(`POST`, pattern, params, handler)
+	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
+		methodRoute(route, method, `prepare/`+pattern, pars, authState, preHandle)
+		if len(pars) > 0 {
+			pars = `,` + pars
+		}
+		methodRoute(route, method, pattern, `signature:hex, time:string`+pars, authState, handle)
 	}
+	postTx := func(url string, params string, preHandle, handle apiHandle) {
+		anyTx(`POST`, url, params, preHandle, handle)
+	}
+	putTx := func(url string, params string, preHandle, handle apiHandle) {
+		anyTx(`PUT`, url, params, preHandle, handle)
+	}
+
+	get(`balance/:wallet`, ``, authWallet, balance)
 	get(`getuid`, ``, getUID)
-	post(`auth`, `pubkey signature:hex,?state:int64`, auth)
+	get(`txstatus/:hash`, ``, authWallet, txstatus)
+	get(`smartcontract/:name`, ``, authState, getSmartContract)
+	get(`content/page/:page`, `?global:int64`, contentPage)
+	get(`content/menu/:name`, `?global:int64`, contentMenu)
+	get(`menu/:name`, `?global:int64`, getMenu)
+	get(`page/:name`, `?global:int64`, getPage)
+	get(`contract/:id`, `?global:int64`, getContract)
+	get(`contractlist`, `?limit ?offset ?global:int64`, contractList)
+
+	post(`login`, `pubkey signature:hex,?state:int64`, login)
+	postTx(`menu`, `name value conditions:string, global:int64`, txPreNewMenu, txMenu)
+	postTx(`page`, `name menu value conditions:string, global:int64`, txPreNewPage, txPage)
+	postTx(`contract`, `name value conditions:string, ?wallet global:int64`, txPreNewContract, txContract)
+	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
+	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
+	post(`sendegs`, `pubkey signature:hex, time recipient amount commission ?comment:string`, authWallet, sendEGS)
+
+	putTx(`activatecontract/:id`, `?global:int64`, txPreActivateContract, txActivateContract)
+	putTx(`contract/:id`, `value conditions:string, global:int64`, txPreEditContract, txContract)
+	putTx(`menu/:name`, `value conditions:string, global:int64`, txPreEditMenu, txMenu)
+	putTx(`page/:name`, `menu value conditions:string, global:int64`, txPreEditPage, txPage)
 }
 
 func processParams(input string) (params map[string]int) {
@@ -51,6 +87,8 @@ func processParams(input string) (params map[string]int) {
 		switch types[1] {
 		case `hex`:
 			vtype = pHex
+		case `string`:
+			vtype = pString
 		case `int64`:
 			vtype = pInt64
 		default:

@@ -17,19 +17,30 @@
 package api
 
 import (
-	"net/http"
+	"fmt"
+	//	"net/url"
+	"testing"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
-func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.sess.Get("wallet") == nil {
-		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	}
-	return nil
-}
+func TestSmartFields(t *testing.T) {
 
-func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.sess.Get("wallet") == nil || data.sess.Get("state").(int64) == 0 {
-		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
 	}
-	return nil
+	ret, err := sendGet(`smartcontract/MainCondition`, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret[`fields`].([]interface{})) != 0 {
+		t.Error(`MainCondition fields must be empty`)
+		return
+	}
+	if ret[`name`].(string) != `@1MainCondition` {
+		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, ret[`name`].(string)))
+		return
+	}
+
 }

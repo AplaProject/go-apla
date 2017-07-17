@@ -72,13 +72,21 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	zero, _ := decimal.NewFromString("0")
-	amount, err := decimal.NewFromString(p.DLTTransfer.Commission)
+
+	ourAmount, err := decimal.NewFromString(p.DLTTransfer.Amount)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if amount.Cmp(zero) <= 0 {
+	if ourAmount.Cmp(zero) <= 0 {
 		return p.ErrInfo("amount<=0")
 	}
+	/*	amount, err := decimal.NewFromString(p.DLTTransfer.Amount) //Commission)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
+		if amount.Cmp(zero) <= 0 {
+			return p.ErrInfo("amount<=0")
+		}*/
 
 	fPrice, err := p.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").String()
 	if err != nil {
@@ -97,14 +105,14 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	commission := fPriceDecemal.Mul(fuelRate)
-	ourCommission, err := decimal.NewFromString(fPrice)
+	ourCommission, err := decimal.NewFromString(p.DLTTransfer.Commission) //fPrice)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// проверим, удовлетворяет ли нас комиссия, которую предлагает юзер
 	if ourCommission.Cmp(commission) < 0 {
-		return p.ErrInfo(fmt.Sprintf("commission %s < dltPrice %d", ourCommission.String(), commission))
+		return p.ErrInfo(fmt.Sprintf("commission %v < dltPrice %v", ourCommission, commission))
 	}
 
 	if p.DLTTransfer.Comment == "null" {
@@ -127,10 +135,10 @@ func (p *DLTTransferParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	ourAmount, err := decimal.NewFromString(p.DLTTransfer.Amount)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
+	/*	ourAmount, err := decimal.NewFromString(p.DLTTransfer.Amount)
+		if err != nil {
+			return p.ErrInfo(err)
+		}*/
 	if totalAmountDecimal.Cmp(ourAmount.Add(ourCommission)) < 0 {
 		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", ourAmount, ourCommission, totalAmount))
 	}

@@ -50,21 +50,19 @@ func (db *DCDB) DelLogTx(binaryTx []byte) error {
 }
 
 // SendTx writes transaction info to transactions_status & queue_tx
-func (db *DCDB) SendTx(txType int64, adminWallet int64, data []byte) (err error) {
-	hash, err := crypto.Hash(data)
+func (db *DCDB) SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {
+	hash, err = crypto.Hash(data)
 	if err != nil {
 		log.Fatal(err)
 	}
+	hash = []byte(hex.EncodeToString(hash))
 	err = db.ExecSQL(`INSERT INTO transactions_status (
 			hash, time,	type, wallet_id, citizen_id	) VALUES (
 			[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), txType, adminWallet, adminWallet)
 	if err != nil {
-		return err
+		return
 	}
 	err = db.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
-	if err != nil {
-		return err
-	}
 	return
 }
 

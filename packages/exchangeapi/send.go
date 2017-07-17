@@ -141,7 +141,7 @@ func send(r *http.Request) interface{} {
 	}
 	data = append(data, converter.EncodeLengthPlusData(pub)...)
 	data = append(data, binsign...)
-	err = sql.DB.SendTx(txType, sender, data)
+	_, err = sql.DB.SendTx(txType, sender, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result

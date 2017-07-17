@@ -21,11 +21,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime/debug"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/astaxie/beego/session"
 	hr "github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type apiData struct {
@@ -35,9 +41,19 @@ type apiData struct {
 	sess   session.SessionStore
 }
 
+type forSign struct {
+	Time    string `json:"time"`
+	ForSign string `json:"forsign"`
+}
+
+type hashTx struct {
+	Hash string `json:"hash"`
+}
+
 const (
 	pInt64 = iota
 	pHex
+	pString
 
 	pOptional = 0x100
 )
@@ -59,6 +75,69 @@ func errorAPI(w http.ResponseWriter, msg string, code int) error {
 	return fmt.Errorf(msg)
 }
 
+func getPrefix(data *apiData) (prefix string) {
+	if glob, ok := data.params[`global`].(int64); ok && glob > 0 {
+		prefix = `global`
+	} else {
+		prefix = converter.Int64ToStr(data.sess.Get(`state`).(int64))
+	}
+	return
+}
+
+func getSignHeader(txName string, data *apiData) tx.Header {
+	var stateID int64
+
+	userID := data.sess.Get(`wallet`).(int64)
+	if data.sess.Get(`state`) != nil {
+		stateID = data.sess.Get(`state`).(int64)
+	}
+	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
+		UserID: userID, StateID: stateID}
+}
+
+func getHeader(txName string, data *apiData) (tx.Header, error) {
+	publicKey := []byte("null")
+	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
+		publicKey = data.params[`pubkey`].([]byte)
+		lenpub := len(publicKey)
+		if lenpub > 64 {
+			publicKey = publicKey[lenpub-64:]
+		}
+	}
+	signature := data.params[`signature`].([]byte)
+	if len(signature) == 0 {
+		return tx.Header{}, fmt.Errorf("signature is empty")
+	}
+	var stateID int64
+	userID := data.sess.Get(`wallet`).(int64)
+	if data.sess.Get(`state`) != nil {
+		stateID = data.sess.Get(`state`).(int64)
+	}
+	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
+		UserID: userID, StateID: stateID, PublicKey: publicKey,
+		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
+}
+
+func getForSign(txName string, data *apiData, append string) *forSign {
+	timeNow := time.Now().Unix()
+	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(txName), timeNow, data.sess.Get(`citizen`).(int64),
+		data.sess.Get(`state`).(int64))
+	return &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign + append}
+}
+
+func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx, error) {
+	var hash []byte
+	serializedData, err := msgpack.Marshal(toSerialize)
+	if err != nil {
+		return nil, err
+	}
+	if hash, err = sql.DB.SendTx(int64(txType), userID,
+		append(converter.DecToBin(int64(txType), 1), serializedData...)); err != nil {
+		return nil, err
+	}
+	return &hashTx{Hash: string(hash)}, nil
+}
+
 // DefaultHandler is a common handle function for api requests
 func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
@@ -68,6 +147,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		)
 		defer func() {
 			if r := recover(); r != nil {
+				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
 				log.Error("API Recovered", r)
 			}
 		}()
@@ -102,7 +182,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 					return
 				}
 				data.params[key] = bin
+			case pString:
+				data.params[key] = val
 			}
+		}
+		for _, par := range ps {
+			data.params[par.Key] = par.Value
 		}
 		for _, handler := range handlers {
 			if handler(w, r, &data) != nil {

@@ -17,19 +17,20 @@
 package api
 
 import (
-	"net/http"
+	"testing"
 )
 
-func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.sess.Get("wallet") == nil {
-		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+func TestBalance(t *testing.T) {
+	if err := keyLogin(0); err != nil {
+		t.Error(err)
+		return
 	}
-	return nil
-}
-
-func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.sess.Get("wallet") == nil || data.sess.Get("state").(int64) == 0 {
-		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+	ret, err := sendGet(`balance/`+gAddress, nil)
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	return nil
+	if len(ret[`amount`].(string)) < 10 {
+		t.Error(`too low balance`, ret)
+	}
 }
