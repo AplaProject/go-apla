@@ -106,16 +106,16 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	}
 	// Оперативные транзакции
 	// Operative transactions
-	MethodName := consts.TxTypes[p.dataType]
-	parser, err := GetParser(p, MethodName)
-	if err != nil {
-		return nil, utils.ErrInfo(err)
-	}
 	if p.TxContract != nil {
 		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
 			return nil, utils.ErrInfo(err)
 		}
 	} else {
+		MethodName := consts.TxTypes[p.dataType]
+		parser, err := GetParser(p, MethodName)
+		if err != nil {
+			return nil, utils.ErrInfo(err)
+		}
 		log.Debug("MethodName", MethodName+"Init")
 		err_ := parser.Init()
 		if _, ok := err_.(error); ok {

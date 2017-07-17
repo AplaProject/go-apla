@@ -202,6 +202,8 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 			}
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		} else if txType > 127 {
+			transSlice = append(transSlice, converter.Int64ToByte(txType))
+			transSlice = append(transSlice, converter.Int64ToByte(p.TxTime))
 			// преобразуем бинарные данные транзакции в массив
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		} else {
