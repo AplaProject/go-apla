@@ -39,7 +39,7 @@ func Route(route *hr.Router) {
 		if len(pars) > 0 {
 			pars = `,` + pars
 		}
-		methodRoute(route, method, pattern, `signature:hex, time:string`+pars, authState, handle)
+		methodRoute(route, method, pattern, `?pubkey signature:hex, time:string`+pars, authState, handle)
 	}
 	postTx := func(url string, params string, preHandle, handle apiHandle) {
 		anyTx(`POST`, url, params, preHandle, handle)
@@ -62,7 +62,7 @@ func Route(route *hr.Router) {
 	post(`login`, `pubkey signature:hex,?state:int64`, login)
 	postTx(`menu`, `name value conditions:string, global:int64`, txPreNewMenu, txMenu)
 	postTx(`page`, `name menu value conditions:string, global:int64`, txPreNewPage, txPage)
-	postTx(`contract`, `name value conditions:string, ?wallet global:int64`, txPreNewContract, txContract)
+	postTx(`contract`, `name value conditions ?wallet:string, global:int64`, txPreNewContract, txContract)
 	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
 	post(`sendegs`, `pubkey signature:hex, time recipient amount commission ?comment:string`, authWallet, sendEGS)

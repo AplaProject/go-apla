@@ -125,10 +125,10 @@ func getCost(name string) int64 {
 }
 
 func (p *Parser) getExtend() *map[string]interface{} {
-	head := p.TxPtr.(*consts.TXHeader) //consts.HeaderNew(contract.parser.TxPtr)
+	head := p.TxSmart //consts.HeaderNew(contract.parser.TxPtr)
 	var citizenID, walletID int64
-	citizenID = int64(head.WalletID)
-	walletID = int64(head.WalletID)
+	citizenID = int64(head.UserID)
+	walletID = int64(head.UserID)
 	// test
 	block := int64(0)
 	blockTime := int64(0)
@@ -138,7 +138,7 @@ func (p *Parser) getExtend() *map[string]interface{} {
 		walletBlock = p.BlockData.WalletID
 		blockTime = p.BlockData.Time
 	}
-	extend := map[string]interface{}{`type`: head.Type, `time`: int64(head.Time), `state`: int64(head.StateID),
+	extend := map[string]interface{}{`type`: head.Type, `time`: head.Time, `state`: head.StateID,
 		`block`: block, `citizen`: citizenID, `wallet`: walletID, `wallet_block`: walletBlock,
 		`parent`: ``, `txcost`: p.GetContractLimit(),
 		`parser`: p, `contract`: p.TxContract, `block_time`: blockTime /*, `vars`: make(map[string]interface{})*/}
@@ -171,14 +171,12 @@ func StackCont(p interface{}, name string) {
 func (p *Parser) CallContract(flags int) (err error) {
 	var public []byte
 	if flags&smart.CallRollback == 0 {
-		//		fmt.Println(`TXHEADER`, p.TxPtr.(*consts.TXHeader).Flags, len(p.TxPtr.(*consts.TXHeader).Sign), p.TxPtr.(*consts.TXHeader))
-		if p.TxPtr.(*consts.TXHeader).Flags&consts.TxfPublic > 0 {
-			public = p.TxPtr.(*consts.TXHeader).Sign[len(p.TxPtr.(*consts.TXHeader).Sign)-64:]
-			p.TxPtr.(*consts.TXHeader).Sign = p.TxPtr.(*consts.TXHeader).Sign[:len(p.TxPtr.(*consts.TXHeader).Sign)-64]
+		if len(p.TxSmart.PublicKey) > 0 && string(p.TxSmart.PublicKey) != `null` {
+			public = p.TxSmart.PublicKey
 		}
 		if len(p.PublicKeys) == 0 {
 			data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?",
-				int64(p.TxPtr.(*consts.TXHeader).WalletID)).String()
+				p.TxSmart.UserID).String()
 			if err != nil {
 				return err
 			}
@@ -197,7 +195,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 		fmt.Printf("TXSign=%x %d\r\n", p.TxPtr.(*consts.TXHeader).Sign, len(p.TxPtr.(*consts.TXHeader).Sign))
 		fmt.Printf("TXForSign=%s %d\r\n", p.TxData[`forsign`].(string), len(p.TxData[`forsign`].(string)))
 		*/
-		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxPtr.(*consts.TXHeader).Sign, false)
+		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
 		//	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
 		if err != nil {
 			return err
@@ -654,8 +652,8 @@ func DBAmount(tblname, column string, id int64) decimal.Decimal {
 // EvalIf counts and returns the logical value of the specified expression
 func (p *Parser) EvalIf(conditions string) (bool, error) {
 	time := int64(0)
-	if p.TxPtr != nil {
-		time = int64(p.TxPtr.(*consts.TXHeader).Time)
+	if p.TxSmart != nil {
+		time = p.TxSmart.Time
 	}
 	/*	if p.TxPtr != nil {
 		switch val := p.TxPtr.(type) {

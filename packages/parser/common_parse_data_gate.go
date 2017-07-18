@@ -91,7 +91,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 		// Time of a transaction used only for fighting off attacks of yesterday transactions
 		curTime := time.Now().Unix()
 		if p.TxContract != nil {
-			if int64(p.TxPtr.(*consts.TXHeader).Time)-consts.MAX_TX_FORW > curTime || int64(p.TxPtr.(*consts.TXHeader).Time) < curTime-consts.MAX_TX_BACK {
+			if p.TxSmart.Time-consts.MAX_TX_FORW > curTime || p.TxSmart.Time < curTime-consts.MAX_TX_BACK {
 				return nil, p.ErrInfo(errors.New("incorrect tx time"))
 			}
 		} else {

@@ -24,7 +24,6 @@ import (
 
 	"regexp"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -126,19 +125,8 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 	result.Values = make(map[string]string)
 	contract, err := c.checkTx(&result)
 	if err == nil {
-		var flags uint8
-		var isPublic []byte
 		info := (*contract).Block.Info.(*script.ContractInfo)
-		userID := uint64(c.SessWalletID)
-		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletID).Bytes()
-		if err == nil && len(isPublic) == 0 {
-			flags |= consts.TxfPublic
-		}
-		fmt.Println(`Prepare`, c.SessWalletID, c.SessCitizenID, c.SessStateID)
-		/*		if c.SessStateID > 0 {
-				userId = c.SessCitizenID
-			}*/
-		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, result.Time, userID, c.SessStateID, flags)
+		forsign := fmt.Sprintf("%d,%d,%d,%d", info.ID, int64(result.Time), c.SessWalletID, c.SessStateID)
 		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
 			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 				if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {

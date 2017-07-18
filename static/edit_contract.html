@@ -77,11 +77,12 @@
 				$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + $("#global").val() + ',' + $("#id").val() + ',' + $("#value").val() + ',' + $("#conditions").val());
 			} else {
 				nameContract = $("#name").val()
-				wallet = $("#walletAddress").val();
+				/*wallet = $("#walletAddress").val();
 				if (wallet) {
 					nameContract = nameContract + '#' + wallet
-				}
-				$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + $("#global").val()+','+nameContract + ',' + $("#value").val() + ',' + $("#conditions").val());
+				}*/
+				$("#for-signature").val('{{.TxTypeID}},' + serverTime + ',{{.CitizenID}},{{.StateID}},' + $("#global").val()+','+
+				       nameContract + ',' + $("#value").val() + ',' + $("#conditions").val() + ',' + $("#walletAddress").val());
 			}
 			doSign();
 			$("#send_to_net").trigger("click");
@@ -99,6 +100,7 @@
 				'name' : nameContract,
 				'value' : $("#value").val(),
 				'conditions' : $("#conditions").val(),
+				'wallet' : $("#walletAddress").val(),
 				'type' : '{{.TxType}}',
 				'time' : serverTime,
 				'citizenId' : '{{.CitizenID}}',

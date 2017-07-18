@@ -72,15 +72,13 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	if data.params[`wallet`].(int64) > 0 {
-		data.params[`name`] = fmt.Sprintf(`%s#%d`, data.params[`name`].(string), data.params[`wallet`].(int64))
-	}
 	v := tx.NewContract{
 		Header:     getSignHeader(`NewContract`, data),
 		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
 		Name:       data.params[`name`].(string),
 		Value:      data.params[`value`].(string),
 		Conditions: data.params[`conditions`].(string),
+		Wallet: data.params[`wallet`].(string),
 	}
 	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
 	return nil
@@ -110,9 +108,6 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		data.params[`name`] = id
 	} else {
 		txName = `NewContract`
-		if data.params[`wallet`].(int64) > 0 {
-			data.params[`name`] = fmt.Sprintf(`%s#%d`, data.params[`name`].(string), data.params[`wallet`].(int64))
-		}
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
@@ -136,6 +131,7 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			Name:       data.params[`name`].(string),
 			Value:      data.params[`value`].(string),
 			Conditions: data.params[`conditions`].(string),
+			Wallet:     data.params[`wallet`].(string),
 		}
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)

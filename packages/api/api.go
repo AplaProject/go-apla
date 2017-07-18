@@ -155,10 +155,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			return
 		}
 		defer data.sess.SessionRelease(w)
-
 		// Getting and validating request parameters
 		r.ParseForm()
 		data.params = make(map[string]interface{})
+		for _, par := range ps {
+			data.params[par.Key] = par.Value
+		}
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
@@ -178,9 +180,6 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			case pString:
 				data.params[key] = val
 			}
-		}
-		for _, par := range ps {
-			data.params[par.Key] = par.Value
 		}
 		for _, handler := range handlers {
 			if handler(w, r, &data) != nil {

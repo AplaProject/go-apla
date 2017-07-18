@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 func TestSmartFields(t *testing.T) {
@@ -47,6 +46,10 @@ func TestSmartFields(t *testing.T) {
 		return
 	}
 	if err := postTx(`smartcontract/Test`, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := postTx(`smartcontract/Test5`, &url.Values{`name`: {`Qwerty`}}); err != nil {
 		t.Error(err)
 		return
 	}

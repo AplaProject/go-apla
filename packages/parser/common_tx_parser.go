@@ -37,11 +37,11 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	var header *tx.Header
 	hashHex := converter.BinToHex(hash)
 	txType, walletID, citizenID := sql.GetTxTypeAndUserID(binaryTx)
-	if txType > 127 || consts.IsStruct(int(txType)) {
+	/*	if txType > 127 || consts.IsStruct(int(txType)) {
 		if walletID == 0 && citizenID == 0 {
 			fatalError = "undefined walletId and citizenId"
 		}
-	}
+	}*/
 	p.BinaryData = binaryTx
 	p.TxBinaryData = binaryTx
 	header, err = p.ParseDataGate(false)
@@ -73,7 +73,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 			}
 		}
 	} else {
-		if !(txType > 127 || consts.IsStruct(int(txType))) {
+		if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
 			if header == nil {
 				return utils.ErrInfo(errors.New("header is nil"))
 			}
