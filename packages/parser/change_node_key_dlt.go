@@ -69,7 +69,7 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 }
 
 func (p *ChangeNodeKeyDLTParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{converter.HexToBin(p.DLTChangeNodeKey.NewNodePublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"node_public_key", "last_forging_data_upd"}, []interface{}{converter.HexToBin(p.DLTChangeNodeKey.NewNodePublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -80,7 +80,7 @@ func (p *ChangeNodeKeyDLTParser) Action() error {
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
+		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

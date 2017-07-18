@@ -71,7 +71,7 @@ func (p *EditMenuParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditMenu.Value, p.EditMenu.Conditions}, prefix+"_menu", []string{"name"}, []string{p.EditMenu.Name}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditMenu.Value, p.EditMenu.Conditions}, prefix+"_menu", []string{"name"}, []string{p.EditMenu.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -78,7 +78,7 @@ func (p *RestoreAccessActiveParser) Validate() error {
 }
 
 func (p *RestoreAccessActiveParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.Active, p.RestoreAccessActive.Secret}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccessActive.Header.StateID)}, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"active", "secret"}, []interface{}{p.Active, p.RestoreAccessActive.Secret}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccessActive.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

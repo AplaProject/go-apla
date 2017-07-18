@@ -82,7 +82,7 @@ func (p *EditSignParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditSign.Value,
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditSign.Value,
 		p.EditSign.Conditions}, prefix+"_signatures", []string{"name"}, []string{p.EditSign.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)

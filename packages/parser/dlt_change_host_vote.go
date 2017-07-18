@@ -97,9 +97,9 @@ func (p *DLTChangeHostVoteParser) Action() error {
 	}
 
 	if len(p.DLTChangeHostVote.Header.PublicKey) > 0 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "public_key_0", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, string(p.DLTChangeHostVote.AddressVote), string(p.DLTChangeHostVote.FuelRate), converter.HexToBin(p.DLTChangeHostVote.Header.PublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
+		_, _, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "public_key_0", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, string(p.DLTChangeHostVote.AddressVote), string(p.DLTChangeHostVote.FuelRate), converter.HexToBin(p.DLTChangeHostVote.Header.PublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, p.DLTChangeHostVote.AddressVote, p.DLTChangeHostVote.FuelRate, p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
+		_, _, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, p.DLTChangeHostVote.AddressVote, p.DLTChangeHostVote.FuelRate, p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)

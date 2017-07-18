@@ -63,7 +63,7 @@ func (p *NewPageParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "menu", "conditions"}, []interface{}{p.NewPage.Name, p.NewPage.Value, p.NewPage.Menu, p.NewPage.Conditions}, prefix+"_pages", nil, nil, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"name", "value", "menu", "conditions"}, []interface{}{p.NewPage.Name, p.NewPage.Value, p.NewPage.Menu, p.NewPage.Conditions}, prefix+"_pages", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

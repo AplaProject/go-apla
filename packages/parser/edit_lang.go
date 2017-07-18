@@ -61,7 +61,7 @@ func (p *EditLangParser) Validate() error {
 
 func (p *EditLangParser) Action() error {
 	prefix := converter.Int64ToStr(p.EditLang.Header.StateID)
-	_, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.EditLang.Trans}, prefix+"_languages", []string{"name"}, []string{p.EditLang.Name}, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"res"}, []interface{}{p.EditLang.Trans}, prefix+"_languages", []string{"name"}, []string{p.EditLang.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -433,13 +433,13 @@ func (p *NewStateParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	if isGlobal {
-		_, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name", "timestamp date_founded"},
+		_, _, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name", "timestamp date_founded"},
 			[]interface{}{id, country, p.BlockData.Time}, "global_states_list", nil, nil, true)
 
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		_, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
+		_, _, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
 			[]interface{}{currency, id + `_state_parameters`}, "global_currencies_list", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)
@@ -449,7 +449,7 @@ func (p *NewStateParser) Action() error {
 	if pkey, err = p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
 		return p.ErrInfo(err)
 	} else if len(p.NewState.Header.PublicKey) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
+		_, _, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	return err

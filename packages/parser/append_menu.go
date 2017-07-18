@@ -69,7 +69,7 @@ func (p *AppendMenuParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	new := page + "\r\n" + p.AppendMenu.Value
-	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_menu", []string{"name"}, []string{p.AppendMenu.Name}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_menu", []string{"name"}, []string{p.AppendMenu.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

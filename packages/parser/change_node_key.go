@@ -55,8 +55,7 @@ func (p *ChangeNodeKeyParser) Validate() error {
 }
 
 func (p *ChangeNodeKeyParser) Action() error {
-
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{converter.HexToBin(p.ChangeNodeKey.NewNodePublicKey)}, "system_recognized_states", []string{"state_id"}, []string{converter.Int64ToStr(p.ChangeNodeKey.Header.StateID)}, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{converter.HexToBin(p.ChangeNodeKey.NewNodePublicKey)}, "system_recognized_states", []string{"state_id"}, []string{converter.Int64ToStr(p.ChangeNodeKey.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -66,7 +65,7 @@ func (p *ChangeNodeKeyParser) Action() error {
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
+		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

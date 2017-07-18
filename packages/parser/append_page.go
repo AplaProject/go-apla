@@ -70,7 +70,7 @@ func (p *AppendPageParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	new := strings.Replace(page, "PageEnd:", p.AppendPage.Value, -1) + "\r\nPageEnd:"
-	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_pages", []string{"name"}, []string{p.AppendPage.Name}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_pages", []string{"name"}, []string{p.AppendPage.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

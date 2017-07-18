@@ -112,7 +112,7 @@ func (p *NewContractParser) Action() error {
 		wallet = *p.walletContract
 	}
 
-	tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
+	_, tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
 		[]interface{}{p.NewContract.Name, p.NewContract.Value, p.NewContract.Conditions,
 			wallet}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {

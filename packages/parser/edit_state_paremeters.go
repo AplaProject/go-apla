@@ -76,7 +76,7 @@ func (p *EditStateParametersParser) Validate() error {
 }
 
 func (p *EditStateParametersParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditStateParameters.Value,
+	_, _, err := p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditStateParameters.Value,
 		p.EditStateParameters.Conditions}, converter.Int64ToStr(p.EditStateParameters.Header.StateID)+"_state_parameters", []string{"name"},
 		[]string{p.EditStateParameters.Name}, true)
 	if err != nil {
