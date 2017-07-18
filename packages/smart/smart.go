@@ -51,8 +51,18 @@ const (
 )
 
 var (
-	smartVM *script.VM
+	smartVM   *script.VM
+	smartTest = make(map[string]string)
 )
+
+func testValue(name string, v ...interface{}) {
+	smartTest[name] = fmt.Sprint(v...)
+}
+
+// GetTestValue returns the test value of the specified key
+func GetTestValue(name string) string {
+	return smartTest[name]
+}
 
 func init() {
 	smartVM = script.NewVM()
@@ -63,6 +73,7 @@ func init() {
 		"TxJson":  TxJSON,
 		"Float":   Float,
 		"Money":   script.ValueToDecimal,
+		`Test`:    testValue,
 	}, AutoPars: map[string]string{
 		`*smart.Contract`: `contract`,
 	}})

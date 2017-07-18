@@ -52,6 +52,7 @@ func Route(route *hr.Router) {
 	get(`getuid`, ``, getUID)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
 	get(`smartcontract/:name`, ``, authState, getSmartContract)
+	get(`test/:name`, ``, getTest)
 	get(`content/page/:page`, `?global:int64`, contentPage)
 	get(`content/menu/:name`, `?global:int64`, contentMenu)
 	get(`menu/:name`, `?global:int64`, getMenu)

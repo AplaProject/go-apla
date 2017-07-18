@@ -94,11 +94,11 @@ func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) err
 		for _, fitem := range *info.Tx {
 			field := smartField{Name: fitem.Name, Type: fitem.Type.String(), Tags: fitem.Tags}
 
-			if strings.Index(fitem.Tags, `hidden`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
+			if strings.Contains(fitem.Tags, `hidden`) || strings.Contains(fitem.Tags, `signature`) {
 				field.HTML = `hidden`
 			} else {
 				for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
-					if strings.Index(fitem.Tags, tag) >= 0 {
+					if strings.Contains(fitem.Tags, tag) {
 						field.HTML = tag
 						break
 					}
@@ -128,10 +128,10 @@ func validateSmartContract(r *http.Request, data *apiData, result *PrepareTxJSON
 
 	if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-			if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `crypt`) >= 0 {
+			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `crypt`) {
 				continue
 			}
-			if strings.Index(fitem.Tags, `signature`) >= 0 && result != nil {
+			if strings.Contains(fitem.Tags, `signature`) && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					pref := getPrefix(data)
 					var value string
@@ -163,7 +163,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *PrepareTxJSON
 					err = fmt.Errorf(`%s is empty`, fitem.Name)
 					break
 				}
-				if strings.Index(fitem.Tags, `address`) >= 0 {
+				if strings.Contains(fitem.Tags, `address`) {
 					addr := converter.StringToAddress(val)
 					if addr == 0 {
 						err = fmt.Errorf(`Address %s is not valid`, val)
@@ -256,11 +256,11 @@ func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
-			if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
+			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
 				continue
 			}
 			var val string
-			if strings.Index(fitem.Tags, `crypt`) >= 0 {
+			if strings.Contains(fitem.Tags, `crypt`) {
 				var wallet string
 				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					wallet = r.FormValue(ret[1])
@@ -285,7 +285,7 @@ func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 				}
 			} else {
 				val = strings.TrimSpace(r.FormValue(fitem.Name))
-				if strings.Index(fitem.Tags, `address`) >= 0 {
+				if strings.Contains(fitem.Tags, `address`) {
 					val = converter.Int64ToStr(converter.StringToAddress(val))
 				} else if fitem.Type.String() == script.Decimal {
 					val = strings.TrimLeft(val, `0`)
@@ -342,7 +342,7 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	fields:
 		for _, fitem := range *info.Tx {
 			val := strings.TrimSpace(r.FormValue(fitem.Name))
-			if strings.Index(fitem.Tags, `address`) >= 0 {
+			if strings.Contains(fitem.Tags, `address`) {
 				val = converter.Int64ToStr(converter.StringToAddress(val))
 			}
 			switch fitem.Type.String() {

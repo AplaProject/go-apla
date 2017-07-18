@@ -52,7 +52,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 		signature, err := crypto.JSSignToBytes(c.r.FormValue("signature1"))
 		if err != nil {
 			result.Error = err.Error()
-		} 
+		}
 		var isPublic []byte
 		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletID).Bytes()
 		if err == nil && len(signature) > 0 && len(isPublic) == 0 {
@@ -70,7 +70,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 			fields:
 				for _, fitem := range *info.Tx {
 					val := strings.TrimSpace(c.r.FormValue(fitem.Name))
-					if strings.Index(fitem.Tags, `address`) >= 0 {
+					if strings.Contains(fitem.Tags, `address`) {
 						val = converter.Int64ToStr(converter.StringToAddress(val))
 					}
 					switch fitem.Type.String() {
@@ -111,7 +111,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 					Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(c.r.FormValue(`time`)),
 						UserID: c.SessWalletID, StateID: c.SessStateID, PublicKey: public,
 						BinSignatures: converter.EncodeLengthPlusData(signature)},
-					Data: data, 
+					Data: data,
 				}
 				serializedData, err := msgpack.Marshal(toSerialize)
 				if err == nil {
