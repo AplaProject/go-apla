@@ -87,7 +87,7 @@ func (p *NewLangParser) Action() error {
 			if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, name).String(); err != nil {
 				return p.ErrInfo(err)
 			} else if len(exist) == 0 {
-				_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{name, res}, prefix+"_languages", nil, nil, true)
+				_, _, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{name, res}, prefix+"_languages", nil, nil, true)
 				if err != nil {
 					return p.ErrInfo(err)
 				}
@@ -95,7 +95,7 @@ func (p *NewLangParser) Action() error {
 			}
 		}
 	} else {
-		_, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.NewLang.Name,
+		_, _, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{p.NewLang.Name,
 			p.NewLang.Trans}, prefix+"_languages", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)

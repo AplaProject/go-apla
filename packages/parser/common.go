@@ -690,15 +690,15 @@ func (p *Parser) payFPrice() error {
 		egs = damount
 	}
 	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(toID)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
 		return err
 	}

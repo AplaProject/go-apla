@@ -67,7 +67,7 @@ func (p *NewStateParametersParser) Validate() error {
 
 func (p *NewStateParametersParser) Action() error {
 	txStateIDStr := converter.Int64ToStr(p.NewStateParameters.Header.StateID)
-	_, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.NewStateParameters.Name, p.NewStateParameters.Value, p.NewStateParameters.Conditions}, txStateIDStr+"_state_parameters", nil, nil, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.NewStateParameters.Name, p.NewStateParameters.Value, p.NewStateParameters.Conditions}, txStateIDStr+"_state_parameters", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

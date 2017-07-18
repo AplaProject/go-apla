@@ -75,8 +75,9 @@ func (p *UpdFullNodesParser) Validate() error {
 	return nil
 }
 
+// UpdFullNodes proceeds UpdFullNodes transaction
 func (p *UpdFullNodesParser) Action() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.BlockData.Time}, "upd_full_nodes", []string{`update`}, nil, false)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"time"}, []interface{}{p.BlockData.Time}, "upd_full_nodes", []string{`update`}, nil, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -144,7 +145,7 @@ func (p *UpdFullNodesParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	if len(newRate) > 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
+		_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

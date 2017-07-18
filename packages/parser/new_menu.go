@@ -61,7 +61,7 @@ func (p *NewMenuParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	_, err = p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.NewMenu.Name, p.NewMenu.Value, p.NewMenu.Conditions}, prefix+"_menu", nil, nil, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"name", "value", "conditions"}, []interface{}{p.NewMenu.Name, p.NewMenu.Value, p.NewMenu.Conditions}, prefix+"_menu", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -192,14 +192,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		} else if txType > 127 {
 			transSlice = append(transSlice, converter.Int64ToByte(txType))
-			if len(*transactionBinaryData) == 0 {
-				return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect tx"))
-			}
-			// Next 4 bytes are the tyme of the transaction
-			transSlice = append(transSlice, converter.Int64ToByte(converter.BinToDecBytesShift(transactionBinaryData, 4)))
-			if len(*transactionBinaryData) == 0 {
-				return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect tx"))
-			}
+			transSlice = append(transSlice, converter.Int64ToByte(p.TxTime))
 			// преобразуем бинарные данные транзакции в массив
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		} else {

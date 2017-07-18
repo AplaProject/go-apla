@@ -103,7 +103,7 @@ func (p *EditWalletParser) Action() error {
 	if len(p.EditWallet.SpendingContract) > 0 {
 		contract = p.checkContract(string(p.EditWallet.SpendingContract))
 	}
-	_, err := p.selectiveLoggingAndUpd([]string{"spending_contract", "conditions_change"},
+	_, _, err := p.selectiveLoggingAndUpd([]string{"spending_contract", "conditions_change"},
 		[]interface{}{contract, string(p.EditWallet.Conditions)}, "dlt_wallets",
 		[]string{"wallet_id"}, []string{string(p.EditWallet.WalletID)}, true)
 	if err != nil {

@@ -124,8 +124,9 @@ type Blocks []*Block
 // VM is the main type of the virtual machine
 type VM struct {
 	Block
-	ExtCost func(string) int64
-	Extern  bool // extern mode of compilation
+	ExtCost     func(string) int64
+	FuncCallsDB map[string]struct{}
+	Extern      bool // extern mode of compilation
 }
 
 // ExtendData is used for the definition of the extended functions and variables

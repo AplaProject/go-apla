@@ -98,7 +98,7 @@ func (p *EditContractParser) Action() error {
 		return p.ErrInfo(err)
 	}
 
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditContract.Value, p.EditContract.Conditions}, prefix+"_smart_contracts", []string{"id"}, []string{p.EditContract.Id}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditContract.Value, p.EditContract.Conditions}, prefix+"_smart_contracts", []string{"id"}, []string{p.EditContract.Id}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

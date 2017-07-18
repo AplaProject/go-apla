@@ -69,9 +69,8 @@ func (p *EditPageParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
 	log.Debug("value page", p.EditPage.Value)
-	_, err = p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.EditPage.Value, p.EditPage.Menu, p.EditPage.Conditions}, prefix+"_pages", []string{"name"}, []string{p.EditPage.Name}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value", "menu", "conditions"}, []interface{}{p.EditPage.Value, p.EditPage.Menu, p.EditPage.Conditions}, prefix+"_pages", []string{"name"}, []string{p.EditPage.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

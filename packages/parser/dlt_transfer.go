@@ -177,9 +177,9 @@ func (p *DLTTransferParser) Action() error {
 	log.Debug("amountAndCommission %s", amountAndCommission)
 	log.Debug("amountAndCommission %s", amountAndCommission.String())
 	if len(p.DLTTransfer.Header.PublicKey) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), converter.HexToBin(p.DLTTransfer.PublicKey)}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
+		_, _, err = p.selectiveLoggingAndUpd([]string{"-amount", "public_key_0"}, []interface{}{amountAndCommission.String(), converter.HexToBin(p.DLTTransfer.PublicKey)}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amountAndCommission.String()}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
+		_, _, err = p.selectiveLoggingAndUpd([]string{"-amount"}, []interface{}{amountAndCommission.String()}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	if err != nil {
 		return p.ErrInfo(err)
@@ -189,10 +189,10 @@ func (p *DLTTransferParser) Action() error {
 		log.Debug("walletId == 0")
 		log.Debug("%s", string(p.DLTTransfer.WalletAddress))
 		walletID = converter.StringToAddress(p.DLTTransfer.WalletAddress)
-		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
+		_, _, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{converter.Int64ToStr(walletID)}, true)
 	} else {
-		_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
+		_, _, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{amount}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{converter.Int64ToStr(walletID)}, true)
 	}
 	if err != nil {
@@ -200,7 +200,7 @@ func (p *DLTTransferParser) Action() error {
 	}
 
 	// node commission
-	_, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{commission}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.BlockData.WalletID)}, true)
+	_, _, err = p.selectiveLoggingAndUpd([]string{"+amount"}, []interface{}{commission}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.BlockData.WalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -1,8 +1,57 @@
 package sql
 
 import (
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
 )
+
+func (db *DCDB) GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
+	var planStr string
+	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	err := db.QueryRow(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", newQuery), newArgs...).Scan(&planStr)
+	switch {
+	case err == sql.ErrNoRows:
+		return 0, errors.New("No rows")
+	case err != nil:
+		return 0, err
+	}
+	var queryPlan []map[string]interface{}
+	dec := json.NewDecoder(strings.NewReader(planStr))
+	dec.UseNumber()
+	if err := dec.Decode(&queryPlan); err != nil {
+		return 0, err
+	}
+	if len(queryPlan) == 0 {
+		return 0, errors.New("Query plan is empty")
+	}
+	firstNode := queryPlan[0]
+	var plan interface{}
+	var ok bool
+	if plan, ok = firstNode["Plan"]; !ok {
+		return 0, errors.New("No Plan key in result")
+	}
+	var planMap map[string]interface{}
+	if planMap, ok = plan.(map[string]interface{}); !ok {
+		return 0, errors.New("Plan is not map[string]interface{}")
+	}
+	if totalCost, ok := planMap["Total Cost"]; ok {
+		if totalCostNum, ok := totalCost.(json.Number); ok {
+			if totalCostF64, err := totalCostNum.Float64(); err != nil {
+				return 0, err
+			} else {
+				return int64(totalCostF64), nil
+			}
+		} else {
+			return 0, errors.New("Total cost is not a number")
+		}
+	} else {
+		return 0, errors.New("PlanMap has no TotalCost")
+	}
+	return 0, nil
+}
 
 // GetFirstColumnName returns the name of the first column in the table
 func (db *DCDB) GetFirstColumnName(table string) (string, error) {
