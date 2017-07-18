@@ -87,7 +87,7 @@ BEGIN:
 		// то начинаем проверку последних 5 блоков
 		// if the last one checked was long ago (interval is more than 5 blocks)
 		confirmations := &model.Confirmations{}
-		err := confirmations.GetMaxGoodBlock(consts.MIN_CONFIRMED_NODES)
+		err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
 		if err != nil {
 			logger.Error("%v", err)
 		}

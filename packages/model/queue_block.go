@@ -6,10 +6,14 @@ type QueueBlocks struct {
 	FullNodeID int64  `gorm:"not null"`
 }
 
-func (q *QueueBlocks) GetQueueBlock() error {
-	return DBConn.First(&q).Error
+func (qb *QueueBlocks) GetQueueBlock() error {
+	return DBConn.First(&qb).Error
 }
 
-func (q *QueueBlocks) Delete() error {
-	return DBConn.Delete(q).Error
+func (qb *QueueBlocks) Delete() error {
+	return DBConn.Delete(qb).Error
+}
+
+func (qb *QueueBlocks) Create() error {
+	return DBConn.Create(qb).Error
 }

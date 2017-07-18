@@ -22,6 +22,10 @@ func (fn *FullNodes) FindNodeByID(nodeID int64) error {
 	return DBConn.Where("id = ?", nodeID).First(&fn).Error
 }
 
+func (fn *FullNodes) Create() error {
+	return DBConn.Create(fn).Error
+}
+
 func GetFullNodesHosts() ([]string, error) {
 	hosts := new([]string)
 

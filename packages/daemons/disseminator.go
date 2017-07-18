@@ -186,7 +186,7 @@ BEGIN:
 			// возьмем хэши тр-ий
 			// take the hashes of transactions
 			//utils.WriteSelectiveLog("SELECT hash, high_rate FROM transactions WHERE sent = 0 AND for_self_use = 0")
-			transactions, err := model.GetAllUnsendedAndUnselfTransactions()
+			transactions, err := model.GetAllUnsendedTransactions()
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				if d.dPrintSleep(err, d.sleepTime) {

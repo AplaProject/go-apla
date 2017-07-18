@@ -5,3 +5,11 @@ type MigrationHistory struct {
 	Version     int32 `gorm:"not null"`
 	DateApplied int32 `gorm:"not null"`
 }
+
+func (mh *MigrationHistory) Get() error {
+	return DBConn.First(mh).Error
+}
+
+func (mh *MigrationHistory) Create() error {
+	return DBConn.Create(mh).Error
+}

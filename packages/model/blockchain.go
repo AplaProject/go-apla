@@ -12,21 +12,62 @@ type Block struct {
 	MaxMinerID   int32  `gorm:not null`
 }
 
+func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
+	var err error
+	blockchain := new([]Block)
+	if endblockID == -1 {
+		err = DBConn.Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error
+	} else {
+		err = DBConn.Order("id asc").Where("id > ?", startBlockID).Find(blockchain).Error
+	}
+	if err != nil {
+		return nil, err
+	}
+	return *blockchain, nil
+}
+
 func TableName() string {
 	return "block_chain"
 }
 
+func (b *Block) IsExists() (bool, error) {
+	query := DBConn.First(b)
+	return !query.RecordNotFound(), query.Error
+}
+
+func (b *Block) Create() error {
+	return DBConn.Create(b).Error
+}
+
 func (b *Block) GetBlock(blockID int64) error {
-	if err := DBConn.Where("block_id = ?", blockID).First(&b).Error; err != nil {
+	if err := DBConn.Where("id = ?", blockID).First(&b).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
+func (b *Block) GetMaxBlock() error {
+	return DBConn.First(b).Error
+}
+
+func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
+	var err error
 	blockchain := new([]Block)
-	if err := DBConn.Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error; err != nil {
+	if startFromID != -1 {
+		err = DBConn.Order("id desc").Limit(limit).Where("id > ?", startFromID).Find(blockchain).Error
+	} else {
+		err = DBConn.Order("id desc").Limit(limit).Last(blockchain).Error
+	}
+	if err != nil {
 		return nil, err
 	}
 	return *blockchain, nil
+}
+
+func (b *Block) Delete() error {
+	return DBConn.Delete(b).Error
+}
+
+func (b *Block) DeleteChain() error {
+	return DBConn.Where("id > ", b.ID).Delete(Block{}).Error
 }

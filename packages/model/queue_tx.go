@@ -17,3 +17,15 @@ func (qt *QueueTx) DeleteTx() error {
 func (qt *QueueTx) Save() error {
 	return DBConn.Save(qt).Error
 }
+
+func (qt *QueueTx) Create() error {
+	return DBConn.Create(qt).Error
+}
+
+func GetQueuedTransactionsCount() (int64, error) {
+	var rowsCount int64
+	if err := DBConn.Exec("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?").Scan(&rowsCount).Error; err != nil {
+		return -1, err
+	}
+	return rowsCount, nil
+}

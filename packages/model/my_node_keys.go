@@ -18,3 +18,11 @@ func (mnk *MyNodeKeys) GetNodeWithMaxBlockID() error {
 	}
 	return nil
 }
+
+func (mnk *MyNodeKeys) Create() error {
+	return DBConn.Create(mnk).Error
+}
+
+func (mnk *MyNodeKeys) GetZeroBlock(publicKey []byte) error {
+	return DBConn.Where("block_id = 0 AND public_key = ", publicKey).First(mnk).Error
+}

@@ -11,8 +11,7 @@ type SystemRecognizedStates struct {
 }
 
 func (srs *SystemRecognizedStates) GetState(stateID int64) error {
-	err := DBConn.Where("state_id = ?", stateID).First(&srs).Error
-	return err
+	return DBConn.Where("state_id = ?", stateID).First(&srs).Error
 }
 
 func (srs *SystemRecognizedStates) IsDelegated(stateID int64) (bool, error) {

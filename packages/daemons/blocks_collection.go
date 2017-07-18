@@ -144,8 +144,8 @@ BEGIN:
 				fmt.Println(err)
 				panic(err)
 			}
-
-			err = model.DeleteMainLock()
+			mainLock := model.MainLock{}
+			err = mainLock.Delete()
 			fmt.Println(`DELETE FROM main_lock`)
 			if err != nil {
 				fmt.Println(err)
@@ -608,7 +608,7 @@ BEGIN:
 
 			var nodePublicKey []byte
 			if blockData.WalletId != 0 {
-				wallet := model.NewWallet()
+				wallet := &model.Wallet{}
 				err = wallet.GetWallet(blockData.WalletId)
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -671,7 +671,7 @@ BEGIN:
 				logger.Info("plug found blockID=%v\n", blockID)
 
 				logging.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-				affect, err := model.MarkTransactionsUnverified()
+				/*affect, err := model.MarkTransactionsUnverified()
 				if err != nil {
 					logging.WriteSelectiveLog(err)
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -679,7 +679,7 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
+				logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))*/
 				/*
 									//var transactions []byte
 									utils.WriteSelectiveLog("SELECT data FROM transactions WHERE verified = 1 AND used = 0")

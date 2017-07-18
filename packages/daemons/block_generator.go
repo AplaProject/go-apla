@@ -310,7 +310,7 @@ BEGIN:
 			var blockDataTx []byte
 			// берем все данные из очереди. Они уже были проверены ранее, и можно их не проверять, а просто брать
 			// take all the data from the turn. It is tested already, you may not check them again but just take
-			transactions, err := model.GetAllUnusedAndVerifiedTransactions()
+			transactions, err := model.GetAllUnusedTransactions()
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {

@@ -16,9 +16,17 @@ func (ib *InfoBlock) GetInfoBlock() error {
 }
 
 func (ib *InfoBlock) GetUnsended() error {
-	return DBConn.Where("sent = ?", "1").First(&ib).Error
+	return DBConn.Where("sent = ?", "0").First(&ib).Error
 }
 
 func (ib *InfoBlock) MarkSended() error {
 	return DBConn.Model(ib).Update("sent", "1").Error
+}
+
+func (ib *InfoBlock) Save() error {
+	return DBConn.Save(ib).Error
+}
+
+func (ib *InfoBlock) Create() error {
+	return DBConn.Create(ib).Error
 }
