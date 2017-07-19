@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 )
 
 func (db *DCDB) GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 	var planStr string
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
 	err := db.QueryRow(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", newQuery), newArgs...).Scan(&planStr)
 	switch {
 	case err == sql.ErrNoRows:

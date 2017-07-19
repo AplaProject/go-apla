@@ -19,6 +19,7 @@ package parser
 import (
 	"encoding/json"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -191,7 +192,7 @@ func (p *UpdFullNodesParser) Rollback() error {
 
 	// обновляем AI
 	// update the AI
-	if p.ConfigIni["db_type"] == "sqlite" {
+	if config.ConfigIni["db_type"] == "sqlite" {
 		err = p.SetAI("full_nodes", maxID)
 	} else {
 		err = p.SetAI("full_nodes", maxID+1)

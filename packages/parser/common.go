@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -309,9 +310,9 @@ func (p *Parser) GetInfoBlock() error {
 	// the last successfully recorded block
 	p.PrevBlock = new(utils.BlockData)
 	var q string
-	if p.ConfigIni["db_type"] == "mysql" || p.ConfigIni["db_type"] == "sqlite" {
+	if config.ConfigIni["db_type"] == "mysql" || config.ConfigIni["db_type"] == "sqlite" {
 		q = "SELECT LOWER(HEX(hash)) as hash, block_id, time FROM info_block"
-	} else if p.ConfigIni["db_type"] == "postgresql" {
+	} else if config.ConfigIni["db_type"] == "postgresql" {
 		q = "SELECT encode(hash, 'HEX')  as hash, block_id, time FROM info_block"
 	}
 	err := p.QueryRow(q).Scan(&p.PrevBlock.Hash, &p.PrevBlock.BlockID, &p.PrevBlock.Time)
@@ -458,7 +459,7 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 // CheckTableExists checks if the table exists
 func (p *Parser) CheckTableExists(table string) (bool, error) {
 	var q string
-	switch p.ConfigIni["db_type"] {
+	switch config.ConfigIni["db_type"] {
 	case "sqlite":
 		q = `SELECT name FROM sqlite_master WHERE type='table' AND name='` + table + `';`
 	case "postgresql":

@@ -1,10 +1,12 @@
 package sql
 
 import (
+	"database/sql"
 	"fmt"
 	"sync"
 
-	"database/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
+
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
 )
@@ -22,21 +24,19 @@ var DB *DCDB
 // DCDB is a database structure
 type DCDB struct {
 	*sql.DB
-	ConfigIni map[string]string
-	//GoroutineName string
 }
 
 // NewDbConnect creates a new database connection
-func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
+func NewDbConnect() (*DCDB, error) {
 	var db *sql.DB
 	var err error
-	if len(ConfigIni["db_user"]) == 0 || len(ConfigIni["db_password"]) == 0 || len(ConfigIni["db_name"]) == 0 {
+	if len(config.ConfigIni["db_user"]) == 0 || len(config.ConfigIni["db_password"]) == 0 || len(config.ConfigIni["db_name"]) == 0 {
 		return &DCDB{}, err
 	}
-	db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable port=%s", ConfigIni["db_user"], ConfigIni["db_password"], ConfigIni["db_name"], ConfigIni["db_port"]))
+	db, err = sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable port=%s", config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"], config.ConfigIni["db_port"]))
 	if err != nil || db.Ping() != nil {
 		return &DCDB{}, err
 	}
 	log.Debug("return")
-	return &DCDB{db, ConfigIni}, err
+	return &DCDB{db}, err
 }

@@ -22,6 +22,7 @@ import (
 
 	"log"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
@@ -358,7 +359,7 @@ BEGIN:
 
 				blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(data))...)
 
-				if configIni["db_type"] == "postgresql" {
+				if config.ConfigIni["db_type"] == "postgresql" {
 					usedTransactions += "decode('" + hash + "', 'hex'),"
 				} else {
 					usedTransactions += "x'" + hash + "',"

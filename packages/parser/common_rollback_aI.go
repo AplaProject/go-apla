@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -44,7 +45,7 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 	NewAi := current + num
 	log.Debug("NewAi: %d", NewAi)
 
-	if p.ConfigIni["db_type"] == "postgresql" {
+	if config.ConfigIni["db_type"] == "postgresql" {
 		pgSerialSeq, err := p.Single("SELECT pg_get_serial_sequence('" + table + "', '" + AiID + "')").String()
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -53,12 +54,12 @@ func (p *Parser) rollbackAI(table string, num int64) error {
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-	} else if p.ConfigIni["db_type"] == "mysql" {
+	} else if config.ConfigIni["db_type"] == "mysql" {
 		err := p.ExecSQL("ALTER TABLE " + tblname + " AUTO_INCREMENT = " + converter.Int64ToStr(NewAi))
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-	} else if p.ConfigIni["db_type"] == "sqlite" {
+	} else if config.ConfigIni["db_type"] == "sqlite" {
 		NewAi--
 		err := p.ExecSQL("UPDATE SQLITE_SEQUENCE SET seq = ? WHERE name = ?", NewAi, table)
 		if err != nil {
