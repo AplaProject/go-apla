@@ -18,31 +18,18 @@ package api
 
 import (
 	"net/http"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 )
 
-type authResult struct {
-	Address string `json:"address"`
+func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	if data.sess.Get("wallet") == nil {
+		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+	}
+	return nil
 }
 
-func auth(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var msg string
-	switch uid := data.sess.Get(`uid`).(type) {
-	case string:
-		msg = uid
-	default:
-		return errorAPI(w, "unknown uid", http.StatusConflict)
+func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	if data.sess.Get("wallet") == nil || data.sess.Get("state").(int64) == 0 {
+		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	}
-	pubkey := data.params[`pubkey`].([]byte)
-	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
-	}
-	if !verify {
-		return errorAPI(w, `signature is incorrect`, http.StatusConflict)
-	}
-
-	data.result = &authResult{Address: crypto.KeyToAddress(pubkey)}
 	return nil
 }

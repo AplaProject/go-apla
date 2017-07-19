@@ -19,28 +19,27 @@ package parser
 import (
 	"errors"
 	"time"
-	//"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 /*
 Обработка данных (блоков или транзакций), пришедших с гейта. Только проверка.
 Data processing (blocks or transactions) gotten from a gate. Just checking.
 */
-
-// ParseDataGate checks conditions of transactions from the gate
-func (p *Parser) ParseDataGate(onlyTx bool) error {
-
+func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	var err error
 	p.dataPre()
 	p.ParseInit()
 	transactionBinaryData := p.BinaryData
+	p.TxBinaryData = transactionBinaryData
 	var transactionBinaryDataFull []byte
+	var header *tx.Header
 
 	log.Debug("p.dataType: %d", p.dataType)
 	// если это транзакции (type>0), а не блок (type==0)
@@ -50,7 +49,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// проверим, есть ли такой тип тр-ий
 		// check if the transaction type exist
 		if p.dataType < 128 && len(consts.TxTypes[p.dataType]) == 0 {
-			return p.ErrInfo("Incorrect tx type " + converter.IntToStr(p.dataType))
+			return nil, p.ErrInfo("Incorrect tx type " + converter.IntToStr(p.dataType))
 		}
 
 		log.Debug("p.dataType: %d", p.dataType)
@@ -61,7 +60,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// Does the transaction hash exist?
 		err = p.CheckLogTx(transactionBinaryDataFull, true, false)
 		if err != nil {
-			return p.ErrInfo(err)
+			return nil, p.ErrInfo(err)
 		}
 
 		hash, err := crypto.Hash(transactionBinaryData)
@@ -73,13 +72,13 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// преобразуем бинарные данные транзакции в массив
 		// transforming binary data of the transaction to an array
 		log.Debug("transactionBinaryData: %x", transactionBinaryData)
-		p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
+		p.TxSlice, header, err = p.ParseTransaction(&transactionBinaryData)
 		if err != nil {
-			return p.ErrInfo(err)
+			return nil, p.ErrInfo(err)
 		}
 		log.Debug("p.TxSlice", p.TxSlice)
 		if len(p.TxSlice) < 3 {
-			return p.ErrInfo(errors.New("len(p.TxSlice) < 3"))
+			return nil, p.ErrInfo(errors.New("len(p.TxSlice) < 3"))
 		}
 
 		// время транзакции может быть немного больше, чем время на ноде.
@@ -92,40 +91,44 @@ func (p *Parser) ParseDataGate(onlyTx bool) error {
 		// Time of a transaction used only for fighting off attacks of yesterday transactions
 		curTime := time.Now().Unix()
 		if p.TxContract != nil {
-			if int64(p.TxPtr.(*consts.TXHeader).Time)-consts.MAX_TX_FORW > curTime || int64(p.TxPtr.(*consts.TXHeader).Time) < curTime-consts.MAX_TX_BACK {
-				return p.ErrInfo(errors.New("incorrect tx time"))
+			if p.TxSmart.Time-consts.MAX_TX_FORW > curTime || p.TxSmart.Time < curTime-consts.MAX_TX_BACK {
+				return nil, p.ErrInfo(errors.New("incorrect tx time"))
 			}
 		} else {
 			if converter.BytesToInt64(p.TxSlice[2])-consts.MAX_TX_FORW > curTime || converter.BytesToInt64(p.TxSlice[2]) < curTime-consts.MAX_TX_BACK {
-				return p.ErrInfo(errors.New("incorrect tx time"))
+				return nil, p.ErrInfo(errors.New("incorrect tx time"))
 			}
 			// $this->transaction_array[3] могут подсунуть пустой
 			if !utils.CheckInputData(p.TxSlice[3], "bigint") {
-				return p.ErrInfo(errors.New("incorrect user id"))
+				return nil, p.ErrInfo(errors.New("incorrect user id"))
 			}
 		}
 	}
 	// Оперативные транзакции
 	// Operative transactions
-	MethodName := consts.TxTypes[p.dataType]
 	if p.TxContract != nil {
 		if err := p.CallContract(smart.CallInit | smart.CallCondition); err != nil {
-			return utils.ErrInfo(err)
+			return nil, utils.ErrInfo(err)
 		}
 	} else {
+		MethodName := consts.TxTypes[p.dataType]
+		parser, err := GetParser(p, MethodName)
+		if err != nil {
+			return nil, utils.ErrInfo(err)
+		}
 		log.Debug("MethodName", MethodName+"Init")
-		verr := utils.CallMethod(p, MethodName+"Init")
-		if _, ok := verr.(error); ok {
-			log.Error("%v", utils.ErrInfo(verr.(error)))
-			return utils.ErrInfo(verr.(error))
+		err_ := parser.Init()
+		if _, ok := err_.(error); ok {
+			log.Error("%v", utils.ErrInfo(err_.(error)))
+			return nil, utils.ErrInfo(err_.(error))
 		}
 
 		log.Debug("MethodName", MethodName+"Front")
-		verr = utils.CallMethod(p, MethodName+"Front")
-		if _, ok := verr.(error); ok {
-			log.Error("%v", utils.ErrInfo(verr.(error)))
-			return utils.ErrInfo(verr.(error))
+		err_ = parser.Validate()
+		if _, ok := err_.(error); ok {
+			log.Error("%v", utils.ErrInfo(err_.(error)))
+			return nil, utils.ErrInfo(err_.(error))
 		}
 	}
-	return nil
+	return header, nil
 }

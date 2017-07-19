@@ -26,19 +26,6 @@ import (
 
 // RollbackToBlockID rollbacks blocks till blockID
 func (p *Parser) RollbackToBlockID(blockID int64) error {
-
-	/*err := p.ExecSQL("SET GLOBAL net_read_timeout = 86400")
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	err = p.ExecSQL("SET GLOBAL max_connections  = 86400")
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-	/*err := p.RollbackTransactions()
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
 	err := p.ExecSQL("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	if err != nil {
 		logging.WriteSelectiveLog(err)

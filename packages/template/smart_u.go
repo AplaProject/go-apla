@@ -766,7 +766,7 @@ func Include(vars *map[string]string, pars ...string) string {
 			}
 		}
 	}
-	params[`norow`] = `1`
+	// params[`norow`] = `1`
 	//	page := (*vars)[`page`]
 	out, err := CreateHTMLFromTemplate(pars[0], converter.StrToInt64((*vars)[`citizen`]), converter.StrToInt64((*vars)[`state_id`]),
 		&params)
@@ -2048,7 +2048,7 @@ func Mult(vars *map[string]string, pars ...string) string {
 
 // Date formats the date value
 func Date(vars *map[string]string, pars ...string) string {
-	if len(pars) == 0 || pars[0] == `NULL` {
+	if len(pars) == 0 || pars[0] == `NULL` || len(pars[0]) < 19 {
 		return ``
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, pars[0][:19])
@@ -2074,7 +2074,7 @@ func Date(vars *map[string]string, pars ...string) string {
 
 // DateTime formats the date/time value
 func DateTime(vars *map[string]string, pars ...string) string {
-	if len(pars) == 0 || pars[0] == `NULL` {
+	if len(pars) == 0 || pars[0] == `NULL` || len(pars[0]) < 19 {
 		return ``
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, pars[0][:19])

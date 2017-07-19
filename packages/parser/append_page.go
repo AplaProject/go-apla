@@ -17,53 +17,41 @@
 package parser
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"strings"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// AppendPageInit initialize AppendPage transaction
-func (p *Parser) AppendPageInit() error {
+type AppendPageParser struct {
+	*Parser
+	AppendPage *tx.AppendPage
+}
 
-	fields := []map[string]string{{"global": "int64"}, {"name": "string"}, {"value": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *AppendPageParser) Init() error {
+	appendPage := &tx.AppendPage{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, appendPage); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.AppendPage = appendPage
 	return nil
 }
 
-// AppendPageFront checks conditions of AppendPage transaction
-func (p *Parser) AppendPageFront() error {
-
-	err := p.generalCheck(`edit_page`)
+func (p *AppendPageParser) Validate() error {
+	err := p.generalCheck(`edit_page`, &p.AppendPage.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	/*verifyData := map[string]string{"name": "string", "value": "string", "menu": "string", "conditions": "string"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	/*
-		Check conditions
-		...
-	*/
-
-	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["name"], p.TxMap["value"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.AppendPage.ForSign(), p.AppendPage.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err = p.AccessChange(`pages`, p.TxMaps.String["name"]); err != nil {
+	if err = p.AccessChange(`pages`, p.AppendPage.Name, p.AppendPage.Global, p.AppendPage.StateID); err != nil {
 		if p.AccessRights(`changing_page`, false) != nil {
 			return err
 		}
@@ -71,20 +59,18 @@ func (p *Parser) AppendPageFront() error {
 	return nil
 }
 
-// AppendPage proceeds AppendPage transaction
-func (p *Parser) AppendPage() error {
-
-	prefix := p.TxStateIDStr
-	if p.TxMaps.Int64["global"] == 1 {
-		prefix = "global"
-	}
-	log.Debug("value page", p.TxMaps.String["value"])
-	page, err := p.Single(`SELECT value FROM "`+prefix+`_pages" WHERE name = ?`, p.TxMaps.String["name"]).String()
+func (p *AppendPageParser) Action() error {
+	prefix, err := GetTablePrefix(p.AppendPage.Global, p.AppendPage.Header.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	new := strings.Replace(page, "PageEnd:", p.TxMaps.String["value"], -1) + "\r\nPageEnd:"
-	_, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_pages", []string{"name"}, []string{p.TxMaps.String["name"]}, true)
+	log.Debug("value page", p.AppendPage.Value)
+	page, err := p.Single(`SELECT value FROM "`+prefix+`_pages" WHERE name = ?`, p.AppendPage.Name).String()
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+	new := strings.Replace(page, "PageEnd:", p.AppendPage.Value, -1) + "\r\nPageEnd:"
+	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_pages", []string{"name"}, []string{p.AppendPage.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -92,7 +78,10 @@ func (p *Parser) AppendPage() error {
 	return nil
 }
 
-// AppendPageRollback rollbacks AppendPage transaction
-func (p *Parser) AppendPageRollback() error {
+func (p *AppendPageParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p AppendPageParser) Header() *tx.Header {
+	return &p.AppendPage.Header
 }

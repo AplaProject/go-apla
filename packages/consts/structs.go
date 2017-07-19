@@ -20,11 +20,6 @@ import (
 	"reflect"
 )
 
-const (
-	// TxfPublic is the flag of TXHeader
-	TxfPublic = 0x01 // Append PublicKey to Sign in TXHeader
-)
-
 // BlockHeader is a structure of the block header
 type BlockHeader struct {
 	Type     byte
@@ -43,22 +38,6 @@ type TxHeader struct {
 	CitizenID int64
 }
 
-// TXHeader is the header of the contract's transactions
-type TXHeader struct {
-	Type     int32 // byte < 128 system tx 129 - 1 byte 130 - 2 bytes 131 - 3 - bytes 132 - 4 bytes
-	Time     uint32
-	WalletID uint64
-	StateID  int32
-	Flags    uint8
-	Sign     []byte
-}
-
-// TXNewCitizen isn't used
-type TXNewCitizen struct {
-	TXHeader
-	PublicKey []byte
-}
-
 // FirstBlock is the header of FirstBlock transaction
 type FirstBlock struct {
 	TxHeader
@@ -67,27 +46,12 @@ type FirstBlock struct {
 	Host          string
 }
 
-// CitizenRequest isn't used
-type CitizenRequest struct {
-	TxHeader
-	StateID int64
-	Sign    []byte
-}
-
-// NewCitizen isn't used
-type NewCitizen struct {
-	TxHeader
-	StateID   int64
-	PublicKey []byte
-	Sign      []byte
-}
-
 // Don't forget to insert the structure in init() - list
 
 var blockStructs = make(map[string]reflect.Type)
 
 func init() {
-	list := []interface{}{FirstBlock{}, CitizenRequest{}, NewCitizen{}, TXNewCitizen{}} // New structures must be inserted here
+	list := []interface{}{FirstBlock{}} // New structures must be inserted here
 
 	for _, item := range list {
 		blockStructs[reflect.TypeOf(item).Name()] = reflect.TypeOf(item)
@@ -108,11 +72,6 @@ func IsStruct(tx int) bool {
 // Header returns TxHeader
 func Header(v interface{}) TxHeader {
 	return reflect.ValueOf(v).Elem().Field(0).Interface().(TxHeader)
-}
-
-// HeaderNew returns TXHeader
-func HeaderNew(v interface{}) TXHeader {
-	return reflect.ValueOf(v).Elem().Field(0).Interface().(TXHeader)
 }
 
 // Sign returns the signature attached to the header

@@ -117,6 +117,19 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 
 		//	fmt.Println(`Result`, result)
 		for i, iret := range result {
+			// first return value of every extend function that makes queries to DB is cost
+			if i == 0 && rt.vm.FuncCallsDB != nil {
+				if _, ok := rt.vm.FuncCallsDB[finfo.Name]; ok {
+					cost := iret.Int()
+					if cost > rt.cost {
+						rt.cost = 0
+						return fmt.Errorf("paid CPU resource is over")
+					} else {
+						rt.cost -= cost
+					}
+					continue
+				}
+			}
 			if finfo.Results[i].String() == `error` {
 				if iret.Interface() != nil {
 					return iret.Interface().(error)

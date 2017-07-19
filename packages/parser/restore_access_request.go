@@ -17,31 +17,34 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// RestoreAccessRequestInit initializes RestoreAccessRequest transaction
-func (p *Parser) RestoreAccessRequestInit() error {
+type RestoreAccessRequestParser struct {
+	*Parser
+	RestoreAccessRequest *tx.RestoreAccessRequest
+}
 
-	fields := []map[string]string{{"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *RestoreAccessRequestParser) Init() error {
+	restoreAccessRequest := &tx.RestoreAccessRequest{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, restoreAccessRequest); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.RestoreAccessRequest = restoreAccessRequest
 	return nil
 }
 
-// RestoreAccessRequestFront checks conditions of RestoreAccessRequest transaction
-func (p *Parser) RestoreAccessRequestFront() error {
-	err := p.generalCheck(`system_restore_access_request`)
+func (p *RestoreAccessRequestParser) Validate() error {
+	err := p.generalCheck(`system_restore_access_request`, &p.RestoreAccessRequest.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.TxStateID).Int64()
+	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.RestoreAccessRequest.Header.StateID).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -52,8 +55,7 @@ func (p *Parser) RestoreAccessRequestFront() error {
 		return p.ErrInfo("active=0")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID)
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessRequest.ForSign(), p.RestoreAccessRequest.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -66,16 +68,18 @@ func (p *Parser) RestoreAccessRequestFront() error {
 	return nil
 }
 
-// RestoreAccessRequest proceeds RestoreAccessRequest transaction
-func (p *Parser) RestoreAccessRequest() error {
-	_, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.TxCitizenID}, "system_restore_access", []string{"state_id"}, []string{converter.UInt32ToStr(p.TxStateID)}, true)
+func (p *RestoreAccessRequestParser) Action() error {
+	_, _, err := p.selectiveLoggingAndUpd([]string{"time", "close", "citizen_id"}, []interface{}{p.BlockData.Time, "0", p.RestoreAccessRequest.Header.UserID}, "system_restore_access", []string{"state_id"}, []string{converter.Int64ToStr(p.RestoreAccessRequest.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// RestoreAccessRequestRollback rollbacks RestoreAccessRequest transaction
-func (p *Parser) RestoreAccessRequestRollback() error {
+func (p *RestoreAccessRequestParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p RestoreAccessRequestParser) Header() *tx.Header {
+	return &p.RestoreAccessRequest.Header
 }

@@ -23,29 +23,30 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 var (
 	isGlobal bool
 )
 
-/*
-Adding state tables should be spelled out in state settings
-*/
+type NewStateParser struct {
+	*Parser
+	NewState *tx.NewState
+}
 
-// NewStateInit initializes NewState transaction
-func (p *Parser) NewStateInit() error {
-
-	fields := []map[string]string{{"state_name": "string"}, {"currency_name": "string"}, {"public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *NewStateParser) Init() error {
+	newState := &tx.NewState{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, newState); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewState = newState
 	return nil
 }
 
-// NewStateGlobal checks if the state or the currency exists
-func (p *Parser) NewStateGlobal(country, currency string) error {
+func (p *NewStateParser) global(country, currency string) error {
 	if !isGlobal {
 		list, err := sql.DB.GetAllTables()
 		if err != nil {
@@ -68,49 +69,46 @@ func (p *Parser) NewStateGlobal(country, currency string) error {
 	return nil
 }
 
-// NewStateFront checks conditions of NewState transaction
-func (p *Parser) NewStateFront() error {
-	err := p.generalCheck(`new_state`)
+func (p *NewStateParser) Validate() error {
+	err := p.generalCheck(`new_state`, &p.NewState.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"state_name": "state_name", "currency_name": "currency_name"}
+	verifyData := map[string][]interface{}{"state_name": []interface{}{p.NewState.StateName}, "currency_name": []interface{}{p.NewState.CurrencyName}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxWalletID, p.TxMap["state_name"], p.TxMap["currency_name"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewState.ForSign(), p.NewState.Header.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	country := string(p.TxMap["state_name"])
+	country := string(p.NewState.StateName)
 	if exist, err := p.IsState(country); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {
 		return fmt.Errorf(`State %s already exists`, country)
 	}
 
-	err = p.NewStateGlobal(country, string(p.TxMap["currency_name"]))
+	err = p.global(country, string(p.NewState.CurrencyName))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// NewStateMain creates state tables in the database
-func (p *Parser) NewStateMain(country, currency string) (id string, err error) {
+func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	id, err = p.ExecSQLGetLastInsertID(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, "system_states", id)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, "system_states", id)
 	if err != nil {
 		return
 	}
@@ -426,23 +424,22 @@ MenuBack(Welcome)`, sid)
 	return
 }
 
-// NewState proceeds NewState transaction
-func (p *Parser) NewState() error {
+func (p *NewStateParser) Action() error {
 	var pkey string
-	country := string(p.TxMap["state_name"])
-	currency := string(p.TxMap["currency_name"])
-	id, err := p.NewStateMain(country, currency)
+	country := string(p.NewState.StateName)
+	currency := string(p.NewState.CurrencyName)
+	id, err := p.Main(country, currency)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if isGlobal {
-		_, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name", "timestamp date_founded"},
+		_, _, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name", "timestamp date_founded"},
 			[]interface{}{id, country, p.BlockData.Time}, "global_states_list", nil, nil, true)
 
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		_, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
+		_, _, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
 			[]interface{}{currency, id + `_state_parameters`}, "global_currencies_list", nil, nil, true)
 		if err != nil {
 			return p.ErrInfo(err)
@@ -451,15 +448,14 @@ func (p *Parser) NewState() error {
 
 	if pkey, err = p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
 		return p.ErrInfo(err)
-	} else if len(p.TxMaps.Bytes["public_key"]) > 30 && len(pkey) == 0 {
-		_, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.TxMaps.Bytes["public_key"])}, "dlt_wallets",
+	} else if len(p.NewState.Header.PublicKey) > 30 && len(pkey) == 0 {
+		_, _, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
 	return err
 }
 
-// NewStateRollback rollbacks NewState transaction
-func (p *Parser) NewStateRollback() error {
+func (p *NewStateParser) Rollback() error {
 	id, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -498,4 +494,8 @@ func (p *Parser) NewStateRollback() error {
 	}
 
 	return nil
+}
+
+func (p NewStateParser) Header() *tx.Header {
+	return &p.NewState.Header
 }
