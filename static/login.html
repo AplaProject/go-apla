@@ -650,7 +650,6 @@ $(document).ready(function(){
 	}
 	encKey = localStorage.getItem('EncKey');
 	updateLanguage(".lang");	
-	
 	selectboxState(JSON.parse({{.States}}));	
 	{{if .State}}
 		GKey.StateId = '{{.State}}';

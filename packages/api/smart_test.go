@@ -18,10 +18,21 @@ package api
 
 import (
 	"fmt"
-	//	"net/url"
+	"net/url"
+	"strings"
 	"testing"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
+
+type smartParams struct {
+	Params  map[string]string
+	Results map[string]string
+}
+
+type smartContract struct {
+	Name   string
+	Value  string
+	Params []smartParams
+}
 
 func TestSmartFields(t *testing.T) {
 
@@ -42,5 +53,86 @@ func TestSmartFields(t *testing.T) {
 		t.Error(fmt.Sprintf(`MainCondition name is wrong: %s`, ret[`name`].(string)))
 		return
 	}
+	if err := postTx(`smartcontract/MainCondition`, &url.Values{}); err != nil {
+		t.Error(err)
+		return
+	}
+}
 
+func TestSmartContracts(t *testing.T) {
+
+	wanted := func(name, want string) bool {
+		ret, err := sendGet(`test/`+name, nil)
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret[`value`].(string) != want {
+			t.Error(fmt.Errorf(`%s != %s`, ret[`value`].(string), want))
+			return false
+		}
+		return true
+	}
+
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, item := range contracts {
+		_, err := sendGet(`contract/`+item.Name, nil)
+		if err != nil {
+			if strings.Contains(err.Error(), `incorrect id`) {
+				form := url.Values{"name": {item.Name}, "value": {item.Value},
+					"conditions": {`true`}, `global`: {`0`}}
+				if err := postTx(`contract`, &form); err != nil {
+					t.Error(err)
+					return
+				}
+				if err := putTx(`activatecontract/`+item.Name, &url.Values{}); err != nil {
+					t.Error(err)
+					return
+				}
+			} else {
+				t.Error(err)
+				return
+			}
+		}
+		for _, par := range item.Params {
+			form := url.Values{}
+			for key, value := range par.Params {
+				form[key] = []string{value}
+			}
+			if err := postTx(`smartcontract/`+item.Name, &form); err != nil {
+				t.Error(err)
+				return
+			}
+			for key, value := range par.Results {
+				if !wanted(key, value) {
+					return
+				}
+			}
+		}
+	}
+}
+
+var contracts = []smartContract{
+	{`testEmpty`, `contract testEmpty {
+		action { Test("empty",  "empty value")}}`,
+		[]smartParams{
+			{nil, map[string]string{`empty`: `empty value`}},
+		}},
+	{`testSimple`, `contract testSimple {
+		data { 
+			amount int
+			name   string
+		}
+		conditions {
+			Test("scond", $amount, $name)
+		}
+		action { Test("sact", $name, $amount)}}`,
+		[]smartParams{
+			{map[string]string{`name`: `Simple name`, `amount`: `-56781`},
+				map[string]string{`scond`: `-56781Simple name`,
+					`sact`: `Simple name-56781`}},
+		}},
 }

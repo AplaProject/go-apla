@@ -1257,7 +1257,7 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 
 function selectboxState(data) {
 	for (var i in data) {
-		selectbox.append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
+		selectbox.append('<option value="' + data[i].id + '" data-id="' + data[i].id + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
 	}
 
 	selectbox.select2({

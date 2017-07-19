@@ -18,7 +18,6 @@ package parser
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
@@ -32,7 +31,7 @@ import (
 type NewContractParser struct {
 	*Parser
 	NewContract    *tx.NewContract
-	walletContract *int64
+	walletContract int64
 }
 
 func (p *NewContractParser) Init() error {
@@ -54,14 +53,11 @@ func (p *NewContractParser) Validate() error {
 	// ...
 
 	// Check InputData
-	name := p.NewContract.Name
-	if off := strings.IndexByte(name, '#'); off > 0 {
-		p.NewContract.Name = name[:off]
-		address := converter.StringToAddress(name[off+1:])
-		if address == 0 {
-			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, name[off+1:]))
+	if len(p.NewContract.Wallet) > 0 {
+		p.walletContract = converter.StringToAddress(p.NewContract.Wallet)
+		if p.walletContract == 0 {
+			return p.ErrInfo(fmt.Errorf(`wrong wallet %s`, p.NewContract.Wallet))
 		}
-		p.walletContract = &address
 	}
 	verifyData := map[string][]interface{}{"int64": []interface{}{p.NewContract.Global}, "string": []interface{}{p.NewContract.Name}}
 	err = p.CheckInputData(verifyData)
@@ -100,21 +96,17 @@ func (p *NewContractParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	var wallet int64
-	if wallet = p.NewContract.UserID; wallet == 0 {
-		wallet = p.TxWalletID
+	if p.walletContract == 0 {
+		p.walletContract = p.NewContract.UserID
 	}
 	root, err := smart.CompileBlock(p.NewContract.Value, prefix, false, 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if p.walletContract != nil {
-		wallet = *p.walletContract
-	}
 
 	_, tblid, err := p.selectiveLoggingAndUpd([]string{"name", "value", "conditions", "wallet_id"},
 		[]interface{}{p.NewContract.Name, p.NewContract.Value, p.NewContract.Conditions,
-			wallet}, prefix+"_smart_contracts", nil, nil, true)
+			p.walletContract}, prefix+"_smart_contracts", nil, nil, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

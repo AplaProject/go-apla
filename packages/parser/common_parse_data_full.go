@@ -194,7 +194,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(fmt.Errorf("nonexistent type"))
 				}
 			} else {
-				if int64(p.TxPtr.(*consts.TXHeader).Time)-consts.MAX_TX_FORW > p.BlockData.Time || int64(p.TxPtr.(*consts.TXHeader).Time) < p.BlockData.Time-consts.MAX_TX_BACK {
+				if p.TxSmart.Time-consts.MAX_TX_FORW > p.BlockData.Time || p.TxSmart.Time < p.BlockData.Time-consts.MAX_TX_BACK {
 					return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 				}
 

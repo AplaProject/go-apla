@@ -118,13 +118,6 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
 
-func getForSign(txName string, data *apiData, append string) *forSign {
-	timeNow := time.Now().Unix()
-	forsign := fmt.Sprintf(`%d,%d,%d,%d,`, utils.TypeInt(txName), timeNow, data.sess.Get(`citizen`).(int64),
-		data.sess.Get(`state`).(int64))
-	return &forSign{Time: converter.Int64ToStr(timeNow), ForSign: forsign + append}
-}
-
 func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx, error) {
 	var hash []byte
 	serializedData, err := msgpack.Marshal(toSerialize)
@@ -162,10 +155,12 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			return
 		}
 		defer data.sess.SessionRelease(w)
-
 		// Getting and validating request parameters
 		r.ParseForm()
 		data.params = make(map[string]interface{})
+		for _, par := range ps {
+			data.params[par.Key] = par.Value
+		}
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
@@ -185,9 +180,6 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			case pString:
 				data.params[key] = val
 			}
-		}
-		for _, par := range ps {
-			data.params[par.Key] = par.Value
 		}
 		for _, handler := range handlers {
 			if handler(w, r, &data) != nil {

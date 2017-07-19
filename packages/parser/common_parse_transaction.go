@@ -31,6 +31,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // ParseTransaction parses a transaction
@@ -59,29 +60,31 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 		isStruct := consts.IsStruct(int(txType))
 		if txType > 127 { // транзакция с контрактом
 			// transaction with the contract
-			var err error
-			p.TxPtr = &consts.TXHeader{}
-			if err = converter.BinUnmarshal(&input, p.TxPtr); err != nil {
+			isStruct = false
+			smartTx := tx.SmartContract{}
+			if err := msgpack.Unmarshal(*transactionBinaryData, &smartTx); err != nil {
 				return nil, nil, err
 			}
-			isStruct = false
-			p.TxStateID = uint32(p.TxPtr.(*consts.TXHeader).StateID)
+			p.TxPtr = nil
+			p.TxSmart = &smartTx
+			p.TxStateID = uint32(smartTx.StateID)
 			p.TxStateIDStr = converter.UInt32ToStr(p.TxStateID)
 			if p.TxStateID > 0 {
-				p.TxCitizenID = int64(p.TxPtr.(*consts.TXHeader).WalletID)
+				p.TxCitizenID = smartTx.UserID
 				p.TxWalletID = 0
 			} else {
 				p.TxCitizenID = 0
-				p.TxWalletID = int64(p.TxPtr.(*consts.TXHeader).WalletID)
+				p.TxWalletID = smartTx.UserID
 			}
-			contract := smart.GetContractByID(p.TxPtr.(*consts.TXHeader).Type)
+			header = &smartTx.Header
+			contract := smart.GetContractByID(int32(smartTx.Type))
 			if contract == nil {
-				return nil, nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
+				return nil, nil, fmt.Errorf(`unknown contract %d`, smartTx.Type)
 			}
-			forsign := fmt.Sprintf("%d,%d,%d,%d,%d", p.TxPtr.(*consts.TXHeader).Type,
-				p.TxPtr.(*consts.TXHeader).Time, p.TxPtr.(*consts.TXHeader).WalletID,
-				p.TxPtr.(*consts.TXHeader).StateID, p.TxPtr.(*consts.TXHeader).Flags)
+			forsign := smartTx.ForSign()
+
 			p.TxContract = contract
+			input = smartTx.Data
 			p.TxData = make(map[string]interface{})
 			if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 				for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
@@ -159,31 +162,17 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 				}
 			}
 			p.TxData[`forsign`] = forsign
-			//			fmt.Println(`Contract data`, p.TxData)
+			//fmt.Println(`Smart Forsign`, forsign)
 		} else if isStruct {
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 			if err := converter.BinUnmarshal(&input, p.TxPtr); err != nil {
 				return nil, nil, err
 			}
 			p.TxVars = make(map[string]string)
-			if int(txType) == 4 { // TXNewCitizen
-				head := consts.HeaderNew(p.TxPtr)
-				p.TxStateID = uint32(head.StateID)
-				p.TxStateIDStr = converter.UInt32ToStr(p.TxStateID)
-				if head.StateID > 0 {
-					p.TxCitizenID = int64(head.WalletID)
-					p.TxWalletID = 0
-				} else {
-					p.TxCitizenID = 0
-					p.TxWalletID = int64(head.WalletID)
-				}
-				p.TxTime = int64(head.Time)
-			} else {
-				head := consts.Header(p.TxPtr)
-				p.TxCitizenID = head.CitizenID
-				p.TxWalletID = head.WalletID
-				p.TxTime = int64(head.Time)
-			}
+			head := consts.Header(p.TxPtr)
+			p.TxCitizenID = head.CitizenID
+			p.TxWalletID = head.WalletID
+			p.TxTime = int64(head.Time)
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)
 		}
 		if isStruct {

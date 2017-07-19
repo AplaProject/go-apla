@@ -26,8 +26,8 @@ import (
 // AjaxStatesList returns the list of states
 func (c *Controller) AjaxStatesList() (string, error) {
 
-	result := make(map[string]map[string]string)
-	data, err := c.GetList(`SELECT id FROM system_states`).String()
+	result := make([]map[string]string, 0)
+	data, err := c.GetList(`SELECT id FROM system_states order by id desc`).String()
 	if err != nil {
 		return ``, err
 	}
@@ -51,10 +51,12 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		if err != nil {
 			return ``, err
 		}
-		result[id] = make(map[string]string)
-		result[id]["state_name"] = stateName
-		result[id]["state_flag"] = stateFlag
-		result[id]["state_coords"] = stateCoords
+		iresult := make(map[string]string)
+		iresult["id"] = id
+		iresult["state_name"] = stateName
+		iresult["state_flag"] = stateFlag
+		iresult["state_coords"] = stateCoords
+		result = append(result, iresult)
 
 	}
 	jsondata, err := json.Marshal(result)

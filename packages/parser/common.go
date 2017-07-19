@@ -91,7 +91,7 @@ func GetParser(p *Parser, txType string) (ParserInterface, error) {
 	case "EditContract":
 		return &EditContractParser{p, nil}, nil
 	case "NewContract":
-		return &NewContractParser{p, nil, nil}, nil
+		return &NewContractParser{p, nil, 0}, nil
 	case "EditColumn":
 		return &EditColumnParser{p, nil}, nil
 	case "EditTable":
@@ -182,6 +182,7 @@ type Parser struct {
 	//	newPublicKeysHex [3][]byte
 	TxPtr      interface{} // Pointer to the corresponding struct in consts/struct.go
 	TxData     map[string]interface{}
+	TxSmart    *tx.SmartContract
 	TxContract *smart.Contract
 	TxVars     map[string]string
 	AllPkeys   map[string]string
