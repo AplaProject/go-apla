@@ -99,10 +99,8 @@ func TestSmartContracts(t *testing.T) {
 		}
 		for _, par := range item.Params {
 			form := url.Values{}
-			if par.Params != nil {
-				for key, value := range par.Params {
-					form[key] = []string{value}
-				}
+			for key, value := range par.Params {
+				form[key] = []string{value}
 			}
 			if err := postTx(`smartcontract/`+item.Name, &form); err != nil {
 				t.Error(err)
