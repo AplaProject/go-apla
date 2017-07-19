@@ -607,9 +607,9 @@ BEGIN:
 			// public key of those who has generated this block
 
 			var nodePublicKey []byte
-			if blockData.WalletId != 0 {
+			if blockData.WalletID != 0 {
 				wallet := &model.Wallet{}
-				err = wallet.GetWallet(blockData.WalletId)
+				err = wallet.GetWallet(blockData.WalletID)
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
