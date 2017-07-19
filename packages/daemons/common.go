@@ -114,7 +114,7 @@ var rollbackList = []string{
 	"Confirmations",
 }
 
-func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error) {
+func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error, retCh chan string) {
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Error("daemon Recovered", r)
@@ -133,12 +133,18 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 		sleepTime:     1,
 	}
 
+	err = handler(d, ctx)
+	if err != nil {
+		logger.Errorf("daemon %s error: %s", goRoutineName, err)
+	}
+
 	timer := time.NewTimer(time.Duration(d.sleepTime) * time.Second)
 	defer timer.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
+			retCh <- goRoutineName
 			return
 
 		case <-timer.C:
@@ -147,7 +153,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 			err = handler(d, ctx)
 			if err != nil {
-				logger.Errorf("confirmation error %s", err)
+				logger.Errorf("daemon %s error: %s", goRoutineName, err)
 			}
 			timer.Reset(time.Duration(d.sleepTime) * time.Second)
 		}
@@ -164,6 +170,7 @@ func StartDaemons() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	utils.CancelFunc = cancel
+	utils.ReturnCh = make(chan string)
 
 	daemonsToStart := serverList
 	if utils.Mobile() {
@@ -180,7 +187,8 @@ func StartDaemons() {
 	for _, name := range daemonsToStart {
 		handler, ok := newDaemonsList[name]
 		if ok {
-			go daemonLoop(ctx, name, handler)
+			go daemonLoop(ctx, name, handler, utils.ReturnCh)
+			utils.DaemonsCount++
 			continue
 		}
 

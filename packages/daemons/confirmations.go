@@ -34,10 +34,10 @@ Using it for watching for forks
 Получаем кол-во нодов, у которых такой же хэш последнего блока как и у нас
 Нужно чтобы следить за вилками
 */
+var s int
 
 // Confirmations gets and checks blocks from nodes
 func Confirmations(d *daemon, ctx context.Context) error {
-	var s int
 
 	// первые 2 минуты спим по 10 сек, чтобы блоки успели собраться
 	// the first 2 minutes we sleep for 10 sec for blocks to be collected

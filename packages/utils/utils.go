@@ -58,12 +58,6 @@ type BlockData struct {
 	Hash     []byte
 }
 
-// DaemonsChansType is a structure for deamons
-type DaemonsChansType struct {
-	ChBreaker chan bool
-	ChAnswer  chan string
-}
-
 var (
 	// FirstBlockDir is a folder where 1block file will be stored
 	FirstBlockDir = flag.String("firstBlockDir", "", "FirstBlockDir")
@@ -120,9 +114,9 @@ var (
 	// DltWalletID is the wallet identifier
 	DltWalletID = flag.Int64("dltWalletId", 0, "DltWalletID")
 
-	// DaemonsChans is a slice of DaemonsChansType
-	DaemonsChans []*DaemonsChansType
+	ReturnCh     chan string
 	CancelFunc   context.CancelFunc
+	DaemonsCount int
 	// Thrust is true for thrust shell
 	Thrust bool
 )

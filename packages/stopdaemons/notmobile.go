@@ -17,7 +17,6 @@
 package stopdaemons
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 /*
@@ -69,8 +69,11 @@ func Signals() {
 		<-SigChan
 		fmt.Println("KILL SIGNAL")
 
-		// TODO: wait signal
 		utils.CancelFunc()
+		for i := 0; i < utils.DaemonsCount; i++ {
+			name := <-utils.ReturnCh
+			log.Debugf("daemon %s stopped", name)
+		}
 
 		log.Debug("Daemons killed")
 		fmt.Println("Daemons killed")
