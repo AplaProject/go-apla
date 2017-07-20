@@ -16,10 +16,10 @@ import (
 
 func CreatingBlockchain(d *daemon, ctx context.Context) error {
 	d.sleepTime = 10 * time.Second
-	return writeNextBlocks(*utils.Dir + "/public/blockchain")
+	return writeNextBlocks(*utils.Dir+"/public/blockchain", consts.COUNT_BLOCK_BEFORE_SAVE)
 }
 
-func writeNextBlocks(fileName string) error {
+func writeNextBlocks(fileName string, minToSave int) error {
 	lastSavedBlockID, err := getLastBlockID(fileName)
 	if err != nil {
 		return err
@@ -33,14 +33,14 @@ func writeNextBlocks(fileName string) error {
 
 	curBlockID := infoBlock.BlockID
 
-	if curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE <= lastSavedBlockID {
+	if curBlockID-int64(minToSave) < lastSavedBlockID {
 		// not enough blocks to save, just return
 		return nil
 	}
 
 	// write the newest blocks to reserved blockchain
 	// ??? curBlockID - COUNT_BLOCK_BEFORE_SAVE ???
-	blocks, err := model.GetBlockchain(lastSavedBlockID, curBlockID-consts.COUNT_BLOCK_BEFORE_SAVE)
+	blocks, err := model.GetBlockchain(lastSavedBlockID, lastSavedBlockID+int64(minToSave))
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func readBlock(r io.Reader) (*blockData, error) {
 	var err error
 	buf := make([]byte, WordSize)
 
-	if _, err = r.Read(buf); err != nil {
+	if _, err = io.ReadFull(r, buf); err != nil {
 		return nil, err
 	}
 
@@ -104,7 +104,7 @@ func readBlock(r io.Reader) (*blockData, error) {
 	}
 
 	// parse the block
-	block, err := unmarshallFileBlock(dataBinary)
+	block, err := unmarhalBlockData(dataBinary)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
@@ -162,15 +162,7 @@ func getLastBlockID(fileName string) (int64, error) {
 	return block.ID, nil
 }
 
-// TODO:
-func unmarshallFileBlock(buff []byte) (blockData, error) {
-	// size (block id + body of a block)
-	blockLen := converter.BinToDec(buff[:WordSize])
-	buff = buff[WordSize:]
-
-	if int(blockLen)+WordSize != len(buff) {
-		return blockData{}, utils.ErrInfo("bad block")
-	}
+func unmarhalBlockData(buff []byte) (blockData, error) {
 
 	blockID := converter.BinToDec(buff[:WordSize])
 	buff = buff[WordSize:]
@@ -179,6 +171,10 @@ func unmarshallFileBlock(buff []byte) (blockData, error) {
 	blockDataLen, err := converter.DecodeLength(&buff)
 	if err != nil {
 		return blockData{}, utils.ErrInfo(err)
+	}
+
+	if blockDataLen > int64(len(buff)) {
+		return blockData{}, utils.ErrInfo("bad length")
 	}
 
 	return blockData{
@@ -193,5 +189,5 @@ func marshallFileBlock(b blockData) []byte {
 	data := append(converter.DecToBin(b.ID, WordSize), converter.EncodeLengthPlusData(b.Data)...)
 	sizeAndData := append(converter.DecToBin(len(data), WordSize), data...)
 
-	return sizeAndData
+	return append(sizeAndData, converter.DecToBin(len(sizeAndData), WordSize)...)
 }

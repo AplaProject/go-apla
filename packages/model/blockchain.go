@@ -15,7 +15,7 @@ type Block struct {
 func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
-	if endblockID == -1 {
+	if endblockID > 0 {
 		err = DBConn.Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error
 	} else {
 		err = DBConn.Order("id asc").Where("id > ?", startBlockID).Find(blockchain).Error
@@ -26,7 +26,7 @@ func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	return *blockchain, nil
 }
 
-func TableName() string {
+func (Block) TableName() string {
 	return "block_chain"
 }
 

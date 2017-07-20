@@ -17,5 +17,11 @@ func GormInit(user string, pass string, host string, dbName string) error {
 	if err != nil {
 		return err
 	}
+	DBConn.SingularTable(true)
 	return nil
+}
+
+func GormSet(db *gorm.DB) {
+	DBConn = db
+	DBConn.SingularTable(true)
 }

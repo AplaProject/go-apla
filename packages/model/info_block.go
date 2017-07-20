@@ -12,7 +12,7 @@ type InfoBlock struct {
 }
 
 func (ib *InfoBlock) GetInfoBlock() error {
-	return DBConn.First(ib).Error
+	return DBConn.Last(ib).Error
 }
 
 func (ib *InfoBlock) GetUnsent() error {
