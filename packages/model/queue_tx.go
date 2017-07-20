@@ -22,6 +22,10 @@ func (qt *QueueTx) Create() error {
 	return DBConn.Create(qt).Error
 }
 
+func (qt *QueueTx) GetByHash(hash []byte) error {
+	return DBConn.Where("hex(hash) = ?").First(qt).Error
+}
+
 func GetQueuedTransactionsCount() (int64, error) {
 	var rowsCount int64
 	if err := DBConn.Exec("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?").Scan(&rowsCount).Error; err != nil {

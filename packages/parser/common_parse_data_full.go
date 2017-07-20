@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
@@ -63,7 +64,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 	}
 
 	logging.WriteSelectiveLog("DELETE FROM transactions WHERE used = 1")
-	afect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE used = 1")
+	afect, err := model.DeleteUsedTransactions()
 	if err != nil {
 		logging.WriteSelectiveLog(err)
 		return utils.ErrInfo(err)
@@ -116,7 +117,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			hashFull = converter.BinToHex(hashFull)
 			logging.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(hashFull))
-			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=1 WHERE hex(hash) = ?", hashFull)
+			affect, err := model.DeleteUsedTransactions()
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				logging.WriteSelectiveLog("RollbackTo")
@@ -257,12 +258,13 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
 			// let user know that his transaction  is added in the block
-			p.ExecSQL("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockID, hashFull)
+			ts := &model.TransactionsStatus{}
+			ts.UpdateBlockID(p.BlockData.BlockID, hashFull)
 			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockID, hashFull)
 
 			// Тут было time(). А значит если бы в цепочке блоков были блоки в которых были бы одинаковые хэши тр-ий, то ParseDataFull вернул бы error
 			// here was a time(). That means if blocks with the same hashes of transactions were in the chain of blocks, ParseDataFull would return the error
-			err = p.InsertInLogTx(transactionBinaryDataFull, converter.BytesToInt64(p.TxMap["time"]))
+			err = InsertInLogTx(transactionBinaryDataFull, converter.BytesToInt64(p.TxMap["time"]))
 			if err != nil {
 				return utils.ErrInfo(err)
 			}

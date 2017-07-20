@@ -19,21 +19,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// InsertInLogTx inserts md5 hash and time into log_transaction
-func (db *DCDB) InsertInLogTx(binaryTx []byte, time int64) error {
-	txHash, err := crypto.Hash(binaryTx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	txHash = converter.BinToHex(txHash)
-	err = db.ExecSQL("INSERT INTO log_transactions (hash, time) VALUES ([hex], ?)", txHash, time)
-	log.Debug("INSERT INTO log_transactions (hash, time) VALUES ([hex], %s)", txHash)
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-	return nil
-}
-
 // DelLogTx deletes a row with the specified md5 hash in log_transaction
 func (db *DCDB) DelLogTx(binaryTx []byte) error {
 	txHash, err := crypto.Hash(binaryTx)
@@ -205,25 +190,6 @@ func (db *DCDB) GetNodePublicKey(waletID int64) ([]byte, error) {
 	result, err := db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", waletID).Bytes()
 	if err != nil {
 		return []byte(""), err
-	}
-	return result, nil
-}
-
-// GetNodePublicKeyWalletOrCB returns node public key of wallet id or state id
-func (db *DCDB) GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	var result []byte
-	var err error
-	if walletID != 0 {
-		log.Debug("wallet_id %v state_id %v", walletID, stateID)
-		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", walletID).Bytes()
-		if err != nil {
-			return []byte(""), err
-		}
-	} else {
-		result, err = db.Single("SELECT node_public_key FROM system_recognized_states WHERE state_id = ?", stateID).Bytes()
-		if err != nil {
-			return []byte(""), err
-		}
 	}
 	return result, nil
 }

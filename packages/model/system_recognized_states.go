@@ -4,7 +4,7 @@ type SystemRecognizedStates struct {
 	Name             string `gorm:"not null;size:255"`
 	StateID          int64  `gorm:"not null;primary_key"`
 	Host             string `gorm:"not null;size:255"`
-	NodePublickKey   []byte `gorm:"not null"`
+	NodePublicKey    []byte `gorm:"not null"`
 	DelegateWalletID int64  `gorm:"not null"`
 	DelegateStateID  int64  `gorm:"not null"`
 	RbID             int64  `gorm:"not null"`

@@ -4,9 +4,9 @@ type Block struct {
 	ID           int64  `gorm:"primary_key;not_null"`
 	Hash         []byte `gorm:not null`
 	Data         []byte `gorm:not null`
-	StateID      int32  `gorm:not null`
+	StateID      int64  `gorm:not null`
 	WalletID     int64  `gorm:not null`
-	Time         int32  `gorm:not null`
+	Time         int64  `gorm:not null`
 	Tx           int32  `gorm:not null`
 	Cur0lMinerID int32  `gorm:not null;column:cur_0l_miner_id`
 	MaxMinerID   int32  `gorm:not null`
@@ -66,6 +66,10 @@ func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 
 func (b *Block) Delete() error {
 	return DBConn.Delete(b).Error
+}
+
+func (b *Block) DeleteById(id int64) error {
+	return DBConn.Where("id = ?", id).Delete(Block{}).Error
 }
 
 func (b *Block) DeleteChain() error {

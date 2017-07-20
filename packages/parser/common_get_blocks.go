@@ -153,7 +153,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 
 		// публичный ключ того, кто этот блок сгенерил
 		// the public key of the one who has generated this block
-		nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(blockData.WalletID, blockData.StateID)
+		nodePublicKey, err := GetNodePublicKeyWalletOrCB(blockData.WalletID, blockData.StateID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -195,40 +195,6 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 	// to take the blocks in order
 	blocksSorted := converter.SortMap(blocks)
 	log.Debug("blocks", blocksSorted)
-
-	// получим наши транзакции в 1 бинарнике, просто для удобства
-	// we wil get our transactions in 1 binary, just for convenience
-	/*var transactions []byte
-		utils.WriteSelectiveLog(`SELECT data FROM transactions WHERE verified = 1 AND used = 0`)
-		all, err := p.GetAll(`SELECT data FROM transactions WHERE verified = 1 AND used = 0`, -1)
-		if err != nil {
-			utils.WriteSelectiveLog(err)
-			return utils.ErrInfo(err)
-		}
-		for _, data := range all {
-			utils.WriteSelectiveLog(utils.BinToHex(data["data"]))
-			log.Debug("data", data)
-			transactions = append(transactions, utils.EncodeLengthPlusData([]byte(data["data"]))...)
-		}
-		if len(transactions) > 0 {
-			// отмечаем, что эти тр-ии теперь нужно проверять по новой
-	// point that these transactions are necessary to check one by one
-			utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
-			if err != nil {
-				utils.WriteSelectiveLog(err)
-				return utils.ErrInfo(err)
-			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-			// откатываем по фронту все свежие тр-ии
-	// we roll back all recent transactions on the front
-			/*parser.GoroutineName = goroutineName
-			parser.BinaryData = transactions
-			err = parser.ParseDataRollbackFront(false)
-			if err != nil {
-				return utils.ErrInfo(err)
-			}*/
-	/*}*/
 
 	logging.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")

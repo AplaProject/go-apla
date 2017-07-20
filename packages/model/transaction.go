@@ -33,6 +33,11 @@ func DeleteLoopedTransactions() (int64, error) {
 	return query.RowsAffected, query.Error
 }
 
+func DeleteUsedTransactions() (int64, error) {
+	query := DBConn.Exec("DELETE FROM transactions WHERE used = 1")
+	return query.RowsAffected, query.Error
+}
+
 func MarkTransactionSended(transactionHash []byte) (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", transactionHash)
 	return query.RowsAffected, query.Error
@@ -77,9 +82,8 @@ func (t *Transactions) Get(transactionHash []byte) error {
 	return DBConn.Where("hash = ?", transactionHash).First(t).Error
 }
 
-func DeleteUsedTransactions() (int64, error) {
-	query := DBConn.Exec("DELETE FROM transactions WHERE used = 1")
-	return query.RowsAffected, query.Error
+func (t *Transactions) GetVerified(transactionHash []byte) error {
+	return DBConn.Where("hex(hash) = ? AND verified = 1", transactionHash).First(t).Error
 }
 
 func DeleteTransaction(transactionHash []byte) (int64, error) {

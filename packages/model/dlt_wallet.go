@@ -17,10 +17,7 @@ type Wallet struct {
 }
 
 func (w *Wallet) GetWallet(walletID int64) error {
-	if err := DBConn.Where("wallet_id = ", walletID).First(&w).Error; err != nil {
-		return err
-	}
-	return nil
+	return DBConn.Where("wallet_id = ", walletID).First(&w).Error
 }
 
 func GetWallets(startWalletID int64, walletsCount int) ([]Wallet, error) {

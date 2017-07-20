@@ -32,14 +32,13 @@ func (p *Parser) CheckBlockHeader() error {
 	// в GetBlocks p.PrevBlock определяется снаружи, поэтому тут важно не перезаписать данными из block_chain
 	// is determined outside in в GetBlocks p.PrevBlock, because here it's important not to rewrite data from block_chain
 	if p.PrevBlock == nil || p.PrevBlock.BlockID != p.BlockData.BlockID-1 {
-		p.PrevBlock, err = p.GetBlockDataFromBlockChain(p.BlockData.BlockID - 1)
+		p.PrevBlock, err = GetBlockDataFromBlockChain(p.BlockData.BlockID - 1)
 		log.Debug("PrevBlock 0", p.PrevBlock)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
 	}
 	log.Debug("PrevBlock.BlockId: %v / PrevBlock.Time: %v / PrevBlock.WalletId: %v / PrevBlock.StateID: %v / PrevBlock.Sign: %v", p.PrevBlock.BlockID, p.PrevBlock.Time, p.PrevBlock.WalletID, p.PrevBlock.StateID, p.PrevBlock.Sign)
-
 	log.Debug("p.PrevBlock.BlockId", p.PrevBlock.BlockID)
 	// для локальных тестов
 	// for the local tests
@@ -76,7 +75,6 @@ func (p *Parser) CheckBlockHeader() error {
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	// is this block too early? Allowable error = error_time
 	if !first {
-
 		sleepTime, err := p.GetSleepTime(p.BlockData.WalletID, p.BlockData.StateID, p.PrevBlock.StateID, p.PrevBlock.WalletID)
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -109,7 +107,7 @@ func (p *Parser) CheckBlockHeader() error {
 	}
 	// проверим, есть ли такой майнер и заодно получим public_key
 	// check if this miner exists and at the same time will receive public_key
-	nodePublicKey, err := p.GetNodePublicKeyWalletOrCB(p.BlockData.WalletID, p.BlockData.StateID)
+	nodePublicKey, err := GetNodePublicKeyWalletOrCB(p.BlockData.WalletID, p.BlockData.StateID)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}

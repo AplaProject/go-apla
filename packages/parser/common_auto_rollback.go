@@ -17,34 +17,24 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-type rollbackTxRowType struct {
-	txHash    string
-	tableName string
-	tableID   string
-}
-
 func (p *Parser) autoRollback() error {
-
-	var rollbackTxRow rollbackTxRowType
-	rows, err := p.QueryRows("SELECT tx_hash, table_name, table_id FROM rollback_tx WHERE tx_hash = [hex] ORDER BY id DESC", p.TxHash)
+	rollbackTx := &model.RollbackTx{}
+	txs, err := rollbackTx.GetRollbackTransactions([]byte(p.TxHash))
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	defer rows.Close()
-	for rows.Next() {
-		err = rows.Scan(&rollbackTxRow.txHash, &rollbackTxRow.tableName, &rollbackTxRow.tableID)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		err := p.selectiveRollback(rollbackTxRow.tableName, p.AllPkeys[rollbackTxRow.tableName]+"='"+rollbackTxRow.tableID+`'`, true)
+	for _, tx := range txs {
+		err := p.selectiveRollback(tx.TableName, p.AllPkeys[tx.TableName]+"='"+tx.TableID+`'`, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	err = p.ExecSQL("DELETE FROM rollback_tx WHERE tx_hash = [hex]", p.TxHash)
+	txForDelete := &model.RollbackTx{TxHash: []byte(p.TxHash)}
+	err = txForDelete.DeleteByHash()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

@@ -2,7 +2,7 @@ package model
 
 type LogTransactions struct {
 	Hash []byte `gorm:"primary_key;not null"`
-	Time int32  `gorm:"not null"`
+	Time int64  `gorm:"not null"`
 }
 
 func (lt *LogTransactions) IsExists() (bool, error) {
@@ -16,6 +16,10 @@ func (lt *LogTransactions) Delete() error {
 
 func (lt *LogTransactions) Get() error {
 	return DBConn.First(lt).Error
+}
+
+func (lt *LogTransactions) GetByHash(hash []byte) error {
+	return DBConn.Where("hex(hash) = ?").First(lt).Error
 }
 
 func (lt *LogTransactions) Create() error {
