@@ -358,6 +358,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	daemons.StartDaemons()
 
+
 	IosLog("MonitorDaemons")
 	// мониторинг демонов
 	daemonsTable := make(map[string]string)

@@ -162,8 +162,6 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 // StartDaemons starts daemons
 func StartDaemons() {
-	utils.DaemonsChans = nil
-
 	if configIni["daemons"] == "null" {
 		return
 	}

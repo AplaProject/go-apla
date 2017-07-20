@@ -8,6 +8,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // Mutex for locking DB
@@ -39,6 +41,11 @@ func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 		return &DCDB{}, err
 	}
 	log.Debug("return")
+	err = model.GormInit(ConfigIni["db_user"], ConfigIni["db_password"], "localhost", ConfigIni["db_name"])
+	if err != nil {
+		log.Errorf("GormInit failed: %s", err)
+	}
+
 	return &DCDB{db, ConfigIni}, err
 }
 

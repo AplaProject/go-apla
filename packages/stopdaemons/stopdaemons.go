@@ -51,12 +51,10 @@ func WaitStopTime() {
 		log.Debug("dExtit: %d", dExists)
 		if dExists > 0 {
 			fmt.Println("Stop_daemons from DB!")
-			for _, ch := range utils.DaemonsChans {
-				fmt.Println("ch.ChBreaker<-true")
-				ch.ChBreaker <- true
-			}
-			for _, ch := range utils.DaemonsChans {
-				fmt.Println(<-ch.ChAnswer)
+			utils.CancelFunc()
+			for i := 0; i < utils.DaemonsCount; i++ {
+				name := <-utils.ReturnCh
+				log.Debugf("daemon %s stopped", name)
 			}
 			fmt.Println("Daemons killed")
 			err := sql.DB.Close()
