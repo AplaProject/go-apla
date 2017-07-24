@@ -61,12 +61,19 @@ func (p *Parser) UpdBlockInfo() {
 			log.Error("%v", err)
 		}
 	} else {
-		err := p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, state_id = ?, wallet_id = ?, sent = 0",
-			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletID)
-		if err != nil {
+		ibUpdate := &model.InfoBlock{
+			Hash:     p.BlockData.Hash,
+			BlockID:  blockID,
+			Time:     p.BlockData.Time,
+			StateID:  p.BlockData.StateID,
+			WalletID: p.BlockData.WalletID,
+			Sent:     0,
+		}
+		if err := ibUpdate.Update(); err != nil {
 			log.Error("%v", err)
 		}
-		err = p.ExecSQL("UPDATE config SET my_block_id = ? WHERE my_block_id < ?", blockID, blockID)
+		config := &model.Config{}
+		err = config.ChangeBlockIDBatch(blockID, blockID)
 		if err != nil {
 			log.Error("%v", err)
 		}

@@ -25,3 +25,8 @@ func (lt *LogTransactions) GetByHash(hash []byte) error {
 func (lt *LogTransactions) Create() error {
 	return DBConn.Create(lt).Error
 }
+
+func DeleteLogTransactionsByHash(hash []byte) (int64, error) {
+	query := DBConn.Exec("DELETE FROM log_transactions WHERE hex(hash) = ?", hash)
+	return query.RowsAffected, query.Error
+}

@@ -40,10 +40,7 @@ func (b *Block) Create() error {
 }
 
 func (b *Block) GetBlock(blockID int64) error {
-	if err := DBConn.Where("id = ?", blockID).First(&b).Error; err != nil {
-		return err
-	}
-	return nil
+	return DBConn.Where("id = ?", blockID).First(&b).Error
 }
 
 func (b *Block) GetMaxBlock() error {

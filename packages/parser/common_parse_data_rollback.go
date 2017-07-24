@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -83,22 +84,20 @@ func (p *Parser) ParseDataRollback() error {
 			hash = converter.BinToHex(hash)
 			p.TxHash = string(hash)
 
-			logging.WriteSelectiveLog("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used=0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
+			affect, err := model.MarkTransactionUnusedAndUnverified([]byte(p.TxHash))
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				return p.ErrInfo(err)
 			}
 			logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
-			affected, err := p.ExecSQLGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
-			log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
+			_, err = model.DeleteLogTransactionsByHash([]byte(p.TxHash))
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 			// даем юзеру понять, что его тр-ия не в блоке
 			// let user know that his territory isn't in the block
-			err = p.ExecSQL("UPDATE transactions_status SET block_id = 0 WHERE hex(hash) = ?", p.TxHash)
-			log.Debug("UPDATE transactions_status SET block_id = 0 WHERE hex(hash) = %s", p.TxHash)
+			ts := &model.TransactionsStatus{}
+			err = ts.UpdateBlockID(0, []byte(p.TxHash))
 			if err != nil {
 				return p.ErrInfo(err)
 			}
@@ -106,12 +105,12 @@ func (p *Parser) ParseDataRollback() error {
 			// put the transaction in the turn for checking suddenly we will need it
 			dataHex := converter.BinToHex(transactionBinaryData)
 			log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", p.TxHash)
-			err = p.ExecSQL("DELETE FROM queue_tx  WHERE hex(hash) = ?", p.TxHash)
+			_, err = model.DeleteQueueTxByHash([]byte(p.TxHash))
 			if err != nil {
 				return p.ErrInfo(err)
 			}
-			log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", p.TxHash, dataHex)
-			err = p.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", p.TxHash, dataHex)
+			queueTx := &model.QueueTx{Hash: []byte(p.TxHash), Data: []byte(dataHex)}
+			err = queueTx.Save()
 			if err != nil {
 				return p.ErrInfo(err)
 			}

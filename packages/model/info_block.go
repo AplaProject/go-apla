@@ -15,6 +15,10 @@ func (ib *InfoBlock) GetInfoBlock() error {
 	return DBConn.First(ib).Error
 }
 
+func (ib *InfoBlock) Update() error {
+	return DBConn.Model(&InfoBlock{}).Updates(ib).Error
+}
+
 func (ib *InfoBlock) GetUnsended() error {
 	return DBConn.Where("sent = ?", "0").First(&ib).Error
 }

@@ -96,6 +96,24 @@ func InsertInLogTx(binaryTx []byte, time int64) error {
 	return nil
 }
 
+func IsCustomTable(table string) (isCustom bool, err error) {
+	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
+		if off := strings.IndexByte(table, '_'); off > 0 {
+			prefix := table[:off]
+			tables := &model.Tables{}
+			tables.SetTableName(prefix + "_tables")
+			err := tables.GetByName(table)
+			if err != nil {
+				return false, err
+			}
+			if len(tables.Name) > 0 {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
 func init() {
 	flag.Parse()
 }
@@ -457,24 +475,7 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 
 // CheckTableExists checks if the table exists
 func (p *Parser) CheckTableExists(table string) (bool, error) {
-	var q string
-	switch p.ConfigIni["db_type"] {
-	case "sqlite":
-		q = `SELECT name FROM sqlite_master WHERE type='table' AND name='` + table + `';`
-	case "postgresql":
-		q = `SELECT relname FROM pg_class WHERE relname = '` + table + `';`
-	case "mysql":
-		q = `SHOW TABLES LIKE '` + table + `'`
-	}
-	exists, err := p.Single(q).Int64()
-	if err != nil {
-		return false, err
-	}
-	if exists > 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return model.DBConn.HasTable(table), nil
 }
 
 // BlockError writes the error of the transaction in the transactions_status table
@@ -493,14 +494,15 @@ func (p *Parser) BlockError(err error) {
 
 // AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
-	param := `value`
-	if iscondition {
-		param = `conditions`
-	}
-	conditions, err := p.Single(`SELECT `+param+` FROM "`+converter.Int64ToStr(int64(p.TxStateID))+`_state_parameters" WHERE name = ?`,
-		condition).String()
+	sp := &model.StateParameters{}
+	sp.SetTableName(converter.Int64ToStr(int64(p.TxStateID)) + "_state_parameters")
+	err := sp.GetByName(condition)
 	if err != nil {
 		return err
+	}
+	conditions := sp.Value
+	if iscondition {
+		conditions = sp.Conditions
 	}
 	if len(conditions) > 0 {
 		ret, err := p.EvalIf(conditions)
@@ -518,14 +520,12 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
-
-	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
 	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
 		return nil
 	}
 
-	if isCustom, err := p.IsCustomTable(table); err != nil {
+	if isCustom, err := IsCustomTable(table); err != nil {
 		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать
 		// table != ... is left for compatibility temporarily. Remove new_state after rebuilding.
 	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
@@ -537,7 +537,9 @@ func (p *Parser) AccessTable(table, action string) error {
 		return nil
 	}*/
 
-	tablePermission, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", table)
+	tables := &model.Tables{}
+	tables.SetTableName(prefix + "_tables")
+	tablePermission, err := tables.GetPermissions(table, "")
 	if err != nil {
 		return err
 	}
@@ -555,21 +557,18 @@ func (p *Parser) AccessTable(table, action string) error {
 
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
-
-	//prefix := utils.Int64ToStr(int64(p.TxStateID))
-
-	if isCustom, err := p.IsCustomTable(table); err != nil {
+	if isCustom, err := IsCustomTable(table); err != nil {
 		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать // table != ... is left for compatibility temporarily. Remove new_state after rebuilding
 	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
-
-	columnsAndPermissions, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
-		"key", "value", table)
+	tables := &model.Tables{}
+	tables.SetTableName(prefix + "_tables")
+	columnsAndPermissions, err := tables.GetPermissions(table, "update")
+	if err != nil {
+		return err
+	}
 	if err != nil {
 		return err
 	}

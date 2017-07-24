@@ -21,6 +21,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -113,7 +114,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				if err != nil {
 					log.Error("error: %v", err)
 				}
-				affect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE hex(hash) = ?", p.TxHash)
+				affect, err := model.DeleteTransactionByHash([]byte(p.TxHash))
 				if err != nil {
 					logging.WriteSelectiveLog(err)
 					return utils.ErrInfo(err)
@@ -121,8 +122,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 			}
 
-			logging.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
+			affect, err := model.MarkTransactionUnusedAndUnverified([]byte(p.TxHash))
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				return utils.ErrInfo(err)

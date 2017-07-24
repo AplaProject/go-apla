@@ -41,7 +41,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 
 	isBytea := getBytea(table)
-	if isCustom, err = p.IsCustomTable(table); err != nil {
+	if isCustom, err = IsCustomTable(table); err != nil {
 		return 0, ``, err
 	}
 
