@@ -231,7 +231,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	} else {
 		level = *utils.LogLevel
 	}
-
 	logLevel, err := logging.LogLevel(level)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))

@@ -51,8 +51,18 @@ const (
 )
 
 var (
-	smartVM *script.VM
+	smartVM   *script.VM
+	smartTest = make(map[string]string)
 )
+
+func testValue(name string, v ...interface{}) {
+	smartTest[name] = fmt.Sprint(v...)
+}
+
+// GetTestValue returns the test value of the specified key
+func GetTestValue(name string) string {
+	return smartTest[name]
+}
 
 func init() {
 	smartVM = script.NewVM()
@@ -63,6 +73,7 @@ func init() {
 		"TxJson":  TxJSON,
 		"Float":   Float,
 		"Money":   script.ValueToDecimal,
+		`Test`:    testValue,
 	}, AutoPars: map[string]string{
 		`*smart.Contract`: `contract`,
 	}})
@@ -110,6 +121,10 @@ func FlushBlock(root *script.Block) {
 // ExtendCost sets the cost of calling extended obj in smartVM
 func ExtendCost(ext func(string) int64) {
 	smartVM.ExtCost = ext
+}
+
+func FuncCallsDB(funcCallsDB map[string]struct{}) {
+	smartVM.FuncCallsDB = funcCallsDB
 }
 
 // Extend set extended variable and functions in smartVM

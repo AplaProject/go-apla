@@ -20,13 +20,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const aSendTx = `ajax_send_tx`
@@ -44,19 +45,14 @@ func init() {
 // AjaxSendTx is a controller of ajax_send_tx request
 func (c *Controller) AjaxSendTx() interface{} {
 	var (
-		result SendTxJSON
-		flags  uint8
+		result       SendTxJSON
+		public, hash []byte
 	)
 	contract, err := c.checkTx(nil)
 	if err == nil {
-		//		info := (*contract).Block.Info.(*script.ContractInfo)
-		userID := uint64(c.SessWalletID)
-		sign := make([]byte, 0)
 		signature, err := crypto.JSSignToBytes(c.r.FormValue("signature1"))
 		if err != nil {
 			result.Error = err.Error()
-		} else if len(signature) > 0 {
-			converter.EncodeLenByte(&sign, signature)
 		}
 		var isPublic []byte
 		wallet := &model.DltWallets{}
@@ -71,83 +67,68 @@ func (c *Controller) AjaxSendTx() interface{} {
 				sign = append(sign, public[1:]...)
 			}
 		}
-		if len(sign) == 0 {
+		if len(signature) == 0 {
 			result.Error = `signature is empty`
 		} else if err == nil {
-			//			var (
 			data := make([]byte, 0)
-			//			)
-			header := consts.TXHeader{
-				Type:     int32(contract.Block.Info.(*script.ContractInfo).ID), /* + smart.CNTOFF*/
-				Time:     uint32(converter.StrToInt64(c.r.FormValue(`time`))),
-				WalletID: userID,
-				StateID:  int32(c.SessStateID),
-				Flags:    flags,
-				Sign:     sign,
-			}
-			//fmt.Println(`SEND TX`, contract.Block.Info.(*script.ContractInfo))
-			//			fmt.Println(`Header`, header)
-			_, err = converter.BinMarshal(&data, &header)
-			if err == nil {
-				if contract.Block.Info.(*script.ContractInfo).Tx != nil {
-				fields:
-					for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
-						val := strings.TrimSpace(c.r.FormValue(fitem.Name))
-						if strings.Index(fitem.Tags, `address`) >= 0 {
-							val = converter.Int64ToStr(converter.StringToAddress(val))
-						}
-						switch fitem.Type.String() {
-						case `[]interface {}`:
-							var list []string
-							for key, values := range c.r.Form {
-								if key == fitem.Name+`[]` {
-									for _, value := range values {
-										list = append(list, value)
-									}
+			info := contract.Block.Info.(*script.ContractInfo)
+			if info.Tx != nil {
+			fields:
+				for _, fitem := range *info.Tx {
+					val := strings.TrimSpace(c.r.FormValue(fitem.Name))
+					if strings.Contains(fitem.Tags, `address`) {
+						val = converter.Int64ToStr(converter.StringToAddress(val))
+					}
+					switch fitem.Type.String() {
+					case `[]interface {}`:
+						var list []string
+						for key, values := range c.r.Form {
+							if key == fitem.Name+`[]` {
+								for _, value := range values {
+									list = append(list, value)
 								}
 							}
-							data = append(data, converter.EncodeLength(int64(len(list)))...)
-							for _, ilist := range list {
-								blist := []byte(ilist)
-								data = append(append(data, converter.EncodeLength(int64(len(blist)))...), blist...)
-							}
-						case `uint64`:
-							converter.BinMarshal(&data, converter.StrToUint64(val))
-							//					case `float64`:
-							//						lib.BinMarshal(&data, utils.StrToFloat64(val))
-						case `int64`:
-							converter.EncodeLenInt64(&data, converter.StrToInt64(val))
-						case `float64`:
-							converter.BinMarshal(&data, converter.StrToFloat64(val))
-						case `string`, script.Decimal:
-							data = append(append(data, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
-						case `[]uint8`:
-							var bytes []byte
-							bytes, err = hex.DecodeString(val)
-							if err != nil {
-								break fields
-							}
-							data = append(append(data, converter.EncodeLength(int64(len(bytes)))...), bytes...)
 						}
+						data = append(data, converter.EncodeLength(int64(len(list)))...)
+						for _, ilist := range list {
+							blist := []byte(ilist)
+							data = append(append(data, converter.EncodeLength(int64(len(blist)))...), blist...)
+						}
+					case `uint64`:
+						converter.BinMarshal(&data, converter.StrToUint64(val))
+					case `int64`:
+						converter.EncodeLenInt64(&data, converter.StrToInt64(val))
+					case `float64`:
+						converter.BinMarshal(&data, converter.StrToFloat64(val))
+					case `string`, script.Decimal:
+						data = append(append(data, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
+					case `[]uint8`:
+						var bytes []byte
+						bytes, err = hex.DecodeString(val)
+						if err != nil {
+							break fields
+						}
+						data = append(append(data, converter.EncodeLength(int64(len(bytes)))...), bytes...)
 					}
 				}
-				if err == nil {
-					hash, err := crypto.Hash(data)
-					if err != nil {
-						log.Fatal(err)
-					}
-					hash = converter.BinToHex(hash)
+			}
+			if err == nil {
+				toSerialize := tx.SmartContract{
+					Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(c.r.FormValue(`time`)),
+						UserID: c.SessWalletID, StateID: c.SessStateID, PublicKey: public,
+						BinSignatures: converter.EncodeLengthPlusData(signature)},
+					Data: data,
+				}
+				serializedData, err := msgpack.Marshal(toSerialize)
 					transactionStatus := &model.TransactionsStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: header.Type,
 						WalletID: int64(userID), CitizenID: int64(userID)}
 					err = transactionStatus.Create()
-					if err == nil {
-						log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", hash, hex.EncodeToString(data))
 						queueTx := &model.QueueTx{Hash: hash, Data: data}
 						err = queueTx.Create()
-						if err == nil {
-							result.Hash = string(hash)
-						}
-					}
+				if err == nil {
+					hash, err = sql.DB.SendTx(int64(info.ID), c.SessWalletID,
+						append([]byte{128}, serializedData...))
+					result.Hash = string(hash)
 				}
 			}
 			fmt.Printf("Data error: %v lendata: %d hash: %s", err, len(data), result.Hash)

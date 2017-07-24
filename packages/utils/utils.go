@@ -50,9 +50,9 @@ var log = logging.MustGetLogger("daemons")
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockId  int64
+	BlockID  int64
 	Time     int64
-	WalletId int64
+	WalletID int64
 	StateID  int64
 	Sign     []byte
 	Hash     []byte
@@ -182,15 +182,15 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 				SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
 		Далее - тело блока (Тр-ии) // further is body block (transaction)
 	*/
-	result.BlockId = converter.BinToDecBytesShift(binaryBlock, 4)
+	result.BlockID = converter.BinToDecBytesShift(binaryBlock, 4)
 	result.Time = converter.BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId, _ = converter.DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+	result.WalletID, _ = converter.DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	// Delete after re-build blocks
 	/*	if result.WalletId == 0x31 {
 		result.WalletId = 1
 	}*/
 	result.StateID = converter.BinToDecBytesShift(binaryBlock, 1)
-	if result.BlockId > 1 {
+	if result.BlockID > 1 {
 		signSize, err := converter.DecodeLength(binaryBlock)
 		if err != nil {
 			log.Fatal(err)
@@ -199,7 +199,7 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	} else {
 		*binaryBlock = (*binaryBlock)[1:]
 	}
-	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.StateID, result.Sign)
+	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockID, result.Time, result.WalletID, result.StateID, result.Sign)
 	return result
 }
 
@@ -678,7 +678,6 @@ func CallMethod(i interface{}, methodName string) interface{} {
 func Caller(steps int) string {
 	name := "?"
 	if pc, _, num, ok := runtime.Caller(steps + 1); ok {
-		//fmt.Println(num)
 		name = fmt.Sprintf("%s :  %d", filepath.Base(runtime.FuncForPC(pc).Name()), num)
 	}
 	return name

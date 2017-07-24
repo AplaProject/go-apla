@@ -23,40 +23,45 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// NewColumnInit initializes NewColumn transaction
-func (p *Parser) NewColumnInit() error {
+type NewColumnParser struct {
+	*Parser
+	NewColumn *tx.NewColumn
+}
 
-	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"index": "int64"}, {"column_type": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *NewColumnParser) Init() error {
+	newColumn := &tx.NewColumn{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, newColumn); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewColumn = newColumn
 	return nil
 }
 
-// NewColumnFront checks conditions of NewColumn transaction
-func (p *Parser) NewColumnFront() error {
-	err := p.generalCheck(`new_column`)
+func (p *NewColumnParser) Validate() error {
+	err := p.generalCheck(`new_column`, &p.NewColumn.Header, map[string]string{"permissions": p.NewColumn.Permissions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	// Check InputData
-	verifyData := map[string]string{"table_name": "string", "column_name": "string", "permissions": "conditions", "index": "int64", "column_type": "column_type"}
+	verifyData := map[string][]interface{}{"string": []interface{}{p.NewColumn.TableName, p.NewColumn.ColumnName}, "conditions": []interface{}{p.NewColumn.Permissions}, "int64": []interface{}{p.NewColumn.Index}, "column_type": []interface{}{p.NewColumn.ColumnType}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	prefix, err := utils.GetPrefix(p.TxMaps.String["table_name"], p.TxStateIDStr)
+	prefix, err := utils.GetPrefix(p.NewColumn.TableName, converter.Int64ToStr(p.NewColumn.Header.StateID))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
-	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"])
+	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName).Int64()
+	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -64,12 +69,12 @@ func (p *Parser) NewColumnFront() error {
 		return p.ErrInfo(`column exists`)
 	}
 
-	count, err := p.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", p.TxMaps.String["table_name"]).Int64()
+	count, err := p.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", p.NewColumn.TableName).Int64()
 	if count >= consts.MAX_COLUMNS+2 /*id + rb_id*/ {
 		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
 	}
-	if p.TxMaps.Int64["index"] > 0 {
-		count, err := p.NumIndexes(p.TxMaps.String["table_name"])
+	if converter.StrToInt64(p.NewColumn.Index) > 0 {
+		count, err := p.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -78,30 +83,26 @@ func (p *Parser) NewColumnFront() error {
 		}
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"], p.TxMap["index"], p.TxMap["column_type"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewColumn.ForSign(), p.NewColumn.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err := p.AccessTable(p.TxMaps.String["table_name"], "new_column"); err != nil {
+	if err := p.AccessTable(p.NewColumn.TableName, "new_column"); err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// NewColumn proceeds NewColumn transaction
-func (p *Parser) NewColumn() error {
-
-	tblname := p.TxMaps.String["table_name"]
-	prefix, err := utils.GetPrefix(tblname, p.TxStateIDStr)
+func (p *NewColumnParser) Action() error {
+	tblname := p.NewColumn.TableName
+	prefix, err := utils.GetPrefix(tblname, converter.Int64ToStr(p.NewColumn.StateID))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where name=?`, tblname).String()
 	if err != nil {
 		return err
@@ -121,22 +122,22 @@ func (p *Parser) NewColumn() error {
 	if err != nil {
 		return err
 	}
-	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
 	if err != nil {
 		return err
 	}
-	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbID, tblname)
+	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.NewColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(p.NewColumn.Permissions)+`"`, rbID, tblname)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tblname)
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, tblname)
 	if err != nil {
 		return err
 	}
 
 	colType := ``
-	switch p.TxMaps.String["column_type"] {
+	switch p.NewColumn.ColumnType {
 	case "text":
 		colType = `varchar(102400)`
 	case "int64":
@@ -151,13 +152,13 @@ func (p *Parser) NewColumn() error {
 		colType = `double precision`
 	}
 
-	err = p.ExecSQL(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.TxMaps.String["column_name"] + ` ` + colType)
+	err = p.ExecSQL(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.NewColumn.ColumnName + ` ` + colType)
 	if err != nil {
 		return err
 	}
 
-	if p.TxMaps.Int64["index"] == 1 {
-		err = p.ExecSQL(`CREATE INDEX "` + tblname + `_` + p.TxMaps.String["column_name"] + `_index" ON "` + tblname + `" (` + p.TxMaps.String["column_name"] + `)`)
+	if p.NewColumn.Index == "1" {
+		err = p.ExecSQL(`CREATE INDEX "` + tblname + `_` + p.NewColumn.ColumnName + `_index" ON "` + tblname + `" (` + p.NewColumn.ColumnName + `)`)
 		if err != nil {
 			return err
 		}
@@ -166,22 +167,18 @@ func (p *Parser) NewColumn() error {
 	return nil
 }
 
-// NewColumnRollback rollbacks NewColumn transaction
-func (p *Parser) NewColumnRollback() error {
+func (p *NewColumnParser) Rollback() error {
 	err := p.autoRollback()
 	if err != nil {
 		return err
 	}
-	err = p.ExecSQL(`ALTER TABLE "` + p.TxMaps.String["table_name"] + `" DROP COLUMN ` + p.TxMaps.String["column_name"] + ``)
+	err = p.ExecSQL(`ALTER TABLE "` + p.NewColumn.TableName + `" DROP COLUMN ` + p.NewColumn.ColumnName + ``)
 	if err != nil {
 		return err
 	}
-	/*
-		if p.TxMaps.Int64["index"] == 1 {
-			err = p.ExecSQL(`DROP INDEX "` + p.TxMaps.String["table_name"] + `_` + p.TxMaps.String["column_name"] + `_index"`)
-			if err != nil {
-				return err
-			}
-		}*/
 	return nil
+}
+
+func (p NewColumnParser) Header() *tx.Header {
+	return &p.NewColumn.Header
 }

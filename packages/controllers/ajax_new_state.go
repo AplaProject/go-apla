@@ -33,7 +33,7 @@ import (
 const aNewState = `ajax_new_state`
 
 // NewState is a structure for the answer of ajax_new_state ajax request
-type NewState struct {
+type NewStateAjax struct {
 	Error string `json:"error"`
 }
 
@@ -44,7 +44,7 @@ func init() {
 // AjaxNewState is a controller of ajax_new_state request
 func (c *Controller) AjaxNewState() interface{} {
 	var (
-		result    NewState
+		result    NewStateAjax
 		err       error
 		spriv     string
 		priv, pub []byte
@@ -128,7 +128,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, converter.EncodeLengthPlusData([]byte(``))...)
 	data = append(data, binsign...)
 
-	err = c.SendTx(txType, adminWallet, data)
+	_, err = c.SendTx(txType, adminWallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -155,7 +155,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, converter.EncodeLengthPlusData(hex.EncodeToString(pub))...)
 	data = append(data, binsign...)
 
-	err = c.SendTx(txType, wallet, data)
+	_, err = c.SendTx(txType, wallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result
