@@ -8,6 +8,19 @@ var currenteditor = null;
 var configPanel = null;
 var CKEDITOR;
 
+function templateDIV(viewport, grid, content, config) {
+	"use strict";
+	
+	return '<div class="lyrow col-' + viewport + '-' + grid + '">' +
+				config +
+				'<div class="view">' +
+					'<div class="column">' +
+						content +
+					'</div>' +
+				'</div>' +
+			'</div>';
+}
+
 function supportstorage() {
 	"use strict";
 	
@@ -158,7 +171,7 @@ function configElements() {
 					elem = elem.children();
 				}
 				
-				if (elem.prop("tagName").toLowerCase() === "input" && $(this).attr("rel") === "disabled") {
+				if ($(this).attr("rel") === "disabled") {
 					if (elem.prop("disabled")) {
 						elem.prop("disabled", false);
 					} else {
@@ -176,10 +189,10 @@ function configElements() {
 				$(this).parent().removeClass("active");
 			}
 		} else {
-			cont.find("> li").removeClass("active");
+			cont.find("> li a:not(.toggle)").parent().removeClass("active");
 			$(this).parent().addClass("active");
 			
-			cont.find("a").each(function() {
+			cont.find("a:not(.toggle)").each(function() {
 				style += $(this).attr("rel") + " ";
 			});
 			
@@ -650,22 +663,87 @@ function initGenerator(){
 	});
 		
 	$("#editorModal").on('show.bs.modal', function (e) {
-		if ($(e.relatedTarget).closest("[egaas-id]").length > 0) {
-			currenteditor = $(e.relatedTarget).closest("[egaas-id]");
-			configPanel = currenteditor.find(".configuration")[0].outerHTML;
-		} else {
-			if ($(e.relatedTarget).closest(".lyrow").find('.view .column .panel').length > 0) {
-				currenteditor = $(e.relatedTarget).closest(".lyrow").find('.view .column .panel .panel-body');
+		var editText;
+		
+		if ($(e.relatedTarget).attr("id") !== "UploadHTML") {
+			if ($(e.relatedTarget).closest("[egaas-id]").length > 0) {
+				currenteditor = $(e.relatedTarget).closest("[egaas-id]");
+				configPanel = currenteditor.find(".configuration")[0].outerHTML;
 			} else {
-				currenteditor = $(e.relatedTarget).closest(".lyrow").find('.view .column');
+				if ($(e.relatedTarget).closest(".lyrow").find('.view .column .panel').length > 0) {
+					currenteditor = $(e.relatedTarget).closest(".lyrow").find('.view .column .panel .panel-body');
+				} else {
+					currenteditor = $(e.relatedTarget).closest(".lyrow").find('.view .column');
+				}
 			}
+			editText = currenteditor.html().replace(configPanel, "");
+		} else {
+			currenteditor = $(".demo");
+			editText = "";
 		}
-		var editText = currenteditor.html().replace(configPanel, "");
+		
 		contenthandle.setData(editText);
 	});
 	
 	$("#savecontent").on('click', function() {
-		currenteditor.html(configPanel + contenthandle.getData());
+		if (!currenteditor.hasClass("row")) {
+			currenteditor.html(configPanel + contenthandle.getData());
+		} else {
+			currenteditor.html(contenthandle.getData());
+			console.log(currenteditor.find("*"));
+			var tags = currenteditor.find("*");
+			var deep = 0;
+			
+			for (var k = 0; k < tags.length; k++) {
+				var tagTemp = $(tags[k]);
+				var deepTemp = tagTemp.parentsUntil(currenteditor).length;
+				
+				if (deepTemp > deep) {
+					deep = deepTemp;
+				}
+			}
+			
+			for (var d = deep; d >= 0; d--) {
+				for (var i = 0; i < tags.length; i++) {
+					var tag = $(tags[i]);
+					var tagName = tags[i].tagName.toLowerCase();
+					
+					if (tag.parentsUntil(currenteditor).length === d) {
+						switch(tagName) {
+							case 'div':
+									if (typeof(tag.attr("class")) !== "undefined") {
+										var col = tag.attr("class").split(" ");
+										var content = tag.html();
+
+										for (var j = 0; j < col.length; j++) {
+											var temp = col[j].split("-");
+
+											if (temp.length === 3 && temp[0] === "col") {
+												var config = $("[egaas-class='col']").find(".configuration")[0].outerHTML;
+												$(tag).replaceWith(templateDIV(temp[1], temp[2], content, config));
+											}
+										}
+									}
+								break;
+							case 'p':
+
+								break;
+							case 'span':
+
+								break;
+							case 'strong':
+
+								break;
+						}
+					}
+				}
+			}
+			
+			$(".demo .lyrow .drag").removeClass("column");
+			
+			initContainer();
+		}
+		
 		$("#editorModal").modal('hide');
 	});
 	$("#clear").click(function(e) {

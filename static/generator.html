@@ -32,6 +32,11 @@
 						<button type="button" class="btn btn-default navbar-btn" id="sourcepreview"><i class="fa fa-eye"></i> Preview</button>
 					</div>
 				</li>
+				<li>
+					<div class="btn-group" data-toggle="buttons-radio">
+						<button type="button" class="btn btn-default navbar-btn editor" id="UploadHTML" data-target="#editorModal" role="button" data-toggle="modal">Upload HTML</button>
+					</div>
+				</li>
 			</ul>
 		</div>
 	</nav>
@@ -49,7 +54,7 @@
 					<i class="fa fa-plus"></i> GRID SYSTEM
 				</li>
 				<li>
-					<div class="lyrow col-md-6">
+					<div class="lyrow col-md-6" egaas-class="col">
 						<div class="configuration">
 							<div class="drag column"></div>
 							<div class="settings btn-group">
@@ -97,7 +102,7 @@
 					<i class="fa fa-plus"></i> BLOCKS
 				</li>
 				<li>
-					<div class="lyrow">
+					<div class="lyrow" egaas-class="panel">
 						<div class="configuration" contenteditable="false">
 							<div class="drag">New Panel</div>
 							<div class="settings">
@@ -316,6 +321,429 @@
 						<div class="view">
 							<div class="column">
 								<input class="form-control" type="text">
+							</div>
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="box" egaas-class="label">
+						<div class="configuration" contenteditable="false">
+							<div class="drag">New label</div>
+							<div class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Colors</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-primary">Primary</a></li>
+													<li><a href="#" rel="text-success">Success</a></li>
+													<li><a href="#" rel="text-info">Info</a></li>
+													<li><a href="#" rel="text-warning">Warning</a></li>
+													<li><a href="#" rel="text-danger">Danger</a></li>
+													<li><a href="#" rel="text-inverse">Inverse</a></li>
+													<li><a href="#" rel="text-green">Green</a></li>
+													<li><a href="#" rel="text-purple">Purple</a></li>
+													<li><a href="#" rel="text-pink">Pink</a></li>
+													<li><a href="#" rel="text-muted">Muted</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Types</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="d-inline">Inline</a></li>
+													  <li><a href="#" rel="d-inline-block">Inline-block</a></li>
+													  <li><a href="#" rel="d-block">Block</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Typography</a>
+												<ul class="dropdown-menu">
+													<li><a href="#" rel="text-normal">Normal</a></li>
+													<li class="active"><a href="#" rel="text-bold">Bold</a></li>
+													<li><a class="toggle" href="#" rel="text-italic">Italic</a></li>
+													<li><a class="toggle" href="#" rel="text-nowrap">Nowrap</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Size</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="">Default</a></li>
+													  <li><a href="#" rel="text-lg">Large</a></li>
+													  <li><a href="#" rel="text-md">Middle</a></li>
+													  <li><a href="#" rel="text-sm">Small</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Align</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-left">Left</a></li>
+													<li><a href="#" rel="text-center">Center</a></li>
+													<li><a href="#" rel="text-right">Right</a></li>
+													<li><a href="#" rel="text-justify">Justify</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-lowercase">Lowercase</a></li>
+													<li><a href="#" rel="text-uppercase">Uppercase</a></li>
+													<li><a href="#" rel="text-capitalize">Capitalize</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<label class="control-label" contenteditable="true">Label</label>
+							</div>
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="box" egaas-class="div">
+						<div class="configuration" contenteditable="false">
+							<div class="drag">New DIV</div>
+							<div class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Colors</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-primary">Primary</a></li>
+													<li><a href="#" rel="text-success">Success</a></li>
+													<li><a href="#" rel="text-info">Info</a></li>
+													<li><a href="#" rel="text-warning">Warning</a></li>
+													<li><a href="#" rel="text-danger">Danger</a></li>
+													<li><a href="#" rel="text-inverse">Inverse</a></li>
+													<li><a href="#" rel="text-green">Green</a></li>
+													<li><a href="#" rel="text-purple">Purple</a></li>
+													<li><a href="#" rel="text-pink">Pink</a></li>
+													<li><a href="#" rel="text-muted">Muted</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Types</a>
+												<ul class="dropdown-menu">
+													  <li><a href="#" rel="d-inline">Inline</a></li>
+													  <li><a href="#" rel="d-inline-block">Inline-block</a></li>
+													  <li class="active"><a href="#" rel="d-block">Block</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Typography</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-normal">Normal</a></li>
+													<li><a href="#" rel="text-bold">Bold</a></li>
+													<li><a class="toggle" href="#" rel="text-italic">Italic</a></li>
+													<li><a class="toggle" href="#" rel="text-nowrap">Nowrap</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Size</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="">Default</a></li>
+													  <li><a href="#" rel="text-lg">Large</a></li>
+													  <li><a href="#" rel="text-md">Middle</a></li>
+													  <li><a href="#" rel="text-sm">Small</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Align</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-left">Left</a></li>
+													<li><a href="#" rel="text-center">Center</a></li>
+													<li><a href="#" rel="text-right">Right</a></li>
+													<li><a href="#" rel="text-justify">Justify</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-lowercase">Lowercase</a></li>
+													<li><a href="#" rel="text-uppercase">Uppercase</a></li>
+													<li><a href="#" rel="text-capitalize">Capitalize</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<div contenteditable="true">Yor content here...</div>
+							</div>
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="box" egaas-class="paragraph">
+						<div class="configuration" contenteditable="false">
+							<div class="drag">New P</div>
+							<div class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Colors</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-primary">Primary</a></li>
+													<li><a href="#" rel="text-success">Success</a></li>
+													<li><a href="#" rel="text-info">Info</a></li>
+													<li><a href="#" rel="text-warning">Warning</a></li>
+													<li><a href="#" rel="text-danger">Danger</a></li>
+													<li><a href="#" rel="text-inverse">Inverse</a></li>
+													<li><a href="#" rel="text-green">Green</a></li>
+													<li><a href="#" rel="text-purple">Purple</a></li>
+													<li><a href="#" rel="text-pink">Pink</a></li>
+													<li><a href="#" rel="text-muted">Muted</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Types</a>
+												<ul class="dropdown-menu">
+													  <li><a href="#" rel="d-inline">Inline</a></li>
+													  <li><a href="#" rel="d-inline-block">Inline-block</a></li>
+													  <li class="active"><a href="#" rel="d-block">Block</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Typography</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-normal">Normal</a></li>
+													<li><a href="#" rel="text-bold">Bold</a></li>
+													<li><a class="toggle" href="#" rel="text-italic">Italic</a></li>
+													<li><a class="toggle" href="#" rel="text-nowrap">Nowrap</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Size</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="">Default</a></li>
+													  <li><a href="#" rel="text-lg">Large</a></li>
+													  <li><a href="#" rel="text-md">Middle</a></li>
+													  <li><a href="#" rel="text-sm">Small</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Align</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-left">Left</a></li>
+													<li><a href="#" rel="text-center">Center</a></li>
+													<li><a href="#" rel="text-right">Right</a></li>
+													<li><a href="#" rel="text-justify">Justify</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-lowercase">Lowercase</a></li>
+													<li><a href="#" rel="text-uppercase">Uppercase</a></li>
+													<li><a href="#" rel="text-capitalize">Capitalize</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<p contenteditable="true">Yor text here...</p>
+							</div>
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="box" egaas-class="span">
+						<div class="configuration" contenteditable="false">
+							<div class="drag">New SPAN</div>
+							<div class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Colors</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-primary">Primary</a></li>
+													<li><a href="#" rel="text-success">Success</a></li>
+													<li><a href="#" rel="text-info">Info</a></li>
+													<li><a href="#" rel="text-warning">Warning</a></li>
+													<li><a href="#" rel="text-danger">Danger</a></li>
+													<li><a href="#" rel="text-inverse">Inverse</a></li>
+													<li><a href="#" rel="text-green">Green</a></li>
+													<li><a href="#" rel="text-purple">Purple</a></li>
+													<li><a href="#" rel="text-pink">Pink</a></li>
+													<li><a href="#" rel="text-muted">Muted</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Types</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="d-inline">Inline</a></li>
+													  <li><a href="#" rel="d-inline-block">Inline-block</a></li>
+													  <li><a href="#" rel="d-block">Block</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Typography</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-normal">Normal</a></li>
+													<li><a href="#" rel="text-bold">Bold</a></li>
+													<li><a class="toggle" href="#" rel="text-italic">Italic</a></li>
+													<li><a class="toggle" href="#" rel="text-nowrap">Nowrap</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Size</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="">Default</a></li>
+													  <li><a href="#" rel="text-lg">Large</a></li>
+													  <li><a href="#" rel="text-md">Middle</a></li>
+													  <li><a href="#" rel="text-sm">Small</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Align</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-left">Left</a></li>
+													<li><a href="#" rel="text-center">Center</a></li>
+													<li><a href="#" rel="text-right">Right</a></li>
+													<li><a href="#" rel="text-justify">Justify</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-lowercase">Lowercase</a></li>
+													<li><a href="#" rel="text-uppercase">Uppercase</a></li>
+													<li><a href="#" rel="text-capitalize">Capitalize</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<span contenteditable="true">Yor text here...</span>
+							</div>
+						</div>
+					</div>
+				</li>
+				<li>
+					<div class="box" egaas-class="strong">
+						<div class="configuration" contenteditable="false">
+							<div class="drag">New STRONG</div>
+							<div class="settings btn-group">
+								<a class="btn btn-xs btn-info dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+								<ul class="dropdown-menu">
+									<li class="styles">
+										<a class="submenu" href="#">Classes</a>
+										<ul class="dropdown-menu">
+											<li class="styles">
+												<a class="submenu" href="#">Colors</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-primary">Primary</a></li>
+													<li><a href="#" rel="text-success">Success</a></li>
+													<li><a href="#" rel="text-info">Info</a></li>
+													<li><a href="#" rel="text-warning">Warning</a></li>
+													<li><a href="#" rel="text-danger">Danger</a></li>
+													<li><a href="#" rel="text-inverse">Inverse</a></li>
+													<li><a href="#" rel="text-green">Green</a></li>
+													<li><a href="#" rel="text-purple">Purple</a></li>
+													<li><a href="#" rel="text-pink">Pink</a></li>
+													<li><a href="#" rel="text-muted">Muted</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Types</a>
+												<ul class="dropdown-menu">
+													  <li><a href="#" rel="d-inline">Inline</a></li>
+													  <li><a href="#" rel="d-inline-block">Inline-block</a></li>
+													  <li class="active"><a href="#" rel="d-block">Block</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Typography</a>
+												<ul class="dropdown-menu">
+													<li><a class="toggle" href="#" rel="text-italic">Italic</a></li>
+													<li><a class="toggle" href="#" rel="text-nowrap">Nowrap</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Size</a>
+												<ul class="dropdown-menu">
+													  <li class="active"><a href="#" rel="">Default</a></li>
+													  <li><a href="#" rel="text-lg">Large</a></li>
+													  <li><a href="#" rel="text-md">Middle</a></li>
+													  <li><a href="#" rel="text-sm">Small</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Align</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="text-left">Left</a></li>
+													<li><a href="#" rel="text-center">Center</a></li>
+													<li><a href="#" rel="text-right">Right</a></li>
+													<li><a href="#" rel="text-justify">Justify</a></li>
+												</ul>
+											</li>
+											<li class="styles">
+												<a class="submenu" href="#">Addons style</a>
+												<ul class="dropdown-menu">
+													<li class="active"><a href="#" rel="">Default</a></li>
+													<li><a href="#" rel="text-lowercase">Lowercase</a></li>
+													<li><a href="#" rel="text-uppercase">Uppercase</a></li>
+													<li><a href="#" rel="text-capitalize">Capitalize</a></li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li><a class="editor" href="#" data-target="#editorModal" role="button" data-toggle="modal">Advanced editor</a></li>
+									<li><a class="remove" href="#">Remove</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="preview"></div>
+						<div class="view">
+							<div class="column">
+								<strong contenteditable="true">Yor text here...</strong>
 							</div>
 						</div>
 					</div>
