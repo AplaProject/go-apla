@@ -1302,3 +1302,10 @@ func GetParent() string {
 	}
 	return parent
 }
+
+func GetTcpPort(config map[string]string) string {
+	if port, ok := config["tcp_port"]; ok {
+		return port
+	}
+	return consts.TCP_PORT
+}

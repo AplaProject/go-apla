@@ -40,8 +40,8 @@ func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	if err != nil || db.Ping() != nil {
 		return &DCDB{}, err
 	}
-	log.Debug("return")
-	err = model.GormInit(ConfigIni["db_user"], ConfigIni["db_password"], "localhost", ConfigIni["db_name"])
+
+	err = model.GormInit(db)
 	if err != nil {
 		log.Errorf("GormInit failed: %s", err)
 	}

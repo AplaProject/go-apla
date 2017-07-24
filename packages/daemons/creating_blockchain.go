@@ -104,7 +104,7 @@ func readBlock(r io.Reader) (*blockData, error) {
 	}
 
 	// parse the block
-	block, err := unmarhalBlockData(dataBinary)
+	block, err := unmarshalBlockData(dataBinary)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
@@ -162,7 +162,7 @@ func getLastBlockID(fileName string) (int64, error) {
 	return block.ID, nil
 }
 
-func unmarhalBlockData(buff []byte) (blockData, error) {
+func unmarshalBlockData(buff []byte) (blockData, error) {
 
 	blockID := converter.BinToDec(buff[:WordSize])
 	buff = buff[WordSize:]

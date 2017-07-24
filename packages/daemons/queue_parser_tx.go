@@ -24,16 +24,17 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // QueueParserTx parses transaction from the queue
 func QueueParserTx(d *daemon, ctx context.Context) error {
 
-	lock, err := d.DbLock(ctx, d.goRoutineName)
+	lock, err := sql.DbLock(ctx, d.goRoutineName)
 	if !lock || err != nil {
 		return err
 	}
-	defer d.DbUnlock(d.goRoutineName)
+	defer sql.DbUnlock(d.goRoutineName)
 
 	infoBlock := &model.InfoBlock{}
 	err = infoBlock.GetInfoBlock()

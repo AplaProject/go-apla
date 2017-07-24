@@ -34,6 +34,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // BlocksCollection collects and parses blocks
@@ -177,11 +178,11 @@ func getHostBlockID(host string) (int64, error) {
 // load from host all blocks from our last block to maxBlockID
 func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
 
-	locked, err := d.DbLock(ctx, d.goRoutineName)
+	locked, err := sql.DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer d.DbUnlock(d.goRoutineName)
+	defer sql.DbUnlock(d.goRoutineName)
 
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
@@ -194,7 +195,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	parser.GoroutineName = d.goRoutineName
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
-		d.UpdMainLock()
+		sql.UpdMainLock()
 
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -371,11 +372,11 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 
 func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
 
-	locked, err := d.DbLock(ctx, d.goRoutineName)
+	locked, err := sql.DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer d.DbUnlock(d.goRoutineName)
+	defer sql.DbUnlock(d.goRoutineName)
 
 	config, err := d.GetNodeConfig()
 	if err != nil {
@@ -448,7 +449,7 @@ func loadFromFile(ctx context.Context, parser *parser.Parser, fileName string) e
 			return ctx.Err()
 		}
 
-		if err = parser.UpdMainLock(); err != nil {
+		if err = sql.UpdMainLock(); err != nil {
 			return err
 		}
 

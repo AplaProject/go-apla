@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 
 	"context"
 )
@@ -44,11 +45,11 @@ import (
 // QueueParserBlocks parses blocks from the queue
 func QueueParserBlocks(d *daemon, ctx context.Context) error {
 
-	locked, err := d.DbLock(ctx, d.goRoutineName)
+	locked, err := sql.DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer d.DbUnlock(d.goRoutineName)
+	defer sql.DbUnlock(d.goRoutineName)
 
 	infoBlock := &model.InfoBlock{}
 	err = infoBlock.GetInfoBlock()

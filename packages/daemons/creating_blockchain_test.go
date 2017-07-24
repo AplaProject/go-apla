@@ -58,7 +58,7 @@ func getFirstBlock(t *testing.T) blockData {
 		t.Fatalf("Can't get first block")
 	}
 
-	block, err := unmarhalBlockData(newBlock)
+	block, err := unmarshalBlockData(newBlock)
 	if err != nil {
 		t.Fatalf("readBlock error: %s", err)
 	}

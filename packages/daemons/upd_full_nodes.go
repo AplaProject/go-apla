@@ -30,17 +30,18 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
 func UpdFullNodes(d *daemon, ctx context.Context) error {
 	d.sleepTime = 60
 
-	locked, err := d.DbLock(ctx, d.goRoutineName)
+	locked, err := sql.DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer d.DbUnlock(d.goRoutineName)
+	defer sql.DbUnlock(d.goRoutineName)
 
 	infoBlock := &model.InfoBlock{}
 	err = infoBlock.GetInfoBlock()

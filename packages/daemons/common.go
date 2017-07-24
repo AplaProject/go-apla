@@ -80,7 +80,7 @@ func init() {
 
 }
 
-var newDaemonsList = map[string]func(*daemon, context.Context) error{
+var daemonsList = map[string]func(*daemon, context.Context) error{
 	"CreatingBlockchain": CreatingBlockchain,
 	"Disseminator":       Disseminator,
 	"BlockGenerator":     BlockGenerator,
@@ -122,13 +122,13 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 		}
 	}()
 
-	db, err := sql.WaitDB(ctx)
+	err := sql.WaitDB(ctx)
 	if err != nil {
 		return
 	}
 
 	d := &daemon{
-		DCDB:          db,
+		DCDB:          sql.GetCurrentDB(),
 		goRoutineName: goRoutineName,
 		sleepTime:     1,
 	}
@@ -173,8 +173,7 @@ func StartDaemons() {
 	daemonsToStart := serverList
 	if utils.Mobile() {
 		daemonsToStart = mobileList
-	}
-	if *utils.TestRollBack == 1 {
+	} else if *utils.TestRollBack == 1 {
 		daemonsToStart = rollbackList
 	}
 
@@ -183,7 +182,7 @@ func StartDaemons() {
 	}
 
 	for _, name := range daemonsToStart {
-		handler, ok := newDaemonsList[name]
+		handler, ok := daemonsList[name]
 		if ok {
 			go daemonLoop(ctx, name, handler, utils.ReturnCh)
 			utils.DaemonsCount++

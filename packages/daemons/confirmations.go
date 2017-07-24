@@ -28,31 +28,23 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/*
-Getting amount of nodes, which has the same hash as we do
-Using it for watching for forks
-Получаем кол-во нодов, у которых такой же хэш последнего блока как и у нас
-Нужно чтобы следить за вилками
-*/
-var s int
+var tick int
 
 // Confirmations gets and checks blocks from nodes
+// Getting amount of nodes, which has the same hash as we do
 func Confirmations(d *daemon, ctx context.Context) error {
 
-	// первые 2 минуты спим по 10 сек, чтобы блоки успели собраться
 	// the first 2 minutes we sleep for 10 sec for blocks to be collected
-	s++
+	tick++
 
 	d.sleepTime = 1
-
-	if s < 12 {
-		d.sleepTime = 1
+	if tick < 12 {
+		d.sleepTime = 10
 	}
 
 	var startBlockID int64
-	// если последний проверенный был давно (пропасть более 5 блоков),
-	// то начинаем проверку последних 5 блоков
-	// if the last one checked was long ago (interval is more than 5 blocks)
+
+	// check last blocks, but not more than 5
 	confirmations := &model.Confirmations{}
 	err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
 	if err != nil {
@@ -70,8 +62,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 	if LastBlockID-ConfirmedBlockID > 5 {
 		startBlockID = ConfirmedBlockID + 1
 		d.sleepTime = 10
-		s = 0 // 2 минуты отчитываем с начала
-		// count 2 minutes from the beginning
+		tick = 0 // reset the tick
 	}
 	if startBlockID == 0 {
 		startBlockID = LastBlockID - 1
@@ -90,6 +81,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		err := block.GetBlock(blockID)
 		if err != nil {
 			logger.Error("%v", err)
+			return err
 		}
 		hash := string(block.Hash)
 		logger.Info("hash: %x", hash)
@@ -100,17 +92,19 @@ func Confirmations(d *daemon, ctx context.Context) error {
 
 		var hosts []string
 		if d.ConfigIni["test_mode"] == "1" {
-			hosts = []string{"localhost:" + consts.TCP_PORT}
+			hosts = []string{"localhost"}
 		} else {
 			hosts, err = model.GetFullNodesHosts()
 			if err != nil {
 				logger.Error("%v", err)
+				return err
 			}
 		}
 
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
-			host := hosts[i] + ":" + consts.TCP_PORT
+			// TODO: ports should be in the table hosts
+			host := hosts[i] + ":" + utils.GetTcpPort(d.ConfigIni)
 			logger.Info("host %v", host)
 			go func() {
 				IsReachable(host, blockID, ch)
