@@ -20,13 +20,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/astaxie/beego/config"
 	"github.com/op/go-logging"
 )
 
@@ -37,7 +36,6 @@ var (
 
 	// MonitorDaemonCh is a channel for daemons
 	MonitorDaemonCh = make(chan []string, 100)
-	configIni       map[string]string
 )
 
 type daemon struct {
@@ -122,36 +120,8 @@ func (d *daemon) unlockPrintSleepInfo(err error, sleep int) bool {
 	return false
 }
 
-// ConfigInit regularly reads config.ini file
-func ConfigInit() {
-	// мониторим config.ini на наличие изменений
-	// monitor config.ini for changes
-	go func() {
-		for {
-			logger.Debug("ConfigInit monitor")
-			if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
-				time.Sleep(time.Second)
-				continue
-			}
-			confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-			if err != nil {
-				logger.Error("%v", utils.ErrInfo(err))
-			}
-			configIni, err = confIni.GetSection("default")
-			if err != nil {
-				logger.Error("%v", utils.ErrInfo(err))
-			}
-			if len(configIni["db_type"]) > 0 {
-				break
-			}
-			time.Sleep(time.Second * 3)
-		}
-	}()
-}
-
 func init() {
 	flag.Parse()
-
 }
 
 // CheckDaemonsRestart restarts daemons
@@ -193,8 +163,8 @@ func StartDaemons() {
 		daemonsStart = map[string]func(chBreaker chan bool, chAnswer chan string){"BlocksCollection": BlocksCollection, "Confirmations": Confirmations}
 	}
 
-	if len(configIni["daemons"]) > 0 && configIni["daemons"] != "null" {
-		daemonsConf := strings.Split(configIni["daemons"], ",")
+	if len(config.ConfigIni["daemons"]) > 0 && config.ConfigIni["daemons"] != "null" {
+		daemonsConf := strings.Split(config.ConfigIni["daemons"], ",")
 		for _, fns := range daemonsConf {
 			logger.Debug("start daemon %s", fns)
 			fmt.Println("start daemon ", fns)
@@ -203,7 +173,7 @@ func StartDaemons() {
 			utils.DaemonsChans = append(utils.DaemonsChans, &utils.DaemonsChansType{ChBreaker: chBreaker, ChAnswer: chAnswer})
 			go daemonsStart[fns](chBreaker, chAnswer)
 		}
-	} else if configIni["daemons"] != "null" {
+	} else if config.ConfigIni["daemons"] != "null" {
 		for dName, fns := range daemonsStart {
 			logger.Debug("start daemon %s", dName)
 			//fmt.Println("start daemon ", fns)

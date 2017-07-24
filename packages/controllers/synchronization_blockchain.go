@@ -22,6 +22,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -92,7 +93,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 
 	wTime := int64(12)
 	wTimeReady := int64(1)
-	if c.ConfigIni["test_mode"] == "1" {
+	if config.ConfigIni["test_mode"] == "1" {
 		wTime = 2 * 365 * 86400
 		wTimeReady = 2 * 365 * 86400
 	}

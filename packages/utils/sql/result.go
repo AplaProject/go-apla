@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -140,7 +141,7 @@ func (r *oneRow) Int() (map[string]int, error) {
 
 // Single returns the single result of the query
 func (db *DCDB) Single(query string, args ...interface{}) *SingleResult {
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
 	var result []byte
 	err := db.QueryRow(newQuery, newArgs...).Scan(&result)
 	switch {
@@ -149,7 +150,7 @@ func (db *DCDB) Single(query string, args ...interface{}) *SingleResult {
 	case err != nil:
 		return &SingleResult{[]byte(""), fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)}
 	}
-	if db.ConfigIni["sql_log"] == "1" {
+	if config.ConfigIni["sql_log"] == "1" {
 		parent := utils.GetParent()
 		log.Debug("SQL: %s / %v / %v", newQuery, newArgs, parent)
 	}
@@ -186,8 +187,8 @@ func (db *DCDB) GetList(query string, args ...interface{}) *ListResult {
 
 // GetAll returns the result of the query as slice of map[string]string
 func (db *DCDB) GetAll(query string, countRows int, args ...interface{}) ([]map[string]string, error) {
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
-	if db.ConfigIni["db_type"] == "postgresql" {
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
+	if config.ConfigIni["db_type"] == "postgresql" {
 		query = ReplQ(query)
 	}
 	var result []map[string]string
@@ -197,7 +198,7 @@ func (db *DCDB) GetAll(query string, countRows int, args ...interface{}) ([]map[
 	}
 	defer rows.Close()
 
-	if db.ConfigIni["sql_log"] == "1" {
+	if config.ConfigIni["sql_log"] == "1" {
 		parent := utils.GetParent()
 		log.Debug("SQL: %s / %v / %v", newQuery, newArgs, parent)
 	}
@@ -270,13 +271,13 @@ func (db *DCDB) OneRow(query string, args ...interface{}) *oneRow {
 
 // QueryRows returns the result of the query
 func (db *DCDB) QueryRows(query string, args ...interface{}) (*sql.Rows, error) {
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
 	return db.Query(newQuery, newArgs...)
 }
 
 // ExecSQL executes the query
 func (db *DCDB) ExecSQL(query string, args ...interface{}) error {
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
 	//var res sql.Result
 	var err error
 	for {
@@ -299,7 +300,7 @@ func (db *DCDB) ExecSQL(query string, args ...interface{}) error {
 
 // ExecSQLGetAffect executes the query and returns amount of affected rows
 func (db *DCDB) ExecSQLGetAffect(query string, args ...interface{}) (int64, error) {
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
 	var res sql.Result
 	var err error
 	for {
@@ -318,7 +319,7 @@ func (db *DCDB) ExecSQLGetAffect(query string, args ...interface{}) (int64, erro
 	}
 	affect, err := res.RowsAffected()
 	lastID, err := res.LastInsertId()
-	if db.ConfigIni["sql_log"] == "1" {
+	if config.ConfigIni["sql_log"] == "1" {
 		log.Debug("SQL: %s / RowsAffected=%d / LastInsertId=%d / %s", newQuery, affect, lastID, newArgs)
 	}
 	return affect, nil
@@ -329,7 +330,7 @@ func (db *DCDB) ExecSQLGetLastInsertID(query, table string, args ...interface{})
 	var v interface{}
 	var lastID string
 	var err error
-	newQuery, newArgs := FormatQueryArgs(query, db.ConfigIni["db_type"], args...)
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
 	colName, err := db.GetFirstColumnNamesPg(table)
 	if err != nil {
 		return "", fmt.Errorf("%s in query %s %s", err, newQuery, newArgs)
@@ -362,7 +363,7 @@ func (db *DCDB) ExecSQLGetLastInsertID(query, table string, args ...interface{})
 		}
 	}
 
-	if db.ConfigIni["sql_log"] == "1" {
+	if config.ConfigIni["sql_log"] == "1" {
 		log.Debug("SQL: %s / LastInsertId=%d / %s", newQuery, lastID, newArgs)
 	}
 	return lastID, nil

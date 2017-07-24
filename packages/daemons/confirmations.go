@@ -20,6 +20,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -125,7 +126,7 @@ BEGIN:
 			}
 
 			var hosts []string
-			if d.ConfigIni["test_mode"] == "1" {
+			if config.ConfigIni["test_mode"] == "1" {
 				hosts = []string{"localhost:" + consts.TCP_PORT}
 			} else {
 				hosts, err = d.GetHosts()

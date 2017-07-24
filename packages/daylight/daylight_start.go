@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/api"
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -45,7 +46,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/astaxie/beego/config"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
@@ -109,30 +109,23 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// читаем config.ini
 	// read the config.ini
-	configIni := make(map[string]string)
-	fullConfigIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-	if err != nil {
-		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
-		log.Error("%v", utils.ErrInfo(err))
-	} else {
-		configIni, err = fullConfigIni.GetSection("default")
-	}
+	config.Read()
 
 	if *utils.TCPHost == "" {
-		*utils.TCPHost = configIni["tcp_host"]
+		*utils.TCPHost = config.ConfigIni["tcp_host"]
 	}
 	if *utils.FirstBlockDir == "" {
-		*utils.FirstBlockDir = configIni["first_block_dir"]
+		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
 	}
 	if *utils.ListenHTTPPort == "" {
-		*utils.ListenHTTPPort = configIni["http_port"]
+		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
 	}
 	if *utils.Dir == "" {
-		*utils.Dir = configIni["dir"]
+		*utils.Dir = config.ConfigIni["dir"]
 	}
-	utils.OneCountry = converter.StrToInt64(configIni["one_country"])
-	utils.PrivCountry = configIni["priv_country"] == `1` || configIni["priv_country"] == `true`
-	if len(configIni["lang"]) > 0 {
+	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
+	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
+	if len(config.ConfigIni["lang"]) > 0 {
 		language.LangList = strings.Split(configIni["lang"], `,`)
 	}
 	/*	outfile, err := os.Create("./out.txt")
@@ -158,7 +151,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
 
-			sql.DB, err = sql.NewDbConnect(configIni)
+			sql.DB, err = sql.NewDbConnect()
 
 			err = KillPid(pidMap["pid"])
 			if nil != err {
@@ -183,12 +176,11 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	controllers.SessInit()
-	controllers.ConfigInit()
-	daemons.ConfigInit()
+	config.MonitorChanges()
 
 	go func() {
 		var err error
-		sql.DB, err = sql.NewDbConnect(configIni)
+		sql.DB, err = sql.NewDbConnect()
 		log.Debug("%v", sql.DB)
 		IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
 		if err != nil {
@@ -209,9 +201,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
 		utils.LogoExt = `png`
 	}
-	IosLog("configIni:" + fmt.Sprintf("%v", configIni))
+	IosLog("configIni:" + fmt.Sprintf("%v", config.ConfigIni))
 	var backend *logging.LogBackend
-	switch configIni["log_output"] {
+	switch config.ConfigIni["log_output"] {
 	case "file":
 		backend = logging.NewLogBackend(f, "", 0)
 	case "console":
@@ -226,7 +218,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	level := "DEBUG"
 	if *utils.LogLevel == "" {
-		level = configIni["log_level"]
+		level = config.ConfigIni["log_level"]
 		*utils.LogLevel = level
 	} else {
 		level = *utils.LogLevel
@@ -306,7 +298,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// откат БД до указанного блока
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
-		sql.DB, err = sql.NewDbConnect(configIni)
+		sql.DB, err = sql.NewDbConnect()
 
 		if err := template.LoadContracts(); err != nil {
 			log.Error(`Load Contracts`, err)
