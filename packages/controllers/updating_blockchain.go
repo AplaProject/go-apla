@@ -83,15 +83,6 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		if len(blockchainURL) == 0 {
 			blockchainURL = consts.BLOCKCHAIN_URL
 		}
-		/*resp, err := http.Get(blockchainURL)
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}
-		blockChainSize := resp.ContentLength
-		if blockChainSize == 0 {
-			blockChainSize = consts.BLOCKCHAIN_SIZE
-		}
-		defer resp.Body.Close()*/
 
 		blockMeter = int64(converter.RoundWithPrecision(float64((blockID/consts.LAST_BLOCK)*100), 0))
 		if blockMeter > 0 {

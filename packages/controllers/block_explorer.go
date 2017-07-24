@@ -18,12 +18,12 @@ package controllers
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -52,19 +52,17 @@ func (c *Controller) BlockExplorer() (string, error) {
 	pageData.SinglePage = converter.StrToInt64(c.r.FormValue("singlePage"))
 	if blockID > 0 {
 		pageData.BlockID = blockID
-		blockInfo, err := c.OneRow(`SELECT b.* FROM block_chain as b where b.id=?`, blockID).String()
+		block := &model.Block{}
+		err := block.GetBlock(blockID)
+		blockInfo := make(map[string]string, 0)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		if len(blockInfo) > 0 {
-			blockInfo[`hash`] = hex.EncodeToString([]byte(blockInfo[`hash`]))
-			blockInfo[`size`] = converter.IntToStr(len(blockInfo[`data`]))
-			if len(blockInfo[`wallet_id`]) > 0 {
-				blockInfo[`wallet_address`] = converter.AddressToString(converter.StrToInt64(blockInfo[`wallet_id`]))
-			} else {
-				blockInfo[`wallet_address`] = ``
-			}
-			tmp := hex.EncodeToString([]byte(blockInfo[`data`]))
+			blockInfo[`hash`] = string(block.Hash)
+			blockInfo[`size`] = converter.IntToStr(len(block.Data))
+			blockInfo[`wallet_address`] = converter.AddressToString(block.WalletID)
+			tmp := string(block.Data)
 			out := ``
 			for i, ch := range tmp {
 				out += string(ch)
@@ -73,17 +71,18 @@ func (c *Controller) BlockExplorer() (string, error) {
 				}
 			}
 			if blockID > 1 {
-				parent, err := c.Single("SELECT hash FROM block_chain where id=?", blockID-1).String()
+				parent := &model.Block{}
+				err = block.GetBlock(blockID - 1)
 				if err == nil {
-					blockInfo[`parent`] = hex.EncodeToString([]byte(parent))
+					blockInfo[`parent`] = string(parent.Hash)
 				} else {
 					blockInfo[`parent`] = err.Error()
 				}
 			}
 			txlist := make([]string, 0)
-			block := ([]byte(blockInfo[`data`]))[1:]
+			block := block.Data[1:]
 			utils.ParseBlockHeader(&block)
-			//			fmt.Printf("Block OK %v sign=%d %d %x", *pblock, len((*pblock).Sign), len(block), block)
+
 			for len(block) > 0 {
 				length, err := converter.DecodeLength(&block)
 				if err != nil {
@@ -127,34 +126,24 @@ func (c *Controller) BlockExplorer() (string, error) {
 		}
 	} else {
 		latest := converter.StrToInt64(c.r.FormValue("latest"))
+		block := &model.Block{}
 		if latest > 0 {
-			curid, _ := c.Single("select max(id) from block_chain").Int64()
-			if curid <= latest {
+			block.GetMaxBlock()
+			if block.ID <= latest {
 				return ``, nil
 			}
 		}
-		blockExplorer, err := c.GetAll(`SELECT  b.hash, b.state_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
-		order by b.id desc limit 30 offset 0`, -1)
+		blockchain, err := block.GetBlocks(-1, 30)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		for ind := range blockExplorer {
-			blockExplorer[ind][`hash`] = hex.EncodeToString([]byte(blockExplorer[ind][`hash`]))
-			if len(blockExplorer[ind][`wallet_id`]) > 0 {
-				blockExplorer[ind][`wallet_address`] = converter.AddressToString(converter.StrToInt64(blockExplorer[ind][`wallet_id`]))
-			} else {
-				blockExplorer[ind][`wallet_address`] = ``
-			}
-			/*			if blockExplorer[ind][`tx`] == `[]` {
-							blockExplorer[ind][`tx_count`] = `0`
-						} else {
-							var tx []string
-							json.Unmarshal([]byte(blockExplorer[ind][`tx`]), &tx)
-							if tx != nil && len(tx) > 0 {
-								blockExplorer[ind][`tx_count`] = utils.IntToStr(len(tx))
-							}
-						}*/
+		blockExplorer := make([]map[string]string, 0)
+		for _, block := range blockchain {
+			row := block.ToMap()
+			row["wallet_address"] = converter.AddressToString(block.WalletID)
+			blockExplorer = append(blockExplorer, row)
 		}
+
 		pageData.List = blockExplorer
 		if blockExplorer != nil && len(blockExplorer) > 0 {
 			pageData.Latest = converter.StrToInt64(blockExplorer[0][`id`])

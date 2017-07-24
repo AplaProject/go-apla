@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 const aAppProcess = `ajax_app_process`
@@ -38,31 +39,33 @@ func init() {
 func (c *Controller) AjaxAppProcess() interface{} {
 	var (
 		result AppProcess
-		table  string
 	)
 	name := c.r.FormValue("name")
 	block := converter.StrToInt64(c.r.FormValue("block"))
 	done := converter.StrToInt(c.r.FormValue("done"))
+
 	if block == 0 {
 		result.Error = `wrong block id`
 		return result
 	}
+
+	app := &model.Apps{Name: name, Done: int32(done)}
 	if strings.HasPrefix(name, `global`) {
-		table = `global_apps`
+		app.SetTableName("global")
 	} else {
-		table = fmt.Sprintf(`"%d_apps"`, c.SessStateID)
+		app.SetTableName(string(c.SessStateID))
 	}
-	cur, err := c.OneRow(`select * from `+table+` where name=?`, name).String()
+	exist, err := app.IsExists(app.Name)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	if len(cur) > 0 {
-		err = c.ExecSQL(fmt.Sprintf(`update %s set done=?, blocks=concat(blocks, ',%d') where name=?`, table, block),
-			done, name)
+	if exist {
+		app.Blocks += fmt.Sprintf(",%d", block)
+		err = app.Save()
 	} else {
-		err = c.ExecSQL(fmt.Sprintf(`insert into %s (name,done,blocks) values(?,?,'%d')`, table, block),
-			name, done)
+		app.Blocks = fmt.Sprintf("%d", block)
+		err = app.Create()
 	}
 	if err != nil {
 		result.Error = err.Error()

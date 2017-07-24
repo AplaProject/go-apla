@@ -19,6 +19,7 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -35,14 +36,12 @@ type changeNodeKeyPage struct {
 
 // ChangeNodeKey is a controller which changes a node key
 func (c *Controller) ChangeNodeKey() (string, error) {
-
-	var err error
-
 	txType := "ChangeNodeKeyDLT"
 	txTypeID := utils.TypeInt(txType)
 	timeNow := time.Now().Unix()
 
-	public, err := c.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
+	wallet := &model.DltWallets{}
+	err := wallet.GetWallet(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
@@ -54,7 +53,7 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 		CitizenID: c.SessCitizenID,
 		TimeNow:   timeNow,
 		TxType:    txType,
-		NoPublic:  len(public) == 0,
+		NoPublic:  len(wallet.PublicKey) == 0,
 		TxTypeID:  txTypeID})
 	if err != nil {
 		return "", utils.ErrInfo(err)

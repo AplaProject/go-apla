@@ -21,6 +21,7 @@ import (
 	"regexp"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -80,38 +81,31 @@ func (c *Controller) EditContract() (string, error) {
 	var contWallet int64
 	for i := 0; i < 10; i++ {
 		if i == 0 {
+			smartContract := &model.SmartContracts{}
+			smartContract.SetTableName(prefix)
 			if id != 0 {
-				data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE id = ?`, id).String()
-				if err != nil {
-					return "", utils.ErrInfo(err)
-				}
+				err = smartContract.GetByID(id)
 			} else {
-				data, err = c.OneRow(`SELECT * FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
-				if err != nil {
-					return "", utils.ErrInfo(err)
-				}
+				err = smartContract.GetByName(name)
 			}
-			if data[`wallet_id`] == `NULL` {
-				data[`wallet`] = ``
-			} else {
-				contWallet = converter.StrToInt64(data[`wallet_id`])
-				data[`wallet`] = converter.AddressToString(contWallet)
-			}
-			if data[`active`] == `NULL` {
-				data[`active`] = ``
-			}
-			if len(data[`conditions`]) == 0 {
-				data[`conditions`] = "ContractConditions(`MainCondition`)"
-			}
-			rbID = converter.StrToInt64(data["rb_id"])
-		} else {
-			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
+			data := smartContract.ToMap()
+			data[`wallet`] = converter.AddressToString(smartContract.WalletID)
+			if len(smartContract.Conditions) == 0 {
+				data[`conditions`] = "ContractConditions(`MainCondition`)"
+			}
+			rbID = smartContract.RbID
+		} else {
+			rollback := &model.Rollback{}
+			err = rollback.Get(rbID)
+			if err != nil {
+				return "", utils.ErrInfo(err)
+			}
+			data := rollback.ToMap()
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
-			//			fmt.Printf("%s", messageMap)
 			rbID = converter.StrToInt64(messageMap["rb_id"])
 			messageMap["block_id"] = data["block_id"]
 			dataContractHistory = append(dataContractHistory, messageMap)

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
 )
@@ -44,20 +45,24 @@ func (c *Controller) WalletHistory() (string, error) {
 	if walletID == 0 {
 		walletID = c.SessWalletID
 	}
-	current, err := c.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, walletID).String()
+	wallet := &model.DltWallets{}
+	err := wallet.GetWallet(walletID)
 	if err != nil {
 		return ``, utils.ErrInfo(err)
 	}
-	rb := converter.StrToInt64(current[`rb_id`])
-	if len(current) > 0 && rb != 0 {
-		balance, _ := decimal.NewFromString(current[`amount`])
+	//current, err := c.OneRow(`select amount, rb_id from dlt_wallets where wallet_id=?`, walletID).String()
+
+	rb := wallet.RollbackID
+	if rb != 0 {
+		balance := wallet.Amount
 		for len(list) <= 100 && rb > 0 {
 			var data map[string]string
-			prev, err := c.OneRow(`select * from rollback where rb_id=?`, rb).String()
+			rollback := &model.Rollback{}
+			err := rollback.Get(rb)
 			if err != nil {
 				return ``, utils.ErrInfo(err)
 			}
-			if err = json.Unmarshal([]byte(prev[`data`]), &data); err != nil {
+			if err = json.Unmarshal([]byte(rollback.Data), &data); err != nil {
 				return ``, utils.ErrInfo(err)
 			}
 			rb = converter.StrToInt64(data[`rb_id`])
@@ -69,7 +74,8 @@ func (c *Controller) WalletHistory() (string, error) {
 				} else {
 					dif = val.Sub(balance)
 				}
-				list = append(list, map[string]interface{}{`block_id`: prev[`block_id`], `amount`: converter.EGSMoney(dif.String()),
+				list = append(list, map[string]interface{}{`block_id`: string(rollback.BlockID),
+					`amount`:  converter.EGSMoney(dif.String()),
 					`balance`: converter.EGSMoney(balance.String()), `inc`: balance.Cmp(val) > 0})
 				balance = val
 			}

@@ -25,6 +25,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 )
 
@@ -58,7 +59,9 @@ func (c *Controller) AjaxSendTx() interface{} {
 			converter.EncodeLenByte(&sign, signature)
 		}
 		var isPublic []byte
-		isPublic, err = c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, c.SessWalletID).Bytes()
+		wallet := &model.DltWallets{}
+		err = wallet.GetWallet(c.SessWalletID)
+		isPublic = wallet.PublicKey
 		if err == nil && len(sign) > 0 && len(isPublic) == 0 {
 			flags |= consts.TxfPublic
 			public, _ := hex.DecodeString(c.r.FormValue(`public`))
@@ -134,12 +137,13 @@ func (c *Controller) AjaxSendTx() interface{} {
 						log.Fatal(err)
 					}
 					hash = converter.BinToHex(hash)
-					err = c.ExecSQL(`INSERT INTO transactions_status (
-						hash, time,	type, wallet_id, citizen_id	) VALUES (
-						[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), header.Type, int64(userID), int64(userID)) //c.SessStateID)
+					transactionStatus := &model.TransactionsStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: header.Type,
+						WalletID: int64(userID), CitizenID: int64(userID)}
+					err = transactionStatus.Create()
 					if err == nil {
 						log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", hash, hex.EncodeToString(data))
-						err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
+						queueTx := &model.QueueTx{Hash: hash, Data: data}
+						err = queueTx.Create()
 						if err == nil {
 							result.Hash = string(hash)
 						}

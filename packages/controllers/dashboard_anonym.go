@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -30,17 +31,13 @@ type dashboardAnonymPage struct {
 func (c *Controller) DashboardAnonym() (string, error) {
 	amount := `0`
 
-	/*	wallet_id,err := c.GetMyWalletID()
-		if err != nil {
-			return "", utils.ErrInfo(err)
-		}*/
-
 	if c.SessWalletID > 0 || len(c.SessAddress) > 0 {
-		var err error
-		amount, err = c.Single("select amount from dlt_wallets where wallet_id = ?", c.SessWalletID).String()
+		wallet := &model.DltWallets{}
+		err := wallet.GetWallet(c.SessWalletID)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
+		amount := wallet.Amount.String()
 		if amount == "" {
 			amount = "0"
 		}

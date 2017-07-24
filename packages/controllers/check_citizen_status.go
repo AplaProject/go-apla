@@ -17,10 +17,11 @@
 package controllers
 
 import (
-	"encoding/hex"
+
 	//	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
@@ -50,31 +51,24 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if len(c.r.FormValue(`last_id`)) > 0 {
 		lastID = converter.StrToInt64(c.r.FormValue(`last_id`))
 	}
-	//	field, err := c.Single(`SELECT value FROM ` + c.StateIDStr + `_state_parameters where parameter='citizen_fields'`).String()
-	vals, err := c.OneRow(`select * from "`+c.StateIDStr+`_citizenship_requests" where approved=0 AND id>? order by id`, lastID).String()
+	request := &model.CitizenshipRequests{}
+	request.SetTableName(c.StateID)
+	err = request.GetUnapproved(lastID)
 	if err != nil {
 		return ``, err
 	}
 	fields := make([]template.FieldInfo, 0)
-	if len(vals) > 0 {
-		//		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public`]))
-		//		pubkey, _ := c.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, vals[`dlt_wallet_id`]).Bytes()
-		//		vals[`publicKey`] = hex.EncodeToString(pubkey)
-		//var data map[string]interface{}
-		/*		if err = json.Unmarshal([]byte(vals[`data`]), &data); err != nil {
-				return ``, err
-			}*/
-		contract := smart.GetContract(`TXCitizenRequest`, uint32(converter.StrToUint64(c.StateIDStr)))
-		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-			if fitem.Type.String() == `string` {
-				value := vals[`name`] //fitem.Name] //.(string)
-				fields = append(fields, template.FieldInfo{Name: fitem.Name, HTMLType: "textinput",
-					TxType: fitem.Type.String(), Title: fitem.Name,
-					Value: value})
-			}
+	contract := smart.GetContract(`TXCitizenRequest`, uint32(converter.StrToUint64(c.StateIDStr)))
+	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
+		if fitem.Type.String() == `string` {
+			value := request.Name
+			fields = append(fields, template.FieldInfo{Name: fitem.Name, HTMLType: "textinput",
+				TxType: fitem.Type.String(), Title: fitem.Name,
+				Value: value})
 		}
-		vals[`publicKey`] = hex.EncodeToString([]byte(vals[`public_key_0`])) //.(string)
 	}
+	vals := request.ToStringMap()
+	vals[`publicKey`] = vals[`public_key_0`]
 	txType := "TXNewCitizen"
 	return proceedTemplate(c, nCheckCitizen, &checkPage{Data: c.Data, Values: vals,
 		Fields: fields, TxType: txType, TxTypeID: utils.TypeInt(txType)})

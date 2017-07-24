@@ -21,7 +21,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 const aEncryptKey = `ajax_encrypt_key`
@@ -51,12 +51,13 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		return result
 	}
 	id = converter.StringToAddress(walletID)
-	pubKey, err := sql.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
+	wallet := &model.DltWallets{}
+	err = wallet.GetWallet(id)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	if len(pubKey) == 0 {
+	if len(wallet.PublicKey) == 0 {
 		result.Error = `unknown wallet id`
 		return result
 	}
@@ -66,19 +67,19 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		private, result.Public, _ = crypto.GenHexKeys()
 
 		pub, _ := hex.DecodeString(result.Public)
-		idnew := crypto.Address(pub)
 
-		exist, err := sql.DB.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		wallet.WalletID = crypto.Address(pub)
+		exist, err := wallet.IsExists()
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
-		if exist == 0 {
-			result.WalletID = idnew
+		if exist == false {
+			result.WalletID = wallet.WalletID
 		}
 	}
 	priv, _ := hex.DecodeString(private)
-	encrypted, err := crypto.SharedEncrypt([]byte(pubKey), priv)
+	encrypted, err := crypto.SharedEncrypt([]byte(wallet.PublicKey), priv)
 	if err != nil {
 		result.Error = err.Error()
 		return result

@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -40,9 +41,15 @@ func (c *Controller) Signatures() (string, error) {
 		global = "0"
 	}
 
-	signatures, err := c.GetAll(`SELECT * FROM "`+prefix+`_signatures" order by name`, -1)
+	signature := &model.Signatures{}
+	rows, err := signature.GetAllOredered(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+
+	signatures := make([]map[string]string, 0)
+	for _, sign := range rows {
+		signatures := append(signatures, sign.ToMap())
 	}
 
 	TemplateStr, err := makeTemplate("signatures_list", "signatures_list", &signaturesPage{

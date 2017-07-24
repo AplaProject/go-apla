@@ -22,6 +22,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -70,10 +71,12 @@ func (c *Controller) EditWallet() (string, error) {
 		id = c.SessWalletID
 	}
 	if id != 0 {
-		data, err = c.OneRow(`SELECT * FROM "dlt_wallets" WHERE wallet_id = ?`, id).String()
+		wallet := &model.DltWallets{}
+		err := wallet.GetWallet(id)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
+		data := wallet.ToMap()
 		if len(data) == 0 {
 			alert = fmt.Sprintf(`Wallet %s [%d] has not been found.`, idaddr, id)
 		} else {

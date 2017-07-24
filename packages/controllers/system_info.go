@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -41,35 +42,53 @@ func init() {
 
 // SystemInfo shows the system information about the blockchain
 func (c *Controller) SystemInfo() (string, error) {
-	var err error
 	pageData := systemInfoPage{Data: c.Data}
 
-	pageData.UpdFullNodes, err = c.GetAll(`SELECT * FROM upd_full_nodes`, -1)
+	ufn := &model.UpdFullNodes{}
+	ufnList, err := ufn.GetAll()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	for _, node := range ufnList {
+		pageData.UpdFullNodes = append(pageData.UpdFullNodes, node.ToMap())
+	}
 
-	pageData.MainLock, err = c.GetAll(`SELECT * FROM main_lock`, -1)
+	mainLock := &model.MainLock{}
+	err = mainLock.Get()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	pageData.MainLock = append(pageData.MainLock, mainLock.ToMap())
 
-	pageData.Rollback, err = c.GetAll(`SELECT * FROM rollback ORDER BY rb_id DESC LIMIT 100`, -1)
+	rollback := &model.Rollback{}
+	rollbacks, err := rollback.GetRollbacks(100)
+
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	for _, rb := range rollbacks {
+		pageData.Rollback = append(pageData.Rollback, rb.ToMap())
+	}
 
-	pageData.FullNodes, err = c.GetAll(`SELECT * FROM full_nodes`, -1)
+	fullNode := &model.FullNodes{}
+	nodes, err := fullNode.GetAll()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	for _, node := range nodes {
+		pageData.FullNodes = append(pageData.FullNodes, node.ToMap())
+	}
 
-	pageData.SystemParameters, err = c.GetAll(`SELECT * FROM system_parameters`, -1)
+	systemParameters, err := model.GetAllSystemParameters()
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	for _, param := range systemParameters {
+		pageData.SystemParameters = append(pageData.SystemParameters, param.ToMap())
+	}
 
-	pageData.Votes, err = c.GetAll(`SELECT address_vote, sum(amount) as sum FROM dlt_wallets WHERE address_vote !='' GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 10`, -1)
+	wallet := &model.DltWallets{}
+	pageData.Votes, err = wallet.GetVotes(10)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

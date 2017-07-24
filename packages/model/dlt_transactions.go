@@ -28,6 +28,13 @@ func (dt *DltTransactions) GetIncomingTransactions(recipientWalletID int64) erro
 	return DBConn.Where("recipient_wallet_id=?", recipientWalletID).First(dt).Error
 }
 
+func (dt *DltTransactions) GetCount(senderWalletID, recipientWalletID int64, recipientWalletAddress string) (int64, error) {
+	var count int64
+	err := DBConn.Where("sender_wallet_id = ? OR recipient_wallet_id = ? OR recipient_wallet_address = ?",
+		senderWalletID, recipientWalletID, recipientWalletAddress).Count(&count).Error
+	return count, err
+}
+
 /*
 func (db *DCDB) GetAllTxBySenderOrRecepient(senderWalletID, recipientWalletID int64, recipientWalletAddress string, limit string) ([]map[string]string, error) {
 	return db.GetAll(`SELECT d.*, w.wallet_id as sw, wr.wallet_id as rw FROM dlt_transactions as d

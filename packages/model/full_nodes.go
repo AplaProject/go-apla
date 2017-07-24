@@ -46,3 +46,21 @@ func GetFullNodesHosts() ([]string, error) {
 	}
 	return *hosts, nil
 }
+
+func (fn *FullNodes) GetAll() ([]FullNodes, error) {
+	var nodes []FullNodes
+	err := DBConn.Find(nodes).Error
+	return nodes, err
+}
+
+func (fn *FullNodes) ToMap() map[string]string {
+	var result map[string]string
+	result["id"] = string(fn.ID)
+	result["host"] = fn.Host
+	result["wallet_id"] = string(fn.WalletID)
+	result["state_id"] = string(fn.StateID)
+	result["final_delegate_wallet_id"] = string(fn.FinalDelegateWalletID)
+	result["final_delegate_state_id"] = string(fn.FinalDelegateStateID)
+	result["rb_id"] = string(fn.RbID)
+	return result
+}

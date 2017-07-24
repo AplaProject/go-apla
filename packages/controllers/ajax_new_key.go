@@ -28,9 +28,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -85,7 +85,9 @@ func (c *Controller) AjaxNewKey() interface{} {
 		log.Fatal(err)
 	}
 	idkey := crypto.Address(pubkey)
-	govAccount, _ := template.StateParam(stateID, `govAccount`)
+	stateParameters := &model.StateParameters{}
+	stateParameters.GetByName("govAccount")
+	govAccount := stateParameters.Value
 	if len(govAccount) == 0 {
 		result.Error = `unknown govAccount`
 		return result
@@ -121,12 +123,14 @@ func (c *Controller) AjaxNewKey() interface{} {
 	}
 	idnew := crypto.Address(pub)
 
-	exist, err := c.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+	wallet := &model.DltWallets{}
+	wallet.WalletID = idnew
+	exist, err := wallet.IsExists()
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	if exist != 0 {
+	if exist != false {
 		result.Error = `key already exists`
 		return result
 	}
@@ -168,23 +172,20 @@ func (c *Controller) AjaxNewKey() interface{} {
 	data = append(append(data, converter.EncodeLength(int64(len(name)))...), []byte(name)...)
 	data = append(append(data, converter.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
 
-	/*	fmt.Printf("NewKey For %s %d\r\n", forsign, len(forsign))
-		fmt.Printf("NewKey Sign %x %d\r\n", sign, len(sign))
-		fmt.Printf("NewKey Key %x %d\r\n", pubkey, len(pubkey))
-	*/
 	hash, err := crypto.Hash(data)
 	if err != nil {
 		log.Fatal(err)
 	}
 	hash = converter.BinToHex(data)
-	err = c.ExecSQL(`INSERT INTO transactions_status (
-			hash, time,	type, wallet_id, citizen_id	) VALUES (
-			[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), header.Type, int64(idkey), int64(idkey))
+	transactionStatus := &model.TransactionsStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: header.Type,
+		WalletID: int64(idkey), CitizenID: int64(idkey)}
+	err = transactionStatus.Create()
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
+	queueTx := &model.QueueTx{Hash: hash, Data: data}
+	err = queueTx.Create()
 	if err != nil {
 		result.Error = err.Error()
 		return result

@@ -1,5 +1,7 @@
 package model
 
+import "github.com/EGaaS/go-egaas-mvp/packages/converter"
+
 type Block struct {
 	ID           int64  `gorm:"primary_key;not_null"`
 	Hash         []byte `gorm:not null`
@@ -70,4 +72,35 @@ func (b *Block) Delete() error {
 
 func (b *Block) DeleteChain() error {
 	return DBConn.Where("id > ", b.ID).Delete(Block{}).Error
+}
+
+func (b *Block) GetLastBlockData() (map[string]int64, error) {
+	result := make(map[string]int64)
+	confirmation := &Confirmations{}
+	err := confirmation.GetMaxGoodBlock()
+	if err != nil {
+		return result, err
+	}
+	if confirmation.BlockID == 0 {
+		confirmation.BlockID = 1
+	}
+
+	err = b.GetBlock(confirmation.BlockID)
+	if err != nil {
+		return result, err
+	}
+	result["blockId"] = int64(converter.BinToDec(b.Data[1:5]))
+	result["lastBlockTime"] = int64(converter.BinToDec(b.Data[5:9]))
+	return result, nil
+}
+
+func (b *Block) ToMap() map[string]string {
+	result := make(map[string]string)
+	result["hash"] = string(b.Hash)
+	result["state_id"] = string(b.StateID)
+	result["wallet_id"] = converter.AddressToString(b.WalletID)
+	result["time"] = string(b.Time)
+	result["tx"] = string(b.Tx)
+	result["id"] = string(b.ID)
+	return result
 }

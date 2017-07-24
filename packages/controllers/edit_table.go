@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
@@ -64,10 +65,15 @@ func (c *Controller) EditTable() (string, error) {
 		global = "1"
 	}
 
-	tableData, err := c.OneRow(`SELECT * FROM "`+prefix+`_tables" WHERE name = ?`, tableName).String()
+	table := &model.Tables{}
+	table.SetTableName(prefix)
+	err = table.Get([]byte(tableName))
+
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+
+	tableData := table.ToMap()
 
 	tablePermission, err := c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", tableName)
 	if err != nil {

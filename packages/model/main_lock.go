@@ -22,3 +22,12 @@ func (ml *MainLock) Get() error {
 func (ml *MainLock) Create() error {
 	return DBConn.Create(ml).Error
 }
+
+func (ml *MainLock) ToMap() map[string]string {
+	result := make(map[string]string, 0)
+	result["lock_time"] = string(ml.LockTime)
+	result["script_name"] = ml.ScriptName
+	result["info"] = ml.Info
+	result["uniq"] = string(ml.Uniq)
+	return result
+}

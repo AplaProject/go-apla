@@ -18,24 +18,26 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // AjaxStatesList returns the list of states
 func (c *Controller) AjaxStatesList() (string, error) {
 
 	result := make(map[string]map[string]string)
-	data, err := c.GetList(`SELECT id FROM system_states`).String()
+	statesList, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return ``, err
 	}
-	query := func(id string, name string) (string, error) {
-		return c.Single(fmt.Sprintf(`SELECT value FROM "%s_state_parameters" WHERE name = ?`, id), name).String()
+	stateParameters := &model.StateParameters{}
+	query := func(id int64, name string) (string, error) {
+		stateParameters.SetTableName(id)
+		err = stateParameters.GetByName(name)
+		return stateParameters.Value, err
 	}
-	for _, id := range data {
-		if !c.IsNodeState(converter.StrToInt64(id), c.r.Host) {
+	for _, id := range statesList {
+		if !c.IsNodeState(id, c.r.Host) {
 			continue
 		}
 
@@ -51,10 +53,10 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		if err != nil {
 			return ``, err
 		}
-		result[id] = make(map[string]string)
-		result[id]["state_name"] = stateName
-		result[id]["state_flag"] = stateFlag
-		result[id]["state_coords"] = stateCoords
+		result[string(id)] = make(map[string]string)
+		result[string(id)]["state_name"] = stateName
+		result[string(id)]["state_flag"] = stateFlag
+		result[string(id)]["state_coords"] = stateCoords
 
 	}
 	jsondata, err := json.Marshal(result)

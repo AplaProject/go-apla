@@ -608,7 +608,7 @@ BEGIN:
 
 			var nodePublicKey []byte
 			if blockData.WalletId != 0 {
-				wallet := &model.Wallet{}
+				wallet := &model.DltWallets{}
 				err = wallet.GetWallet(blockData.WalletId)
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

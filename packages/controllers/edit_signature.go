@@ -19,6 +19,7 @@ package controllers
 import (
 	"encoding/json"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -60,28 +61,28 @@ func (c *Controller) EditSignature() (string, error) {
 	var title, cond string
 	list := make([]SignRes, 0)
 	if len(name) > 0 {
-		res, err := c.OneRow(`SELECT value, conditions FROM "`+prefix+`_signatures" where name=?`, name).String()
+		signature := &model.Signatures{}
+		signature.SetTableName(prefix)
+		err := signature.Get(name)
 		if err != nil {
 			return "", err
 		}
-		if len(res) > 0 {
-			var rmap map[string]interface{}
-			cond = res[`conditions`]
-			err = json.Unmarshal([]byte(res[`value`]), &rmap)
-			if err != nil {
-				return "", err
-			}
-			if val, ok := rmap[`title`]; ok {
-				title = val.(string)
-			}
-			if val, ok := rmap[`params`]; ok {
-				for _, item := range val.([]interface{}) {
-					text := item.(map[string]interface{})
-					list = append(list, SignRes{text[`name`].(string), text[`text`].(string)})
-				}
-			}
-			txType = "EditSign"
+		var rmap map[string]interface{}
+		cond = signature.Conditions
+		err = json.Unmarshal([]byte(signature.Value), &rmap)
+		if err != nil {
+			return "", err
 		}
+		if val, ok := rmap[`title`]; ok {
+			title = val.(string)
+		}
+		if val, ok := rmap[`params`]; ok {
+			for _, item := range val.([]interface{}) {
+				text := item.(map[string]interface{})
+				list = append(list, SignRes{text[`name`].(string), text[`text`].(string)})
+			}
+		}
+		txType = "EditSign"
 	}
 	pageData := editSignaturePage{Data: c.Data, List: list, Title: title, Conditions: cond,
 		Global: global, Name: name, TxType: txType, TxTypeID: utils.TypeInt(txType), Unique: ``}

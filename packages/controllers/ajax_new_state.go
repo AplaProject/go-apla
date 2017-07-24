@@ -26,6 +26,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -46,23 +47,21 @@ func (c *Controller) AjaxNewState() interface{} {
 		result    NewState
 		err       error
 		spriv     string
-		current   map[string]string
 		priv, pub []byte
 		wallet    int64
 	)
 	id := converter.StrToInt64(c.r.FormValue("testnet"))
-	if current, err = c.OneRow(`select country,currency,wallet, private from testnet_emails where id=?`, id).String(); err != nil {
+	testnetEmails := &model.TestnetEmails{ID: id}
+	if err = testnetEmails.Get(id); err != nil {
 		result.Error = err.Error()
-	} else if len(current) == 0 {
-		result.Error = `unknown id`
-	} else if converter.StrToInt64(current[`wallet`]) > 0 || len(current[`private`]) > 0 {
+	} else if testnetEmails.Wallet > 0 || len(testnetEmails.Private) > 0 {
 		result.Error = `duplicate of request`
 	}
 	if len(result.Error) > 0 {
 		return result
 	}
-	exist := int64(1)
-	for exist != 0 {
+	exist := true
+	for exist != false {
 		spriv, _, _ = crypto.GenHexKeys()
 		priv, _ = hex.DecodeString(spriv)
 		pub, err = crypto.PrivateToPublic(priv)
@@ -71,7 +70,8 @@ func (c *Controller) AjaxNewState() interface{} {
 		}
 		wallet = crypto.Address(pub)
 
-		exist, err = c.Single(`select wallet_id from dlt_wallets where wallet_id=?`, wallet).Int64()
+		dltWallet := &model.DltWallets{WalletID: wallet}
+		exist, err = dltWallet.IsExists()
 		if err != nil {
 			result.Error = err.Error()
 			return result
@@ -82,7 +82,10 @@ func (c *Controller) AjaxNewState() interface{} {
 		result.Error = `TestnetKey is absent`
 		return result
 	}
-	err = c.ExecSQL(`update testnet_emails set wallet=?, private=? where id=?`, wallet, spriv, id)
+	testnetEmails.Wallet = wallet
+	testnetEmails.Private = priv
+
+	err = testnetEmails.Save()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -108,8 +111,7 @@ func (c *Controller) AjaxNewState() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	/*	fmt.Println(`FORIN`, forSign)
-		fmt.Println(`IN`, hex.EncodeToString(signature))*/
+
 	sign := make([]byte, 0)
 	sign = append(sign, converter.EncodeLengthPlusData(signature)...)
 	binsign := converter.EncodeLengthPlusData(sign)
@@ -134,7 +136,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	time.Sleep(2500 * time.Millisecond)
 	txType = utils.TypeInt(`NewState`)
 	txTime = time.Now().Unix()
-	forSign = fmt.Sprintf("%d,%d,%d,%s,%s", txType, txTime, wallet, current[`country`], current[`currency`])
+	forSign = fmt.Sprintf("%d,%d,%d,%s,%s", txType, txTime, wallet, testnetEmails.Country, testnetEmails.Currency)
 	signature, err = crypto.Sign(spriv, forSign)
 	if err != nil {
 		result.Error = err.Error()
@@ -148,14 +150,10 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, converter.DecToBin(txTime, 4)...)
 	data = append(data, converter.EncodeLengthPlusData(wallet)...)
 	data = append(data, converter.EncodeLengthPlusData(0)...)
-	data = append(data, converter.EncodeLengthPlusData([]byte(current[`country`]))...)
-	data = append(data, converter.EncodeLengthPlusData([]byte(current[`currency`]))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(testnetEmails.Country))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(testnetEmails.Currency))...)
 	data = append(data, converter.EncodeLengthPlusData(hex.EncodeToString(pub))...)
 	data = append(data, binsign...)
-	/*	pubkey := make([][]byte, 0)
-		pubkey = append(pubkey, pub)
-		CheckSignResult, err := utils.CheckSign(pubkey, forSign, sign, false)
-		fmt.Println(`CHECK`, CheckSignResult, err)*/
 
 	err = c.SendTx(txType, wallet, data)
 	if err != nil {

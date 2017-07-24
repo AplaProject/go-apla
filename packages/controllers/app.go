@@ -23,10 +23,10 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type appData struct {
@@ -85,22 +85,20 @@ func App(w http.ResponseWriter, r *http.Request) {
 	if len(data) > 0 {
 		var table string
 		if strings.HasPrefix(page, `global`) {
-			table = `global_apps`
+			table = `global`
 		} else {
-			table = fmt.Sprintf(`"%d_apps"`, GetSessInt64("state_id", sess))
+			table = fmt.Sprintf(`"%d"`, GetSessInt64("state_id", sess))
 		}
-		appinfo, err := sql.DB.OneRow(`select * from `+table+` where name=?`, page).String()
+		app := &model.Apps{}
+		app.SetTableName(table)
+		err := app.Get(page)
 		if err != nil {
 			out = err.Error()
 		} else {
 			var done bool
 			var blocks []string
-			if len(appinfo) > 0 {
-				done = appinfo[`done`] == `1`
-				blocks = strings.Split(appinfo[`blocks`], `,`)
-			} else {
-				blocks = make([]string, 0)
-			}
+			done = app.Done == 1
+			blocks = strings.Split(app.Blocks, `,`)
 			out, _ = template.ProceedTemplate(`app_template`, &template.PageTpl{Page: page,
 				Template: textproc.Process(string(data), &params), Unique: ``,
 				Data: &appData{

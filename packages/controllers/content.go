@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	tpl "github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -122,9 +123,9 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	c.ContentInc = true
 
-	var installProgress, configExists string
+	var configExists string
 	var lastBlockTime int64
-
+	install := &model.Install{}
 	dbInit := false
 	if len(configIni["db_user"]) > 0 || (configIni["db_type"] == "sqlite") {
 		dbInit = true
@@ -132,16 +133,15 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	if dbInit {
 		var err error
-		//c.DCDB, err = utils.NewDbConnect(configIni)
 		c.DCDB = sql.DB
 		if c.DCDB.DB == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
 		if dbInit {
-			// отсутвие таблы выдаст ошибку, значит процесс инсталяции еще не пройден и надо выдать 0-й шаг
+			install := &model.Install{}
 			// the absence of table will show the mistake, this means that the process of installation is not finished and zero-step should be shown
-			_, err = c.DCDB.Single("SELECT progress FROM install").String()
+			err = install.Get()
 			if err != nil {
 				log.Error("%v", err)
 				dbInit = false
@@ -150,11 +150,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	}
 	stateName := ""
 	if sessStateID > 0 {
-		stateName, err = c.GetStateName(sessStateID)
+		stateParameters := &model.StateParameters{}
+		stateParameters.SetTableName(sessStateID)
+		err = stateParameters.GetByName("state_name")
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.StateName = stateName
+		c.StateName = stateParameters.Value
 		c.StateID = sessStateID
 		c.StateIDStr = converter.Int64ToStr(sessStateID)
 	}
@@ -163,31 +165,33 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	if dbInit {
 		var err error
-		installProgress, err = c.DCDB.Single("SELECT progress FROM install").String()
+		err = install.Get()
 		if err != nil {
 			log.Error("%v", err)
 		}
-		configExists, err = c.DCDB.Single("SELECT first_load_blockchain_url FROM config").String()
+		config := &model.Config{}
+		err = config.GetConfig()
 		if err != nil {
 			log.Error("%v", err)
 		}
+		configExists = config.FirstLoadBlockchainURL
 
-		// Инфа о последнем блоке
 		// Information about the last block
-		blockData, err := c.DCDB.GetLastBlockData()
+		block := &model.Block{}
+		blockData, err := block.GetLastBlockData()
 		if err != nil {
 			log.Error("%v", err)
 		}
-		//время последнего блока
 		// time of the last block
 		lastBlockTime = blockData["lastBlockTime"]
-		log.Debug("installProgress", installProgress, "configExists", configExists, "lastBlockTime", lastBlockTime)
+		log.Debug("installProgress", install.Progress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-		confirmedBlockID, err := c.GetConfirmedBlockID()
+		confirmation := &model.Confirmations{}
+		err = confirmation.GetMaxGoodBlock()
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.ConfirmedBlockID = confirmedBlockID
+		c.ConfirmedBlockID = confirmation.BlockID
 
 	}
 	r.ParseForm()
@@ -214,18 +218,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	log.Debug("parameters=", c.Parameters)
 
 	log.Debug("tpl_name=", tplName)
-	// если в параметрах пришел язык, то установим его
 	// if the language has come in parameters, install it
 	newLang := converter.StrToInt(c.Parameters["lang"])
 	if newLang > 0 {
 		log.Debug("newLang", newLang)
 		SetLang(w, r, newLang)
 	}
-	// уведомления
 	// notifications
-	//if utils.CheckInputData(parameters["alert"], "alert") {
 	c.Alert = c.Parameters["alert"]
-	//}
 
 	lang := GetLang(w, r, c.Parameters)
 	log.Debug("lang", lang)
@@ -241,26 +241,23 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	c.Periods = map[int64]string{86400: "1 " + c.Lang["day"], 604800: "1 " + c.Lang["week"], 31536000: "1 " + c.Lang["year"], 2592000: "1 " + c.Lang["month"], 1209600: "2 " + c.Lang["weeks"]}
 
 	match, _ := regexp.MatchString("^(installStep[0-9_]+)|(blockExplorer)$", tplName)
-	// CheckInputData - гарантирует, что tplName чист
 	// CheckInputData - ensures that tplName is clean
 	if tplName != "" && utils.CheckInputData(tplName, "tpl_name") && (sessWalletID != 0 || sessCitizenID > 0 || len(sessAddress) > 0 || match) {
-	} else if dbInit && installProgress == "complete" && len(configExists) == 0 {
-		// первый запуск, еще не загружен блокчейн
+	} else if dbInit && install.Progress == "complete" && len(configExists) == 0 {
 		// the first running, blockchain is not uploaded yet
 		tplName = "updatingBlockchain"
-	} else if dbInit && installProgress == "complete" && (sessWalletID != 0 || sessCitizenID > 0 || len(sessAddress) > 0) {
+	} else if dbInit && install.Progress == "complete" && (sessWalletID != 0 || sessCitizenID > 0 || len(sessAddress) > 0) {
 		tplName = "dashboardAnonym"
-	} else if dbInit && installProgress == "complete" {
+	} else if dbInit && install.Progress == "complete" {
 		if tplName != "loginECDSA" {
 			tplName = "login"
 		}
 	} else {
-		tplName = "installStep0" // самый первый запуск // the very first launch
+		tplName = "installStep0" // the very first launch
 	}
-	log.Debug("dbInit", dbInit, "installProgress", installProgress, "configExists", configExists)
+	log.Debug("dbInit", dbInit, "installProgress", install.Progress, "configExists", configExists)
 	log.Debug("tplName>>>>>>>>>>>>>>>>>>>>>>", tplName)
 
-	// идет загрузка блокчейна
 	// blockchain is loading
 	wTime := int64(2)
 	if configIni != nil && configIni["test_mode"] == "1" {
@@ -298,7 +295,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		tplName = "login"
 	}
 
-	log.Debug("tplName::", tplName, sessCitizenID, sessWalletID, installProgress)
+	log.Debug("tplName::", tplName, sessCitizenID, sessWalletID, install.Progress)
 
 	fmt.Println("tplName::", tplName, sessCitizenID, sessWalletID, sessAddress)
 	controller := r.FormValue("controllerHTML")
@@ -354,30 +351,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(CallPage(c, pageName)))
 		return
 	}
-	if len(tplName) > 0 && (sessCitizenID > 0 || sessWalletID != 0 || len(sessAddress) > 0) && installProgress == "complete" {
+	if len(tplName) > 0 && (sessCitizenID > 0 || sessWalletID != 0 || len(sessAddress) > 0) && install.Progress == "complete" {
 
 		if tplName == "login" {
 			tplName = "dashboard_anonym"
 		}
 
-		/*		if tplName == "home" && c.Parameters["first_select"] != "1" {
-				data, err := c.OneRow(`SELECT first_select, miner_id from ` + c.MyPrefix + `my_table`).Int64()
-				if err != nil {
-					log.Error("%v", err)
-				}
-				if data["first_select"] == 0 && data["miner_id"] == 0 && c.SessRestricted == 0 {
-					tplName = "firstSelect"
-				}
-			} */
 		c.TplName = tplName
-
-		/*		if dbInit {
-				// Если у юзера только 1 праймари ключ, то выдавать форму, где показываются данные для подписи и форма ввода подписи не нужно.
-				// If user has the only one primary key, there is no need to give the form where data for signatures and form for input are shown.
-				// Только если он сам не захочет, указав это в my_table
-				// But if he wants, he should point this into my_table
-				c.ShowSignData = false
-			}*/
 
 		if dbInit && tplName != "updatingBlockchain" {
 			html, err := CallController(c, "AlertMessage")
@@ -390,7 +370,6 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("tplName==", tplName)
 
-		// подсвечиваем красным номер блока, если идет процесс обновления
 		// We highlight the block number in red if the update process is in progress
 		var blockJs string
 		blockID, err := c.GetBlockID()
@@ -416,10 +395,8 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// тем, кто не зареган на пуле,не выдаем некоторые страницы
 		// We don't give some pages for ones who are not registered in the pool
 		if !converter.InSliceString(tplName, skipRestrictedUsers) {
-			// вызываем контроллер в зависимости от шаблона
 			// We call controller depending on template
 			html, err := CallController(c, tplName)
 			if err != nil {
@@ -434,14 +411,12 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("tplName", tplName)
 		html := ""
-		// если сессия обнулилась в процессе навигации по админке, то вместо login шлем на /, чтобы очистилось меню
 		// if session has been resetted during the navigation of the admin area, instead of login we'll send to / to clear the menu
 		if len(r.FormValue("tpl_name")) > 0 && tplName == "login" {
 			log.Debug("window.location.href = /")
 			w.Write([]byte("<script language=\"javascript\">window.location.href = \"/\"</script>If you are not redirected automatically, follow the <a href=\"/\">/</a>"))
 			return
 		}
-		// вызываем контроллер в зависимости от шаблона
 		// We call controller depending on template
 		html, err = CallController(c, tplName)
 		if err != nil {
@@ -455,7 +430,4 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte(html))
 	}
-
-	//sess.Set("username", 11111)
-
 }

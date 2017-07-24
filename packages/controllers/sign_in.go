@@ -21,6 +21,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -79,26 +80,19 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	/*	err = c.ExecSQL("UPDATE config SET dlt_wallet_id = ?", walletId)
-		if err != nil {
-			result.Error = err.Error()
-			return result
-		}*/
+	citizen := &model.Citizens{}
 	log.Debug("wallet_id : %d", walletID)
-	var citizenID int64
-	//	fmt.Println(`SingIN`, stateID)
 	if stateID > 0 {
-		//result = SignInJson{}
 		log.Debug("stateId %v", stateID)
 		if _, err := c.CheckStateName(stateID); err == nil {
-			citizenID, err = c.Single(`SELECT id FROM "`+converter.Int64ToStr(stateID)+`_citizens" WHERE id = ?`,
-				walletID).Int64()
+			citizen.SetTableName(stateID)
+			err = citizen.Get(stateID)
 			if err != nil {
 				result.Error = err.Error()
 				return result
 			}
-			log.Debug("citizenID %v", citizenID)
-			if citizenID == 0 {
+			log.Debug("citizenID %v", citizen.ID)
+			if citizen.ID == 0 {
 				stateID = 0
 				if utils.PrivCountry {
 					result.Error = "not a citizen"
@@ -111,16 +105,10 @@ func (c *Controller) AjaxSignIn() interface{} {
 		}
 	}
 	result.Result = true
-	/*	citizenID, err := c.GetCitizenIdByPublicKey(publicKey)
-		err = c.ExecSQL("UPDATE config SET citizen_id = ?", citizenID)
-		if err != nil {
-			result.Error = err.Error()
-			return result
-		}*/
 	c.sess.Set("wallet_id", walletID)
 	c.sess.Set("address", result.Address)
-	c.sess.Set("citizen_id", citizenID)
+	c.sess.Set("citizen_id", string(citizen.ID))
 	c.sess.Set("state_id", stateID)
-	log.Debug("wallet_id %d citizen_id %d state_id %d", walletID, citizenID, stateID)
+	log.Debug("wallet_id %d citizen_id %d state_id %d", walletID, citizen.ID, stateID)
 	return result //`{"result":1,"address": "` + address + `"}`, nil
 }

@@ -1,5 +1,7 @@
 package model
 
+import "github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 type Confirmations struct {
 	BlockID int64 `gorm:"primary_key;not null"`
 	Good    int32 `gorm:"not null"`
@@ -13,6 +15,10 @@ func (c *Confirmations) GetGoodBlock(goodCount int) error {
 
 func (c *Confirmations) GetConfirmation(blockID int64) error {
 	return DBConn.Where("blockID = ?", blockID).First(&c).Error
+}
+
+func (c *Confirmations) GetMaxGoodBlock() error {
+	return DBConn.Order("id desc").Where("good >= ?", consts.MIN_CONFIRMED_NODES).First(c).Error
 }
 
 func (c *Confirmations) Update() error {

@@ -19,6 +19,7 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -36,18 +37,20 @@ type changeStateSmartLawsPage struct {
 
 // ChangeStateSmartLaws is a controller which shows state parameters
 func (c *Controller) ChangeStateSmartLaws() (string, error) {
-
 	var err error
-
 	txType := "ChangeStateSmartLaws"
 	timeNow := time.Now().Unix()
 
 	parameter := c.r.FormValue(`parameter`)
 
-	StateSmartLaws, err := c.OneRow(`SELECT * FROM "`+c.StateIDStr+`_state_parameters" WHERE parameter = ?`, parameter).String()
+	stateParameter := &model.StateParameters{}
+	stateParameter.SetTableName(c.StateID)
+	err = stateParameter.GetByParameter(parameter)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+
+	resStateParameters := stateParameter.ToMap()
 
 	allStateParameters, err := c.GetList(`SELECT parameter FROM ea_state_parameters`).String()
 	if err != nil {
@@ -59,7 +62,7 @@ func (c *Controller) ChangeStateSmartLaws() (string, error) {
 		Lang:               c.Lang,
 		WalletID:           c.SessWalletID,
 		CitizenID:          c.SessCitizenID,
-		StateSmartLaws:     StateSmartLaws,
+		StateSmartLaws:     resStateParameters,
 		AllStateParameters: allStateParameters,
 		TimeNow:            timeNow,
 		TxType:             txType,

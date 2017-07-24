@@ -24,9 +24,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
 const aGenKeys = `ajax_gen_keys`
@@ -53,21 +53,27 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		result.Error = `Count must be from 1 to 50`
 		return result
 	}
-	govAccount, err := template.StateParam(int64(c.SessStateID), `gov_account`)
+	stateParameters := &model.StateParameters{}
+	stateParameters.SetTableName(c.SessStateID)
+	err = stateParameters.GetByName("gov_account")
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
+	govAccount := stateParameters.Value
+
 	if c.SessCitizenID != converter.StrToInt64(govAccount) || len(govAccount) == 0 {
 		result.Error = `Access denied`
 		return result
 	}
-	privKey, err := c.Single(`select private from testnet_emails where wallet=?`, c.SessCitizenID).String()
+
+	testnetKey := &model.TesnetKeys{}
+	err = testnetKey.GetByWallet(c.SessCitizenID)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	if len(privKey) == 0 {
+	if len(testnetKey.Private) == 0 {
 		result.Error = `unknown private key`
 		return result
 	}
@@ -91,12 +97,14 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		}
 		idnew := int64(crypto.Address(pub))
 
-		exist, err := c.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		wallet := &model.DltWallets{}
+		wallet.WalletID = idnew
+		exist, err := wallet.IsExists()
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
-		if exist != 0 {
+		if exist != false {
 			i--
 			continue
 		}
@@ -107,7 +115,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(c.SessCitizenID), c.SessStateID, flags)
 		pubhex := hex.EncodeToString(pub)
 		forsign += fmt.Sprintf(",%v,%v", ``, pubhex)
-		signature, err := crypto.Sign(privKey, forsign)
+		signature, err := crypto.Sign(string(testnetKey.Private), forsign)
 		if err != nil {
 			result.Error = err.Error()
 			return result
@@ -136,26 +144,28 @@ func (c *Controller) AjaxGenKeys() interface{} {
 			result.Error = err.Error()
 			return result
 		}
-		err = c.ExecSQL(`insert into testnet_keys (id, state_id, private, wallet) values(?,?,?,?)`,
-			c.SessCitizenID, c.SessStateID, spriv, idnew)
+		testnetKey.ID = c.SessCitizenID
+		testnetKey.StateID = c.SessStateID
+		testnetKey.Private = []byte(priv)
+		testnetKey.Wallet = idnew
+		err = testnetKey.Create()
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
 	}
 
-	result.Generated, err = c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenID, c.SessStateID).Int64()
+	result.Generated, err = testnetKey.GetGeneratedCount(c.SessCitizenID, c.SessStateID)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	result.Available, err = c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenID, c.SessStateID).Int64()
+	result.Available, err = testnetKey.GetAvailableCount(c.SessCitizenID, c.SessStateID)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
 	result.Used = result.Generated - result.Available
-	//	result.Generated = generated, Available: available, Used: generated - available}
 
 	return result
 }

@@ -46,8 +46,6 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	sessWalletID := GetSessWalletID(sess)
 	sessCitizenID := GetSessCitizenID(sess)
 	sessStateID := GetSessInt64("state_id", sess)
-	//	sessAccountId := GetSessInt64("account_id", sess)
-	//sessAddress := GetSessString(sess, "address")
 	log.Debug("sessWalletID %v / sessCitizenID %v", sessWalletID, sessCitizenID)
 
 	r.ParseForm()
@@ -65,7 +63,6 @@ func Template(w http.ResponseWriter, r *http.Request) {
 	}
 	params[`global`] = converter.Escape(r.FormValue("global"))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
-	//	fmt.Println(`PARAMS`, params)
 	tpl, err := template.CreateHTMLFromTemplate(page, sessCitizenID, sessStateID, &params)
 	if err != nil {
 		log.Error("%v", err)

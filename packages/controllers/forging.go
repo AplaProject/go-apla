@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -40,11 +41,13 @@ func (c *Controller) Forging() (string, error) {
 	txType := "DLTChangeHostVote"
 	timeNow := time.Now().Unix()
 
-	MyWalletData, err := c.OneRow("SELECT host, address_vote, fuel_rate FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
-	MyWalletData[`address`] = converter.AddressToString(c.SessWalletID)
+	wallet := &model.DltWallets{}
+	err := wallet.GetWallet(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	MyWalletData := wallet.ToMap()
+	MyWalletData[`address`] = converter.AddressToString(c.SessWalletID)
 	log.Debug("MyWalletData %v", MyWalletData)
 
 	TemplateStr, err := makeTemplate("forging", "forging", &forgingPage{

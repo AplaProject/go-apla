@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
@@ -67,27 +68,25 @@ func GetChain() {
 	for {
 		if sql.DB.DB != nil {
 			// b.hash, b.state_id,
-			explorer, err := sql.DB.GetAll(`SELECT   b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
-			where b.id > $1	order by b.id desc limit 30 offset 0`, -1, chainLatest)
-			if err == nil && len(explorer) > 0 {
-				chainLatest = converter.StrToInt64(explorer[0][`id`])
-				if chainOff+len(explorer) > chainLimit {
+			block := &model.Block{}
+			blockchain, err := block.GetBlocks(chainLatest, 30)
+			if err == nil && len(blockchain) > 0 {
+				chainLatest = blockchain[0].ID
+				if chainOff+len(blockchain) > chainLimit {
 					for i := 0; i < 50; i++ {
 						chainList[i] = chainList[chainOff-50+i]
 					}
 					chainOff = 50
 				}
-				for i := len(explorer); i > 0; i-- {
-					item := explorer[i-1]
-					walletID := converter.StrToInt64(item[`wallet_id`])
+				for i := len(blockchain); i > 0; i-- {
+					item := blockchain[i-1]
 					address := ``
-					if walletID != 0 {
-						address = converter.AddressToString(walletID)
+					if item.WalletID != 0 {
+						address = converter.AddressToString(item.WalletID)
 					}
 
-					chainList[chainOff] = ChainInfo{ID: converter.StrToInt64(item[`id`]),
-						//Hash: hex.EncodeToString([]byte(item[`hash`])), Wallet: walletID,State: utils.StrToInt64(item[`state_id`]),
-						Address: address, Time: item[`time`], Tx: item[`tx`]}
+					chainList[chainOff] = ChainInfo{ID: item.WalletID,
+						Address: address, Time: string(item.Time), Tx: string(item.Tx)}
 					chainOff++
 				}
 			}

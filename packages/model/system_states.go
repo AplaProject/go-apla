@@ -20,3 +20,8 @@ func (ss *SystemStates) GetLast() error {
 func (ss *SystemStates) Delete() error {
 	return DBConn.Delete(ss).Error
 }
+
+func (ss *SystemStates) IsExists(stateID int64) (bool, error) {
+	query := DBConn.Where("id = ?", stateID).First(ss)
+	return !query.RecordNotFound(), query.Error
+}

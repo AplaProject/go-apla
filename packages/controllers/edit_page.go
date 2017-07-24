@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -70,22 +71,27 @@ func (c *Controller) EditPage() (string, error) {
 	var block bool
 	for i := 0; i < 30; i++ {
 		if i == 0 {
-			dataPage, err := c.OneRow(`SELECT * FROM "`+prefix+`_pages" WHERE name = ?`, name).String()
+			page := &model.Page{}
+			page.SetTableName(prefix)
+			err = page.Get(name)
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
-			if len(dataPage) > 0 && len(dataPage[`conditions`]) == 0 {
+			dataPage := page.ToMap()
+			if len(dataPage[`conditions`]) == 0 {
 				dataPage[`conditions`] = "ContractConditions(`MainCondition`)"
 			}
 
-			rbID = converter.StrToInt64(dataPage["rb_id"])
+			rbID = page.RbID
 			dataPageMain = dataPage
 			block = dataPage[`menu`] == `0`
 		} else {
-			data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
+			rollback := &model.Rollback{}
+			err := rollback.Get(rbID)
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
+			data := rollback.ToMap()
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
 			fmt.Printf("%s", messageMap)
@@ -98,14 +104,21 @@ func (c *Controller) EditPage() (string, error) {
 		}
 	}
 
-	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, dataPageMain["menu"]).String()
+	menu := &model.Menu{}
+	menu.SetTableName(prefix)
+	err = menu.Get(dataPageMain["menu"])
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
+	dataMenu := menu.ToMap()
 
-	allMenu, err := c.GetAll(`SELECT * FROM "`+prefix+`_menu"`, -1)
+	menus, err := menu.GetAll(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+	allMenu := make([]map[string]string, 0)
+	for _, m := range menus {
+		allMenu = append(allMenu, m.ToMap())
 	}
 
 	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage{

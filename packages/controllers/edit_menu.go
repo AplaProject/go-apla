@@ -19,6 +19,7 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -56,11 +57,14 @@ func (c *Controller) EditMenu() (string, error) {
 		name = c.r.FormValue("name")
 	}
 
-	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, name).String()
+	menu := &model.Menu{}
+	menu.SetTableName(prefix)
+	err = menu.Get(name)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	if len(dataMenu) > 0 && len(dataMenu[`conditions`]) == 0 {
+	dataMenu := menu.ToMap()
+	if len(dataMenu[`conditions`]) == 0 {
 		dataMenu[`conditions`] = "ContractConditions(`MainCondition`)"
 	}
 

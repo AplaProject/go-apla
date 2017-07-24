@@ -17,10 +17,11 @@
 package controllers
 
 import (
-	"encoding/hex"
+
 	//	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 const aExplorer = `ajax_explorer`
@@ -37,31 +38,28 @@ func init() {
 
 // AjaxExplorer is a controller of ajax_explorer request
 func (c *Controller) AjaxExplorer() interface{} {
+	var blockchain []model.Block
+	var err error
 	result := ExplorerJSON{}
 	latest := converter.StrToInt64(c.r.FormValue("latest"))
+	data := make([]map[string]string, 0)
+
 	if latest > 0 {
-		result.Latest, _ = c.Single("select max(id) from block_chain").Int64()
+		block := &model.Block{}
+		block.GetMaxBlock()
+		result.Latest = block.ID
 		if result.Latest > latest {
-			explorer, err := c.GetAll(`SELECT  b.hash, b.state_id, b.wallet_id, b.time, b.tx, b.id FROM block_chain as b
-		where b.id > $1	order by b.id desc limit 30 offset 0`, -1, latest)
-			if err == nil {
-				for ind := range explorer {
-					explorer[ind][`hash`] = hex.EncodeToString([]byte(explorer[ind][`hash`]))
-					if len(explorer[ind][`wallet_id`]) > 0 {
-						explorer[ind][`wallet_address`] = converter.AddressToString(converter.StrToInt64(explorer[ind][`wallet_id`]))
-					} else {
-						explorer[ind][`wallet_address`] = ``
-					}
-				}
-				result.Data = explorer
-				if explorer != nil && len(explorer) > 0 {
-					result.Latest = converter.StrToInt64(explorer[0][`id`])
+			blockchain, err = block.GetBlocks(latest, 30)
+			if err != nil {
+				for _, block := range blockchain {
+					data = append(data, block.ToMap())
 				}
 			}
 		}
 	}
-	if result.Data == nil {
-		result.Data = make([]map[string]string, 0)
+	result.Data = data
+	if data != nil && len(data) > 0 {
+		result.Latest = blockchain[0].ID
 	}
 	return result
 }

@@ -372,11 +372,11 @@ func main() {
 	if !utils.InSliceString(`testnet_emails`, list) {
 		if err = utils.DB.ExecSQL(`CREATE SEQUENCE testnet_emails_id_seq START WITH 1;
 CREATE TABLE "testnet_emails" (
-"id" integer NOT NULL DEFAULT nextval('testnet_emails_id_seq'),
+"id" bigint NOT NULL DEFAULT nextval('testnet_emails_id_seq'),
 "email" varchar(128) NOT NULL DEFAULT '',
 "country" varchar(128) NOT NULL DEFAULT '',
 "currency" varchar(32) NOT NULL DEFAULT '',
-"private" varchar(64) NOT NULL DEFAULT '',
+"private" bytea NOT NULL DEFAULT '',
 "wallet" bigint NOT NULL DEFAULT '0',
 "status" integer NOT NULL DEFAULT '0',
 "code" integer NOT NULL DEFAULT '0',
@@ -450,8 +450,8 @@ CREATE INDEX testnet_index_email ON "testnet_emails" (email);`); err != nil {
 	if !utils.InSliceString(`testnet_keys`, list) {
 		if err = utils.DB.ExecSQL(`CREATE TABLE "testnet_keys" (
 		"id" bigint NOT NULL DEFAULT '0',
-		"state_id" integer NOT NULL DEFAULT '0',
-		"private" varchar(64) NOT NULL DEFAULT '',
+		"state_id" bigint NOT NULL DEFAULT '0',
+		"private" bytea NOT NULL DEFAULT '',
 		"wallet" bigint NOT NULL DEFAULT '0',
 		"status" integer NOT NULL DEFAULT '0'
 		);

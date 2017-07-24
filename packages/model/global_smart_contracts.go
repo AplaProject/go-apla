@@ -20,9 +20,9 @@ func (sc *SmartContracts) TableName() string {
 	return sc.tableName
 }
 
-func GetAllSmartContracts() ([]SmartContracts, error) {
+func GetAllSmartContracts(tablePrefix string) ([]SmartContracts, error) {
 	contracts := new([]SmartContracts)
-	err := DBConn.Find(contracts).Error
+	err := DBConn.Order("id").Table(tablePrefix + "_smart_contracts").Find(contracts).Error
 	if err != nil {
 		return nil, err
 	}
@@ -73,4 +73,17 @@ func CreateSmartContractMainCondition(id string, walletID int64) error {
             action {}
     }`, walletID, 1,
 	).Error
+}
+
+func (sc *SmartContracts) ToMap() map[string]string {
+	result := make(map[string]string)
+	result["id"] = string(sc.ID)
+	result["name"] = sc.Name
+	result["value"] = string(sc.Value)
+	result["wallet_id"] = string(sc.WalletID)
+	result["active"] = sc.Active
+	result["conditions"] = sc.Conditions
+	result["variables"] = string(sc.Variables)
+	result["rb_id"] = string(sc.RbID)
+	return result
 }

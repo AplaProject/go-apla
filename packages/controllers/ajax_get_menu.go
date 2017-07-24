@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -45,14 +46,16 @@ func (c *Controller) AjaxGetMenu() interface{} {
 		prefix = c.StateIDStr
 	}
 
-	dataMenu, err := c.OneRow(`SELECT * FROM "`+prefix+`_menu" WHERE name = ?`, name).String()
+	dataMenu := &model.Menu{}
+	dataMenu.SetTableName(prefix)
+	err := dataMenu.Get(name)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 
-	menu.Name = dataMenu["name"]
-	menu.Value = dataMenu["value"]
-	menu.Conditions = dataMenu["conditions"]
+	menu.Name = dataMenu.Name
+	menu.Value = dataMenu.Value
+	menu.Conditions = dataMenu.Conditions
 
 	return menu
 }

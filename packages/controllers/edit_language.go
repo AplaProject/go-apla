@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"sort"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -66,10 +67,13 @@ func (c *Controller) EditLanguage() (string, error) {
 
 	list := make([]LangRes, 0)
 	if len(name) > 0 {
-		res, err := c.Single(`SELECT res FROM "`+prefix+`_languages" where name=?`, name).String()
+		language := &model.Language{}
+		language.SetTableName(prefix)
+		err := language.Get(name)
 		if err != nil {
 			return "", err
 		}
+		res := language.Res
 		var rmap map[string]string
 		err = json.Unmarshal([]byte(res), &rmap)
 		if err != nil {

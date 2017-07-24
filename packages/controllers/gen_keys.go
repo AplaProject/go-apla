@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
 
@@ -43,11 +44,12 @@ func (c *Controller) GenKeys() (string, error) {
 	if c.SessCitizenID != converter.StrToInt64(govAccount) {
 		return ``, fmt.Errorf(`Access denied`)
 	}
-	generated, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=?`, c.SessCitizenID, c.SessStateID).Int64()
+	testnetKeys := &model.TestnetKeys{}
+	generated, err := testnetKeys.GetGeneratedCount(c.SessCitizenID, c.SessStateID)
 	if err != nil {
 		return ``, err
 	}
-	available, err := c.Single(`select count(id) from testnet_keys where id=? and state_id=? and status=0`, c.SessCitizenID, c.SessStateID).Int64()
+	available, err := testnetKeys.GetAvailableCount(c.SessCitizenID, c.SessStateID)
 	if err != nil {
 		return ``, err
 	}

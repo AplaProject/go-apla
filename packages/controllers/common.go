@@ -206,23 +206,6 @@ func CallMethod(i interface{}, methodName string) (string, error) {
 	return "", fmt.Errorf("method not found")
 }
 
-/*
-func GetSessEUserId(sess session.SessionStore) int64 {
-	sessUserId := sess.Get("e_user_id")
-	log.Debug("sessUserId: %v", sessUserId)
-	switch sessUserId.(type) {
-	case int64:
-		return sessUserId.(int64)
-	case int:
-		return int64(sessUserId.(int))
-	case string:
-		return utils.StrToInt64(sessUserId.(string))
-	default:
-		return 0
-	}
-	return 0
-}*/
-
 // GetSessWalletID returns session's wallet id
 func GetSessWalletID(sess session.SessionStore) int64 {
 	sessUserID := sess.Get("wallet_id")

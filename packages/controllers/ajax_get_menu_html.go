@@ -19,6 +19,7 @@ package controllers
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -33,35 +34,30 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	if global == "" || global == "0" {
 		prefix = c.StateIDStr
 	}
-	menuName := ``
-	menu := ``
 	var err error
+	page := &model.Page{}
+	menu := &model.Menu{}
 	if len(prefix) > 0 {
 
-		menuName, err = c.Single(`SELECT menu FROM "`+prefix+`_pages" WHERE name = ?`, pageName).String()
+		page.SetTableName(prefix)
+		err = page.Get(pageName)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		menu, err = c.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, menuName).String()
+
+		menu.SetTableName(prefix)
+		err = menu.Get(page.Menu)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 	}
-	/*	outmenu := ReplaceMenu(menu)
-		menu = fmt.Sprintf(`{"idname": "%s", "menu": "%s<script>
-		$('.aside .nav li').removeClass('active');
-		$('.citizen_`+pageName+`').addClass('active');
-		</script>"}`, menuName, strings.Replace(strings.Replace(outmenu, "\"", "\\\"", -1), `li class='`, `li class='menu_page `, -1))
-
-		return strings.Replace(strings.Replace(strings.Replace(menu, "\n", "", -1), "\r", "", -1), "\t", "", -1), nil
-	*/
 	params := make(map[string]string)
 	params[`state_id`] = c.StateIDStr
 	params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
-	if len(menu) > 0 {
-		menu = language.LangMacro(textproc.Process(menu, &params), converter.StrToInt(c.StateIDStr), params[`accept_lang`]) +
-			`<!--#` + menuName + `#-->`
+	if len(menu.Value) > 0 {
+		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), converter.StrToInt(c.StateIDStr), params[`accept_lang`]) +
+			`<!--#` + page.Menu + `#-->`
 	}
-	return menu, nil
+	return menu.Value, nil
 
 }

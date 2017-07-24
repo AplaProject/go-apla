@@ -19,6 +19,7 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -35,15 +36,17 @@ type stateParametersPage struct {
 
 // StateParameters is a controller for the list of state parameters
 func (c *Controller) StateParameters() (string, error) {
-
-	var err error
-
 	txType := "StateParameters"
 	timeNow := time.Now().Unix()
 
-	stateParameters, err := c.GetAll(`SELECT * FROM "`+c.StateIDStr+`_state_parameters" order by name`, -1)
+	stateParams := &model.StateParameters{}
+	rows, err := stateParams.GetAllStateParameters(c.StateIDStr)
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+	stateParameters := make([]map[string]string, 0)
+	for _, row := range rows {
+		stateParameters := append(stateParameters, row.ToMap())
 	}
 
 	TemplateStr, err := makeTemplate("state_parameters", "stateParameters", &stateParametersPage{

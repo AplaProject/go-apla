@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -24,15 +25,15 @@ import (
 func (c *Controller) TxStatus() (string, error) {
 
 	hash := c.r.FormValue("hash")
-
-	tx, err := c.OneRow(`SELECT block_id, error FROM transactions_status WHERE hash = [hex]`, hash).String()
+	ts := &model.TransactionsStatus{}
+	err := ts.Get([]byte(hash))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	if tx["block_id"] != "0" && tx["block_id"] != "" {
-		return `{"success":"` + tx["block_id"] + `"}`, nil
-	} else if len(tx["error"]) > 0 {
-		return "", utils.ErrInfo(tx["error"])
+	if ts.BlockID != 0 {
+		return `{"success":"` + string(ts.BlockID) + `"}`, nil
+	} else if len(ts.Error) > 0 {
+		return "", utils.ErrInfo(ts.Error)
 	}
 	return `{"wait":"1"}`, nil
 }

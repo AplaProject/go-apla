@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 const aAddresses = `ajax_addresses`
@@ -44,25 +45,44 @@ func (c *Controller) AjaxAddresses() interface{} {
 		req    []map[string]string
 	)
 	result.Address = make([]string, 0)
-	addr := strings.Replace(c.r.FormValue(`address`), `-`, ``, -1)
+	walletAddress := strings.Replace(c.r.FormValue(`address`), `-`, ``, -1)
 	state := c.r.FormValue(`state`)
-	var request string
-	if len(state) == 0 {
-		request = `select id from "` + converter.Int64ToStr(c.SessStateID) + `_citizens" where id>=? order by id`
-	} else if state == `0` {
-		request = `select wallet_id as id from dlt_wallets where wallet_id>=? order by wallet_id`
-	} else {
-		request = `select id from "` + converter.EscapeName(state) + `_citizens" where id>=? order by id`
-	}
-	ret, _ := strconv.ParseUint(addr+strings.Repeat(`0`, 20-len(addr)), 10, 64)
-	req, err = c.GetAll(request, 7, int64(ret))
+	startCitizenID, _ := strconv.ParseInt(walletAddress+strings.Repeat(`0`, 20-len(walletAddress)), 10, 64)
+	var citizens []model.Citizens
+	var dltWallets []model.DltWallets
 
-	if err != nil {
-		result.Error = err.Error()
+	if len(state) == 0 {
+		citizens, err = model.GetAllCitizensWhereIdMoreThan(c.SessStateID, startCitizenID, 7)
+		if err != nil {
+			result.Error = err.Error()
+		} else {
+			for _, citizen := range citizens {
+				result.Address = append(result.Address, converter.AddressToString(citizen.ID))
+			}
+		}
+	} else if state == `0` {
+		dltWallets, err = model.GetWallets(startCitizenID, 7)
+		if err != nil {
+			result.Error = err.Error()
+		} else {
+			for _, wallet := range dltWallets {
+				result.Address = append(result.Address, converter.AddressToString(wallet.WalletID))
+			}
+		}
 	} else {
-		for _, ireq := range req {
-			result.Address = append(result.Address, converter.AddressToString(converter.StrToInt64(ireq[`id`])))
+		tablePrefix, err := strconv.ParseInt(converter.EscapeName(state), 10, 64)
+		if err != nil {
+			result.Error = err.Error()
+		}
+		citizens, err = model.GetAllCitizensWhereIdMoreThan(tablePrefix, startCitizenID, 7)
+		if err != nil {
+			result.Error = err.Error()
+		} else {
+			for _, ireq := range req {
+				result.Address = append(result.Address, converter.AddressToString(converter.StrToInt64(ireq[`id`])))
+			}
 		}
 	}
+
 	return result
 }

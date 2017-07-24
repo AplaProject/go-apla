@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -42,25 +43,25 @@ func (c *Controller) Contracts() (string, error) {
 		global = "0"
 	}
 
-	stateSmartLaws, err := c.GetAll(`SELECT * FROM "`+prefix+`_smart_contracts" order by id`, -1)
+	contracts, err := model.GetAllSmartContracts(prefix)
+	stateSmartLaws := make([]map[string]string, 0)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	for ind, val := range stateSmartLaws {
-		if val[`wallet_id`] == `NULL` {
-			stateSmartLaws[ind][`wallet`] = ``
-		} else {
-			stateSmartLaws[ind][`wallet`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
-		}
-		if val[`active`] == `NULL` {
-			stateSmartLaws[ind][`active`] = ``
-		}
+	for ind, contract := range contracts {
+		stateSmartLaws = append(stateSmartLaws, contract.ToMap())
+		stateSmartLaws[ind][`wallet`] = converter.AddressToString(contract.WalletID)
 	}
 	var allStateParameters []string
 	if global == "0" {
-		allStateParameters, err = c.GetList(`SELECT name FROM "` + prefix + `_state_parameters"`).String()
+		stateParameters := &model.StateParameters{}
+		list, err := stateParameters.GetAllStateParameters(prefix)
 		if err != nil {
 			return "", utils.ErrInfo(err)
+		}
+		allStateParameters := make([]string, 0)
+		for _, param := range list {
+			allStateParameters = append(allStateParameters, param.Name)
 		}
 	}
 
