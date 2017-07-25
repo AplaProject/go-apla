@@ -88,7 +88,7 @@ func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) err
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
 	fields := make([]smartField, 0)
-	result := smartFieldsResult{Fields: fields, Name: info.Name, Active: info.Active}
+	result := smartFieldsResult{Name: info.Name, Active: info.Active}
 
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
@@ -114,6 +114,7 @@ func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) err
 			fields = append(fields, field)
 		}
 	}
+	result.Fields = fields
 	data.result = result
 	return nil
 }

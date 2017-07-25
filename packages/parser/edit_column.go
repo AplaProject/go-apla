@@ -49,10 +49,11 @@ func (p *EditColumnParser) Validate() error {
 
 	stateIdStr := converter.Int64ToStr(p.EditColumn.Header.StateID)
 	table := stateIdStr + `_tables`
-	if strings.HasPrefix(stateIdStr, `global`) {
+	if strings.HasPrefix(p.EditColumn.TableName, `global`) {
 		table = `global_tables`
 	}
-	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.EditColumn.ColumnName, p.EditColumn.TableName).Int64()
+	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`,
+		p.EditColumn.ColumnName, p.EditColumn.TableName).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

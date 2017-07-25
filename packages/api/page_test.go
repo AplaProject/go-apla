@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 func TestPage(t *testing.T) {
@@ -69,6 +71,46 @@ func TestPage(t *testing.T) {
 		if ret[`menu`].(string) != menu {
 			t.Error(fmt.Errorf(`Page menu is not right %s`, ret[`menu`].(string)))
 			return
+		}
+		append := "P(appended, Append paragraph)"
+		form = url.Values{"value": {append}, `global`: {glob.value}}
+
+		if err := putTx(`appendpage/`+name, &form); err != nil {
+			t.Error(err)
+			return
+		}
+		ret, err = sendGet(`page/`+name+glob.url, nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if ret[`value`].(string) != value+"\r\n"+append {
+			t.Error(fmt.Errorf(`Appended page is not right %s`, ret[`value`].(string)))
+			return
+		}
+	}
+}
+
+func TestPageList(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, glob := range []string{``, `?limit=10&global=1`} {
+		ret, err := sendGet(`pagelist`+glob, nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		count := converter.StrToInt64(ret[`count`].(string))
+		if len(glob) == 0 {
+			if count == 0 {
+				t.Error(fmt.Errorf(`empty page list`))
+			}
+		} else {
+			if count == 0 || len(ret[`list`].([]interface{})) == 0 || len(ret[`list`].([]interface{})) > 10 {
+				t.Error(fmt.Errorf(`wrong global page list`))
+			}
 		}
 	}
 }

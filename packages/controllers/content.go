@@ -133,7 +133,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	if dbInit {
 		var err error
 		c.DCDB = sql.DB
-		if c.DCDB.DB == nil {
+		if c.DCDB == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
