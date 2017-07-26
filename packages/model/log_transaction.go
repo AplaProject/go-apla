@@ -21,3 +21,11 @@ func (lt *LogTransactions) Get() error {
 func (lt *LogTransactions) Create() error {
 	return DBConn.Create(lt).Error
 }
+
+func GetLogTransactionsCount(hash []byte) (int64, error) {
+	var rowsCount int64
+	if err := DBConn.Exec("SELECT count(hash) FROM log_transactions WHERE hex(hash) = ?", hash).Scan(&rowsCount).Error; err != nil {
+		return -1, err
+	}
+	return rowsCount, nil
+}

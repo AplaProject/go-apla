@@ -17,37 +17,17 @@
 package tcpserver
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/* Выдаем тело указанного блока
-// Give the body of the specified block
- * запрос шлет демон blocksCollection и queue_parser_blocks через p.GetBlocks()
-// blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
-*/
-
 // Type7 writes the body of the specified block
-func (t *TCPServer) Type7() {
-
-	buf := make([]byte, 4)
-	_, err := t.Conn.Read(buf)
+// blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
+func (t *TCPServer) Type7(request *GetBodyRequest) (*GetBodyResponse, error) {
+	block := &model.Block{}
+	err := block.GetBlock(int64(request.BlockID))
 	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
+		return nil, utils.ErrInfo(err)
 	}
-	blockID := converter.BinToDec(buf)
-	block, err := t.Single("SELECT data FROM block_chain WHERE id  =  ?", blockID).Bytes()
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
-	}
-
-	log.Debug("blockID %d", blockID)
-	log.Debug("block %x", block)
-	err = utils.WriteSizeAndData(block, t.Conn)
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
-	}
+	return &GetBodyResponse{Data: block.Data}, nil
 }

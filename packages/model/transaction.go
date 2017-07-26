@@ -97,6 +97,14 @@ func (t *Transactions) Create() error {
 	return DBConn.Create(t).Error
 }
 
+func GetTransactionsCount(hash []byte) (int64, error) {
+	var rowsCount int64
+	if err := DBConn.Exec("SELECT count(hash) FROM transactions WHERE hex(hash) = ?", hash).Scan(&rowsCount).Error; err != nil {
+		return -1, err
+	}
+	return rowsCount, nil
+}
+
 /*
 func (db *DCDB) GetAllDataHashFromTransactionsAndQueue() ([]map[string]string, error) {
 	return db.GetAll(`SELECT * FROM (SELECT data, hash FROM queue_tx UNION SELECT data, hash FROM transactions WHERE verified = 0 AND used = 0)  AS x`, -1)

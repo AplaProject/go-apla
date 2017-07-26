@@ -17,76 +17,49 @@
 package tcpserver
 
 import (
-	"io"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/*
- * от disseminator
-// from disseminator
-*/
+// Type2 serves requests from disseminator
+func (t *TCPServer) Type2(r *DisRequest) (*DisTrResponse, error) {
 
-func (t *TCPServer) Type2() {
-	// размер данных
-	// data size
-	buf := make([]byte, 4)
-	_, err := t.Conn.Read(buf)
+	binaryData := r.Data
+	// take the transactions from usual users but not nodes.
+	_, _, decryptedBinData, err := t.DecryptData(&binaryData)
 	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
+		return nil, utils.ErrInfo(err)
 	}
-	size := converter.BinToDec(buf)
-	log.Debug("size: %d", size)
-	if size < consts.MAX_TX_SIZE {
-		// сами данные
-		// data size
-		binaryData := make([]byte, size)
-		//binaryData, err = ioutil.ReadAll(t.Conn)
-		_, err = io.ReadFull(t.Conn, binaryData)
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			return
-		}
-		/*
-					 * Прием тр-ий от простых юзеров, а не нодов. Вызывается демоном disseminator
-			// take the transactions from usual users but not nodes. It's called by 'disseminator' daemon
-					 * */
-		_, _, decryptedBinData, err := t.DecryptData(&binaryData)
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			return
-		}
-		log.Debug("decryptedBinData: %x", decryptedBinData)
-		// проверим размер
-		// check the size
-		if int64(len(binaryData)) > consts.MAX_TX_SIZE {
-			log.Debug("%v", utils.ErrInfo("len(txBinData) > max_tx_size"))
-			return
-		}
-		if len(binaryData) < 5 {
-			log.Debug("%v", utils.ErrInfo("len(binaryData) < 5"))
-			return
-		}
-		decryptedBinDataFull := decryptedBinData
-		hash, err := crypto.Hash(decryptedBinDataFull)
-		if err != nil {
-			log.Fatal(err)
-		}
-		hash = converter.BinToHex(hash)
-		err = t.ExecSQL(`DELETE FROM queue_tx WHERE hex(hash) = ?`, hash)
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			return
-		}
-		log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", hash, converter.BinToHex(decryptedBinDataFull))
-		err = t.ExecSQL(`INSERT INTO queue_tx (hash, data) VALUES ([hex], ?, [hex])`, hash, converter.BinToHex(decryptedBinDataFull))
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			return
-		}
+
+	if int64(len(binaryData)) > consts.MAX_TX_SIZE {
+		return nil, utils.ErrInfo("len(txBinData) > max_tx_size")
 	}
+
+	if len(binaryData) < 5 {
+		return nil, utils.ErrInfo("len(binaryData) < 5")
+	}
+
+	decryptedBinDataFull := decryptedBinData
+	hash, err := crypto.Hash(decryptedBinDataFull)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hash = converter.BinToHex(hash)
+	err = model.DeleteQueuedTransaction(hash)
+	if err != nil {
+		return nil, utils.ErrInfo(err)
+	}
+
+	hexBinData := converter.BinToHex(decryptedBinDataFull)
+	log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", hash, hexBinData)
+	err = model.InsertIntoQueueTransaction(hash, hexBinData, 0)
+	if err != nil {
+		return nil, utils.ErrInfo(err)
+	}
+
+	return &DisTrResponse{}, nil
 }

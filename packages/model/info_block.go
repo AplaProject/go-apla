@@ -30,3 +30,12 @@ func (ib *InfoBlock) Save() error {
 func (ib *InfoBlock) Create() error {
 	return DBConn.Create(ib).Error
 }
+
+func GetCurBlockID() (int64, error) {
+	curBlock := &InfoBlock{}
+	err := curBlock.GetInfoBlock()
+	if err != nil {
+		return 0, err
+	}
+	return curBlock.BlockID, nil
+}

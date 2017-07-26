@@ -454,10 +454,10 @@ func loadFromFile(ctx context.Context, parser *parser.Parser, fileName string) e
 		}
 
 		block, err := readBlock(file)
-		if err == io.EOF {
-			return nil
-		}
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return err
 		}
 

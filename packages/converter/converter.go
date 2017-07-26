@@ -316,6 +316,8 @@ func DecToBin(v interface{}, sizeBytes int64) []byte {
 		dec = int64(v.(int))
 	case int64:
 		dec = v.(int64)
+	case uint64:
+		dec = int64(v.(uint64))
 	case string:
 		dec = StrToInt64(v.(string))
 	}

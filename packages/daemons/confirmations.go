@@ -23,8 +23,8 @@ import (
 	"context"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -157,12 +157,6 @@ func Confirmations(d *daemon, ctx context.Context) error {
 func checkConf(host string, blockID int64) string {
 
 	logger.Debug("host: %v", host)
-	/*tcpAddr, err := net.ResolveTCPAddr("tcp", host)
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return "0"
-	}
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)*/
 	conn, err := net.DialTimeout("tcp", host, 5*time.Second)
 	if err != nil {
 		logger.Debug("%v", utils.ErrInfo(err))
@@ -173,32 +167,23 @@ func checkConf(host string, blockID int64) string {
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
 	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
 
-	// вначале шлем тип данных, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
-	// firstly send a data type for the receiving party could understand how exacetly to process the data sent
-	_, err = conn.Write(converter.DecToBin(4, 2))
+	type confRequest struct {
+		Type    uint16
+		BlockID uint32
+	}
+	err = tcpserver.SendRequest(&confRequest{Type: 4, BlockID: blockID}, conn)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return "0"
 	}
 
-	// в 4-х байтах пишем ID блока, хэш которого хотим получить
-	// record the block ID that we want to recive in 4 bytes
-	size := converter.DecToBin(blockID, 4)
-	_, err = conn.Write(size)
+	resp := &tcpserver.ConfirmResponse{}
+	err = tcpserver.ReadRequest(resp, conn)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return "0"
 	}
-
-	// ответ всегда 32 байта
-	// the response is always 32 bytes
-	hash := make([]byte, 32)
-	_, err = conn.Read(hash)
-	if err != nil {
-		logger.Error("%v", utils.ErrInfo(err))
-		return "0"
-	}
-	return string(hash)
+	return string(resp.Hash)
 }
 
 // IsReachable checks if there is blockID on the host

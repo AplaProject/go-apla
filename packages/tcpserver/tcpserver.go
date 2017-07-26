@@ -19,12 +19,13 @@ package tcpserver
 import (
 	"flag"
 	//	"fmt"
-	"net"
-	//	"runtime"
-	"sync"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	//	"runtime"
+
+	"sync/atomic"
+
+	"io"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
@@ -32,7 +33,6 @@ import (
 var (
 	log     = logging.MustGetLogger("tcpserver")
 	counter int64
-	mutex   = &sync.Mutex{}
 )
 
 func init() {
@@ -42,60 +42,65 @@ func init() {
 // TCPServer is a structure for TCP connecvtion
 type TCPServer struct {
 	*sql.DCDB
-	Conn net.Conn
-}
-
-func (t *TCPServer) deferClose() {
-	t.Conn.Close()
-	mutex.Lock()
-	counter--
-	//	fmt.Println("--", counter)
-	mutex.Unlock()
 }
 
 // HandleTCPRequest proceed TCP requests
-func (t *TCPServer) HandleTCPRequest() {
+func (t *TCPServer) HandleTCPRequest(rw io.ReadWriter) {
+	defer func() {
+		atomic.AddInt64(&counter, -1)
+	}()
 
-	/*	fmt.Println("NumCPU:", runtime.NumCPU(),
-		" NumGoRoutine:", runtime.NumGoroutine(),
-		" t.counter:", counter)
-	*/
-	var err error
-
-	log.Debug("HandleTCPRequest from %v", t.Conn.RemoteAddr())
-	defer t.deferClose()
-
-	mutex.Lock()
-	if counter > 20 {
-		t.Conn.Close()
-		mutex.Unlock()
+	count := atomic.AddInt64(&counter, +1)
+	if count > 20 {
 		return
 	}
-	counter++
-	//		fmt.Println("++", counter)
-	mutex.Unlock()
 
-	// тип данных
-	// data type
-	buf := make([]byte, 2)
-	_, err = t.Conn.Read(buf)
+	dType := &TransactionType{}
+	err := ReadRequest(dType, rw)
 	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
 		return
 	}
-	dataType := converter.BinToDec(buf)
-	log.Debug("dataType %v", dataType)
-	switch dataType {
+
+	var response interface{}
+
+	switch dType.Type {
 	case 1:
-		t.Type1()
+		req := &DisRequest{}
+		err = ReadRequest(req, rw)
+		if err != nil {
+			err = t.Type1(req, rw)
+		}
+
 	case 2:
-		t.Type2()
+		req := &DisRequest{}
+		err = ReadRequest(req, rw)
+		if err != nil {
+			response, err = t.Type2(req)
+		}
+
 	case 4:
-		t.Type4()
+		req := &ConfirmRequest{}
+		err = ReadRequest(req, rw)
+		if err != nil {
+			response, err = t.Type4(req)
+		}
+
 	case 7:
-		t.Type7()
+		req := &GetBodyRequest{}
+		err = ReadRequest(req, rw)
+		if err != nil {
+			response, err = t.Type7(req)
+		}
+
 	case 10:
-		t.Type10()
+		response, err = t.Type10()
 	}
-	log.Debug("END")
+
+	if response != nil && err != nil {
+		err = SendRequest(&response, rw)
+	}
+
+	if err != nil {
+		log.Errorf("handle error: %s", err)
+	}
 }
