@@ -49,7 +49,7 @@ func (c *Controller) Signatures() (string, error) {
 
 	signatures := make([]map[string]string, 0)
 	for _, sign := range rows {
-		signatures := append(signatures, sign.ToMap())
+		signatures = append(signatures, sign.ToMap())
 	}
 
 	TemplateStr, err := makeTemplate("signatures_list", "signatures_list", &signaturesPage{

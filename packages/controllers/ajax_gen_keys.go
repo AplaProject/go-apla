@@ -67,7 +67,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		return result
 	}
 
-	testnetKey := &model.TesnetKeys{}
+	testnetKey := &model.TestnetKeys{}
 	err = testnetKey.GetByWallet(c.SessCitizenID)
 	if err != nil {
 		result.Error = err.Error()

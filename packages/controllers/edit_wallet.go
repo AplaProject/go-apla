@@ -47,7 +47,6 @@ func init() {
 func (c *Controller) EditWallet() (string, error) {
 
 	var (
-		err   error
 		data  map[string]string
 		alert string
 	)

@@ -46,7 +46,7 @@ func (c *Controller) StateParameters() (string, error) {
 	}
 	stateParameters := make([]map[string]string, 0)
 	for _, row := range rows {
-		stateParameters := append(stateParameters, row.ToMap())
+		stateParameters = append(stateParameters, row.ToMap())
 	}
 
 	TemplateStr, err := makeTemplate("state_parameters", "stateParameters", &stateParametersPage{
