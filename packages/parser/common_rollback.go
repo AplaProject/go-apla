@@ -71,48 +71,29 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			}
 			hash = converter.BinToHex(hash)
 			p.TxHash = string(hash)
-			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
+			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
 			var (
 				MethodName string
-				verr       interface{}
+				err_       interface{}
+				parser     ParserInterface
 			)
 			if p.TxContract == nil {
 				MethodName = consts.TxTypes[converter.BytesToInt(p.TxSlice[1])]
-				p.TxMap = map[string][]byte{}
-				verr = utils.CallMethod(p, MethodName+"Init")
-				if _, ok := verr.(error); ok {
-					return utils.ErrInfo(verr.(error))
+				parser, err = GetParser(p, MethodName)
+				if err != nil {
+					return utils.ErrInfo(err)
+				}
+				if parser != nil {
+					p.TxMap = map[string][]byte{}
+					err_ = parser.Init()
+					if _, ok := err_.(error); ok {
+						return utils.ErrInfo(err_.(error))
+					}
 				}
 			}
-			// если дошли до тр-ии, которая вызвала ошибку, то откатываем только фронтальную проверку
-			// if we get to the transaction, which caused the error, then we roll back only the frontal check
-			/*if i == 0 {
-						/*if skipCurrent { // тр-ия, которая вызвала ошибку закончилась еще до фронт. проверки, т.е. откатывать по ней вообще нечего
-			// transaction that caused the error was finished before frontal check, then there is nothing to rall back
-							continue
-						}*/
-			/*// если успели дойти только до половины фронтальной функции
-			// If we reached only half of the frontal function
-						MethodNameRollbackFront := MethodName + "RollbackFront"
-						// откатываем только фронтальную проверку
-			// roll back only frontal check
-						verr = utils.CallMethod(p, MethodNameRollbackFront)
-						if _, ok := verr.(error); ok {
-							return utils.ErrInfo(verr.(error))
-						}*/
-			/*} else if onlyFront {*/
-			/*verr = utils.CallMethod(p, MethodName+"RollbackFront")
-			if _, ok := verr.(error); ok {
-				return utils.ErrInfo(verr.(error))
-			}*/
-			/*} else {*/
-			/*verr = utils.CallMethod(p, MethodName+"RollbackFront")
-			if _, ok := verr.(error); ok {
-				return utils.ErrInfo(verr.(error))
-			}*/
 			if (i == 0 && !skipCurrent) || i > 0 {
 				log.Debug(MethodName + "Rollback")
 				if p.TxContract != nil {
@@ -123,9 +104,9 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 						return p.ErrInfo(err)
 					}
 				} else {
-					verr = utils.CallMethod(p, MethodName+"Rollback")
-					if _, ok := verr.(error); ok {
-						return utils.ErrInfo(verr.(error))
+					err_ = parser.Rollback()
+					if _, ok := err_.(error); ok {
+						return utils.ErrInfo(err_.(error))
 					}
 				}
 				err = p.DelLogTx(binaryData)

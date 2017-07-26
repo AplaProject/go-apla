@@ -24,7 +24,6 @@ import (
 
 	"regexp"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
@@ -61,10 +60,10 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 		err = fmt.Errorf(`there is not %s contract %v`, cntname, contract)
 	} else if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 		for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-			if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `crypt`) >= 0 {
+			if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `crypt`) {
 				continue
 			}
-			if strings.Index(fitem.Tags, `signature`) >= 0 && result != nil {
+			if strings.Contains(fitem.Tags, `signature`) && result != nil {
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					pref := converter.Int64ToStr(c.SessStateID)
 					if c.SessStateID == 0 {
@@ -101,7 +100,7 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 					err = fmt.Errorf(`%s is empty`, fitem.Name)
 					break
 				}
-				if strings.Index(fitem.Tags, `address`) >= 0 {
+				if strings.Contains(fitem.Tags, `address`) {
 					addr := converter.StringToAddress(val)
 					if addr == 0 {
 						err = fmt.Errorf(`Address %s is not valid`, val)
@@ -130,25 +129,18 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 	result.Values = make(map[string]string)
 	contract, err := c.checkTx(&result)
 	if err == nil {
-		var flags uint8
-		var isPublic []byte
 		info := (*contract).Block.Info.(*script.ContractInfo)
-		userID := uint64(c.SessWalletID)
+		forsign := fmt.Sprintf("%d,%d,%d,%d", info.ID, int64(result.Time), c.SessWalletID, c.SessStateID)
 		dltWallet := &model.DltWallets{}
 		err = dltWallet.GetWallet(c.SessWalletID)
 		isPublic = dltWallet.PublicKey
-		if err == nil && len(isPublic) == 0 {
-			flags |= consts.TxfPublic
-		}
-		fmt.Println(`Prepare`, c.SessWalletID, c.SessCitizenID, c.SessStateID)
-		forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, result.Time, userID, c.SessStateID, flags)
 		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
 			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
-				if strings.Index(fitem.Tags, `image`) >= 0 || strings.Index(fitem.Tags, `signature`) >= 0 {
+				if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {
 					continue
 				}
 				var val string
-				if strings.Index(fitem.Tags, `crypt`) >= 0 {
+				if strings.Contains(fitem.Tags, `crypt`) {
 					var wallet string
 					if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 						wallet = c.r.FormValue(ret[1])
@@ -174,7 +166,7 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 					}
 				} else {
 					val = strings.TrimSpace(c.r.FormValue(fitem.Name))
-					if strings.Index(fitem.Tags, `address`) >= 0 {
+					if strings.Contains(fitem.Tags, `address`) {
 						val = converter.Int64ToStr(converter.StringToAddress(val))
 					} else if fitem.Type.String() == script.Decimal {
 						val = strings.TrimLeft(val, `0`)

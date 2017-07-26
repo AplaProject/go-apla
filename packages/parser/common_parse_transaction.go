@@ -28,22 +28,23 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // ParseTransaction parses a transaction
-func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, error) {
-
+func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.Header, error) {
 	var returnSlice [][]byte
 	var transSlice [][]byte
+	var header *tx.Header
 	log.Debug("transactionBinaryData: %x", *transactionBinaryData)
 	log.Debug("transactionBinaryData: %s", *transactionBinaryData)
 	p.TxContract = nil
 	p.TxPtr = nil
 	p.PublicKeys = nil
 	if len(*transactionBinaryData) > 0 {
-
 		// хэш транзакции
 		// hash of the transaction
 		hash, err := crypto.DoubleHash(*transactionBinaryData)
@@ -59,32 +60,31 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 		isStruct := consts.IsStruct(int(txType))
 		if txType > 127 { // транзакция с контрактом
 			// transaction with the contract
-			var err error
-			p.TxPtr = &consts.TXHeader{}
-			if err = converter.BinUnmarshal(&input, p.TxPtr); err != nil {
-				return nil, err
-			}
 			isStruct = false
-			p.TxStateID = uint32(p.TxPtr.(*consts.TXHeader).StateID)
+			smartTx := tx.SmartContract{}
+			if err := msgpack.Unmarshal(*transactionBinaryData, &smartTx); err != nil {
+				return nil, nil, err
+			}
+			p.TxPtr = nil
+			p.TxSmart = &smartTx
+			p.TxStateID = uint32(smartTx.StateID)
 			p.TxStateIDStr = converter.UInt32ToStr(p.TxStateID)
 			if p.TxStateID > 0 {
-				p.TxCitizenID = int64(p.TxPtr.(*consts.TXHeader).WalletID)
+				p.TxCitizenID = smartTx.UserID
 				p.TxWalletID = 0
 			} else {
 				p.TxCitizenID = 0
-				p.TxWalletID = int64(p.TxPtr.(*consts.TXHeader).WalletID)
+				p.TxWalletID = smartTx.UserID
 			}
-			contract := smart.GetContractByID(p.TxPtr.(*consts.TXHeader).Type)
+			header = &smartTx.Header
+			contract := smart.GetContractByID(int32(smartTx.Type))
 			if contract == nil {
-				return nil, fmt.Errorf(`unknown contract %d`, p.TxPtr.(*consts.TXHeader).Type)
+				return nil, nil, fmt.Errorf(`unknown contract %d`, smartTx.Type)
 			}
-			//			log.Debug(`TRANDEB %d %d NAME: %s`, int64(p.TxPtr.(*consts.TXHeader).WalletId),
-			//				uint64(p.TxPtr.(*consts.TXHeader).WalletId), contract.Name)
-			forsign := fmt.Sprintf("%d,%d,%d,%d,%d", p.TxPtr.(*consts.TXHeader).Type,
-				p.TxPtr.(*consts.TXHeader).Time, p.TxPtr.(*consts.TXHeader).WalletID,
-				p.TxPtr.(*consts.TXHeader).StateID, p.TxPtr.(*consts.TXHeader).Flags)
+			forsign := smartTx.ForSign()
 
 			p.TxContract = contract
+			input = smartTx.Data
 			p.TxData = make(map[string]interface{})
 			if contract.Block.Info.(*script.ContractInfo).Tx != nil {
 				for _, fitem := range *contract.Block.Info.(*script.ContractInfo).Tx {
@@ -105,35 +105,35 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					case script.Decimal:
 						var s string
 						if err = converter.BinUnmarshal(&input, &s); err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						v, err = decimal.NewFromString(s)
 					case `string`:
 						var s string
 						if err = converter.BinUnmarshal(&input, &s); err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						v = s
 					case `[]uint8`:
 						var b []byte
 						if err = converter.BinUnmarshal(&input, &b); err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						v = hex.EncodeToString(b)
 					case `[]interface {}`:
 						count, err := converter.DecodeLength(&input)
 						if err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						isforv = true
 						list := make([]interface{}, 0)
 						for count > 0 {
 							length, err := converter.DecodeLength(&input)
 							if err != nil {
-								return nil, err
+								return nil, nil, err
 							}
 							if len(input) < int(length) {
-								return nil, fmt.Errorf(`input slice is short`)
+								return nil, nil, fmt.Errorf(`input slice is short`)
 							}
 							list = append(list, string(input[:length]))
 							input = input[length:]
@@ -150,7 +150,7 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 					}
 					p.TxData[fitem.Name] = v
 					if err != nil {
-						return nil, err
+						return nil, nil, err
 					}
 					if strings.Index(fitem.Tags, `image`) >= 0 {
 						continue
@@ -162,49 +162,22 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				}
 			}
 			p.TxData[`forsign`] = forsign
-			//			fmt.Println(`Contract data`, p.TxData)
+			//fmt.Println(`Smart Forsign`, forsign)
 		} else if isStruct {
 			p.TxPtr = consts.MakeStruct(consts.TxTypes[int(txType)])
 			if err := converter.BinUnmarshal(&input, p.TxPtr); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			p.TxVars = make(map[string]string)
-			if int(txType) == 4 { // TXNewCitizen
-				head := consts.HeaderNew(p.TxPtr)
-				p.TxStateID = uint32(head.StateID)
-				p.TxStateIDStr = converter.UInt32ToStr(p.TxStateID)
-				if head.StateID > 0 {
-					p.TxCitizenID = int64(head.WalletID)
-					p.TxWalletID = 0
-				} else {
-					p.TxCitizenID = 0
-					p.TxWalletID = int64(head.WalletID)
-				}
-				p.TxTime = int64(head.Time)
-			} else {
-				head := consts.Header(p.TxPtr)
-				p.TxCitizenID = head.CitizenID
-				p.TxWalletID = head.WalletID
-				p.TxTime = int64(head.Time)
-			}
+			head := consts.Header(p.TxPtr)
+			p.TxCitizenID = head.CitizenID
+			p.TxWalletID = head.WalletID
+			p.TxTime = int64(head.Time)
 			fmt.Println(`PARSED STRUCT %v`, p.TxPtr)
 		}
-		transSlice = append(transSlice, converter.Int64ToByte(txType))
-		if len(*transactionBinaryData) == 0 {
-			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
-		}
-		// следующие 4 байта - время транзакции
-		// the next 4 bytes are the tyme of the transaction
-		transSlice = append(transSlice, converter.Int64ToByte(converter.BinToDecBytesShift(transactionBinaryData, 4)))
-		if len(*transactionBinaryData) == 0 {
-			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect tx"))
-		}
-		log.Debug("%s", transSlice)
-		// преобразуем бинарные данные транзакции в массив
-		// convert the binary data of transaction to an array
-		if txType > 127 {
-			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
-		} else if isStruct {
+		if isStruct {
+			transSlice = append(transSlice, converter.Int64ToByte(txType))
+			transSlice = append(transSlice, converter.Int64ToByte(p.TxTime))
 			t := reflect.ValueOf(p.TxPtr).Elem()
 
 			//walletId & citizenId
@@ -216,35 +189,35 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, erro
 				data := converter.FieldToBytes(t.Interface(), i)
 				returnSlice = append(returnSlice, data)
 			}
+			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
+		} else if txType > 127 {
+			transSlice = append(transSlice, converter.Int64ToByte(txType))
+			transSlice = append(transSlice, converter.Int64ToByte(p.TxTime))
+			// преобразуем бинарные данные транзакции в массив
+			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		} else {
-			i := 0
-			for {
-				length, err := converter.DecodeLength(transactionBinaryData)
-				if err != nil {
-					log.Fatal(err)
-				}
-				i++
-				if length > 0 && length < consts.MAX_TX_SIZE {
-					data := converter.BytesShift(transactionBinaryData, length)
-					returnSlice = append(returnSlice, data)
-					log.Debug("%x", data)
-					log.Debug("%s", data)
-				} else if length == 0 && len(*transactionBinaryData) > 0 {
-					returnSlice = append(returnSlice, []byte{})
-					continue
-				}
-				if length == 0 || i >= 20 { // у нас нет тр-ий с более чем 20 элементами
-					// we don't have the transactions with more than 20 elements
-					break
-				}
+			parser, err := GetParser(p, consts.TxTypes[int(txType)])
+			if err != nil {
+				return transSlice, nil, utils.ErrInfo(err)
 			}
-		}
-		if isStruct {
+			err = parser.Init()
+			if err != nil {
+				return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect tx:%s", err))
+			}
+			header = parser.Header()
+			if header == nil {
+				return transSlice, nil, utils.ErrInfo(fmt.Errorf("tx header is nil"))
+			}
+			transSlice = append(transSlice, converter.Int64ToByte(txType))
+			// следующие 4 байта - время транзакции
+			transSlice = append(transSlice, converter.Int64ToByte(header.Time))
+			transSlice = append(transSlice, converter.Int64ToByte(header.StateID))
+			transSlice = append(transSlice, converter.Int64ToByte(header.UserID))
 			*transactionBinaryData = (*transactionBinaryData)[len(*transactionBinaryData):]
 		}
 		if len(*transactionBinaryData) > 0 {
-			return transSlice, utils.ErrInfo(fmt.Errorf("incorrect transactionBinaryData %x", transactionBinaryData))
+			return transSlice, nil, utils.ErrInfo(fmt.Errorf("incorrect transactionBinaryData %x", transactionBinaryData))
 		}
 	}
-	return append(transSlice, returnSlice...), nil
+	return append(transSlice, returnSlice...), header, nil
 }

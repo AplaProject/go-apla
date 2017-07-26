@@ -25,7 +25,7 @@ import (
 // AjaxStatesList returns the list of states
 func (c *Controller) AjaxStatesList() (string, error) {
 
-	result := make(map[string]map[string]string)
+	result := make([]map[string]string, 0)
 	statesList, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return ``, err
@@ -57,6 +57,8 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		result[string(id)]["state_name"] = stateName
 		result[string(id)]["state_flag"] = stateFlag
 		result[string(id)]["state_coords"] = stateCoords
+		iresult["state_coords"] = stateCoords
+		result = append(result, iresult)
 
 	}
 	jsondata, err := json.Marshal(result)
