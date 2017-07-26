@@ -5,7 +5,7 @@ import "github.com/shopspring/decimal"
 type Wallet struct {
 	WalletID           int64           `gorm:"primary_key;not null"`
 	Amount             decimal.Decimal `gorm:"not null"`
-	PublicKey          []byte          `gorm:"column:publick_key_0;not null"`
+	PublicKey          []byte          `gorm:"column:public_key_0;not null"`
 	NodePublicKey      []byte          `gorm:"not null"`
 	LastForgingDataUpd int64           `gorm:"not null"`
 	Host               string          `gorm:"not null"`
@@ -17,7 +17,7 @@ type Wallet struct {
 }
 
 func (w *Wallet) GetWallet(walletID int64) error {
-	return DBConn.Where("wallet_id = ", walletID).First(&w).Error
+	return DBConn.Where("wallet_id = ?", walletID).First(&w).Error
 }
 
 func GetWallets(startWalletID int64, walletsCount int) ([]Wallet, error) {
@@ -29,13 +29,13 @@ func GetWallets(startWalletID int64, walletsCount int) ([]Wallet, error) {
 	return *wallets, nil
 }
 
-func (w *Wallet) IsExistsByPublicKey() (bool, error) {
-	query := DBConn.Where("public_key_0 = ", w.PublicKey).First(w)
+func (w *Wallet) IsExistsByPublicKey(pubkey []byte) (bool, error) {
+	query := DBConn.Where("public_key_0 = ?", pubkey).First(w)
 	return !query.RecordNotFound(), query.Error
 }
 
 func (w *Wallet) IsExists() (bool, error) {
-	query := DBConn.Where("wallet_id = ", w.WalletID).First(w)
+	query := DBConn.Where("wallet_id = ?", w.WalletID).First(w)
 	return !query.RecordNotFound(), query.Error
 }
 

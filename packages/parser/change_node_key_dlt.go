@@ -18,6 +18,7 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -55,8 +56,9 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	lastForgingDataUpd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
-	if err != nil || txTime-lastForgingDataUpd < 600 {
+	dltW := &model.Wallet{}
+	err = dltW.GetWallet(p.TxWalletID)
+	if err != nil || txTime-dltW.LastForgingDataUpd < 600 {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
 	}
 
@@ -73,14 +75,15 @@ func (p *ChangeNodeKeyDLTParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.DLTChangeNodeKey.NewNodePublicKey).Int64()
+	mnk := &model.MyNodeKeys{}
+	myKey := mnk.ID
+	err = mnk.GetZeroBlock(p.DLTChangeNodeKey.NewNodePublicKey)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
+		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(int64(myKey))}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

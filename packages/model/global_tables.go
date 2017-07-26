@@ -20,6 +20,11 @@ func (t *Tables) GetByName(name string) error {
 	return DBConn.Where("name = ?", name).First(t).Error
 }
 
+func (t *Tables) ExistsByName(name string) (bool, error) {
+	query := DBConn.Where("name = ?", name).First(t)
+	return !query.RecordNotFound(), query.Error
+}
+
 func (t *Tables) GetPermissions(name, jsonKey string) (map[string]string, error) {
 	keyStr := ""
 	if jsonKey != "" {
@@ -41,4 +46,9 @@ func (t *Tables) GetPermissions(name, jsonKey string) (map[string]string, error)
 		return nil, err
 	}
 	return result, nil
+}
+
+func (t *Tables) SetActionByName(table, name, action, actionValue string, rbID int64) (int64, error) {
+	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+actionValue+`"`, rbID, name)
+	return query.RowsAffected, query.Error
 }

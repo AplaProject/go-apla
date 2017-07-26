@@ -9,7 +9,7 @@ type DltTransactions struct {
 	RecepientWalletAddress string          `gorm:"not null;size:32"`
 	Amount                 decimal.Decimal `gorm:"not null"`
 	Comission              decimal.Decimal `gorm:"not null"`
-	Time                   int32           `gorm:"not null"`
+	Time                   int64           `gorm:"not null"`
 	Comment                string          `gorm:"not null"`
 	BlockID                int64           `gorm:"not null"`
 	RbID                   int64           `gorm:"not null"`

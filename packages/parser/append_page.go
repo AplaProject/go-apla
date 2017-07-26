@@ -19,6 +19,7 @@ package parser
 import (
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -65,11 +66,13 @@ func (p *AppendPageParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	log.Debug("value page", p.AppendPage.Value)
-	page, err := p.Single(`SELECT value FROM "`+prefix+`_pages" WHERE name = ?`, p.AppendPage.Name).String()
+	page := &model.Pages{}
+	page.SetTableName(prefix + "_pages")
+	err = page.GetByName(p.AppendPage.Name)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	new := strings.Replace(page, "PageEnd:", p.AppendPage.Value, -1) + "\r\nPageEnd:"
+	new := strings.Replace(page.Value, "PageEnd:", p.AppendPage.Value, -1) + "\r\nPageEnd:"
 	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_pages", []string{"name"}, []string{p.AppendPage.Name}, true)
 	if err != nil {
 		return p.ErrInfo(err)

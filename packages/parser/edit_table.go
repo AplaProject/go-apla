@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -58,12 +59,14 @@ func (p *EditTableParser) Validate() error {
 		return p.ErrInfo("incorrect table name")
 	}
 
-	table := prefix + `_tables`
-	exists, err := p.Single(`select count(*) from "`+table+`" where name = ?`, p.EditTable.Name).Int64()
+	tableName := prefix + `_tables`
+	table := model.Tables{}
+	table.SetTableName(tableName)
+	exists, err := table.ExistsByName(p.EditTable.Name)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if exists == 0 {
+	if !exists {
 		return p.ErrInfo(`not exists`)
 	}
 
@@ -79,7 +82,6 @@ func (p *EditTableParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-
 	return nil
 }
 
@@ -93,15 +95,18 @@ func (p *EditTableParser) Action() error {
 		return p.ErrInfo("incorrect table name")
 	}
 
-	table := prefix + `_tables`
+	tableName := prefix + `_tables`
 	tblname := p.EditTable.Name
-	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where name=?`, tblname).String()
+	table := &model.Tables{}
+	table.SetTableName(tableName)
+	err := table.GetByName(tableName)
 	if err != nil {
 		return err
 	}
+	logData := map[string]string{"rb_id": converter.Int64ToStr(table.RbID), "columns_and_permissions": table.ColumnsAndPermissions}
 	jsonMap := make(map[string]string)
 	for k, v := range logData {
-		if k == p.AllPkeys[table] {
+		if k == p.AllPkeys[tableName] {
 			continue
 		}
 		jsonMap[k] = v
@@ -113,7 +118,8 @@ func (p *EditTableParser) Action() error {
 	if err != nil {
 		return err
 	}
-	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
+	rollback := &model.Rollback{Data: string(jsonData), BlockID: p.BlockData.BlockID}
+	err = rollback.Create()
 	if err != nil {
 		return err
 	}
@@ -130,17 +136,21 @@ func (p *EditTableParser) Action() error {
 			return err
 		}
 		actions[action] = strings.Replace(actions[action], `"`, `\"`, -1)
-		err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`,
-			`"`+actions[action]+`"`, rbID, tblname)
+		t := &model.Tables{}
+		_, err = t.SetActionByName(tableName, tblname, action, actions[action], rollback.RbID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, p.EditTable.Name)
+	rollbackTx := &model.RollbackTx{
+		BlockID:   p.BlockData.BlockID,
+		TxHash:    []byte(p.TxHash),
+		TableName: tableName,
+		TableID:   p.EditTable.Name}
+	err = rollbackTx.Create()
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

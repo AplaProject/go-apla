@@ -18,6 +18,7 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -62,12 +63,14 @@ func (p *EditContractParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.EditContract.Id).String()
+	sc := &model.SmartContracts{}
+	sc.SetTableName(prefix + "_smart_contracts")
+	err = sc.GetByID(converter.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(conditions) > 0 {
-		ret, err := p.EvalIf(conditions)
+	if len(sc.Conditions) > 0 {
+		ret, err := p.EvalIf(sc.Conditions)
 		if err != nil {
 			return err
 		}
@@ -86,25 +89,24 @@ func (p *EditContractParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	item, err := p.OneRow(`SELECT id, active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.EditContract.Id).String()
+	sc := &model.SmartContracts{}
+	sc.SetTableName(prefix + "_smart_contracts")
+	err = sc.GetByID(converter.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	tblid := converter.StrToInt64(item[`id`])
-	active := item[`active`] == `1`
+	active := sc.Active == `1`
 	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, converter.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
 	_, _, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{p.EditContract.Value, p.EditContract.Conditions}, prefix+"_smart_contracts", []string{"id"}, []string{p.EditContract.Id}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TableID = tblid
+			root.Children[i].Info.(*script.ContractInfo).TableID = sc.ID
 			root.Children[i].Info.(*script.ContractInfo).Active = active
 		}
 	}

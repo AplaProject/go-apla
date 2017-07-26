@@ -21,6 +21,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -58,17 +59,15 @@ func (p *RestoreAccessParser) Validate() error {
 		return p.ErrInfo("p.TxWalletID != consts.RECOVERY_ADDRESS")
 	}
 
-	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.RestoreAccess.StateID).Int64()
+	restoreAccess := &model.SystemRestoreAccess{}
+	err = restoreAccess.Get(p.RestoreAccess.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(data) == 0 {
-		return p.ErrInfo("incorrect system_restore_access")
-	}
-	if data["active"] == 0 {
+	if restoreAccess.Active == 0 {
 		return p.ErrInfo("active = 0")
 	}
-	if data["close"] == 1 {
+	if restoreAccess.Close == 1 {
 		return p.ErrInfo("close = 1")
 	}
 
@@ -82,7 +81,7 @@ func (p *RestoreAccessParser) Validate() error {
 	}
 	// прошел ли месяц с момента, когда кто-то запросил смену ключа
 	// whether the month passed from the moment when someone requested changing of a key
-	if txTime-data["change_key_time"] < consts.CHANGE_KEY_PERIOD {
+	if txTime-restoreAccess.Time < consts.CHANGE_KEY_PERIOD {
 		return p.ErrInfo("CHANGE_KEY_PERIOD")
 	}
 
@@ -98,11 +97,12 @@ func (p *RestoreAccessParser) Validate() error {
 }
 
 func (p *RestoreAccessParser) Action() error {
-	citizenID, err := p.Single(`SELECT citizen_id FROM system_restore_access WHERE state_id = ?`, p.RestoreAccess.StateID).String()
+	restoreAccess := &model.SystemRestoreAccess{}
+	err := restoreAccess.Get(p.RestoreAccess.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	value := `$citizen=` + citizenID
+	value := `$citizen=` + converter.Int64ToStr(restoreAccess.CitizenID)
 	_, _, err = p.selectiveLoggingAndUpd([]string{"value", "conditions"}, []interface{}{value, value}, p.TxStateIDStr+"_state_parameters", []string{"name"}, []string{"changing_tables"}, true)
 	if err != nil {
 		return p.ErrInfo(err)
