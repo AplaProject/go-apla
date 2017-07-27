@@ -79,6 +79,7 @@ func Route(route *hr.Router) {
 	postTx(`stateparams`, `name value conditions:string`, txPreNewStateParams, txStateParams)
 	postTx(`contract`, `name value conditions ?wallet:string, global:int64`, txPreNewContract, txContract)
 	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
+	post(`signtest/`, `forsign private:string`, signTest)
 	post(`prepare/sendegs`, `recipient amount commission ?comment:string`, authWallet, preSendEGS)
 	post(`sendegs`, `pubkey signature:hex, time recipient amount commission ?comment:string`, authWallet, sendEGS)
 

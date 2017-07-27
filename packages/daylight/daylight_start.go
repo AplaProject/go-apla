@@ -107,7 +107,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	exchangeapi.InitAPI()
 
-	// читаем config.ini
 	// read the config.ini
 	config.Read()
 
@@ -126,16 +125,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
 	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
 	if len(config.ConfigIni["lang"]) > 0 {
-		language.LangList = strings.Split(configIni["lang"], `,`)
+		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
 	}
-	/*	outfile, err := os.Create("./out.txt")
-	    if err != nil {
-	        panic(err)
-	    }
-	    defer outfile.Close()
-		os.Stdout = outfile*/
 
-	// убьем ранее запущенный eGaaS
 	// kill previously run eGaaS
 	if !utils.Mobile() {
 		fmt.Println("kill daylight.pid")
@@ -160,14 +152,13 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			if fmt.Sprintf("%s", err) != "null" {
 				fmt.Println(fmt.Sprintf("%s", err))
-				// даем 15 сек, чтобы завершиться предыдущему процессу
 				// give 15 sec to end the previous process
 				for i := 0; i < 15; i++ {
 					log.Debug("waiting killer %d", i)
 					if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
 						fmt.Println("waiting killer")
 						time.Sleep(time.Second)
-					} else { // если daylight.pid нет, значит завершился // if there is no daylight.pid, so it is finished
+					} else { // if there is no daylight.pid, so it is finished
 						break
 					}
 				}
@@ -234,7 +225,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	// если есть OldFileName, значит работаем под именем dc.tmp и нужно перезапуститься под нормальным именем
 	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
 	log.Debug("OldFileName %v", *utils.OldFileName)
 	if *utils.OldFileName != "" || len(configIni) != 0 {
@@ -246,7 +236,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				log.Debug("%v", utils.ErrInfo(err))
 			}
 		}
-		// ждем подключения к БД
 		// waiting for connection to the database
 		for {
 			if sql.DB == nil || sql.DB.DB == nil {
@@ -280,7 +269,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}
 
-	// сохраним текущий pid и версию
 	// save the current pid and version
 	if !utils.Mobile() {
 		pid := os.Getpid()
@@ -295,7 +283,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}
 
-	// откат БД до указанного блока
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
 		sql.DB, err = sql.NewDbConnect()
@@ -311,7 +298,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			panic(err)
 		}
 		fmt.Println("complete")
-		// получим стату по всем таблам
 		// we recieve the statistics of all tables
 		allTable, err := sql.DB.GetAllTables()
 		if err != nil {
@@ -351,7 +337,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	daemons.StartDaemons()
 
 	IosLog("MonitorDaemons")
-	// мониторинг демонов
 	daemonsTable := make(map[string]string)
 	go func() {
 		for {
@@ -363,14 +348,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}()
 
-	// сигналы демонам для выхода
 	// signals for daemons to exit
 	IosLog("signals")
 	stopdaemons.Signals()
 
 	time.Sleep(time.Second)
 
-	// мониторим сигнал из БД о том, что демонам надо завершаться
 	// monitor the signal from the database that the daemons must be completed
 	go stopdaemons.WaitStopTime()
 
@@ -378,11 +361,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	HandleHTTPHost := ""
 	ListenHTTPHost := *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	go func() {
-		// уже прошел процесс инсталяции, где юзер указал БД и был перезапуск кошелька
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		if len(configIni["db_type"]) > 0 {
+		if len(config.ConfigIni["db_type"]) > 0 {
 			for {
-				// ждем, пока произойдет подключение к БД в другой гоурутине
 				// wait while connection to a DB in other gourutina takes place
 				if sql.DB == nil || sql.DB.DB == nil {
 					time.Sleep(time.Second)
@@ -396,7 +377,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				log.Error(`Load Contracts`, err)
 			}
 			BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost = GetHTTPHost()
-			// для ноды тоже нужна БД // DB is needed for node as well
+			// DB is needed for node as well
 			tcpListener()
 		}
 		IosLog(fmt.Sprintf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost))
@@ -469,9 +450,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}()
 
-	// ожидает появления свежих записей в чате, затем ждет появления коннектов
 	// waits for new records in chat, then waits for connect
-	// (заносятся из демеона connections и от тех, кто сам подключился к ноде)
 	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
 	// go utils.ChatOutput(utils.ChatNewTx)
 

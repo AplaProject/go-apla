@@ -1503,7 +1503,7 @@ function prepare_ok(predata, unique, forsign, sendnet) {
 	sendnet();
 }
 
-function prepare_contract(predata, unique, sendnet) {
+function prepare_contract(predata, unique, sendnet, preorigin) {
 	$.get('ajax?json=ajax_prepare_tx', predata,
 		function (data) {
 			if (data.error.length > 0) {
@@ -1524,7 +1524,11 @@ function prepare_contract(predata, unique, sendnet) {
 						sign = GKey.sign(isign.forsign);
 						accept += isign.title + '<br>';
 						for (var k = 0; k < isign.params.length; k++) {
-							accept += isign.params[k].text + ': ' + predata[isign.params[k].name] + '<br>';
+							var value = predata[isign.params[k].name];
+							if (preorigin && preorigin[isign.params[k].name]) {
+								value = preorigin[isign.params[k].name];
+							}
+							accept += isign.params[k].text + ': ' + value + '<br>';
 						}
 						data.forsign += ',' + sign;
 						predata[isign.field] = sign;

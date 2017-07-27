@@ -7,6 +7,7 @@
 	}
 	var serverTime{{.Unique}};
 	var predata{{.Unique}};
+	var preorigin{{.Unique}} = {};	
 
 	$(document).ready(function(){
 	$('#send{{.Unique}}').bind('click', function () {
@@ -16,6 +17,7 @@
 		{{range .Fields}}
 			{{if ne .HTMLType "image"}}
 				{{if eq .HTMLType "money"}}
+					preorigin{{$.Unique}}['{{.Name}}'] = $("#" + '{{.ID}}').val();
 					predata{{$.Unique}}['{{.Name}}'] = MoneyDigit($("#" + '{{.ID}}').val(), "{{.Param}}");
 				{{else}}
 					{{if eq .HTMLType "array"}}
@@ -33,7 +35,7 @@
 				{{end}}
 			{{end}}
 		{{end}}
-		prepare_contract(predata{{.Unique}}, {{$.Unique}}, sendnet{{$.Unique}});
+		prepare_contract(predata{{.Unique}}, {{$.Unique}}, sendnet{{$.Unique}}, preorigin{{.Unique}});
 	} );
 
 function sendnet{{.Unique}}() {
