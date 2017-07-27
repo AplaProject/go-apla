@@ -29,3 +29,7 @@ func GetLogTransactionsCount(hash []byte) (int64, error) {
 	}
 	return rowsCount, nil
 }
+
+func LogTransactionsCreateTable() error {
+	return DBConn.CreateTable(&LogTransactions{}).Error
+}

@@ -28,6 +28,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/astaxie/beego/config"
 	"github.com/op/go-logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 var (
@@ -192,4 +193,11 @@ func StartDaemons() {
 		logger.Errorf("unknown daemon name: %s", name)
 
 	}
+}
+
+func GetHostPort(h string) string {
+	if strings.Contains(h, ":") {
+		return h
+	}
+	return h + ":" + consts.TCP_PORT
 }

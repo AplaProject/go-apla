@@ -171,7 +171,7 @@ func checkConf(host string, blockID int64) string {
 		Type    uint16
 		BlockID uint32
 	}
-	err = tcpserver.SendRequest(&confRequest{Type: 4, BlockID: blockID}, conn)
+	err = tcpserver.SendRequest(&confRequest{Type: 4, BlockID: uint32(blockID)}, conn)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return "0"

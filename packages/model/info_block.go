@@ -2,13 +2,13 @@ package model
 
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
-	StateID        int64  `gorm:"not null"`
-	WalletID       int64  `gorm:"not null"`
+	StateID        int64  `gorm:"not null default 0"`
+	WalletID       int64  `gorm:"not null default 0"`
 	BlockID        int64  `gorm:"not null"`
-	Time           int32  `gorm:"not null"`
-	Level          int8   `gorm:"not null"`
-	CurrentVersion string `gorm:"not null"`
-	Sent           int8   `gorm:"not null"`
+	Time           int32  `gorm:"not null default 0"`
+	Level          int8   `gorm:"not null default 0"`
+	CurrentVersion string `gorm:"not null default ''"`
+	Sent           int8   `gorm:"not null default 0"`
 }
 
 func (ib *InfoBlock) GetInfoBlock() error {
@@ -38,4 +38,8 @@ func GetCurBlockID() (int64, error) {
 		return 0, err
 	}
 	return curBlock.BlockID, nil
+}
+
+func InfoBlockCreateTable() error {
+	return DBConn.CreateTable(&InfoBlock{}).Error
 }

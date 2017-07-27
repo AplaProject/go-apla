@@ -156,6 +156,6 @@ func readBytes(r io.Reader, size uint64) ([]byte, error) {
 	}
 	value := make([]byte, int(size))
 	_, err := io.ReadFull(r, value)
-	_, err := r.Read(value)
+	_, err = r.Read(value)
 	return value, err
 }

@@ -4,6 +4,7 @@ type Transactions struct {
 	Hash      []byte `gorm:private_key;not null`
 	Data      []byte `gorm:not null`
 	Used      int8   `gorm:not null`
+	Verified  int8   `gorm:not null`
 	HighRate  int8   `gorm:not null`
 	Type      int8   `gorm:not null`
 	WalletID  int64  `gorm:not null`
@@ -105,6 +106,9 @@ func GetTransactionsCount(hash []byte) (int64, error) {
 	return rowsCount, nil
 }
 
+func TransactionsCreateTable() error {
+	return DBConn.CreateTable(&Transactions{}).Error
+}
 /*
 func (db *DCDB) GetAllDataHashFromTransactionsAndQueue() ([]map[string]string, error) {
 	return db.GetAll(`SELECT * FROM (SELECT data, hash FROM queue_tx UNION SELECT data, hash FROM transactions WHERE verified = 0 AND used = 0)  AS x`, -1)

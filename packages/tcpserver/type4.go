@@ -27,7 +27,8 @@ func (t *TCPServer) Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
 	block := &model.Block{}
 	err := block.GetBlock(int64(r.BlockID))
 	if err != nil || len(block.Hash) == 0 {
-		resp.Hash = []byte([32]byte{})
+		hash := [32]byte{}
+		resp.Hash = hash[:]
 	} else {
 		resp.Hash = block.Hash
 	}

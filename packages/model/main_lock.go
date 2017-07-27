@@ -32,3 +32,7 @@ func (ml *MainLock) Get() error {
 func (ml *MainLock) Create() error {
 	return DBConn.Create(ml).Error
 }
+
+func MainLockCreateTable() error {
+	return DBConn.CreateTable(&MainLock{}).Error
+}

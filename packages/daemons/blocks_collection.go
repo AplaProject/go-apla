@@ -90,7 +90,7 @@ func blocksCollection(d *daemon, ctx context.Context) error {
 
 	// TODO: ????? remove from all tables in some test mode ?????
 
-	hosts, err := d.GetHosts()
+	hosts, err := model.GetFullNodesHosts()
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func chooseBestHost(ctx context.Context, hosts []string) (string, int64, error) 
 		wg.Add(1)
 
 		go func(host string) {
-			blockID, err := getLastBlockID(host)
+			blockID, err := getHostBlockID(host)
 			wg.Done()
 
 			c <- blockAndHost{
@@ -134,7 +134,7 @@ func chooseBestHost(ctx context.Context, hosts []string) (string, int64, error) 
 				blockID: blockID,
 				err:     err,
 			}
-		}(h + ":" + consts.TCP_PORT)
+		} (GetHostPort(h))
 	}
 	wg.Wait()
 
@@ -144,7 +144,7 @@ func chooseBestHost(ctx context.Context, hosts []string) (string, int64, error) 
 		bl := <-c
 
 		if bl.blockID > maxBlockID {
-			bl.blockID = maxBlockID
+			maxBlockID = bl.blockID
 			bestHost = bl.host
 		}
 	}

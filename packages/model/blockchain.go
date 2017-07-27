@@ -16,9 +16,9 @@ func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
 	if endblockID > 0 {
-		err = DBConn.Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error
 	} else {
-		err = DBConn.Order("id asc").Where("id > ?", startBlockID).Find(blockchain).Error
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(blockchain).Error
 	}
 	if err != nil {
 		return nil, err
@@ -70,4 +70,8 @@ func (b *Block) Delete() error {
 
 func (b *Block) DeleteChain() error {
 	return DBConn.Where("id > ", b.ID).Delete(Block{}).Error
+}
+
+func BlockChainCreateTable() error {
+	return DBConn.CreateTable(&Block{}).Error
 }
