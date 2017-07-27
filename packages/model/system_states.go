@@ -14,9 +14,13 @@ func GetAllSystemStatesIDs() ([]int64, error) {
 }
 
 func (ss *SystemStates) GetLast() error {
-	return DBConn.First(ss).Error
+	return DBConn.Last(ss).Error
 }
 
 func (ss *SystemStates) Delete() error {
 	return DBConn.Delete(ss).Error
+}
+
+func (ss *SystemStates) Create() error {
+	return DBConn.Create(ss).Error
 }

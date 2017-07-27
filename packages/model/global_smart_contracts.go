@@ -29,6 +29,10 @@ func GetAllSmartContracts() ([]SmartContracts, error) {
 	return *contracts, nil
 }
 
+func (sc *SmartContracts) Create() error {
+	return DBConn.Create(sc).Error
+}
+
 func (sc *SmartContracts) GetByID(contractID int64) error {
 	return DBConn.Where("id = ?", contractID).Find(sc).Error
 }

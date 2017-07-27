@@ -20,16 +20,12 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
-)
-
-var (
-	isGlobal bool
 )
 
 type NewStateParser struct {
@@ -43,29 +39,6 @@ func (p *NewStateParser) Init() error {
 		return p.ErrInfo(err)
 	}
 	p.NewState = newState
-	return nil
-}
-
-func (p *NewStateParser) global(country, currency string) error {
-	if !isGlobal {
-		list, err := sql.DB.GetAllTables()
-		if err != nil {
-			return err
-		}
-		isGlobal = converter.InSliceString(`global_currencies_list`, list) && converter.InSliceString(`global_states_list`, list)
-	}
-	if isGlobal {
-		if id, err := sql.DB.Single(`select id from global_states_list where state_name=?`, country).Int64(); err != nil {
-			return err
-		} else if id > 0 {
-			return fmt.Errorf(`State %s already exists`, country)
-		}
-		if id, err := sql.DB.Single(`select id from global_currencies_list where currency_code=?`, currency).Int64(); err != nil {
-			return err
-		} else if id > 0 {
-			return fmt.Errorf(`Currency %s already exists`, currency)
-		}
-	}
 	return nil
 }
 
@@ -90,162 +63,114 @@ func (p *NewStateParser) Validate() error {
 		return p.ErrInfo("incorrect sign")
 	}
 	country := string(p.NewState.StateName)
-	if exist, err := p.IsState(country); err != nil {
+	if exist, err := IsState(country); err != nil {
 		return p.ErrInfo(err)
 	} else if exist > 0 {
 		return fmt.Errorf(`State %s already exists`, country)
 	}
 
-	err = p.global(country, string(p.NewState.CurrencyName))
-	if err != nil {
-		return p.ErrInfo(err)
-	}
 	return nil
 }
 
 func (p *NewStateParser) Main(country, currency string) (id string, err error) {
-	id, err = p.ExecSQLGetLastInsertID(`INSERT INTO system_states DEFAULT VALUES`, "system_states")
+	systemState := &model.SystemStates{RbID: 0}
+	err = systemState.Create()
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, "system_states", id)
+	id = converter.Int64ToStr(systemState.ID)
+	rollbackTx := model.RollbackTx{BlockID: p.BlockData.BlockID, TxHash: []byte(p.TxHash), TableName: "system_states", TableID: id}
+	err = rollbackTx.Create()
 	if err != nil {
 		return
 	}
-
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_state_parameters" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"value" text  NOT NULL DEFAULT '',
-				"bytecode" bytea  NOT NULL DEFAULT '',
-				"conditions" text  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_state_parameters" ADD CONSTRAINT "` + id + `_state_parameters_pkey" PRIMARY KEY (name);
-				`)
+	err = model.CreateStateTable(id)
 	if err != nil {
 		return
 	}
 	sid := "ContractConditions(`MainCondition`)" //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
-	err = p.ExecSQL(`INSERT INTO "`+id+`_state_parameters" (name, value, bytecode, conditions) VALUES
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?),
-		(?, ?, ?, ?)`,
-		"restore_access_condition", sid, "", psid,
-		"new_table", sid, "", psid,
-		"new_column", sid, "", psid,
-		"changing_tables", sid, "", psid,
-		"changing_language", sid, "", psid,
-		"changing_signature", sid, "", psid,
-		"changing_smart_contracts", sid, "", psid,
-		"changing_menu", sid, "", psid,
-		"changing_page", sid, "", psid,
-		"currency_name", currency, "", psid,
-		"gender_list", "male,female", "", psid,
-		"money_digit", "0", "", psid,
-		"tx_fiat_limit", "10", "", psid,
-		"state_name", country, "", psid,
-		"gov_account", p.TxWalletID, "", psid,
-		"dlt_spending", p.TxWalletID, "", psid,
-		"state_flag", "", "", psid,
-		"state_coords", ``, "", psid,
-		"citizenship_price", "1000000", "", psid)
+	err = model.CreateStateConditions(id, sid, psid, currency, country, p.TxWalletID)
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL(`CREATE SEQUENCE "` + id + `_smart_contracts_id_seq" START WITH 1;
-				CREATE TABLE "` + id + `_smart_contracts" (
-				"id" bigint NOT NULL  default nextval('` + id + `_smart_contracts_id_seq'),
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"value" text  NOT NULL DEFAULT '',
-				"wallet_id" bigint  NOT NULL DEFAULT '0',
-				"active" character(1) NOT NULL DEFAULT '0',
-				"conditions" text  NOT NULL DEFAULT '',
-				"variables" bytea  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER SEQUENCE "` + id + `_smart_contracts_id_seq" owned by "` + id + `_smart_contracts".id;
-				ALTER TABLE ONLY "` + id + `_smart_contracts" ADD CONSTRAINT "` + id + `_smart_contracts_pkey" PRIMARY KEY (id);
-				CREATE INDEX "` + id + `_smart_contracts_index_name" ON "` + id + `_smart_contracts" (name);
-				`)
+	err = model.CreateSmartContractTable(id)
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL(`INSERT INTO "`+id+`_smart_contracts" (name, value, wallet_id, active) VALUES
-		(?, ?, ?, ?)`,
-		`MainCondition`, `contract MainCondition {
-            data {}
-            conditions {
-                    if(StateVal("gov_account")!=$citizen)
-                    {
-                        warning "Sorry, you don't have access to this action."
-                    }
-            }
-            action {}
-    }`, p.TxWalletID, 1,
-	)
-
+	sc := &model.SmartContracts{
+		Name: "Main condition",
+		Value: []byte(`contract MainCondition {
+			data {}
+			conditions {
+			    if(StateVal("gov_account")!=$citizen)
+			    {
+				warning "Sorry, you don't have access to this action."
+			    }
+		        }
+			action {}
+		}`),
+		WalletID: p.TxWalletID,
+		Active:   "1"}
+	sc.SetTableName(id + "_smart_contracts")
+	err = sc.Create()
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL(`UPDATE "`+id+`_smart_contracts" SET conditions = ?`, sid)
+	scu := &model.SmartContracts{}
+	scu.SetTableName(id + "_smart_contracts")
+	err = scu.UpdateConditions(sid)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_tables" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"columns_and_permissions" jsonb,
-				"conditions" text  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_tables" ADD CONSTRAINT "` + id + `_tables_pkey" PRIMARY KEY (name);
-				`)
+	err = model.CreateStateTablesTable(id)
+	if err != nil {
+		return
+	}
+	t := &model.Tables{
+		Name: []byte(id + "citizens"),
+		ColumnsAndPermissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
+		Conditions:            psid,
+	}
+	t.SetTableName(id + "_tables")
+	err = t.Create()
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`INSERT INTO "`+id+`_tables" (name, columns_and_permissions, conditions) VALUES
-		(?, ?, ?)`,
-		id+`_citizens`, `{"general_update":"`+sid+`", "update": {"public_key_0": "`+sid+`"}, "insert": "`+sid+`", "new_column":"`+sid+`"}`, psid)
+	err = model.CreateStatePagesTable(id)
 	if err != nil {
 		return
 	}
-
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_pages" (
-				"name" varchar(255)  NOT NULL DEFAULT '',
-				"value" text  NOT NULL DEFAULT '',
-				"menu" varchar(255)  NOT NULL DEFAULT '',
-				"conditions" bytea  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_pages" ADD CONSTRAINT "` + id + `_pages_pkey" PRIMARY KEY (name);
-				`)
-	if err != nil {
-		return
-	}
-
-	err = p.ExecSQL(`INSERT INTO "`+id+`_pages" (name, value, menu, conditions) VALUES
-		(?, ?, ?, ?),
-		(?, ?, ?, ?)`,
-		`dashboard_default`, `FullScreen(1)
-
+	dashboardValue := `FullScreen(1)
+	If(StateVal(type_office))
+	Else:
+	Title : Basic Apps
+	Divs: col-md-4
+			Divs: panel panel-default elastic
+				Divs: panel-body text-center fill-area flexbox-item-grow
+					Divs: flexbox-item-grow flex-center
+						Divs: pv-lg
+						Image("/static/img/apps/money.png", Basic, center-block img-responsive img-circle img-thumbnail thumb96 )
+						DivsEnd:
+						P(h4,Basic Apps)
+						P(text-left,"Election and Assign, Polling, Messenger, Simple Money System")
+					DivsEnd:
+				DivsEnd:
+				Divs: panel-footer
+					Divs: clearfix
+						Divs: pull-right
+							BtnPage(app-basic, Install,'',btn btn-primary lang)
+						DivsEnd:
+					DivsEnd:
+				DivsEnd:
+			DivsEnd:
+		DivsEnd:
+	IfEnd:
+	PageEnd:
+`
+	governmentValue := `FullScreen(1)
 If(StateVal(type_office))
 Else:
 Title : Basic Apps
@@ -271,58 +196,48 @@ Divs: col-md-4
 	DivsEnd:
 IfEnd:
 PageEnd:
-`, `menu_default`, sid,
-
-		`government`, `FullScreen(1)
-
-If(StateVal(type_office))
-Else:
-Title : Basic Apps
-Divs: col-md-4
-		Divs: panel panel-default elastic
-			Divs: panel-body text-center fill-area flexbox-item-grow
-				Divs: flexbox-item-grow flex-center
-					Divs: pv-lg
-					Image("/static/img/apps/money.png", Basic, center-block img-responsive img-circle img-thumbnail thumb96 )
-					DivsEnd:
-					P(h4,Basic Apps)
-					P(text-left,"Election and Assign, Polling, Messenger, Simple Money System")
-				DivsEnd:
-			DivsEnd:
-			Divs: panel-footer
-				Divs: clearfix
-					Divs: pull-right
-						BtnPage(app-basic, Install,'',btn btn-primary lang)
-					DivsEnd:
-				DivsEnd:
-			DivsEnd:
-		DivsEnd:
-	DivsEnd:
-IfEnd:
-PageEnd:
-`, `government`, sid,
-	)
+`
+	firstPage := &model.Pages{
+		Name:       "dashboard_default",
+		Value:      dashboardValue,
+		Menu:       "menu_default",
+		Conditions: sid,
+	}
+	firstPage.SetTableName(id + "_page")
+	err = firstPage.Create()
+	if err != nil {
+		return
+	}
+	secondPage := &model.Pages{
+		Name:       "government",
+		Value:      governmentValue,
+		Menu:       "government",
+		Conditions: sid,
+	}
+	secondPage.SetTableName(id + "_page")
+	err = secondPage.Create()
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_menu" (
-				"name" varchar(255)  NOT NULL DEFAULT '',
-				"value" text  NOT NULL DEFAULT '',
-				"conditions" bytea  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_menu" ADD CONSTRAINT "` + id + `_menu_pkey" PRIMARY KEY (name);
-				`)
+	err = model.CreateStateMenuTable(id)
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL(`INSERT INTO "`+id+`_menu" (name, value, conditions) VALUES
-		(?, ?, ?),
-		(?, ?, ?)`,
-		`menu_default`, `MenuItem(Dashboard, dashboard_default)
- MenuItem(Government dashboard, government)`, sid,
-		`government`, `MenuItem(Citizen dashboard, dashboard_default)
+	firstMenu := &model.Menu{
+		Name: "menu_default",
+		Value: `MenuItem(Dashboard, dashboard_default)
+ MenuItem(Government dashboard, government)`,
+		Conditions: sid,
+	}
+	firstMenu.SetTableName(id + "_menu")
+	err = firstMenu.Create()
+	if err != nil {
+		return
+	}
+	secondMenu := &model.Menu{
+		Name: `government`,
+		Value: `MenuItem(Citizen dashboard, dashboard_default)
 MenuItem(Government dashboard, government)
 MenuGroup(Admin tools,admin)
 MenuItem(Tables,sys-listOfTables)
@@ -335,87 +250,52 @@ MenuItem(Languages, sys-languages)
 MenuItem(Signatures, sys-signatures)
 MenuItem(Gen Keys, sys-gen_keys)
 MenuEnd:
-MenuBack(Welcome)`, sid)
+MenuBack(Welcome)`,
+		Conditions: sid,
+	}
+	secondMenu.SetTableName(id + "_menu")
+	err = secondMenu.Create()
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_citizens" (
-				"id" bigint NOT NULL DEFAULT '0',
-				"public_key_0" bytea  NOT NULL DEFAULT '',				
-				"block_id" bigint NOT NULL DEFAULT '0',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_citizens" ADD CONSTRAINT "` + id + `_citizens_pkey" PRIMARY KEY (id);
-				`)
+	err = model.CreateCitizensStateTable(id)
 	if err != nil {
 		return
 	}
 
-	pKey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Bytes()
+	dltWallet := &model.Wallet{}
+	err = dltWallet.GetWallet(p.TxWalletID)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`INSERT INTO "`+id+`_citizens" (id,public_key_0) VALUES (?, [hex])`, p.TxWalletID, converter.BinToHex(pKey))
+	citizen := &model.Citizens{ID: p.TxWalletID, PublicKey: converter.BinToHex(dltWallet.PublicKey)}
+	citizen.SetTableName(id + "_citizens")
+	err = citizen.Create()
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_languages" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"res" jsonb,
-				"conditions" text  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_languages" ADD CONSTRAINT "` + id + `_languages_pkey" PRIMARY KEY (name);
-				`)
+	err = model.CreateLanguagesStateTable(id)
 	if err != nil {
 		return
 	}
-	err = p.ExecSQL(`INSERT INTO "`+id+`_languages" (name, res, conditions) VALUES
-		(?, ?, ?),
-		(?, ?, ?),
-		(?, ?, ?),
-		(?, ?, ?),
-		(?, ?, ?)`,
-		`dateformat`, `{"en": "YYYY-MM-DD", "ru": "DD.MM.YYYY"}`, sid,
-		`timeformat`, `{"en": "YYYY-MM-DD HH:MI:SS", "ru": "DD.MM.YYYY HH:MI:SS"}`, sid,
-		`Gender`, `{"en": "Gender", "ru": "Пол"}`, sid,
-		`male`, `{"en": "Male", "ru": "Мужской"}`, sid,
-		`female`, `{"en": "Female", "ru": "Женский"}`, sid)
+	err = model.CreateStateDefaultLanguages(id, sid)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_signatures" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"value" jsonb,
-				"conditions" text  NOT NULL DEFAULT '',
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER TABLE ONLY "` + id + `_signatures" ADD CONSTRAINT "` + id + `_signatures_pkey" PRIMARY KEY (name);
-				`)
+	err = model.CreateSignaturesStateTable(id)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_apps" (
-				"name" varchar(100)  NOT NULL DEFAULT '',
-				"done" integer NOT NULL DEFAULT '0',
-				"blocks" text  NOT NULL DEFAULT ''
-				);
-				ALTER TABLE ONLY "` + id + `_apps" ADD CONSTRAINT "` + id + `_apps_pkey" PRIMARY KEY (name);
-				`)
+	err = model.CreateStateAppsTable(id)
 	if err != nil {
 		return
 	}
 
-	err = p.ExecSQL(`CREATE TABLE "` + id + `_anonyms" (
-				"id_citizen" bigint NOT NULL DEFAULT '0',
-				"id_anonym" bigint NOT NULL DEFAULT '0',
-				"encrypted" bytea  NOT NULL DEFAULT ''
-				);
-				CREATE INDEX "` + id + `_anonyms_index_id" ON "` + id + `_anonyms" (id_citizen);`)
+	err = model.CreateStateAnonymsTable(id)
 	if err != nil {
 		return
 	}
@@ -425,30 +305,17 @@ MenuBack(Welcome)`, sid)
 }
 
 func (p *NewStateParser) Action() error {
-	var pkey string
 	country := string(p.NewState.StateName)
 	currency := string(p.NewState.CurrencyName)
-	id, err := p.Main(country, currency)
+	_, err := p.Main(country, currency)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if isGlobal {
-		_, _, err = p.selectiveLoggingAndUpd([]string{"gstate_id", "state_name", "timestamp date_founded"},
-			[]interface{}{id, country, p.BlockData.Time}, "global_states_list", nil, nil, true)
-
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		_, _, err = p.selectiveLoggingAndUpd([]string{"currency_code", "settings_table"},
-			[]interface{}{currency, id + `_state_parameters`}, "global_currencies_list", nil, nil, true)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-	}
-
-	if pkey, err = p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String(); err != nil {
+	dltWallet := &model.Wallet{}
+	err = dltWallet.GetWallet(p.TxWalletID)
+	if err != nil {
 		return p.ErrInfo(err)
-	} else if len(p.NewState.Header.PublicKey) > 30 && len(pkey) == 0 {
+	} else if len(p.NewState.Header.PublicKey) > 30 && len(dltWallet.PublicKey) == 0 {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"public_key_0"}, []interface{}{converter.HexToBin(p.NewState.Header.PublicKey)}, "dlt_wallets",
 			[]string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	}
@@ -456,7 +323,8 @@ func (p *NewStateParser) Action() error {
 }
 
 func (p *NewStateParser) Rollback() error {
-	id, err := p.Single(`SELECT table_id FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states").Int64()
+	rollbackTx := &model.RollbackTx{}
+	err := rollbackTx.Get([]byte(p.TxHash), "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -466,29 +334,32 @@ func (p *NewStateParser) Rollback() error {
 	}
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
-		`smart_contracts`, `state_parameters`, `apps`, `anonyms` /*, `citizenship_requests`*/} {
-		err = p.ExecSQL(fmt.Sprintf(`DROP TABLE "%d_%s"`, id, name))
+		`smart_contracts`, `state_parameters`, `apps`, `anonyms`} {
+		err = model.DBConn.DropTable(fmt.Sprintf("%d_%s", rollbackTx.TableID, name)).Error
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
-	err = p.ExecSQL(`DELETE FROM rollback_tx WHERE tx_hash = [hex] AND table_name = ?`, p.TxHash, "system_states")
+	rollbackTxToDel := &model.RollbackTx{TxHash: []byte(p.TxHash), TableName: "system_states"}
+	err = rollbackTxToDel.DeleteByHashAndTableName()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	maxID, err := p.Single(`SELECT max(id) FROM "system_states"`).Int64()
+	ss := &model.SystemStates{}
+	err = ss.GetLast()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	// обновляем AI
 	// update  the AI
-	err = p.SetAI("system_states", maxID+1)
+	err = p.SetAI("system_states", ss.ID+1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSQL(`DELETE FROM "system_states" WHERE id = ?`, id)
+	ssToDel := &model.SystemStates{ID: ss.ID}
+	err = ssToDel.Delete()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

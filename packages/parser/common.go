@@ -114,6 +114,25 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 	return false, nil
 }
 
+func IsState(country string) (int64, error) {
+	ids, err := model.GetAllSystemStatesIDs()
+	if err != nil {
+		return 0, err
+	}
+	for _, id := range ids {
+		sp := &model.StateParameters{}
+		sp.SetTableName(fmt.Sprintf("%d_state_parameters", id))
+		err = sp.GetByName("state_name")
+		if err != nil {
+			return 0, err
+		}
+		if strings.ToLower(sp.Name) == strings.ToLower(country) {
+			return id, nil
+		}
+	}
+	return 0, nil
+}
+
 func init() {
 	flag.Parse()
 }

@@ -525,24 +525,6 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 	return false
 }
 
-// IsState returns the identifier of the state
-func (db *DCDB) IsState(country string) (int64, error) {
-	data, err := db.GetList(`SELECT id FROM system_states`).Int64()
-	if err != nil {
-		return 0, err
-	}
-	for _, id := range data {
-		stateName, err := db.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = 'state_name'`, id)).String()
-		if err != nil {
-			return 0, err
-		}
-		if strings.ToLower(stateName) == strings.ToLower(country) {
-			return id, nil
-		}
-	}
-	return 0, nil
-}
-
 // UpdateFuel is reserved
 func (db *DCDB) UpdateFuel() {
 	/*	fuelMutex.Lock()

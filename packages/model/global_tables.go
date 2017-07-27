@@ -16,6 +16,10 @@ func (t *Tables) SetTableName(tableName string) {
 	t.tableName = tableName
 }
 
+func (t *Tables) Create() error {
+	return DBConn.Create(t).Error
+}
+
 func (t *Tables) GetByName(name string) error {
 	return DBConn.Where("name = ?", name).First(t).Error
 }
@@ -51,4 +55,15 @@ func (t *Tables) GetPermissions(name, jsonKey string) (map[string]string, error)
 func (t *Tables) SetActionByName(table, name, action, actionValue string, rbID int64) (int64, error) {
 	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+actionValue+`"`, rbID, name)
 	return query.RowsAffected, query.Error
+}
+
+func CreateStateTablesTable(stateID string) error {
+	return DBConn.Exec(`CREATE TABLE "` + stateID + `_tables" (
+				"name" varchar(100)  NOT NULL DEFAULT '',
+				"columns_and_permissions" jsonb,
+				"conditions" text  NOT NULL DEFAULT '',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER TABLE ONLY "` + stateID + `_tables" ADD CONSTRAINT "` + stateID + `_tables_pkey" PRIMARY KEY (name);
+	`).Error
 }
