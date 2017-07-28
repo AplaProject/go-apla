@@ -19,6 +19,7 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"html/template"
 	"regexp"
 	"strconv"
@@ -242,7 +243,7 @@ func LangRes(vars *map[string]string, pars ...string) string {
 
 // LangJS returns span tag for the language resource
 func LangJS(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<span class="lang" lang-id="%s"></span>`, pars[0])
+	return fmt.Sprintf(`<span class="lang" lang-id="%s"></span>`, converter.SanitizeName(pars[0]))
 }
 
 func ifValue(val string) bool {
@@ -294,7 +295,7 @@ func Money(vars *map[string]string, pars ...string) string {
 	} else {
 		cents = converter.StrToInt(StateVal(vars, `money_digit`))
 	}
-	ret := pars[0]
+	ret := converter.SanitizeNumber(pars[0])
 	if ret == `NULL` {
 		ret = `0`
 	}
@@ -366,10 +367,10 @@ func If(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	if isTrue {
-		return pars[1]
+		return converter.SanitizeScript(pars[1])
 	}
 	if len(pars) > 2 {
-		return pars[2]
+		return converter.SanitizeScript(pars[2])
 	}
 	return ``
 }
@@ -422,7 +423,7 @@ func Now(vars *map[string]string, pars ...string) string {
 		query, interval string
 	)
 	if len(pars) > 1 && len(pars[1]) > 0 {
-		interval = pars[1]
+		interval = converter.SanitizeNumber(pars[1])
 		if interval[0] != '-' && interval[0] != '+' {
 			interval = `+` + interval
 		}
@@ -433,11 +434,11 @@ func Now(vars *map[string]string, pars ...string) string {
 		cut = 10
 	} else {
 		query = `select now()` + interval
-		switch pars[0] {
+		format := converter.Sanitize(pars[0], `+-: /.`)
+		switch format {
 		case `datetime`:
 			cut = 19
 		default:
-			format := pars[0]
 			if strings.Index(format, `HH`) >= 0 && strings.Index(format, `HH24`) < 0 {
 				format = strings.Replace(format, `HH`, `HH24`, -1)
 			}
@@ -457,16 +458,16 @@ func Now(vars *map[string]string, pars ...string) string {
 // Textarea returns textarea HTML tag
 func Textarea(vars *map[string]string, pars ...string) string {
 	var (
-		class, value string
+		class, value, more string
 	)
 	if len(pars) > 1 {
-		class = pars[1]
+		class, more = getClass(pars[1])
 	}
 	if len(pars) > 2 {
-		value = pars[2]
+		value = html.EscapeString(pars[2])
 	}
-	return fmt.Sprintf(`<textarea id="%s" class="%s">%s</textarea>`,
-		pars[0], class, value)
+	return fmt.Sprintf(`<textarea id="%s" class="%s" %s>%s</textarea>`,
+		converter.SanitizeName(pars[0]), class, more, value)
 }
 
 // Input returns input HTML tag
@@ -482,28 +483,29 @@ func Input(vars *map[string]string, pars ...string) string {
 		placeholder = LangRes(vars, pars[2])
 	}
 	if len(pars) > 3 {
-		itype = pars[3]
+		itype = converter.SanitizeName(pars[3])
 	}
 	if len(pars) > 4 {
-		value = pars[4]
+		value = html.EscapeString(pars[4])
 	}
 	return fmt.Sprintf(`<input type="%s" id="%s" placeholder="%s" class="%s" value="%s" %s>`,
-		itype, pars[0], placeholder, class, value, more)
+		itype, converter.SanitizeName(pars[0]), placeholder, class, value, more)
 }
 
 // InputDate returns input HTML tag with datepicker
 func InputDate(vars *map[string]string, pars ...string) string {
 	var (
-		class, value string
+		class, value, more string
 	)
 	if len(pars) > 1 {
-		class = pars[1]
+		class, more = getClass(pars[1])
 	}
 	if len(pars) > 2 {
-		value = pars[2]
+		value = html.EscapeString(pars[2])
 	}
 	(*vars)["widate"] = `1`
-	return fmt.Sprintf(`<input type="text" class="datetimepicker %s" id="%s" value="%s">`, class, pars[0], value)
+	return fmt.Sprintf(`<input type="text" class="datetimepicker %s" %s id="%s" value="%s">`,
+		class, more, converter.SanitizeName(pars[0]), value)
 }
 
 // InputMoney returns input HTML tag with a special money mask
@@ -513,7 +515,7 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 		digit        int
 	)
 	if len(pars) > 1 {
-		class = pars[1]
+		class = converter.SanitizeName(pars[1])
 	}
 	if len(pars) > 3 {
 		digit = converter.StrToInt(pars[3])
@@ -521,12 +523,12 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 		digit = converter.StrToInt(StateVal(vars, `money_digit`))
 	}
 	if len(pars) > 2 {
-		value = Money(vars, pars[2], converter.IntToStr(digit))
+		value = Money(vars, converter.SanitizeNumber(pars[2]), converter.IntToStr(digit))
 	}
 	(*vars)["wimoney"] = `1`
-	return fmt.Sprintf(`<input id="%s" type="text" value="%s"
-				data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 'autoGroup': true, 'digits': %d, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"
-	class="inputmask %s">`, pars[0], value, digit, class)
+	return fmt.Sprintf(`<input id="%s" type="text" value="%s" data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 
+'autoGroup': true, 'digits': %d, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"	class="inputmask %s">`,
+		converter.SanitizeName(pars[0]), value, digit, class)
 }
 
 // InputAddress returns input HTML tag for entering wallet address
@@ -535,16 +537,16 @@ func InputAddress(vars *map[string]string, pars ...string) string {
 		class, value string
 	)
 	if len(pars) > 1 {
-		class = pars[1]
+		class = converter.SanitizeName(pars[1])
 	}
 	if len(pars) > 2 {
-		value = pars[2]
+		value = html.EscapeString(pars[2])
 	}
 	(*vars)["wiaddress"] = `1`
 	return fmt.Sprintf(`<input id="%s" type="text" value="%s" data-type="wallet" class="%s address">
 				<ul class="parsley-errors-list">
 					<li class="parsley-required">Please enter the correct address</li>
-				</ul>`, pars[0], value, class)
+				</ul>`, converter.SanitizeName(pars[0]), value, class)
 }
 
 // Trim trims spaces at the beginning and at the end of the text
@@ -552,7 +554,7 @@ func Trim(vars *map[string]string, pars ...string) string {
 	if len(pars) == 0 {
 		return ``
 	}
-	return strings.TrimSpace(pars[0])
+	return strings.TrimSpace(html.EscapeString(pars[0]))
 }
 
 // Back returns back button
@@ -565,8 +567,8 @@ func Back(vars *map[string]string, pars ...string) string {
 		params = converter.Escape(pars[2])
 	}
 	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-	hist_push(['load_%s', '%s', {%s}]);
-</script>`, converter.Escape(pars[0]), converter.Escape(pars[1]), params)
+hist_push(['load_%s', '%s', {%s}]);</script>`,
+		converter.SanitizeName(pars[0]), converter.SanitizeName(pars[1]), params)
 }
 
 // JSONScript returns json object
@@ -858,11 +860,13 @@ func GetOne(vars *map[string]string, pars ...string) string {
 }
 
 func getClass(class string) (string, string) {
-	//list := strings.Split(class, ` `)
+	special := map[string]string{
+		`copyclipboard`: `onClick="CopyToClipboard('#clipboard')"`,
+	}
 	list := make([]string, 0)
 	buf := make([]rune, 0)
 	var quote bool
-	for _, ch := range class {
+	for _, ch := range converter.Sanitize(class, `"' #-=`) {
 		if ch == ' ' && !quote && len(buf) > 0 {
 			list = append(list, string(buf))
 			buf = buf[:0]
@@ -892,13 +896,14 @@ func getClass(class string) (string, string) {
 				}
 				more = append(more, fmt.Sprintf(`%s="%s"`, lr[0], right))
 			}
+		} else if ispecial, ok := special[ilist]; ok {
+			more = append(more, ispecial)
 		} else if strings.HasPrefix(ilist, `xs-`) || strings.HasPrefix(ilist, `sm-`) ||
 			strings.HasPrefix(ilist, `md-`) || strings.HasPrefix(ilist, `lg`) {
 			classes = append(classes, `col-`+ilist)
 		} else if ilist != `''` {
 			classes = append(classes, ilist)
 		}
-
 	}
 	return strings.Join(classes, ` `), strings.Join(more, ` `)
 }
@@ -910,7 +915,7 @@ func getTag(tag string, pars ...string) (out string) {
 	class, more := getClass(pars[0])
 	out = fmt.Sprintf(`<%s class="%s" %s>`, tag, class, more)
 	for i := 1; i < len(pars); i++ {
-		out += pars[i]
+		out += converter.SanitizeScript(pars[i])
 	}
 	return out + fmt.Sprintf(`</%s>`, tag)
 }
@@ -927,10 +932,10 @@ func Tag(vars *map[string]string, pars ...string) (out string) {
 	if valid {
 		var class, title, more string
 		if len(pars) > 1 {
-			title = pars[1]
+			title = converter.SanitizeScript(pars[1])
 		}
 		if len(pars) > 2 {
-			class, more = getClass(converter.Escape(pars[2]))
+			class, more = getClass(pars[2])
 		}
 		return fmt.Sprintf(`<%s class="%s" %s>%s</%[1]s>`, pars[0], class, more, title)
 	}
@@ -968,7 +973,7 @@ func Li(vars *map[string]string, pars ...string) (out string) {
 	if len(pars) > 1 {
 		class, more = getClass(pars[1])
 	}
-	return fmt.Sprintf(`<li class="%s" %s>%s</li>`, class, more, pars[0])
+	return fmt.Sprintf(`<li class="%s" %s>%s</li>`, class, more, converter.SanitizeScript(pars[0]))
 }
 
 // Small returns small HTML tag
@@ -1116,7 +1121,8 @@ func SetVar(vars *map[string]string, pars ...string) string {
 // TextHidden returns hidden textarea HTML tag
 func TextHidden(vars *map[string]string, pars ...string) (out string) {
 	for _, item := range pars {
-		out += fmt.Sprintf(`<textarea style="display:none;" id="%s">%s</textarea>`, item, (*vars)[item])
+		out += fmt.Sprintf(`<textarea style="display:none;" id="%s">%s</textarea>`,
+			item, html.EscapeString((*vars)[item]))
 	}
 	return
 }
@@ -1133,16 +1139,16 @@ func TxID(vars *map[string]string, pars ...string) string {
 func LinkPage(vars *map[string]string, pars ...string) string {
 	params := ``
 
-	title := pars[0]
+	title := converter.SanitizeName(pars[0])
 	if len(pars) > 1 {
-		title = pars[1]
+		title = html.EscapeString(pars[1])
 	}
 
 	if len(pars) < 2 {
 		return ``
 	}
 	if len(pars) >= 3 {
-		params = pars[2]
+		params = converter.Escape(pars[2])
 	}
 	classParams := ``
 	if len(pars) >= 4 {
@@ -1150,7 +1156,8 @@ func LinkPage(vars *map[string]string, pars ...string) string {
 		class, more := getClass(pars[3])
 		classParams = fmt.Sprintf(`class="%s" %s`, class, more)
 	}
-	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" %s>%s</a>`, pars[0], params, classParams, title)
+	return fmt.Sprintf(`<a onclick="load_template('%s', {%s} )" %s>%s</a>`, converter.SanitizeName(pars[0]),
+		params, classParams, title)
 }
 
 // BtnEdit returns button HTML tag with an icon
@@ -1160,7 +1167,7 @@ func BtnEdit(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	if len(pars) >= 3 {
-		params = pars[2]
+		params = converter.Escape(pars[2])
 	}
 	return fmt.Sprintf(`<button style="width: 44px;" type="button" class="btn btn-labeled btn-default" onclick="load_template('%s', {%s})"><span class="btn-label"><em class="fa fa-%s"></em></span></button>`,
 		converter.Escape(pars[0]), params, converter.Escape(pars[1]))
@@ -1168,12 +1175,12 @@ func BtnEdit(vars *map[string]string, pars ...string) string {
 
 // BlockInfo returns returns a link for popup block
 func BlockInfo(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<a href="#" onclick="openBlockDetailPopup('%s')">%[1]s</a>`, pars[0])
+	return fmt.Sprintf(`<a href="#" onclick="openBlockDetailPopup('%s')">%[1]s</a>`, converter.SanitizeName(pars[0]))
 }
 
 // Val returns the value of the html control with id identifier
 func Val(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`$('#%s').val()`, pars[0])
+	return fmt.Sprintf(`$('#%s').val()`, converter.SanitizeName(pars[0]))
 }
 
 // BtnPage returns the button HTML tag with the link to the template page
@@ -1183,7 +1190,7 @@ func BtnPage(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	if len(pars) >= 3 {
-		params = pars[2]
+		params = converter.Escape(pars[2])
 	}
 	if params == `''` {
 		params = ``
@@ -1195,16 +1202,16 @@ func BtnPage(vars *map[string]string, pars ...string) string {
 	}
 	anchor := `''`
 	if len(pars) >= 5 {
-		anchor = pars[4]
+		anchor = converter.SanitizeName(pars[4])
 	}
-	html := `<button type="button" class="%s" %s onclick="load_template('%s', {%s}, %s )">%s</button>`
-	page := pars[0]
+	htmlpat := `<button type="button" class="%s" %s onclick="load_template('%s', {%s}, %s )">%s</button>`
+	page := converter.SanitizeName(pars[0])
 	if page[0:4] == `app-` {
-		html = `<button type="button" class="%s" %s onclick="load_app('%s', {%s}, %s )">%s</button>`
+		htmlpat = `<button type="button" class="%s" %s onclick="load_app('%s', {%s}, %s )">%s</button>`
 		page = page[4:]
 	}
-	return fmt.Sprintf(html,
-		class, more, page, params, anchor, pars[1])
+	return fmt.Sprintf(htmlpat,
+		class, more, page, params, anchor, converter.SanitizeScript(pars[1]))
 }
 
 // BtnContract returns the button for executing of the contract
@@ -1219,14 +1226,14 @@ func BtnContract(vars *map[string]string, pars ...string) string {
 	}
 
 	if len(pars) >= 4 {
-		params = pars[3]
+		params = converter.Escape(pars[3])
 	}
 	if params == `''` {
 		params = ``
 	}
 	class := `"btn btn-primary"`
 	if len(pars) >= 5 {
-		class = pars[4]
+		class = converter.SanitizeName(pars[4])
 	}
 	if len(pars) >= 7 {
 		onsuccess = converter.Escape(pars[5])
@@ -1237,7 +1244,8 @@ func BtnContract(vars *map[string]string, pars ...string) string {
 	}
 	(*vars)["wibtncont"] = `1`
 	return fmt.Sprintf(`<button type="button" class=%s data-tool="panel-refresh" onclick="btn_contract(this, '%s', {%s}, '%s', '%s', '%s', {%s})">%s</button>`,
-		class, pars[0], params, pars[2], onsuccess, page, pageparam, pars[1])
+		class, converter.SanitizeName(pars[0]), params, converter.SanitizeName(pars[2]), onsuccess,
+		page, pageparam, converter.SanitizeScript(pars[1]))
 }
 
 // StateLink returns the value of the variable
@@ -1245,7 +1253,7 @@ func StateLink(vars *map[string]string, pars ...string) string {
 	if len(pars) < 2 {
 		return ``
 	}
-	return (*vars)[fmt.Sprintf(`%s_%s`, pars[0], pars[1])]
+	return (*vars)[fmt.Sprintf(`%s_%s`, converter.SanitizeName(pars[0]), converter.SanitizeName(pars[1]))]
 }
 
 // Table returns table HTML tag with the result of sql query
@@ -1370,7 +1378,8 @@ func Image(vars *map[string]string, pars ...string) string {
 	rez := " "
 	if len(pars[0]) == 0 || (strings.HasPrefix(pars[0], `data:`) || strings.HasSuffix(pars[0], `jpg`) ||
 		strings.HasSuffix(pars[0], `png`) || strings.HasSuffix(pars[0], `svg`) || strings.HasSuffix(pars[0], `gif`)) {
-		rez = fmt.Sprintf(`<img src="%s" class="%s" %s alt="%s" stylex="display:block;">`, pars[0], class, more, alt)
+		rez = fmt.Sprintf(`<img src="%s" class="%s" %s alt="%s" stylex="display:block;">`,
+			html.EscapeString(pars[0]), class, more, alt)
 	}
 	return rez
 }
@@ -1378,7 +1387,7 @@ func Image(vars *map[string]string, pars ...string) string {
 // InputMap returns HTML tags for map point
 func InputMap(vars *map[string]string, pars ...string) string {
 	var coords string
-	id := pars[0]
+	id := converter.SanitizeName(pars[0])
 	if len(id) == 0 {
 		return ``
 	}
@@ -1398,7 +1407,7 @@ func InputMap(vars *map[string]string, pars ...string) string {
 // InputMapPoly returns HTML tags for polygon map
 func InputMapPoly(vars *map[string]string, pars ...string) string {
 	var coords, idaddress, idsquare string
-	id := pars[0]
+	id := converter.SanitizeName(pars[0])
 	if len(id) == 0 {
 		return ``
 	}
@@ -1419,7 +1428,7 @@ func InputMapPoly(vars *map[string]string, pars ...string) string {
 
 // ImageInput returns HTML tags for uploading image
 func ImageInput(vars *map[string]string, pars ...string) string {
-	id := pars[0]
+	id := converter.SanitizeName(pars[0])
 	if len(id) == 0 {
 		return ``
 	}
@@ -1429,6 +1438,7 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		width = converter.StrToInt(pars[1])
 	}
+	pars[2] = html.EscapeString(pars[2])
 	if len(pars) > 2 {
 		var w, h int
 		if lr := strings.Split(pars[2], `/`); len(lr) == 2 {
@@ -1453,7 +1463,7 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 
 // StateVal returns par[1]-th value of pars[0] state param
 func StateVal(vars *map[string]string, pars ...string) string {
-	val, _ := StateParam(converter.StrToInt64((*vars)[`state_id`]), pars[0])
+	val, _ := StateParam(converter.StrToInt64((*vars)[`state_id`]), converter.SanitizeName(pars[0]))
 	if len(pars) > 1 {
 		ind := converter.StrToInt(pars[1])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
@@ -1467,14 +1477,14 @@ func StateVal(vars *map[string]string, pars ...string) string {
 
 // LiTemplate returns li HTML tag with a link to the template page
 func LiTemplate(vars *map[string]string, pars ...string) string {
-	name := pars[0]
+	name := converter.SanitizeName(pars[0])
 	title := name
 	params := ``
 	if len(pars) > 1 {
-		title = pars[1]
+		title = converter.SanitizeName(pars[1])
 	}
 	if len(pars) >= 3 {
-		params = pars[2]
+		params = converter.Escape(pars[2])
 	}
 	return fmt.Sprintf(`<li><a href="#" onclick="load_template('%s', {%s});"><span>%s</span></a></li>`,
 		name, params, title)
@@ -1483,12 +1493,16 @@ func LiTemplate(vars *map[string]string, pars ...string) string {
 // Navigation returns bread crumb navigation links
 func Navigation(vars *map[string]string, pars ...string) string {
 	li := make([]string, 0)
-	for _, ipar := range pars {
-		li = append(li, ipar)
+	for ind, ipar := range pars {
+		val := converter.SanitizeScript(ipar)
+		if ind > 0 && len(val) > 0 && val[0] != '<' {
+			val = `&nbsp;/&nbsp;&nbsp;` + val
+		}
+		li = append(li, val)
 	}
 	return textproc.Macro(fmt.Sprintf(`<ol class="breadcrumb"><span class="pull-right">
 	<a href='#' onclick="load_template('sys-editPage', {name: '#page#', global:'#global#'} )">Edit</a></span>%s</ol>`,
-		strings.Join(li, `&nbsp;/&nbsp;`)), vars)
+		strings.Join(li, `&nbsp;`)), vars)
 }
 
 // MarkDown returns processed markdown text
@@ -1498,7 +1512,7 @@ func MarkDown(vars *map[string]string, pars ...string) string {
 
 // Title returns a div tag with the title class
 func Title(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<div class="content-heading">%s</div>`, pars[0])
+	return fmt.Sprintf(`<div class="content-heading">%s</div>`, converter.SanitizeScript(pars[0]))
 }
 
 // PageTitle returns the header of the page panel
@@ -1508,7 +1522,8 @@ func PageTitle(vars *map[string]string, pars ...string) string {
 		row = ` row`
 		(*vars)[`isrow`] = `closed`
 	}
-	return fmt.Sprintf(`<div class="panel panel-default" data-sweet-alert><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body%s">`, pars[0], row)
+	return fmt.Sprintf(`<div class="panel panel-default" data-sweet-alert><div class="panel-heading"><div class="panel-title">%s</div></div><div class="panel-body%s">`,
+		converter.SanitizeScript(pars[0]), row)
 }
 
 // PageEnd closes the page panel
@@ -1523,7 +1538,7 @@ func PageEnd(vars *map[string]string, pars ...string) string {
 func Form(vars *map[string]string, pars ...string) string {
 	var class string
 	if len(pars[0]) > 0 {
-		class = fmt.Sprintf(`class="%s"`, pars[0])
+		class = fmt.Sprintf(`class="%s"`, converter.SanitizeName(pars[0]))
 	}
 	return fmt.Sprintf(`<form role="form" %s>`, class)
 }
@@ -1537,10 +1552,9 @@ func FormEnd(vars *map[string]string, pars ...string) string {
 func Label(vars *map[string]string, pars ...string) string {
 	var class string
 	if len(pars) > 1 && len(pars[1]) > 0 {
-		class = fmt.Sprintf(`class="%s"`, pars[1])
+		class = fmt.Sprintf(`class="%s"`, converter.SanitizeName(pars[1]))
 	}
-	text := LangRes(vars, pars[0])
-	return fmt.Sprintf(`<label %s>%s</label>`, class, text)
+	return fmt.Sprintf(`<label %s>%s</label>`, class, LangRes(vars, pars[0]))
 }
 
 // Legend returns the legend HTML tag
@@ -1785,7 +1799,8 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 		pars := strings.SplitN(onsuccess, `,`, 3)
 		onsuccess = ``
 		if len(pars) >= 2 {
-			onsuccess = fmt.Sprintf(`load_%s('%s'`, pars[0], pars[1])
+			onsuccess = fmt.Sprintf(`load_%s('%s'`, converter.SanitizeName(pars[0]),
+				converter.SanitizeName(pars[1]))
 			if len(pars) == 3 {
 				onsuccess += `,{` + pars[2] + `}`
 			}
@@ -1920,11 +1935,11 @@ func Ring(vars *map[string]string, pars ...string) string {
 	}
 	color := `23b7e5`
 	if len(pars) > 4 {
-		color = pars[4]
+		color = converter.SanitizeName(pars[4])
 	}
 	fontColor := `656565`
 	if len(pars) > 5 {
-		fontColor = pars[5]
+		fontColor = converter.SanitizeName(pars[5])
 	}
 	width := 250
 	if len(pars) > 6 {
@@ -1936,11 +1951,11 @@ func Ring(vars *map[string]string, pars ...string) string {
 	}
 	prefix := ``
 	if len(pars) > 8 {
-		prefix = pars[8]
+		prefix = converter.SanitizeName(pars[8])
 	}
 	suffix := ``
 	if len(pars) > 9 {
-		suffix = pars[9]
+		suffix = converter.SanitizeName(pars[9])
 	}
 	return fmt.Sprintf(`
 		<div
@@ -1996,12 +2011,13 @@ func WiAccount(vars *map[string]string, pars ...string) string {
 func Source(vars *map[string]string, pars ...string) string {
 	var value string
 	if len(pars) > 1 {
-		value = pars[1]
+		value = converter.SanitizeScript(pars[1])
 	}
-	(*vars)["wisource"] = pars[0]
+	name := converter.SanitizeName(pars[0])
+	(*vars)["wisource"] = name
 	return fmt.Sprintf(`<pre class="textEditor"><code></code><section id="textEditor">%s</section>
 					</pre>
-				   <textarea id="%s" class="form-control hidden"></textarea>`, value, pars[0])
+				   <textarea id="%s" class="form-control hidden"></textarea>`, value, name)
 }
 
 // WiCitizen returns a widget with the information about the citizen
@@ -2012,10 +2028,10 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	if len(pars) > 2 && pars[2] != `NULL` && pars[2] != `` && pars[2] != `#my_avatar#` {
-		image = pars[2]
+		image = html.EscapeString(pars[2])
 	}
 	if len(pars) > 3 && len(pars[3]) > 0 {
-		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, pars[3])
+		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, html.EscapeString(pars[3]))
 	}
 	address := converter.AddressToString(converter.StrToInt64(pars[1]))
 	(*vars)["wicitizen"] = `1`
@@ -2057,7 +2073,7 @@ func Date(vars *map[string]string, pars ...string) string {
 	}
 	var format string
 	if len(pars) > 1 {
-		format = pars[1]
+		format = converter.Sanitize(pars[1], `+-: /.`)
 	} else {
 		format = LangRes(vars, `dateformat`)
 		if format == `dateformat` {
@@ -2083,7 +2099,7 @@ func DateTime(vars *map[string]string, pars ...string) string {
 	}
 	var format string
 	if len(pars) > 1 {
-		format = pars[1]
+		format = converter.Sanitize(pars[1], `+-: /.`)
 	} else {
 		format = LangRes(vars, `timeformat`)
 		if format == `timeformat` {
@@ -2130,7 +2146,8 @@ func Select(vars *map[string]string, pars ...string) string {
 		value = converter.StrToInt64(pars[3])
 	}
 
-	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s" %s>`, pars[0], class, more)
+	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s" %s>`,
+		converter.SanitizeName(pars[0]), class, more)
 	for _, item := range list {
 		var selected string
 		if item.ID == value {
@@ -2149,7 +2166,7 @@ func mapOut(vars *map[string]string, mapClass string, pars []string) string {
 		class, more = getClass(pars[1])
 	}
 	(*vars)[mapClass] = `1`
-	return fmt.Sprintf(`<div class="%s %s" %s>%s</div>`, mapClass, class, more, pars[0])
+	return fmt.Sprintf(`<div class="%s %s" %s>%s</div>`, mapClass, class, more, converter.SanitizeScript(pars[0]))
 }
 
 // Map returns a map widget
@@ -2175,10 +2192,10 @@ func MenuGroup(vars *map[string]string, pars ...string) string {
 		}
 		(*vars)[`menuid`] = id*/
 	if len(pars) > 1 {
-		idname = converter.Escape(pars[1])
+		idname = converter.SanitizeName(pars[1])
 	}
 	if len(pars) > 2 {
-		icon = fmt.Sprintf(`<em class="%s"></em>`, converter.Escape(pars[2]))
+		icon = fmt.Sprintf(`<em class="%s"></em>`, converter.SanitizeName(pars[2]))
 	}
 	return fmt.Sprintf(`<li id="li%s"><span>%s
      <span>%s</span></span>
@@ -2196,20 +2213,20 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 	}*/
 	off := 0
 	if len(pars) > 1 {
-		action = converter.Escape(pars[1])
+		action = converter.SanitizeName(pars[1])
 	}
 	if !strings.HasPrefix(action, `load_`) {
 		action = `load_template`
 		off = 1
 	}
 	if len(pars) > 2-off {
-		page = converter.Escape(pars[2-off])
+		page = converter.SanitizeName(pars[2-off])
 	}
 	if len(pars) > 3-off {
 		params = converter.Escape(pars[3-off])
 	}
 	if len(pars) > 4-off {
-		icon = fmt.Sprintf(`<em class="%s"></em>`, converter.Escape(pars[4-off]))
+		icon = fmt.Sprintf(`<em class="%s"></em>`, converter.SanitizeName(pars[4-off]))
 	}
 	return fmt.Sprintf(`<li id="li%s">
 		<a href="#" title="%s" onClick="%s('%s',{%s});">
@@ -2219,16 +2236,16 @@ func MenuItem(vars *map[string]string, pars ...string) string {
 
 // MenuPage returns a special comment for the menu
 func MenuPage(vars *map[string]string, pars ...string) string {
-	return fmt.Sprintf(`<!--%s-->`, converter.Escape(pars[0]))
+	return fmt.Sprintf(`<!--%s-->`, html.EscapeString(pars[0]))
 }
 
 // MenuBack returns a special menu link
 func MenuBack(vars *map[string]string, pars ...string) string {
 	var link string
 	if len(pars) > 1 {
-		link = fmt.Sprintf(`load_template('%s')`, converter.Escape(pars[1]))
+		link = fmt.Sprintf(`load_template('%s')`, converter.SanitizeName(pars[1]))
 	}
-	return fmt.Sprintf(`<!--%s=%s-->`, converter.Escape(pars[0]), link)
+	return fmt.Sprintf(`<!--%s=%s-->`, converter.SanitizeName(pars[0]), link)
 }
 
 // MenuEnd closes menu tags
@@ -2604,6 +2621,7 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 	(*params)[`page`] = page
 	(*params)[`state_id`] = converter.Int64ToStr(stateID)
 	(*params)[`citizen`] = converter.Int64ToStr(citizenID)
+	(*params)[`lang`] = language.GetLang(int(stateID), (*params)[`accept_lang`])
 	if len(data) > 0 {
 		templ := textproc.Process(data, params)
 		if (*params)[`isrow`] == `opened` {

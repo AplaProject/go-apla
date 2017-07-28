@@ -30,6 +30,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/language"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
@@ -100,6 +101,7 @@ func init() {
 		"Sha256":             Sha256,
 		"PubToID":            PubToID,
 		"HexToBytes":         HexToBytes,
+		"LangRes":            LangRes,
 		"UpdateContract":     UpdateContract,
 		"UpdateParam":        UpdateParam,
 		"UpdateMenu":         UpdateMenu,
@@ -889,6 +891,12 @@ func UpdatePage(p *Parser, name, value, menu, conditions, global string, stateID
 // Len returns the length of the slice
 func Len(in []interface{}) int64 {
 	return int64(len(in))
+}
+
+// LangRes returns the language resource
+func LangRes(p *Parser, idRes, lang string) string {
+	ret, _ := language.LangText(idRes, int(p.TxStateID), lang)
+	return ret
 }
 
 func checkWhere(tblname string, where string, order string) (string, string, error) {
