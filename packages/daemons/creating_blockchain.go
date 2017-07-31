@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"io"
+	"fmt"
 )
 
 func CreatingBlockchain(d *daemon, ctx context.Context) error {
@@ -177,6 +178,7 @@ func unmarshalBlockData(buff []byte) (blockData, error) {
 		return blockData{}, utils.ErrInfo("bad length")
 	}
 
+	fmt.Printf("blockId: %d, blockLen: %d, blockData: +%v", blockID, blockDataLen, buff)
 	return blockData{
 		ID:   blockID,
 		Data: buff[:blockDataLen],
@@ -186,8 +188,11 @@ func unmarshalBlockData(buff []byte) (blockData, error) {
 // TODO: rewrite this
 func marshallFileBlock(b blockData) []byte {
 
+	fmt.Printf("\nto marshal: %+v\n", b.Data)
 	data := append(converter.DecToBin(b.ID, WordSize), converter.EncodeLengthPlusData(b.Data)...)
 	sizeAndData := append(converter.DecToBin(len(data), WordSize), data...)
 
-	return append(sizeAndData, converter.DecToBin(len(sizeAndData), WordSize)...)
+	blockBin := append(sizeAndData, converter.DecToBin(len(sizeAndData), WordSize)...)
+	fmt.Printf("\n\nmarshal: blockBin: %+v\n", blockBin)
+	return  blockBin
 }

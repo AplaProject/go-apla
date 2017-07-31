@@ -20,3 +20,7 @@ func (srs *SystemRecognizedStates) IsDelegated(stateID int64) (bool, error) {
 	}
 	return srs.DelegateStateID > 0 || srs.DelegateWalletID > 0, nil
 }
+
+func SystemRecognizedStatesCreateTable() error {
+	return DBConn.CreateTable(&SystemRecognizedStates{}).Error
+}

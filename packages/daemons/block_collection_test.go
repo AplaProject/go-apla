@@ -3,26 +3,21 @@ package daemons
 import (
 	"net"
 	"testing"
-
-	//"database/sql"
-
-	//"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/jinzhu/gorm"
-
-
-	dsql "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/parser"
-	sqlite "github.com/mattn/go-sqlite3"
-
-
 	"database/sql"
 	"context"
 	"sync"
 	"time"
 	"os"
+
+	"github.com/jinzhu/gorm"
+	sqlite "github.com/mattn/go-sqlite3"
+
+	dsql "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"io/ioutil"
 )
 
 func encode(x, y []byte) string {
@@ -93,6 +88,21 @@ func initGorm(t *testing.T) *gorm.DB {
 	}
 
 	err = model.LogTransactionsCreateTable()
+	if err != nil {
+		t.Fatalf("can't create table: %s", err)
+	}
+
+	err = model.ConfigCreateTable()
+	if err != nil {
+		t.Fatalf("can't create table: %s", err)
+	}
+
+	err = model.SystemRecognizedStatesCreateTable()
+	if err != nil {
+		t.Fatalf("can't create table: %s", err)
+	}
+
+	err = model.MyNodeKeysCreateTable()
 	if err != nil {
 		t.Fatalf("can't create table: %s", err)
 	}
@@ -196,6 +206,30 @@ func TestChooseBlock(t *testing.T) {
 	wg.Wait()
 }
 
+func checkBlock(t *testing.T, id int64) {
+	b := &model.Block{}
+	err := b.GetBlock(1)
+	if err != nil {
+		t.Errorf("get block failed: %s", err)
+	} else {
+		if b.ID != id {
+			t.Errorf("bad blockID want %d, got %d", id, b.ID)
+		}
+	}
+}
+
+func checkInfoBlock(t *testing.T, id int64) {
+	ib := &model.InfoBlock{}
+	err := ib.GetInfoBlock()
+	if err != nil {
+		t.Errorf("can't get info block: %s", err)
+	}
+
+	if ib.BlockID != id {
+		t.Errorf("bad info block: want %d, got %d", id, ib.BlockID)
+	}
+}
+
 func TestFirstBlock(t *testing.T) {
 
 	g := initGorm(t)
@@ -211,13 +245,30 @@ func TestFirstBlock(t *testing.T) {
 		t.Errorf("loadFirstBlock return error: %s", err)
 	}
 
-	b := model.Block{}
-	err = b.GetBlock(1)
+	checkBlock(t, 1)
+	checkInfoBlock(t, 1)
+
+}
+
+func TestLoadFromFile(t *testing.T) {
+	g := initGorm(t)
+	defer g.Close()
+
+	fileName := getTmpFile(t)
+	defer os.Remove(fileName)
+	fileBlockBin := marshallFileBlock(getFirstBlock(t))
+	err := ioutil.WriteFile(fileName, fileBlockBin, os.ModeAppend)
 	if err != nil {
-		t.Errorf("get first block failed: %s", err)
-	} else {
-		if b.ID != 1 {
-			t.Errorf("inserted bad blockID want 1, got %d", b.ID)
-		}
+		t.Fatalf("can't write to file: %s", err)
+	}
+
+	d := createDaemon(g.DB())
+	parser := new(parser.Parser)
+	parser.DCDB = d.DCDB
+	parser.GoroutineName = "test"
+
+	err = loadFromFile(context.Background(), parser, fileName)
+	if err != nil {
+		t.Fatalf("load from file return error: %s", err)
 	}
 }

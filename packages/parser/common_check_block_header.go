@@ -117,10 +117,11 @@ func (p *Parser) CheckBlockHeader() error {
 		if len(nodePublicKey) == 0 {
 			return utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
+		log.Infof("node public key: %s", nodePublicKey)
 		// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
 		// SIGN from 128 bites to 512 bites. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
 		forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s", p.BlockData.BlockID, p.PrevBlock.Hash, p.BlockData.Time, p.BlockData.WalletID, p.BlockData.StateID, p.MrklRoot)
-		log.Debug(forSign)
+		log.Debugf("!!!for sign: %v", forSign)
 		// проверим подпись
 		// check the signature
 		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, p.BlockData.Sign, true)

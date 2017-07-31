@@ -35,3 +35,7 @@ func (c *Config) ChangeBlockID(oldBlockID int64, newBlockID int64) error {
 func (c *Config) ChangeBlockIDBatch(oldBlockID int64, newBlockID int64) error {
 	return DBConn.Model(c).Where("id < ?", oldBlockID).Update("id", newBlockID).Error
 }
+
+func ConfigCreateTable() error {
+	return DBConn.CreateTable(&Config{}).Error
+}

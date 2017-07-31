@@ -260,12 +260,15 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 }
 
 func downloadChain(ctx context.Context, fileName, url string) error {
-	// TODO????
-	for i := 0; i < 10; i++ {
-		loadCtx, _ := context.WithTimeout(ctx, 3600*time.Second) // ??
+
+	for i := 0; i < consts.DOWNLOAD_CHAIN_TRY_COUNT; i++ {
+		loadCtx, cancel := context.WithTimeout(ctx, consts.UPD_FULL_NODES_PERIOD*time.Second)
+		defer cancel()
+
 		blockchainSize, err := downloadToFile(loadCtx, url, fileName)
 		if err != nil {
 			logger.Error("%v", utils.ErrInfo(err))
+			continue
 		}
 		if blockchainSize > consts.BLOCKCHAIN_SIZE {
 			return nil

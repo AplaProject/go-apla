@@ -45,8 +45,7 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 		return utils.ErrInfo("blockID == 0")
 	}
 
-	// чистим зацикленные
-	// clean the looped
+	// delete looped transactions
 	logging.WriteSelectiveLog("DELETE FROM transactions WHERE verified = 0 AND used = 0 AND counter > 10")
 	affect, err := model.DeleteLoopedTransactions()
 	if err != nil {

@@ -92,6 +92,7 @@ const CHANGE_KEY_PERIOD = 86400 * 7
 const UPD_FULL_NODES_PERIOD = 3600 // на время тестов 3600, потом надо ставить 86400
 // 3600 is for the test time, then we have to put 86400
 
+const DOWNLOAD_CHAIN_TRY_COUNT = 10
 const RATE_VOTING_PERIOD = 3600
 
 const RECOVERY_ADDRESS = 8275283526439353759

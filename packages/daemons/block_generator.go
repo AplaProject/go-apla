@@ -48,11 +48,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	if config.StateID > 0 {
 		systemState := &model.SystemRecognizedStates{}
 		delegated, err := systemState.IsDelegated(config.StateID)
-		if err != nil {
-			return err
-		}
-
-		if delegated {
+		if err == nil && delegated {
 			// we are the state and we have delegated the node maintenance to another user or state
 			d.sleepTime = 3600 * time.Second
 			return nil
@@ -60,11 +56,8 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 
 	fullNodes := &model.FullNodes{}
-	if err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID); err != nil {
-		return err
-	}
-
-	if fullNodes.ID == 0 {
+	err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID);
+	if err != nil || fullNodes.ID == 0 {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
 		return nil
@@ -75,6 +68,9 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO: delete hex ??
+	prevBlock.Hash = converter.BinToHex(prevBlock.Hash)
 
 	// calculate the next block generation time
 	sleepTime, err := d.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
@@ -141,8 +137,8 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transactions, key
 	}
 	mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
-	forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s",
-		newBlockID, prevBlock.Hash, blockTime, c.DltWalletID, c.StateID, string(mrklRoot))
+	forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
+		newBlockID, prevBlock.Hash, blockTime, c.DltWalletID, c.StateID, mrklRoot)
 
 	signed, err := crypto.Sign(key, forSign)
 	if err != nil {
