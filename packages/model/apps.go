@@ -37,3 +37,13 @@ func (a *App) Save() error {
 func (a *App) Create() error {
 	return DBConn.Create(a).Error
 }
+
+func CreateStateAppsTable(stateID string) error {
+	return DBConn.Exec(`CREATE TABLE "` + stateID + `_apps" (
+				"name" varchar(100)  NOT NULL DEFAULT '',
+				"done" integer NOT NULL DEFAULT '0',
+				"blocks" text  NOT NULL DEFAULT ''
+				);
+				ALTER TABLE ONLY "` + stateID + `_apps" ADD CONSTRAINT "` + stateID + `_apps_pkey" PRIMARY KEY (name);
+			`).Error
+}

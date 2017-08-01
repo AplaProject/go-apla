@@ -20,6 +20,10 @@ func (m *Menu) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(m).Error
 }
 
+func (m *Menu) Create() error {
+	return DBConn.Create(m).Error
+}
+
 func (m *Menu) GetAll(prefix string) ([]Menu, error) {
 	var result []Menu
 	err := DBConn.Table(prefix + "_menus").Order("name").Find(result).Error
@@ -33,4 +37,15 @@ func (m *Menu) ToMap() map[string]string {
 	result["conditions"] = m.Conditions
 	result["rb_id"] = string(m.RbID)
 	return result
+}
+
+func CreateStateMenuTable(stateID string) error {
+	return DBConn.Exec(`CREATE TABLE "` + stateID + `_menu" (
+				"name" varchar(255)  NOT NULL DEFAULT '',
+				"value" text  NOT NULL DEFAULT '',
+				"conditions" bytea  NOT NULL DEFAULT '',
+				"rb_id" bigint NOT NULL DEFAULT '0'
+				);
+				ALTER TABLE ONLY "` + stateID + `_menu" ADD CONSTRAINT "` + stateID + `_menu_pkey" PRIMARY KEY (name);
+				`).Error
 }

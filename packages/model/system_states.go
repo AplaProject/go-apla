@@ -28,7 +28,7 @@ func (ss *SystemState) GetCount() (int64, error) {
 }
 
 func (ss *SystemState) GetLast() error {
-	return DBConn.First(ss).Error
+	return DBConn.Last(ss).Error
 }
 
 func (ss *SystemState) Delete() error {
@@ -38,4 +38,8 @@ func (ss *SystemState) Delete() error {
 func (ss *SystemState) IsExists(stateID int64) (bool, error) {
 	query := DBConn.Where("id = ?", stateID).First(ss)
 	return !query.RecordNotFound(), query.Error
+}
+
+func (ss *SystemState) Create() error {
+	return DBConn.Create(ss).Error
 }

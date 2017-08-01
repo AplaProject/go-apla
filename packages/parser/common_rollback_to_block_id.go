@@ -22,63 +22,55 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // RollbackToBlockID rollbacks blocks till blockID
 func (p *Parser) RollbackToBlockID(blockID int64) error {
-	err := p.ExecSQL("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+	_, err := model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
 		logging.WriteSelectiveLog(err)
 		return p.ErrInfo(err)
 	}
 
 	limit := 1000
-	blocks := make([]map[string][]byte, 0, limit)
 	//	var blocks []map[string][]byte
 	// откатываем наши блоки
 	// roll back our blocks
 	for {
-		rows, err := p.Query(p.FormatQuery("SELECT id, data FROM block_chain WHERE id > ? ORDER BY id DESC LIMIT "+fmt.Sprintf(`%d`, limit)+` OFFSET 0`), blockID)
+		block := &model.Block{}
+		blocks, err := block.GetBlocks(blockID, int32(limit))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		parser := new(Parser)
-		parser.DCDB = p.DCDB
-		for rows.Next() {
-			var data, id []byte
-			err = rows.Scan(&id, &data)
-			if err != nil {
-				rows.Close()
-				return p.ErrInfo(err)
-			}
-			blocks = append(blocks, map[string][]byte{"id": id, "data": data})
-		}
-		rows.Close()
 		if len(blocks) == 0 {
 			break
 		}
-		fmt.Printf(`%s `, blocks[0]["id"])
+		parser := new(Parser)
+		fmt.Printf(`%s `, blocks[0].ID)
 		for _, block := range blocks {
 			// Откатываем наши блоки до блока blockID
 			// roll back our blocks to the block blockID
-			parser.BinaryData = block["data"]
+			parser.BinaryData = block.Data
 			err = parser.ParseDataRollback()
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 
-			err = p.ExecSQL("DELETE FROM block_chain WHERE id = ?", block["id"])
+			b := &model.Block{}
+			err = b.DeleteById(block.ID)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 		}
 		blocks = blocks[:0]
 	}
-	var hash, data []byte
-	err = p.QueryRow(p.FormatQuery("SELECT hash, data FROM block_chain WHERE id  =  ?"), blockID).Scan(&hash, &data)
+	block := &model.Block{}
+	err = block.GetBlock(blockID)
 	if err != nil && err != sql.ErrNoRows {
 		return p.ErrInfo(err)
 	}
+	data := block.Data
 	converter.BytesShift(&data, 1)
 	iblock := converter.BinToDecBytesShift(&data, 4)
 	time := converter.BinToDecBytesShift(&data, 4)
@@ -87,13 +79,18 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 		log.Fatal(err)
 	}
 	walletID := converter.BinToDecBytesShift(&data, size)
-	StateID := converter.BinToDecBytesShift(&data, 1)
-	err = p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, wallet_id = ?, state_id = ?",
-		converter.BinToHex(hash), iblock, time, walletID, StateID)
+	stateID := converter.BinToDecBytesShift(&data, 1)
+	ib := &model.InfoBlock{
+		Hash:     converter.BinToHex(block.Hash),
+		BlockID:  iblock,
+		Time:     time,
+		WalletID: walletID,
+		StateID:  stateID}
+	err = ib.Update()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSQL("UPDATE config SET my_block_id = ?", iblock)
+	err = model.UpdateConfig("my_block_id", converter.Int64ToStr(iblock))
 	if err != nil {
 		return p.ErrInfo(err)
 	}

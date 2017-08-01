@@ -17,8 +17,17 @@ func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, 
 	return result, err
 }
 
-func GetAllSystemParameters() ([]SystemParameter, error) {
-	parameters := new([]SystemParameter)
+func (sp *SystemParameter) GetValueParameterByName(name, value string) (string, error) {
+	var result string
+	err := DBConn.Raw(`SELECT value->'`+value+`' FROM system_parameters WHERE name = ?`, name).Scan(&result).Error
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func GetAllSystemParameters() ([]SystemParameters, error) {
+	parameters := new([]SystemParameters)
 	if err := DBConn.Find(parameters).Error; err != nil {
 		return nil, err
 	}

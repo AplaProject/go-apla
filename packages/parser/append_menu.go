@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -64,10 +65,13 @@ func (p *AppendMenuParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	log.Debug("value page", p.AppendMenu.Value)
-	page, err := p.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, p.AppendMenu.Name).String()
+	menu := &model.Menu{}
+	menu.SetTableName(prefix + "_menu")
+	err = menu.GetByName(p.AppendMenu.Name)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	page := menu.Value
 	new := page + "\r\n" + p.AppendMenu.Value
 	_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{new}, prefix+"_menu", []string{"name"}, []string{p.AppendMenu.Name}, true)
 	if err != nil {

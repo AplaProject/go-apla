@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -64,16 +65,21 @@ func (p *ActivateContractParser) Validate() error {
 		return p.ErrInfo("incorrect contract id")
 	}
 	if p.ActivateContract.Id[0] > '9' {
-		p.ActivateContract.Id, err = p.Single(`SELECT id FROM "`+prefix+`_smart_contracts" WHERE name = ?`, p.ActivateContract.Id).String()
-		if len(p.ActivateContract.Id) == 0 {
+		smartContract := &model.SmartContracts{}
+		smartContract.SetTableName(prefix + "_smart_contract")
+		err = smartContract.GetByName(p.ActivateContract.Id)
+		if smartContract.ID == 0 {
 			return p.ErrInfo("incorrect contract name")
 		}
+		p.ActivateContract.Id = converter.Int64ToStr(smartContract.ID)
 	}
-	active, err := p.Single(`SELECT active FROM "`+prefix+`_smart_contracts" WHERE id = ?`, p.ActivateContract.Id).String()
+	smartContract := &model.SmartContracts{}
+	smartContract.SetTableName(prefix + "_smart_contract")
+	err = smartContract.GetByID(converter.StrToInt64(p.ActivateContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if active == `1` {
+	if smartContract.Active == `1` {
 		return p.ErrInfo(fmt.Errorf(`The contract has been already activated`))
 	}
 	curCost := p.TxUsedCost

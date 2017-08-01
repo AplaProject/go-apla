@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -83,9 +84,11 @@ func (p *NewContractParser) Validate() error {
 		}
 	}
 
-	if exist, err := p.Single(`select id from "`+prefix+"_smart_contracts"+`" where name=?`, p.NewContract.Name).Int64(); err != nil {
+	sc := &model.SmartContracts{}
+	sc.SetTableName(prefix + "_smart_contracts")
+	if exist, err := sc.ExistsByName(p.NewContract.Name); err != nil {
 		return p.ErrInfo(err)
-	} else if exist > 0 {
+	} else if exist {
 		return p.ErrInfo(fmt.Sprintf("The contract %s already exists", p.NewContract.Name))
 	}
 	return nil

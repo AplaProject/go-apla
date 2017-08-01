@@ -10,7 +10,7 @@ type RollbackTx struct {
 
 func (rt *RollbackTx) GetRollbackTransactions(transactionHash []byte) ([]RollbackTx, error) {
 	transactions := new([]RollbackTx)
-	err := DBConn.Where("tx_hash = ", transactionHash).Find(transactionHash).Error
+	err := DBConn.Where("tx_hash = ", transactionHash).Order("id desc").Find(transactions).Error
 	if err != nil {
 		return nil, err
 	}

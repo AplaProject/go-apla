@@ -19,21 +19,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// InsertInLogTx inserts md5 hash and time into log_transaction
-func (db *DCDB) InsertInLogTx(binaryTx []byte, time int64) error {
-	txHash, err := crypto.Hash(binaryTx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	txHash = converter.BinToHex(txHash)
-	err = db.ExecSQL("INSERT INTO log_transactions (hash, time) VALUES ([hex], ?)", txHash, time)
-	log.Debug("INSERT INTO log_transactions (hash, time) VALUES ([hex], %s)", txHash)
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-	return nil
-}
-
 // DelLogTx deletes a row with the specified md5 hash in log_transaction
 func (db *DCDB) DelLogTx(binaryTx []byte) error {
 	txHash, err := crypto.Hash(binaryTx)
@@ -209,25 +194,6 @@ func (db *DCDB) GetNodePublicKey(waletID int64) ([]byte, error) {
 	return result, nil
 }
 
-// GetNodePublicKeyWalletOrCB returns node public key of wallet id or state id
-func (db *DCDB) GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	var result []byte
-	var err error
-	if walletID != 0 {
-		log.Debug("wallet_id %v state_id %v", walletID, stateID)
-		result, err = db.Single("SELECT node_public_key FROM dlt_wallets WHERE wallet_id = ?", walletID).Bytes()
-		if err != nil {
-			return []byte(""), err
-		}
-	} else {
-		result, err = db.Single("SELECT node_public_key FROM system_recognized_states WHERE state_id = ?", stateID).Bytes()
-		if err != nil {
-			return []byte(""), err
-		}
-	}
-	return result, nil
-}
-
 // GetPublicKeyWalletOrCitizen returns public key of the wallet id or citizen id
 func (db *DCDB) GetPublicKeyWalletOrCitizen(walletID, citizenID int64) ([]byte, error) {
 	var result []byte
@@ -300,12 +266,6 @@ func (db *DCDB) GetAiID(table string) (string, error) {
 		}
 	}
 	return column, nil
-}
-
-// NodesBan is reserved
-func (db *DCDB) NodesBan(info string) error {
-
-	return nil
 }
 
 // GetBlockDataFromBlockChain returns the block information from the blockchain
@@ -546,6 +506,7 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
 	}
+	// TODO: fix after merge, because config moved from DB
 	if val, ok := db.ConfigIni[`node_state_id`]; ok {
 		if val == `*` {
 			return true
@@ -557,29 +518,4 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 		}
 	}
 	return false
-}
-
-// IsState returns the identifier of the state
-func (db *DCDB) IsState(country string) (int64, error) {
-	data, err := db.GetList(`SELECT id FROM system_states`).Int64()
-	if err != nil {
-		return 0, err
-	}
-	for _, id := range data {
-		stateName, err := db.Single(fmt.Sprintf(`SELECT value FROM "%d_state_parameters" WHERE name = 'state_name'`, id)).String()
-		if err != nil {
-			return 0, err
-		}
-		if strings.ToLower(stateName) == strings.ToLower(country) {
-			return id, nil
-		}
-	}
-	return 0, nil
-}
-
-// UpdateFuel is reserved
-func (db *DCDB) UpdateFuel() {
-	/*	fuelMutex.Lock()
-		cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
-		fuelMutex.Unlock()*/
 }

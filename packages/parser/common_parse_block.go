@@ -17,6 +17,7 @@
 package parser
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -55,14 +56,14 @@ func (p *Parser) ParseBlock() error {
 	p.CurrentBlockID = p.BlockData.BlockID
 
 	// Until then let it be. Get tables p_keys. then it is necessary to update only when you change tables
-	allTables, err := p.GetAllTables()
+	allTables, err := model.GetAllTables()
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
 	p.AllPkeys = make(map[string]string)
 	for _, table := range allTables {
 		log.Debug("%s", table)
-		col, err := p.GetFirstColumnName(table)
+		col, err := model.GetFirstColumnName(table)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

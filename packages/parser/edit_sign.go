@@ -18,6 +18,7 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -58,12 +59,14 @@ func (p *EditSignParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_signatures" WHERE name = ?`, p.EditSign.Name).String()
+	sign := &model.Signatures{}
+	sign.SetTableName(prefix + "_signatures")
+	err = sign.GetByName(p.EditSign.Name)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(conditions) > 0 {
-		ret, err := p.EvalIf(conditions)
+	if len(sign.Conditions) > 0 {
+		ret, err := p.EvalIf(sign.Conditions)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

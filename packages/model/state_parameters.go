@@ -97,3 +97,12 @@ func (sp *StateParameters) ToMap() map[string]string {
 	result["rb_id"] = string(sp.RbID)
 	return result
 }
+
+func CreateStateAnonymsTable(stateID string) error {
+	return DBConn.Exec(`CREATE TABLE "` + stateID + `_anonyms" (
+				"id_citizen" bigint NOT NULL DEFAULT '0',
+				"id_anonym" bigint NOT NULL DEFAULT '0',
+				"encrypted" bytea  NOT NULL DEFAULT ''
+			    );
+			    CREATE INDEX "` + stateID + `_anonyms_index_id" ON "` + stateID + `_anonyms" (id_citizen);`).Error
+}

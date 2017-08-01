@@ -21,6 +21,10 @@ func (p *Page) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(p).Error
 }
 
+func (p *Pages) Create() error {
+	return DBConn.Create(p).Error
+}
+
 func (p *Page) GetWithMenu(prefix string) ([]Page, error) {
 	pages := make([]Page, 0)
 	err := DBConn.Table(prefix + "_pages").Where("menu != '0'").Order("name").Find(pages).Error
@@ -41,4 +45,15 @@ func (p *Page) ToMap() map[string]string {
 	result["conditions"] = p.Conditions
 	result["rb_id"] = string(p.RbID)
 	return result
+}
+
+func CreateStatePagesTable(stateID string) error {
+	return DBConn.Exec(`CREATE TABLE "` + stateID + `_pages" (
+			    "name" varchar(255)  NOT NULL DEFAULT '',
+			    "value" text  NOT NULL DEFAULT '',
+			    "menu" varchar(255)  NOT NULL DEFAULT '',
+			    "conditions" bytea  NOT NULL DEFAULT '',
+			    "rb_id" bigint NOT NULL DEFAULT '0'
+			    );
+			    ALTER TABLE ONLY "` + stateID + `_pages" ADD CONSTRAINT "` + stateID + `_pages_pkey" PRIMARY KEY (name);`).Error
 }

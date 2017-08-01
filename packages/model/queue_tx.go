@@ -26,6 +26,15 @@ func (qt *QueueTx) Create() error {
 	return DBConn.Create(qt).Error
 }
 
+func (qt *QueueTx) GetByHash(hash []byte) error {
+	return DBConn.Where("hex(hash) = ?").First(qt).Error
+}
+
+func DeleteQueueTxByHash(hash []byte) (int64, error) {
+	query := DBConn.Exec("DELETE FROM queue_tx WHERE hex(hash) = ?", hash)
+	return query.RowsAffected, query.Error
+}
+
 func GetQueuedTransactionsCount() (int64, error) {
 	var rowsCount int64
 	if err := DBConn.Exec("SELECT count(hash) FROM queue_tx WHERE hex(hash) = ?").Scan(&rowsCount).Error; err != nil {

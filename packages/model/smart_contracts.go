@@ -29,8 +29,22 @@ func GetAllSmartContracts(tablePrefix string) ([]SmartContracts, error) {
 	return *contracts, nil
 }
 
+func (sc *SmartContracts) Create() error {
+	return DBConn.Create(sc).Error
+}
+
 func (sc *SmartContracts) GetByID(contractID int64) error {
 	return DBConn.Where("id = ?", contractID).Find(sc).Error
+}
+
+func (sc *SmartContracts) ExistsByID(contractID int64) (bool, error) {
+	query := DBConn.Where("id = ?", contractID).First(sc)
+	return !query.RecordNotFound(), query.Error
+}
+
+func (sc *SmartContracts) ExistsByName(name string) (bool, error) {
+	query := DBConn.Where("name = ?", name).First(sc)
+	return !query.RecordNotFound(), query.Error
 }
 
 func (sc *SmartContracts) GetByName(contractName string) error {

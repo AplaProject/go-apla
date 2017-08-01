@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
@@ -41,7 +42,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 
 	isBytea := getBytea(table)
-	if isCustom, err = p.IsCustomTable(table); err != nil {
+	if isCustom, err = IsCustomTable(table); err != nil {
 		return 0, ``, err
 	}
 
@@ -73,9 +74,6 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 	log.Debug("addSQLFields %s", addSQLFields)
 	for i, field := range fields {
-		/*if p.AllPkeys[table] == field {
-			continue
-		}*/
 		field = strings.TrimSpace(field)
 		fields[i] = field
 		if field[:1] == "+" || field[:1] == "-" {
@@ -100,11 +98,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	// если есть, что логировать
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
-	selectCost, err := p.GetQueryTotalCost(selectQuery)
+	selectCost, err := model.GetQueryTotalCost(selectQuery)
 	if err != nil {
 		return 0, tableID, err
 	}
-	logData, err := p.OneRow(selectQuery).String()
+	logData, err := model.GetOneRow(selectQuery).String()
 	if err != nil {
 		return 0, tableID, err
 	}
@@ -136,11 +134,12 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		if err != nil {
 			return 0, tableID, err
 		}
-		rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
+		rollback := &model.Rollback{Data: string(jsonData), BlockID: p.BlockData.BlockID}
+		err = rollback.Create()
 		if err != nil {
 			return 0, tableID, err
 		}
-		log.Debug("string(jsonData) %s / rbID %d", string(jsonData), rbID)
+		log.Debug("string(jsonData) %s / rbID %d", string(jsonData), rollback.RbID)
 		addSQLUpdate := ""
 		for i := 0; i < len(fields); i++ {
 			// utils.InSliceString(fields[i], []string{"hash", "tx_hash", "public_key", "public_key_0", "public_key_1", "public_key_2", "node_public_key"}
@@ -161,14 +160,12 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 		}
 		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere
-		updateCost, err := p.GetQueryTotalCost(updateQuery, rbID)
+		updateCost, err := model.GetQueryTotalCost(updateQuery, rollback.RbID)
 		if err != nil {
 			return 0, tableID, err
 		}
 		cost += updateCost
-		err = p.ExecSQL(`UPDATE "`+table+`" SET `+addSQLUpdate+` rb_id = ? `+addSQLWhere, rbID)
-		log.Debug(`UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere)
-		//log.Debug("logId", logId)
+		err = model.Update(table, addSQLUpdate+fmt.Sprintf("rb_id = %d", rollback.RbID), addSQLWhere)
 		if err != nil {
 			return 0, tableID, err
 		}
@@ -207,18 +204,23 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
-		insertCost, err := p.GetQueryTotalCost(insertQuery)
+		insertCost, err := model.GetQueryTotalCost(insertQuery)
 		if err != nil {
 			return 0, tableID, err
 		}
 		cost += insertCost
-		tableID, err = p.ExecSQLGetLastInsertID(insertQuery, table)
+		tableIDStr, err := model.InsertReturningLastID(table, addSQLIns0, addSQLIns1)
+		tableID := converter.Int64ToStr(tableIDStr)
 		if err != nil {
 			return 0, tableID, err
 		}
 	}
 	if generalRollback {
-		err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, tableID)
+		rollbackTx := &model.RollbackTx{BlockID: p.BlockData.BlockID,
+			TxHash:    []byte(p.TxHash),
+			TableName: table,
+			TableID:   tableID}
+		err = rollbackTx.Create()
 		if err != nil {
 			return 0, tableID, err
 		}

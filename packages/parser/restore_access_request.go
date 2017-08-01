@@ -18,6 +18,7 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -44,14 +45,9 @@ func (p *RestoreAccessRequestParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.RestoreAccessRequest.Header.StateID).Int64()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	if len(data) == 0 {
-		return p.ErrInfo("!system_restore_access")
-	}
-	if data["active"] == 0 {
+	restoreAccess := &model.SystemRestoreAccess{}
+	err = restoreAccess.Get(p.RestoreAccessRequest.StateID)
+	if restoreAccess.Active == 0 {
 		return p.ErrInfo("active=0")
 	}
 

@@ -21,6 +21,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -54,11 +55,12 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 	}
 
 	// public key need only when we don't have public_key in the dlt_wallets table
-	publicKey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).String()
+	dltW := &model.Wallet{}
+	err = dltW.GetWallet(p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if len(publicKey) == 0 {
+	if len(dltW.PublicKey) == 0 {
 		bkey, err := hex.DecodeString(string(p.DLTChangeHostVote.PublicKey))
 		if err != nil {
 			return p.ErrInfo(err)
@@ -72,8 +74,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	lastForgingDataUpd, err := p.Single(`SELECT last_forging_data_upd FROM dlt_wallets WHERE wallet_id = ?`, p.TxWalletID).Int64()
-	if err != nil || txTime-lastForgingDataUpd < 600 {
+	if err != nil || txTime-dltW.LastForgingDataUpd < 600 {
 		return p.ErrInfo("txTime - lastForgingDataUpd < 600 sec")
 	}
 
@@ -91,12 +92,13 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 func (p *DLTChangeHostVoteParser) Action() error {
 	var err error
 	log.Debug("p.TxMaps.String[addressVote] %s", p.DLTChangeHostVote.AddressVote)
-	pkey, err := p.Single(`SELECT public_key_0 FROM dlt_wallets WHERE public_key_0 = [hex]`, p.DLTChangeHostVote.Header.PublicKey).String()
+	wallet := &model.Wallet{}
+	exists, err := wallet.IsExistsByPublicKey(p.DLTChangeHostVote.Header.PublicKey)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	if len(p.DLTChangeHostVote.Header.PublicKey) > 0 && len(pkey) == 0 {
+	if len(p.DLTChangeHostVote.Header.PublicKey) > 0 && !exists {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "public_key_0", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, string(p.DLTChangeHostVote.AddressVote), string(p.DLTChangeHostVote.FuelRate), converter.HexToBin(p.DLTChangeHostVote.Header.PublicKey), p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
 	} else {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"host", "address_vote", "fuel_rate", "last_forging_data_upd"}, []interface{}{p.DLTChangeHostVote.Host, p.DLTChangeHostVote.AddressVote, p.DLTChangeHostVote.FuelRate, p.BlockData.Time}, "dlt_wallets", []string{"wallet_id"}, []string{converter.Int64ToStr(p.TxWalletID)}, true)
@@ -104,7 +106,6 @@ func (p *DLTChangeHostVoteParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.UpdateFuel() // uncache fuel
 	return nil
 }
 

@@ -1,15 +1,17 @@
 package model
 
 type Transaction struct {
-	Hash      []byte `gorm:"private_key;not null"`
-	Data      []byte `gorm:"not null"`
-	Used      int8   `gorm:"not null"`
-	HighRate  int8   `gorm:"not null"`
-	Type      int8   `gorm:"not null"`
-	WalletID  int64  `gorm:"not null"`
-	CitizeniD int64  `gorm:"not null"`
-	Counter   int8   `gorm:"not null"`
-	Sent      int8   `gorm:"not null"`
+	Hash       []byte `gorm:private_key;not null`
+	Data       []byte `gorm:not null`
+	Used       int8   `gorm:not null`
+	HighRate   int8   `gorm:not null`
+	Type       int8   `gorm:not null`
+	ForSelfUse int8   `gorm:not null`
+	WalletID   int64  `gorm:not null`
+	CitizenID  int64  `gorm:not null`
+	ThirdVar   int32  `gorm:not null`
+	Counter    int8   `gorm:not null`
+	Sent       int8   `gorm:not null`
 }
 
 func GetAllUnusedTransactions() (*[]Transaction, error) {
@@ -33,6 +35,16 @@ func DeleteLoopedTransactions() (int64, error) {
 	return query.RowsAffected, query.Error
 }
 
+func DeleteTransactionByHash(hash []byte) (int64, error) {
+	query := DBConn.Exec("DELETE FROM transactions WHERE hex(hash) = ?", hash)
+	return query.RowsAffected, query.Error
+}
+
+func DeleteUsedTransactions() (int64, error) {
+	query := DBConn.Exec("DELETE FROM transactions WHERE used = 1")
+	return query.RowsAffected, query.Error
+}
+
 func MarkTransactionSended(transactionHash []byte) (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", transactionHash)
 	return query.RowsAffected, query.Error
@@ -40,6 +52,16 @@ func MarkTransactionSended(transactionHash []byte) (int64, error) {
 
 func MarkTransactionUsed(transactionHash []byte) (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET used = 1 WHERE hex(hash) = ?", transactionHash)
+	return query.RowsAffected, query.Error
+}
+
+func MarkTransactionUnusedAndUnverified(transactionHash []byte) (int64, error) {
+	query := DBConn.Exec("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", transactionHash)
+	return query.RowsAffected, query.Error
+}
+
+func MarkVerifiedAndNotUsedTransactionsUnverified() (int64, error) {
+	query := DBConn.Exec("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
 	return query.RowsAffected, query.Error
 }
 
@@ -77,9 +99,8 @@ func (t *Transaction) Get(transactionHash []byte) error {
 	return DBConn.Where("hash = ?", transactionHash).First(t).Error
 }
 
-func DeleteUsedTransactions() (int64, error) {
-	query := DBConn.Exec("DELETE FROM transactions WHERE used = 1")
-	return query.RowsAffected, query.Error
+func (t *Transactions) GetVerified(transactionHash []byte) error {
+	return DBConn.Where("hex(hash) = ? AND verified = 1", transactionHash).First(t).Error
 }
 
 func DeleteTransaction(transactionHash []byte) (int64, error) {

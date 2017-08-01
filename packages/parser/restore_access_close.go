@@ -18,6 +18,7 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -45,11 +46,12 @@ func (p *RestoreAccessCloseParser) Validate() error {
 	}
 
 	// check whether or not already close
-	close, err := p.Single("SELECT close FROM system_restore_access WHERE user_id  =  ? AND state_id = ?", p.RestoreAccessClose.Header.UserID, p.RestoreAccessClose.Header.StateID).Int64()
+	restoreAccess := &model.SystemRestoreAccess{}
+	err = restoreAccess.Get(p.RestoreAccessClose.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if close > 0 {
+	if restoreAccess.Close > 0 {
 		return p.ErrInfo("close=1")
 	}
 

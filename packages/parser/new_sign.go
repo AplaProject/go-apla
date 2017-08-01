@@ -19,6 +19,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -59,9 +60,11 @@ func (p *NewSignParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if exist, err := p.Single(`select name from "`+prefix+"_signatures"+`" where name=?`, p.NewSign.Name).String(); err != nil {
+	sign := &model.Signatures{}
+	sign.SetTableName(prefix + "_signatures")
+	if exist, err := sign.ExistsByName(p.NewSign.Name); err != nil {
 		return p.ErrInfo(err)
-	} else if len(exist) > 0 {
+	} else if exist {
 		return p.ErrInfo(fmt.Sprintf("The signature %s already exists", p.NewSign.Name))
 	}
 	return nil

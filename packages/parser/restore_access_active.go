@@ -18,6 +18,7 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -56,11 +57,12 @@ func (p *RestoreAccessActiveParser) Validate() error {
 	}
 
 	// check that there is no repeat shift
-	active, err := p.Single("SELECT active FROM system_restore_access WHERE state_id = ?", p.RestoreAccessActive.Header.StateID).Int64()
+	restoreAccess := &model.SystemRestoreAccess{}
+	err = restoreAccess.Get(p.RestoreAccessActive.StateID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if active == p.Active {
+	if restoreAccess.Active == p.Active {
 		return p.ErrInfo("active")
 	}
 	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.RestoreAccessActive.ForSign(), p.RestoreAccessActive.BinSignatures, false)

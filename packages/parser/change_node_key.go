@@ -18,6 +18,7 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -39,12 +40,12 @@ func (p *ChangeNodeKeyParser) Init() error {
 }
 
 func (p *ChangeNodeKeyParser) Validate() error {
-	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.ChangeNodeKey.Header.UserID)
-	if err != nil || len(nodePublicKey) == 0 {
+	wallet := &model.Wallet{}
+	err := wallet.GetWallet(p.ChangeNodeKey.Header.UserID)
+	if err != nil || len(wallet.PublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")
 	}
-
-	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, true)
+	CheckSignResult, err := utils.CheckSign([][]byte{wallet.PublicKey}, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, true)
 	if err != nil || !CheckSignResult {
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, false)
 		if err != nil || !CheckSignResult {
@@ -59,13 +60,13 @@ func (p *ChangeNodeKeyParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.ChangeNodeKey.NewNodePublicKey).Int64()
+	key := &model.MyNodeKeys{}
+	err = key.GetZeroBlock(p.ChangeNodeKey.NewNodePublicKey)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	log.Debug("myKey %d", myKey)
-	if myKey > 0 {
-		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
+	if key.ID > 0 {
+		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(int64(key.ID))}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

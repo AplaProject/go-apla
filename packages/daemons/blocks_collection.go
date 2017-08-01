@@ -626,7 +626,7 @@ BEGIN:
 					}
 					continue BEGIN
 				}
-				nodePublicKey = systemState.NodePublickKey
+				nodePublicKey = systemState.NodePublicKey
 			}
 
 			logger.Debug("nodePublicKey %x", nodePublicKey)

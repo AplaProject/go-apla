@@ -21,17 +21,16 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // RollbackTo rollbacks proceeded transactions
-//  если в ходе проверки тр-ий возникает ошибка, то вызываем откатчик всех занесенных тр-ий
 // if the error appears during the checking of transactions, call the rollback of transactions
 func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 	var err error
 	if len(binaryData) > 0 {
-		// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
 		// in the beggining it's neccessary to obtain the sizes of all transactions in order to go through them in reverse order
 		binForSize := binaryData
 		var sizesSlice []int64
@@ -44,10 +43,8 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				break
 			}
 			sizesSlice = append(sizesSlice, txSize)
-			// удалим тр-ию
 			// remove the transaction
 			log.Debug("txSize", txSize)
-			//log.Debug("binForSize", binForSize)
 			converter.BytesShift(&binForSize, txSize)
 			if len(binForSize) == 0 {
 				break
@@ -55,14 +52,10 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 		}
 		sizesSlice = converter.SliceReverse(sizesSlice)
 		for i := 0; i < len(sizesSlice); i++ {
-			// обработка тр-ий может занять много времени, нужно отметиться
 			// processing of transaction may take a lot off time, we have to be marked
-			p.UpdDaemonTime(p.GoroutineName)
-			// отделим одну транзакцию
 			// separate one transaction
 			transactionBinaryData := converter.BytesShiftReverse(&binaryData, sizesSlice[i])
 			binaryData := transactionBinaryData
-			// узнаем кол-во байт, которое занимает размер и удалим размер
 			// get know the quantity of bytes, which the size takes and remove it
 			converter.BytesShiftReverse(&binaryData, len(converter.EncodeLength(sizesSlice[i])))
 			hash, err := crypto.Hash(transactionBinaryData)
@@ -109,11 +102,16 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 						return utils.ErrInfo(err_.(error))
 					}
 				}
-				err = p.DelLogTx(binaryData)
+				txHash, err := crypto.Hash(binaryData)
+				if err != nil {
+					p.ErrInfo(binaryData)
+				}
+				logTx := &model.LogTransactions{Hash: txHash}
+				err = logTx.Delete()
 				if err != nil {
 					log.Error("error: %v", err)
 				}
-				affect, err := p.ExecSQLGetAffect("DELETE FROM transactions WHERE hex(hash) = ?", p.TxHash)
+				affect, err := model.DeleteTransactionByHash([]byte(p.TxHash))
 				if err != nil {
 					logging.WriteSelectiveLog(err)
 					return utils.ErrInfo(err)
@@ -121,8 +119,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 			}
 
-			logging.WriteSelectiveLog("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", p.TxHash)
+			affect, err := model.MarkTransactionUnusedAndUnverified([]byte(p.TxHash))
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				return utils.ErrInfo(err)

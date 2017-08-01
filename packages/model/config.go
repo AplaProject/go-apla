@@ -33,9 +33,9 @@ func (c *Config) Create() error {
 }
 
 func (c *Config) ChangeBlockID(oldBlockID int64, newBlockID int64) error {
-	return DBConn.Model(c).Where("id = ?", oldBlockID).Update("id", newBlockID).Error
+	return DBConn.Model(c).Where("my_block_id = ?", oldBlockID).Update("my_block_id", newBlockID).Error
 }
 
 func (c *Config) ChangeBlockIDBatch(oldBlockID int64, newBlockID int64) error {
-	return DBConn.Model(c).Where("id < ?", oldBlockID).Update("id", newBlockID).Error
+	return DBConn.Model(c).Where("my_block_id < ?", oldBlockID).Update("my_block_id", newBlockID).Error
 }

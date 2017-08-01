@@ -24,5 +24,5 @@ func (mnk *MyNodeKey) Create() error {
 }
 
 func (mnk *MyNodeKey) GetZeroBlock(publicKey []byte) error {
-	return DBConn.Where("block_id = 0 AND public_key = ", publicKey).First(mnk).Error
+	return DBConn.Where("block_id = 0 AND public_key = ?", publicKey).First(mnk).Error
 }

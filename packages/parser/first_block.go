@@ -22,7 +22,10 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"github.com/shopspring/decimal"
 )
 
 type FirstBlockParser struct {
@@ -43,13 +46,20 @@ func (p *FirstBlockParser) Action() error {
 	myAddress := crypto.Address(data.PublicKey)
 	log.Debug("data.PublicKey %s", data.PublicKey)
 	log.Debug("data.PublicKey %x", data.PublicKey)
-	err := p.ExecSQL(`INSERT INTO dlt_wallets (wallet_id, host, address_vote, public_key_0, node_public_key, amount) VALUES (?, ?, ?, [hex], [hex], ?)`,
-		myAddress, data.Host, converter.AddressToString(myAddress), hex.EncodeToString(data.PublicKey), hex.EncodeToString(data.NodePublicKey), consts.FIRST_QDLT)
-	//p.TxMaps.String["host"], myAddress, p.TxMaps.Bytes["public_key"], p.TxMaps.Bytes["node_public_key"], consts.FIRST_DLT)
+	dltWallet := &model.Wallet{
+		WalletID:      myAddress,
+		Host:          data.Host,
+		AddressVote:   converter.AddressToString(myAddress),
+		PublicKey:     []byte(hex.EncodeToString(data.PublicKey)),
+		NodePublicKey: []byte(hex.EncodeToString(data.NodePublicKey)),
+		Amount:        decimal.NewFromFloat(consts.FIRST_QDLT),
+	}
+	err := dltWallet.Create()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	err = p.ExecSQL(`INSERT INTO full_nodes (wallet_id, host) VALUES (?,?)`, myAddress, data.Host) //p.TxMaps.String["host"])
+	fullNode := &model.FullNodes{WalletID: myAddress, Host: data.Host}
+	err = fullNode.Create()
 	if err != nil {
 		return p.ErrInfo(err)
 	}

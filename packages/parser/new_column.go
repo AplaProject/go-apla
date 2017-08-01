@@ -22,6 +22,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -60,21 +61,22 @@ func (p *NewColumnParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName).Int64()
+	//exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName).Int64()
+	exists := true
 	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if exists > 0 {
+	if exists {
 		return p.ErrInfo(`column exists`)
 	}
 
-	count, err := p.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", p.NewColumn.TableName).Int64()
+	count, err := model.GetColumnCount(p.NewColumn.TableName)
 	if count >= consts.MAX_COLUMNS+2 /*id + rb_id*/ {
 		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
 	}
 	if converter.StrToInt64(p.NewColumn.Index) > 0 {
-		count, err := p.NumIndexes(p.NewColumn.TableName)
+		count, err := model.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -103,7 +105,7 @@ func (p *NewColumnParser) Action() error {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where name=?`, tblname).String()
+	logData, err := model.GetColumnsAndPermissionsAndRbIDWhereTable(table, tblname)
 	if err != nil {
 		return err
 	}
@@ -122,16 +124,24 @@ func (p *NewColumnParser) Action() error {
 	if err != nil {
 		return err
 	}
-	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
+	rb := &model.Rollback{Data: string(jsonData), BlockID: p.BlockData.BlockID}
+	err = rb.Create()
 	if err != nil {
 		return err
 	}
-	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.NewColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(p.NewColumn.Permissions)+`"`, rbID, tblname)
+	tableM := &model.Tables{}
+	_, err = tableM.SetActionByName(table, p.NewColumn.TableName, "update, "+p.NewColumn.ColumnName, `"`+converter.EscapeForJSON(p.NewColumn.Permissions)+`"`, rb.RbID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, tblname)
+	rbTx := &model.RollbackTx{
+		ID:        p.BlockData.BlockID,
+		TxHash:    []byte(p.TxHash),
+		TableName: table,
+		TableID:   p.NewColumn.TableName,
+	}
+	err = rbTx.Create()
 	if err != nil {
 		return err
 	}
@@ -152,13 +162,13 @@ func (p *NewColumnParser) Action() error {
 		colType = `double precision`
 	}
 
-	err = p.ExecSQL(`ALTER TABLE "` + tblname + `" ADD COLUMN ` + p.NewColumn.ColumnName + ` ` + colType)
+	err = model.AlterTableAddColumn(tblname, p.NewColumn.ColumnName, colType)
 	if err != nil {
 		return err
 	}
 
 	if p.NewColumn.Index == "1" {
-		err = p.ExecSQL(`CREATE INDEX "` + tblname + `_` + p.NewColumn.ColumnName + `_index" ON "` + tblname + `" (` + p.NewColumn.ColumnName + `)`)
+		err = model.CreateIndex(tblname+"_"+p.NewColumn.ColumnName+"_index", tblname, p.NewColumn.ColumnName)
 		if err != nil {
 			return err
 		}
@@ -172,7 +182,7 @@ func (p *NewColumnParser) Rollback() error {
 	if err != nil {
 		return err
 	}
-	err = p.ExecSQL(`ALTER TABLE "` + p.NewColumn.TableName + `" DROP COLUMN ` + p.NewColumn.ColumnName + ``)
+	err = model.AlterTableDropColumn(p.NewColumn.TableName, p.NewColumn.ColumnName)
 	if err != nil {
 		return err
 	}

@@ -21,12 +21,12 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // UpdBlockInfo updates info_block table
 func (p *Parser) UpdBlockInfo() {
-
 	blockID := p.BlockData.BlockID
 	// для локальных тестов
 	// for the local tests
@@ -47,20 +47,33 @@ func (p *Parser) UpdBlockInfo() {
 	log.Debug("%v", blockID)
 	log.Debug("%v", p.BlockData.Time)
 	log.Debug("%v", p.CurrentVersion)
-
 	if p.BlockData.BlockID == 1 {
-		err := p.ExecSQL("INSERT INTO info_block (hash, block_id, time, state_id, wallet_id, current_version) VALUES ([hex], ?, ?, ?, ?, ?)",
-			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletID, p.CurrentVersion)
+		ib := &model.InfoBlock{
+			Hash:           p.BlockData.Hash,
+			BlockID:        blockID,
+			Time:           p.BlockData.Time,
+			StateID:        p.BlockData.StateID,
+			WalletID:       p.BlockData.WalletID,
+			CurrentVersion: p.CurrentVersion,
+		}
+		err := ib.Create()
 		if err != nil {
 			log.Error("%v", err)
 		}
 	} else {
-		err := p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, state_id = ?, wallet_id = ?, sent = 0",
-			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletID)
-		if err != nil {
+		ibUpdate := &model.InfoBlock{
+			Hash:     p.BlockData.Hash,
+			BlockID:  blockID,
+			Time:     p.BlockData.Time,
+			StateID:  p.BlockData.StateID,
+			WalletID: p.BlockData.WalletID,
+			Sent:     0,
+		}
+		if err := ibUpdate.Update(); err != nil {
 			log.Error("%v", err)
 		}
-		err = p.ExecSQL("UPDATE config SET my_block_id = ? WHERE my_block_id < ?", blockID, blockID)
+		config := &model.Config{}
+		err = config.ChangeBlockIDBatch(blockID, blockID)
 		if err != nil {
 			log.Error("%v", err)
 		}

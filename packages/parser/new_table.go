@@ -23,6 +23,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -104,12 +105,13 @@ func (p *NewTableParser) Validate() error {
 		prefix = `global`
 	}
 
-	exists, err := p.Single(`SELECT count(*) FROM "`+table+`" WHERE name = ?`, prefix+`_`+p.NewTable.Name).Int64()
-	log.Debug(`SELECT count(*) FROM "` + table + `" WHERE name = ?`)
+	t := &model.Tables{}
+	t.SetTableName(table)
+	exists, err := t.ExistsByName(prefix + "_" + p.NewTable.Name)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if exists > 0 {
+	if exists {
 		return p.ErrInfo(`table exists`)
 	}
 
@@ -139,7 +141,6 @@ func (p *NewTableParser) Action() error {
 
 	colsSQL := ""
 	colsSQL2 := ""
-	sqlIndex := ""
 	for _, data := range cols {
 		colType := ``
 		colDef := ``
@@ -162,33 +163,25 @@ func (p *NewTableParser) Action() error {
 		colsSQL += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
 		colsSQL2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
 		if data[2] == "1" {
-			sqlIndex += `CREATE INDEX "` + tableName + `_` + data[0] + `_index" ON "` + tableName + `" (` + data[0] + `);`
+			err := model.CreateIndex(tableName+"_"+data[0], tableName, data[0])
+			if err != nil {
+				p.ErrInfo(err)
+			}
 		}
 	}
 	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
 
-	sql := `CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
-				CREATE TABLE "` + tableName + `" (
-				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
-				` + colsSQL + `
-				"rb_id" bigint NOT NULL DEFAULT '0'
-				);
-				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
-				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
-	fmt.Println(sql)
-	err = p.ExecSQL(sql)
+	err = model.CreateTable(tableName, colsSQL)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSQL(sqlIndex)
-	if err != nil {
-		return p.ErrInfo(err)
+	t := &model.Tables{
+		Name: []byte(tableName),
+		ColumnsAndPermissions: `{"general_update":"ContractConditions(\"MainCondition\")", "update": {` + colsSQL2 + `}, "insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`,
 	}
-
-	err = p.ExecSQL(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
-		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSQL2+`},
-		"insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`)
+	t.SetTableName(prefix + "_tables")
+	err = t.Create()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -206,8 +199,9 @@ func (p *NewTableParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 	tableName := prefix + "_" + p.NewTable.Name
-	err = p.ExecSQL(`DROP TABLE "` + tableName + `"`)
-	err = p.ExecSQL(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
+	err = model.DBConn.DropTable(tableName).Error
+	t := &model.Tables{Name: []byte(tableName)}
+	err = t.Delete()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
