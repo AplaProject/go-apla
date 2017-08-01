@@ -43,9 +43,27 @@ func (w *Wallet) Create() error {
 	return DBConn.Create(w).Error
 }
 
-/*
-func (db *DCDB) GetVotes() ([]map[string]string, error) {
-	return db.GetAll(`SELECT address_vote, sum(amount) as sum FROM dlt_wallets WHERE address_vote !=''
-	 GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 10`, -1)
+func (w *Wallet) GetNewFuelRate() (string, error) {
+	return Single(`SELECT fuel_rate FROM dlt_wallets WHERE fuel_rate !=0 GROUP BY fuel_rate ORDER BY sum(amount) DESC LIMIT 1`).String()
 }
-*/
+
+func (w *Wallet) GetAddressVotes() ([]string, error) {
+	rows, err := DBConn.Raw(`SELECT address_vote FROM dlt_wallets WHERE address_vote !='' AND amount > 10000000000000000000000 GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 100`).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var addresses []string
+	for rows.Next() {
+		var addressVote string
+		err := rows.Scan(&addressVote)
+		if err != nil {
+			return nil, err
+		}
+		addresses = append(addresses, addressVote)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return addresses, nil
+}

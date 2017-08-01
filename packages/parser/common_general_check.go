@@ -18,6 +18,8 @@ package parser
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -39,18 +41,19 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		p.TxCitizenID = 0
 	}
 	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
-		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", p.TxWalletID).String()
+		dltWallet := &model.Wallet{}
+		err := dltWallet.GetWallet(p.TxWalletID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		log.Debug("datausers", data)
-		if len(data["public_key_0"]) == 0 {
+		log.Debug("datausers", dltWallet)
+		if len(dltWallet.PublicKey) == 0 {
 			if len(header.PublicKey) == 0 {
 				return utils.ErrInfoFmt("incorrect public_key")
 			}
 			// возможно юзер послал ключ с тр-ией
 			log.Debug("pubkey %x", header.PublicKey)
-			walletID, err := p.GetWalletIDByPublicKey(header.PublicKey)
+			walletID, err := crypto.GetWalletIDByPublicKey(header.PublicKey)
 			if err != nil {
 				return utils.ErrInfo(err)
 			}
@@ -60,20 +63,19 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			}
 			p.PublicKeys = append(p.PublicKeys, header.PublicKey)
 		} else {
-			p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
-			log.Debug("data[public_key_0]", data["public_key_0"])
+			p.PublicKeys = append(p.PublicKeys, dltWallet.PublicKey)
+			log.Debug("data[public_key_0]", dltWallet.PublicKey)
 		}
 	} else {
-		log.Debug(`SELECT * FROM "`+converter.Int64ToStr(header.StateID)+`_citizens" WHERE id = %d`, header.UserID)
-		data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?", header.UserID).String()
+		dltWallet := &model.Wallet{}
+		err := dltWallet.GetWallet(p.TxWalletID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		log.Debug("datausers", data)
-		if len(data["public_key_0"]) == 0 {
+		if len(dltWallet.PublicKey) == 0 {
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
-		p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
+		p.PublicKeys = append(p.PublicKeys, dltWallet.PublicKey)
 	}
 	// чтобы не записали слишком длинную подпись
 	// for not to record too long signature

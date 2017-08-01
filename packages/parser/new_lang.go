@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
@@ -69,9 +70,11 @@ func (p *NewLangParser) Validate() error {
 			return fmt.Errorf(`empty lanuguage resource`)
 		}
 	} else {
-		if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, p.NewLang.Name).String(); err != nil {
+		lang := &model.Languages{}
+		lang.SetTableName(prefix + "_languages")
+		if exist, err := lang.IsExistsByName(p.NewLang.Name); err != nil {
 			return p.ErrInfo(err)
-		} else if len(exist) > 0 {
+		} else if exist {
 			return p.ErrInfo(fmt.Sprintf("The language resource %s already exists", p.NewLang.Name))
 		}
 	}
@@ -84,9 +87,11 @@ func (p *NewLangParser) Action() error {
 		var list map[string]string
 		json.Unmarshal([]byte(p.NewLang.Trans), &list)
 		for name, res := range list {
-			if exist, err := p.Single(`select name from "`+prefix+"_languages"+`" where name=?`, name).String(); err != nil {
+			lang := &model.Languages{}
+			lang.SetTableName(prefix + "_languages")
+			if exist, err := lang.IsExistsByName(name); err != nil {
 				return p.ErrInfo(err)
-			} else if len(exist) == 0 {
+			} else if !exist {
 				_, _, err := p.selectiveLoggingAndUpd([]string{"name", "res"}, []interface{}{name, res}, prefix+"_languages", nil, nil, true)
 				if err != nil {
 					return p.ErrInfo(err)

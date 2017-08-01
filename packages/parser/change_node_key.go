@@ -40,12 +40,12 @@ func (p *ChangeNodeKeyParser) Init() error {
 }
 
 func (p *ChangeNodeKeyParser) Validate() error {
-	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.ChangeNodeKey.Header.UserID)
-	if err != nil || len(nodePublicKey) == 0 {
+	wallet := &model.Wallet{}
+	err := wallet.GetWallet(p.ChangeNodeKey.Header.UserID)
+	if err != nil || len(wallet.PublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")
 	}
-
-	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, true)
+	CheckSignResult, err := utils.CheckSign([][]byte{wallet.PublicKey}, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, true)
 	if err != nil || !CheckSignResult {
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, false)
 		if err != nil || !CheckSignResult {

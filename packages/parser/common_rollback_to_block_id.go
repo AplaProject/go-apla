@@ -47,7 +47,6 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 			break
 		}
 		parser := new(Parser)
-		parser.DCDB = p.DCDB
 		fmt.Printf(`%s `, blocks[0].ID)
 		for _, block := range blocks {
 			// Откатываем наши блоки до блока blockID

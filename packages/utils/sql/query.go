@@ -268,12 +268,6 @@ func (db *DCDB) GetAiID(table string) (string, error) {
 	return column, nil
 }
 
-// NodesBan is reserved
-func (db *DCDB) NodesBan(info string) error {
-
-	return nil
-}
-
 // GetBlockDataFromBlockChain returns the block information from the blockchain
 func (db *DCDB) GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	BlockData := new(utils.BlockData)
@@ -512,6 +506,7 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
 	}
+	// TODO: fix after merge, because config moved from DB
 	if val, ok := db.ConfigIni[`node_state_id`]; ok {
 		if val == `*` {
 			return true
@@ -523,11 +518,4 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 		}
 	}
 	return false
-}
-
-// UpdateFuel is reserved
-func (db *DCDB) UpdateFuel() {
-	/*	fuelMutex.Lock()
-		cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
-		fuelMutex.Unlock()*/
 }

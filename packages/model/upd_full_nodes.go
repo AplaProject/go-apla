@@ -2,7 +2,7 @@ package model
 
 type UpdFullNodes struct {
 	ID   int64 `gorm:"primary_key;not null"`
-	Time int32 `gorm:"not null"`
+	Time int64 `gorm:"not null"`
 	RbID int64 `gorm: "not null"`
 }
 

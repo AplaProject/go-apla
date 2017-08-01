@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -75,7 +76,7 @@ func (p *Parser) CheckBlockHeader() error {
 	// не слишком ли рано прислан этот блок. допустима погрешность = error_time
 	// is this block too early? Allowable error = error_time
 	if !first {
-		sleepTime, err := p.GetSleepTime(p.BlockData.WalletID, p.BlockData.StateID, p.PrevBlock.StateID, p.PrevBlock.WalletID)
+		sleepTime, err := model.GetSleepTime(p.BlockData.WalletID, p.BlockData.StateID, p.PrevBlock.StateID, p.PrevBlock.WalletID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

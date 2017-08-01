@@ -35,6 +35,11 @@ func (b *Block) IsExists() (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
+func (b *Block) IsExistsID(blockID int64) (bool, error) {
+	query := DBConn.Where("id = ?").First(b)
+	return !query.RecordNotFound(), query.Error
+}
+
 func (b *Block) Create() error {
 	return DBConn.Create(b).Error
 }
@@ -45,6 +50,16 @@ func (b *Block) GetBlock(blockID int64) error {
 
 func (b *Block) GetMaxBlock() error {
 	return DBConn.First(b).Error
+}
+
+func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {
+	var err error
+	blockchain := new([]Block)
+	err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(blockchain).Error
+	if err != nil {
+		return nil, err
+	}
+	return *blockchain, nil
 }
 
 func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {

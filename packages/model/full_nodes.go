@@ -18,8 +18,12 @@ func (fn *FullNodes) FindNode(stateID int64, walletID int64, finalDelegateStateI
 		"final_delegate_wallet_id = ?", finalDelegateWalletID).Find(&fn).Error
 }
 
-func (fn *FullNodes) FindNodeByID(nodeID int64) error {
-	return DBConn.Where("id = ?", nodeID).First(&fn).Error
+func (fn *FullNodes) DeleteNodesWithWallets() error {
+	return DBConn.Exec("DELETE FROM full_nodes WHERE wallet_id != 0").Error
+}
+
+func (fn *FullNodes) FindNodeById(nodeid int64) error {
+	return DBConn.Where("id = ?", nodeid).First(&fn).Error
 }
 
 func (fn *FullNodes) Create() error {
@@ -45,4 +49,21 @@ func GetFullNodesHosts() ([]string, error) {
 		return nil, nil
 	}
 	return *hosts, nil
+}
+
+func (fn *FullNodes) GetMaxID() (int32, error) {
+	var result int32
+	err := DBConn.Raw("SELECT max(id) FROM full_nodes").Scan(&result).Error
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
+}
+
+func (fn *FullNodes) GetAllFullNodesHasWalletID() ([]map[string]string, error) {
+	return GetAll(`SELECT * FROM full_nodes WHERE wallet_id != 0`, -1)
+}
+
+func (fn *FullNodes) GetRbIDFullNodesWithWallet() (int64, error) {
+	return Single("SELECT rb_id FROM full_nodes WHERE wallet_id != 0").Int64()
 }

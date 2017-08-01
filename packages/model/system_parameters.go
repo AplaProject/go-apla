@@ -11,6 +11,15 @@ func (sp *SystemParameters) Get(name string) error {
 	return DBConn.Where("name = ?").First(sp).Error
 }
 
+func (sp *SystemParameters) GetValueParameterByName(name, value string) (string, error) {
+	var result string
+	err := DBConn.Raw(`SELECT value->'`+value+`' FROM system_parameters WHERE name = ?`, name).Scan(&result).Error
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
 func GetAllSystemParameters() ([]SystemParameters, error) {
 	parameters := new([]SystemParameters)
 	if err := DBConn.Find(parameters).Error; err != nil {

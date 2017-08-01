@@ -83,12 +83,13 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo("amount<=0")
 	}
 
-	fPrice, err := p.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").String()
+	sp := &model.SystemParameters{}
+	fPrice, err := sp.GetValueParameterByName("op_price", "dlt_transfer")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	fuelRate := p.GetFuel()
+	fuelRate := model.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}

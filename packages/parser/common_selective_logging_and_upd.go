@@ -98,11 +98,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	// если есть, что логировать
 	// if there is something to log
 	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
-	selectCost, err := p.GetQueryTotalCost(selectQuery)
+	selectCost, err := model.GetQueryTotalCost(selectQuery)
 	if err != nil {
 		return 0, tableID, err
 	}
-	logData, err := p.OneRow(selectQuery).String()
+	logData, err := model.GetOneRow(selectQuery).String()
 	if err != nil {
 		return 0, tableID, err
 	}
@@ -160,14 +160,12 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			}
 		}
 		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere
-		updateCost, err := p.GetQueryTotalCost(updateQuery, rollback.RbID)
+		updateCost, err := model.GetQueryTotalCost(updateQuery, rollback.RbID)
 		if err != nil {
 			return 0, tableID, err
 		}
 		cost += updateCost
-		err = p.ExecSQL(`UPDATE "`+table+`" SET `+addSQLUpdate+` rb_id = ? `+addSQLWhere, rollback.RbID)
-		log.Debug(`UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere)
-		//log.Debug("logId", logId)
+		err = model.Update(table, addSQLUpdate+fmt.Sprintf("rb_id = %d", rollback.RbID), addSQLWhere)
 		if err != nil {
 			return 0, tableID, err
 		}
@@ -206,12 +204,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
 		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
-		insertCost, err := p.GetQueryTotalCost(insertQuery)
+		insertCost, err := model.GetQueryTotalCost(insertQuery)
 		if err != nil {
 			return 0, tableID, err
 		}
 		cost += insertCost
-		tableID, err = p.ExecSQLGetLastInsertID(insertQuery, table)
+		tableIDStr, err := model.InsertReturningLastID(table, addSQLIns0, addSQLIns1)
+		tableID := converter.Int64ToStr(tableIDStr)
 		if err != nil {
 			return 0, tableID, err
 		}

@@ -78,7 +78,6 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 		for {
 			// обработка тр-ий может занять много времени, нужно отметиться
 			// transactions processing can take a lot of time, you need to be marked
-			p.UpdDaemonTime(p.GoroutineName)
 			log.Debug("&p.BinaryData", p.BinaryData)
 			transactionSize, err := converter.DecodeLength(&p.BinaryData)
 			if err != nil {

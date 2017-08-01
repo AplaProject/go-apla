@@ -106,7 +106,6 @@ func (p *DLTChangeHostVoteParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.UpdateFuel() // uncache fuel
 	return nil
 }
 

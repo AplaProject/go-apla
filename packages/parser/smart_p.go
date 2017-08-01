@@ -30,11 +30,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/shopspring/decimal"
 )
 
@@ -171,28 +171,22 @@ func (p *Parser) CallContract(flags int) (err error) {
 			public = p.TxSmart.PublicKey
 		}
 		if len(p.PublicKeys) == 0 {
-			data, err := p.OneRow("SELECT public_key_0 FROM dlt_wallets WHERE wallet_id = ?",
-				p.TxSmart.UserID).String()
+			wallet := &model.Wallet{}
+			err := wallet.GetWallet(p.TxSmart.UserID)
 			if err != nil {
 				return err
 			}
-			//			fmt.Printf(`TXDATA %d %d\r\n`, len(data["public_key_0"]), len(public))
-			if len(data["public_key_0"]) == 0 {
+			if len(wallet.PublicKey) == 0 {
 				if len(public) > 0 {
 					p.PublicKeys = append(p.PublicKeys, public)
 				} else {
 					return fmt.Errorf("unknown wallet id")
 				}
 			} else {
-				p.PublicKeys = append(p.PublicKeys, []byte(data["public_key_0"]))
+				p.PublicKeys = append(p.PublicKeys, wallet.PublicKey)
 			}
 		}
-		/*fmt.Printf("TXPublic=%x %d\r\n", p.PublicKeys[0], len(p.PublicKeys[0]))
-		fmt.Printf("TXSign=%x %d\r\n", p.TxPtr.(*consts.TXHeader).Sign, len(p.TxPtr.(*consts.TXHeader).Sign))
-		fmt.Printf("TXForSign=%s %d\r\n", p.TxData[`forsign`].(string), len(p.TxData[`forsign`].(string)))
-		*/
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
-		//	fmt.Println(`Forsign`, p.TxData[`forsign`], CheckSignResult, err)
 		if err != nil {
 			return err
 		}
@@ -220,12 +214,9 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf(`Wrong type of price function`)
 		}
 	}
-	if p.GetFuel().Cmp(decimal.New(0, 0)) <= 0 {
+	if model.GetFuel().Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`Fuel rate must be greater than 0`)
 	}
-	/*	if (flags&smart.CallAction) > 0 && !p.CheckContractLimit(price) {
-		return fmt.Errorf(`there are not enough money`)
-	}*/
 	if !p.TxContract.Block.Info.(*script.ContractInfo).Active {
 		return fmt.Errorf(`Contract %s is not active`, p.TxContract.Name)
 	}
@@ -257,7 +248,7 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qco
 	}
 	var ind int
 	var lastID string
-	if ind, err = p.NumIndexes(tblname); err != nil {
+	if ind, err = model.NumIndexes(tblname); err != nil {
 		return
 	}
 	qcost, lastID, err = p.selectiveLoggingAndUpd(strings.Split(params, `,`), val, tblname, nil, nil, true)
@@ -281,12 +272,11 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
 			return
 		}
-		if !p.IsNodeState(state, ``) {
+		if !utils.IsNodeState(state, ``) {
 			return
 		}
 	}
 	tblname = names[0] + `_reports_` + strings.Join(names[1:], `_`)
-
 	if err = p.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -336,7 +326,7 @@ func DBUpdateExt(p *Parser, tblname string, column string, value interface{}, pa
 	if err = p.AccessColumns(tblname, columns); err != nil {
 		return
 	}
-	if isIndex, err = sql.DB.IsIndex(tblname, column); err != nil {
+	if isIndex, err = model.IsIndex(tblname, column); err != nil {
 		return
 	} else if !isIndex {
 		err = fmt.Errorf(`there is not index on %s`, column)
@@ -352,11 +342,11 @@ func DBString(tblname string, name string, id int64) (int64, string, error) {
 	if err := checkReport(tblname); err != nil {
 		return 0, ``, err
 	}
-	cost, err := sql.DB.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
+	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
 	if err != nil {
 		return 0, "", nil
 	}
-	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).String()
+	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).String()
 	return cost, res, err
 }
 
@@ -393,17 +383,17 @@ func DBInt(tblname string, name string, id int64) (int64, int64, error) {
 	if err := checkReport(tblname); err != nil {
 		return 0, 0, err
 	}
-	cost, err := sql.DB.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
+	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id)
 	if err != nil {
 		return 0, 0, err
 	}
-	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).Int64()
+	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where id=?`, id).Int64()
 	return cost, res, err
 }
 
 func getBytea(table string) map[string]bool {
 	isBytea := make(map[string]bool)
-	colTypes, err := sql.DB.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
+	colTypes, err := model.GetAll(`select column_name, data_type from information_schema.columns where table_name=?`, -1, table)
 	if err != nil {
 		return isBytea
 	}
@@ -430,16 +420,16 @@ func DBStringExt(tblname string, name string, id interface{}, idname string) (in
 		}
 	}
 
-	if isIndex, err := sql.DB.IsIndex(tblname, idname); err != nil {
+	if isIndex, err := model.IsIndex(tblname, idname); err != nil {
 		return 0, ``, err
 	} else if !isIndex {
 		return 0, ``, fmt.Errorf(`there is not index on %s`, idname)
 	}
-	cost, err := sql.DB.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
+	cost, err := model.GetQueryTotalCost(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id)
 	if err != nil {
 		return 0, "", err
 	}
-	res, err := sql.DB.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id).String()
+	res, err := model.Single(`select `+converter.EscapeName(name)+` from `+converter.EscapeName(tblname)+` where `+converter.EscapeName(idname)+`=?`, id).String()
 	return cost, res, err
 }
 
@@ -489,18 +479,18 @@ func DBStringWhere(tblname string, name string, where string, params ...interfac
 		if len(iret) != 2 {
 			continue
 		}
-		if isIndex, err := sql.DB.IsIndex(tblname, iret[1]); err != nil {
+		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
 			return 0, ``, err
 		} else if !isIndex {
 			return 0, ``, fmt.Errorf(`there is not index on %s`, iret[1])
 		}
 	}
 	selectQuery := `select ` + converter.EscapeName(name) + ` from ` + converter.EscapeName(tblname) + ` where ` + strings.Replace(converter.Escape(where), `$`, `?`, -1)
-	qcost, err := sql.DB.GetQueryTotalCost(selectQuery, params...)
+	qcost, err := model.GetQueryTotalCost(selectQuery, params...)
 	if err != nil {
 		return 0, "", err
 	}
-	res, err := sql.DB.Single(selectQuery, params).String()
+	res, err := model.Single(selectQuery, params).String()
 	if err != nil {
 		return 0, "", err
 	}
@@ -629,7 +619,7 @@ func DBAmount(tblname, column string, id int64) (int64, decimal.Decimal) {
 		return 0, decimal.New(0, 0)
 	}
 
-	balance, err := sql.DB.Single("SELECT amount FROM "+converter.EscapeName(tblname)+" WHERE "+converter.EscapeName(column)+" = ?", id).String()
+	balance, err := model.Single("SELECT amount FROM "+converter.EscapeName(tblname)+" WHERE "+converter.EscapeName(column)+" = ?", id).String()
 	if err != nil {
 		return 0, decimal.New(0, 0)
 	}
@@ -705,14 +695,13 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 		values []interface{}
 	)
 	prefix := converter.Int64ToStr(int64(p.TxStateID))
-	cnt, err := p.OneRow(`SELECT id,conditions, active FROM "`+prefix+`_smart_contracts" WHERE name = ?`, name).String()
+	sc := &model.SmartContracts{}
+	sc.SetTableName(prefix + "_smart_contracts")
+	err := sc.GetByName(name)
 	if err != nil {
 		return 0, err
 	}
-	if len(cnt) == 0 {
-		return 0, fmt.Errorf(`unknown contract %s`, name)
-	}
-	cond := cnt[`conditions`]
+	cond := sc.Conditions
 	if len(cond) > 0 {
 		ret, err := p.EvalIf(cond)
 		if err != nil {
@@ -738,19 +727,19 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 	if len(fields) == 0 {
 		return 0, fmt.Errorf(`empty value and condition`)
 	}
-	root, err := smart.CompileBlock(value, prefix, false, converter.StrToInt64(cnt["id"]))
+	root, err := smart.CompileBlock(value, prefix, false, sc.ID)
 	if err != nil {
 		return 0, err
 	}
 	_, _, err = p.selectiveLoggingAndUpd(fields, values,
-		prefix+"_smart_contracts", []string{"id"}, []string{cnt["id"]}, true)
+		prefix+"_smart_contracts", []string{"id"}, []string{converter.Int64ToStr(sc.ID)}, true)
 	if err != nil {
 		return 0, err
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TableID = converter.StrToInt64(cnt[`id`])
-			root.Children[i].Info.(*script.ContractInfo).Active = cnt[`active`] == `1`
+			root.Children[i].Info.(*script.ContractInfo).TableID = sc.ID
+			root.Children[i].Info.(*script.ContractInfo).Active = sc.Active == "1"
 		}
 	}
 	smart.FlushBlock(root)
@@ -823,7 +812,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 	}
 	//	fmt.Println(`CheckSignature`, i, state, name)
 	p := (*i)[`parser`].(*Parser)
-	value, err := p.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
+	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
 	if err != nil {
 		return err
 	}
@@ -899,7 +888,7 @@ func checkWhere(tblname string, where string, order string) (string, string, err
 		if len(iret) != 2 {
 			continue
 		}
-		if isIndex, err := sql.DB.IsIndex(tblname, iret[1]); err != nil {
+		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
 			return ``, ``, err
 		} else if !isIndex {
 			return ``, ``, fmt.Errorf(`there is not index on %s`, iret[1])
@@ -927,7 +916,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 		if len(iret) != 2 {
 			continue
 		}
-		if isIndex, err := sql.DB.IsIndex(tblname, iret[1]); err != nil {
+		if isIndex, err := model.IsIndex(tblname, iret[1]); err != nil {
 			return 0, nil, err
 		} else if !isIndex {
 			return 0, nil, fmt.Errorf(`there is not index on %s`, iret[1])
@@ -939,7 +928,7 @@ func DBGetList(tblname string, name string, offset, limit int64, order string,
 	if limit <= 0 {
 		limit = -1
 	}
-	list, err := sql.DB.GetAll(`select `+converter.Escape(name)+` from `+converter.EscapeName(tblname)+` where `+
+	list, err := model.GetAll(`select `+converter.Escape(name)+` from `+converter.EscapeName(tblname)+` where `+
 		strings.Replace(converter.Escape(where), `$`, `?`, -1)+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {
@@ -962,7 +951,7 @@ func DBGetTable(tblname string, columns string, offset, limit int64, order strin
 		limit = -1
 	}
 	cols := strings.Split(converter.Escape(columns), `,`)
-	list, err := sql.DB.GetAll(`select `+strings.Join(cols, `,`)+` from `+converter.EscapeName(tblname)+` where `+
+	list, err := model.GetAll(`select `+strings.Join(cols, `,`)+` from `+converter.EscapeName(tblname)+` where `+
 		where+order+fmt.Sprintf(` offset %d `, offset), int(limit), params...)
 	result := make([]interface{}, len(list))
 	for i := 0; i < len(list); i++ {

@@ -1,15 +1,17 @@
 package model
 
 type Transactions struct {
-	Hash      []byte `gorm:private_key;not null`
-	Data      []byte `gorm:not null`
-	Used      int8   `gorm:not null`
-	HighRate  int8   `gorm:not null`
-	Type      int8   `gorm:not null`
-	WalletID  int64  `gorm:not null`
-	CitizeniD int64  `gorm:not null`
-	Counter   int8   `gorm:not null`
-	Sent      int8   `gorm:not null`
+	Hash       []byte `gorm:private_key;not null`
+	Data       []byte `gorm:not null`
+	Used       int8   `gorm:not null`
+	HighRate   int8   `gorm:not null`
+	Type       int8   `gorm:not null`
+	ForSelfUse int8   `gorm:not null`
+	WalletID   int64  `gorm:not null`
+	CitizenID  int64  `gorm:not null`
+	ThirdVar   int32  `gorm:not null`
+	Counter    int8   `gorm:not null`
+	Sent       int8   `gorm:not null`
 }
 
 func GetAllUnusedTransactions() (*[]Transactions, error) {

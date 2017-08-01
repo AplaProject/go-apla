@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // selectiveRollback rollbacks the specified fields
@@ -33,20 +34,21 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 	tblname := converter.EscapeName(table)
 	// получим rb_id, по которому можно найти данные, которые были до этого
 	// we obtain rb_id with help of that it is possible to find the data which was before
-	rbID, err := p.Single("SELECT rb_id FROM " + tblname + " " + where + " order by rb_id desc").Int64()
+	rbID, err := model.GetRollbackID(tblname, where, "desc")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if rbID > 0 {
 		// данные, которые восстановим
 		// data that we will be restored
-		rbData, err := p.OneRow("SELECT * FROM rollback WHERE rb_id  =  ?", rbID).String()
+		rollback := &model.Rollback{}
+		err = rollback.Get(rbID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 
 		var jsonMap map[string]string
-		err = json.Unmarshal([]byte(rbData["data"]), &jsonMap)
+		err = json.Unmarshal([]byte(rollback.Data), &jsonMap)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -59,23 +61,21 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 				addSQLUpdate += k + `='` + strings.Replace(v, `'`, `''`, -1) + `',`
 			}
 		}
-		//log.Debug("%v", logData)
-		//log.Debug("%v", logData["prev_rb_id"])
-		//log.Debug("UPDATE "+table+" SET "+addSQLUpdate+" rb_id = ? "+where)
 		addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
-		err = p.ExecSQL("UPDATE " + tblname + " SET " + addSQLUpdate + " " + where)
+		err = model.Update(tblname, addSQLUpdate, where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// подчищаем _log
 		// clean up the _log
-		err = p.ExecSQL("DELETE FROM rollback WHERE rb_id = ?", rbID)
+		rbToDel := &model.Rollback{RbID: rbID}
+		err = rbToDel.Delete()
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		p.rollbackAI("rollback", 1)
 	} else {
-		err = p.ExecSQL("DELETE FROM " + tblname + " " + where)
+		err = model.Delete(tblname, where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

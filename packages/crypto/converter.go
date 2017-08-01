@@ -63,3 +63,9 @@ func PrivateToPublicHex(hexkey string) (string, error) {
 func KeyToAddress(pubKey []byte) string {
 	return converter.AddressToString(Address(pubKey))
 }
+
+// GetWalletIDByPublicKey converts public key to wallet id
+func GetWalletIDByPublicKey(publicKey []byte) (int64, error) {
+	key, _ := hex.DecodeString(string(publicKey))
+	return int64(Address(key)), nil
+}

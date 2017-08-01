@@ -69,7 +69,6 @@ func (p *Parser) ParseDataRollback() error {
 		for i := 0; i < len(sizesSlice); i++ {
 			// обработка тр-ий может занять много времени, нужно отметиться
 			// processing of the transaction may take a lot of time, we need to be marked
-			p.UpdDaemonTime(p.GoroutineName)
 			// отделим одну транзакцию
 			transactionBinaryData := converter.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
 			p.TxBinaryData = transactionBinaryData

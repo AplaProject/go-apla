@@ -354,7 +354,7 @@ func (p *NewStateParser) Rollback() error {
 	}
 	// обновляем AI
 	// update  the AI
-	err = p.SetAI("system_states", ss.ID+1)
+	err = model.SetAI("system_states", ss.ID+1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

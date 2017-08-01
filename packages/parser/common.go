@@ -33,7 +33,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	db "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
@@ -238,7 +237,6 @@ type txMapsType struct {
 
 // Parser is a structure for parsing transactions
 type Parser struct {
-	*db.DCDB
 	TxMaps           *txMapsType
 	TxMap            map[string][]byte
 	TxMapS           map[string]string
@@ -610,7 +608,7 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	if err != nil {
 		return err
 	}
-	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
+	conditions, err := model.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
 	if err != nil {
 		return err
 	}
@@ -630,13 +628,13 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 }
 
 func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
-	fPrice, err := p.Single(`SELECT value->'`+name+`' FROM system_parameters WHERE name = ?`, "op_price").String()
+	fPrice, err := model.Single(`SELECT value->'`+name+`' FROM system_parameters WHERE name = ?`, "op_price").String()
 	if err != nil {
 		return decimal.New(0, 0), p.ErrInfo(err)
 	}
 	p.TxCost = 0
 	p.TxUsedCost, _ = decimal.NewFromString(fPrice)
-	fuelRate := p.GetFuel()
+	fuelRate := model.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
@@ -670,7 +668,7 @@ func (p *Parser) payFPrice() error {
 	)
 	//return nil
 	toID := p.BlockData.WalletID // account of node
-	fuel := p.GetFuel()
+	fuel := model.GetFuel()
 	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
@@ -696,7 +694,7 @@ func (p *Parser) payFPrice() error {
 		return nil
 	}
 	var amount string
-	if amount, err = p.Single(`select amount from dlt_wallets where wallet_id=?`, fromID).String(); err != nil {
+	if amount, err = model.Single(`select amount from dlt_wallets where wallet_id=?`, fromID).String(); err != nil {
 		return err
 	}
 	damount, err := decimal.NewFromString(amount)

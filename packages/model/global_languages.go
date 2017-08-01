@@ -16,6 +16,11 @@ func (l *Languages) TableName() string {
 	return l.tableName
 }
 
+func (l *Languages) IsExistsByName(name string) (bool, error) {
+	query := DBConn.Where("name = ?", name).First(l)
+	return !query.RecordNotFound(), query.Error
+}
+
 func CreateLanguagesStateTable(stateID string) error {
 	return DBConn.Exec(`CREATE TABLE "` + stateID + `_languages" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
