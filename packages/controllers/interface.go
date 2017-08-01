@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -40,17 +41,34 @@ func (c *Controller) Interface() (string, error) {
 		prefix = "global"
 	}
 
-	interfacePages, err := c.GetAll(`SELECT * FROM "`+prefix+`_pages" where menu!='0' order by name`, -1)
+	p := &model.Page{}
+	pages, err := p.GetWithMenu(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	interfaceBlocks, err := c.GetAll(`SELECT * FROM "`+prefix+`_pages" where menu='0' order by name`, -1)
+	interfacePages := make([]map[string]string, 0)
+	for _, page := range pages {
+		interfacePages = append(interfacePages, page.ToMap())
+	}
+
+	pages, err = p.GetWithoutMenu(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	interfaceMenu, err := c.GetAll(`SELECT * FROM "`+prefix+`_menu" order by name`, -1)
+	interfaceBlocks := make([]map[string]string, 0)
+	for _, page := range pages {
+		interfaceBlocks = append(interfaceBlocks, page.ToMap())
+	}
+
+	m := &model.Menu{}
+	menus, err := m.GetAll(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+
+	interfaceMenu := make([]map[string]string, 0)
+	for _, menu := range menus {
+		interfaceMenu = append(interfaceMenu, menu.ToMap())
 	}
 
 	TemplateStr, err := makeTemplate("interface", "interface", &interfacePage{

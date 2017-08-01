@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
@@ -61,7 +62,8 @@ func (c *Controller) EditColumn() (string, error) {
 		return "", utils.ErrInfo("incorrect table name")
 	}
 
-	columns, err := c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	t := &model.Tables{}
+	columns, err := t.GetColumnsAndPermissions(prefix, tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

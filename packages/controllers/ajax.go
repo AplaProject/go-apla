@@ -73,8 +73,6 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	c.SessStateID = sessStateID
 
 	if dbInit {
-		//c.DCDB, err = utils.NewDbConnect(configIni)
-
 		c.DCDB = sql.DB
 
 		if sql.DB == nil || sql.DB.DB == nil {

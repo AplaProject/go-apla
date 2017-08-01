@@ -17,12 +17,12 @@
 package controllers
 
 import (
-	//	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -71,11 +71,12 @@ func ReplaceMenu(menu string) string {
 // Menu is controller for displaying the left menu
 func (c *Controller) Menu() (string, error) {
 	var (
-		err                                                            error
-		updver, menu, stateName, stateFlag, citizenName, citizenAvatar string
-		isMain                                                         bool
+		err                          error
+		updver, stateName, stateFlag string
+		isMain                       bool
 	)
-
+	citizen := &model.Citizens{}
+	menu := &model.Menu{}
 	if strings.HasPrefix(c.r.Host, `localhost`) {
 		updinfo, err := utils.GetUpdVerAndURL(consts.UPD_AND_VER_URL)
 		if err == nil && updinfo != nil {
@@ -83,18 +84,17 @@ func (c *Controller) Menu() (string, error) {
 		}
 	}
 
-	canCitizen, _ := c.Single(`SELECT count(id) FROM system_states`).Int64()
+	systemStates := &model.SystemState{}
+	canCitizen, _ := systemStates.GetCount()
 	if c.StateIDStr != "" {
 		params := make(map[string]string)
 		params[`state_id`] = c.StateIDStr
 		params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
 
-		menu, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_menu" WHERE name = ?`, "main_menu").String()
+		menu.SetTableName(c.StateIDStr)
+		err = menu.Get("main_menu")
 		if err != nil {
-			return "", err
-		}
-		if len(menu) == 0 {
-			menu, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_menu" WHERE name = ?`, "menu_default").String()
+			err = menu.Get("menu_default")
 			if err != nil {
 				return "", err
 			}
@@ -102,26 +102,32 @@ func (c *Controller) Menu() (string, error) {
 			isMain = true
 		}
 
-		stateName, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_state_parameters" WHERE name = ?`, "state_name").String()
+		stateParameters := &model.StateParameters{}
+		stateParameters.SetTableName(c.StateID)
+		err := stateParameters.GetByName("state_name")
 		if err != nil {
 			return "", err
 		}
-		stateFlag, err = c.Single(`SELECT value FROM "`+c.StateIDStr+`_state_parameters" WHERE name = ?`, "state_flag").String()
-		if err != nil {
-			return "", err
-		}
+		stateName = stateParameters.Value
 
-		citizenName, err = c.Single(`SELECT name FROM "`+c.StateIDStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
+		err = stateParameters.GetByName("state_flag")
+		if err != nil {
+			return "", err
+		}
+		stateFlag = stateParameters.Value
+
+		citizen := &model.Citizens{}
+		citizen.SetTableName(c.StateID)
+		err = citizen.Get(c.SessCitizenID)
 		if err != nil {
 			log.Error("%v", err)
 		}
 
-		citizenAvatar, err = c.Single(`SELECT avatar FROM "`+c.StateIDStr+`_citizens" WHERE id = ?`, c.SessCitizenID).String()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		//		menu = ReplaceMenu(menu)
-		menu = language.LangMacro(textproc.Process(menu, &params), converter.StrToInt(c.StateIDStr), params[`accept_lang`])
+		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), converter.StrToInt(c.StateIDStr), params[`accept_lang`])
 	}
 	var langs []LangInfo
 	if len(language.LangList) > 0 {
@@ -138,7 +144,7 @@ func (c *Controller) Menu() (string, error) {
 			{Title: `Nederlands (NL)`, Code: `nl`}}
 	}
 	states, _ := c.AjaxStatesList()
-	return proceedTemplate(c, nMenu, &menuPage{Data: c.Data, Menu: menu, MainMenu: isMain, CanCitizen: canCitizen > 0,
-		States: states, StateName: stateName, StateFlag: stateFlag, CitizenName: citizenName, LogoExt: utils.LogoExt,
-		CitizenAvatar: citizenAvatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code})
+	return proceedTemplate(c, nMenu, &menuPage{Data: c.Data, Menu: menu.Value, MainMenu: isMain, CanCitizen: canCitizen > 0,
+		States: states, StateName: stateName, StateFlag: stateFlag, CitizenName: string(citizen.Name), LogoExt: utils.LogoExt,
+		CitizenAvatar: citizen.Avatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code})
 }

@@ -12,6 +12,10 @@ type Config struct {
 	CurrentLoadBlockchain  string `gorm:"not null";`
 }
 
+func (c *Config) TableName() string {
+	return "config"
+}
+
 func UpdateConfig(field string, value string) error {
 	return DBConn.Model(&Config{}).Update(field, value).Error
 }

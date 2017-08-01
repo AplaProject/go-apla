@@ -1,22 +1,22 @@
 package model
 
-type UpdFullNodes struct {
+type UpdFullNode struct {
 	ID   int64 `gorm:"primary_key;not null"`
 	Time int32 `gorm:"not null"`
-	RbID int64 `gorm: "not null"`
+	RbID int64 `gorm:"not null"`
 }
 
-func (ufn *UpdFullNodes) Read() error {
+func (ufn *UpdFullNode) Read() error {
 	return DBConn.First(ufn).Error
 }
 
-func (ufn *UpdFullNodes) GetAll() ([]UpdFullNodes, error) {
-	var result []UpdFullNodes
+func (ufn *UpdFullNode) GetAll() ([]UpdFullNode, error) {
+	var result []UpdFullNode
 	err := DBConn.Find(result).Error
 	return result, err
 }
 
-func (ufn *UpdFullNodes) ToMap() map[string]string {
+func (ufn *UpdFullNode) ToMap() map[string]string {
 	result := make(map[string]string)
 	result["id"] = string(ufn.ID)
 	result["time"] = string(ufn.Time)

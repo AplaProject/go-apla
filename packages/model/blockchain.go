@@ -76,7 +76,7 @@ func (b *Block) DeleteChain() error {
 
 func (b *Block) GetLastBlockData() (map[string]int64, error) {
 	result := make(map[string]int64)
-	confirmation := &Confirmations{}
+	confirmation := &Confirmation{}
 	err := confirmation.GetMaxGoodBlock()
 	if err != nil {
 		return result, err

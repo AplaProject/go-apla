@@ -1,6 +1,6 @@
 package model
 
-type FullNodes struct {
+type FullNode struct {
 	ID                    int32  `gorm:"primary_key;not_null"`
 	Host                  string `gorm:"not null;size:100"`
 	WalletID              int64  `gorm:"not null"`
@@ -10,7 +10,7 @@ type FullNodes struct {
 	RbID                  int64  `gorm:"not null"`
 }
 
-func (fn *FullNodes) FindNode(stateID int64, walletID int64, finalDelegateStateID int64, finalDelegateWalletID int64) error {
+func (fn *FullNode) FindNode(stateID int64, walletID int64, finalDelegateStateID int64, finalDelegateWalletID int64) error {
 	return DBConn.Where(
 		"state_id = ?", stateID).Or(
 		"wallet_id = ?", walletID).Or(
@@ -18,11 +18,11 @@ func (fn *FullNodes) FindNode(stateID int64, walletID int64, finalDelegateStateI
 		"final_delegate_wallet_id = ?", finalDelegateWalletID).Find(&fn).Error
 }
 
-func (fn *FullNodes) FindNodeByID(nodeID int64) error {
+func (fn *FullNode) FindNodeByID(nodeID int64) error {
 	return DBConn.Where("id = ?", nodeID).First(&fn).Error
 }
 
-func (fn *FullNodes) Create() error {
+func (fn *FullNode) Create() error {
 	return DBConn.Create(fn).Error
 }
 
@@ -47,13 +47,13 @@ func GetFullNodesHosts() ([]string, error) {
 	return *hosts, nil
 }
 
-func (fn *FullNodes) GetAll() ([]FullNodes, error) {
-	var nodes []FullNodes
+func (fn *FullNode) GetAll() ([]FullNode, error) {
+	var nodes []FullNode
 	err := DBConn.Find(nodes).Error
 	return nodes, err
 }
 
-func (fn *FullNodes) ToMap() map[string]string {
+func (fn *FullNode) ToMap() map[string]string {
 	var result map[string]string
 	result["id"] = string(fn.ID)
 	result["host"] = fn.Host

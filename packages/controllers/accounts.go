@@ -17,7 +17,6 @@
 package controllers
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -81,7 +80,7 @@ func (c *Controller) Accounts() (string, error) {
 			Amount: strAmount})
 	}
 
-	account := &model.Accounts{}
+	account := &model.Account{}
 	account.SetTablePrefix(c.SessCitizenID)
 	err := account.Get(c.SessStateID)
 	if err != nil {
@@ -89,16 +88,14 @@ func (c *Controller) Accounts() (string, error) {
 	}
 	newAccount(c.SessCitizenID, account.Amount)
 
-	list, err := c.GetAll(fmt.Sprintf(`select anon.*, acc.amount from "%d_anonyms" as anon
-	left join "%[1]d_accounts" as acc on acc.citizen_id=anon.id_anonym
-	where anon.id_citizen=?`, c.SessStateID), -1, c.SessCitizenID)
+	aa := &model.AnonAmount{}
+	amounts, err := aa.Get(c.SessStateID, c.SessCitizenID)
 	if err != nil {
 		return ``, err
 	}
 
-	for _, item := range list {
-		amount, _ := decimal.NewFromString(item[`amount`])
-		newAccount(converter.StrToInt64(item[`id_anonym`]), amount)
+	for _, item := range amounts {
+		newAccount(item.IDAnonym, item.Amount)
 	}
 	txType := "NewAccount"
 	pageData := accountsPage{Data: c.Data, List: data, Currency: currency, TxType: txType,

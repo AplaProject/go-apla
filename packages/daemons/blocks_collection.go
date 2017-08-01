@@ -608,7 +608,7 @@ BEGIN:
 
 			var nodePublicKey []byte
 			if blockData.WalletID != 0 {
-				wallet := &model.DltWallets{}
+				wallet := &model.DltWallet{}
 				err = wallet.GetWallet(blockData.WalletID)
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -618,7 +618,7 @@ BEGIN:
 				}
 				nodePublicKey = wallet.PublicKey
 			} else {
-				systemState := &model.SystemRecognizedStates{}
+				systemState := &model.SystemRecognizedState{}
 				err = systemState.GetState(blockData.StateID)
 				if err != nil {
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

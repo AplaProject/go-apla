@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -62,14 +63,15 @@ func (c *Controller) RowHistory() (string, error) {
 	columns["id"] = ""
 	columns["block_id"] = ""
 	for i := 0; i < 100; i++ {
-		data, err := c.OneRow(`SELECT data, block_id FROM "rollback" WHERE rb_id = ?`, rbID).String()
+		rollback := &model.Rollback{}
+		err := rollback.Get(rbID)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 		var messageMap map[string]string
-		json.Unmarshal([]byte(data["data"]), &messageMap)
+		json.Unmarshal([]byte(rollback.Data), &messageMap)
 		rbID = converter.StrToInt64(messageMap["rb_id"])
-		messageMap["block_id"] = data["block_id"]
+		messageMap["block_id"] = string(rollback.BlockID)
 		history = append(history, messageMap)
 		if rbID == 0 {
 			break

@@ -5,7 +5,7 @@ type CitizenshipRequests struct {
 	ID          int64  `gorm:"primary_key;not null"`
 	PublickKey  []byte `gorm:"column:public_key_0"`
 	DltWalletID int64  `gorm:"not null"`
-	Name        []byte
+	Name        string
 	Approved    int64 `gorm:"not null"`
 	BlockID     int64 `gorm:"not null"`
 	RbID        int64 `gorm:"not null"`

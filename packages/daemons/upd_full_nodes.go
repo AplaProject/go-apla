@@ -107,9 +107,8 @@ BEGIN:
 		myStateID := config.StateID
 		myWalletID := config.DltWalletID
 		logger.Debug("%v", myWalletID)
-		// Есть ли мы в списке тех, кто может генерить блоки
 		// If we are in the list of those who are able to generate the blocks
-		fullNode := &model.FullNodes{}
+		fullNode := &model.FullNode{}
 		err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
 		if err != nil {
 			d.dbUnlock()
@@ -133,9 +132,8 @@ BEGIN:
 
 		curTime := time.Now().Unix()
 
-		// проверим, прошло ли время с момента последнего обновления
 		// check if the time of the last updating passed
-		updFn := &model.UpdFullNodes{}
+		updFn := &model.UpdFullNode{}
 		err = updFn.Read()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -152,7 +150,7 @@ BEGIN:
 		}
 
 		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
-		myNodeKey := &model.MyNodeKeys{}
+		myNodeKey := &model.MyNodeKey{}
 		err = myNodeKey.GetNodeWithMaxBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

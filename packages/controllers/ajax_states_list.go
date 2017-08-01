@@ -53,10 +53,9 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		if err != nil {
 			return ``, err
 		}
-		result[string(id)] = make(map[string]string)
-		result[string(id)]["state_name"] = stateName
-		result[string(id)]["state_flag"] = stateFlag
-		result[string(id)]["state_coords"] = stateCoords
+		iresult := make(map[string]string)
+		iresult["state_name"] = stateName
+		iresult["state_flag"] = stateFlag
 		iresult["state_coords"] = stateCoords
 		result = append(result, iresult)
 

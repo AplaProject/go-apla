@@ -1,19 +1,19 @@
 package model
 
-type QueueBlocks struct {
+type QueueBlock struct {
 	Hash       []byte `gorm:"primary_key;not null"`
 	BlockID    int64  `gorm:"not null"`
 	FullNodeID int64  `gorm:"not null"`
 }
 
-func (qb *QueueBlocks) GetQueueBlock() error {
+func (qb *QueueBlock) GetQueueBlock() error {
 	return DBConn.First(&qb).Error
 }
 
-func (qb *QueueBlocks) Delete() error {
+func (qb *QueueBlock) Delete() error {
 	return DBConn.Delete(qb).Error
 }
 
-func (qb *QueueBlocks) Create() error {
+func (qb *QueueBlock) Create() error {
 	return DBConn.Create(qb).Error
 }

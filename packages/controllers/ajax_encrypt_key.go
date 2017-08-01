@@ -51,7 +51,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		return result
 	}
 	id = converter.StringToAddress(walletID)
-	wallet := &model.DltWallets{}
+	wallet := &model.DltWallet{}
 	err = wallet.GetWallet(id)
 	if err != nil {
 		result.Error = err.Error()

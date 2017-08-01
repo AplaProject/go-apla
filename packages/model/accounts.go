@@ -2,7 +2,7 @@ package model
 
 import "github.com/shopspring/decimal"
 
-type Accounts struct {
+type Account struct {
 	tableName string
 	ID        int64           `gorm:"primary_key;not null"`
 	Amount    decimal.Decimal `gorm:"not null"`
@@ -13,14 +13,14 @@ type Accounts struct {
 	RbID      int64           `gorm:"not null"`
 }
 
-func (a *Accounts) SetTablePrefix(prefix int64) {
+func (a *Account) SetTablePrefix(prefix int64) {
 	a.tableName = string(prefix) + "_accounts"
 }
 
-func (a *Accounts) TableName() string {
+func (a *Account) TableName() string {
 	return a.tableName
 }
 
-func (a *Accounts) Get(accountID int64) error {
+func (a *Account) Get(accountID int64) error {
 	return DBConn.Where("id = ?", accountID).First(a).Error
 }

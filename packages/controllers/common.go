@@ -77,7 +77,6 @@ type Controller struct {
 var (
 	configIni      map[string]string
 	globalSessions *session.Manager
-	// в гоурутинах используется только для чтения
 	// In gourutin is used only for reading
 	globalLangReadOnly map[int]map[string]string
 )
@@ -85,11 +84,7 @@ var (
 // SessInit initializes sessions
 func SessInit() {
 	var err error
-	/*path := *utils.Dir + `/tmp`
-	if runtime.GOOS == "windows" {
-		path = "tmp"
-	}
-	globalSessions, err = session.NewManager("file", `{"cookieName":"gosessionid","gclifetime":864000,"ProviderConfig":"`+path+`"}`)*/
+
 	globalSessions, err = session.NewManager("memory", `{"cookieName":"gosessionid","gclifetime":864000}`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
@@ -100,7 +95,6 @@ func SessInit() {
 
 // ConfigInit reads ini file
 func ConfigInit() {
-	// мониторим config.ini на наличие изменений
 	// We monitor config.ini for changes
 	go func() {
 		for {
@@ -145,7 +139,6 @@ func init() {
 
 // CallController calls the method with this name
 func CallController(c *Controller, name string) (string, error) {
-	// имя экспортируемого метода должно начинаться с заглавной буквы
 	// the name of exported method must begin with a capital letter
 	a := []rune(name)
 	a[0] = unicode.ToUpper(a[0])
@@ -274,7 +267,6 @@ func SetLang(w http.ResponseWriter, r *http.Request, lang int) {
 }
 
 // CheckLang checks if there is a language with such id
-// если в lang прислали какую-то гадость
 // If some muck was sent in the lang
 func CheckLang(lang int) bool {
 	for _, v := range consts.LangMap {

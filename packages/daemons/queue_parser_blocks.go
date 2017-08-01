@@ -98,7 +98,7 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		queueBlock := &model.QueueBlocks{}
+		queueBlock := &model.QueueBlock{}
 		err = queueBlock.GetQueueBlock()
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -140,11 +140,8 @@ BEGIN:
 			continue BEGIN
 		}
 
-		/*
-		 * Загрузка блоков для детальной проверки
-		 */
 		// download of the blocks for the detailed check
-		fullNode := &model.FullNodes{}
+		fullNode := &model.FullNode{}
 
 		err = fullNode.FindNodeByID(queueBlock.FullNodeID)
 		if err != nil {

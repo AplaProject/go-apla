@@ -6,6 +6,10 @@ type QueueTx struct {
 	FromGate int    `gorm:"not null"`
 }
 
+func (qt *QueueTx) TableName() string {
+	return "queue_tx"
+}
+
 func DeleteQueueTx() error {
 	return DBConn.Delete(&QueueTx{}).Error
 }

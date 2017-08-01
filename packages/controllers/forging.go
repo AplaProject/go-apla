@@ -41,7 +41,7 @@ func (c *Controller) Forging() (string, error) {
 	txType := "DLTChangeHostVote"
 	timeNow := time.Now().Unix()
 
-	wallet := &model.DltWallets{}
+	wallet := &model.DltWallet{}
 	err := wallet.GetWallet(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)

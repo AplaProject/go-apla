@@ -76,7 +76,7 @@ func (c *Controller) AppCatalog() (string, error) {
 	}
 	apps := make(map[string]int)
 	loadapps := func(table string) error {
-		app := &model.Apps{}
+		app := &model.App{}
 		app.SetTableName(table)
 		data, err := app.GetAll()
 		if err != nil {

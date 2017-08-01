@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -33,17 +34,18 @@ type modalAnonymPage struct {
 
 // ModalAnonym shows QR code of the wallet
 func (c *Controller) ModalAnonym() (string, error) {
-
-	MyWalletData, err := c.OneRow("SELECT host, address_vote as addressVote  FROM dlt_wallets WHERE wallet_id = ?", c.SessWalletID).String()
-	MyWalletData[`address`] = converter.AddressToString(c.SessWalletID)
+	wallet := &model.DltWallet{}
+	err := wallet.GetWallet(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	log.Debug("MyWalletData %v", MyWalletData)
+	data := wallet.ToMap()
+	data[`address`] = converter.AddressToString(c.SessWalletID)
+	log.Debug("MyWalletData %v", data)
 
 	TemplateStr, err := makeTemplate("modal_anonym", "modalAnonym", &modalAnonymPage{
 		Lang:         c.Lang,
-		MyWalletData: MyWalletData,
+		MyWalletData: data,
 		Title:        "modalAnonym",
 		WalletID:     c.SessWalletID,
 		CitizenID:    c.SessCitizenID,

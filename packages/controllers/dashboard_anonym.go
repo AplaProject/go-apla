@@ -32,7 +32,7 @@ func (c *Controller) DashboardAnonym() (string, error) {
 	amount := `0`
 
 	if c.SessWalletID > 0 || len(c.SessAddress) > 0 {
-		wallet := &model.DltWallets{}
+		wallet := &model.DltWallet{}
 		err := wallet.GetWallet(c.SessWalletID)
 		if err != nil {
 			return "", utils.ErrInfo(err)

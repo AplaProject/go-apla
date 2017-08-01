@@ -21,6 +21,18 @@ func (p *Page) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(p).Error
 }
 
+func (p *Page) GetWithMenu(prefix string) ([]Page, error) {
+	pages := make([]Page, 0)
+	err := DBConn.Table(prefix + "_pages").Where("menu != '0'").Order("name").Find(pages).Error
+	return pages, err
+}
+
+func (p *Page) GetWithoutMenu(prefix string) ([]Page, error) {
+	pages := make([]Page, 0)
+	err := DBConn.Table(prefix + "_pages").Where("menu == '0'").Order("name").Find(pages).Error
+	return pages, err
+}
+
 func (p *Page) ToMap() map[string]string {
 	result := make(map[string]string)
 	result["name"] = p.Name

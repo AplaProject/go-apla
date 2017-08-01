@@ -19,3 +19,9 @@ func (l *Language) TableName() string {
 func (l *Language) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(l).Error
 }
+
+func (l *Language) GetAll(prefix string) ([]Language, error) {
+	var result []Language
+	err := DBConn.Table(prefix + "_languages").Order("name").Find(result).Error
+	return result, err
+}

@@ -11,6 +11,10 @@ type InfoBlock struct {
 	Sent           int8   `gorm:"not null"`
 }
 
+func (ib *InfoBlock) TableName() string {
+	return "info_block"
+}
+
 func (ib *InfoBlock) GetInfoBlock() error {
 	return DBConn.First(ib).Error
 }

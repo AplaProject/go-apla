@@ -25,7 +25,7 @@ import (
 func (c *Controller) TxStatus() (string, error) {
 
 	hash := c.r.FormValue("hash")
-	ts := &model.TransactionsStatus{}
+	ts := &model.TransactionStatus{}
 	err := ts.Get([]byte(hash))
 	if err != nil {
 		return "", utils.ErrInfo(err)

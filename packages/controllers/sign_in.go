@@ -75,7 +75,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
 	publicKey := []byte(key)
-	walletID, err := c.GetWalletIDByPublicKey(publicKey)
+	walletID := int64(crypto.Address(publicKey))
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -84,24 +84,25 @@ func (c *Controller) AjaxSignIn() interface{} {
 	log.Debug("wallet_id : %d", walletID)
 	if stateID > 0 {
 		log.Debug("stateId %v", stateID)
-		if _, err := c.CheckStateName(stateID); err == nil {
-			citizen.SetTableName(stateID)
-			err = citizen.Get(stateID)
-			if err != nil {
-				result.Error = err.Error()
-				return result
-			}
-			log.Debug("citizenID %v", citizen.ID)
-			if citizen.ID == 0 {
-				stateID = 0
-				if utils.PrivCountry {
-					result.Error = "not a citizen"
-					return result
-				}
-			}
-		} else {
+		systemStates := &model.SystemState{}
+		err := systemStates.Get(stateID)
+		if err != nil {
 			result.Error = err.Error()
 			return result
+		}
+		citizen.SetTableName(stateID)
+		err = citizen.Get(stateID)
+		if err != nil {
+			result.Error = err.Error()
+			return result
+		}
+		log.Debug("citizenID %v", citizen.ID)
+		if citizen.ID == 0 {
+			stateID = 0
+			if utils.PrivCountry {
+				result.Error = "not a citizen"
+				return result
+			}
 		}
 	}
 	result.Result = true
@@ -110,5 +111,5 @@ func (c *Controller) AjaxSignIn() interface{} {
 	c.sess.Set("citizen_id", string(citizen.ID))
 	c.sess.Set("state_id", stateID)
 	log.Debug("wallet_id %d citizen_id %d state_id %d", walletID, citizen.ID, stateID)
-	return result //`{"result":1,"address": "` + address + `"}`, nil
+	return result
 }

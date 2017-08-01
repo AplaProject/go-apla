@@ -7,6 +7,10 @@ type MainLock struct {
 	Uniq       int8   `gorm:"not_null"`
 }
 
+func (ml *MainLock) TableName() string {
+	return "main_lock"
+}
+
 func (ml *MainLock) Delete() error {
 	query := DBConn.Delete(&MainLock{})
 	if query.Error != nil && !query.RecordNotFound() {

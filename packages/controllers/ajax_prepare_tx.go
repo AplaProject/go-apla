@@ -131,9 +131,9 @@ func (c *Controller) AjaxPrepareTx() interface{} {
 	if err == nil {
 		info := (*contract).Block.Info.(*script.ContractInfo)
 		forsign := fmt.Sprintf("%d,%d,%d,%d", info.ID, int64(result.Time), c.SessWalletID, c.SessStateID)
-		dltWallet := &model.DltWallets{}
+		dltWallet := &model.DltWallet{}
 		err = dltWallet.GetWallet(c.SessWalletID)
-		isPublic = dltWallet.PublicKey
+		//isPublic := dltWallet.PublicKey
 		if (*contract).Block.Info.(*script.ContractInfo).Tx != nil {
 			for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 				if strings.Contains(fitem.Tags, `image`) || strings.Contains(fitem.Tags, `signature`) {

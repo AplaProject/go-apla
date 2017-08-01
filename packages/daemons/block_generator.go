@@ -113,7 +113,7 @@ BEGIN:
 		myWalletID := config.DltWalletID
 
 		if myStateID > 0 {
-			systemState := &model.SystemRecognizedStates{}
+			systemState := &model.SystemRecognizedState{}
 			delegate, err := systemState.IsDelegated(myStateID)
 			if err != nil {
 				d.dbUnlock()
@@ -123,7 +123,6 @@ BEGIN:
 				}
 				continue
 			}
-			// Если мы - государство и у нас указан delegate в system_recognized_states, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или ЦБ, то выходим.
 			// If we are the state and we have the record delegate specified at the system_recognized_states (it means we have delegated the authority to maintain the node to another user or state), in that case exit.
 			if delegate {
 				d.dbUnlock()
@@ -136,9 +135,8 @@ BEGIN:
 			}
 		}
 
-		// Есть ли мы в списке тех, кто может генерить блоки
 		// If we are in the list of those who can generate blocks
-		fullNodes := &model.FullNodes{}
+		fullNodes := &model.FullNode{}
 		err = fullNodes.FindNode(myStateID, myWalletID, myStateID, myWalletID)
 		if err != nil {
 			d.dbUnlock()
@@ -251,9 +249,8 @@ BEGIN:
 
 		newBlockID = infoBlock.BlockID + 1
 
-		// получим наш приватный нодовский ключ
 		// Recieve our private node key
-		myNodeKeys := &model.MyNodeKeys{}
+		myNodeKeys := &model.MyNodeKey{}
 		err = myNodeKeys.GetNodeWithMaxBlockID()
 		if err != nil {
 			if d.unlockPrintSleep(err, d.sleepTime) {

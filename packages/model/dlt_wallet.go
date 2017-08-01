@@ -2,7 +2,7 @@ package model
 
 import "github.com/shopspring/decimal"
 
-type DltWallets struct {
+type DltWallet struct {
 	WalletID           int64           `gorm:"primary_key;not null"`
 	Amount             decimal.Decimal `gorm:"not null"`
 	PublicKey          []byte          `gorm:"column:publick_key_0;not null"`
@@ -16,15 +16,15 @@ type DltWallets struct {
 	RollbackID         int64           `gorm:"not null;column:rb_id"`
 }
 
-func (w *DltWallets) GetWallet(walletID int64) error {
+func (w *DltWallet) GetWallet(walletID int64) error {
 	if err := DBConn.Where("wallet_id = ", walletID).First(&w).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetWallets(startWalletID int64, walletsCount int) ([]DltWallets, error) {
-	wallets := new([]DltWallets)
+func GetWallets(startWalletID int64, walletsCount int) ([]DltWallet, error) {
+	wallets := new([]DltWallet)
 	err := DBConn.Limit(walletsCount).Where("wallet_id >= ?", startWalletID).Find(wallets).Error
 	if err != nil {
 		return nil, err
@@ -32,24 +32,24 @@ func GetWallets(startWalletID int64, walletsCount int) ([]DltWallets, error) {
 	return *wallets, nil
 }
 
-func (w *DltWallets) IsExistsByPublicKey() (bool, error) {
+func (w *DltWallet) IsExistsByPublicKey() (bool, error) {
 	query := DBConn.Where("public_key_0 = ", w.PublicKey).First(w)
 	return !query.RecordNotFound(), query.Error
 }
 
-func (w *DltWallets) IsExists() (bool, error) {
+func (w *DltWallet) IsExists() (bool, error) {
 	query := DBConn.Where("wallet_id = ", w.WalletID).First(w)
 	return !query.RecordNotFound(), query.Error
 }
 
-func (w *DltWallets) Create() error {
+func (w *DltWallet) Create() error {
 	return DBConn.Create(w).Error
 }
 
-func (w *DltWallets) GetVotes(limit int) ([]map[string]string, error) {
+func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {
 	result := make([]map[string]string, 0)
 
-	var wallets []DltWallets
+	var wallets []DltWallet
 	err := DBConn.
 		Select([]string{"address_vote", "sum(amount) as sum"}).
 		Where("address_vote != ''").
@@ -70,14 +70,7 @@ func (w *DltWallets) GetVotes(limit int) ([]map[string]string, error) {
 	return result, nil
 }
 
-/*
-func (db *DCDB) GetVotes() ([]map[string]string, error) {
-	return db.GetAll(`SELECT address_vote, sum(amount) as sum FROM dlt_wallets WHERE address_vote !=''
-	 GROUP BY address_vote ORDER BY sum(amount) DESC LIMIT 10`, -1)
-}
-*/
-
-func (w *DltWallets) ToMap() map[string]string {
+func (w *DltWallet) ToMap() map[string]string {
 	result := make(map[string]string, 0)
 	result["wallet_id"] = string(w.WalletID)
 	result["amount"] = w.Amount.String()

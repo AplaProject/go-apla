@@ -95,7 +95,7 @@ BEGIN:
 
 		fullNode := true
 		if myStateID > 0 {
-			systemState := &model.SystemRecognizedStates{}
+			systemState := &model.SystemRecognizedState{}
 			delegate, err := systemState.IsDelegated(myStateID)
 			if err != nil {
 				logger.Error("%v", err)
@@ -104,16 +104,14 @@ BEGIN:
 				}
 				continue
 			}
-			// Если мы - государство и у нас указан delegate, т.е. мы делегировали полномочия по поддержанию ноды другому юзеру или государству, то выходим.
 			// if we are a state we have a delegate, that means we delegat our authority of the node maintenance to another user or state, then we exit.
 			if delegate {
 				fullNode = false
 			}
 		}
 
-		// Есть ли мы в списке тех, кто может генерить блоки
 		// if we are in the cycle of those who are able to generate blocks
-		node := &model.FullNodes{}
+		node := &model.FullNode{}
 		err = node.FindNode(myStateID, myWalletID, myStateID, myWalletID)
 		if err != nil {
 			logger.Error("%v", err)
@@ -387,7 +385,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 			txHash = converter.BinToHex(txHash)
 			logger.Debug("txHash %s (host : %v)", txHash, host)
 			logging.WriteSelectiveLog("SELECT data FROM transactions WHERE hex(hash) = " + string(txHash))
-			transaction := &model.Transactions{}
+			transaction := &model.Transaction{}
 			err := transaction.Read(txHash)
 			logger.Debug("tx %x", transaction.Data)
 			if err != nil {

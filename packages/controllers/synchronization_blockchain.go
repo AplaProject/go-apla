@@ -113,7 +113,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		}
 	}
 
-	confirmation := &model.Confirmations{}
+	confirmation := &model.Confirmation{}
 	err = confirmation.GetMaxGoodBlock()
 	if err != nil {
 		return "", err

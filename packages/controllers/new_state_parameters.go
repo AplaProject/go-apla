@@ -19,6 +19,7 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -30,9 +31,15 @@ func (c *Controller) NewStateParameters() (string, error) {
 	txType := "NewStateParameters"
 	timeNow := time.Now().Unix()
 
-	allStateParameters, err := c.GetList(`SELECT name FROM "` + c.StateIDStr + `_state_parameters"`).String()
+	stateParameters := &model.StateParameters{}
+	params, err := stateParameters.GetAllStateParameters(c.StateIDStr)
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+
+	allStateParameters := make([]string, 0)
+	for _, param := range params {
+		allStateParameters = append(allStateParameters, param.Name)
 	}
 
 	TemplateStr, err := makeTemplate("edit_state_parameters", "editStateParameters", &editStateParametersPage{

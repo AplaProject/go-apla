@@ -45,7 +45,7 @@ func (c *Controller) WalletHistory() (string, error) {
 	if walletID == 0 {
 		walletID = c.SessWalletID
 	}
-	wallet := &model.DltWallets{}
+	wallet := &model.DltWallet{}
 	err := wallet.GetWallet(walletID)
 	if err != nil {
 		return ``, utils.ErrInfo(err)

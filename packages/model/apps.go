@@ -1,39 +1,39 @@
 package model
 
-type Apps struct {
+type App struct {
 	tableName string
 	Name      string `gorm:"private_key;not null;size:100"`
 	Done      int32  `gorm:"not null"`
 	Blocks    string `gorm:"not null"`
 }
 
-func (a *Apps) SetTableName(tablePrefix string) {
+func (a *App) SetTableName(tablePrefix string) {
 	a.tableName = tablePrefix + "_apps"
 }
 
-func (a *Apps) TableName() string {
+func (a *App) TableName() string {
 	return a.tableName
 }
 
-func (a *Apps) Get(name string) error {
+func (a *App) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(a).Error
 }
 
-func (a *Apps) GetAll() ([]Apps, error) {
-	var apps []Apps
+func (a *App) GetAll() ([]App, error) {
+	var apps []App
 	err := DBConn.Table(a.tableName).Find(apps).Error
 	return apps, err
 }
 
-func (a *Apps) IsExists(name string) (bool, error) {
+func (a *App) IsExists(name string) (bool, error) {
 	query := DBConn.Where("name = ?", name).First(a)
 	return !query.RecordNotFound(), query.Error
 }
 
-func (a *Apps) Save() error {
+func (a *App) Save() error {
 	return DBConn.Save(a).Error
 }
 
-func (a *Apps) Create() error {
+func (a *App) Create() error {
 	return DBConn.Create(a).Error
 }

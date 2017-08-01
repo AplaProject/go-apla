@@ -18,8 +18,10 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	//"encoding/json"
 	//"fmt"
 )
@@ -56,12 +58,11 @@ func (c *Controller) ShowTable() (string, error) {
 	} else {
 		global = "0"
 	}
-	var columns map[string]string
-	columns, err = c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	t := &model.Tables{}
+	columns, err := t.GetColumnsAndPermissions(prefix, tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	//	columns["id"] = ""
 
 	tableData, err := c.GetAll(`SELECT * FROM "`+tableName+`" order by id`, 1000)
 	if err != nil {
@@ -97,7 +98,6 @@ func (c *Controller) ShowTable() (string, error) {
 		WalletID:  c.SessWalletID,
 		CitizenID: c.SessCitizenID,
 		Columns:   columns,
-		//tableData : columnsAndPermissions,
 		TableName: tableName,
 		TableData: tableData})
 	if err != nil {

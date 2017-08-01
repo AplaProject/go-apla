@@ -1,6 +1,6 @@
 package model
 
-type SystemRecognizedStates struct {
+type SystemRecognizedState struct {
 	Name             string `gorm:"not null;size:255"`
 	StateID          int64  `gorm:"not null;primary_key"`
 	Host             string `gorm:"not null;size:255"`
@@ -10,11 +10,11 @@ type SystemRecognizedStates struct {
 	RbID             int64  `gorm:"not null"`
 }
 
-func (srs *SystemRecognizedStates) GetState(stateID int64) error {
+func (srs *SystemRecognizedState) GetState(stateID int64) error {
 	return DBConn.Where("state_id = ?", stateID).First(&srs).Error
 }
 
-func (srs *SystemRecognizedStates) IsDelegated(stateID int64) (bool, error) {
+func (srs *SystemRecognizedState) IsDelegated(stateID int64) (bool, error) {
 	if err := srs.GetState(stateID); err != nil {
 		return false, err
 	}

@@ -19,13 +19,14 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type restoreAccessPage struct {
 	Alert              string
 	Active             int64
-	Request            int64
+	Request            int32
 	Lang               map[string]string
 	WalletID           int64
 	CitizenID          int64
@@ -42,21 +43,21 @@ func (c *Controller) RestoreAccess() (string, error) {
 	txType := "RestoreAccessActive"
 	timeNow := time.Now().Unix()
 
-	data, err := c.OneRow("SELECT active FROM system_restore_access WHERE state_id  =  ?", c.SessStateID).Int64()
+	sra := &model.SystemRestoreAccess{}
+	err := sra.Get(c.SessStateID)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	active := data["active"]
 
-	var request int64
-	if data["time"] > 0 {
-		request = data["time"]
+	var request int32
+	if sra.Time > 0 {
+		request = sra.Time
 	}
 
 	TemplateStr, err := makeTemplate("restore_access", "restoreAccess", &restoreAccessPage{
 		Alert:     c.Alert,
 		Lang:      c.Lang,
-		Active:    active,
+		Active:    sra.Active,
 		Request:   request,
 		TimeNow:   timeNow,
 		TxType:    txType,

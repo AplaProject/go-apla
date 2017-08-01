@@ -19,6 +19,7 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -36,9 +37,14 @@ func (c *Controller) NewPage() (string, error) {
 		global = "0"
 	}
 
-	allMenu, err := c.GetAll(`SELECT * FROM "`+prefix+`_menu"`, -1)
+	menu := &model.Menu{}
+	menus, err := menu.GetAll(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)
+	}
+	allMenu := make([]map[string]string, 0)
+	for _, m := range menus {
+		allMenu = append(allMenu, m.ToMap())
 	}
 
 	TemplateStr, err := makeTemplate("edit_page", "editPage", &editPagePage{

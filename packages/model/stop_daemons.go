@@ -1,17 +1,21 @@
 package model
 
-type StopDaemons struct {
+type StopDaemon struct {
 	StopTime int32 `gorm:"not null"`
 }
 
-func (sd *StopDaemons) Create() error {
+func (sd *StopDaemon) TableName() string {
+	return "stop_daemons"
+}
+
+func (sd *StopDaemon) Create() error {
 	return DBConn.Create(sd).Error
 }
 
-func (sd *StopDaemons) Delete() error {
-	return DBConn.Delete(&StopDaemons{}).Error
+func (sd *StopDaemon) Delete() error {
+	return DBConn.Delete(&StopDaemon{}).Error
 }
 
-func (sd *StopDaemons) Get() error {
+func (sd *StopDaemon) Get() error {
 	return DBConn.First(sd).Error
 }

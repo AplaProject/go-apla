@@ -79,8 +79,6 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		result.Error = `unknown private key`
 		return result
 	}
-	//	bkey, err := hex.DecodeString(privKey)
-	//	pubkey := lib.PrivateToPublic(bkey)
 
 	contract := smart.GetContract(`GenCitizen`, uint32(c.SessStateID))
 	if contract == nil {
@@ -99,7 +97,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		}
 		idnew := int64(crypto.Address(pub))
 
-		wallet := &model.DltWallets{}
+		wallet := &model.DltWallet{}
 		wallet.WalletID = idnew
 		exist, err := wallet.IsExists()
 		if err != nil {

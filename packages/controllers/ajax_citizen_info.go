@@ -59,7 +59,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	)
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
 	stateCode := converter.StrToInt64(c.r.FormValue(`stateId`))
-	systemState := &model.SystemStates{}
+	systemState := &model.SystemState{}
 	_, err = systemState.IsExists(stateCode)
 	c.r.ParseMultipartForm(16 << 20) // Max memory 16 MiB
 	formdata := c.r.MultipartForm
@@ -95,7 +95,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		}
 	}
 
-	wallet := &model.DltWallets{}
+	wallet := &model.DltWallet{}
 	if err = wallet.GetWallet(walletID); err != nil {
 		result.Error = err.Error()
 		return result

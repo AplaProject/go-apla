@@ -49,7 +49,7 @@ func (c *Controller) AjaxAppProcess() interface{} {
 		return result
 	}
 
-	app := &model.Apps{Name: name, Done: int32(done)}
+	app := &model.App{Name: name, Done: int32(done)}
 	if strings.HasPrefix(name, `global`) {
 		app.SetTableName("global")
 	} else {

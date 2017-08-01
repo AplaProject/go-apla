@@ -70,7 +70,7 @@ func (c *Controller) EditWallet() (string, error) {
 		id = c.SessWalletID
 	}
 	if id != 0 {
-		wallet := &model.DltWallets{}
+		wallet := &model.DltWallet{}
 		err := wallet.GetWallet(id)
 		if err != nil {
 			return "", utils.ErrInfo(err)

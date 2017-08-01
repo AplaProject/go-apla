@@ -76,17 +76,14 @@ BEGIN:
 		logger.Info(GoroutineName)
 		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
 
-		// проверим, не нужно ли нам выйти из цикла
 		// check if we have to break the cycle
 		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
 			break BEGIN
 		}
 
 		var startBlockID int64
-		// если последний проверенный был давно (пропасть более 5 блоков),
-		// то начинаем проверку последних 5 блоков
 		// if the last one checked was long ago (interval is more than 5 blocks)
-		confirmations := &model.Confirmations{}
+		confirmations := &model.Confirmation{}
 		err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
 		if err != nil {
 			logger.Error("%v", err)
@@ -162,7 +159,7 @@ BEGIN:
 				}
 				logger.Info("st0 %v  st1 %v", st0, st1)
 			}
-			confirmation := &model.Confirmations{}
+			confirmation := &model.Confirmation{}
 			err = confirmation.GetConfirmation(blockID)
 			if err == nil {
 				logger.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockID)

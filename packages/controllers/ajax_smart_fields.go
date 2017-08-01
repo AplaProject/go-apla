@@ -55,8 +55,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 		result.Error = `Basic app is not installed`
 		return result
 	}
-	//	_, err = c.GetStateName(stateID)
-	//	if err == nil {
+
 	citizen := &model.Citizens{ID: c.SessWalletID}
 	citizen.SetTableName(stateID)
 	if exist, err := citizen.IsExists(); err != nil {
@@ -105,7 +104,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 					err := stateParameters.GetByName("citizenship_price")
 					if err == nil {
 						result.Price, _ = strconv.ParseInt(stateParameters.Value, 10, 64)
-						dltWallet := &model.DltWallets{}
+						dltWallet := &model.DltWallet{}
 						err = dltWallet.GetWallet(c.SessWalletID)
 						dPrice, _ := decimal.NewFromString(stateParameters.Value)
 						result.Valid = (err == nil && dltWallet.Amount.Cmp(dPrice) >= 0)

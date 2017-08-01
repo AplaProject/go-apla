@@ -16,6 +16,8 @@
 
 package controllers
 
+import "github.com/EGaaS/go-egaas-mvp/packages/model"
+
 const nLanguages = `languages`
 
 type languagesPage struct {
@@ -36,9 +38,18 @@ func (c *Controller) Languages() (string, error) {
 		prefix = c.StateIDStr
 		global = "0"
 	}
-	list, err := c.GetAll(`SELECT name, res FROM "`+prefix+`_languages" order by name`, -1)
+	language := &model.Language{}
+	langs, err := language.GetAll(prefix)
 	if err != nil {
 		return "", err
+	}
+
+	list := make([]map[string]string, 0)
+	for _, lang := range langs {
+		row := make(map[string]string)
+		row["name"] = lang.Name
+		row["res"] = lang.Res
+		list = append(list, row)
 	}
 
 	pageData := languagesPage{Data: c.Data, Global: global, List: list}

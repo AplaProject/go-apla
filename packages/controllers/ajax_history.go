@@ -17,8 +17,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
@@ -51,33 +49,32 @@ func (c *Controller) AjaxHistory() interface{} {
 		length = 20
 	}
 	log.Debug("a/h walletId %s / c.SessAddress %s", walletID, c.SessAddress)
-	limit := fmt.Sprintf(`LIMIT %d OFFSET %d`, length, converter.StrToInt(c.r.FormValue("start")))
 	if walletID != 0 {
-		dltTransaction := &model.DltTransactions{}
+		dltTransaction := &model.DltTransaction{}
 		total, _ := dltTransaction.GetCount(walletID, walletID, c.SessAddress)
 		result.Total = int(total)
 		result.Filtered = int(total)
 		if length != 0 {
-			history, err = c.GetAll(`SELECT d.*, w.wallet_id as sw, wr.wallet_id as rw FROM dlt_transactions as d
-		        left join dlt_wallets as w on w.wallet_id=d.sender_wallet_id
-		        left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id
-				where sender_wallet_id=? OR 
-		        recipient_wallet_id=?  OR
-		        recipient_wallet_address=? order by d.id desc  `+limit, -1, walletID, walletID, c.SessAddress)
+			wt := &model.WalletedTransaction{}
+			transactions, err := wt.Get(walletID, walletID, c.SessAddress, length, converter.StrToInt(c.r.FormValue("start")))
 			if err != nil {
 				log.Error("%s", err)
 			}
-			for ind := range history {
+			history := make([]map[string]string, 0)
+
+			for _, transaction := range transactions {
 				block := &model.Block{}
 				block.GetMaxBlock()
 				max := block.ID
-				history[ind][`confirm`] = converter.Int64ToStr(max - converter.StrToInt64(history[ind][`block_id`]))
-				history[ind][`sender_address`] = converter.AddressToString(converter.StrToInt64(history[ind][`sw`]))
-				recipient := history[ind][`rw`]
+				row := transaction.ToMap()
+				row[`confirm`] = converter.Int64ToStr(max - transaction.BlockID)
+				row[`sender_address`] = converter.AddressToString(transaction.Sw)
+				recipient := string(transaction.Rw)
 				if len(recipient) < 10 {
-					recipient = history[ind][`recipient_wallet_address`]
+					recipient = string(transaction.RecepientWalletAddress)
 				}
-				history[ind][`recipient_address`] = converter.AddressToString(converter.StringToAddress(recipient))
+				row[`recipient_address`] = converter.AddressToString(converter.StringToAddress(recipient))
+				history = append(history, row)
 			}
 		}
 	}

@@ -25,15 +25,15 @@ import (
 	"strings"
 	"time"
 
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const aNewKey = `ajax_new_key`
@@ -125,7 +125,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 	}
 	idnew := crypto.Address(pub)
 
-	wallet := &model.DltWallets{}
+	wallet := &model.DltWallet{}
 	wallet.WalletID = idnew
 	exist, err := wallet.IsExists()
 	if err != nil {
@@ -163,20 +163,20 @@ func (c *Controller) AjaxNewKey() interface{} {
 	toSerialize.Data = converter.EncodeLengthPlusData(data)
 
 	serializedData, err := msgpack.Marshal(toSerialize)
-	hash, err := crypto.Hash(data)
+	hash, err := crypto.Hash(serializedData)
 	if err != nil {
 		log.Fatal(err)
 	}
-	hash = converter.BinToHex(data)
-	transactionStatus := &model.TransactionsStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: header.Type,
+	hash = converter.BinToHex(serializedData)
+	transactionStatus := &model.TransactionStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: int32(info.ID),
 		WalletID: int64(idkey), CitizenID: int64(idkey)}
 	err = transactionStatus.Create()
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	queueTx := &model.QueueTx{Hash: hash, Data: data}
-	err = queueTx.Create()
+	queueTx := &model.QueueTx{Hash: hash, Data: serializedData}
+	if err = queueTx.Create(); err != nil {
 		result.Error = err.Error()
 		return result
 	}

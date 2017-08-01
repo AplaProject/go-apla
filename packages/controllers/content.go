@@ -186,7 +186,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		lastBlockTime = blockData["lastBlockTime"]
 		log.Debug("installProgress", install.Progress, "configExists", configExists, "lastBlockTime", lastBlockTime)
 
-		confirmation := &model.Confirmations{}
+		confirmation := &model.Confirmation{}
 		err = confirmation.GetMaxGoodBlock()
 		if err != nil {
 			log.Error("%v", err)

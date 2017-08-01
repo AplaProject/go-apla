@@ -44,7 +44,7 @@ func init() {
 func (c *Controller) SystemInfo() (string, error) {
 	pageData := systemInfoPage{Data: c.Data}
 
-	ufn := &model.UpdFullNodes{}
+	ufn := &model.UpdFullNode{}
 	ufnList, err := ufn.GetAll()
 	if err != nil {
 		return "", utils.ErrInfo(err)
@@ -70,7 +70,7 @@ func (c *Controller) SystemInfo() (string, error) {
 		pageData.Rollback = append(pageData.Rollback, rb.ToMap())
 	}
 
-	fullNode := &model.FullNodes{}
+	fullNode := &model.FullNode{}
 	nodes, err := fullNode.GetAll()
 	if err != nil {
 		return "", utils.ErrInfo(err)
@@ -87,7 +87,7 @@ func (c *Controller) SystemInfo() (string, error) {
 		pageData.SystemParameters = append(pageData.SystemParameters, param.ToMap())
 	}
 
-	wallet := &model.DltWallets{}
+	wallet := &model.DltWallet{}
 	pageData.Votes, err = wallet.GetVotes(10)
 	if err != nil {
 		return "", utils.ErrInfo(err)

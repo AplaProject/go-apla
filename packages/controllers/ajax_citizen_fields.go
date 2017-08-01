@@ -65,7 +65,7 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 					result.Error = err.Error()
 				} else {
 					result.Price = price
-					wallet := &model.DltWallets{}
+					wallet := &model.DltWallet{}
 					err = wallet.GetWallet(c.SessWalletID)
 					result.Valid = (err == nil && amount >= result.Price)
 				}

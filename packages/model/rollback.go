@@ -19,14 +19,6 @@ func (r *Rollback) GetRollbacks(limit int) ([]Rollback, error) {
 	return *rollbacks, err
 }
 
-/*
-func (db *DCDB) GetRollbackInfo(rollbackID int64) (map[string]string, error) {
-	return db.OneRow(`select r.*, b.time from rollback as r
-			left join block_chain as b on b.id=r.block_id
-			where r.rb_id=?`, rollbackID).String()
-}
-*/
-
 func (r *Rollback) Create() error {
 	return DBConn.Create(r).Error
 }

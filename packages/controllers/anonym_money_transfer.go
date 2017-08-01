@@ -46,7 +46,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	txTypeID := utils.TypeInt(txType)
 	timeNow := time.Now().Unix()
 
-	systemParameters := &model.SystemParameters{}
+	systemParameters := &model.SystemParameter{}
 	value, err := systemParameters.GetJSONField(`value->'dlt_transfer'`, "op_price")
 	fPrice, _ := strconv.ParseInt(value, 10, 64)
 	if err != nil {
@@ -66,7 +66,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	commission := decimal.New(fPrice, 0).Mul(fuelRate)
 
 	log.Debug("sessCitizenID %d SessWalletID %d SessStateID %d", c.SessCitizenID, c.SessWalletID, c.SessStateID)
-	dltWallet := &model.DltWallets{}
+	dltWallet := &model.DltWallet{}
 	err = dltWallet.GetWallet(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)

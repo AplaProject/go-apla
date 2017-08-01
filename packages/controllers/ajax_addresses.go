@@ -49,7 +49,7 @@ func (c *Controller) AjaxAddresses() interface{} {
 	state := c.r.FormValue(`state`)
 	startCitizenID, _ := strconv.ParseInt(walletAddress+strings.Repeat(`0`, 20-len(walletAddress)), 10, 64)
 	var citizens []model.Citizens
-	var dltWallets []model.DltWallets
+	var dltWallets []model.DltWallet
 
 	if len(state) == 0 {
 		citizens, err = model.GetAllCitizensWhereIdMoreThan(c.SessStateID, startCitizenID, 7)

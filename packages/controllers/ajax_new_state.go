@@ -70,7 +70,7 @@ func (c *Controller) AjaxNewState() interface{} {
 		}
 		wallet = crypto.Address(pub)
 
-		dltWallet := &model.DltWallets{WalletID: wallet}
+		dltWallet := &model.DltWallet{WalletID: wallet}
 		exist, err = dltWallet.IsExists()
 		if err != nil {
 			result.Error = err.Error()

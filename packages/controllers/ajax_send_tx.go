@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -55,16 +56,15 @@ func (c *Controller) AjaxSendTx() interface{} {
 			result.Error = err.Error()
 		}
 		var isPublic []byte
-		wallet := &model.DltWallets{}
+		wallet := &model.DltWallet{}
 		err = wallet.GetWallet(c.SessWalletID)
 		isPublic = wallet.PublicKey
-		if err == nil && len(sign) > 0 && len(isPublic) == 0 {
-			flags |= consts.TxfPublic
+		if err == nil && len(signature) > 0 && len(isPublic) == 0 {
 			public, _ := hex.DecodeString(c.r.FormValue(`public`))
 			if len(public) == 0 {
 				err = fmt.Errorf(`empty public key`)
 			} else {
-				sign = append(sign, public[1:]...)
+				signature = append(signature, public[1:]...)
 			}
 		}
 		if len(signature) == 0 {
@@ -120,11 +120,11 @@ func (c *Controller) AjaxSendTx() interface{} {
 					Data: data,
 				}
 				serializedData, err := msgpack.Marshal(toSerialize)
-					transactionStatus := &model.TransactionsStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: header.Type,
-						WalletID: int64(userID), CitizenID: int64(userID)}
-					err = transactionStatus.Create()
-						queueTx := &model.QueueTx{Hash: hash, Data: data}
-						err = queueTx.Create()
+				transactionStatus := &model.TransactionStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: int32(info.ID),
+					WalletID: c.SessWalletID, CitizenID: c.SessWalletID}
+				err = transactionStatus.Create()
+				queueTx := &model.QueueTx{Hash: hash, Data: data}
+				err = queueTx.Create()
 				if err == nil {
 					hash, err = sql.DB.SendTx(int64(info.ID), c.SessWalletID,
 						append([]byte{128}, serializedData...))

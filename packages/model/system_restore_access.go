@@ -11,6 +11,10 @@ type SystemRestoreAccess struct {
 	RbID      int64  `gorm:"not null"`
 }
 
+func (sra *SystemRestoreAccess) TableName() string {
+	return "system_restore_access"
+}
+
 func (sra *SystemRestoreAccess) Get(stateID int64) error {
 	return DBConn.Where("state_id = ?", stateID).First(sra).Error
 }

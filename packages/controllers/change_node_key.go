@@ -40,7 +40,7 @@ func (c *Controller) ChangeNodeKey() (string, error) {
 	txTypeID := utils.TypeInt(txType)
 	timeNow := time.Now().Unix()
 
-	wallet := &model.DltWallets{}
+	wallet := &model.DltWallet{}
 	err := wallet.GetWallet(c.SessWalletID)
 	if err != nil {
 		return "", utils.ErrInfo(err)

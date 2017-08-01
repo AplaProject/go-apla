@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -43,16 +43,22 @@ func (c *Controller) ListOfTables() (string, error) {
 	if global == "1" {
 		prefix = "global"
 	}
-	tables, err := c.GetAll(`SELECT * FROM "`+prefix+`_tables"`, -1)
+
+	t := &model.Tables{}
+	t.SetTableName(prefix)
+	data, err := t.GetAll(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	for i, data := range tables {
-		count, err := c.Single(`SELECT count(id) FROM "` + data["name"] + `"`).Int64()
+	tables := make([]map[string]string, 0)
+	for _, table := range data {
+		mappedTable := table.ToMap()
+		count, err := model.GetRecordsCount(string(table.Name))
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		tables[i]["count"] = converter.Int64ToStr(count)
+		mappedTable["count"] = string(count)
+		tables = append(tables, mappedTable)
 	}
 
 	TemplateStr, err := makeTemplate("list_of_tables", "listOfTables", &listOfTablesPage{

@@ -7,7 +7,7 @@ type Citizens struct {
 	BlockID   int64  `gorm:"not null"`
 	RbID      int64  `gorm:"not null"`
 	Avatar    string
-	Name      []byte
+	Name      string
 }
 
 func (c *Citizens) SetTableName(tablePrefix int64) {
