@@ -2,8 +2,8 @@ package model
 
 type InfoBlock struct {
 	Hash           []byte `gorm:"not null"`
-	StateID        int64  `gorm:"not null"`
-	WalletID       int64  `gorm:"not null"`
+	StateID        int64  `gorm:"not null default 0"`
+	WalletID       int64  `gorm:"not null default 0"`
 	BlockID        int64  `gorm:"not null"`
 	Time           int64  `gorm:"not null"`
 	Level          int8   `gorm:"not null"`
@@ -16,18 +16,18 @@ func (ib *InfoBlock) TableName() string {
 }
 
 func (ib *InfoBlock) GetInfoBlock() error {
-	return DBConn.First(ib).Error
+	return DBConn.Last(ib).Error
 }
 
 func (ib *InfoBlock) Update() error {
 	return DBConn.Model(&InfoBlock{}).Updates(ib).Error
 }
 
-func (ib *InfoBlock) GetUnsended() error {
+func (ib *InfoBlock) GetUnsent() error {
 	return DBConn.Where("sent = ?", "0").First(&ib).Error
 }
 
-func (ib *InfoBlock) MarkSended() error {
+func (ib *InfoBlock) MarkSent() error {
 	return DBConn.Model(ib).Update("sent", "1").Error
 }
 
@@ -37,4 +37,17 @@ func (ib *InfoBlock) Save() error {
 
 func (ib *InfoBlock) Create() error {
 	return DBConn.Create(ib).Error
+}
+
+func GetCurBlockID() (int64, error) {
+	curBlock := &InfoBlock{}
+	err := curBlock.GetInfoBlock()
+	if err != nil {
+		return 0, err
+	}
+	return curBlock.BlockID, nil
+}
+
+func InfoBlockCreateTable() error {
+	return DBConn.CreateTable(&InfoBlock{}).Error
 }

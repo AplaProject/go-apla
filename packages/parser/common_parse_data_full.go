@@ -257,7 +257,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
 			// let user know that his transaction  is added in the block
-			ts := &model.TransactionsStatus{}
+			ts := &model.TransactionStatus{}
 			ts.UpdateBlockID(p.BlockData.BlockID, hashFull)
 			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockID, hashFull)
 

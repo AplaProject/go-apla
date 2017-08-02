@@ -1,60 +1,59 @@
 package sql
 
 import (
-	"fmt"
-	"regexp"
+	"context"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-// CheckInstall waits for the end of the installation
-func (db *DCDB) CheckInstall(DaemonCh chan bool, AnswerDaemonCh chan string, GoroutineName string) bool {
-	// Возможна ситуация, когда инсталяция еще не завершена. База данных может быть создана, а таблицы еще не занесены
-	// there could be the situation when installation is not over yet. Database could be created but tables are not inserted yet
+// WaitDB waits for the end of the installation
+func WaitDB(ctx context.Context) error {
+	// There is could be the situation when installation is not over yet.
+	// Database could be created but tables are not inserted yet
+
+	if model.GetCurrentDB() != nil && CheckDB() {
+		return nil
+	}
+
+	// poll a base with period
+	tick := time.NewTicker(1 * time.Second)
 	for {
 		select {
-		case <-DaemonCh:
-			log.Debug("Restart from CheckInstall")
-			AnswerDaemonCh <- GoroutineName
-			return false
-		default:
-		}
-		progress, err := db.Single("SELECT progress FROM install").String()
-		if err != nil || progress != "complete" {
-			// возможно попасть на тот момент, когда БД закрыта и идет скачивание готовой БД с сервера
-			// the moment could happen when the database is closed and there is a download of the completed database from the server
-			if ok, _ := regexp.MatchString(`database is closed`, fmt.Sprintf("%s", err)); ok {
-				if DB != nil {
-					db = DB
-				}
+		case <-tick.C:
+			if model.GetCurrentDB() != nil && CheckDB() {
+				return nil
 			}
-			//log.Debug("%v", `progress != "complete"`, db.GoroutineName)
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			time.Sleep(time.Second)
-		} else {
-			break
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
-	return true
 }
 
-// UpdMainLock updates the lock time
-func (db *DCDB) UpdMainLock() error {
-	return db.ExecSQL("UPDATE main_lock SET lock_time = ?", time.Now().Unix())
-}
+// CheckDB check if installation complete or not
+func CheckDB() bool {
+	install := &model.Install{}
 
-// CheckDaemonsRestart is reserved
-func (db *DCDB) CheckDaemonsRestart() bool {
+	err := install.Get()
+	if err != nil {
+		log.Errorf("%v", utils.ErrInfo(err))
+	}
+
+	if install.Progress == "complete" {
+		return true
+	}
+
 	return false
 }
 
-// DbLock locks deamons
-func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutineName string) (bool, error) {
+// UpdMainLock updates the lock time
+func UpdMainLock() error {
+	return model.MainLockUpdate()
+}
+
+// DbLock locks daemons
+func DbLock(ctx context.Context, goRoutineName string) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -63,55 +62,56 @@ func (db *DCDB) DbLock(DaemonCh chan bool, AnswerDaemonCh chan string, goRoutine
 		}
 	}()
 
-	log.Debug("DbLock")
-	var ok bool
-	for {
+	ok, err := tryLock(goRoutineName)
+
+	ticker := time.NewTicker(1 * time.Second)
+
+	for !ok && err == nil {
 		select {
-		case <-DaemonCh:
-			log.Debug("Restart from DbLock")
-			AnswerDaemonCh <- goRoutineName
-			return true, utils.ErrInfo("Restart from DbLock")
-		default:
+		case <-ticker.C:
+			ok, err = tryLock(goRoutineName)
+		case <-ctx.Done():
+			return false, ctx.Err()
 		}
 
-		Mutex.Lock()
+	}
+	return ok, err
+}
 
-		log.Debug("DbLock Mutex.Lock()")
+const MaxLockTime = 600
 
-		exists, err := db.OneRow("SELECT lock_time, script_name FROM main_lock").String()
-		if err != nil {
-			Mutex.Unlock()
-			return false, utils.ErrInfo(err)
+func tryLock(goRoutineName string) (bool, error) {
+	Mutex.Lock()
+	defer Mutex.Unlock()
+
+	ml := model.MainLock{}
+	err := ml.Get()
+
+	// check for lock record and lock period
+	if ml.LockTime == 0 {
+		ml.LockTime = int32(time.Now().Unix())
+		ml.ScriptName = goRoutineName
+		ml.Info = utils.Caller(2)
+		if err = ml.Save(); err != nil {
+			return false, err
 		}
-		if len(exists["script_name"]) == 0 {
-			err = db.ExecSQL(`INSERT INTO main_lock(lock_time, script_name, info) VALUES(?, ?, ?)`, time.Now().Unix(), goRoutineName, utils.Caller(2))
-			if err != nil {
-				Mutex.Unlock()
-				return false, utils.ErrInfo(err)
+		return true, nil
+
+	} else {
+		lockPeriod := time.Now().Unix() - int64(ml.LockTime)
+		if lockPeriod > MaxLockTime {
+			log.Error("%d %s %d", ml.LockTime, ml.ScriptName, lockPeriod)
+			if utils.Mobile() {
+				err = model.MainLockDelete(ml.ScriptName)
 			}
-			ok = true
-		} else {
-			t := converter.StrToInt64(exists["lock_time"])
-			now := time.Now().Unix()
-			if now-t > 600 {
-				log.Error("%d %s %d", t, exists["script_name"], now-t)
-				if utils.Mobile() {
-					db.ExecSQL(`DELETE FROM main_lock`)
-				}
-			}
-		}
-		Mutex.Unlock()
-		if !ok {
-			time.Sleep(time.Duration(crypto.RandInt(300, 400)) * time.Millisecond)
-		} else {
-			break
 		}
 	}
-	return false, nil
+
+	return false, err
 }
 
 // DbUnlock unlocks database
-func (db *DCDB) DbUnlock(goRoutineName string) error {
+func DbUnlock(goRoutineName string) error {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("Recovered", r)
@@ -119,16 +119,8 @@ func (db *DCDB) DbUnlock(goRoutineName string) error {
 		}
 	}()
 	log.Debug("DbUnlock %v %v", utils.Caller(2), goRoutineName)
-	affect, err := db.ExecSQLGetAffect("DELETE FROM main_lock WHERE script_name = ?", goRoutineName)
-	log.Debug("main_lock affect: %d, goRoutineName: %s", affect, goRoutineName)
-	if err != nil {
-		log.Error("%s", utils.ErrInfo(err))
+	if err := model.MainLockDelete(goRoutineName); err != nil {
 		return utils.ErrInfo(err)
 	}
 	return nil
-}
-
-// UpdDaemonTime is reserved
-func (db *DCDB) UpdDaemonTime(name string) {
-
 }

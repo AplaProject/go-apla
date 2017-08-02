@@ -17,398 +17,143 @@
 package daemons
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
-	"log"
+	"context"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
-//var err error
+func BlockGenerator(d *daemon, ctx context.Context) error {
+	d.sleepTime = time.Second
 
-// BlockGenerator generates blocks
-func BlockGenerator(chBreaker chan bool, chAnswer chan string) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
-			panic(r)
-		}
-	}()
-
-	const GoroutineName = "BlockGenerator"
-	d := new(daemon)
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	locked, err := sql.DbLock(ctx, d.goRoutineName)
+	if !locked || err != nil {
+		return err
 	}
-	d.goRoutineName = GoroutineName
-	d.chAnswer = chAnswer
-	d.chBreaker = chBreaker
+	defer sql.DbUnlock(d.goRoutineName)
 
-	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
-		return
-	}
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	config := &model.Config{}
+	if err = config.GetConfig(); err != nil {
+		return err
 	}
 
-BEGIN:
-	for {
-
-		// full_node_id == 0 приводит к установке d.sleepTime = 10 в daemons/upd_full_nodes.go, тут надо обнулить, т.к. может быть первичная установка
-		// full_node_id == 0 leads to the installation of  d.sleepTime = 10 в daemons/upd_full_nodes.go, here it is necessary to reset, because it could happen a primary installation
-
-		d.sleepTime = 1
-
-		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
-
-		// проверим, не нужно ли нам выйти из цикла
-		// Check, whether we need to get out of the cycle
-		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-			break BEGIN
-		}
-
-		restart, err := d.dbLock()
-		if restart {
-			break BEGIN
-		}
-		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		infoBlock := &model.InfoBlock{}
-		err = infoBlock.GetInfoBlock()
-		if err != nil {
-			if d.unlockPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		newBlockID := infoBlock.BlockID + 1
-		logger.Debug("newBlockID: %v", newBlockID)
-
-		config := &model.Config{}
-		err = config.GetConfig()
-		//logger.Debug("%v", myWalletID)
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-		myStateID := config.StateID
-		myWalletID := config.DltWalletID
-
-		if myStateID > 0 {
-			systemState := &model.SystemRecognizedState{}
-			delegate, err := systemState.IsDelegated(myStateID)
-			if err != nil {
-				d.dbUnlock()
-				logger.Error("%v", err)
-				if d.dSleep(d.sleepTime) {
-					break BEGIN
-				}
-				continue
-			}
-			// If we are the state and we have the record delegate specified at the system_recognized_states (it means we have delegated the authority to maintain the node to another user or state), in that case exit.
-			if delegate {
-				d.dbUnlock()
-				logger.Debug("delegate > 0")
-				d.sleepTime = 3600
-				if d.dSleep(d.sleepTime) {
-					break BEGIN
-				}
-				continue
-			}
-		}
-
-		// If we are in the list of those who can generate blocks
-		fullNodes := &model.FullNode{}
-		err = fullNodes.FindNode(myStateID, myWalletID, myStateID, myWalletID)
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-
-		myFullNodeID := fullNodes.ID
-		logger.Debug("myFullNodeID %d", myFullNodeID)
-		if myFullNodeID == 0 {
-			d.dbUnlock()
-			logger.Debug("myFullNodeID == 0")
-			d.sleepTime = 10
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-
-		// если дошли до сюда, значит мы есть в full_nodes. Надо определить в каком месте списка
-		// получим state_id, wallet_id и время последнего блока
-		// If we have reached here, we are in full_nodes. It is necessary to determine where in the list we
-		// will get state_id, wallet_id and the time of the last block
-		infoBlock = &model.InfoBlock{}
-		err = infoBlock.GetInfoBlock()
-		if err != nil {
-			if d.unlockPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		logger.Debug("prevBlock %v", infoBlock)
-
-		/*		prevBlockHash, err := d.Single("SELECT hex(hash) as hash FROM info_block").String()
-				if err != nil {
-					d.dbUnlock()
-					logger.Error("%v", err)
-					if d.dSleep(d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				logger.Debug("prevBlockHash %s", prevBlockHash)*/
-
-		sleepTime, err := d.GetSleepTime(myWalletID, myStateID, infoBlock.StateID, infoBlock.WalletID)
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		d.dbUnlock()
-
-		// учтем прошедшее время
-		// take into account the passed time
-		sleep := int64(sleepTime) - (time.Now().Unix() - int64(infoBlock.Time))
-		if sleep < 0 {
-			sleep = 0
-		}
-
-		logger.Debug("time.Now().Unix*() %v / prevBlock[time] %v", time.Now().Unix(), infoBlock.Time)
-
-		logger.Debug("sleep %v", sleep)
-
-		// спим
-		// sleep
-		for i := 0; i < int(sleep); i++ {
-			time.Sleep(time.Second)
-		}
-
-		// пока мы спали последний блок, скорее всего, изменился. Но с большой вероятностью наше место в очереди не изменилось. А если изменилось, то ничего страшного не прозойдет.
-		// While we slept, most likely the last block has been changed. But probably our turn is not changed. Even if it is, dont't worry, nothing bad will happen.
-		restart, err = d.dbLock()
-		if restart {
-			break BEGIN
-		}
-		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		infoBlock = &model.InfoBlock{}
-		err = infoBlock.GetInfoBlock()
-		if err != nil {
-			if d.unlockPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		logger.Debug("prevBlock %v", infoBlock)
-
-		logger.Debug("blockID %v", infoBlock.BlockID)
-
-		logger.Debug("blockgeneration begin")
-		if infoBlock.BlockID < 1 {
-			logger.Debug("continue")
-			d.dbUnlock()
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-
-		newBlockID = infoBlock.BlockID + 1
-
-		// Recieve our private node key
-		myNodeKeys := &model.MyNodeKey{}
-		err = myNodeKeys.GetNodeWithMaxBlockID()
-		if err != nil {
-			if d.unlockPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		if len(myNodeKeys.PrivateKey) < 1 {
-			logger.Debug("continue")
-			d.dbUnlock()
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-
-		//#####################################
-		//##		 Формируем блок
-		//#####################################
-		//#####################################
-		//##		 Form the block
-		//#####################################
-
-		if infoBlock.BlockID >= newBlockID {
-			logger.Debug("continue %d >= %d", infoBlock.BlockID, newBlockID)
-			d.dbUnlock()
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-		p := new(parser.Parser)
-		p.DCDB = d.DCDB
-
-		//Time := time.Now().Unix()
-
-		// переведем тр-ии в `verified` = 1
-		// transfer the transactions into `verified` = 1
-		err = p.AllTxParser()
-		if err != nil {
-			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-
-		okBlock := false
-		for !okBlock {
-
-			Time := time.Now().Unix()
-			var mrklArray [][]byte
-			var mrklRoot []byte
-			var blockDataTx []byte
-			// берем все данные из очереди. Они уже были проверены ранее, и можно их не проверять, а просто брать
-			// take all the data from the turn. It is tested already, you may not check them again but just take
-			transactions, err := model.GetAllUnusedTransactions()
-			if err != nil {
-				logging.WriteSelectiveLog(err)
-				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue
-			}
-			for _, transaction := range *transactions {
-				// Check if we need to get out from the cycle
-				if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-					break BEGIN
-				}
-
-				logging.WriteSelectiveLog("hash: " + string(transaction.Hash))
-				logger.Debug("data %v", transaction.Data)
-				logger.Debug("hash %v", transaction.Hash)
-				transactionType := transaction.Data[1:2]
-				logger.Debug("%v", transactionType)
-				logger.Debug("%x", transactionType)
-				doubleHash, err := crypto.DoubleHash(transaction.Data)
-				if err != nil {
-					log.Fatal(err)
-				}
-				doubleHash = converter.BinToHex(doubleHash)
-				mrklArray = append(mrklArray, doubleHash)
-				logger.Debug("mrklArray %v", mrklArray)
-
-				oneMoreHash, err := crypto.Hash(transaction.Data)
-				if err != nil {
-					log.Fatal(err)
-				}
-				logger.Debug("hash: %s", oneMoreHash)
-
-				dataHex := fmt.Sprintf("%x", transaction.Data)
-				logger.Debug("dataHex %v", dataHex)
-
-				blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData(transaction.Data)...)
-			}
-
-			if len(mrklArray) == 0 {
-				mrklArray = append(mrklArray, []byte("0"))
-			}
-			mrklRoot = utils.MerkleTreeRoot(mrklArray)
-			logger.Debug("mrklRoot: %s", mrklRoot)
-
-			// подписываем нашим нод-ключем заголовок блока
-			// sign the heading of a block by our node-key
-			var forSign string
-			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockID, infoBlock.Hash, Time, myWalletID, myStateID, string(mrklRoot))
-			//			forSign = fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", newBlockID, prevBlock[`hash`], Time, myWalletID, myStateID, string(mrklRoot))
-			logger.Debug("forSign: %v", forSign)
-			//		bytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, utils.HashSha1(forSign))
-			bytes, err := crypto.Sign(string(myNodeKeys.PrivateKey), forSign)
-			if err != nil {
-				if d.dPrintSleep(fmt.Sprintf("err %v %v", err, utils.GetParent()), d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			logger.Debug("SignECDSA %x", bytes)
-
-			signatureBin := bytes
-
-			// готовим заголовок
-			// Prepare the heading
-			newBlockIDBinary := converter.DecToBin(newBlockID, 4)
-			timeBinary := converter.DecToBin(Time, 4)
-			stateIDBinary := converter.DecToBin(myStateID, 1)
-
-			// заголовок
-			// heading
-			blockHeader := converter.DecToBin(0, 1)
-			blockHeader = append(blockHeader, newBlockIDBinary...)
-			blockHeader = append(blockHeader, timeBinary...)
-			converter.EncodeLenInt64(&blockHeader, myWalletID)
-			blockHeader = append(blockHeader, stateIDBinary...)
-			blockHeader = append(blockHeader, converter.EncodeLengthPlusData(signatureBin)...)
-
-			// сам блок
-			// block itself
-			blockBin := append(blockHeader, blockDataTx...)
-			logger.Debug("block %x", blockBin)
-
-			// теперь нужно разнести блок по таблицам и после этого мы будем его слать всем нодам демоном disseminator
-			// now we have to spread the block into to the tables and then we'll sent it to the all nodes by the 'disseminator' daemon
-			p.BinaryData = blockBin
-			err = p.ParseDataFull(true)
-			if err != nil {
-				p.BlockError(err)
-				if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-					break BEGIN
-				}
-				continue
-			}
-			okBlock = true
-		}
-		d.dbUnlock()
-
-		if d.dSleep(d.sleepTime) {
-			break BEGIN
+	if config.StateID > 0 {
+		systemState := &model.SystemRecognizedState{}
+		delegated, err := systemState.IsDelegated(config.StateID)
+		if err == nil && delegated {
+			// we are the state and we have delegated the node maintenance to another user or state
+			d.sleepTime = 3600 * time.Second
+			return nil
 		}
 	}
-	logger.Debug("break BEGIN %v", GoroutineName)
+
+	fullNodes := &model.FullNode{}
+	err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	if err != nil || fullNodes.ID == 0 {
+		// we are not full node and can't generate new blocks
+		d.sleepTime = 10 * time.Second
+		return nil
+	}
+
+	prevBlock := &model.InfoBlock{}
+	err = prevBlock.GetInfoBlock()
+	if err != nil {
+		return err
+	}
+
+	// TODO: delete hex ??
+	prevBlock.Hash = converter.BinToHex(prevBlock.Hash)
+
+	// calculate the next block generation time
+	sleepTime, err := d.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
+	if err != nil {
+		return err
+	}
+	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
+	if toSleep > 0 {
+		d.sleepTime = time.Duration(toSleep) * time.Second
+		return nil
+	}
+
+	nodeKey := &model.MyNodeKey{}
+	err = nodeKey.GetNodeWithMaxBlockID()
+	if err != nil || len(nodeKey.PrivateKey) < 1 {
+		return err
+	}
+
+	p := new(parser.Parser)
+
+	// verify transactions
+	err = p.AllTxParser()
+	if err != nil {
+		return err
+	}
+
+	trs, err := model.GetAllUnusedTransactions()
+	if err != nil || trs == nil {
+		return err
+	}
+
+	blockBin, err := generateNextBlock(prevBlock, *trs, string(nodeKey.PrivateKey), config, time.Now().Unix())
+	if err != nil {
+		return err
+	}
+
+	p.BinaryData = blockBin
+	err = p.ParseDataFull(true)
+	if err != nil {
+		p.BlockError(err)
+		return err
+	}
+
+	return nil
+}
+
+func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key string, c *model.Config, blockTime int64) ([]byte, error) {
+	newBlockID := prevBlock.BlockID + 1
+
+	var mrklArray [][]byte
+	var blockDataTx []byte
+	for _, tr := range trs {
+		doubleHash, err := crypto.DoubleHash(tr.Data)
+		if err != nil {
+			return nil, err
+		}
+		mrklArray = append(mrklArray, converter.BinToHex(doubleHash)) // TODO: check it !!!!
+		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(tr.Data))...)
+	}
+
+	if len(mrklArray) == 0 {
+		mrklArray = append(mrklArray, []byte("0"))
+	}
+	mrklRoot := utils.MerkleTreeRoot(mrklArray)
+
+	forSign := fmt.Sprintf("0,%d,%s,%d,%d,%d,%s",
+		newBlockID, prevBlock.Hash, blockTime, c.DltWalletID, c.StateID, mrklRoot)
+
+	signed, err := crypto.Sign(key, forSign)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	// fill header
+	buf.Write(converter.DecToBin(0, 1))
+	buf.Write(converter.DecToBin(newBlockID, 4))
+	buf.Write(converter.DecToBin(blockTime, 4))
+	buf.Write(converter.EncodeLenInt64InPlace(c.DltWalletID))
+	buf.Write(converter.DecToBin(c.StateID, 1))
+	buf.Write(converter.EncodeLengthPlusData(signed))
+	// data
+	buf.Write(blockDataTx)
+
+	return buf.Bytes(), nil
 }

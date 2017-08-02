@@ -21,7 +21,7 @@ func (p *Page) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(p).Error
 }
 
-func (p *Pages) Create() error {
+func (p *Page) Create() error {
 	return DBConn.Create(p).Error
 }
 

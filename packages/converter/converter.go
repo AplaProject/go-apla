@@ -35,6 +35,17 @@ func EncodeLenInt64(data *[]byte, x int64) *[]byte {
 	return data
 }
 
+func EncodeLenInt64InPlace(x int64) []byte {
+	buf := make([]byte, 9)
+	value := buf[1:]
+	binary.LittleEndian.PutUint64(value, uint64(x))
+	var length byte
+	for length = 8; length > 0 && value[length-1] == 0; length-- {
+	}
+	buf[0] = length
+	return buf[:length+1]
+}
+
 // TODO перенести в конвертеры
 func EncodeLenByte(out *[]byte, buf []byte) *[]byte {
 	*out = append(append(*out, EncodeLength(int64(len(buf)))...), buf...)
@@ -305,6 +316,8 @@ func DecToBin(v interface{}, sizeBytes int64) []byte {
 		dec = int64(v.(int))
 	case int64:
 		dec = v.(int64)
+	case uint64:
+		dec = int64(v.(uint64))
 	case string:
 		dec = StrToInt64(v.(string))
 	}

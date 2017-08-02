@@ -95,7 +95,7 @@ func (p *Parser) ParseDataRollback() error {
 			}
 			// даем юзеру понять, что его тр-ия не в блоке
 			// let user know that his territory isn't in the block
-			ts := &model.TransactionsStatus{}
+			ts := &model.TransactionStatus{}
 			err = ts.UpdateBlockID(0, []byte(p.TxHash))
 			if err != nil {
 				return p.ErrInfo(err)

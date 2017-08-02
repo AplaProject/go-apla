@@ -16,6 +16,10 @@ type DltWallet struct {
 	RollbackID         int64           `gorm:"not null;column:rb_id"`
 }
 
+func (DltWallet) TableName() string {
+	return "dlt_wallets"
+}
+
 func (w *DltWallet) GetWallet(walletID int64) error {
 	return DBConn.Where("wallet_id = ?", walletID).First(&w).Error
 }
@@ -106,4 +110,8 @@ func (w *DltWallet) GetAddressVotes() ([]string, error) {
 		return nil, err
 	}
 	return addresses, nil
+}
+
+func WalletCreateTable() error {
+	return DBConn.CreateTable(&DltWallet{}).Error
 }

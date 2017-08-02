@@ -186,14 +186,12 @@ func tcpListener() {
 					if err != nil {
 						log.Error("Error accepting:", err)
 						time.Sleep(time.Second)
-						//panic(err)
-						//os.Exit(1)
 					} else {
 						go func(conn net.Conn) {
 							t := new(tcpserver.TCPServer)
 							t.DCDB = db
-							t.Conn = conn
-							t.HandleTCPRequest()
+							t.HandleTCPRequest(conn)
+							conn.Close()
 						}(conn)
 					}
 				}

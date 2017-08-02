@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type MainLock struct {
 	LockTime   int32  `gorm:"not_null"`
 	ScriptName string `gorm:"not_null;size:100"`
@@ -12,11 +14,23 @@ func (ml *MainLock) TableName() string {
 }
 
 func (ml *MainLock) Delete() error {
-	query := DBConn.Delete(&MainLock{})
+	return DBConn.Delete(&MainLock{}).Error
+}
+
+func MainLockDelete(scriptName string) error {
+	query := DBConn.Where("script_name=?", scriptName).Delete(&MainLock{})
 	if query.Error != nil && !query.RecordNotFound() {
 		return query.Error
 	}
 	return nil
+}
+
+func (ml *MainLock) Save() error {
+	return DBConn.Save(ml).Error
+}
+
+func MainLockUpdate() error {
+	return DBConn.Model(&MainLock{}).Update("LockTime", int32(time.Now().Unix())).Error
 }
 
 func (ml *MainLock) Get() error {
@@ -34,4 +48,8 @@ func (ml *MainLock) ToMap() map[string]string {
 	result["info"] = ml.Info
 	result["uniq"] = string(ml.Uniq)
 	return result
+}
+
+func MainLockCreateTable() error {
+	return DBConn.CreateTable(&MainLock{}).Error
 }

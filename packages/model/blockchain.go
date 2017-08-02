@@ -17,10 +17,10 @@ type Block struct {
 func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
-	if endblockID == -1 {
-		err = DBConn.Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error
+	if endblockID > 0 {
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error
 	} else {
-		err = DBConn.Order("id asc").Where("id > ?", startBlockID).Find(blockchain).Error
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(blockchain).Error
 	}
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	return *blockchain, nil
 }
 
-func TableName() string {
+func (Block) TableName() string {
 	return "block_chain"
 }
 
@@ -87,7 +87,7 @@ func (b *Block) DeleteById(id int64) error {
 }
 
 func (b *Block) DeleteChain() error {
-	return DBConn.Where("id > ", b.ID).Delete(Block{}).Error
+	return DBConn.Where("id > ?", b.ID).Delete(Block{}).Error
 }
 
 func (b *Block) GetLastBlockData() (map[string]int64, error) {
@@ -119,4 +119,8 @@ func (b *Block) ToMap() map[string]string {
 	result["tx"] = string(b.Tx)
 	result["id"] = string(b.ID)
 	return result
+}
+
+func BlockChainCreateTable() error {
+	return DBConn.CreateTable(&Block{}).Error
 }

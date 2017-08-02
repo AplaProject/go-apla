@@ -17,413 +17,296 @@
 package daemons
 
 import (
-	"io"
-	"time"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+
+	"bytes"
+	"context"
+	"io"
+	"sync"
 )
 
-/*
- * просто шлем всем, кто есть в nodes_connection хэши блока и тр-ий
- * если мы не майнер, то шлем всю тр-ию целиком, блоки слать не можем
- * если майнер - то шлем только хэши, т.к. у нас есть хост, откуда всё можно скачать
- * */
-// just send to all who have hashes of block and transaction in nodes_connection
-// if we are not a miner, then send transaction totally, we are not able not send blocks
-// if we are a miner then send only hashes because we have the host where we can upload everything
+const (
+	FULL_REQUEST = 1
+	TR_REQUEST   = 2
+)
 
-// Disseminator send hashes of block and transactions
-func Disseminator(chBreaker chan bool, chAnswer chan string) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
-			panic(r)
+// send to all nodes from nodes_connections the following data
+// if we are full node(miner): sends blocks and transactions hashes
+// else send the full transactions
+func Disseminator(d *daemon, ctx context.Context) error {
+	config := &model.Config{}
+	err := config.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	systemState := &model.SystemRecognizedState{}
+	delegated, err := systemState.IsDelegated(config.StateID)
+	if err != nil {
+		return err
+	}
+
+	node := &model.FullNode{}
+	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
+	if err != nil {
+		return err
+	}
+	fullNodeID := node.ID
+
+	// find out who we are, fullnode or not
+	isFullNode := func() bool {
+		if config.StateID > 0 && delegated {
+			// we are state and we have delegated some work to another node
+			return false
 		}
+		if fullNodeID == 0 {
+			return false
+		}
+		return true
 	}()
 
-	const GoroutineName = "Disseminator"
-	d := new(daemon)
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	if isFullNode {
+		// send blocks and transactions hashes
+		return sendHashes(fullNodeID)
+	} else {
+		// we are not full node for this StateID and WalletID, so just send transactions
+		return sendTransactions()
 	}
-	d.goRoutineName = GoroutineName
-	d.chAnswer = chAnswer
-	d.chBreaker = chBreaker
-	d.sleepTime = 1
-
-	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
-		return
-	}
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
-	}
-
-BEGIN:
-	for {
-		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
-
-		// проверим, не нужно ли нам выйти из цикла
-		// check if we have to break the cycle
-		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-			break BEGIN
-		}
-
-		hosts, err := model.GetFullNodesHosts()
-		if err != nil {
-			logger.Error("%v", err)
-		}
-
-		config := &model.Config{}
-		err = config.GetConfig()
-		if err != nil {
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-		myStateID := config.StateID
-		myWalletID := config.DltWalletID
-		logger.Debug("%v", myWalletID)
-
-		fullNode := true
-		if myStateID > 0 {
-			systemState := &model.SystemRecognizedState{}
-			delegate, err := systemState.IsDelegated(myStateID)
-			if err != nil {
-				logger.Error("%v", err)
-				if d.dSleep(d.sleepTime) {
-					break BEGIN
-				}
-				continue
-			}
-			// if we are a state we have a delegate, that means we delegat our authority of the node maintenance to another user or state, then we exit.
-			if delegate {
-				fullNode = false
-			}
-		}
-
-		// if we are in the cycle of those who are able to generate blocks
-		node := &model.FullNode{}
-		err = node.FindNode(myStateID, myWalletID, myStateID, myWalletID)
-		if err != nil {
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-		fullNodeID := node.ID
-		if fullNodeID == 0 {
-			fullNode = false
-		}
-
-		var dataType int64 // это тип для того, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
-		// this type is needed to let the host understand how exactly it has to process the sent data
-
-		// если мы - fullNode, то должны слать хэши, блоки сами стянут
-		// if we are fullNode we have to send hashes, blocks will take themselves
-		if fullNode {
-
-			logger.Debug("dataType = 1")
-
-			dataType = 1
-
-			// возьмем хэш текущего блока и номер блока
-			// take the hash of current block and number of a block
-			// для теста ролбеков отключим на время
-			// disconnect for some time to test rollbacks
-			infoBlock := &model.InfoBlock{}
-			err = infoBlock.GetUnsended()
-			if err != nil {
-				if d.dPrintSleep(err, d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			data := infoBlock
-			err = infoBlock.MarkSended()
-			if err != nil {
-				if d.dPrintSleep(err, d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-
-			/*
-			 * Составляем данные на отправку
-			 * */
-			// We compose the data for sending
-			toBeSent := []byte{}
-			toBeSent = append(toBeSent, converter.DecToBin(fullNodeID, 2)...)
-			if len(data.Hash) > 0 { // блок // block
-				// если 0, то на приемнике будем читать блок, если = 1 , то сразу хэши тр-ий
-				// if 0, we will read the block on the receiver, if = 1, then immediately will read the hashes of transactions
-				toBeSent = append(toBeSent, converter.DecToBin(0, 1)...)
-				toBeSent = append(toBeSent, converter.DecToBin(data.BlockID, 3)...)
-				toBeSent = append(toBeSent, data.Hash...)
-				err = infoBlock.MarkSended()
-				if err != nil {
-					if d.dPrintSleep(err, d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-			} else { // тр-ии без блока // transactions without block
-				toBeSent = append(toBeSent, converter.DecToBin(1, 1)...)
-			}
-			logger.Debug("toBeSent block %x", toBeSent)
-
-			// возьмем хэши тр-ий
-			// take the hashes of transactions
-			//utils.WriteSelectiveLog("SELECT hash, high_rate FROM transactions WHERE sent = 0 AND for_self_use = 0")
-			transactions, err := model.GetAllUnsendedTransactions()
-			if err != nil {
-				logging.WriteSelectiveLog(err)
-				if d.dPrintSleep(err, d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			// нет ни транзакций, ни блока для отправки...
-			// transaction and block for sending are absent
-			if len(*transactions) == 0 && len(toBeSent) < 10 {
-				//utils.WriteSelectiveLog("len(transactions) == 0")
-				//log.Debug("len(transactions) == 0")
-				if d.dSleep(d.sleepTime) {
-					break BEGIN
-				}
-				logger.Debug("len(transactions) == 0 && len(toBeSent) == 0")
-				continue BEGIN
-			}
-			for _, data := range *transactions {
-				hexHash := converter.BinToHex(data.Hash)
-				toBeSent = append(toBeSent, data.Hash...)
-				logger.Debug("hash %x", data.Hash)
-				logging.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hexHash))
-				affect, err := model.MarkTransactionSended(hexHash)
-				if err != nil {
-					logging.WriteSelectiveLog(err)
-					if d.dPrintSleep(err, d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
-			}
-
-			logger.Debug("toBeSent %x", toBeSent)
-			// отправляем блок и хэши тр-ий, если есть что отправлять
-			// send the block and hashes of transactions if there is something to send
-			if len(toBeSent) > 0 {
-				for _, host := range hosts {
-					go d.DisseminatorType1(host+":"+consts.TCP_PORT, toBeSent, dataType)
-				}
-			}
-		} else {
-
-			logger.Debug("1")
-
-			dataType = 2
-
-			logger.Debug("dataType: %d", dataType)
-
-			var toBeSent []byte // сюда пишем все тр-ии, которые будем слать другим нодам
-			// here we record all the transactions which we will send to other nodes
-			// возьмем хэши и сами тр-ии
-			// take hashes and transactions themselve
-			logging.WriteSelectiveLog("SELECT hash, data FROM transactions WHERE sent  =  0")
-			transactions, err := model.GetAllUnsendedTransactions()
-			if err != nil {
-				logging.WriteSelectiveLog(err)
-				if d.dPrintSleep(err, d.sleepTime) {
-					break BEGIN
-				}
-				continue BEGIN
-			}
-			for _, transaction := range *transactions {
-				logger.Debug("hash %x", transaction.Hash)
-				hashHex := converter.BinToHex(transaction.Hash)
-				logging.WriteSelectiveLog("UPDATE transactions SET sent = 1 WHERE hex(hash) = " + string(hashHex))
-				err := transaction.Save()
-				if err != nil {
-					logging.WriteSelectiveLog(err)
-					if d.dPrintSleep(err, d.sleepTime) {
-						break BEGIN
-					}
-					continue BEGIN
-				}
-				toBeSent = append(toBeSent, transaction.Data...)
-			}
-
-			// шлем тр-ии
-			// send the transactions
-			if len(toBeSent) > 0 {
-				for _, host := range hosts {
-
-					go func(host string) {
-
-						logger.Debug("host %v", host)
-
-						conn, err := utils.TCPConn(host)
-						if err != nil {
-							logger.Error("%v", utils.ErrInfo(err))
-							return
-						}
-						defer conn.Close()
-
-						// вначале шлем тип данных, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
-						// at first we send the data type to let the host understand how exactly it has to process the sent data
-						_, err = conn.Write(converter.DecToBin(dataType, 2))
-						if err != nil {
-							logger.Error("%v", utils.ErrInfo(err))
-							return
-						}
-
-						// в 4-х байтах пишем размер данных, которые пошлем далее
-						// we record the data size in 4 bytes which we will send further
-						size := converter.DecToBin(len(toBeSent), 4)
-						_, err = conn.Write(size)
-						if err != nil {
-							logger.Error("%v", utils.ErrInfo(err))
-							return
-						}
-						// далее шлем сами данные
-						// further we send data itself
-						_, err = conn.Write(toBeSent)
-						if err != nil {
-							logger.Error("%v", utils.ErrInfo(err))
-							return
-						}
-
-					}(host + ":" + consts.TCP_PORT)
-				}
-			}
-		}
-
-		if d.dSleep(d.sleepTime) {
-			break BEGIN
-		}
-	}
-	logger.Debug("break BEGIN %v", GoroutineName)
 }
 
-func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64) {
+func sendTransactions() error {
+	// get unsent transactions
+	trs, err := model.GetAllUnsentTransactions(false)
 
-	logger.Debug("host %v", host)
+	if err != nil {
+		return err
+	}
 
-	// шлем данные указанному хосту
-	// send data itself to the specified host
+	if trs == nil {
+		return nil
+	}
+
+	// form packet to send
+	var buf bytes.Buffer
+	for _, tr := range *trs {
+		buf.Write(MarshallTr(tr))
+	}
+
+	if buf.Len() > 0 {
+		err := sendPacketToAll(TR_REQUEST, buf.Bytes(), nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	// set all transactions as sent
+	for _, tr := range *trs {
+		hexHash := converter.BinToHex(tr.Hash)
+		_, err := model.MarkTransactionSent(hexHash)
+		if err != nil {
+			logger.Errorf("failed to set transaction as sent: %s", err)
+		}
+	}
+
+	return nil
+}
+
+// send block and transactions hashes
+func sendHashes(fullNodeID int32) error {
+	block := &model.InfoBlock{}
+	err := block.GetUnsent()
+	if err != nil {
+		return err
+	}
+
+	trs, err := model.GetAllUnsentTransactions(true)
+	if err != nil {
+		return err
+	}
+
+	if (trs == nil || len(*trs) == 0) && block == nil {
+		// it's nothing to send
+		return nil
+	}
+
+	buf := prepareHashReq(block, trs, fullNodeID)
+	if buf != nil || len(buf) > 0 {
+		err := sendPacketToAll(FULL_REQUEST, buf, sendHashesResp)
+		if err != nil {
+			return err
+		}
+	}
+
+	// mark all transactions and block as sent
+	if block != nil {
+		err = block.MarkSent()
+		if err != nil {
+			return err
+		}
+	}
+
+	if trs != nil {
+		for _, tr := range *trs {
+			hexHash := converter.BinToHex(tr.Hash)
+			_, err := model.MarkTransactionSent(hexHash)
+			if err != nil {
+				logger.Errorf("error set transaction %+v as sent: %s", tr, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func sendHashesResp(resp []byte, w io.Writer) error {
+	var buf bytes.Buffer
+	for {
+		// Parse the list of requested transactions
+		if len(resp) >= 16 {
+			txHash := converter.BytesShift(&resp, 16)
+			tr := &model.Transaction{}
+			err := tr.Read(txHash)
+			if err != nil {
+				return err
+			}
+			if len(tr.Data) > 0 {
+				buf.Write(converter.EncodeLengthPlusData(tr.Data))
+			}
+		}
+	}
+	// write out the requested transactions
+	_, err := w.Write(converter.DecToBin(buf.Len(), 4))
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(buf.Bytes())
+	return err
+}
+
+func prepareHashReq(block *model.InfoBlock, trs *[]model.Transaction, nodeID int32) []byte {
+	var noBlockFlag byte
+	if block != nil {
+		noBlockFlag = 1
+	}
+
+	var buf bytes.Buffer
+	buf.Write(converter.DecToBin(nodeID, 2))
+	buf.WriteByte(noBlockFlag)
+	if block != nil {
+		buf.Write(MarshallBlock(block))
+	}
+	if trs != nil {
+		for _, tr := range *trs {
+			buf.Write(MarshallTrHash(tr))
+		}
+	}
+
+	return buf.Bytes()
+}
+
+func MarshallTr(tr model.Transaction) []byte {
+	return tr.Data
+
+}
+
+func MarshallBlock(block *model.InfoBlock) []byte {
+	if block != nil {
+		toBeSent := converter.DecToBin(block.BlockID, 3)
+		return append(toBeSent, block.Hash...)
+	}
+	return []byte{}
+}
+
+func MarshallTrHash(tr model.Transaction) []byte {
+	return tr.Hash
+}
+
+func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Writer) error) error {
+	hosts, err := model.GetFullNodesHosts()
+	if err != nil {
+		return err
+	}
+
+	var wg sync.WaitGroup
+
+	for _, host := range hosts {
+		wg.Add(1)
+		go func(h string) {
+			err := sendDRequest(h, reqType, buf, respHand)
+			if err != nil {
+				logger.Infof("failed to send transaction to %s (%s)", h, err)
+			}
+			wg.Done()
+		}(GetHostPort(host))
+	}
+	wg.Wait()
+
+	return nil
+}
+
+/*
+Packet format:
+type  2 bytes
+len   4 bytes
+data  len bytes
+*/
+
+func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte, io.Writer) error) error {
 	conn, err := utils.TCPConn(host)
 	if err != nil {
-		logger.Error("%v", utils.ErrInfo(err))
-		return
+		return err
 	}
 	defer conn.Close()
 
-	// вначале шлем тип данных, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
-	// at first we send the data type to let the host understand how exactly it has to process the sent data
-	n, err := conn.Write(converter.DecToBin(dataType, 2))
+	// type
+	_, err = conn.Write(converter.DecToBin(reqType, 2))
 	if err != nil {
-		logger.Error("%v", utils.ErrInfo(err))
-		return
+		return err
 	}
-	logger.Debug("n: %x (host : %v)", n, host)
 
-	// в 4-х байтах пишем размер данных, которые пошлем далее
-	// we record the data size in 4 bytes which we will send further
-	size := converter.DecToBin(len(toBeSent), 4)
-	n, err = conn.Write(size)
+	// data size
+	size := converter.DecToBin(len(buf), 4)
+	_, err = conn.Write(size)
 	if err != nil {
-		logger.Error("%v", utils.ErrInfo(err))
-		return
+		return err
 	}
-	logger.Debug("n: %x (host : %v)", n, host)
-	n, err = conn.Write(toBeSent)
-	if err != nil {
-		logger.Error("%v", utils.ErrInfo(err))
-		return
-	}
-	logger.Debug("n: %d / size: %v / len: %d  (host : %v)", n, converter.BinToDec(size), len(toBeSent), host)
 
-	// в ответ получаем размер данных, которые нам хочет передать сервер
-	// as a response we recieve the data size which the server wants to transfer
-	buf := make([]byte, 4)
-	n, err = conn.Read(buf)
+	// data
+	_, err = conn.Write(buf)
 	if err != nil {
-		logger.Error("%v", utils.ErrInfo(err))
-		return
+		return err
 	}
-	logger.Debug("n: %x (host : %v)", n, host)
-	dataSize := converter.BinToDec(buf)
-	logger.Debug("dataSize %d (host : %v)", dataSize, host)
-	// и если данных менее MAX_TX_SIZE, то получаем их
-	// if data is less than MAX_TX_SIZE, so get them
-	if dataSize < consts.MAX_TX_SIZE && dataSize > 0 {
-		binaryTxHashes := make([]byte, dataSize)
-		_, err = io.ReadFull(conn, binaryTxHashes)
+
+	// if response handler exist, read the answer and call handler
+	if respHandler != nil {
+		buf := make([]byte, 4)
+
+		// read data size
+		_, err = io.ReadFull(conn, buf)
 		if err != nil {
-			logger.Error("%v", utils.ErrInfo(err))
-			return
-		}
-		logger.Debug("binaryTxHashes %x (host : %v)", binaryTxHashes, host)
-		var binaryTx []byte
-		for {
-			// Разбираем список транзакций
-			// Parse the list of transactions
-			txHash := make([]byte, 16)
-			if len(binaryTxHashes) >= 16 {
-				txHash = converter.BytesShift(&binaryTxHashes, 16)
-			}
-			txHash = converter.BinToHex(txHash)
-			logger.Debug("txHash %s (host : %v)", txHash, host)
-			logging.WriteSelectiveLog("SELECT data FROM transactions WHERE hex(hash) = " + string(txHash))
-			transaction := &model.Transaction{}
-			err := transaction.Read(txHash)
-			logger.Debug("tx %x", transaction.Data)
-			if err != nil {
-				logging.WriteSelectiveLog(err)
-				logger.Error("%v", utils.ErrInfo(err))
-				return
-			}
-			logging.WriteSelectiveLog("tx: " + string(converter.BinToHex(transaction.Data)))
-			if len(transaction.Data) > 0 {
-				binaryTx = append(binaryTx, converter.EncodeLengthPlusData(transaction.Data)...)
-			}
-			if len(binaryTxHashes) == 0 {
-				break
-			}
+			return err
 		}
 
-		logger.Debug("binaryTx %x (host : %v)", binaryTx, host)
+		respSize := converter.BinToDec(buf)
+		if respSize > consts.MAX_TX_SIZE {
+			return nil
+		}
 
-		// шлем серверу
-		// send to the server
-		// в первых 4-х байтах пишем размер данных, которые пошлем далее
-		// we record the data size in 4 bytes which we will send further
-		size := converter.DecToBin(len(binaryTx), 4)
-		_, err = conn.Write(size)
+		// read the data
+		resp := make([]byte, respSize)
+		_, err = io.ReadFull(conn, resp)
 		if err != nil {
-			logger.Error("%v", utils.ErrInfo(err))
-			return
+			return err
 		}
-		// далее шлем сами данные
-		// further send data itself
-		_, err = conn.Write(binaryTx)
+
+		err = respHandler(resp, conn)
 		if err != nil {
-			logger.Error("%v", utils.ErrInfo(err))
-			return
+			return err
 		}
-	} else if dataSize == 0 {
-		logger.Debug("dataSize == 0 (%v)", host)
-	} else {
-		logger.Error("incorrect dataSize  (host : %v)", host)
 	}
+
+	return nil
 }

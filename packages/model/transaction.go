@@ -22,7 +22,8 @@ func GetAllUnusedTransactions() (*[]Transaction, error) {
 	return transactions, nil
 }
 
-func GetAllUnsendedTransactions() (*[]Transaction, error) {
+// TODO forSelfUse ???
+func GetAllUnsentTransactions(forSelfUse bool) (*[]Transaction, error) {
 	transactions := new([]Transaction)
 	if err := DBConn.Where("sent = ?", "0").Find(&transactions).Error; err != nil {
 		return nil, err
@@ -45,7 +46,7 @@ func DeleteUsedTransactions() (int64, error) {
 	return query.RowsAffected, query.Error
 }
 
-func MarkTransactionSended(transactionHash []byte) (int64, error) {
+func MarkTransactionSent(transactionHash []byte) (int64, error) {
 	query := DBConn.Exec("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
@@ -99,7 +100,7 @@ func (t *Transaction) Get(transactionHash []byte) error {
 	return DBConn.Where("hash = ?", transactionHash).First(t).Error
 }
 
-func (t *Transactions) GetVerified(transactionHash []byte) error {
+func (t *Transaction) GetVerified(transactionHash []byte) error {
 	return DBConn.Where("hex(hash) = ? AND verified = 1", transactionHash).First(t).Error
 }
 
@@ -116,3 +117,21 @@ func DeleteTransactionIfUnused(transactionHash []byte) (int64, error) {
 func (t *Transaction) Create() error {
 	return DBConn.Create(t).Error
 }
+
+func GetTransactionsCount(hash []byte) (int64, error) {
+	var rowsCount int64
+	if err := DBConn.Exec("SELECT count(hash) FROM transactions WHERE hex(hash) = ?", hash).Scan(&rowsCount).Error; err != nil {
+		return -1, err
+	}
+	return rowsCount, nil
+}
+
+func TransactionsCreateTable() error {
+	return DBConn.CreateTable(&Transaction{}).Error
+}
+
+/*
+func (db *DCDB) GetAllDataHashFromTransactionsAndQueue() ([]map[string]string, error) {
+	return db.GetAll(`SELECT * FROM (SELECT data, hash FROM queue_tx UNION SELECT data, hash FROM transactions WHERE verified = 0 AND used = 0)  AS x`, -1)
+}
+*/

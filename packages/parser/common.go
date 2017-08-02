@@ -64,14 +64,14 @@ func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
 	var err error
 	if walletID != 0 {
 		log.Debug("wallet_id %v state_id %v", walletID, stateID)
-		wallet := &model.Wallet{}
+		wallet := &model.DltWallet{}
 		err = wallet.GetWallet(walletID)
 		if err != nil {
 			return []byte(""), err
 		}
 		result = wallet.NodePublicKey
 	} else {
-		srs := &model.SystemRecognizedStates{}
+		srs := &model.SystemRecognizedState{}
 		err = srs.GetState(stateID)
 		if err != nil {
 			return []byte(""), err
@@ -87,7 +87,7 @@ func InsertInLogTx(binaryTx []byte, time int64) error {
 		log.Fatal(err)
 	}
 	txHash = converter.BinToHex(txHash)
-	ltx := &model.LogTransactions{Hash: txHash, Time: time}
+	ltx := &model.LogTransaction{Hash: txHash, Time: time}
 	err = ltx.Create()
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -101,7 +101,7 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 			prefix := table[:off]
 			tables := &model.Tables{}
 			tables.SetTableName(prefix + "_tables")
-			err := tables.GetByName(table)
+			err := tables.Get([]byte(table))
 			if err != nil {
 				return false, err
 			}
@@ -120,7 +120,7 @@ func IsState(country string) (int64, error) {
 	}
 	for _, id := range ids {
 		sp := &model.StateParameters{}
-		sp.SetTableName(fmt.Sprintf("%d_state_parameters", id))
+		sp.SetTableName(id)
 		err = sp.GetByName("state_name")
 		if err != nil {
 			return 0, err
@@ -315,7 +315,7 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		log.Fatal(err)
 	}
 	searchedHash = converter.BinToHex(searchedHash)
-	logTx := &model.LogTransactions{}
+	logTx := &model.LogTransaction{}
 	err = logTx.GetByHash(searchedHash)
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
@@ -329,7 +329,7 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if transactions {
 		// проверим, нет ли у нас такой тр-ии
 		// check whether we have such a transaction
-		tx := &model.Transactions{}
+		tx := &model.Transaction{}
 		err := tx.GetVerified(searchedHash)
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
@@ -477,7 +477,7 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 	// получим сумму на кошельке юзера
 	// recieve the amount on the user's wallet
-	wallet := &model.Wallet{}
+	wallet := &model.DltWallet{}
 	err := wallet.GetWallet(walletID)
 	if err != nil {
 		return err
@@ -505,14 +505,14 @@ func (p *Parser) BlockError(err error) {
 		errText = errText[:255]
 	}
 	p.DeleteQueueTx([]byte(p.TxHash))
-	ts := &model.TransactionsStatus{}
+	ts := &model.TransactionStatus{}
 	ts.SetError(errText, []byte(p.TxHash))
 }
 
 // AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameters{}
-	sp.SetTableName(converter.Int64ToStr(int64(p.TxStateID)) + "_state_parameters")
+	sp.SetTableName(int64(p.TxStateID))
 	err := sp.GetByName(condition)
 	if err != nil {
 		return err
@@ -719,4 +719,8 @@ func (p *Parser) payFPrice() error {
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)
 	return nil
+}
+
+func (p *Parser) UpdDaemonTime(goroutineName string) {
+	// TODO:
 }

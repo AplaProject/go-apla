@@ -49,7 +49,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	}
 
 	// We check to see if the time elapsed since the last update
-	ufn := &model.UpdFullNodes{}
+	ufn := &model.UpdFullNode{}
 	err = ufn.Read()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -62,7 +62,7 @@ func (p *UpdFullNodesParser) Validate() error {
 		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
 	}
 
-	wallet := &model.Wallet{}
+	wallet := &model.DltWallet{}
 	err = wallet.GetWallet(p.UpdFullNodes.UserID)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -90,7 +90,7 @@ func (p *UpdFullNodesParser) Action() error {
 
 	// выбирем ноды, где wallet_id
 	// choose nodes where wallet_id is
-	fns := &model.FullNodes{}
+	fns := &model.FullNode{}
 	data, err := fns.GetAllFullNodesHasWalletID()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -101,7 +101,7 @@ func (p *UpdFullNodesParser) Action() error {
 	}
 
 	// log them into the one record JSON
-	rbFN := &model.RbFullNodes{
+	rbFN := &model.RbFullNode{
 		FullNodesWalletJson: jsonData,
 		BlockID:             p.BlockData.BlockID,
 		PrevRbID:            converter.StrToInt64(data[0]["rb_id"]),
@@ -113,7 +113,7 @@ func (p *UpdFullNodesParser) Action() error {
 
 	// удаляем где wallet_id
 	// delete where the wallet_id is
-	fn := &model.FullNodes{}
+	fn := &model.FullNode{}
 	err = fn.DeleteNodesWithWallets()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -132,27 +132,27 @@ func (p *UpdFullNodesParser) Action() error {
 
 	// получаем новые данные по wallet-нодам
 	// obtain new data on wallet-nodes
-	dw := &model.Wallet{}
+	dw := &model.DltWallet{}
 	all, err := dw.GetAddressVotes()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	for _, addressVote := range all {
-		wallet := &model.Wallet{}
+		wallet := &model.DltWallet{}
 		err := wallet.GetWallet(int64(converter.StringToAddress(addressVote)))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
 		// insert new data on wallet-nodes with the indication of the common rb_id
-		fn := &model.FullNodes{WalletID: wallet.WalletID, Host: wallet.Host, RbID: rbFN.RbID}
+		fn := &model.FullNode{WalletID: wallet.WalletID, Host: wallet.Host, RbID: rbFN.RbID}
 		err = fn.Create()
 		if err != nil {
 			return p.ErrInfo(err)
 		}
 	}
 
-	w := &model.Wallet{}
+	w := &model.DltWallet{}
 	newRate, err := w.GetNewFuelRate()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -174,13 +174,13 @@ func (p *UpdFullNodesParser) Rollback() error {
 
 	// получим rb_id чтобы восстановить оттуда данные
 	// get rb_id to restore the data from there
-	fnRB := &model.FullNodes{}
+	fnRB := &model.FullNode{}
 	rbID, err := fnRB.GetRbIDFullNodesWithWallet()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	rbFN := &model.RbFullNodes{}
+	rbFN := &model.RbFullNode{}
 	err = rbFN.GetByRbID(rbID)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -193,7 +193,7 @@ func (p *UpdFullNodesParser) Rollback() error {
 
 	// удаляем новые данные
 	// delete new data
-	fn := &model.FullNodes{}
+	fn := &model.FullNode{}
 	err = fn.DeleteNodesWithWallets()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -216,7 +216,7 @@ func (p *UpdFullNodesParser) Rollback() error {
 	for _, data := range fullNodesWallet {
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
 		// insert new data on wallet-nodes with the indication of the common rb_id
-		fn := &model.FullNodes{
+		fn := &model.FullNode{
 			ID:                    int32(converter.StrToInt64(data["id"])),
 			Host:                  data["host"],
 			WalletID:              converter.StrToInt64(data["wallet_id"]),

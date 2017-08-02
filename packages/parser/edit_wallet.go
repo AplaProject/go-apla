@@ -75,7 +75,7 @@ func (p *EditWalletParser) Validate() error {
 		}
 	}
 	id := converter.StrToInt64(string(p.EditWallet.WalletID))
-	dltWallet := &model.Wallet{}
+	dltWallet := &model.DltWallet{}
 	err = dltWallet.GetWallet(converter.StrToInt64(p.EditWallet.WalletID))
 	if err != nil {
 		return p.ErrInfo(err)

@@ -20,188 +20,142 @@ import (
 	"net"
 	"time"
 
+	"context"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/*
-Getting amount of nodes, which has the same hash as we do
-Using it for watching for forks
-Получаем кол-во нодов, у которых такой же хэш последнего блока как и у нас
-Нужно чтобы следить за вилками
-*/
+var tick int
 
 // Confirmations gets and checks blocks from nodes
-func Confirmations(chBreaker chan bool, chAnswer chan string) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
-			panic(r)
-		}
-	}()
+// Getting amount of nodes, which has the same hash as we do
+func Confirmations(d *daemon, ctx context.Context) error {
 
-	const GoroutineName = "Confirmations"
-	d := new(daemon)
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
-	}
-	d.goRoutineName = GoroutineName
-	d.chAnswer = chAnswer
-	d.chBreaker = chBreaker
-	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
-		return
-	}
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	// the first 2 minutes we sleep for 10 sec for blocks to be collected
+	tick++
+
+	d.sleepTime = 1
+	if tick < 12 {
+		d.sleepTime = 10
 	}
 
-	var s int
+	var startBlockID int64
 
-BEGIN:
-	for {
-		// первые 2 минуты спим по 10 сек, чтобы блоки успели собраться
-		// the first 2 minutes we sleep for 10 sec for blocks to be collected
-		s++
+	// check last blocks, but not more than 5
+	confirmations := &model.Confirmation{}
+	err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
+	if err != nil {
+		logger.Error("%v", err)
+		return err
+	}
 
-		d.sleepTime = 1
+	ConfirmedBlockID := confirmations.BlockID
+	infoBlock := &model.InfoBlock{}
+	err = infoBlock.GetInfoBlock()
+	if err != nil {
+		logger.Error("%v", err)
+	}
+	LastBlockID := infoBlock.BlockID
+	if LastBlockID-ConfirmedBlockID > 5 {
+		startBlockID = ConfirmedBlockID + 1
+		d.sleepTime = 10
+		tick = 0 // reset the tick
+	}
+	if startBlockID == 0 {
+		startBlockID = LastBlockID - 1
+	}
+	logger.Debug("startBlockID: %d / LastBlockID: %d", startBlockID, LastBlockID)
 
-		if s < 12 {
-			d.sleepTime = 1
+	for blockID := LastBlockID; blockID > startBlockID; blockID-- {
+
+		if ctx.Err() != nil {
+			return ctx.Err()
 		}
 
-		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
+		logger.Debug("blockID: %d", blockID)
 
-		// check if we have to break the cycle
-		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-			break BEGIN
-		}
-
-		var startBlockID int64
-		// if the last one checked was long ago (interval is more than 5 blocks)
-		confirmations := &model.Confirmation{}
-		err := confirmations.GetGoodBlock(consts.MIN_CONFIRMED_NODES)
+		block := model.Block{}
+		err := block.GetBlock(blockID)
 		if err != nil {
 			logger.Error("%v", err)
+			return err
 		}
-		ConfirmedBlockID := confirmations.BlockID
-		infoBlock := &model.InfoBlock{}
-		err = infoBlock.GetInfoBlock()
-		if err != nil {
-			logger.Error("%v", err)
+		hash := string(block.Hash)
+		logger.Info("hash: %x", hash)
+		if len(hash) == 0 {
+			logger.Debug("len(hash) == 0")
+			continue
 		}
-		LastBlockID := infoBlock.BlockID
-		if LastBlockID-ConfirmedBlockID > 5 {
-			startBlockID = ConfirmedBlockID + 1
-			d.sleepTime = 10
-			s = 0 // 2 минуты отчитываем с начала
-			// count 2 minutes from the beginning
-		}
-		if startBlockID == 0 {
-			startBlockID = LastBlockID - 1
-		}
-		logger.Debug("startBlockID: %d / LastBlockID: %d", startBlockID, LastBlockID)
 
-		for blockID := LastBlockID; blockID > startBlockID; blockID-- {
-
-			// проверим, не нужно ли нам выйти из цикла
-			// check if we have to break the cycle
-			if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-				break BEGIN
+		var hosts []string
+		if d.ConfigIni["test_mode"] == "1" {
+			hosts = []string{"localhost"}
+		} else {
+			hosts, err = model.GetFullNodesHosts()
+			if err != nil {
+				logger.Error("%v", err)
+				return err
 			}
+		}
 
-			logger.Debug("blockID: %d", blockID)
-
-			block := model.Block{}
-			err := block.GetBlock(blockID)
+		ch := make(chan string)
+		for i := 0; i < len(hosts); i++ {
+			// TODO: ports should be in the table hosts
+			host := hosts[i] + ":" + utils.GetTcpPort(d.ConfigIni)
+			logger.Info("host %v", host)
+			go func() {
+				IsReachable(host, blockID, ch)
+			}()
+		}
+		var answer string
+		var st0, st1 int64
+		for i := 0; i < len(hosts); i++ {
+			answer = <-ch
+			logger.Info("answer == hash (%x = %x)", answer, hash)
+			logger.Info("answer == hash (%s = %s)", answer, hash)
+			if answer == hash {
+				st1++
+			} else {
+				st0++
+			}
+			logger.Info("st0 %v  st1 %v", st0, st1)
+		}
+		confirmation := &model.Confirmation{}
+		err = confirmation.GetConfirmation(blockID)
+		if err == nil {
+			logger.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockID)
+			confirmation.Good = int32(st1)
+			confirmation.Bad = int32(st0)
+			confirmation.Time = int32(time.Now().Unix())
+			err = confirmation.Save()
 			if err != nil {
 				logger.Error("%v", err)
 			}
-			hash := string(block.Hash)
-			logger.Info("hash: %x", hash)
-			if len(hash) == 0 {
-				logger.Debug("len(hash) == 0")
-				continue
-			}
-
-			var hosts []string
-			if d.ConfigIni["test_mode"] == "1" {
-				hosts = []string{"localhost:" + consts.TCP_PORT}
-			} else {
-				hosts, err = model.GetFullNodesHosts()
-				if err != nil {
-					logger.Error("%v", err)
-				}
-			}
-
-			ch := make(chan string)
-			for i := 0; i < len(hosts); i++ {
-				host := hosts[i] + ":" + consts.TCP_PORT
-				logger.Info("host %v", host)
-				go func() {
-					IsReachable(host, blockID, ch)
-				}()
-			}
-			var answer string
-			var st0, st1 int64
-			for i := 0; i < len(hosts); i++ {
-				answer = <-ch
-				logger.Info("answer == hash (%x = %x)", answer, hash)
-				logger.Info("answer == hash (%s = %s)", answer, hash)
-				if answer == hash {
-					st1++
-				} else {
-					st0++
-				}
-				logger.Info("st0 %v  st1 %v", st0, st1)
-			}
-			confirmation := &model.Confirmation{}
-			err = confirmation.GetConfirmation(blockID)
-			if err == nil {
-				logger.Debug("UPDATE confirmations SET good = %v, bad = %v, time = %v WHERE block_id = %v", st1, st0, time.Now().Unix(), blockID)
-				confirmation.Good = int32(st1)
-				confirmation.Bad = int32(st0)
-				confirmation.Time = int32(time.Now().Unix())
-				err = confirmation.Save()
-				if err != nil {
-					logger.Error("%v", err)
-				}
-			} else {
-				confirmation.Good = int32(st1)
-				confirmation.Bad = int32(st0)
-				confirmation.Time = int32(time.Now().Unix())
-				logger.Debug("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( %v, %v, %v, %v )", blockID, st1, st0, time.Now().Unix())
-				err = confirmation.Save()
-				if err != nil {
-					logger.Error("%v", err)
-				}
-			}
-			logger.Debug("blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES %d>%d && %d>=%d\n", blockID, startBlockID, st1, consts.MIN_CONFIRMED_NODES)
-			if blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES {
-				break
+		} else {
+			confirmation.Good = int32(st1)
+			confirmation.Bad = int32(st0)
+			confirmation.Time = int32(time.Now().Unix())
+			logger.Debug("INSERT INTO confirmations ( block_id, good, bad, time ) VALUES ( %v, %v, %v, %v )", blockID, st1, st0, time.Now().Unix())
+			err = confirmation.Save()
+			if err != nil {
+				logger.Error("%v", err)
 			}
 		}
-
-		if d.dSleep(d.sleepTime) {
-			break BEGIN
+		logger.Debug("blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES %d>%d && %d>=%d\n", blockID, startBlockID, st1, consts.MIN_CONFIRMED_NODES)
+		if blockID > startBlockID && st1 >= consts.MIN_CONFIRMED_NODES {
+			break
 		}
 	}
-	logger.Debug("break BEGIN %v", GoroutineName)
+
+	return nil
+
 }
 
 func checkConf(host string, blockID int64) string {
-
 	logger.Debug("host: %v", host)
-	/*tcpAddr, err := net.ResolveTCPAddr("tcp", host)
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return "0"
-	}
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)*/
 	conn, err := net.DialTimeout("tcp", host, 5*time.Second)
 	if err != nil {
 		logger.Debug("%v", utils.ErrInfo(err))
@@ -212,32 +166,23 @@ func checkConf(host string, blockID int64) string {
 	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
 	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
 
-	// вначале шлем тип данных, чтобы принимающая сторона могла понять, как именно надо обрабатывать присланные данные
-	// firstly send a data type for the receiving party could understand how exacetly to process the data sent
-	_, err = conn.Write(converter.DecToBin(4, 2))
+	type confRequest struct {
+		Type    uint16
+		BlockID uint32
+	}
+	err = tcpserver.SendRequest(&confRequest{Type: 4, BlockID: uint32(blockID)}, conn)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return "0"
 	}
 
-	// в 4-х байтах пишем ID блока, хэш которого хотим получить
-	// record the block ID that we want to recive in 4 bytes
-	size := converter.DecToBin(blockID, 4)
-	_, err = conn.Write(size)
+	resp := &tcpserver.ConfirmResponse{}
+	err = tcpserver.ReadRequest(resp, conn)
 	if err != nil {
 		logger.Error("%v", utils.ErrInfo(err))
 		return "0"
 	}
-
-	// ответ всегда 32 байта
-	// the response is always 32 bytes
-	hash := make([]byte, 32)
-	_, err = conn.Read(hash)
-	if err != nil {
-		logger.Error("%v", utils.ErrInfo(err))
-		return "0"
-	}
-	return string(hash)
+	return string(resp.Hash)
 }
 
 // IsReachable checks if there is blockID on the host

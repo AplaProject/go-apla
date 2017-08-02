@@ -51,7 +51,7 @@ func (c *Controller) RestoreAccess() (string, error) {
 
 	var request int32
 	if sra.Time > 0 {
-		request = sra.Time
+		request = int32(sra.Time)
 	}
 
 	TemplateStr, err := makeTemplate("restore_access", "restoreAccess", &restoreAccessPage{

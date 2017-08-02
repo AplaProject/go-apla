@@ -5,8 +5,11 @@ import (
 	"sync"
 
 	"database/sql"
+
 	_ "github.com/lib/pq"
 	"github.com/op/go-logging"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // Mutex for locking DB
@@ -37,6 +40,16 @@ func NewDbConnect(ConfigIni map[string]string) (*DCDB, error) {
 	if err != nil || db.Ping() != nil {
 		return &DCDB{}, err
 	}
-	log.Debug("return")
+
+	err = model.GormInit(db)
+	if err != nil {
+		log.Errorf("GormInit failed: %s", err)
+	}
+
 	return &DCDB{db, ConfigIni}, err
+}
+
+func GetCurrentDB() *DCDB {
+	// TODO:  should be atomic.Pointer ??
+	return DB
 }

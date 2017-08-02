@@ -46,7 +46,7 @@ func (p *FirstBlockParser) Action() error {
 	myAddress := crypto.Address(data.PublicKey)
 	log.Debug("data.PublicKey %s", data.PublicKey)
 	log.Debug("data.PublicKey %x", data.PublicKey)
-	dltWallet := &model.Wallet{
+	dltWallet := &model.DltWallet{
 		WalletID:      myAddress,
 		Host:          data.Host,
 		AddressVote:   converter.AddressToString(myAddress),
@@ -58,7 +58,7 @@ func (p *FirstBlockParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	fullNode := &model.FullNodes{WalletID: myAddress, Host: data.Host}
+	fullNode := &model.FullNode{WalletID: myAddress, Host: data.Host}
 	err = fullNode.Create()
 	if err != nil {
 		return p.ErrInfo(err)

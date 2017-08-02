@@ -41,7 +41,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		p.TxCitizenID = 0
 	}
 	if txType == utils.TypeInt("DLTTransfer") || txType == utils.TypeInt("NewState") || txType == utils.TypeInt("DLTChangeHostVote") || txType == utils.TypeInt("ChangeNodeKeyDLT") || txType == utils.TypeInt("CitizenRequest") || txType == utils.TypeInt("UpdFullNodes") {
-		dltWallet := &model.Wallet{}
+		dltWallet := &model.DltWallet{}
 		err := dltWallet.GetWallet(p.TxWalletID)
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -67,7 +67,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			log.Debug("data[public_key_0]", dltWallet.PublicKey)
 		}
 	} else {
-		dltWallet := &model.Wallet{}
+		dltWallet := &model.DltWallet{}
 		err := dltWallet.GetWallet(p.TxWalletID)
 		if err != nil {
 			return utils.ErrInfo(err)

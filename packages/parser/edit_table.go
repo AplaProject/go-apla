@@ -99,7 +99,7 @@ func (p *EditTableParser) Action() error {
 	tblname := p.EditTable.Name
 	table := &model.Tables{}
 	table.SetTableName(tableName)
-	err := table.GetByName(tableName)
+	err := table.Get([]byte(tableName))
 	if err != nil {
 		return err
 	}

@@ -22,13 +22,13 @@ var (
 	DBConn *gorm.DB
 )
 
-func GormInit(user string, pass string, host string, dbName string) error {
+func GormInit(db *sql.DB) error {
 	var err error
-	DBConn, err = gorm.Open("postgres", fmt.Sprintf(
-		"user=%s password=pass host=localhost dbname=%s sslmode=disable "), user, pass, dbName)
+	DBConn, err = gorm.Open("postgres", db)
 	if err != nil {
 		return err
 	}
+	DBConn.SingularTable(true)
 	return nil
 }
 
@@ -353,4 +353,14 @@ func AlterTableDropColumn(tableName, columnName string) error {
 
 func CreateIndex(indexName, tableName, onColumn string) error {
 	return DBConn.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+}
+
+func GormSet(db *gorm.DB) {
+	DBConn = db
+	DBConn.SingularTable(true)
+}
+
+// TODO: should be atomic ?
+func GetCurrentDB() *gorm.DB {
+	return DBConn
 }

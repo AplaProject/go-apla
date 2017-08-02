@@ -58,7 +58,7 @@ func (p *DLTTransferParser) Validate() error {
 	}
 
 	// public key need only when we don't have public_key in the dlt_wallets table
-	dltWallet := &model.Wallet{}
+	dltWallet := &model.DltWallet{}
 	exists, err := dltWallet.IsExists()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -83,7 +83,7 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo("amount<=0")
 	}
 
-	sp := &model.SystemParameters{}
+	sp := &model.SystemParameter{}
 	fPrice, err := sp.GetValueParameterByName("op_price", "dlt_transfer")
 	if err != nil {
 		return p.ErrInfo(err)
@@ -123,7 +123,7 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo("incorrect sign OOPS")
 	}
 
-	wallet := &model.Wallet{}
+	wallet := &model.DltWallet{}
 	err = wallet.GetWallet(p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -136,7 +136,7 @@ func (p *DLTTransferParser) Validate() error {
 
 func (p *DLTTransferParser) Action() error {
 	log.Debug("wallet address %s", p.DLTTransfer.WalletAddress)
-	dltWallet := &model.Wallet{}
+	dltWallet := &model.DltWallet{}
 	err := dltWallet.GetWallet(p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -185,7 +185,7 @@ func (p *DLTTransferParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	dltTransaction := &model.DltTransactions{
+	dltTransaction := &model.DltTransaction{
 		SenderWalletID:         p.TxWalletID,
 		RecepientWalletID:      dltWallet.WalletID,
 		RecepientWalletAddress: converter.AddressToString(int64(converter.StrToUint64(p.DLTTransfer.WalletAddress))),

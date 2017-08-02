@@ -18,6 +18,7 @@ package utils
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -27,7 +28,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,12 +56,6 @@ type BlockData struct {
 	StateID  int64
 	Sign     []byte
 	Hash     []byte
-}
-
-// DaemonsChansType is a structure for deamons
-type DaemonsChansType struct {
-	ChBreaker chan bool
-	ChAnswer  chan string
 }
 
 var (
@@ -120,8 +114,9 @@ var (
 	// DltWalletID is the wallet identifier
 	DltWalletID = flag.Int64("dltWalletId", 0, "DltWalletID")
 
-	// DaemonsChans is a slice of DaemonsChansType
-	DaemonsChans []*DaemonsChansType
+	ReturnCh     chan string
+	CancelFunc   context.CancelFunc
+	DaemonsCount int
 	// Thrust is true for thrust shell
 	Thrust bool
 )
@@ -1324,4 +1319,11 @@ func IsNodeState(state int64, host string) bool {
 		}
 	}
 	return false
+}
+
+func GetTcpPort(config map[string]string) string {
+	if port, ok := config["tcp_port"]; ok {
+		return port
+	}
+	return consts.TCP_PORT
 }

@@ -106,7 +106,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				if err != nil {
 					p.ErrInfo(binaryData)
 				}
-				logTx := &model.LogTransactions{Hash: txHash}
+				logTx := &model.LogTransaction{Hash: txHash}
 				err = logTx.Delete()
 				if err != nil {
 					log.Error("error: %v", err)

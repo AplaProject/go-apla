@@ -18,15 +18,27 @@ func (lt *LogTransaction) Get() error {
 	return DBConn.First(lt).Error
 }
 
-func (lt *LogTransactions) GetByHash(hash []byte) error {
+func (lt *LogTransaction) GetByHash(hash []byte) error {
 	return DBConn.Where("hex(hash) = ?").First(lt).Error
 }
 
-func (lt *LogTransactions) Create() error {
+func (lt *LogTransaction) Create() error {
 	return DBConn.Create(lt).Error
 }
 
 func DeleteLogTransactionsByHash(hash []byte) (int64, error) {
 	query := DBConn.Exec("DELETE FROM log_transactions WHERE hex(hash) = ?", hash)
 	return query.RowsAffected, query.Error
+}
+
+func GetLogTransactionsCount(hash []byte) (int64, error) {
+	var rowsCount int64
+	if err := DBConn.Exec("SELECT count(hash) FROM log_transactions WHERE hex(hash) = ?", hash).Scan(&rowsCount).Error; err != nil {
+		return -1, err
+	}
+	return rowsCount, nil
+}
+
+func LogTransactionsCreateTable() error {
+	return DBConn.CreateTable(&LogTransaction{}).Error
 }

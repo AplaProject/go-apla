@@ -37,11 +37,6 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	var header *tx.Header
 	hashHex := converter.BinToHex(hash)
 	txType, walletID, citizenID := sql.GetTxTypeAndUserID(binaryTx)
-	/*	if txType > 127 || consts.IsStruct(int(txType)) {
-		if walletID == 0 && citizenID == 0 {
-			fatalError = "undefined walletId and citizenId"
-		}
-	}*/
 	p.BinaryData = binaryTx
 	p.TxBinaryData = binaryTx
 	header, err = p.ParseDataGate(false)
@@ -67,7 +62,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		}
 		log.Debug("fromGate %d", qtx.FromGate)
 		if qtx.FromGate == 0 {
-			m := &model.TransactionsStatus{}
+			m := &model.TransactionStatus{}
 			err = m.SetError(errText, hashHex)
 			if err != nil {
 				return utils.ErrInfo(err)
@@ -84,7 +79,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 
 		log.Debug("SELECT counter FROM transactions WHERE hex(hash) = ?", string(hashHex))
 		logging.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hashHex))
-		tx := &model.Transactions{}
+		tx := &model.Transaction{}
 		err := tx.Get(hashHex)
 		if err != nil {
 			logging.WriteSelectiveLog(err)
@@ -103,7 +98,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		logging.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
 		// вставляем с verified=1
 		// put with verified=1
-		newTx := &model.Transactions{
+		newTx := &model.Transaction{
 			Hash:       hashHex,
 			Data:       converter.BinToHex(binaryTx),
 			ForSelfUse: 0,

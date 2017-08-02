@@ -26,8 +26,8 @@ func (sp *SystemParameter) GetValueParameterByName(name, value string) (string, 
 	return result, nil
 }
 
-func GetAllSystemParameters() ([]SystemParameters, error) {
-	parameters := new([]SystemParameters)
+func GetAllSystemParameters() ([]SystemParameter, error) {
+	parameters := new([]SystemParameter)
 	if err := DBConn.Find(parameters).Error; err != nil {
 		return nil, err
 	}

@@ -17,10 +17,10 @@
 package daemons
 
 import (
+	"context"
 	"fmt"
-	"time"
-
 	"log"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -28,198 +28,113 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
-func UpdFullNodes(chBreaker chan bool, chAnswer chan string) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
-			panic(r)
-		}
-	}()
-
-	const GoroutineName = "UpdFullNodes"
-	d := new(daemon)
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
-	}
-	d.goRoutineName = GoroutineName
-	d.chAnswer = chAnswer
-	d.chBreaker = chBreaker
+func UpdFullNodes(d *daemon, ctx context.Context) error {
 	d.sleepTime = 60
-	if !d.CheckInstall(chBreaker, chAnswer, GoroutineName) {
-		return
+
+	locked, err := sql.DbLock(ctx, d.goRoutineName)
+	if !locked || err != nil {
+		return err
 	}
-	d.DCDB = DbConnect(chBreaker, chAnswer, GoroutineName)
-	if d.DCDB == nil {
-		return
+	defer sql.DbUnlock(d.goRoutineName)
+
+	infoBlock := &model.InfoBlock{}
+	err = infoBlock.GetInfoBlock()
+	if err != nil {
+		return err
 	}
 
-BEGIN:
-	for {
-		logger.Info(GoroutineName)
-		MonitorDaemonCh <- []string{GoroutineName, converter.Int64ToStr(time.Now().Unix())}
-
-		// проверим, не нужно ли нам выйти из цикла
-		// check if we have to break the cycle
-		if CheckDaemonsRestart(chBreaker, chAnswer, GoroutineName) {
-			break BEGIN
-		}
-
-		restart, err := d.dbLock()
-		if restart {
-			break BEGIN
-		}
-		if err != nil {
-			if d.dPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		infoBlock := &model.InfoBlock{}
-		err = infoBlock.GetInfoBlock()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		if infoBlock.BlockID == 0 {
-			if d.unlockPrintSleep(utils.ErrInfo("blockID == 0"), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		config := &model.Config{}
-		err = config.GetConfig()
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-		myStateID := config.StateID
-		myWalletID := config.DltWalletID
-		logger.Debug("%v", myWalletID)
-		// If we are in the list of those who are able to generate the blocks
-		fullNode := &model.FullNode{}
-		err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
-		if err != nil {
-			d.dbUnlock()
-			logger.Error("%v", err)
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-		fullNodeID := fullNode.ID
-		logger.Debug("fullNodeID = %d", fullNodeID)
-		if fullNodeID == 0 {
-			d.dbUnlock()
-			logger.Debug("fullNodeID == 0")
-			d.sleepTime = 10 // because 1s is too small for non-full nodes
-			if d.dSleep(d.sleepTime) {
-				break BEGIN
-			}
-			continue
-		}
-
-		curTime := time.Now().Unix()
-
-		// check if the time of the last updating passed
-		updFn := &model.UpdFullNode{}
-		err = updFn.Read()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		updFullNodes := int64(updFn.Time)
-		if curTime-updFullNodes <= consts.UPD_FULL_NODES_PERIOD {
-			if d.unlockPrintSleep(utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO"), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
-		myNodeKey := &model.MyNodeKey{}
-		err = myNodeKey.GetNodeWithMaxBlockID()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		binSign, err := crypto.Sign(string(myNodeKey.PrivateKey), forSign)
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		data := converter.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
-		data = append(data, converter.DecToBin(curTime, 4)...)
-		data = append(data, converter.EncodeLengthPlusData(myWalletID)...)
-		data = append(data, converter.EncodeLengthPlusData(0)...)
-		data = append(data, converter.EncodeLengthPlusData([]byte(binSign))...)
-
-		hash, err := crypto.Hash(data)
-		if err != nil {
-			log.Fatal(err)
-		}
-		hash = converter.BinToHex(hash)
-		queueTx := &model.QueueTx{Hash: hash}
-		err = queueTx.DeleteTx()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-		queueTx.Data = converter.BinToHex(data)
-		err = queueTx.Save()
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		if err != nil {
-			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		p := new(parser.Parser)
-		p.DCDB = d.DCDB
-		hash, err = crypto.Hash(data)
-		if err != nil {
-			log.Fatal(err)
-		}
-		hash = converter.BinToHex(hash)
-		err = p.TxParser(converter.HexToBin(hash), data, true)
-		if err != nil {
-			if d.unlockPrintSleep(err, d.sleepTime) {
-				break BEGIN
-			}
-			continue BEGIN
-		}
-
-		d.dbUnlock()
-
-		if d.dSleep(d.sleepTime) {
-			break BEGIN
-		}
+	if infoBlock.BlockID == 0 {
+		return utils.ErrInfo("blockID == 0")
 	}
-	logger.Debug("break BEGIN %v", GoroutineName)
+
+	config := &model.Config{}
+	err = config.GetConfig()
+	if err != nil {
+		return err
+
+	}
+	myStateID := config.StateID
+	myWalletID := config.DltWalletID
+	logger.Debug("%v", myWalletID)
+	// Есть ли мы в списке тех, кто может генерить блоки
+	// If we are in the list of those who are able to generate the blocks
+	fullNode := &model.FullNode{}
+	err = fullNode.FindNode(myStateID, myWalletID, myStateID, myWalletID)
+	if err != nil {
+		return err
+	}
+
+	fullNodeID := fullNode.ID
+	logger.Debug("fullNodeID = %d", fullNodeID)
+	if fullNodeID == 0 {
+		d.sleepTime = 10 // because 1s is too small for non-full nodes
+		return nil
+	}
+
+	curTime := time.Now().Unix()
+
+	// проверим, прошло ли время с момента последнего обновления
+	// check if the time of the last updating passed
+	updFn := &model.UpdFullNode{}
+	err = updFn.Read()
+	if err != nil {
+		return err
+	}
+
+	updFullNodes := int64(updFn.Time)
+	if curTime-updFullNodes <= consts.UPD_FULL_NODES_PERIOD {
+		return utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
+	}
+
+	forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
+	myNodeKey := &model.MyNodeKey{}
+	err = myNodeKey.GetNodeWithMaxBlockID()
+	if err != nil {
+		return err
+	}
+
+	binSign, err := crypto.Sign(string(myNodeKey.PrivateKey), forSign)
+	if err != nil {
+		return err
+	}
+
+	data := converter.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
+	data = append(data, converter.DecToBin(curTime, 4)...)
+	data = append(data, converter.EncodeLengthPlusData(myWalletID)...)
+	data = append(data, converter.EncodeLengthPlusData(0)...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(binSign))...)
+
+	hash, err := crypto.Hash(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hash = converter.BinToHex(hash)
+	queueTx := &model.QueueTx{Hash: hash}
+	err = queueTx.DeleteTx()
+	if err != nil {
+		return err
+	}
+
+	queueTx.Data = converter.BinToHex(data)
+	err = queueTx.Save()
+	if err != nil {
+		return nil
+	}
+
+	p := new(parser.Parser)
+	hash, err = crypto.Hash(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	hash = converter.BinToHex(hash)
+	err = p.TxParser(converter.HexToBin(hash), data, true)
+	if err != nil {
+		return err
+	}
+	return nil
 }

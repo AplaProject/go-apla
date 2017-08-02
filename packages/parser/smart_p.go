@@ -171,7 +171,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			public = p.TxSmart.PublicKey
 		}
 		if len(p.PublicKeys) == 0 {
-			wallet := &model.Wallet{}
+			wallet := &model.DltWallet{}
 			err := wallet.GetWallet(p.TxSmart.UserID)
 			if err != nil {
 				return err

@@ -56,7 +56,7 @@ func (p *ChangeNodeKeyDLTParser) Validate() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	dltW := &model.Wallet{}
+	dltW := &model.DltWallet{}
 	err = dltW.GetWallet(p.TxWalletID)
 	if err != nil || txTime-dltW.LastForgingDataUpd < 600 {
 		return p.ErrInfo("txTime - last_forging_data_upd < 600 sec")
@@ -75,7 +75,7 @@ func (p *ChangeNodeKeyDLTParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	mnk := &model.MyNodeKeys{}
+	mnk := &model.MyNodeKey{}
 	myKey := mnk.ID
 	err = mnk.GetZeroBlock(p.DLTChangeNodeKey.NewNodePublicKey)
 	if err != nil {

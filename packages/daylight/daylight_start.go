@@ -312,7 +312,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			log.Error(`Load Contracts`, err)
 		}
 		parser := new(parser.Parser)
-		parser.DCDB = sql.DB
 		err = parser.RollbackToBlockID(*utils.RollbackToBlockID)
 		if err != nil {
 			fmt.Println(err)

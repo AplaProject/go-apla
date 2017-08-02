@@ -1004,7 +1004,7 @@ func Strong(vars *map[string]string, pars ...string) (out string) {
 func Divs(vars *map[string]string, pars ...string) (out string) {
 	count := 0
 
-	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` && (*vars)[`norow`] != `1` {
+	if len((*vars)[`isrow`]) == 0 && (*vars)[`auto_loop`] != `1` {
 		out = `<div class="row">`
 		(*vars)[`isrow`] = `opened`
 	}

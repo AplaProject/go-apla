@@ -73,7 +73,7 @@ func (p *NewStateParser) Validate() error {
 }
 
 func (p *NewStateParser) Main(country, currency string) (id string, err error) {
-	systemState := &model.SystemStates{RbID: 0}
+	systemState := &model.SystemState{RbID: 0}
 	err = systemState.Create()
 	if err != nil {
 		return
@@ -129,7 +129,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		return
 	}
 	t := &model.Tables{
-		Name: []byte(id + "citizens"),
+		Name: id + "citizens",
 		ColumnsAndPermissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
 		Conditions:            psid,
 	}
@@ -197,7 +197,7 @@ Divs: col-md-4
 IfEnd:
 PageEnd:
 `
-	firstPage := &model.Pages{
+	firstPage := &model.Page{
 		Name:       "dashboard_default",
 		Value:      dashboardValue,
 		Menu:       "menu_default",
@@ -208,7 +208,7 @@ PageEnd:
 	if err != nil {
 		return
 	}
-	secondPage := &model.Pages{
+	secondPage := &model.Page{
 		Name:       "government",
 		Value:      governmentValue,
 		Menu:       "government",
@@ -264,14 +264,14 @@ MenuBack(Welcome)`,
 		return
 	}
 
-	dltWallet := &model.Wallet{}
+	dltWallet := &model.DltWallet{}
 	err = dltWallet.GetWallet(p.TxWalletID)
 	if err != nil {
 		return
 	}
 
 	citizen := &model.Citizens{ID: p.TxWalletID, PublicKey: converter.BinToHex(dltWallet.PublicKey)}
-	citizen.SetTableName(id + "_citizens")
+	citizen.SetTableName(converter.StrToInt64(id))
 	err = citizen.Create()
 	if err != nil {
 		return
@@ -311,7 +311,7 @@ func (p *NewStateParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	dltWallet := &model.Wallet{}
+	dltWallet := &model.DltWallet{}
 	err = dltWallet.GetWallet(p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -347,7 +347,7 @@ func (p *NewStateParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 
-	ss := &model.SystemStates{}
+	ss := &model.SystemState{}
 	err = ss.GetLast()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -358,7 +358,7 @@ func (p *NewStateParser) Rollback() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	ssToDel := &model.SystemStates{ID: ss.ID}
+	ssToDel := &model.SystemState{ID: ss.ID}
 	err = ssToDel.Delete()
 	if err != nil {
 		return p.ErrInfo(err)

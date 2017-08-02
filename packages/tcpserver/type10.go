@@ -17,26 +17,19 @@
 package tcpserver
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-/* Выдаем номер макс. блока
-// Give the number of max. block
- * запрос шлет демон blocksCollection
-// blocksCollection daemon sends the request
-*/
+// Type10 sends the last block ID
+// blocksCollection daemon sends this request
+func (t *TCPServer) Type10() (*MaxBlockResponse, error) {
+	blockID, err := model.GetCurBlockID()
+	if err != nil {
+		return nil, utils.ErrInfo(err)
+	}
 
-// Type10 writes the number of the maximum block
-func (t *TCPServer) Type10() {
-	blockID, err := t.Single("SELECT block_id FROM info_block").Int64()
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
-	}
-	_, err = t.Conn.Write(converter.DecToBin(blockID, 4))
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
-	}
+	return &MaxBlockResponse{
+		BlockID: uint32(blockID),
+	}, nil
 }

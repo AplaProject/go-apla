@@ -55,7 +55,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 	}
 
 	// public key need only when we don't have public_key in the dlt_wallets table
-	dltW := &model.Wallet{}
+	dltW := &model.DltWallet{}
 	err = dltW.GetWallet(p.TxWalletID)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -92,7 +92,7 @@ func (p *DLTChangeHostVoteParser) Validate() error {
 func (p *DLTChangeHostVoteParser) Action() error {
 	var err error
 	log.Debug("p.TxMaps.String[addressVote] %s", p.DLTChangeHostVote.AddressVote)
-	wallet := &model.Wallet{}
+	wallet := &model.DltWallet{}
 	exists, err := wallet.IsExistsByPublicKey(p.DLTChangeHostVote.Header.PublicKey)
 	if err != nil {
 		return p.ErrInfo(err)

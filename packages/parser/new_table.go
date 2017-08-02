@@ -177,7 +177,7 @@ func (p *NewTableParser) Action() error {
 	}
 
 	t := &model.Tables{
-		Name: []byte(tableName),
+		Name: tableName,
 		ColumnsAndPermissions: `{"general_update":"ContractConditions(\"MainCondition\")", "update": {` + colsSQL2 + `}, "insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`,
 	}
 	t.SetTableName(prefix + "_tables")
@@ -200,7 +200,7 @@ func (p *NewTableParser) Rollback() error {
 	}
 	tableName := prefix + "_" + p.NewTable.Name
 	err = model.DBConn.DropTable(tableName).Error
-	t := &model.Tables{Name: []byte(tableName)}
+	t := &model.Tables{Name: tableName}
 	err = t.Delete()
 	if err != nil {
 		return p.ErrInfo(err)

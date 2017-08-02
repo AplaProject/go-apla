@@ -17,41 +17,20 @@
 package tcpserver
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
-/*
- * данные присылает демон confirmations
-// the data is sent by 'confirmations' daemon
-*/
-
 // Type4 writes the hash of the specified block
-func (t *TCPServer) Type4() {
-
-	buf := make([]byte, 4)
-	_, err := t.Conn.Read(buf)
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
+// The request is sent by 'confirmations' daemon
+func (t *TCPServer) Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
+	resp := &ConfirmResponse{}
+	block := &model.Block{}
+	err := block.GetBlock(int64(r.BlockID))
+	if err != nil || len(block.Hash) == 0 {
+		hash := [32]byte{}
+		resp.Hash = hash[:]
+	} else {
+		resp.Hash = block.Hash
 	}
-	blockID := converter.BinToDec(buf)
-	log.Debug("blockID %d", blockID)
-	// используется для учета кол-ва подвержденных блоков, т.е. тех, которые есть у большинства нодов
-	// it is used to account the number of affected blocks, those which belong to majority of nodes
-	hash, err := t.Single("SELECT hash FROM block_chain WHERE id = ?", blockID).String()
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		t.Conn.Write(converter.DecToBin(0, 1))
-		return
-	}
-	if len(hash) == 0 {
-		hash = "0"
-	}
-	log.Debug("hash %x", hash)
-	_, err = t.Conn.Write([]byte(hash))
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		return
-	}
+	return resp, nil
 }

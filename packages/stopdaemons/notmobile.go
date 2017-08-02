@@ -18,12 +18,13 @@ package stopdaemons
 
 import (
 	"fmt"
-	"github.com/EGaaS/go-egaas-mvp/packages/system"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/system"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 /*
@@ -67,13 +68,13 @@ func Signals() {
 		signal.Notify(SigChan, os.Interrupt, os.Kill, Term)
 		<-SigChan
 		fmt.Println("KILL SIGNAL")
-		for _, ch := range utils.DaemonsChans {
-			fmt.Println("ch.ChBreaker<-true")
-			ch.ChBreaker <- true
+
+		utils.CancelFunc()
+		for i := 0; i < utils.DaemonsCount; i++ {
+			name := <-utils.ReturnCh
+			log.Debugf("daemon %s stopped", name)
 		}
-		for _, ch := range utils.DaemonsChans {
-			fmt.Println(<-ch.ChAnswer)
-		}
+
 		log.Debug("Daemons killed")
 		fmt.Println("Daemons killed")
 		if sql.DB != nil && sql.DB.DB != nil {
