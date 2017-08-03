@@ -8,7 +8,7 @@ type Menu struct {
 	RbID       int64  `gorm:"not null"`
 }
 
-func (m *Menu) SetTableName(prefix string) {
+func (m *Menu) SetTablePrefix(prefix string) {
 	m.tableName = prefix + "_menus"
 }
 

@@ -61,8 +61,8 @@ func (c *Controller) EditSignature() (string, error) {
 	var title, cond string
 	list := make([]SignRes, 0)
 	if len(name) > 0 {
-		signature := &model.Signatures{}
-		signature.SetTableName(prefix)
+		signature := &model.Signature{}
+		signature.SetTablePrefix(prefix)
 		err := signature.Get(name)
 		if err != nil {
 			return "", err

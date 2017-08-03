@@ -87,9 +87,9 @@ func (c *Controller) AjaxNewKey() interface{} {
 		log.Fatal(err)
 	}
 	idkey := crypto.Address(pubkey)
-	stateParameters := &model.StateParameters{}
-	stateParameters.GetByName("govAccount")
-	govAccount := stateParameters.Value
+	stateParameter := &model.StateParameter{}
+	stateParameter.GetByName("govAccount")
+	govAccount := stateParameter.Value
 	if len(govAccount) == 0 {
 		result.Error = `unknown govAccount`
 		return result

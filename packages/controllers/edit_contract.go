@@ -81,8 +81,8 @@ func (c *Controller) EditContract() (string, error) {
 	var contWallet int64
 	for i := 0; i < 10; i++ {
 		if i == 0 {
-			smartContract := &model.SmartContracts{}
-			smartContract.SetTableName(prefix)
+			smartContract := &model.SmartContract{}
+			smartContract.SetTablePrefix(prefix)
 			if id != 0 {
 				err = smartContract.GetByID(id)
 			} else {

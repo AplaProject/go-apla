@@ -49,12 +49,12 @@ func (p *EditColumnParser) Validate() error {
 	}
 
 	stateIdStr := converter.Int64ToStr(p.EditColumn.Header.StateID)
-	table := stateIdStr + `_tables`
+	prefix := stateIdStr
 	if strings.HasPrefix(stateIdStr, `global`) {
-		table = `global_tables`
+		prefix = `global`
 	}
-	tEx := &model.Tables{}
-	tEx.SetTableName(table)
+	tEx := &model.Table{}
+	tEx.SetTablePrefix(prefix)
 	exists, err := tEx.IsExistsByPermissionsAndTableName(p.EditColumn.ColumnName, p.EditColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -109,7 +109,7 @@ func (p *EditColumnParser) Action() error {
 	if err != nil {
 		return err
 	}
-	tableM := &model.Tables{}
+	tableM := &model.Table{}
 	_, err = tableM.SetActionByName(table, p.EditColumn.TableName, "update, "+p.EditColumn.ColumnName, `"`+converter.EscapeForJSON(p.EditColumn.Permissions)+`"`, rb.RbID)
 	if err != nil {
 		return p.ErrInfo(err)

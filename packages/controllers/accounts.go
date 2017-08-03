@@ -63,16 +63,16 @@ func (c *Controller) Accounts() (string, error) {
 
 	data := make([]AccountInfo, 0)
 
-	stateParameters := &model.StateParameters{}
-	if err := stateParameters.GetByName("money_digit"); err != nil {
+	stateParameter := &model.StateParameter{}
+	if err := stateParameter.GetByName("money_digit"); err != nil {
 		return ``, err
 	}
-	digit := converter.StrToInt(stateParameters.Value)
+	digit := converter.StrToInt(stateParameter.Value)
 
-	if err := stateParameters.GetByName("currency_name"); err != nil {
+	if err := stateParameter.GetByName("currency_name"); err != nil {
 		return ``, err
 	}
-	currency := stateParameters.Value
+	currency := stateParameter.Value
 
 	newAccount := func(account int64, amount decimal.Decimal) {
 		strAmount := formatAmount(digit, amount)

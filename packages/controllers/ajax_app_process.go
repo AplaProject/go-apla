@@ -51,9 +51,9 @@ func (c *Controller) AjaxAppProcess() interface{} {
 
 	app := &model.App{Name: name, Done: int32(done)}
 	if strings.HasPrefix(name, `global`) {
-		app.SetTableName("global")
+		app.SetTablePrefix("global")
 	} else {
-		app.SetTableName(string(c.SessStateID))
+		app.SetTablePrefix(string(c.SessStateID))
 	}
 	exist, err := app.IsExists(app.Name)
 	if err != nil {

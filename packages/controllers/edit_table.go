@@ -65,9 +65,9 @@ func (c *Controller) EditTable() (string, error) {
 		global = "1"
 	}
 
-	table := &model.Tables{}
-	table.SetTableName(prefix)
-	err = table.Get([]byte(tableName))
+	table := &model.Table{}
+	table.SetTablePrefix(prefix)
+	err = table.Get(tableName)
 
 	if err != nil {
 		return "", utils.ErrInfo(err)

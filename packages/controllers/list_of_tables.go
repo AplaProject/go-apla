@@ -44,8 +44,8 @@ func (c *Controller) ListOfTables() (string, error) {
 		prefix = "global"
 	}
 
-	t := &model.Tables{}
-	t.SetTableName(prefix)
+	t := &model.Table{}
+	t.SetTablePrefix(prefix)
 	data, err := t.GetAll(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)

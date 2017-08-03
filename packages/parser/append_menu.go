@@ -66,7 +66,7 @@ func (p *AppendMenuParser) Action() error {
 	}
 	log.Debug("value page", p.AppendMenu.Value)
 	menu := &model.Menu{}
-	menu.SetTableName(prefix + "_menu")
+	menu.SetTablePrefix(prefix)
 	err = menu.Get(p.AppendMenu.Name)
 	if err != nil {
 		return p.ErrInfo(err)

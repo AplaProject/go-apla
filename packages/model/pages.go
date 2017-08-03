@@ -9,7 +9,7 @@ type Page struct {
 	RbID       int64  `gorm:"not null"`
 }
 
-func (p *Page) SetTableName(prefix string) {
+func (p *Page) SetTablePrefix(prefix string) {
 	p.tableName = prefix + "_pages"
 }
 

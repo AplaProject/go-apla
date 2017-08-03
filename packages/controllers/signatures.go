@@ -41,7 +41,7 @@ func (c *Controller) Signatures() (string, error) {
 		global = "0"
 	}
 
-	signature := &model.Signatures{}
+	signature := &model.Signature{}
 	rows, err := signature.GetAllOredered(prefix)
 	if err != nil {
 		return "", utils.ErrInfo(err)

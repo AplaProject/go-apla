@@ -59,9 +59,8 @@ func (p *EditTableParser) Validate() error {
 		return p.ErrInfo("incorrect table name")
 	}
 
-	tableName := prefix + `_tables`
-	table := model.Tables{}
-	table.SetTableName(tableName)
+	table := model.Table{}
+	table.SetTablePrefix(prefix)
 	exists, err := table.ExistsByName(p.EditTable.Name)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -97,9 +96,9 @@ func (p *EditTableParser) Action() error {
 
 	tableName := prefix + `_tables`
 	tblname := p.EditTable.Name
-	table := &model.Tables{}
-	table.SetTableName(tableName)
-	err := table.Get([]byte(tableName))
+	table := &model.Table{}
+	table.SetTablePrefix(prefix)
+	err := table.Get(tblname)
 	if err != nil {
 		return err
 	}
@@ -136,7 +135,7 @@ func (p *EditTableParser) Action() error {
 			return err
 		}
 		actions[action] = strings.Replace(actions[action], `"`, `\"`, -1)
-		t := &model.Tables{}
+		t := &model.Table{}
 		_, err = t.SetActionByName(tableName, tblname, action, actions[action], rollback.RbID)
 		if err != nil {
 			return p.ErrInfo(err)

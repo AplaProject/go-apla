@@ -117,8 +117,8 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		return result
 	}
 
-	request := &model.CitizenshipRequests{}
-	request.SetTableName(stateCode)
+	request := &model.CitizenshipRequest{}
+	request.SetTablePrefix(converter.Int64ToStr(stateCode))
 	err = request.GetByWalletOrdered(walletID)
 	if err != nil {
 		result.Error = fmt.Errorf(`unknown request for wallet %d`, walletID).Error()

@@ -1,6 +1,6 @@
 package model
 
-type Signatures struct {
+type Signature struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:255"`
 	Value      string `gorm:not null;type:jsonb(PostgreSQL)`
@@ -8,30 +8,30 @@ type Signatures struct {
 	RbID       int64  `gorm:"not null"`
 }
 
-func (s *Signatures) SetTableName(prefix string) {
+func (s *Signature) SetTablePrefix(prefix string) {
 	s.tableName = prefix + "_signatures"
 }
 
-func (s *Signatures) TableName() string {
+func (s *Signature) TableName() string {
 	return s.tableName
 }
 
-func (s *Signatures) Get(name string) error {
+func (s *Signature) Get(name string) error {
 	return DBConn.Where("name = ?", name).First(s).Error
 }
 
-func (s *Signatures) ExistsByName(name string) (bool, error) {
+func (s *Signature) ExistsByName(name string) (bool, error) {
 	query := DBConn.Where("name = ?", name).First(s)
 	return !query.RecordNotFound(), query.Error
 }
 
-func (s *Signatures) GetAllOredered(prefix string) ([]Signatures, error) {
-	var result []Signatures
+func (s *Signature) GetAllOredered(prefix string) ([]Signature, error) {
+	var result []Signature
 	err := DBConn.Table(prefix + "_signatures").Order("name").Find(result).Error
 	return result, err
 }
 
-func (s *Signatures) ToMap() map[string]string {
+func (s *Signature) ToMap() map[string]string {
 	var result map[string]string
 	result["name"] = s.Name
 	result["value"] = s.Value

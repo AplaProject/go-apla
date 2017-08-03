@@ -1,6 +1,6 @@
 package model
 
-type Citizens struct {
+type Citizen struct {
 	tableName string
 	ID        int64  `gorm:"primary_key;not null"`
 	PublicKey []byte `gorm:"not null;column:publick_key_0"`
@@ -10,34 +10,34 @@ type Citizens struct {
 	Name      string
 }
 
-func (c *Citizens) SetTableName(tablePrefix int64) {
-	c.tableName = string(tablePrefix) + "_citizens"
+func (c *Citizen) SetTablePrefix(tablePrefix string) {
+	c.tableName = tablePrefix + "_citizens"
 }
 
-func (c *Citizens) TableName() string {
+func (c *Citizen) TableName() string {
 	return c.tableName
 }
 
-func (c *Citizens) Create() error {
+func (c *Citizen) Create() error {
 	return DBConn.Create(c).Error
 }
 
-func GetAllCitizensWhereIdMoreThan(tablePrefix int64, id int64, limit int64) ([]Citizens, error) {
-	citizens := new([]Citizens)
-	err := DBConn.Table(string(tablePrefix)+"_citizens").Order("id").Where("id >= ?", id).Limit(limit).Find(citizens).Error
-	if err != nil {
-		return nil, err
-	}
-	return *citizens, nil
-}
-
-func (c *Citizens) IsExists() (bool, error) {
+func (c *Citizen) IsExists() (bool, error) {
 	query := DBConn.Where("id = ?", c.ID).First(c)
 	return !query.RecordNotFound(), query.Error
 }
 
-func (c *Citizens) Get(id int64) error {
+func (c *Citizen) Get(id int64) error {
 	return DBConn.Where("id = ?", id).First(c).Error
+}
+
+func GetAllCitizensWhereIdMoreThan(tablePrefix string, id int64, limit int64) ([]Citizen, error) {
+	citizens := new([]Citizen)
+	err := DBConn.Table(tablePrefix+"_citizens").Order("id").Where("id >= ?", id).Limit(limit).Find(citizens).Error
+	if err != nil {
+		return nil, err
+	}
+	return *citizens, nil
 }
 
 func CreateCitizensStateTable(stateID string) error {

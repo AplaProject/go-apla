@@ -70,8 +70,8 @@ func (p *NewLangParser) Validate() error {
 			return fmt.Errorf(`empty lanuguage resource`)
 		}
 	} else {
-		lang := &model.Languages{}
-		lang.SetTableName(prefix + "_languages")
+		lang := &model.Language{}
+		lang.SetTablePrefix(prefix)
 		if exist, err := lang.IsExistsByName(p.NewLang.Name); err != nil {
 			return p.ErrInfo(err)
 		} else if exist {
@@ -87,8 +87,8 @@ func (p *NewLangParser) Action() error {
 		var list map[string]string
 		json.Unmarshal([]byte(p.NewLang.Trans), &list)
 		for name, res := range list {
-			lang := &model.Languages{}
-			lang.SetTableName(prefix + "_languages")
+			lang := &model.Language{}
+			lang.SetTablePrefix(prefix)
 			if exist, err := lang.IsExistsByName(name); err != nil {
 				return p.ErrInfo(err)
 			} else if !exist {

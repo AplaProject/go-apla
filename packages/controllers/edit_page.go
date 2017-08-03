@@ -72,7 +72,7 @@ func (c *Controller) EditPage() (string, error) {
 	for i := 0; i < 30; i++ {
 		if i == 0 {
 			page := &model.Page{}
-			page.SetTableName(prefix)
+			page.SetTablePrefix(prefix)
 			err = page.Get(name)
 			if err != nil {
 				return "", utils.ErrInfo(err)
@@ -105,7 +105,7 @@ func (c *Controller) EditPage() (string, error) {
 	}
 
 	menu := &model.Menu{}
-	menu.SetTableName(prefix)
+	menu.SetTablePrefix(prefix)
 	err = menu.Get(dataPageMain["menu"])
 	if err != nil {
 		return "", utils.ErrInfo(err)

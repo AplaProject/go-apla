@@ -60,8 +60,8 @@ func (p *NewSignParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	sign := &model.Signatures{}
-	sign.SetTableName(prefix + "_signatures")
+	sign := &model.Signature{}
+	sign.SetTablePrefix(prefix)
 	if exist, err := sign.ExistsByName(p.NewSign.Name); err != nil {
 		return p.ErrInfo(err)
 	} else if exist {

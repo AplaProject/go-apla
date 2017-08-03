@@ -695,8 +695,8 @@ func UpdateContract(p *Parser, name, value, conditions string) (int64, error) {
 		values []interface{}
 	)
 	prefix := converter.Int64ToStr(int64(p.TxStateID))
-	sc := &model.SmartContracts{}
-	sc.SetTableName(prefix + "_smart_contracts")
+	sc := &model.SmartContract{}
+	sc.SetTablePrefix(prefix)
 	err := sc.GetByName(name)
 	if err != nil {
 		return 0, err

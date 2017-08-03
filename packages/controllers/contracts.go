@@ -54,8 +54,8 @@ func (c *Controller) Contracts() (string, error) {
 	}
 	var allStateParameters []string
 	if global == "0" {
-		stateParameters := &model.StateParameters{}
-		list, err := stateParameters.GetAllStateParameters(prefix)
+		stateParameter := &model.StateParameter{}
+		list, err := stateParameter.GetAllStateParameters(prefix)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}

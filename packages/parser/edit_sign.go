@@ -59,8 +59,8 @@ func (p *EditSignParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	sign := &model.Signatures{}
-	sign.SetTableName(prefix + "_signatures")
+	sign := &model.Signature{}
+	sign.SetTablePrefix(prefix)
 	err = sign.Get(p.EditSign.Name)
 	if err != nil {
 		return p.ErrInfo(err)

@@ -80,17 +80,17 @@ func (c *Controller) AjaxSignIn() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	citizen := &model.Citizens{}
+	citizen := &model.Citizen{}
 	log.Debug("wallet_id : %d", walletID)
 	if stateID > 0 {
 		log.Debug("stateId %v", stateID)
-		systemStates := &model.SystemState{}
-		err := systemStates.Get(stateID)
+		systemState := &model.SystemState{}
+		err := systemState.Get(stateID)
 		if err != nil {
 			result.Error = err.Error()
 			return result
 		}
-		citizen.SetTableName(stateID)
+		citizen.SetTablePrefix(converter.Int64ToStr(stateID))
 		err = citizen.Get(stateID)
 		if err != nil {
 			result.Error = err.Error()

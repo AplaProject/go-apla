@@ -51,10 +51,10 @@ func (c *Controller) AjaxNewState() interface{} {
 		wallet    int64
 	)
 	id := converter.StrToInt64(c.r.FormValue("testnet"))
-	testnetEmails := &model.TestnetEmails{ID: id}
-	if err = testnetEmails.Get(id); err != nil {
+	testnetEmail := &model.TestnetEmail{ID: id}
+	if err = testnetEmail.Get(id); err != nil {
 		result.Error = err.Error()
-	} else if testnetEmails.Wallet > 0 || len(testnetEmails.Private) > 0 {
+	} else if testnetEmail.Wallet > 0 || len(testnetEmail.Private) > 0 {
 		result.Error = `duplicate of request`
 	}
 	if len(result.Error) > 0 {
@@ -82,10 +82,10 @@ func (c *Controller) AjaxNewState() interface{} {
 		result.Error = `TestnetKey is absent`
 		return result
 	}
-	testnetEmails.Wallet = wallet
-	testnetEmails.Private = priv
+	testnetEmail.Wallet = wallet
+	testnetEmail.Private = priv
 
-	err = testnetEmails.Save()
+	err = testnetEmail.Save()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -136,7 +136,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	time.Sleep(2500 * time.Millisecond)
 	txType = utils.TypeInt(`NewState`)
 	txTime = time.Now().Unix()
-	forSign = fmt.Sprintf("%d,%d,%d,%s,%s", txType, txTime, wallet, testnetEmails.Country, testnetEmails.Currency)
+	forSign = fmt.Sprintf("%d,%d,%d,%s,%s", txType, txTime, wallet, testnetEmail.Country, testnetEmail.Currency)
 	signature, err = crypto.Sign(spriv, forSign)
 	if err != nil {
 		result.Error = err.Error()
@@ -150,8 +150,8 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, converter.DecToBin(txTime, 4)...)
 	data = append(data, converter.EncodeLengthPlusData(wallet)...)
 	data = append(data, converter.EncodeLengthPlusData(0)...)
-	data = append(data, converter.EncodeLengthPlusData([]byte(testnetEmails.Country))...)
-	data = append(data, converter.EncodeLengthPlusData([]byte(testnetEmails.Currency))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(testnetEmail.Country))...)
+	data = append(data, converter.EncodeLengthPlusData([]byte(testnetEmail.Currency))...)
 	data = append(data, converter.EncodeLengthPlusData(hex.EncodeToString(pub))...)
 	data = append(data, binsign...)
 

@@ -1,6 +1,6 @@
 package model
 
-type TestnetEmails struct {
+type TestnetEmail struct {
 	ID       int64  `gorm:"primary_key;not null"`
 	Email    string `gorm:"not null;size:128"`
 	Country  string `gorm:"not null;size:128"`
@@ -12,10 +12,14 @@ type TestnetEmails struct {
 	Validate int32  `gorm:"not null"`
 }
 
-func (te *TestnetEmails) Get(ID int64) error {
+func (TestnetEmail) TableName() string {
+	return "testnet_emails"
+}
+
+func (te *TestnetEmail) Get(ID int64) error {
 	return DBConn.Where("id = ?").First(te).Error
 }
 
-func (te *TestnetEmails) Save() error {
+func (te *TestnetEmail) Save() error {
 	return DBConn.Save(te).Error
 }

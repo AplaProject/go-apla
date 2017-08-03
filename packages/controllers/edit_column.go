@@ -62,7 +62,7 @@ func (c *Controller) EditColumn() (string, error) {
 		return "", utils.ErrInfo("incorrect table name")
 	}
 
-	t := &model.Tables{}
+	t := &model.Table{}
 	columns, err := t.GetColumnsAndPermissions(prefix, tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)

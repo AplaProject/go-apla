@@ -7,7 +7,7 @@ type App struct {
 	Blocks    string `gorm:"not null"`
 }
 
-func (a *App) SetTableName(tablePrefix string) {
+func (a *App) SetTablePrefix(tablePrefix string) {
 	a.tableName = tablePrefix + "_apps"
 }
 

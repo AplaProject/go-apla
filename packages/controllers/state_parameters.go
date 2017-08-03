@@ -39,7 +39,7 @@ func (c *Controller) StateParameters() (string, error) {
 	txType := "StateParameters"
 	timeNow := time.Now().Unix()
 
-	stateParams := &model.StateParameters{}
+	stateParams := &model.StateParameter{}
 	rows, err := stateParams.GetAllStateParameters(c.StateIDStr)
 	if err != nil {
 		return "", utils.ErrInfo(err)

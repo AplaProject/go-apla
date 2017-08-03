@@ -75,7 +75,7 @@ func (c *Controller) Menu() (string, error) {
 		updver, stateName, stateFlag string
 		isMain                       bool
 	)
-	citizen := &model.Citizens{}
+	citizen := &model.Citizen{}
 	menu := &model.Menu{}
 	if strings.HasPrefix(c.r.Host, `localhost`) {
 		updinfo, err := utils.GetUpdVerAndURL(consts.UPD_AND_VER_URL)
@@ -91,7 +91,7 @@ func (c *Controller) Menu() (string, error) {
 		params[`state_id`] = c.StateIDStr
 		params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
 
-		menu.SetTableName(c.StateIDStr)
+		menu.SetTablePrefix(c.StateIDStr)
 		err = menu.Get("main_menu")
 		if err != nil {
 			err = menu.Get("menu_default")
@@ -102,22 +102,22 @@ func (c *Controller) Menu() (string, error) {
 			isMain = true
 		}
 
-		stateParameters := &model.StateParameters{}
-		stateParameters.SetTableName(c.StateID)
-		err := stateParameters.GetByName("state_name")
+		stateParameter := &model.StateParameter{}
+		stateParameter.SetTablePrefix(c.StateIDStr)
+		err := stateParameter.GetByName("state_name")
 		if err != nil {
 			return "", err
 		}
-		stateName = stateParameters.Value
+		stateName = stateParameter.Value
 
-		err = stateParameters.GetByName("state_flag")
+		err = stateParameter.GetByName("state_flag")
 		if err != nil {
 			return "", err
 		}
-		stateFlag = stateParameters.Value
+		stateFlag = stateParameter.Value
 
-		citizen := &model.Citizens{}
-		citizen.SetTableName(c.StateID)
+		citizen := &model.Citizen{}
+		citizen.SetTablePrefix(c.StateIDStr)
 		err = citizen.Get(c.SessCitizenID)
 		if err != nil {
 			log.Error("%v", err)

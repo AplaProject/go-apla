@@ -55,21 +55,21 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		result.Error = `Count must be from 1 to 50`
 		return result
 	}
-	stateParameters := &model.StateParameters{}
-	stateParameters.SetTableName(c.SessStateID)
-	err = stateParameters.GetByName("gov_account")
+	stateParameter := &model.StateParameter{}
+	stateParameter.SetTablePrefix(converter.Int64ToStr(c.SessStateID))
+	err = stateParameter.GetByName("gov_account")
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	govAccount := stateParameters.Value
+	govAccount := stateParameter.Value
 
 	if c.SessCitizenID != converter.StrToInt64(govAccount) || len(govAccount) == 0 {
 		result.Error = `Access denied`
 		return result
 	}
 
-	testnetKey := &model.TestnetKeys{}
+	testnetKey := &model.TestnetKey{}
 	err = testnetKey.GetByWallet(c.SessCitizenID)
 	if err != nil {
 		result.Error = err.Error()

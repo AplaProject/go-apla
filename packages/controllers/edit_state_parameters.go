@@ -19,6 +19,7 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -46,16 +47,16 @@ func (c *Controller) EditStateParameters() (string, error) {
 
 	name := c.r.FormValue(`name`)
 
-	stateParameters := &model.StateParameters{}
-	stateParameters.SetTableName(c.StateID)
-	err = stateParameters.GetByName(name)
+	stateParameter := &model.StateParameter{}
+	stateParameter.SetTablePrefix(converter.Int64ToStr(c.StateID))
+	err = stateParameter.GetByName(name)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 
-	sParameters := stateParameters.ToMap()
+	sParameters := stateParameter.ToMap()
 
-	allParameters, err := stateParameters.GetAllStateParameters(c.StateIDStr)
+	allParameters, err := stateParameter.GetAllStateParameters(c.StateIDStr)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

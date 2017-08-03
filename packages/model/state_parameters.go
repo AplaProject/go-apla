@@ -1,6 +1,6 @@
 package model
 
-type StateParameters struct {
+type StateParameter struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:100"`
 	Value      string `gorm:"not null"`
@@ -9,29 +9,39 @@ type StateParameters struct {
 	RbID       int64  `gorm:"not null"`
 }
 
-func (sp *StateParameters) TableName() string {
+func (sp *StateParameter) TableName() string {
 	return sp.tableName
 }
 
-func (sp *StateParameters) SetTableName(tablePrefix int64) {
-	sp.tableName = string(tablePrefix) + "_state_parameters"
+func (sp *StateParameter) SetTablePrefix(tablePrefix string) {
+	sp.tableName = tablePrefix + "_state_parameters"
 }
 
-func (sp *StateParameters) GetByName(name string) error {
+func (sp *StateParameter) GetByName(name string) error {
 	return DBConn.Where("name = ?", name).First(sp).Error
 }
 
-func (sp *StateParameters) GetByParameter(parameter string) error {
+func (sp *StateParameter) GetByParameter(parameter string) error {
 	return DBConn.Where("parameter = ?", parameter).First(sp).Error
 }
 
-func (sp *StateParameters) GetAllStateParameters(tablePrefix string) ([]StateParameters, error) {
-	parameters := new([]StateParameters)
-	err := DBConn.Table(string(tablePrefix) + "_state_parameters").Find(parameters).Error
+func (sp *StateParameter) GetAllStateParameters(tablePrefix string) ([]StateParameter, error) {
+	parameters := new([]StateParameter)
+	err := DBConn.Table(tablePrefix + "_state_parameters").Find(parameters).Error
 	if err != nil {
 		return nil, err
 	}
 	return *parameters, nil
+}
+
+func (sp *StateParameter) ToMap() map[string]string {
+	result := make(map[string]string, 0)
+	result["name"] = sp.Name
+	result["value"] = sp.Value
+	result["byte_code"] = string(sp.ByteCode)
+	result["conditions"] = sp.Conditions
+	result["rb_id"] = string(sp.RbID)
+	return result
 }
 
 func CreateStateTable(stateID string) error {
@@ -86,16 +96,6 @@ func CreateStateConditions(stateID string, sid string, psid string, currency str
 		"state_flag", "", "", psid,
 		"state_coords", ``, "", psid,
 		"citizenship_price", "1000000", "", psid).Error
-}
-
-func (sp *StateParameters) ToMap() map[string]string {
-	result := make(map[string]string, 0)
-	result["name"] = sp.Name
-	result["value"] = sp.Value
-	result["byte_code"] = string(sp.ByteCode)
-	result["conditions"] = sp.Conditions
-	result["rb_id"] = string(sp.RbID)
-	return result
 }
 
 func CreateStateAnonymsTable(stateID string) error {

@@ -17,7 +17,6 @@
 package controllers
 
 import (
-	//	"fmt"
 	"strconv"
 	"strings"
 
@@ -48,11 +47,11 @@ func (c *Controller) AjaxAddresses() interface{} {
 	walletAddress := strings.Replace(c.r.FormValue(`address`), `-`, ``, -1)
 	state := c.r.FormValue(`state`)
 	startCitizenID, _ := strconv.ParseInt(walletAddress+strings.Repeat(`0`, 20-len(walletAddress)), 10, 64)
-	var citizens []model.Citizens
+	var citizens []model.Citizen
 	var dltWallets []model.DltWallet
 
 	if len(state) == 0 {
-		citizens, err = model.GetAllCitizensWhereIdMoreThan(c.SessStateID, startCitizenID, 7)
+		citizens, err = model.GetAllCitizensWhereIdMoreThan(converter.Int64ToStr(c.SessStateID), startCitizenID, 7)
 		if err != nil {
 			result.Error = err.Error()
 		} else {
@@ -74,7 +73,7 @@ func (c *Controller) AjaxAddresses() interface{} {
 		if err != nil {
 			result.Error = err.Error()
 		}
-		citizens, err = model.GetAllCitizensWhereIdMoreThan(tablePrefix, startCitizenID, 7)
+		citizens, err = model.GetAllCitizensWhereIdMoreThan(converter.Int64ToStr(tablePrefix), startCitizenID, 7)
 		if err != nil {
 			result.Error = err.Error()
 		} else {

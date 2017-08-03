@@ -68,7 +68,7 @@ func (c *Controller) EditLanguage() (string, error) {
 	list := make([]LangRes, 0)
 	if len(name) > 0 {
 		language := &model.Language{}
-		language.SetTableName(prefix)
+		language.SetTablePrefix(prefix)
 		err := language.Get(name)
 		if err != nil {
 			return "", err

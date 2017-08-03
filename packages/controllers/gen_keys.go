@@ -44,12 +44,12 @@ func (c *Controller) GenKeys() (string, error) {
 	if c.SessCitizenID != converter.StrToInt64(govAccount) {
 		return ``, fmt.Errorf(`Access denied`)
 	}
-	testnetKeys := &model.TestnetKeys{}
-	generated, err := testnetKeys.GetGeneratedCount(c.SessCitizenID, c.SessStateID)
+	testnetKey := &model.TestnetKey{}
+	generated, err := testnetKey.GetGeneratedCount(c.SessCitizenID, c.SessStateID)
 	if err != nil {
 		return ``, err
 	}
-	available, err := testnetKeys.GetAvailableCount(c.SessCitizenID, c.SessStateID)
+	available, err := testnetKey.GetAvailableCount(c.SessCitizenID, c.SessStateID)
 	if err != nil {
 		return ``, err
 	}

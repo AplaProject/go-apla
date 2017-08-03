@@ -63,8 +63,8 @@ func (p *EditContractParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	sc := &model.SmartContracts{}
-	sc.SetTableName(prefix + "_smart_contracts")
+	sc := &model.SmartContract{}
+	sc.SetTablePrefix(prefix)
 	err = sc.GetByID(converter.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)
@@ -89,8 +89,8 @@ func (p *EditContractParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	sc := &model.SmartContracts{}
-	sc.SetTableName(prefix + "_smart_contracts")
+	sc := &model.SmartContract{}
+	sc.SetTablePrefix(prefix)
 	err = sc.GetByID(converter.StrToInt64(p.EditContract.Id))
 	if err != nil {
 		return p.ErrInfo(err)

@@ -51,8 +51,8 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if len(c.r.FormValue(`last_id`)) > 0 {
 		lastID = converter.StrToInt64(c.r.FormValue(`last_id`))
 	}
-	request := &model.CitizenshipRequests{}
-	request.SetTableName(c.StateID)
+	request := &model.CitizenshipRequest{}
+	request.SetTablePrefix(converter.Int64ToStr(c.StateID))
 	err = request.GetUnapproved(lastID)
 	if err != nil {
 		return ``, err

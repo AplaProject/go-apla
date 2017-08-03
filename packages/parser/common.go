@@ -99,9 +99,9 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
 		if off := strings.IndexByte(table, '_'); off > 0 {
 			prefix := table[:off]
-			tables := &model.Tables{}
-			tables.SetTableName(prefix + "_tables")
-			err := tables.Get([]byte(table))
+			tables := &model.Table{}
+			tables.SetTablePrefix(prefix)
+			err := tables.Get(table)
 			if err != nil {
 				return false, err
 			}
@@ -119,8 +119,8 @@ func IsState(country string) (int64, error) {
 		return 0, err
 	}
 	for _, id := range ids {
-		sp := &model.StateParameters{}
-		sp.SetTableName(id)
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(converter.Int64ToStr(id))
 		err = sp.GetByName("state_name")
 		if err != nil {
 			return 0, err
@@ -511,8 +511,8 @@ func (p *Parser) BlockError(err error) {
 
 // AccessRights checks the access right by executing the condition value
 func (p *Parser) AccessRights(condition string, iscondition bool) error {
-	sp := &model.StateParameters{}
-	sp.SetTableName(int64(p.TxStateID))
+	sp := &model.StateParameter{}
+	sp.SetTablePrefix(p.TxStateIDStr)
 	err := sp.GetByName(condition)
 	if err != nil {
 		return err
@@ -554,8 +554,8 @@ func (p *Parser) AccessTable(table, action string) error {
 		return nil
 	}*/
 
-	tables := &model.Tables{}
-	tables.SetTableName(prefix + "_tables")
+	tables := &model.Table{}
+	tables.SetTablePrefix(prefix)
 	tablePermission, err := tables.GetPermissions(table, "")
 	if err != nil {
 		return err
@@ -580,8 +580,8 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
-	tables := &model.Tables{}
-	tables.SetTableName(prefix + "_tables")
+	tables := &model.Table{}
+	tables.SetTablePrefix(prefix)
 	columnsAndPermissions, err := tables.GetPermissions(table, "update")
 	if err != nil {
 		return err

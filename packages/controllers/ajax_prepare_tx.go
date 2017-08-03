@@ -70,8 +70,8 @@ func (c *Controller) checkTx(result *PrepareTxJSON) (contract *smart.Contract, e
 						pref = `global`
 					}
 					var value string
-					signature := &model.Signatures{}
-					signature.SetTableName(pref)
+					signature := &model.Signature{}
+					signature.SetTablePrefix(pref)
 					err := signature.Get(ret[1])
 					if err != nil {
 						break

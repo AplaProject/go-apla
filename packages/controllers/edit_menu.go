@@ -58,7 +58,7 @@ func (c *Controller) EditMenu() (string, error) {
 	}
 
 	menu := &model.Menu{}
-	menu.SetTableName(prefix)
+	menu.SetTablePrefix(prefix)
 	err = menu.Get(name)
 	if err != nil {
 		return "", utils.ErrInfo(err)

@@ -16,8 +16,12 @@
 
 package controllers
 
-import "github.com/EGaaS/go-egaas-mvp/packages/model"
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
+)
 
 const aCitizenFields = `ajax_citizen_fields`
 
@@ -44,8 +48,8 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 	stateID := int64(1) // utils.StrToInt64(c.r.FormValue(`state_id`))
 	//	_, err = c.GetStateName(stateId)
 	//	if err == nil {
-	request := &model.CitizenshipRequests{}
-	request.SetTableName(stateID)
+	request := &model.CitizenshipRequest{}
+	request.SetTablePrefix(converter.Int64ToStr(stateID))
 	err = request.GetByWallet(c.SessWalletID)
 	if err == nil {
 		if request.ID > 0 {
@@ -56,11 +60,11 @@ func (c *Controller) AjaxCitizenFields() interface{} {
 {"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
 {"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
 ]`, nil
-			stateParameters := &model.StateParameters{}
-			stateParameters.SetTableName(stateID)
-			err = stateParameters.GetByName("citizenship_price")
+			stateParameter := &model.StateParameter{}
+			stateParameter.SetTablePrefix(converter.Int64ToStr(stateID))
+			err = stateParameter.GetByName("citizenship_price")
 			if err == nil {
-				price, err := strconv.ParseInt(stateParameters.Value, 10, 64)
+				price, err := strconv.ParseInt(stateParameter.Value, 10, 64)
 				if err != nil {
 					result.Error = err.Error()
 				} else {

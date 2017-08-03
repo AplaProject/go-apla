@@ -129,7 +129,7 @@ func (p *NewColumnParser) Action() error {
 	if err != nil {
 		return err
 	}
-	tableM := &model.Tables{}
+	tableM := &model.Table{}
 	_, err = tableM.SetActionByName(table, p.NewColumn.TableName, "update, "+p.NewColumn.ColumnName, `"`+converter.EscapeForJSON(p.NewColumn.Permissions)+`"`, rb.RbID)
 	if err != nil {
 		return p.ErrInfo(err)

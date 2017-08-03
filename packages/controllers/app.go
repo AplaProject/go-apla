@@ -90,7 +90,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 			table = fmt.Sprintf(`"%d"`, GetSessInt64("state_id", sess))
 		}
 		app := &model.App{}
-		app.SetTableName(table)
+		app.SetTablePrefix(table)
 		err := app.Get(page)
 		if err != nil {
 			out = err.Error()

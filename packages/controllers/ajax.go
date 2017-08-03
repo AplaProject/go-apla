@@ -82,13 +82,13 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debug("sessStateID", sessStateID)
 	if sessStateID > 0 {
-		stateParameters := &model.StateParameters{}
-		stateParameters.SetTableName(sessStateID)
-		err := stateParameters.GetByName("state_name")
+		stateParameter := &model.StateParameter{}
+		stateParameter.SetTablePrefix(converter.Int64ToStr(sessStateID))
+		err := stateParameter.GetByName("state_name")
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.StateName = stateParameters.Value
+		c.StateName = stateParameter.Value
 		c.StateID = sessStateID
 		c.StateIDStr = converter.Int64ToStr(sessStateID)
 	}

@@ -19,22 +19,22 @@ package controllers
 import (
 	"encoding/json"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // AjaxStatesList returns the list of states
 func (c *Controller) AjaxStatesList() (string, error) {
-
 	result := make([]map[string]string, 0)
 	statesList, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return ``, err
 	}
-	stateParameters := &model.StateParameters{}
+	stateParameter := &model.StateParameter{}
 	query := func(id int64, name string) (string, error) {
-		stateParameters.SetTableName(id)
-		err = stateParameters.GetByName(name)
-		return stateParameters.Value, err
+		stateParameter.SetTablePrefix(converter.Int64ToStr(id))
+		err = stateParameter.GetByName(name)
+		return stateParameter.Value, err
 	}
 	for _, id := range statesList {
 		if !c.IsNodeState(id, c.r.Host) {
@@ -58,7 +58,6 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		iresult["state_flag"] = stateFlag
 		iresult["state_coords"] = stateCoords
 		result = append(result, iresult)
-
 	}
 	jsondata, err := json.Marshal(result)
 	if err != nil {

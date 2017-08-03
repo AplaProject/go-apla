@@ -98,7 +98,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	sc := &model.SmartContracts{
+	sc := &model.SmartContract{
 		Name: "Main condition",
 		Value: []byte(`contract MainCondition {
 			data {}
@@ -112,13 +112,13 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		}`),
 		WalletID: p.TxWalletID,
 		Active:   "1"}
-	sc.SetTableName(id + "_smart_contracts")
+	sc.SetTablePrefix(id)
 	err = sc.Create()
 	if err != nil {
 		return
 	}
-	scu := &model.SmartContracts{}
-	scu.SetTableName(id + "_smart_contracts")
+	scu := &model.SmartContract{}
+	scu.SetTablePrefix(id)
 	err = scu.UpdateConditions(sid)
 	if err != nil {
 		return
@@ -128,12 +128,12 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	if err != nil {
 		return
 	}
-	t := &model.Tables{
+	t := &model.Table{
 		Name: id + "citizens",
 		ColumnsAndPermissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
 		Conditions:            psid,
 	}
-	t.SetTableName(id + "_tables")
+	t.SetTablePrefix(id)
 	err = t.Create()
 	if err != nil {
 		return
@@ -203,7 +203,7 @@ PageEnd:
 		Menu:       "menu_default",
 		Conditions: sid,
 	}
-	firstPage.SetTableName(id + "_page")
+	firstPage.SetTablePrefix(id)
 	err = firstPage.Create()
 	if err != nil {
 		return
@@ -214,7 +214,7 @@ PageEnd:
 		Menu:       "government",
 		Conditions: sid,
 	}
-	secondPage.SetTableName(id + "_page")
+	secondPage.SetTablePrefix(id)
 	err = secondPage.Create()
 	if err != nil {
 		return
@@ -230,7 +230,7 @@ PageEnd:
  MenuItem(Government dashboard, government)`,
 		Conditions: sid,
 	}
-	firstMenu.SetTableName(id + "_menu")
+	firstMenu.SetTablePrefix(id)
 	err = firstMenu.Create()
 	if err != nil {
 		return
@@ -253,7 +253,7 @@ MenuEnd:
 MenuBack(Welcome)`,
 		Conditions: sid,
 	}
-	secondMenu.SetTableName(id + "_menu")
+	secondMenu.SetTablePrefix(id)
 	err = secondMenu.Create()
 	if err != nil {
 		return
@@ -270,8 +270,8 @@ MenuBack(Welcome)`,
 		return
 	}
 
-	citizen := &model.Citizens{ID: p.TxWalletID, PublicKey: converter.BinToHex(dltWallet.PublicKey)}
-	citizen.SetTableName(converter.StrToInt64(id))
+	citizen := &model.Citizen{ID: p.TxWalletID, PublicKey: converter.BinToHex(dltWallet.PublicKey)}
+	citizen.SetTablePrefix(id)
 	err = citizen.Create()
 	if err != nil {
 		return

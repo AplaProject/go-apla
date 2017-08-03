@@ -56,8 +56,8 @@ func (c *Controller) AjaxSmartFields() interface{} {
 		return result
 	}
 
-	citizen := &model.Citizens{ID: c.SessWalletID}
-	citizen.SetTableName(stateID)
+	citizen := &model.Citizen{ID: c.SessWalletID}
+	citizen.SetTablePrefix(stateStr)
 	if exist, err := citizen.IsExists(); err != nil {
 		result.Error = err.Error()
 		return result
@@ -66,8 +66,8 @@ func (c *Controller) AjaxSmartFields() interface{} {
 		return result
 	}
 
-	request := &model.CitizenshipRequests{}
-	request.SetTableName(stateID)
+	request := &model.CitizenshipRequest{}
+	request.SetTablePrefix(stateStr)
 	err = request.GetByWalletOrdered(c.SessWalletID)
 	if err == nil {
 		if request.ID > 0 {
@@ -99,14 +99,14 @@ func (c *Controller) AjaxSmartFields() interface{} {
 				result.Fields = fmt.Sprintf(`[%s]`, strings.Join(fields, `,`))
 
 				if err == nil {
-					stateParameters := &model.StateParameters{}
-					stateParameters.SetTableName(stateID)
-					err := stateParameters.GetByName("citizenship_price")
+					stateParameter := &model.StateParameter{}
+					stateParameter.SetTablePrefix(stateStr)
+					err := stateParameter.GetByName("citizenship_price")
 					if err == nil {
-						result.Price, _ = strconv.ParseInt(stateParameters.Value, 10, 64)
+						result.Price, _ = strconv.ParseInt(stateParameter.Value, 10, 64)
 						dltWallet := &model.DltWallet{}
 						err = dltWallet.GetWallet(c.SessWalletID)
-						dPrice, _ := decimal.NewFromString(stateParameters.Value)
+						dPrice, _ := decimal.NewFromString(stateParameter.Value)
 						result.Valid = (err == nil && dltWallet.Amount.Cmp(dPrice) >= 0)
 					}
 				}

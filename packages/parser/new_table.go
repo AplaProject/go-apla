@@ -95,18 +95,16 @@ func (p *NewTableParser) Validate() error {
 	}
 
 	prefix := converter.Int64ToStr(p.NewTable.Header.StateID)
-	table := prefix + `_tables`
 	global, err := strconv.Atoi(p.NewTable.Global)
 	if err != nil {
 		return fmt.Errorf("Global is not int")
 	}
 	if global == 1 {
-		table = `global_tables`
 		prefix = `global`
 	}
 
-	t := &model.Tables{}
-	t.SetTableName(table)
+	t := &model.Table{}
+	t.SetTablePrefix(prefix)
 	exists, err := t.ExistsByName(prefix + "_" + p.NewTable.Name)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -176,11 +174,11 @@ func (p *NewTableParser) Action() error {
 		return p.ErrInfo(err)
 	}
 
-	t := &model.Tables{
+	t := &model.Table{
 		Name: tableName,
 		ColumnsAndPermissions: `{"general_update":"ContractConditions(\"MainCondition\")", "update": {` + colsSQL2 + `}, "insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`,
 	}
-	t.SetTableName(prefix + "_tables")
+	t.SetTablePrefix(prefix)
 	err = t.Create()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -200,7 +198,7 @@ func (p *NewTableParser) Rollback() error {
 	}
 	tableName := prefix + "_" + p.NewTable.Name
 	err = model.DBConn.DropTable(tableName).Error
-	t := &model.Tables{Name: tableName}
+	t := &model.Table{Name: tableName}
 	err = t.Delete()
 	if err != nil {
 		return p.ErrInfo(err)

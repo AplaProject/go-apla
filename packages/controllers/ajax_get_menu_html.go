@@ -38,14 +38,13 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	page := &model.Page{}
 	menu := &model.Menu{}
 	if len(prefix) > 0 {
-
-		page.SetTableName(prefix)
+		page.SetTablePrefix(prefix)
 		err = page.Get(pageName)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
 
-		menu.SetTableName(prefix)
+		menu.SetTablePrefix(prefix)
 		err = menu.Get(page.Menu)
 		if err != nil {
 			return "", utils.ErrInfo(err)

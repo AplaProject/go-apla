@@ -1,6 +1,6 @@
 package model
 
-type SmartContracts struct {
+type SmartContract struct {
 	tableName  string
 	ID         int64  `gorm:"primary_key;not null"`
 	Name       string `gorm:"not null;size:100"`
@@ -12,47 +12,60 @@ type SmartContracts struct {
 	RbID       int64  `gorm:"not null"`
 }
 
-func (sc *SmartContracts) SetTableName(newName string) {
-	sc.tableName = newName
+func (sc *SmartContract) SetTablePrefix(tablePrefix string) {
+	sc.tableName = tablePrefix + "_smart_contracts"
 }
 
-func (sc *SmartContracts) TableName() string {
+func (sc *SmartContract) TableName() string {
 	return sc.tableName
 }
 
-func GetAllSmartContracts(tablePrefix string) ([]SmartContracts, error) {
-	contracts := new([]SmartContracts)
+func (sc *SmartContract) Create() error {
+	return DBConn.Create(sc).Error
+}
+
+func (sc *SmartContract) GetByID(contractID int64) error {
+	return DBConn.Where("id = ?", contractID).Find(sc).Error
+}
+
+func (sc *SmartContract) ExistsByID(contractID int64) (bool, error) {
+	query := DBConn.Where("id = ?", contractID).First(sc)
+	return !query.RecordNotFound(), query.Error
+}
+
+func (sc *SmartContract) ExistsByName(name string) (bool, error) {
+	query := DBConn.Where("name = ?", name).First(sc)
+	return !query.RecordNotFound(), query.Error
+}
+
+func (sc *SmartContract) GetByName(contractName string) error {
+	return DBConn.Where("name = ?", contractName).Find(sc).Error
+}
+
+func (sc *SmartContract) UpdateConditions(conditions string) error {
+	return DBConn.Model(sc).Update("conditions", conditions).Error
+}
+
+func (sc *SmartContract) ToMap() map[string]string {
+	result := make(map[string]string)
+	result["id"] = string(sc.ID)
+	result["name"] = sc.Name
+	result["value"] = string(sc.Value)
+	result["wallet_id"] = string(sc.WalletID)
+	result["active"] = sc.Active
+	result["conditions"] = sc.Conditions
+	result["variables"] = string(sc.Variables)
+	result["rb_id"] = string(sc.RbID)
+	return result
+}
+
+func GetAllSmartContracts(tablePrefix string) ([]SmartContract, error) {
+	contracts := new([]SmartContract)
 	err := DBConn.Order("id").Table(tablePrefix + "_smart_contracts").Find(contracts).Error
 	if err != nil {
 		return nil, err
 	}
 	return *contracts, nil
-}
-
-func (sc *SmartContracts) Create() error {
-	return DBConn.Create(sc).Error
-}
-
-func (sc *SmartContracts) GetByID(contractID int64) error {
-	return DBConn.Where("id = ?", contractID).Find(sc).Error
-}
-
-func (sc *SmartContracts) ExistsByID(contractID int64) (bool, error) {
-	query := DBConn.Where("id = ?", contractID).First(sc)
-	return !query.RecordNotFound(), query.Error
-}
-
-func (sc *SmartContracts) ExistsByName(name string) (bool, error) {
-	query := DBConn.Where("name = ?", name).First(sc)
-	return !query.RecordNotFound(), query.Error
-}
-
-func (sc *SmartContracts) GetByName(contractName string) error {
-	return DBConn.Where("name = ?", contractName).Find(sc).Error
-}
-
-func (sc *SmartContracts) UpdateConditions(conditions string) error {
-	return DBConn.Model(sc).Update("conditions", conditions).Error
 }
 
 func CreateSmartContractTable(id string) error {
@@ -87,17 +100,4 @@ func CreateSmartContractMainCondition(id string, walletID int64) error {
             action {}
     }`, walletID, 1,
 	).Error
-}
-
-func (sc *SmartContracts) ToMap() map[string]string {
-	result := make(map[string]string)
-	result["id"] = string(sc.ID)
-	result["name"] = sc.Name
-	result["value"] = string(sc.Value)
-	result["wallet_id"] = string(sc.WalletID)
-	result["active"] = sc.Active
-	result["conditions"] = sc.Conditions
-	result["variables"] = string(sc.Variables)
-	result["rb_id"] = string(sc.RbID)
-	return result
 }

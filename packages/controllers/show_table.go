@@ -22,8 +22,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	//"encoding/json"
-	//"fmt"
 )
 
 type showTablePage struct {
@@ -58,7 +56,7 @@ func (c *Controller) ShowTable() (string, error) {
 	} else {
 		global = "0"
 	}
-	t := &model.Tables{}
+	t := &model.Table{}
 	columns, err := t.GetColumnsAndPermissions(prefix, tableName)
 	if err != nil {
 		return "", utils.ErrInfo(err)

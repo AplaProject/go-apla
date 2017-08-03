@@ -1,6 +1,6 @@
 package model
 
-type CitizenshipRequests struct {
+type CitizenshipRequest struct {
 	tableName   string
 	ID          int64  `gorm:"primary_key;not null"`
 	PublickKey  []byte `gorm:"column:public_key_0"`
@@ -11,27 +11,27 @@ type CitizenshipRequests struct {
 	RbID        int64 `gorm:"not null"`
 }
 
-func (cr *CitizenshipRequests) SetTableName(tablePrefix int64) {
-	cr.tableName = string(tablePrefix) + "_citizenship_requests"
+func (cr *CitizenshipRequest) SetTablePrefix(tablePrefix string) {
+	cr.tableName = tablePrefix + "_citizenship_requests"
 }
 
-func (cr *CitizenshipRequests) TableName() string {
+func (cr *CitizenshipRequest) TableName() string {
 	return cr.tableName
 }
 
-func (cr *CitizenshipRequests) GetByWallet(walletID int64) error {
+func (cr *CitizenshipRequest) GetByWallet(walletID int64) error {
 	return DBConn.Where("dlt_wallet_id = ?", walletID).Find(cr).Error
 }
 
-func (cr *CitizenshipRequests) GetByWalletOrdered(walletID int64) error {
+func (cr *CitizenshipRequest) GetByWalletOrdered(walletID int64) error {
 	return DBConn.Order("id desc").Where("dlt_wallet_id = ?", walletID).Find(cr).Error
 }
 
-func (cr *CitizenshipRequests) GetUnapproved(startID int64) error {
+func (cr *CitizenshipRequest) GetUnapproved(startID int64) error {
 	return DBConn.Order("id desc").Where("approved = 0 and id > ", startID).First(cr).Error
 }
 
-func (cr *CitizenshipRequests) ToStringMap() map[string]string {
+func (cr *CitizenshipRequest) ToStringMap() map[string]string {
 	result := make(map[string]string)
 	result["id"] = string(cr.ID)
 	result["public_key"] = string(cr.PublickKey)
