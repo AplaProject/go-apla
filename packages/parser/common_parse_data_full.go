@@ -25,6 +25,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/shopspring/decimal"
 )
 
@@ -166,7 +167,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
 				// to prevent the possibility when 1 user can send a 10-gigabyte dos-block which will fill with his own transactions
-				if txCounter[userID] > consts.MAX_BLOCK_USER_TXS {
+				if txCounter[userID] > sql.SysInt64(sql.MaxBlockUserTx) {
 					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
 						log.Error("error: %v", err0)

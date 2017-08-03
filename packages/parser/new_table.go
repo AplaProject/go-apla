@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -71,8 +71,8 @@ func (p *NewTableParser) Validate() error {
 	if len(cols) == 0 {
 		return p.ErrInfo(`len(cols) == 0`)
 	}
-	if len(cols) > consts.MAX_COLUMNS {
-		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
+	if len(cols) > sql.SysInt(sql.MaxColumns) {
+		return fmt.Errorf(`Too many columns. Limit is %d`, sql.SysInt(sql.MaxColumns))
 	}
 	var indexes int
 	for _, data := range cols {
@@ -89,8 +89,8 @@ func (p *NewTableParser) Validate() error {
 			indexes++
 		}
 	}
-	if indexes > consts.MAX_INDEXES {
-		return fmt.Errorf(`Too many indexes. Limit is %d`, consts.MAX_INDEXES)
+	if indexes > sql.SysInt(sql.MaxIndexes) {
+		return fmt.Errorf(`Too many indexes. Limit is %d`, sql.SysInt(sql.MaxIndexes))
 	}
 
 	prefix := converter.Int64ToStr(p.NewTable.Header.StateID)

@@ -22,6 +22,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -54,8 +55,8 @@ func (p *RestoreAccessParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	if p.TxWalletID != consts.RECOVERY_ADDRESS {
-		return p.ErrInfo("p.TxWalletID != consts.RECOVERY_ADDRESS")
+	if p.TxWalletID != sql.SysInt64(sql.RecoveryAddress) {
+		return p.ErrInfo("p.TxWalletID != sql.RecoveryAddress")
 	}
 
 	data, err := p.OneRow("SELECT * FROM system_restore_access WHERE state_id  =  ?", p.RestoreAccess.StateID).Int64()

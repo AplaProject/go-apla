@@ -23,9 +23,9 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 var (
@@ -57,7 +57,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		}
 		blockURL = nodeConfig["first_load_blockchain_url"]
 		if len(blockURL) == 0 {
-			blockURL = consts.BLOCKCHAIN_URL
+			blockURL = sql.SysString(sql.BlockchainURL)
 		}
 		resp, err := http.Get(blockURL)
 		if err != nil {

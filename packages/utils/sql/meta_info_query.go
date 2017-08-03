@@ -115,8 +115,25 @@ func (db *DCDB) NumIndexes(tblname string) (int, error) {
 	return int(indexes - 1), nil
 }
 
+// IsSystemTable checks if the table is a system table
+func IsSystemTable(table string) bool {
+	var sys = map[string]bool{
+		`dlt_transactions`:       true,
+		`dlt_wallets`:            true,
+		`global_apps`:            true,
+		`global_menu`:            true,
+		`global_pages`:           true,
+		`global_signatures`:      true,
+		`global_smart_contracts`: true,
+	}
+	return sys[table]
+}
+
 // IsCustomTable checks if the table is created by the users
-func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
+func (db *DCDB) IsCustomTable(table string) (isCustom bool, pref string, err error) {
+	if IsSystemTable(table) {
+		return false, `global`, nil
+	}
 	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
 		if off := strings.IndexByte(table, '_'); off > 0 {
 			prefix := table[:off]
@@ -125,6 +142,10 @@ func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
 			}
 		}
 	}
+	if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
+		return false, `notcustom`, fmt.Errorf(table + ` is not a custom table`)
+	}
+	pref = table[:strings.IndexByte(table, '_')]
 	return
 }
 

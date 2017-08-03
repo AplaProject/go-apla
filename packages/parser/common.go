@@ -23,10 +23,8 @@ import (
 	"os"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
@@ -527,17 +525,10 @@ func (p *Parser) AccessTable(table, action string) error {
 		return nil
 	}
 
-	if isCustom, err := p.IsCustomTable(table); err != nil {
-		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать
-		// table != ... is left for compatibility temporarily. Remove new_state after rebuilding.
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
-		return fmt.Errorf(table + ` is not a custom table`)
+	_, prefix, err := p.IsCustomTable(table)
+	if err != nil {
+		return err
 	}
-	prefix := table[:strings.IndexByte(table, '_')]
-
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
 
 	tablePermission, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", table)
 	if err != nil {
@@ -557,18 +548,10 @@ func (p *Parser) AccessTable(table, action string) error {
 
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
-
-	//prefix := utils.Int64ToStr(int64(p.TxStateID))
-
-	if isCustom, err := p.IsCustomTable(table); err != nil {
-		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать // table != ... is left for compatibility temporarily. Remove new_state after rebuilding
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
-		return fmt.Errorf(table + ` is not a custom table`)
+	_, prefix, err := p.IsCustomTable(table)
+	if err != nil {
+		return err
 	}
-	prefix := table[:strings.IndexByte(table, '_')]
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
 
 	columnsAndPermissions, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
 		"key", "value", table)
@@ -576,7 +559,15 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 		return err
 	}
 	for _, col := range columns {
-		if cond, ok := columnsAndPermissions[col]; ok && len(cond) > 0 {
+		var (
+			cond string
+			ok   bool
+		)
+		cond, ok = columnsAndPermissions[converter.Sanitize(col, ``)]
+		if !ok {
+			cond, ok = columnsAndPermissions[`*`]
+		}
+		if ok && len(cond) > 0 {
 			ret, err := p.EvalIf(cond)
 			if err != nil {
 				return err
@@ -614,12 +605,8 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 }
 
 func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
-	fPrice, err := p.Single(`SELECT value->'`+name+`' FROM system_parameters WHERE name = ?`, "op_price").String()
-	if err != nil {
-		return decimal.New(0, 0), p.ErrInfo(err)
-	}
 	p.TxCost = 0
-	p.TxUsedCost, _ = decimal.NewFromString(fPrice)
+	p.TxUsedCost = decimal.New(db.SysCost(name), 0)
 	fuelRate := p.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
@@ -700,7 +687,7 @@ func (p *Parser) payFPrice() error {
 		return err
 	}
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
+		[]string{converter.Int64ToStr(db.SysInt64(db.CommissionWallet))}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)

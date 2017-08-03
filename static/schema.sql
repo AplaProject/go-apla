@@ -4,7 +4,6 @@ DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
 "id" bigint NOT NULL  default nextval('dlt_transactions_id_seq'),
 "sender_wallet_id" bigint NOT NULL DEFAULT '0',
 "recipient_wallet_id" bigint NOT NULL DEFAULT '0',
-"recipient_wallet_address" varchar(32) NOT NULL DEFAULT '',
 "amount" decimal(30) NOT NULL DEFAULT '0',
 "commission" decimal(30) NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
@@ -492,13 +491,61 @@ ALTER SEQUENCE "global_smart_contracts_id_seq" owned by "global_smart_contracts"
 ALTER TABLE ONLY "global_smart_contracts" ADD CONSTRAINT global_smart_contracts_pkey PRIMARY KEY (id);
 CREATE INDEX global_smart_contracts_index_name ON "global_smart_contracts" (name);
 
+INSERT INTO global_smart_contracts ("name", "value", "active", "conditions") VALUES ('DLTTransfer',
+  'contract DLTTransfer {
+    data {
+        Recipient string
+        Amount    string
+        Commission  string
+        Comment     string "optional"
+    }
+
+    conditions {
+        $recipient = AddressToId($Recipient)
+        if $recipient == 0 {
+            error Sprintf("Recipient %s is invalid", $Recipient)
+        }
+        var total fuel cost money
+        fuel = Money(SysParamString(`fuel_rate`))
+        cost = Money(SysCost(`dlt_transfer`))
+        $commission = Money($Commission)
+        if $commission < cost*fuel {
+            error Sprintf("Commission %v < %v", $commission, cost*fuel)
+        }
+        $amount = Money($Amount) 
+        if $amount == 0 {
+            error "Amount is zero"
+        }
+        total = Money(DBStringExt(`dlt_wallets`, `amount`, $wallet, "wallet_id"))
+        if $amount + $commission >= total {
+            error Sprintf("Money is not enough %v < %v",total, $amount + $commission)
+        }
+    }
+
+    action {
+        DBUpdateExt(`dlt_wallets`, "wallet_id", $wallet,`-amount`, $amount+$commission)
+        DBUpdateExt(`dlt_wallets`, "wallet_id", $recipient,`+amount`, $amount)
+        DBInsert(`dlt_transactions`, `sender_wallet_id, recipient_wallet_id, amount, commission, comment, time, block_id`, $wallet, $recipient, $amount, $commission, $Comment, $block_time, $block)
+        DBUpdateExt(`dlt_wallets`, "wallet_id", $wallet_block,`+amount`, $commission)
+        DBInsert(`dlt_transactions`, `sender_wallet_id, recipient_wallet_id, amount, commission, comment, time, block_id`, $wallet, $wallet_block, $commission, 0, `Commission`, $block_time, $block)
+    }
+}', '1','ContractAccess("@0UpdateDLTTranfer")');
+
 CREATE TABLE "global_tables" (
-"name" bytea  NOT NULL DEFAULT '',
+"name" varchar(255)  NOT NULL DEFAULT '',
 "columns_and_permissions" jsonb,
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "global_tables" ADD CONSTRAINT global_tables_pkey PRIMARY KEY (name);
+
+INSERT INTO global_tables ("name", "columns_and_permissions", "conditions") VALUES ('dlt_wallets', 
+        '{"insert": "ContractAccess(\"@0NewWallet\")", "update": {"*": "false","amount": "ContractAccess(\"@0DLTTransfer\")"}, "new_column": "ContractAccess(\"@0NewWalletColumn\")", "general_update": "ContractAccess(\"@0UpdateDltWallet\")"}',
+        'false');
+INSERT INTO global_tables ("name", "columns_and_permissions", "conditions") VALUES ('dlt_transactions', 
+        '{"insert": "ContractAccess(\"@0DLTTransfer\")", "update": {"*": "false"}, "new_column": "ContractAccess(\"@0NewDLTColumn\")", "general_update": "ContractAccess(\"@0UpdateDltTransactions\")"}',
+        'false');
+
 
 DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
@@ -510,10 +557,20 @@ ALTER SEQUENCE system_states_id_seq owned by system_states.id;
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
 
 
-INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');
-INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000000000000000');
-INSERT INTO system_parameters ("name", "value") VALUES ('max_columns', '20');
-INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":"200", "change_node": 100, "edit_lang": 10, "edit_sign": 10, "change_host_vote": 100, "new_column":500, "new_lang": 10, "new_sign": 10, "new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100, "system_restore_access":100,"activate_cost":100}');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('number_of_dlt_nodes', '100', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('fuel_rate', '1000000000000000', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":200, "change_node": 100, "edit_lang": 10, "edit_sign": 10, "change_host_vote": 100, "new_column":500, "new_lang": 10, "new_sign": 10, "new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100, "system_restore_access":100,"activate_cost":100}', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('gaps_between_blocks', '3', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('blockchain_url', 'https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_block_size', '67108864', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_tx_size', '33554432', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_tx_count', '100000', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_columns', '50', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_indexes', '10', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_block_user_tx', '100', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('upd_full_nodes_period', '3600', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('recovery_address', '8275283526439353759', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('commission_wallet', '8275283526439353759', 'ContractAccess("@0SysPar")');
 
 
 DROP SEQUENCE IF EXISTS system_restore_access_id_seq CASCADE;

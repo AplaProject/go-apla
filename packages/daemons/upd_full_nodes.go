@@ -22,11 +22,11 @@ import (
 
 	"log"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -138,7 +138,7 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		if curTime-updFullNodes <= consts.UPD_FULL_NODES_PERIOD {
+		if curTime-updFullNodes <= sql.SysInt64(sql.UpdFullNodesPeriod) {
 			if d.unlockPrintSleep(utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO"), d.sleepTime) {
 				break BEGIN
 			}

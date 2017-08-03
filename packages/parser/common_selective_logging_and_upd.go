@@ -30,10 +30,10 @@ import (
 // do not use for comments
 func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
 	var (
-		tableID  string
-		isCustom bool
-		err      error
-		cost     int64
+		tableID, pref string
+		isCustom      bool
+		err           error
+		cost          int64
 	)
 
 	if generalRollback && p.BlockData == nil {
@@ -41,7 +41,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 
 	isBytea := getBytea(table)
-	if isCustom, err = p.IsCustomTable(table); err != nil {
+	if isCustom, pref, err = p.IsCustomTable(table); err != nil && pref != `notcustom` {
 		return 0, ``, err
 	}
 

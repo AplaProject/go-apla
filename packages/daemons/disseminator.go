@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 /*
@@ -371,7 +372,7 @@ func (d *daemon) DisseminatorType1(host string, toBeSent []byte, dataType int64)
 	logger.Debug("dataSize %d (host : %v)", dataSize, host)
 	// и если данных менее MAX_TX_SIZE, то получаем их
 	// if data is less than MAX_TX_SIZE, so get them
-	if dataSize < consts.MAX_TX_SIZE && dataSize > 0 {
+	if dataSize < sql.SysInt64(sql.MaxTxSize) && dataSize > 0 {
 		binaryTxHashes := make([]byte, dataSize)
 		_, err = io.ReadFull(conn, binaryTxHashes)
 		if err != nil {

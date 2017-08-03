@@ -196,7 +196,7 @@ BEGIN:
 				//nodeConfig, err := d.GetNodeConfig()
 				blockchainURL := config["first_load_blockchain_url"]
 				if len(blockchainURL) == 0 {
-					blockchainURL = consts.BLOCKCHAIN_URL
+					blockchainURL = sql.SysString(sql.BlockchainURL)
 				}
 				logger.Debug("blockchainURL: %s", blockchainURL)
 				// возможно сервер отдаст блокчейн не с первой попытки
@@ -536,8 +536,8 @@ BEGIN:
 			// размер блока не может быть более чем max_block_size
 			// the size of a block couln't be more then max_block_size
 			if currentBlockID > 1 {
-				if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
-					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), consts.MAX_BLOCK_SIZE))
+				if int64(len(binaryBlock)) > sql.SysInt64(sql.MaxBlockSize) {
+					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), sql.SysInt64(sql.MaxBlockSize)))
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
@@ -580,7 +580,7 @@ BEGIN:
 			}
 			// нам нужен меркель-рут текущего блока
 			// we need the mrklRoot of current block
-			mrklRoot, err := utils.GetMrklroot(binaryBlock, first)
+			mrklRoot, err := sql.GetMrklroot(binaryBlock, first)
 			if err != nil {
 				d.NodesBan(fmt.Sprintf(`%v`, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

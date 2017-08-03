@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
@@ -76,7 +75,7 @@ func (c *Controller) Install() (string, error) {
 	}
 
 	if len(firstLoadBlockchainURL) == 0 {
-		firstLoadBlockchainURL = consts.BLOCKCHAIN_URL
+		firstLoadBlockchainURL = sql.SysString(sql.BlockchainURL)
 	}
 	dbConfig := config.DBConfig{
 		Type:     dbType,

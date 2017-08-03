@@ -20,9 +20,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -70,16 +70,16 @@ func (p *NewColumnParser) Validate() error {
 	}
 
 	count, err := p.Single("SELECT count(column_name) FROM information_schema.columns WHERE table_name=?", p.NewColumn.TableName).Int64()
-	if count >= consts.MAX_COLUMNS+2 /*id + rb_id*/ {
-		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
+	if count >= sql.SysInt64(sql.MaxColumns)+2 /*id + rb_id*/ {
+		return fmt.Errorf(`Too many columns. Limit is %d`, sql.SysInt64(sql.MaxColumns))
 	}
 	if converter.StrToInt64(p.NewColumn.Index) > 0 {
 		count, err := p.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if count >= consts.MAX_INDEXES {
-			return fmt.Errorf(`Too many indexes. Limit is %d`, consts.MAX_INDEXES)
+		if count >= sql.SysInt(sql.MaxIndexes) {
+			return fmt.Errorf(`Too many indexes. Limit is %d`, sql.SysInt(sql.MaxIndexes))
 		}
 	}
 

@@ -20,9 +20,9 @@ import (
 	"encoding/json"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -57,8 +57,8 @@ func (p *UpdFullNodesParser) Validate() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	if txTime-updFullNodes <= consts.UPD_FULL_NODES_PERIOD {
-		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
+	if txTime-updFullNodes <= sql.SysInt64(sql.UpdFullNodesPeriod) {
+		return utils.ErrInfoFmt("txTime - upd_full_nodes <= UPD_FULL_NODES_PERIOD")
 	}
 
 	p.nodePublicKey, err = p.GetNodePublicKey(p.UpdFullNodes.UserID)

@@ -168,7 +168,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	controllers.SessInit()
 	config.MonitorChanges()
-
 	go func() {
 		var err error
 		sql.DB, err = sql.NewDbConnect()
@@ -176,6 +175,11 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
 		if err != nil {
 			IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
+			log.Error("%v", utils.ErrInfo(err))
+			Exit(1)
+		}
+		err = sql.SysUpdate()
+		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			Exit(1)
 		}

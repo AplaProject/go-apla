@@ -19,10 +19,10 @@ package tcpserver
 import (
 	"io"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 /*
@@ -41,7 +41,7 @@ func (t *TCPServer) Type2() {
 	}
 	size := converter.BinToDec(buf)
 	log.Debug("size: %d", size)
-	if size < consts.MAX_TX_SIZE {
+	if size < sql.SysInt64(sql.MaxTxSize) {
 		// сами данные
 		// data size
 		binaryData := make([]byte, size)
@@ -63,7 +63,7 @@ func (t *TCPServer) Type2() {
 		log.Debug("decryptedBinData: %x", decryptedBinData)
 		// проверим размер
 		// check the size
-		if int64(len(binaryData)) > consts.MAX_TX_SIZE {
+		if int64(len(binaryData)) > sql.SysInt64(sql.MaxTxSize) {
 			log.Debug("%v", utils.ErrInfo("len(txBinData) > max_tx_size"))
 			return
 		}

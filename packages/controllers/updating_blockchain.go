@@ -28,6 +28,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type updatingBlockchainStruct struct {
@@ -82,7 +83,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		nodeConfig, err := c.GetNodeConfig()
 		blockchainURL := nodeConfig["first_load_blockchain_url"]
 		if len(blockchainURL) == 0 {
-			blockchainURL = consts.BLOCKCHAIN_URL
+			blockchainURL = sql.SysString(sql.BlockchainURL)
 		}
 		/*resp, err := http.Get(blockchainURL)
 		if err != nil {

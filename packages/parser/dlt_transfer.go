@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
@@ -88,11 +89,6 @@ func (p *DLTTransferParser) Validate() error {
 			return p.ErrInfo("amount<=0")
 		}*/
 
-	fPrice, err := p.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").String()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	fuelRate := p.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
@@ -100,11 +96,11 @@ func (p *DLTTransferParser) Validate() error {
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
 	// fuelRate = 1 000 000 000 000 000
 	//
-	fPriceDecemal, err := decimal.NewFromString(fPrice)
+	fPriceDecimal := decimal.New(sql.SysCost(`dlt_transfer`), 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	commission := fPriceDecemal.Mul(fuelRate)
+	commission := fPriceDecimal.Mul(fuelRate)
 	ourCommission, err := decimal.NewFromString(p.DLTTransfer.Commission) //fPrice)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -142,6 +138,10 @@ func (p *DLTTransferParser) Validate() error {
 	if totalAmountDecimal.Cmp(ourAmount.Add(ourCommission)) < 0 {
 		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", ourAmount, ourCommission, totalAmount))
 	}
+	if converter.StringToAddress(p.DLTTransfer.WalletAddress) == 0 {
+		return p.ErrInfo(fmt.Sprintf(`Wallet %v is invalid`, p.DLTTransfer.WalletAddress))
+	}
+
 	return nil
 }
 
@@ -206,8 +206,8 @@ func (p *DLTTransferParser) Action() error {
 	}
 
 	// record into the general transaction history
-	dltTransactionsID, err := p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, walletID, converter.AddressToString(int64(converter.StrToUint64(p.DLTTransfer.WalletAddress))), amount.String(), commission.String(), p.DLTTransfer.Comment, p.BlockData.Time, p.BlockData.BlockID)
+	dltTransactionsID, err := p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
+		p.TxWalletID, walletID, amount.String(), commission.String(), p.DLTTransfer.Comment, p.BlockData.Time, p.BlockData.BlockID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -216,8 +216,8 @@ func (p *DLTTransferParser) Action() error {
 		return err
 	}
 
-	dltTransactionsID, err = p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, recipient_wallet_address, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
-		p.TxWalletID, p.BlockData.WalletID, converter.AddressToString(p.BlockData.WalletID), commission.String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockID)
+	dltTransactionsID, err = p.ExecSQLGetLastInsertID(`INSERT INTO dlt_transactions ( sender_wallet_id, recipient_wallet_id, amount, commission, comment, time, block_id ) VALUES ( ?, ?, ?, ?, ?, ?, ? )`, "dlt_transactions",
+		p.TxWalletID, p.BlockData.WalletID, commission.String(), 0, "Commission", p.BlockData.Time, p.BlockData.BlockID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
