@@ -1257,7 +1257,7 @@ function send_to_net_success(data, ReadyFunction, skipsuccess) {
 
 function selectboxState(data) {
 	for (var i in data) {
-		selectbox.append('<option value="' + i + '" data-id="' + i + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
+		selectbox.append('<option value="' + data[i].id + '" data-id="' + data[i].id + '" data-flag="' + data[i].state_flag + '">' + data[i].state_name + '</option>');
 	}
 
 	selectbox.select2({
@@ -1503,7 +1503,7 @@ function prepare_ok(predata, unique, forsign, sendnet) {
 	sendnet();
 }
 
-function prepare_contract(predata, unique, sendnet) {
+function prepare_contract(predata, unique, sendnet, preorigin) {
 	$.get('ajax?json=ajax_prepare_tx', predata,
 		function (data) {
 			if (data.error.length > 0) {
@@ -1524,7 +1524,11 @@ function prepare_contract(predata, unique, sendnet) {
 						sign = GKey.sign(isign.forsign);
 						accept += isign.title + '<br>';
 						for (var k = 0; k < isign.params.length; k++) {
-							accept += isign.params[k].text + ': ' + predata[isign.params[k].name] + '<br>';
+							var value = predata[isign.params[k].name];
+							if (preorigin && preorigin[isign.params[k].name]) {
+								value = preorigin[isign.params[k].name];
+							}
+							accept += isign.params[k].text + ': ' + value + '<br>';
 						}
 						data.forsign += ',' + sign;
 						predata[isign.field] = sign;
@@ -1601,7 +1605,7 @@ function InitMobileTable() {
 }
 function autoUpdate(id, period) {
 	var body = $("#auto" + id + "body").html();
-	if (body)
+	if (body && GKey.StateId) {
 		$.post('template?page=body', { body: body },
 			function (data) {
 				if (data == '') {
@@ -1612,6 +1616,7 @@ function autoUpdate(id, period) {
 					setTimeout(function () { autoUpdate(id, period); }, period * 1000);
 				}
 			}, "html");
+	}
 }
 
 var tempCoordsAddress;
@@ -1623,7 +1628,7 @@ function getMapAddress(elem, coords) {
 			elem.val(address);
 			elem.text(address);
 		}
-		
+
 		tempCoordsAddress = coords;
 	});
 }
@@ -1631,16 +1636,16 @@ function getMapAddress(elem, coords) {
 function getMapAddressSquare(elem, coords) {
 	var area = [];
 	coords = coords.cords;
-	
+
 	for (i = 0; i < coords.length; i++) {
 		area.push(new google.maps.LatLng(coords[i][0], coords[i][1]));
 	}
-	
+
 	if (elem.val() === "" || elem.text() === "" || arraysEqual(coords, tempCoordsArea) === false) {
 		elem.val(google.maps.geometry.spherical.computeArea(area).toFixed(0));
 		elem.text(google.maps.geometry.spherical.computeArea(area).toFixed(0));
 	}
-	
+
 	tempCoordsArea = coords;
 }
 

@@ -19,10 +19,10 @@ package tcpserver
 import (
 	"io"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 /*
@@ -254,7 +254,7 @@ func (t *TCPServer) Type1() {
 				txHex := converter.BinToHex(txBinData)
 				// проверим размер
 				// check the size
-				if int64(len(txBinData)) > consts.MAX_TX_SIZE {
+				if int64(len(txBinData)) > sql.SysInt64(sql.MaxTxSize) {
 					log.Debug("%v", utils.ErrInfo("len(txBinData) > max_tx_size"))
 					return
 				}

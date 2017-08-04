@@ -17,45 +17,43 @@
 package parser
 
 import (
-	//"encoding/json"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// EditColumnInit initializes EditColumn transaction
-func (p *Parser) EditColumnInit() error {
+type EditColumnParser struct {
+	*Parser
+	EditColumn *tx.EditColumn
+}
 
-	fields := []map[string]string{{"table_name": "string"}, {"column_name": "string"}, {"permissions": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *EditColumnParser) Init() error {
+	editColumn := &tx.EditColumn{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, editColumn); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditColumn = editColumn
 	return nil
 }
 
-// EditColumnFront checks conditions of EditColumn transaction
-func (p *Parser) EditColumnFront() error {
-	err := p.generalCheck(`edit_column`)
+func (p *EditColumnParser) Validate() error {
+	err := p.generalCheck(`edit_column`, &p.EditColumn.Header, map[string]string{"permissions": p.EditColumn.Permissions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	// Check InputData
-	/*verifyData := map[string]string{"table_name": "string", "column_name": "word", "permissions": "string"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}*/
-
-	table := p.TxStateIDStr + `_tables`
-	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
+	stateIdStr := converter.Int64ToStr(p.EditColumn.Header.StateID)
+	table := stateIdStr + `_tables`
+	if strings.HasPrefix(p.EditColumn.TableName, `global`) {
 		table = `global_tables`
 	}
-	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).Int64()
+	exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`,
+		p.EditColumn.ColumnName, p.EditColumn.TableName).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -63,30 +61,28 @@ func (p *Parser) EditColumnFront() error {
 		return p.ErrInfo(`column not exists`)
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["table_name"], p.TxMap["column_name"], p.TxMap["permissions"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditColumn.ForSign(), p.EditColumn.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if err = p.AccessTable(p.TxMaps.String["table_name"], `general_update`); err != nil {
+	if err = p.AccessTable(p.EditColumn.TableName, `general_update`); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// EditColumn proceeds EditColumn transaction
-func (p *Parser) EditColumn() error {
-
-	table := p.TxStateIDStr + `_tables`
-	if strings.HasPrefix(p.TxMaps.String["table_name"], `global`) {
+func (p *EditColumnParser) Action() error {
+	stateIdStr := converter.Int64ToStr(p.EditColumn.Header.StateID)
+	table := stateIdStr + `_tables`
+	if strings.HasPrefix(p.EditColumn.TableName, `global`) {
 		table = `global_tables`
 	}
 	logData, err := p.OneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`,
-		p.TxMaps.String["column_name"], p.TxMaps.String["table_name"]).String()
+		p.EditColumn.ColumnName, p.EditColumn.TableName).String()
 	if err != nil {
 		return err
 	}
@@ -105,17 +101,17 @@ func (p *Parser) EditColumn() error {
 	if err != nil {
 		return err
 	}
-	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+	rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
 	if err != nil {
 		return err
 	}
-	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.TxMaps.String["column_name"]+`}', ?, true), rb_id = ? WHERE name = ?`,
-		`"`+converter.EscapeForJSON(p.TxMaps.String["permissions"])+`"`, rbID, p.TxMaps.String["table_name"])
+	err = p.ExecSQL(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{update, `+p.EditColumn.ColumnName+`}', ?, true), rb_id = ? WHERE name = ?`,
+		`"`+converter.EscapeForJSON(p.EditColumn.Permissions)+`"`, rbID, p.EditColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
-	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, p.TxMaps.String["table_name"])
+	err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, p.EditColumn.TableName)
 	if err != nil {
 		return err
 	}
@@ -123,17 +119,10 @@ func (p *Parser) EditColumn() error {
 	return nil
 }
 
-// EditColumnRollback rollbacks EditColumn transaction
-func (p *Parser) EditColumnRollback() error {
-	err := p.autoRollback()
-	if err != nil {
-		return err
-	}
-	return nil
+func (p *EditColumnParser) Rollback() error {
+	return p.autoRollback()
 }
 
-/*func (p *Parser) EditColumnRollbackFront() error {
-
-	return nil
+func (p EditColumnParser) Header() *tx.Header {
+	return &p.EditColumn.Header
 }
-*/

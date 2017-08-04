@@ -23,42 +23,35 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// EditWalletInit initializes EditWallet transaction
-func (p *Parser) EditWalletInit() error {
+type EditWalletParser struct {
+	*Parser
+	EditWallet *tx.EditWallet
+}
 
-	fields := []map[string]string{{"id": "int64"}, {"spending_contract": "string"},
-		{"conditions_change": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *EditWalletParser) Init() error {
+	editWallet := &tx.EditWallet{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, editWallet); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.EditWallet = editWallet
 	return nil
 }
 
-func (p *Parser) checkContract(name string) string {
-	name = script.StateName(p.TxStateID, name)
+func (p *EditWalletParser) checkContract(name string) string {
+	name = script.StateName(uint32(p.EditWallet.Header.StateID), name)
 	if smart.GetContract(name, 0) == nil {
 		return ``
 	}
 	return name
 }
 
-// EditWalletFront checks conditions of EditWallet transaction
-func (p *Parser) EditWalletFront() error {
-
-	err := p.generalCheck(`edit_wallet`)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-	// Check the system limits. You can not send more than X time a day this TX
-	// ...
-
-	// Check InputData
-	verifyData := map[string]string{}
-	err = p.CheckInputData(verifyData)
+func (p *EditWalletParser) Validate() error {
+	err := p.generalCheck(`edit_wallet`, &p.EditWallet.Header, map[string]string{"conditions": p.EditWallet.Conditions})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -68,21 +61,19 @@ func (p *Parser) EditWalletFront() error {
 		wallet = p.TxCitizenID
 	}
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], wallet,
-		p.TxStateID, p.TxMap["id"], p.TxMap["spending_contract"], p.TxMap["conditions_change"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.EditWallet.ForSign(), p.EditWallet.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if !CheckSignResult {
 		return p.ErrInfo("incorrect sign")
 	}
-	if len(p.TxMap["conditions_change"]) > 0 {
-		if err := smart.CompileEval(string(p.TxMap["conditions_change"]), uint32(p.TxStateID)); err != nil {
+	if len(p.EditWallet.Conditions) > 0 {
+		if err := smart.CompileEval(string(p.EditWallet.Conditions), uint32(p.EditWallet.Header.StateID)); err != nil {
 			return p.ErrInfo(err)
 		}
 	}
-	id := converter.StrToInt64(string(p.TxMap["id"]))
+	id := converter.StrToInt64(string(p.EditWallet.WalletID))
 	conditions, err := p.Single(`SELECT conditions_change FROM "dlt_wallets" WHERE wallet_id = ?`, id).String()
 	if err != nil {
 		return p.ErrInfo(err)
@@ -98,31 +89,33 @@ func (p *Parser) EditWalletFront() error {
 	} else if id != wallet {
 		return fmt.Errorf(`Access denied`)
 	}
-	if len(p.TxMap["spending_contract"]) > 0 {
-		if len(p.checkContract(string(p.TxMap["spending_contract"]))) == 0 {
-			return fmt.Errorf(`Cannot find %s contract`, string(p.TxMap["spending_contract"]))
+	if len(p.EditWallet.SpendingContract) > 0 {
+		if len(p.checkContract(string(p.EditWallet.SpendingContract))) == 0 {
+			return fmt.Errorf(`Cannot find %s contract`, string(p.EditWallet.SpendingContract))
 		}
 	}
 	return nil
 }
 
-// EditWallet proceeds EditWallet transaction
-func (p *Parser) EditWallet() error {
+func (p *EditWalletParser) Action() error {
 	var contract string
 
-	if len(p.TxMap["spending_contract"]) > 0 {
-		contract = p.checkContract(string(p.TxMap["spending_contract"]))
+	if len(p.EditWallet.SpendingContract) > 0 {
+		contract = p.checkContract(string(p.EditWallet.SpendingContract))
 	}
-	_, err := p.selectiveLoggingAndUpd([]string{"spending_contract", "conditions_change"},
-		[]interface{}{contract, string(p.TxMap["conditions_change"])}, "dlt_wallets",
-		[]string{"wallet_id"}, []string{string(p.TxMap["id"])}, true)
+	_, _, err := p.selectiveLoggingAndUpd([]string{"spending_contract", "conditions_change"},
+		[]interface{}{contract, string(p.EditWallet.Conditions)}, "dlt_wallets",
+		[]string{"wallet_id"}, []string{string(p.EditWallet.WalletID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
 }
 
-// EditWalletRollback rollbacks EditWallet transaction
-func (p *Parser) EditWalletRollback() error {
+func (p *EditWalletParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p *EditWalletParser) Header() *tx.Header {
+	return &p.EditWallet.Header
 }

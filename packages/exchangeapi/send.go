@@ -81,22 +81,14 @@ func send(r *http.Request) interface{} {
 		return result
 	}
 
-	fPrice, err := sql.DB.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").String()
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
+	fPrice := sql.SysCost(`dlt_transfer`)
 	fuelRate := sql.DB.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		result.Error = `fuel rate must be greater than 0`
 		return result
 	}
-	fPriceDecemal, err := decimal.NewFromString(fPrice)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	commission := fPriceDecemal.Mul(fuelRate)
+	fPriceDecimal := decimal.New(fPrice, 0)
+	commission := fPriceDecimal.Mul(fuelRate)
 
 	total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, sender).String()
 	if err != nil {
@@ -141,7 +133,7 @@ func send(r *http.Request) interface{} {
 	}
 	data = append(data, converter.EncodeLengthPlusData(pub)...)
 	data = append(data, binsign...)
-	err = sql.DB.SendTx(txType, sender, data)
+	_, err = sql.DB.SendTx(txType, sender, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result

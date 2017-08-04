@@ -25,13 +25,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const aNewKey = `ajax_new_key`
@@ -135,57 +137,34 @@ func (c *Controller) AjaxNewKey() interface{} {
 		result.Error = `GenCitizen contract has not been found`
 		return result
 	}
-	var flags uint8
 
-	ctime := uint32(time.Now().Unix())
+	ctime := time.Now().Unix()
 	info := (*contract).Block.Info.(*script.ContractInfo)
-	forsign := fmt.Sprintf("%d,%d,%d,%d,%d", info.ID, ctime, uint64(idkey), stateID, flags)
+	toSerialize := tx.SmartContract{
+		Header: tx.Header{Type: int(info.ID), Time: ctime,
+			UserID: c.SessCitizenID, StateID: c.SessStateID}}
 	pubhex := hex.EncodeToString(pub)
-	forsign += fmt.Sprintf(",%v,%v", name, pubhex)
-
+	forsign := toSerialize.ForSign() + fmt.Sprintf("%v,%v", name, pubhex)
 	signature, err := crypto.Sign(key, forsign)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
+	toSerialize.BinSignatures = converter.EncodeLengthPlusData(signature)
+	toSerialize.PublicKey = pub
 
-	sign := make([]byte, 0)
-	converter.EncodeLenByte(&sign, signature)
 	data := make([]byte, 0)
-	header := consts.TXHeader{
-		Type:     int32(contract.Block.Info.(*script.ContractInfo).ID),
-		Time:     uint32(ctime),
-		WalletID: uint64(idkey),
-		StateID:  int32(stateID),
-		Flags:    flags,
-		Sign:     sign,
-	}
-	_, err = converter.BinMarshal(&data, &header)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
 	data = append(append(data, converter.EncodeLength(int64(len(name)))...), []byte(name)...)
 	data = append(append(data, converter.EncodeLength(int64(len(pubhex)))...), []byte(pubhex)...)
+	toSerialize.Data = converter.EncodeLengthPlusData(data)
 
-	/*	fmt.Printf("NewKey For %s %d\r\n", forsign, len(forsign))
-		fmt.Printf("NewKey Sign %x %d\r\n", sign, len(sign))
-		fmt.Printf("NewKey Key %x %d\r\n", pubkey, len(pubkey))
-	*/
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-	hash = converter.BinToHex(data)
-	err = c.ExecSQL(`INSERT INTO transactions_status (
-			hash, time,	type, wallet_id, citizen_id	) VALUES (
-			[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), header.Type, int64(idkey), int64(idkey))
+	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
-	err = c.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
-	if err != nil {
+	if _, err = sql.DB.SendTx(int64(info.ID), c.SessCitizenID,
+		append([]byte{128}, serializedData...)); err != nil {
 		result.Error = err.Error()
 		return result
 	}

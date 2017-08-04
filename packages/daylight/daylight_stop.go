@@ -29,7 +29,7 @@ func Stop() {
 	log.Debug("Stop()")
 	IosLog("Stop()")
 	var err error
-	sql.DB, err = sql.NewDbConnect(configIni)
+	sql.DB, err = sql.NewDbConnect()
 	log.Debug("DayLight Stop : %v", sql.DB)
 	IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
 	if err != nil {

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/shopspring/decimal"
 )
 
@@ -43,11 +44,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	txTypeID := utils.TypeInt(txType)
 	timeNow := time.Now().Unix()
 
-	fPrice, err := c.Single(`SELECT value->'dlt_transfer' FROM system_parameters WHERE name = ?`, "op_price").Int64()
-	if err != nil {
-		return "", utils.ErrInfo(err)
-	}
-
+	fPrice := sql.SysCost(`dlt_transfer`)
 	fuelRate := c.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return ``, fmt.Errorf(`fuel rate must be greater than 0`)

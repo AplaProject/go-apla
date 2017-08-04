@@ -196,7 +196,7 @@ BEGIN:
 				//nodeConfig, err := d.GetNodeConfig()
 				blockchainURL := config["first_load_blockchain_url"]
 				if len(blockchainURL) == 0 {
-					blockchainURL = consts.BLOCKCHAIN_URL
+					blockchainURL = sql.SysString(sql.BlockchainURL)
 				}
 				logger.Debug("blockchainURL: %s", blockchainURL)
 				// возможно сервер отдаст блокчейн не с первой попытки
@@ -536,8 +536,8 @@ BEGIN:
 			// размер блока не может быть более чем max_block_size
 			// the size of a block couln't be more then max_block_size
 			if currentBlockID > 1 {
-				if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
-					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), consts.MAX_BLOCK_SIZE))
+				if int64(len(binaryBlock)) > sql.SysInt64(sql.MaxBlockSize) {
+					d.NodesBan(fmt.Sprintf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`, len(binaryBlock), sql.SysInt64(sql.MaxBlockSize)))
 					if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 						break BEGIN
 					}
@@ -547,8 +547,8 @@ BEGIN:
 
 			logger.Debug("currentBlockID %v", currentBlockID)
 
-			if blockData.BlockId != blockID {
-				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockID  %v > %v`, blockData.BlockId, blockID))
+			if blockData.BlockID != blockID {
+				d.NodesBan(fmt.Sprintf(`blockData.BlockId != blockID  %v > %v`, blockData.BlockID, blockID))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
 				}
@@ -580,7 +580,7 @@ BEGIN:
 			}
 			// нам нужен меркель-рут текущего блока
 			// we need the mrklRoot of current block
-			mrklRoot, err := utils.GetMrklroot(binaryBlock, first)
+			mrklRoot, err := sql.GetMrklroot(binaryBlock, first)
 			if err != nil {
 				d.NodesBan(fmt.Sprintf(`%v`, err))
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
@@ -593,7 +593,7 @@ BEGIN:
 
 			// публичный ключ того, кто этот блок сгенерил
 			// public key of those who has generated this block
-			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletId, blockData.StateID)
+			nodePublicKey, err := d.GetNodePublicKeyWalletOrCB(blockData.WalletID, blockData.StateID)
 			if err != nil {
 				if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 					break BEGIN
@@ -605,7 +605,7 @@ BEGIN:
 
 			// SIGN от 128 байта до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
 			// SIGN from 128 bytes to 512 bytes. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, USER_ID, LEVEL, MRKL_ROOT
-			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockId, prevBlockHash, blockData.Time, blockData.WalletId, blockData.StateID, mrklRoot)
+			forSign := fmt.Sprintf("0,%v,%v,%v,%v,%v,%s", blockData.BlockID, prevBlockHash, blockData.Time, blockData.WalletID, blockData.StateID, mrklRoot)
 			logger.Debug("forSign %v", forSign)
 
 			// проверяем подпись

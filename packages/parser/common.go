@@ -22,17 +22,17 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strings"
+	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	db "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
 )
@@ -43,6 +43,96 @@ var (
 
 func init() {
 	flag.Parse()
+}
+
+type ParserInterface interface {
+	Init() error
+	Validate() error
+	Action() error
+	Rollback() error
+	Header() *tx.Header
+}
+
+func GetTablePrefix(global string, stateId int64) (string, error) {
+	globalInt, err := strconv.Atoi(global)
+	if err != nil {
+		return "", err
+	}
+	stateIdStr := converter.Int64ToStr(stateId)
+	if globalInt == 1 {
+		return "global", nil
+	}
+	return stateIdStr, nil
+}
+
+func GetParser(p *Parser, txType string) (ParserInterface, error) {
+	switch txType {
+	case "FirstBlock":
+		return &FirstBlockParser{p}, nil
+	case "DLTTransfer":
+		return &DLTTransferParser{p, nil}, nil
+	case "DLTChangeHostVote":
+		return &DLTChangeHostVoteParser{p, nil}, nil
+	case "UpdFullNodes":
+		return &UpdFullNodesParser{p, nil}, nil
+	case "ChangeNodeKey":
+		return &ChangeNodeKeyParser{p, nil}, nil
+	case "NewState":
+		return &NewStateParser{p, nil}, nil
+	case "NewColumn":
+		return &NewColumnParser{p, nil}, nil
+	case "NewTable":
+		return &NewTableParser{p, nil}, nil
+	case "EditPage":
+		return &EditPageParser{p, nil}, nil
+	case "EditMenu":
+		return &EditMenuParser{p, nil}, nil
+	case "EditContract":
+		return &EditContractParser{p, nil}, nil
+	case "NewContract":
+		return &NewContractParser{p, nil, 0}, nil
+	case "EditColumn":
+		return &EditColumnParser{p, nil}, nil
+	case "EditTable":
+		return &EditTableParser{p, nil}, nil
+	case "EditStateParameters":
+		return &EditStateParametersParser{p, nil}, nil
+	case "NewStateParameters":
+		return &NewStateParametersParser{p, nil}, nil
+	case "NewPage":
+		return &NewPageParser{p, nil}, nil
+	case "NewMenu":
+		return &NewMenuParser{p, nil}, nil
+	case "ChangeNodeKeyDLT":
+		return &ChangeNodeKeyDLTParser{p, nil}, nil
+	case "AppendPage":
+		return &AppendPageParser{p, nil}, nil
+	case "RestoreAccessActive":
+		return &RestoreAccessActiveParser{p, nil, "", 0}, nil
+	case "RestoreAccessClose":
+		return &RestoreAccessCloseParser{p, nil}, nil
+	case "RestoreAccessRequest":
+		return &RestoreAccessRequestParser{p, nil}, nil
+	case "RestoreAccess":
+		return &RestoreAccessParser{p, nil}, nil
+	case "NewLang":
+		return &NewLangParser{p, nil}, nil
+	case "EditLang":
+		return &EditLangParser{p, nil}, nil
+	case "AppendMenu":
+		return &AppendMenuParser{p, nil}, nil
+	case "NewSign":
+		return &NewSignParser{p, nil}, nil
+	case "EditSign":
+		return &EditSignParser{p, nil}, nil
+	case "EditWallet":
+		return &EditWalletParser{p, nil}, nil
+	case "ActivateContract":
+		return &ActivateContractParser{p, nil, ""}, nil
+	case "NewAccount":
+		return &NewAccountParser{p, nil}, nil
+	}
+	return nil, fmt.Errorf("Unknown txType: %s", txType)
 }
 
 type txMapsType struct {
@@ -66,6 +156,7 @@ type Parser struct {
 	BlockData        *utils.BlockData
 	PrevBlock        *utils.BlockData
 	BinaryData       []byte
+	TxBinaryData     []byte
 	blockHashHex     []byte
 	dataType         int
 	blockHex         []byte
@@ -90,6 +181,7 @@ type Parser struct {
 	//	newPublicKeysHex [3][]byte
 	TxPtr      interface{} // Pointer to the corresponding struct in consts/struct.go
 	TxData     map[string]interface{}
+	TxSmart    *tx.SmartContract
 	TxContract *smart.Contract
 	TxVars     map[string]string
 	AllPkeys   map[string]string
@@ -105,7 +197,7 @@ func ClearTmp(blocks map[int64]string) {
 
 // GetBlockInfo returns BlockData structure
 func (p *Parser) GetBlockInfo() *utils.BlockData {
-	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletId: p.BlockData.WalletId, StateID: p.BlockData.StateID, BlockId: p.BlockData.BlockId}
+	return &utils.BlockData{Hash: p.BlockData.Hash, Time: p.BlockData.Time, WalletID: p.BlockData.WalletID, StateID: p.BlockData.StateID, BlockID: p.BlockData.BlockID}
 }
 
 /*
@@ -217,12 +309,12 @@ func (p *Parser) GetInfoBlock() error {
 	// the last successfully recorded block
 	p.PrevBlock = new(utils.BlockData)
 	var q string
-	if p.ConfigIni["db_type"] == "mysql" || p.ConfigIni["db_type"] == "sqlite" {
+	if config.ConfigIni["db_type"] == "mysql" || config.ConfigIni["db_type"] == "sqlite" {
 		q = "SELECT LOWER(HEX(hash)) as hash, block_id, time FROM info_block"
-	} else if p.ConfigIni["db_type"] == "postgresql" {
+	} else if config.ConfigIni["db_type"] == "postgresql" {
 		q = "SELECT encode(hash, 'HEX')  as hash, block_id, time FROM info_block"
 	}
-	err := p.QueryRow(q).Scan(&p.PrevBlock.Hash, &p.PrevBlock.BlockId, &p.PrevBlock.Time)
+	err := p.QueryRow(q).Scan(&p.PrevBlock.Hash, &p.PrevBlock.BlockID, &p.PrevBlock.Time)
 
 	if err != nil && err != sql.ErrNoRows {
 		return p.ErrInfo(err)
@@ -235,20 +327,20 @@ func (p *Parser) InsertIntoBlockchain() error {
 	//var mutex = &sync.Mutex{}
 	// для локальных тестов
 	// for local tests
-	if p.BlockData.BlockId == 1 {
+	if p.BlockData.BlockID == 1 {
 		if *utils.StartBlockID != 0 {
-			p.BlockData.BlockId = *utils.StartBlockID
+			p.BlockData.BlockID = *utils.StartBlockID
 		}
 	}
 	//mutex.Lock()
 	// пишем в цепочку блоков
 	// record into the block chain
-	err := p.ExecSQL("DELETE FROM block_chain WHERE id = ?", p.BlockData.BlockId)
+	err := p.ExecSQL("DELETE FROM block_chain WHERE id = ?", p.BlockData.BlockID)
 	if err != nil {
 		return err
 	}
 	err = p.ExecSQL("INSERT INTO block_chain (id, hash, data, state_id, wallet_id, time, tx) VALUES (?, [hex], [hex], ?, ?, ?, ?)",
-		p.BlockData.BlockId, p.BlockData.Hash, p.blockHex, p.BlockData.StateID, p.BlockData.WalletId, p.BlockData.Time, p.TxIds)
+		p.BlockData.BlockID, p.BlockData.Hash, p.blockHex, p.BlockData.StateID, p.BlockData.WalletID, p.BlockData.Time, p.TxIds)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -280,39 +372,17 @@ func (p *Parser) InsertIntoBlockchain() error {
 	return TxMap, nil
 }*/
 
-// CheckInputData checks the each item of data
-func (p *Parser) CheckInputData(data map[string]string) error {
-
-	for k, v := range data {
-		fmt.Println("v==", v, p.TxMap[k])
-		if !utils.CheckInputData(p.TxMap[k], v) {
-			return fmt.Errorf("incorrect " + k + "(" + string(p.TxMap[k]) + " : " + v + ")")
+func (p *Parser) CheckInputData(data map[string][]interface{}) error {
+	for k, list := range data {
+		for _, v := range list {
+			fmt.Println("v==", v, k)
+			if !utils.CheckInputData(v, k) {
+				return fmt.Errorf("incorrect %s: %s", v, k)
+			}
 		}
 	}
 	return nil
 }
-
-/*
-func (p *Parser) limitRequestsRollback(txType string) error {
-	time := p.TxMap["time"]
-	if p.ConfigIni["db_type"] == "mysql" {
-		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE user_id = ? AND time = ? LIMIT 1", p.TxUserID, time)
-	} else if p.ConfigIni["db_type"] == "postgresql" {
-		return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE ctid IN (SELECT ctid FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
-	}
-	return p.ExecSQL("DELETE FROM rb_time_"+txType+" WHERE id IN (SELECT id FROM rb_time_"+txType+" WHERE  user_id = ? AND time = ? LIMIT 1)", p.TxUserID, time)
-}
-
-func arrayIntersect(arr1, arr2 map[int]int) bool {
-	for _, v := range arr1 {
-		for _, v2 := range arr2 {
-			if v == v2 {
-				return true
-			}
-		}
-	}
-	return false
-}*/
 
 // FormatBlockData returns formated block data
 func (p *Parser) FormatBlockData() string {
@@ -364,20 +434,6 @@ func (p *Parser) ErrInfo(verr interface{}) error {
 	return fmt.Errorf("[ERROR] %s (%s)\n%s\n%s", err, utils.Caller(1), p.FormatBlockData(), p.FormatTxMap())
 }
 
-/*
-func (p *Parser) limitRequestsMoneyOrdersRollback() error {
-	err := p.ExecSQL("DELETE FROM rb_time_money_orders WHERE hex(tx_hash) = ?", p.TxHash)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	return nil
-}
-
-func (p *Parser) getMyNodeCommission(currencyId, userId int64, amount float64) (float64, error) {
-	return consts.COMMISSION, nil
-
-}
-*/
 func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	wallet := p.TxWalletID
 	if wallet == 0 {
@@ -399,30 +455,10 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	return nil
 }
 
-/*
-func (p *Parser) MyTable(table, id_column string, id int64, ret_column string) (int64, error) {
-	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string") {
-		return 0, fmt.Errorf("!string")
-	}
-	return p.Single(`SELECT `+ret_column+` FROM `+table+` WHERE `+id_column+` = ?`, id).Int64()
-}
-
-func (p *Parser) MyTableChecking(table, id_column string, id int64, ret_column string) (bool, error) {
-	if utils.CheckInputData(table, "string") || utils.CheckInputData(ret_column, "string") {
-		return false, fmt.Errorf("!string")
-	}
-
-	if ok, err := p.CheckTableExists(table); !ok {
-		return true, err
-	}
-	return false, nil
-}
-*/
-
 // CheckTableExists checks if the table exists
 func (p *Parser) CheckTableExists(table string) (bool, error) {
 	var q string
-	switch p.ConfigIni["db_type"] {
+	switch config.ConfigIni["db_type"] {
 	case "sqlite":
 		q = `SELECT name FROM sqlite_master WHERE type='table' AND name='` + table + `';`
 	case "postgresql":
@@ -489,17 +525,10 @@ func (p *Parser) AccessTable(table, action string) error {
 		return nil
 	}
 
-	if isCustom, err := p.IsCustomTable(table); err != nil {
-		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать
-		// table != ... is left for compatibility temporarily. Remove new_state after rebuilding.
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
-		return fmt.Errorf(table + ` is not a custom table`)
+	_, prefix, err := p.IsCustomTable(table)
+	if err != nil {
+		return err
 	}
-	prefix := table[:strings.IndexByte(table, '_')]
-
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
 
 	tablePermission, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`, "key", "value", table)
 	if err != nil {
@@ -519,18 +548,10 @@ func (p *Parser) AccessTable(table, action string) error {
 
 // AccessColumns checks access rights to the columns
 func (p *Parser) AccessColumns(table string, columns []string) error {
-
-	//prefix := utils.Int64ToStr(int64(p.TxStateID))
-
-	if isCustom, err := p.IsCustomTable(table); err != nil {
-		return err // table != ... временно оставлено для совместимости. После переделки new_state убрать // table != ... is left for compatibility temporarily. Remove new_state after rebuilding
-	} else if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
-		return fmt.Errorf(table + ` is not a custom table`)
+	_, prefix, err := p.IsCustomTable(table)
+	if err != nil {
+		return err
 	}
-	prefix := table[:strings.IndexByte(table, '_')]
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
 
 	columnsAndPermissions, err := p.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
 		"key", "value", table)
@@ -538,7 +559,15 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 		return err
 	}
 	for _, col := range columns {
-		if cond, ok := columnsAndPermissions[col]; ok && len(cond) > 0 {
+		var (
+			cond string
+			ok   bool
+		)
+		cond, ok = columnsAndPermissions[converter.Sanitize(col, ``)]
+		if !ok {
+			cond, ok = columnsAndPermissions[`*`]
+		}
+		if ok && len(cond) > 0 {
 			ret, err := p.EvalIf(cond)
 			if err != nil {
 				return err
@@ -551,16 +580,11 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 	return nil
 }
 
-// AccessChange checks rights of changing the table
-func (p *Parser) AccessChange(table, name string) error {
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
+func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
+	prefix, err := GetTablePrefix(global, stateId)
+	if err != nil {
+		return err
 	}
-	//	prefix := utils.Int64ToStr(int64(p.TxStateID))
 	conditions, err := p.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
 	if err != nil {
 		return err
@@ -581,12 +605,8 @@ func (p *Parser) AccessChange(table, name string) error {
 }
 
 func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
-	fPrice, err := p.Single(`SELECT value->'`+name+`' FROM system_parameters WHERE name = ?`, "op_price").String()
-	if err != nil {
-		return decimal.New(0, 0), p.ErrInfo(err)
-	}
 	p.TxCost = 0
-	p.TxUsedCost, _ = decimal.NewFromString(fPrice)
+	p.TxUsedCost = decimal.New(db.SysCost(name), 0)
 	fuelRate := p.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
@@ -609,68 +629,10 @@ func (p *Parser) checkPrice(name string) error {
 
 // GetContractLimit returns the default maximal cost of contract
 func (p *Parser) GetContractLimit() (ret int64) {
-	//	fuel := p.GetFuel()
-	/*	if p.TxStateID > 0 && p.TxCitizenID > 0 {
-
-		}
-		TxCitizenID      int64
-		TxWalletID       int64
-		TxStateID */
-	/*	if ret == 0 {
-		ret = script.CostDefault
-	}*/
 	// default maximum cost of F
 	p.TxCost = script.CostDefault // ret * fuel
 	return p.TxCost
 }
-
-/*func (p *Parser) CheckContractLimit(price int64) bool {
-	return true
-	var balance decimal.Decimal
-	fuel := p.GetFuel()
-	if fuel <= 0 {
-		return false
-	}
-	need := p.TxCost * fuel // need qEGS = F*fuel
-	//	wallet := p.TxWalletID
-	if p.TxStateID > 0 && p.TxCitizenID != 0 {
-		var needuser int64
-		rate, _ := utils.EGSRate(int64(p.TxStateID)) // money/egs
-		tableAccounts, _ := utils.StateParam(int64(p.TxStateID), `table_accounts`)
-		tableAccounts = lib.Escape(tableAccounts)
-		if len(tableAccounts) == 0 {
-			tableAccounts = `accounts`
-		}
-		if rate == 0 {
-			rate = 1.0
-		}
-		p.TxContract.EGSRate = rate
-		p.TxContract.TableAccounts = tableAccounts
-
-		if price >= 0 {
-			needuser = int64(float64(price) * rate)
-		} else {
-			needuser = int64(float64(need) * rate)
-		}
-		p.TxContract.TxGovAccount = utils.StrToInt64(StateVal(p, `gov_account`))
-		if needuser > 0 {
-			if money, _ := p.Single(fmt.Sprintf(`select amount from "%d_%s" where citizen_id=?`, p.TxStateID, tableAccounts),
-				p.TxCitizenID).Int64(); money < needuser {
-				return false
-			}
-		}
-		// Check if government has enough money
-		balance, _ = utils.Balance(p.TxContract.TxGovAccount)
-		//wallet = p.TxCitizenID
-	} else {
-		//if balance.Cmp(decimal.New(0, 0)) == 0 {
-		balance, _ = utils.Balance(p.TxWalletID)
-	}
-	/*		TxCitizenID      int64
-			TxWalletID       int64
-			TxStateID
-	return balance.Cmp(decimal.New(need, 0)) > 0
-}*/
 
 func (p *Parser) payFPrice() error {
 	var (
@@ -678,7 +640,7 @@ func (p *Parser) payFPrice() error {
 		err    error
 	)
 	//return nil
-	toID := p.BlockData.WalletId // account of node
+	toID := p.BlockData.WalletID // account of node
 	fuel := p.GetFuel()
 	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
@@ -716,51 +678,18 @@ func (p *Parser) payFPrice() error {
 		egs = damount
 	}
 	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
-	//	fmt.Printf("Commission %v %v \r\n", commission, egs)
-	/*	query := fmt.Sprintf(`begin;
-		update dlt_wallets set amount = amount - least(amount, '%d') where wallet_id='%d';
-		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
-		update dlt_wallets set amount = amount + '%d' where wallet_id='%d';
-		commit;`, egs, fromID, egs-commission, toID, commission, consts.COMMISSION_WALLET)
-		if err := p.ExecSQL(query); err != nil {
-			return err
-		}*/
-	if _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(fromID)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{egs.Sub(commission)}, `dlt_wallets`, []string{`wallet_id`},
 		[]string{converter.Int64ToStr(toID)}, true); err != nil {
 		return err
 	}
-	if _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
+	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
+		[]string{converter.Int64ToStr(db.SysInt64(db.CommissionWallet))}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)
 	return nil
-	/*	if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
-			// Это все уберется, гос-во будет снимать деньги с граждан внутри контрактов
-			// All these will be removed, state will withdraw money from citizens within contracts
-			table := fmt.Sprintf(`"%d_%s"`, p.TxStateID, p.TxContract.TableAccounts)
-			amount, err := p.Single(`select amount from `+table+` where citizen_id=?`, p.TxCitizenID).Int64()
-			money := int64(float64(egs) * p.TxContract.EGSRate)
-			if p.TxContract.TxPrice >= 0 {
-				money = int64(float64(p.TxContract.TxPrice) * p.TxContract.EGSRate)
-			}
-			if amount < money {
-				money = amount
-			}
-			if money > 0 {
-				if err = p.ExecSQL(`update `+table+` set amount = amount - ? where citizen_id=?`, money, p.TxCitizenID); err != nil {
-					return err
-				}
-				if err = p.ExecSQL(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxContract.TxGovAccount); err != nil {
-					// refund payment
-					p.ExecSQL(`update `+table+` set amount = amount + ? where citizen_id=?`, money, p.TxCitizenID)
-					return err
-				}
-			}
-		}
-		return nil*/
 }

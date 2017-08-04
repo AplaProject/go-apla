@@ -24,13 +24,12 @@ import (
 
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/astaxie/beego/config"
 )
 
 // Install is a controller for the installation
@@ -76,51 +75,40 @@ func (c *Controller) Install() (string, error) {
 	}
 
 	if len(firstLoadBlockchainURL) == 0 {
-		firstLoadBlockchainURL = consts.BLOCKCHAIN_URL
+		firstLoadBlockchainURL = sql.SysString(sql.BlockchainURL)
 	}
-
-	if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
-		ioutil.WriteFile(*utils.Dir+"/config.ini", []byte(``), 0644)
+	dbConfig := config.DBConfig{
+		Type:     dbType,
+		User:     dbUsername,
+		Host:     dbHost,
+		Port:     dbPort,
+		Password: dbPassword,
+		Name:     dbName,
 	}
-	confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-	confIni.Set("log_level", logLevel)
-	confIni.Set("install_type", installType)
-	confIni.Set("dir", *utils.Dir)
-	confIni.Set("tcp_host", *utils.TCPHost)
-	confIni.Set("http_port", *utils.ListenHTTPPort)
-	confIni.Set("first_block_dir", *utils.FirstBlockDir)
-	confIni.Set("db_type", dbType)
-	confIni.Set("db_user", dbUsername)
-	confIni.Set("db_host", dbHost)
-	confIni.Set("db_port", dbPort)
-	confIni.Set("db_password", dbPassword)
-	confIni.Set("db_name", dbName)
-	confIni.Set("node_state_id", `*`)
-
-	err = confIni.SaveConfigFile(*utils.Dir + "/config.ini")
+	err := config.Save(logLevel, installType, &dbConfig)
 	if err != nil {
-		dropConfig()
+		config.Drop()
+		return "", utils.ErrInfo(err)
+	}
+	err = config.Read()
+	if err != nil {
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
-	configIni, err = confIni.GetSection("default")
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
-		return "", utils.ErrInfo(err)
-	}
 	var DB *sql.DCDB
-	DB, err = sql.NewDbConnect(configIni)
+	DB, err = sql.NewDbConnect()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
+	sql.DB = DB
 	c.DCDB = DB
-	if c.DCDB.DB == nil {
+	if c.DCDB == nil {
 		err = fmt.Errorf("utils.DB == nil")
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
@@ -135,35 +123,35 @@ func (c *Controller) Install() (string, error) {
 	`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
 	schema, err := static.Asset("static/schema.sql")
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
 	err = c.DCDB.ExecSQL(string(schema))
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
 	err = c.DCDB.ExecSQL("INSERT INTO config (first_load_blockchain, first_load_blockchain_url, auto_reload) VALUES (?, ?, ?)", firstLoad, firstLoadBlockchainURL, 259200)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
 	err = c.DCDB.ExecSQL(`INSERT INTO install (progress) VALUES ('complete')`)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
@@ -210,7 +198,7 @@ func (c *Controller) Install() (string, error) {
 	err = c.DCDB.ExecSQL(`INSERT INTO my_node_keys (private_key, public_key, block_id) VALUES (?, [hex], ?)`, NodePrivateKeyStr, npubkey, 1)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
@@ -228,13 +216,9 @@ func (c *Controller) Install() (string, error) {
 	err = c.DCDB.ExecSQL(`UPDATE config SET dlt_wallet_id = ?`, *utils.DltWalletID)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
-		dropConfig()
+		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
 
 	return `{"success":1}`, nil
-}
-
-func dropConfig() {
-	os.Remove(*utils.Dir + "/config.ini")
 }

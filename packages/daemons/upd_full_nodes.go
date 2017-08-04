@@ -22,11 +22,13 @@ import (
 
 	"log"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
@@ -136,27 +138,41 @@ BEGIN:
 			}
 			continue BEGIN
 		}
-		if curTime-updFullNodes <= consts.UPD_FULL_NODES_PERIOD {
+		if curTime-updFullNodes <= sql.SysInt64(sql.UpdFullNodesPeriod) {
 			if d.unlockPrintSleep(utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO"), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
 
-		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
-		binSign, err := d.GetBinSign(forSign)
+		txType := utils.TypeInt(`UpdFullNodes`)
+		toSerialize := tx.UpdFullNodes{Header: tx.Header{Type: int(txType),
+			Time: curTime, UserID: myWalletID, StateID: 0, PublicKey: []byte(`null`)}}
+		signature, err := d.GetBinSign(toSerialize.ForSign())
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN
 			}
 			continue BEGIN
 		}
-		data := converter.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
-		data = append(data, converter.DecToBin(curTime, 4)...)
-		data = append(data, converter.EncodeLengthPlusData(myWalletID)...)
-		data = append(data, converter.EncodeLengthPlusData(0)...)
-		data = append(data, converter.EncodeLengthPlusData([]byte(binSign))...)
-
+		if len(signature) == 0 {
+			err = fmt.Errorf(`Empty signature UpdFullNodes`)
+			logger.Error("%v", err)
+			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+				break BEGIN
+			}
+			continue BEGIN
+		}
+		toSerialize.BinSignatures = converter.EncodeLengthPlusData(signature)
+		transactionTypeBin := converter.DecToBin(txType, 1)
+		serializedData, err := msgpack.Marshal(toSerialize)
+		if err != nil {
+			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {
+				break BEGIN
+			}
+			continue BEGIN
+		}
+		data := append(transactionTypeBin, serializedData...)
 		err = d.InsertReplaceTxInQueue(data)
 		if err != nil {
 			if d.unlockPrintSleep(utils.ErrInfo(err), d.sleepTime) {

@@ -19,30 +19,36 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 /*
 Adding state tables should be spelled out in state settings
 */
 
-// NewTableInit initializes NewTable transaction
-func (p *Parser) NewTableInit() error {
+type NewTableParser struct {
+	*Parser
+	NewTable *tx.NewTable
+}
 
-	fields := []map[string]string{{"global": "int64"}, {"table_name": "string"}, {"columns": "string"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *NewTableParser) Init() error {
+	newTable := &tx.NewTable{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, newTable); err != nil {
 		return p.ErrInfo(err)
 	}
+	p.NewTable = newTable
 	return nil
 }
 
-// NewTableFront checks conditions of NewTable transaction
-func (p *Parser) NewTableFront() error {
-
-	err := p.generalCheck(`add_table`)
+func (p *NewTableParser) Validate() error {
+	err := p.generalCheck(`add_table`, &p.NewTable.Header, map[string]string{})
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -51,22 +57,22 @@ func (p *Parser) NewTableFront() error {
 	// ...
 
 	// Check InputData
-	verifyData := map[string]string{"global": "int64", "table_name": "string"}
+	verifyData := map[string][]interface{}{"int64": []interface{}{p.NewTable.Global}, "string": []interface{}{p.NewTable.Name}}
 	err = p.CheckInputData(verifyData)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	var cols [][]string
-	err = json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
+	err = json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	if len(cols) == 0 {
 		return p.ErrInfo(`len(cols) == 0`)
 	}
-	if len(cols) > consts.MAX_COLUMNS {
-		return fmt.Errorf(`Too many columns. Limit is %d`, consts.MAX_COLUMNS)
+	if len(cols) > sql.SysInt(sql.MaxColumns) {
+		return fmt.Errorf(`Too many columns. Limit is %d`, sql.SysInt(sql.MaxColumns))
 	}
 	var indexes int
 	for _, data := range cols {
@@ -83,18 +89,22 @@ func (p *Parser) NewTableFront() error {
 			indexes++
 		}
 	}
-	if indexes > consts.MAX_INDEXES {
-		return fmt.Errorf(`Too many indexes. Limit is %d`, consts.MAX_INDEXES)
+	if indexes > sql.SysInt(sql.MaxIndexes) {
+		return fmt.Errorf(`Too many indexes. Limit is %d`, sql.SysInt(sql.MaxIndexes))
 	}
 
-	prefix := p.TxStateIDStr
-	table := p.TxStateIDStr + `_tables`
-	if p.TxMaps.Int64["global"] == 1 {
+	prefix := converter.Int64ToStr(p.NewTable.Header.StateID)
+	table := prefix + `_tables`
+	global, err := strconv.Atoi(p.NewTable.Global)
+	if err != nil {
+		return fmt.Errorf("Global is not int")
+	}
+	if global == 1 {
 		table = `global_tables`
 		prefix = `global`
 	}
 
-	exists, err := p.Single(`SELECT count(*) FROM "`+table+`" WHERE name = ?`, prefix+`_`+p.TxMaps.String["table_name"]).Int64()
+	exists, err := p.Single(`SELECT count(*) FROM "`+table+`" WHERE name = ?`, prefix+`_`+p.NewTable.Name).Int64()
 	log.Debug(`SELECT count(*) FROM "` + table + `" WHERE name = ?`)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -104,8 +114,7 @@ func (p *Parser) NewTableFront() error {
 	}
 
 	// must be supplemented
-	forSign := fmt.Sprintf("%s,%s,%d,%d,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxCitizenID, p.TxStateID, p.TxMap["global"], p.TxMap["table_name"], p.TxMap["columns"])
-	CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+	CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.NewTable.ForSign(), p.NewTable.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -119,17 +128,15 @@ func (p *Parser) NewTableFront() error {
 	return nil
 }
 
-// NewTable proceeds NewTable transaction
-func (p *Parser) NewTable() error {
-
-	tableName := `global_` + p.TxMaps.String["table_name"]
-	if p.TxMaps.Int64["global"] == 0 {
-		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
+func (p *NewTableParser) Action() error {
+	prefix, err := GetTablePrefix(p.NewTable.Global, p.NewTable.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
+	tableName := prefix + "_" + p.NewTable.Name
 	var cols [][]string
-	json.Unmarshal([]byte(p.TxMaps.String["columns"]), &cols)
+	json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 
-	//citizenIdStr := utils.Int64ToStr(p.TxCitizenID)
 	colsSQL := ""
 	colsSQL2 := ""
 	sqlIndex := ""
@@ -169,7 +176,7 @@ func (p *Parser) NewTable() error {
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`
 	fmt.Println(sql)
-	err := p.ExecSQL(sql)
+	err = p.ExecSQL(sql)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -179,10 +186,6 @@ func (p *Parser) NewTable() error {
 		return p.ErrInfo(err)
 	}
 
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
-	}
 	err = p.ExecSQL(`INSERT INTO "`+prefix+`_tables" ( name, columns_and_permissions ) VALUES ( ?, ? )`,
 		tableName, `{"general_update":"ContractConditions(\"MainCondition\")", "update": {`+colsSQL2+`},
 		"insert": "ContractConditions(\"MainCondition\")", "new_column":"ContractConditions(\"MainCondition\")"}`)
@@ -193,27 +196,24 @@ func (p *Parser) NewTable() error {
 	return nil
 }
 
-// NewTableRollback rollbacks NewTable transaction
-func (p *Parser) NewTableRollback() error {
-
+func (p *NewTableParser) Rollback() error {
 	err := p.autoRollback()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
-	tableName := `global_` + p.TxMaps.String["table_name"]
-	if p.TxMaps.Int64["global"] == 0 {
-		tableName = p.TxStateIDStr + `_` + p.TxMaps.String["table_name"]
+	prefix, err := GetTablePrefix(p.NewTable.Global, p.NewTable.Header.StateID)
+	if err != nil {
+		return p.ErrInfo(err)
 	}
+	tableName := prefix + "_" + p.NewTable.Name
 	err = p.ExecSQL(`DROP TABLE "` + tableName + `"`)
-
-	prefix := `global`
-	if p.TxMaps.Int64["global"] == 0 {
-		prefix = p.TxStateIDStr
-	}
 	err = p.ExecSQL(`DELETE FROM "`+prefix+`_tables" WHERE name = ?`, tableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	return nil
+}
+
+func (p NewTableParser) Header() *tx.Header {
+	return &p.NewTable.Header
 }

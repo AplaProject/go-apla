@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/api"
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -45,7 +46,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/astaxie/beego/config"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
@@ -107,42 +107,27 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	exchangeapi.InitAPI()
 
-	// читаем config.ini
 	// read the config.ini
-	configIni := make(map[string]string)
-	fullConfigIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-	if err != nil {
-		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
-		log.Error("%v", utils.ErrInfo(err))
-	} else {
-		configIni, err = fullConfigIni.GetSection("default")
-	}
+	config.Read()
 
 	if *utils.TCPHost == "" {
-		*utils.TCPHost = configIni["tcp_host"]
+		*utils.TCPHost = config.ConfigIni["tcp_host"]
 	}
 	if *utils.FirstBlockDir == "" {
-		*utils.FirstBlockDir = configIni["first_block_dir"]
+		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
 	}
 	if *utils.ListenHTTPPort == "" {
-		*utils.ListenHTTPPort = configIni["http_port"]
+		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
 	}
 	if *utils.Dir == "" {
-		*utils.Dir = configIni["dir"]
+		*utils.Dir = config.ConfigIni["dir"]
 	}
-	utils.OneCountry = converter.StrToInt64(configIni["one_country"])
-	utils.PrivCountry = configIni["priv_country"] == `1` || configIni["priv_country"] == `true`
-	if len(configIni["lang"]) > 0 {
-		language.LangList = strings.Split(configIni["lang"], `,`)
+	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
+	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
+	if len(config.ConfigIni["lang"]) > 0 {
+		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
 	}
-	/*	outfile, err := os.Create("./out.txt")
-	    if err != nil {
-	        panic(err)
-	    }
-	    defer outfile.Close()
-		os.Stdout = outfile*/
 
-	// убьем ранее запущенный eGaaS
 	// kill previously run eGaaS
 	if !utils.Mobile() {
 		fmt.Println("kill daylight.pid")
@@ -158,7 +143,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
 
-			sql.DB, err = sql.NewDbConnect(configIni)
+			sql.DB, err = sql.NewDbConnect()
 
 			err = KillPid(pidMap["pid"])
 			if nil != err {
@@ -167,14 +152,13 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			if fmt.Sprintf("%s", err) != "null" {
 				fmt.Println(fmt.Sprintf("%s", err))
-				// даем 15 сек, чтобы завершиться предыдущему процессу
 				// give 15 sec to end the previous process
 				for i := 0; i < 15; i++ {
 					log.Debug("waiting killer %d", i)
 					if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
 						fmt.Println("waiting killer")
 						time.Sleep(time.Second)
-					} else { // если daylight.pid нет, значит завершился // if there is no daylight.pid, so it is finished
+					} else { // if there is no daylight.pid, so it is finished
 						break
 					}
 				}
@@ -183,16 +167,19 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	controllers.SessInit()
-	controllers.ConfigInit()
-	daemons.ConfigInit()
-
+	config.MonitorChanges()
 	go func() {
 		var err error
-		sql.DB, err = sql.NewDbConnect(configIni)
+		sql.DB, err = sql.NewDbConnect()
 		log.Debug("%v", sql.DB)
 		IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
 		if err != nil {
 			IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
+			log.Error("%v", utils.ErrInfo(err))
+			Exit(1)
+		}
+		err = sql.SysUpdate()
+		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			Exit(1)
 		}
@@ -209,9 +196,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
 		utils.LogoExt = `png`
 	}
-	IosLog("configIni:" + fmt.Sprintf("%v", configIni))
+	IosLog("configIni:" + fmt.Sprintf("%v", config.ConfigIni))
 	var backend *logging.LogBackend
-	switch configIni["log_output"] {
+	switch config.ConfigIni["log_output"] {
 	case "file":
 		backend = logging.NewLogBackend(f, "", 0)
 	case "console":
@@ -226,12 +213,11 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	level := "DEBUG"
 	if *utils.LogLevel == "" {
-		level = configIni["log_level"]
+		level = config.ConfigIni["log_level"]
 		*utils.LogLevel = level
 	} else {
 		level = *utils.LogLevel
 	}
-
 	logLevel, err := logging.LogLevel(level)
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
@@ -243,7 +229,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	// если есть OldFileName, значит работаем под именем dc.tmp и нужно перезапуститься под нормальным именем
 	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
 	log.Debug("OldFileName %v", *utils.OldFileName)
 	if *utils.OldFileName != "" || len(configIni) != 0 {
@@ -255,7 +240,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				log.Debug("%v", utils.ErrInfo(err))
 			}
 		}
-		// ждем подключения к БД
 		// waiting for connection to the database
 		for {
 			if sql.DB == nil || sql.DB.DB == nil {
@@ -289,7 +273,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}
 
-	// сохраним текущий pid и версию
 	// save the current pid and version
 	if !utils.Mobile() {
 		pid := os.Getpid()
@@ -304,10 +287,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}
 
-	// откат БД до указанного блока
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
-		sql.DB, err = sql.NewDbConnect(configIni)
+		sql.DB, err = sql.NewDbConnect()
 
 		if err := template.LoadContracts(); err != nil {
 			log.Error(`Load Contracts`, err)
@@ -320,7 +302,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			panic(err)
 		}
 		fmt.Println("complete")
-		// получим стату по всем таблам
 		// we recieve the statistics of all tables
 		allTable, err := sql.DB.GetAllTables()
 		if err != nil {
@@ -360,7 +341,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	daemons.StartDaemons()
 
 	IosLog("MonitorDaemons")
-	// мониторинг демонов
 	daemonsTable := make(map[string]string)
 	go func() {
 		for {
@@ -372,14 +352,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}()
 
-	// сигналы демонам для выхода
 	// signals for daemons to exit
 	IosLog("signals")
 	stopdaemons.Signals()
 
 	time.Sleep(time.Second)
 
-	// мониторим сигнал из БД о том, что демонам надо завершаться
 	// monitor the signal from the database that the daemons must be completed
 	go stopdaemons.WaitStopTime()
 
@@ -387,11 +365,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	HandleHTTPHost := ""
 	ListenHTTPHost := *utils.TCPHost + ":" + *utils.ListenHTTPPort
 	go func() {
-		// уже прошел процесс инсталяции, где юзер указал БД и был перезапуск кошелька
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		if len(configIni["db_type"]) > 0 {
+		if len(config.ConfigIni["db_type"]) > 0 {
 			for {
-				// ждем, пока произойдет подключение к БД в другой гоурутине
 				// wait while connection to a DB in other gourutina takes place
 				if sql.DB == nil || sql.DB.DB == nil {
 					time.Sleep(time.Second)
@@ -405,7 +381,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 				log.Error(`Load Contracts`, err)
 			}
 			BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost = GetHTTPHost()
-			// для ноды тоже нужна БД // DB is needed for node as well
+			// DB is needed for node as well
 			tcpListener()
 		}
 		IosLog(fmt.Sprintf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost))
@@ -478,9 +454,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}()
 
-	// ожидает появления свежих записей в чате, затем ждет появления коннектов
 	// waits for new records in chat, then waits for connect
-	// (заносятся из демеона connections и от тех, кто сам подключился к ноде)
 	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
 	// go utils.ChatOutput(utils.ChatNewTx)
 

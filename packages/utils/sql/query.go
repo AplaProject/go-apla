@@ -11,11 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/shopspring/decimal"
 )
 
@@ -50,21 +51,19 @@ func (db *DCDB) DelLogTx(binaryTx []byte) error {
 }
 
 // SendTx writes transaction info to transactions_status & queue_tx
-func (db *DCDB) SendTx(txType int64, adminWallet int64, data []byte) (err error) {
-	hash, err := crypto.Hash(data)
+func (db *DCDB) SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {
+	hash, err = crypto.Hash(data)
 	if err != nil {
 		log.Fatal(err)
 	}
+	hash = []byte(hex.EncodeToString(hash))
 	err = db.ExecSQL(`INSERT INTO transactions_status (
 			hash, time,	type, wallet_id, citizen_id	) VALUES (
 			[hex], ?, ?, ?, ? )`, hash, time.Now().Unix(), txType, adminWallet, adminWallet)
 	if err != nil {
-		return err
+		return
 	}
 	err = db.ExecSQL("INSERT INTO queue_tx (hash, data) VALUES ([hex], [hex])", hash, hex.EncodeToString(data))
-	if err != nil {
-		return err
-	}
 	return
 }
 
@@ -119,7 +118,7 @@ func (db *DCDB) GetMyStateIDAndWalletID() (int64, int64, error) {
 // GetHosts returns the list of hosts
 func (db *DCDB) GetHosts() ([]string, error) {
 	q := ""
-	if db.ConfigIni["db_type"] == "postgresql" {
+	if config.ConfigIni["db_type"] == "postgresql" {
 		q = "SELECT DISTINCT ON (host) host FROM full_nodes"
 	} else {
 		q = "SELECT host FROM full_nodes GROUP BY host"
@@ -260,7 +259,7 @@ func (db *DCDB) SetAI(table string, AI int64) error {
 		return utils.ErrInfo(err)
 	}
 
-	if db.ConfigIni["db_type"] == "postgresql" {
+	if config.ConfigIni["db_type"] == "postgresql" {
 		pgGetSerialSequence, err := db.Single("SELECT pg_get_serial_sequence('" + table + "', '" + AiID + "')").String()
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -282,7 +281,7 @@ func (db *DCDB) GetAiID(table string) (string, error) {
 	} else if table == "miners" {
 		column = "miner_id"
 	} else {
-		switch db.ConfigIni["db_type"] {
+		switch config.ConfigIni["db_type"] {
 		case "postgresql":
 			exists = ""
 			err := db.QueryRow("SELECT column_name FROM information_schema.columns WHERE table_name=$1 and column_name=$2", table, "id").Scan(&exists)
@@ -336,24 +335,6 @@ func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, walletID int64, citiz
 		converter.BinUnmarshal(&tmp, &txHead)
 		walletID = txHead.WalletID
 		citizenID = txHead.CitizenID
-	} else if txType > 127 {
-		header := consts.TXHeader{}
-		err := converter.BinUnmarshal(&tmp, &header)
-		if err == nil {
-			if header.StateID > 0 {
-				citizenID = int64(header.WalletID)
-			} else {
-				walletID = int64(header.WalletID)
-			}
-		}
-	} else {
-		converter.BytesShift(&binaryBlock, 4) // уберем время
-		length, err := converter.DecodeLength(&binaryBlock)
-		if err != nil {
-			log.Fatal(err)
-		}
-		walletID = converter.BytesToInt64(converter.BytesShift(&binaryBlock, length))
-		citizenID = converter.BytesToInt64(converter.BytesShift(&binaryBlock, length))
 	}
 	return
 }
@@ -505,17 +486,17 @@ func (db *DCDB) GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockW
 
 	sleepTime := 0
 	if myPosition == prevBlockFullNodePosition {
-		sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
+		sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * SysInt(GapsBetweenBlocks)
 	}
 
 	if myPosition > prevBlockFullNodePosition {
-		sleepTime = (myPosition - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
+		sleepTime = (myPosition - int(prevBlockFullNodePosition)) * SysInt(GapsBetweenBlocks)
 	}
 
 	if myPosition < prevBlockFullNodePosition {
-		sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * consts.GAPS_BETWEEN_BLOCKS
+		sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * SysInt(GapsBetweenBlocks)
 	}
-	log.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / consts.GAPS_BETWEEN_BLOCKS %v", sleepTime, myPosition, prevBlockFullNodePosition, consts.GAPS_BETWEEN_BLOCKS)
+	log.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / GAPS_BETWEEN_BLOCKS %v", sleepTime, myPosition, prevBlockFullNodePosition, SysInt(GapsBetweenBlocks))
 
 	return int64(sleepTime), nil
 }
@@ -555,9 +536,8 @@ func (db *DCDB) GetFuel() decimal.Decimal {
 	/*	fuelMutex.Lock()
 		defer fuelMutex.Unlock()
 		if cacheFuel <= 0 {*/
-	fuel, _ := db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").String()
 	//}
-	cacheFuel, _ := decimal.NewFromString(fuel)
+	cacheFuel, _ := decimal.NewFromString(SysString(FuelRate))
 	return cacheFuel
 }
 
@@ -566,7 +546,7 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
 	}
-	if val, ok := db.ConfigIni[`node_state_id`]; ok {
+	if val, ok := config.ConfigIni[`node_state_id`]; ok {
 		if val == `*` {
 			return true
 		}
@@ -599,7 +579,4 @@ func (db *DCDB) IsState(country string) (int64, error) {
 
 // UpdateFuel is reserved
 func (db *DCDB) UpdateFuel() {
-	/*	fuelMutex.Lock()
-		cacheFuel, _ = db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").Int64()
-		fuelMutex.Unlock()*/
 }

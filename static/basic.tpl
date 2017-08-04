@@ -3317,7 +3317,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3337,7 +3337,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3357,7 +3357,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3377,7 +3377,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3397,7 +3397,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3417,7 +3417,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3438,7 +3438,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 	   },
 
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3459,7 +3459,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 	   },
 
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3479,7 +3479,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3499,7 +3499,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3519,7 +3519,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3539,7 +3539,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3559,7 +3559,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3579,7 +3579,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3599,7 +3599,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3619,7 +3619,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3639,7 +3639,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3659,7 +3659,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3679,7 +3679,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3700,7 +3700,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 	   },
 
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3720,7 +3720,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3740,7 +3740,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3760,7 +3760,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3780,7 +3780,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3800,7 +3800,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3820,7 +3820,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3840,7 +3840,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3860,7 +3860,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3880,7 +3880,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3900,7 +3900,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3921,7 +3921,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 	   },
 
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3941,7 +3941,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3961,7 +3961,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -3981,7 +3981,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,
@@ -4001,7 +4001,7 @@ Desc: "Election and Assign, Polling, Messenger, Simple Money System",
 			}
 	   },
 {
-		Forsign: 'global,name,value,conditions',
+		Forsign: 'global,name,value,conditions,wallet',
 		Data: {
 			type: "NewContract",
 			typeid: #type_new_contract_id#,

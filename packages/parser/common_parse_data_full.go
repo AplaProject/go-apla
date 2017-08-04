@@ -25,6 +25,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/shopspring/decimal"
 )
 
@@ -35,17 +36,13 @@ import (
 // ParseDataFull checks the condiitions and proceeds of transactions
 // frontal check + adding the data from the block to a table and info_block
 func (p *Parser) ParseDataFull(blockGenerator bool) error {
-
+	var txType int
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
 		// parse only blocks
 		return utils.ErrInfo(fmt.Errorf("incorrect dataType"))
 	}
 	var err error
-
-	//if len(p.BinaryData) > 500000 {
-	//	ioutil.WriteFile("block-"+string(utils.DSha256(p.BinaryData)), p.BinaryData, 0644)
-	//}
 
 	if blockGenerator {
 		err = p.GetInfoBlock()
@@ -139,7 +136,9 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			hash = converter.BinToHex(hash)
 			p.TxHash = string(hash)
 			log.Debug("p.TxHash %s", p.TxHash)
-			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
+			p.TxBinaryData = transactionBinaryData
+			txType = int(converter.BinToDecBytesShift(&p.TxBinaryData, 1))
+			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			log.Debug("p.TxSlice %v", p.TxSlice)
 			if err != nil {
 				err0 := p.RollbackTo(txForRollbackTo, true)
@@ -149,7 +148,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				return err
 			}
 
-			if p.BlockData.BlockId > 1 && p.TxContract == nil {
+			if p.BlockData.BlockID > 1 && p.TxContract == nil {
 				var userID int64
 				// txSlice[3] могут подсунуть пустой
 				// txSlice[3] could slip the empty one
@@ -168,7 +167,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
 				// to prevent the possibility when 1 user can send a 10-gigabyte dos-block which will fill with his own transactions
-				if txCounter[userID] > consts.MAX_BLOCK_USER_TXS {
+				if txCounter[userID] > sql.SysInt64(sql.MaxBlockUserTx) {
 					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
 						log.Error("error: %v", err0)
@@ -196,7 +195,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(fmt.Errorf("nonexistent type"))
 				}
 			} else {
-				if int64(p.TxPtr.(*consts.TXHeader).Time)-consts.MAX_TX_FORW > p.BlockData.Time || int64(p.TxPtr.(*consts.TXHeader).Time) < p.BlockData.Time-consts.MAX_TX_BACK {
+				if p.TxSmart.Time-consts.MAX_TX_FORW > p.BlockData.Time || p.TxSmart.Time < p.BlockData.Time-consts.MAX_TX_BACK {
 					return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 				}
 
@@ -221,16 +220,20 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 					return utils.ErrInfo(err)
 				}
 			} else {
-				MethodName := consts.TxTypes[converter.BytesToInt(p.TxSlice[1])]
+				MethodName := consts.TxTypes[txType]
+				parser, err := GetParser(p, MethodName)
+				if err != nil {
+					return utils.ErrInfo(err)
+				}
 				log.Debug("MethodName", MethodName+"Init")
-				err := utils.CallMethod(p, MethodName+"Init")
+				err = parser.Init()
 				if _, ok := err.(error); ok {
 					log.Error("error: %v", err)
 					return utils.ErrInfo(err.(error))
 				}
 
 				log.Debug("MethodName", MethodName+"Front")
-				err = utils.CallMethod(p, MethodName+"Front")
+				err = parser.Validate()
 				if _, ok := err.(error); ok {
 					log.Error("error: %v", err)
 					err0 := p.RollbackTo(txForRollbackTo, true)
@@ -241,7 +244,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 				}
 
 				log.Debug("MethodName", MethodName)
-				err = utils.CallMethod(p, MethodName)
+				err = parser.Action()
 				// pay for CPU resources
 				p.payFPrice()
 				if _, ok := err.(error); ok {
@@ -255,8 +258,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			// даем юзеру понять, что его тр-ия попала в блок
 			// let user know that his transaction  is added in the block
-			p.ExecSQL("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockId, hashFull)
-			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockId, hashFull)
+			p.ExecSQL("UPDATE transactions_status SET block_id = ? WHERE hex(hash) = ?", p.BlockData.BlockID, hashFull)
+			log.Debug("UPDATE transactions_status SET block_id = %d WHERE hex(hash) = %s", p.BlockData.BlockID, hashFull)
 
 			// Тут было time(). А значит если бы в цепочке блоков были блоки в которых были бы одинаковые хэши тр-ий, то ParseDataFull вернул бы error
 			// here was a time(). That means if blocks with the same hashes of transactions were in the chain of blocks, ParseDataFull would return the error
@@ -275,7 +278,6 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 		p.InsertIntoBlockchain()
 	} else {
 		p.UpdBlockInfo()
-
 	}
 	return nil
 }

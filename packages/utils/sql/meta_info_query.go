@@ -1,8 +1,59 @@
 package sql
 
 import (
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 )
+
+func (db *DCDB) GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
+	var planStr string
+	newQuery, newArgs := FormatQueryArgs(query, config.ConfigIni["db_type"], args...)
+	err := db.QueryRow(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", newQuery), newArgs...).Scan(&planStr)
+	switch {
+	case err == sql.ErrNoRows:
+		return 0, errors.New("No rows")
+	case err != nil:
+		return 0, err
+	}
+	var queryPlan []map[string]interface{}
+	dec := json.NewDecoder(strings.NewReader(planStr))
+	dec.UseNumber()
+	if err := dec.Decode(&queryPlan); err != nil {
+		return 0, err
+	}
+	if len(queryPlan) == 0 {
+		return 0, errors.New("Query plan is empty")
+	}
+	firstNode := queryPlan[0]
+	var plan interface{}
+	var ok bool
+	if plan, ok = firstNode["Plan"]; !ok {
+		return 0, errors.New("No Plan key in result")
+	}
+	var planMap map[string]interface{}
+	if planMap, ok = plan.(map[string]interface{}); !ok {
+		return 0, errors.New("Plan is not map[string]interface{}")
+	}
+	if totalCost, ok := planMap["Total Cost"]; ok {
+		if totalCostNum, ok := totalCost.(json.Number); ok {
+			if totalCostF64, err := totalCostNum.Float64(); err != nil {
+				return 0, err
+			} else {
+				return int64(totalCostF64), nil
+			}
+		} else {
+			return 0, errors.New("Total cost is not a number")
+		}
+	} else {
+		return 0, errors.New("PlanMap has no TotalCost")
+	}
+	return 0, nil
+}
 
 // GetFirstColumnName returns the name of the first column in the table
 func (db *DCDB) GetFirstColumnName(table string) (string, error) {
@@ -64,8 +115,25 @@ func (db *DCDB) NumIndexes(tblname string) (int, error) {
 	return int(indexes - 1), nil
 }
 
+// IsSystemTable checks if the table is a system table
+func IsSystemTable(table string) bool {
+	var sys = map[string]bool{
+		`dlt_transactions`:       true,
+		`dlt_wallets`:            true,
+		`global_apps`:            true,
+		`global_menu`:            true,
+		`global_pages`:           true,
+		`global_signatures`:      true,
+		`global_smart_contracts`: true,
+	}
+	return sys[table]
+}
+
 // IsCustomTable checks if the table is created by the users
-func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
+func (db *DCDB) IsCustomTable(table string) (isCustom bool, pref string, err error) {
+	if IsSystemTable(table) {
+		return false, `global`, nil
+	}
 	if (table[0] >= '0' && table[0] <= '9') || strings.HasPrefix(table, `global_`) {
 		if off := strings.IndexByte(table, '_'); off > 0 {
 			prefix := table[:off]
@@ -74,6 +142,10 @@ func (db *DCDB) IsCustomTable(table string) (isCustom bool, err error) {
 			}
 		}
 	}
+	if !isCustom && !strings.HasSuffix(table, `_citizenship_requests`) {
+		return false, `notcustom`, fmt.Errorf(table + ` is not a custom table`)
+	}
+	pref = table[:strings.IndexByte(table, '_')]
 	return
 }
 

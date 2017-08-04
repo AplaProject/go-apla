@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 )
 
 // ReplQ preprocesses a database query
@@ -61,7 +63,7 @@ func FormatQueryArgs(q, dbType string, args ...interface{}) (string, []interface
 func (db *DCDB) FormatQuery(q string) string {
 	newQ := q
 	if ok, _ := regexp.MatchString(`CREATE TABLE`, newQ); !ok {
-		switch db.ConfigIni["db_type"] {
+		switch config.ConfigIni["db_type"] {
 		case "postgresql":
 			newQ = strings.Replace(newQ, "[hex]", "decode(?,'HEX')", -1)
 			newQ = strings.Replace(newQ, " authorization", ` "authorization"`, -1)
@@ -73,7 +75,7 @@ func (db *DCDB) FormatQuery(q string) string {
 		}
 	}
 
-	if db.ConfigIni["db_type"] == "postgresql" || db.ConfigIni["db_type"] == "sqlite" {
+	if config.ConfigIni["db_type"] == "postgresql" || config.ConfigIni["db_type"] == "sqlite" {
 		r, _ := regexp.Compile(`\s*([0-9]+_[\w]+)(?:\.|\s|\)|$)`)
 		indexArr := r.FindAllStringSubmatchIndex(newQ, -1)
 		for i := len(indexArr) - 1; i >= 0; i-- {
@@ -84,7 +86,7 @@ func (db *DCDB) FormatQuery(q string) string {
 	r, _ := regexp.Compile(`hex\(([\w]+)\)`)
 	indexArr := r.FindAllStringSubmatchIndex(newQ, -1)
 	for i := len(indexArr) - 1; i >= 0; i-- {
-		if db.ConfigIni["db_type"] == "mysql" || db.ConfigIni["db_type"] == "sqlite" {
+		if config.ConfigIni["db_type"] == "mysql" || config.ConfigIni["db_type"] == "sqlite" {
 			newQ = newQ[:indexArr[i][0]] + `LOWER(HEX(` + newQ[indexArr[i][2]:indexArr[i][3]] + `))` + newQ[indexArr[i][1]:]
 		} else {
 			newQ = newQ[:indexArr[i][0]] + `LOWER(encode(` + newQ[indexArr[i][2]:indexArr[i][3]] + `, 'hex'))` + newQ[indexArr[i][1]:]

@@ -53,7 +53,7 @@ func (c *Controller) AjaxHistory() interface{} {
 	limit := fmt.Sprintf(`LIMIT %d OFFSET %d`, length, converter.StrToInt(c.r.FormValue("start")))
 	if walletID != 0 {
 		total, _ := c.Single(`SELECT count(id) FROM dlt_transactions where sender_wallet_id = ? OR
-		                       recipient_wallet_id = ? OR recipient_wallet_address = ?`, walletID, walletID, c.SessAddress).Int64()
+		                       recipient_wallet_id = ?`, walletID, walletID).Int64()
 		result.Total = int(total)
 		result.Filtered = int(total)
 		if length != 0 {
@@ -61,8 +61,7 @@ func (c *Controller) AjaxHistory() interface{} {
 		        left join dlt_wallets as w on w.wallet_id=d.sender_wallet_id
 		        left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id
 				where sender_wallet_id=? OR 
-		        recipient_wallet_id=?  OR
-		        recipient_wallet_address=? order by d.id desc  `+limit, -1, walletID, walletID, c.SessAddress)
+		        recipient_wallet_id=? order by d.id desc  `+limit, -1, walletID, walletID)
 			if err != nil {
 				log.Error("%s", err)
 			}
@@ -71,9 +70,9 @@ func (c *Controller) AjaxHistory() interface{} {
 				history[ind][`confirm`] = converter.Int64ToStr(max - converter.StrToInt64(history[ind][`block_id`]))
 				history[ind][`sender_address`] = converter.AddressToString(converter.StrToInt64(history[ind][`sw`]))
 				recipient := history[ind][`rw`]
-				if len(recipient) < 10 {
-					recipient = history[ind][`recipient_wallet_address`]
-				}
+				/*				if len(recipient) < 10 {
+								recipient = history[ind][`recipient_wallet_address`]
+							}*/
 				history[ind][`recipient_address`] = converter.AddressToString(converter.StringToAddress(recipient))
 			}
 		}

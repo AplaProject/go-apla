@@ -28,20 +28,21 @@ import (
 // selectiveLoggingAndUpd changes DB and writes all DB changes for rollbacks
 // не использовать для комментов
 // do not use for comments
-func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (string, error) {
+func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, table string, whereFields, whereValues []string, generalRollback bool) (int64, string, error) {
 	var (
-		tableID  string
-		isCustom bool
-		err      error
+		tableID, pref string
+		isCustom      bool
+		err           error
+		cost          int64
 	)
 
 	if generalRollback && p.BlockData == nil {
-		return ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
+		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
 	isBytea := getBytea(table)
-	if isCustom, err = p.IsCustomTable(table); err != nil {
-		return ``, err
+	if isCustom, pref, err = p.IsCustomTable(table); err != nil && pref != `notcustom` {
+		return 0, ``, err
 	}
 
 	for i, v := range ivalues {
@@ -59,7 +60,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 				}
 			}
 			if isCustom && vlen > 32 {
-				return ``, fmt.Errorf(`hash value cannot be larger than 32 bytes`)
+				return 0, ``, fmt.Errorf(`hash value cannot be larger than 32 bytes`)
 			}
 		}
 	}
@@ -98,10 +99,16 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	}
 	// если есть, что логировать
 	// if there is something to log
-	logData, err := p.OneRow(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere).String()
+	selectQuery := `SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere
+	selectCost, err := p.GetQueryTotalCost(selectQuery)
 	if err != nil {
-		return tableID, err
+		return 0, tableID, err
 	}
+	logData, err := p.OneRow(selectQuery).String()
+	if err != nil {
+		return 0, tableID, err
+	}
+	cost += selectCost
 	log.Debug(`SELECT ` + addSQLFields + ` rb_id FROM "` + table + `" ` + addSQLWhere)
 	if whereFields != nil && len(logData) > 0 {
 		jsonMap := make(map[string]string)
@@ -127,11 +134,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 		jsonData, _ := json.Marshal(jsonMap)
 		if err != nil {
-			return tableID, err
+			return 0, tableID, err
 		}
-		rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockId)
+		rbID, err := p.ExecSQLGetLastInsertID("INSERT INTO rollback ( data, block_id ) VALUES ( ?, ? )", "rollback", string(jsonData), p.BlockData.BlockID)
 		if err != nil {
-			return tableID, err
+			return 0, tableID, err
 		}
 		log.Debug("string(jsonData) %s / rbID %d", string(jsonData), rbID)
 		addSQLUpdate := ""
@@ -153,11 +160,17 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 				addSQLUpdate += fields[i] + `='` + strings.Replace(values[i], `'`, `''`, -1) + `',`
 			}
 		}
+		updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere
+		updateCost, err := p.GetQueryTotalCost(updateQuery, rbID)
+		if err != nil {
+			return 0, tableID, err
+		}
+		cost += updateCost
 		err = p.ExecSQL(`UPDATE "`+table+`" SET `+addSQLUpdate+` rb_id = ? `+addSQLWhere, rbID)
 		log.Debug(`UPDATE "` + table + `" SET ` + addSQLUpdate + ` rb_id = ? ` + addSQLWhere)
 		//log.Debug("logId", logId)
 		if err != nil {
-			return tableID, err
+			return 0, tableID, err
 		}
 		tableID = logData[p.AllPkeys[table]]
 	} else {
@@ -193,16 +206,22 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		addSQLIns0 = addSQLIns0[0 : len(addSQLIns0)-1]
 		addSQLIns1 = addSQLIns1[0 : len(addSQLIns1)-1]
 		//		fmt.Println(`Sel Log`, "INSERT INTO "+table+" ("+addSQLIns0+") VALUES ("+addSQLIns1+")")
-		tableID, err = p.ExecSQLGetLastInsertID(`INSERT INTO "`+table+`" (`+addSQLIns0+`) VALUES (`+addSQLIns1+`)`, table)
+		insertQuery := `INSERT INTO "` + table + `" (` + addSQLIns0 + `) VALUES (` + addSQLIns1 + `)`
+		insertCost, err := p.GetQueryTotalCost(insertQuery)
 		if err != nil {
-			return tableID, err
+			return 0, tableID, err
+		}
+		cost += insertCost
+		tableID, err = p.ExecSQLGetLastInsertID(insertQuery, table)
+		if err != nil {
+			return 0, tableID, err
 		}
 	}
 	if generalRollback {
-		err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockId, p.TxHash, table, tableID)
+		err = p.ExecSQL("INSERT INTO rollback_tx ( block_id, tx_hash, table_name, table_id ) VALUES (?, [hex], ?, ?)", p.BlockData.BlockID, p.TxHash, table, tableID)
 		if err != nil {
-			return tableID, err
+			return 0, tableID, err
 		}
 	}
-	return tableID, nil
+	return cost, tableID, nil
 }

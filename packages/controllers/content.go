@@ -30,12 +30,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	tpl "github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/astaxie/beego/config"
 )
 
 var (
@@ -126,15 +126,14 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	var lastBlockTime int64
 
 	dbInit := false
-	if len(configIni["db_user"]) > 0 || (configIni["db_type"] == "sqlite") {
+	if len(config.ConfigIni["db_user"]) > 0 || (config.ConfigIni["db_type"] == "sqlite") {
 		dbInit = true
 	}
 
 	if dbInit {
 		var err error
-		//c.DCDB, err = utils.NewDbConnect(configIni)
 		c.DCDB = sql.DB
-		if c.DCDB.DB == nil {
+		if c.DCDB == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
@@ -263,7 +262,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	// идет загрузка блокчейна
 	// blockchain is loading
 	wTime := int64(2)
-	if configIni != nil && configIni["test_mode"] == "1" {
+	if config.ConfigIni != nil && config.ConfigIni["test_mode"] == "1" {
 		wTime = 2 * 365 * 86400
 		log.Debug("%v", wTime)
 		log.Debug("%v", lastBlockTime)
@@ -276,17 +275,8 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	if tplName == "installStep0" {
 		log.Debug("ConfigInit monitor")
-		if _, err := os.Stat(*utils.Dir + "/config.ini"); err == nil {
-
-			confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			configIni, err = confIni.GetSection("default")
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			if len(configIni["db_type"]) > 0 {
+		if err := config.Read(); err == nil {
+			if len(config.ConfigIni["db_type"]) > 0 {
 				tplName = "updatingBlockchain"
 			}
 		}
@@ -302,7 +292,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("tplName::", tplName, sessCitizenID, sessWalletID, sessAddress)
 	controller := r.FormValue("controllerHTML")
-	if val, ok := configIni[`psw`]; ok && ((tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0) {
+	if val, ok := config.ConfigIni[`psw`]; ok && ((tplName != `login` && tplName != `loginECDSA`) || len(controller) > 0) {
 		if psw, err := r.Cookie(`psw`); err != nil || !IsPassValid(val, psw.Value) {
 			if err == nil {
 				cookie := http.Cookie{Name: "psw", Value: ``, Expires: time.Now().AddDate(0, 0, -1)}

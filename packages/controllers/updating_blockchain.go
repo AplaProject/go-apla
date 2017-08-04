@@ -23,10 +23,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type updatingBlockchainStruct struct {
@@ -81,7 +83,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		nodeConfig, err := c.GetNodeConfig()
 		blockchainURL := nodeConfig["first_load_blockchain_url"]
 		if len(blockchainURL) == 0 {
-			blockchainURL = consts.BLOCKCHAIN_URL
+			blockchainURL = sql.SysString(sql.BlockchainURL)
 		}
 		/*resp, err := http.Get(blockchainURL)
 		if err != nil {
@@ -143,7 +145,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 	b := new(bytes.Buffer)
-	standardInstall = configIni[`install_type`] == `standard`
+	standardInstall = config.ConfigIni[`install_type`] == `standard`
 
 	t.Execute(b, &updatingBlockchainStruct{SleepTime: sleepTime, StandardInstall: standardInstall, RestartDb: restartDb, Lang: c.Lang,
 		WaitText: waitText, BlockID: blockID, BlockTime: blockTime, StartDaemons: startDaemons,

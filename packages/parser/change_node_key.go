@@ -17,77 +17,55 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// ChangeNodeKeyInit initializes ChangeNodeKey transaction
-func (p *Parser) ChangeNodeKeyInit() error {
+type ChangeNodeKeyParser struct {
+	*Parser
+	ChangeNodeKey *tx.ChangeNodeKey
+}
 
-	fields := []map[string]string{{"new_node_public_key": "bytes"}, {"sign": "bytes"}}
-	err := p.GetTxMaps(fields)
-	if err != nil {
+func (p *ChangeNodeKeyParser) Init() error {
+	changeNodeKey := &tx.ChangeNodeKey{}
+	if err := msgpack.Unmarshal(p.TxBinaryData, changeNodeKey); err != nil {
 		return p.ErrInfo(err)
 	}
-	p.TxMaps.Bytes["new_node_public_key"] = converter.BinToHex(p.TxMaps.Bytes["new_node_public_key"])
-	p.TxMap["new_node_public_key"] = converter.BinToHex(p.TxMap["new_node_public_key"])
+	p.ChangeNodeKey = changeNodeKey
+	p.ChangeNodeKey.NewNodePublicKey = converter.BinToHex(p.ChangeNodeKey.NewNodePublicKey)
 	return nil
 }
 
-// ChangeNodeKeyFront checks conditions of ChangeNodeKey transaction
-func (p *Parser) ChangeNodeKeyFront() error {
-
-	/*err := p.generalCheck()
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
-
-	verifyData := map[string]string{"new_node_public_key": "public_key"}
-	err = p.CheckInputData(verifyData)
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-	*/
-	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.TxMaps.Int64["citizen_id"])
+func (p *ChangeNodeKeyParser) Validate() error {
+	nodePublicKey, err := p.GetPublicKeyWalletOrCitizen(p.TxMaps.Int64["wallet_id"], p.ChangeNodeKey.Header.UserID)
 	if err != nil || len(nodePublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")
 	}
 
-	forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["user_id"], p.TxMap["new_node_public_key"])
-	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, forSign, p.TxMap["sign"], true)
+	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, true)
 	if err != nil || !CheckSignResult {
-		forSign := fmt.Sprintf("%s,%s,%s,%s", p.TxMap["type"], p.TxMap["time"], p.TxMap["user_id"], p.TxMap["new_node_public_key"])
-		CheckSignResult, err := utils.CheckSign(p.PublicKeys, forSign, p.TxMap["sign"], false)
+		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, false)
 		if err != nil || !CheckSignResult {
 			return p.ErrInfo("incorrect sign")
 		}
 	}
-
-	/*	err = p.limitRequest(p.Variables.Int64["limit_node_key"], "node_key", p.Variables.Int64["limit_node_key_period"])
-		if err != nil {
-			return p.ErrInfo(err)
-		}*/
-
 	return nil
 }
 
-// ChangeNodeKey proceeds ChangeNodeKey transaction
-func (p *Parser) ChangeNodeKey() error {
-
-	_, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{converter.HexToBin(p.TxMaps.Bytes["new_node_public_key"])}, "system_recognized_states", []string{"state_id"}, []string{converter.UInt32ToStr(p.TxStateID)}, true)
+func (p *ChangeNodeKeyParser) Action() error {
+	_, _, err := p.selectiveLoggingAndUpd([]string{"node_public_key"}, []interface{}{converter.HexToBin(p.ChangeNodeKey.NewNodePublicKey)}, "system_recognized_states", []string{"state_id"}, []string{converter.Int64ToStr(p.ChangeNodeKey.Header.StateID)}, true)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.TxMaps.Bytes["new_node_public_key"]).Int64()
+	myKey, err := p.Single(`SELECT id FROM my_node_keys WHERE block_id = 0 AND public_key = [hex]`, p.ChangeNodeKey.NewNodePublicKey).Int64()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	log.Debug("myKey %d", myKey)
 	if myKey > 0 {
-		_, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockId}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
+		_, _, err := p.selectiveLoggingAndUpd([]string{"block_id"}, []interface{}{p.BlockData.BlockID}, "my_node_keys", []string{"id"}, []string{converter.Int64ToStr(myKey)}, true)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -95,7 +73,10 @@ func (p *Parser) ChangeNodeKey() error {
 	return nil
 }
 
-// ChangeNodeKeyRollback rollbacks ChangeNodeKey transaction
-func (p *Parser) ChangeNodeKeyRollback() error {
+func (p *ChangeNodeKeyParser) Rollback() error {
 	return p.autoRollback()
+}
+
+func (p ChangeNodeKeyParser) Header() *tx.Header {
+	return &p.ChangeNodeKey.Header
 }

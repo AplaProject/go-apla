@@ -40,10 +40,6 @@ const LAST_BLOCK = 330000
 // Approximate blockchain size
 const BLOCKCHAIN_SIZE = 1000
 
-// где лежит блокчейн. для тех, кто не хочет собирать его с нодов
-// Where is blockchain. For those who don't want to collect it from nodes
-const BLOCKCHAIN_URL = "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain"
-
 // на сколько может бежать время в тр-ии
 // How fast could the time of transaction pass
 const MAX_TX_FORW = 0
@@ -51,17 +47,6 @@ const MAX_TX_FORW = 0
 // тр-ия может блуждать по сети сутки и потом попасть в блок
 // transaction may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
-
-const MAX_BLOCK_SIZE = 64 << 20
-
-const MAX_TX_SIZE = 32 << 20
-
-const MAX_TX_COUNT = 100000
-
-const (
-	MAX_COLUMNS = 50 // Maximum columns in tables
-	MAX_INDEXES = 10 // Maximum indexes in tables
-)
 
 const ERROR_TIME = 1
 
@@ -76,10 +61,8 @@ const WRITE_TIMEOUT = 20
 // default value, with how many nodes we make the connection
 const OUT_CONNECTIONS = 10
 
-const GAPS_BETWEEN_BLOCKS = 3
 const COMMISSION = 1000
 const TCP_PORT = "7078"
-const MAX_BLOCK_USER_TXS = 100
 const RB_BLOCKS_1 = 30
 const RB_BLOCKS_2 = 1440
 const ALERT_ERROR_TIME = 1
@@ -89,14 +72,7 @@ const DATA_TYPE_BLOCK_BODY = 7
 
 const CHANGE_KEY_PERIOD = 86400 * 7
 
-const UPD_FULL_NODES_PERIOD = 3600 // на время тестов 3600, потом надо ставить 86400
-// 3600 is for the test time, then we have to put 86400
-
 const RATE_VOTING_PERIOD = 3600
-
-const RECOVERY_ADDRESS = 8275283526439353759
-
-const COMMISSION_WALLET = 8275283526439353759
 
 const COUNT_BLOCK_BEFORE_SAVE = RB_BLOCKS_2
 

@@ -50,9 +50,9 @@ var log = logging.MustGetLogger("daemons")
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockId  int64
+	BlockID  int64
 	Time     int64
-	WalletId int64
+	WalletID int64
 	StateID  int64
 	Sign     []byte
 	Hash     []byte
@@ -182,15 +182,15 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 				SIGN                               от 128 до 512 байт. Подпись от TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT // from 128 to 512 байт. Signature from TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
 		Далее - тело блока (Тр-ии) // further is body block (transaction)
 	*/
-	result.BlockId = converter.BinToDecBytesShift(binaryBlock, 4)
+	result.BlockID = converter.BinToDecBytesShift(binaryBlock, 4)
 	result.Time = converter.BinToDecBytesShift(binaryBlock, 4)
-	result.WalletId, _ = converter.DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
+	result.WalletID, _ = converter.DecodeLenInt64(binaryBlock) //BytesToInt64(BytesShift(binaryBlock, DecodeLength(binaryBlock)))
 	// Delete after re-build blocks
 	/*	if result.WalletId == 0x31 {
 		result.WalletId = 1
 	}*/
 	result.StateID = converter.BinToDecBytesShift(binaryBlock, 1)
-	if result.BlockId > 1 {
+	if result.BlockID > 1 {
 		signSize, err := converter.DecodeLength(binaryBlock)
 		if err != nil {
 			log.Fatal(err)
@@ -199,7 +199,7 @@ func ParseBlockHeader(binaryBlock *[]byte) *BlockData {
 	} else {
 		*binaryBlock = (*binaryBlock)[1:]
 	}
-	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockId, result.Time, result.WalletId, result.StateID, result.Sign)
+	log.Debug("result.BlockId: %v / result.Time: %v / result.WalletId: %v / result.StateID: %v / result.Sign: %v", result.BlockID, result.Time, result.WalletID, result.StateID, result.Sign)
 	return result
 }
 
@@ -557,62 +557,6 @@ func GetHTTPTextAnswer(url string) (string, error) {
 	return string(htmlData), err
 }
 
-// GetEndBlockID returns the end block id
-func GetEndBlockID() (int64, error) {
-
-	if _, err := os.Stat(*Dir + "/public/blockchain"); os.IsNotExist(err) {
-		return 0, nil
-	}
-
-	// размер блока, записанный в 5-и последних байтах файла blockchain
-	// size of a block recorded into the last 5 bytes of blockchain file
-	fname := *Dir + "/public/blockchain"
-	file, err := os.Open(fname)
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	defer file.Close()
-
-	fi, err := file.Stat()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if fi.Size() == 0 {
-		return 0, ErrInfo("/public/blockchain size=0")
-	}
-
-	// размер блока, записанный в 5-и последних байтах файла blockchain
-	// size of a block recorded into the last 5 bytes of blockchain file
-	_, err = file.Seek(-5, 2)
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	buf := make([]byte, 5)
-	_, err = file.Read(buf)
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	size := converter.BinToDec(buf)
-	if size > consts.MAX_BLOCK_SIZE {
-		return 0, ErrInfo("size > conts.MAX_BLOCK_SIZE")
-	}
-	// сам блок
-	// block itself
-	_, err = file.Seek(-(size + 5), 2)
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	dataBinary := make([]byte, size+5)
-	_, err = file.Read(dataBinary)
-	if err != nil {
-		return 0, ErrInfo(err)
-	}
-	// размер (id блока + тело блока)
-	// size (block id + body of a block)
-	converter.BinToDecBytesShift(&dataBinary, 5)
-	return converter.BinToDecBytesShift(&dataBinary, 5), nil
-}
-
 // ErrInfoFmt fomats the error message
 func ErrInfoFmt(err string, a ...interface{}) error {
 	return fmt.Errorf("%s (%s)", fmt.Sprintf(err, a...), Caller(1))
@@ -678,7 +622,6 @@ func CallMethod(i interface{}, methodName string) interface{} {
 func Caller(steps int) string {
 	name := "?"
 	if pc, _, num, ok := runtime.Caller(steps + 1); ok {
-		//fmt.Println(num)
 		name = fmt.Sprintf("%s :  %d", filepath.Base(runtime.FuncForPC(pc).Name()), num)
 	}
 	return name
@@ -743,63 +686,6 @@ func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin
 		}
 	}
 	return crypto.CheckSign(publicKeys[0], forSign, signsSlice[0])
-}
-
-// GetMrklroot returns MerkleTreeRoot
-func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
-	var mrklSlice [][]byte
-	var txSize int64
-	// [error] парсим после вызова функции
-	// parse [error] after the calling of a function
-	if len(binaryData) > 0 {
-		for {
-			// чтобы исключить атаку на переполнение памяти
-			// to exclude an attack on memory overflow
-			if !first {
-				if txSize > consts.MAX_TX_SIZE {
-					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
-				}
-			}
-			txSize, err := converter.DecodeLength(&binaryData)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// отчекрыжим одну транзакцию от списка транзакций
-			// separate one transaction from the list of transactions
-			if txSize > 0 {
-				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
-				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
-				if err != nil {
-					log.Fatal(err)
-				}
-				dSha256Hash = converter.BinToHex(dSha256Hash)
-				mrklSlice = append(mrklSlice, dSha256Hash)
-				//if len(transactionBinaryData) > 500000 {
-				//	ioutil.WriteFile(string(dSha256Hash)+"-"+Int64ToStr(txSize), transactionBinaryData, 0644)
-				//}
-			}
-
-			// чтобы исключить атаку на переполнение памяти
-			// to exclude an attack on memory overflow
-			if !first {
-				if len(mrklSlice) > consts.MAX_TX_COUNT {
-					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), consts.MAX_TX_COUNT))
-				}
-			}
-			if len(binaryData) == 0 {
-				break
-			}
-		}
-	} else {
-		mrklSlice = append(mrklSlice, []byte("0"))
-	}
-	log.Debug("mrklSlice: %s", mrklSlice)
-	if len(mrklSlice) == 0 {
-		mrklSlice = append(mrklSlice, []byte("0"))
-	}
-	log.Debug("mrklSlice: %s", mrklSlice)
-	return MerkleTreeRoot(mrklSlice), nil
 }
 
 // MerkleTreeRoot rertun Merkle value

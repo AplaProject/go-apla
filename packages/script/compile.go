@@ -806,7 +806,7 @@ main:
 			}
 			if !call {
 				cmd = &ByteCode{cmdExtend, lexem.Value.(string)}
-				if (*lexems)[i+1].Type == isLBrack {
+				if i < len(*lexems)-1 && (*lexems)[i+1].Type == isLBrack {
 					buffer = append(buffer, &ByteCode{cmdIndex, 0})
 				}
 			}

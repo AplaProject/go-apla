@@ -28,95 +28,10 @@ import (
 )
 
 /**
- * Откат таблиц rb_time_, которые были изменены транзакциями
-//Rollback of rb_time_ tables that have been modified by transactions
-*/
-/*
-func (p *Parser) ParseDataRollbackFront(txcandidateBlock bool) error {
-
-	// вначале нужно получить размеры всех тр-ий, чтобы пройтись по ним в обратном порядке
-// in the beginning it is necessary to obtain the sizes of all the transactions in order to go through them in reverse order
-	binForSize := p.BinaryData
-	var sizesSlice []int64
-	for {
-		txSize := utils.DecodeLength(&binForSize)
-		if txSize == 0 {
-			break
-		}
-		sizesSlice = append(sizesSlice, txSize)
-		// удалим тр-ию
-// remove the transaction
-		utils.BytesShift(&binForSize, txSize)
-		if len(binForSize) == 0 {
-			break
-		}
-	}
-	sizesSlice = utils.SliceReverse(sizesSlice)
-	for i := 0; i < len(sizesSlice); i++ {
-		// обработка тр-ий может занять много времени, нужно отметиться
-// processing of the transactions may take a lot of time, you need to be marked
-		p.UpdDaemonTime(p.GoroutineName)
-		// отделим одну транзакцию
-// separate one transaction
-		transactionBinaryData := utils.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
-		// узнаем кол-во байт, которое занимает размер
-// we'll get know the quantity of bytes, which the size takes
-		size_ := len(utils.EncodeLength(sizesSlice[i]))
-		// удалим размер
-// remove the size
-		utils.BytesShiftReverse(&p.BinaryData, size_)
-		p.TxHash = string(utils.Md5(transactionBinaryData))
-
-		// инфа о предыдущем блоке (т.е. последнем занесенном)
-// the information about previous block (the last added)
-		err := p.GetInfoBlock()
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		if txcandidateBlock {
-			utils.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE hex(hash) = " + string(p.TxHash))
-			affect, err := p.ExecSQLGetAffect("UPDATE transactions SET verified = 0 WHERE hex(hash) = ?", p.TxHash)
-			if err != nil {
-				utils.WriteSelectiveLog(err)
-				return p.ErrInfo(err)
-			}
-			utils.WriteSelectiveLog("affect: " + utils.Int64ToStr(affect))
-		}
-		/*affected, err := p.ExecSQLGetAffect("DELETE FROM log_transactions WHERE hex(hash) = ?", p.TxHash)
-		log.Debug("DELETE FROM log_transactions WHERE hex(hash) = %s / affected = %d", p.TxHash, affected)
-		if err != nil {
-			return p.ErrInfo(err)
-		}*/
-/*
-		p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
-		if err != nil {
-			return p.ErrInfo(err)
-		}
-		p.dataType = utils.BytesToInt(p.TxSlice[1])
-		//userId := p.TxSlice[3]
-		MethodName := consts.TxTypes[p.dataType]
-		err_ := utils.CallMethod(p, MethodName+"Init")
-		if _, ok := err_.(error); ok {
-			return p.ErrInfo(err_.(error))
-		}
-		err_ = utils.CallMethod(p, MethodName+"RollbackFront")
-		if _, ok := err_.(error); ok {
-			return p.ErrInfo(err_.(error))
-		}
-	}
-
-	return nil
-}
-*/
-
-/*
-Откат БД по блокам
-rollback of DB
-*/
-
-// ParseDataRollback rollbacks blocks
+ * Откат БД по блокам
+ */
 func (p *Parser) ParseDataRollback() error {
-
+	var txType int
 	p.dataPre()
 	if p.dataType != 0 { // парсим только блоки
 		// parse only blocks
@@ -155,8 +70,9 @@ func (p *Parser) ParseDataRollback() error {
 			// processing of the transaction may take a lot of time, we need to be marked
 			p.UpdDaemonTime(p.GoroutineName)
 			// отделим одну транзакцию
-			// separate one transaction
 			transactionBinaryData := converter.BytesShiftReverse(&p.BinaryData, sizesSlice[i])
+			p.TxBinaryData = transactionBinaryData
+			txType = int(converter.BinToDecBytesShift(&p.TxBinaryData, 1))
 			// узнаем кол-во байт, которое занимает размер и удалим размер
 			// we'll get know the quantaty of bytes which the size takes
 			converter.BytesShiftReverse(&p.BinaryData, len(converter.EncodeLength(sizesSlice[i])))
@@ -200,7 +116,7 @@ func (p *Parser) ParseDataRollback() error {
 				return p.ErrInfo(err)
 			}
 
-			p.TxSlice, err = p.ParseTransaction(&transactionBinaryData)
+			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
@@ -212,20 +128,19 @@ func (p *Parser) ParseDataRollback() error {
 					return p.ErrInfo(err)
 				}
 			} else {
-				p.dataType = converter.BytesToInt(p.TxSlice[1])
-				MethodName := consts.TxTypes[p.dataType]
-				result := utils.CallMethod(p, MethodName+"Init")
+				MethodName := consts.TxTypes[txType]
+				parser, err := GetParser(p, MethodName)
+				if err != nil {
+					return p.ErrInfo(err)
+				}
+				result := parser.Init()
 				if _, ok := result.(error); ok {
 					return p.ErrInfo(result.(error))
 				}
-				result = utils.CallMethod(p, MethodName+"Rollback")
+				result = parser.Rollback()
 				if _, ok := result.(error); ok {
 					return p.ErrInfo(result.(error))
 				}
-				/*err_ = utils.CallMethod(p, MethodName+"RollbackFront")
-				if _, ok := err_.(error); ok {
-					return p.ErrInfo(err_.(error))
-				}*/
 			}
 		}
 	}

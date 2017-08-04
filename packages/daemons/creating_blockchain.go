@@ -7,6 +7,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // CreatingBlockchain writes blockchain
@@ -57,7 +58,7 @@ BEGIN:
 
 		// пишем свежие блоки в резервный блокчейн
 		// record the newest blocks in reserve blockchain
-		endBlockID, err := utils.GetEndBlockID()
+		endBlockID, err := sql.GetEndBlockID()
 		if err != nil {
 			if d.dPrintSleep(utils.ErrInfo(err), d.sleepTime) {
 				break BEGIN

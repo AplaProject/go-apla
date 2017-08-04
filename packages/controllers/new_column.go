@@ -19,9 +19,9 @@ package controllers
 import (
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // NewColumn show the form for creating new column
@@ -45,7 +45,7 @@ func (c *Controller) NewColumn() (string, error) {
 		StateID:          c.SessStateID,
 		ColumnName:       "",
 		ColumnPermission: "",
-		CanIndex:         count < consts.MAX_INDEXES,
+		CanIndex:         count < sql.SysInt(sql.MaxIndexes),
 		TimeNow:          timeNow,
 		TxType:           txType,
 		TxTypeID:         utils.TypeInt(txType)})

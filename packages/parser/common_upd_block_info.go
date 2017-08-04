@@ -27,15 +27,15 @@ import (
 // UpdBlockInfo updates info_block table
 func (p *Parser) UpdBlockInfo() {
 
-	blockID := p.BlockData.BlockId
+	blockID := p.BlockData.BlockID
 	// для локальных тестов
 	// for the local tests
-	if p.BlockData.BlockId == 1 {
+	if p.BlockData.BlockID == 1 {
 		if *utils.StartBlockID != 0 {
 			blockID = *utils.StartBlockID
 		}
 	}
-	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletId, p.BlockData.StateID)
+	forSha := fmt.Sprintf("%d,%s,%s,%d,%d,%d", blockID, p.PrevBlock.Hash, p.MrklRoot, p.BlockData.Time, p.BlockData.WalletID, p.BlockData.StateID)
 	log.Debug("forSha", forSha)
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
@@ -48,15 +48,15 @@ func (p *Parser) UpdBlockInfo() {
 	log.Debug("%v", p.BlockData.Time)
 	log.Debug("%v", p.CurrentVersion)
 
-	if p.BlockData.BlockId == 1 {
+	if p.BlockData.BlockID == 1 {
 		err := p.ExecSQL("INSERT INTO info_block (hash, block_id, time, state_id, wallet_id, current_version) VALUES ([hex], ?, ?, ?, ?, ?)",
-			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId, p.CurrentVersion)
+			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletID, p.CurrentVersion)
 		if err != nil {
 			log.Error("%v", err)
 		}
 	} else {
 		err := p.ExecSQL("UPDATE info_block SET hash = [hex], block_id = ?, time = ?, state_id = ?, wallet_id = ?, sent = 0",
-			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletId)
+			p.BlockData.Hash, blockID, p.BlockData.Time, p.BlockData.StateID, p.BlockData.WalletID)
 		if err != nil {
 			log.Error("%v", err)
 		}
