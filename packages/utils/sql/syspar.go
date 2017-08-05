@@ -78,6 +78,9 @@ var (
 
 // SysUpdate reloads/updates values of system parameters
 func SysUpdate() error {
+	if DB == nil || DB.DB == nil {
+		return nil
+	}
 	list, err := DB.GetAll(`select * from system_parameters`, -1)
 	if err != nil {
 		return err
