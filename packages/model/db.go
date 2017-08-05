@@ -28,7 +28,7 @@ func GormInit(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	DBConn.SingularTable(true)
+	//DBConn.SingularTable(true)
 	return nil
 }
 

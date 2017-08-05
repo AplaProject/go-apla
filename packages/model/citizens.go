@@ -3,7 +3,7 @@ package model
 type Citizen struct {
 	tableName string
 	ID        int64  `gorm:"primary_key;not null"`
-	PublicKey []byte `gorm:"not null;column:publick_key_0"`
+	PublicKey []byte `gorm:"not null;column:public_key_0"`
 	BlockID   int64  `gorm:"not null"`
 	RbID      int64  `gorm:"not null"`
 	Avatar    string

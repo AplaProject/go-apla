@@ -3,7 +3,7 @@ package model
 type MyNodeKey struct {
 	ID         int32  `gorm:"primary_key;not null"`
 	AddTime    int32  `gorm:"not null"`
-	PublickKey []byte `gorm:"not null"`
+	PublicKey []byte `gorm:"not null"`
 	PrivateKey []byte `gorm:"not null"`
 	Status     int8   `gorm:"not null"`
 	MyTime     int32  `gorm:"not null"`

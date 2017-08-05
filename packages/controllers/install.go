@@ -191,7 +191,7 @@ func (c *Controller) Install() (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	nodeKeys := &model.MyNodeKey{PrivateKey: NodePrivateKey, PublickKey: npubkey, BlockID: 1}
+	nodeKeys := &model.MyNodeKey{PrivateKey: NodePrivateKey, PublicKey: npubkey, BlockID: 1}
 	err = nodeKeys.Create()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))

@@ -306,7 +306,7 @@ func (c *Controller) SaveQueue() (string, error) {
 			return "", utils.ErrInfo(err)
 		}
 		if myWalletID == walletID {
-			nodeKeys := &model.MyNodeKey{PublickKey: publicKey, PrivateKey: privateKey}
+			nodeKeys := &model.MyNodeKey{PublicKey: publicKey, PrivateKey: privateKey}
 			err = nodeKeys.Create()
 			if err != nil {
 				return "", utils.ErrInfo(err)

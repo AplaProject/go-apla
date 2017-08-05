@@ -90,7 +90,7 @@ func TestBlockGenerator(t *testing.T) {
 	keys := &model.MyNodeKeys{
 		ID: 1,
 		BlockID: 1,
-		PublickKey: []byte(public),
+		PublicKey: []byte(public),
 		PrivateKey: []byte(priv),
 	}
 	if err := keys.Create(); err != nil {
