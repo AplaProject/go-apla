@@ -165,7 +165,7 @@ CREATE TABLE "system_parameters" (
 "name" varchar(255)  NOT NULL DEFAULT '',
 "value" jsonb,
 "conditions" text  NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
