@@ -178,11 +178,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			log.Error("%v", utils.ErrInfo(err))
 			Exit(1)
 		}
-		err = sql.SysUpdate()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			Exit(1)
-		}
+
 	}()
 
 	f, err := os.OpenFile(*utils.Dir+"/dclog.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
@@ -249,7 +245,11 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			break
 		}
 		schema.Migration()
-
+		err = sql.SysUpdate()
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+			Exit(1)
+		}
 		if *utils.OldFileName != "" {
 			err = sql.DB.Close()
 			if err != nil {
