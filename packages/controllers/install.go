@@ -94,16 +94,7 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	var DB *sql.DCDB
-	DB, err = sql.NewDbConnect()
-	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
-		config.Drop()
-		return "", utils.ErrInfo(err)
-	}
-	sql.DB = DB
-	c.DCDB = DB
-	if c.DCDB == nil {
+	if model.DBConn == nil {
 		err = fmt.Errorf("utils.DB == nil")
 		log.Error("%v", utils.ErrInfo(err))
 		config.Drop()

@@ -120,7 +120,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 					Data: data,
 				}
 				serializedData, err := msgpack.Marshal(toSerialize)
-				transactionStatus := &model.TransactionStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: int32(info.ID),
+				transactionStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: int64(info.ID),
 					WalletID: c.SessWalletID, CitizenID: c.SessWalletID}
 				err = transactionStatus.Create()
 				queueTx := &model.QueueTx{Hash: hash, Data: data}

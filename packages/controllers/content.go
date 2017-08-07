@@ -36,7 +36,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	tpl "github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 var (
@@ -133,9 +132,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	if dbInit {
 		var err error
-		c.DCDB = sql.DB
-		if c.DCDB == nil {
-			log.Error("utils.DB == nil")
+		if model.DBConn == nil {
 			dbInit = false
 		}
 		if dbInit {
@@ -363,10 +360,12 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 		// We highlight the block number in red if the update process is in progress
 		var blockJs string
-		blockID, err := c.GetBlockID()
+		ib := &model.InfoBlock{}
+		err = ib.GetInfoBlock()
 		if err != nil {
 			log.Error("%v", err)
 		}
+		blockID := ib.BlockID
 		blockJs = "$('#block_id').html(" + converter.Int64ToStr(blockID) + ");$('#block_id').css('color', '#428BCA');"
 
 		w.Write([]byte(`<script>

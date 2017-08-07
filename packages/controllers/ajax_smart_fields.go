@@ -51,7 +51,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 	)
 	stateID := converter.StrToInt64(c.r.FormValue(`state_id`))
 	stateStr := converter.Int64ToStr(stateID)
-	if !c.IsTable(stateStr+`_citizens`) || !c.IsTable(stateStr+`_citizenship_requests`) {
+	if !model.IsTable(stateStr+`_citizens`) || !model.IsTable(stateStr+`_citizenship_requests`) {
 		result.Error = `Basic app is not installed`
 		return result
 	}

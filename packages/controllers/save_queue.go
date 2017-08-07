@@ -301,7 +301,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		myWalletID, err := c.GetMyWalletID()
+		myWalletID, err := model.GetMyWalletID()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
@@ -335,8 +335,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		log.Fatal(err)
 	}
 	hash = converter.BinToHex(hash)
-	txStatus := &model.TransactionStatus{
-		Hash: hash, Time: int32(time.Now().Unix()), Type: int32(txType), WalletID: walletID, CitizenID: citizenID}
+	txStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: txType, WalletID: walletID, CitizenID: citizenID}
 	err = txStatus.Create()
 	if err != nil {
 		return "", utils.ErrInfo(err)

@@ -27,6 +27,7 @@ import (
 	"regexp"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -82,13 +83,12 @@ func init() {
 
 func (c *Controller) getList(table, prefix string) (*[]exportInfo, error) {
 	ret := make([]exportInfo, 0)
-	contracts, err := c.GetAll(fmt.Sprintf(`select name from "%s_%s" order by name`, prefix, table), -1)
+	contracts, err := model.GetNameList(fmt.Sprintf("%s_%s", prefix, table), -1)
 	if err != nil {
 		return nil, err
 	}
 	global := prefix == `global`
 	for _, ival := range contracts {
-		//		id, _ := strconv.ParseInt(ival[`id`], 10, 32)
 		ret = append(ret, exportInfo{ival["name"], global})
 	}
 	return &ret, nil
@@ -105,17 +105,12 @@ func (c *Controller) setVar(name, prefix string) (out string) {
 	for _, icontract := range contracts {
 		var state string
 		icontract, _, state = getState(c.SessStateID, icontract)
-		data, _ := c.OneRow(fmt.Sprintf(`select conditions,value from "%s_%s" where name=?`, state, name), icontract).String()
-		//		fmt.Println(`Data`, err, data)
+		data, _ := model.GetConditionsAndValue(fmt.Sprintf("%s_%s", state, name), icontract)
 		if len(data) > 0 && len(data[`value`]) > 0 {
 			names = append(names, prefix+`_`+icontract)
 			list = append(list, fmt.Sprintf("`%s_%s #= %s`", prefix, icontract, strings.Replace(data[`value`], "`", "``", -1)))
 			names = append(names, prefix+`c_`+icontract)
 			list = append(list, fmt.Sprintf("`%sc_%s #= %s`", prefix, icontract, strings.Replace(data[`conditions`], "`", `"`, -1)))
-			/*			if prefix == `p` {
-						} else {
-							list = append(list, fmt.Sprintf("`%s_%s = %s`", prefix, icontract, data))
-						}*/
 		}
 	}
 	out += strings.Join(list, ",\r\n") + ")\r\nTextHidden( " + strings.Join(names, ", ") + ")\r\n"
@@ -148,7 +143,7 @@ func (c *Controller) setData(name, prefix string) (out string) {
 		} else {
 			tblname = fmt.Sprintf(`Table("%s")`, tblname)
 		}
-		data, _ := c.GetAll(`select * from "`+itable+`" order by id`, -1)
+		data, _ := model.GetTableData(itable, -1)
 		if len(data) == 0 {
 			continue
 		}
@@ -158,8 +153,7 @@ func (c *Controller) setData(name, prefix string) (out string) {
 		for key := range data[0] {
 			if key != `rb_id` && key != `id` {
 				pars = append(pars, key)
-				coltype, _ := c.OneRow(`select data_type,character_maximum_length from information_schema.columns
-where table_name = ? and column_name = ?`, itable, key).String()
+				coltype, _ := model.GetColumnDataTypeCharMaxLength(itable, key)
 				if len(coltype) > 0 {
 					ival := `0`
 					switch {
@@ -167,8 +161,6 @@ where table_name = ? and column_name = ?`, itable, key).String()
 						ival = ``
 					case strings.HasPrefix(coltype[`data_type`], `timestamp`):
 						ival = "NULL"
-						/*						case coltype[`data_type`] == `bigint`, strings.HasPrefix(coltype[`data_type`], `double`),
-												strings.HasPrefix(coltype[`data_type`], `numeric`):*/
 					}
 					null[key] = ival
 				}
@@ -231,9 +223,10 @@ func (c *Controller) setAppend(name, prefix string) (out string) {
 func (c *Controller) setLang() (out string) {
 	out = "SetVar(`l_lang #= "
 	list := make(map[string]string)
-	res, _ := c.GetAll(fmt.Sprintf(`select * from "%d_languages"`, c.SessStateID), -1)
+	lang := &model.Language{}
+	res, _ := lang.GetAll(converter.Int64ToStr(c.SessStateID))
 	for _, ires := range res {
-		list[ires[`name`]] = ires[`res`]
+		list[ires.Name] = ires.Res
 	}
 	val, _ := json.Marshal(list)
 	out += string(val) + "`)\r\nTextHidden(l_lang)\r\n"
@@ -302,17 +295,16 @@ func (c *Controller) ExportTpl() (string, error) {
 								if state == 0 {
 									pref = `global`
 								}
-								sign, err := c.OneRow(fmt.Sprintf(`select * from "%s_signatures" where name=?`, pref), ret[1]).String()
+								sign := &model.Signature{}
+								sign.SetTablePrefix(pref)
+								err := sign.Get(ret[1])
 								if err != nil {
 									break
 								}
-								if len(sign) == 0 {
-									break
-								}
 								names = append(names, `sign_`+ret[1])
-								list = append(list, fmt.Sprintf("`sign_%s #= %s`", ret[1], strings.Replace(sign[`value`], "`", `"`, -1)))
+								list = append(list, fmt.Sprintf("`sign_%s #= %s`", ret[1], strings.Replace(sign.Value, "`", `"`, -1)))
 								names = append(names, `signc_`+ret[1])
-								list = append(list, fmt.Sprintf("`signc_%s #= %s`", ret[1], strings.Replace(sign[`conditions`], "`", `"`, -1)))
+								list = append(list, fmt.Sprintf("`signc_%s #= %s`", ret[1], strings.Replace(sign.Conditions, "`", `"`, -1)))
 								signlist[fmt.Sprintf(`%d%s`, global, ret[1])] = true
 							}
 						}
@@ -356,20 +348,17 @@ func (c *Controller) ExportTpl() (string, error) {
 					global int
 				)
 				itable, global, state = getState(c.SessStateID, itable)
-				cols, _ := c.Single(fmt.Sprintf(`select columns_and_permissions->'update' from "%s_tables" where name=?`,
-					state), itable).String()
-				fmap := make(map[string]string)
-				json.Unmarshal([]byte(cols), &fmap)
+				t := &model.Table{}
+				cols, _ := t.GetColumnsAndPermissions(state, itable)
 				fields := make([]string, 0)
-				for key := range fmap {
+				for key := range cols {
 					ikey := strings.ToLower(key)
 					index := 0
 					itype := ``
-					if ok, _ := c.IsIndex(itable, ikey); ok {
+					if ok, _ := model.IsIndex(itable, ikey); ok {
 						index = 1
 					}
-					coltype, _ := c.OneRow(`select data_type,character_maximum_length from information_schema.columns
-where table_name = ? and column_name = ?`, itable, ikey).String()
+					coltype, _ := model.GetColumnDataTypeCharMaxLength(itable, ikey)
 					if len(coltype) > 0 {
 						switch {
 						case coltype[`data_type`] == "character varying":
@@ -390,20 +379,20 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				}
 
 				list = append(list, fmt.Sprintf(`{
-		Forsign: 'global,table_name,columns',
-		Data: {
-			type: "NewTable",
-			typeid: #type_new_table_id#,
-			global: %d,
-			table_name : "%s",
-			columns: '[%s]'
-			}
-	   }`, global, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
-
-				perm, _ := c.Single(fmt.Sprintf(`select columns_and_permissions from "%s_tables" where name=?`,
-					state), itable).String()
+						Forsign: 'global,table_name,columns',
+						Data: {
+							type: "NewTable",
+							typeid: #type_new_table_id#,
+							global: %d,
+							table_name : "%s",
+							columns: '[%s]'
+							}
+					   }`, global, itable[strings.IndexByte(itable, '_')+1:], strings.Join(fields, `,`)))
+				table := &model.Table{}
+				table.SetTablePrefix(state)
+				table.Get(itable)
 				var jperm map[string]interface{}
-				json.Unmarshal([]byte(perm), &jperm)
+				json.Unmarshal([]byte(table.ColumnsAndPermissions), &jperm)
 				var toedit bool
 				vals := make(map[string]string)
 				re, _ := regexp.Compile(`^\$citizen\s*==\s*-?\d+$`)
@@ -433,7 +422,8 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 	   }`, tablepref, itable[strings.IndexByte(itable, '_')+1:], converter.EscapeForJSON(vals[`general_update`]),
 						converter.EscapeForJSON(vals[`insert`]), converter.EscapeForJSON(vals[`new_column`])))
 				}
-				for key, field := range jperm[`update`].(map[string]interface{}) {
+				jpermUpdate := jperm["update"].(map[string]interface{})
+				for key, field := range jpermUpdate {
 					if !re.MatchString(field.(string)) {
 						list = append(list, fmt.Sprintf(`{
 		Forsign: 'table_name,column_name,permissions',
@@ -612,7 +602,10 @@ where table_name = ? and column_name = ?`, itable, ikey).String()
 				if global == 1 {
 					prefix = `global`
 				}
-				menu, _ := c.Single(fmt.Sprintf(`select menu from "%s_pages" where name=?`, prefix), ipage).String()
+				page := &model.Page{}
+				page.SetTablePrefix(prefix)
+				page.Get(ipage)
+				menu := page.Menu
 				if len(menu) == 0 {
 					menu = "menu_default"
 				}

@@ -128,7 +128,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, converter.EncodeLengthPlusData([]byte(``))...)
 	data = append(data, binsign...)
 
-	_, err = c.SendTx(txType, adminWallet, data)
+	_, err = model.SendTx(txType, adminWallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -155,7 +155,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	data = append(data, converter.EncodeLengthPlusData(hex.EncodeToString(pub))...)
 	data = append(data, binsign...)
 
-	_, err = c.SendTx(txType, wallet, data)
+	_, err = model.SendTx(txType, wallet, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result

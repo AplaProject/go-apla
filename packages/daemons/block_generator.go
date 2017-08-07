@@ -73,7 +73,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	prevBlock.Hash = converter.BinToHex(prevBlock.Hash)
 
 	// calculate the next block generation time
-	sleepTime, err := d.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
+	sleepTime, err := model.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
 	if err != nil {
 		return err
 	}

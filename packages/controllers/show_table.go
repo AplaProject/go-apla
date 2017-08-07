@@ -62,7 +62,7 @@ func (c *Controller) ShowTable() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	tableData, err := c.GetAll(`SELECT * FROM "`+tableName+`" order by id`, 1000)
+	tableData, err := model.GetTableData(tableName, -1)
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

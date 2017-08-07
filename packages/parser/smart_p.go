@@ -279,7 +279,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
 			return
 		}
-		if !utils.IsNodeState(state, ``) {
+		if !model.IsNodeState(state, ``) {
 			return
 		}
 	}

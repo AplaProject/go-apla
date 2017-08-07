@@ -2,15 +2,19 @@ package model
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/shopspring/decimal"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -292,6 +296,40 @@ func SetAI(table string, AI int64) error {
 	return nil
 }
 
+func IsTable(tblname string) bool {
+	name, _ := Single(`SELECT table_name FROM information_schema.tables 
+         WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')
+     	AND table_name=?`, tblname).String()
+	return name == tblname
+}
+
+func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {
+	hash, err = crypto.Hash(data)
+	if err != nil {
+		return nil, err
+	}
+	hash = []byte(hex.EncodeToString(hash))
+	ts := &TransactionStatus{
+		Hash:      hash,
+		Time:      time.Now().Unix(),
+		Type:      txType,
+		WalletID:  adminWallet,
+		CitizenID: adminWallet}
+	err = ts.Create()
+	if err != nil {
+		return nil, err
+	}
+	qtx := &QueueTx{Hash: hash,
+		Data: data}
+	err = qtx.Create()
+	return
+}
+
+func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
+	return GetOneRow(`SELECT data_type, character_maximum_length from 
+	information_schema.columns WHERE table_name = ? AND column_name = ?`, tableName, columnName).String()
+}
+
 func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int64) (int64, error) {
 	// возьмем список всех full_nodes
 	// take the list of all full_nodes
@@ -343,6 +381,19 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	return int64(sleepTime), nil
 }
 
+func GetMyWalletID() (int64, error) {
+	conf := &Config{}
+	err := conf.GetConfig()
+	if err != nil {
+		return 0, err
+	}
+	walletID := conf.DltWalletID
+	if walletID == 0 {
+		walletID = converter.StringToAddress(*utils.WalletAddress)
+	}
+	return walletID, nil
+}
+
 func AlterTableAddColumn(tableName, columnName, columnType string) error {
 	return DBConn.Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
 }
@@ -355,6 +406,18 @@ func CreateIndex(indexName, tableName, onColumn string) error {
 	return DBConn.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
 }
 
+func GetTableData(tableName string, limit int) ([]map[string]string, error) {
+	return GetAll(`SELECT * FROM "`+tableName+`" order by id`, limit)
+}
+
+func GetNameList(tableName string, count int) ([]map[string]string, error) {
+	return GetAll(fmt.Sprintf(`SELECT name FROM "%s" ORDER BY name`, tableName), count)
+}
+
+func GetConditionsAndValue(tableName, name string) (map[string]string, error) {
+	return GetOneRow(fmt.Sprintf(`SELECT conditions, value FROM "%s" WHERE name = ?`, tableName), name).String()
+}
+
 func GormSet(db *gorm.DB) {
 	DBConn = db
 	DBConn.SingularTable(true)
@@ -363,4 +426,26 @@ func GormSet(db *gorm.DB) {
 // TODO: should be atomic ?
 func GetCurrentDB() *gorm.DB {
 	return DBConn
+}
+
+func GetNodeConfig() (map[string]string, error) {
+	return GetOneRow("SELECT * FROM config").String()
+}
+
+// Because of import cycle utils and config
+func IsNodeState(state int64, host string) bool {
+	if strings.HasPrefix(host, `localhost`) {
+		return true
+	}
+	if val, ok := config.ConfigIni[`node_state_id`]; ok {
+		if val == `*` {
+			return true
+		}
+		for _, id := range strings.Split(val, `,`) {
+			if converter.StrToInt64(id) == state {
+				return true
+			}
+		}
+	}
+	return false
 }

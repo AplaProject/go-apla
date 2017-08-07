@@ -1190,24 +1190,6 @@ func GetParent() string {
 	return parent
 }
 
-func IsNodeState(state int64, host string) bool {
-	if strings.HasPrefix(host, `localhost`) {
-		return true
-	}
-	// TODO: fix after merge, because config moved from DB
-	//if val, ok := db.ConfigIni[`node_state_id`]; ok {
-	val := "*"
-	if val == `*` {
-		return true
-	}
-	for _, id := range strings.Split(val, `,`) {
-		if converter.StrToInt64(id) == state {
-			return true
-		}
-	}
-	return false
-}
-
 func GetTcpPort(config map[string]string) string {
 	if port, ok := config["tcp_port"]; ok {
 		return port

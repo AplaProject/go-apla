@@ -39,10 +39,11 @@ var (
 // SynchronizationBlockchain synchronizes the blockchain
 func (c *Controller) SynchronizationBlockchain() (string, error) {
 
-	if c.DCDB == nil || c.DCDB.DB == nil {
+	if model.DBConn == nil {
 		return "", nil
 	}
-	blockData, err := c.DCDB.GetInfoBlock()
+	ib := &model.InfoBlock{}
+	err := ib.GetInfoBlock()
 	if err != nil {
 		log.Error("%v", utils.ErrInfo(err))
 
@@ -51,7 +52,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 			fileSize               int64
 		)
 		downloadFile = *utils.Dir + "/public/blockchain"
-		nodeConfig, err := c.GetNodeConfig()
+		nodeConfig, err := model.GetNodeConfig()
 		if err != nil {
 			return "", err
 		}
@@ -82,14 +83,8 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		}
 		return `{"download": "0"}`, nil
 	}
-	blockID := blockData["block_id"]
-	blockTime := blockData["time"]
-	if len(blockID) == 0 {
-		blockID = "0"
-	}
-	if len(blockTime) == 0 {
-		blockTime = "0"
-	}
+	blockID := ib.BlockID
+	blockTime := ib.Time
 
 	wTime := int64(12)
 	wTimeReady := int64(1)
@@ -98,10 +93,11 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		wTimeReady = 2 * 365 * 86400
 	}
 	now := time.Now().Unix()
-	log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, converter.StrToInt64(blockData["time"]))
+	log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, ib.Time)
 	// if time differs less than for 12 hours from current time, give not affected but those which are in blockchain
-	if now-converter.StrToInt64(blockData["time"]) < 3600*wTime {
-		lastBlockData, err := c.DCDB.GetLastBlockData()
+	if now-ib.Time < 3600*wTime {
+		b := &model.Block{}
+		lastBlockData, err := b.GetLastBlockData()
 		if err != nil {
 			return "", err
 		}
@@ -109,8 +105,8 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		log.Debug("time.Now().Unix(): %v", time.Now().Unix())
 		// if almost all blocks are collected
 		if time.Now().Unix()-lastBlockData["lastBlockTime"] < 600*wTimeReady {
-			blockID = "-1"
-			blockTime = "-1"
+			blockID = -1
+			blockTime = -1
 		}
 	}
 
@@ -126,7 +122,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		currentLoadBlockchain = c.NodeConfig["first_load_blockchain_url"]
 	}
 	var needReload string
-	iBlock := converter.StrToInt64(blockID)
+	iBlock := blockID
 	if timeSynchro == 0 {
 		timeSynchro = time.Now().Unix()
 		lastSBlock = iBlock
@@ -137,14 +133,14 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 			lastSTime = time.Now().Unix()
 		} else if time.Now().Unix()-lastSTime > 60 { // Set the timeout in 60 seconds on the next block
 			// There is a sence to check the last block
-			if time.Now().Unix()-converter.StrToInt64(blockTime) > 3600 {
+			if time.Now().Unix()-blockTime > 3600 {
 				needReload = `1`
 			}
 		}
 	}
 
-	result := map[string]string{"block_id": blockID, "confirmed_block_id": converter.Int64ToStr(confirmedBlockID),
-		"block_time": blockTime, "current_load_blockchain": currentLoadBlockchain,
+	result := map[string]string{"block_id": converter.Int64ToStr(blockID), "confirmed_block_id": converter.Int64ToStr(confirmedBlockID),
+		"block_time": converter.Int64ToStr(blockTime), "current_load_blockchain": currentLoadBlockchain,
 		"need_reload": needReload}
 	resultJ, _ := json.Marshal(result)
 

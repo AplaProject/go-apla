@@ -379,7 +379,7 @@ func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
 	}
 	defer sql.DbUnlock(d.goRoutineName)
 
-	config, err := d.GetNodeConfig()
+	config, err := model.GetNodeConfig()
 	if err != nil {
 		return err
 	}

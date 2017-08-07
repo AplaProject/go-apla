@@ -25,7 +25,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
@@ -74,9 +73,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	c.SessStateID = sessStateID
 
 	if dbInit {
-		c.DCDB = sql.DB
-
-		if sql.DB == nil || sql.DB.DB == nil {
+		if model.DBConn == nil {
 			log.Error("utils.DB == nil")
 			dbInit = false
 		}
@@ -109,7 +106,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if dbInit {
-		config, err := c.GetNodeConfig()
+		config, err := model.GetNodeConfig()
 		if err != nil {
 			log.Error("%v", err)
 		}

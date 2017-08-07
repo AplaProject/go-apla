@@ -35,7 +35,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	bconf "github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
@@ -45,8 +44,7 @@ var log = logging.MustGetLogger("controllers")
 
 // Controller is the main controller's structure
 type Controller struct {
-	dbInit bool
-	*sql.DCDB
+	dbInit           bool
 	r                *http.Request
 	w                http.ResponseWriter
 	sess             session.SessionStore

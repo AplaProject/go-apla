@@ -37,7 +37,7 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		return stateParameter.Value, err
 	}
 	for _, id := range statesList {
-		if !c.IsNodeState(id, c.r.Host) {
+		if !model.IsNodeState(id, c.r.Host) {
 			continue
 		}
 

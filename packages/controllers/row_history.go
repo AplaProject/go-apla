@@ -56,7 +56,9 @@ func (c *Controller) RowHistory() (string, error) {
 	} else {
 		global = "0"
 	}
-	columns, err := c.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`, "key", "value", tableName)
+	t := &model.Table{}
+	t.SetTablePrefix(prefix)
+	columns, err := t.GetPermissions(tableName, "update")
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

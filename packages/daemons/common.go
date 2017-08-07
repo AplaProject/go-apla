@@ -40,7 +40,6 @@ var (
 )
 
 type daemon struct {
-	*sql.DCDB
 	goRoutineName string
 	/*DaemonCh       chan bool
 	AnswerDaemonCh chan string*/
@@ -99,7 +98,6 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 	}
 
 	d := &daemon{
-		DCDB:          sql.GetCurrentDB(),
 		goRoutineName: goRoutineName,
 		sleepTime:     1,
 	}

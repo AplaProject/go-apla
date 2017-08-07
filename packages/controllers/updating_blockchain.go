@@ -26,6 +26,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
@@ -57,22 +58,25 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 	var restartDb, standardInstall bool
 
 	if c.dbInit {
-		ConfirmedBlockID, err := c.DCDB.GetConfirmedBlockID()
+		confirmation := &model.Confirmation{}
+		err := confirmation.GetMaxGoodBlock()
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		if ConfirmedBlockID == 0 {
-			firstLoadBlockchain, err := c.DCDB.Single("SELECT first_load_blockchain FROM config").String()
+		if confirmation.BlockID == 0 {
+			conf := &model.Config{}
+			err := conf.GetConfig()
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
-			if firstLoadBlockchain == "file" {
+			if conf.FirstLoadBlockchain == "file" {
 				waitText = c.Lang["loading_blockchain_please_wait"]
 			} else {
 				waitText = c.Lang["is_synchronized_with_the_dc_network"]
 			}
 		} else {
-			LastBlockData, err := c.DCDB.GetLastBlockData()
+			b := &model.Block{}
+			LastBlockData, err := b.GetLastBlockData()
 			if err != nil {
 				return "", utils.ErrInfo(err)
 			}
@@ -80,7 +84,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 			blockID = LastBlockData["blockId"]
 		}
 
-		nodeConfig, err := c.GetNodeConfig()
+		nodeConfig, err := model.GetNodeConfig()
 		blockchainURL := nodeConfig["first_load_blockchain_url"]
 		if len(blockchainURL) == 0 {
 			blockchainURL = sql.SysString(sql.BlockchainURL)

@@ -168,7 +168,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 		log.Fatal(err)
 	}
 	hash = converter.BinToHex(serializedData)
-	transactionStatus := &model.TransactionStatus{Hash: hash, Time: int32(time.Now().Unix()), Type: int32(info.ID),
+	transactionStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: int64(info.ID),
 		WalletID: int64(idkey), CitizenID: int64(idkey)}
 	err = transactionStatus.Create()
 	if err != nil {
