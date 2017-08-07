@@ -18,11 +18,10 @@ package language
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type cacheLang struct {
@@ -70,9 +69,14 @@ func UpdateLang(state int, name, value string) {
 
 // loadLang download the language sources from database for the state
 func loadLang(state int) error {
-	list, err := sql.DB.GetAll(fmt.Sprintf(`select * from "%d_languages"`, state), -1)
+	language := &model.Language{}
+	languages, err := language.GetAll(string(state))
 	if err != nil {
 		return err
+	}
+	list := make([]map[string]string, 0)
+	for _, l := range languages {
+		list = append(list, l.ToMap())
 	}
 	res := &cacheLang{make(map[string]*map[string]string)}
 	for _, ilist := range list {
@@ -81,7 +85,6 @@ func loadLang(state int) error {
 		(*res).res[ilist[`name`]] = &ires
 	}
 	lang[state] = res
-	//	fmt.Println(`Res`, *res)
 	return nil
 }
 

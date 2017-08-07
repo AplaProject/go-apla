@@ -32,15 +32,6 @@ import (
 
 const aCitizenInfo = `ajax_citizen_info`
 
-/*
-type FieldInfo struct {
-	Name     string `json:"name"`
-	HTMLType string `json:"htmlType"`
-	TxType   string `json:"txType"`
-	Title    string `json:"title"`
-	Value    string `json:"value"`
-}*/
-
 // CitizenInfoJSON is a structure for the answer of ajax_citizen_info ajax request
 type CitizenInfoJSON struct {
 	Result bool   `json:"result"`

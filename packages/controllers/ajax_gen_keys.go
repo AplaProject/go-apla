@@ -26,7 +26,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -134,7 +133,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 			result.Error = err.Error()
 			return result
 		}
-		if _, err = sql.DB.SendTx(int64(info.ID), c.SessCitizenID,
+		if _, err = model.SendTx(int64(info.ID), c.SessCitizenID,
 			append([]byte{128}, serializedData...)); err != nil {
 			result.Error = err.Error()
 			return result

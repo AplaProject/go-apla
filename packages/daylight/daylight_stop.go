@@ -20,25 +20,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // Stop stops the program
 func Stop() {
 	log.Debug("Stop()")
 	IosLog("Stop()")
-	var err error
-	sql.DB, err = sql.NewDbConnect()
-	log.Debug("DayLight Stop : %v", sql.DB)
-	IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
+	log.Debug("DayLight Stop : %v", model.DBConn)
+	IosLog("utils.DB:" + fmt.Sprintf("%v", model.DBConn))
 	if err != nil {
 		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 		log.Error("%v", utils.ErrInfo(err))
-		//panic(err)
-		//os.Exit(1)
 	}
-	err = sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
+	stopDaemons := &model.StopDaemon{StopTime: int32(time.Now().Unix())}
+	err := stopDaemons.Create()
 	if err != nil {
 		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 		log.Error("%v", utils.ErrInfo(err))

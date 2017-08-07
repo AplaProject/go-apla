@@ -18,6 +18,10 @@ func (fn *FullNode) FindNode(stateID int64, walletID int64, finalDelegateStateID
 		"final_delegate_wallet_id = ?", finalDelegateWalletID).Find(&fn).Error
 }
 
+func (fn *FullNode) Get(walletID int64) error {
+	return DBConn.Where("wallet_id = ?", walletID).First(fn).Error
+}
+
 func (fn *FullNode) FindNodeByID(nodeID int64) error {
 	return DBConn.Where("id = ?", nodeID).First(&fn).Error
 }

@@ -25,17 +25,16 @@ import (
 )
 
 type editTablePage struct {
-	Alert      string
-	Lang       map[string]string
-	WalletID   int64
-	CitizenID  int64
-	TableName  string
-	TxType     string
-	TxTypeID   int64
-	TimeNow    int64
-	CanColumns bool
-	TableData  map[string]string
-	//	Columns               map[string]string
+	Alert                 string
+	Lang                  map[string]string
+	WalletID              int64
+	CitizenID             int64
+	TableName             string
+	TxType                string
+	TxTypeID              int64
+	TimeNow               int64
+	CanColumns            bool
+	TableData             map[string]string
 	ColumnsAndPermissions []map[string]string
 	StateID               int64
 	TablePermission       map[string]string

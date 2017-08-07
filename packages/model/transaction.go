@@ -120,9 +120,3 @@ func (t *Transaction) Create() error {
 func TransactionsCreateTable() error {
 	return DBConn.CreateTable(&Transaction{}).Error
 }
-
-/*
-func (db *DCDB) GetAllDataHashFromTransactionsAndQueue() ([]map[string]string, error) {
-	return db.GetAll(`SELECT * FROM (SELECT data, hash FROM queue_tx UNION SELECT data, hash FROM transactions WHERE verified = 0 AND used = 0)  AS x`, -1)
-}
-*/

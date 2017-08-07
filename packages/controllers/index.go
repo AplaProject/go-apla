@@ -30,9 +30,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type index struct {
@@ -91,7 +91,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	showIOSMenu := true
 	// When we don't give the menu
-	if sql.DB == nil || sql.DB.DB == nil {
+	if model.DBConn == nil {
 		showIOSMenu = false
 	}
 
@@ -99,18 +99,20 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		showIOSMenu = false
 	}
 
-	if showIOSMenu && sql.DB != nil && sql.DB.DB != nil {
-		blockData, err := sql.DB.GetInfoBlock()
+	if showIOSMenu && model.DBConn != nil {
+		infoBlock := &model.InfoBlock{}
+
+		err := infoBlock.GetInfoBlock()
 		if err != nil {
 			log.Error("%v", err)
 		}
 		wTime := int64(12)
 		wTimeReady := int64(2)
 		now := time.Now().Unix()
-		log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, converter.StrToInt64(blockData["time"]))
+		log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, infoBlock.Time)
 		// if time differs less than for 12 hours from current time, give not affected but those which are in blockchain
-		if now-converter.StrToInt64(blockData["time"]) < 3600*wTime {
-			lastBlockData, err := sql.DB.GetLastBlockData()
+		if now-infoBlock.Time < 3600*wTime {
+			lastBlockData, err := GetLastBlockData()
 			if err != nil {
 				log.Error("%v", err)
 			}

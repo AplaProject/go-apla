@@ -26,7 +26,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -126,7 +125,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 				queueTx := &model.QueueTx{Hash: hash, Data: data}
 				err = queueTx.Create()
 				if err == nil {
-					hash, err = sql.DB.SendTx(int64(info.ID), c.SessWalletID,
+					hash, err = model.SendTx(int64(info.ID), c.SessWalletID,
 						append([]byte{128}, serializedData...))
 					result.Hash = string(hash)
 				}

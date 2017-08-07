@@ -55,3 +55,12 @@ func CreateStateDefaultLanguages(stateID, conditions string) error {
 		`male`, `{"en": "Male", "ru": "Мужской"}`, conditions,
 		`female`, `{"en": "Female", "ru": "Женский"}`, conditions).Error
 }
+
+func (l *Language) ToMap() map[string]string {
+	result := make(map[string]string, 0)
+	result["name"] = l.Name
+	result["res"] = l.Res
+	result["conditions"] = l.Conditions
+	result["rb_id"] = string(l.RbID)
+	return result
+}

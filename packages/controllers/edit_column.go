@@ -22,7 +22,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type editColumnPage struct {
@@ -74,7 +73,7 @@ func (c *Controller) EditColumn() (string, error) {
 		TableName:        tableName,
 		ColumnName:       columnName,
 		ColumnPermission: columns[columnName],
-		ColumnType:       sql.GetColumnType(tableName, columnName),
+		ColumnType:       model.GetColumnType(tableName, columnName),
 		WalletID:         c.SessWalletID,
 		CitizenID:        c.SessCitizenID,
 		StateID:          c.SessStateID,

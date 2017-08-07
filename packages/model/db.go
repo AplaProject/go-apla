@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/ethereum/go-ethereum/log"
+	"github.com/shopspring/decimal"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -26,13 +28,13 @@ var (
 	DBConn *gorm.DB
 )
 
-func GormInit(db *sql.DB) error {
+func GormInit(user string, pass string, dbName string) error {
 	var err error
-	DBConn, err = gorm.Open("postgres", db)
+	DBConn, err = gorm.Open("postgres",
+		fmt.Sprintf("host=myhost user=%s dbname=%s sslmode=disable password=%s", user, pass, dbName))
 	if err != nil {
 		return err
 	}
-	//DBConn.SingularTable(true)
 	return nil
 }
 
@@ -325,20 +327,64 @@ func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err erro
 	return
 }
 
+func GetLastBlockData() (map[string]int64, error) {
+	result := make(map[string]int64)
+	confirmation := &Confirmation{}
+	err := confirmation.GetMaxGoodBlock()
+	if err != nil {
+		return result, utils.ErrInfo(err)
+	}
+	confirmedBlockID := confirmation.BlockID
+	if confirmedBlockID == 0 {
+		confirmedBlockID = 1
+	}
+	log.Debug("%v", "confirmedBlockId", confirmedBlockID)
+	// obtain the time of the last affected block
+	block := &Block{}
+	err = block.GetBlock(confirmedBlockID)
+	if err != nil || len(block.Data) == 0 {
+		return result, utils.ErrInfo(err)
+	}
+	result["blockId"] = block.ID
+	// the time of the last block
+	result["lastBlockTime"] = block.Time
+	return result, nil
+}
+
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
 	return GetOneRow(`SELECT data_type, character_maximum_length from 
 	information_schema.columns WHERE table_name = ? AND column_name = ?`, tableName, columnName).String()
 }
 
+func GetColumnType(tblname, column string) (itype string) {
+	coltype, _ := GetColumnDataTypeCharMaxLength(tblname, column)
+	if len(coltype) > 0 {
+		switch {
+		case coltype[`data_type`] == "character varying":
+			itype = `text`
+		case coltype[`data_type`] == "bytea":
+			itype = "varchar"
+		case coltype[`data_type`] == `bigint`:
+			itype = "numbers"
+		case strings.HasPrefix(coltype[`data_type`], `timestamp`):
+			itype = "date_time"
+		case strings.HasPrefix(coltype[`data_type`], `numeric`):
+			itype = "money"
+		case strings.HasPrefix(coltype[`data_type`], `double`):
+			itype = "double"
+		}
+	}
+	return
+}
+
 func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int64) (int64, error) {
-	// возьмем список всех full_nodes
 	// take the list of all full_nodes
+
 	fullNodesList, err := GetAll("SELECT id, wallet_id, state_id as state_id FROM full_nodes", -1)
 	if err != nil {
 		return int64(0), err
 	}
 
-	// определим full_node_id того, кто должен был генерить блок (но мог это делегировать)
 	// determine full_node_id of the one, who had to generate a block (but could delegate this)
 	prevBlockFullNodeID, err := Single("SELECT id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockStateID, prevBlockWalletID).Int64()
 	if err != nil {
@@ -353,7 +399,6 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 		return -1
 	}(fullNodesList, prevBlockFullNodeID)
 
-	// определим свое место (в том числе в delegate)
 	// define our place (Including in the 'delegate')
 	myPosition := func(fullNodesList []map[string]string, myWalletID, myStateID int64) int {
 		for i, fullNodes := range fullNodesList {
@@ -416,20 +461,6 @@ func GetNameList(tableName string, count int) ([]map[string]string, error) {
 
 func GetConditionsAndValue(tableName, name string) (map[string]string, error) {
 	return GetOneRow(fmt.Sprintf(`SELECT conditions, value FROM "%s" WHERE name = ?`, tableName), name).String()
-}
-
-func GormSet(db *gorm.DB) {
-	DBConn = db
-	DBConn.SingularTable(true)
-}
-
-// TODO: should be atomic ?
-func GetCurrentDB() *gorm.DB {
-	return DBConn
-}
-
-func GetNodeConfig() (map[string]string, error) {
-	return GetOneRow("SELECT * FROM config").String()
 }
 
 // Because of import cycle utils and config

@@ -36,7 +36,6 @@ func init() {
 
 // AjaxGetMenu is a controller of ajax_get_menu
 func (c *Controller) AjaxGetMenu() interface{} {
-
 	var menu InterfaceMenu
 	name := c.r.FormValue("name")
 

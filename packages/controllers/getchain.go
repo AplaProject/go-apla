@@ -21,7 +21,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // ChainInfo contains infromation about transaction
@@ -66,7 +65,7 @@ func UpdateChain(latest int64) (answer ChainMsg) {
 // GetChain updates information about transactions
 func GetChain() {
 	for {
-		if sql.DB.DB != nil {
+		if model.DBConn != nil {
 			// b.hash, b.state_id,
 			block := &model.Block{}
 			blockchain, err := block.GetBlocks(chainLatest, 30)

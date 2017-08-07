@@ -38,6 +38,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/schema"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
@@ -109,7 +110,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// read the config.ini
 	config.Read()
-
 	if *utils.TCPHost == "" {
 		*utils.TCPHost = config.ConfigIni["tcp_host"]
 	}
@@ -143,8 +143,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			}
 			fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
 
-			sql.DB, err = sql.NewDbConnect()
-
 			err = KillPid(pidMap["pid"])
 			if nil != err {
 				fmt.Println(err)
@@ -168,16 +166,22 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	controllers.SessInit()
 	config.MonitorChanges()
+
+	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+	if err != nil {
+		log.Fatal("gorm init error")
+	}
+
 	go func() {
 		var err error
-		sql.DB, err = sql.NewDbConnect()
-		log.Debug("%v", sql.DB)
-		IosLog("utils.DB:" + fmt.Sprintf("%v", sql.DB))
+		log.Debug("%v", model.DBConn)
+		IosLog("utils.DB:" + fmt.Sprintf("%v", model.DBConn))
 		if err != nil {
 			IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 			log.Error("%v", utils.ErrInfo(err))
 			Exit(1)
 		}
+
 		err = sql.SysUpdate()
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
@@ -242,7 +246,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 		// waiting for connection to the database
 		for {
-			if sql.DB == nil || sql.DB.DB == nil {
+			if model.DBConn == nil {
 				time.Sleep(time.Second)
 				continue
 			}
@@ -255,7 +259,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			Exit(1)
 		}
 		if *utils.OldFileName != "" {
-			err = sql.DB.Close()
+			err = model.DBConn.Close()
 			if err != nil {
 				log.Error("%v", utils.ErrInfo(err))
 			}
@@ -293,8 +297,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
-		sql.DB, err = sql.NewDbConnect()
-
 		if err := template.LoadContracts(); err != nil {
 			log.Error(`Load Contracts`, err)
 		}
@@ -306,7 +308,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 		fmt.Println("complete")
 		// we recieve the statistics of all tables
-		allTable, err := sql.DB.GetAllTables()
+		allTable, err := model.GetAllTables()
 		if err != nil {
 			fmt.Println(err)
 			panic(err)
@@ -372,7 +374,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		if len(config.ConfigIni["db_type"]) > 0 {
 			for {
 				// wait while connection to a DB in other gourutina takes place
-				if sql.DB == nil || sql.DB.DB == nil {
+				if model.DBConn != nil {
 					time.Sleep(time.Second)
 					fmt.Println("wait DB")
 				} else {
