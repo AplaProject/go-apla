@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -37,7 +36,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/astaxie/beego/config"
+	bconf "github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
 )
@@ -75,7 +74,6 @@ type Controller struct {
 }
 
 var (
-	configIni      map[string]string
 	globalSessions *session.Manager
 	// In gourutin is used only for reading
 	globalLangReadOnly map[int]map[string]string
@@ -93,37 +91,15 @@ func SessInit() {
 	go globalSessions.GC()
 }
 
-// ConfigInit reads ini file
-func ConfigInit() {
-	// We monitor config.ini for changes
-	go func() {
-		for {
-			log.Debug("ConfigInit monitor")
-			if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
-				time.Sleep(time.Second)
-				continue
-			}
-			config, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			configIni, err = config.GetSection("default")
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			if len(configIni["db_type"]) > 0 {
-				break
-			}
-			time.Sleep(time.Second * 3)
-		}
-	}()
+func init() {
+	flag.Parse()
 	globalLangReadOnly = make(map[int]map[string]string)
 	for _, v := range consts.LangMap {
 		data, err := static.Asset(fmt.Sprintf("static/lang/%d.ini", v))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
-		iniConf, err := config.NewConfigData("ini", []byte(data))
+		iniConf, err := bconf.NewConfigData("ini", []byte(data))
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
@@ -131,10 +107,6 @@ func ConfigInit() {
 		globalLangReadOnly[v] = make(map[string]string)
 		globalLangReadOnly[v] = iniconf
 	}
-}
-
-func init() {
-	flag.Parse()
 }
 
 // CallController calls the method with this name

@@ -17,17 +17,14 @@
 package tcpserver
 
 import (
-	"io"
-
-	"errors"
-
 	"bytes"
-
+	"errors"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"io"
 )
 
 // get the list of transactions which belong to the sender from 'disseminator' daemon
@@ -199,6 +196,5 @@ func saveNewTransactions(r *DisRequest) error {
 			return err
 		}
 	}
-
 	return nil
 }

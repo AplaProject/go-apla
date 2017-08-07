@@ -43,7 +43,6 @@ func (c *Controller) ListOfTables() (string, error) {
 	if global == "1" {
 		prefix = "global"
 	}
-
 	t := &model.Table{}
 	t.SetTablePrefix(prefix)
 	data, err := t.GetAll(prefix)

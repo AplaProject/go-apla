@@ -19,10 +19,10 @@ package parser
 import (
 	"encoding/json"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -58,7 +58,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	if txTime-ufn.Time <= consts.UPD_FULL_NODES_PERIOD {
+	if txTime-ufn.Time <= sql.SysInt64(sql.UpdFullNodesPeriod) {
 		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
 	}
 
@@ -71,7 +71,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, true)
+	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -204,7 +204,6 @@ func (p *UpdFullNodesParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 
-	// обновляем AI
 	// update the AI
 	err = model.SetAI("full_nodes", int64(maxID+1))
 	if err != nil {

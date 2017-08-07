@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
@@ -44,7 +45,7 @@ func (c *Controller) LoginECDSA() (string, error) {
 	var private []byte
 
 	local := strings.HasPrefix(c.r.Host, `localhost`)
-	if c.ConfigIni["public_node"] != "1" || local {
+	if config.ConfigIni["public_node"] != "1" || local {
 		private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
 	}
 

@@ -28,6 +28,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // GetOldBlocks gets previous blocks
@@ -119,7 +120,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 		}
 
 		// the block size cannot be more than max_block_size
-		if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
+		if int64(len(binaryBlock)) > sql.SysInt64(sql.MaxBlockSize) {
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 		}
@@ -133,7 +134,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 		}
 
 		// we need the mrklRoot of the current block
-		mrklRoot, err := utils.GetMrklroot(binaryBlock, false)
+		mrklRoot, err := sql.GetMrklroot(binaryBlock, false)
 		if err != nil {
 			ClearTmp(blocks)
 			return utils.ErrInfo(err)

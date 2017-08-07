@@ -260,7 +260,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 func downloadChain(ctx context.Context, fileName, url string) error {
 
 	for i := 0; i < consts.DOWNLOAD_CHAIN_TRY_COUNT; i++ {
-		loadCtx, cancel := context.WithTimeout(ctx, consts.UPD_FULL_NODES_PERIOD*time.Second)
+		loadCtx, cancel := context.WithTimeout(ctx, time.Duration(sql.SysInt64(sql.UpdFullNodesPeriod))*time.Second)
 		defer cancel()
 
 		blockchainSize, err := downloadToFile(loadCtx, url, fileName)
@@ -313,9 +313,9 @@ func parseBlock(blockID int64, binaryBlock []byte) (header *utils.BlockData, bod
 	converter.BytesShift(&binaryBlock, 1) // remove 1-st byte - type (block/transaction)
 	header = utils.ParseBlockHeader(&binaryBlock)
 
-	if int64(len(binaryBlock)) > consts.MAX_BLOCK_SIZE {
+	if int64(len(binaryBlock)) > sql.SysInt64(sql.MaxBlockSize) {
 		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			len(binaryBlock), consts.MAX_BLOCK_SIZE)
+			len(binaryBlock), sql.SysInt64(sql.MaxBlockSize))
 
 		return
 	}
@@ -335,7 +335,7 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 		return true, nil
 	}
 
-	mrklRoot, err := utils.GetMrklroot(body, false)
+	mrklRoot, err := sql.GetMrklroot(body, false)
 	if err != nil {
 		return true, err
 	}
@@ -387,7 +387,7 @@ func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
 	if config["first_load_blockchain"] == "file" {
 		blockchainURL := config["first_load_blockchain_url"]
 		if len(blockchainURL) == 0 {
-			blockchainURL = consts.BLOCKCHAIN_URL
+			blockchainURL = sql.SysString(sql.BlockchainURL)
 		}
 
 		fileName := *utils.Dir + "/public/blockchain"
@@ -419,7 +419,6 @@ func needLoad() (bool, error) {
 	}
 	return false, nil
 }
-
 func getBlockHash(blockID int64) (string, error) {
 	if blockID > 1 {
 		block := &model.Block{}

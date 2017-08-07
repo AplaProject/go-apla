@@ -1,7 +1,111 @@
-DROP TABLE IF EXISTS "global_apps"; CREATE TABLE "global_apps" (
-"name" varchar(100)  NOT NULL DEFAULT '',
-"done" integer NOT NULL DEFAULT '0',
-"blocks" text  NOT NULL DEFAULT ''
+DROP SEQUENCE IF EXISTS "dlt_transactions_id_seq" CASCADE;
+CREATE SEQUENCE "dlt_transactions_id_seq" START WITH 1;
+DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
+"id" bigint NOT NULL  default nextval('dlt_transactions_id_seq'),
+"sender_wallet_id" bigint NOT NULL DEFAULT '0',
+"recipient_wallet_id" bigint NOT NULL DEFAULT '0',
+"amount" decimal(30) NOT NULL DEFAULT '0',
+"commission" decimal(30) NOT NULL DEFAULT '0',
+"time" int  NOT NULL DEFAULT '0',
+"comment" text NOT NULL DEFAULT '',
+"block_id" int  NOT NULL DEFAULT '0',
+"rb_id" int  NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE "dlt_transactions_id_seq" owned by "dlt_transactions".id;
+ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMARY KEY (id);
+CREATE INDEX dlt_transactions_index_sender ON "dlt_transactions" (sender_wallet_id);
+CREATE INDEX dlt_transactions_index_recipient ON "dlt_transactions" (recipient_wallet_id);
+
+
+
+DROP TYPE IF EXISTS "my_keys_enum_status" CASCADE;
+CREATE TYPE "my_keys_enum_status" AS ENUM ('my_pending','approved');
+DROP SEQUENCE IF EXISTS my_keys_id_seq CASCADE;
+CREATE SEQUENCE my_keys_id_seq START WITH 1;
+DROP TABLE IF EXISTS "my_keys"; CREATE TABLE "my_keys" (
+"id" int NOT NULL  default nextval('my_keys_id_seq'),
+"add_time" int NOT NULL DEFAULT '0',
+"notification" smallint NOT NULL DEFAULT '0',
+"public_key" bytea  NOT NULL DEFAULT '',
+"private_key" varchar(3096) NOT NULL DEFAULT '',
+"password_hash" varchar(64) NOT NULL DEFAULT '',
+"status" my_keys_enum_status  NOT NULL DEFAULT 'my_pending',
+"my_time" int  NOT NULL DEFAULT '0',
+"time" int  NOT NULL DEFAULT '0',
+"block_id" int NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE my_keys_id_seq owned by my_keys.id;
+ALTER TABLE ONLY "my_keys" ADD CONSTRAINT my_keys_pkey PRIMARY KEY (id);
+
+
+
+
+DROP TYPE IF EXISTS "my_node_keys_enum_status" CASCADE;
+CREATE TYPE "my_node_keys_enum_status" AS ENUM ('my_pending','approved');
+DROP SEQUENCE IF EXISTS my_node_keys_id_seq CASCADE;
+CREATE SEQUENCE my_node_keys_id_seq START WITH 1;
+DROP TABLE IF EXISTS "my_node_keys"; CREATE TABLE "my_node_keys" (
+"id" int NOT NULL  default nextval('my_node_keys_id_seq'),
+"add_time" int NOT NULL DEFAULT '0',
+"public_key" bytea  NOT NULL DEFAULT '',
+"private_key" varchar(3096) NOT NULL DEFAULT '',
+"status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
+"my_time" int NOT NULL DEFAULT '0',
+"time" bigint NOT NULL DEFAULT '0',
+"block_id" int NOT NULL DEFAULT '0',
+"rb_id" int NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
+ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);
+
+
+
+
+DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
+"hash" bytea  NOT NULL DEFAULT '',
+"time" int NOT NULL DEFAULT '0',
+"type" int NOT NULL DEFAULT '0',
+"wallet_id" bigint NOT NULL DEFAULT '0',
+"citizen_id" bigint NOT NULL DEFAULT '0',
+"block_id" int NOT NULL DEFAULT '0',
+"error" varchar(255) NOT NULL DEFAULT ''
+);
+ALTER TABLE ONLY "transactions_status" ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);
+
+
+
+
+DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
+"block_id" bigint  NOT NULL DEFAULT '0',
+"good" int  NOT NULL DEFAULT '0',
+"bad" int  NOT NULL DEFAULT '0',
+"time" int  NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (block_id);
+
+
+
+
+DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
+"id" int NOT NULL DEFAULT '0',
+"hash" bytea  NOT NULL DEFAULT '',
+"data" bytea NOT NULL DEFAULT '',
+"state_id" int  NOT NULL DEFAULT '0',
+"wallet_id" bigint  NOT NULL DEFAULT '0',
+"time" int NOT NULL DEFAULT '0',
+"tx" int NOT NULL DEFAULT '0',
+"cur_0l_miner_id" int NOT NULL DEFAULT '0',
+"max_miner_id" int NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "block_chain" ADD CONSTRAINT block_chain_pkey PRIMARY KEY (id);
+
+DROP SEQUENCE IF EXISTS currency_id_seq CASCADE;
+CREATE SEQUENCE currency_id_seq START WITH 1;
+DROP TABLE IF EXISTS "currency"; CREATE TABLE "currency" (
+"id" smallint  NOT NULL  default nextval('currency_id_seq'),
+"name" char(3) NOT NULL DEFAULT '',
+"full_name" varchar(50) NOT NULL DEFAULT '',
+"rb_id" int NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "global_apps" ADD CONSTRAINT "global_apps_pkey" PRIMARY KEY (name);
 
@@ -143,13 +247,65 @@ ALTER SEQUENCE "global_smart_contracts_id_seq" owned by "global_smart_contracts"
 ALTER TABLE ONLY "global_smart_contracts" ADD CONSTRAINT global_smart_contracts_pkey PRIMARY KEY (id);
 CREATE INDEX global_smart_contracts_index_name ON "global_smart_contracts" (name);
 
+INSERT INTO global_smart_contracts ("name", "value", "active", "conditions") VALUES ('DLTTransfer',
+  'contract DLTTransfer {
+    data {
+        Recipient string
+        Amount    string
+        Commission  string
+        Comment     string "optional"
+    }
+
+    conditions {
+        $recipient = AddressToId($Recipient)
+        if $recipient == 0 {
+            error Sprintf("Recipient %s is invalid", $Recipient)
+        }
+        var total fuel cost money
+        fuel = Money(SysParamString(`fuel_rate`))
+        cost = Money(SysCost(`dlt_transfer`))
+        $commission = Money($Commission)
+        if $commission < cost*fuel {
+            error Sprintf("Commission %v < %v", $commission, cost*fuel)
+        }
+        $amount = Money($Amount) 
+        if $amount == 0 {
+            error "Amount is zero"
+        }
+        total = Money(DBStringExt(`dlt_wallets`, `amount`, $wallet, "wallet_id"))
+        if $amount + $commission >= total {
+            error Sprintf("Money is not enough %v < %v",total, $amount + $commission)
+        }
+    }
+
+    action {
+        DBUpdateExt(`dlt_wallets`, "wallet_id", $wallet,`-amount`, $amount+$commission)
+        DBUpdateExt(`dlt_wallets`, "wallet_id", $recipient,`+amount`, $amount)
+        DBInsert(`dlt_transactions`, `sender_wallet_id, recipient_wallet_id, amount, commission, comment, time, block_id`, $wallet, $recipient, $amount, $commission, $Comment, $block_time, $block)
+        DBUpdateExt(`dlt_wallets`, "wallet_id", $wallet_block,`+amount`, $commission)
+        DBInsert(`dlt_transactions`, `sender_wallet_id, recipient_wallet_id, amount, commission, comment, time, block_id`, $wallet, $wallet_block, $commission, 0, `Commission`, $block_time, $block)
+    }
+}', '1','ContractAccess("@0UpdateDLTTranfer")');
+
 CREATE TABLE "global_tables" (
+<<<<<<< HEAD
 "name" varchar(100)  NOT NULL DEFAULT '',
+=======
+"name" varchar(255)  NOT NULL DEFAULT '',
+>>>>>>> develop
 "columns_and_permissions" jsonb,
 "conditions" text  NOT NULL DEFAULT '',
 "rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "global_tables" ADD CONSTRAINT global_tables_pkey PRIMARY KEY (name);
+
+INSERT INTO global_tables ("name", "columns_and_permissions", "conditions") VALUES ('dlt_wallets', 
+        '{"insert": "ContractAccess(\"@0NewWallet\")", "update": {"*": "false","amount": "ContractAccess(\"@0DLTTransfer\")"}, "new_column": "ContractAccess(\"@0NewWalletColumn\")", "general_update": "ContractAccess(\"@0UpdateDltWallet\")"}',
+        'false');
+INSERT INTO global_tables ("name", "columns_and_permissions", "conditions") VALUES ('dlt_transactions', 
+        '{"insert": "ContractAccess(\"@0DLTTransfer\")", "update": {"*": "false"}, "new_column": "ContractAccess(\"@0NewDLTColumn\")", "general_update": "ContractAccess(\"@0UpdateDltTransactions\")"}',
+        'false');
+
 
 DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
@@ -169,10 +325,20 @@ CREATE TABLE "system_parameters" (
 );
 ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
-INSERT INTO system_parameters ("name", "value") VALUES ('number_of_dlt_nodes', '100');
-INSERT INTO system_parameters ("name", "value") VALUES ('fuel_rate', '1000000000000000');
-INSERT INTO system_parameters ("name", "value") VALUES ('max_columns', '20');
-INSERT INTO system_parameters ("name", "value") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":"200", "change_node": 100, "edit_lang": 10, "edit_sign": 10, "change_host_vote": 100, "new_column":500, "new_lang": 10, "new_sign": 10, "new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100, "system_restore_access":100,"activate_cost":100}');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('number_of_dlt_nodes', '100', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('fuel_rate', '1000000000000000', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('op_price', '{"edit_contract":100, "edit_column":100, "edit_menu":100, "edit_page":100, "edit_state_parameters":100,"edit_table":100,"new_column":100,"new_contract":100,"new_menu":100,"new_state_parameters":100,"new_page":100, "insert":100, "update":200, "change_node": 100, "edit_lang": 10, "edit_sign": 10, "change_host_vote": 100, "new_column":500, "new_lang": 10, "new_sign": 10, "new_column_w_index":1000, "add_table":5000,  "select":10, "new_state":1000000, "dlt_transfer":1, "system_restore_access_active":10000, "system_restore_access_close":100, "system_restore_access_request":100, "system_restore_access":100,"activate_cost":100}', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('gaps_between_blocks', '3', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('blockchain_url', '"https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain"', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_block_size', '67108864', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_tx_size', '33554432', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_tx_count', '100000', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_columns', '50', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_indexes', '10', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('max_block_user_tx', '100', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('upd_full_nodes_period', '3600', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('recovery_address', '8275283526439353759', 'ContractAccess("@0SysPar")');
+INSERT INTO system_parameters ("name", "value", "conditions") VALUES ('commission_wallet', '8275283526439353759', 'ContractAccess("@0SysPar")');
 
 DROP SEQUENCE IF EXISTS system_restore_access_id_seq CASCADE;
 CREATE SEQUENCE system_restore_access_id_seq START WITH 1;

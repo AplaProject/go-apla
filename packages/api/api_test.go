@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -230,4 +231,52 @@ func putTx(txname string, form *url.Values) error {
 		return err
 	}
 	return nil
+}
+
+func TestSign(t *testing.T) {
+	var (
+		err               error
+		key, sign, public []byte
+		uid               interface{}
+		ok                bool
+	)
+	key, err = ioutil.ReadFile(`key`)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	ret, err := sendGet(`getuid`, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if uid, ok = ret[`uid`]; !ok {
+		t.Error(fmt.Errorf(`getuid has returned empty uid`))
+		return
+	}
+	form := url.Values{"private": {string(key)}, "forsign": {uid.(string)}}
+	ret, err = sendPost(`signtest`, &form)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	public, err = hex.DecodeString(ret[`pubkey`].(string))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sign, err = hex.DecodeString(ret[`signature`].(string))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	ok, err = crypto.CheckSign(public, uid.(string), sign)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !ok {
+		t.Error(fmt.Errorf(`incorrect signature`))
+		return
+	}
 }

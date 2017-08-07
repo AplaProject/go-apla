@@ -19,7 +19,6 @@ package controllers
 import (
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
@@ -104,7 +103,7 @@ func (c *Controller) EditTable() (string, error) {
 		TxType:                txType,
 		TxTypeID:              utils.TypeInt(txType),
 		StateID:               c.SessStateID,
-		CanColumns:            count < consts.MAX_COLUMNS+2,
+		CanColumns:            count < sql.SysInt64(sql.MaxColumns)+2,
 		Global:                global,
 		TablePermission:       tablePermission,
 		ColumnsAndPermissions: list,

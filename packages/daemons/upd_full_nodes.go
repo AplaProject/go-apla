@@ -22,7 +22,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -86,7 +85,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	updFullNodes := int64(updFn.Time)
-	if curTime-updFullNodes <= consts.UPD_FULL_NODES_PERIOD {
+	if curTime-updFullNodes <= sql.SysInt64(sql.UpdFullNodesPeriod) {
 		return utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
 	}
 

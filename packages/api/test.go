@@ -17,8 +17,10 @@
 package api
 
 import (
+	"encoding/hex"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 )
 
@@ -26,7 +28,26 @@ type getTestResult struct {
 	Value string `json:"value"`
 }
 
+type signTestResult struct {
+	Signature string `json:"signature"`
+	Public    string `json:"pubkey"`
+}
+
 func getTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	data.result = &getTestResult{Value: smart.GetTestValue(data.params[`name`].(string))}
+	return nil
+}
+
+func signTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
+
+	sign, err := crypto.Sign(data.params[`private`].(string), data.params[`forsign`].(string))
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	pub, err := crypto.PrivateToPublicHex(data.params[`private`].(string))
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusConflict)
+	}
+	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: pub}
 	return nil
 }

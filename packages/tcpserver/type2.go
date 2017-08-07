@@ -26,7 +26,6 @@ import (
 
 // Type2 serves requests from disseminator
 func (t *TCPServer) Type2(r *DisRequest) (*DisTrResponse, error) {
-
 	binaryData := r.Data
 	// take the transactions from usual users but not nodes.
 	_, _, decryptedBinData, err := t.DecryptData(&binaryData)

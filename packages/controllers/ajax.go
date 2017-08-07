@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -63,7 +64,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	c.w = w
 	c.sess = sess
 	dbInit := false
-	if len(configIni["db_user"]) > 0 || configIni["db_type"] == "sqlite" {
+	if len(config.ConfigIni["db_user"]) > 0 || config.ConfigIni["db_type"] == "sqlite" {
 		dbInit = true
 	}
 

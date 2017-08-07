@@ -19,8 +19,8 @@ package controllers
 import (
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type newTablePage struct {
@@ -56,8 +56,8 @@ func (c *Controller) NewTable() (string, error) {
 		StateID:    c.StateID,
 		Global:     global,
 		TimeNow:    timeNow,
-		MaxColumns: consts.MAX_COLUMNS,
-		MaxIndexes: consts.MAX_INDEXES,
+		MaxColumns: sql.SysInt(sql.MaxColumns),
+		MaxIndexes: sql.SysInt(sql.MaxIndexes),
 		TxType:     txType,
 		TxTypeID:   utils.TypeInt(txType)})
 	if err != nil {

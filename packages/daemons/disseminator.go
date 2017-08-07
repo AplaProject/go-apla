@@ -21,6 +21,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 
 	"bytes"
 	"context"
@@ -279,13 +280,13 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	if err != nil {
 		return err
 	}
-
-	// if response handler exist, read the answer and call handler
-	if respHandler != nil {
-		buf := make([]byte, 4)
-
-		// read data size
-		_, err = io.ReadFull(conn, buf)
+	dataSize := converter.BinToDec(buf)
+	logger.Debug("dataSize %d (host : %v)", dataSize, host)
+	// и если данных менее MAX_TX_SIZE, то получаем их
+	// if data is less than MAX_TX_SIZE, so get them
+	if dataSize < sql.SysInt64(sql.MaxTxSize) && dataSize > 0 {
+		binaryTxHashes := make([]byte, dataSize)
+		_, err = io.ReadFull(conn, binaryTxHashes)
 		if err != nil {
 			return err
 		}
@@ -307,6 +308,5 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 			return err
 		}
 	}
-
 	return nil
 }

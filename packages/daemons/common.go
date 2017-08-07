@@ -19,16 +19,15 @@ package daemons
 import (
 	"context"
 	"flag"
-	"os"
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	"github.com/astaxie/beego/config"
 	"github.com/op/go-logging"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 )
 
 var (
@@ -38,7 +37,6 @@ var (
 
 	// MonitorDaemonCh is a channel for daemons
 	MonitorDaemonCh = make(chan []string, 100)
-	configIni       map[string]string
 )
 
 type daemon struct {
@@ -49,36 +47,8 @@ type daemon struct {
 	sleepTime time.Duration
 }
 
-// ConfigInit regularly reads config.ini file
-func ConfigInit() {
-	// мониторим config.ini на наличие изменений
-	// monitor config.ini for changes
-	go func() {
-		for {
-			logger.Debug("ConfigInit monitor")
-			if _, err := os.Stat(*utils.Dir + "/config.ini"); os.IsNotExist(err) {
-				time.Sleep(time.Second)
-				continue
-			}
-			confIni, err := config.NewConfig("ini", *utils.Dir+"/config.ini")
-			if err != nil {
-				logger.Error("%v", utils.ErrInfo(err))
-			}
-			configIni, err = confIni.GetSection("default")
-			if err != nil {
-				logger.Error("%v", utils.ErrInfo(err))
-			}
-			if len(configIni["db_type"]) > 0 {
-				break
-			}
-			time.Sleep(time.Second * 3)
-		}
-	}()
-}
-
 func init() {
 	flag.Parse()
-
 }
 
 var daemonsList = map[string]func(*daemon, context.Context) error{
@@ -163,7 +133,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 // StartDaemons starts daemons
 func StartDaemons() {
-	if configIni["daemons"] == "null" {
+	if config.ConfigIni["daemons"] == "null" {
 		return
 	}
 
@@ -178,8 +148,8 @@ func StartDaemons() {
 		daemonsToStart = rollbackList
 	}
 
-	if len(configIni["daemons"]) > 0 {
-		daemonsToStart = strings.Split(configIni["daemons"], ",")
+	if len(config.ConfigIni["daemons"]) > 0 {
+		daemonsToStart = strings.Split(config.ConfigIni["daemons"], ",")
 	}
 
 	for _, name := range daemonsToStart {

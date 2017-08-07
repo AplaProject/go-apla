@@ -11,11 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/shopspring/decimal"
 )
 
@@ -102,7 +103,7 @@ func (db *DCDB) GetMyStateIDAndWalletID() (int64, int64, error) {
 // GetHosts returns the list of hosts
 func (db *DCDB) GetHosts() ([]string, error) {
 	q := ""
-	if db.ConfigIni["db_type"] == "postgresql" {
+	if config.ConfigIni["db_type"] == "postgresql" {
 		q = "SELECT DISTINCT ON (host) host FROM full_nodes"
 	} else {
 		q = "SELECT host FROM full_nodes GROUP BY host"
@@ -224,7 +225,7 @@ func (db *DCDB) SetAI(table string, AI int64) error {
 		return utils.ErrInfo(err)
 	}
 
-	if db.ConfigIni["db_type"] == "postgresql" {
+	if config.ConfigIni["db_type"] == "postgresql" {
 		pgGetSerialSequence, err := db.Single("SELECT pg_get_serial_sequence('" + table + "', '" + AiID + "')").String()
 		if err != nil {
 			return utils.ErrInfo(err)
@@ -246,7 +247,7 @@ func (db *DCDB) GetAiID(table string) (string, error) {
 	} else if table == "miners" {
 		column = "miner_id"
 	} else {
-		switch db.ConfigIni["db_type"] {
+		switch config.ConfigIni["db_type"] {
 		case "postgresql":
 			exists = ""
 			err := db.QueryRow("SELECT column_name FROM information_schema.columns WHERE table_name=$1 and column_name=$2", table, "id").Scan(&exists)
@@ -445,17 +446,17 @@ func (db *DCDB) GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockW
 
 	sleepTime := 0
 	if myPosition == prevBlockFullNodePosition {
-		sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
+		sleepTime = ((len(fullNodesList) + myPosition) - int(prevBlockFullNodePosition)) * SysInt(GapsBetweenBlocks)
 	}
 
 	if myPosition > prevBlockFullNodePosition {
-		sleepTime = (myPosition - int(prevBlockFullNodePosition)) * consts.GAPS_BETWEEN_BLOCKS
+		sleepTime = (myPosition - int(prevBlockFullNodePosition)) * SysInt(GapsBetweenBlocks)
 	}
 
 	if myPosition < prevBlockFullNodePosition {
-		sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * consts.GAPS_BETWEEN_BLOCKS
+		sleepTime = (len(fullNodesList) - prevBlockFullNodePosition) * SysInt(GapsBetweenBlocks)
 	}
-	log.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / consts.GAPS_BETWEEN_BLOCKS %v", sleepTime, myPosition, prevBlockFullNodePosition, consts.GAPS_BETWEEN_BLOCKS)
+	log.Debug("sleepTime %v / myPosition %v / prevBlockFullNodePosition %v / GAPS_BETWEEN_BLOCKS %v", sleepTime, myPosition, prevBlockFullNodePosition, SysInt(GapsBetweenBlocks))
 
 	return int64(sleepTime), nil
 }
@@ -495,9 +496,8 @@ func (db *DCDB) GetFuel() decimal.Decimal {
 	/*	fuelMutex.Lock()
 		defer fuelMutex.Unlock()
 		if cacheFuel <= 0 {*/
-	fuel, _ := db.Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").String()
 	//}
-	cacheFuel, _ := decimal.NewFromString(fuel)
+	cacheFuel, _ := decimal.NewFromString(SysString(FuelRate))
 	return cacheFuel
 }
 
@@ -506,8 +506,7 @@ func (db *DCDB) IsNodeState(state int64, host string) bool {
 	if strings.HasPrefix(host, `localhost`) {
 		return true
 	}
-	// TODO: fix after merge, because config moved from DB
-	if val, ok := db.ConfigIni[`node_state_id`]; ok {
+	if val, ok := config.ConfigIni[`node_state_id`]; ok {
 		if val == `*` {
 			return true
 		}

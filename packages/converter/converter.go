@@ -258,7 +258,33 @@ func BinUnmarshal(out *[]byte, v interface{}) error {
 	return nil
 }
 
-// TODO перенести в отдельный модуль, может быть конвертеры
+// Sanitize deletes unaccessable characters from input string
+func Sanitize(name string, available string) string {
+	out := make([]rune, 0, len(name))
+	for _, ch := range name {
+		if ch > 127 || (ch >= '0' && ch <= '9') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
+			(ch >= 'A' && ch <= 'Z') || strings.IndexRune(available, ch) >= 0 {
+			out = append(out, ch)
+		}
+	}
+	return string(out)
+}
+
+// SanitizeScript deletes unaccessable characters from input string
+func SanitizeScript(input string) string {
+	return strings.Replace(strings.Replace(input, `<script`, `&lt;script`, -1), `script>`, `script&gt;`, -1)
+}
+
+// SanitizeName deletes unaccessable characters from name string
+func SanitizeName(input string) string {
+	return Sanitize(input, `- `)
+}
+
+// SanitizeNumber deletes unaccessable characters from number or name string
+func SanitizeNumber(input string) string {
+	return Sanitize(input, `+.- `)
+}
+
 // EscapeName deletes unaccessable characters for input name(s)
 func EscapeName(name string) string {
 	out := make([]byte, 1, len(name)+2)

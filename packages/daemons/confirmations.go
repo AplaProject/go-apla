@@ -17,11 +17,11 @@
 package daemons
 
 import (
+	"context"
 	"net"
 	"time"
 
-	"context"
-
+	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
@@ -91,7 +91,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		}
 
 		var hosts []string
-		if d.ConfigIni["test_mode"] == "1" {
+		if config.ConfigIni["test_mode"] == "1" {
 			hosts = []string{"localhost"}
 		} else {
 			hosts, err = model.GetFullNodesHosts()
@@ -104,7 +104,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		ch := make(chan string)
 		for i := 0; i < len(hosts); i++ {
 			// TODO: ports should be in the table hosts
-			host := hosts[i] + ":" + utils.GetTcpPort(d.ConfigIni)
+			host := hosts[i] + ":" + utils.GetTcpPort(config.ConfigIni)
 			logger.Info("host %v", host)
 			go func() {
 				IsReachable(host, blockID, ch)

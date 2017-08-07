@@ -24,6 +24,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
@@ -83,12 +84,6 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo("amount<=0")
 	}
 
-	sp := &model.SystemParameter{}
-	fPrice, err := sp.GetValueParameterByName("op_price", "dlt_transfer")
-	if err != nil {
-		return p.ErrInfo(err)
-	}
-
 	fuelRate := model.GetFuel()
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
@@ -96,11 +91,11 @@ func (p *DLTTransferParser) Validate() error {
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
 	// fuelRate = 1 000 000 000 000 000
 	//
-	fPriceDecemal, err := decimal.NewFromString(fPrice)
+	fPriceDecimal := decimal.New(sql.SysCost(`dlt_transfer`), 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	commission := fPriceDecemal.Mul(fuelRate)
+	commission := fPriceDecimal.Mul(fuelRate)
 	ourCommission, err := decimal.NewFromString(p.DLTTransfer.Commission) //fPrice)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -131,6 +126,10 @@ func (p *DLTTransferParser) Validate() error {
 	if wallet.Amount.Cmp(ourAmount.Add(ourCommission)) < 0 {
 		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", ourAmount, ourCommission, wallet.Amount))
 	}
+	if converter.StringToAddress(p.DLTTransfer.WalletAddress) == 0 {
+		return p.ErrInfo(fmt.Sprintf(`Wallet %v is invalid`, p.DLTTransfer.WalletAddress))
+	}
+
 	return nil
 }
 

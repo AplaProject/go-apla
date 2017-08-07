@@ -25,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -33,6 +32,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	db "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
@@ -549,11 +549,6 @@ func (p *Parser) AccessTable(table, action string) error {
 		return fmt.Errorf(table + ` is not a custom table`)
 	}
 	prefix := table[:strings.IndexByte(table, '_')]
-
-	/*	if p.TxStateID == 0 {
-		return nil
-	}*/
-
 	tables := &model.Table{}
 	tables.SetTablePrefix(prefix)
 	tablePermission, err := tables.GetPermissions(table, "")
@@ -590,7 +585,15 @@ func (p *Parser) AccessColumns(table string, columns []string) error {
 		return err
 	}
 	for _, col := range columns {
-		if cond, ok := columnsAndPermissions[col]; ok && len(cond) > 0 {
+		var (
+			cond string
+			ok   bool
+		)
+		cond, ok = columnsAndPermissions[converter.Sanitize(col, ``)]
+		if !ok {
+			cond, ok = columnsAndPermissions[`*`]
+		}
+		if ok && len(cond) > 0 {
 			ret, err := p.EvalIf(cond)
 			if err != nil {
 				return err
@@ -714,7 +717,7 @@ func (p *Parser) payFPrice() error {
 		return err
 	}
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(consts.COMMISSION_WALLET)}, true); err != nil {
+		[]string{converter.Int64ToStr(db.SysInt64(db.CommissionWallet))}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)
