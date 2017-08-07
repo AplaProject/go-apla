@@ -22,6 +22,14 @@ func GetAllUnusedTransactions() (*[]Transaction, error) {
 	return transactions, nil
 }
 
+func GetAllTransactions(limit int) (*[]Transaction, error) {
+	transactions := new([]Transaction)
+	if err := DBConn.Limit(limit).Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
 // TODO forSelfUse ???
 func GetAllUnsentTransactions(forSelfUse bool) (*[]Transaction, error) {
 	transactions := new([]Transaction)

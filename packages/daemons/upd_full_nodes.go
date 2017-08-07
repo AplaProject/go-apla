@@ -22,23 +22,23 @@ import (
 	"log"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
 func UpdFullNodes(d *daemon, ctx context.Context) error {
 	d.sleepTime = 60
 
-	locked, err := sql.DbLock(ctx, d.goRoutineName)
+	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer sql.DbUnlock(d.goRoutineName)
+	defer DbUnlock(d.goRoutineName)
 
 	infoBlock := &model.InfoBlock{}
 	err = infoBlock.GetInfoBlock()
@@ -50,14 +50,14 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 		return utils.ErrInfo("blockID == 0")
 	}
 
-	config := &model.Config{}
-	err = config.GetConfig()
+	nodeConfig := &model.Config{}
+	err = nodeConfig.GetConfig()
 	if err != nil {
 		return err
 
 	}
-	myStateID := config.StateID
-	myWalletID := config.DltWalletID
+	myStateID := nodeConfig.StateID
+	myWalletID := nodeConfig.DltWalletID
 	logger.Debug("%v", myWalletID)
 	// Есть ли мы в списке тех, кто может генерить блоки
 	// If we are in the list of those who are able to generate the blocks
@@ -85,7 +85,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	updFullNodes := int64(updFn.Time)
-	if curTime-updFullNodes <= sql.SysInt64(sql.UpdFullNodesPeriod) {
+	if curTime-updFullNodes <= syspar.SysInt64(syspar.UpdFullNodesPeriod) {
 		return utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
 	}
 

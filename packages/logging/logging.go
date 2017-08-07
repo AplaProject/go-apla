@@ -5,10 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 func WriteSelectiveLog(text interface{}) {
@@ -23,9 +21,12 @@ func WriteSelectiveLog(text interface{}) {
 			stext = fmt.Sprintf("%v", text)
 		}
 		allTransactionsStr := ""
-		allTransactions, _ := sql.DB.GetAll("SELECT hex(hash) as hex_hash, verified, used, high_rate, for_self_use, user_id, third_var, counter, sent FROM transactions", 100)
+		allTransactions, err := model.GetAllTransactions(100)
+		if err != nil {
+			return
+		}
 		for _, data := range allTransactions {
-			allTransactionsStr += data["hex_hash"] + "|" + data["verified"] + "|" + data["used"] + "|" + data["high_rate"] + "|" + data["for_self_use"] + "|" + consts.TxTypes[converter.StrToInt(data["type"])] + "|" + data["user_id"] + "|" + data["third_var"] + "|" + data["counter"] + "|" + data["sent"] + "\n"
+			allTransactionsStr += fmt.Sprintf("%+v", data)
 		}
 		t := time.Now()
 		data := allTransactionsStr + utils.GetParent() + " ### " + t.Format(time.StampMicro) + " ### " + stext + "\n\n"

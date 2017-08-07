@@ -26,7 +26,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
 
@@ -92,7 +91,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 		}
 	}()
 
-	err := sql.WaitDB(ctx)
+	err := WaitDB(ctx)
 	if err != nil {
 		return
 	}

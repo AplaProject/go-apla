@@ -28,17 +28,16 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 func BlockGenerator(d *daemon, ctx context.Context) error {
 	d.sleepTime = time.Second
 
-	locked, err := sql.DbLock(ctx, d.goRoutineName)
+	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer sql.DbUnlock(d.goRoutineName)
+	defer DbUnlock(d.goRoutineName)
 
 	config := &model.Config{}
 	if err = config.GetConfig(); err != nil {

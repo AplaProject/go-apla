@@ -5,7 +5,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 
 	"context"
 	"fmt"
@@ -13,6 +12,8 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 )
 
 func CreatingBlockchain(d *daemon, ctx context.Context) error {
@@ -91,7 +92,7 @@ func readBlock(r io.Reader) (*blockData, error) {
 	}
 
 	size := converter.BinToDec(buf)
-	if size > sql.SysInt64(sql.MaxBlockSize) {
+	if size > syspar.SysInt64(syspar.MaxBlockSize) {
 		return nil, utils.ErrInfo("size > conts.MAX_BLOCK_SIZE")
 	}
 
@@ -145,7 +146,7 @@ func getLastBlockID(fileName string) (int64, error) {
 		return 0, utils.ErrInfo(err)
 	}
 	size := converter.BinToDec(buf)
-	if size > sql.SysInt64(sql.MaxBlockSize) {
+	if size > syspar.SysInt64(syspar.MaxBlockSize) {
 		return 0, utils.ErrInfo("size > conts.MAX_BLOCK_SIZE")
 	}
 
@@ -185,14 +186,10 @@ func unmarshalBlockData(buff []byte) (blockData, error) {
 	}, nil
 }
 
-// TODO: rewrite this
 func marshallFileBlock(b blockData) []byte {
-
-	fmt.Printf("\nto marshal: %+v\n", b.Data)
 	data := append(converter.DecToBin(b.ID, WordSize), converter.EncodeLengthPlusData(b.Data)...)
 	sizeAndData := append(converter.DecToBin(len(data), WordSize), data...)
 
 	blockBin := append(sizeAndData, converter.DecToBin(len(sizeAndData), WordSize)...)
-	fmt.Printf("\n\nmarshal: blockBin: %+v\n", blockBin)
 	return blockBin
 }

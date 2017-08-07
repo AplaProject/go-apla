@@ -28,13 +28,13 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // BlocksCollection collects and parses blocks
@@ -177,11 +177,11 @@ func getHostBlockID(host string) (int64, error) {
 // load from host all blocks from our last block to maxBlockID
 func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
 
-	locked, err := sql.DbLock(ctx, d.goRoutineName)
+	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer sql.DbUnlock(d.goRoutineName)
+	defer DbUnlock(d.goRoutineName)
 
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
@@ -193,7 +193,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	parser.GoroutineName = d.goRoutineName
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID++ {
-		sql.UpdMainLock()
+		UpdMainLock()
 
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -260,7 +260,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 func downloadChain(ctx context.Context, fileName, url string) error {
 
 	for i := 0; i < consts.DOWNLOAD_CHAIN_TRY_COUNT; i++ {
-		loadCtx, cancel := context.WithTimeout(ctx, time.Duration(sql.SysInt64(sql.UpdFullNodesPeriod))*time.Second)
+		loadCtx, cancel := context.WithTimeout(ctx, time.Duration(syspar.SysInt64(syspar.UpdFullNodesPeriod))*time.Second)
 		defer cancel()
 
 		blockchainSize, err := downloadToFile(loadCtx, url, fileName)
@@ -313,9 +313,9 @@ func parseBlock(blockID int64, binaryBlock []byte) (header *utils.BlockData, bod
 	converter.BytesShift(&binaryBlock, 1) // remove 1-st byte - type (block/transaction)
 	header = utils.ParseBlockHeader(&binaryBlock)
 
-	if int64(len(binaryBlock)) > sql.SysInt64(sql.MaxBlockSize) {
+	if int64(len(binaryBlock)) > syspar.SysInt64(syspar.MaxBlockSize) {
 		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			len(binaryBlock), sql.SysInt64(sql.MaxBlockSize))
+			len(binaryBlock), syspar.SysInt64(syspar.MaxBlockSize))
 
 		return
 	}
@@ -335,7 +335,7 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 		return true, nil
 	}
 
-	mrklRoot, err := sql.GetMrklroot(body, false)
+	mrklRoot, err := utils.GetMrklroot(body, false)
 	if err != nil {
 		return true, err
 	}
@@ -373,21 +373,22 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 
 func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
 
-	locked, err := sql.DbLock(ctx, d.goRoutineName)
+	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
 	}
-	defer sql.DbUnlock(d.goRoutineName)
+	defer DbUnlock(d.goRoutineName)
 
-	config, err := model.GetNodeConfig()
+	nodeConfig := &model.Config{}
+	err = nodeConfig.GetConfig()
 	if err != nil {
 		return err
 	}
 
-	if config["first_load_blockchain"] == "file" {
-		blockchainURL := config["first_load_blockchain_url"]
+	if nodeConfig.FirstLoadBlockchain == "file" {
+		blockchainURL := nodeConfig.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
-			blockchainURL = sql.SysString(sql.BlockchainURL)
+			blockchainURL = syspar.SysString(syspar.BlockchainURL)
 		}
 
 		fileName := *utils.Dir + "/public/blockchain"
@@ -449,7 +450,7 @@ func loadFromFile(ctx context.Context, parser *parser.Parser, fileName string) e
 			return ctx.Err()
 		}
 
-		if err = sql.UpdMainLock(); err != nil {
+		if err = UpdMainLock(); err != nil {
 			return err
 		}
 

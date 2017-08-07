@@ -17,11 +17,11 @@
 package daemons
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 
 	"bytes"
 	"context"
@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	FULL_REQUEST = 1
-	TR_REQUEST   = 2
+	FULL_REQUEST         = 1
+	TRANSACTIONS_REQUEST = 2
 )
 
 // send to all nodes from nodes_connections the following data
@@ -97,7 +97,7 @@ func sendTransactions() error {
 	}
 
 	if buf.Len() > 0 {
-		err := sendPacketToAll(TR_REQUEST, buf.Bytes(), nil)
+		err := sendPacketToAll(TRANSACTIONS_REQUEST, buf.Bytes(), nil)
 		if err != nil {
 			return err
 		}
@@ -284,7 +284,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	logger.Debug("dataSize %d (host : %v)", dataSize, host)
 	// и если данных менее MAX_TX_SIZE, то получаем их
 	// if data is less than MAX_TX_SIZE, so get them
-	if dataSize < sql.SysInt64(sql.MaxTxSize) && dataSize > 0 {
+	if dataSize < syspar.SysInt64(syspar.MaxTxSize) && dataSize > 0 {
 		binaryTxHashes := make([]byte, dataSize)
 		_, err = io.ReadFull(conn, binaryTxHashes)
 		if err != nil {

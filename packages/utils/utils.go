@@ -731,6 +731,64 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 	return []byte(ret[0])
 }
 
+// GetMrklroot returns MerkleTreeRoot
+func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
+	var mrklSlice [][]byte
+	var txSize int64
+	// [error] парсим после вызова функции
+	// parse [error] after the calling of a function
+	if len(binaryData) > 0 {
+		for {
+			// чтобы исключить атаку на переполнение памяти
+			// to exclude an attack on memory overflow
+			if !first {
+				if txSize > SysInt64(MaxTxSize) {
+					return nil, utils.ErrInfoFmt("[error] MAX_TX_SIZE")
+				}
+			}
+			txSize, err := converter.DecodeLength(&binaryData)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// отчекрыжим одну транзакцию от списка транзакций
+			// separate one transaction from the list of transactions
+			if txSize > 0 {
+				transactionBinaryData := converter.BytesShift(&binaryData, txSize)
+				dSha256Hash, err := crypto.DoubleHash(transactionBinaryData)
+				if err != nil {
+					log.Fatal(err)
+				}
+				dSha256Hash = converter.BinToHex(dSha256Hash)
+				mrklSlice = append(mrklSlice, dSha256Hash)
+				//if len(transactionBinaryData) > 500000 {
+				//	ioutil.WriteFile(string(dSha256Hash)+"-"+Int64ToStr(txSize), transactionBinaryData, 0644)
+				//}
+			}
+
+			// чтобы исключить атаку на переполнение памяти
+			// to exclude an attack on memory overflow
+			if !first {
+				if len(mrklSlice) > SysInt(MaxTxCount) {
+					return nil, utils.ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), SysInt(MaxTxCount)))
+				}
+			}
+			if len(binaryData) == 0 {
+				break
+			}
+		}
+	} else {
+		mrklSlice = append(mrklSlice, []byte("0"))
+	}
+	log.Debug("mrklSlice: %s", mrklSlice)
+	if len(mrklSlice) == 0 {
+		mrklSlice = append(mrklSlice, []byte("0"))
+	}
+	log.Debug("mrklSlice: %s", mrklSlice)
+	return utils.MerkleTreeRoot(mrklSlice), nil
+}
+
+
 // TypeInt returns the identifier of the embedded transaction
 func TypeInt(txType string) int64 {
 	for k, v := range consts.TxTypes {

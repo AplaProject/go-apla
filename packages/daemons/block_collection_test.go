@@ -1,23 +1,23 @@
 package daemons
 
 import (
-	"net"
-	"testing"
-	"database/sql"
 	"context"
-	"sync"
-	"time"
+	"database/sql"
+	"net"
 	"os"
+	"sync"
+	"testing"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	sqlite "github.com/mattn/go-sqlite3"
 
-	dsql "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"io/ioutil"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"io/ioutil"
+	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 )
 
 func encode(x, y []byte) string {
@@ -32,18 +32,27 @@ func initGorm(t *testing.T) *gorm.DB {
 	os.Remove("./db_test")
 	os.Remove("./schema")
 
-
-	sql.Register("sqlite3_custom", &sqlite.SQLiteDriver{
-		ConnectHook: func(conn *sqlite.SQLiteConn) error {
-			if err := conn.RegisterFunc("encode", encode, true); err != nil {
-				return err
-			}
-			if err := conn.RegisterFunc("decode", decode, true); err != nil {
-				return err
-			}
-			return  nil
-		},
-	})
+	drivers := sql.Drivers()
+	found := false
+	for _, d := range drivers {
+		if d == "sqlite3_custom" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		sql.Register("sqlite3_custom", &sqlite.SQLiteDriver{
+			ConnectHook: func(conn *sqlite.SQLiteConn) error {
+				if err := conn.RegisterFunc("encode", encode, true); err != nil {
+					return err
+				}
+				if err := conn.RegisterFunc("decode", decode, true); err != nil {
+					return err
+				}
+				return nil
+			},
+		})
+	}
 
 	schema, err := sql.Open("sqlite3", "./schema")
 	if err != nil {
@@ -51,16 +60,15 @@ func initGorm(t *testing.T) *gorm.DB {
 	}
 	defer schema.Close()
 
-
 	gormDb, err := sql.Open("sqlite3_custom", "./db_test")
 	if err != nil {
 		t.Fatalf("sqlite failed %s", err)
 	}
-	db, err := gorm.Open("sqlite3",gormDb)
-	if err  != nil {
+	db, err := gorm.Open("sqlite3", gormDb)
+	if err != nil {
 		t.Fatalf("gorm init failed: %s", err)
 	}
-	model.GormSet(db)
+	model.DBConn = db
 
 	err = model.FullNodeCreateTable()
 	if err != nil {
@@ -77,7 +85,9 @@ func initGorm(t *testing.T) *gorm.DB {
 		t.Fatalf("can't create table: %s", err)
 	}
 
-	err = model.WalletCreateTable()
+	err = model.DBConn.CreateTable(&testDltWallet{}).Error
+
+	//	err = model.WalletCreateTable()
 	if err != nil {
 		t.Fatalf("can't create table: %s", err)
 	}
@@ -138,14 +148,10 @@ func createDaemon(db *sql.DB) *daemon {
 	config := make(map[string]string)
 	config["db_type"] = "sqlite"
 
-	dcdb := &dsql.DCDB{db, config}
-
 	return &daemon{
-		DCDB: dcdb,
 		goRoutineName: "test",
 	}
 }
-
 
 func getAndResponse(t *testing.T, l net.Listener, getRequest, sendRequest []byte) {
 
@@ -180,7 +186,6 @@ func TestChooseBlock(t *testing.T) {
 		t.Fatalf("can't start daemon: %s", err)
 	}
 	defer l.Close()
-
 
 	var wg sync.WaitGroup
 
@@ -234,10 +239,8 @@ func TestFirstBlock(t *testing.T) {
 
 	g := initGorm(t)
 	defer g.Close()
-	d := createDaemon(g.DB())
 
 	parser := new(parser.Parser)
-	parser.DCDB = d.DCDB
 	parser.GoroutineName = "test"
 
 	err := loadFirstBlock(parser)
@@ -262,13 +265,25 @@ func TestLoadFromFile(t *testing.T) {
 		t.Fatalf("can't write to file: %s", err)
 	}
 
-	d := createDaemon(g.DB())
 	parser := new(parser.Parser)
-	parser.DCDB = d.DCDB
 	parser.GoroutineName = "test"
 
 	err = loadFromFile(context.Background(), parser, fileName)
 	if err != nil {
 		t.Fatalf("load from file return error: %s", err)
 	}
+}
+
+type testDltWallet struct {
+	WalletID           int64  `gorm:"primary_key;not null"`
+	Amount             int64  `gorm:"not null"`
+	PublicKey          []byte `gorm:"column:public_key_0;not null"`
+	NodePublicKey      []byte `gorm:"not null"`
+	LastForgingDataUpd int64  `gorm:"not null default 0"`
+	Host               string `gorm:"not null default ''"`
+	AddressVote        string `gorm:"not null default ''"`
+	FuelRate           int64  `gorm:"not null default 0"`
+	SpendingContract   string `gorm:"not null default ''"`
+	ConditionsChange   string `gorm:"not null default ''"`
+	RollbackID         int64  `gorm:"not null default 0"`
 }
