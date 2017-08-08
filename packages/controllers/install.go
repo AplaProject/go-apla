@@ -23,11 +23,11 @@ import (
 	"os"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 // Install is a controller for the installation
@@ -73,7 +73,7 @@ func (c *Controller) Install() (string, error) {
 	}
 
 	if len(firstLoadBlockchainURL) == 0 {
-		firstLoadBlockchainURL = sql.SysString(sql.BlockchainURL)
+		firstLoadBlockchainURL = syspar.SysString(syspar.BlockchainURL)
 	}
 	dbConfig := config.DBConfig{
 		Type:     dbType,

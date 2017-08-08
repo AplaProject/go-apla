@@ -23,7 +23,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
 )
 
@@ -85,7 +84,7 @@ func SysUpdate() error {
 	}
 	systemParameters, err := model.GetAllSystemParameters()
 	if err != nil {
-		return utils.ErrInfo(err)
+		return err
 	}
 	mutex.Lock()
 	defer mutex.Unlock()

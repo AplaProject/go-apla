@@ -23,9 +23,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -56,7 +56,7 @@ func (p *RestoreAccessParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	if p.TxWalletID != sql.SysInt64(sql.RecoveryAddress) {
+	if p.TxWalletID != syspar.SysInt64(syspar.RecoveryAddress) {
 		return p.ErrInfo("p.TxWalletID != sql.RecoveryAddress")
 	}
 

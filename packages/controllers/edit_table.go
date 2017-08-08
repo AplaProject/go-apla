@@ -19,9 +19,9 @@ package controllers
 import (
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type editTablePage struct {
@@ -84,7 +84,7 @@ func (c *Controller) EditTable() (string, error) {
 	}
 	list := make([]map[string]string, 0)
 	for key, value := range columnsAndPermissions {
-		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: sql.GetColumnType(tableName, key)})
+		list = append(list, map[string]string{`name`: key, `perm`: value, `type`: model.GetColumnType(tableName, key)})
 	}
 
 	count, err := model.GetColumnsCount(tableName)
@@ -102,7 +102,7 @@ func (c *Controller) EditTable() (string, error) {
 		TxType:                txType,
 		TxTypeID:              utils.TypeInt(txType),
 		StateID:               c.SessStateID,
-		CanColumns:            count < sql.SysInt64(sql.MaxColumns)+2,
+		CanColumns:            count < syspar.SysInt64(syspar.MaxColumns)+2,
 		Global:                global,
 		TablePermission:       tablePermission,
 		ColumnsAndPermissions: list,

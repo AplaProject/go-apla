@@ -60,7 +60,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 {"name":"lastname", "htmlType":"textinput", "txType":"string", "title":"Last Name"},
 {"name":"birthday", "htmlType":"calendar", "txType":"string", "title":"Birthday"},
 {"name":"photo", "htmlType":"file", "txType":"binary", "title":"Photo"}
-]`, nil
+]`, error(nil)
 	vals := make(map[string]string)
 	time := c.r.FormValue(`time`)
 	walletID, err := strconv.ParseInt(c.r.FormValue(`walletId`), 10, 64)

@@ -732,7 +732,7 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 }
 
 // GetMrklroot returns MerkleTreeRoot
-func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
+func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int) ([]byte, error) {
 	var mrklSlice [][]byte
 	var txSize int64
 	// [error] парсим после вызова функции
@@ -742,8 +742,8 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 			// чтобы исключить атаку на переполнение памяти
 			// to exclude an attack on memory overflow
 			if !first {
-				if txSize > SysInt64(MaxTxSize) {
-					return nil, utils.ErrInfoFmt("[error] MAX_TX_SIZE")
+				if txSize > maxTxSize {
+					return nil, ErrInfoFmt("[error] MAX_TX_SIZE")
 				}
 			}
 			txSize, err := converter.DecodeLength(&binaryData)
@@ -769,8 +769,8 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 			// чтобы исключить атаку на переполнение памяти
 			// to exclude an attack on memory overflow
 			if !first {
-				if len(mrklSlice) > SysInt(MaxTxCount) {
-					return nil, utils.ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), SysInt(MaxTxCount)))
+				if len(mrklSlice) > maxTxCount {
+					return nil, ErrInfo(fmt.Errorf("[error] MAX_TX_COUNT (%v > %v)", len(mrklSlice), maxTxCount))
 				}
 			}
 			if len(binaryData) == 0 {
@@ -785,9 +785,8 @@ func GetMrklroot(binaryData []byte, first bool) ([]byte, error) {
 		mrklSlice = append(mrklSlice, []byte("0"))
 	}
 	log.Debug("mrklSlice: %s", mrklSlice)
-	return utils.MerkleTreeRoot(mrklSlice), nil
+	return MerkleTreeRoot(mrklSlice), nil
 }
-
 
 // TypeInt returns the identifier of the embedded transaction
 func TypeInt(txType string) int64 {

@@ -38,6 +38,7 @@ import (
 	bconf "github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 var log = logging.MustGetLogger("controllers")
@@ -65,7 +66,7 @@ type Controller struct {
 	Parameters       map[string]string
 	TimeFormat       string
 	NodeAdmin        bool
-	NodeConfig       map[string]string
+	NodeConfig       model.Config
 	CurrencyList     map[int64]string
 	ConfirmedBlockID int64
 	Data             *CommonPage

@@ -24,12 +24,12 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type updatingBlockchainStruct struct {
@@ -64,12 +64,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 			return "", utils.ErrInfo(err)
 		}
 		if confirmation.BlockID == 0 {
-			conf := &model.Config{}
-			err := conf.GetConfig()
-			if err != nil {
-				return "", utils.ErrInfo(err)
-			}
-			if conf.FirstLoadBlockchain == "file" {
+			if c.NodeConfig.FirstLoadBlockchain == "file" {
 				waitText = c.Lang["loading_blockchain_please_wait"]
 			} else {
 				waitText = c.Lang["is_synchronized_with_the_dc_network"]
@@ -84,10 +79,9 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 			blockID = LastBlockData["blockId"]
 		}
 
-		nodeConfig, err := model.GetNodeConfig()
-		blockchainURL := nodeConfig["first_load_blockchain_url"]
+		blockchainURL := c.NodeConfig.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
-			blockchainURL = sql.SysString(sql.BlockchainURL)
+			blockchainURL = syspar.SysString(syspar.BlockchainURL)
 		}
 
 		blockMeter = int64(converter.RoundWithPrecision(float64((blockID/consts.LAST_BLOCK)*100), 0))

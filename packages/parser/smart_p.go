@@ -26,6 +26,7 @@ import (
 
 	"encoding/hex"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -36,7 +37,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/shopspring/decimal"
 )
 
@@ -645,17 +645,17 @@ func StateVal(p *Parser, name string) string {
 
 // SysParamString returns the value of the system parameter
 func SysParamString(name string) string {
-	return sql.SysString(name)
+	return syspar.SysString(name)
 }
 
 // SysParamInt returns the value of the system parameter
 func SysParamInt(name string) int64 {
-	return sql.SysInt64(name)
+	return syspar.SysInt64(name)
 }
 
 // SysCost returns the cost of the transaction from the system parameter
 func SysCost(name string) int64 {
-	return sql.SysCost(name)
+	return syspar.SysCost(name)
 }
 
 // Int converts a string to a number
@@ -1009,7 +1009,7 @@ func UpdateSysParam(p *Parser, name, value, conditions string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	err = sql.SysUpdate()
+	err = syspar.SysUpdate()
 	if err != nil {
 		return 0, err
 	}

@@ -106,7 +106,8 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if dbInit {
-		config, err := model.GetNodeConfig()
+		nodeConfig := &model.Config{}
+		err := nodeConfig.GetConfig()
 		if err != nil {
 			log.Error("%v", err)
 		}

@@ -112,7 +112,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		log.Debug("wTime: %v / utils.Time(): %v / blockData[time]: %v", wTime, now, infoBlock.Time)
 		// if time differs less than for 12 hours from current time, give not affected but those which are in blockchain
 		if now-infoBlock.Time < 3600*wTime {
-			lastBlockData, err := GetLastBlockData()
+			lastBlockData, err := model.GetLastBlockData()
 			if err != nil {
 				log.Error("%v", err)
 			}

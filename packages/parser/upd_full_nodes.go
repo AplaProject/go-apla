@@ -22,9 +22,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -58,7 +58,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	if txTime-ufn.Time <= sql.SysInt64(sql.UpdFullNodesPeriod) {
+	if txTime-ufn.Time <= syspar.SysInt64(syspar.UpdFullNodesPeriod) {
 		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
 	}
 

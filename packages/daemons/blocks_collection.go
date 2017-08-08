@@ -28,13 +28,13 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 )
 
 // BlocksCollection collects and parses blocks
@@ -335,7 +335,7 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 		return true, nil
 	}
 
-	mrklRoot, err := utils.GetMrklroot(body, false)
+	mrklRoot, err := utils.GetMrklroot(body, false, syspar.SysInt64(syspar.MaxTxSize), syspar.SysInt(syspar.MaxTxCount))
 	if err != nil {
 		return true, err
 	}

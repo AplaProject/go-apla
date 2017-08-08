@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -32,7 +33,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	db "github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/op/go-logging"
 	"github.com/shopspring/decimal"
@@ -717,7 +717,7 @@ func (p *Parser) payFPrice() error {
 		return err
 	}
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(db.SysInt64(db.CommissionWallet))}, true); err != nil {
+		[]string{converter.Int64ToStr(syspar.SysInt64(syspar.CommissionWallet))}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)

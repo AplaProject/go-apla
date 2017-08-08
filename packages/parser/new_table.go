@@ -24,9 +24,9 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -72,8 +72,8 @@ func (p *NewTableParser) Validate() error {
 	if len(cols) == 0 {
 		return p.ErrInfo(`len(cols) == 0`)
 	}
-	if len(cols) > sql.SysInt(sql.MaxColumns) {
-		return fmt.Errorf(`Too many columns. Limit is %d`, sql.SysInt(sql.MaxColumns))
+	if len(cols) > syspar.SysInt(syspar.MaxColumns) {
+		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.SysInt(syspar.MaxColumns))
 	}
 	var indexes int
 	for _, data := range cols {
@@ -90,8 +90,8 @@ func (p *NewTableParser) Validate() error {
 			indexes++
 		}
 	}
-	if indexes > sql.SysInt(sql.MaxIndexes) {
-		return fmt.Errorf(`Too many indexes. Limit is %d`, sql.SysInt(sql.MaxIndexes))
+	if indexes > syspar.SysInt(syspar.MaxIndexes) {
+		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.SysInt(syspar.MaxIndexes))
 	}
 
 	prefix := converter.Int64ToStr(p.NewTable.Header.StateID)

@@ -23,10 +23,10 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 var (
@@ -52,13 +52,9 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 			fileSize               int64
 		)
 		downloadFile = *utils.Dir + "/public/blockchain"
-		nodeConfig, err := model.GetNodeConfig()
-		if err != nil {
-			return "", err
-		}
-		blockURL = nodeConfig["first_load_blockchain_url"]
-		if len(blockURL) == 0 {
-			blockURL = sql.SysString(sql.BlockchainURL)
+
+		if len(c.NodeConfig.FirstLoadBlockchainURL) == 0 {
+			blockURL = syspar.SysString(syspar.BlockchainURL)
 		}
 		resp, err := http.Get(blockURL)
 		if err != nil {
@@ -118,8 +114,8 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 	confirmedBlockID := confirmation.BlockID
 
 	currentLoadBlockchain := "nodes"
-	if c.NodeConfig["current_load_blockchain"] == "file" {
-		currentLoadBlockchain = c.NodeConfig["first_load_blockchain_url"]
+	if c.NodeConfig.FirstLoadBlockchain == "file" {
+		currentLoadBlockchain = c.NodeConfig.FirstLoadBlockchainURL
 	}
 	var needReload string
 	iBlock := blockID
