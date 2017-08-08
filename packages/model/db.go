@@ -459,6 +459,10 @@ func GetNameList(tableName string, count int) ([]map[string]string, error) {
 	return GetAll(fmt.Sprintf(`SELECT name FROM "%s" ORDER BY name`, tableName), count)
 }
 
+func DropTable(tableName string) error {
+	return model.DBConn.DropTable(tableName).Error
+}
+
 func GetConditionsAndValue(tableName, name string) (map[string]string, error) {
 	return GetOneRow(fmt.Sprintf(`SELECT conditions, value FROM "%s" WHERE name = ?`, tableName), name).String()
 }

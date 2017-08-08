@@ -504,11 +504,6 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	return nil
 }
 
-// CheckTableExists checks if the table exists
-func (p *Parser) CheckTableExists(table string) (bool, error) {
-	return model.DBConn.HasTable(table), nil
-}
-
 // BlockError writes the error of the transaction in the transactions_status table
 func (p *Parser) BlockError(err error) {
 	if len(p.TxHash) == 0 {
