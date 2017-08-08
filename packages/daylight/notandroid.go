@@ -188,9 +188,7 @@ func tcpListener() {
 						time.Sleep(time.Second)
 					} else {
 						go func(conn net.Conn) {
-							t := new(tcpserver.TCPServer)
-							t.DCDB = db
-							t.HandleTCPRequest(conn)
+							tcpserver.HandleTCPRequest(conn)
 							conn.Close()
 						}(conn)
 					}

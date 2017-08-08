@@ -19,18 +19,19 @@ package tcpserver
 import (
 	"bytes"
 	"errors"
+	"io"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"io"
 )
 
 // get the list of transactions which belong to the sender from 'disseminator' daemon
 // do not load the blocks here because here could be the chain of blocks that are loaded for a long time
 // download the transactions here, because they are small and definitely will be downloaded in 60 sec
-func (t *TCPServer) Type1(r *DisRequest, rw io.ReadWriter) error {
+func Type1(r *DisRequest, rw io.ReadWriter) error {
 
 	buf := bytes.NewBuffer(r.Data)
 

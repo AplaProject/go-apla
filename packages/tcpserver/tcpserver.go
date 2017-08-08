@@ -26,7 +26,6 @@ import (
 
 	"io"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
 
@@ -39,13 +38,8 @@ func init() {
 	flag.Parse()
 }
 
-// TCPServer is a structure for TCP connecvtion
-type TCPServer struct {
-	*sql.DCDB
-}
-
 // HandleTCPRequest proceed TCP requests
-func (t *TCPServer) HandleTCPRequest(rw io.ReadWriter) {
+func HandleTCPRequest(rw io.ReadWriter) {
 	defer func() {
 		atomic.AddInt64(&counter, -1)
 	}()
@@ -68,32 +62,32 @@ func (t *TCPServer) HandleTCPRequest(rw io.ReadWriter) {
 		req := &DisRequest{}
 		err = ReadRequest(req, rw)
 		if err != nil {
-			err = t.Type1(req, rw)
+			err = Type1(req, rw)
 		}
 
 	case 2:
 		req := &DisRequest{}
 		err = ReadRequest(req, rw)
 		if err != nil {
-			response, err = t.Type2(req)
+			response, err = Type2(req)
 		}
 
 	case 4:
 		req := &ConfirmRequest{}
 		err = ReadRequest(req, rw)
 		if err != nil {
-			response, err = t.Type4(req)
+			response, err = Type4(req)
 		}
 
 	case 7:
 		req := &GetBodyRequest{}
 		err = ReadRequest(req, rw)
 		if err != nil {
-			response, err = t.Type7(req)
+			response, err = Type7(req)
 		}
 
 	case 10:
-		response, err = t.Type10()
+		response, err = Type10()
 	}
 
 	if response != nil && err != nil {

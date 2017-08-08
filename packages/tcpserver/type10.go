@@ -23,7 +23,7 @@ import (
 
 // Type10 sends the last block ID
 // blocksCollection daemon sends this request
-func (t *TCPServer) Type10() (*MaxBlockResponse, error) {
+func Type10() (*MaxBlockResponse, error) {
 	blockID, err := model.GetCurBlockID()
 	if err != nil {
 		return nil, utils.ErrInfo(err)

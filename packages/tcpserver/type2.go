@@ -17,6 +17,11 @@
 package tcpserver
 
 import (
+	crand "crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -25,10 +30,10 @@ import (
 )
 
 // Type2 serves requests from disseminator
-func (t *TCPServer) Type2(r *DisRequest) (*DisTrResponse, error) {
+func Type2(r *DisRequest) (*DisTrResponse, error) {
 	binaryData := r.Data
 	// take the transactions from usual users but not nodes.
-	_, _, decryptedBinData, err := t.DecryptData(&binaryData)
+	_, _, decryptedBinData, err := DecryptData(&binaryData)
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
@@ -61,4 +66,71 @@ func (t *TCPServer) Type2(r *DisRequest) (*DisTrResponse, error) {
 	}
 
 	return &DisTrResponse{}, nil
+}
+
+func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
+	if len(*binaryTx) == 0 {
+		return nil, nil, nil, utils.ErrInfo("len(binaryTx) == 0")
+	}
+
+	myUserID := converter.BinToDecBytesShift(&*binaryTx, 5)
+	log.Debug("myUserId: %d", myUserID)
+
+	// remove the encrypted key, and all that stay in $binary_tx will be encrypted keys of the transactions/blocks
+	length, err := converter.DecodeLength(&*binaryTx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	encryptedKey := converter.BytesShift(&*binaryTx, length)
+	log.Debug("encryptedKey: %x", encryptedKey)
+	log.Debug("encryptedKey: %s", encryptedKey)
+
+	iv := converter.BytesShift(&*binaryTx, 16)
+	log.Debug("iv: %s", iv)
+	log.Debug("iv: %x", iv)
+
+	if len(encryptedKey) == 0 {
+		return nil, nil, nil, utils.ErrInfo("len(encryptedKey) == 0")
+	}
+
+	if len(*binaryTx) == 0 {
+		return nil, nil, nil, utils.ErrInfo("len(*binaryTx) == 0")
+	}
+
+	nodeKey := &model.MyNodeKey{}
+	err = nodeKey.GetNodeWithMaxBlockID()
+	if err != nil {
+		return nil, nil, nil, utils.ErrInfo(err)
+	}
+	if len(nodeKey.PrivateKey) == 0 {
+		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")
+	}
+
+	block, _ := pem.Decode([]byte(nodeKey.PrivateKey))
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		return nil, nil, nil, utils.ErrInfo("No valid PEM data found")
+	}
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, nil, nil, utils.ErrInfo(err)
+	}
+
+	decKey, err := rsa.DecryptPKCS1v15(crand.Reader, privateKey, encryptedKey)
+	if err != nil {
+		return nil, nil, nil, utils.ErrInfo(err)
+	}
+	log.Debug("decrypted Key: %s", decKey)
+	if len(decKey) == 0 {
+		return nil, nil, nil, utils.ErrInfo("len(decKey)")
+	}
+
+	log.Debug("binaryTx %x", *binaryTx)
+	log.Debug("iv %s", iv)
+	decrypted, err := crypto.Decrypt(iv, *binaryTx, decKey)
+	if err != nil {
+		return nil, nil, nil, utils.ErrInfo(err)
+	}
+
+	return decKey, iv, decrypted, nil
 }

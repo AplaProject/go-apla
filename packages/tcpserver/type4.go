@@ -22,7 +22,7 @@ import (
 
 // Type4 writes the hash of the specified block
 // The request is sent by 'confirmations' daemon
-func (t *TCPServer) Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
+func Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
 	resp := &ConfirmResponse{}
 	block := &model.Block{}
 	err := block.GetBlock(int64(r.BlockID))

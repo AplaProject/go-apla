@@ -23,7 +23,7 @@ import (
 
 // Type7 writes the body of the specified block
 // blocksCollection and queue_parser_blocks daemons send the request through p.GetBlocks()
-func (t *TCPServer) Type7(request *GetBodyRequest) (*GetBodyResponse, error) {
+func Type7(request *GetBodyRequest) (*GetBodyResponse, error) {
 	block := &model.Block{}
 	err := block.GetBlock(int64(request.BlockID))
 	if err != nil {
