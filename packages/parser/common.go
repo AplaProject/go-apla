@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -41,6 +42,19 @@ import (
 var (
 	log = logging.MustGetLogger("daemons")
 )
+
+// GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
+func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
+	tmp := binaryBlock[:]
+	txType = converter.BinToDecBytesShift(&binaryBlock, 1)
+	if consts.IsStruct(int(txType)) {
+		var txHead consts.TxHeader
+		converter.BinUnmarshal(&tmp, &txHead)
+		walletID = txHead.WalletID
+		citizenID = txHead.CitizenID
+	}
+	return
+}
 
 func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	BlockData := new(utils.BlockData)

@@ -26,7 +26,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
@@ -36,7 +35,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	var fatalError string
 	var header *tx.Header
 	hashHex := converter.BinToHex(hash)
-	txType, walletID, citizenID := sql.GetTxTypeAndUserID(binaryTx)
+	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
 	p.BinaryData = binaryTx
 	p.TxBinaryData = binaryTx
 	header, err = p.ParseDataGate(false)
