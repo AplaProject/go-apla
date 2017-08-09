@@ -169,7 +169,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 	if err != nil {
-		log.Fatal("gorm init error")
+		log.Fatalf("gorm init error: %s", err)
 	}
 
 	go func() {
