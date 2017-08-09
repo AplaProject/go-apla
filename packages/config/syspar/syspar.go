@@ -97,6 +97,10 @@ func SysUpdate() error {
 	return err
 }
 
+func SysInt64(name string) int64 {
+	return converter.StrToInt64(SysString(name))
+}
+
 func GetBlockchainURL() string {
 	return SysString(BlockchainURL)
 }
