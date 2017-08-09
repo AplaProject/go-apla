@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/log"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -310,7 +308,6 @@ func GetLastBlockData() (map[string]int64, error) {
 	if confirmedBlockID == 0 {
 		confirmedBlockID = 1
 	}
-	log.Debug("%v", "confirmedBlockId", confirmedBlockID)
 	// obtain the time of the last affected block
 	block := &Block{}
 	err = block.GetBlock(confirmedBlockID)

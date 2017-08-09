@@ -167,7 +167,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 
 				// чтобы 1 юзер не смог прислать дос-блок размером в 10гб, который заполнит своими же транзакциями
 				// to prevent the possibility when 1 user can send a 10-gigabyte dos-block which will fill with his own transactions
-				if txCounter[userID] > syspar.GetMaxBlockUserTx() {
+				if txCounter[userID] > int64(syspar.GetMaxBlockUserTx()) {
 					err0 := p.RollbackTo(txForRollbackTo, true)
 					if err0 != nil {
 						log.Error("error: %v", err0)

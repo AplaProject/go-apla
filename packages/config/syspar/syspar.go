@@ -21,9 +21,7 @@ import (
 	"sync"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/shopspring/decimal"
 )
 
 const (
@@ -110,19 +108,19 @@ func GetUpdFullNodesPeriod() int64 {
 }
 
 func GetMaxBlockSize() int64 {
-	return conveter.StrToInt64(SysString(MaxBlockSize))
+	return converter.StrToInt64(SysString(MaxBlockSize))
 }
 
 func GetMaxTxSize() int64 {
-	return conveter.StrToInt64(SysString(MaxTxSize))
+	return converter.StrToInt64(SysString(MaxTxSize))
 }
 
 func GetRecoveryAddress() int64 {
-	return conveter.StrToInt64(SysString(RecoveryAddress))
+	return converter.StrToInt64(SysString(RecoveryAddress))
 }
 
 func GetCommissionWallet() int64 {
-	return conveter.StrToInt64(SysString(CommissionWallet))
+	return converter.StrToInt64(SysString(CommissionWallet))
 }
 
 func GetGapsBetweenBlocks() int {
@@ -130,19 +128,19 @@ func GetGapsBetweenBlocks() int {
 }
 
 func GetMaxTxCount() int {
-	return conveter.StrToInt(SysString(MaxTxCount))
+	return converter.StrToInt(SysString(MaxTxCount))
 }
 
 func GetMaxColumns() int {
-	return conveter.StrToInt(SysString(MaxColumns))
+	return converter.StrToInt(SysString(MaxColumns))
 }
 
 func GetMaxIndexes() int {
-	return conveter.StrToInt(SysString(MaxIndexes))
+	return converter.StrToInt(SysString(MaxIndexes))
 }
 
 func GetMaxBlockUserTx() int {
-	return conveter.StrToInt(SysString(MaxBlockUserTx))
+	return converter.StrToInt(SysString(MaxBlockUserTx))
 }
 
 // SysCost returns the cost of the transaction
