@@ -21,7 +21,7 @@ import (
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
@@ -51,19 +51,19 @@ type tableListResult struct {
 func getTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	prefix := getPrefix(data)
 	tableName := prefix + `_` + data.params[`name`].(string)
-	tablePermission, err := sql.DB.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`,
+	tablePermission, err := model.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`,
 		"key", "value", tableName)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-	columnsAndPermissions, err := sql.DB.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
+	columnsAndPermissions, err := model.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
 		"key", "value", tableName)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 	columns := make([]columnItem, 0)
 	for key, value := range columnsAndPermissions {
-		columns = append(columns, columnItem{Name: key, Perm: value, Type: sql.GetColumnType(tableName, key)})
+		columns = append(columns, columnItem{Name: key, Perm: value, Type: model.GetColumnType(tableName, key)})
 	}
 	data.result = &tableResult{Name: tableName, PermInsert: tablePermission[`insert`],
 		PermNewColumn: tablePermission[`new_column`], PermChange: tablePermission[`general_update`],
@@ -142,12 +142,12 @@ func tableList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		limit = -1
 	}
 	outList := make([]tableItem, 0)
-	count, err := sql.DB.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_tables"`).String()
+	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_tables"`).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 
-	list, err := sql.DB.GetAll(`SELECT name FROM "`+getPrefix(data)+`_tables" order by name`+
+	list, err := model.GetAll(`SELECT name FROM "`+getPrefix(data)+`_tables" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)

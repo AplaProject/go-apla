@@ -11,7 +11,7 @@ func (ss *SystemState) TableName() string {
 
 func GetAllSystemStatesIDs() ([]int64, error) {
 	IDs := new([]int64)
-	if err := DBConn.Model(&SystemState{}).Find(IDs).Error; err != nil {
+	if err := DBConn.Model(&SystemState{}).Find(IDs).Order("id").Error; err != nil {
 		return nil, err
 	}
 	return *IDs, nil

@@ -21,7 +21,7 @@ import (
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
@@ -44,7 +44,7 @@ type pageListResult struct {
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
-	dataPage, err := sql.DB.OneRow(`SELECT * FROM "`+getPrefix(data)+`_pages" WHERE name = ?`,
+	dataPage, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_pages" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
@@ -129,12 +129,12 @@ func pageList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		limit = -1
 	}
 	outList := make([]pageItem, 0)
-	count, err := sql.DB.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_pages"`).String()
+	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_pages"`).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 
-	list, err := sql.DB.GetAll(`SELECT name, menu FROM "`+getPrefix(data)+`_pages" order by name`+
+	list, err := model.GetAll(`SELECT name, menu FROM "`+getPrefix(data)+`_pages" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)

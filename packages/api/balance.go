@@ -21,7 +21,7 @@ import (
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type balanceResult struct {
@@ -35,7 +35,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if wallet == 0 {
 		return errorAPI(w, fmt.Sprintf(`Wallet %s is invalid`, data.params[`wallet`].(string)), http.StatusBadRequest)
 	}
-	total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
+	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}

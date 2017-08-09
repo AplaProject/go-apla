@@ -21,7 +21,7 @@ import (
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
@@ -49,7 +49,7 @@ type contractListResult struct {
 func checkID(data *apiData) (id string, err error) {
 	id = data.params[`id`].(string)
 	if id[0] > '9' {
-		id, err = sql.DB.Single(`SELECT id FROM "`+getPrefix(data)+`_smart_contracts" WHERE name = ?`, id).String()
+		id, err = model.Single(`SELECT id FROM "`+getPrefix(data)+`_smart_contracts" WHERE name = ?`, id).String()
 		if err == nil && len(id) == 0 {
 			err = fmt.Errorf(`incorrect id %s of the contract`, data.params[`id`].(string))
 		}
@@ -62,7 +62,7 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
-	dataContract, err := sql.DB.OneRow(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" WHERE id = ?`, id).String()
+	dataContract, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" WHERE id = ?`, id).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
@@ -78,7 +78,7 @@ func txPreNewContract(w http.ResponseWriter, r *http.Request, data *apiData) err
 		Name:       data.params[`name`].(string),
 		Value:      data.params[`value`].(string),
 		Conditions: data.params[`conditions`].(string),
-		Wallet: data.params[`wallet`].(string),
+		Wallet:     data.params[`wallet`].(string),
 	}
 	data.result = &forSign{Time: converter.Int64ToStr(v.Time), ForSign: v.ForSign()}
 	return nil
@@ -192,12 +192,12 @@ func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		limit = -1
 	}
 	outList := make([]contractItem, 0)
-	count, err := sql.DB.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_smart_contracts"`).String()
+	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_smart_contracts"`).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 
-	list, err := sql.DB.GetAll(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" order by id`+
+	list, err := model.GetAll(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" order by id`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)

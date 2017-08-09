@@ -32,6 +32,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/api"
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/controllers"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -46,7 +47,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/go-bindata-assetfs"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
@@ -182,7 +182,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			Exit(1)
 		}
 
-		err = sql.SysUpdate()
+		err = syspar.SysUpdate()
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			Exit(1)
@@ -253,7 +253,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			break
 		}
 		schema.Migration()
-		err = sql.SysUpdate()
+		err = syspar.SysUpdate()
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 			Exit(1)
@@ -316,7 +316,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
 		for _, table := range allTable {
-			count, err := sql.DB.Single(`SELECT count(*) FROM ` + converter.EscapeName(table)).Int64()
+			count, err := model.Single(`SELECT count(*) FROM ` + converter.EscapeName(table)).Int64()
 			if err != nil {
 				fmt.Println(err)
 				panic(err)

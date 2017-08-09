@@ -27,7 +27,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	//"os"
 	//"regexp"
 	//	"time"
@@ -37,6 +36,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // IosLog is reserved
@@ -156,17 +156,14 @@ func httpListenerV6(route http.Handler) {
 }
 
 func tcpListener() {
-	db := sql.DB
 	log.Debug("tcp")
 	go func() {
-		if db == nil || db.DB == nil {
-			for {
-				db = sql.DB
-				if db != nil && db.DB != nil {
-					break
-				} else {
-					time.Sleep(time.Second * 3)
-				}
+		for {
+
+			if model.DBConn != nil {
+				break
+			} else {
+				time.Sleep(time.Second * 3)
 			}
 		}
 

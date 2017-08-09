@@ -10,9 +10,8 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/go-thrust/lib/commands"
 	. "github.com/go-thrust/lib/common"
 )
@@ -105,8 +104,8 @@ func Clean() {
 
 func CleanExit() {
 	Clean()
-	if sql.DB != nil && sql.DB.DB != nil {
-		sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
+	if model.DBConn != nil {
+		model.SetStopNow()
 	} else {
 		os.Exit(0)
 	}

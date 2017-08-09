@@ -21,7 +21,7 @@ import (
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type txstatusResult struct {
@@ -35,7 +35,7 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
 		return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
 	}
-	tx, err := sql.DB.OneRow(`SELECT block_id, error FROM transactions_status WHERE hash = [hex]`,
+	tx, err := model.GetOneRow(`SELECT block_id, error FROM transactions_status WHERE hash = [hex]`,
 		data.params[`hash`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)

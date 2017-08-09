@@ -22,10 +22,10 @@ func WriteSelectiveLog(text interface{}) {
 		}
 		allTransactionsStr := ""
 		allTransactions, err := model.GetAllTransactions(100)
-		if err != nil {
+		if err != nil || allTransactions == nil {
 			return
 		}
-		for _, data := range allTransactions {
+		for _, data := range *allTransactions {
 			allTransactionsStr += fmt.Sprintf("%+v", data)
 		}
 		t := time.Now()

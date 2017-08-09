@@ -21,13 +21,12 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/daylight"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/go-thrust/lib/bindings/window"
 	"github.com/go-thrust/lib/commands"
 	"github.com/go-thrust/thrust"
@@ -63,8 +62,8 @@ func main() {
 		thrust.NewEventHandler("*", func(cr commands.CommandResponse) {
 			//			fmt.Println(fmt.Sprintf("======Event(%d) - Signaled by Command (%s)", cr.TargetID, cr.Type))
 			if cr.TargetID > 1 && cr.Type == "closed" {
-				if sql.DB != nil && sql.DB.DB != nil {
-					sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
+				if model.DBConn != nil {
+					model.SetStopNow()
 				} else {
 					thrust.Exit()
 					system.FinishThrust(0)

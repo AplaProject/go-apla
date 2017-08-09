@@ -37,6 +37,13 @@ func GormInit(user string, pass string, dbName string) error {
 	return nil
 }
 
+func GormClose() error {
+	if DBConn != nil {
+		return DBConn.Close()
+	}
+	return nil
+}
+
 func DropTables() error {
 	return DBConn.Exec(`
 	DO $$ DECLARE
@@ -519,4 +526,49 @@ func IsIndex(tblname, column string) (bool, error) {
 
 func GetTableData(tableName string, limit int) ([]map[string]string, error) {
 	return GetAll(`SELECT * FROM "`+tableName+`" order by id`, limit)
+}
+
+func InsertIntoMigration(version string, timeApplied int64) error {
+	return DBConn.Exec(`INSERT INTO migration_history (version, date_applied) VALUES (?, ?)`, version, timeApplied).Error
+}
+
+func GetMap(query string, name, value string, args ...interface{}) (map[string]string, error) {
+	result := make(map[string]string)
+	all, err := GetAll(query, -1, args...)
+	if err != nil {
+		return result, err
+	}
+	for _, v := range all {
+		result[v[name]] = v[value]
+	}
+	return result, err
+}
+
+// ListResult is a structure for the list result
+type ListResult struct {
+	result []string
+	err    error
+}
+
+// String return the slice of strings
+func (r *ListResult) String() ([]string, error) {
+	if r.err != nil {
+		return r.result, r.err
+	}
+	return r.result, nil
+}
+
+// GetList returns the result of the query as ListResult variable
+func GetList(query string, args ...interface{}) *ListResult {
+	var result []string
+	all, err := GetAll(query, -1, args...)
+	if err != nil {
+		return &ListResult{result, err}
+	}
+	for _, v := range all {
+		for _, v2 := range v {
+			result = append(result, v2)
+		}
+	}
+	return &ListResult{result, nil}
 }

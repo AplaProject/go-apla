@@ -111,7 +111,7 @@ func Ajax(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("%v", err)
 		}
-		c.NodeConfig = config
+		c.NodeConfig = *nodeConfig
 
 	}
 	r.ParseForm()

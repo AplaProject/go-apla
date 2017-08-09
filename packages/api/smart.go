@@ -27,9 +27,9 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -136,7 +136,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *PrepareTxJSON
 				if ret := regexp.MustCompile(`(?is)signature:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					pref := getPrefix(data)
 					var value string
-					value, err = sql.DB.Single(fmt.Sprintf(`select value from "%s_signatures" where name=?`, pref), ret[1]).String()
+					value, err = model.Single(fmt.Sprintf(`select value from "%s_signatures" where name=?`, pref), ret[1]).String()
 					if err != nil {
 						break
 					}
@@ -196,7 +196,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		return result
 	}
 	id = converter.StringToAddress(walletID)
-	pubKey, err := sql.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
+	pubKey, err := model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, id).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -213,7 +213,7 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 		pub, _ := hex.DecodeString(result.Public)
 		idnew := crypto.Address(pub)
 
-		exist, err := sql.DB.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
+		exist, err := model.Single(`select wallet_id from dlt_wallets where wallet_id=?`, idnew).Int64()
 		if err != nil {
 			result.Error = err.Error()
 			return result
@@ -316,7 +316,7 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	}
 	userID = data.sess.Get(`wallet`).(int64)
 
-	isPublic, err = sql.DB.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, userID).Bytes()
+	isPublic, err = model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, userID).Bytes()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
@@ -389,7 +389,7 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-	if hash, err = sql.DB.SendTx(int64(info.ID), userID,
+	if hash, err = model.SendTx(int64(info.ID), userID,
 		append([]byte{128}, serializedData...)); err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}

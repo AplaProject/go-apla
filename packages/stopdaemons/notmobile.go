@@ -22,9 +22,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 /*
@@ -77,16 +77,13 @@ func Signals() {
 
 		log.Debug("Daemons killed")
 		fmt.Println("Daemons killed")
-		if sql.DB != nil && sql.DB.DB != nil {
-			err := sql.DB.Close()
-			fmt.Println("DB Closed")
-			if err != nil {
-				log.Error(utils.ErrInfo(err).Error())
-				//panic(err)
-			}
+		err := model.GormClose()
+		if err != nil {
+			log.Error(utils.ErrInfo(err).Error())
+			//panic(err)
 		}
 
-		err := os.Remove(*utils.Dir + "/daylight.pid")
+		err = os.Remove(*utils.Dir + "/daylight.pid")
 		if err != nil {
 			log.Error(utils.ErrInfo(err).Error())
 			panic(err)

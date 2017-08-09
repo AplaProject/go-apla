@@ -21,7 +21,7 @@ import (
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
@@ -50,7 +50,7 @@ type stateListResult struct {
 
 func getStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
-	dataPar, err := sql.DB.OneRow(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" WHERE name = ?`,
+	dataPar, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
@@ -155,12 +155,12 @@ func stateParamsList(w http.ResponseWriter, r *http.Request, data *apiData) erro
 		limit = -1
 	}
 	outList := make([]stateParamResult, 0)
-	count, err := sql.DB.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_state_parameters"`).String()
+	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_state_parameters"`).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 
-	list, err := sql.DB.GetAll(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" order by name`+
+	list, err := model.GetAll(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
@@ -181,21 +181,21 @@ func stateList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	} else if limit < 0 {
 		limit = -1
 	}
-	count, err := sql.DB.Single(`SELECT count(*) FROM system_states`).String()
+	count, err := model.Single(`SELECT count(*) FROM system_states`).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
-	idata, err := sql.DB.GetList(`SELECT id FROM system_states order by id desc` +
+	idata, err := model.GetList(`SELECT id FROM system_states order by id desc` +
 		fmt.Sprintf(` offset %d limit %d`, data.params[`offset`].(int64), limit)).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}
 	outList := make([]stateItem, 0)
 	for _, id := range idata {
-		if !sql.DB.IsNodeState(converter.StrToInt64(id), r.Host) {
+		if !model.IsNodeState(converter.StrToInt64(id), r.Host) {
 			continue
 		}
-		list, err := sql.DB.GetAll(fmt.Sprintf(`SELECT name, value FROM "%s_state_parameters" WHERE name in ('state_name','state_flag', 'state_coords')`,
+		list, err := model.GetAll(fmt.Sprintf(`SELECT name, value FROM "%s_state_parameters" WHERE name in ('state_name','state_flag', 'state_coords')`,
 			id), -1)
 		if err != nil {
 			return errorAPI(w, err.Error(), http.StatusConflict)

@@ -21,8 +21,8 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type loginResult struct {
@@ -50,8 +50,9 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	wallet := crypto.Address(pubkey)
 	var citizen int64
 	if state > 0 {
-		if _, err := sql.DB.CheckStateName(state); err == nil {
-			citizen, err = sql.DB.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_citizens" WHERE id = ?`,
+		sysState := &model.SystemState{}
+		if exist, err := sysState.IsExists(state); err == nil && exist {
+			citizen, err = model.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_citizens" WHERE id = ?`,
 				wallet).Int64()
 			if err != nil {
 				return errorAPI(w, err.Error(), http.StatusConflict)

@@ -25,8 +25,8 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/astaxie/beego/session"
 	hr "github.com/julienschmidt/httprouter"
@@ -124,7 +124,7 @@ func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx,
 	if err != nil {
 		return nil, err
 	}
-	if hash, err = sql.DB.SendTx(int64(txType), userID,
+	if hash, err = model.SendTx(int64(txType), userID,
 		append(converter.DecToBin(int64(txType), 1), serializedData...)); err != nil {
 		return nil, err
 	}

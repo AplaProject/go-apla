@@ -30,10 +30,7 @@ func Stop() {
 	IosLog("Stop()")
 	log.Debug("DayLight Stop : %v", model.DBConn)
 	IosLog("utils.DB:" + fmt.Sprintf("%v", model.DBConn))
-	if err != nil {
-		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
-		log.Error("%v", utils.ErrInfo(err))
-	}
+
 	stopDaemons := &model.StopDaemon{StopTime: int32(time.Now().Unix())}
 	err := stopDaemons.Create()
 	if err != nil {

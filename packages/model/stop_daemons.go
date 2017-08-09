@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type StopDaemon struct {
 	StopTime int32 `gorm:"not null"`
 }
@@ -18,4 +20,8 @@ func (sd *StopDaemon) Delete() error {
 
 func (sd *StopDaemon) Get() error {
 	return DBConn.First(sd).Error
+}
+func SetStopNow() error {
+	stopTime := &StopDaemon{StopTime: int32(time.Now().Unix())}
+	return stopTime.Create()
 }

@@ -21,9 +21,9 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 )
 
 type contentResult struct {
@@ -54,7 +54,7 @@ func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 func contentMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	prefix := getPrefix(data)
-	menu, err := sql.DB.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, data.params[`name`].(string)).String()
+	menu, err := model.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, data.params[`name`].(string)).String()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusConflict)
 	}

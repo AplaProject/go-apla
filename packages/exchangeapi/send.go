@@ -23,11 +23,11 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/boltdb/bolt"
 	"github.com/shopspring/decimal"
 )
@@ -96,7 +96,7 @@ func send(r *http.Request) interface{} {
 	fPriceDecimal := decimal.New(fPrice, 0)
 	commission := fPriceDecimal.Mul(fuelRate)
 
-	total, err := sql.DB.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, sender).String()
+	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, sender).String()
 	if err != nil {
 		result.Error = err.Error()
 		return result
@@ -139,7 +139,7 @@ func send(r *http.Request) interface{} {
 	}
 	data = append(data, converter.EncodeLengthPlusData(pub)...)
 	data = append(data, binsign...)
-	_, err = sql.DB.SendTx(txType, sender, data)
+	_, err = model.SendTx(txType, sender, data)
 	if err != nil {
 		result.Error = err.Error()
 		return result

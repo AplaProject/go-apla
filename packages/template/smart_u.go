@@ -29,12 +29,12 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 	"github.com/russross/blackfriday"
 	"github.com/shopspring/decimal"
@@ -172,7 +172,7 @@ func init() {
 func LoadContracts() (err error) {
 	var states []map[string]string
 	prefix := []string{`global`}
-	states, err = sql.DB.GetAll(`select id from system_states order by id`, -1)
+	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func LoadContracts() (err error) {
 // LoadContract reads and compiles contract of new state
 func LoadContract(prefix string) (err error) {
 	var contracts []map[string]string
-	contracts, err = sql.DB.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
+	contracts, err = model.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
 	if err != nil {
 		return err
 	}
@@ -210,7 +210,7 @@ func LoadContract(prefix string) (err error) {
 
 // Balance returns the balance of the wallet
 func Balance(walletID int64) (decimal.Decimal, error) {
-	balance, err := sql.DB.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", walletID).String()
+	balance, err := model.Single("SELECT amount FROM dlt_wallets WHERE wallet_id = ?", walletID).String()
 	if err != nil {
 		return decimal.New(0, 0), err
 	}
@@ -219,12 +219,12 @@ func Balance(walletID int64) (decimal.Decimal, error) {
 
 // EGSRate returns egs_rate of the state
 func EGSRate(idstate int64) (float64, error) {
-	return sql.DB.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, `egs_rate`).Float64()
 }
 
 // StateParam returns the value of state parameters
 func StateParam(idstate int64, name string) (string, error) {
-	return sql.DB.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
+	return model.Single(`SELECT value FROM "`+converter.Int64ToStr(idstate)+`_state_parameters" WHERE name = ?`, name).String()
 }
 
 // Param returns the value of the specified varaible
@@ -445,7 +445,7 @@ func Now(vars *map[string]string, pars ...string) string {
 			query = fmt.Sprintf(`select to_char(now()%s, '%s')`, interval, format)
 		}
 	}
-	ret, err := sql.DB.Single(query).String()
+	ret, err := model.Single(query).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -526,7 +526,7 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 		value = Money(vars, converter.SanitizeNumber(pars[2]), converter.IntToStr(digit))
 	}
 	(*vars)["wimoney"] = `1`
-	return fmt.Sprintf(`<input id="%s" type="text" value="%s" data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ', 
+	return fmt.Sprintf(`<input id="%s" type="text" value="%s" data-inputmask="'alias': 'numeric', 'rightAlign': false, 'groupSeparator': ' ',
 'autoGroup': true, 'digits': %d, 'digitsOptional': false, 'prefix': '', 'placeholder': '0'"	class="inputmask %s">`,
 		converter.SanitizeName(pars[0]), value, digit, class)
 }
@@ -577,8 +577,8 @@ func JSONScript(vars *map[string]string, pars ...string) string {
 		return ``
 	}
 	return fmt.Sprintf(`<script language="JavaScript" type="text/javascript">
-	var jdata = { 
-%s 
+	var jdata = {
+%s
 }
 </script>`, pars[0])
 }
@@ -626,7 +626,7 @@ func WhiteBg(vars *map[string]string, pars ...string) string {
 
 // MessageBoard returns HTML source for displaying messages
 func MessageBoard(vars *map[string]string, pars ...string) string {
-	messages, err := sql.DB.GetAll(`select * from "global_messages" order by id`, 100)
+	messages, err := model.GetAll(`select * from "global_messages" order by id`, 100)
 	if err != nil {
 		return ``
 	}
@@ -700,7 +700,7 @@ func GetList(vars *map[string]string, pars ...string) string {
 		limit = converter.StrToInt(pars[5])
 	}
 
-	value, err := sql.DB.GetAll(`select `+fields+` from `+converter.EscapeName(pars[1])+where+order, limit)
+	value, err := model.GetAll(`select `+fields+` from `+converter.EscapeName(pars[1])+where+order, limit)
 	if err != nil {
 		return err.Error()
 	}
@@ -825,7 +825,7 @@ func GetRowVars(vars *map[string]string, pars ...string) string {
 		where = ` where ` + converter.Escape(pars[2])
 	}
 	fmt.Println(`select * from ` + converter.EscapeName(pars[1]) + where)
-	value, err := sql.DB.OneRow(`select * from ` + converter.EscapeName(pars[1]) + where).String()
+	value, err := model.GetOneRow(`select * from ` + converter.EscapeName(pars[1]) + where).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -849,7 +849,7 @@ func GetOne(vars *map[string]string, pars ...string) string {
 	} else if len(pars) == 3 {
 		where = ` where ` + converter.Escape(pars[2])
 	}
-	value, err := sql.DB.Single(`select ` + converter.Escape(pars[0]) + ` from ` + converter.EscapeName(pars[1]) + where).String()
+	value, err := model.Single(`select ` + converter.Escape(pars[0]) + ` from ` + converter.EscapeName(pars[1]) + where).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -1288,7 +1288,7 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	if val, ok := (*pars)[`Fields`]; ok {
 		fields = converter.Escape(val)
 	}
-	list, err := sql.DB.GetAll(fmt.Sprintf(`select %s from %s %s %s%s`, fields,
+	list, err := model.GetAll(fmt.Sprintf(`select %s from %s %s %s%s`, fields,
 		converter.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 	if err != nil {
 		return err.Error()
@@ -1398,7 +1398,7 @@ func InputMap(vars *map[string]string, pars ...string) string {
 	out := fmt.Sprintf(`<div class="form-group"><label>Map</label><textarea class="form-control inmap" id="%s">%s</textarea></div>`,
 		id, coords)
 	if len(pars) > 2 {
-		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control" 
+		out += fmt.Sprintf(`<div class="form-group"><label>Address</label><input type="text" class="form-control"
 		        id="%s_address" value="%s"></div>`, id, strings.Replace(pars[2], `<`, `&lt;`, -1))
 	}
 	return out
@@ -1579,7 +1579,7 @@ func ValueByID(vars *map[string]string, pars ...string) string {
 	if len(pars) < 3 {
 		return ``
 	}
-	value, err := sql.DB.OneRow(`select * from ` + converter.EscapeName(pars[0]) + ` where id='` + converter.Escape(pars[1]) + `'`).String()
+	value, err := model.GetOneRow(`select * from ` + converter.EscapeName(pars[0]) + ` where id='` + converter.Escape(pars[1]) + `'`).String()
 	if err != nil {
 		return err.Error()
 	}
@@ -1747,12 +1747,12 @@ func getSelect(linklist string) (data []map[string]string, id string, name strin
 	if len(tbl) > 2 {
 		id = tbl[2]
 	}
-	count, err = sql.DB.Single(`select count(*) from ` + tblname).Int64()
+	count, err = model.Single(`select count(*) from ` + tblname).Int64()
 	if err != nil {
 		return
 	}
 	if count > 0 && count <= 50 {
-		data, err = sql.DB.GetAll(fmt.Sprintf(`select %s, %s from %s order by %s`, id,
+		data, err = model.GetAll(fmt.Sprintf(`select %s, %s from %s order by %s`, id,
 			converter.EscapeName(name), tblname, converter.EscapeName(name)), -1)
 	}
 	return
@@ -2047,8 +2047,8 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 					 </li></ul></div></div></div>
 		 <div class="panel-body bg-inverse"><div class="row row-table text-center">
 			   <div class="col-xs-12 p0">
-				  <p class="m0 h4">%s <i class="clipboard fa fa-clipboard" aria-hidden="true" data-clipboard-action="copy" 
-				  data-clipboard-text="%s" onClick="CopyToClipboard('.clipboard')"  data-notify="" 
+				  <p class="m0 h4">%s <i class="clipboard fa fa-clipboard" aria-hidden="true" data-clipboard-action="copy"
+				  data-clipboard-text="%s" onClick="CopyToClipboard('.clipboard')"  data-notify=""
 				  data-message="Copied to clipboard" data-options="{&quot;status&quot;:&quot;info&quot;}"></i></p>
 				  <p class="m0 text-muted">Citizen ID</p>
 		</div></div></div></div>`, image, converter.Escape(pars[0]), flag, address, address)
@@ -2286,7 +2286,7 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
 			limit = fmt.Sprintf(` offset %d limit %d`, converter.StrToInt64(opar[0]), converter.StrToInt64(opar[1]))
 		}
 	}
-	list, err := sql.DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, converter.EscapeName(value), converter.EscapeName(label),
+	list, err := model.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, converter.EscapeName(value), converter.EscapeName(label),
 		converter.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 	if err != nil {
 		return err.Error()
@@ -2314,7 +2314,7 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
           }
         ]
     };
-    
+
     var barOptions = {
       scaleBeginAtZero : true,
       scaleShowGridLines : true,
@@ -2379,7 +2379,7 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
 		} else {
 			limit = fmt.Sprintf(` limit %d`, len(colors))
 		}
-		list, err := sql.DB.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, converter.EscapeName(value), converter.EscapeName(label),
+		list, err := model.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, converter.EscapeName(value), converter.EscapeName(label),
 			converter.EscapeName((*pars)[`Table`]), where, order, limit), -1)
 		if err != nil {
 			return err.Error()
@@ -2408,7 +2408,7 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
       segmentShowStroke : true,
       segmentStrokeColor : '#fff',
       segmentStrokeWidth : 2,
-      percentageInnerCutout : 0, 
+      percentageInnerCutout : 0,
       animationSteps : 100,
       animationEasing : 'easeOutBounce',
       animateRotate : true,
@@ -2613,7 +2613,7 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 	if page == `body` && len((*params)[`autobody`]) > 0 {
 		data = (*params)[`autobody`]
 	} else {
-		data, err = sql.DB.Single(query, page).String()
+		data, err = model.Single(query, page).String()
 		if err != nil {
 			return "", err
 		}
