@@ -21,21 +21,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
-// ParseInit is reserved
-func (p *Parser) ParseInit() error {
-	/*if p.States == nil {
-		p.States = make(map[int64]string)
-		all, err := p.GetAll(`SELECT id, name FROM system_states`, -1)
-		if err != nil {
-			return err
-		}
-		for _, v := range all {
-			p.States[utils.StrToInt64(v["id"])] = v["name"]
-		}
-	}*/
-	return nil
-}
-
 // ParseBlock starts to parse a block
 func (p *Parser) ParseBlock() error {
 	/*
@@ -69,9 +54,6 @@ func (p *Parser) ParseBlock() error {
 		}
 		log.Debug("%s", col)
 		p.AllPkeys[table] = col
-	}
-	if err := p.ParseInit(); err != nil {
-		return utils.ErrInfo(err)
 	}
 
 	return nil

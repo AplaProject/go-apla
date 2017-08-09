@@ -50,3 +50,34 @@ func GetQueuedTransactionsCount(hash []byte) (int64, error) {
 func InsertIntoQueueTransaction(hash, data []byte, fromGate int) error {
 	return DBConn.Exec("INSERT INTO queue_tx (hash, data, from_gate) VALUES (?, ?, ?)", hash, data, fromGate).Error
 }
+
+func GetAllUnverifiedAndUnusedTransactions() ([]*QueueTx, error) {
+	query := `SELECT *
+		  FROM (
+	              SELECT data,
+	                     hash
+	              FROM queue_tx
+		      UNION
+		      SELECT data,
+			     hash
+		      FROM transactions
+		      WHERE verified = 0 AND used = 0
+			)  AS x`
+	rows, err := DBConn.Raw(query).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var data, hash []byte
+	result := []*QueueTx{}
+	for rows.Next() {
+		if err := rows.Scan(&data, &hash); err != nil {
+			return nil, err
+		}
+		result = append(result, &QueueTx{Data: data, Hash: hash})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
