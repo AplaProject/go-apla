@@ -72,8 +72,8 @@ func (p *NewTableParser) Validate() error {
 	if len(cols) == 0 {
 		return p.ErrInfo(`len(cols) == 0`)
 	}
-	if len(cols) > syspar.SysInt(syspar.MaxColumns) {
-		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.SysInt(syspar.MaxColumns))
+	if len(cols) > syspar.GetMaxColumns() {
+		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
 	var indexes int
 	for _, data := range cols {
@@ -90,8 +90,8 @@ func (p *NewTableParser) Validate() error {
 			indexes++
 		}
 	}
-	if indexes > syspar.SysInt(syspar.MaxIndexes) {
-		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.SysInt(syspar.MaxIndexes))
+	if indexes > syspar.GetMaxIndexes() {
+		return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
 	}
 
 	prefix := converter.Int64ToStr(p.NewTable.Header.StateID)

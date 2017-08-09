@@ -81,7 +81,7 @@ func (c *Controller) UpdatingBlockchain() (string, error) {
 
 		blockchainURL := c.NodeConfig.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
-			blockchainURL = syspar.SysString(syspar.BlockchainURL)
+			blockchainURL = syspar.GetBlockchainURL()
 		}
 
 		blockMeter = int64(converter.RoundWithPrecision(float64((blockID/consts.LAST_BLOCK)*100), 0))

@@ -56,7 +56,7 @@ func (p *RestoreAccessParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 
-	if p.TxWalletID != syspar.SysInt64(syspar.RecoveryAddress) {
+	if p.TxWalletID != syspar.GetRecoveryAddress() {
 		return p.ErrInfo("p.TxWalletID != sql.RecoveryAddress")
 	}
 

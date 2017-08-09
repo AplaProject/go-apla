@@ -102,7 +102,7 @@ func (c *Controller) EditTable() (string, error) {
 		TxType:                txType,
 		TxTypeID:              utils.TypeInt(txType),
 		StateID:               c.SessStateID,
-		CanColumns:            count < syspar.SysInt64(syspar.MaxColumns)+2,
+		CanColumns:            count < int64(syspar.GetMaxColumns()+2),
 		Global:                global,
 		TablePermission:       tablePermission,
 		ColumnsAndPermissions: list,

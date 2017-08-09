@@ -61,7 +61,7 @@ func (p *Parser) CheckBlockHeader() error {
 	// меркель рут нужен для проверки подписи блока, а также проверки лимитов MAX_TX_SIZE и MAX_TX_COUNT
 	// MrklRoot is needed to check the signatures of block, as well as to check limits MAX_TX_SIZE и MAX_TX_COUN
 	//log.Debug("p.Variables: %v", p.Variables)
-	p.MrklRoot, err = utils.GetMrklroot(p.BinaryData, first, syspar.SysInt64(syspar.MaxTxSize), syspar.SysInt(syspar.MaxTxCount))
+	p.MrklRoot, err = utils.GetMrklroot(p.BinaryData, first, syspar.GetMaxTxSize(), syspar.GetMaxTxCount())
 	log.Debug("p.MrklRoot: %s", p.MrklRoot)
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -84,7 +84,7 @@ func (p *Parser) CheckBlockHeader() error {
 
 		log.Debug("p.PrevBlock.Time %v + sleepTime %v - p.BlockData.Time %v > consts.ERROR_TIME %v", p.PrevBlock.Time, sleepTime, p.BlockData.Time, consts.ERROR_TIME)
 		if p.PrevBlock.Time+sleepTime-p.BlockData.Time > consts.ERROR_TIME {
-			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, syspar.SysInt(syspar.GapsBetweenBlocks), p.BlockData.Time, consts.ERROR_TIME))
+			return utils.ErrInfo(fmt.Errorf("incorrect block time %d + %d - %d > %d", p.PrevBlock.Time, syspar.GetGapsBetweenBlocks(), p.BlockData.Time, consts.ERROR_TIME))
 		}
 	}
 

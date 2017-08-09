@@ -28,13 +28,13 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 )
 
 // BlocksCollection collects and parses blocks
@@ -260,7 +260,7 @@ func updateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 func downloadChain(ctx context.Context, fileName, url string) error {
 
 	for i := 0; i < consts.DOWNLOAD_CHAIN_TRY_COUNT; i++ {
-		loadCtx, cancel := context.WithTimeout(ctx, time.Duration(syspar.SysInt64(syspar.UpdFullNodesPeriod))*time.Second)
+		loadCtx, cancel := context.WithTimeout(ctx, time.Duration(syspar.GetUpdFullNodesPeriod())*time.Second)
 		defer cancel()
 
 		blockchainSize, err := downloadToFile(loadCtx, url, fileName)
@@ -313,9 +313,9 @@ func parseBlock(blockID int64, binaryBlock []byte) (header *utils.BlockData, bod
 	converter.BytesShift(&binaryBlock, 1) // remove 1-st byte - type (block/transaction)
 	header = utils.ParseBlockHeader(&binaryBlock)
 
-	if int64(len(binaryBlock)) > syspar.SysInt64(syspar.MaxBlockSize) {
+	if int64(len(binaryBlock)) > syspar.GetMaxBlockSize() {
 		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			len(binaryBlock), syspar.SysInt64(syspar.MaxBlockSize))
+			len(binaryBlock), syspar.GetMaxBlockSize())
 
 		return
 	}
@@ -335,7 +335,7 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 		return true, nil
 	}
 
-	mrklRoot, err := utils.GetMrklroot(body, false, syspar.SysInt64(syspar.MaxTxSize), syspar.SysInt(syspar.MaxTxCount))
+	mrklRoot, err := utils.GetMrklroot(body, false, syspar.GetMaxTxSize(), syspar.GetMaxTxCount())
 	if err != nil {
 		return true, err
 	}
@@ -388,7 +388,7 @@ func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
 	if nodeConfig.FirstLoadBlockchain == "file" {
 		blockchainURL := nodeConfig.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
-			blockchainURL = syspar.SysString(syspar.BlockchainURL)
+			blockchainURL = syspar.GetBlockchainURL()
 		}
 
 		fileName := *utils.Dir + "/public/blockchain"

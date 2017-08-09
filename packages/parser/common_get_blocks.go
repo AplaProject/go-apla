@@ -120,7 +120,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 		}
 
 		// the block size cannot be more than max_block_size
-		if int64(len(binaryBlock)) > syspar.SysInt64(syspar.MaxBlockSize) {
+		if int64(len(binaryBlock)) > syspar.GetMaxBlockSize() {
 			ClearTmp(blocks)
 			return utils.ErrInfo(errors.New(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 		}
@@ -134,7 +134,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 		}
 
 		// we need the mrklRoot of the current block
-		mrklRoot, err := utils.GetMrklroot(binaryBlock, false, syspar.SysInt64(syspar.MaxTxSize), syspar.SysInt(syspar.MaxTxCount))
+		mrklRoot, err := utils.GetMrklroot(binaryBlock, false, syspar.GetMaxTxSize(), syspar.GetMaxTxCount())
 		if err != nil {
 			ClearTmp(blocks)
 			return utils.ErrInfo(err)

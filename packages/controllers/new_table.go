@@ -56,8 +56,8 @@ func (c *Controller) NewTable() (string, error) {
 		StateID:    c.StateID,
 		Global:     global,
 		TimeNow:    timeNow,
-		MaxColumns: syspar.SysInt(syspar.MaxColumns),
-		MaxIndexes: syspar.SysInt(syspar.MaxIndexes),
+		MaxColumns: syspar.GetMaxColumns(),
+		MaxIndexes: syspar.GetMaxIndexes(),
 		TxType:     txType,
 		TxTypeID:   utils.TypeInt(txType)})
 	if err != nil {

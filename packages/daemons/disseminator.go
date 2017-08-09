@@ -284,7 +284,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	logger.Debug("dataSize %d (host : %v)", dataSize, host)
 	// и если данных менее MAX_TX_SIZE, то получаем их
 	// if data is less than MAX_TX_SIZE, so get them
-	if dataSize < syspar.SysInt64(syspar.MaxTxSize) && dataSize > 0 {
+	if dataSize < syspar.GetMaxTxSize() && dataSize > 0 {
 		binaryTxHashes := make([]byte, dataSize)
 		_, err = io.ReadFull(conn, binaryTxHashes)
 		if err != nil {

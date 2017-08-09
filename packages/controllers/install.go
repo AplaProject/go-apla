@@ -73,7 +73,7 @@ func (c *Controller) Install() (string, error) {
 	}
 
 	if len(firstLoadBlockchainURL) == 0 {
-		firstLoadBlockchainURL = syspar.SysString(syspar.BlockchainURL)
+		firstLoadBlockchainURL = syspar.GetBlockchainURL()
 	}
 	dbConfig := config.DBConfig{
 		Type:     dbType,

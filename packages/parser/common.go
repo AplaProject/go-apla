@@ -752,7 +752,7 @@ func (p *Parser) payFPrice() error {
 		return err
 	}
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`+amount`}, []interface{}{commission}, `dlt_wallets`, []string{`wallet_id`},
-		[]string{converter.Int64ToStr(syspar.SysInt64(syspar.CommissionWallet))}, true); err != nil {
+		[]string{converter.Int64ToStr(syspar.GetCommissionWallet())}, true); err != nil {
 		return err
 	}
 	fmt.Printf(" Paid commission %v\r\n", commission)
