@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -41,6 +42,19 @@ import (
 var (
 	log = logging.MustGetLogger("daemons")
 )
+
+// GetTxTypeAndUserID returns tx type, wallet and citizen id from the block data
+func GetTxTypeAndUserID(binaryBlock []byte) (txType int64, walletID int64, citizenID int64) {
+	tmp := binaryBlock[:]
+	txType = converter.BinToDecBytesShift(&binaryBlock, 1)
+	if consts.IsStruct(int(txType)) {
+		var txHead consts.TxHeader
+		converter.BinUnmarshal(&tmp, &txHead)
+		walletID = txHead.WalletID
+		citizenID = txHead.CitizenID
+	}
+	return
+}
 
 func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	BlockData := new(utils.BlockData)
@@ -490,11 +504,6 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	return nil
 }
 
-// CheckTableExists checks if the table exists
-func (p *Parser) CheckTableExists(table string) (bool, error) {
-	return model.DBConn.HasTable(table), nil
-}
-
 // BlockError writes the error of the transaction in the transactions_status table
 func (p *Parser) BlockError(err error) {
 	if len(p.TxHash) == 0 {
@@ -611,9 +620,22 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 	if err != nil {
 		return err
 	}
-	conditions, err := model.Single(`SELECT conditions FROM "`+prefix+`_`+table+`" WHERE name = ?`, name).String()
-	if err != nil {
-		return err
+	var conditions string
+	switch table {
+	case "pages":
+		page := &model.Page{}
+		page.SetTablePrefix(prefix)
+		if err := page.Get(name); err != nil {
+			return err
+		}
+		conditions = page.Conditions
+	case "menus":
+		menu := &model.Menu{}
+		menu.SetTablePrefix(prefix)
+		if err := menu.Get(name); err != nil {
+			return err
+		}
+		conditions = menu.Conditions
 	}
 
 	if len(conditions) > 0 {
@@ -631,7 +653,8 @@ func (p *Parser) AccessChange(table, name, global string, stateId int64) error {
 }
 
 func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
-	fPrice, err := model.Single(`SELECT value->'`+name+`' FROM system_parameters WHERE name = ?`, "op_price").String()
+	syspar := &model.SystemParameter{}
+	fPrice, err := syspar.GetValueParameterByName("op_price", name)
 	if err != nil {
 		return decimal.New(0, 0), p.ErrInfo(err)
 	}
@@ -706,16 +729,12 @@ func (p *Parser) payFPrice() error {
 	if egs.Cmp(decimal.New(0, 0)) == 0 { // Is it possible to pay nothing?
 		return nil
 	}
-	var amount string
-	if amount, err = model.Single(`select amount from dlt_wallets where wallet_id=?`, fromID).String(); err != nil {
+	wallet := &model.DltWallet{}
+	if err := wallet.Get(fromID); err != nil {
 		return err
 	}
-	damount, err := decimal.NewFromString(amount)
-	if err != nil {
-		return err
-	}
-	if damount.Cmp(egs) < 0 {
-		egs = damount
+	if wallet.Amount.Cmp(egs) < 0 {
+		egs = wallet.Amount
 	}
 	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},

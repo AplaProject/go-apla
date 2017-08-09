@@ -197,7 +197,7 @@ func (p *NewTableParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 	tableName := prefix + "_" + p.NewTable.Name
-	err = model.DBConn.DropTable(tableName).Error
+	err = model.DropTable(tableName)
 	t := &model.Table{Name: tableName}
 	err = t.Delete()
 	if err != nil {

@@ -460,6 +460,10 @@ func GetNameList(tableName string, count int) ([]map[string]string, error) {
 	return result, nil
 }
 
+func DropTable(tableName string) error {
+	return model.DBConn.DropTable(tableName).Error
+}
+
 func GetConditionsAndValue(tableName, name string) (map[string]string, error) {
 	type proxy struct {
 		Conditions string

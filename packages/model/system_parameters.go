@@ -7,6 +7,10 @@ type SystemParameter struct {
 	RbID       int64  `gorm:"not null"`
 }
 
+func (sp SystemParameter) TableName() string {
+	return "system_parameters"
+}
+
 func (sp *SystemParameter) Get(name string) error {
 	return DBConn.Where("name = ?").First(sp).Error
 }

@@ -335,7 +335,7 @@ func (p *NewStateParser) Rollback() error {
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
 		`smart_contracts`, `state_parameters`, `apps`, `anonyms`} {
-		err = model.DBConn.DropTable(fmt.Sprintf("%d_%s", rollbackTx.TableID, name)).Error
+		err = model.DropTable(fmt.Sprintf("%d_%s", rollbackTx.TableID, name))
 		if err != nil {
 			return p.ErrInfo(err)
 		}

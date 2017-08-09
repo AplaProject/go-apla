@@ -20,11 +20,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
@@ -96,7 +96,7 @@ func (p *DLTTransferParser) Validate() error {
 	// 1 000 000 000 000 000 000 qDLT = 1 DLT * 100 000 000
 	// fuelRate = 1 000 000 000 000 000
 	//
-	fPriceDecimal := decimal.New(sql.SysCost(`dlt_transfer`), 0)
+	fPriceDecimal := decimal.New(syspar.SysCost(`dlt_transfer`), 0)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

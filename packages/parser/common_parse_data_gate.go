@@ -35,7 +35,6 @@ Data processing (blocks or transactions) gotten from a gate. Just checking.
 func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 	var err error
 	p.dataPre()
-	p.ParseInit()
 	transactionBinaryData := p.BinaryData
 	p.TxBinaryData = transactionBinaryData
 	var transactionBinaryDataFull []byte

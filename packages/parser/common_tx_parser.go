@@ -26,7 +26,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
@@ -36,7 +35,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	var fatalError string
 	var header *tx.Header
 	hashHex := converter.BinToHex(hash)
-	txType, walletID, citizenID := sql.GetTxTypeAndUserID(binaryTx)
+	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
 	p.BinaryData = binaryTx
 	p.TxBinaryData = binaryTx
 	header, err = p.ParseDataGate(false)
@@ -146,32 +145,14 @@ func (p *Parser) DeleteQueueTx(hashHex []byte) error {
 
 // AllTxParser parses new transactions
 func (p *Parser) AllTxParser() error {
-
-	// берем тр-ии
-	// take the transactions
-	all, err := model.GetAll(`
-			SELECT *
-			FROM (
-	              SELECT data,
-	                         hash
-	              FROM queue_tx
-				UNION
-				SELECT data,
-							 hash
-				FROM transactions
-				WHERE verified = 0 AND
-							 used = 0
-			)  AS x
-			`, -1)
+	all, err := model.GetAllUnverifiedAndUnusedTransactions()
 	for _, data := range all {
-
-		log.Debug("hash: %x", data["hash"])
-
-		err = p.TxParser([]byte(data["hash"]), []byte(data["data"]), false)
+		log.Debug("hash: %x", data.Hash)
+		err = p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
 			itx := &model.IncorrectTx{
 				Time: time.Now().Unix(),
-				Hash: converter.BinToHex(data["hash"]),
+				Hash: converter.BinToHex(data.Hash),
 				Err:  fmt.Sprintf("%s", err),
 			}
 			err0 := itx.Create()
