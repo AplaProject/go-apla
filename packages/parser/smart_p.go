@@ -223,7 +223,13 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf(`Wrong type of price function`)
 		}
 	}
-	if model.GetFuel().Cmp(decimal.New(0, 0)) <= 0 {
+	systemParam := &model.SystemParameter{}
+	err = systemParam.Get("fuel_rate")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fuelRate := decimal.NewFromString(systemParam.Value)
+	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`Fuel rate must be greater than 0`)
 	}
 	if !p.TxContract.Block.Info.(*script.ContractInfo).Active {

@@ -17,9 +17,3 @@ func (qb *QueueBlock) Delete() error {
 func (qb *QueueBlock) Create() error {
 	return DBConn.Create(qb).Error
 }
-
-func InsertQueueBlock(hash []byte, fullNodeID int64, blockID int64) error {
-	return DBConn.Exec(`INSERT INTO queue_blocks(hash, full_node_id, block_id) VALUES ([hex], ?, ?) ON CONFLICT DO NOTHING`,
-		hash, fullNodeID, blockID).Error
-
-}

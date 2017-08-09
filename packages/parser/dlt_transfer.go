@@ -84,7 +84,12 @@ func (p *DLTTransferParser) Validate() error {
 		return p.ErrInfo("amount<=0")
 	}
 
-	fuelRate := model.GetFuel()
+	systemParam := &model.SystemParameter{}
+	err = systemParam.Get("fuel_rate")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fuelRate := decimal.NewFromString(systemParam.Value)
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}

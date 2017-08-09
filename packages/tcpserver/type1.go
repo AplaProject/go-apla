@@ -107,7 +107,8 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 	// we accept only new blocks
 	if newBlockID >= blockID {
 		newDataHash := converter.BinToHex(blockHash)
-		err = model.InsertQueueBlock(newDataHash, fullNodeID, newBlockID)
+		queueBlock := &model.QueueBlock{Hash: newDataHash, FullNodeID: fullNodeID, BlockID: newBlockID}
+		err = queueBlock.Create()
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -189,10 +190,11 @@ func saveNewTransactions(r *DisRequest) error {
 			log.Fatal(err)
 		}
 
-		txHex := converter.BinToHex(txBinData)
-		hash = converter.BinToHex(hash)
+		//txHex := converter.BinToHex(txBinData)
+		//hash = converter.BinToHex(hash)
 
-		err = model.InsertIntoQueueTransaction(hash, txHex, 1)
+		queueTx := &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1}
+		err = queueTx.Create()
 		if err != nil {
 			return err
 		}

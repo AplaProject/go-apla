@@ -87,8 +87,8 @@ func (w *DltWallet) ToMap() map[string]string {
 	return result
 }
 
-func (w *DltWallet) GetNewFuelRate() (string, error) {
-	return Single(`SELECT fuel_rate FROM dlt_wallets WHERE fuel_rate !=0 GROUP BY fuel_rate ORDER BY sum(amount) DESC LIMIT 1`).String()
+func (w *DltWallet) GetNewFuelRate() error {
+	return DBConn.Table("dlt_wallets").Where("fuel_rate !=0").Select("fuel_rate").Group("fuel_rate").Order("sum(amount)").First(w).Error
 }
 
 func (w *DltWallet) GetAddressVotes() ([]string, error) {

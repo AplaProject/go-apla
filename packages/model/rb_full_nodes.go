@@ -2,7 +2,7 @@ package model
 
 type RbFullNode struct {
 	RbID                int64  `gorm:"primary_key;not null"`
-	FullNodesWalletJson []byte `gorm:"not_null"`
+	FullNodesWalletJson []byte `gorm:"not null"`
 	BlockID             int64  `gorm:"primary_key;not null"`
 	PrevRbID            int64  `gorm:"not null"`
 }

@@ -64,10 +64,6 @@ func (t *Table) ExistsByName(name string) (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
-func GetTableWhereUpdatePermissionAndTableName(columnName, tableName string) (map[string]string, error) {
-	return GetOneRow(`SELECT columns_and_permissions, rb_id FROM "`+tableName+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, columnName, tableName).String()
-}
-
 func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) (bool, error) {
 	query := DBConn.Where(`(columns_and_permissions->'update'-> ? ) is not null AND name = ?`, columnName, tableName).First(t)
 	return !query.RecordNotFound(), query.Error
@@ -96,10 +92,6 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 	return result, nil
 }
 
-func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[string]string, error) {
-	return GetOneRow(`SELECT columns_and_permissions, rb_id FROM "`+table+`" where name=?`, tableName).String()
-}
-
 func (t *Table) SetActionByName(table, name, action, actionValue string, rbID int64) (int64, error) {
 	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+actionValue+`"`, rbID, name)
 	return query.RowsAffected, query.Error
@@ -125,4 +117,36 @@ func CreateTable(tableName, colsSQL string) error {
 				);
 				ALTER SEQUENCE "` + tableName + `_id_seq" owned by "` + tableName + `".id;
 				ALTER TABLE ONLY "` + tableName + `" ADD CONSTRAINT "` + tableName + `_pkey" PRIMARY KEY (id);`).Error
+}
+
+func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[string]string, error) {
+	type proxy struct {
+		ColumnsAndPermissions string
+		RbID                  int64
+	}
+	temp := &proxy{}
+	err := DBConn.Table(table).Where("name = ?", tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string, 0)
+	result["table"] = temp.ColumnsAndPermissions
+	result["rb_id"] = string(temp.RbID)
+	return result, nil
+}
+
+func GetTableWhereUpdatePermissionAndTableName(columnName, tableName string) (map[string]string, error) {
+	type proxy struct {
+		ColumnsAndPermissions string
+		RbID                  int64
+	}
+	temp := &proxy{}
+	err := DBConn.Table(tableName).Where("(columns_and_permissions->'update'-> ? ) is not null AND name = ?", columnName, tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string, 0)
+	result["table"] = temp.ColumnsAndPermissions
+	result["rb_id"] = string(temp.RbID)
+	return result, nil
 }

@@ -25,6 +25,7 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/boltdb/bolt"
@@ -82,7 +83,12 @@ func send(r *http.Request) interface{} {
 	}
 
 	fPrice := sql.SysCost(`dlt_transfer`)
-	fuelRate := sql.DB.GetFuel()
+	systemParam := &model.SystemParameter{}
+	err = systemParam.Get("fuel_rate")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fuelRate := decimal.NewFromString(systemParam.Value)
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		result.Error = `fuel rate must be greater than 0`
 		return result

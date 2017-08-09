@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/shopspring/decimal"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -154,27 +153,6 @@ func GetFirstColumnName(table string) (string, error) {
 	return "", nil
 }
 
-func NumIndexes(tblname string) (int, error) {
-	indexes, err := Single(`select count( i.relname) from pg_class t, pg_class i, pg_index ix, pg_attribute a 
-	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
-         and t.relkind = 'r'  and t.relname = ?`, tblname).Int64()
-	if err != nil {
-		return 0, err
-	}
-	return int(indexes - 1), nil
-}
-
-func IsIndex(tblname, column string) (bool, error) {
-	indexes, err := GetAll(`select t.relname as table_name, i.relname as index_name, a.attname as column_name 
-	 from pg_class t, pg_class i, pg_index ix, pg_attribute a 
-	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
-         and t.relkind = 'r'  and t.relname = ?  and a.attname = ?`, 1, tblname, column)
-	if err != nil {
-		return false, err
-	}
-	return len(indexes) > 0, nil
-}
-
 func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 	var planStr string
 	err := DBConn.Raw(fmt.Sprintf("EXPLAIN (FORMAT JSON) %s", query), args...).Row().Scan(&planStr)
@@ -217,12 +195,6 @@ func GetQueryTotalCost(query string, args ...interface{}) (int64, error) {
 		return 0, errors.New("PlanMap has no TotalCost")
 	}
 	return 0, nil
-}
-
-func GetFuel() decimal.Decimal {
-	fuel, _ := Single(`SELECT value FROM system_parameters WHERE name = ?`, "fuel_rate").String()
-	cacheFuel, _ := decimal.NewFromString(fuel)
-	return cacheFuel
 }
 
 func GetAllTables() ([]string, error) {
@@ -298,13 +270,6 @@ func SetAI(table string, AI int64) error {
 	return nil
 }
 
-func IsTable(tblname string) bool {
-	name, _ := Single(`SELECT table_name FROM information_schema.tables 
-         WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')
-     	AND table_name=?`, tblname).String()
-	return name == tblname
-}
-
 func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {
 	hash, err = crypto.Hash(data)
 	if err != nil {
@@ -351,9 +316,57 @@ func GetLastBlockData() (map[string]int64, error) {
 	return result, nil
 }
 
+func GetMyWalletID() (int64, error) {
+	conf := &Config{}
+	err := conf.GetConfig()
+	if err != nil {
+		return 0, err
+	}
+	walletID := conf.DltWalletID
+	if walletID == 0 {
+		walletID = converter.StringToAddress(*utils.WalletAddress)
+	}
+	return walletID, nil
+}
+
+func AlterTableAddColumn(tableName, columnName, columnType string) error {
+	return DBConn.Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
+}
+
+func AlterTableDropColumn(tableName, columnName string) error {
+	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
+}
+
+func CreateIndex(indexName, tableName, onColumn string) error {
+	return DBConn.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+}
+
+func IsTable(tblname string) bool {
+	var name string
+	DBConn.Table("information_schema.tables").
+		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema') AND table_name=?`, tblname").
+		Pluck("table_name", name)
+	return name == tblname
+}
+
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-	return GetOneRow(`SELECT data_type, character_maximum_length from 
-	information_schema.columns WHERE table_name = ? AND column_name = ?`, tableName, columnName).String()
+	type Proxy struct {
+		DataType               string
+		CharacterMaximumLength string
+	}
+	var temp Proxy
+	err := DBConn.
+		Table("information_schema.columns").
+		Where("table_name = ? AND column_name = ?, tableName, columnName").
+		Select("data_type", "character_maximum_length").
+		Find(&temp).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string, 0)
+	result["data_type"] = temp.DataType
+	result["character_maximum_length"] = temp.CharacterMaximumLength
+	return result, nil
 }
 
 func GetColumnType(tblname, column string) (itype string) {
@@ -380,16 +393,22 @@ func GetColumnType(tblname, column string) (itype string) {
 func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int64) (int64, error) {
 	// take the list of all full_nodes
 
-	fullNodesList, err := GetAll("SELECT id, wallet_id, state_id as state_id FROM full_nodes", -1)
+	node := &FullNode{}
+	fullNodes, err := node.GetAll()
 	if err != nil {
-		return int64(0), err
+		return 0, err
+	}
+	fullNodesList := make([]map[string]string, 0)
+	for _, node := range fullNodes {
+		fullNodesList = append(fullNodesList, node.ToMap())
 	}
 
 	// determine full_node_id of the one, who had to generate a block (but could delegate this)
-	prevBlockFullNodeID, err := Single("SELECT id FROM full_nodes WHERE state_id = ? OR wallet_id = ?", prevBlockStateID, prevBlockWalletID).Int64()
+	err = node.Get(prevBlockWalletID)
 	if err != nil {
-		return int64(0), err
+		return 0, err
 	}
+	prevBlockFullNodeID := node.ID
 	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeID int64) int {
 		for i, fullNodes := range fullNodesList {
 			if converter.StrToInt64(fullNodes["id"]) == prevBlockFullNodeID {
@@ -397,7 +416,7 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 			}
 		}
 		return -1
-	}(fullNodesList, prevBlockFullNodeID)
+	}(fullNodesList, int64(prevBlockFullNodeID))
 
 	// define our place (Including in the 'delegate')
 	myPosition := func(fullNodesList []map[string]string, myWalletID, myStateID int64) int {
@@ -426,41 +445,35 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	return int64(sleepTime), nil
 }
 
-func GetMyWalletID() (int64, error) {
-	conf := &Config{}
-	err := conf.GetConfig()
-	if err != nil {
-		return 0, err
-	}
-	walletID := conf.DltWalletID
-	if walletID == 0 {
-		walletID = converter.StringToAddress(*utils.WalletAddress)
-	}
-	return walletID, nil
-}
-
-func AlterTableAddColumn(tableName, columnName, columnType string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
-}
-
-func AlterTableDropColumn(tableName, columnName string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
-}
-
-func CreateIndex(indexName, tableName, onColumn string) error {
-	return DBConn.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
-}
-
-func GetTableData(tableName string, limit int) ([]map[string]string, error) {
-	return GetAll(`SELECT * FROM "`+tableName+`" order by id`, limit)
-}
-
 func GetNameList(tableName string, count int) ([]map[string]string, error) {
-	return GetAll(fmt.Sprintf(`SELECT name FROM "%s" ORDER BY name`, tableName), count)
+	var names []string
+	err := DBConn.Table(tableName).Order("name").Limit(count).Pluck("name", &names).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make([]map[string]string, 0)
+	for _, name := range names {
+		line := make(map[string]string)
+		line["name"] = name
+		result = append(result, line)
+	}
+	return result, nil
 }
 
 func GetConditionsAndValue(tableName, name string) (map[string]string, error) {
-	return GetOneRow(fmt.Sprintf(`SELECT conditions, value FROM "%s" WHERE name = ?`, tableName), name).String()
+	type proxy struct {
+		Conditions string
+		Value      string
+	}
+	var temp proxy
+	err := DBConn.Table(tableName).Where("name = ?", name).Select("conditions", "value").Find(&temp).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string)
+	result["conditions"] = temp.Conditions
+	result["value"] = temp.Value
+	return result, nil
 }
 
 // Because of import cycle utils and config
@@ -479,4 +492,27 @@ func IsNodeState(state int64, host string) bool {
 		}
 	}
 	return false
+}
+
+func NumIndexes(tblname string) (int, error) {
+	var indexes int64
+	err := DBConn.Exec(fmt.Sprintf(`select count( i.relname) from pg_class t, pg_class i, pg_index ix, pg_attribute a 
+	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
+         and t.relkind = 'r'  and t.relname = %s`, tblname)).Scan(&indexes).Error
+	if err != nil {
+		return 0, err
+	}
+	return int(indexes - 1), nil
+}
+
+func IsIndex(tblname, column string) (bool, error) {
+	query := DBConn.Exec(fmt.Sprintf(`select t.relname as table_name, i.relname as index_name, a.attname as column_name 
+	 from pg_class t, pg_class i, pg_index ix, pg_attribute a 
+	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
+		 and t.relkind = 'r'  and t.relname = %s  and a.attname = %s`, tblname, column))
+	return query.RowsAffected > 0, query.Error
+}
+
+func GetTableData(tableName string, limit int) ([]map[string]string, error) {
+	return GetAll(`SELECT * FROM "`+tableName+`" order by id`, limit)
 }

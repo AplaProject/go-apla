@@ -26,6 +26,16 @@ func (fn *FullNode) FindNodeByID(nodeID int64) error {
 	return DBConn.Where("id = ?", nodeID).First(&fn).Error
 }
 
+func (fn *FullNode) GetAllFullNodesHasWalletID() ([]FullNode, error) {
+	result := make([]FullNode, 0)
+	err := DBConn.Where("wallet_id != 0").Find(&result).Error
+	return result, err
+}
+
+func (fn *FullNode) GetRbIDFullNodesWithWallet() error {
+	return DBConn.Where("wallet_id != 0").First(fn).Error
+}
+
 func (fn *FullNode) DeleteNodesWithWallets() error {
 	return DBConn.Exec("DELETE FROM full_nodes WHERE wallet_id != 0").Error
 }
@@ -87,12 +97,4 @@ func (fn *FullNode) GetMaxID() (int32, error) {
 		return 0, err
 	}
 	return result, nil
-}
-
-func (fn *FullNode) GetAllFullNodesHasWalletID() ([]map[string]string, error) {
-	return GetAll(`SELECT * FROM full_nodes WHERE wallet_id != 0`, -1)
-}
-
-func (fn *FullNode) GetRbIDFullNodesWithWallet() (int64, error) {
-	return Single("SELECT rb_id FROM full_nodes WHERE wallet_id != 0").Int64()
 }

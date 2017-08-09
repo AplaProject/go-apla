@@ -91,10 +91,16 @@ func (p *UpdFullNodesParser) Action() error {
 	// выбирем ноды, где wallet_id
 	// choose nodes where wallet_id is
 	fns := &model.FullNode{}
-	data, err := fns.GetAllFullNodesHasWalletID()
+	nodes, err := fns.GetAllFullNodesHasWalletID()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+
+	data := make([]map[string]string, 0)
+	for _, node := range nodes {
+		data = append(data, node.ToMap())
+	}
+
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return p.ErrInfo(err)
@@ -153,10 +159,11 @@ func (p *UpdFullNodesParser) Action() error {
 	}
 
 	w := &model.DltWallet{}
-	newRate, err := w.GetNewFuelRate()
+	err := w.GetNewFuelRate()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	newRate := string(w.FuelRate)
 	if len(newRate) > 0 {
 		_, _, err = p.selectiveLoggingAndUpd([]string{"value"}, []interface{}{newRate}, "system_parameters", []string{"name"}, []string{"fuel_rate"}, true)
 		if err != nil {
@@ -175,11 +182,11 @@ func (p *UpdFullNodesParser) Rollback() error {
 	// получим rb_id чтобы восстановить оттуда данные
 	// get rb_id to restore the data from there
 	fnRB := &model.FullNode{}
-	rbID, err := fnRB.GetRbIDFullNodesWithWallet()
+	err := fnRB.GetRbIDFullNodesWithWallet()
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-
+	rbID = fnRB.ID
 	rbFN := &model.RbFullNode{}
 	err = rbFN.GetByRbID(rbID)
 	if err != nil {

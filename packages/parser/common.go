@@ -637,7 +637,12 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	}
 	p.TxCost = 0
 	p.TxUsedCost, _ = decimal.NewFromString(fPrice)
-	fuelRate := model.GetFuel()
+	systemParam := &model.SystemParameter{}
+	err = systemParam.Get("fuel_rate")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fuelRate := decimal.NewFromString(systemParam.Value)
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
@@ -671,7 +676,12 @@ func (p *Parser) payFPrice() error {
 	)
 	//return nil
 	toID := p.BlockData.WalletID // account of node
-	fuel := model.GetFuel()
+	systemParam := &model.SystemParameter{}
+	err = systemParam.Get("fuel_rate")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fuel := decimal.NewFromString(systemParam.Value)
 	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}

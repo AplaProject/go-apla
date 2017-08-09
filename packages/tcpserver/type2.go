@@ -58,9 +58,10 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 		return nil, utils.ErrInfo(err)
 	}
 
-	hexBinData := converter.BinToHex(decryptedBinDataFull)
-	log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", hash, hexBinData)
-	err = model.InsertIntoQueueTransaction(hash, hexBinData, 0)
+	//hexBinData := converter.BinToHex(decryptedBinDataFull)
+	log.Debug("INSERT INTO queue_tx (hash, data) (%s, %s)", hash, decryptedBinData)
+	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
+	err = queueTx.Create()
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
