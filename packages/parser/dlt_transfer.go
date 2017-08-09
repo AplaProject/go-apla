@@ -89,7 +89,10 @@ func (p *DLTTransferParser) Validate() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fuelRate := decimal.NewFromString(systemParam.Value)
+	fuelRate, err := decimal.NewFromString(systemParam.Value)
+	if err != nil {
+		return err
+	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}

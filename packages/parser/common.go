@@ -665,7 +665,10 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fuelRate := decimal.NewFromString(systemParam.Value)
+	fuelRate, err := decimal.NewFromString(systemParam.Value)
+	if err != nil {
+		return decimal.New(0, 0), p.ErrInfo(err)
+	}
 	if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 		return decimal.New(0, 0), fmt.Errorf(`fuel rate must be greater than 0`)
 	}
@@ -704,7 +707,10 @@ func (p *Parser) payFPrice() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fuel := decimal.NewFromString(systemParam.Value)
+	fuel, err := decimal.NewFromString(systemParam.Value)
+	if err != nil {
+		return err
+	}
 	if fuel.Cmp(decimal.New(0, 0)) <= 0 {
 		return fmt.Errorf(`fuel rate must be greater than 0`)
 	}
@@ -730,7 +736,7 @@ func (p *Parser) payFPrice() error {
 		return nil
 	}
 	wallet := &model.DltWallet{}
-	if err := wallet.Get(fromID); err != nil {
+	if err := wallet.GetWallet(fromID); err != nil {
 		return err
 	}
 	if wallet.Amount.Cmp(egs) < 0 {

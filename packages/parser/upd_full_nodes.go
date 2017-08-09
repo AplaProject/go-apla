@@ -159,8 +159,7 @@ func (p *UpdFullNodesParser) Action() error {
 	}
 
 	w := &model.DltWallet{}
-	err := w.GetNewFuelRate()
-	if err != nil {
+	if err := w.GetNewFuelRate(); err != nil {
 		return p.ErrInfo(err)
 	}
 	newRate := string(w.FuelRate)
@@ -182,13 +181,12 @@ func (p *UpdFullNodesParser) Rollback() error {
 	// получим rb_id чтобы восстановить оттуда данные
 	// get rb_id to restore the data from there
 	fnRB := &model.FullNode{}
-	err := fnRB.GetRbIDFullNodesWithWallet()
-	if err != nil {
+	if err := fnRB.GetRbIDFullNodesWithWallet(); err != nil {
 		return p.ErrInfo(err)
 	}
-	rbID = fnRB.ID
+
 	rbFN := &model.RbFullNode{}
-	err = rbFN.GetByRbID(rbID)
+	err = rbFN.GetByRbID(int64(fnRB.ID)) // TODO: change rb_id type
 	if err != nil {
 		return p.ErrInfo(err)
 	}
