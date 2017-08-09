@@ -21,9 +21,8 @@ import (
 	"testing"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 type tempItem struct {
@@ -35,7 +34,6 @@ type tempList []tempItem
 
 func init() {
 	var (
-		DB  *sql.DCDB
 		err error
 	)
 	config.ConfigIni = map[string]string{
@@ -47,11 +45,10 @@ func init() {
 		`db_type`:     `postgresql`,
 		`db_host`:     `localhost`,
 	}
-	DB, err = sql.NewDbConnect()
+	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 	if err != nil {
 		fmt.Println(`Connect error`)
 	}
-	sql.DB = DB
 }
 
 func TestSanitize(t *testing.T) {

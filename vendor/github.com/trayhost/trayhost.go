@@ -33,8 +33,8 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/sql"
 	"github.com/op/go-logging"
 )
 
@@ -78,8 +78,9 @@ func EnterLoop(title string, imageData []byte) {
 
 	// If reached, user clicked Exit
 	isExiting = true
-	if sql.DB != nil && sql.DB.DB != nil {
-		err := sql.DB.ExecSQL(`INSERT INTO stop_daemons(stop_time) VALUES (?)`, time.Now().Unix())
+	if model.DBConn != nil {
+		sd := &model.StopDaemon{StopTime: time.Now().Unix()}
+		err := sd.Create()
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
 		}
