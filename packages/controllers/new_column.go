@@ -46,7 +46,7 @@ func (c *Controller) NewColumn() (string, error) {
 		StateID:          c.SessStateID,
 		ColumnName:       "",
 		ColumnPermission: "",
-		CanIndex:         count < syspar.SysInt(syspar.MaxIndexes),
+		CanIndex:         count < syspar.GetMaxIndexes(),
 		TimeNow:          timeNow,
 		TxType:           txType,
 		TxTypeID:         utils.TypeInt(txType)})

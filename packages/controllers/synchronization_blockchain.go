@@ -54,7 +54,7 @@ func (c *Controller) SynchronizationBlockchain() (string, error) {
 		downloadFile = *utils.Dir + "/public/blockchain"
 
 		if len(c.NodeConfig.FirstLoadBlockchainURL) == 0 {
-			blockURL = syspar.SysString(syspar.BlockchainURL)
+			blockURL = syspar.GetBlockchainURL()
 		}
 		resp, err := http.Get(blockURL)
 		if err != nil {

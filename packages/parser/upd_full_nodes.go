@@ -58,7 +58,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	if p.BlockData != nil {
 		txTime = p.BlockData.Time
 	}
-	if txTime-ufn.Time <= syspar.SysInt64(syspar.UpdFullNodesPeriod) {
+	if txTime-ufn.Time <= syspar.GetUpdFullNodesPeriod() {
 		return utils.ErrInfoFmt("txTime - upd_full_nodes <= consts.UPD_FULL_NODES_PERIOD")
 	}
 

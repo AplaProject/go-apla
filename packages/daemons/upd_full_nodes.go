@@ -85,7 +85,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	updFullNodes := int64(updFn.Time)
-	if curTime-updFullNodes <= syspar.SysInt64(syspar.UpdFullNodesPeriod) {
+	if curTime-updFullNodes <= syspar.GetUpdFullNodesPeriod() {
 		return utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
 	}
 

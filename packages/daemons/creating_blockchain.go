@@ -92,7 +92,7 @@ func readBlock(r io.Reader) (*blockData, error) {
 	}
 
 	size := converter.BinToDec(buf)
-	if size > syspar.SysInt64(syspar.MaxBlockSize) {
+	if size > syspar.GetMaxBlockSize() {
 		return nil, utils.ErrInfo("size > conts.MAX_BLOCK_SIZE")
 	}
 
@@ -146,7 +146,7 @@ func getLastBlockID(fileName string) (int64, error) {
 		return 0, utils.ErrInfo(err)
 	}
 	size := converter.BinToDec(buf)
-	if size > syspar.SysInt64(syspar.MaxBlockSize) {
+	if size > syspar.GetMaxBlockSize() {
 		return 0, utils.ErrInfo("size > conts.MAX_BLOCK_SIZE")
 	}
 

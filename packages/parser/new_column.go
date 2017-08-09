@@ -71,16 +71,16 @@ func (p *NewColumnParser) Validate() error {
 	}
 
 	count, err := model.GetColumnCount(p.NewColumn.TableName)
-	if count >= syspar.SysInt64(syspar.MaxColumns) {
-		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.SysInt64(syspar.MaxColumns))
+	if count >= int64(syspar.GetMaxColumns()) {
+		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
 	if converter.StrToInt64(p.NewColumn.Index) > 0 {
 		count, err := model.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
-		if count >= syspar.SysInt(syspar.MaxIndexes) {
-			return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.SysInt(syspar.MaxIndexes))
+		if count >= syspar.GetMaxIndexes() {
+			return fmt.Errorf(`Too many indexes. Limit is %d`, syspar.GetMaxIndexes())
 		}
 	}
 

@@ -97,19 +97,48 @@ func SysUpdate() error {
 	return err
 }
 
-// SysDecimal returns big integer value
-func SysDecimal(name string) (decimal.Decimal, error) {
-	return decimal.NewFromString(string(name))
+func GetBlockchainURL() string {
+	return SysString(BlockchainURL)
 }
 
-// SysInt64 returns int64 value of the system parameter
-func SysInt64(name string) int64 {
-	return converter.StrToInt64(SysString(name))
+func GetUpdFullNodesPeriod() int64 {
+	return converter.StrToInt64(SysString(UpdFullNodesPeriod))
 }
 
-// SysInt returns int64 value of the system parameter
-func SysInt(name string) int {
-	return converter.StrToInt(SysString(name))
+func GetMaxBlockSize() int64 {
+	return conveter.StrToInt64(SysString(MaxBlockSize))
+}
+
+func GetMaxTxSize() int64 {
+	return conveter.StrToInt64(SysString(MaxTxSize))
+}
+
+func GetRecoveryAddress() int64 {
+	return conveter.StrToInt64(SysString(RecoveryAddress))
+}
+
+func GetCommissionWallet() int64 {
+	return conveter.StrToInt64(SysString(CommissionWallet))
+}
+
+func GetGapsBetweenBlocks() int {
+	return converter.StrToInt(SysString(GapsBetweenBlocks))
+}
+
+func GetMaxTxCount() int {
+	return conveter.StrToInt(SysString(MaxTxCount))
+}
+
+func GetMaxColumns() int {
+	return conveter.StrToInt(SysString(MaxColumns))
+}
+
+func GetMaxIndexes() int {
+	return conveter.StrToInt(SysString(MaxIndexes))
+}
+
+func GetMaxBlockUserTx() int {
+	return conveter.StrToInt(SysString(MaxBlockUserTx))
 }
 
 // SysCost returns the cost of the transaction
