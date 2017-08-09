@@ -61,7 +61,6 @@ func (p *NewColumnParser) Validate() error {
 		return p.ErrInfo(err)
 	}
 	table := prefix + `_tables`
-	//exists, err := p.Single(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName).Int64()
 	exists := true
 	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName)
 	if err != nil {
