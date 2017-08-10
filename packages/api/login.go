@@ -35,15 +35,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	case string:
 		msg = uid
 	default:
-		return errorAPI(w, "unknown uid", http.StatusConflict)
+		return errorAPI(w, "unknown uid", http.StatusBadRequest)
 	}
 	pubkey := data.params[`pubkey`].([]byte)
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	if !verify {
-		return errorAPI(w, `signature is incorrect`, http.StatusConflict)
+		return errorAPI(w, `signature is incorrect`, http.StatusBadRequest)
 	}
 	state := data.params[`state`].(int64)
 	address := crypto.KeyToAddress(pubkey)
@@ -54,16 +54,16 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			citizen, err = sql.DB.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_citizens" WHERE id = ?`,
 				wallet).Int64()
 			if err != nil {
-				return errorAPI(w, err.Error(), http.StatusConflict)
+				return errorAPI(w, err.Error(), http.StatusInternalServerError)
 			}
 			if citizen == 0 {
 				state = 0
 				if utils.PrivCountry {
-					return errorAPI(w, "not a citizen", http.StatusConflict)
+					return errorAPI(w, "not a citizen", http.StatusForbidden)
 				}
 			}
 		} else {
-			return errorAPI(w, err.Error(), http.StatusBadRequest)
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 

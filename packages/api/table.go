@@ -54,12 +54,12 @@ func getTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	tablePermission, err := sql.DB.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`,
 		"key", "value", tableName)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	columnsAndPermissions, err := sql.DB.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
 		"key", "value", tableName)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	columns := make([]columnItem, 0)
 	for key, value := range columnsAndPermissions {
@@ -85,7 +85,7 @@ func txPreNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error 
 func txNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`NewTable`, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.NewTable{
 		Header:  header,
@@ -95,7 +95,7 @@ func txNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -116,7 +116,7 @@ func txPreEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error
 func txEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`EditTable`, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.EditTable{
 		Header:        header,
@@ -127,7 +127,7 @@ func txEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -144,13 +144,13 @@ func tableList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]tableItem, 0)
 	count, err := sql.DB.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_tables"`).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := sql.DB.GetAll(`SELECT name FROM "`+getPrefix(data)+`_tables" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	for _, val := range list {
@@ -174,7 +174,7 @@ func txPreEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) erro
 func txEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`EditColumn`, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.EditColumn{
 		Header:      header,
@@ -184,7 +184,7 @@ func txEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -206,7 +206,7 @@ func txPreNewColumn(w http.ResponseWriter, r *http.Request, data *apiData) error
 func txNewColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`NewColumn`, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.NewColumn{
 		Header:      header,
@@ -218,7 +218,7 @@ func txNewColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil

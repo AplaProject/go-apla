@@ -38,7 +38,7 @@ func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	tx, err := sql.DB.OneRow(`SELECT block_id, error FROM transactions_status WHERE hash = [hex]`,
 		data.params[`hash`].(string)).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if len(tx) == 0 {
 		return errorAPI(w, `hash has not been found`, http.StatusBadRequest)
