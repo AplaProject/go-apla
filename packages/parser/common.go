@@ -330,7 +330,7 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	}
 	searchedHash = converter.BinToHex(searchedHash)
 	logTx := &model.LogTransaction{}
-	err = logTx.GetByHash(searchedHash)
+	err = logTx.GetByHash(string(searchedHash))
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)

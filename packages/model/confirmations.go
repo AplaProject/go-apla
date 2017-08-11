@@ -14,7 +14,7 @@ func (c *Confirmation) GetGoodBlock(goodCount int) error {
 }
 
 func (c *Confirmation) GetConfirmation(blockID int64) error {
-	return DBConn.Where("blockID = ?", blockID).First(&c).Error
+	return DBConn.Where("block_id= ?", blockID).First(&c).Error
 }
 
 func (c *Confirmation) GetMaxGoodBlock() error {

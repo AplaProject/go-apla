@@ -23,6 +23,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 
+	"badoo/_packages/log"
 	"bytes"
 	"context"
 	"io"
@@ -41,18 +42,21 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	config := &model.Config{}
 	err := config.GetConfig()
 	if err != nil {
+		logger.Errorf("can't get config: %s", err)
 		return err
 	}
 
 	systemState := &model.SystemRecognizedState{}
 	delegated, err := systemState.IsDelegated(config.StateID)
 	if err != nil {
+		logger.Errorf("can't get delegated status: %s", err)
 		return err
 	}
 
 	node := &model.FullNode{}
 	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
+		logger.Errorf("can't get full_node: %s", err)
 		return err
 	}
 	fullNodeID := node.ID
@@ -71,9 +75,11 @@ func Disseminator(d *daemon, ctx context.Context) error {
 
 	if isFullNode {
 		// send blocks and transactions hashes
+		logger.Debugf("we are full_node")
 		return sendHashes(fullNodeID)
 	} else {
 		// we are not full node for this StateID and WalletID, so just send transactions
+		logger.Debugf("we are not full_node")
 		return sendTransactions()
 	}
 }
@@ -117,8 +123,7 @@ func sendTransactions() error {
 
 // send block and transactions hashes
 func sendHashes(fullNodeID int32) error {
-	block := &model.InfoBlock{}
-	err := block.GetUnsent()
+	block, err := model.BlockGetUnsent()
 	if err != nil {
 		return err
 	}
@@ -130,6 +135,7 @@ func sendHashes(fullNodeID int32) error {
 
 	if (trs == nil || len(*trs) == 0) && block == nil {
 		// it's nothing to send
+		log.Debugf("it's nothing to send")
 		return nil
 	}
 

@@ -104,7 +104,7 @@ func (p *Parser) ParseDataRollback() error {
 			// put the transaction in the turn for checking suddenly we will need it
 			dataHex := converter.BinToHex(transactionBinaryData)
 			log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", p.TxHash)
-			_, err = model.DeleteQueueTxByHash([]byte(p.TxHash))
+			_, err = model.DeleteQueueTxByHash(p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}

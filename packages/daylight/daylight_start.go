@@ -227,14 +227,15 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		log.Error("%v", utils.ErrInfo(err))
 	}
 
-	log.Error("logLevel: %v", logLevel)
+	log.Error("set logLevel: %v", logLevel)
 	backendLeveled.SetLevel(logLevel, "")
 	logging.SetBackend(backendLeveled)
+	log.Error("ok")
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
-	log.Debug("OldFileName %v", *utils.OldFileName)
+	log.Errorf("OldFileName %v", *utils.OldFileName)
 	if *utils.OldFileName != "" || len(configIni) != 0 {
 
 		if *utils.OldFileName != "" { //*utils.Dir+`/dc.tmp`
@@ -373,7 +374,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		if len(config.ConfigIni["db_type"]) > 0 {
 			for {
-				// wait while connection to a DB in other gourutina takes place
+				// wait while connection to a DB in other gourutine takes place
 				if model.DBConn != nil {
 					time.Sleep(time.Second)
 					fmt.Println("wait DB")

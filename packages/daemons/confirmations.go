@@ -37,9 +37,9 @@ func Confirmations(d *daemon, ctx context.Context) error {
 	// the first 2 minutes we sleep for 10 sec for blocks to be collected
 	tick++
 
-	d.sleepTime = 1
+	d.sleepTime = 1 * time.Second
 	if tick < 12 {
-		d.sleepTime = 10
+		d.sleepTime = 10 * time.Second
 	}
 
 	var startBlockID int64
@@ -61,7 +61,7 @@ func Confirmations(d *daemon, ctx context.Context) error {
 	LastBlockID := infoBlock.BlockID
 	if LastBlockID-ConfirmedBlockID > 5 {
 		startBlockID = ConfirmedBlockID + 1
-		d.sleepTime = 10
+		d.sleepTime = 10 * time.Second
 		tick = 0 // reset the tick
 	}
 	if startBlockID == 0 {

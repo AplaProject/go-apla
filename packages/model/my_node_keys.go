@@ -5,7 +5,7 @@ type MyNodeKey struct {
 	AddTime    int32  `gorm:"not null"`
 	PublicKey  []byte `gorm:"not null"`
 	PrivateKey []byte `gorm:"not null"`
-	Status     int8   `gorm:"not null"`
+	Status     string `gorm:"not null"`
 	MyTime     int32  `gorm:"not null"`
 	Time       int32  `gorm:"not null"`
 	BlockID    int64  `gorm:"not null"`
@@ -13,8 +13,13 @@ type MyNodeKey struct {
 }
 
 func (mnk *MyNodeKey) GetNodeWithMaxBlockID() error {
-	// TODO: check this ???
-	if err := DBConn.Where("block_id = ?", "(SELECT max(block_id) FROM my_node_keys)").First(&mnk).Error; err != nil {
+	var blockID int64
+	err := DBConn.Raw("SELECT max(block_id) FROM my_node_keys").Row().Scan(&blockID)
+	if err != nil {
+		return err
+	}
+
+	if err := DBConn.Where("block_id = ?", blockID).First(mnk).Error; err != nil {
 		return err
 	}
 	return nil

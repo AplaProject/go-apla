@@ -18,8 +18,8 @@ func (lt *LogTransaction) Get() error {
 	return DBConn.First(lt).Error
 }
 
-func (lt *LogTransaction) GetByHash(hash []byte) error {
-	return DBConn.Where("hex(hash) = ?").First(lt).Error
+func (lt *LogTransaction) GetByHash(hash string) error {
+	return DBConn.Where("hex(hash) = ?", hash).First(lt).Error
 }
 
 func (lt *LogTransaction) Create() error {

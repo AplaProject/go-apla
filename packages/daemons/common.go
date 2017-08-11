@@ -98,16 +98,13 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 	d := &daemon{
 		goRoutineName: goRoutineName,
-		sleepTime:     1,
+		sleepTime:     1 * time.Second,
 	}
 
 	err = handler(d, ctx)
 	if err != nil {
-		logger.Errorf("daemon %s error: %s", goRoutineName, err)
+		logger.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1))
 	}
-
-	timer := time.NewTimer(time.Duration(d.sleepTime) * time.Second)
-	defer timer.Stop()
 
 	for {
 		select {
@@ -115,15 +112,15 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 			retCh <- goRoutineName
 			return
 
-		case <-timer.C:
+		case <-time.After(d.sleepTime):
 			logger.Info(d.goRoutineName)
 			MonitorDaemonCh <- []string{d.goRoutineName, converter.Int64ToStr(time.Now().Unix())}
 
 			err = handler(d, ctx)
 			if err != nil {
-				logger.Errorf("daemon %s error: %s", goRoutineName, err)
+				logger.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(2))
 			}
-			timer.Reset(time.Duration(d.sleepTime) * time.Second)
+
 		}
 	}
 }

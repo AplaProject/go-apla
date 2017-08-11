@@ -27,10 +27,10 @@ func (qt *QueueTx) Create() error {
 }
 
 func (qt *QueueTx) GetByHash(hash []byte) error {
-	return DBConn.Where("hex(hash) = ?").First(qt).Error
+	return DBConn.Where("hex(hash) = ?", hash).First(qt).Error
 }
 
-func DeleteQueueTxByHash(hash []byte) (int64, error) {
+func DeleteQueueTxByHash(hash string) (int64, error) {
 	query := DBConn.Exec("DELETE FROM queue_tx WHERE hex(hash) = ?", hash)
 	return query.RowsAffected, query.Error
 }

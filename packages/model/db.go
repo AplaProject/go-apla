@@ -402,9 +402,10 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	if err != nil {
 		return 0, err
 	}
-	fullNodesList := make([]map[string]string, 0)
-	for _, node := range fullNodes {
-		fullNodesList = append(fullNodesList, node.ToMap())
+	fullNodesList := make([]map[string]string, 0, len(*fullNodes))
+	for _, node := range *fullNodes {
+		nodeMap := node.ToMap()
+		fullNodesList = append(fullNodesList, nodeMap)
 	}
 
 	// determine full_node_id of the one, who had to generate a block (but could delegate this)

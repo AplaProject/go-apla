@@ -72,14 +72,14 @@ func GetFullNodesHosts() ([]string, error) {
 	return *hosts, nil
 }
 
-func (fn *FullNode) GetAll() ([]FullNode, error) {
-	var nodes []FullNode
+func (fn *FullNode) GetAll() (*[]FullNode, error) {
+	nodes := new([]FullNode)
 	err := DBConn.Find(nodes).Error
 	return nodes, err
 }
 
 func (fn *FullNode) ToMap() map[string]string {
-	var result map[string]string
+	result := make(map[string]string)
 	result["id"] = string(fn.ID)
 	result["host"] = fn.Host
 	result["wallet_id"] = string(fn.WalletID)
@@ -92,7 +92,7 @@ func (fn *FullNode) ToMap() map[string]string {
 
 func (fn *FullNode) GetMaxID() (int32, error) {
 	var result int32
-	err := DBConn.Raw("SELECT max(id) FROM full_nodes").Scan(&result).Error
+	err := DBConn.Raw("SELECT max(id) FROM full_nodes").Row().Scan(&result)
 	if err != nil {
 		return 0, err
 	}

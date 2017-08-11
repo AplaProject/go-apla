@@ -32,7 +32,7 @@ import (
 
 // UpdFullNodes sends UpdFullNodes transactions
 func UpdFullNodes(d *daemon, ctx context.Context) error {
-	d.sleepTime = 60
+	d.sleepTime = 60 * time.Second
 
 	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
@@ -70,7 +70,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	fullNodeID := fullNode.ID
 	logger.Debug("fullNodeID = %d", fullNodeID)
 	if fullNodeID == 0 {
-		d.sleepTime = 10 // because 1s is too small for non-full nodes
+		d.sleepTime = 10 * time.Second // because 1s is too small for non-full nodes
 		return nil
 	}
 

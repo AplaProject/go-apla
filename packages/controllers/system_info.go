@@ -75,7 +75,7 @@ func (c *Controller) SystemInfo() (string, error) {
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
-	for _, node := range nodes {
+	for _, node := range *nodes {
 		pageData.FullNodes = append(pageData.FullNodes, node.ToMap())
 	}
 
