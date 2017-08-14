@@ -49,7 +49,7 @@ func GetLastTransactions(limit int) ([]Transaction, error) {
 
 func GetTransactionsCount(hash []byte) (int64, error) {
 	var rowsCount int64
-	if err := DBConn.Exec("SELECT count(hash) FROM transactions WHERE hex(hash) = ?", hash).Scan(&rowsCount).Error; err != nil {
+	if err := DBConn.Exec("SELECT count(hash) FROM transactions WHERE hash = ?", hash).Scan(&rowsCount).Error; err != nil {
 		return -1, err
 	}
 	return rowsCount, nil
@@ -76,17 +76,17 @@ func DeleteTransactionIfUnused(transactionHash []byte) (int64, error) {
 }
 
 func MarkTransactionSent(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("UPDATE transactions SET sent = 1 WHERE hex(hash) = ?", transactionHash)
+	query := DBConn.Exec("UPDATE transactions SET sent = 1 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
 func MarkTransactionUsed(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("UPDATE transactions SET used = 1 WHERE hex(hash) = ?", transactionHash)
+	query := DBConn.Exec("UPDATE transactions SET used = 1 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
 func MarkTransactionUnusedAndUnverified(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("UPDATE transactions SET used = 0, verified = 0 WHERE hex(hash) = ?", transactionHash)
+	query := DBConn.Exec("UPDATE transactions SET used = 0, verified = 0 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
@@ -96,12 +96,12 @@ func MarkVerifiedAndNotUsedTransactionsUnverified() (int64, error) {
 }
 
 func MarkTransactionUnused(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("UPDATE transactions SET used = 0 WHERE hex(hash) = ?", transactionHash)
+	query := DBConn.Exec("UPDATE transactions SET used = 0 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
 func (t *Transaction) Read(hash []byte) error {
-	return DBConn.Where("hash = ?", hash).First(t).Error
+	return handleError(DBConn.Where("hash = ?", hash).First(t).Error)
 }
 
 func (t *Transaction) Save() error {
@@ -109,11 +109,11 @@ func (t *Transaction) Save() error {
 }
 
 func (t *Transaction) Get(transactionHash []byte) error {
-	return DBConn.Where("hash = ?", transactionHash).First(t).Error
+	return handleError(DBConn.Where("hash = ?", transactionHash).First(t).Error)
 }
 
 func (t *Transaction) GetVerified(transactionHash []byte) error {
-	return DBConn.Where("hex(hash) = ? AND verified = 1", transactionHash).First(t).Error
+	return handleError(DBConn.Where("hash = ? AND verified = 1", transactionHash).First(t).Error)
 }
 
 func (t *Transaction) IsExists() (bool, error) {

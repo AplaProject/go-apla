@@ -115,7 +115,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			if err != nil {
 				log.Fatal(err)
 			}
-			hashFull = converter.BinToHex(hashFull)
+			// hashFull = converter.BinToHex(hashFull)
 			logging.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(hashFull))
 			affect, err := model.DeleteUsedTransactions()
 			if err != nil {
@@ -133,7 +133,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			if err != nil {
 				log.Fatal(err)
 			}
-			hash = converter.BinToHex(hash)
+			// hash = converter.BinToHex(hash)
 			p.TxHash = string(hash)
 			log.Debug("p.TxHash %s", p.TxHash)
 			p.TxBinaryData = transactionBinaryData

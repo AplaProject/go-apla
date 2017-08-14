@@ -15,11 +15,12 @@ func (lt *LogTransaction) Delete() error {
 }
 
 func (lt *LogTransaction) Get() error {
-	return DBConn.First(lt).Error
+	return handleError(DBConn.First(lt).Error)
 }
 
 func (lt *LogTransaction) GetByHash(hash string) error {
-	return DBConn.Where("hex(hash) = ?", hash).First(lt).Error
+	return handleError(DBConn.Where("hash = ?", hash).First(lt).Error)
+
 }
 
 func (lt *LogTransaction) Create() error {
@@ -27,13 +28,13 @@ func (lt *LogTransaction) Create() error {
 }
 
 func DeleteLogTransactionsByHash(hash []byte) (int64, error) {
-	query := DBConn.Exec("DELETE FROM log_transactions WHERE hex(hash) = ?", hash)
+	query := DBConn.Exec("DELETE FROM log_transactions WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error
 }
 
 func GetLogTransactionsCount(hash []byte) (int64, error) {
 	var rowsCount int64
-	if err := DBConn.Exec("SELECT count(hash) FROM log_transactions WHERE hex(hash) = ?", hash).Scan(&rowsCount).Error; err != nil {
+	if err := DBConn.Exec("SELECT count(hash) FROM log_transactions WHERE hash = ?", hash).Scan(&rowsCount).Error; err != nil {
 		return -1, err
 	}
 	return rowsCount, nil

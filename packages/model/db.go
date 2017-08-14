@@ -2,7 +2,6 @@ package model
 
 import (
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -280,7 +279,7 @@ func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err erro
 	if err != nil {
 		return nil, err
 	}
-	hash = []byte(hex.EncodeToString(hash))
+
 	ts := &TransactionStatus{
 		Hash:      hash,
 		Time:      time.Now().Unix(),
@@ -569,4 +568,11 @@ func GetList(query string, args ...interface{}) *ListResult {
 		}
 	}
 	return &ListResult{result, nil}
+}
+
+func handleError(err error) error {
+	if err == gorm.ErrRecordNotFound {
+		return nil
+	}
+	return err
 }

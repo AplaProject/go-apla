@@ -167,6 +167,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	controllers.SessInit()
 	config.MonitorChanges()
 
+	log.Infof("config: %+v", config.ConfigIni)
 	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 	if err != nil {
 		log.Fatalf("gorm init error: %s", err)
