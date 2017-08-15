@@ -94,6 +94,13 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
+	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+	if err != nil {
+		log.Errorf("db error: %s", err)
+		config.Drop()
+		return "", utils.ErrInfo(err)
+	}
+
 	if model.DBConn == nil {
 		err = fmt.Errorf("utils.DB == nil")
 		log.Error("%v", utils.ErrInfo(err))

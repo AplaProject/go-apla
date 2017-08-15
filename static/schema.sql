@@ -107,7 +107,6 @@ DROP TABLE IF EXISTS "currency"; CREATE TABLE "currency" (
 "full_name" varchar(50) NOT NULL DEFAULT '',
 "rb_id" int NOT NULL DEFAULT '0'
 );
-ALTER TABLE ONLY "global_apps" ADD CONSTRAINT "global_apps_pkey" PRIMARY KEY (name);
 
 DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
 "progress" varchar(10) NOT NULL DEFAULT ''
@@ -237,11 +236,11 @@ CREATE TABLE "global_smart_contracts" (
 "id" bigint NOT NULL  default nextval('global_smart_contracts_id_seq'),
 "name" varchar(100)  NOT NULL DEFAULT '',
 "value" bytea  NOT NULL DEFAULT '',
-"wallet_id" bigint  REFERENCES dlt_wallets(wallet_id)  NOT NULL DEFAULT '0',
+"wallet_id" bigint NOT NULL DEFAULT '0',
 "active" character(1) NOT NULL DEFAULT '0',
 "conditions" text  NOT NULL DEFAULT '',
 "variables" bytea  NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE "global_smart_contracts_id_seq" owned by "global_smart_contracts".id;
 ALTER TABLE ONLY "global_smart_contracts" ADD CONSTRAINT global_smart_contracts_pkey PRIMARY KEY (id);
@@ -288,14 +287,10 @@ INSERT INTO global_smart_contracts ("name", "value", "active", "conditions") VAL
 }', '1','ContractAccess("@0UpdateDLTTranfer")');
 
 CREATE TABLE "global_tables" (
-<<<<<<< HEAD
 "name" varchar(100)  NOT NULL DEFAULT '',
-=======
-"name" varchar(255)  NOT NULL DEFAULT '',
->>>>>>> develop
 "columns_and_permissions" jsonb,
 "conditions" text  NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "global_tables" ADD CONSTRAINT global_tables_pkey PRIMARY KEY (name);
 
@@ -386,24 +381,6 @@ ALTER SEQUENCE "dlt_transactions_id_seq" owned by "dlt_transactions".id;
 ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMARY KEY (id);
 CREATE INDEX dlt_transactions_index_sender ON "dlt_transactions" (sender_wallet_id);
 CREATE INDEX dlt_transactions_index_recipient ON "dlt_transactions" (recipient_wallet_id);
-
-DROP TYPE IF EXISTS "my_node_keys_enum_status" CASCADE;
-CREATE TYPE "my_node_keys_enum_status" AS ENUM ('my_pending','approved');
-DROP SEQUENCE IF EXISTS my_node_keys_id_seq CASCADE;
-CREATE SEQUENCE my_node_keys_id_seq START WITH 1;
-DROP TABLE IF EXISTS "my_node_keys"; CREATE TABLE "my_node_keys" (
-"id" int NOT NULL  default nextval('my_node_keys_id_seq'),
-"add_time" int NOT NULL DEFAULT '0',
-"public_key" bytea  NOT NULL DEFAULT '',
-"private_key" bytea NOT NULL DEFAULT '',
-"status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
-"my_time" int NOT NULL DEFAULT '0',
-"time" bigint NOT NULL DEFAULT '0',
-"block_id" bigint REFERENCES block_chain(id) NOT NULL DEFAULT '0',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
-);
-ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
-ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);
 
 DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
 "hash" bytea  NOT NULL DEFAULT '',

@@ -170,7 +170,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	log.Infof("config: %+v", config.ConfigIni)
 	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
 	if err != nil {
-		log.Fatalf("gorm init error: %s", err)
+		log.Errorf("gorm init error: %s", err)
 	}
 
 	go func() {
@@ -180,13 +180,13 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		if err != nil {
 			IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
 			log.Error("%v", utils.ErrInfo(err))
-			Exit(1)
+			//Exit(1)
 		}
 
 		err = syspar.SysUpdate()
 		if err != nil {
 			log.Error("%v", utils.ErrInfo(err))
-			Exit(1)
+			//Exit(1)
 		}
 	}()
 
@@ -376,7 +376,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		if len(config.ConfigIni["db_type"]) > 0 {
 			for {
 				// wait while connection to a DB in other gourutine takes place
-				if model.DBConn != nil {
+				if model.DBConn == nil {
 					time.Sleep(time.Second)
 					fmt.Println("wait DB")
 				} else {

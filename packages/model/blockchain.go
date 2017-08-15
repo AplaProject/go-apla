@@ -34,12 +34,12 @@ func (Block) TableName() string {
 
 func (b *Block) IsExists() (bool, error) {
 	query := DBConn.First(b)
-	return !query.RecordNotFound(), query.Error
+	return !query.RecordNotFound(), handleError(query.Error)
 }
 
 func (b *Block) IsExistsID(blockID int64) (bool, error) {
 	query := DBConn.Where("id = ?").First(b)
-	return !query.RecordNotFound(), query.Error
+	return !query.RecordNotFound(), handleError(query.Error)
 }
 
 func (b *Block) Create() error {
@@ -47,21 +47,18 @@ func (b *Block) Create() error {
 }
 
 func (b *Block) GetBlock(blockID int64) error {
-	return DBConn.Where("id = ?", blockID).First(&b).Error
+	return handleError(DBConn.Where("id = ?", blockID).First(&b).Error)
 }
 
 func (b *Block) GetMaxBlock() error {
-	return DBConn.First(b).Error
+	return handleError(DBConn.First(b).Error)
 }
 
 func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
 	err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(blockchain).Error
-	if err != nil {
-		return nil, err
-	}
-	return *blockchain, nil
+	return *blockchain, handleError(err)
 }
 
 func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
@@ -72,10 +69,7 @@ func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 	} else {
 		err = DBConn.Order("id desc").Limit(limit).Last(blockchain).Error
 	}
-	if err != nil {
-		return nil, err
-	}
-	return *blockchain, nil
+	return *blockchain, handleError(err)
 }
 
 func (b *Block) Delete() error {
@@ -102,7 +96,7 @@ func (b *Block) GetLastBlockData() (map[string]int64, error) {
 	}
 
 	err = b.GetBlock(confirmation.BlockID)
-	if err != nil {
+	if err != nil || b.ID == 0 {
 		return result, err
 	}
 	result["blockId"] = int64(converter.BinToDec(b.Data[1:5]))

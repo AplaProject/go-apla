@@ -10,15 +10,15 @@ type Confirmation struct {
 }
 
 func (c *Confirmation) GetGoodBlock(goodCount int) error {
-	return DBConn.Where("good >= ?", goodCount).Last(&c).Error
+	return handleError(DBConn.Where("good >= ?", goodCount).Last(&c).Error)
 }
 
 func (c *Confirmation) GetConfirmation(blockID int64) error {
-	return DBConn.Where("block_id= ?", blockID).First(&c).Error
+	return handleError(DBConn.Where("block_id= ?", blockID).First(&c).Error)
 }
 
 func (c *Confirmation) GetMaxGoodBlock() error {
-	return DBConn.Order("id desc").Where("good >= ?", consts.MIN_CONFIRMED_NODES).First(c).Error
+	return handleError(DBConn.Order("block_id desc").Where("good >= ?", consts.MIN_CONFIRMED_NODES).First(c).Error)
 }
 
 func (c *Confirmation) Update() error {

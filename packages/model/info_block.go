@@ -18,13 +18,12 @@ func (ib *InfoBlock) TableName() string {
 }
 
 func (ib *InfoBlock) GetInfoBlock() error {
-	return DBConn.Last(ib).Error
+	return handleError(DBConn.Last(ib).Error)
 }
 
 func (ib *InfoBlock) Update() error {
 	return DBConn.Model(&InfoBlock{}).Updates(ib).Error
 }
-
 
 func (ib *InfoBlock) GetUnsent() (bool, error) {
 	err := DBConn.Where("sent = ?", "0").First(&ib).Error

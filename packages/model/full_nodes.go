@@ -11,11 +11,11 @@ type FullNode struct {
 }
 
 func (fn *FullNode) FindNode(stateID int64, walletID int64, finalDelegateStateID int64, finalDelegateWalletID int64) error {
-	return DBConn.Where(
+	return handleError(DBConn.Where(
 		"state_id = ?", stateID).Or(
 		"wallet_id = ?", walletID).Or(
 		"final_delegate_state_id = ?", finalDelegateStateID).Or(
-		"final_delegate_wallet_id = ?", finalDelegateWalletID).Find(&fn).Error
+		"final_delegate_wallet_id = ?", finalDelegateWalletID).Find(&fn).Error)
 }
 
 func (fn *FullNode) Get(walletID int64) error {
