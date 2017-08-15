@@ -498,7 +498,11 @@ func (p *Parser) checkSenderDLT(amount, commission decimal.Decimal) error {
 	}
 	amountAndCommission := amount
 	amountAndCommission.Add(commission)
-	if wallet.Amount.Cmp(amountAndCommission) < 0 {
+	wltAmount, err := decimal.NewFromString(wallet.Amount)
+	if err != nil {
+		return err
+	}
+	if wltAmount.Cmp(amountAndCommission) < 0 {
 		return fmt.Errorf("%v < %v)", wallet.Amount, amountAndCommission)
 	}
 	return nil
@@ -705,7 +709,7 @@ func (p *Parser) payFPrice() error {
 	systemParam := &model.SystemParameter{}
 	err = systemParam.Get("fuel_rate")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("can't get fuel_rate: %s", err)
 	}
 	fuel, err := decimal.NewFromString(systemParam.Value)
 	if err != nil {
@@ -739,8 +743,13 @@ func (p *Parser) payFPrice() error {
 	if err := wallet.GetWallet(fromID); err != nil {
 		return err
 	}
-	if wallet.Amount.Cmp(egs) < 0 {
-		egs = wallet.Amount
+	wltAmount, err := decimal.NewFromString(wallet.Amount)
+	if err != nil {
+		return err
+	}
+
+	if wltAmount.Cmp(egs) < 0 {
+		egs = wltAmount
 	}
 	commission := egs.Mul(decimal.New(3, 0)).Div(decimal.New(100, 0)).Floor()
 	if _, _, err := p.selectiveLoggingAndUpd([]string{`-amount`}, []interface{}{egs}, `dlt_wallets`, []string{`wallet_id`},

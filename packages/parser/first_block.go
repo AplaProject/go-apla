@@ -52,7 +52,7 @@ func (p *FirstBlockParser) Action() error {
 		AddressVote:   converter.AddressToString(myAddress),
 		PublicKey:     []byte(hex.EncodeToString(data.PublicKey)),
 		NodePublicKey: []byte(hex.EncodeToString(data.NodePublicKey)),
-		Amount:        decimal.NewFromFloat(consts.FIRST_QDLT),
+		Amount:        decimal.NewFromFloat(consts.FIRST_QDLT).String(),
 	}
 	err := dltWallet.Create()
 	if err != nil {

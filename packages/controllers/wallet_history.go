@@ -54,7 +54,10 @@ func (c *Controller) WalletHistory() (string, error) {
 
 	rb := wallet.RollbackID
 	if rb != 0 {
-		balance := wallet.Amount
+		balance, err := decimal.NewFromString(wallet.Amount)
+		if err != nil {
+			return ``, utils.ErrInfo(err)
+		}
 		for len(list) <= 100 && rb > 0 {
 			var data map[string]string
 			rollback := &model.Rollback{}

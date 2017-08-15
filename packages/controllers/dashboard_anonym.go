@@ -37,7 +37,7 @@ func (c *Controller) DashboardAnonym() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		amount := wallet.Amount.String()
+		amount := wallet.Amount
 		if amount == "" {
 			amount = "0"
 		}

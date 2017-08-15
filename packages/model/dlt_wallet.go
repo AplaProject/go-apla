@@ -1,19 +1,17 @@
 package model
 
-import "github.com/shopspring/decimal"
-
 type DltWallet struct {
-	WalletID           int64           `gorm:"primary_key;not null"`
-	Amount             decimal.Decimal `gorm:"not null"`
-	PublicKey          []byte          `gorm:"column:public_key_0;not null"`
-	NodePublicKey      []byte          `gorm:"not null"`
-	LastForgingDataUpd int64           `gorm:"not null"`
-	Host               string          `gorm:"not null"`
-	AddressVote        string          `gorm:"not null"`
-	FuelRate           int64           `gorm:"not null"`
-	SpendingContract   string          `gorm:"not null"`
-	ConditionsChange   string          `gorm:"not null"`
-	RollbackID         int64           `gorm:"not null;column:rb_id"`
+	WalletID           int64  `gorm:"primary_key;not null"`
+	Amount             string `gorm:"not null"`
+	PublicKey          []byte `gorm:"column:public_key_0;not null"`
+	NodePublicKey      []byte `gorm:"not null"`
+	LastForgingDataUpd int64  `gorm:"not null"`
+	Host               string `gorm:"not null"`
+	AddressVote        string `gorm:"not null"`
+	FuelRate           int64  `gorm:"not null"`
+	SpendingContract   string `gorm:"not null"`
+	ConditionsChange   string `gorm:"not null"`
+	RollbackID         int64  `gorm:"not null;column:rb_id"`
 }
 
 func (DltWallet) TableName() string {
@@ -21,7 +19,7 @@ func (DltWallet) TableName() string {
 }
 
 func (w *DltWallet) GetWallet(walletID int64) error {
-	return DBConn.Where("wallet_id = ?", walletID).First(&w).Error
+	return handleError(DBConn.Where("wallet_id = ?", walletID).First(&w).Error)
 }
 
 func GetWallets(startWalletID int64, walletsCount int) ([]DltWallet, error) {
@@ -64,7 +62,7 @@ func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {
 
 	for _, wallet := range wallets {
 		newRow := make(map[string]string)
-		newRow["amount"] = wallet.Amount.String()
+		newRow["amount"] = wallet.Amount
 		newRow["address_vote"] = wallet.AddressVote
 		result = append(result, newRow)
 	}
@@ -74,7 +72,7 @@ func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {
 func (w *DltWallet) ToMap() map[string]string {
 	result := make(map[string]string, 0)
 	result["wallet_id"] = string(w.WalletID)
-	result["amount"] = w.Amount.String()
+	result["amount"] = w.Amount
 	result["public_key_0"] = string(w.PublicKey)
 	result["node_public_key"] = string(w.NodePublicKey)
 	result["last_forgind_data_upd"] = string(w.LastForgingDataUpd)

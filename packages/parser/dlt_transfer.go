@@ -131,7 +131,12 @@ func (p *DLTTransferParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	if wallet.Amount.Cmp(ourAmount.Add(ourCommission)) < 0 {
+	wltAmount, err := decimal.NewFromString(wallet.Amount)
+	if err != nil {
+		return p.ErrInfo(err)
+	}
+
+	if wltAmount.Cmp(ourAmount.Add(ourCommission)) < 0 {
 		return p.ErrInfo(fmt.Sprintf("%s + %s < %s)", ourAmount, ourCommission, wallet.Amount))
 	}
 	if converter.StringToAddress(p.DLTTransfer.WalletAddress) == 0 {

@@ -28,6 +28,8 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"badoo/_packages/log"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -64,6 +66,7 @@ func initialLoad(d *daemon, ctx context.Context) error {
 	}
 
 	if toLoad {
+		log.Debugf("star first block loading")
 		config.CurrentLoadBlockchain = "file"
 		if err := config.Save(); err != nil {
 			return err
@@ -281,8 +284,11 @@ func loadFirstBlock(parser *parser.Parser) error {
 	var err error
 
 	if len(*utils.FirstBlockDir) > 0 {
-		newBlock, _ = ioutil.ReadFile(*utils.FirstBlockDir + "/1block")
+		fileName := *utils.FirstBlockDir + "/1block"
+		log.Debugf("load first block from file: %s", fileName)
+		newBlock, _ = ioutil.ReadFile(fileName)
 	} else {
+		log.Debugf("load from assets")
 		newBlock, err = static.Asset("static/1block")
 		if err != nil {
 			return err
@@ -292,10 +298,12 @@ func loadFirstBlock(parser *parser.Parser) error {
 	parser.CurrentVersion = consts.VERSION
 
 	if err = parser.ParseDataFull(false); err != nil {
+		log.Errorf("failed to parse first block: %s", err)
 		return err
 	}
 
 	if err = parser.InsertIntoBlockchain(); err != nil {
+		log.Errorf("failed to insert first block into blockchain: %s", err)
 		return err
 	}
 
@@ -386,6 +394,7 @@ func firstLoad(ctx context.Context, d *daemon, parser *parser.Parser) error {
 	}
 
 	if nodeConfig.FirstLoadBlockchain == "file" {
+		log.Debugf("first load from file")
 		blockchainURL := nodeConfig.FirstLoadBlockchainURL
 		if len(blockchainURL) == 0 {
 			blockchainURL = syspar.GetBlockchainURL()

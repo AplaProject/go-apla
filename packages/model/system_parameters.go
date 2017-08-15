@@ -12,7 +12,7 @@ func (sp SystemParameter) TableName() string {
 }
 
 func (sp *SystemParameter) Get(name string) error {
-	return DBConn.Where("name = ?").First(sp).Error
+	return DBConn.Where("name = ?", name).First(sp).Error
 }
 
 func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, error) {

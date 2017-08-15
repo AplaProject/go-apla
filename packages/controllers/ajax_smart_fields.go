@@ -107,7 +107,10 @@ func (c *Controller) AjaxSmartFields() interface{} {
 						dltWallet := &model.DltWallet{}
 						err = dltWallet.GetWallet(c.SessWalletID)
 						dPrice, _ := decimal.NewFromString(stateParameter.Value)
-						result.Valid = (err == nil && dltWallet.Amount.Cmp(dPrice) >= 0)
+						wltAmount, err := decimal.NewFromString(dltWallet.Amount)
+						if err == nil {
+							result.Valid = (err == nil && wltAmount.Cmp(dPrice) >= 0)
+						}
 					}
 				}
 

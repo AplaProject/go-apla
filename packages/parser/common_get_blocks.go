@@ -179,6 +179,7 @@ func (p *Parser) GetBlocks(blockID int64, host string, rollbackBlocks, goroutine
 	log.Debug("blocks", blocksSorted)
 
 	logging.WriteSelectiveLog("UPDATE transactions SET verified = 0 WHERE verified = 1 AND used = 0")
+
 	affect, err := model.MarkVerifiedAndNotUsedTransactionsUnverified()
 	if err != nil {
 		logging.WriteSelectiveLog(err)

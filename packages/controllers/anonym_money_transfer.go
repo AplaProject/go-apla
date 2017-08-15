@@ -74,7 +74,7 @@ func (c *Controller) AnonymMoneyTransfer() (string, error) {
 	TemplateStr, err := makeTemplate("anonym_money_transfer", "anonymMoneyTransfer", &anonymMoneyTransferPage{
 		Lang:       c.Lang,
 		Title:      "anonymMoneyTransfer",
-		Amount:     dltWallet.Amount.String(),
+		Amount:     dltWallet.Amount,
 		WalletID:   c.SessWalletID,
 		CitizenID:  c.SessCitizenID,
 		Commission: commission.String(),

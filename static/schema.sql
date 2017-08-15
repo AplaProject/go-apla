@@ -191,7 +191,7 @@ DROP TABLE IF EXISTS "dlt_wallets"; CREATE TABLE "dlt_wallets" (
 "fuel_rate" bigint NOT NULL DEFAULT '0',
 "spending_contract" varchar(100) NOT NULL DEFAULT '',
 "conditions_change" text NOT NULL DEFAULT '',
-"rb_id" bigint  REFERENCES rollback(rb_id)  NOT NULL DEFAULT '0'
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "dlt_wallets" ADD CONSTRAINT dlt_wallets_pkey PRIMARY KEY (wallet_id);
 
@@ -453,7 +453,8 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "wallet_id" bigint  REFERENCES dlt_wallets(wallet_id) NOT NULL DEFAULT '0',
 "citizen_id" bigint NOT NULL DEFAULT '0',
 "counter" smallint NOT NULL DEFAULT '0',
-"sent" smallint NOT NULL DEFAULT '0'
+"sent" smallint NOT NULL DEFAULT '0',
+"verified" smallint NOT NULL DEFAULT '1'
 );
 ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
 

@@ -12,6 +12,7 @@ type Transaction struct {
 	ThirdVar   int32  `gorm:not null`
 	Counter    int8   `gorm:not null`
 	Sent       int8   `gorm:not null`
+	Verified   int8   `gorm:not null;default:1`
 }
 
 func GetAllUnusedTransactions() (*[]Transaction, error) {
