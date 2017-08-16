@@ -23,9 +23,9 @@ func (ts *TransactionStatus) Get(transactionHash []byte) error {
 }
 
 func (ts *TransactionStatus) UpdateBlockID(newBlockID int64, transactionHash []byte) error {
-	return DBConn.Where("hash = ?", transactionHash).Update("block_id", newBlockID).Error
+	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("block_id", newBlockID).Error
 }
 
 func (ts *TransactionStatus) SetError(errorText string, transactionHash []byte) error {
-	return DBConn.Where("hash = ?", transactionHash).Update("error", errorText).Error
+	return DBConn.Model(&TransactionStatus{}).Where("hash = ?", transactionHash).Update("error", errorText).Error
 }

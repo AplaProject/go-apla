@@ -58,7 +58,7 @@ func (p *Parser) UpdBlockInfo() {
 		}
 		err := ib.Create()
 		if err != nil {
-			log.Error("%v", err)
+			log.Error("error insert into info_block %v", err)
 		}
 	} else {
 		ibUpdate := &model.InfoBlock{

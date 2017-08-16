@@ -748,7 +748,7 @@ func GetMrklroot(binaryData []byte, first bool, maxTxSize int64, maxTxCount int)
 			}
 			txSize, err := converter.DecodeLength(&binaryData)
 			if err != nil {
-				log.Fatal(err)
+				panic(err)
 			}
 
 			// отчекрыжим одну транзакцию от списка транзакций

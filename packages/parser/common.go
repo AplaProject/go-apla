@@ -104,6 +104,7 @@ func InsertInLogTx(binaryTx []byte, time int64) error {
 	ltx := &model.LogTransaction{Hash: txHash, Time: time}
 	err = ltx.Create()
 	if err != nil {
+		log.Errorf("error insert transaction into log: %s", err)
 		return utils.ErrInfo(err)
 	}
 	return nil

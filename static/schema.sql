@@ -403,7 +403,7 @@ ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (
 
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 "hash" bytea  NOT NULL DEFAULT '',
-"block_id" int REFERENCES block_chain(id)  NOT NULL DEFAULT '0',
+"block_id" int NOT NULL DEFAULT '0',
 "state_id" int  NOT NULL DEFAULT '0',
 "wallet_id" bigint  REFERENCES dlt_wallets(wallet_id)  NOT NULL DEFAULT '0',
 "time" int  NOT NULL DEFAULT '0',
@@ -419,9 +419,9 @@ DROP TABLE IF EXISTS "full_nodes"; CREATE TABLE "full_nodes" (
 "host" varchar(100) NOT NULL DEFAULT '',
 "wallet_id" bigint  REFERENCES dlt_wallets(wallet_id) NOT NULL DEFAULT '0',
 "state_id" int NOT NULL DEFAULT '0',
-"final_delegate_wallet_id" bigint REFERENCES dlt_wallets(wallet_id) NOT NULL DEFAULT '0',
+"final_delegate_wallet_id" bigint NOT NULL DEFAULT '0',
 "final_delegate_state_id" bigint NOT NULL DEFAULT '0',
-"rb_id" int  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" int NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE full_nodes_id_seq owned by full_nodes.id;
 ALTER TABLE ONLY "full_nodes" ADD CONSTRAINT full_nodes_pkey PRIMARY KEY (id);

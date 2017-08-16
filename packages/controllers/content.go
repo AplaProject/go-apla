@@ -363,7 +363,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		ib := &model.InfoBlock{}
 		err = ib.GetInfoBlock()
 		if err != nil {
-			log.Error("%v", err)
+			log.Error("can't get block info %v", err)
 		}
 		blockID := ib.BlockID
 		blockJs = "$('#block_id').html(" + converter.Int64ToStr(blockID) + ");$('#block_id').css('color', '#428BCA');"
@@ -378,7 +378,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		if c.StateID > 0 && (tplName == "dashboard_anonym" || tplName == "home") {
 			tpl, err := tpl.CreateHTMLFromTemplate("dashboard_default", sessCitizenID, sessStateID, &map[string]string{})
 			if err != nil {
-				log.Error("%v", err)
+				log.Errorf("create html from template failed: %v", err)
 				return
 			}
 			w.Write([]byte(tpl))
@@ -390,7 +390,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			// We call controller depending on template
 			html, err := CallController(c, tplName)
 			if err != nil {
-				log.Error("%v", err)
+				log.Errorf("call controller with %s failed: %v", tplName, err)
 			}
 			w.Write([]byte(html))
 		}
@@ -410,13 +410,13 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		// We call controller depending on template
 		html, err = CallController(c, tplName)
 		if err != nil {
-			log.Error("%v", err)
+			log.Errorf("call controller depending failed: %v", err)
 		}
 		w.Write([]byte(html))
 	} else {
 		html, err := CallController(c, "LoginECDSA")
 		if err != nil {
-			log.Error("%v", err)
+			log.Errorf("call LoginECDSA controller failed: %v", err)
 		}
 		w.Write([]byte(html))
 	}

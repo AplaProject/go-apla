@@ -3,15 +3,14 @@ package model
 import "github.com/EGaaS/go-egaas-mvp/packages/converter"
 
 type Block struct {
-	ID           int64  `gorm:"primary_key;not_null"`
-	Hash         []byte `gorm:not null`
-	Data         []byte `gorm:not null`
-	StateID      int64  `gorm:not null`
-	WalletID     int64  `gorm:not null`
-	Time         int64  `gorm:not null`
-	Tx           int32  `gorm:not null`
-	Cur0lMinerID int32  `gorm:not null;column:cur_0l_miner_id`
-	MaxMinerID   int32  `gorm:not null`
+	ID         int64  `gorm:"primary_key;not_null"`
+	Hash       []byte `gorm:not null`
+	Data       []byte `gorm:not null`
+	StateID    int64  `gorm:not null`
+	WalletID   int64  `gorm:not null`
+	Time       int64  `gorm:not null`
+	Tx         int32  `gorm:not null`
+	MaxMinerID int32  `gorm:not null`
 }
 
 func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {

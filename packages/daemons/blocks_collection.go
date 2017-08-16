@@ -297,7 +297,9 @@ func loadFirstBlock(parser *parser.Parser) error {
 	parser.BinaryData = newBlock
 	parser.CurrentVersion = consts.VERSION
 
+	log.Printf("start to insert first block")
 	if err = parser.ParseDataFull(false); err != nil {
+		parser.BlockError(err)
 		log.Errorf("failed to parse first block: %s", err)
 		return err
 	}
@@ -306,6 +308,7 @@ func loadFirstBlock(parser *parser.Parser) error {
 		log.Errorf("failed to insert first block into blockchain: %s", err)
 		return err
 	}
+	log.Printf("first block inserted")
 
 	return nil
 }
