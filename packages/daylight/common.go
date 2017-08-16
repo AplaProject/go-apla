@@ -28,9 +28,8 @@ import (
 )
 
 var (
-	log       = logging.MustGetLogger("daylight")
-	format    = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{color:reset} %{message}[" + consts.VERSION + "]" + string(byte(0)))
-	configIni map[string]string
+	log    = logging.MustGetLogger("daylight")
+	format = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{color:reset} %{message}[" + consts.VERSION + "]" + string(byte(0)))
 )
 
 func openBrowser(BrowserHTTPHost string) {

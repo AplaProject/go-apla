@@ -139,16 +139,17 @@ func initLogs() error {
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	backendLeveled := logging.AddModuleLevel(backendFormatter)
 
-	var level string
 	if *utils.LogLevel == "" {
-		level = config.ConfigIni["log_level"]
-		*utils.LogLevel = level
-	} else {
-		level = *utils.LogLevel
+		if level, ok := config.ConfigIni["log_level"]; ok {
+			*utils.LogLevel = level
+		} else {
+			*utils.LogLevel = "INFO"
+		}
 	}
-	logLevel, err := logging.LogLevel(level)
+
+	logLevel, err := logging.LogLevel(*utils.LogLevel)
 	if err != nil {
-		log.Error("bad log level - %s: %v", level, utils.ErrInfo(err))
+		log.Error("bad log level - %s: %v", *utils.LogLevel, utils.ErrInfo(err))
 		return err
 	}
 
@@ -258,12 +259,15 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		*utils.Dir = dir
 	}
 
+	readConfig()
+
 	// create first block
 	if *utils.GenerateFirstBlock == 1 {
-		utils.FirstBlock(true)
-	}
+		log.Infof("generate first block")
+		utils.FirstBlock()
+		os.Exit(0)
 
-	readConfig()
+	}
 
 	fmt.Printf("work dir = %s\ndcVersion=%s\n", *utils.Dir, consts.VERSION)
 
@@ -290,7 +294,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
-	if *utils.OldFileName != "" || len(configIni) != 0 {
+	if *utils.OldFileName != "" {
 
 		if *utils.OldFileName != "" { //*utils.Dir+`/dc.tmp`
 			err = utils.CopyFileContents(os.Args[0], *utils.OldFileName)
@@ -313,7 +317,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			if thrustWindowLoder != nil {
 				thrustWindowLoder.Close()
 			}
-			system.Finish(0)
+			system.Finish()
 			err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
 			if err != nil {
 				log.Debug("%v", os.Stderr)
@@ -396,7 +400,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	stopdaemons.WaintForSignals()
 
 	go func() {
-
+		time.Sleep(time.Second)
 		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost)
 
 		if *utils.Console == 0 && !utils.Mobile() {

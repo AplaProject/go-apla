@@ -28,8 +28,6 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
-	"badoo/_packages/log"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -261,7 +259,7 @@ func downloadChain(ctx context.Context, fileName, url string) error {
 
 		blockchainSize, err := downloadToFile(loadCtx, url, fileName)
 		if err != nil {
-			logger.Error("%v", utils.ErrInfo(err))
+			log.Error("%v", utils.ErrInfo(err))
 			continue
 		}
 		if blockchainSize > consts.BLOCKCHAIN_SIZE {
@@ -290,7 +288,7 @@ func loadFirstBlock(parser *parser.Parser) error {
 	parser.BinaryData = newBlock
 	parser.CurrentVersion = consts.VERSION
 
-	log.Printf("start to insert first block")
+	log.Infof("start to insert first block")
 	if err = parser.ParseDataFull(false); err != nil {
 		parser.BlockError(err)
 		log.Errorf("failed to parse first block: %s", err)
@@ -301,7 +299,7 @@ func loadFirstBlock(parser *parser.Parser) error {
 		log.Errorf("failed to insert first block into blockchain: %s", err)
 		return err
 	}
-	log.Printf("first block inserted")
+	log.Infof("first block inserted")
 
 	return nil
 }
@@ -524,7 +522,7 @@ func downloadToFile(ctx context.Context, url, file string) (int64, error) {
 		if len(data) == 0 {
 			break
 		}
-		logger.Debug("read %s", url)
+		log.Debug("read %s", url)
 	}
 	return offset, nil
 }

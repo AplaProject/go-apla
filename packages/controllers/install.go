@@ -138,10 +138,9 @@ func (c *Controller) Install() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	log.Debug("GenerateFirstBlock", *utils.GenerateFirstBlock)
+	log.Debugf("GenerateFirstBlock = %d, block dir = %s", *utils.GenerateFirstBlock, *utils.FirstBlockDir)
 
 	if _, err := os.Stat(*utils.FirstBlockDir + "/1block"); len(*utils.FirstBlockDir) > 0 && os.IsNotExist(err) {
-
 		// If there is no key, this is the first run and the need to create them in the working directory.
 		if _, err := os.Stat(*utils.Dir + "/PrivateKey"); os.IsNotExist(err) {
 
@@ -167,10 +166,10 @@ func (c *Controller) Install() (string, error) {
 			}
 		}
 
+		log.Debugf("start to generate first block")
 		*utils.GenerateFirstBlock = 1
-		utils.FirstBlock(false)
+		utils.FirstBlock()
 	}
-	log.Debug("1block")
 
 	NodePrivateKey, _ := ioutil.ReadFile(*utils.Dir + "/NodePrivateKey")
 	npubkey, err := crypto.PrivateToPublic(NodePrivateKey)
@@ -180,7 +179,7 @@ func (c *Controller) Install() (string, error) {
 	nodeKeys := &model.MyNodeKey{PrivateKey: NodePrivateKey, PublicKey: npubkey, BlockID: 1}
 	err = nodeKeys.Create()
 	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
+		log.Error("my_node_key insert failed: %v", utils.ErrInfo(err))
 		config.Drop()
 		return "", utils.ErrInfo(err)
 	}
@@ -196,10 +195,9 @@ func (c *Controller) Install() (string, error) {
 		*utils.DltWalletID = crypto.Address(PublicKeyBytes2)
 	}
 
-	conf.DltWalletID = *utils.DltWalletID
-	err = conf.Save()
+	err = model.UpdateConfig("dlt_wallet_id", *utils.DltWalletID)
 	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
+		log.Errorf("can't update config: %s", utils.ErrInfo(err))
 		config.Drop()
 		return "", utils.ErrInfo(err)
 	}

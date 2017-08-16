@@ -41,7 +41,7 @@ func CheckDB() bool {
 
 	err := install.Get()
 	if err != nil {
-		logger.Errorf("%v", utils.ErrInfo(err))
+		log.Errorf("%v", utils.ErrInfo(err))
 	}
 
 	if install.Progress == "complete" {
@@ -61,7 +61,7 @@ func DbLock(ctx context.Context, goRoutineName string) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("Recovered", r)
+			log.Error("Recovered", r)
 			panic(r)
 		}
 	}()
@@ -104,7 +104,7 @@ func tryLock(goRoutineName string) (bool, error) {
 	} else {
 		lockPeriod := time.Now().Unix() - int64(ml.LockTime)
 		if lockPeriod > MaxLockTime {
-			logger.Error("%d %s %d", ml.LockTime, ml.ScriptName, lockPeriod)
+			log.Error("%d %s %d", ml.LockTime, ml.ScriptName, lockPeriod)
 			if utils.Mobile() {
 				err = model.MainLockDelete(ml.ScriptName)
 			}
@@ -118,11 +118,11 @@ func tryLock(goRoutineName string) (bool, error) {
 func DbUnlock(goRoutineName string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("Recovered", r)
+			log.Error("Recovered", r)
 			panic(r)
 		}
 	}()
-	logger.Debug("DbUnlock %v %v", utils.Caller(2), goRoutineName)
+	log.Debug("DbUnlock %v %v", utils.Caller(2), goRoutineName)
 	if err := model.MainLockDelete(goRoutineName); err != nil {
 		return utils.ErrInfo(err)
 	}

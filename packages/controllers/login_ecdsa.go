@@ -49,7 +49,11 @@ func (c *Controller) LoginECDSA() (string, error) {
 		private, _ = ioutil.ReadFile(filepath.Join(*utils.Dir, `PrivateKey`))
 	}
 
-	states, _ := c.AjaxStatesList()
+	states, err := c.AjaxStatesList()
+	if err != nil {
+		log.Errorf("states list error: %s", err)
+		return "", err
+	}
 	key := c.r.FormValue("key")
 	pkey := c.r.FormValue("pkey")
 	state := c.r.FormValue("state")

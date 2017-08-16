@@ -18,7 +18,7 @@ type WalletedTransaction struct {
 }
 
 func (wt *WalletedTransaction) Get(senderWalletID, recipientWalletID int64, recipientWalletAddress string, limit int, offset int) ([]WalletedTransaction, error) {
-	var result []WalletedTransaction
+	result := new([]WalletedTransaction)
 	err := DBConn.Table("dlt_transactions as d").Select("d.*, w.wallet_id as sw, wr.wallet_id as rw").
 		Joins("left join dlt_wallets as w on w.wallet_id=d.sender_wallet_id").
 		Joins("left join dlt_wallets as wr on wr.wallet_id=d.recipient_wallet_id").
@@ -27,8 +27,8 @@ func (wt *WalletedTransaction) Get(senderWalletID, recipientWalletID int64, reci
 		Or("recipient_wallet_address=?", recipientWalletAddress).
 		Limit(limit).
 		Offset(offset).
-		Order("d.id desc").Scan(wt).Error
-	return result, err
+		Order("d.id desc").Scan(result).Error
+	return *result, err
 }
 
 func (wt *WalletedTransaction) ToMap() map[string]string {

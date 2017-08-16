@@ -36,7 +36,7 @@ func (p *Parser) ParseBlock() error {
 		// Futher - the body of a block (transaction)
 	*/
 	p.BlockData = utils.ParseBlockHeader(&p.BinaryData)
-	log.Debug("%v", p.BlockData)
+	log.Debug("block data: %v", p.BlockData)
 
 	p.CurrentBlockID = p.BlockData.BlockID
 
@@ -47,12 +47,12 @@ func (p *Parser) ParseBlock() error {
 	}
 	p.AllPkeys = make(map[string]string)
 	for _, table := range allTables {
-		log.Debug("%s", table)
+		log.Debug("table: %s", table)
 		col, err := model.GetFirstColumnName(table)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
-		log.Debug("%s", col)
+		log.Debug("first column: %s", col)
 		p.AllPkeys[table] = col
 	}
 

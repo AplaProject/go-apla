@@ -93,7 +93,7 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	host := GetHostPort(fullNode.Host)
 	err = p.GetBlocks(blockID, host, "rollback_blocks_1", d.goRoutineName, 7)
 	if err != nil {
-		logger.Error("v", err)
+		log.Error("v", err)
 		queueBlock.Delete()
 		return utils.ErrInfo(err)
 	}

@@ -100,7 +100,7 @@ func InsertInLogTx(binaryTx []byte, time int64) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	txHash = converter.BinToHex(txHash)
+	//txHash = converter.BinToHex(txHash)
 	ltx := &model.LogTransaction{Hash: txHash, Time: time}
 	err = ltx.Create()
 	if err != nil {
@@ -262,9 +262,9 @@ type Parser struct {
 	PrevBlock        *utils.BlockData
 	BinaryData       []byte
 	TxBinaryData     []byte
-	blockHashHex     []byte
+	blockHash        []byte
 	dataType         int
-	blockHex         []byte
+	blockData        []byte
 	CurrentBlockID   int64
 	fullTxBinaryData []byte
 	TxHash           string
@@ -310,9 +310,9 @@ func (p *Parser) dataPre() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	p.blockHashHex = converter.BinToHex(hash)
+	p.blockHash = hash
 
-	p.blockHex = converter.BinToHex(p.BinaryData)
+	p.blockData = p.BinaryData
 	// определим тип данных
 	// define the data type
 	p.dataType = int(converter.BinToDec(converter.BytesShift(&p.BinaryData, 1)))
@@ -409,7 +409,7 @@ func (p *Parser) InsertIntoBlockchain() error {
 	b := &model.Block{
 		ID:       p.BlockData.BlockID,
 		Hash:     p.BlockData.Hash,
-		Data:     p.blockHex,
+		Data:     p.blockData,
 		StateID:  p.BlockData.StateID,
 		WalletID: p.BlockData.WalletID,
 		Time:     p.BlockData.Time,

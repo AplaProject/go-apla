@@ -23,8 +23,6 @@ import (
 
 	"context"
 
-	"badoo/_packages/log"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -51,7 +49,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		delegated, err := systemState.IsDelegated(config.StateID)
 		if err == nil && delegated {
 			// we are the state and we have delegated the node maintenance to another user or state
-			logger.Infof("we are not full node, sleep for hour")
+			log.Infof("we are not full node, sleep for hour")
 			d.sleepTime = 3600 * time.Second
 			return nil
 		}
@@ -68,7 +66,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	prevBlock := &model.InfoBlock{}
 	err = prevBlock.GetInfoBlock()
 	if err != nil {
-		logger.Errorf("can't get block: %s", err)
+		log.Errorf("can't get block: %s", err)
 		return err
 	}
 
@@ -78,7 +76,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// calculate the next block generation time
 	sleepTime, err := model.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
 	if err != nil {
-		logger.Errorf("can't get sleep time: %s", err)
+		log.Errorf("can't get sleep time: %s", err)
 		return err
 	}
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
@@ -109,14 +107,14 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 
 	blockBin, err := generateNextBlock(prevBlock, *trs, string(nodeKey.PrivateKey), config, time.Now().Unix())
 	if err != nil {
-		logger.Errorf("can't generate block: %s", err)
+		log.Errorf("can't generate block: %s", err)
 		return err
 	}
 
 	p.BinaryData = blockBin
 	err = p.ParseDataFull(true)
 	if err != nil {
-		logger.Errorf("parser block error: %s", err)
+		log.Errorf("parser block error: %s", err)
 		p.BlockError(err)
 		return err
 	}

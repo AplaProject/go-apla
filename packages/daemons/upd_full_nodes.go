@@ -19,7 +19,6 @@ package daemons
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
@@ -58,7 +57,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 	myStateID := nodeConfig.StateID
 	myWalletID := nodeConfig.DltWalletID
-	logger.Debug("%v", myWalletID)
+	log.Debug("%v", myWalletID)
 	// Есть ли мы в списке тех, кто может генерить блоки
 	// If we are in the list of those who are able to generate the blocks
 	fullNode := &model.FullNode{}
@@ -68,7 +67,7 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	}
 
 	fullNodeID := fullNode.ID
-	logger.Debug("fullNodeID = %d", fullNodeID)
+	log.Debug("fullNodeID = %d", fullNodeID)
 	if fullNodeID == 0 {
 		d.sleepTime = 10 * time.Second // because 1s is too small for non-full nodes
 		return nil

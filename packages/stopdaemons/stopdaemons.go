@@ -56,10 +56,12 @@ func WaitStopTime() {
 				name := <-utils.ReturnCh
 				log.Debugf("daemon %s stopped", name)
 			}
+			system.FinishThrust()
+
 			fmt.Println("Daemons killed")
-			err := model.DBConn.Close()
+			err := model.GormClose()
 			if err != nil {
-				log.Error(utils.ErrInfo(err).Error())
+				log.Errorf("gorm close failed: %s", utils.ErrInfo(err).Error())
 			}
 			fmt.Println("DB Closed")
 			err = os.Remove(*utils.Dir + "/daylight.pid")
@@ -68,7 +70,7 @@ func WaitStopTime() {
 				panic(err)
 			}
 			fmt.Println("removed " + *utils.Dir + "/daylight.pid")
-			system.FinishThrust(1)
+
 		}
 		time.Sleep(time.Second)
 	}

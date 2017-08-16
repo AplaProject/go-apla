@@ -683,6 +683,9 @@ func (s *DB) AddError(err error) error {
 		}
 
 		s.Error = err
+		if err != nil && err != ErrRecordNotFound {
+			panic(err)
+		}
 	}
 	return err
 }

@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	logger = logging.MustGetLogger("daemons")
+	log = logging.MustGetLogger("daemons")
 	/*DaemonCh        chan bool     = make(chan bool, 100)
 	AnswerDaemonCh  chan string   = make(chan string, 100)*/
 
@@ -86,7 +86,7 @@ var rollbackList = []string{
 func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon, context.Context) error, retCh chan string) {
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("daemon Recovered", r)
+			log.Error("daemon Recovered", r)
 			panic(r)
 		}
 	}()
@@ -103,7 +103,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 
 	err = handler(d, ctx)
 	if err != nil {
-		logger.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1))
+		log.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(1))
 	}
 
 	for {
@@ -113,12 +113,12 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(*daemon,
 			return
 
 		case <-time.After(d.sleepTime):
-			logger.Info(d.goRoutineName)
+			log.Info(d.goRoutineName)
 			MonitorDaemonCh <- []string{d.goRoutineName, converter.Int64ToStr(time.Now().Unix())}
 
 			err = handler(d, ctx)
 			if err != nil {
-				logger.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(2))
+				log.Errorf("daemon %s error: %s (%v)", goRoutineName, err, utils.Caller(2))
 			}
 
 		}
@@ -154,7 +154,7 @@ func StartDaemons() {
 			continue
 		}
 
-		logger.Errorf("unknown daemon name: %s", name)
+		log.Errorf("unknown daemon name: %s", name)
 
 	}
 }

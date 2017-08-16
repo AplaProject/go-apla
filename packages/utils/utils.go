@@ -84,7 +84,7 @@ var (
 	// OldFileName is the old file name
 	OldFileName = flag.String("oldFileName", "", "")
 	// LogLevel is the log level
-	LogLevel = flag.String("logLevel", "INFO", "DayLight LogLevel")
+	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
 	// Console equals 1 for starting in console
 	Console = flag.Int64("console", 0, "Start from console")
 	// StartBlockID is the start block
@@ -1065,17 +1065,16 @@ func ShellExecute(cmdline string) {
 }
 
 // FirstBlock generates the first block
-func FirstBlock(exit bool) {
+func FirstBlock() {
 	log.Debug("FirstBlock")
-
-	log.Debug("GenerateFirstBlock == 1")
 
 	if len(*FirstBlockPublicKey) == 0 {
 		log.Debug("len(*FirstBlockPublicKey) == 0")
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
 		if err != nil {
-			log.Error("%v", ErrInfo(err))
+			log.Error("write publick key failed: %v", ErrInfo(err))
+			return
 		}
 		*FirstBlockPublicKey = pub
 	}
@@ -1084,18 +1083,17 @@ func FirstBlock(exit bool) {
 		priv, pub, _ := crypto.GenHexKeys()
 		err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
 		if err != nil {
-			log.Error("%v", ErrInfo(err))
+			log.Error("write private kery failed: %v", ErrInfo(err))
+			return
 		}
 		*FirstBlockNodePublicKey = pub
 	}
 
 	PublicKey := *FirstBlockPublicKey
-	log.Debug("PublicKey", PublicKey)
 	//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
 	PublicKeyBytes, _ := hex.DecodeString(string(PublicKey))
 
 	NodePublicKey := *FirstBlockNodePublicKey
-	log.Debug("NodePublicKey", NodePublicKey)
 	//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
 	NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
 	Host := *FirstBlockHost
@@ -1108,13 +1106,15 @@ func FirstBlock(exit bool) {
 	now := uint32(time.Now().Unix())
 	_, err := converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 	if err != nil {
-		log.Error("%v", ErrInfo(err))
+		log.Errorf("first block header marshall error: %v", ErrInfo(err))
+		return
 	}
 	_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
 		Time: now, WalletID: iAddress, CitizenID: 0},
 		PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
 	if err != nil {
-		log.Error("%v", ErrInfo(err))
+		log.Errorf("first block body marshal error: %v", ErrInfo(err))
+		return
 	}
 	converter.EncodeLenByte(&block, tx)
 
@@ -1125,15 +1125,13 @@ func FirstBlock(exit bool) {
 		firstBlockDir = filepath.Join("", *FirstBlockDir)
 		if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
 			if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-				log.Error("%v", ErrInfo(err))
+				log.Error("can't create directory for 1block: %v", ErrInfo(err))
+				return
 			}
 		}
 	}
+	log.Debugf("write first block to: %s/1block", firstBlockDir)
 	ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
-	if exit {
-		os.Exit(0)
-	}
-
 }
 
 // EgaasUpdate decompresses and updates executable file

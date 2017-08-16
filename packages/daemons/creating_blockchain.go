@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 

@@ -10,11 +10,15 @@ func (ss *SystemState) TableName() string {
 }
 
 func GetAllSystemStatesIDs() ([]int64, error) {
-	IDs := new([]int64)
-	if err := DBConn.Model(&SystemState{}).Find(IDs).Order("id").Error; err != nil {
+	states := new([]SystemState)
+	if err := DBConn.Find(states).Order("id").Error; err != nil {
 		return nil, err
 	}
-	return *IDs, nil
+	ids := make([]int64, 0, len(*states))
+	for _, s := range *states {
+		ids = append(ids, s.ID)
+	}
+	return ids, nil
 }
 
 func (ss *SystemState) Get(id int64) error {
@@ -23,7 +27,7 @@ func (ss *SystemState) Get(id int64) error {
 
 func (ss *SystemState) GetCount() (int64, error) {
 	var count int64
-	err := DBConn.Table("system_states").Count(count).Error
+	err := DBConn.Table("system_states").Count(&count).Error
 	return count, err
 }
 

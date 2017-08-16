@@ -17,7 +17,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 
@@ -30,12 +29,15 @@ import (
 
 // Ajax is a common handle function for ajax requests
 func Ajax(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error("ajax Recovered", r)
-			fmt.Println("ajax Recovered", r)
-		}
-	}()
+
+	/*	defer func() {
+			if r := recover(); r != nil {
+				log.Error("ajax Recovered", r)
+				fmt.Println("ajax Recovered", r)
+			}
+		}()
+	*/
+
 	if qr := r.FormValue("qr"); len(qr) > 0 {
 		if qr[0] == '1' || converter.IsValidAddress(qr) {
 			png, _ := qrcode.Encode(qr, qrcode.Medium, 170)

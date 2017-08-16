@@ -23,7 +23,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 
-	"badoo/_packages/log"
 	"bytes"
 	"context"
 	"io"
@@ -42,21 +41,21 @@ func Disseminator(d *daemon, ctx context.Context) error {
 	config := &model.Config{}
 	err := config.GetConfig()
 	if err != nil {
-		logger.Errorf("can't get config: %s", err)
+		log.Errorf("can't get config: %s", err)
 		return err
 	}
 
 	systemState := &model.SystemRecognizedState{}
 	delegated, err := systemState.IsDelegated(config.StateID)
 	if err != nil {
-		logger.Errorf("can't get delegated status: %s", err)
+		log.Errorf("can't get delegated status: %s", err)
 		return err
 	}
 
 	node := &model.FullNode{}
 	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
-		logger.Errorf("can't get full_node: %s", err)
+		log.Errorf("can't get full_node: %s", err)
 		return err
 	}
 	fullNodeID := node.ID
@@ -75,11 +74,11 @@ func Disseminator(d *daemon, ctx context.Context) error {
 
 	if isFullNode {
 		// send blocks and transactions hashes
-		logger.Debugf("we are full_node")
+		log.Debugf("we are full_node")
 		return sendHashes(fullNodeID)
 	} else {
 		// we are not full node for this StateID and WalletID, so just send transactions
-		logger.Debugf("we are not full_node")
+		log.Debugf("we are not full_node")
 		return sendTransactions()
 	}
 }
@@ -114,7 +113,7 @@ func sendTransactions() error {
 		hexHash := converter.BinToHex(tr.Hash)
 		_, err := model.MarkTransactionSent(hexHash)
 		if err != nil {
-			logger.Errorf("failed to set transaction as sent: %s", err)
+			log.Errorf("failed to set transaction as sent: %s", err)
 		}
 	}
 
@@ -160,7 +159,7 @@ func sendHashes(fullNodeID int32) error {
 			hexHash := converter.BinToHex(tr.Hash)
 			_, err := model.MarkTransactionSent(hexHash)
 			if err != nil {
-				logger.Errorf("error set transaction %+v as sent: %s", tr, err)
+				log.Errorf("error set transaction %+v as sent: %s", tr, err)
 			}
 		}
 	}
@@ -244,7 +243,7 @@ func sendPacketToAll(reqType int, buf []byte, respHand func(resp []byte, w io.Wr
 		go func(h string) {
 			err := sendDRequest(h, reqType, buf, respHand)
 			if err != nil {
-				logger.Infof("failed to send transaction to %s (%s)", h, err)
+				log.Infof("failed to send transaction to %s (%s)", h, err)
 			}
 			wg.Done()
 		}(GetHostPort(host))
@@ -287,7 +286,7 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 		return err
 	}
 	dataSize := converter.BinToDec(buf)
-	logger.Debug("dataSize %d (host : %v)", dataSize, host)
+	log.Debug("dataSize %d (host : %v)", dataSize, host)
 	// и если данных менее MAX_TX_SIZE, то получаем их
 	// if data is less than MAX_TX_SIZE, so get them
 	if dataSize < syspar.GetMaxTxSize() && dataSize > 0 {

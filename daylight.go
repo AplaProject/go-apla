@@ -66,7 +66,7 @@ func main() {
 					model.SetStopNow()
 				} else {
 					thrust.Exit()
-					system.FinishThrust(0)
+					system.FinishThrust()
 					os.Exit(0)
 				}
 			}
@@ -84,5 +84,5 @@ func main() {
 	go daylight.Start("", thrustWindow)
 
 	enterLoop()
-	system.Finish(0)
+	system.Finish()
 }

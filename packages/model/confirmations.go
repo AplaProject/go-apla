@@ -1,9 +1,11 @@
 package model
 
-import "github.com/EGaaS/go-egaas-mvp/packages/consts"
+import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+)
 
 type Confirmation struct {
-	BlockID int64 `gorm:"primary_key;not null"`
+	BlockID int64 `gorm:"primary_key"`
 	Good    int32 `gorm:"not null"`
 	Bad     int32 `gorm:"not null"`
 	Time    int32 `gorm:"not null"`

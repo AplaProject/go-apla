@@ -101,7 +101,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	log.Debug("Content")
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
-		log.Error("%v", err)
+		log.Error("session start failed: %v", err)
 	}
 	defer sess.SessionRelease(w)
 	sessWalletID := GetSessWalletID(sess)
@@ -140,7 +140,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 			// the absence of table will show the mistake, this means that the process of installation is not finished and zero-step should be shown
 			err = install.Get()
 			if err != nil {
-				log.Error("%v", err)
+				log.Error("install get failed: %v", err)
 				dbInit = false
 			}
 		}
@@ -151,7 +151,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		stateParameter.SetTablePrefix(converter.Int64ToStr(sessStateID))
 		err = stateParameter.GetByName("state_name")
 		if err != nil {
-			log.Error("%v", err)
+			log.Errorf("get state_name failed: %v", err)
 		}
 		c.StateName = stateParameter.Value
 		c.StateID = sessStateID
@@ -164,12 +164,12 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		var err error
 		err = install.Get()
 		if err != nil {
-			log.Error("%v", err)
+			log.Errorf("install get failed:%v", err)
 		}
 		config := &model.Config{}
 		err = config.GetConfig()
 		if err != nil {
-			log.Error("%v", err)
+			log.Errorf("get config failed: %v", err)
 		}
 		configExists = config.FirstLoadBlockchainURL
 
@@ -177,7 +177,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		block := &model.Block{}
 		blockData, err := block.GetLastBlockData()
 		if err != nil {
-			log.Error("%v", err)
+			log.Errorf("get last block errors: %v", err)
 		}
 		// time of the last block
 		lastBlockTime = blockData["lastBlockTime"]
@@ -186,7 +186,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 		confirmation := &model.Confirmation{}
 		err = confirmation.GetMaxGoodBlock()
 		if err != nil {
-			log.Error("%v", err)
+			log.Errorf("get max good block failed: %v", err)
 		}
 		c.ConfirmedBlockID = confirmation.BlockID
 

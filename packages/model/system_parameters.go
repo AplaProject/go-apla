@@ -17,13 +17,13 @@ func (sp *SystemParameter) Get(name string) error {
 
 func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, error) {
 	var result string
-	err := DBConn.Table("system_parameters").Where("name = ?", name).Select(jsonField).Find(result).Error
+	err := DBConn.Table("system_parameters").Where("name = ?", name).Select(jsonField).Row().Scan(&result)
 	return result, err
 }
 
 func (sp *SystemParameter) GetValueParameterByName(name, value string) (string, error) {
 	var result string
-	err := DBConn.Raw(`SELECT value->'`+value+`' FROM system_parameters WHERE name = ?`, name).Scan(&result).Error
+	err := DBConn.Raw(`SELECT value->'`+value+`' FROM system_parameters WHERE name = ?`, name).Row().Scan(&result)
 	if err != nil {
 		return "", err
 	}

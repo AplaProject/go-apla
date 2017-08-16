@@ -19,7 +19,6 @@ package parser
 import (
 	"fmt"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -41,7 +40,7 @@ func (p *Parser) UpdBlockInfo() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	hash = converter.BinToHex(hash)
+	//hash = converter.BinToHex(hash)
 	p.BlockData.Hash = hash
 	log.Debug("%v", p.BlockData.Hash)
 	log.Debug("%v", blockID)

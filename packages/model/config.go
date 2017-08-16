@@ -16,7 +16,7 @@ func (c *Config) TableName() string {
 	return "config"
 }
 
-func UpdateConfig(field string, value string) error {
+func UpdateConfig(field string, value interface{}) error {
 	return DBConn.Model(&Config{}).Update(field, value).Error
 }
 

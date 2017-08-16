@@ -79,6 +79,9 @@ func WaintForSignals() {
 			log.Debug("Daemons killed")
 			fmt.Println("Daemons killed")
 		}
+
+		system.FinishThrust()
+
 		if model.DBConn != nil {
 			err := model.GormClose()
 			if err != nil {
@@ -92,6 +95,8 @@ func WaintForSignals() {
 		} else {
 			fmt.Println("removed " + *utils.Dir + "/daylight.pid")
 		}
-		system.FinishThrust(1)
+
+		os.Exit(1)
+
 	}()
 }
