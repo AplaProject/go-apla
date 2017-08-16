@@ -55,12 +55,6 @@ import (
 	"github.com/op/go-logging"
 )
 
-func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
-	for _, method := range methods {
-		route.HandlerFunc(method, path, handle)
-	}
-}
-
 // FileAsset returns the body of the file
 func FileAsset(name string) ([]byte, error) {
 
@@ -71,6 +65,173 @@ func FileAsset(name string) ([]byte, error) {
 		}
 	}
 	return static.Asset(name)
+}
+
+func readConfig() {
+	// read the config.ini
+	config.Read()
+	if *utils.TCPHost == "" {
+		*utils.TCPHost = config.ConfigIni["tcp_host"]
+	}
+	if *utils.FirstBlockDir == "" {
+		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
+	}
+	if *utils.ListenHTTPPort == "" {
+		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
+	}
+	if *utils.Dir == "" {
+		*utils.Dir = config.ConfigIni["dir"]
+	}
+	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
+	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
+	if len(config.ConfigIni["lang"]) > 0 {
+		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
+	}
+}
+
+func killOld() {
+	if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
+		dat, err := ioutil.ReadFile(*utils.Dir + "/daylight.pid")
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+		}
+		var pidMap map[string]string
+		err = json.Unmarshal(dat, &pidMap)
+		if err != nil {
+			log.Error("%v", utils.ErrInfo(err))
+		}
+		fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
+
+		err = KillPid(pidMap["pid"])
+		if nil != err {
+			fmt.Println(err)
+			log.Error("KillPid %v", utils.ErrInfo(err))
+		}
+		if fmt.Sprintf("%s", err) != "null" {
+			fmt.Println(fmt.Sprintf("%s", err))
+			// give 15 sec to end the previous process
+			for i := 0; i < 15; i++ {
+				log.Debug("waiting killer %d", i)
+				if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
+					fmt.Println("waiting killer")
+					time.Sleep(time.Second)
+				} else { // if there is no daylight.pid, so it is finished
+					break
+				}
+			}
+		}
+	}
+}
+
+func initLogs() error {
+	var backend *logging.LogBackend
+
+	if config.ConfigIni["log_output"] == "console" {
+		backend = logging.NewLogBackend(os.Stderr, "", 0)
+	} else {
+		f, err := os.OpenFile(*utils.Dir+"/dclog.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
+		if err != nil {
+			return err
+		}
+		backend = logging.NewLogBackend(f, "", 0)
+	}
+
+	backendFormatter := logging.NewBackendFormatter(backend, format)
+	backendLeveled := logging.AddModuleLevel(backendFormatter)
+
+	var level string
+	if *utils.LogLevel == "" {
+		level = config.ConfigIni["log_level"]
+		*utils.LogLevel = level
+	} else {
+		level = *utils.LogLevel
+	}
+	logLevel, err := logging.LogLevel(level)
+	if err != nil {
+		log.Error("bad log level - %s: %v", level, utils.ErrInfo(err))
+		return err
+	}
+
+	log.Infof("set logLevel: %v", logLevel)
+	backendLeveled.SetLevel(logLevel, "")
+	logging.SetBackend(backendLeveled)
+	return nil
+}
+
+func savePid() error {
+	pid := os.Getpid()
+	PidAndVer, err := json.Marshal(map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION})
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
+}
+
+func delPidFile() {
+	os.Remove(filepath.Join(*utils.Dir, "daylight.pid"))
+}
+
+func rollbackToBlock(blockID int64) error {
+	if err := template.LoadContracts(); err != nil {
+		log.Errorf(`Load Contracts`, err)
+		return err
+	}
+	parser := new(parser.Parser)
+	err := parser.RollbackToBlockID(*utils.RollbackToBlockID)
+	if err != nil {
+		log.Errorf("rollback return error: %s", err)
+		return err
+	}
+
+	// we recieve the statistics of all tables
+	allTable, err := model.GetAllTables()
+	if err != nil {
+		log.Errorf("get all tables failed: %s", err)
+		return err
+
+	}
+
+	startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
+	for _, table := range allTable {
+		count, err := model.Single(`SELECT count(*) FROM ` + converter.EscapeName(table)).Int64()
+		if err != nil {
+			log.Errorf("select from table %s failed: %s", table, err)
+			return err
+		}
+		if count > 0 && count > startData[table] {
+			fmt.Println(">>ALERT<<", table, count)
+		} else {
+			fmt.Println(table, "ok")
+		}
+	}
+	return nil
+}
+
+func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
+	for _, method := range methods {
+		route.HandlerFunc(method, path, handle)
+	}
+}
+func initRoutes(listenHost, browserHost string) string {
+	route := httprouter.New()
+	setRoute(route, `/`, controllers.Index, `GET`)
+	setRoute(route, `/content`, controllers.Content, `GET`, `POST`)
+	setRoute(route, `/template`, controllers.Template, `GET`, `POST`)
+	setRoute(route, `/app`, controllers.App, `GET`, `POST`)
+	setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
+	setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
+	setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
+	api.Route(route)
+	route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
+	route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
+	if len(*utils.TLS) > 0 {
+		go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
+	}
+
+	httpListener(listenHost, &browserHost, route)
+	// for ipv6 server
+	httpListenerV6(route)
+	return browserHost
 }
 
 // Start starts the main code of the program
@@ -94,172 +255,51 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	if dir != "" {
-		fmt.Println("dir", dir)
 		*utils.Dir = dir
 	}
 
-	utils.FirstBlock(true)
+	// create first block
+	if *utils.GenerateFirstBlock == 1 {
+		utils.FirstBlock(true)
+	}
 
-	IosLog("dir:" + dir)
-	fmt.Println("utils.Dir", *utils.Dir)
+	readConfig()
 
-	fmt.Println("dcVersion:", consts.VERSION)
-	log.Debug("dcVersion: %v", consts.VERSION)
+	fmt.Printf("work dir = %s\ndcVersion=%s\n", *utils.Dir, consts.VERSION)
 
 	exchangeapi.InitAPI()
 
-	// read the config.ini
-	config.Read()
-	if *utils.TCPHost == "" {
-		*utils.TCPHost = config.ConfigIni["tcp_host"]
-	}
-	if *utils.FirstBlockDir == "" {
-		*utils.FirstBlockDir = config.ConfigIni["first_block_dir"]
-	}
-	if *utils.ListenHTTPPort == "" {
-		*utils.ListenHTTPPort = config.ConfigIni["http_port"]
-	}
-	if *utils.Dir == "" {
-		*utils.Dir = config.ConfigIni["dir"]
-	}
-	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
-	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
-	if len(config.ConfigIni["lang"]) > 0 {
-		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)
-	}
-
 	// kill previously run eGaaS
 	if !utils.Mobile() {
-		fmt.Println("kill daylight.pid")
-		if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
-			dat, err := ioutil.ReadFile(*utils.Dir + "/daylight.pid")
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			var pidMap map[string]string
-			err = json.Unmarshal(dat, &pidMap)
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			fmt.Println("old PID ("+*utils.Dir+"/daylight.pid"+"):", pidMap["pid"])
-
-			err = KillPid(pidMap["pid"])
-			if nil != err {
-				fmt.Println(err)
-				log.Error("KillPid %v", utils.ErrInfo(err))
-			}
-			if fmt.Sprintf("%s", err) != "null" {
-				fmt.Println(fmt.Sprintf("%s", err))
-				// give 15 sec to end the previous process
-				for i := 0; i < 15; i++ {
-					log.Debug("waiting killer %d", i)
-					if _, err := os.Stat(*utils.Dir + "/daylight.pid"); err == nil {
-						fmt.Println("waiting killer")
-						time.Sleep(time.Second)
-					} else { // if there is no daylight.pid, so it is finished
-						break
-					}
-				}
-			}
-		}
+		killOld()
 	}
 
 	controllers.SessInit()
-	config.MonitorChanges()
 
-	log.Infof("config: %+v", config.ConfigIni)
-	err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
-	if err != nil {
-		log.Errorf("gorm init error: %s", err)
-	}
-
-	go func() {
-		var err error
-		log.Debug("%v", model.DBConn)
-		IosLog("utils.DB:" + fmt.Sprintf("%v", model.DBConn))
-		if err != nil {
-			IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
-			log.Error("%v", utils.ErrInfo(err))
-			//Exit(1)
-		}
-
-		err = syspar.SysUpdate()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			//Exit(1)
-		}
-	}()
-
-	f, err := os.OpenFile(*utils.Dir+"/dclog.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
-	if err != nil {
-		IosLog("err:" + fmt.Sprintf("%s", utils.ErrInfo(err)))
-		log.Error("%v", utils.ErrInfo(err))
-		Exit(1)
-	}
-	defer f.Close()
-
+	// TODO: ??
 	if fi, err := os.Stat(*utils.Dir + `/logo.png`); err == nil && fi.Size() > 0 {
 		utils.LogoExt = `png`
 	}
-	IosLog("configIni:" + fmt.Sprintf("%v", config.ConfigIni))
-	var backend *logging.LogBackend
-	switch config.ConfigIni["log_output"] {
-	case "file":
-		backend = logging.NewLogBackend(f, "", 0)
-	case "console":
-		backend = logging.NewLogBackend(os.Stderr, "", 0)
-	case "file_console":
-	//backend = logging.NewLogBackend(io.MultiWriter(f, os.Stderr), "", 0)
-	default:
-		backend = logging.NewLogBackend(f, "", 0)
-	}
-	backendFormatter := logging.NewBackendFormatter(backend, format)
-	backendLeveled := logging.AddModuleLevel(backendFormatter)
 
-	level := "DEBUG"
-	if *utils.LogLevel == "" {
-		level = config.ConfigIni["log_level"]
-		*utils.LogLevel = level
-	} else {
-		level = *utils.LogLevel
-	}
-	logLevel, err := logging.LogLevel(level)
+	err = initLogs()
 	if err != nil {
-		log.Error("%v", utils.ErrInfo(err))
+		log.Error("logs init failed: %v", utils.ErrInfo(err))
+		Exit(1)
 	}
-
-	log.Error("set logLevel: %v", logLevel)
-	backendLeveled.SetLevel(logLevel, "")
-	logging.SetBackend(backendLeveled)
-	log.Error("ok")
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
-	log.Errorf("OldFileName %v", *utils.OldFileName)
 	if *utils.OldFileName != "" || len(configIni) != 0 {
 
 		if *utils.OldFileName != "" { //*utils.Dir+`/dc.tmp`
 			err = utils.CopyFileContents(os.Args[0], *utils.OldFileName)
 			if err != nil {
-				log.Debug("%v", os.Stderr)
-				log.Debug("%v", utils.ErrInfo(err))
+				log.Errorf("can't copy from %s %v", *utils.OldFileName, utils.ErrInfo(err))
 			}
-		}
-		// waiting for connection to the database
-		for {
-			if model.DBConn == nil {
-				time.Sleep(time.Second)
-				continue
-			}
-			break
 		}
 		schema.Migration()
-		err = syspar.SysUpdate()
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			Exit(1)
-		}
+
 		if *utils.OldFileName != "" {
 			err = model.DBConn.Close()
 			if err != nil {
@@ -285,50 +325,16 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// save the current pid and version
 	if !utils.Mobile() {
-		pid := os.Getpid()
-		PidAndVer, err := json.Marshal(map[string]string{"pid": converter.IntToStr(pid), "version": consts.VERSION})
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
+		if err := savePid(); err != nil {
+			log.Errorf("can't create pid: %s", err)
+			Exit(1)
 		}
-		err = ioutil.WriteFile(*utils.Dir+"/daylight.pid", PidAndVer, 0644)
-		if err != nil {
-			log.Error("%v", utils.ErrInfo(err))
-			panic(err)
-		}
+		defer delPidFile()
 	}
 
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
-		if err := template.LoadContracts(); err != nil {
-			log.Error(`Load Contracts`, err)
-		}
-		parser := new(parser.Parser)
-		err = parser.RollbackToBlockID(*utils.RollbackToBlockID)
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
-		}
-		fmt.Println("complete")
-		// we recieve the statistics of all tables
-		allTable, err := model.GetAllTables()
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
-		}
-
-		startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
-		for _, table := range allTable {
-			count, err := model.Single(`SELECT count(*) FROM ` + converter.EscapeName(table)).Int64()
-			if err != nil {
-				fmt.Println(err)
-				panic(err)
-			}
-			if count > 0 && count > startData[table] {
-				fmt.Println(">>ALERT<<", table, count)
-			} else {
-				fmt.Println(table, "ok")
-			}
-		}
+		rollbackToBlock(*utils.RollbackToBlockID)
 		Exit(0)
 	}
 
@@ -342,83 +348,56 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		}
 	}
 
-	log.Debug("daemonsStart")
-	IosLog("daemonsStart")
+	BrowserHTTPHost, _, ListenHTTPHost := GetHTTPHost()
+	fmt.Printf("BrowserHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, ListenHTTPHost)
 
-	daemons.StartDaemons()
-
-	IosLog("MonitorDaemons")
-	daemonsTable := make(map[string]string)
-	go func() {
-		for {
-			daemonNameAndTime := <-daemons.MonitorDaemonCh
-			daemonsTable[daemonNameAndTime[0]] = daemonNameAndTime[1]
-			if time.Now().Unix()%10 == 0 {
-				log.Debug("daemonsTable: %v\n", daemonsTable)
-			}
-		}
-	}()
-
-	// signals for daemons to exit
-	IosLog("signals")
-	stopdaemons.Signals()
-
-	time.Sleep(time.Second)
-
-	// monitor the signal from the database that the daemons must be completed
-	go stopdaemons.WaitStopTime()
-
-	BrowserHTTPHost := "http://localhost:" + *utils.ListenHTTPPort
-	HandleHTTPHost := ""
-	ListenHTTPHost := *utils.TCPHost + ":" + *utils.ListenHTTPPort
-	go func() {
+	if len(config.ConfigIni["db_type"]) > 0 {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		if len(config.ConfigIni["db_type"]) > 0 {
+		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+		if err != nil {
+			log.Errorf("gorm init error: %s", err)
+			Exit(1)
+		}
+
+		err = syspar.SysUpdate()
+		if err != nil {
+			log.Error("can't read system parameters: %s", utils.ErrInfo(err))
+			Exit(1)
+		}
+
+		log.Info("start daemons")
+		daemons.StartDaemons()
+
+		IosLog("MonitorDaemons")
+		daemonsTable := make(map[string]string)
+		go func() {
 			for {
-				// wait while connection to a DB in other gourutine takes place
-				if model.DBConn == nil {
-					time.Sleep(time.Second)
-					fmt.Println("wait DB")
-				} else {
-					break
+				daemonNameAndTime := <-daemons.MonitorDaemonCh
+				daemonsTable[daemonNameAndTime[0]] = daemonNameAndTime[1]
+				if time.Now().Unix()%10 == 0 {
+					log.Debug("daemonsTable: %v\n", daemonsTable)
 				}
 			}
-			fmt.Println("GET http host")
-			if err := template.LoadContracts(); err != nil {
-				log.Error(`Load Contracts`, err)
-			}
-			BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost = GetHTTPHost()
-			// DB is needed for node as well
-			tcpListener()
+		}()
+
+		// signals for daemons to exit
+		go stopdaemons.WaitStopTime()
+
+		if err := template.LoadContracts(); err != nil {
+			log.Errorf("Load Contracts error: %s", err)
+			Exit(1)
 		}
-		IosLog(fmt.Sprintf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost))
-		fmt.Printf("BrowserHTTPHost: %v, HandleHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, HandleHTTPHost, ListenHTTPHost)
+		// DB is needed for node as well
+		tcpListener()
 		go controllers.GetChain()
 
-		route := httprouter.New()
-		setRoute(route, `/`, controllers.Index, `GET`)
-		setRoute(route, `/content`, controllers.Content, `GET`, `POST`)
-		setRoute(route, `/template`, controllers.Template, `GET`, `POST`)
-		setRoute(route, `/app`, controllers.App, `GET`, `POST`)
-		setRoute(route, `/ajax`, controllers.Ajax, `GET`, `POST`)
-		setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
-		setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
-		api.Route(route)
-		route.Handler(`GET`, `/static/*filepath`, http.FileServer(&assetfs.AssetFS{Asset: FileAsset, AssetDir: static.AssetDir, Prefix: ""}))
-		route.Handler(`GET`, `/.well-known/*filepath`, http.FileServer(http.Dir(*utils.TLS)))
-		if len(*utils.TLS) > 0 {
-			go http.ListenAndServeTLS(":443", *utils.TLS+`/fullchain.pem`, *utils.TLS+`/privkey.pem`, route)
-		}
+	}
 
-		log.Debug("ListenHTTPHost", ListenHTTPHost)
+	stopdaemons.WaintForSignals()
 
-		IosLog(fmt.Sprintf("ListenHTTPHost: %v", ListenHTTPHost))
+	go func() {
 
-		fmt.Println("ListenHTTPHost", ListenHTTPHost)
-
-		httpListener(ListenHTTPHost, &BrowserHTTPHost, route)
-		// for ipv6 server
-		httpListenerV6(route)
+		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost)
 
 		if *utils.Console == 0 && !utils.Mobile() {
 			time.Sleep(time.Second)
@@ -465,9 +444,6 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	// (they are entered from the 'connections' daemon and from those who connected to the node by their own)
 	// go utils.ChatOutput(utils.ChatNewTx)
 
-	log.Debug("ALL RIGHT")
-	IosLog("ALL RIGHT")
-	fmt.Println("ALL RIGHT")
 	time.Sleep(time.Second * 3600 * 24 * 90)
-	log.Debug("EXIT")
+	log.Errorf("exit")
 }

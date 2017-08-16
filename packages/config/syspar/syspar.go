@@ -77,9 +77,6 @@ var (
 
 // SysUpdate reloads/updates values of system parameters
 func SysUpdate() error {
-	if model.DBConn == nil {
-		return nil
-	}
 	systemParameters, err := model.GetAllSystemParameters()
 	if err != nil {
 		return err

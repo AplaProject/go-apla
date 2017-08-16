@@ -36,7 +36,6 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 // IosLog is reserved
@@ -158,15 +157,6 @@ func httpListenerV6(route http.Handler) {
 func tcpListener() {
 	log.Debug("tcp")
 	go func() {
-		for {
-
-			if model.DBConn != nil {
-				break
-			} else {
-				time.Sleep(time.Second * 3)
-			}
-		}
-
 		log.Debug("*utils.tcpHost: %v", *utils.TCPHost+":"+consts.TCP_PORT)
 		//if len(*utils.TCPHost) > 0 {
 		// включаем листинг TCP-сервером и обработку входящих запросов

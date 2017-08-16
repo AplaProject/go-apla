@@ -84,7 +84,7 @@ var (
 	// OldFileName is the old file name
 	OldFileName = flag.String("oldFileName", "", "")
 	// LogLevel is the log level
-	LogLevel = flag.String("logLevel", "", "DayLight LogLevel")
+	LogLevel = flag.String("logLevel", "INFO", "DayLight LogLevel")
 	// Console equals 1 for starting in console
 	Console = flag.Int64("console", 0, "Start from console")
 	// StartBlockID is the start block
@@ -1068,74 +1068,72 @@ func ShellExecute(cmdline string) {
 func FirstBlock(exit bool) {
 	log.Debug("FirstBlock")
 
-	if *GenerateFirstBlock == 1 {
+	log.Debug("GenerateFirstBlock == 1")
 
-		log.Debug("GenerateFirstBlock == 1")
-
-		if len(*FirstBlockPublicKey) == 0 {
-			log.Debug("len(*FirstBlockPublicKey) == 0")
-			priv, pub, _ := crypto.GenHexKeys()
-			err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-			*FirstBlockPublicKey = pub
-		}
-		if len(*FirstBlockNodePublicKey) == 0 {
-			log.Debug("len(*FirstBlockNodePublicKey) == 0")
-			priv, pub, _ := crypto.GenHexKeys()
-			err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
-			if err != nil {
-				log.Error("%v", ErrInfo(err))
-			}
-			*FirstBlockNodePublicKey = pub
-		}
-
-		PublicKey := *FirstBlockPublicKey
-		log.Debug("PublicKey", PublicKey)
-		//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
-		PublicKeyBytes, _ := hex.DecodeString(string(PublicKey))
-
-		NodePublicKey := *FirstBlockNodePublicKey
-		log.Debug("NodePublicKey", NodePublicKey)
-		//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
-		NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
-		Host := *FirstBlockHost
-		if len(Host) == 0 {
-			Host = "127.0.0.1"
-		}
-
-		var block, tx []byte
-		iAddress := int64(crypto.Address(PublicKeyBytes))
-		now := uint32(time.Now().Unix())
-		_, err := converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
+	if len(*FirstBlockPublicKey) == 0 {
+		log.Debug("len(*FirstBlockPublicKey) == 0")
+		priv, pub, _ := crypto.GenHexKeys()
+		err := ioutil.WriteFile(*Dir+"/PrivateKey", []byte(priv), 0644)
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
-		_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
-			Time: now, WalletID: iAddress, CitizenID: 0},
-			PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
+		*FirstBlockPublicKey = pub
+	}
+	if len(*FirstBlockNodePublicKey) == 0 {
+		log.Debug("len(*FirstBlockNodePublicKey) == 0")
+		priv, pub, _ := crypto.GenHexKeys()
+		err := ioutil.WriteFile(*Dir+"/NodePrivateKey", []byte(priv), 0644)
 		if err != nil {
 			log.Error("%v", ErrInfo(err))
 		}
-		converter.EncodeLenByte(&block, tx)
+		*FirstBlockNodePublicKey = pub
+	}
 
-		firstBlockDir := ""
-		if len(*FirstBlockDir) == 0 {
-			firstBlockDir = *Dir
-		} else {
-			firstBlockDir = filepath.Join("", *FirstBlockDir)
-			if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
-				if err = os.Mkdir(firstBlockDir, 0755); err != nil {
-					log.Error("%v", ErrInfo(err))
-				}
+	PublicKey := *FirstBlockPublicKey
+	log.Debug("PublicKey", PublicKey)
+	//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
+	PublicKeyBytes, _ := hex.DecodeString(string(PublicKey))
+
+	NodePublicKey := *FirstBlockNodePublicKey
+	log.Debug("NodePublicKey", NodePublicKey)
+	//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
+	NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
+	Host := *FirstBlockHost
+	if len(Host) == 0 {
+		Host = "127.0.0.1"
+	}
+
+	var block, tx []byte
+	iAddress := int64(crypto.Address(PublicKeyBytes))
+	now := uint32(time.Now().Unix())
+	_, err := converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
+	if err != nil {
+		log.Error("%v", ErrInfo(err))
+	}
+	_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
+		Time: now, WalletID: iAddress, CitizenID: 0},
+		PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})
+	if err != nil {
+		log.Error("%v", ErrInfo(err))
+	}
+	converter.EncodeLenByte(&block, tx)
+
+	firstBlockDir := ""
+	if len(*FirstBlockDir) == 0 {
+		firstBlockDir = *Dir
+	} else {
+		firstBlockDir = filepath.Join("", *FirstBlockDir)
+		if _, err := os.Stat(firstBlockDir); os.IsNotExist(err) {
+			if err = os.Mkdir(firstBlockDir, 0755); err != nil {
+				log.Error("%v", ErrInfo(err))
 			}
-		}
-		ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
-		if exit {
-			os.Exit(0)
 		}
 	}
+	ioutil.WriteFile(filepath.Join(firstBlockDir, "1block"), block, 0644)
+	if exit {
+		os.Exit(0)
+	}
+
 }
 
 // EgaasUpdate decompresses and updates executable file

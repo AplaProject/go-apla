@@ -3,7 +3,6 @@ package config
 import (
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/astaxie/beego/config"
@@ -70,30 +69,4 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 
 func Drop() {
 	os.Remove(*utils.Dir + "/" + configFileName)
-}
-
-func MonitorChanges() {
-	// мониторим config.ini на наличие изменений
-	// monitor config.ini for changes
-	go func() {
-		for {
-			logger.Debug("ConfigInit monitor")
-			if _, err := os.Stat(*utils.Dir + "/" + configFileName); os.IsNotExist(err) {
-				time.Sleep(time.Second)
-				continue
-			}
-			confIni, err := config.NewConfig("ini", *utils.Dir+"/"+configFileName)
-			if err != nil {
-				logger.Error("%v", utils.ErrInfo(err))
-			}
-			ConfigIni, err = confIni.GetSection("default")
-			if err != nil {
-				logger.Error("%v", utils.ErrInfo(err))
-			}
-			if len(ConfigIni["db_type"]) > 0 {
-				break
-			}
-			time.Sleep(time.Second * 3)
-		}
-	}()
 }

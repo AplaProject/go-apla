@@ -60,35 +60,38 @@ func waitSig() {
 }
 
 // Signals waits for Interrupt os.Kill signals
-func Signals() {
+func WaintForSignals() {
 	SigChan = make(chan os.Signal, 1)
 	waitSig()
 	var Term os.Signal = syscall.SIGTERM
 	go func() {
 		signal.Notify(SigChan, os.Interrupt, os.Kill, Term)
 		<-SigChan
-		fmt.Println("KILL SIGNAL")
+		fmt.Println("got kill signal")
 
-		utils.CancelFunc()
-		for i := 0; i < utils.DaemonsCount; i++ {
-			name := <-utils.ReturnCh
-			log.Debugf("daemon %s stopped", name)
+		if utils.CancelFunc != nil {
+			utils.CancelFunc()
+			for i := 0; i < utils.DaemonsCount; i++ {
+				name := <-utils.ReturnCh
+				log.Debugf("daemon %s stopped", name)
+			}
+
+			log.Debug("Daemons killed")
+			fmt.Println("Daemons killed")
+		}
+		if model.DBConn != nil {
+			err := model.GormClose()
+			if err != nil {
+				log.Error("gorm close error: %s", utils.ErrInfo(err).Error())
+			}
 		}
 
-		log.Debug("Daemons killed")
-		fmt.Println("Daemons killed")
-		err := model.GormClose()
+		err := os.Remove(*utils.Dir + "/daylight.pid")
 		if err != nil {
-			log.Error(utils.ErrInfo(err).Error())
-			//panic(err)
+			log.Error("can't remove pid file: %s", err)
+		} else {
+			fmt.Println("removed " + *utils.Dir + "/daylight.pid")
 		}
-
-		err = os.Remove(*utils.Dir + "/daylight.pid")
-		if err != nil {
-			log.Error(utils.ErrInfo(err).Error())
-			panic(err)
-		}
-		fmt.Println("removed " + *utils.Dir + "/daylight.pid")
-		system.Finish(1)
+		system.FinishThrust(1)
 	}()
 }
