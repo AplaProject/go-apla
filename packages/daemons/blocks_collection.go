@@ -60,15 +60,9 @@ func initialLoad(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	config := &model.Config{}
-	if err := config.GetConfig(); err != nil {
-		return err
-	}
-
 	if toLoad {
 		log.Debugf("star first block loading")
-		config.CurrentLoadBlockchain = "file"
-		if err := config.Save(); err != nil {
+		if err := model.UpdateConfig("current_load_clockchain", "file"); err != nil {
 			return err
 		}
 
@@ -80,8 +74,7 @@ func initialLoad(d *daemon, ctx context.Context) error {
 		}
 	}
 
-	config.CurrentLoadBlockchain = "nodes"
-	if err := config.Save(); err != nil {
+	if err := model.UpdateConfig("current_load_clockchain", "nodes"); err != nil {
 		return err
 	}
 
