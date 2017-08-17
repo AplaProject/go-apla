@@ -49,6 +49,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 	pageData := blockExplorerPage{Data: c.Data, Host: c.r.Host}
 
 	blockID := converter.StrToInt64(c.r.FormValue("blockId"))
+
 	pageData.SinglePage = converter.StrToInt64(c.r.FormValue("singlePage"))
 	if blockID > 0 {
 		pageData.BlockID = blockID
@@ -137,6 +138,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
+
 		blockExplorer := make([]map[string]string, 0)
 		for _, block := range blockchain {
 			row := block.ToMap()

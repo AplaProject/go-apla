@@ -1,6 +1,10 @@
 package model
 
-import "github.com/EGaaS/go-egaas-mvp/packages/converter"
+import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+)
 
 type Block struct {
 	ID         int64  `gorm:"primary_key;not_null"`
@@ -106,11 +110,11 @@ func (b *Block) GetLastBlockData() (map[string]int64, error) {
 func (b *Block) ToMap() map[string]string {
 	result := make(map[string]string)
 	result["hash"] = string(b.Hash)
-	result["state_id"] = string(b.StateID)
+	result["state_id"] = strconv.FormatInt(b.StateID, 10)
 	result["wallet_id"] = converter.AddressToString(b.WalletID)
-	result["time"] = string(b.Time)
-	result["tx"] = string(b.Tx)
-	result["id"] = string(b.ID)
+	result["time"] = strconv.FormatInt(b.Time, 10)
+	result["tx"] = string(converter.BinToHex(b.Tx))
+	result["id"] = strconv.FormatInt(b.ID, 10)
 	return result
 }
 

@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type Rollback struct {
 	RbID    int64  `gorm:"primary_key;not null"`
 	BlockID int64  `gorm:"not null"`
@@ -29,8 +31,8 @@ func (r *Rollback) Delete() error {
 
 func (r *Rollback) ToMap() map[string]string {
 	result := make(map[string]string, 0)
-	result["rb_id"] = string(r.RbID)
-	result["block_id"] = string(r.BlockID)
+	result["rb_id"] = strconv.FormatInt(r.RbID, 10)
+	result["block_id"] = strconv.FormatInt(r.BlockID, 10)
 	result["data"] = r.Data
 	return result
 }

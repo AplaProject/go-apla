@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type SystemParameter struct {
 	Name       string `gorm:"primary_key;not null;size:255"`
 	Value      string `gorm:"not null;type:jsonb(PostgreSQL)"`
@@ -43,6 +45,6 @@ func (sp *SystemParameter) ToMap() map[string]string {
 	result["name"] = sp.Name
 	result["value"] = sp.Value
 	result["conditions"] = sp.Conditions
-	result["rb_id"] = string(sp.RbID)
+	result["rb_id"] = strconv.FormatInt(sp.RbID, 10)
 	return result
 }

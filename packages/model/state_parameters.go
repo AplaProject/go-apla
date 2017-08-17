@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type StateParameter struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:100"`
@@ -40,7 +42,7 @@ func (sp *StateParameter) ToMap() map[string]string {
 	result["value"] = sp.Value
 	result["byte_code"] = string(sp.ByteCode)
 	result["conditions"] = sp.Conditions
-	result["rb_id"] = string(sp.RbID)
+	result["rb_id"] = strconv.FormatInt(sp.RbID, 10)
 	return result
 }
 

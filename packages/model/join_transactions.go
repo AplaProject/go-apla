@@ -1,14 +1,16 @@
 package model
 
-import "github.com/shopspring/decimal"
+import (
+	"strconv"
+)
 
 type WalletedTransaction struct {
 	ID                     int64
 	SenderWalletID         int64
 	RecepientWalletID      int64
 	RecepientWalletAddress string
-	Amount                 decimal.Decimal
-	Comission              decimal.Decimal
+	Amount                 string
+	Comission              string
 	Time                   int32
 	Comment                string
 	BlockID                int64
@@ -33,17 +35,17 @@ func (wt *WalletedTransaction) Get(senderWalletID, recipientWalletID int64, reci
 
 func (wt *WalletedTransaction) ToMap() map[string]string {
 	result := make(map[string]string, 0)
-	result["id"] = string(wt.ID)
-	result["sender_wallet_id"] = string(wt.SenderWalletID)
-	result["recepient_wallet_id"] = string(wt.RecepientWalletID)
+	result["id"] = strconv.FormatInt(wt.ID, 10)
+	result["sender_wallet_id"] = strconv.FormatInt(wt.SenderWalletID, 10)
+	result["recepient_wallet_id"] = strconv.FormatInt(wt.RecepientWalletID, 10)
 	result["recepient_wallet_address"] = wt.RecepientWalletAddress
-	result["amount"] = wt.Amount.String()
-	result["comission"] = wt.Comission.String()
-	result["time"] = string(wt.Time)
+	result["amount"] = wt.Amount
+	result["comission"] = wt.Comission
+	result["time"] = strconv.FormatInt(int64(wt.Time), 10)
 	result["comment"] = wt.Comment
-	result["block_id"] = string(wt.BlockID)
-	result["rb_id"] = string(wt.RbID)
-	result["sw"] = string(wt.Sw)
-	result["rw"] = string(wt.Rw)
+	result["block_id"] = strconv.FormatInt(wt.BlockID, 10)
+	result["rb_id"] = strconv.FormatInt(wt.RbID, 10)
+	result["sw"] = strconv.FormatInt(wt.Sw, 10)
+	result["rw"] = strconv.FormatInt(wt.Rw, 10)
 	return result
 }

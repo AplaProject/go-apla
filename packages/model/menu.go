@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type Menu struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:255"`
@@ -35,7 +37,7 @@ func (m *Menu) ToMap() map[string]string {
 	result["name"] = m.Name
 	result["value"] = m.Value
 	result["conditions"] = m.Conditions
-	result["rb_id"] = string(m.RbID)
+	result["rb_id"] = strconv.FormatInt(m.RbID, 10)
 	return result
 }
 

@@ -1104,6 +1104,8 @@ func FirstBlock() {
 	var block, tx []byte
 	iAddress := int64(crypto.Address(PublicKeyBytes))
 	now := uint32(time.Now().Unix())
+
+	log.Debugf("wallet_id: %+v\n", iAddress)
 	_, err := converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 	if err != nil {
 		log.Errorf("first block header marshall error: %v", ErrInfo(err))

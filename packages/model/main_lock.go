@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 type MainLock struct {
 	LockTime   int32  `gorm:"not_null"`
@@ -43,10 +46,10 @@ func (ml *MainLock) Create() error {
 
 func (ml *MainLock) ToMap() map[string]string {
 	result := make(map[string]string, 0)
-	result["lock_time"] = string(ml.LockTime)
+	result["lock_time"] = strconv.FormatInt(int64(ml.LockTime), 10)
 	result["script_name"] = ml.ScriptName
 	result["info"] = ml.Info
-	result["uniq"] = string(ml.Uniq)
+	result["uniq"] = strconv.FormatInt(int64(ml.Uniq), 10)
 	return result
 }
 

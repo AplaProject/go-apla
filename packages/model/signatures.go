@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type Signature struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:255"`
@@ -36,7 +38,7 @@ func (s *Signature) ToMap() map[string]string {
 	result["name"] = s.Name
 	result["value"] = s.Value
 	result["conditions"] = s.Conditions
-	result["rb_id"] = string(s.RbID)
+	result["rb_id"] = strconv.FormatInt(s.RbID, 10)
 	return result
 }
 

@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type FullNode struct {
 	ID                    int32  `gorm:"primary_key;not_null"`
 	Host                  string `gorm:"not null;size:100"`
@@ -80,13 +82,13 @@ func (fn *FullNode) GetAll() (*[]FullNode, error) {
 
 func (fn *FullNode) ToMap() map[string]string {
 	result := make(map[string]string)
-	result["id"] = string(fn.ID)
+	result["id"] = strconv.FormatInt(int64(fn.ID), 10)
 	result["host"] = fn.Host
-	result["wallet_id"] = string(fn.WalletID)
-	result["state_id"] = string(fn.StateID)
-	result["final_delegate_wallet_id"] = string(fn.FinalDelegateWalletID)
-	result["final_delegate_state_id"] = string(fn.FinalDelegateStateID)
-	result["rb_id"] = string(fn.RbID)
+	result["wallet_id"] = strconv.FormatInt(fn.WalletID, 10)
+	result["state_id"] = strconv.FormatInt(fn.StateID, 10)
+	result["final_delegate_wallet_id"] = strconv.FormatInt(fn.FinalDelegateWalletID, 10)
+	result["final_delegate_state_id"] = strconv.FormatInt(fn.FinalDelegateStateID, 10)
+	result["rb_id"] = strconv.FormatInt(fn.RbID, 10)
 	return result
 }
 

@@ -121,11 +121,10 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 
 	var needTx []byte
 	for buf.Len() > 0 {
-		newDataTxHash := converter.BinToHex(buf.Next(16))
+		newDataTxHash := buf.Next(16)
 		if len(newDataTxHash) == 0 {
 			return nil, errors.New("wrong transactions hash size")
 		}
-		log.Debug("newDataTxHash %s", newDataTxHash)
 
 		// check if we have such a transaction
 		// check log_transaction
@@ -156,7 +155,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 			log.Debug("exists")
 			continue
 		}
-		needTx = append(needTx, converter.HexToBin(newDataTxHash)...)
+		needTx = append(needTx, newDataTxHash...)
 	}
 
 	return needTx, nil

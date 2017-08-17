@@ -167,7 +167,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 	if err != nil {
 		log.Fatal(err)
 	}
-	hash = converter.BinToHex(serializedData)
+	hash = serializedData
 	transactionStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: int64(info.ID),
 		WalletID: int64(idkey), CitizenID: int64(idkey)}
 	err = transactionStatus.Create()
@@ -175,7 +175,8 @@ func (c *Controller) AjaxNewKey() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	queueTx := &model.QueueTx{Hash: hash, Data: serializedData}
+
+	queueTx := &model.QueueTx{Hash: hash, Data: serializedData} // TODO: serializedData ????
 	if err = queueTx.Create(); err != nil {
 		result.Error = err.Error()
 		return result

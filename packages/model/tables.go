@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type Table struct {
 	tableName             string
 	Name                  string `gorm:"primary_key;not null;size:100"`
@@ -33,7 +35,7 @@ func (t *Table) ToMap() map[string]string {
 	result["name"] = string(t.Name)
 	result["columns_and_permissions"] = t.ColumnsAndPermissions
 	result["conditions"] = t.Conditions
-	result["rb_id"] = string(t.RbID)
+	result["rb_id"] = strconv.FormatInt(t.RbID, 10)
 	return result
 }
 
@@ -131,7 +133,7 @@ func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[str
 	}
 	result := make(map[string]string, 0)
 	result["table"] = temp.ColumnsAndPermissions
-	result["rb_id"] = string(temp.RbID)
+	result["rb_id"] = strconv.FormatInt(temp.RbID, 10)
 	return result, nil
 }
 
@@ -147,6 +149,6 @@ func GetTableWhereUpdatePermissionAndTableName(columnName, tableName string) (ma
 	}
 	result := make(map[string]string, 0)
 	result["table"] = temp.ColumnsAndPermissions
-	result["rb_id"] = string(temp.RbID)
+	result["rb_id"] = strconv.FormatInt(temp.RbID, 10)
 	return result, nil
 }

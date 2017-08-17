@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type DltWallet struct {
 	WalletID           int64  `gorm:"primary_key;not null"`
 	Amount             string `gorm:"not null"`
@@ -71,17 +73,17 @@ func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {
 
 func (w *DltWallet) ToMap() map[string]string {
 	result := make(map[string]string, 0)
-	result["wallet_id"] = string(w.WalletID)
+	result["wallet_id"] = strconv.FormatInt(w.WalletID, 10)
 	result["amount"] = w.Amount
 	result["public_key_0"] = string(w.PublicKey)
 	result["node_public_key"] = string(w.NodePublicKey)
-	result["last_forgind_data_upd"] = string(w.LastForgingDataUpd)
+	result["last_forgind_data_upd"] = strconv.FormatInt(w.LastForgingDataUpd, 10)
 	result["host"] = w.Host
 	result["address_vote"] = w.AddressVote
-	result["fuel_rate"] = string(w.FuelRate)
+	result["fuel_rate"] = strconv.FormatInt(w.FuelRate, 10)
 	result["spending_contract"] = w.SpendingContract
 	result["conditions_change"] = w.ConditionsChange
-	result["rb_id"] = string(w.RollbackID)
+	result["rb_id"] = strconv.FormatInt(w.RollbackID, 10)
 	return result
 }
 

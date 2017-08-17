@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type UpdFullNode struct {
 	ID   int64 `gorm:"primary_key;not null"`
 	Time int64 `gorm:"not null"`
@@ -18,8 +20,8 @@ func (ufn *UpdFullNode) GetAll() ([]UpdFullNode, error) {
 
 func (ufn *UpdFullNode) ToMap() map[string]string {
 	result := make(map[string]string)
-	result["id"] = string(ufn.ID)
-	result["time"] = string(ufn.Time)
-	result["rb_id"] = string(ufn.RbID)
+	result["id"] = strconv.FormatInt(ufn.ID, 10)
+	result["time"] = strconv.FormatInt(ufn.Time, 10)
+	result["rb_id"] = strconv.FormatInt(ufn.RbID, 10)
 	return result
 }

@@ -70,9 +70,6 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	// TODO: delete hex ??
-	prevBlock.Hash = converter.BinToHex(prevBlock.Hash)
-
 	// calculate the next block generation time
 	sleepTime, err := model.GetSleepTime(config.DltWalletID, config.StateID, config.StateID, config.DltWalletID)
 	if err != nil {
@@ -81,6 +78,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 	toSleep := int64(sleepTime) - (time.Now().Unix() - int64(prevBlock.Time))
 	if toSleep > 0 {
+		log.Debugf("we need to sleep %d seconds to generate new block", toSleep)
 		d.sleepTime = time.Duration(toSleep) * time.Second
 		return nil
 	}
@@ -97,6 +95,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	// verify transactions
 	err = p.AllTxParser()
 	if err != nil {
+		log.Errorf("transactions parser error: %s", err)
 		return err
 	}
 

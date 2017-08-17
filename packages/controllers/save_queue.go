@@ -334,7 +334,6 @@ func (c *Controller) SaveQueue() (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	hash = converter.BinToHex(hash)
 	txStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: txType, WalletID: walletID, CitizenID: citizenID}
 	err = txStatus.Create()
 	if err != nil {

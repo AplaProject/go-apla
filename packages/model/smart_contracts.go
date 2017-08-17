@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type SmartContract struct {
 	tableName  string
 	ID         int64  `gorm:"primary_key;not null"`
@@ -48,14 +50,14 @@ func (sc *SmartContract) UpdateConditions(conditions string) error {
 
 func (sc *SmartContract) ToMap() map[string]string {
 	result := make(map[string]string)
-	result["id"] = string(sc.ID)
+	result["id"] = strconv.FormatInt(sc.ID, 10)
 	result["name"] = sc.Name
 	result["value"] = string(sc.Value)
-	result["wallet_id"] = string(sc.WalletID)
+	result["wallet_id"] = strconv.FormatInt(sc.WalletID, 10)
 	result["active"] = sc.Active
 	result["conditions"] = sc.Conditions
 	result["variables"] = string(sc.Variables)
-	result["rb_id"] = string(sc.RbID)
+	result["rb_id"] = strconv.FormatInt(sc.RbID, 10)
 	return result
 }
 

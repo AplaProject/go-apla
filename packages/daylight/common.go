@@ -22,14 +22,14 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/op/go-logging"
 )
 
 var (
-	log    = logging.MustGetLogger("daylight")
-	format = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{color:reset} %{message}[" + consts.VERSION + "]" + string(byte(0)))
+	log = logging.MustGetLogger("daylight")
+	//	format = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile} %{shortfunc} [%{level:.4s}] %{color:reset} %{message}[" + consts.VERSION + "]" + string(byte(0)))
+	format = logging.MustStringFormatter("%{shortfile} %{shortfunc} [%{level:.4s}] %{message}")
 )
 
 func openBrowser(BrowserHTTPHost string) {

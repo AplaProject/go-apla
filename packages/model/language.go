@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type Language struct {
 	tableName  string
 	Name       string `gorm:"primary_key;not null;size:100"`
@@ -61,6 +63,6 @@ func (l *Language) ToMap() map[string]string {
 	result["name"] = l.Name
 	result["res"] = l.Res
 	result["conditions"] = l.Conditions
-	result["rb_id"] = string(l.RbID)
+	result["rb_id"] = strconv.FormatInt(l.RbID, 10)
 	return result
 }

@@ -111,14 +111,13 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 		log.Fatal(err)
 	}
 
-	hash = converter.BinToHex(hash)
 	queueTx := &model.QueueTx{Hash: hash}
 	err = queueTx.DeleteTx()
 	if err != nil {
 		return err
 	}
 
-	queueTx.Data = converter.BinToHex(data)
+	queueTx.Data = data
 	err = queueTx.Save()
 	if err != nil {
 		return nil
@@ -129,8 +128,8 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	hash = converter.BinToHex(hash)
-	err = p.TxParser(converter.HexToBin(hash), data, true)
+
+	err = p.TxParser(hash, data, true)
 	if err != nil {
 		return err
 	}
