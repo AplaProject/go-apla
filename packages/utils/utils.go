@@ -1076,6 +1076,7 @@ func FirstBlock() {
 			log.Error("write publick key failed: %v", ErrInfo(err))
 			return
 		}
+		log.Debugf("public key: %s", pub)
 		*FirstBlockPublicKey = pub
 	}
 	if len(*FirstBlockNodePublicKey) == 0 {
@@ -1091,11 +1092,20 @@ func FirstBlock() {
 
 	PublicKey := *FirstBlockPublicKey
 	//		PublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(PublicKey))
-	PublicKeyBytes, _ := hex.DecodeString(string(PublicKey))
+	PublicKeyBytes, err := hex.DecodeString(string(PublicKey))
+	if err != nil {
+		log.Errorf("can't generate key, decode string failed: %s", err)
+		return
+	}
 
 	NodePublicKey := *FirstBlockNodePublicKey
 	//		NodePublicKeyBytes, _ := base64.StdEncoding.DecodeString(string(NodePublicKey))
-	NodePublicKeyBytes, _ := hex.DecodeString(string(NodePublicKey))
+	NodePublicKeyBytes, err := hex.DecodeString(string(NodePublicKey))
+	if err != nil {
+		log.Errorf("can't generate key, decode string failed: %s", err)
+		return
+	}
+
 	Host := *FirstBlockHost
 	if len(Host) == 0 {
 		Host = "127.0.0.1"
@@ -1106,11 +1116,13 @@ func FirstBlock() {
 	now := uint32(time.Now().Unix())
 
 	log.Debugf("wallet_id: %+v\n", iAddress)
-	_, err := converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
+	_, err = converter.BinMarshal(&block, &consts.BlockHeader{Type: 0, BlockID: 1, Time: now, WalletID: iAddress})
 	if err != nil {
 		log.Errorf("first block header marshall error: %v", ErrInfo(err))
 		return
 	}
+
+	log.Debugf("len(PublicKeyBytes) = %d, len(NodePublicKeyBytes) = %d", len(PublicKeyBytes), len(NodePublicKeyBytes))
 	_, err = converter.BinMarshal(&tx, &consts.FirstBlock{TxHeader: consts.TxHeader{Type: 1,
 		Time: now, WalletID: iAddress, CitizenID: 0},
 		PublicKey: PublicKeyBytes, NodePublicKey: NodePublicKeyBytes, Host: string(Host)})

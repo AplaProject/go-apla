@@ -86,9 +86,16 @@ func signECDSA(privateKey string, data string) (ret []byte, err error) {
 // TODO параметризировать, длина данных в зависимости от длины кривой
 // CheckECDSA checks if forSign has been signed with corresponding to public the private key
 func checkECDSA(public []byte, data string, signature []byte) (bool, error) {
-	if len(data) == 0 || len(public) != 64 || len(signature) == 0 {
-		return false, fmt.Errorf("invalid parameters")
+	if len(data) == 0 {
+		return false, fmt.Errorf("invalid parameters len(data) == 0")
 	}
+	if len(public) != 64 {
+		return false, fmt.Errorf("invalid parameters len(public) = %d", len(public))
+	}
+	if len(signature) == 0 {
+		return false, fmt.Errorf("invalid parameters len(signature) == 0")
+	}
+
 	var pubkeyCurve elliptic.Curve
 	switch ellipticSize {
 	case elliptic256:

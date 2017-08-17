@@ -51,7 +51,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 		if err != nil {
 			log.Fatal(err)
 		}
-		hash = converter.BinToHex(hash)
 		transSlice = append(transSlice, hash)
 		input := (*transactionBinaryData)[:]
 		// первый байт - тип транзакции

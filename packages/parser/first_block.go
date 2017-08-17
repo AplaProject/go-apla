@@ -45,7 +45,7 @@ func (p *FirstBlockParser) Action() error {
 	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
 	myAddress := crypto.Address(data.PublicKey)
 	log.Debug("data.PublicKey %s", data.PublicKey)
-	log.Debug("data.PublicKey %x", data.PublicKey)
+	log.Debug("data.PublicKey %x", data.NodePublicKey)
 	dltWallet := &model.DltWallet{
 		WalletID:      myAddress,
 		Host:          data.Host,

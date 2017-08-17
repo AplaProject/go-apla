@@ -94,12 +94,6 @@ func (p *Parser) CheckBlockHeader() error {
 		utils.ErrInfo(fmt.Errorf("incorrect block time"))
 	}
 
-	// проверим ID блока
-	// check the block ID
-	if !utils.CheckInputData(p.BlockData.BlockID, "int") {
-		return utils.ErrInfo(fmt.Errorf("incorrect block_id value (not int)"))
-	}
-
 	// проверим, верный ли ID блока
 	// check if the ID of block is correct
 	if !first {
