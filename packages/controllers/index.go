@@ -81,7 +81,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	sess, err := globalSessions.SessionStart(w, r)
 	if err != nil {
-		log.Error("%v", err)
+		log.Errorf("start session error: %v", err)
 	}
 	defer sess.SessionRelease(w)
 
@@ -89,9 +89,12 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	sessWalletID := GetSessWalletID(sess)
 	//	var key string
 
+	log.Debugf("sessWalletID: %v", sessWalletID)
+
 	showIOSMenu := true
 	// When we don't give the menu
 	if model.DBConn == nil {
+		log.Debugf("base is done???")
 		showIOSMenu = false
 	}
 
@@ -101,10 +104,10 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	if showIOSMenu && model.DBConn != nil {
 		infoBlock := &model.InfoBlock{}
-
+		log.Debugf("try to get block info")
 		err := infoBlock.GetInfoBlock()
 		if err != nil {
-			log.Error("%v", err)
+			log.Error("can't get block info: %v", err)
 		}
 		wTime := int64(12)
 		wTimeReady := int64(2)
@@ -156,15 +159,19 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, err := static.Asset("static/index.html")
+
 	t := template.New("template").Funcs(funcMap)
+
 	t, err = t.Parse(string(data))
 	if err != nil {
-		log.Error("%v", err)
+		log.Errorf("template parse error: %s", err)
 	}
+
 	langs := ``
 	if len(language.LangList) > 0 {
 		langs = strings.Join(language.LangList, `,`)
 	}
+
 	b := new(bytes.Buffer)
 	err = t.Execute(b, &index{
 		DbOk:        true,
@@ -185,5 +192,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("%v", err)
 	}
+	log.Debugf("write response")
 	w.Write(b.Bytes())
 }

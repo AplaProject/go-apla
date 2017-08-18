@@ -17,8 +17,6 @@
 package daemons
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -27,6 +25,8 @@ import (
 	"context"
 	"io"
 	"sync"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 )
 
 const (
@@ -85,7 +85,7 @@ func Disseminator(d *daemon, ctx context.Context) error {
 
 func sendTransactions() error {
 	// get unsent transactions
-	trs, err := model.GetAllUnsentTransactions(false)
+	trs, err := model.GetAllUnsentTransactions()
 
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func sendHashes(fullNodeID int32) error {
 		return err
 	}
 
-	trs, err := model.GetAllUnsentTransactions(true)
+	trs, err := model.GetAllUnsentTransactions()
 	if err != nil {
 		return err
 	}
@@ -169,18 +169,16 @@ func sendHashes(fullNodeID int32) error {
 
 func sendHashesResp(resp []byte, w io.Writer) error {
 	var buf bytes.Buffer
-	for {
+	for len(resp) > 16 {
 		// Parse the list of requested transactions
-		if len(resp) >= 16 {
-			txHash := converter.BytesShift(&resp, 16)
-			tr := &model.Transaction{}
-			err := tr.Read(txHash)
-			if err != nil {
-				return err
-			}
-			if len(tr.Data) > 0 {
-				buf.Write(converter.EncodeLengthPlusData(tr.Data))
-			}
+		txHash := converter.BytesShift(&resp, 16)
+		tr := &model.Transaction{}
+		err := tr.Read(txHash)
+		if err != nil {
+			return err
+		}
+		if len(tr.Data) > 0 {
+			buf.Write(converter.EncodeLengthPlusData(tr.Data))
 		}
 	}
 	// write out the requested transactions
@@ -285,29 +283,23 @@ func sendDRequest(host string, reqType int, buf []byte, respHandler func([]byte,
 	if err != nil {
 		return err
 	}
-	dataSize := converter.BinToDec(buf)
-	log.Debug("dataSize %d (host : %v)", dataSize, host)
-	// и если данных менее MAX_TX_SIZE, то получаем их
-	// if data is less than MAX_TX_SIZE, so get them
-	if dataSize < syspar.GetMaxTxSize() && dataSize > 0 {
-		binaryTxHashes := make([]byte, dataSize)
-		_, err = io.ReadFull(conn, binaryTxHashes)
-		if err != nil {
-			return err
-		}
+
+	// if response handler exist, read the answer and call handler
+	if respHandler != nil {
+		buf := make([]byte, 4)
+		// read data size
+		_, err = io.ReadFull(conn, buf)
 
 		respSize := converter.BinToDec(buf)
-		if respSize > consts.MAX_TX_SIZE {
+		if respSize > syspar.GetMaxTxSize() {
 			return nil
 		}
-
 		// read the data
 		resp := make([]byte, respSize)
 		_, err = io.ReadFull(conn, resp)
 		if err != nil {
 			return err
 		}
-
 		err = respHandler(resp, conn)
 		if err != nil {
 			return err

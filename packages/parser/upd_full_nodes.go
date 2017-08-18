@@ -67,7 +67,7 @@ func (p *UpdFullNodesParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.nodePublicKey = wallet.PublicKey
+	p.nodePublicKey = []byte(wallet.PublicKey)
 	if len(p.nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}

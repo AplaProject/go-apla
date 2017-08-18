@@ -40,16 +40,16 @@ func (c *Controller) DashboardAnonym() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		amount := wallet.Amount
-		if amount == "" {
-			amount = "0"
+		if wallet.Amount != "" {
+			amount = wallet.Amount
 		}
 	}
 
 	TemplateStr, err := makeTemplate("dashboard_anonym", "dashboardAnonym", &dashboardAnonymPage{
 		Lang:   c.Lang,
 		Title:  "Home",
-		Amount: amount})
+		Amount: amount,
+	})
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

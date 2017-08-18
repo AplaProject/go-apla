@@ -49,7 +49,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		delegated, err := systemState.IsDelegated(config.StateID)
 		if err == nil && delegated {
 			// we are the state and we have delegated the node maintenance to another user or state
-			log.Infof("we are not full node, sleep for hour")
+			log.Infof("we delegated block generation, sleep for hour")
 			d.sleepTime = 3600 * time.Second
 			return nil
 		}
@@ -60,6 +60,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	if err != nil || fullNodes.ID == 0 {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
+		log.Infof("we are not full node, sleep for 10 seconds")
 		return nil
 	}
 
@@ -131,7 +132,7 @@ func generateNextBlock(prevBlock *model.InfoBlock, trs []model.Transaction, key 
 		if err != nil {
 			return nil, err
 		}
-		mrklArray = append(mrklArray, converter.BinToHex(doubleHash)) // TODO: check it !!!!
+		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
 		blockDataTx = append(blockDataTx, converter.EncodeLengthPlusData([]byte(tr.Data))...)
 	}
 

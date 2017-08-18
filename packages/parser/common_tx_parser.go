@@ -98,14 +98,12 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 		// вставляем с verified=1
 		// put with verified=1
 		newTx := &model.Transaction{
-			Hash:       hash,
-			Data:       converter.BinToHex(binaryTx),
-			ForSelfUse: 0,
-			Type:       int8(txType),
-			WalletID:   walletID,
-			CitizenID:  citizenID,
-			ThirdVar:   0,
-			Counter:    counter,
+			Hash:      hash,
+			Data:      converter.BinToHex(binaryTx),
+			Type:      int8(txType),
+			WalletID:  walletID,
+			CitizenID: citizenID,
+			Counter:   counter,
 		}
 		err = newTx.Create()
 		if err != nil {

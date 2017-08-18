@@ -7,7 +7,7 @@ type QueueBlock struct {
 }
 
 func (qb *QueueBlock) GetQueueBlock() error {
-	return DBConn.First(&qb).Error
+	return handleError(DBConn.First(&qb).Error)
 }
 
 func (qb *QueueBlock) Delete() error {

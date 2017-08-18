@@ -55,15 +55,16 @@ func (c *Controller) BlockExplorer() (string, error) {
 		pageData.BlockID = blockID
 		block := &model.Block{}
 		err := block.GetBlock(blockID)
-		blockInfo := make(map[string]string, 0)
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
+
+		blockInfo := block.ToMap()
 		if len(blockInfo) > 0 {
-			blockInfo[`hash`] = string(block.Hash)
+			blockInfo[`hash`] = string(converter.BinToHex(block.Hash))
 			blockInfo[`size`] = converter.IntToStr(len(block.Data))
 			blockInfo[`wallet_address`] = converter.AddressToString(block.WalletID)
-			tmp := string(block.Data)
+			tmp := string(converter.BinToHex(block.Data))
 			out := ``
 			for i, ch := range tmp {
 				out += string(ch)
@@ -73,9 +74,9 @@ func (c *Controller) BlockExplorer() (string, error) {
 			}
 			if blockID > 1 {
 				parent := &model.Block{}
-				err = block.GetBlock(blockID - 1)
+				err = parent.GetBlock(blockID - 1)
 				if err == nil {
-					blockInfo[`parent`] = string(parent.Hash)
+					blockInfo[`parent`] = string(converter.BinToHex(parent.Hash))
 				} else {
 					blockInfo[`parent`] = err.Error()
 				}
@@ -134,8 +135,10 @@ func (c *Controller) BlockExplorer() (string, error) {
 				return ``, nil
 			}
 		}
+
 		blockchain, err := block.GetBlocks(-1, 30)
 		if err != nil {
+			log.Debugf("can't get last 30 blocks")
 			return "", utils.ErrInfo(err)
 		}
 

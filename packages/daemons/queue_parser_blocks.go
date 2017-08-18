@@ -18,7 +18,6 @@ package daemons
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -61,8 +60,6 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 	if len(queueBlock.Hash) == 0 {
 		return err
 	}
-	queueBlock.Hash = converter.BinToHex(queueBlock.Hash)
-	infoBlock.Hash = converter.BinToHex(infoBlock.Hash)
 
 	// check if the block gets in the rollback_blocks_1 limit
 	if queueBlock.BlockID > infoBlock.BlockID+consts.RB_BLOCKS_1 {

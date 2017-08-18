@@ -81,7 +81,7 @@ func (p *Parser) RollbackToBlockID(blockID int64) error {
 	walletID := converter.BinToDecBytesShift(&data, size)
 	stateID := converter.BinToDecBytesShift(&data, 1)
 	ib := &model.InfoBlock{
-		Hash:     converter.BinToHex(block.Hash),
+		Hash:     block.Hash,
 		BlockID:  iblock,
 		Time:     time,
 		WalletID: walletID,

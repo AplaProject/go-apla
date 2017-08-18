@@ -192,7 +192,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 					return fmt.Errorf("unknown wallet id")
 				}
 			} else {
-				p.PublicKeys = append(p.PublicKeys, wallet.PublicKey)
+				p.PublicKeys = append(p.PublicKeys, []byte(wallet.PublicKey))
 			}
 		}
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)

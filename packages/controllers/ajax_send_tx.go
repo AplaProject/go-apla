@@ -54,11 +54,10 @@ func (c *Controller) AjaxSendTx() interface{} {
 		if err != nil {
 			result.Error = err.Error()
 		}
-		var isPublic []byte
 		wallet := &model.DltWallet{}
 		err = wallet.GetWallet(c.SessWalletID)
-		isPublic = wallet.PublicKey
-		if err == nil && len(signature) > 0 && len(isPublic) == 0 {
+
+		if err == nil && len(signature) > 0 && len(wallet.PublicKey) == 0 {
 			public, _ := hex.DecodeString(c.r.FormValue(`public`))
 			if len(public) == 0 {
 				err = fmt.Errorf(`empty public key`)

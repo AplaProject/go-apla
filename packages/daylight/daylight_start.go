@@ -371,8 +371,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 		log.Info("start daemons")
 		daemons.StartDaemons()
+		log.Debugf("daemon started")
 
-		IosLog("MonitorDaemons")
 		daemonsTable := make(map[string]string)
 		go func() {
 			for {
@@ -391,8 +391,10 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			log.Errorf("Load Contracts error: %s", err)
 			Exit(1)
 		}
-		// DB is needed for node as well
+		log.Debugf("all contracts loaded")
+
 		tcpListener()
+		log.Debugf("tcp listener started")
 		go controllers.GetChain()
 
 	}
@@ -404,6 +406,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		BrowserHTTPHost = initRoutes(ListenHTTPHost, BrowserHTTPHost)
 
 		if *utils.Console == 0 && !utils.Mobile() {
+			log.Debugf("try to start browser")
 			time.Sleep(time.Second)
 			if thrustWindowLoder != nil {
 				thrustWindowLoder.Close()

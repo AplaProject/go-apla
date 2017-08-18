@@ -67,10 +67,10 @@ func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, erro
 func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
-	if startFromID != -1 {
+	if startFromID > 0 {
 		err = DBConn.Order("id desc").Limit(limit).Where("id > ?", startFromID).Find(blockchain).Error
 	} else {
-		err = DBConn.Order("id desc").Limit(limit).Last(blockchain).Error
+		err = DBConn.Order("id desc").Limit(limit).Find(blockchain).Error
 	}
 	return *blockchain, handleError(err)
 }
@@ -109,7 +109,7 @@ func (b *Block) GetLastBlockData() (map[string]int64, error) {
 
 func (b *Block) ToMap() map[string]string {
 	result := make(map[string]string)
-	result["hash"] = string(b.Hash)
+	result["hash"] = string(converter.BinToHex(b.Hash))
 	result["state_id"] = strconv.FormatInt(b.StateID, 10)
 	result["wallet_id"] = converter.AddressToString(b.WalletID)
 	result["time"] = strconv.FormatInt(b.Time, 10)

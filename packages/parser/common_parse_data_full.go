@@ -79,7 +79,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 		for {
 			// обработка тр-ий может занять много времени, нужно отметиться
 			// transactions processing can take a lot of time, you need to be marked
-			log.Debug("&p.BinaryData", p.BinaryData)
+			log.Debugf("block data = %+v, transctions data = %x", p.BlockData, p.BinaryData)
 			transactionSize, err := converter.DecodeLength(&p.BinaryData)
 			if err != nil {
 				log.Fatal(err)
@@ -135,7 +135,6 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			// hash = converter.BinToHex(hash)
 			p.TxHash = string(hash)
-			log.Debug("p.TxHash %s", p.TxHash)
 			p.TxBinaryData = transactionBinaryData
 			txType = int(converter.BinToDecBytesShift(&p.TxBinaryData, 1))
 			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)

@@ -74,7 +74,8 @@ func (c *Controller) AjaxSignIn() interface{} {
 	log.Debug("c.r.RemoteAddr %s", c.r.RemoteAddr)
 	log.Debug("c.r.Header.Get(User-Agent) %s", c.r.Header.Get("User-Agent"))
 
-	publicKey := []byte(key)
+	log.Debugf("publick key for sign_in: %s", key)
+	publicKey := []byte(converter.HexToBin(key))
 	walletID := int64(crypto.Address(publicKey))
 	if err != nil {
 		result.Error = err.Error()

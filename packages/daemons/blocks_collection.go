@@ -350,7 +350,7 @@ func checkHash(header utils.BlockData, body []byte, prevHash []byte) (bool, erro
 		if err != nil {
 			return true, err
 		}
-		nodePublicKey = wallet.PublicKey
+		nodePublicKey = []byte(wallet.PublicKey)
 	} else {
 		systemState := &model.SystemRecognizedState{}
 		err = systemState.GetState(header.StateID)

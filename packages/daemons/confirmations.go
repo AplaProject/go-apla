@@ -26,6 +26,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/tcpserver"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 var tick int
@@ -87,9 +88,9 @@ func Confirmations(d *daemon, ctx context.Context) error {
 			log.Error("%v", err)
 			return err
 		}
-		hash := string(block.Hash)
-		log.Info("hash: %x", hash)
-		if len(hash) == 0 {
+		hashStr := string(converter.BinToHex(block.Hash))
+		log.Info("hash: %x", hashStr)
+		if len(hashStr) == 0 {
 			log.Debug("len(hash) == 0")
 			continue
 		}
@@ -118,9 +119,8 @@ func Confirmations(d *daemon, ctx context.Context) error {
 		var st0, st1 int64
 		for i := 0; i < len(hosts); i++ {
 			answer = <-ch
-			log.Info("answer == hash (%x = %x)", answer, hash)
-			log.Info("answer == hash (%s = %s)", answer, hash)
-			if answer == hash {
+			log.Info("answer == hash (%s = %s)", answer, hashStr)
+			if answer == hashStr {
 				st1++
 			} else {
 				st0++

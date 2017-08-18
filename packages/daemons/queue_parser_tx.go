@@ -23,7 +23,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 // QueueParserTx parses transaction from the queue
@@ -41,7 +40,8 @@ func QueueParserTx(d *daemon, ctx context.Context) error {
 		return err
 	}
 	if infoBlock.BlockID == 0 {
-		return utils.ErrInfo("blockID == 0")
+		log.Debugf("there are now blocks for parse")
+		return nil
 	}
 
 	// delete looped transactions

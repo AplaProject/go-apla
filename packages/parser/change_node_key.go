@@ -45,7 +45,7 @@ func (p *ChangeNodeKeyParser) Validate() error {
 	if err != nil || len(wallet.PublicKey) == 0 {
 		return p.ErrInfo("incorrect user_id")
 	}
-	CheckSignResult, err := utils.CheckSign([][]byte{wallet.PublicKey}, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, true)
+	CheckSignResult, err := utils.CheckSign([][]byte{[]byte(wallet.PublicKey)}, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, true)
 	if err != nil || !CheckSignResult {
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.ChangeNodeKey.ForSign(), p.ChangeNodeKey.Header.BinSignatures, false)
 		if err != nil || !CheckSignResult {

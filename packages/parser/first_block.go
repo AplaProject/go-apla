@@ -17,8 +17,6 @@
 package parser
 
 import (
-	"encoding/hex"
-
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -44,16 +42,19 @@ func (p *FirstBlockParser) Action() error {
 	data := p.TxPtr.(*consts.FirstBlock)
 	//	myAddress := b58.Encode(lib.Address(data.PublicKey)) //utils.HashSha1Hex(p.TxMaps.Bytes["public_key"]);
 	myAddress := crypto.Address(data.PublicKey)
-	log.Debug("data.PublicKey %s", data.PublicKey)
-	log.Debug("data.PublicKey %x", data.NodePublicKey)
+	log.Debugf("first block wallet: %d", myAddress)
+	log.Debugf("data.PublicKey %s", data.PublicKey)
+	log.Debugf("data.PublicKey %x", data.NodePublicKey)
 	dltWallet := &model.DltWallet{
 		WalletID:      myAddress,
 		Host:          data.Host,
 		AddressVote:   converter.AddressToString(myAddress),
-		PublicKey:     []byte(hex.EncodeToString(data.PublicKey)),
-		NodePublicKey: []byte(hex.EncodeToString(data.NodePublicKey)),
+		PublicKey:     data.PublicKey,
+		NodePublicKey: data.NodePublicKey,
 		Amount:        decimal.NewFromFloat(consts.FIRST_QDLT).String(),
 	}
+
+	log.Debugf("wallet = %+v", dltWallet)
 	err := dltWallet.Create()
 	if err != nil {
 		return p.ErrInfo(err)

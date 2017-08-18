@@ -382,17 +382,6 @@ ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMA
 CREATE INDEX dlt_transactions_index_sender ON "dlt_transactions" (sender_wallet_id);
 CREATE INDEX dlt_transactions_index_recipient ON "dlt_transactions" (recipient_wallet_id);
 
-DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
-"hash" bytea  NOT NULL DEFAULT '',
-"time" int NOT NULL DEFAULT '0',
-"type" int NOT NULL DEFAULT '0',
-"wallet_id" bigint  REFERENCES dlt_wallets(wallet_id) NOT NULL DEFAULT '0',
-"citizen_id" bigint NOT NULL DEFAULT '0', /* Obsolete*/
-"block_id" int REFERENCES block_chain(id) NOT NULL DEFAULT '0',
-"error" varchar(255) NOT NULL DEFAULT ''
-);
-ALTER TABLE ONLY "transactions_status" ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);
-
 DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
 "block_id" bigint REFERENCES block_chain(id)  NOT NULL DEFAULT '0',
 "good" int  NOT NULL DEFAULT '0',

@@ -7,7 +7,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -83,7 +82,7 @@ func TestBlockGenerator(t *testing.T) {
 		t.Fatalf("can't create prevBlock value: %s", err)
 	}
 
-	priv, public, err := crypto.GenHexKeys()
+	priv, public, err := crypto.GenBytesKeys()
 	if err != nil {
 		t.Fatalf("can't gen keys: %s", err)
 	}
@@ -100,8 +99,8 @@ func TestBlockGenerator(t *testing.T) {
 
 	wallet := &model.DltWallet{
 		WalletID:      1000,
-		PublicKey:     []byte(public),
-		NodePublicKey: []byte(converter.HexToBin(public)), // TODO: ????????
+		PublicKey:     public,
+		NodePublicKey: public,
 	}
 	if err := wallet.Create(); err != nil {
 		t.Fatalf("can't create wallet: %s", err)

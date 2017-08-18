@@ -83,14 +83,14 @@ func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
 		if err != nil {
 			return []byte(""), err
 		}
-		result = wallet.NodePublicKey
+		result = []byte(wallet.NodePublicKey)
 	} else {
 		srs := &model.SystemRecognizedState{}
 		err = srs.GetState(stateID)
 		if err != nil {
 			return []byte(""), err
 		}
-		result = srs.NodePublicKey
+		result = []byte(srs.NodePublicKey)
 	}
 	return result, nil
 }

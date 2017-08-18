@@ -63,7 +63,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			}
 			p.PublicKeys = append(p.PublicKeys, header.PublicKey)
 		} else {
-			p.PublicKeys = append(p.PublicKeys, dltWallet.PublicKey)
+			p.PublicKeys = append(p.PublicKeys, []byte(dltWallet.PublicKey))
 			log.Debug("data[public_key_0]", dltWallet.PublicKey)
 		}
 	} else {
@@ -75,7 +75,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		if len(dltWallet.PublicKey) == 0 {
 			return utils.ErrInfoFmt("incorrect user_id")
 		}
-		p.PublicKeys = append(p.PublicKeys, dltWallet.PublicKey)
+		p.PublicKeys = append(p.PublicKeys, []byte(dltWallet.PublicKey))
 	}
 	// чтобы не записали слишком длинную подпись
 	// for not to record too long signature
