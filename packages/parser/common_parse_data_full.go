@@ -117,7 +117,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 			// hashFull = converter.BinToHex(hashFull)
 			logging.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(hashFull))
-			affect, err := model.DeleteUsedTransactions()
+			affect, err := model.MarkTransactionUsed(hashFull)
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				logging.WriteSelectiveLog("RollbackTo")

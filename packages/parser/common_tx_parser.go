@@ -18,103 +18,108 @@ package parser
 
 import (
 	"errors"
-	"fmt"
-	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/logging"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 // TxParser writes transactions into the queue
 func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
-	var err error
-	var fatalError string
-	var header *tx.Header
 
-	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
+	log.Debugf("transaction hex data: %x", binaryTx)
 	p.BinaryData = binaryTx
 	p.TxBinaryData = binaryTx
-	header, err = p.ParseDataGate(false)
 
-	if err != nil || len(fatalError) > 0 {
-		p.DeleteQueueTx(hash) // удалим тр-ию из очереди
-		// remove transaction from the turn
-	}
-	if err == nil && len(fatalError) > 0 {
-		err = errors.New(fatalError)
-	}
+	// get parameters for "struct" transactions
+	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
 
+	header, err := p.ParseDataGate(false)
 	if err != nil {
-		log.Error("err: %v", err)
-		errText := fmt.Sprintf("%s", err)
-		if len(errText) > 255 {
-			errText = errText[:255]
-		}
-		qtx := &model.QueueTx{}
-		err = qtx.GetByHash(hash)
-		if err != nil {
-			return utils.ErrInfo(err)
-		}
-		log.Debug("fromGate %d", qtx.FromGate)
-		if qtx.FromGate == 0 {
-			m := &model.TransactionStatus{}
-			err = m.SetError(errText, hash)
-			if err != nil {
-				return utils.ErrInfo(err)
-			}
-		}
-	} else {
-		if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
-			if header == nil {
-				return utils.ErrInfo(errors.New("header is nil"))
-			}
-			walletID = header.StateID
-			citizenID = header.UserID
-		}
+		log.Errorf("parse data gate error: %s", err)
+		p.processBadTransaction(hash, err.Error())
+		return err
+	}
 
-		log.Debug("SELECT counter FROM transactions WHERE hex(hash) = ?", string(hash))
-		logging.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hash))
-		tx := &model.Transaction{}
-		err := tx.Get(hash)
-		if err != nil {
-			logging.WriteSelectiveLog(err)
-			return utils.ErrInfo(err)
+	if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
+		if header == nil {
+			return utils.ErrInfo(errors.New("header is nil"))
 		}
-		counter := tx.Counter
-		counter++
-		logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hash))
-		_, err = model.DeleteTransactionByHash(hash)
-		if err != nil {
-			logging.WriteSelectiveLog(err)
-			return utils.ErrInfo(err)
-		}
+		walletID = header.StateID
+		citizenID = header.UserID
+	}
 
-		log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hash, converter.BinToHex(binaryTx), 0, int8(txType), walletID, citizenID, 0, counter)
-		logging.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
-		// вставляем с verified=1
-		// put with verified=1
-		newTx := &model.Transaction{
-			Hash:      hash,
-			Data:      converter.BinToHex(binaryTx),
-			Type:      int8(txType),
-			WalletID:  walletID,
-			CitizenID: citizenID,
-			Counter:   counter,
-		}
-		err = newTx.Create()
-		if err != nil {
-			logging.WriteSelectiveLog(err)
-			return utils.ErrInfo(err)
-		}
-		logging.WriteSelectiveLog("result insert")
-		log.Debug("INSERT INTO transactions - OK")
-		// удалим тр-ию из очереди (с verified=0)
-		// remove transaction from the turn (with verified=0)
-		err = p.DeleteQueueTx(hash)
+	if walletID == 0 && citizenID == 0 {
+		errStr := "undefined walletID and citizenID"
+		p.processBadTransaction(hash, errStr)
+		return errors.New(errStr)
+	}
+
+	logging.WriteSelectiveLog("SELECT counter FROM transactions WHERE hex(hash) = " + string(hash))
+	tx := &model.Transaction{}
+	err = tx.Get(hash)
+	if err != nil {
+		logging.WriteSelectiveLog(err)
+		return utils.ErrInfo(err)
+	}
+	counter := tx.Counter
+	counter++
+	logging.WriteSelectiveLog("DELETE FROM transactions WHERE hex(hash) = " + string(hash))
+	_, err = model.DeleteTransactionByHash(hash)
+	if err != nil {
+		logging.WriteSelectiveLog(err)
+		return utils.ErrInfo(err)
+	}
+
+	log.Errorf("wallet id for transaction - %d", walletID)
+
+	log.Debug("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES (%s, %s, %v, %v, %v, %v, %v, %v)", hash, converter.BinToHex(binaryTx), 0, int8(txType), walletID, citizenID, 0, counter)
+	logging.WriteSelectiveLog("INSERT INTO transactions (hash, data, for_self_use, type, wallet_id, citizen_id, third_var, counter) VALUES ([hex], [hex], ?, ?, ?, ?, ?, ?)")
+	// вставляем с verified=1
+	// put with verified=1
+	newTx := &model.Transaction{
+		Hash:      hash,
+		Data:      binaryTx,
+		Type:      int8(txType),
+		WalletID:  walletID,
+		CitizenID: citizenID,
+		Counter:   counter,
+		Verified:  1,
+	}
+	err = newTx.Create()
+	if err != nil {
+		logging.WriteSelectiveLog(err)
+		return utils.ErrInfo(err)
+	}
+	logging.WriteSelectiveLog("result insert")
+	log.Debug("INSERT INTO transactions - OK")
+	// удалим тр-ию из очереди (с verified=0)
+	// remove transaction from the turn (with verified=0)
+	err = p.DeleteQueueTx(hash)
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+
+	return nil
+}
+
+func (p *Parser) processBadTransaction(hash []byte, errText string) error {
+	p.DeleteQueueTx(hash)
+
+	if len(errText) > 255 {
+		errText = errText[:255]
+	}
+	qtx := &model.QueueTx{}
+	err := qtx.GetByHash(hash)
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+
+	if qtx.FromGate == 0 {
+		m := &model.TransactionStatus{}
+		err = m.SetError(errText, hash)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -148,17 +153,23 @@ func (p *Parser) AllTxParser() error {
 		log.Debug("hash: %x", data.Hash)
 		err = p.TxParser(data.Hash, data.Data, false)
 		if err != nil {
-			itx := &model.IncorrectTx{
-				Time: time.Now().Unix(),
-				Hash: converter.BinToHex(data.Hash),
-				Err:  fmt.Sprintf("%s", err),
-			}
-			err0 := itx.Create()
-			if err0 != nil {
-				log.Error("%v", utils.ErrInfo(err0))
-			}
+			log.Errorf("transaction parser error: %s", err)
+			/*
+				TODO: log bad transaction
+				itx := &model.IncorrectTx{
+					Time: time.Now().Unix(),
+					Hash: converter.BinToHex(data.Hash),
+					Err:  fmt.Sprintf("%s", err),
+				}
+				err0 := itx.Create()
+				if err0 != nil {
+					log.Error("can't insert incorrect transaction: %v", utils.ErrInfo(err0))
+				}
+			*/
+			// TODO: return after first bad transaction ?
 			return utils.ErrInfo(err)
 		}
+		log.Debugf("transaction parsed successfully")
 	}
 	return nil
 }

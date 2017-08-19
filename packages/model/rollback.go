@@ -8,6 +8,10 @@ type Rollback struct {
 	Data    string `gorm:"not null"`
 }
 
+func (Rollback) TableName() string {
+	return "rollback"
+}
+
 func (r *Rollback) Get(rollbackID int64) error {
 	return DBConn.Where("rb_id = ?", rollbackID).First(r).Error
 }

@@ -118,14 +118,14 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 		log.Debug("MethodName", MethodName+"Init")
 		err_ := parser.Init()
 		if _, ok := err_.(error); ok {
-			log.Error("%v", utils.ErrInfo(err_.(error)))
+			log.Error("parser init error: %v", utils.ErrInfo(err_.(error)))
 			return nil, utils.ErrInfo(err_.(error))
 		}
 
 		log.Debug("MethodName", MethodName+"Front")
 		err_ = parser.Validate()
 		if _, ok := err_.(error); ok {
-			log.Error("%v", utils.ErrInfo(err_.(error)))
+			log.Error("parser validate error: %v", utils.ErrInfo(err_.(error)))
 			return nil, utils.ErrInfo(err_.(error))
 		}
 	}

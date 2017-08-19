@@ -69,7 +69,7 @@ func DeleteUsedTransactions() (int64, error) {
 }
 
 func DeleteTransactionIfUnused(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("DELETE FROM transactions WHERE hash = ? and used = 0", transactionHash)
+	query := DBConn.Exec("DELETE FROM transactions WHERE hash = ? and used = 0 and verified = 0", transactionHash)
 	return query.RowsAffected, query.Error
 }
 

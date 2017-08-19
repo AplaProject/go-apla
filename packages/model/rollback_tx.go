@@ -4,8 +4,12 @@ type RollbackTx struct {
 	ID        int64  `gorm:"primary_key;not null"`
 	BlockID   int64  `gorm:"not null"`
 	TxHash    []byte `gorm:"not null"`
-	TableName string `gorm:"not null;size:255"`
+	NameTable string `gorm:"not null;size:255;column:table_name"`
 	TableID   string `gorm:"not null;size:255"`
+}
+
+func (RollbackTx) TableName() string {
+	return "rollback_tx"
 }
 
 func (rt *RollbackTx) GetRollbackTransactions(transactionHash []byte) ([]RollbackTx, error) {
@@ -22,7 +26,7 @@ func (rt *RollbackTx) DeleteByHash() error {
 }
 
 func (rt *RollbackTx) DeleteByHashAndTableName() error {
-	return DBConn.Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.TableName).Delete(rt).Error
+	return DBConn.Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Delete(rt).Error
 }
 
 func (rt *RollbackTx) Create() error {

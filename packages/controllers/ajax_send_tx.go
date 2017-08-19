@@ -45,8 +45,8 @@ func init() {
 // AjaxSendTx is a controller of ajax_send_tx request
 func (c *Controller) AjaxSendTx() interface{} {
 	var (
-		result       SendTxJSON
-		public, hash []byte
+		result SendTxJSON
+		public []byte
 	)
 	contract, err := c.checkTx(nil)
 	if err == nil {
@@ -118,6 +118,13 @@ func (c *Controller) AjaxSendTx() interface{} {
 					Data: data,
 				}
 				serializedData, err := msgpack.Marshal(toSerialize)
+				if err != nil {
+					log.Errorf("marshalling error: %s", err)
+				}
+				hash, err := crypto.Hash(serializedData)
+				if err != nil {
+					log.Fatal(err)
+				}
 				transactionStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: int64(info.ID),
 					WalletID: c.SessWalletID, CitizenID: c.SessWalletID}
 				err = transactionStatus.Create()

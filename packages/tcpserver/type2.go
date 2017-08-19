@@ -52,7 +52,6 @@ func Type2(r *DisRequest) (*DisTrResponse, error) {
 		log.Fatal(err)
 	}
 
-	hash = converter.BinToHex(hash)
 	err = model.DeleteQueuedTransaction(hash)
 	if err != nil {
 		return nil, utils.ErrInfo(err)

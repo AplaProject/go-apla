@@ -144,7 +144,7 @@ func (p *EditTableParser) Action() error {
 	rollbackTx := &model.RollbackTx{
 		BlockID:   p.BlockData.BlockID,
 		TxHash:    []byte(p.TxHash),
-		TableName: tableName,
+		NameTable: tableName,
 		TableID:   p.EditTable.Name}
 	err = rollbackTx.Create()
 	if err != nil {

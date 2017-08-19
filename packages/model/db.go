@@ -347,8 +347,9 @@ func CreateIndex(indexName, tableName, onColumn string) error {
 func IsTable(tblname string) bool {
 	var name string
 	DBConn.Table("information_schema.tables").
-		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema') AND table_name=?`, tblname").
-		Pluck("table_name", name)
+		Where("table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema') AND table_name=?`", tblname).
+		Select("table_name").Row().Scan(&name)
+
 	return name == tblname
 }
 

@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+)
 
 type StateParameter struct {
 	tableName  string
@@ -40,7 +44,7 @@ func (sp *StateParameter) ToMap() map[string]string {
 	result := make(map[string]string, 0)
 	result["name"] = sp.Name
 	result["value"] = sp.Value
-	result["byte_code"] = string(sp.ByteCode)
+	result["byte_code"] = string(converter.BinToHex(sp.ByteCode))
 	result["conditions"] = sp.Conditions
 	result["rb_id"] = strconv.FormatInt(sp.RbID, 10)
 	return result

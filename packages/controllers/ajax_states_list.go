@@ -28,8 +28,11 @@ func (c *Controller) AjaxStatesList() (string, error) {
 	result := make([]map[string]string, 0)
 	statesList, err := model.GetAllSystemStatesIDs()
 	if err != nil {
+		log.Errorf("can't get all stated ids: %s", err)
 		return ``, err
 	}
+	log.Debugf("states list: %+v", statesList)
+
 	stateParameter := &model.StateParameter{}
 	query := func(id int64, name string) (string, error) {
 		stateParameter.SetTablePrefix(converter.Int64ToStr(id))
@@ -41,24 +44,17 @@ func (c *Controller) AjaxStatesList() (string, error) {
 			continue
 		}
 
-		stateName, err := query(id, `state_name`)
-		if err != nil {
-			return ``, err
+		stateParams := make(map[string]string)
+		for _, paramName := range []string{"state_name", "state_flag", "state_coords"} {
+			param, err := query(id, paramName)
+			if err != nil {
+				// TODO: ???? return "", err
+			}
+			stateParams[paramName] = param
 		}
-		stateFlag, err := query(id, `state_flag`)
-		if err != nil {
-			return ``, err
-		}
-		stateCoords, err := query(id, `state_coords`)
-		if err != nil {
-			return ``, err
-		}
-		iresult := make(map[string]string)
-		iresult["state_name"] = stateName
-		iresult["state_flag"] = stateFlag
-		iresult["state_coords"] = stateCoords
-		result = append(result, iresult)
+		result = append(result, stateParams)
 	}
+
 	jsondata, err := json.Marshal(result)
 	if err != nil {
 		return ``, err

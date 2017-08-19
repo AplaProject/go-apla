@@ -14,7 +14,7 @@ func (c *Citizen) SetTablePrefix(tablePrefix string) {
 	c.tableName = tablePrefix + "_citizens"
 }
 
-func (c *Citizen) TableName() string {
+func (c Citizen) TableName() string {
 	return c.tableName
 }
 
@@ -45,7 +45,9 @@ func CreateCitizensStateTable(stateID string) error {
 				"id" bigint NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"block_id" bigint NOT NULL DEFAULT '0',
-				"rb_id" bigint NOT NULL DEFAULT '0'
+				"rb_id" bigint NOT NULL DEFAULT '0',
+				"avatar" text NOT NULL DEFAULT '',
+				"name" text NOT NULL DEFAULT ''
 			     );
 			     ALTER TABLE ONLY "` + stateID + `_citizens" ADD CONSTRAINT "` + stateID + `_citizens_pkey" PRIMARY KEY (id);
 			   `).Error

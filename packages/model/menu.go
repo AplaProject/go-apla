@@ -11,10 +11,10 @@ type Menu struct {
 }
 
 func (m *Menu) SetTablePrefix(prefix string) {
-	m.tableName = prefix + "_menus"
+	m.tableName = prefix + "_menu"
 }
 
-func (m *Menu) TableName() string {
+func (m Menu) TableName() string {
 	return m.tableName
 }
 

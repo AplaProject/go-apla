@@ -167,7 +167,6 @@ func (c *Controller) AjaxNewKey() interface{} {
 	if err != nil {
 		log.Fatal(err)
 	}
-	hash = serializedData
 	transactionStatus := &model.TransactionStatus{Hash: hash, Time: time.Now().Unix(), Type: int64(info.ID),
 		WalletID: int64(idkey), CitizenID: int64(idkey)}
 	err = transactionStatus.Create()

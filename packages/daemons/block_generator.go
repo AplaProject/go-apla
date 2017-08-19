@@ -104,6 +104,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	if err != nil || trs == nil {
 		return err
 	}
+	log.Debugf("transactions to put in new block: %+v", trs)
 
 	blockBin, err := generateNextBlock(prevBlock, *trs, string(nodeKey.PrivateKey), config, time.Now().Unix())
 	if err != nil {
@@ -112,6 +113,7 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 	}
 
 	p.BinaryData = blockBin
+	log.Debugf("try to parse new transactions")
 	err = p.ParseDataFull(true)
 	if err != nil {
 		log.Errorf("parser block error: %s", err)

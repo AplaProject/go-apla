@@ -306,7 +306,7 @@ DROP SEQUENCE IF EXISTS system_states_id_seq CASCADE;
 CREATE SEQUENCE system_states_id_seq START WITH 1;
 DROP TABLE IF EXISTS "system_states"; CREATE TABLE "system_states" (
 "id" bigint NOT NULL default nextval('system_states_id_seq'),
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE system_states_id_seq owned by system_states.id;
 ALTER TABLE ONLY "system_states" ADD CONSTRAINT system_states_pkey PRIMARY KEY (id);
@@ -439,7 +439,7 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "used" smallint NOT NULL DEFAULT '0',
 "high_rate" smallint NOT NULL DEFAULT '0',
 "type" smallint NOT NULL DEFAULT '0',
-"wallet_id" bigint  REFERENCES dlt_wallets(wallet_id) NOT NULL DEFAULT '0',
+"wallet_id" bigint NOT NULL DEFAULT '0',
 "citizen_id" bigint NOT NULL DEFAULT '0',
 "counter" smallint NOT NULL DEFAULT '0',
 "sent" smallint NOT NULL DEFAULT '0',
@@ -462,7 +462,7 @@ DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
 CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
 DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
 "id" bigint NOT NULL  default nextval('rollback_tx_id_seq'),
-"block_id" bigint REFERENCES block_chain(id) NOT NULL DEFAULT '0',
+"block_id" bigint NOT NULL DEFAULT '0',
 "tx_hash" bytea  NOT NULL DEFAULT '',
 "table_name" varchar(255) NOT NULL DEFAULT '',
 "table_id" varchar(255) NOT NULL DEFAULT ''
