@@ -19,6 +19,8 @@ package controllers
 import (
 	"encoding/json"
 
+	"strconv"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
@@ -48,10 +50,12 @@ func (c *Controller) AjaxStatesList() (string, error) {
 		for _, paramName := range []string{"state_name", "state_flag", "state_coords"} {
 			param, err := query(id, paramName)
 			if err != nil {
-				// TODO: ???? return "", err
+				log.Errorf("can't get state parameter %s: %s", paramName, err)
+				return ``, err
 			}
 			stateParams[paramName] = param
 		}
+		stateParams["id"] = strconv.FormatInt(id, 10)
 		result = append(result, stateParams)
 	}
 

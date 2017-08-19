@@ -87,7 +87,7 @@ func App(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(page, `global`) {
 			table = `global`
 		} else {
-			table = fmt.Sprintf(`"%d"`, GetSessInt64("state_id", sess))
+			table = fmt.Sprintf("%d", GetSessInt64("state_id", sess))
 		}
 		app := &model.App{}
 		app.SetTablePrefix(table)

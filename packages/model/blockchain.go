@@ -113,7 +113,7 @@ func (b *Block) ToMap() map[string]string {
 	result["state_id"] = strconv.FormatInt(b.StateID, 10)
 	result["wallet_id"] = converter.AddressToString(b.WalletID)
 	result["time"] = strconv.FormatInt(b.Time, 10)
-	result["tx"] = string(converter.BinToHex(b.Tx))
+	result["tx"] = strconv.FormatInt(int64(b.Tx), 10)
 	result["id"] = strconv.FormatInt(b.ID, 10)
 	return result
 }

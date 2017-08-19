@@ -19,7 +19,7 @@ func (ts *TransactionStatus) Create() error {
 }
 
 func (ts *TransactionStatus) Get(transactionHash []byte) error {
-	return DBConn.Where("hash = ?", transactionHash).First(ts).Error
+	return handleError(DBConn.Where("hash = ?", transactionHash).First(ts).Error)
 }
 
 func (ts *TransactionStatus) UpdateBlockID(newBlockID int64, transactionHash []byte) error {

@@ -24,11 +24,11 @@ func (sp *StateParameter) SetTablePrefix(tablePrefix string) {
 }
 
 func (sp *StateParameter) GetByName(name string) error {
-	return DBConn.Where("name = ?", name).First(sp).Error
+	return handleError(DBConn.Where("name = ?", name).First(sp).Error)
 }
 
 func (sp *StateParameter) GetByParameter(parameter string) error {
-	return DBConn.Where("parameter = ?", parameter).First(sp).Error
+	return handleError(DBConn.Where("parameter = ?", parameter).First(sp).Error)
 }
 
 func (sp *StateParameter) GetAllStateParameters(tablePrefix string) ([]StateParameter, error) {

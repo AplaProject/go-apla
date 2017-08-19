@@ -23,9 +23,9 @@ func (l *Language) Get(name string) error {
 }
 
 func (l *Language) GetAll(prefix string) ([]Language, error) {
-	var result []Language
+	result := new([]Language)
 	err := DBConn.Table(prefix + "_languages").Order("name").Find(result).Error
-	return result, err
+	return *result, err
 }
 
 func (l *Language) IsExistsByName(name string) (bool, error) {

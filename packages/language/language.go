@@ -21,6 +21,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"strconv"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -70,7 +72,7 @@ func UpdateLang(state int, name, value string) {
 // loadLang download the language sources from database for the state
 func loadLang(state int) error {
 	language := &model.Language{}
-	languages, err := language.GetAll(string(state))
+	languages, err := language.GetAll(strconv.FormatInt(int64(state), 10))
 	if err != nil {
 		return err
 	}

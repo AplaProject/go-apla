@@ -68,7 +68,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 		}
 	} else {
 		dltWallet := &model.DltWallet{}
-		err := dltWallet.GetWallet(p.TxWalletID)
+		err := dltWallet.GetWallet(header.UserID)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

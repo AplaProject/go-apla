@@ -319,6 +319,8 @@ func (c *Controller) SaveQueue() (string, error) {
 			toSerialize = tx.ChangeNodeKey{header, converter.HexToBin(publicKey)}
 		}
 	}
+
+	log.Debugf("toSerialize: %+v", toSerialize)
 	transactionTypeBin := converter.DecToBin(txType, 1)
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
@@ -347,7 +349,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	return `{"hash":"` + string(hash) + `"}`, nil
+	return `{"hash":"` + string(converter.BinToHex(hash)) + `"}`, nil
 }
 
 // CheckInputData calls utils.CheckInputData for the each item of the map

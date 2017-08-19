@@ -17,6 +17,9 @@
 package controllers
 
 import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -26,12 +29,12 @@ func (c *Controller) TxStatus() (string, error) {
 
 	hash := c.r.FormValue("hash")
 	ts := &model.TransactionStatus{}
-	err := ts.Get([]byte(hash))
+	err := ts.Get(converter.HexToBin([]byte(hash)))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}
 	if ts.BlockID != 0 {
-		return `{"success":"` + string(ts.BlockID) + `"}`, nil
+		return `{"success":"` + strconv.FormatInt(ts.BlockID, 10) + `"}`, nil
 	} else if len(ts.Error) > 0 {
 		return "", utils.ErrInfo(ts.Error)
 	}
