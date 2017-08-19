@@ -28,7 +28,7 @@ func (c *Citizen) IsExists() (bool, error) {
 }
 
 func (c *Citizen) Get(id int64) error {
-	return DBConn.Where("id = ?", id).First(c).Error
+	return handleError(DBConn.Where("id = ?", id).First(c).Error)
 }
 
 func GetAllCitizensWhereIdMoreThan(tablePrefix string, id int64, limit int64) ([]Citizen, error) {

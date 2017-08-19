@@ -92,7 +92,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 			return result
 		}
 		citizen.SetTablePrefix(converter.Int64ToStr(stateID))
-		err = citizen.Get(stateID)
+		err = citizen.Get(walletID)
 		if err != nil {
 			result.Error = err.Error()
 			return result

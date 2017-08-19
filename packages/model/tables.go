@@ -32,7 +32,7 @@ func (t *Table) Delete() error {
 
 func (t *Table) ToMap() map[string]string {
 	result := make(map[string]string, 0)
-	result["name"] = string(t.Name)
+	result["name"] = t.Name
 	result["columns_and_permissions"] = t.ColumnsAndPermissions
 	result["conditions"] = t.Conditions
 	result["rb_id"] = strconv.FormatInt(t.RbID, 10)
@@ -40,9 +40,9 @@ func (t *Table) ToMap() map[string]string {
 }
 
 func (t *Table) GetAll(prefix string) ([]Table, error) {
-	var result []Table
+	var result = new([]Table)
 	err := DBConn.Table(prefix + "_tables").Find(result).Error
-	return result, err
+	return *result, err
 }
 
 func (t *Table) GetTablePermissions(tablePrefix string, tableName string) (map[string]string, error) {
