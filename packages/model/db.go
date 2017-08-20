@@ -13,6 +13,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logging "github.com/op/go-logging"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -22,6 +23,7 @@ import (
 
 var (
 	DBConn *gorm.DB
+	log    = logging.MustGetLogger("model")
 )
 
 func GormInit(user string, pass string, dbName string) error {
@@ -31,6 +33,8 @@ func GormInit(user string, pass string, dbName string) error {
 	if err != nil {
 		return err
 	}
+
+	//DBConn.LogMode(true)
 	return nil
 }
 
@@ -73,7 +77,7 @@ func GetColumnsCount(tableName string) (int64, error) {
 	err := DBConn.Table("information_schema.columns").
 		Where("table_name=?", tableName).
 		Select("count(column_name)").
-		Scan(count).Error
+		Scan(&count).Error
 	return count, err
 }
 
@@ -224,7 +228,10 @@ func GetAllTables() ([]string, error) {
 
 func GetColumnCount(tableName string) (int64, error) {
 	var count int64
-	err := DBConn.Raw("SELECT count(*) FROM information_schema.columns WHERE table_name ?", tableName).Scan(&count).Error
+	err := DBConn.Raw("SELECT count(*) FROM information_schema.columns WHERE table_name=?", tableName).Row().Scan(&count)
+	if err == gorm.ErrRecordNotFound {
+		return 0, nil
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -337,7 +344,7 @@ func AlterTableAddColumn(tableName, columnName, columnType string) error {
 }
 
 func AlterTableDropColumn(tableName, columnName string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
+	return DBConn.Exec(`ALTER TABLE '` + tableName + `' DROP COLUMN ` + columnName).Error
 }
 
 func CreateIndex(indexName, tableName, onColumn string) error {
@@ -505,9 +512,12 @@ func IsNodeState(state int64, host string) bool {
 
 func NumIndexes(tblname string) (int, error) {
 	var indexes int64
-	err := DBConn.Exec(fmt.Sprintf(`select count( i.relname) from pg_class t, pg_class i, pg_index ix, pg_attribute a 
+	err := DBConn.Raw(fmt.Sprintf(`select count( i.relname) from pg_class t, pg_class i, pg_index ix, pg_attribute a
 	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
-         and t.relkind = 'r'  and t.relname = %s`, tblname)).Scan(&indexes).Error
+         and t.relkind = 'r'  and t.relname = '%s'`, tblname)).Row().Scan(&indexes)
+	if err == gorm.ErrRecordNotFound {
+		return 0, nil
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -515,10 +525,10 @@ func NumIndexes(tblname string) (int, error) {
 }
 
 func IsIndex(tblname, column string) (bool, error) {
-	query := DBConn.Exec(fmt.Sprintf(`select t.relname as table_name, i.relname as index_name, a.attname as column_name 
+	query := DBConn.Raw(fmt.Sprintf(`select t.relname as table_name, i.relname as index_name, a.attname as column_name
 	 from pg_class t, pg_class i, pg_index ix, pg_attribute a 
 	 where t.oid = ix.indrelid and i.oid = ix.indexrelid and a.attrelid = t.oid and a.attnum = ANY(ix.indkey)
-		 and t.relkind = 'r'  and t.relname = %s  and a.attname = %s`, tblname, column))
+		 and t.relkind = 'r'  and t.relname = '%s'  and a.attname = '%s'`, tblname, column))
 	return query.RowsAffected > 0, query.Error
 }
 

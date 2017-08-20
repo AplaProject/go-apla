@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	"github.com/jinzhu/gorm"
 )
 
 type Confirmation struct {
@@ -33,6 +34,9 @@ func (c *Confirmation) Create() error {
 
 func (c *Confirmation) IsExists() (bool, error) {
 	query := DBConn.First(c)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 

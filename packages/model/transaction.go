@@ -1,5 +1,7 @@
 package model
 
+import "github.com/jinzhu/gorm"
+
 type Transaction struct {
 	Hash      []byte `gorm:private_key;not null`
 	Data      []byte `gorm:not null`
@@ -116,6 +118,9 @@ func (t *Transaction) GetVerified(transactionHash []byte) error {
 
 func (t *Transaction) IsExists() (bool, error) {
 	query := DBConn.First(t)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 

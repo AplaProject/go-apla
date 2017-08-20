@@ -75,7 +75,7 @@ func (c *Controller) Menu() (string, error) {
 		updver, stateName, stateFlag string
 		isMain                       bool
 	)
-	citizen := &model.Citizen{}
+	// citizen := &model.Citizen{}
 	menu := &model.Menu{}
 	if strings.HasPrefix(c.r.Host, `localhost`) {
 		updinfo, err := utils.GetUpdVerAndURL(consts.UPD_AND_VER_URL)
@@ -145,6 +145,6 @@ func (c *Controller) Menu() (string, error) {
 	}
 	states, _ := c.AjaxStatesList()
 	return proceedTemplate(c, nMenu, &menuPage{Data: c.Data, Menu: menu.Value, MainMenu: isMain, CanCitizen: canCitizen > 0,
-		States: states, StateName: stateName, StateFlag: stateFlag, CitizenName: string(citizen.Name), LogoExt: utils.LogoExt,
-		CitizenAvatar: citizen.Avatar, UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code})
+		States: states, StateName: stateName, StateFlag: stateFlag, CitizenName: "TODO", LogoExt: utils.LogoExt,
+		CitizenAvatar: "", UpdVer: updver, Btc: GetBtc(), Langs: langs, CountLangs: len(langs), DefLang: langs[0].Code})
 }

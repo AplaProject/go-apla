@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/jinzhu/gorm"
+)
 
 type SmartContract struct {
 	tableName  string
@@ -32,11 +36,17 @@ func (sc *SmartContract) GetByID(contractID int64) error {
 
 func (sc *SmartContract) ExistsByID(contractID int64) (bool, error) {
 	query := DBConn.Where("id = ?", contractID).First(sc)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 
 func (sc *SmartContract) ExistsByName(name string) (bool, error) {
 	query := DBConn.Where("name = ?", name).First(sc)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 

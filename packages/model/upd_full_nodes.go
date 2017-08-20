@@ -14,7 +14,7 @@ func (ufn *UpdFullNode) Read() error {
 
 func (ufn *UpdFullNode) GetAll() ([]UpdFullNode, error) {
 	var result []UpdFullNode
-	err := DBConn.Find(result).Error
+	err := DBConn.Find(&result).Error
 	return result, err
 }
 

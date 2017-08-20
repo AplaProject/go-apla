@@ -60,9 +60,10 @@ func (p *NewColumnParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	table := prefix + `_tables`
-	exists := true
-	log.Debug(`select count(*) from "`+table+`" where (columns_and_permissions->'update'-> ? ) is not null AND name = ?`, p.NewColumn.ColumnName, p.NewColumn.TableName)
+	tEx := &model.Table{}
+	tEx.SetTablePrefix(prefix)
+
+	exists, err := tEx.IsExistsByPermissionsAndTableName(p.NewColumn.ColumnName, p.NewColumn.TableName)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -142,7 +143,8 @@ func (p *NewColumnParser) Action() error {
 	}
 	err = rbTx.Create()
 	if err != nil {
-		return err
+		log.Errorf("something wrong: %s", err)
+		//return err
 	}
 
 	colType := ``

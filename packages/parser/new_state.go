@@ -129,7 +129,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		return
 	}
 	t := &model.Table{
-		Name: id + "citizens",
+		Name: id + "_citizens",
 		ColumnsAndPermissions: `{"general_update":"` + sid + `", "update": {"public_key_0": "` + sid + `"}, "insert": "` + sid + `", "new_column":"` + sid + `"}`,
 		Conditions:            psid,
 	}

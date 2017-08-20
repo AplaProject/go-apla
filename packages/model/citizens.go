@@ -1,13 +1,13 @@
 package model
 
+import "github.com/jinzhu/gorm"
+
 type Citizen struct {
 	tableName string
 	ID        int64  `gorm:"primary_key;not null"`
 	PublicKey []byte `gorm:"not null;column:public_key_0"`
 	BlockID   int64  `gorm:"not null"`
 	RbID      int64  `gorm:"not null"`
-	Avatar    string
-	Name      string
 }
 
 func (c *Citizen) SetTablePrefix(tablePrefix string) {
@@ -24,6 +24,9 @@ func (c *Citizen) Create() error {
 
 func (c *Citizen) IsExists() (bool, error) {
 	query := DBConn.Where("id = ?", c.ID).First(c)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 
@@ -45,9 +48,7 @@ func CreateCitizensStateTable(stateID string) error {
 				"id" bigint NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"block_id" bigint NOT NULL DEFAULT '0',
-				"rb_id" bigint NOT NULL DEFAULT '0',
-				"avatar" text NOT NULL DEFAULT '',
-				"name" text NOT NULL DEFAULT ''
+				"rb_id" bigint NOT NULL DEFAULT '0'
 			     );
 			     ALTER TABLE ONLY "` + stateID + `_citizens" ADD CONSTRAINT "` + stateID + `_citizens_pkey" PRIMARY KEY (id);
 			   `).Error

@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/jinzhu/gorm"
+)
 
 type DltWallet struct {
 	WalletID           int64  `gorm:"primary_key;not null"`
@@ -35,11 +39,17 @@ func GetWallets(startWalletID int64, walletsCount int) ([]DltWallet, error) {
 
 func (w *DltWallet) IsExistsByPublicKey(pubkey []byte) (bool, error) {
 	query := DBConn.Where("public_key_0 = ?", pubkey).First(w)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 
 func (w *DltWallet) IsExists() (bool, error) {
 	query := DBConn.Where("wallet_id = ?", w.WalletID).First(w)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 

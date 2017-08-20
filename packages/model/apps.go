@@ -1,8 +1,10 @@
 package model
 
+import "github.com/jinzhu/gorm"
+
 type App struct {
 	tableName string
-	Name      string `gorm:"private_key;not null;size:100"`
+	Name      string `gorm:"primary_key;not null;size:100"`
 	Done      int32  `gorm:"not null"`
 	Blocks    string `gorm:"not null"`
 }
@@ -27,6 +29,9 @@ func (a *App) GetAll() ([]App, error) {
 
 func (a *App) IsExists(name string) (bool, error) {
 	query := DBConn.Where("name = ?", name).First(a)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 

@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/jinzhu/gorm"
+)
 
 type Table struct {
 	tableName             string
@@ -63,12 +67,21 @@ func (t *Table) GetColumnsAndPermissions(tablePrefix string, tableName string) (
 
 func (t *Table) ExistsByName(name string) (bool, error) {
 	query := DBConn.Where("name = ?", name).First(t)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 
 func (t *Table) IsExistsByPermissionsAndTableName(columnName, tableName string) (bool, error) {
 	query := DBConn.Where(`(columns_and_permissions->'update'-> ? ) is not null AND name = ?`, columnName, tableName).First(t)
-	return !query.RecordNotFound(), query.Error
+	if query.Error == nil {
+		return !query.RecordNotFound(), nil
+	}
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
+	return false, query.Error
 }
 
 func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) {
@@ -95,7 +108,8 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 }
 
 func (t *Table) SetActionByName(table, name, action, actionValue string, rbID int64) (int64, error) {
-	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+actionValue+`"`, rbID, name)
+	log.Debugf("set action by name: name = %s, actions = %s, actionsValue = %s", name, action, actionValue)
+	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', `+`'`+actionValue+`'`+`, true), rb_id = ? WHERE name = ?`, rbID, name)
 	return query.RowsAffected, query.Error
 }
 

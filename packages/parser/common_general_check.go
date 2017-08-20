@@ -67,6 +67,7 @@ func (p *Parser) generalCheck(name string, header *tx.Header, conditionsCheck ma
 			log.Debug("data[public_key_0]", dltWallet.PublicKey)
 		}
 	} else {
+		log.Debugf("parser general check, user_id = %d", header.UserID)
 		dltWallet := &model.DltWallet{}
 		err := dltWallet.GetWallet(header.UserID)
 		if err != nil {

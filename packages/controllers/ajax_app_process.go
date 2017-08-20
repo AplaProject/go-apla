@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 
+	"strconv"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
@@ -53,7 +55,7 @@ func (c *Controller) AjaxAppProcess() interface{} {
 	if strings.HasPrefix(name, `global`) {
 		app.SetTablePrefix("global")
 	} else {
-		app.SetTablePrefix(string(c.SessStateID))
+		app.SetTablePrefix(strconv.FormatInt(c.SessStateID, 10))
 	}
 	exist, err := app.IsExists(app.Name)
 	if err != nil {

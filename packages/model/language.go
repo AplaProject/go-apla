@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/jinzhu/gorm"
+)
 
 type Language struct {
 	tableName  string
@@ -30,6 +34,9 @@ func (l *Language) GetAll(prefix string) ([]Language, error) {
 
 func (l *Language) IsExistsByName(name string) (bool, error) {
 	query := DBConn.Where("name = ?", name).First(l)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 

@@ -216,10 +216,13 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 		}
 	}
 	if generalRollback {
-		rollbackTx := &model.RollbackTx{BlockID: p.BlockData.BlockID,
-			TxHash:                              []byte(p.TxHash),
-			NameTable:                           table,
-			TableID:                             tableID}
+		rollbackTx := &model.RollbackTx{
+			BlockID: p.BlockData.BlockID,
+			TxHash:    []byte(p.TxHash),
+			NameTable: table,
+			TableID:   tableID,
+		}
+
 		err = rollbackTx.Create()
 		if err != nil {
 			return 0, tableID, err

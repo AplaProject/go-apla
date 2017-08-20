@@ -28,7 +28,7 @@ func (m *Menu) Create() error {
 
 func (m *Menu) GetAll(prefix string) ([]Menu, error) {
 	var result []Menu
-	err := DBConn.Table(prefix + "_menus").Order("name").Find(result).Error
+	err := DBConn.Table(prefix + "_menus").Order("name").Find(&result).Error
 	return result, err
 }
 

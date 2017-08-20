@@ -137,6 +137,8 @@ func (p *NewTableParser) Action() error {
 	var cols [][]string
 	json.Unmarshal([]byte(p.NewTable.Columns), &cols)
 
+	indexes := make([]string, 0)
+
 	colsSQL := ""
 	colsSQL2 := ""
 	for _, data := range cols {
@@ -161,10 +163,7 @@ func (p *NewTableParser) Action() error {
 		colsSQL += `"` + data[0] + `" ` + colType + " " + colDef + " ,\n"
 		colsSQL2 += `"` + data[0] + `": "ContractConditions(\"MainCondition\")",`
 		if data[2] == "1" {
-			err := model.CreateIndex(tableName+"_"+data[0], tableName, data[0])
-			if err != nil {
-				p.ErrInfo(err)
-			}
+			indexes = append(indexes, data[0])
 		}
 	}
 	colsSQL2 = colsSQL2[:len(colsSQL2)-1]
@@ -172,6 +171,13 @@ func (p *NewTableParser) Action() error {
 	err = model.CreateTable(tableName, colsSQL)
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+
+	for _, index := range indexes {
+		err := model.CreateIndex(tableName+"_"+index, tableName, index)
+		if err != nil {
+			p.ErrInfo(err)
+		}
 	}
 
 	t := &model.Table{

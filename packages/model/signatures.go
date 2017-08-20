@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/jinzhu/gorm"
+)
 
 type Signature struct {
 	tableName  string
@@ -24,6 +28,9 @@ func (s *Signature) Get(name string) error {
 
 func (s *Signature) ExistsByName(name string) (bool, error) {
 	query := DBConn.Where("name = ?", name).First(s)
+	if query.Error == gorm.ErrRecordNotFound {
+		return false, nil
+	}
 	return !query.RecordNotFound(), query.Error
 }
 
