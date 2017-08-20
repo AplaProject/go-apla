@@ -273,8 +273,9 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 		if thrustWindowLoder != nil {
 			thrustWindowLoder.Close()
 		}
-		os.Exit(code)
 		model.GormClose()
+		delPidFile()
+		os.Exit(code)
 	}
 
 	if dir != "" {
