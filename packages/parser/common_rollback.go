@@ -62,8 +62,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 			if err != nil {
 				log.Fatal(err)
 			}
-			hash = converter.BinToHex(hash)
-			p.TxHash = string(hash)
+			p.TxHash = hash
 			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			if err != nil {
 				return utils.ErrInfo(err)
@@ -111,7 +110,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				if err != nil {
 					log.Error("error: %v", err)
 				}
-				affect, err := model.DeleteTransactionByHash([]byte(p.TxHash))
+				affect, err := model.DeleteTransactionByHash(p.TxHash)
 				if err != nil {
 					logging.WriteSelectiveLog(err)
 					return utils.ErrInfo(err)
@@ -119,7 +118,7 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
 			}
 
-			affect, err := model.MarkTransactionUnusedAndUnverified([]byte(p.TxHash))
+			affect, err := model.MarkTransactionUnusedAndUnverified(p.TxHash)
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				return utils.ErrInfo(err)

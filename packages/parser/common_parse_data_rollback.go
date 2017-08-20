@@ -80,35 +80,32 @@ func (p *Parser) ParseDataRollback() error {
 			if err != nil {
 				log.Fatal(err)
 			}
-			hash = converter.BinToHex(hash)
-			p.TxHash = string(hash)
+			p.TxHash = hash
 
-			affect, err := model.MarkTransactionUnusedAndUnverified([]byte(p.TxHash))
+			affect, err := model.MarkTransactionUnusedAndUnverified(p.TxHash)
 			if err != nil {
 				logging.WriteSelectiveLog(err)
 				return p.ErrInfo(err)
 			}
 			logging.WriteSelectiveLog("affect: " + converter.Int64ToStr(affect))
-			_, err = model.DeleteLogTransactionsByHash([]byte(p.TxHash))
+			_, err = model.DeleteLogTransactionsByHash(p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 			// даем юзеру понять, что его тр-ия не в блоке
 			// let user know that his territory isn't in the block
 			ts := &model.TransactionStatus{}
-			err = ts.UpdateBlockID(0, []byte(p.TxHash))
+			err = ts.UpdateBlockID(0, p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
 			// пишем тр-ию в очередь на проверку, авось пригодится
 			// put the transaction in the turn for checking suddenly we will need it
-			dataHex := converter.BinToHex(transactionBinaryData)
-			log.Debug("DELETE FROM queue_tx WHERE hex(hash) = %s", p.TxHash)
 			_, err = model.DeleteQueueTxByHash(p.TxHash)
 			if err != nil {
 				return p.ErrInfo(err)
 			}
-			queueTx := &model.QueueTx{Hash: []byte(p.TxHash), Data: []byte(dataHex)}
+			queueTx := &model.QueueTx{Hash: p.TxHash, Data: transactionBinaryData}
 			err = queueTx.Save()
 			if err != nil {
 				return p.ErrInfo(err)

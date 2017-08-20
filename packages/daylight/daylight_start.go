@@ -44,7 +44,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/schema"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/stopdaemons"
-	"github.com/EGaaS/go-egaas-mvp/packages/system"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/go-bindata-assetfs"
@@ -189,9 +188,14 @@ func rollbackToBlock(blockID int64) error {
 	if err != nil {
 		log.Errorf("get all tables failed: %s", err)
 		return err
-
 	}
 
+	// block id = 1, is a special case for full rollback
+	if blockID != 1 {
+		return nil
+	}
+
+	// check blocks related tables
 	startData := map[string]int64{"install": 1, "config": 1, "queue_tx": 99999, "log_transactions": 1, "transactions_status": 99999, "block_chain": 1, "info_block": 1, "dlt_wallets": 1, "confirmations": 9999999, "full_nodes": 1, "system_parameters": 4, "my_node_keys": 99999, "transactions": 999999}
 	for _, table := range allTable {
 		count, err := model.Single(`SELECT count(*) FROM ` + converter.EscapeName(table)).Int64()
@@ -204,6 +208,23 @@ func rollbackToBlock(blockID int64) error {
 		} else {
 			fmt.Println(table, "ok")
 		}
+	}
+	return nil
+}
+
+func processOldFile(oldFileName string) error {
+
+	err := utils.CopyFileContents(os.Args[0], oldFileName)
+	if err != nil {
+		log.Errorf("can't copy from %s %v", oldFileName, utils.ErrInfo(err))
+		return err
+	}
+	schema.Migration()
+
+	err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
+	if err != nil {
+		log.Errorf("exec command error: %v", utils.ErrInfo(err))
+		return err
 	}
 	return nil
 }
@@ -253,6 +274,7 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 			thrustWindowLoder.Close()
 		}
 		os.Exit(code)
+		model.GormClose()
 	}
 
 	if dir != "" {
@@ -260,6 +282,21 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	}
 
 	readConfig()
+
+	if len(config.ConfigIni["db_type"]) > 0 {
+		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
+		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
+		if err != nil {
+			log.Errorf("gorm init error: %s", err)
+			Exit(1)
+		}
+
+		err = syspar.SysUpdate()
+		if err != nil {
+			log.Error("can't read system parameters: %s", utils.ErrInfo(err))
+			Exit(1)
+		}
+	}
 
 	// create first block
 	if *utils.GenerateFirstBlock == 1 {
@@ -295,36 +332,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// if there is OldFileName, so act on behalf dc.tmp and we have to restart on behalf the normal name
 	if *utils.OldFileName != "" {
-
-		if *utils.OldFileName != "" { //*utils.Dir+`/dc.tmp`
-			err = utils.CopyFileContents(os.Args[0], *utils.OldFileName)
-			if err != nil {
-				log.Errorf("can't copy from %s %v", *utils.OldFileName, utils.ErrInfo(err))
-			}
-		}
-		schema.Migration()
-
-		if *utils.OldFileName != "" {
-			err = model.DBConn.Close()
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-			err = os.Remove(filepath.Join(*utils.Dir, "daylight.pid"))
-			if err != nil {
-				log.Error("%v", utils.ErrInfo(err))
-			}
-
-			if thrustWindowLoder != nil {
-				thrustWindowLoder.Close()
-			}
-			system.Finish()
-			err = exec.Command(*utils.OldFileName, "-dir", *utils.Dir).Start()
-			if err != nil {
-				log.Debug("%v", os.Stderr)
-				log.Debug("%v", utils.ErrInfo(err))
-			}
-			os.Exit(1)
-		}
+		processOldFile(*utils.OldFileName)
+		Exit(1)
 	}
 
 	// save the current pid and version
@@ -338,7 +347,12 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 
 	// database rollback to the specified block
 	if *utils.RollbackToBlockID > 0 {
-		rollbackToBlock(*utils.RollbackToBlockID)
+		err := rollbackToBlock(*utils.RollbackToBlockID)
+		if err != nil {
+			fmt.Printf("rollback error: %s\n", err)
+		} else {
+			fmt.Printf("OK\n")
+		}
 		Exit(0)
 	}
 
@@ -355,20 +369,8 @@ func Start(dir string, thrustWindowLoder *window.Window) {
 	BrowserHTTPHost, _, ListenHTTPHost := GetHTTPHost()
 	fmt.Printf("BrowserHTTPHost: %v, ListenHTTPHost: %v\n", BrowserHTTPHost, ListenHTTPHost)
 
-	if len(config.ConfigIni["db_type"]) > 0 {
+	if model.DBConn != nil {
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err = model.GormInit(config.ConfigIni["db_user"], config.ConfigIni["db_password"], config.ConfigIni["db_name"])
-		if err != nil {
-			log.Errorf("gorm init error: %s", err)
-			Exit(1)
-		}
-
-		err = syspar.SysUpdate()
-		if err != nil {
-			log.Error("can't read system parameters: %s", utils.ErrInfo(err))
-			Exit(1)
-		}
-
 		log.Info("start daemons")
 		daemons.StartDaemons()
 		log.Debugf("daemon started")

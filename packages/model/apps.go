@@ -23,7 +23,7 @@ func (a *App) Get(name string) error {
 
 func (a *App) GetAll() ([]App, error) {
 	var apps []App
-	err := DBConn.Table(a.tableName).Find(apps).Error
+	err := DBConn.Table(a.tableName).Find(&apps).Error
 	return apps, err
 }
 

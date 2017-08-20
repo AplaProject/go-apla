@@ -79,7 +79,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		return
 	}
 	id = converter.Int64ToStr(systemState.ID)
-	rollbackTx := model.RollbackTx{BlockID: p.BlockData.BlockID, TxHash: []byte(p.TxHash), NameTable: "system_states", TableID: id}
+	rollbackTx := model.RollbackTx{BlockID: p.BlockData.BlockID, TxHash: p.TxHash, NameTable: "system_states", TableID: id}
 	err = rollbackTx.Create()
 	if err != nil {
 		return
@@ -324,7 +324,7 @@ func (p *NewStateParser) Action() error {
 
 func (p *NewStateParser) Rollback() error {
 	rollbackTx := &model.RollbackTx{}
-	err := rollbackTx.Get([]byte(p.TxHash), "system_states")
+	err := rollbackTx.Get(p.TxHash, "system_states")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -341,7 +341,7 @@ func (p *NewStateParser) Rollback() error {
 		}
 	}
 
-	rollbackTxToDel := &model.RollbackTx{TxHash: []byte(p.TxHash), NameTable: "system_states"}
+	rollbackTxToDel := &model.RollbackTx{TxHash: p.TxHash, NameTable: "system_states"}
 	err = rollbackTxToDel.DeleteByHashAndTableName()
 	if err != nil {
 		return p.ErrInfo(err)

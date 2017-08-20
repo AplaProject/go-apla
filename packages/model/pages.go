@@ -28,15 +28,15 @@ func (p *Page) Create() error {
 }
 
 func (p *Page) GetWithMenu(prefix string) ([]Page, error) {
-	pages := make([]Page, 0)
+	pages := new([]Page)
 	err := DBConn.Table(prefix + "_pages").Where("menu != '0'").Order("name").Find(pages).Error
-	return pages, err
+	return *pages, err
 }
 
 func (p *Page) GetWithoutMenu(prefix string) ([]Page, error) {
-	pages := make([]Page, 0)
-	err := DBConn.Table(prefix + "_pages").Where("menu == '0'").Order("name").Find(pages).Error
-	return pages, err
+	pages := new([]Page)
+	err := DBConn.Table(prefix + "_pages").Where("menu = '0'").Order("name").Find(pages).Error
+	return *pages, err
 }
 
 func (p *Page) ToMap() map[string]string {

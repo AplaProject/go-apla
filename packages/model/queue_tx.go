@@ -30,7 +30,7 @@ func (qt *QueueTx) GetByHash(hash []byte) error {
 	return handleError(DBConn.Where("hash = ?", hash).First(qt).Error)
 }
 
-func DeleteQueueTxByHash(hash string) (int64, error) {
+func DeleteQueueTxByHash(hash []byte) (int64, error) {
 	query := DBConn.Exec("DELETE FROM queue_tx WHERE hash = ?", hash)
 	return query.RowsAffected, query.Error
 }

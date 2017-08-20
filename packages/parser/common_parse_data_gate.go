@@ -66,7 +66,7 @@ func (p *Parser) ParseDataGate(onlyTx bool) (*tx.Header, error) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		p.TxHash = string(hash)
+		p.TxHash = hash
 
 		// преобразуем бинарные данные транзакции в массив
 		// transforming binary data of the transaction to an array

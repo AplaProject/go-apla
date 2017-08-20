@@ -213,7 +213,7 @@ func (p *DLTTransferParser) Action() error {
 	}
 	rollbackTx := &model.RollbackTx{
 		BlockID:   p.BlockData.BlockID,
-		TxHash:    []byte(p.TxHash),
+		TxHash:    p.TxHash,
 		NameTable: "dlt_transactions",
 		TableID:   converter.Int64ToStr(dltTransaction.ID),
 	}

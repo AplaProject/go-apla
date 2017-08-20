@@ -68,7 +68,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 		binaryData := block.Data
 		converter.BytesShift(&binaryData, 1) // не нужно. 0 - блок, >0 - тр-ии
 		BlockData = utils.ParseBlockHeader(&binaryData)
-		BlockData.Hash = converter.BinToHex(block.Hash)
+		BlockData.Hash = block.Hash
 	}
 	return BlockData, nil
 }
@@ -267,7 +267,7 @@ type Parser struct {
 	blockData        []byte
 	CurrentBlockID   int64
 	fullTxBinaryData []byte
-	TxHash           string
+	TxHash           []byte
 	TxSlice          [][]byte
 	MerkleRoot       []byte
 	GoroutineName    string
@@ -329,16 +329,15 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	searchedHash = converter.BinToHex(searchedHash)
 	logTx := &model.LogTransaction{}
-	err = logTx.GetByHash(string(searchedHash))
+	err = logTx.GetByHash(searchedHash)
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
 	log.Debug("hash %x", logTx.Hash)
 	if len(logTx.Hash) > 0 {
-		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %s", searchedHash))
+		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
 	}
 
 	if transactions {
@@ -351,7 +350,7 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 			return utils.ErrInfo(err)
 		}
 		if len(tx.Hash) > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx in transactions %s", searchedHash))
+			return utils.ErrInfo(fmt.Errorf("double tx in transactions %x", searchedHash))
 		}
 	}
 
@@ -365,7 +364,7 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 			return utils.ErrInfo(err)
 		}
 		if len(qtx.Hash) > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %s", searchedHash))
+			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
 		}
 	}
 
@@ -518,9 +517,9 @@ func (p *Parser) BlockError(err error) {
 	if len(errText) > 255 {
 		errText = errText[:255]
 	}
-	p.DeleteQueueTx([]byte(p.TxHash))
+	p.DeleteQueueTx(p.TxHash)
 	ts := &model.TransactionStatus{}
-	ts.SetError(errText, []byte(p.TxHash))
+	ts.SetError(errText, p.TxHash)
 }
 
 // AccessRights checks the access right by executing the condition value

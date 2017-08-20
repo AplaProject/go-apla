@@ -110,8 +110,7 @@ func sendTransactions() error {
 
 	// set all transactions as sent
 	for _, tr := range *trs {
-		hexHash := converter.BinToHex(tr.Hash)
-		_, err := model.MarkTransactionSent(hexHash)
+		_, err := model.MarkTransactionSent(tr.Hash)
 		if err != nil {
 			log.Errorf("failed to set transaction as sent: %s", err)
 		}
@@ -156,8 +155,7 @@ func sendHashes(fullNodeID int32) error {
 
 	if trs != nil {
 		for _, tr := range *trs {
-			hexHash := converter.BinToHex(tr.Hash)
-			_, err := model.MarkTransactionSent(hexHash)
+			_, err := model.MarkTransactionSent(tr.Hash)
 			if err != nil {
 				log.Errorf("error set transaction %+v as sent: %s", tr, err)
 			}

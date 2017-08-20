@@ -133,8 +133,8 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			if err != nil {
 				log.Fatal(err)
 			}
-			// hash = converter.BinToHex(hash)
-			p.TxHash = string(hash)
+
+			p.TxHash = hash
 			p.TxBinaryData = transactionBinaryData
 			txType = int(converter.BinToDecBytesShift(&p.TxBinaryData, 1))
 			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)

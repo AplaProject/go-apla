@@ -350,19 +350,6 @@ DROP TABLE IF EXISTS "system_restore_access"; CREATE TABLE "system_restore_acces
 ALTER SEQUENCE system_restore_access_id_seq owned by system_restore_access.id;
 ALTER TABLE ONLY "system_restore_access" ADD CONSTRAINT system_restore_access_pkey PRIMARY KEY (id);
 
-DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
-"id" int NOT NULL DEFAULT '0',
-"hash" bytea  NOT NULL DEFAULT '',
-"data" bytea NOT NULL DEFAULT '',
-"state_id" int  NOT NULL DEFAULT '0',
-"wallet_id" bigint  REFERENCES dlt_wallets(wallet_id) NOT NULL DEFAULT '0',
-"time" int NOT NULL DEFAULT '0',
-"tx" int NOT NULL DEFAULT '0',
-"cur_0l_miner_id" int NOT NULL DEFAULT '0',
-"max_miner_id" int NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "block_chain" ADD CONSTRAINT block_chain_pkey PRIMARY KEY (id);
-
 DROP SEQUENCE IF EXISTS "dlt_transactions_id_seq" CASCADE;
 CREATE SEQUENCE "dlt_transactions_id_seq" START WITH 1;
 DROP TABLE IF EXISTS "dlt_transactions"; CREATE TABLE "dlt_transactions" (
@@ -381,14 +368,6 @@ ALTER SEQUENCE "dlt_transactions_id_seq" owned by "dlt_transactions".id;
 ALTER TABLE ONLY "dlt_transactions" ADD CONSTRAINT "dlt_transactions_pkey" PRIMARY KEY (id);
 CREATE INDEX dlt_transactions_index_sender ON "dlt_transactions" (sender_wallet_id);
 CREATE INDEX dlt_transactions_index_recipient ON "dlt_transactions" (recipient_wallet_id);
-
-DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
-"block_id" bigint REFERENCES block_chain(id)  NOT NULL DEFAULT '0',
-"good" int  NOT NULL DEFAULT '0',
-"bad" int  NOT NULL DEFAULT '0',
-"time" int  NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (block_id);
 
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 "hash" bytea  NOT NULL DEFAULT '',

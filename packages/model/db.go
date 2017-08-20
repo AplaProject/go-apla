@@ -59,7 +59,7 @@ func DropTables() error {
 
 func GetRecordsCount(tableName string) (int64, error) {
 	var count int64
-	err := DBConn.Table(tableName).Count(count).Error
+	err := DBConn.Table(tableName).Count(&count).Error
 	return count, err
 }
 
@@ -140,7 +140,9 @@ func GetRollbackID(tblname, where, ordering string) (int64, error) {
 	query := "SELECT rb_id FROM " + tblname + " " + where + " order by rb_id " + ordering
 	err := DBConn.Raw(query).Row().Scan(&result)
 	if err != nil {
-		return 0, err
+		log.Errorf("can't get rollback_id: %s for query %s", err, query)
+		// TODO
+		return 0, nil
 	}
 	return result, nil
 }

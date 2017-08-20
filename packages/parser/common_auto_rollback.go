@@ -23,7 +23,7 @@ import (
 
 func (p *Parser) autoRollback() error {
 	rollbackTx := &model.RollbackTx{}
-	txs, err := rollbackTx.GetRollbackTransactions([]byte(p.TxHash))
+	txs, err := rollbackTx.GetRollbackTransactions(p.TxHash)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
@@ -33,7 +33,7 @@ func (p *Parser) autoRollback() error {
 			return p.ErrInfo(err)
 		}
 	}
-	txForDelete := &model.RollbackTx{TxHash: []byte(p.TxHash)}
+	txForDelete := &model.RollbackTx{TxHash: p.TxHash}
 	err = txForDelete.DeleteByHash()
 	if err != nil {
 		return p.ErrInfo(err)

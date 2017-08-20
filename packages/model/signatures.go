@@ -36,7 +36,7 @@ func (s *Signature) ExistsByName(name string) (bool, error) {
 
 func (s *Signature) GetAllOredered(prefix string) ([]Signature, error) {
 	var result []Signature
-	err := DBConn.Table(prefix + "_signatures").Order("name").Find(result).Error
+	err := DBConn.Table(prefix + "_signatures").Order("name").Find(&result).Error
 	return result, err
 }
 

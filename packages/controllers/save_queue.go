@@ -342,7 +342,6 @@ func (c *Controller) SaveQueue() (string, error) {
 		return "", utils.ErrInfo(err)
 	}
 
-	log.Debug("INSERT INTO queue_tx (hash, data) VALUES (%s, %s)", hash, converter.BinToHex(data))
 	queueTx := &model.QueueTx{Hash: hash, Data: data}
 	err = queueTx.Create()
 	if err != nil {
