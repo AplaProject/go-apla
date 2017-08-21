@@ -13,12 +13,12 @@ func (RollbackTx) TableName() string {
 }
 
 func (rt *RollbackTx) GetRollbackTransactions(transactionHash []byte) ([]RollbackTx, error) {
-	transactions := new([]RollbackTx)
+	transactions := make([]RollbackTx, 0)
 	err := DBConn.Where("tx_hash =  ?", transactionHash).Order("id desc").Find(&transactions).Error
 	if err != nil {
 		return nil, err
 	}
-	return *transactions, err
+	return transactions, err
 }
 
 func (rt *RollbackTx) DeleteByHash() error {
