@@ -37,7 +37,7 @@ func (sp *StateParameter) GetAllStateParameters(tablePrefix string) ([]StatePara
 	if err != nil {
 		return nil, err
 	}
-	return *parameters, nil
+	return parameters, nil
 }
 
 func (sp *StateParameter) ToMap() map[string]string {
