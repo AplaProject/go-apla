@@ -2,6 +2,7 @@ package model
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 )
@@ -50,18 +51,38 @@ func (t *Table) GetAll(prefix string) ([]Table, error) {
 }
 
 func (t *Table) GetTablePermissions(tablePrefix string, tableName string) (map[string]string, error) {
+	var value string
 	result := make(map[string]string, 0)
-	err := DBConn.Table(tablePrefix+"tables").
+	row, err := DBConn.Table(tablePrefix+"_tables").
 		Select("jsonb_each_text(columns_and_permissions)").
-		Where("name = ?", tableName).Scan(&result).Error
+		Where("name = ?", tableName).Rows()
+	if err != nil {
+		return nil, err
+	}
+	for row.Next() {
+		row.Scan(&value)
+		value = value[1 : len(value)-1]
+		line := strings.Split(value, ",")
+		result[line[0]] = line[1]
+	}
 	return result, err
 }
 
 func (t *Table) GetColumnsAndPermissions(tablePrefix string, tableName string) (map[string]string, error) {
+	var value string
 	result := make(map[string]string, 0)
-	err := DBConn.Table(tablePrefix+"tables").
+	row, err := DBConn.Table(tablePrefix+"_tables").
 		Select("jsonb_each_text(columns_and_permissions->'update')").
-		Where("name = ?", tableName).Scan(&result).Error
+		Where("name = ?", tableName).Rows()
+	if err != nil {
+		return nil, err
+	}
+	for row.Next() {
+		row.Scan(&value)
+		value = value[1 : len(value)-1]
+		line := strings.Split(value, ",")
+		result[line[0]] = line[1]
+	}
 	return result, err
 }
 
