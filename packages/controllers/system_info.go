@@ -55,7 +55,7 @@ func (c *Controller) SystemInfo() (string, error) {
 
 	mainLock := &model.MainLock{}
 	err = mainLock.Get()
-	if err != nil {
+	if err != nil && err != model.RecordNotFound {
 		return "", utils.ErrInfo(err)
 	}
 	pageData.MainLock = append(pageData.MainLock, mainLock.ToMap())

@@ -18,7 +18,7 @@ func (r *Rollback) Get(rollbackID int64) error {
 
 func (r *Rollback) GetRollbacks(limit int) ([]Rollback, error) {
 	rollbacks := new([]Rollback)
-	err := DBConn.Limit(limit).Find(rollbacks).Error
+	err := DBConn.Limit(limit).Find(&rollbacks).Error
 	if err != nil {
 		return nil, err
 	}

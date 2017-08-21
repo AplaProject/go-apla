@@ -33,7 +33,7 @@ func (sp *StateParameter) GetByParameter(parameter string) error {
 
 func (sp *StateParameter) GetAllStateParameters(tablePrefix string) ([]StateParameter, error) {
 	parameters := new([]StateParameter)
-	err := DBConn.Table(tablePrefix + "_state_parameters").Find(parameters).Error
+	err := DBConn.Table(tablePrefix + "_state_parameters").Find(&parameters).Error
 	if err != nil {
 		return nil, err
 	}

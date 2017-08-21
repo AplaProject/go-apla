@@ -28,7 +28,7 @@ func (l *Language) Get(name string) error {
 
 func (l *Language) GetAll(prefix string) ([]Language, error) {
 	result := new([]Language)
-	err := DBConn.Table(prefix + "_languages").Order("name").Find(result).Error
+	err := DBConn.Table(prefix + "_languages").Order("name").Find(&result).Error
 	return *result, err
 }
 

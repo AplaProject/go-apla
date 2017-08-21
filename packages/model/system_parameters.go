@@ -34,7 +34,7 @@ func (sp *SystemParameter) GetValueParameterByName(name, value string) (string, 
 
 func GetAllSystemParameters() ([]SystemParameter, error) {
 	parameters := new([]SystemParameter)
-	if err := DBConn.Find(parameters).Error; err != nil {
+	if err := DBConn.Find(&parameters).Error; err != nil {
 		return nil, err
 	}
 	return *parameters, nil

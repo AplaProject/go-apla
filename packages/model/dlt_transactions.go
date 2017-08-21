@@ -29,7 +29,7 @@ func (dt *DltTransaction) GetIncomingTransactions(recipientWalletID int64) error
 }
 
 func (dt *DltTransaction) GetCount(senderWalletID, recipientWalletID int64, recipientWalletAddress string) (int64, error) {
-	var count int64
+	count := int64(-1)
 	err := DBConn.Where("sender_wallet_id = ? OR recipient_wallet_id = ? OR recipient_wallet_address = ?",
 		senderWalletID, recipientWalletID, recipientWalletAddress).Find(dt).Count(&count).Error
 	return count, err

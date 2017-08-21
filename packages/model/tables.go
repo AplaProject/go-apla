@@ -44,16 +44,16 @@ func (t *Table) ToMap() map[string]string {
 }
 
 func (t *Table) GetAll(prefix string) ([]Table, error) {
-	var result = new([]Table)
-	err := DBConn.Table(prefix + "_tables").Find(result).Error
-	return *result, err
+	result := make([]Table, 0)
+	err := DBConn.Table(prefix + "_tables").Find(&result).Error
+	return result, err
 }
 
 func (t *Table) GetTablePermissions(tablePrefix string, tableName string) (map[string]string, error) {
 	result := make(map[string]string, 0)
 	err := DBConn.Table(tablePrefix+"tables").
 		Select("jsonb_each_text(columns_and_permissions)").
-		Where("name = ?", tableName).Scan(result).Error
+		Where("name = ?", tableName).Scan(&result).Error
 	return result, err
 }
 
@@ -61,7 +61,7 @@ func (t *Table) GetColumnsAndPermissions(tablePrefix string, tableName string) (
 	result := make(map[string]string, 0)
 	err := DBConn.Table(tablePrefix+"tables").
 		Select("jsonb_each_text(columns_and_permissions->'update')").
-		Where("name = ?", tableName).Scan(result).Error
+		Where("name = ?", tableName).Scan(&result).Error
 	return result, err
 }
 

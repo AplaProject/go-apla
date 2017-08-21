@@ -35,13 +35,13 @@ func (s *Signature) ExistsByName(name string) (bool, error) {
 }
 
 func (s *Signature) GetAllOredered(prefix string) ([]Signature, error) {
-	var result []Signature
+	result := make([]Signature, 0)
 	err := DBConn.Table(prefix + "_signatures").Order("name").Find(&result).Error
 	return result, err
 }
 
 func (s *Signature) ToMap() map[string]string {
-	var result map[string]string
+	result := make(map[string]string, 0)
 	result["name"] = s.Name
 	result["value"] = s.Value
 	result["conditions"] = s.Conditions

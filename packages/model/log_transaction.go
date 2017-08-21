@@ -38,7 +38,7 @@ func DeleteLogTransactionsByHash(hash []byte) (int64, error) {
 }
 
 func GetLogTransactionsCount(hash []byte) (int64, error) {
-	var rowsCount int64
+	rowsCount := int64(0)
 	if err := DBConn.Exec("SELECT count(hash) FROM log_transactions WHERE hash = ?", hash).Scan(&rowsCount).Error; err != nil {
 		return -1, err
 	}

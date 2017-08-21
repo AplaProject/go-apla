@@ -36,7 +36,7 @@ func (c *Citizen) Get(id int64) error {
 
 func GetAllCitizensWhereIdMoreThan(tablePrefix string, id int64, limit int64) ([]Citizen, error) {
 	citizens := new([]Citizen)
-	err := DBConn.Table(tablePrefix+"_citizens").Order("id").Where("id >= ?", id).Limit(limit).Find(citizens).Error
+	err := DBConn.Table(tablePrefix+"_citizens").Order("id").Where("id >= ?", id).Limit(limit).Find(&citizens).Error
 	if err != nil {
 		return nil, err
 	}

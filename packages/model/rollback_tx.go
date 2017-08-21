@@ -14,7 +14,7 @@ func (RollbackTx) TableName() string {
 
 func (rt *RollbackTx) GetRollbackTransactions(transactionHash []byte) ([]RollbackTx, error) {
 	transactions := new([]RollbackTx)
-	err := DBConn.Where("tx_hash =  ?", transactionHash).Order("id desc").Find(transactions).Error
+	err := DBConn.Where("tx_hash =  ?", transactionHash).Order("id desc").Find(&transactions).Error
 	if err != nil {
 		return nil, err
 	}

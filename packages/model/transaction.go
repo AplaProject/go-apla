@@ -3,16 +3,16 @@ package model
 import "github.com/jinzhu/gorm"
 
 type Transaction struct {
-	Hash      []byte `gorm:private_key;not null`
-	Data      []byte `gorm:not null`
-	Used      int8   `gorm:not null`
-	HighRate  int8   `gorm:not null`
-	Type      int8   `gorm:not null`
-	WalletID  int64  `gorm:not null`
-	CitizenID int64  `gorm:not null`
-	Counter   int8   `gorm:not null`
-	Sent      int8   `gorm:not null`
-	Verified  int8   `gorm:not null;default:1`
+	Hash      []byte `gorm:"private_key;not null"`
+	Data      []byte `gorm:"not null"`
+	Used      int8   `gorm:"not null"`
+	HighRate  int8   `gorm:"not null"`
+	Type      int8   `gorm:"not null"`
+	WalletID  int64  `gorm:"not null"`
+	CitizenID int64  `gorm:"not null"`
+	Counter   int8   `gorm:"not null"`
+	Sent      int8   `gorm:"not null"`
+	Verified  int8   `gorm:"not null;default:1"`
 }
 
 func GetAllUnusedTransactions() (*[]Transaction, error) {
@@ -41,7 +41,7 @@ func GetAllUnsentTransactions() (*[]Transaction, error) {
 
 func GetLastTransactions(limit int) ([]Transaction, error) {
 	transactions := new([]Transaction)
-	if err := DBConn.Limit(limit).Find(transactions).Error; err != nil {
+	if err := DBConn.Limit(limit).Find(&transactions).Error; err != nil {
 		return nil, err
 	}
 	return *transactions, nil

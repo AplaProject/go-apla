@@ -29,7 +29,7 @@ func (wt *WalletedTransaction) Get(senderWalletID, recipientWalletID int64, reci
 		Or("recipient_wallet_address=?", recipientWalletAddress).
 		Limit(limit).
 		Offset(offset).
-		Order("d.id desc").Scan(result).Error
+		Order("d.id desc").Scan(&result).Error
 	return *result, err
 }
 

@@ -30,7 +30,7 @@ func (w *DltWallet) GetWallet(walletID int64) error {
 
 func GetWallets(startWalletID int64, walletsCount int) ([]DltWallet, error) {
 	wallets := new([]DltWallet)
-	err := DBConn.Limit(walletsCount).Where("wallet_id >= ?", startWalletID).Find(wallets).Error
+	err := DBConn.Limit(walletsCount).Where("wallet_id >= ?", startWalletID).Find(&wallets).Error
 	if err != nil {
 		return nil, err
 	}
@@ -60,14 +60,14 @@ func (w *DltWallet) Create() error {
 func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {
 	result := make([]map[string]string, 0)
 
-	var wallets []DltWallet
+	wallets := make([]DltWallet, 0)
 	err := DBConn.
 		Select([]string{"address_vote", "sum(amount) as sum"}).
 		Where("address_vote != ''").
 		Group("address_vote").
 		Order("sum(amount) desc").
 		Limit(limit).
-		Find(wallets).Error
+		Find(&wallets).Error
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (w *DltWallet) GetAddressVotes() ([]string, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var addresses []string
+	addresses := make([]string, 0)
 	for rows.Next() {
 		var addressVote string
 		err := rows.Scan(&addressVote)

@@ -22,8 +22,9 @@ import (
 )
 
 var (
-	DBConn *gorm.DB
-	log    = logging.MustGetLogger("model")
+	DBConn         *gorm.DB
+	log            = logging.MustGetLogger("model")
+	RecordNotFound = gorm.ErrRecordNotFound
 )
 
 func GormInit(user string, pass string, dbName string) error {

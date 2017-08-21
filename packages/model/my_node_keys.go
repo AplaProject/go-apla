@@ -13,7 +13,7 @@ type MyNodeKey struct {
 }
 
 func (mnk *MyNodeKey) GetNodeWithMaxBlockID() error {
-	var blockID int64
+	blockID := int64(0)
 	err := DBConn.Raw("SELECT max(block_id) FROM my_node_keys").Row().Scan(&blockID)
 	if err != nil {
 		return err

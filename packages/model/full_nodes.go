@@ -25,7 +25,7 @@ func (fn *FullNode) Get(walletID int64) error {
 }
 
 func (fn *FullNode) FindNodeByID(nodeID int64) error {
-	return handleError(DBConn.Where("id = ?", nodeID).First(&fn).Error)
+	return handleError(DBConn.Where("id = ?", nodeID).First(fn).Error)
 }
 
 func (fn *FullNode) GetAllFullNodesHasWalletID() ([]FullNode, error) {
@@ -43,7 +43,7 @@ func (fn *FullNode) DeleteNodesWithWallets() error {
 }
 
 func (fn *FullNode) FindNodeById(nodeid int64) error {
-	return handleError(DBConn.Where("id = ?", nodeid).First(&fn).Error)
+	return handleError(DBConn.Where("id = ?", nodeid).First(fn).Error)
 }
 
 func (fn *FullNode) Create() error {
@@ -76,7 +76,7 @@ func GetFullNodesHosts() ([]string, error) {
 
 func (fn *FullNode) GetAll() (*[]FullNode, error) {
 	nodes := new([]FullNode)
-	err := DBConn.Find(nodes).Error
+	err := DBConn.Find(&nodes).Error
 	return nodes, err
 }
 
@@ -93,7 +93,7 @@ func (fn *FullNode) ToMap() map[string]string {
 }
 
 func (fn *FullNode) GetMaxID() (int32, error) {
-	var result int32
+	result := int32(-1)
 	err := DBConn.Raw("SELECT max(id) FROM full_nodes").Row().Scan(&result)
 	if err != nil {
 		return 0, err

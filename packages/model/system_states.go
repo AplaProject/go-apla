@@ -13,7 +13,7 @@ func (ss *SystemState) TableName() string {
 
 func GetAllSystemStatesIDs() ([]int64, error) {
 	states := new([]SystemState)
-	if err := DBConn.Find(states).Order("id").Error; err != nil {
+	if err := DBConn.Find(&states).Order("id").Error; err != nil {
 		return nil, err
 	}
 	ids := make([]int64, 0, len(*states))
@@ -28,7 +28,7 @@ func (ss *SystemState) Get(id int64) error {
 }
 
 func (ss *SystemState) GetCount() (int64, error) {
-	var count int64
+	count := int64(0)
 	err := DBConn.Table("system_states").Count(&count).Error
 	return count, err
 }

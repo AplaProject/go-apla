@@ -9,22 +9,22 @@ import (
 
 type Block struct {
 	ID         int64  `gorm:"primary_key;not_null"`
-	Hash       []byte `gorm:not null`
-	Data       []byte `gorm:not null`
-	StateID    int64  `gorm:not null`
-	WalletID   int64  `gorm:not null`
-	Time       int64  `gorm:not null`
-	Tx         int32  `gorm:not null`
-	MaxMinerID int32  `gorm:not null`
+	Hash       []byte `gorm:"not null"`
+	Data       []byte `gorm:"not null"`
+	StateID    int64  `gorm:"not null"`
+	WalletID   int64  `gorm:"not null"`
+	Time       int64  `gorm:"not null"`
+	Tx         int32  `gorm:"not null"`
+	MaxMinerID int32  `gorm:"not null"`
 }
 
 func GetBlockchain(startBlockID int64, endblockID int64) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
 	if endblockID > 0 {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(blockchain).Error
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ? AND id <= ?", startBlockID, endblockID).Find(&blockchain).Error
 	} else {
-		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(blockchain).Error
+		err = DBConn.Model(&Block{}).Order("id asc").Where("id > ?", startBlockID).Find(&blockchain).Error
 	}
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (b *Block) Create() error {
 }
 
 func (b *Block) GetBlock(blockID int64) error {
-	return handleError(DBConn.Where("id = ?", blockID).First(&b).Error)
+	return handleError(DBConn.Where("id = ?", blockID).First(b).Error)
 }
 
 func (b *Block) GetMaxBlock() error {
@@ -67,7 +67,7 @@ func (b *Block) GetMaxBlock() error {
 func (b *Block) GetBlocksFrom(startFromID int64, ordering string) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
-	err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(blockchain).Error
+	err = DBConn.Order("id "+ordering).Where("id > ?", startFromID).Find(&blockchain).Error
 	return *blockchain, handleError(err)
 }
 
@@ -75,9 +75,9 @@ func (b *Block) GetBlocks(startFromID int64, limit int32) ([]Block, error) {
 	var err error
 	blockchain := new([]Block)
 	if startFromID > 0 {
-		err = DBConn.Order("id desc").Limit(limit).Where("id > ?", startFromID).Find(blockchain).Error
+		err = DBConn.Order("id desc").Limit(limit).Where("id > ?", startFromID).Find(&blockchain).Error
 	} else {
-		err = DBConn.Order("id desc").Limit(limit).Find(blockchain).Error
+		err = DBConn.Order("id desc").Limit(limit).Find(&blockchain).Error
 	}
 	return *blockchain, handleError(err)
 }

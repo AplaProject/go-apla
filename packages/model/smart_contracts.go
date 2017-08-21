@@ -73,7 +73,7 @@ func (sc *SmartContract) ToMap() map[string]string {
 
 func GetAllSmartContracts(tablePrefix string) ([]SmartContract, error) {
 	contracts := new([]SmartContract)
-	err := DBConn.Order("id").Table(tablePrefix + "_smart_contracts").Find(contracts).Error
+	err := DBConn.Order("id").Table(tablePrefix + "_smart_contracts").Find(&contracts).Error
 	if err != nil {
 		return nil, err
 	}
