@@ -335,7 +335,7 @@ func (p *NewStateParser) Rollback() error {
 
 	for _, name := range []string{`menu`, `pages`, `citizens`, `languages`, `signatures`, `tables`,
 		`smart_contracts`, `state_parameters`, `apps`, `anonyms`} {
-		err = model.DropTable(fmt.Sprintf("%d_%s", rollbackTx.TableID, name))
+		err = model.DropTable(fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -347,18 +347,24 @@ func (p *NewStateParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 
+	var ID int64
 	ss := &model.SystemState{}
-	err = ss.GetLast()
+	notFound, err := ss.GetLast()
 	if err != nil {
 		return p.ErrInfo(err)
+	}
+	if notFound {
+		ID = 1
+	} else {
+		ID = ss.ID
 	}
 	// обновляем AI
 	// update  the AI
-	err = model.SetAI("system_states", ss.ID+1)
+	err = model.SetAI("system_states", ID+1)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	ssToDel := &model.SystemState{ID: ss.ID}
+	ssToDel := &model.SystemState{ID: ID}
 	err = ssToDel.Delete()
 	if err != nil {
 		return p.ErrInfo(err)

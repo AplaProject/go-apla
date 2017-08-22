@@ -209,8 +209,7 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 			return 0, tableID, err
 		}
 		cost += insertCost
-		tableIDStr, err := model.InsertReturningLastID(table, addSQLIns0, addSQLIns1)
-		tableID := converter.Int64ToStr(tableIDStr)
+		tableID, err = model.InsertReturningLastID(table, addSQLIns0, addSQLIns1)
 		if err != nil {
 			return 0, tableID, err
 		}

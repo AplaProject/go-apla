@@ -33,8 +33,12 @@ func (ss *SystemState) GetCount() (int64, error) {
 	return count, err
 }
 
-func (ss *SystemState) GetLast() error {
-	return DBConn.Last(ss).Error
+func (ss *SystemState) GetLast() (bool, error) {
+	last := DBConn.Last(ss)
+	if last.RecordNotFound() {
+		return true, nil
+	}
+	return false, last.Error
 }
 
 func (ss *SystemState) Delete() error {

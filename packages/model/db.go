@@ -98,16 +98,16 @@ func Delete(tblname, where string) error {
 	return DBConn.Exec("DELETE FROM " + tblname + " " + where).Error
 }
 
-func InsertReturningLastID(table, columns, values string) (int64, error) {
-	var result int64
+func InsertReturningLastID(table, columns, values string) (string, error) {
+	var result string
 	returning, err := GetFirstColumnName(table)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	insertQuery := `INSERT INTO "` + table + `" (` + columns + `) VALUES (` + values + `) RETURNING ` + returning
 	err = DBConn.Raw(insertQuery).Row().Scan(&result)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	return result, nil
 }
