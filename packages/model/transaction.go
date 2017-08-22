@@ -33,7 +33,7 @@ func GetAllTransactions(limit int) (*[]Transaction, error) {
 
 func GetAllUnsentTransactions() (*[]Transaction, error) {
 	transactions := new([]Transaction)
-	if err := DBConn.Where("sent = ?", "0").Find(&transactions).Error; err != nil {
+	if err := DBConn.Where("sent = ?", "0").Find(transactions).Error; err != nil {
 		return nil, err
 	}
 	return transactions, nil
@@ -49,7 +49,7 @@ func GetLastTransactions(limit int) ([]Transaction, error) {
 
 func GetTransactionsCount(hash []byte) (int64, error) {
 	var rowsCount int64
-	if err := DBConn.Exec("SELECT count(hash) FROM transactions WHERE hash = ?", hash).Scan(&rowsCount).Error; err != nil {
+	if err := DBConn.Table("transactions").Where("hash = ?", hash).Count(&rowsCount).Error; err != nil {
 		return -1, err
 	}
 	return rowsCount, nil

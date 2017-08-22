@@ -52,37 +52,39 @@ func HandleTCPRequest(rw io.ReadWriter) {
 	dType := &TransactionType{}
 	err := ReadRequest(dType, rw)
 	if err != nil {
+		log.Errorf("read request type failed: %s", err)
 		return
 	}
 
+	log.Debugf("tcpservers: got request type: %d", dType.Type)
 	var response interface{}
 
 	switch dType.Type {
 	case 1:
 		req := &DisRequest{}
 		err = ReadRequest(req, rw)
-		if err != nil {
+		if err == nil {
 			err = Type1(req, rw)
 		}
 
 	case 2:
 		req := &DisRequest{}
 		err = ReadRequest(req, rw)
-		if err != nil {
+		if err == nil {
 			response, err = Type2(req)
 		}
 
 	case 4:
 		req := &ConfirmRequest{}
 		err = ReadRequest(req, rw)
-		if err != nil {
+		if err == nil {
 			response, err = Type4(req)
 		}
 
 	case 7:
 		req := &GetBodyRequest{}
 		err = ReadRequest(req, rw)
-		if err != nil {
+		if err == nil {
 			response, err = Type7(req)
 		}
 
@@ -90,11 +92,17 @@ func HandleTCPRequest(rw io.ReadWriter) {
 		response, err = Type10()
 	}
 
-	if response != nil && err != nil {
-		err = SendRequest(&response, rw)
+	if err != nil {
+		log.Errorf("tcpserver: parse request error: %s", err)
+		return
+	}
+	if response == nil {
+		return
 	}
 
+	log.Debugf("tcpserver response: %+v", response)
+	err = SendRequest(response, rw)
 	if err != nil {
-		log.Errorf("handle error: %s", err)
+		log.Errorf("tcpserver handle error: %s", err)
 	}
 }

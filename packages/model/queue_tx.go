@@ -40,8 +40,8 @@ func DeleteQueuedTransaction(hash []byte) error {
 }
 
 func GetQueuedTransactionsCount(hash []byte) (int64, error) {
-	rowsCount := int64(0)
-	err := DBConn.Where("hash = ?", hash).Count(&rowsCount).Error
+	var rowsCount int64
+	err := DBConn.Table("queue_tx").Where("hash = ?", hash).Count(&rowsCount).Error
 	return rowsCount, err
 }
 

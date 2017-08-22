@@ -35,7 +35,7 @@ func GormInit(user string, pass string, dbName string) error {
 		return err
 	}
 
-	//DBConn.LogMode(true)
+	//	DBConn.LogMode(true)
 	return nil
 }
 

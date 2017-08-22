@@ -18,7 +18,6 @@ package tcpserver
 
 import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 )
 
 // Type4 writes the hash of the specified block
@@ -31,7 +30,7 @@ func Type4(r *ConfirmRequest) (*ConfirmResponse, error) {
 		hash := [32]byte{}
 		resp.Hash = hash[:]
 	} else {
-		resp.Hash = converter.BinToHex(block.Hash)  // can we send binary data ?
+		resp.Hash = block.Hash // can we send binary data ?
 	}
 	return resp, nil
 }

@@ -7,12 +7,14 @@ import (
 
 	"strconv"
 
+	"fmt"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 type TransactionType struct {
-	Type uint32
+	Type uint16
 }
 
 // type 10
@@ -112,7 +114,7 @@ func SendRequest(request interface{}, w io.Writer) error {
 					panic("bad size tag")
 				}
 				if size != len(value) {
-					return errors.New("bug, bad slice len")
+					return fmt.Errorf("bug, bad slice len, want: %d, got %d", size, len(value))
 				}
 			} else {
 				_, err := w.Write(converter.DecToBin(len(value), 4))
@@ -142,8 +144,7 @@ func SendRequest(request interface{}, w io.Writer) error {
 }
 
 func readUint(r io.Reader, byteCount int) (uint64, error) {
-	buf := make([]byte, byteCount)
-	_, err := r.Read(buf)
+	buf, err := readBytes(r, uint64(byteCount))
 	if err != nil {
 		return 0, utils.ErrInfo(err)
 	}
@@ -156,6 +157,5 @@ func readBytes(r io.Reader, size uint64) ([]byte, error) {
 	}
 	value := make([]byte, int(size))
 	_, err := io.ReadFull(r, value)
-	_, err = r.Read(value)
 	return value, err
 }
