@@ -347,16 +347,9 @@ func (p *NewStateParser) Rollback() error {
 		return p.ErrInfo(err)
 	}
 
-	var ID int64
-	ss := &model.SystemState{}
-	notFound, err := ss.GetLast()
+	ID, err := model.GetAILastValue("system_states")
 	if err != nil {
 		return p.ErrInfo(err)
-	}
-	if notFound {
-		ID = 1
-	} else {
-		ID = ss.ID
 	}
 	// обновляем AI
 	// update  the AI

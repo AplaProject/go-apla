@@ -83,7 +83,7 @@ func (p *EditColumnParser) Action() error {
 	if strings.HasPrefix(p.EditColumn.TableName, `global`) {
 		table = `global_tables`
 	}
-	logData, err := model.GetTableWhereUpdatePermissionAndTableName(p.EditColumn.ColumnName, p.EditColumn.TableName)
+	logData, err := model.GetTableWhereUpdatePermissionAndTableName(table, p.EditColumn.ColumnName, p.EditColumn.TableName)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (p *EditColumnParser) Action() error {
 	}
 
 	rbTx := &model.RollbackTx{
-		ID:        p.BlockData.BlockID,
+		BlockID:   p.BlockData.BlockID,
 		TxHash:    p.TxHash,
 		NameTable: table,
 		TableID:   p.EditColumn.TableName,

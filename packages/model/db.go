@@ -116,6 +116,14 @@ func SequenceRestartWith(seqName string, id int64) error {
 	return DBConn.Exec("ALTER SEQUENCE " + seqName + " RESTART WITH " + converter.Int64ToStr(id)).Error
 }
 
+func SequenceLastValue(seqName string) (int64, error) {
+	var result int64
+	if err := DBConn.Raw("SELECT last_value FROM " + seqName).Row().Scan(&result); err != nil {
+		return 0, err
+	}
+	return result, nil
+}
+
 func GetSerialSequence(table, AiID string) (string, error) {
 	var result string
 	query := `SELECT pg_get_serial_sequence('` + table + `', '` + AiID + `')`
@@ -282,6 +290,22 @@ func SetAI(table string, AI int64) error {
 		return err
 	}
 	return nil
+}
+
+func GetAILastValue(table string) (int64, error) {
+	AiID, err := GetAiID(table)
+	if err != nil {
+		return 0, err
+	}
+	pgGetSerialSequence, err := GetSerialSequence(table, AiID)
+	if err != nil {
+		return 0, err
+	}
+	result, err := SequenceLastValue(pgGetSerialSequence)
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
 }
 
 func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err error) {

@@ -136,7 +136,7 @@ func (p *NewColumnParser) Action() error {
 	}
 
 	rbTx := &model.RollbackTx{
-		ID:        p.BlockData.BlockID,
+		BlockID:   p.BlockData.BlockID,
 		TxHash:    p.TxHash,
 		NameTable: table,
 		TableID:   p.NewColumn.TableName,

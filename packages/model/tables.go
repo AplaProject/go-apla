@@ -172,13 +172,13 @@ func GetColumnsAndPermissionsAndRbIDWhereTable(table, tableName string) (map[str
 	return result, nil
 }
 
-func GetTableWhereUpdatePermissionAndTableName(columnName, tableName string) (map[string]string, error) {
+func GetTableWhereUpdatePermissionAndTableName(table, columnName, tableName string) (map[string]string, error) {
 	type proxy struct {
 		ColumnsAndPermissions string
 		RbID                  int64
 	}
 	temp := &proxy{}
-	err := DBConn.Table(tableName).Where("(columns_and_permissions->'update'-> ? ) is not null AND name = ?", columnName, tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
+	err := DBConn.Table(table).Where("(columns_and_permissions->'update'-> ? ) is not null AND name = ?", columnName, tableName).Select("columns_and_permissions, rb_id").Find(temp).Error
 	if err != nil {
 		return nil, err
 	}
