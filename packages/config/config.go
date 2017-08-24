@@ -35,6 +35,7 @@ func Read() error {
 		if err != nil {
 			return err
 		}
+		*utils.Version2 = len(ConfigIni[`version2`]) > 0
 	}
 	return nil
 }
@@ -55,6 +56,9 @@ func Save(logLevel, installType string, dbConf *DBConfig) error {
 	confIni.Set("db_user", dbConf.User)
 	confIni.Set("db_host", dbConf.Host)
 	confIni.Set("db_port", dbConf.Port)
+	if *utils.Version2 {
+		confIni.Set("version2", `true`)
+	}
 	confIni.Set("db_password", dbConf.Password)
 	confIni.Set("db_name", dbConf.Name)
 	confIni.Set("node_state_id", `*`)

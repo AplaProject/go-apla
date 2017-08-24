@@ -65,7 +65,11 @@ func GetRecordsCount(tableName string) (int64, error) {
 }
 
 func ExecSchema() error {
-	schema, err := static.Asset("static/schema.sql")
+	schemaFile := "schema.sql"
+	if *utils.Version2 {
+		schemaFile = "schema-v2.sql"
+	}
+	schema, err := static.Asset("static/" + schemaFile)
 	if err != nil {
 		os.Remove(*utils.Dir + "/config.ini")
 		return err
