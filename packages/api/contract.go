@@ -64,7 +64,7 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	dataContract, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" WHERE id = ?`, id).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &contractResult{ID: dataContract["id"], Name: dataContract["name"], Active: dataContract["active"],
 		Wallet: dataContract["wallet"], Value: dataContract["value"], Conditions: dataContract["conditions"]}
@@ -111,7 +111,7 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
 	var toSerialize interface{}
@@ -136,7 +136,7 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -165,7 +165,7 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
 	var toSerialize interface{}
@@ -177,7 +177,7 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -194,13 +194,13 @@ func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]contractItem, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_smart_contracts"`).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" order by id`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	for _, val := range list {

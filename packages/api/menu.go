@@ -45,7 +45,7 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	dataMenu, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_menu" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &menuResult{Name: dataMenu["name"], Value: dataMenu["value"], Conditions: dataMenu["conditions"]}
 	return nil
@@ -82,7 +82,7 @@ func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
 	var toSerialize interface{}
@@ -106,7 +106,7 @@ func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -123,13 +123,13 @@ func menuList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]menuItem, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_menu"`).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT name FROM "`+getPrefix(data)+`_menu" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	for _, val := range list {
@@ -153,7 +153,7 @@ func txPreAppendMenu(w http.ResponseWriter, r *http.Request, data *apiData) erro
 func txAppendMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`AppendMenu`, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.AppendMenu{
 		Header: header,
@@ -163,7 +163,7 @@ func txAppendMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil

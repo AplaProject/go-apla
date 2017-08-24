@@ -141,17 +141,18 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
+				errorAPI(w, "", http.StatusInternalServerError)
 				log.Error("API Recovered", r)
 			}
 		}()
 		if apiSess == nil {
-			errorAPI(w, `Session is undefined`, http.StatusConflict)
+			errorAPI(w, `Session is undefined`, http.StatusForbidden)
 			return
 		}
 
 		data.sess, err = apiSess.SessionStart(w, r)
 		if err != nil {
-			errorAPI(w, err.Error(), http.StatusConflict)
+			errorAPI(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer data.sess.SessionRelease(w)
@@ -188,7 +189,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		jsonResult, err := json.Marshal(data.result)
 		if err != nil {
-			errorAPI(w, err.Error(), http.StatusConflict)
+			errorAPI(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
