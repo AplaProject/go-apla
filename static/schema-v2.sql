@@ -165,10 +165,46 @@ CREATE SEQUENCE upd_contracts_id_seq START WITH 1;
 CREATE TABLE "upd_contracts" (
 "id" bigint NOT NULL  default nextval('upd_contracts_id_seq'),
 "id_contract" bigint  NOT NULL DEFAULT '0',
-"value" text  NOT NULL DEFAULT ''
+"value" text  NOT NULL DEFAULT '',
+"votes" bigint  NOT NULL DEFAULT '0',
+"rb_id" bigint NOT NULL DEFAULT '0'
 );
 ALTER SEQUENCE "upd_contracts_id_seq" owned by "upd_contracts".id;
 ALTER TABLE ONLY "upd_contracts" ADD CONSTRAINT upd_contracts_pkey PRIMARY KEY (id);
+
+DROP SEQUENCE IF EXISTS upd_system_parameters_id_seq CASCADE;
+CREATE SEQUENCE upd_system_parameters_id_seq START WITH 1;
+CREATE TABLE "upd_system_parameters" (
+"id" bigint NOT NULL  default nextval('upd_system_parameters_id_seq'),
+"name" varchar(255)  NOT NULL DEFAULT '',
+"value" text  NOT NULL DEFAULT '',
+"votes" bigint  NOT NULL DEFAULT '0',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE "upd_system_parameters_id_seq" owned by "upd_system_parameters".id;
+ALTER TABLE ONLY "upd_system_parameters" ADD CONSTRAINT upd_system_parameters_pkey PRIMARY KEY (id);
+
+CREATE TABLE "system_tables" (
+"name" varchar(100)  NOT NULL DEFAULT '',
+"permissions" jsonb,
+"columns" jsonb,
+"conditions" text  NOT NULL DEFAULT '',
+"rb_id" bigint NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
+
+INSERT INTO system_tables ("name", "permissions","columns", "conditions") VALUES ('upd_contracts', 
+        '{"insert": "ContractAccess(\"@0UpdSysContract\")", "update": "ContractAccess(\"@0UpdSysContract\")", 
+          "new_column": "ContractAccess(\"@0UpdSysContract\")"}',
+        '{"id_contract": "ContractAccess(\"@0UpdSysContract\")", "value": "ContractAccess(\"@0UpdSysContract\")", 
+          "votes": "ContractAccess(\"@0UpdSysContract\")"}',          
+        'ContractAccess(\"@0UpdSysContract\")'),
+        ('upd_system_parameters', 
+        '{"insert": "ContractAccess(\"@0UpdSysContract\")", "update": "ContractAccess(\"@0UpdSysContract\")", 
+          "new_column": "ContractAccess(\"@0UpdSysContract\")"}',
+        '{"name": "ContractAccess(\"@0UpdSysContract\")", "value": "ContractAccess(\"@0UpdSysContract\")", 
+          "votes": "ContractAccess(\"@0UpdSysContract\")"}',          
+        'ContractAccess(\"@0UpdSysContract\")');
 
 
 DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
@@ -202,6 +238,17 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "verified" smallint NOT NULL DEFAULT '1'
 );
 ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
+
+DROP TABLE IF EXISTS "system_recognized_states"; CREATE TABLE "system_recognized_states" (
+"name" varchar(255) NOT NULL DEFAULT '',
+"state_id" bigint NOT NULL DEFAULT '0',
+"host" varchar(255) NOT NULL DEFAULT '',
+"node_public_key" bytea  NOT NULL DEFAULT '',
+"delegate_wallet_id" bigint NOT NULL DEFAULT '0',
+"delegate_state_id" int NOT NULL DEFAULT '0',
+"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+);
+ALTER TABLE ONLY "system_recognized_states" ADD CONSTRAINT system_recognized_states_pkey PRIMARY KEY (state_id);
 
 DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
 CREATE SEQUENCE rollback_tx_id_seq START WITH 1;

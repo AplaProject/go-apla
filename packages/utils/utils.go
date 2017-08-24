@@ -124,6 +124,7 @@ var (
 
 func init() {
 	flag.Parse()
+	fmt.Println(`Version2=`, *Version2)
 }
 
 // IOS checks if the app runs on iOS

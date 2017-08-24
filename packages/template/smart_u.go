@@ -171,7 +171,12 @@ func init() {
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts() (err error) {
 	var states []map[string]string
-	prefix := []string{`global`}
+	var prefix []string
+	if *utils.Version2 {
+		prefix = []string{`system`}
+	} else {
+		prefix = []string{`global`}
+	}
 	states, err = model.GetAll(`select id from system_states order by id`, -1)
 	if err != nil {
 		return err
@@ -179,7 +184,6 @@ func LoadContracts() (err error) {
 	for _, istate := range states {
 		prefix = append(prefix, istate[`id`])
 	}
-	LoadContract(`global`)
 	for _, ipref := range prefix {
 		if err = LoadContract(ipref); err != nil {
 			break
@@ -192,17 +196,18 @@ func LoadContracts() (err error) {
 // LoadContract reads and compiles contract of new state
 func LoadContract(prefix string) (err error) {
 	var contracts []map[string]string
-	contracts, err = model.GetAll(`select * from "`+prefix+`_smart_contracts" order by id`, -1)
+	contracts, err = model.GetAll(`select * from "`+prefix+`_contracts" order by id`, -1)
 	if err != nil {
 		return err
 	}
 	for _, item := range contracts {
+		names := strings.Join(smart.ContractsList(item[`value`]), `,`)
 		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, converter.StrToInt64(item[`id`])); err != nil {
-			log.Error("Load Contract", item[`name`], err)
-			fmt.Println("Error Load Contract", item[`name`], err)
+			log.Error("Load Contract", names, err)
+			fmt.Println("Error Load Contract", names, err)
 			//return
 		} else {
-			fmt.Println("OK Load Contract", item[`name`], item[`id`], item[`active`] == `1`)
+			fmt.Println("OK Load Contract", names, item[`id`], item[`active`] == `1`)
 		}
 	}
 	return

@@ -19,6 +19,7 @@ package smart
 import (
 	"encoding/hex"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -244,4 +245,15 @@ func Float(v interface{}) (ret float64) {
 		}
 	}
 	return
+}
+
+func ContractsList(value string) []string {
+	list := make([]string, 0)
+	re := regexp.MustCompile(`contract[\s]*([\d\w_]+)[\s]*{`)
+	for _, item := range re.FindAllStringSubmatch(value, -1) {
+		if len(item) > 1 {
+			list = append(list, item[1])
+		}
+	}
+	return list
 }
