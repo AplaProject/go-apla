@@ -112,7 +112,10 @@ func (p *Parser) processBadTransaction(hash []byte, errText string) error {
 		errText = errText[:255]
 	}
 	qtx := &model.QueueTx{}
-	err := qtx.GetByHash(hash)
+	found, err := qtx.GetByHash(hash)
+	if !found {
+		return nil
+	}
 	if err != nil {
 		return utils.ErrInfo(err)
 	}

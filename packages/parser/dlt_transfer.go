@@ -199,10 +199,10 @@ func (p *DLTTransferParser) Action() error {
 	}
 	dltTransaction := &model.DltTransaction{
 		SenderWalletID:         p.TxWalletID,
-		RecepientWalletID:      dltWallet.WalletID,
-		RecepientWalletAddress: converter.AddressToString(int64(converter.StrToUint64(p.DLTTransfer.WalletAddress))),
-		Amount:                 amount,
-		Comission:              commission,
+		RecipientWalletID:      dltWallet.WalletID,
+		RecipientWalletAddress: converter.AddressToString(int64(converter.StrToUint64(p.DLTTransfer.WalletAddress))),
+		Amount:                 &amount,
+		Commission:             &commission,
 		Comment:                p.DLTTransfer.Comment,
 		Time:                   p.BlockData.Time,
 		BlockID:                p.BlockData.BlockID,

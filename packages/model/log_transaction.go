@@ -25,9 +25,12 @@ func (lt *LogTransaction) Get() error {
 	return handleError(DBConn.First(lt).Error)
 }
 
-func (lt *LogTransaction) GetByHash(hash []byte) error {
-	return handleError(DBConn.Where("hash = ?", hash).First(lt).Error)
-
+func (lt *LogTransaction) GetByHash(hash []byte) (bool, error) {
+	query := DBConn.Where("hash = ?", hash).First(lt)
+	if query.RecordNotFound() {
+		return false, nil
+	}
+	return true, query.Error
 }
 
 func (lt *LogTransaction) Create() error {

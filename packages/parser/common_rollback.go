@@ -63,6 +63,8 @@ func (p *Parser) RollbackTo(binaryData []byte, skipCurrent bool) error {
 				log.Fatal(err)
 			}
 			p.TxHash = hash
+			p.TxBinaryData = transactionBinaryData
+			converter.BinToDecBytesShift(&p.TxBinaryData, 1)
 			p.TxSlice, _, err = p.ParseTransaction(&transactionBinaryData)
 			if err != nil {
 				return utils.ErrInfo(err)

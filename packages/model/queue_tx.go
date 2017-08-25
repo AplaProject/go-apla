@@ -26,8 +26,12 @@ func (qt *QueueTx) Create() error {
 	return DBConn.Create(qt).Error
 }
 
-func (qt *QueueTx) GetByHash(hash []byte) error {
-	return handleError(DBConn.Where("hash = ?", hash).First(qt).Error)
+func (qt *QueueTx) GetByHash(hash []byte) (bool, error) {
+	query := DBConn.Where("hash = ?", hash).First(qt)
+	if query.RecordNotFound() {
+		return false, nil
+	}
+	return true, query.Error
 }
 
 func DeleteQueueTxByHash(hash []byte) (int64, error) {
