@@ -113,6 +113,8 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('max_tx_count', '1000', 'ContractAccess("@0UpdSysParam")'),
 ('max_columns', '50', 'ContractAccess("@0UpdSysParam")'),
 ('max_block_user_tx', '100', 'ContractAccess("@0UpdSysParam")'),
+('max_fuel_tx', '1000', 'ContractAccess("@0UpdSysParam")'),
+('max_fuel_block', '100000', 'ContractAccess("@0UpdSysParam")'),
 ('upd_full_nodes_period', '3600', 'ContractAccess("@0UpdSysParam")'),
 ('last_upd_full_nodes', '23672372', 'ContractAccess("@0UpdSysParam")'),
 ('commission_size', '3', 'ContractAccess("@0UpdSysParam")'),
@@ -288,3 +290,27 @@ ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id
 DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 "stop_time" int NOT NULL DEFAULT '0'
 );
+
+DROP SEQUENCE IF EXISTS full_nodes_id_seq CASCADE;
+CREATE SEQUENCE full_nodes_id_seq START WITH 1;
+DROP TABLE IF EXISTS "full_nodes"; CREATE TABLE "full_nodes" (
+"id" int NOT NULL  default nextval('full_nodes_id_seq'),
+"host" varchar(100) NOT NULL DEFAULT '',
+"wallet_id" bigint  NOT NULL DEFAULT '0',
+"state_id" int NOT NULL DEFAULT '0',
+"final_delegate_wallet_id" bigint NOT NULL DEFAULT '0',
+"final_delegate_state_id" bigint NOT NULL DEFAULT '0',
+"rb_id" int NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE full_nodes_id_seq owned by full_nodes.id;
+ALTER TABLE ONLY "full_nodes" ADD CONSTRAINT full_nodes_pkey PRIMARY KEY (id);
+
+DROP SEQUENCE IF EXISTS upd_full_nodes_id_seq CASCADE;
+CREATE SEQUENCE upd_full_nodes_id_seq START WITH 1;
+DROP TABLE IF EXISTS "upd_full_nodes"; CREATE TABLE "upd_full_nodes" (
+"id" bigint NOT NULL  default nextval('upd_full_nodes_id_seq'),
+"time" int NOT NULL DEFAULT '0',
+"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
+);
+ALTER SEQUENCE upd_full_nodes_id_seq owned by upd_full_nodes.id;
+ALTER TABLE ONLY "upd_full_nodes" ADD CONSTRAINT upd_full_nodes_pkey PRIMARY KEY (id);

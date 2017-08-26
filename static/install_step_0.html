@@ -156,17 +156,17 @@
 							<label class="col-sm-3 control-label lang" for="first_load" lang-id="mode"></label>
 							<div class="col-sm-9">
 								<select id="first_load" class="form-control">
-									<option value="Private-net" class="lang" lang-id="private_net">Private-net</option>
+									<option value="Private-net" selected class="lang" lang-id="private_net">Private-net</option>
 									<option value="nodes">Testnet Nodes</option>
-									<option value="file" selected>Testnet Url</option>
+									<option value="file" >Testnet Url</option>
 								</select>
 								<div>
-									<input class="form-control" type="text" id="url" value="https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain" required>
+									<input class="form-control"  style="display:none" type="text" id="url" value="https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain" required>
 								</div>
 							</div>
 						</fieldset>
 	
-						<fieldset class="form-group" id="gen_first"  style="display:none">
+						<fieldset class="form-group" id="gen_first">
 							<label class="col-sm-3 control-label" for="generate_first_block"></label>
 							<div class="col-sm-9">
 								<div class="checkbox c-checkbox">

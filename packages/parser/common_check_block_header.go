@@ -99,14 +99,12 @@ func (p *Parser) CheckBlockHeader() error {
 		if p.BlockData.BlockID != p.PrevBlock.BlockID+1 {
 			return utils.ErrInfo(fmt.Errorf("incorrect block_id %d != %d +1", p.BlockData.BlockID, p.PrevBlock.BlockID))
 		}
-	}
-	// проверим, есть ли такой майнер и заодно получим public_key
-	// check if this miner exists and at the same time will receive public_key
-	nodePublicKey, err := GetNodePublicKeyWalletOrCB(p.BlockData.WalletID, p.BlockData.StateID)
-	if err != nil {
-		return utils.ErrInfo(err)
-	}
-	if !first {
+		// проверим, есть ли такой майнер и заодно получим public_key
+		// check if this miner exists and at the same time will receive public_key
+		nodePublicKey, err := GetNodePublicKeyWalletOrCB(p.BlockData.WalletID, p.BlockData.StateID)
+		if err != nil {
+			return utils.ErrInfo(err)
+		}
 		if len(nodePublicKey) == 0 {
 			return utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
