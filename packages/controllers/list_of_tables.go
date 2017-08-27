@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -56,7 +58,7 @@ func (c *Controller) ListOfTables() (string, error) {
 		if err != nil {
 			return "", utils.ErrInfo(err)
 		}
-		mappedTable["count"] = string(count)
+		mappedTable["count"] = strconv.FormatInt(count, 10)
 		tables = append(tables, mappedTable)
 	}
 

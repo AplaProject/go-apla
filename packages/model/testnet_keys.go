@@ -22,12 +22,12 @@ func (tk *TestnetKey) Create() error {
 
 func (tk *TestnetKey) GetGeneratedCount(ID int64, stateID int64) (int64, error) {
 	count := int64(-1)
-	err := DBConn.Where("id = ? and state_id = ?", ID, stateID).Count(&count).Error
+	err := DBConn.Table("testnet_keys").Where("id = ? and state_id = ?", ID, stateID).Count(&count).Error
 	return count, err
 }
 
 func (tk *TestnetKey) GetAvailableCount(ID int64, stateID int64) (int64, error) {
 	count := int64(-1)
-	err := DBConn.Where("id = ? and state_id = ? and status = 0", ID, stateID).Count(&count).Error
+	err := DBConn.Table("testnet_keys").Where("id = ? and state_id = ? and status = 0", ID, stateID).Count(&count).Error
 	return count, err
 }

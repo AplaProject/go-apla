@@ -7,7 +7,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"time"
@@ -178,7 +177,6 @@ func unmarshalBlockData(buff []byte) (blockData, error) {
 		return blockData{}, utils.ErrInfo("bad length")
 	}
 
-	fmt.Printf("blockId: %d, blockLen: %d, blockData: +%v", blockID, blockDataLen, buff)
 	return blockData{
 		ID:   blockID,
 		Data: buff[:blockDataLen],

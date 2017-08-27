@@ -77,8 +77,8 @@ func GetColumnsCount(tableName string) (int64, error) {
 	var count int64
 	err := DBConn.Table("information_schema.columns").
 		Where("table_name=?", tableName).
-		Select("count(column_name)").
-		Scan(&count).Error
+		Select("column_name").
+		Count(&count).Error
 	return count, err
 }
 
@@ -388,22 +388,25 @@ func IsTable(tblname string) bool {
 }
 
 func GetColumnDataTypeCharMaxLength(tableName, columnName string) (map[string]string, error) {
-	type Proxy struct {
-		DataType               string
-		CharacterMaximumLength string
-	}
-	var temp Proxy
-	err := DBConn.
+
+	var dataType string
+	var characterMaximumLength string
+
+	rows, err := DBConn.
 		Table("information_schema.columns").
-		Where("table_name = ? AND column_name = ?, tableName, columnName").
-		Select("data_type", "character_maximum_length").
-		Find(&temp).Error
+		Where("table_name = '?' AND column_name = '?'", tableName, columnName).
+		Select("data_type", "character_maximum_length").Rows()
 	if err != nil {
 		return nil, err
 	}
+	for rows.Next() {
+		rows.Scan(&dataType)
+		rows.Scan(&characterMaximumLength)
+	}
+
 	result := make(map[string]string, 0)
-	result["data_type"] = temp.DataType
-	result["character_maximum_length"] = temp.CharacterMaximumLength
+	result["data_type"] = dataType
+	result["character_maximum_length"] = characterMaximumLength
 	return result, nil
 }
 
@@ -560,6 +563,10 @@ func IsIndex(tblname, column string) (bool, error) {
 }
 
 func GetTableData(tableName string, limit int) ([]map[string]string, error) {
+	// TODO fix with EGAAS-240
+	if tableName == "dlt_wallets" {
+		return GetAll(`SELECT * FROM "`+tableName+`" order by wallet_id`, limit)
+	}
 	return GetAll(`SELECT * FROM "`+tableName+`" order by id`, limit)
 }
 
