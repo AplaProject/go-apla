@@ -31,12 +31,18 @@ type loginResult struct {
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var msg string
-	switch uid := data.sess.Get(`uid`).(type) {
+	sess, err := apiSess.SessionStart(w, r)
+	if err != nil {
+		return err
+	}
+	defer sess.SessionRelease(w)
+	switch uid := sess.Get(`uid`).(type) {
 	case string:
 		msg = uid
 	default:
 		return errorAPI(w, "unknown uid", http.StatusBadRequest)
 	}
+
 	pubkey := data.params[`pubkey`].([]byte)
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
@@ -69,9 +75,9 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 
 	data.result = &loginResult{Address: address}
-	data.sess.Set("wallet", wallet)
-	data.sess.Set("address", address)
-	data.sess.Set("citizen", citizen)
-	data.sess.Set("state", state)
+	sess.Set("wallet", wallet)
+	sess.Set("address", address)
+	sess.Set("citizen", citizen)
+	sess.Set("state", state)
 	return nil
 }

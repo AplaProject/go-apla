@@ -42,8 +42,7 @@ func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	params[`global`] = converter.Int64ToStr(data.params[`global`].(int64))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
-	tpl, err := template.CreateHTMLFromTemplate(page, data.sess.Get(`citizen`).(int64),
-		data.sess.Get(`state`).(int64), &params)
+	tpl, err := template.CreateHTMLFromTemplate(page, data.wallet, data.state, &params)
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -59,11 +58,11 @@ func contentMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	params := make(map[string]string)
-	params[`state_id`] = converter.Int64ToStr(data.sess.Get(`state`).(int64))
+	params[`state_id`] = converter.Int64ToStr(data.state)
 	params[`global`] = converter.Int64ToStr(data.params[`global`].(int64))
 	params[`accept_lang`] = r.Header.Get(`Accept-Language`)
 	if len(menu) > 0 {
-		menu = language.LangMacro(textproc.Process(menu, &params), int(data.sess.Get(`state`).(int64)), params[`accept_lang`]) +
+		menu = language.LangMacro(textproc.Process(menu, &params), int(data.state), params[`accept_lang`]) +
 			`<!--#` + data.params[`name`].(string) + `#-->`
 	}
 	data.result = &contentResult{HTML: menu}

@@ -82,7 +82,7 @@ type EncryptKey struct {
 func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	cntname := data.params[`name`].(string)
-	contract := smart.GetContract(cntname, uint32(data.sess.Get(`state`).(int64)))
+	contract := smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
 		return errorAPI(w, fmt.Sprintf(`there is not %s contract`, cntname), http.StatusBadRequest)
 	}
@@ -121,8 +121,7 @@ func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) err
 
 func validateSmartContract(r *http.Request, data *apiData, result *PrepareTxJSON) (contract *smart.Contract, err error) {
 	cntname := data.params[`name`].(string)
-	state := data.sess.Get(`state`).(int64)
-	contract = smart.GetContract(cntname, uint32(state))
+	contract = smart.GetContract(cntname, uint32(data.state))
 	if contract == nil {
 		return nil, fmt.Errorf(`there is not %s contract`, cntname)
 	}
@@ -149,7 +148,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *PrepareTxJSON
 					if err != nil {
 						break
 					}
-					sign.ForSign = fmt.Sprintf(`%d,%d`, (*result).Time, uint64(data.sess.Get(`wallet`).(int64)))
+					sign.ForSign = fmt.Sprintf(`%d,%d`, (*result).Time, uint64(data.wallet))
 					for _, isign := range sign.Params {
 						sign.ForSign += fmt.Sprintf(`,%v`, strings.TrimSpace(r.FormValue(isign.Param)))
 					}
@@ -236,9 +235,9 @@ func EncryptNewKey(walletID string) (result EncryptKey) {
 
 func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var (
-		result                   PrepareTxJSON
-		stateID, userID, timeNow int64
-		smartTx                  tx.SmartContract
+		result  PrepareTxJSON
+		timeNow int64
+		smartTx tx.SmartContract
 	)
 
 	timeNow = time.Now().Unix()
@@ -249,11 +248,7 @@ func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
-	userID = data.sess.Get(`wallet`).(int64)
-	if data.sess.Get(`state`) != nil {
-		stateID = data.sess.Get(`state`).(int64)
-	}
-	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, UserID: userID, StateID: stateID}
+	smartTx.Header = tx.Header{Type: int(info.ID), Time: timeNow, UserID: data.wallet, StateID: data.state}
 	forsign := smartTx.ForSign()
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
@@ -266,7 +261,7 @@ func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 				if ret := regexp.MustCompile(`(?is)crypt:([\w_\d]+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					wallet = r.FormValue(ret[1])
 				} else {
-					wallet = converter.Int64ToStr(userID)
+					wallet = converter.Int64ToStr(data.wallet)
 				}
 				key := EncryptNewKey(wallet)
 				if len(key.Error) != 0 {
@@ -302,7 +297,6 @@ func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 
 func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var (
-		stateID, userID           int64
 		isPublic, hash, publicKey []byte
 		toSerialize               interface{}
 	)
@@ -311,12 +305,8 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	info := (*contract).Block.Info.(*script.ContractInfo)
-	if data.sess.Get(`state`) != nil {
-		stateID = data.sess.Get(`state`).(int64)
-	}
-	userID = data.sess.Get(`wallet`).(int64)
 
-	isPublic, err = model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, userID).Bytes()
+	isPublic, err = model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, data.wallet).Bytes()
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -381,7 +371,7 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	}
 	toSerialize = tx.SmartContract{
 		Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(data.params[`time`].(string)),
-			UserID: userID, StateID: stateID, PublicKey: publicKey,
+			UserID: data.wallet, StateID: data.state, PublicKey: publicKey,
 			BinSignatures: converter.EncodeLengthPlusData(signature)},
 		Data: idata,
 	}
@@ -389,7 +379,7 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
-	if hash, err = model.SendTx(int64(info.ID), userID,
+	if hash, err = model.SendTx(int64(info.ID), data.wallet,
 		append([]byte{128}, serializedData...)); err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
