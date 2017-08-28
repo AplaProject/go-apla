@@ -27,12 +27,13 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	//	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
 func UpdFullNodes(d *daemon, ctx context.Context) error {
 	d.sleepTime = 60 * time.Second
-
 	locked, err := DbLock(ctx, d.goRoutineName)
 	if !locked || err != nil {
 		return err
@@ -133,5 +134,6 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

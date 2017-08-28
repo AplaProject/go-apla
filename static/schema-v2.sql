@@ -54,7 +54,8 @@ ALTER TABLE ONLY "migration_history" ADD CONSTRAINT migration_history_pkey PRIMA
 
 DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
 "hash" bytea  NOT NULL DEFAULT '',
-"data" bytea NOT NULL DEFAULT ''
+"data" bytea NOT NULL DEFAULT '',
+"from_gate" int NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
 

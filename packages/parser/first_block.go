@@ -17,6 +17,9 @@
 package parser
 
 import (
+	"encoding/hex"
+	
+	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
@@ -54,6 +57,12 @@ func (p *FirstBlockParser) Action() error {
 		if err != nil {
 			return p.ErrInfo(err)
 		}
+		node := &model.SystemParameterV2{Name: `full_nodes`}
+		if err = node.SaveArray([][]string{{data.Host, converter.Int64ToStr(myAddress),
+			hex.EncodeToString(data.NodePublicKey)}}); err != nil {
+			return p.ErrInfo(err)
+		}
+		syspar.SysUpdate()
 	} else {
 		dltWallet := &model.DltWallet{
 			WalletID:      myAddress,

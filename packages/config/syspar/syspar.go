@@ -17,11 +17,14 @@
 package syspar
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
 
 const (
@@ -29,6 +32,8 @@ const (
 	NumberNodes = `number_of_dlt_nodes`
 	// FuelRate is the rate
 	FuelRate = `fuel_rate`
+	// FullNodes is the list of nodes
+	FullNodes = `full_nodes`
 	// OpPrice is the costs of operations
 	OpPrice = `op_price`
 	// GapsBetweenBlocks is the time between blocks
@@ -55,6 +60,11 @@ const (
 	CommissionWallet = `commission_wallet`
 )
 
+type FullNode struct {
+	Host   string
+	Public []byte
+}
+
 var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
@@ -72,24 +82,66 @@ var (
 		CommissionWallet:   `8275283526439353759`,
 	}
 	cost  = make(map[string]int64)
+	nodes = make(map[int64]*FullNode)
 	mutex = &sync.RWMutex{}
 )
 
 // SysUpdate reloads/updates values of system parameters
 func SysUpdate() error {
-	systemParameters, err := model.GetAllSystemParameters()
-	if err != nil {
-		return err
-	}
-	mutex.Lock()
-	defer mutex.Unlock()
-	for _, param := range systemParameters {
-		cache[param.Name] = param.Value
+	var err error
+	if *utils.Version2 {
+		systemParameters, err := model.GetAllSystemParametersV2()
+		if err != nil {
+			return err
+		}
+		mutex.Lock()
+		defer mutex.Unlock()
+		for _, param := range systemParameters {
+			cache[param.Name] = param.Value
+		}
+	} else {
+		systemParameters, err := model.GetAllSystemParameters()
+		if err != nil {
+			return err
+		}
+		mutex.Lock()
+		defer mutex.Unlock()
+		for _, param := range systemParameters {
+			cache[param.Name] = param.Value
+		}
 	}
 
 	cost = make(map[string]int64)
 	json.Unmarshal([]byte(cache[OpPrice]), &cost)
+
+	nodes = make(map[int64]*FullNode)
+	if len(cache[FullNodes]) > 0 {
+		inodes := make([][]string, 0)
+		err = json.Unmarshal([]byte(cache[FullNodes]), &inodes)
+		if err != nil {
+			return err
+		}
+		for _, item := range inodes {
+			if len(item) < 3 {
+				continue
+			}
+			pub, err := hex.DecodeString(item[2])
+			if err != nil {
+				return err
+			}
+			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
+		}
+	}
 	return err
+}
+
+func GetNode(wallet int64) *FullNode {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if ret, ok := nodes[wallet]; ok {
+		return ret
+	}
+	return nil
 }
 
 func SysInt64(name string) int64 {
@@ -101,6 +153,7 @@ func GetBlockchainURL() string {
 }
 
 func GetUpdFullNodesPeriod() int64 {
+	fmt.Println(`PERIOD`, SysString(UpdFullNodesPeriod))
 	return converter.StrToInt64(SysString(UpdFullNodesPeriod))
 }
 

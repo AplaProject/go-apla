@@ -77,13 +77,20 @@ func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
 	var result []byte
 	var err error
 	if walletID != 0 {
-		log.Debug("wallet_id %v state_id %v", walletID, stateID)
-		wallet := &model.DltWallet{}
-		err = wallet.GetWallet(walletID)
-		if err != nil {
-			return []byte(""), err
+		if *utils.Version2 {
+			node := syspar.GetNode(walletID)
+			if node != nil {
+				result = node.Public
+			}
+		} else {
+			log.Debug("wallet_id %v state_id %v", walletID, stateID)
+			wallet := &model.DltWallet{}
+			err = wallet.GetWallet(walletID)
+			if err != nil {
+				return []byte(""), err
+			}
+			result = []byte(wallet.NodePublicKey)
 		}
-		result = []byte(wallet.NodePublicKey)
 	} else {
 		srs := &model.SystemRecognizedState{}
 		err = srs.GetState(stateID)
