@@ -47,7 +47,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	dataPage, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_pages" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &pageResult{Name: dataPage["name"], Menu: dataPage["menu"],
 		Value: dataPage["value"], Conditions: dataPage["conditions"]}
@@ -87,7 +87,7 @@ func txPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
 	var toSerialize interface{}
@@ -113,7 +113,7 @@ func txPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 
@@ -131,13 +131,13 @@ func pageList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]pageItem, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_pages"`).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT name, menu FROM "`+getPrefix(data)+`_pages" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	for _, val := range list {
@@ -161,7 +161,7 @@ func txPreAppendPage(w http.ResponseWriter, r *http.Request, data *apiData) erro
 func txAppendPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`AppendPage`, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
 	toSerialize := tx.AppendPage{
@@ -172,7 +172,7 @@ func txAppendPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 

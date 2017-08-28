@@ -31,22 +31,21 @@ type txstatusResult struct {
 
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var status txstatusResult
-
 	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
 		return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
 	}
-	tx, err := model.GetOneRow(`SELECT block_id, error FROM transactions_status WHERE hash = [hex]`,
-		data.params[`hash`].(string)).String()
+	ts := &model.TransactionStatus{}
+	notFound, err := ts.Get([]byte(data.params["hash"].(string)))
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
-	if len(tx) == 0 {
+	if notFound {
 		return errorAPI(w, `hash has not been found`, http.StatusBadRequest)
 	}
-	if converter.StrToInt64(tx[`block_id`]) > 0 {
-		status.BlockID = tx[`block_id`]
+	if ts.BlockID > 0 {
+		status.BlockID = converter.Int64ToStr(ts.BlockID)
 	}
-	status.Message = tx[`error`]
+	status.Message = ts.Error
 	data.result = &status
 	return nil
 }

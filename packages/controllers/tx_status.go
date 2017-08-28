@@ -26,10 +26,9 @@ import (
 
 // TxStatus return the status of the transaction
 func (c *Controller) TxStatus() (string, error) {
-
 	hash := c.r.FormValue("hash")
 	ts := &model.TransactionStatus{}
-	err := ts.Get(converter.HexToBin([]byte(hash)))
+	_, err := ts.Get(converter.HexToBin([]byte(hash)))
 	if err != nil {
 		return "", utils.ErrInfo(err)
 	}

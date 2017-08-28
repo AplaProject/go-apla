@@ -45,7 +45,7 @@ func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	tpl, err := template.CreateHTMLFromTemplate(page, data.sess.Get(`citizen`).(int64),
 		data.sess.Get(`state`).(int64), &params)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &contentResult{HTML: string(tpl)}
 	return nil
@@ -56,7 +56,7 @@ func contentMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	prefix := getPrefix(data)
 	menu, err := model.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, data.params[`name`].(string)).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	params := make(map[string]string)
 	params[`state_id`] = converter.Int64ToStr(data.sess.Get(`state`).(int64))

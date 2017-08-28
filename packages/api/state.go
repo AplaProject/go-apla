@@ -53,7 +53,7 @@ func getStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error
 	dataPar, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &stateParamResult{Name: dataPar["name"], Value: dataPar["value"], Conditions: dataPar["conditions"]}
 	return nil
@@ -73,7 +73,7 @@ func txNewState(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`NewState`, data)
 	header.StateID = 0
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
 	toSerialize := tx.NewState{
@@ -83,7 +83,7 @@ func txNewState(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -118,7 +118,7 @@ func txStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error 
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
 	var toSerialize interface{}
@@ -140,7 +140,7 @@ func txStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error 
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
@@ -157,13 +157,13 @@ func stateParamsList(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	outList := make([]stateParamResult, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_state_parameters"`).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	for _, val := range list {
@@ -183,12 +183,12 @@ func stateList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	count, err := model.Single(`SELECT count(*) FROM system_states`).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	idata, err := model.GetList(`SELECT id FROM system_states order by id desc` +
 		fmt.Sprintf(` offset %d limit %d`, data.params[`offset`].(int64), limit)).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	outList := make([]stateItem, 0)
 	for _, id := range idata {
@@ -198,7 +198,7 @@ func stateList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		list, err := model.GetAll(fmt.Sprintf(`SELECT name, value FROM "%s_state_parameters" WHERE name in ('state_name','state_flag', 'state_coords')`,
 			id), -1)
 		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusConflict)
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		item := stateItem{ID: id}
 		for _, val := range list {

@@ -112,6 +112,7 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 
 			hashFull, err := crypto.Hash(transactionBinaryDataFull)
+			hashFull = converter.BinToHex(hashFull)
 			if err != nil {
 				log.Fatal(err)
 			}

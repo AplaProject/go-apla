@@ -337,13 +337,13 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		log.Fatal(err)
 	}
 	logTx := &model.LogTransaction{}
-	err = logTx.GetByHash(searchedHash)
+	found, err := logTx.GetByHash(searchedHash)
 	if err != nil {
 		log.Error("%s", utils.ErrInfo(err))
 		return utils.ErrInfo(err)
 	}
 	log.Debug("hash %x", logTx.Hash)
-	if len(logTx.Hash) > 0 {
+	if found {
 		return utils.ErrInfo(fmt.Errorf("double tx in log_transactions %x", searchedHash))
 	}
 
@@ -365,13 +365,13 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 		// проверим, нет ли у нас такой тр-ии
 		// check whether we have such a transaction
 		qtx := &model.QueueTx{}
-		err := qtx.GetByHash(searchedHash)
+		found, err := qtx.GetByHash(searchedHash)
+		if found {
+			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
+		}
 		if err != nil {
 			log.Error("%s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
-		}
-		if len(qtx.Hash) > 0 {
-			return utils.ErrInfo(fmt.Errorf("double tx in queue_tx %x", searchedHash))
 		}
 	}
 

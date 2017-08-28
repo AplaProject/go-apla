@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -83,6 +84,8 @@ func (c *Controller) ShowTable() (string, error) {
 					}
 				}
 				tableData[i][key] = string(out)
+			} else if key == "public_key_0" {
+				tableData[i][key] = hex.EncodeToString([]byte(val))
 			} else {
 				tableData[i][key] = strings.Replace(val, "\n", "\n<br>", -1)
 			}

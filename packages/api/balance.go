@@ -37,7 +37,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	total, err := model.Single(`SELECT amount FROM dlt_wallets WHERE wallet_id = ?`, wallet).String()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &balanceResult{Amount: total, EGS: converter.EGSMoney(total)}
 	return nil

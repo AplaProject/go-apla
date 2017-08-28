@@ -270,7 +270,7 @@ func txPreSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 				}
 				key := EncryptNewKey(wallet)
 				if len(key.Error) != 0 {
-					return errorAPI(w, key.Error, http.StatusConflict)
+					return errorAPI(w, key.Error, http.StatusBadRequest)
 				}
 				result.Values[fitem.Name] = key.Encrypted
 				val = key.Encrypted
@@ -318,7 +318,7 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 
 	isPublic, err = model.Single(`select public_key_0 from dlt_wallets where wallet_id=?`, userID).Bytes()
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if len(isPublic) == 0 {
 		if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
@@ -329,7 +329,7 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 			}
 		}
 		if len(publicKey) == 0 {
-			return errorAPI(w, `empty public key`, http.StatusConflict)
+			return errorAPI(w, `empty public key`, http.StatusBadRequest)
 		}
 	} else {
 		publicKey = []byte("null")
@@ -387,11 +387,11 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	}
 	serializedData, err := msgpack.Marshal(toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if hash, err = model.SendTx(int64(info.ID), userID,
 		append([]byte{128}, serializedData...)); err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &hashTx{Hash: string(hash)}
 	return nil

@@ -38,7 +38,7 @@ func preSendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 func sendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	header, err := getHeader(`DLTTransfer`, data)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	header.StateID = 0
 
@@ -57,7 +57,7 @@ func sendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusConflict)
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
 	return nil
