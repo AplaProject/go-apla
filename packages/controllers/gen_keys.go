@@ -18,8 +18,11 @@ package controllers
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 )
@@ -41,7 +44,11 @@ func init() {
 // GenKeys show information about generated and available keys
 func (c *Controller) GenKeys() (string, error) {
 	govAccount, _ := template.StateParam(int64(c.SessStateID), `gov_account`)
-	if c.SessCitizenID != converter.StrToInt64(govAccount) {
+	account, err := strconv.ParseInt(govAccount, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, govAccount)
+	}
+	if c.SessCitizenID != account {
 		return ``, fmt.Errorf(`Access denied`)
 	}
 	testnetKey := &model.TestnetKey{}

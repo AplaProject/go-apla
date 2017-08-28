@@ -20,7 +20,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -78,7 +81,11 @@ func (c *Controller) AjaxAddresses() interface{} {
 			result.Error = err.Error()
 		} else {
 			for _, ireq := range req {
-				result.Address = append(result.Address, converter.AddressToString(converter.StrToInt64(ireq[`id`])))
+				address, err := strconv.ParseInt(ireq["id"], 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, ireq["id"])
+				}
+				result.Address = append(result.Address, converter.AddressToString(address))
 			}
 		}
 	}

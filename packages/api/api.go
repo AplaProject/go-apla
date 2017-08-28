@@ -22,9 +22,13 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -113,7 +117,11 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	if data.sess.Get(`state`) != nil {
 		stateID = data.sess.Get(`state`).(int64)
 	}
-	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
+	time, err := strconv.ParseInt(data.params["time"].(string), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, data.params["time"])
+	}
+	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time,
 		UserID: userID, StateID: stateID, PublicKey: publicKey,
 		BinSignatures: converter.EncodeLengthPlusData(signature)}, nil
 }
@@ -170,7 +178,10 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			}
 			switch par & 0xff {
 			case pInt64:
-				data.params[key] = converter.StrToInt64(val)
+				data.params[key], err = strconv.ParseInt(val, 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, val)
+				}
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {

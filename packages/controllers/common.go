@@ -33,12 +33,13 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	bconf "github.com/astaxie/beego/config"
 	"github.com/astaxie/beego/session"
 	"github.com/op/go-logging"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 var log = logging.MustGetLogger("controllers")
@@ -180,7 +181,11 @@ func GetSessWalletID(sess session.SessionStore) int64 {
 	case int:
 		return int64(sessUserID.(int))
 	case string:
-		return converter.StrToInt64(sessUserID.(string))
+		val, err := strconv.ParseInt(sessUserID.(string), 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, sessUserID.(string))
+		}
+		return val
 	}
 	return 0
 }
@@ -195,7 +200,11 @@ func GetSessCitizenID(sess session.SessionStore) int64 {
 	case int:
 		return int64(sessUserID.(int))
 	case string:
-		return converter.StrToInt64(sessUserID.(string))
+		val, err := strconv.ParseInt(sessUserID.(string), 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, sessUserID.(string))
+		}
+		return val
 	}
 	return 0
 }
@@ -332,7 +341,11 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 			return strings.Join(s, sep)
 		},
 		"strToInt64": func(text string) int64 {
-			return converter.StrToInt64(text)
+			val, err := strconv.ParseInt(text, 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, text)
+			}
+			return val
 		},
 		"strToInt": func(text string) int {
 			return converter.StrToInt(text)

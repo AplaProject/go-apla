@@ -19,8 +19,12 @@ package controllers
 import (
 	"encoding/json"
 	"regexp"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -55,7 +59,10 @@ func (c *Controller) EditContract() (string, error) {
 		global = "0"
 	}
 
-	id := converter.StrToInt64(c.r.FormValue("id"))
+	id, err := strconv.ParseInt(c.r.FormValue("id"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("id"))
+	}
 	name := c.r.FormValue("name")
 	if id == 0 {
 		// @ - global or alien state
@@ -77,7 +84,6 @@ func (c *Controller) EditContract() (string, error) {
 	var data map[string]string
 	var dataContractHistory []map[string]string
 	var rbID int64
-	var err error
 	var contWallet int64
 	for i := 0; i < 10; i++ {
 		if i == 0 {
@@ -106,7 +112,10 @@ func (c *Controller) EditContract() (string, error) {
 			data := rollback.ToMap()
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
-			rbID = converter.StrToInt64(messageMap["rb_id"])
+			rbID, err = strconv.ParseInt(messageMap["rb_id"], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, messageMap["rb_id"])
+			}
 			messageMap["block_id"] = data["block_id"]
 			dataContractHistory = append(dataContractHistory, messageMap)
 		}

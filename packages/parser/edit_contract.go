@@ -17,7 +17,10 @@
 package parser
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -65,7 +68,11 @@ func (p *EditContractParser) Validate() error {
 	}
 	sc := &model.SmartContract{}
 	sc.SetTablePrefix(prefix)
-	err = sc.GetByID(converter.StrToInt64(p.EditContract.Id))
+	contractID, err := strconv.ParseInt(p.EditContract.Id, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, p.EditContract.Id)
+	}
+	err = sc.GetByID(contractID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -91,12 +98,16 @@ func (p *EditContractParser) Action() error {
 	}
 	sc := &model.SmartContract{}
 	sc.SetTablePrefix(prefix)
-	err = sc.GetByID(converter.StrToInt64(p.EditContract.Id))
+	contractID, err := strconv.ParseInt(p.EditContract.Id, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, p.EditContract.Id)
+	}
+	err = sc.GetByID(contractID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 	active := sc.Active == `1`
-	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, converter.StrToInt64(p.EditContract.Id))
+	root, err := smart.CompileBlock(p.EditContract.Value, prefix, false, contractID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

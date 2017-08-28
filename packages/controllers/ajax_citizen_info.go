@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	//	"bytes"
 	"encoding/hex"
 	"encoding/json"
@@ -25,6 +26,7 @@ import (
 	"strconv"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -49,7 +51,10 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 		err    error
 	)
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
-	stateCode := converter.StrToInt64(c.r.FormValue(`stateId`))
+	stateCode, err := strconv.ParseInt(c.r.FormValue(`stateId`), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+	}
 	systemState := &model.SystemState{}
 	_, err = systemState.IsExists(stateCode)
 	c.r.ParseMultipartForm(16 << 20) // Max memory 16 MiB

@@ -18,6 +18,9 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -25,6 +28,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/shopspring/decimal"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -75,7 +79,11 @@ func (p *ActivateContractParser) Validate() error {
 	}
 	smartContract := &model.SmartContract{}
 	smartContract.SetTablePrefix(prefix)
-	err = smartContract.GetByID(converter.StrToInt64(p.ActivateContract.Id))
+	contractID, err := strconv.ParseInt(p.ActivateContract.Id, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, p.ActivateContract.Id)
+	}
+	err = smartContract.GetByID(contractID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -117,7 +125,11 @@ func (p *ActivateContractParser) Action() error {
 		[]string{p.ActivateContract.Id}, true); err != nil {
 		return err
 	}
-	smart.ActivateContract(converter.StrToInt64(p.ActivateContract.Id), prefix, true)
+	contractID, err := strconv.ParseInt(p.ActivateContract.Id, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, p.ActivateContract.Id)
+	}
+	smart.ActivateContract(contractID, prefix, true)
 	return nil
 }
 

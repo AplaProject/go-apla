@@ -18,14 +18,17 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -74,9 +77,13 @@ func (p *EditWalletParser) Validate() error {
 			return p.ErrInfo(err)
 		}
 	}
-	id := converter.StrToInt64(string(p.EditWallet.WalletID))
+
+	id, err := strconv.ParseInt(p.EditWallet.WalletID, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, p.EditWallet.WalletID)
+	}
 	dltWallet := &model.DltWallet{}
-	err = dltWallet.GetWallet(converter.StrToInt64(p.EditWallet.WalletID))
+	err = dltWallet.GetWallet(id)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

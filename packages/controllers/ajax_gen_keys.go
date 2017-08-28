@@ -19,10 +19,14 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -49,7 +53,10 @@ func (c *Controller) AjaxGenKeys() interface{} {
 	var result GenKeys
 	var err error
 
-	count := converter.StrToInt64(c.r.FormValue("count"))
+	count, err := strconv.ParseInt(c.r.FormValue("count"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("count"))
+	}
 	if count < 1 || count > 50 {
 		result.Error = `Count must be from 1 to 50`
 		return result
@@ -61,9 +68,11 @@ func (c *Controller) AjaxGenKeys() interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	govAccount := stateParameter.Value
-
-	if c.SessCitizenID != converter.StrToInt64(govAccount) || len(govAccount) == 0 {
+	govAccount, err := strconv.ParseInt(stateParameter.Value, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, stateParameter.Value)
+	}
+	if c.SessCitizenID != govAccount || len(stateParameter.Value) == 0 {
 		result.Error = `Access denied`
 		return result
 	}

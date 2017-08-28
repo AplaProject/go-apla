@@ -18,10 +18,12 @@ package controllers
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -49,6 +51,7 @@ func (c *Controller) EditWallet() (string, error) {
 	var (
 		data  map[string]string
 		alert string
+		err   error
 	)
 
 	txType := "EditWallet"
@@ -57,7 +60,10 @@ func (c *Controller) EditWallet() (string, error) {
 	var id int64
 	if len(idaddr) > 0 {
 		if idaddr[0] == '-' {
-			id = converter.StrToInt64(idaddr)
+			id, err = strconv.ParseInt(idaddr, 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, idaddr)
+			}
 		} else if strings.IndexByte(idaddr, '-') < 0 {
 			id = int64(converter.StrToUint64(idaddr))
 		} else {

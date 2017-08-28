@@ -26,9 +26,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -197,7 +200,11 @@ func LoadContract(prefix string) (err error) {
 		return err
 	}
 	for _, item := range contracts {
-		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, converter.StrToInt64(item[`id`])); err != nil {
+		id, err := strconv.ParseInt(item["id"], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, item["id"])
+		}
+		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, id); err != nil {
 			log.Error("Load Contract", item[`name`], err)
 			fmt.Println("Error Load Contract", item[`name`], err)
 			//return
@@ -237,7 +244,11 @@ func Param(vars *map[string]string, pars ...string) string {
 
 // LangRes returns the corresponding language resource of the specified parameter
 func LangRes(vars *map[string]string, pars ...string) string {
-	ret, _ := language.LangText(pars[0], int(converter.StrToInt64((*vars)[`state_id`])), (*vars)[`accept_lang`])
+	stateID, err := strconv.ParseInt((*vars)["state_id"], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+	}
+	ret, _ := language.LangText(pars[0], int(stateID), (*vars)[`accept_lang`])
 	return ret
 }
 
@@ -770,8 +781,15 @@ func Include(vars *map[string]string, pars ...string) string {
 	}
 	// params[`norow`] = `1`
 	//	page := (*vars)[`page`]
-	out, err := CreateHTMLFromTemplate(pars[0], converter.StrToInt64((*vars)[`citizen`]), converter.StrToInt64((*vars)[`state_id`]),
-		&params)
+	citizen, err := strconv.ParseInt((*vars)["citizen"], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, (*vars)["citizen"])
+	}
+	stateID, err := strconv.ParseInt((*vars)["state_id"], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+	}
+	out, err := CreateHTMLFromTemplate(pars[0], citizen, stateID, &params)
 	if err != nil {
 		out = err.Error()
 	}
@@ -1279,10 +1297,18 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 	}
 	if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
 		opar := strings.Split(val, `,`)
+		par0, err := strconv.ParseInt(opar[0], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, opar[0])
+		}
 		if len(opar) == 1 {
-			limit = fmt.Sprintf(` limit %d`, converter.StrToInt64(opar[0]))
+			limit = fmt.Sprintf(` limit %d`, par0)
 		} else {
-			limit = fmt.Sprintf(` offset %d limit %d`, converter.StrToInt64(opar[0]), converter.StrToInt64(opar[1]))
+			par1, err := strconv.ParseInt(opar[1], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, opar[1])
+			}
+			limit = fmt.Sprintf(` offset %d limit %d`, par0, par1)
 		}
 	}
 	if val, ok := (*pars)[`Fields`]; ok {
@@ -1463,7 +1489,11 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 
 // StateVal returns par[1]-th value of pars[0] state param
 func StateVal(vars *map[string]string, pars ...string) string {
-	val, _ := StateParam(converter.StrToInt64((*vars)[`state_id`]), converter.SanitizeName(pars[0]))
+	stateID, err := strconv.ParseInt((*vars)["state_id"], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+	}
+	val, _ := StateParam(stateID, converter.SanitizeName(pars[0]))
 	if len(pars) > 1 {
 		ind := converter.StrToInt(pars[1])
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
@@ -1613,7 +1643,11 @@ func ValueByID(vars *map[string]string, pars ...string) string {
 func TXButton(vars *map[string]string, pars *map[string]string) string {
 	var unique int64
 	if uval, ok := (*vars)[`tx_unique`]; ok {
-		unique = converter.StrToInt64(uval) + 1
+		unique, err := strconv.ParseInt(uval, 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, uval)
+		}
+		unique++
 	}
 	(*vars)[`tx_unique`] = converter.Int64ToStr(unique)
 	btnName := `Send`
@@ -1762,7 +1796,11 @@ func getSelect(linklist string) (data []map[string]string, id string, name strin
 func TXForm(vars *map[string]string, pars *map[string]string) string {
 	var unique int64
 	if uval, ok := (*vars)[`tx_unique`]; ok {
-		unique = converter.StrToInt64(uval) + 1
+		unique, err := strconv.ParseInt(uval, 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, uval)
+		}
+		unique++
 	}
 	(*vars)[`tx_unique`] = converter.Int64ToStr(unique)
 	name := (*pars)[`Contract`]
@@ -1855,13 +1893,21 @@ txlist:
 			}
 		}
 		if len(linklist) > 0 {
-			sellist := SelList{converter.StrToInt64(value), make(map[int]string)}
+			val, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, value)
+			}
+			sellist := SelList{val, make(map[int]string)}
 			if strings.IndexByte(linklist, '.') >= 0 {
 				if data, id, name, err := getSelect(linklist); err != nil {
 					return err.Error()
 				} else if len(data) > 0 {
 					for _, item := range data {
-						sellist.List[int(converter.StrToInt64(item[id]))] = converter.StripTags(item[name])
+						idInt64, err := strconv.ParseInt(item[id], 10, 64)
+						if err != nil {
+							logger.LogInfo(consts.StrtoInt64Error, item[id])
+						}
+						sellist.List[int(idInt64)] = converter.StripTags(item[name])
 					}
 				}
 			} else if alist := strings.Split(StateVal(vars, linklist), `,`); len(alist) > 0 {
@@ -1920,18 +1966,34 @@ func Ring(vars *map[string]string, pars ...string) string {
 	count := 0
 	size := 18
 	if len(pars) > 0 {
-		count = int(converter.StrToInt64(pars[0]))
+		val, err := strconv.ParseInt(pars[0], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[0])
+		}
+		count = int(val)
 	}
 	if len(pars) > 1 {
-		size = int(converter.StrToInt64(pars[1]))
+		val, err := strconv.ParseInt(pars[1], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+		}
+		size = int(val)
 	}
 	pct := 100
 	if len(pars) > 2 {
-		pct = int(converter.StrToInt64(pars[2]))
+		val, err := strconv.ParseInt(pars[2], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[2])
+		}
+		pct = int(val)
 	}
 	speed := 1
 	if len(pars) > 3 {
-		speed = int(converter.StrToInt64(pars[3]))
+		val, err := strconv.ParseInt(pars[3], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[3])
+		}
+		speed = int(val)
 	}
 	color := `23b7e5`
 	if len(pars) > 4 {
@@ -1943,11 +2005,19 @@ func Ring(vars *map[string]string, pars ...string) string {
 	}
 	width := 250
 	if len(pars) > 6 {
-		width = int(converter.StrToInt64(pars[6]))
+		val, err := strconv.ParseInt(pars[6], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[6])
+		}
+		width = int(val)
 	}
 	thickness := 10
 	if len(pars) > 7 {
-		thickness = int(converter.StrToInt64(pars[7]))
+		val, err := strconv.ParseInt(pars[7], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[7])
+		}
+		thickness = int(val)
 	}
 	prefix := ``
 	if len(pars) > 8 {
@@ -2033,7 +2103,11 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 	if len(pars) > 3 && len(pars[3]) > 0 {
 		flag = fmt.Sprintf(`<img src="%s" alt="Image" class="wd-xs">`, html.EscapeString(pars[3]))
 	}
-	address := converter.AddressToString(converter.StrToInt64(pars[1]))
+	val, err := strconv.ParseInt(pars[1], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, pars[1])
+	}
+	address := converter.AddressToString(val)
 	(*vars)["wicitizen"] = `1`
 	return fmt.Sprintf(`<div class="panel widget"><div class="panel-body">
 			<div class="row row-table"><div class="col-xs-6 text-center">
@@ -2130,7 +2204,11 @@ func Select(vars *map[string]string, pars ...string) string {
 				return err.Error()
 			} else if len(data) > 0 {
 				for _, item := range data {
-					list = append(list, SelInfo{ID: converter.StrToInt64(item[id]), Name: converter.StripTags(item[name])})
+					idInt64, err := strconv.ParseInt(item[id], 10, 64)
+					if err != nil {
+						logger.LogInfo(consts.StrtoInt64Error, item[id])
+					}
+					list = append(list, SelInfo{ID: idInt64, Name: converter.StripTags(item[name])})
 				}
 			}
 		} else if alist := strings.Split(StateVal(vars, pars[1]), `,`); len(alist) > 0 {
@@ -2143,7 +2221,11 @@ func Select(vars *map[string]string, pars ...string) string {
 		class, more = getClass(pars[2])
 	}
 	if len(pars) > 3 {
-		value = converter.StrToInt64(pars[3])
+		var err error
+		value, err = strconv.ParseInt(pars[3], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[3])
+		}
 	}
 
 	out := fmt.Sprintf(`<select id="%s" class="selectbox form-control %s" %s>`,
@@ -2280,10 +2362,18 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
 	}
 	if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
 		opar := strings.Split(val, `,`)
+		par0, err := strconv.ParseInt(opar[0], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, opar[0])
+		}
 		if len(opar) == 1 {
-			limit = fmt.Sprintf(` limit %d`, converter.StrToInt64(opar[0]))
+			limit = fmt.Sprintf(` limit %d`, par0)
 		} else {
-			limit = fmt.Sprintf(` offset %d limit %d`, converter.StrToInt64(opar[0]), converter.StrToInt64(opar[1]))
+			par1, err := strconv.ParseInt(opar[1], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, opar[1])
+			}
+			limit = fmt.Sprintf(` offset %d limit %d`, par0, par1)
 		}
 	}
 	list, err := model.GetAll(fmt.Sprintf(`select %s,%s from %s %s %s%s`, converter.EscapeName(value), converter.EscapeName(label),
@@ -2371,10 +2461,18 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
 		}
 		if val, ok := (*pars)[`Limit`]; ok && len(val) > 0 {
 			opar := strings.Split(val, `,`)
+			par0, err := strconv.ParseInt(opar[0], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, opar[0])
+			}
 			if len(opar) == 1 {
-				limit = fmt.Sprintf(` limit %d`, converter.StrToInt64(opar[0]))
+				limit = fmt.Sprintf(` limit %d`, par0)
 			} else {
-				limit = fmt.Sprintf(` offset %d limit %d`, converter.StrToInt64(opar[0]), converter.StrToInt64(opar[1]))
+				par1, err := strconv.ParseInt(opar[1], 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, opar[1])
+				}
+				limit = fmt.Sprintf(` offset %d limit %d`, par0, par1)
 			}
 		} else {
 			limit = fmt.Sprintf(` limit %d`, len(colors))
@@ -2632,7 +2730,10 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 		getHeight := func() int64 {
 			height := int64(100)
 			if h, ok := (*params)[`hmap`]; ok {
-				height = converter.StrToInt64(h)
+				height, err = strconv.ParseInt(h, 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, h)
+				}
 			}
 			return height
 		}
@@ -2731,7 +2832,11 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 		if (*params)[`wibtncont`] == `1` {
 			var unique int64
 			if uval, ok := (*params)[`tx_unique`]; ok {
-				unique = converter.StrToInt64(uval) + 1
+				unique, err = strconv.ParseInt(uval, 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, uval)
+				}
+				unique++
 			}
 			(*params)[`tx_unique`] = converter.Int64ToStr(unique)
 			funcMap := template.FuncMap{

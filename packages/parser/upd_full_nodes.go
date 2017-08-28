@@ -18,6 +18,9 @@ package parser
 
 import (
 	"encoding/json"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -25,6 +28,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -107,10 +111,14 @@ func (p *UpdFullNodesParser) Action() error {
 	}
 
 	// log them into the one record JSON
+	rbID, err := strconv.ParseInt(data[0]["rb_id"], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, data[0]["rb_id"])
+	}
 	rbFN := &model.RbFullNode{
 		FullNodesWalletJson: jsonData,
 		BlockID:             p.BlockData.BlockID,
-		PrevRbID:            converter.StrToInt64(data[0]["rb_id"]),
+		PrevRbID:            rbID,
 	}
 	err = rbFN.Create()
 	if err != nil {
@@ -220,14 +228,38 @@ func (p *UpdFullNodesParser) Rollback() error {
 	for _, data := range fullNodesWallet {
 		// вставляем новые данные по wallet-нодам с указанием общего rb_id
 		// insert new data on wallet-nodes with the indication of the common rb_id
+		id, err := strconv.ParseInt(data["id"], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, data["id"])
+		}
+		walletID, err := strconv.ParseInt(data["wallet_id"], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, data["wallet_id"])
+		}
+		stateID, err := strconv.ParseInt(data["state_id"], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, data["state_id"])
+		}
+		fdWalletID, err := strconv.ParseInt(data["final_delegate_wallet_id"], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, data["final_delegate_wallet_id"])
+		}
+		fdStateID, err := strconv.ParseInt(data["final_delegate_state_id"], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, data["final_delegate_state_id"])
+		}
+		rbID, err := strconv.ParseInt(data["rb_id"], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, data["rb_id"])
+		}
 		fn := &model.FullNode{
-			ID:                    int32(converter.StrToInt64(data["id"])),
+			ID:                    int32(id),
 			Host:                  data["host"],
-			WalletID:              converter.StrToInt64(data["wallet_id"]),
-			StateID:               converter.StrToInt64(data["state_id"]),
-			FinalDelegateWalletID: converter.StrToInt64(data["final_delegate_wallet_id"]),
-			FinalDelegateStateID:  converter.StrToInt64(data["final_delegate_state_id"]),
-			RbID:                  converter.StrToInt64(data["rb_id"]),
+			WalletID:              walletID,
+			StateID:               stateID,
+			FinalDelegateWalletID: fdWalletID,
+			FinalDelegateStateID:  fdStateID,
+			RbID:                  rbID,
 		}
 		err = fn.Create()
 		if err != nil {

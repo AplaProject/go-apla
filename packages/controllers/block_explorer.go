@@ -19,10 +19,12 @@ package controllers
 import (
 	"encoding/binary"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -48,9 +50,15 @@ func init() {
 func (c *Controller) BlockExplorer() (string, error) {
 	pageData := blockExplorerPage{Data: c.Data, Host: c.r.Host}
 
-	blockID := converter.StrToInt64(c.r.FormValue("blockId"))
+	blockID, err := strconv.ParseInt(c.r.FormValue("blockId"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("blockId"))
+	}
 
-	pageData.SinglePage = converter.StrToInt64(c.r.FormValue("singlePage"))
+	pageData.SinglePage, err = strconv.ParseInt(c.r.FormValue("singlePage"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("singlePage"))
+	}
 	if blockID > 0 {
 		pageData.BlockID = blockID
 		block := &model.Block{}
@@ -127,7 +135,10 @@ func (c *Controller) BlockExplorer() (string, error) {
 			return proceedTemplate(c, `modal_block_detail`, &pageData)
 		}
 	} else {
-		latest := converter.StrToInt64(c.r.FormValue("latest"))
+		latest, err := strconv.ParseInt(c.r.FormValue("latest"), 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("latest"))
+		}
 		block := &model.Block{}
 		if latest > 0 {
 			block.GetMaxBlock()
@@ -151,7 +162,10 @@ func (c *Controller) BlockExplorer() (string, error) {
 
 		pageData.List = blockExplorer
 		if blockExplorer != nil && len(blockExplorer) > 0 {
-			pageData.Latest = converter.StrToInt64(blockExplorer[0][`id`])
+			pageData.Latest, err = strconv.ParseInt(blockExplorer[0][`id`], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, blockExplorer[0][`id`])
+			}
 		}
 	}
 	return proceedTemplate(c, nBlockExplorer, &pageData)

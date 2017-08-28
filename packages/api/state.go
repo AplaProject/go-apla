@@ -19,8 +19,12 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
@@ -192,7 +196,11 @@ func stateList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	outList := make([]stateItem, 0)
 	for _, id := range idata {
-		if !model.IsNodeState(converter.StrToInt64(id), r.Host) {
+		idInt, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, id)
+		}
+		if !model.IsNodeState(idInt, r.Host) {
 			continue
 		}
 		list, err := model.GetAll(fmt.Sprintf(`SELECT name, value FROM "%s_state_parameters" WHERE name in ('state_name','state_flag', 'state_coords')`,

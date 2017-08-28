@@ -18,8 +18,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
@@ -68,7 +72,10 @@ func (c *Controller) WalletHistory() (string, error) {
 			if err = json.Unmarshal([]byte(rollback.Data), &data); err != nil {
 				return ``, utils.ErrInfo(err)
 			}
-			rb = converter.StrToInt64(data[`rb_id`])
+			rb, err = strconv.ParseInt(data[`rb_id`], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data["rb_id"])
+			}
 			if amount, ok := data[`amount`]; ok {
 				var dif decimal.Decimal
 				val, _ := decimal.NewFromString(amount)

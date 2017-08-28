@@ -19,9 +19,13 @@ package exchangeapi
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/shopspring/decimal"
 )
@@ -51,7 +55,11 @@ func history(r *http.Request) interface{} {
 		result.Error = `Wallet is invalid`
 		return result
 	}
-	count := int(converter.StrToInt64(r.FormValue(`count`)))
+	c, err := strconv.ParseInt(r.FormValue("count"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, r.FormValue("count"))
+	}
+	count := int(c)
 	if count == 0 {
 		count = 50
 	}
@@ -64,7 +72,10 @@ func history(r *http.Request) interface{} {
 		result.Error = err.Error()
 		return result
 	}
-	rb := converter.StrToInt64(current[`rb_id`])
+	rb, err := strconv.ParseInt(current[`rb_id`], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, current[`rb_id`])
+	}
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
 		for len(list) < count && rb > 0 {
@@ -80,7 +91,10 @@ func history(r *http.Request) interface{} {
 				result.Error = err.Error()
 				return result
 			}
-			rb = converter.StrToInt64(data[`rb_id`])
+			rb, err = strconv.ParseInt(data[`rb_id`], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data[`rb_id`])
+			}
 			//			fmt.Println(`DATA`, prev)
 			if amount, ok := data[`amount`]; ok {
 				var dif decimal.Decimal
@@ -94,7 +108,11 @@ func history(r *http.Request) interface{} {
 				if balance.Cmp(val) < 0 {
 					sign = `-`
 				}
-				dt := time.Unix(converter.StrToInt64(prev[`time`]), 0)
+				timeInt, err := strconv.ParseInt(prev["time"], 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, prev["time"])
+				}
+				dt := time.Unix(timeInt, 0)
 
 				list = append(list, histOper{BlockID: prev[`block_id`], Dif: sign + converter.EGSMoney(dif.String()),
 					Amount: balance.String(), EGS: converter.EGSMoney(balance.String()), Time: dt.Format(`02.01.2006 15:04:05`)})
@@ -110,7 +128,11 @@ func history(r *http.Request) interface{} {
 			return result
 		}
 		if len(first) > 0 {
-			dt := time.Unix(converter.StrToInt64(first[`time`]), 0)
+			timeInt, err := strconv.ParseInt(first["time"], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, first["time"])
+			}
+			dt := time.Unix(timeInt, 0)
 			list = append(list, histOper{BlockID: first[`block_id`], Dif: `+` + converter.EGSMoney(first[`amount`]),
 				Amount: first[`amount`],
 				EGS:    converter.EGSMoney(first[`amount`]), Time: dt.Format(`02.01.2006 15:04:05`)})

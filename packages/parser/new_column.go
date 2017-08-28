@@ -19,6 +19,9 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -26,6 +29,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -75,7 +79,11 @@ func (p *NewColumnParser) Validate() error {
 	if count >= int64(syspar.GetMaxColumns()) {
 		return fmt.Errorf(`Too many columns. Limit is %d`, syspar.GetMaxColumns())
 	}
-	if converter.StrToInt64(p.NewColumn.Index) > 0 {
+	columnIndex, err := strconv.ParseInt(p.NewColumn.Index, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, p.NewColumn.Index)
+	}
+	if columnIndex > 0 {
 		count, err := model.NumIndexes(p.NewColumn.TableName)
 		if err != nil {
 			return p.ErrInfo(err)

@@ -32,6 +32,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -280,10 +281,14 @@ func DBInsert(p *Parser, tblname string, params string, val ...interface{}) (qco
 
 // DBInsertReport inserts a record into the specified report table
 func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}) (qcost int64, ret int64, err error) {
+	var state int64
 	qcost = 0
 	names := strings.Split(tblname, `_`)
 	if names[0] != `global` {
-		state := converter.StrToInt64(names[0])
+		state, err = strconv.ParseInt(names[0], 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, names[0])
+		}
 		if state != int64(p.TxStateID) {
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
 			return
@@ -578,7 +583,11 @@ func IsContract(p *Parser, names ...interface{}) bool {
 
 // IsGovAccount checks whether the specified account is the owner of the state
 func IsGovAccount(p *Parser, citizen int64) bool {
-	return converter.StrToInt64(StateVal(p, `gov_account`)) == citizen
+	account, err := strconv.ParseInt(StateVal(p, `gov_account`), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, StateVal(p, `gov_account`))
+	}
+	return account == citizen
 }
 
 // AddressToID converts the string representation of the wallet number to a numeric
@@ -669,7 +678,11 @@ func SysCost(name string) int64 {
 
 // Int converts a string to a number
 func Int(val string) int64 {
-	return converter.StrToInt64(val)
+	value, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, val)
+	}
+	return value
 }
 
 // Str converts the value to a string

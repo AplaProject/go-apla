@@ -17,10 +17,14 @@
 package controllers
 
 import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	//	"fmt"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -49,7 +53,10 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 
 	//test
 	if len(c.r.FormValue(`last_id`)) > 0 {
-		lastID = converter.StrToInt64(c.r.FormValue(`last_id`))
+		lastID, err = strconv.ParseInt(c.r.FormValue(`last_id`), 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue(`last_id`))
+		}
 	}
 	request := &model.CitizenshipRequest{}
 	request.SetTablePrefix(converter.Int64ToStr(c.StateID))

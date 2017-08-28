@@ -19,11 +19,15 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -95,7 +99,11 @@ func (c *Controller) AjaxSendTx() interface{} {
 					case `uint64`:
 						converter.BinMarshal(&data, converter.StrToUint64(val))
 					case `int64`:
-						converter.EncodeLenInt64(&data, converter.StrToInt64(val))
+						value, err := strconv.ParseInt(val, 10, 64)
+						if err != nil {
+							logger.LogInfo(consts.StrtoInt64Error, val)
+						}
+						converter.EncodeLenInt64(&data, value)
 					case `float64`:
 						converter.BinMarshal(&data, converter.StrToFloat64(val))
 					case `string`, script.Decimal:
@@ -111,8 +119,12 @@ func (c *Controller) AjaxSendTx() interface{} {
 				}
 			}
 			if err == nil {
+				timeInt, err := strconv.ParseInt(c.r.FormValue(`time`), 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue(`time`))
+				}
 				toSerialize := tx.SmartContract{
-					Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(c.r.FormValue(`time`)),
+					Header: tx.Header{Type: int(info.ID), Time: timeInt,
 						UserID: c.SessWalletID, StateID: c.SessStateID, PublicKey: public,
 						BinSignatures: converter.EncodeLengthPlusData(signature)},
 					Data: data,

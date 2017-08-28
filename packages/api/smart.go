@@ -22,11 +22,15 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -364,7 +368,11 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 			case `uint64`:
 				converter.BinMarshal(&idata, converter.StrToUint64(val))
 			case `int64`:
-				converter.EncodeLenInt64(&idata, converter.StrToInt64(val))
+				value, err := strconv.ParseInt(val, 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, val)
+				}
+				converter.EncodeLenInt64(&idata, value)
 			case `float64`:
 				converter.BinMarshal(&idata, converter.StrToFloat64(val))
 			case `string`, script.Decimal:
@@ -379,8 +387,12 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 			}
 		}
 	}
+	time, err := strconv.ParseInt(data.params[`time`].(string), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, data.params[`time`].(string))
+	}
 	toSerialize = tx.SmartContract{
-		Header: tx.Header{Type: int(info.ID), Time: converter.StrToInt64(data.params[`time`].(string)),
+		Header: tx.Header{Type: int(info.ID), Time: time,
 			UserID: userID, StateID: stateID, PublicKey: publicKey,
 			BinSignatures: converter.EncodeLengthPlusData(signature)},
 		Data: idata,

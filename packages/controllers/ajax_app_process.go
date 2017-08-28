@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"strconv"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -43,7 +46,10 @@ func (c *Controller) AjaxAppProcess() interface{} {
 		result AppProcess
 	)
 	name := c.r.FormValue("name")
-	block := converter.StrToInt64(c.r.FormValue("block"))
+	block, err := strconv.ParseInt(c.r.FormValue("block"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("block"))
+	}
 	done := converter.StrToInt(c.r.FormValue("done"))
 
 	if block == 0 {

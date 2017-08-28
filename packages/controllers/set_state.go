@@ -16,7 +16,12 @@
 
 package controllers
 
-import "github.com/EGaaS/go-egaas-mvp/packages/converter"
+import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
+)
 
 const aSetState = `set_state`
 
@@ -34,8 +39,16 @@ func (c *Controller) SetState() interface{} {
 	var result setStateJSON
 
 	c.r.ParseForm()
-	c.sess.Set("state_id", converter.StrToInt64(c.r.FormValue("state_id")))
-	c.sess.Set("citizen_id", converter.StrToInt64(c.r.FormValue("citizen_id")))
+	stateID, err := strconv.ParseInt(c.r.FormValue("state_id"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("state_id"))
+	}
+	c.sess.Set("state_id", stateID)
+	citizenID, err := strconv.ParseInt(c.r.FormValue("citizen_id"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("citizen_id"))
+	}
+	c.sess.Set("citizen_id", citizenID)
 	result.Error = ""
 	return result //`{"result":1,"address": "` + address + `"}`, nil
 }

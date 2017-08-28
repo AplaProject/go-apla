@@ -18,9 +18,13 @@ package controllers
 
 import (
 	"encoding/hex"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -46,11 +50,16 @@ func (c *Controller) AjaxSignIn() interface{} {
 	c.r.ParseForm()
 	key := c.r.FormValue("key")
 	bkey, err := hex.DecodeString(key)
-	stateID := converter.StrToInt64(c.r.FormValue("state_id"))
 	if err != nil {
 		result.Error = err.Error()
 		return result
 	}
+
+	stateID, err := strconv.ParseInt(c.r.FormValue("state_id"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("state_id"))
+	}
+
 	if utils.PrivCountry && utils.OneCountry > 0 {
 		stateID = utils.OneCountry
 	}

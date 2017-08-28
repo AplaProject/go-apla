@@ -17,10 +17,13 @@
 package controllers
 
 import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	//	"encoding/json"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -41,7 +44,10 @@ func (c *Controller) AjaxExplorer() interface{} {
 	var blockchain []model.Block
 	var err error
 	result := ExplorerJSON{}
-	latest := converter.StrToInt64(c.r.FormValue("latest"))
+	latest, err := strconv.ParseInt(c.r.FormValue("latest"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("latest"))
+	}
 	data := make([]map[string]string, 0)
 
 	if latest > 0 {

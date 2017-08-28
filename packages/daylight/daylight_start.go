@@ -19,6 +19,7 @@ package daylight
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	//	_ "image/png"
 	"io/ioutil"
 	"math/rand"
@@ -39,6 +40,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/daemons"
 	"github.com/EGaaS/go-egaas-mvp/packages/exchangeapi"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
 	"github.com/EGaaS/go-egaas-mvp/packages/schema"
@@ -81,7 +83,11 @@ func readConfig() {
 	if *utils.Dir == "" {
 		*utils.Dir = config.ConfigIni["dir"]
 	}
-	utils.OneCountry = converter.StrToInt64(config.ConfigIni["one_country"])
+	country, err := strconv.ParseInt(config.ConfigIni["one_country"], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, config.ConfigIni["one_country"])
+	}
+	utils.OneCountry = country
 	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`
 	if len(config.ConfigIni["lang"]) > 0 {
 		language.LangList = strings.Split(config.ConfigIni["lang"], `,`)

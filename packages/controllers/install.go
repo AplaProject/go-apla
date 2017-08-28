@@ -21,11 +21,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -39,7 +42,11 @@ func (c *Controller) Install() (string, error) {
 	}
 	generateFirstBlock := c.r.FormValue("generate_first_block")
 	if generateFirstBlock != "" {
-		*utils.GenerateFirstBlock = converter.StrToInt64(generateFirstBlock)
+		var err error
+		*utils.GenerateFirstBlock, err = strconv.ParseInt(generateFirstBlock, 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, generateFirstBlock)
+		}
 	}
 
 	installType := c.r.FormValue("type")

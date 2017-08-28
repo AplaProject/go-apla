@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	logging "github.com/op/go-logging"
 
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/jinzhu/gorm"
@@ -453,7 +455,11 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	prevBlockFullNodeID := node.ID
 	prevBlockFullNodePosition := func(fullNodesList []map[string]string, prevBlockFullNodeID int64) int {
 		for i, fullNodes := range fullNodesList {
-			if converter.StrToInt64(fullNodes["id"]) == prevBlockFullNodeID {
+			id, err := strconv.ParseInt(fullNodes["id"], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, fullNodes["id"])
+			}
+			if id == prevBlockFullNodeID {
 				return i
 			}
 		}
@@ -463,8 +469,15 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 	// define our place (Including in the 'delegate')
 	myPosition := func(fullNodesList []map[string]string, myWalletID, myStateID int64) int {
 		for i, fullNodes := range fullNodesList {
-			if converter.StrToInt64(fullNodes["state_id"]) == myStateID || converter.StrToInt64(fullNodes["wallet_id"]) == myWalletID ||
-				converter.StrToInt64(fullNodes["final_delegate_state_id"]) == myWalletID || converter.StrToInt64(fullNodes["final_delegate_wallet_id"]) == myWalletID {
+			stateID, err := strconv.ParseInt(fullNodes["state_id"], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, fullNodes["state_id"])
+			}
+			walletID, err := strconv.ParseInt(fullNodes["wallet_id"], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, fullNodes["wallet_id"])
+			}
+			if stateID == myStateID || walletID == myWalletID {
 				return i
 			}
 		}
@@ -532,7 +545,11 @@ func IsNodeState(state int64, host string) bool {
 			return true
 		}
 		for _, id := range strings.Split(val, `,`) {
-			if converter.StrToInt64(id) == state {
+			stateID, err := strconv.ParseInt(id, 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, id)
+			}
+			if stateID == state {
 				return true
 			}
 		}

@@ -19,13 +19,17 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"io/ioutil"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -50,7 +54,10 @@ func (c *Controller) AjaxNewState() interface{} {
 		priv, pub []byte
 		wallet    int64
 	)
-	id := converter.StrToInt64(c.r.FormValue("testnet"))
+	id, err := strconv.ParseInt(c.r.FormValue("testnet"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("testnet"))
+	}
 	testnetEmail := &model.TestnetEmail{ID: id}
 	if err = testnetEmail.Get(id); err != nil {
 		result.Error = err.Error()

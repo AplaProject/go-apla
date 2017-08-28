@@ -19,10 +19,14 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -43,7 +47,10 @@ func (c *Controller) SaveQueue() (string, error) {
 		return `{"result":"incorrect citizenID || walletID"}`, nil
 	}
 
-	txTime := converter.StrToInt64(c.r.FormValue("time"))
+	txTime, err := strconv.ParseInt(c.r.FormValue("time"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("time"))
+	}
 	if !utils.CheckInputData(txTime, "int") {
 		return `{"result":"incorrect time"}`, nil
 	}
@@ -77,7 +84,10 @@ func (c *Controller) SaveQueue() (string, error) {
 	log.Debug("txType", itxType)
 
 	userID := walletID
-	stateID := converter.StrToInt64(c.r.FormValue("stateId"))
+	stateID, err := strconv.ParseInt(c.r.FormValue("stateId"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+	}
 	if stateID > 0 {
 		userID = citizenID
 	}
@@ -93,7 +103,10 @@ func (c *Controller) SaveQueue() (string, error) {
 		"EditStateParameters", "NewStateParameters", "NewContract", "EditContract", "NewMenu",
 		"EditMenu", "NewTable":
 		userID := walletID
-		stateID := converter.StrToInt64(c.r.FormValue("stateId"))
+		stateID, err := strconv.ParseInt(c.r.FormValue("stateId"), 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+		}
 		if stateID > 0 {
 			userID = citizenID
 		}
@@ -106,7 +119,10 @@ func (c *Controller) SaveQueue() (string, error) {
 		header.StateID = 0
 	case "EditWallet", "ActivateContract":
 		userID := walletID
-		stateID := converter.StrToInt64(c.r.FormValue("stateId"))
+		stateID, err := strconv.ParseInt(c.r.FormValue("stateId"), 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+		}
 		if userID == 0 {
 			userID = citizenID
 		}
@@ -276,7 +292,10 @@ func (c *Controller) SaveQueue() (string, error) {
 			Conditions: c.r.FormValue("conditions"),
 		}
 	case "NewAccount":
-		accountID := converter.StrToInt64(c.r.FormValue("accountId"))
+		accountID, err := strconv.ParseInt(c.r.FormValue("accountId"), 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("accountId"))
+		}
 		pubKey, err := hex.DecodeString(c.r.FormValue("pubkey"))
 		if accountID == 0 || stateID == 0 || userID == 0 || err != nil {
 			return ``, fmt.Errorf(`incorrect NewAccount parameters`)

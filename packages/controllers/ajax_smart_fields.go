@@ -21,7 +21,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -49,7 +52,10 @@ func (c *Controller) AjaxSmartFields() interface{} {
 		result SmartFieldsJSON
 		err    error
 	)
-	stateID := converter.StrToInt64(c.r.FormValue(`state_id`))
+	stateID, err := strconv.ParseInt(c.r.FormValue(`state_id`), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue(`state_id`))
+	}
 	stateStr := converter.Int64ToStr(stateID)
 	if !model.IsTable(stateStr+`_citizens`) || !model.IsTable(stateStr+`_citizenship_requests`) {
 		result.Error = `Basic app is not installed`

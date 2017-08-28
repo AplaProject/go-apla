@@ -19,9 +19,12 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -95,7 +98,10 @@ func (c *Controller) EditPage() (string, error) {
 			var messageMap map[string]string
 			json.Unmarshal([]byte(data["data"]), &messageMap)
 			fmt.Printf("%s", messageMap)
-			rbID = converter.StrToInt64(messageMap["rb_id"])
+			rbID, err = strconv.ParseInt(messageMap["rb_id"], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, messageMap["rb_id"])
+			}
 			messageMap["block_id"] = data["block_id"]
 			dataPageHistory = append(dataPageHistory, messageMap)
 		}

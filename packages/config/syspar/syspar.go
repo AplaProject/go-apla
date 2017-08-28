@@ -18,9 +18,13 @@ package syspar
 
 import (
 	"encoding/json"
+	"strconv"
 	"sync"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -93,7 +97,11 @@ func SysUpdate() error {
 }
 
 func SysInt64(name string) int64 {
-	return converter.StrToInt64(SysString(name))
+	val, err := strconv.ParseInt(SysString(name), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(name))
+	}
+	return val
 }
 
 func GetBlockchainURL() string {
@@ -101,23 +109,43 @@ func GetBlockchainURL() string {
 }
 
 func GetUpdFullNodesPeriod() int64 {
-	return converter.StrToInt64(SysString(UpdFullNodesPeriod))
+	val, err := strconv.ParseInt(SysString(UpdFullNodesPeriod), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(UpdFullNodesPeriod))
+	}
+	return val
 }
 
 func GetMaxBlockSize() int64 {
-	return converter.StrToInt64(SysString(MaxBlockSize))
+	val, err := strconv.ParseInt(SysString(MaxBlockSize), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxBlockSize))
+	}
+	return val
 }
 
 func GetMaxTxSize() int64 {
-	return converter.StrToInt64(SysString(MaxTxSize))
+	val, err := strconv.ParseInt(SysString(MaxTxSize), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxTxSize))
+	}
+	return val
 }
 
 func GetRecoveryAddress() int64 {
-	return converter.StrToInt64(SysString(RecoveryAddress))
+	val, err := strconv.ParseInt(SysString(RecoveryAddress), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(RecoveryAddress))
+	}
+	return val
 }
 
 func GetCommissionWallet() int64 {
-	return converter.StrToInt64(SysString(CommissionWallet))
+	val, err := strconv.ParseInt(SysString(CommissionWallet), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(CommissionWallet))
+	}
+	return val
 }
 
 func GetGapsBetweenBlocks() int {

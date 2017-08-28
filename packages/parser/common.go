@@ -29,6 +29,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -551,7 +552,11 @@ func (p *Parser) AccessRights(condition string, iscondition bool) error {
 // AccessTable checks the access right to the table
 func (p *Parser) AccessTable(table, action string) error {
 	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
-	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == converter.StrToInt64(govAccount) {
+	account, err := strconv.ParseInt(govAccount, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, govAccount)
+	}
+	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == account {
 		return nil
 	}
 
@@ -727,7 +732,10 @@ func (p *Parser) payFPrice() error {
 	} else { // contract
 		if p.TxStateID > 0 && p.TxCitizenID != 0 && p.TxContract != nil {
 			//fromID = p.TxContract.TxGovAccount
-			fromID = converter.StrToInt64(StateVal(p, `gov_account`))
+			fromID, err = strconv.ParseInt(StateVal(p, `gov_account`), 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, StateVal(p, `gov_account`))
+			}
 		} else {
 			// списываем напрямую с dlt_wallets у юзера
 			// write directly from dlt_wallets of user

@@ -19,8 +19,12 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
@@ -206,7 +210,12 @@ func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	for _, val := range list {
 		var wallet, active string
 		if val[`wallet_id`] != `NULL` {
-			wallet = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
+			walletID, err := strconv.ParseInt(val[`wallet_id`], 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, val[`wallet_id`])
+			}
+			wallet = converter.AddressToString(walletID)
+
 		}
 		if val[`active`] != `NULL` {
 			active = `1`

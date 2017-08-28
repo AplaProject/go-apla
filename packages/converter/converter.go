@@ -16,15 +16,13 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-//TODO параметризировать
 func FillLeft(slice []byte) []byte {
-	if len(slice) >= 32 {
+	if len(slice) >= consts.FillSize {
 		return slice
 	}
-	return append(make([]byte, 32-len(slice)), slice...)
+	return append(make([]byte, consts.FillSize-len(slice)), slice...)
 }
 
-//TODO перенести в конвертеры
 func EncodeLenInt64(data *[]byte, x int64) *[]byte {
 	var length int
 	buf := make([]byte, 8)
@@ -46,13 +44,11 @@ func EncodeLenInt64InPlace(x int64) []byte {
 	return buf[:length+1]
 }
 
-// TODO перенести в конвертеры
 func EncodeLenByte(out *[]byte, buf []byte) *[]byte {
 	*out = append(append(*out, EncodeLength(int64(len(buf)))...), buf...)
 	return out
 }
 
-// TODO перенести в конвертеры
 // EncodeLength encodes int64 number to []byte. If it is less than 128 then it returns []byte{length}.
 // Otherwise, it returns (0x80 | len of int64) + int64 as BigEndian []byte
 //
@@ -73,7 +69,6 @@ func EncodeLength(length int64) []byte {
 	return append(buf[:1], buf[i:]...)
 }
 
-//TODO перенести в конвертеры
 // DecodeLenInt64 gets int64 from []byte and shift the slice. The []byte should  be
 // encoded with EncodeLengthPlusInt64.
 func DecodeLenInt64(data *[]byte) (int64, error) {
@@ -91,7 +86,6 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 	return x, nil
 }
 
-// TODO перенести в конвертеры
 // DecodeLength decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
 //
 //   0x43 => 67
@@ -117,7 +111,6 @@ func DecodeLength(buf *[]byte) (ret int64, err error) {
 	return
 }
 
-// TODO перенести в конвертеры
 // BinMarshal converts v parameter to []byte slice.
 func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 	var err error
@@ -178,7 +171,6 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 	return out, nil
 }
 
-// TODO перенести в конвертеры
 // BinUnmarshal converts []byte slice which has been made with BinMarshal to v
 func BinUnmarshal(out *[]byte, v interface{}) error {
 	t := reflect.ValueOf(v)
@@ -302,34 +294,28 @@ func EscapeName(name string) string {
 	return string(append(out, '"'))
 }
 
-// Float2Bytes converts float64 to []byte
 func float2Bytes(float float64) []byte {
 	bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bytes, math.Float64bits(float))
 	return bytes
 }
 
-// Bytes2Float converts []byte to float64
 func bytes2Float(bytes []byte) float64 {
 	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
 }
 
-// UInt32ToStr converts uint32 to string
 func UInt32ToStr(num uint32) string {
 	return strconv.FormatInt(int64(num), 10)
 }
 
-// Int64ToStr converts int64 to string
 func Int64ToStr(num int64) string {
 	return strconv.FormatInt(num, 10)
 }
 
-// Int64ToByte converts int64 to []byte
 func Int64ToByte(num int64) []byte {
 	return []byte(strconv.FormatInt(num, 10))
 }
 
-// IntToStr converts integer to string
 func IntToStr(num int) string {
 	return strconv.Itoa(num)
 }
@@ -345,7 +331,7 @@ func DecToBin(v interface{}, sizeBytes int64) []byte {
 	case uint64:
 		dec = int64(v.(uint64))
 	case string:
-		dec = StrToInt64(v.(string))
+		dec, _ = strconv.ParseInt(v.(string), 10, 64)
 	}
 	Hex := fmt.Sprintf("%0"+Int64ToStr(sizeBytes*2)+"x", dec)
 	return HexToBin([]byte(Hex))
@@ -479,12 +465,13 @@ func BytesShiftReverse(str *[]byte, v interface{}) []byte {
 	return substr
 }
 
+/*
 // StrToInt64 converts string to int64
 func StrToInt64(s string) int64 {
 	int64, _ := strconv.ParseInt(s, 10, 64)
 	return int64
 }
-
+*/
 // BytesToInt64 converts []bytes to int64
 func BytesToInt64(s []byte) int64 {
 	int64, _ := strconv.ParseInt(string(s), 10, 64)

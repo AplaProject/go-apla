@@ -18,6 +18,9 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
@@ -26,6 +29,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -115,7 +119,11 @@ func (p *NewContractParser) Action() error {
 	}
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
-			root.Children[i].Info.(*script.ContractInfo).TableID = converter.StrToInt64(tblid)
+			tableID, err := strconv.ParseInt(tblid, 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, tblid)
+			}
+			root.Children[i].Info.(*script.ContractInfo).TableID = tableID
 		}
 	}
 

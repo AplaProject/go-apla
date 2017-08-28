@@ -3,8 +3,12 @@ package model
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 // SingleResult is a structure for the single result
@@ -94,7 +98,11 @@ func (r *OneRow) Int64() (map[string]int64, error) {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = converter.StrToInt64(v)
+		res, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, v)
+		}
+		result[k] = res
 	}
 	return result, nil
 }

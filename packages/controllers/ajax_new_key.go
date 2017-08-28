@@ -22,13 +22,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
@@ -72,7 +76,10 @@ func (c *Controller) AjaxNewKey() interface{} {
 	var seed string
 	key := c.r.FormValue("key")
 	name := c.r.FormValue("name")
-	stateID := converter.StrToInt64(c.r.FormValue("state_id"))
+	stateID, err := strconv.ParseInt(c.r.FormValue("state_id"), 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("state_id"))
+	}
 	bkey, err := hex.DecodeString(key)
 	if err != nil {
 		result.Error = err.Error()
@@ -89,12 +96,17 @@ func (c *Controller) AjaxNewKey() interface{} {
 	idkey := crypto.Address(pubkey)
 	stateParameter := &model.StateParameter{}
 	stateParameter.GetByName("govAccount")
-	govAccount := stateParameter.Value
-	if len(govAccount) == 0 {
+	if len(stateParameter.Value) == 0 {
 		result.Error = `unknown govAccount`
 		return result
 	}
-	if converter.StrToInt64(govAccount) != idkey {
+
+	govAccount, err := strconv.ParseInt(stateParameter.Value, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, stateParameter.Value)
+	}
+
+	if govAccount != idkey {
 		result.Error = `access denied`
 		return result
 	}
