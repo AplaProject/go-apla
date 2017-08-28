@@ -65,7 +65,11 @@ func (c *Controller) EditWallet() (string, error) {
 				logger.LogInfo(consts.StrtoInt64Error, idaddr)
 			}
 		} else if strings.IndexByte(idaddr, '-') < 0 {
-			id = int64(converter.StrToUint64(idaddr))
+			addr, err := strconv.ParseInt(idaddr, 10, 64)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, idaddr)
+			}
+			id = addr
 		} else {
 			id = converter.StringToAddress(idaddr)
 		}

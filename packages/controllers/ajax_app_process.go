@@ -24,7 +24,6 @@ import (
 
 	"strconv"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
@@ -50,7 +49,10 @@ func (c *Controller) AjaxAppProcess() interface{} {
 	if err != nil {
 		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("block"))
 	}
-	done := converter.StrToInt(c.r.FormValue("done"))
+	done, err := strconv.Atoi(c.r.FormValue("done"))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("done"))
+	}
 
 	if block == 0 {
 		result.Error = `wrong block id`

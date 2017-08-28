@@ -17,7 +17,11 @@
 package controllers
 
 import (
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
@@ -43,8 +47,15 @@ func (c *Controller) AjaxHistory() interface{} {
 		err     error
 	)
 	walletID := c.SessWalletID
-	result := HistoryJSON{Draw: converter.StrToInt(c.r.FormValue("draw"))}
-	length := converter.StrToInt(c.r.FormValue("length"))
+	draw, err := strconv.Atoi(c.r.FormValue("draw"))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("draw"))
+	}
+	result := HistoryJSON{Draw: draw}
+	length, err := strconv.Atoi(c.r.FormValue("length"))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("length"))
+	}
 	if length == -1 {
 		length = 20
 	}
@@ -56,7 +67,11 @@ func (c *Controller) AjaxHistory() interface{} {
 		result.Filtered = int(total)
 		if length != 0 {
 			wt := &model.WalletedTransaction{}
-			transactions, err := wt.Get(walletID, walletID, c.SessAddress, length, converter.StrToInt(c.r.FormValue("start")))
+			start, err := strconv.Atoi(c.r.FormValue("start"))
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("start"))
+			}
+			transactions, err := wt.Get(walletID, walletID, c.SessAddress, length, start)
 			if err != nil {
 				log.Error("get transactions error: %s", err)
 			}

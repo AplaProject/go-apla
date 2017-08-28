@@ -19,10 +19,14 @@ package parser
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
@@ -197,10 +201,14 @@ func (p *DLTTransferParser) Action() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
+	walletAddress, err := strconv.ParseInt(p.DLTTransfer.WalletAddress, 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, p.DLTTransfer.WalletAddress)
+	}
 	dltTransaction := &model.DltTransaction{
 		SenderWalletID:         p.TxWalletID,
 		RecipientWalletID:      dltWallet.WalletID,
-		RecipientWalletAddress: converter.AddressToString(int64(converter.StrToUint64(p.DLTTransfer.WalletAddress))),
+		RecipientWalletAddress: converter.AddressToString(walletAddress),
 		Amount:                 &amount,
 		Commission:             &commission,
 		Comment:                p.DLTTransfer.Comment,

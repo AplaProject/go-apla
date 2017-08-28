@@ -34,6 +34,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,6 +42,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/lib"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/kardianos/osext"
 	"github.com/mcuadros/go-version"
 	"github.com/op/go-logging"
@@ -236,55 +238,91 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		}
 	case "type":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if converter.StrToInt(data) <= 30 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 30 {
 				return true
 			}
 		}
 	case "word":
 		if ok, _ := regexp.MatchString(`^(?i)[a-z]+$`, data); ok {
-			if converter.StrToInt(data) <= 1024 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 1024 {
 				return true
 			}
 		}
 	case "currency_name", "state_name":
 		if ok, _ := regexp.MatchString(`^[\pL0-9\,\s\.\-\:\=\;\?\!\%\)\(\@\/\n\r]{1,20}$`, data); ok {
-			if converter.StrToInt(data) <= 1024 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 1024 {
 				return true
 			}
 		}
 	case "string":
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
-			if converter.StrToInt(data) <= 1024 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 1024 {
 				return true
 			}
 		}
 	case "referral":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,2}$`, data); ok {
-			if converter.StrToInt(data) <= 30 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 30 {
 				return true
 			}
 		}
 	case "currency_id":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if converter.StrToInt(data) <= 255 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 255 {
 				return true
 			}
 		}
 	case "system_commission":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if converter.StrToInt(data) <= 15 && converter.StrToInt(data) >= 5 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 15 && value >= 5 {
 				return true
 			}
 		}
 	case "tinyint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
-			if converter.StrToInt(data) <= 127 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 127 {
 				return true
 			}
 		}
 	case "smallint":
 		if ok, _ := regexp.MatchString(`^[0-9]{1,5}$`, data); ok {
-			if converter.StrToInt(data) <= 65535 {
+			value, err := strconv.Atoi(data)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, data)
+			}
+			if value <= 65535 {
 				return true
 			}
 		}
@@ -505,7 +543,11 @@ func CheckInputData(idata interface{}, dataType string) bool {
 			return true
 		}
 	case "level":
-		if converter.StrToInt(data) >= 0 && converter.StrToInt(data) <= 34 {
+		value, err := strconv.Atoi(data)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, data)
+		}
+		if value >= 0 && value <= 34 {
 			return true
 		}
 	case "comment":

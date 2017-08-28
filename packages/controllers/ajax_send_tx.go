@@ -97,7 +97,11 @@ func (c *Controller) AjaxSendTx() interface{} {
 							data = append(append(data, converter.EncodeLength(int64(len(blist)))...), blist...)
 						}
 					case `uint64`:
-						converter.BinMarshal(&data, converter.StrToUint64(val))
+						value, err := strconv.ParseUint(val, 10, 64)
+						if err != nil {
+							logger.LogInfo(consts.StrtoInt64Error, val)
+						}
+						converter.BinMarshal(&data, value)
 					case `int64`:
 						value, err := strconv.ParseInt(val, 10, 64)
 						if err != nil {

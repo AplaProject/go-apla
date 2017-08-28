@@ -472,23 +472,29 @@ func StrToInt64(s string) int64 {
 	return int64
 }
 */
+
 // BytesToInt64 converts []bytes to int64
 func BytesToInt64(s []byte) int64 {
-	int64, _ := strconv.ParseInt(string(s), 10, 64)
-	return int64
+	return int64(binary.LittleEndian.Uint64(s))
+	//int64, _ := strconv.ParseInt(string(s), 10, 64)
+	//return int64
 }
 
+/*
 // StrToUint64 converts string to the unsinged int64
 func StrToUint64(s string) uint64 {
 	ret, _ := strconv.ParseUint(s, 10, 64)
 	return ret
 }
+*/
 
+/*
 // StrToInt converts string to integer
 func StrToInt(s string) int {
 	i, _ := strconv.Atoi(s)
 	return i
 }
+*/
 
 // Float64ToStr converts float64 to string
 func Float64ToStr(f float64) string {

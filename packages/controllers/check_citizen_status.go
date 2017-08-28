@@ -65,7 +65,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 		return ``, err
 	}
 	fields := make([]template.FieldInfo, 0)
-	contract := smart.GetContract(`TXCitizenRequest`, uint32(converter.StrToUint64(c.StateIDStr)))
+	contract := smart.GetContract(`TXCitizenRequest`, uint32(c.StateID))
 	for _, fitem := range *(*contract).Block.Info.(*script.ContractInfo).Tx {
 		if fitem.Type.String() == `string` {
 			value := request.Name

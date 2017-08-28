@@ -119,12 +119,16 @@ func (r *OneRow) Float64() (map[string]float64, error) {
 }
 
 func (r *OneRow) Int() (map[string]int, error) {
+	var err error
 	result := make(map[string]int)
 	if r.err != nil {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = converter.StrToInt(v)
+		result[k], err = strconv.Atoi(v)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, v)
+		}
 	}
 	return result, nil
 }

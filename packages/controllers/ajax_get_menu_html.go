@@ -17,8 +17,11 @@
 package controllers
 
 import (
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	"strconv"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -54,7 +57,11 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	params[`state_id`] = c.StateIDStr
 	params[`accept_lang`] = c.r.Header.Get(`Accept-Language`)
 	if len(menu.Value) > 0 {
-		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), converter.StrToInt(c.StateIDStr), params[`accept_lang`]) +
+		stateID, err := strconv.Atoi(c.StateIDStr)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, c.StateIDStr)
+		}
+		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), stateID, params[`accept_lang`]) +
 			`<!--#` + page.Menu + `#-->`
 	}
 	return menu.Value, nil

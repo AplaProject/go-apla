@@ -17,9 +17,13 @@
 package controllers
 
 import (
+	"strconv"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/shopspring/decimal"
@@ -67,7 +71,10 @@ func (c *Controller) Accounts() (string, error) {
 	if err := stateParameter.GetByName("money_digit"); err != nil {
 		return ``, err
 	}
-	digit := converter.StrToInt(stateParameter.Value)
+	digit, err := strconv.Atoi(stateParameter.Value)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, stateParameter.Value)
+	}
 
 	if err := stateParameter.GetByName("currency_name"); err != nil {
 		return ``, err
@@ -82,7 +89,7 @@ func (c *Controller) Accounts() (string, error) {
 
 	account := &model.Account{}
 	account.SetTablePrefix(c.SessCitizenID)
-	err := account.Get(c.SessStateID)
+	err = account.Get(c.SessStateID)
 	if err != nil {
 		return ``, err
 	}

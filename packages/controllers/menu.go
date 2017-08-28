@@ -17,11 +17,12 @@
 package controllers
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
@@ -127,7 +128,11 @@ func (c *Controller) Menu() (string, error) {
 			log.Error("%v", err)
 		}
 		//		menu = ReplaceMenu(menu)
-		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), converter.StrToInt(c.StateIDStr), params[`accept_lang`])
+		stateID, err := strconv.Atoi(c.StateIDStr)
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, c.StateIDStr)
+		}
+		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), stateID, params[`accept_lang`])
 	}
 	var langs []LangInfo
 	if len(language.LangList) > 0 {

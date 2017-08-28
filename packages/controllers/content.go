@@ -26,12 +26,16 @@ import (
 	"os"
 	"regexp"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/static"
 	tpl "github.com/EGaaS/go-egaas-mvp/packages/template"
@@ -216,7 +220,10 @@ func Content(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("tpl_name=", tplName)
 	// if the language has come in parameters, install it
-	newLang := converter.StrToInt(c.Parameters["lang"])
+	newLang, err := strconv.Atoi(c.Parameters["lang"])
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, c.Parameters["lang"])
+	}
 	if newLang > 0 {
 		log.Debug("newLang", newLang)
 		SetLang(w, r, newLang)

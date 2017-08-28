@@ -259,7 +259,10 @@ func CheckLang(lang int) bool {
 
 // GetLang returns the user's language
 func GetLang(w http.ResponseWriter, r *http.Request, parameters map[string]string) int {
-	lang := converter.StrToInt(parameters["lang"])
+	lang, err := strconv.Atoi(parameters["lang"])
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, parameters["lang"])
+	}
 	if !CheckLang(lang) {
 		if langCookie, err := r.Cookie("lang"); err == nil {
 			lang, _ = strconv.Atoi(langCookie.Value)
@@ -348,7 +351,11 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 			return val
 		},
 		"strToInt": func(text string) int {
-			return converter.StrToInt(text)
+			value, err := strconv.Atoi(text)
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, text)
+			}
+			return value
 		},
 		"bin2hex": func(text string) string {
 			return string(converter.BinToHex([]byte(text)))

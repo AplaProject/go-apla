@@ -23,7 +23,6 @@ import (
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
@@ -149,23 +148,43 @@ func GetCommissionWallet() int64 {
 }
 
 func GetGapsBetweenBlocks() int {
-	return converter.StrToInt(SysString(GapsBetweenBlocks))
+	val, err := strconv.Atoi(SysString(GapsBetweenBlocks))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(GapsBetweenBlocks))
+	}
+	return val
 }
 
 func GetMaxTxCount() int {
-	return converter.StrToInt(SysString(MaxTxCount))
+	val, err := strconv.Atoi(SysString(MaxTxCount))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxTxCount))
+	}
+	return val
 }
 
 func GetMaxColumns() int {
-	return converter.StrToInt(SysString(MaxColumns))
+	val, err := strconv.Atoi(SysString(MaxColumns))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxColumns))
+	}
+	return val
 }
 
 func GetMaxIndexes() int {
-	return converter.StrToInt(SysString(MaxIndexes))
+	val, err := strconv.Atoi(SysString(MaxIndexes))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxIndexes))
+	}
+	return val
 }
 
 func GetMaxBlockUserTx() int {
-	return converter.StrToInt(SysString(MaxBlockUserTx))
+	val, err := strconv.Atoi(SysString(MaxBlockUserTx))
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxBlockUserTx))
+	}
+	return val
 }
 
 // SysCost returns the cost of the transaction

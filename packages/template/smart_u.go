@@ -301,11 +301,19 @@ func ifValue(val string) bool {
 // Money returns the formated value of the specified money amount
 func Money(vars *map[string]string, pars ...string) string {
 	var cents int
+	var err error
 	if len(pars) > 1 {
-		cents = converter.StrToInt(pars[1])
+		cents, err = strconv.Atoi(pars[1])
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+		}
 	} else {
-		cents = converter.StrToInt(StateVal(vars, `money_digit`))
+		cents, err = strconv.Atoi(StateVal(vars, `money_digit`))
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+		}
 	}
+
 	ret := converter.SanitizeNumber(pars[0])
 	if ret == `NULL` {
 		ret = `0`
@@ -524,14 +532,21 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 	var (
 		class, value string
 		digit        int
+		err          error
 	)
 	if len(pars) > 1 {
 		class = converter.SanitizeName(pars[1])
 	}
 	if len(pars) > 3 {
-		digit = converter.StrToInt(pars[3])
+		digit, err = strconv.Atoi(pars[3])
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[3])
+		}
 	} else {
-		digit = converter.StrToInt(StateVal(vars, `money_digit`))
+		digit, err = strconv.Atoi(StateVal(vars, `money_digit`))
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+		}
 	}
 	if len(pars) > 2 {
 		value = Money(vars, converter.SanitizeNumber(pars[2]), converter.IntToStr(digit))
@@ -708,7 +723,11 @@ func GetList(vars *map[string]string, pars ...string) string {
 		order = ` order by ` + converter.EscapeName(pars[4])
 	}
 	if len(pars) >= 6 {
-		limit = converter.StrToInt(pars[5])
+		var err error
+		limit, err = strconv.Atoi(pars[5])
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[5])
+		}
 	}
 
 	value, err := model.GetAll(`select `+fields+` from `+converter.EscapeName(pars[1])+where+order, limit)
@@ -745,14 +764,22 @@ func GetList(vars *map[string]string, pars ...string) string {
 
 // AutoUpdate reloads inner commands each pars[0] seconds
 func AutoUpdate(vars *map[string]string, pars ...string) string {
-	time := converter.StrToInt(pars[0])
+	time, err := strconv.Atoi(pars[0])
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, pars[0])
+	}
 	if time == 0 {
 		time = 10
 	}
 	(*vars)[`auto_time`] = converter.IntToStr(time)
 	(*vars)[`auto_loop`] = `1`
 	if len((*vars)[`auto_id`]) > 0 {
-		(*vars)[`auto_id`] = converter.IntToStr(converter.StrToInt((*vars)[`auto_id`]) + 1)
+		autoID, err := strconv.Atoi((*vars)["auto_id"])
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, (*vars)["auto_id"])
+		}
+		autoID++
+		(*vars)[`auto_id`] = converter.IntToStr(autoID)
 	} else {
 		(*vars)[`auto_id`] = `1`
 	}
@@ -1048,7 +1075,11 @@ func Divs(vars *map[string]string, pars ...string) (out string) {
 func DivsEnd(vars *map[string]string, pars ...string) (out string) {
 	if val, ok := (*vars)[`divs`]; ok && len(val) > 0 {
 		divs := strings.Split(val, `,`)
-		out = strings.Repeat(`</div>`, converter.StrToInt(divs[len(divs)-1]))
+		divsCount, err := strconv.Atoi(divs[len(divs)-1])
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, divs[len(divs)-1])
+		}
+		out = strings.Repeat(`</div>`, divsCount)
 		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
 	}
 	return
@@ -1454,6 +1485,7 @@ func InputMapPoly(vars *map[string]string, pars ...string) string {
 
 // ImageInput returns HTML tags for uploading image
 func ImageInput(vars *map[string]string, pars ...string) string {
+	var err error
 	id := converter.SanitizeName(pars[0])
 	if len(id) == 0 {
 		return ``
@@ -1462,16 +1494,29 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 	height := 100
 	ratio := `1/1`
 	if len(pars) > 1 {
-		width = converter.StrToInt(pars[1])
+		width, err = strconv.Atoi(pars[1])
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+		}
 	}
 	pars[2] = html.EscapeString(pars[2])
 	if len(pars) > 2 {
 		var w, h int
 		if lr := strings.Split(pars[2], `/`); len(lr) == 2 {
-			w, h = converter.StrToInt(lr[0]), converter.StrToInt(lr[1])
+			w, err = strconv.Atoi(lr[0])
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, lr[0])
+			}
+			h, err = strconv.Atoi(lr[1])
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, lr[1])
+			}
 			height = int(width * w / h)
 		} else {
-			height = converter.StrToInt(pars[2])
+			height, err = strconv.Atoi(pars[2])
+			if err != nil {
+				logger.LogInfo(consts.StrtoInt64Error, pars[2])
+			}
 			w, h = width, height
 			for _, i := range []int{2, 3, 5, 7} {
 				for (w%i) == 0 && (h%i) == 0 {
@@ -1495,7 +1540,10 @@ func StateVal(vars *map[string]string, pars ...string) string {
 	}
 	val, _ := StateParam(stateID, converter.SanitizeName(pars[0]))
 	if len(pars) > 1 {
-		ind := converter.StrToInt(pars[1])
+		ind, err := strconv.Atoi(pars[1])
+		if err != nil {
+			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+		}
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 			val = LangRes(vars, alist[ind-1])
 		} else {
@@ -1667,7 +1715,11 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	}
 
 	onsuccess := (*pars)[`OnSuccess`]
-	contract := smart.GetContract(name, uint32(converter.StrToUint64((*vars)[`state_id`])))
+	stateID, err := strconv.ParseUint((*vars)[`state_id`], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+	}
+	contract := smart.GetContract(name, uint32(stateID))
 	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
 		return fmt.Sprintf(`there is not %s contract`, name)
 	}
@@ -1746,9 +1798,15 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 			if fitem.Type.String() == script.Decimal {
 				var count int
 				if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-					count = converter.StrToInt(ret[1])
+					count, err = strconv.Atoi(ret[1])
+					if err != nil {
+						logger.LogInfo(consts.StrtoInt64Error, ret[1])
+					}
 				} else {
-					count = converter.StrToInt(StateVal(vars, `money_digit`))
+					count, err = strconv.Atoi(StateVal(vars, `money_digit`))
+					if err != nil {
+						logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+					}
 				}
 				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HTMLType: "money",
 					ID: idname, Param: converter.IntToStr(count)})
@@ -1807,7 +1865,11 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	//	init := (*pars)[`Init`]
 	//fmt.Println(`TXForm Init`, *vars)
 	onsuccess := (*pars)[`OnSuccess`]
-	contract := smart.GetContract(name, uint32(converter.StrToUint64((*vars)[`state_id`])))
+	stateID, err := strconv.ParseUint((*vars)[`state_id`], 10, 64)
+	if err != nil {
+		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+	}
+	contract := smart.GetContract(name, uint32(stateID))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
 		return fmt.Sprintf(`there is not %s contract or parameters`, name)
 	}
@@ -1920,9 +1982,15 @@ txlist:
 		} else if fitem.Type.String() == script.Decimal {
 			var count int
 			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
-				count = converter.StrToInt(ret[1])
+				count, err = strconv.Atoi(ret[1])
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, ret[1])
+				}
 			} else {
-				count = converter.StrToInt(StateVal(vars, `money_digit`))
+				count, err = strconv.Atoi(StateVal(vars, `money_digit`))
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+				}
 			}
 			value = Money(vars, value, converter.IntToStr(count))
 			finfo.Fields = append(finfo.Fields, FieldInfo{Name: fitem.Name, HTMLType: "money",

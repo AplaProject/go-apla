@@ -366,7 +366,11 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 					idata = append(append(idata, converter.EncodeLength(int64(len(blist)))...), blist...)
 				}
 			case `uint64`:
-				converter.BinMarshal(&idata, converter.StrToUint64(val))
+				value, err := strconv.ParseUint(val, 10, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrtoInt64Error, val)
+				}
+				converter.BinMarshal(&idata, value)
 			case `int64`:
 				value, err := strconv.ParseInt(val, 10, 64)
 				if err != nil {
