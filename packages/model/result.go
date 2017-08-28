@@ -2,7 +2,9 @@ package model
 
 import (
 	"database/sql"
+	"encoding/binary"
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -50,7 +52,8 @@ func (r *SingleResult) Float64() (float64, error) {
 	if r.err != nil {
 		return 0, r.err
 	}
-	return converter.StrToFloat64(string(r.result)), nil
+	return math.Float64frombits(binary.LittleEndian.Uint64(r.result)), nil
+	//return converter.StrToFloat64(string(r.result)), nil
 }
 
 // String returns string
@@ -113,7 +116,7 @@ func (r *OneRow) Float64() (map[string]float64, error) {
 		return result, r.err
 	}
 	for k, v := range r.result {
-		result[k] = converter.StrToFloat64(v)
+		result[k], _ = strconv.ParseFloat(v, 64)
 	}
 	return result, nil
 }

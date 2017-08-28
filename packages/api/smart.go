@@ -378,7 +378,11 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 				}
 				converter.EncodeLenInt64(&idata, value)
 			case `float64`:
-				converter.BinMarshal(&idata, converter.StrToFloat64(val))
+				value, err := strconv.ParseFloat(val, 64)
+				if err != nil {
+					logger.LogInfo(consts.StrToFloatError, val)
+				}
+				converter.BinMarshal(&idata, value)
 			case `string`, script.Decimal:
 				idata = append(append(idata, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
 			case `[]uint8`:

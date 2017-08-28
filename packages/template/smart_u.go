@@ -2201,7 +2201,15 @@ func Mult(vars *map[string]string, pars ...string) string {
 	if len(pars) != 2 {
 		return ``
 	}
-	return converter.Int64ToStr(converter.RoundWithoutPrecision(converter.StrToFloat64(pars[0]) * converter.StrToFloat64(pars[1])))
+	par0, err := strconv.ParseFloat(pars[0], 64)
+	if err != nil {
+		logger.LogInfo(consts.StrToFloatError, pars[0])
+	}
+	par1, err := strconv.ParseFloat(pars[1], 64)
+	if err != nil {
+		logger.LogInfo(consts.StrToFloatError, pars[1])
+	}
+	return converter.Int64ToStr(converter.RoundWithoutPrecision(par0 * par1))
 }
 
 // Date formats the date value

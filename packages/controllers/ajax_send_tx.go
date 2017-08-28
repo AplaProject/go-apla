@@ -109,7 +109,11 @@ func (c *Controller) AjaxSendTx() interface{} {
 						}
 						converter.EncodeLenInt64(&data, value)
 					case `float64`:
-						converter.BinMarshal(&data, converter.StrToFloat64(val))
+						value, err := strconv.ParseFloat(val, 64)
+						if err != nil {
+							logger.LogInfo(consts.StrToFloatError, val)
+						}
+						converter.BinMarshal(&data, value)
 					case `string`, script.Decimal:
 						data = append(append(data, converter.EncodeLength(int64(len(val)))...), []byte(val)...)
 					case `[]uint8`:
