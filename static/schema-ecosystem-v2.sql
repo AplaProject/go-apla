@@ -52,6 +52,16 @@ CREATE TABLE "%[1]d_contracts" (
 ALTER SEQUENCE "%[1]d_contracts_id_seq" owned by "%[1]d_contracts".id;
 ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 
+INSERT INTO "%[1]d_contracts" ("value", "wallet_id","active", "conditions") VALUES 
+('contract MainCondition {
+  conditions {
+    if(StateVal("gov_account")!=$citizen)
+    {
+      warning "Sorry, you don`t have access to this action."
+    }
+  }
+}', '%[2]d', '1', 'ContractConditions(`MainCondition`)');
+
 DROP TABLE IF EXISTS "%[1]d_parameters";
 CREATE TABLE "%[1]d_parameters" (
 "name" varchar(255)  NOT NULL DEFAULT '',
@@ -60,6 +70,20 @@ CREATE TABLE "%[1]d_parameters" (
 "rb_id" bigint  NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("name");
+
+INSERT INTO "%[1]d_parameters" ("name", "value", "conditions") VALUES 
+('gov_account', '%[2]d', 'ContractConditions(`MainCondition`)'),
+('restore_access_condition', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('new_table', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('new_column', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('changing_tables', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('changing_language', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('changing_signature', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('changing_page', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('changing_menu', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('changing_contracts', 'ContractConditions(`MainCondition`)', 'ContractConditions(`MainCondition`)'),
+('ecosystem_name', '%[1]d', 'ContractConditions(`MainCondition`)'),
+('money_digit', '2', 'ContractConditions(`MainCondition`)');
 
 CREATE TABLE "%[1]d_tables" (
 "name" varchar(100)  NOT NULL DEFAULT '',

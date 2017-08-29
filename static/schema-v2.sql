@@ -101,8 +101,8 @@ CREATE TABLE "system_parameters" (
 ALTER TABLE ONLY "system_parameters" ADD CONSTRAINT system_parameters_pkey PRIMARY KEY ("name");
 
 INSERT INTO system_parameters ("name", "value", "conditions") VALUES 
-('default_ecosystem_page', '', 'ContractAccess("@0UpdSysParam")'),    
-('default_ecosystem_menu', '', 'ContractAccess("@0UpdSysParam")'),
+('default_ecosystem_page', 'P(class, Default Ecosystem Page)', 'ContractAccess("@0UpdSysParam")'),    
+('default_ecosystem_menu', 'MenuItem(main, Default Ecosystem Menu)', 'ContractAccess("@0UpdSysParam")'),
 ('default_ecosystem_contract', '', 'ContractAccess("@0UpdSysParam")'),
 ('gap_between_blocks', '3', 'ContractAccess("@0UpdSysParam")'),
 ('new_version_url', 'upd.apla.io', 'ContractAccess("@0UpdSysParam")'),

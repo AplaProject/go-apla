@@ -18,7 +18,7 @@ package parser
 
 import (
 	"encoding/hex"
-	
+
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -48,13 +48,16 @@ func (p *FirstBlockParser) Action() error {
 	myAddress := crypto.Address(data.PublicKey)
 
 	if *utils.Version2 {
+		err := model.ExecSchemaEcosystem(1, myAddress)
+		if err != nil {
+			return p.ErrInfo(err)
+		}
 		key := &model.Key{
 			ID:        myAddress,
 			PublicKey: data.PublicKey,
 			Amount:    decimal.NewFromFloat(consts.FIRST_QDLT).String(),
 		}
-		err := key.SetTablePrefix(consts.MainEco).Create()
-		if err != nil {
+		if err = key.SetTablePrefix(consts.MainEco).Create(); err != nil {
 			return p.ErrInfo(err)
 		}
 		node := &model.SystemParameterV2{Name: `full_nodes`}

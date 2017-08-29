@@ -64,12 +64,12 @@ func GetRecordsCount(tableName string) (int64, error) {
 	return count, err
 }
 
-func ExecSchemaEcosystem(id int) error {
+func ExecSchemaEcosystem(id int, wallet int64) error {
 	schema, err := static.Asset("static/schema-ecosystem-v2.sql")
 	if err != nil {
 		return err
 	}
-	return DBConn.Exec(fmt.Sprintf(string(schema), id)).Error
+	return DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
 }
 
 func ExecSchema() error {
@@ -82,14 +82,7 @@ func ExecSchema() error {
 		os.Remove(*utils.Dir + "/config.ini")
 		return err
 	}
-	err = DBConn.Exec(string(schema)).Error
-	if err != nil {
-		return err
-	}
-	if *utils.Version2 {
-		return ExecSchemaEcosystem(1)
-	}
-	return nil
+	return DBConn.Exec(string(schema)).Error
 }
 
 func GetColumnsCount(tableName string) (int64, error) {
