@@ -180,19 +180,44 @@ func (p *Parser) CallContract(flags int) (err error) {
 			public = p.TxSmart.PublicKey
 		}
 		if len(p.PublicKeys) == 0 {
-			wallet := &model.DltWallet{}
-			err := wallet.GetWallet(p.TxSmart.UserID)
-			if err != nil {
-				return err
-			}
-			if len(wallet.PublicKey) == 0 {
-				if len(public) > 0 {
-					p.PublicKeys = append(p.PublicKeys, public)
+			if *utils.Version2 {
+				if p.TxSmart.Type == 258 { // UpdFullNodes
+					node := syspar.GetNode(p.TxSmart.UserID)
+					if node == nil {
+						return fmt.Errorf("unknown node id")
+					}
+					p.PublicKeys = append(p.PublicKeys, node.Public)
 				} else {
-					return fmt.Errorf("unknown wallet id")
+					wallet := &model.Key{}
+					err := wallet.Get(p.TxSmart.UserID)
+					if err != nil {
+						return err
+					}
+					if len(wallet.PublicKey) == 0 {
+						if len(public) > 0 {
+							p.PublicKeys = append(p.PublicKeys, public)
+						} else {
+							return fmt.Errorf("unknown wallet id")
+						}
+					} else {
+						p.PublicKeys = append(p.PublicKeys, []byte(wallet.PublicKey))
+					}
 				}
 			} else {
-				p.PublicKeys = append(p.PublicKeys, []byte(wallet.PublicKey))
+				wallet := &model.DltWallet{}
+				err := wallet.GetWallet(p.TxSmart.UserID)
+				if err != nil {
+					return err
+				}
+				if len(wallet.PublicKey) == 0 {
+					if len(public) > 0 {
+						p.PublicKeys = append(p.PublicKeys, public)
+					} else {
+						return fmt.Errorf("unknown wallet id")
+					}
+				} else {
+					p.PublicKeys = append(p.PublicKeys, []byte(wallet.PublicKey))
+				}
 			}
 		}
 		CheckSignResult, err := utils.CheckSign(p.PublicKeys, p.TxData[`forsign`].(string), p.TxSmart.BinSignatures, false)
@@ -223,12 +248,7 @@ func (p *Parser) CallContract(flags int) (err error) {
 			return fmt.Errorf(`Wrong type of price function`)
 		}
 	}
-	systemParam := &model.SystemParameter{}
-	err = systemParam.Get("fuel_rate")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fuelRate, err := decimal.NewFromString(systemParam.Value)
+	fuelRate, err := decimal.NewFromString(syspar.GetFuelRate(1))
 	if err != nil {
 		return err
 	}

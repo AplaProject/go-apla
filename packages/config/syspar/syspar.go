@@ -19,7 +19,6 @@ package syspar
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -83,6 +82,7 @@ var (
 	}
 	cost  = make(map[string]int64)
 	nodes = make(map[int64]*FullNode)
+	fuels = make(map[int64]string)
 	mutex = &sync.RWMutex{}
 )
 
@@ -132,6 +132,21 @@ func SysUpdate() error {
 			nodes[converter.StrToInt64(item[1])] = &FullNode{Host: item[0], Public: pub}
 		}
 	}
+	fuels = make(map[int64]string)
+	if len(cache[FuelRate]) > 0 {
+		ifuels := make([][]string, 0)
+		err = json.Unmarshal([]byte(cache[FuelRate]), &ifuels)
+		if err != nil {
+			return err
+		}
+		for _, item := range ifuels {
+			if len(item) < 2 {
+				continue
+			}
+			fuels[converter.StrToInt64(item[0])] = item[1]
+		}
+	}
+
 	return err
 }
 
@@ -152,8 +167,16 @@ func GetBlockchainURL() string {
 	return SysString(BlockchainURL)
 }
 
+func GetFuelRate(ecosystem int64) string {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	if ret, ok := fuels[ecosystem]; ok {
+		return ret
+	}
+	return `0`
+}
+
 func GetUpdFullNodesPeriod() int64 {
-	fmt.Println(`PERIOD`, SysString(UpdFullNodesPeriod))
 	return converter.StrToInt64(SysString(UpdFullNodesPeriod))
 }
 

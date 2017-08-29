@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
 "type" int NOT NULL DEFAULT '0',
 "ecosystem" int NOT NULL DEFAULT '1',
 "wallet_id" bigint NOT NULL DEFAULT '0',
+"citizen_id" bigint NOT NULL DEFAULT '0',
 "block_id" int NOT NULL DEFAULT '0',
 "error" varchar(255) NOT NULL DEFAULT ''
 );
@@ -121,7 +122,7 @@ INSERT INTO system_parameters ("name", "value", "conditions") VALUES
 ('commission_size', '3', 'ContractAccess("@0UpdSysParam")'),
 ('commission_wallet', '[1,8275283526439353759]', 'ContractAccess("@0UpdSysParam")'),
 ('sys_currencies', '[1]', 'ContractAccess("@0UpdSysParam")'),
-('fuel_rate', '[[1,1000000000000000]]', 'ContractAccess("@0UpdSysParam")'),
+('fuel_rate', '[["1","1000000000000000"]]', 'ContractAccess("@0UpdSysParam")'),
 ('recovery_address', '[[1,8275283526439353759]]', 'ContractAccess("@0UpdSysParam")');
 
 DROP SEQUENCE IF EXISTS system_contracts_id_seq CASCADE;
@@ -158,8 +159,10 @@ INSERT INTO system_contracts ("value", "active", "conditions") VALUES
     data {
     }
     conditions {
+      Println(`UpdFullNodes condition`)
     }
     action {
+      Println(`UpdFullNodes action`)
     }
 }', '1','ContractAccess("@0UpdSysContract")');
 
@@ -236,6 +239,7 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 "type" smallint NOT NULL DEFAULT '0',
 "ecosystem" int NOT NULL DEFAULT '1',
 "wallet_id" bigint NOT NULL DEFAULT '0',
+"citizen_id" bigint NOT NULL DEFAULT '0',
 "counter" smallint NOT NULL DEFAULT '0',
 "sent" smallint NOT NULL DEFAULT '0',
 "verified" smallint NOT NULL DEFAULT '1'

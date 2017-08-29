@@ -26,9 +26,11 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/parser"
+	"github.com/EGaaS/go-egaas-mvp/packages/script"
+	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
-	//	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
-	//	"gopkg.in/vmihailenco/msgpack.v2"
+	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // UpdFullNodes sends UpdFullNodes transactions
@@ -88,42 +90,74 @@ func UpdFullNodes(d *daemon, ctx context.Context) error {
 	if curTime-updFullNodes <= syspar.GetUpdFullNodesPeriod() {
 		return utils.ErrInfo("curTime-adminTime <= consts.UPD_FULL_NODES_PERIO")
 	}
-
-	forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
 	myNodeKey := &model.MyNodeKey{}
 	err = myNodeKey.GetNodeWithMaxBlockID()
 	if err != nil {
 		return err
 	}
+	var (
+		hash, data []byte
+	)
 
-	binSign, err := crypto.Sign(string(myNodeKey.PrivateKey), forSign)
-	if err != nil {
-		return err
+	if *utils.Version2 {
+		contract := smart.GetContract(`@0UpdFullNodes`, 0)
+		if contract == nil {
+			return fmt.Errorf(`there is not @0UpdFullNodes contract`)
+		}
+		info := (*contract).Block.Info.(*script.ContractInfo)
+		var (
+			smartTx     tx.SmartContract
+			toSerialize interface{}
+		)
+		smartTx.Header = tx.Header{Type: int(info.ID), Time: time.Now().Unix(), UserID: myWalletID, StateID: 0}
+		signature, err := crypto.Sign(string(myNodeKey.PrivateKey), smartTx.ForSign())
+		if err != nil {
+			return err
+		}
+		toSerialize = tx.SmartContract{
+			Header: tx.Header{Type: int(info.ID), Time: smartTx.Header.Time,
+				UserID: myWalletID, BinSignatures: converter.EncodeLengthPlusData(signature)},
+			Data: make([]byte, 0),
+		}
+		serializedData, err := msgpack.Marshal(toSerialize)
+		if err != nil {
+			return err
+		}
+		data = append([]byte{128}, serializedData...)
+		if hash, err = model.SendTx(int64(info.ID), myWalletID, data); err != nil {
+			return err
+		}
+	} else {
+		forSign := fmt.Sprintf("%v,%v,%v,%v", utils.TypeInt("UpdFullNodes"), curTime, myWalletID, 0)
+
+		binSign, err := crypto.Sign(string(myNodeKey.PrivateKey), forSign)
+		if err != nil {
+			return err
+		}
+
+		data = converter.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
+		data = append(data, converter.DecToBin(curTime, 4)...)
+		data = append(data, converter.EncodeLengthPlusData(myWalletID)...)
+		data = append(data, converter.EncodeLengthPlusData(0)...)
+		data = append(data, converter.EncodeLengthPlusData([]byte(binSign))...)
+
+		hash, err = crypto.Hash(data)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		queueTx := &model.QueueTx{Hash: hash}
+		err = queueTx.DeleteTx()
+		if err != nil {
+			return err
+		}
+
+		queueTx.Data = data
+		err = queueTx.Save()
+		if err != nil {
+			return nil
+		}
 	}
-
-	data := converter.DecToBin(utils.TypeInt("UpdFullNodes"), 1)
-	data = append(data, converter.DecToBin(curTime, 4)...)
-	data = append(data, converter.EncodeLengthPlusData(myWalletID)...)
-	data = append(data, converter.EncodeLengthPlusData(0)...)
-	data = append(data, converter.EncodeLengthPlusData([]byte(binSign))...)
-
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	queueTx := &model.QueueTx{Hash: hash}
-	err = queueTx.DeleteTx()
-	if err != nil {
-		return err
-	}
-
-	queueTx.Data = data
-	err = queueTx.Save()
-	if err != nil {
-		return nil
-	}
-
 	p := new(parser.Parser)
 	hash, err = crypto.Hash(data)
 	if err != nil {
