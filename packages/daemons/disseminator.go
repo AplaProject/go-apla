@@ -45,13 +45,6 @@ func Disseminator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	systemState := &model.SystemRecognizedState{}
-	delegated, err := systemState.IsDelegated(config.StateID)
-	if err != nil {
-		log.Errorf("can't get delegated status: %s", err)
-		return err
-	}
-
 	node := &model.FullNode{}
 	err = node.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil {
@@ -62,10 +55,6 @@ func Disseminator(d *daemon, ctx context.Context) error {
 
 	// find out who we are, fullnode or not
 	isFullNode := func() bool {
-		if config.StateID > 0 && delegated {
-			// we are state and we have delegated some work to another node
-			return false
-		}
 		if fullNodeID == 0 {
 			return false
 		}

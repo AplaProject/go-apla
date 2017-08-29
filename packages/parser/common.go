@@ -74,13 +74,12 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 }
 
 func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
-	var result []byte
 	var err error
 	if walletID != 0 {
 		if *utils.Version2 {
 			node := syspar.GetNode(walletID)
 			if node != nil {
-				result = node.Public
+				return node.Public, nil
 			}
 		} else {
 			log.Debug("wallet_id %v state_id %v", walletID, stateID)
@@ -89,17 +88,10 @@ func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
 			if err != nil {
 				return []byte(""), err
 			}
-			result = []byte(wallet.NodePublicKey)
+			return []byte(wallet.NodePublicKey), nil
 		}
-	} else {
-		srs := &model.SystemRecognizedState{}
-		err = srs.GetState(stateID)
-		if err != nil {
-			return []byte(""), err
-		}
-		result = []byte(srs.NodePublicKey)
 	}
-	return result, nil
+	return nil, fmt.Errorf(`unknown node %d`, walletID)
 }
 
 func InsertInLogTx(binaryTx []byte, time int64) error {

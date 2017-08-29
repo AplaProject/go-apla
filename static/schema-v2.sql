@@ -246,17 +246,6 @@ DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
 );
 ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
 
-DROP TABLE IF EXISTS "system_recognized_states"; CREATE TABLE "system_recognized_states" (
-"name" varchar(255) NOT NULL DEFAULT '',
-"state_id" bigint NOT NULL DEFAULT '0',
-"host" varchar(255) NOT NULL DEFAULT '',
-"node_public_key" bytea  NOT NULL DEFAULT '',
-"delegate_wallet_id" bigint NOT NULL DEFAULT '0',
-"delegate_state_id" int NOT NULL DEFAULT '0',
-"rb_id" bigint  REFERENCES rollback(rb_id) NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "system_recognized_states" ADD CONSTRAINT system_recognized_states_pkey PRIMARY KEY (state_id);
-
 DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
 CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
 DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (

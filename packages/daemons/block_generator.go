@@ -44,17 +44,6 @@ func BlockGenerator(d *daemon, ctx context.Context) error {
 		return err
 	}
 
-	if config.StateID > 0 {
-		systemState := &model.SystemRecognizedState{}
-		delegated, err := systemState.IsDelegated(config.StateID)
-		if err == nil && delegated {
-			// we are the state and we have delegated the node maintenance to another user or state
-			log.Infof("we delegated block generation, sleep for hour")
-			d.sleepTime = 3600 * time.Second
-			return nil
-		}
-	}
-
 	fullNodes := &model.FullNode{}
 	err = fullNodes.FindNode(config.StateID, config.DltWalletID, config.StateID, config.DltWalletID)
 	if err != nil || fullNodes.ID == 0 {
