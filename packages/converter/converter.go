@@ -313,7 +313,9 @@ func Int64ToStr(num int64) string {
 }
 
 func Int64ToByte(num int64) []byte {
-	return []byte(strconv.FormatInt(num, 10))
+	result := make([]byte, 8)
+	binary.LittleEndian.PutUint64(result, uint64(num))
+	return result
 }
 
 func IntToStr(num int) string {
@@ -372,13 +374,14 @@ func HexToBin(ihexdata interface{}) []byte {
 
 // BinToDec converts input binary []byte to int64
 func BinToDec(bin []byte) int64 {
-	var a uint64
+	/*var a uint64
 	l := len(bin)
 	for i, b := range bin {
 		shift := uint64((l - i - 1) * 8)
 		a |= uint64(b) << shift
 	}
-	return int64(a)
+	return int64(a)*/
+	return int64(binary.BigEndian.Uint64(bin))
 }
 
 // BinToDecBytesShift converts the input binary []byte to int64 and shifts the input bin
@@ -479,8 +482,11 @@ func Float64ToStr(f float64) string {
 
 // BytesToFloat64 converts []byte to float64
 func BytesToFloat64(s []byte) float64 {
-	Float64, _ := strconv.ParseFloat(string(s), 64)
-	return Float64
+	bits := binary.LittleEndian.Uint64(s)
+	float64 := math.Float64frombits(bits)
+	return float64
+	//Float64, _ := strconv.ParseFloat(string(s), 64)
+	//return Float64
 }
 
 // BytesToInt converts []byte to integer
@@ -529,8 +535,6 @@ func EncodeLengthPlusData(idata interface{}) []byte {
 	case []byte:
 		data = idata.([]byte)
 	}
-	//log.Debug("data: %x", data)
-	//log.Debug("len data: %d", len(data))
 	return append(EncodeLength(int64(len(data))), data...)
 }
 
@@ -603,7 +607,6 @@ func EscapeForJSON(data string) string {
 	return strings.Replace(data, `"`, `\"`, -1)
 }
 
-// TODO перенести в валидаторы
 // ValidateEmail validates email
 func ValidateEmail(email string) bool {
 	Re := regexp.MustCompile(`^(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
@@ -647,7 +650,6 @@ func RSortMap(m map[int64]string) []map[int64]string {
 	return result
 }
 
-// TODO перенести в валидаторы
 // InSliceString searches the string in the slice of strings
 func InSliceString(search string, slice []string) bool {
 	for _, v := range slice {
@@ -743,6 +745,7 @@ func RoundWithPrecision(num float64, precision int) float64 {
 	return float64(Round(num*output)) / output
 }
 
+/*
 func RoundWithoutPrecision(num float64) int64 {
 	//log.Debug("num", num)
 	//num += ROUND_FIX
@@ -750,3 +753,4 @@ func RoundWithoutPrecision(num float64) int64 {
 	//log.Debug("num", num)
 	return int64(num + math.Copysign(0.5, num))
 }
+*/

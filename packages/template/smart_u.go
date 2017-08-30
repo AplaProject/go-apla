@@ -2209,7 +2209,7 @@ func Mult(vars *map[string]string, pars ...string) string {
 	if err != nil {
 		logger.LogInfo(consts.StrToFloatError, pars[1])
 	}
-	return converter.Int64ToStr(converter.RoundWithoutPrecision(par0 * par1))
+	return converter.Int64ToStr(converter.Round(par0 * par1))
 }
 
 // Date formats the date value
