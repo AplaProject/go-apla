@@ -33,4 +33,9 @@ func TestBalance(t *testing.T) {
 	if len(ret[`amount`].(string)) < 10 {
 		t.Error(`too low balance`, ret)
 	}
+	ret, err = sendGet(`balance/`+gAddress+`?state=10000`, nil)
+	if err.Error() != `500 ` {
+		t.Error(err)
+		return
+	}
 }

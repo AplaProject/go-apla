@@ -110,6 +110,9 @@ func keyLogin(state int64) (err error) {
 	if err != nil {
 		return
 	}
+	if len(key) > 64 {
+		key = key[:64]
+	}
 	ret, err := sendGet(`getuid`, nil)
 	if err != nil {
 		return

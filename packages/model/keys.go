@@ -15,6 +15,9 @@ type Key struct {
 }
 
 func (m *Key) SetTablePrefix(prefix int64) *Key {
+	if prefix == 0 {
+		prefix = 1
+	}
 	m.tableName = fmt.Sprintf("%d_keys", prefix)
 	return m
 }
