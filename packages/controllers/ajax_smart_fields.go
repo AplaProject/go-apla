@@ -54,7 +54,7 @@ func (c *Controller) AjaxSmartFields() interface{} {
 	)
 	stateID, err := strconv.ParseInt(c.r.FormValue(`state_id`), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue(`state_id`))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue(`state_id`))
 	}
 	stateStr := converter.Int64ToStr(stateID)
 	if !model.IsTable(stateStr+`_citizens`) || !model.IsTable(stateStr+`_citizenship_requests`) {

@@ -53,7 +53,7 @@ func (c *Controller) AjaxCitizenInfo() interface{} {
 	c.w.Header().Add("Access-Control-Allow-Origin", "*")
 	stateCode, err := strconv.ParseInt(c.r.FormValue(`stateId`), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("stateId"))
 	}
 	systemState := &model.SystemState{}
 	_, err = systemState.IsExists(stateCode)

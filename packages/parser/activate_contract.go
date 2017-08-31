@@ -81,7 +81,7 @@ func (p *ActivateContractParser) Validate() error {
 	smartContract.SetTablePrefix(prefix)
 	contractID, err := strconv.ParseInt(p.ActivateContract.Id, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, p.ActivateContract.Id)
+		logger.LogInfo(consts.StrToIntError, p.ActivateContract.Id)
 	}
 	err = smartContract.GetByID(contractID)
 	if err != nil {
@@ -127,7 +127,7 @@ func (p *ActivateContractParser) Action() error {
 	}
 	contractID, err := strconv.ParseInt(p.ActivateContract.Id, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, p.ActivateContract.Id)
+		logger.LogInfo(consts.StrToIntError, p.ActivateContract.Id)
 	}
 	smart.ActivateContract(contractID, prefix, true)
 	return nil

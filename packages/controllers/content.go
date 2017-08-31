@@ -222,7 +222,7 @@ func Content(w http.ResponseWriter, r *http.Request) {
 	// if the language has come in parameters, install it
 	newLang, err := strconv.Atoi(c.Parameters["lang"])
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.Parameters["lang"])
+		logger.LogInfo(consts.StrToIntError, c.Parameters["lang"])
 	}
 	if newLang > 0 {
 		log.Debug("newLang", newLang)

@@ -113,7 +113,7 @@ func (p *UpdFullNodesParser) Action() error {
 	// log them into the one record JSON
 	rbID, err := strconv.ParseInt(data[0]["rb_id"], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, data[0]["rb_id"])
+		logger.LogInfo(consts.StrToIntError, data[0]["rb_id"])
 	}
 	rbFN := &model.RbFullNode{
 		FullNodesWalletJson: jsonData,
@@ -230,27 +230,27 @@ func (p *UpdFullNodesParser) Rollback() error {
 		// insert new data on wallet-nodes with the indication of the common rb_id
 		id, err := strconv.ParseInt(data["id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, data["id"])
+			logger.LogInfo(consts.StrToIntError, data["id"])
 		}
 		walletID, err := strconv.ParseInt(data["wallet_id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, data["wallet_id"])
+			logger.LogInfo(consts.StrToIntError, data["wallet_id"])
 		}
 		stateID, err := strconv.ParseInt(data["state_id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, data["state_id"])
+			logger.LogInfo(consts.StrToIntError, data["state_id"])
 		}
 		fdWalletID, err := strconv.ParseInt(data["final_delegate_wallet_id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, data["final_delegate_wallet_id"])
+			logger.LogInfo(consts.StrToIntError, data["final_delegate_wallet_id"])
 		}
 		fdStateID, err := strconv.ParseInt(data["final_delegate_state_id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, data["final_delegate_state_id"])
+			logger.LogInfo(consts.StrToIntError, data["final_delegate_state_id"])
 		}
 		rbID, err := strconv.ParseInt(data["rb_id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, data["rb_id"])
+			logger.LogInfo(consts.StrToIntError, data["rb_id"])
 		}
 		fn := &model.FullNode{
 			ID:                    int32(id),

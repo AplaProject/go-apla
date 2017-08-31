@@ -17,10 +17,14 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 )
@@ -30,19 +34,23 @@ type loginResult struct {
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	var msg string
 	switch uid := data.sess.Get(`uid`).(type) {
 	case string:
 		msg = uid
 	default:
+		logger.LogError(consts.RouteError, data.sess.Get(`uid`))
 		return errorAPI(w, "unknown uid", http.StatusBadRequest)
 	}
 	pubkey := data.params[`pubkey`].([]byte)
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
+		logger.LogError(consts.RouteError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	if !verify {
+		logger.LogDebug(consts.RouteError, fmt.Sprintf("pubkey: %s, msg: %s, sign: %s", string(pubkey), msg, string(data.params[`signature`].([]byte))))
 		return errorAPI(w, `signature is incorrect`, http.StatusBadRequest)
 	}
 	state := data.params[`state`].(int64)
@@ -55,15 +63,19 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			citizen, err = model.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_citizens" WHERE id = ?`,
 				wallet).Int64()
 			if err != nil {
+				logger.LogError(consts.DBError, err)
 				return errorAPI(w, err.Error(), http.StatusInternalServerError)
 			}
 			if citizen == 0 {
+				logger.LogInfo(consts.RecordNotFoundError, fmt.Sprintf("stateID: %d, citizenID: %d", state, wallet))
 				state = 0
 				if utils.PrivCountry {
+					logger.LogError(consts.RouteError, "not a citizen")
 					return errorAPI(w, "not a citizen", http.StatusForbidden)
 				}
 			}
 		} else {
+			logger.LogError(consts.RecordNotFoundError, fmt.Sprintf("state %d is not exists", wallet))
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 	}

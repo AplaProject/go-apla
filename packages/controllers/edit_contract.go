@@ -61,7 +61,7 @@ func (c *Controller) EditContract() (string, error) {
 
 	id, err := strconv.ParseInt(c.r.FormValue("id"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("id"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("id"))
 	}
 	name := c.r.FormValue("name")
 	if id == 0 {
@@ -114,7 +114,7 @@ func (c *Controller) EditContract() (string, error) {
 			json.Unmarshal([]byte(data["data"]), &messageMap)
 			rbID, err = strconv.ParseInt(messageMap["rb_id"], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, messageMap["rb_id"])
+				logger.LogInfo(consts.StrToIntError, messageMap["rb_id"])
 			}
 			messageMap["block_id"] = data["block_id"]
 			dataContractHistory = append(dataContractHistory, messageMap)

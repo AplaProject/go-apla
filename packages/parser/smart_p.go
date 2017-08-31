@@ -287,7 +287,7 @@ func DBInsertReport(p *Parser, tblname string, params string, val ...interface{}
 	if names[0] != `global` {
 		state, err = strconv.ParseInt(names[0], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, names[0])
+			logger.LogInfo(consts.StrToIntError, names[0])
 		}
 		if state != int64(p.TxStateID) {
 			err = fmt.Errorf(`Wrong state in DBInsertReport`)
@@ -585,7 +585,7 @@ func IsContract(p *Parser, names ...interface{}) bool {
 func IsGovAccount(p *Parser, citizen int64) bool {
 	account, err := strconv.ParseInt(StateVal(p, `gov_account`), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, StateVal(p, `gov_account`))
+		logger.LogInfo(consts.StrToIntError, StateVal(p, `gov_account`))
 	}
 	return account == citizen
 }
@@ -680,7 +680,7 @@ func SysCost(name string) int64 {
 func Int(val string) int64 {
 	value, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, val)
+		logger.LogInfo(consts.StrToIntError, val)
 	}
 	return value
 }

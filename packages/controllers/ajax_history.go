@@ -49,12 +49,12 @@ func (c *Controller) AjaxHistory() interface{} {
 	walletID := c.SessWalletID
 	draw, err := strconv.Atoi(c.r.FormValue("draw"))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("draw"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("draw"))
 	}
 	result := HistoryJSON{Draw: draw}
 	length, err := strconv.Atoi(c.r.FormValue("length"))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("length"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("length"))
 	}
 	if length == -1 {
 		length = 20
@@ -69,7 +69,7 @@ func (c *Controller) AjaxHistory() interface{} {
 			wt := &model.WalletedTransaction{}
 			start, err := strconv.Atoi(c.r.FormValue("start"))
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("start"))
+				logger.LogInfo(consts.StrToIntError, c.r.FormValue("start"))
 			}
 			transactions, err := wt.Get(walletID, walletID, c.SessAddress, length, start)
 			if err != nil {

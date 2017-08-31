@@ -56,7 +56,7 @@ func (c *Controller) AjaxNewState() interface{} {
 	)
 	id, err := strconv.ParseInt(c.r.FormValue("testnet"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("testnet"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("testnet"))
 	}
 	testnetEmail := &model.TestnetEmail{ID: id}
 	if err = testnetEmail.Get(id); err != nil {

@@ -57,7 +57,7 @@ func history(r *http.Request) interface{} {
 	}
 	c, err := strconv.ParseInt(r.FormValue("count"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, r.FormValue("count"))
+		logger.LogInfo(consts.StrToIntError, r.FormValue("count"))
 	}
 	count := int(c)
 	if count == 0 {
@@ -74,7 +74,7 @@ func history(r *http.Request) interface{} {
 	}
 	rb, err := strconv.ParseInt(current[`rb_id`], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, current[`rb_id`])
+		logger.LogInfo(consts.StrToIntError, current[`rb_id`])
 	}
 	if len(current) > 0 && rb != 0 {
 		balance, _ := decimal.NewFromString(current[`amount`])
@@ -93,7 +93,7 @@ func history(r *http.Request) interface{} {
 			}
 			rb, err = strconv.ParseInt(data[`rb_id`], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data[`rb_id`])
+				logger.LogInfo(consts.StrToIntError, data[`rb_id`])
 			}
 			//			fmt.Println(`DATA`, prev)
 			if amount, ok := data[`amount`]; ok {
@@ -110,7 +110,7 @@ func history(r *http.Request) interface{} {
 				}
 				timeInt, err := strconv.ParseInt(prev["time"], 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, prev["time"])
+					logger.LogInfo(consts.StrToIntError, prev["time"])
 				}
 				dt := time.Unix(timeInt, 0)
 
@@ -130,7 +130,7 @@ func history(r *http.Request) interface{} {
 		if len(first) > 0 {
 			timeInt, err := strconv.ParseInt(first["time"], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, first["time"])
+				logger.LogInfo(consts.StrToIntError, first["time"])
 			}
 			dt := time.Unix(timeInt, 0)
 			list = append(list, histOper{BlockID: first[`block_id`], Dif: `+` + converter.EGSMoney(first[`amount`]),

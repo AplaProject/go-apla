@@ -78,7 +78,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 	name := c.r.FormValue("name")
 	stateID, err := strconv.ParseInt(c.r.FormValue("state_id"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("state_id"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("state_id"))
 	}
 	bkey, err := hex.DecodeString(key)
 	if err != nil {
@@ -103,7 +103,7 @@ func (c *Controller) AjaxNewKey() interface{} {
 
 	govAccount, err := strconv.ParseInt(stateParameter.Value, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, stateParameter.Value)
+		logger.LogInfo(consts.StrToIntError, stateParameter.Value)
 	}
 
 	if govAccount != idkey {

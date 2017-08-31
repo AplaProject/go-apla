@@ -100,7 +100,7 @@ func (c *Controller) EditPage() (string, error) {
 			fmt.Printf("%s", messageMap)
 			rbID, err = strconv.ParseInt(messageMap["rb_id"], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, messageMap["rb_id"])
+				logger.LogInfo(consts.StrToIntError, messageMap["rb_id"])
 			}
 			messageMap["block_id"] = data["block_id"]
 			dataPageHistory = append(dataPageHistory, messageMap)

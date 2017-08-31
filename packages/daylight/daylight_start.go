@@ -85,7 +85,7 @@ func readConfig() {
 	}
 	country, err := strconv.ParseInt(config.ConfigIni["one_country"], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, config.ConfigIni["one_country"])
+		logger.LogInfo(consts.StrToIntError, config.ConfigIni["one_country"])
 	}
 	utils.OneCountry = country
 	utils.PrivCountry = config.ConfigIni["priv_country"] == `1` || config.ConfigIni["priv_country"] == `true`

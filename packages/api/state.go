@@ -53,10 +53,11 @@ type stateListResult struct {
 }
 
 func getStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	dataPar, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &stateParamResult{Name: dataPar["name"], Value: dataPar["value"], Conditions: dataPar["conditions"]}
@@ -64,6 +65,7 @@ func getStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error
 }
 
 func txPreNewState(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.NewState{
 		Header:       getSignHeader(`NewState`, data),
 		StateName:    data.params[`name`].(string),
@@ -74,9 +76,11 @@ func txPreNewState(w http.ResponseWriter, r *http.Request, data *apiData) error 
 }
 
 func txNewState(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`NewState`, data)
 	header.StateID = 0
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -87,6 +91,7 @@ func txNewState(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -94,6 +99,7 @@ func txNewState(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.NewStateParameters{
 		Header:     getSignHeader(`NewStateParameters`, data),
 		Name:       data.params[`name`].(string),
@@ -105,6 +111,7 @@ func txPreNewStateParams(w http.ResponseWriter, r *http.Request, data *apiData) 
 }
 
 func txPreEditStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditStateParameters{
 		Header:     getSignHeader(`EditStateParameters`, data),
 		Name:       data.params[`name`].(string),
@@ -116,12 +123,14 @@ func txPreEditStateParams(w http.ResponseWriter, r *http.Request, data *apiData)
 }
 
 func txStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	txName := `NewStateParameters`
 	if r.Method == `PUT` {
 		txName = `EditStateParameters`
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -144,6 +153,7 @@ func txStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error 
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -151,7 +161,7 @@ func txStateParams(w http.ResponseWriter, r *http.Request, data *apiData) error 
 }
 
 func stateParamsList(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	limit := int(data.params[`limit`].(int64))
 	if limit == 0 {
 		limit = 25
@@ -161,12 +171,14 @@ func stateParamsList(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	outList := make([]stateParamResult, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_state_parameters"`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT * FROM "`+getPrefix(data)+`_state_parameters" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -179,6 +191,7 @@ func stateParamsList(w http.ResponseWriter, r *http.Request, data *apiData) erro
 }
 
 func stateList(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	limit := int(data.params[`limit`].(int64))
 	if limit == 0 {
 		limit = 25
@@ -187,18 +200,20 @@ func stateList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	count, err := model.Single(`SELECT count(*) FROM system_states`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	idata, err := model.GetList(`SELECT id FROM system_states order by id desc` +
 		fmt.Sprintf(` offset %d limit %d`, data.params[`offset`].(int64), limit)).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	outList := make([]stateItem, 0)
 	for _, id := range idata {
 		idInt, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, id)
+			logger.LogInfo(consts.StrToIntError, id)
 		}
 		if !model.IsNodeState(idInt, r.Host) {
 			continue
@@ -206,6 +221,7 @@ func stateList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		list, err := model.GetAll(fmt.Sprintf(`SELECT name, value FROM "%s_state_parameters" WHERE name in ('state_name','state_flag', 'state_coords')`,
 			id), -1)
 		if err != nil {
+			logger.LogError(consts.DBError, err)
 			return errorAPI(w, err.Error(), http.StatusInternalServerError)
 		}
 		item := stateItem{ID: id}

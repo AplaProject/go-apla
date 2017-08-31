@@ -52,12 +52,12 @@ func (c *Controller) BlockExplorer() (string, error) {
 
 	blockID, err := strconv.ParseInt(c.r.FormValue("blockId"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("blockId"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("blockId"))
 	}
 
 	pageData.SinglePage, err = strconv.ParseInt(c.r.FormValue("singlePage"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("singlePage"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("singlePage"))
 	}
 	if blockID > 0 {
 		pageData.BlockID = blockID
@@ -137,7 +137,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 	} else {
 		latest, err := strconv.ParseInt(c.r.FormValue("latest"), 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("latest"))
+			logger.LogInfo(consts.StrToIntError, c.r.FormValue("latest"))
 		}
 		block := &model.Block{}
 		if latest > 0 {
@@ -164,7 +164,7 @@ func (c *Controller) BlockExplorer() (string, error) {
 		if blockExplorer != nil && len(blockExplorer) > 0 {
 			pageData.Latest, err = strconv.ParseInt(blockExplorer[0][`id`], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, blockExplorer[0][`id`])
+				logger.LogInfo(consts.StrToIntError, blockExplorer[0][`id`])
 			}
 		}
 	}

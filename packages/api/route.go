@@ -19,6 +19,9 @@ package api
 import (
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	hr "github.com/julienschmidt/httprouter"
 )
 
@@ -104,7 +107,7 @@ func processParams(input string) (params map[string]int) {
 		var vtype int
 		types := strings.Split(par, `:`)
 		if len(types) != 2 {
-			log.Fatalf(`Incorrect api route parameters: "%s"`, par)
+			logger.LogFatal(consts.RouteError, par)
 		}
 		switch types[1] {
 		case `hex`:
@@ -114,7 +117,7 @@ func processParams(input string) (params map[string]int) {
 		case `int64`:
 			vtype = pInt64
 		default:
-			log.Fatalf(`Unknown type of api route parameter: "%s"`, par)
+			logger.LogFatal(consts.RouteError, par)
 		}
 		vars := strings.Split(types[0], ` `)
 		for _, v := range vars {
@@ -125,7 +128,7 @@ func processParams(input string) (params map[string]int) {
 				if len(v) > 1 {
 					params[v[1:]] = vtype | pOptional
 				} else {
-					log.Fatalf(`Incorrect name of api route parameter: "%s"`, par)
+					logger.LogFatal(consts.RouteError, par)
 				}
 			} else {
 				params[v] = vtype

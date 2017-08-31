@@ -46,7 +46,7 @@ func (c *Controller) GenKeys() (string, error) {
 	govAccount, _ := template.StateParam(int64(c.SessStateID), `gov_account`)
 	account, err := strconv.ParseInt(govAccount, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, govAccount)
+		logger.LogInfo(consts.StrToIntError, govAccount)
 	}
 	if c.SessCitizenID != account {
 		return ``, fmt.Errorf(`Access denied`)

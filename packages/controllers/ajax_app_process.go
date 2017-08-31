@@ -47,11 +47,11 @@ func (c *Controller) AjaxAppProcess() interface{} {
 	name := c.r.FormValue("name")
 	block, err := strconv.ParseInt(c.r.FormValue("block"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("block"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("block"))
 	}
 	done, err := strconv.Atoi(c.r.FormValue("done"))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("done"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("done"))
 	}
 
 	if block == 0 {

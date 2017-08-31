@@ -45,7 +45,7 @@ func (c *Controller) Install() (string, error) {
 		var err error
 		*utils.GenerateFirstBlock, err = strconv.ParseInt(generateFirstBlock, 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, generateFirstBlock)
+			logger.LogInfo(consts.StrToIntError, generateFirstBlock)
 		}
 	}
 

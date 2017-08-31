@@ -19,11 +19,15 @@ package api
 import (
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
 
 func preSendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.DLTTransfer{
 		Header:        getSignHeader(`DLTTransfer`, data),
 		WalletAddress: data.params[`recipient`].(string),
@@ -36,8 +40,10 @@ func preSendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func sendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`DLTTransfer`, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	header.StateID = 0
@@ -57,6 +63,7 @@ func sendEGS(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash

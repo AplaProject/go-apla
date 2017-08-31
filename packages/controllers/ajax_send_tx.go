@@ -99,13 +99,13 @@ func (c *Controller) AjaxSendTx() interface{} {
 					case `uint64`:
 						value, err := strconv.ParseUint(val, 10, 64)
 						if err != nil {
-							logger.LogInfo(consts.StrtoInt64Error, val)
+							logger.LogInfo(consts.StrToIntError, val)
 						}
 						converter.BinMarshal(&data, value)
 					case `int64`:
 						value, err := strconv.ParseInt(val, 10, 64)
 						if err != nil {
-							logger.LogInfo(consts.StrtoInt64Error, val)
+							logger.LogInfo(consts.StrToIntError, val)
 						}
 						converter.EncodeLenInt64(&data, value)
 					case `float64`:
@@ -129,7 +129,7 @@ func (c *Controller) AjaxSendTx() interface{} {
 			if err == nil {
 				timeInt, err := strconv.ParseInt(c.r.FormValue(`time`), 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue(`time`))
+					logger.LogInfo(consts.StrToIntError, c.r.FormValue(`time`))
 				}
 				toSerialize := tx.SmartContract{
 					Header: tx.Header{Type: int(info.ID), Time: timeInt,

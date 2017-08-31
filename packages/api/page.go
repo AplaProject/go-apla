@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
@@ -43,10 +45,11 @@ type pageListResult struct {
 }
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	dataPage, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_pages" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &pageResult{Name: dataPage["name"], Menu: dataPage["menu"],
@@ -55,6 +58,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.NewPage{
 		Header:     getSignHeader(`NewPage`, data),
 		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
@@ -68,6 +72,7 @@ func txPreNewPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreEditPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditPage{
 		Header:     getSignHeader(`EditPage`, data),
 		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
@@ -81,12 +86,14 @@ func txPreEditPage(w http.ResponseWriter, r *http.Request, data *apiData) error 
 }
 
 func txPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	txName := `NewPage`
 	if r.Method == `PUT` {
 		txName = `EditPage`
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -113,6 +120,7 @@ func txPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogDebug(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -121,7 +129,7 @@ func txPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func pageList(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	limit := int(data.params[`limit`].(int64))
 	if limit == 0 {
 		limit = 25
@@ -131,12 +139,14 @@ func pageList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]pageItem, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_pages"`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT name, menu FROM "`+getPrefix(data)+`_pages" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -148,6 +158,7 @@ func pageList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreAppendPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.AppendPage{
 		Header: getSignHeader(`AppendPage`, data),
 		Global: converter.Int64ToStr(data.params[`global`].(int64)),
@@ -159,8 +170,10 @@ func txPreAppendPage(w http.ResponseWriter, r *http.Request, data *apiData) erro
 }
 
 func txAppendPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`AppendPage`, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -172,6 +185,7 @@ func txAppendPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash

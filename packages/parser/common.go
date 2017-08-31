@@ -554,7 +554,7 @@ func (p *Parser) AccessTable(table, action string) error {
 	govAccount, _ := template.StateParam(int64(p.TxStateID), `gov_account`)
 	account, err := strconv.ParseInt(govAccount, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, govAccount)
+		logger.LogInfo(consts.StrToIntError, govAccount)
 	}
 	if table == `dlt_wallets` && p.TxContract != nil && p.TxCitizenID == account {
 		return nil
@@ -734,7 +734,7 @@ func (p *Parser) payFPrice() error {
 			//fromID = p.TxContract.TxGovAccount
 			fromID, err = strconv.ParseInt(StateVal(p, `gov_account`), 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, StateVal(p, `gov_account`))
+				logger.LogInfo(consts.StrToIntError, StateVal(p, `gov_account`))
 			}
 		} else {
 			// списываем напрямую с dlt_wallets у юзера

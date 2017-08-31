@@ -203,7 +203,7 @@ func (p *DLTTransferParser) Action() error {
 	}
 	walletAddress, err := strconv.ParseInt(p.DLTTransfer.WalletAddress, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, p.DLTTransfer.WalletAddress)
+		logger.LogInfo(consts.StrToIntError, p.DLTTransfer.WalletAddress)
 	}
 	dltTransaction := &model.DltTransaction{
 		SenderWalletID:         p.TxWalletID,

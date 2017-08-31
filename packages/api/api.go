@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -34,7 +33,6 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 	"github.com/astaxie/beego/session"
 	hr "github.com/julienschmidt/httprouter"
-	"github.com/op/go-logging"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -65,7 +63,6 @@ const (
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData) error
 
 var (
-	log     = logging.MustGetLogger("api")
 	apiSess *session.Manager
 )
 
@@ -119,7 +116,7 @@ func getHeader(txName string, data *apiData) (tx.Header, error) {
 	}
 	time, err := strconv.ParseInt(data.params["time"].(string), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, data.params["time"])
+		logger.LogInfo(consts.StrToIntError, data.params["time"])
 	}
 	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time,
 		UserID: userID, StateID: stateID, PublicKey: publicKey,
@@ -148,19 +145,20 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		)
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
 				errorAPI(w, "", http.StatusInternalServerError)
-				log.Error("API Recovered", r)
+				logger.LogError(consts.PanicRecoveredError, r)
 			}
 		}()
 		if apiSess == nil {
 			errorAPI(w, `Session is undefined`, http.StatusForbidden)
+			logger.LogDebug(consts.SessionError, "")
 			return
 		}
 
 		data.sess, err = apiSess.SessionStart(w, r)
 		if err != nil {
 			errorAPI(w, err.Error(), http.StatusInternalServerError)
+			logger.LogError(consts.SessionError, "")
 			return
 		}
 		defer data.sess.SessionRelease(w)
@@ -173,18 +171,21 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
-				errorAPI(w, fmt.Sprintf(`Value %s is undefined`, key), http.StatusBadRequest)
+				errorMessage := fmt.Sprintf(`Value %s is undefined`, key)
+				errorAPI(w, errorMessage, http.StatusBadRequest)
+				logger.LogError(consts.RouteError, errorMessage)
 				return
 			}
 			switch par & 0xff {
 			case pInt64:
 				data.params[key], err = strconv.ParseInt(val, 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, val)
+					logger.LogInfo(consts.StrToIntError, val)
 				}
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
+					logger.LogError(consts.RouteError, err)
 					errorAPI(w, err.Error(), http.StatusBadRequest)
 					return
 				}
@@ -200,6 +201,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		jsonResult, err := json.Marshal(data.result)
 		if err != nil {
+			logger.LogError(consts.RouteError, err)
 			errorAPI(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

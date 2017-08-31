@@ -55,7 +55,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 
 	count, err := strconv.ParseInt(c.r.FormValue("count"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("count"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("count"))
 	}
 	if count < 1 || count > 50 {
 		result.Error = `Count must be from 1 to 50`
@@ -70,7 +70,7 @@ func (c *Controller) AjaxGenKeys() interface{} {
 	}
 	govAccount, err := strconv.ParseInt(stateParameter.Value, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, stateParameter.Value)
+		logger.LogInfo(consts.StrToIntError, stateParameter.Value)
 	}
 	if c.SessCitizenID != govAccount || len(stateParameter.Value) == 0 {
 		result.Error = `Access denied`

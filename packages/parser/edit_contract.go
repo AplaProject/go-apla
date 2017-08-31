@@ -70,7 +70,7 @@ func (p *EditContractParser) Validate() error {
 	sc.SetTablePrefix(prefix)
 	contractID, err := strconv.ParseInt(p.EditContract.Id, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, p.EditContract.Id)
+		logger.LogInfo(consts.StrToIntError, p.EditContract.Id)
 	}
 	err = sc.GetByID(contractID)
 	if err != nil {
@@ -100,7 +100,7 @@ func (p *EditContractParser) Action() error {
 	sc.SetTablePrefix(prefix)
 	contractID, err := strconv.ParseInt(p.EditContract.Id, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, p.EditContract.Id)
+		logger.LogInfo(consts.StrToIntError, p.EditContract.Id)
 	}
 	err = sc.GetByID(contractID)
 	if err != nil {

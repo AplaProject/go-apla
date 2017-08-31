@@ -20,7 +20,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
@@ -36,10 +39,11 @@ type langListResult struct {
 }
 
 func getLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	dataLang, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_languages" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &langResult{Name: dataLang["name"], Trans: dataLang["res"]}
@@ -47,6 +51,7 @@ func getLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditNewLang{
 		Header: getSignHeader(`NewLang`, data),
 		Name:   data.params[`name`].(string),
@@ -57,6 +62,7 @@ func txPreNewLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreEditLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditNewLang{
 		Header: getSignHeader(`EditLang`, data),
 		Name:   data.params[`name`].(string),
@@ -67,12 +73,14 @@ func txPreEditLang(w http.ResponseWriter, r *http.Request, data *apiData) error 
 }
 
 func txLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	txName := `NewLang`
 	if r.Method == `PUT` {
 		txName = `EditLang`
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -83,6 +91,7 @@ func txLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -90,7 +99,7 @@ func txLang(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func langList(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	limit := int(data.params[`limit`].(int64))
 	if limit == 0 {
 		limit = 25
@@ -100,12 +109,14 @@ func langList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]langResult, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_languages"`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT name, res FROM "`+getPrefix(data)+`_languages" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 

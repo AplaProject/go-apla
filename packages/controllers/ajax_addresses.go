@@ -83,7 +83,7 @@ func (c *Controller) AjaxAddresses() interface{} {
 			for _, ireq := range req {
 				address, err := strconv.ParseInt(ireq["id"], 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, ireq["id"])
+					logger.LogInfo(consts.StrToIntError, ireq["id"])
 				}
 				result.Address = append(result.Address, converter.AddressToString(address))
 			}

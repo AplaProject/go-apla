@@ -19,8 +19,11 @@ package api
 import (
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/language"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/template"
 	"github.com/EGaaS/go-egaas-mvp/packages/textproc"
@@ -31,7 +34,7 @@ type contentResult struct {
 }
 
 func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	params := make(map[string]string)
 	for name := range r.Form {
 		params[name] = r.FormValue(name)
@@ -45,6 +48,7 @@ func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	tpl, err := template.CreateHTMLFromTemplate(page, data.sess.Get(`citizen`).(int64),
 		data.sess.Get(`state`).(int64), &params)
 	if err != nil {
+		logger.LogError(consts.RouteError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &contentResult{HTML: string(tpl)}
@@ -52,10 +56,11 @@ func contentPage(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func contentMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	prefix := getPrefix(data)
 	menu, err := model.Single(`SELECT value FROM "`+prefix+`_menu" WHERE name = ?`, data.params[`name`].(string)).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	params := make(map[string]string)

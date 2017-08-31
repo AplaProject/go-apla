@@ -18,17 +18,25 @@ package api
 
 import (
 	"net/http"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	if data.sess.Get("wallet") == nil {
+		logger.LogDebug(consts.RouteError, "")
 		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	}
 	return nil
 }
 
 func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	if data.sess.Get("wallet") == nil || data.sess.Get("state").(int64) == 0 {
+		logger.LogDebug(consts.RouteError, "")
 		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	}
 	return nil

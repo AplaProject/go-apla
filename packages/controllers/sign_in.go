@@ -57,7 +57,7 @@ func (c *Controller) AjaxSignIn() interface{} {
 
 	stateID, err := strconv.ParseInt(c.r.FormValue("state_id"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("state_id"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("state_id"))
 	}
 
 	if utils.PrivCountry && utils.OneCountry > 0 {

@@ -183,7 +183,7 @@ func GetSessWalletID(sess session.SessionStore) int64 {
 	case string:
 		val, err := strconv.ParseInt(sessUserID.(string), 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, sessUserID.(string))
+			logger.LogInfo(consts.StrToIntError, sessUserID.(string))
 		}
 		return val
 	}
@@ -202,7 +202,7 @@ func GetSessCitizenID(sess session.SessionStore) int64 {
 	case string:
 		val, err := strconv.ParseInt(sessUserID.(string), 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, sessUserID.(string))
+			logger.LogInfo(consts.StrToIntError, sessUserID.(string))
 		}
 		return val
 	}
@@ -261,7 +261,7 @@ func CheckLang(lang int) bool {
 func GetLang(w http.ResponseWriter, r *http.Request, parameters map[string]string) int {
 	lang, err := strconv.Atoi(parameters["lang"])
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, parameters["lang"])
+		logger.LogInfo(consts.StrToIntError, parameters["lang"])
 	}
 	if !CheckLang(lang) {
 		if langCookie, err := r.Cookie("lang"); err == nil {
@@ -346,14 +346,14 @@ func makeTemplate(html, name string, tData interface{}) (string, error) {
 		"strToInt64": func(text string) int64 {
 			val, err := strconv.ParseInt(text, 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, text)
+				logger.LogInfo(consts.StrToIntError, text)
 			}
 			return val
 		},
 		"strToInt": func(text string) int {
 			value, err := strconv.Atoi(text)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, text)
+				logger.LogInfo(consts.StrToIntError, text)
 			}
 			return value
 		},

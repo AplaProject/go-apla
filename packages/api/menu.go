@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
@@ -41,10 +43,11 @@ type menuListResult struct {
 }
 
 func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	dataMenu, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_menu" WHERE name = ?`,
 		data.params[`name`].(string)).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &menuResult{Name: dataMenu["name"], Value: dataMenu["value"], Conditions: dataMenu["conditions"]}
@@ -52,6 +55,7 @@ func getMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.NewMenu{
 		Header:     getSignHeader(`NewMenu`, data),
 		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
@@ -64,6 +68,7 @@ func txPreNewMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreEditMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditMenu{
 		Header:     getSignHeader(`EditMenu`, data),
 		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
@@ -76,12 +81,14 @@ func txPreEditMenu(w http.ResponseWriter, r *http.Request, data *apiData) error 
 }
 
 func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	txName := `NewMenu`
 	if r.Method == `PUT` {
 		txName = `EditMenu`
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -106,6 +113,7 @@ func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -113,7 +121,7 @@ func txMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func menuList(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	limit := int(data.params[`limit`].(int64))
 	if limit == 0 {
 		limit = 25
@@ -123,12 +131,14 @@ func menuList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]menuItem, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_menu"`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT name FROM "`+getPrefix(data)+`_menu" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -140,6 +150,7 @@ func menuList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreAppendMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.AppendMenu{
 		Header: getSignHeader(`AppendMenu`, data),
 		Global: converter.Int64ToStr(data.params[`global`].(int64)),
@@ -151,8 +162,10 @@ func txPreAppendMenu(w http.ResponseWriter, r *http.Request, data *apiData) erro
 }
 
 func txAppendMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`AppendMenu`, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.AppendMenu{
@@ -163,6 +176,7 @@ func txAppendMenu(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash

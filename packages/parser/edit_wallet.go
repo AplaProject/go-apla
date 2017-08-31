@@ -80,7 +80,7 @@ func (p *EditWalletParser) Validate() error {
 
 	id, err := strconv.ParseInt(p.EditWallet.WalletID, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, p.EditWallet.WalletID)
+		logger.LogInfo(consts.StrToIntError, p.EditWallet.WalletID)
 	}
 	dltWallet := &model.DltWallet{}
 	err = dltWallet.GetWallet(id)

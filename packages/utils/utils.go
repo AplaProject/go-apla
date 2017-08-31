@@ -240,7 +240,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 30 {
 				return true
@@ -250,7 +250,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^(?i)[a-z]+$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 1024 {
 				return true
@@ -260,7 +260,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[\pL0-9\,\s\.\-\:\=\;\?\!\%\)\(\@\/\n\r]{1,20}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 1024 {
 				return true
@@ -270,7 +270,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[\w]+$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 1024 {
 				return true
@@ -280,7 +280,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,2}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 30 {
 				return true
@@ -290,7 +290,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 255 {
 				return true
@@ -300,7 +300,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 15 && value >= 5 {
 				return true
@@ -310,7 +310,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,3}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 127 {
 				return true
@@ -320,7 +320,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 		if ok, _ := regexp.MatchString(`^[0-9]{1,5}$`, data); ok {
 			value, err := strconv.Atoi(data)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data)
+				logger.LogInfo(consts.StrToIntError, data)
 			}
 			if value <= 65535 {
 				return true
@@ -545,7 +545,7 @@ func CheckInputData(idata interface{}, dataType string) bool {
 	case "level":
 		value, err := strconv.Atoi(data)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, data)
+			logger.LogInfo(consts.StrToIntError, data)
 		}
 		if value >= 0 && value <= 34 {
 			return true

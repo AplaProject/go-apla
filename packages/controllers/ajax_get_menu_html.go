@@ -59,7 +59,7 @@ func (c *Controller) AjaxGetMenuHtml() (string, error) {
 	if len(menu.Value) > 0 {
 		stateID, err := strconv.Atoi(c.StateIDStr)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, c.StateIDStr)
+			logger.LogInfo(consts.StrToIntError, c.StateIDStr)
 		}
 		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), stateID, params[`accept_lang`]) +
 			`<!--#` + page.Menu + `#-->`

@@ -457,7 +457,7 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 		for i, fullNodes := range fullNodesList {
 			id, err := strconv.ParseInt(fullNodes["id"], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, fullNodes["id"])
+				logger.LogInfo(consts.StrToIntError, fullNodes["id"])
 			}
 			if id == prevBlockFullNodeID {
 				return i
@@ -471,11 +471,11 @@ func GetSleepTime(myWalletID, myStateID, prevBlockStateID, prevBlockWalletID int
 		for i, fullNodes := range fullNodesList {
 			stateID, err := strconv.ParseInt(fullNodes["state_id"], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, fullNodes["state_id"])
+				logger.LogInfo(consts.StrToIntError, fullNodes["state_id"])
 			}
 			walletID, err := strconv.ParseInt(fullNodes["wallet_id"], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, fullNodes["wallet_id"])
+				logger.LogInfo(consts.StrToIntError, fullNodes["wallet_id"])
 			}
 			if stateID == myStateID || walletID == myWalletID {
 				return i
@@ -547,7 +547,7 @@ func IsNodeState(state int64, host string) bool {
 		for _, id := range strings.Split(val, `,`) {
 			stateID, err := strconv.ParseInt(id, 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, id)
+				logger.LogInfo(consts.StrToIntError, id)
 			}
 			if stateID == state {
 				return true

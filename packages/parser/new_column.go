@@ -81,7 +81,7 @@ func (p *NewColumnParser) Validate() error {
 	}
 	columnIndex, err := strconv.ParseInt(p.NewColumn.Index, 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, p.NewColumn.Index)
+		logger.LogInfo(consts.StrToIntError, p.NewColumn.Index)
 	}
 	if columnIndex > 0 {
 		count, err := model.NumIndexes(p.NewColumn.TableName)

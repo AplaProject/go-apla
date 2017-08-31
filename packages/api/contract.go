@@ -51,23 +51,30 @@ type contractListResult struct {
 }
 
 func checkID(data *apiData) (id string, err error) {
+	logger.LogDebug(consts.FuncStarted, "")
 	id = data.params[`id`].(string)
 	if id[0] > '9' {
 		id, err = model.Single(`SELECT id FROM "`+getPrefix(data)+`_smart_contracts" WHERE name = ?`, id).String()
-		if err == nil && len(id) == 0 {
-			err = fmt.Errorf(`incorrect id %s of the contract`, data.params[`id`].(string))
+		if err == nil && len(id) != 0 {
+			logger.LogError(consts.DBError, err)
+		} else if len(id) == 0 {
+			logger.LogInfo(consts.RecordNotFoundError, err)
 		}
+		err = fmt.Errorf(`incorrect id %s of the contract`, data.params[`id`].(string))
 	}
 	return
 }
 
 func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	id, err := checkID(data)
 	if err != nil {
+		logger.LogDebug(consts.RouteError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	dataContract, err := model.GetOneRow(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" WHERE id = ?`, id).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = &contractResult{ID: dataContract["id"], Name: dataContract["name"], Active: dataContract["active"],
@@ -76,6 +83,7 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.NewContract{
 		Header:     getSignHeader(`NewContract`, data),
 		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
@@ -89,6 +97,7 @@ func txPreNewContract(w http.ResponseWriter, r *http.Request, data *apiData) err
 }
 
 func txPreEditContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditContract{
 		Header:     getSignHeader(`EditContract`, data),
 		Global:     converter.Int64ToStr(data.params[`global`].(int64)),
@@ -101,12 +110,14 @@ func txPreEditContract(w http.ResponseWriter, r *http.Request, data *apiData) er
 }
 
 func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	var txName string
 
 	if r.Method == `PUT` {
 		txName = `EditContract`
 		id, err := checkID(data)
 		if err != nil {
+			logger.LogError(consts.RouteError, err)
 			return errorAPI(w, err.Error(), http.StatusBadRequest)
 		}
 		data.params[`name`] = id
@@ -115,6 +126,7 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -140,6 +152,7 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -147,8 +160,10 @@ func txContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	id, err := checkID(data)
 	if err != nil {
+		logger.LogError(consts.RouteError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	v := tx.ActivateContract{
@@ -161,14 +176,16 @@ func txPreActivateContract(w http.ResponseWriter, r *http.Request, data *apiData
 }
 
 func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	txName := `ActivateContract`
 	id, err := checkID(data)
 	if err != nil {
+		logger.LogError(consts.RouteError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	header, err := getHeader(txName, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -181,6 +198,7 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -188,7 +206,7 @@ func txActivateContract(w http.ResponseWriter, r *http.Request, data *apiData) e
 }
 
 func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	limit := int(data.params[`limit`].(int64))
 	if limit == 0 {
 		limit = 25
@@ -198,12 +216,14 @@ func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]contractItem, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_smart_contracts"`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT * FROM "`+getPrefix(data)+`_smart_contracts" order by id`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -212,7 +232,7 @@ func contractList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		if val[`wallet_id`] != `NULL` {
 			walletID, err := strconv.ParseInt(val[`wallet_id`], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, val[`wallet_id`])
+				logger.LogInfo(consts.StrToIntError, val[`wallet_id`])
 			}
 			wallet = converter.AddressToString(walletID)
 

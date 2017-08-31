@@ -130,7 +130,7 @@ func (c *Controller) Menu() (string, error) {
 		//		menu = ReplaceMenu(menu)
 		stateID, err := strconv.Atoi(c.StateIDStr)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, c.StateIDStr)
+			logger.LogInfo(consts.StrToIntError, c.StateIDStr)
 		}
 		menu.Value = language.LangMacro(textproc.Process(menu.Value, &params), stateID, params[`accept_lang`])
 	}

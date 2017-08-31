@@ -46,7 +46,7 @@ func (c *Controller) AjaxExplorer() interface{} {
 	result := ExplorerJSON{}
 	latest, err := strconv.ParseInt(c.r.FormValue("latest"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("latest"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("latest"))
 	}
 	data := make([]map[string]string, 0)
 

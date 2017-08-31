@@ -98,7 +98,7 @@ func SysUpdate() error {
 func SysInt64(name string) int64 {
 	val, err := strconv.ParseInt(SysString(name), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(name))
+		logger.LogInfo(consts.StrToIntError, SysString(name))
 	}
 	return val
 }
@@ -110,7 +110,7 @@ func GetBlockchainURL() string {
 func GetUpdFullNodesPeriod() int64 {
 	val, err := strconv.ParseInt(SysString(UpdFullNodesPeriod), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(UpdFullNodesPeriod))
+		logger.LogInfo(consts.StrToIntError, SysString(UpdFullNodesPeriod))
 	}
 	return val
 }
@@ -118,7 +118,7 @@ func GetUpdFullNodesPeriod() int64 {
 func GetMaxBlockSize() int64 {
 	val, err := strconv.ParseInt(SysString(MaxBlockSize), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxBlockSize))
+		logger.LogInfo(consts.StrToIntError, SysString(MaxBlockSize))
 	}
 	return val
 }
@@ -126,7 +126,7 @@ func GetMaxBlockSize() int64 {
 func GetMaxTxSize() int64 {
 	val, err := strconv.ParseInt(SysString(MaxTxSize), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxTxSize))
+		logger.LogInfo(consts.StrToIntError, SysString(MaxTxSize))
 	}
 	return val
 }
@@ -134,7 +134,7 @@ func GetMaxTxSize() int64 {
 func GetRecoveryAddress() int64 {
 	val, err := strconv.ParseInt(SysString(RecoveryAddress), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(RecoveryAddress))
+		logger.LogInfo(consts.StrToIntError, SysString(RecoveryAddress))
 	}
 	return val
 }
@@ -142,7 +142,7 @@ func GetRecoveryAddress() int64 {
 func GetCommissionWallet() int64 {
 	val, err := strconv.ParseInt(SysString(CommissionWallet), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(CommissionWallet))
+		logger.LogInfo(consts.StrToIntError, SysString(CommissionWallet))
 	}
 	return val
 }
@@ -150,7 +150,7 @@ func GetCommissionWallet() int64 {
 func GetGapsBetweenBlocks() int {
 	val, err := strconv.Atoi(SysString(GapsBetweenBlocks))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(GapsBetweenBlocks))
+		logger.LogInfo(consts.StrToIntError, SysString(GapsBetweenBlocks))
 	}
 	return val
 }
@@ -158,7 +158,7 @@ func GetGapsBetweenBlocks() int {
 func GetMaxTxCount() int {
 	val, err := strconv.Atoi(SysString(MaxTxCount))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxTxCount))
+		logger.LogInfo(consts.StrToIntError, SysString(MaxTxCount))
 	}
 	return val
 }
@@ -166,7 +166,7 @@ func GetMaxTxCount() int {
 func GetMaxColumns() int {
 	val, err := strconv.Atoi(SysString(MaxColumns))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxColumns))
+		logger.LogInfo(consts.StrToIntError, SysString(MaxColumns))
 	}
 	return val
 }
@@ -174,7 +174,7 @@ func GetMaxColumns() int {
 func GetMaxIndexes() int {
 	val, err := strconv.Atoi(SysString(MaxIndexes))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxIndexes))
+		logger.LogInfo(consts.StrToIntError, SysString(MaxIndexes))
 	}
 	return val
 }
@@ -182,7 +182,7 @@ func GetMaxIndexes() int {
 func GetMaxBlockUserTx() int {
 	val, err := strconv.Atoi(SysString(MaxBlockUserTx))
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, SysString(MaxBlockUserTx))
+		logger.LogInfo(consts.StrToIntError, SysString(MaxBlockUserTx))
 	}
 	return val
 }

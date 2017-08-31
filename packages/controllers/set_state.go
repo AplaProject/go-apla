@@ -41,12 +41,12 @@ func (c *Controller) SetState() interface{} {
 	c.r.ParseForm()
 	stateID, err := strconv.ParseInt(c.r.FormValue("state_id"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("state_id"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("state_id"))
 	}
 	c.sess.Set("state_id", stateID)
 	citizenID, err := strconv.ParseInt(c.r.FormValue("citizen_id"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("citizen_id"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("citizen_id"))
 	}
 	c.sess.Set("citizen_id", citizenID)
 	result.Error = ""

@@ -73,7 +73,7 @@ func (c *Controller) Accounts() (string, error) {
 	}
 	digit, err := strconv.Atoi(stateParameter.Value)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, stateParameter.Value)
+		logger.LogInfo(consts.StrToIntError, stateParameter.Value)
 	}
 
 	if err := stateParameter.GetByName("currency_name"); err != nil {

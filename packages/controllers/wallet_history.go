@@ -74,7 +74,7 @@ func (c *Controller) WalletHistory() (string, error) {
 			}
 			rb, err = strconv.ParseInt(data[`rb_id`], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, data["rb_id"])
+				logger.LogInfo(consts.StrToIntError, data["rb_id"])
 			}
 			if amount, ok := data[`amount`]; ok {
 				var dif decimal.Decimal

@@ -55,7 +55,7 @@ func (c *Controller) CheckCitizenStatus() (string, error) {
 	if len(c.r.FormValue(`last_id`)) > 0 {
 		lastID, err = strconv.ParseInt(c.r.FormValue(`last_id`), 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue(`last_id`))
+			logger.LogInfo(consts.StrToIntError, c.r.FormValue(`last_id`))
 		}
 	}
 	request := &model.CitizenshipRequest{}

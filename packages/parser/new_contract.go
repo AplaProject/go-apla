@@ -121,7 +121,7 @@ func (p *NewContractParser) Action() error {
 		if item.Type == script.ObjContract {
 			tableID, err := strconv.ParseInt(tblid, 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, tblid)
+				logger.LogInfo(consts.StrToIntError, tblid)
 			}
 			root.Children[i].Info.(*script.ContractInfo).TableID = tableID
 		}

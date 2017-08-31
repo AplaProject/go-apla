@@ -49,7 +49,7 @@ func (c *Controller) SaveQueue() (string, error) {
 
 	txTime, err := strconv.ParseInt(c.r.FormValue("time"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("time"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("time"))
 	}
 	if !utils.CheckInputData(txTime, "int") {
 		return `{"result":"incorrect time"}`, nil
@@ -86,7 +86,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	userID := walletID
 	stateID, err := strconv.ParseInt(c.r.FormValue("stateId"), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("stateId"))
 	}
 	if stateID > 0 {
 		userID = citizenID
@@ -105,7 +105,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		userID := walletID
 		stateID, err := strconv.ParseInt(c.r.FormValue("stateId"), 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+			logger.LogInfo(consts.StrToIntError, c.r.FormValue("stateId"))
 		}
 		if stateID > 0 {
 			userID = citizenID
@@ -121,7 +121,7 @@ func (c *Controller) SaveQueue() (string, error) {
 		userID := walletID
 		stateID, err := strconv.ParseInt(c.r.FormValue("stateId"), 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("stateId"))
+			logger.LogInfo(consts.StrToIntError, c.r.FormValue("stateId"))
 		}
 		if userID == 0 {
 			userID = citizenID
@@ -294,7 +294,7 @@ func (c *Controller) SaveQueue() (string, error) {
 	case "NewAccount":
 		accountID, err := strconv.ParseInt(c.r.FormValue("accountId"), 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("accountId"))
+			logger.LogInfo(consts.StrToIntError, c.r.FormValue("accountId"))
 		}
 		pubKey, err := hex.DecodeString(c.r.FormValue("pubkey"))
 		if accountID == 0 || stateID == 0 || userID == 0 || err != nil {

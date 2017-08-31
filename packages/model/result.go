@@ -103,7 +103,7 @@ func (r *OneRow) Int64() (map[string]int64, error) {
 	for k, v := range r.result {
 		res, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, v)
+			logger.LogInfo(consts.StrToIntError, v)
 		}
 		result[k] = res
 	}
@@ -130,7 +130,7 @@ func (r *OneRow) Int() (map[string]int, error) {
 	for k, v := range r.result {
 		result[k], err = strconv.Atoi(v)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, v)
+			logger.LogInfo(consts.StrToIntError, v)
 		}
 	}
 	return result, nil

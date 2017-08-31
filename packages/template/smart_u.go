@@ -202,7 +202,7 @@ func LoadContract(prefix string) (err error) {
 	for _, item := range contracts {
 		id, err := strconv.ParseInt(item["id"], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, item["id"])
+			logger.LogInfo(consts.StrToIntError, item["id"])
 		}
 		if err = smart.Compile(item[`value`], prefix, item[`active`] == `1`, id); err != nil {
 			log.Error("Load Contract", item[`name`], err)
@@ -246,7 +246,7 @@ func Param(vars *map[string]string, pars ...string) string {
 func LangRes(vars *map[string]string, pars ...string) string {
 	stateID, err := strconv.ParseInt((*vars)["state_id"], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+		logger.LogInfo(consts.StrToIntError, (*vars)["state_id"])
 	}
 	ret, _ := language.LangText(pars[0], int(stateID), (*vars)[`accept_lang`])
 	return ret
@@ -305,12 +305,12 @@ func Money(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		cents, err = strconv.Atoi(pars[1])
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+			logger.LogInfo(consts.StrToIntError, pars[1])
 		}
 	} else {
 		cents, err = strconv.Atoi(StateVal(vars, `money_digit`))
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+			logger.LogInfo(consts.StrToIntError, StateVal(vars, `money_digit`))
 		}
 	}
 
@@ -540,12 +540,12 @@ func InputMoney(vars *map[string]string, pars ...string) string {
 	if len(pars) > 3 {
 		digit, err = strconv.Atoi(pars[3])
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[3])
+			logger.LogInfo(consts.StrToIntError, pars[3])
 		}
 	} else {
 		digit, err = strconv.Atoi(StateVal(vars, `money_digit`))
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+			logger.LogInfo(consts.StrToIntError, StateVal(vars, `money_digit`))
 		}
 	}
 	if len(pars) > 2 {
@@ -726,7 +726,7 @@ func GetList(vars *map[string]string, pars ...string) string {
 		var err error
 		limit, err = strconv.Atoi(pars[5])
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[5])
+			logger.LogInfo(consts.StrToIntError, pars[5])
 		}
 	}
 
@@ -766,7 +766,7 @@ func GetList(vars *map[string]string, pars ...string) string {
 func AutoUpdate(vars *map[string]string, pars ...string) string {
 	time, err := strconv.Atoi(pars[0])
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, pars[0])
+		logger.LogInfo(consts.StrToIntError, pars[0])
 	}
 	if time == 0 {
 		time = 10
@@ -776,7 +776,7 @@ func AutoUpdate(vars *map[string]string, pars ...string) string {
 	if len((*vars)[`auto_id`]) > 0 {
 		autoID, err := strconv.Atoi((*vars)["auto_id"])
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, (*vars)["auto_id"])
+			logger.LogInfo(consts.StrToIntError, (*vars)["auto_id"])
 		}
 		autoID++
 		(*vars)[`auto_id`] = converter.IntToStr(autoID)
@@ -810,11 +810,11 @@ func Include(vars *map[string]string, pars ...string) string {
 	//	page := (*vars)[`page`]
 	citizen, err := strconv.ParseInt((*vars)["citizen"], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, (*vars)["citizen"])
+		logger.LogInfo(consts.StrToIntError, (*vars)["citizen"])
 	}
 	stateID, err := strconv.ParseInt((*vars)["state_id"], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+		logger.LogInfo(consts.StrToIntError, (*vars)["state_id"])
 	}
 	out, err := CreateHTMLFromTemplate(pars[0], citizen, stateID, &params)
 	if err != nil {
@@ -1077,7 +1077,7 @@ func DivsEnd(vars *map[string]string, pars ...string) (out string) {
 		divs := strings.Split(val, `,`)
 		divsCount, err := strconv.Atoi(divs[len(divs)-1])
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, divs[len(divs)-1])
+			logger.LogInfo(consts.StrToIntError, divs[len(divs)-1])
 		}
 		out = strings.Repeat(`</div>`, divsCount)
 		(*vars)[`divs`] = strings.Join(divs[:len(divs)-1], `,`)
@@ -1330,14 +1330,14 @@ func Table(vars *map[string]string, pars *map[string]string) string {
 		opar := strings.Split(val, `,`)
 		par0, err := strconv.ParseInt(opar[0], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, opar[0])
+			logger.LogInfo(consts.StrToIntError, opar[0])
 		}
 		if len(opar) == 1 {
 			limit = fmt.Sprintf(` limit %d`, par0)
 		} else {
 			par1, err := strconv.ParseInt(opar[1], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, opar[1])
+				logger.LogInfo(consts.StrToIntError, opar[1])
 			}
 			limit = fmt.Sprintf(` offset %d limit %d`, par0, par1)
 		}
@@ -1496,7 +1496,7 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 	if len(pars) > 1 {
 		width, err = strconv.Atoi(pars[1])
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+			logger.LogInfo(consts.StrToIntError, pars[1])
 		}
 	}
 	pars[2] = html.EscapeString(pars[2])
@@ -1505,17 +1505,17 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 		if lr := strings.Split(pars[2], `/`); len(lr) == 2 {
 			w, err = strconv.Atoi(lr[0])
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, lr[0])
+				logger.LogInfo(consts.StrToIntError, lr[0])
 			}
 			h, err = strconv.Atoi(lr[1])
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, lr[1])
+				logger.LogInfo(consts.StrToIntError, lr[1])
 			}
 			height = int(width * w / h)
 		} else {
 			height, err = strconv.Atoi(pars[2])
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, pars[2])
+				logger.LogInfo(consts.StrToIntError, pars[2])
 			}
 			w, h = width, height
 			for _, i := range []int{2, 3, 5, 7} {
@@ -1536,13 +1536,13 @@ func ImageInput(vars *map[string]string, pars ...string) string {
 func StateVal(vars *map[string]string, pars ...string) string {
 	stateID, err := strconv.ParseInt((*vars)["state_id"], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+		logger.LogInfo(consts.StrToIntError, (*vars)["state_id"])
 	}
 	val, _ := StateParam(stateID, converter.SanitizeName(pars[0]))
 	if len(pars) > 1 {
 		ind, err := strconv.Atoi(pars[1])
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+			logger.LogInfo(consts.StrToIntError, pars[1])
 		}
 		if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 			val = LangRes(vars, alist[ind-1])
@@ -1693,7 +1693,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	if uval, ok := (*vars)[`tx_unique`]; ok {
 		unique, err := strconv.ParseInt(uval, 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, uval)
+			logger.LogInfo(consts.StrToIntError, uval)
 		}
 		unique++
 	}
@@ -1717,7 +1717,7 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 	onsuccess := (*pars)[`OnSuccess`]
 	stateID, err := strconv.ParseUint((*vars)[`state_id`], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+		logger.LogInfo(consts.StrToIntError, (*vars)["state_id"])
 	}
 	contract := smart.GetContract(name, uint32(stateID))
 	if contract == nil /*|| contract.Block.Info.(*script.ContractInfo).Tx == nil*/ {
@@ -1800,12 +1800,12 @@ func TXButton(vars *map[string]string, pars *map[string]string) string {
 				if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 					count, err = strconv.Atoi(ret[1])
 					if err != nil {
-						logger.LogInfo(consts.StrtoInt64Error, ret[1])
+						logger.LogInfo(consts.StrToIntError, ret[1])
 					}
 				} else {
 					count, err = strconv.Atoi(StateVal(vars, `money_digit`))
 					if err != nil {
-						logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+						logger.LogInfo(consts.StrToIntError, StateVal(vars, `money_digit`))
 					}
 				}
 				finfo.Fields = append(finfo.Fields, TxInfo{Name: fitem.Name, Value: value, HTMLType: "money",
@@ -1856,7 +1856,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	if uval, ok := (*vars)[`tx_unique`]; ok {
 		unique, err := strconv.ParseInt(uval, 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, uval)
+			logger.LogInfo(consts.StrToIntError, uval)
 		}
 		unique++
 	}
@@ -1867,7 +1867,7 @@ func TXForm(vars *map[string]string, pars *map[string]string) string {
 	onsuccess := (*pars)[`OnSuccess`]
 	stateID, err := strconv.ParseUint((*vars)[`state_id`], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, (*vars)["state_id"])
+		logger.LogInfo(consts.StrToIntError, (*vars)["state_id"])
 	}
 	contract := smart.GetContract(name, uint32(stateID))
 	if contract == nil || contract.Block.Info.(*script.ContractInfo).Tx == nil {
@@ -1957,7 +1957,7 @@ txlist:
 		if len(linklist) > 0 {
 			val, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, value)
+				logger.LogInfo(consts.StrToIntError, value)
 			}
 			sellist := SelList{val, make(map[int]string)}
 			if strings.IndexByte(linklist, '.') >= 0 {
@@ -1967,7 +1967,7 @@ txlist:
 					for _, item := range data {
 						idInt64, err := strconv.ParseInt(item[id], 10, 64)
 						if err != nil {
-							logger.LogInfo(consts.StrtoInt64Error, item[id])
+							logger.LogInfo(consts.StrToIntError, item[id])
 						}
 						sellist.List[int(idInt64)] = converter.StripTags(item[name])
 					}
@@ -1984,12 +1984,12 @@ txlist:
 			if ret := regexp.MustCompile(`(?is)digit:(\d+)`).FindStringSubmatch(fitem.Tags); len(ret) == 2 {
 				count, err = strconv.Atoi(ret[1])
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, ret[1])
+					logger.LogInfo(consts.StrToIntError, ret[1])
 				}
 			} else {
 				count, err = strconv.Atoi(StateVal(vars, `money_digit`))
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, StateVal(vars, `money_digit`))
+					logger.LogInfo(consts.StrToIntError, StateVal(vars, `money_digit`))
 				}
 			}
 			value = Money(vars, value, converter.IntToStr(count))
@@ -2036,14 +2036,14 @@ func Ring(vars *map[string]string, pars ...string) string {
 	if len(pars) > 0 {
 		val, err := strconv.ParseInt(pars[0], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[0])
+			logger.LogInfo(consts.StrToIntError, pars[0])
 		}
 		count = int(val)
 	}
 	if len(pars) > 1 {
 		val, err := strconv.ParseInt(pars[1], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[1])
+			logger.LogInfo(consts.StrToIntError, pars[1])
 		}
 		size = int(val)
 	}
@@ -2051,7 +2051,7 @@ func Ring(vars *map[string]string, pars ...string) string {
 	if len(pars) > 2 {
 		val, err := strconv.ParseInt(pars[2], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[2])
+			logger.LogInfo(consts.StrToIntError, pars[2])
 		}
 		pct = int(val)
 	}
@@ -2059,7 +2059,7 @@ func Ring(vars *map[string]string, pars ...string) string {
 	if len(pars) > 3 {
 		val, err := strconv.ParseInt(pars[3], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[3])
+			logger.LogInfo(consts.StrToIntError, pars[3])
 		}
 		speed = int(val)
 	}
@@ -2075,7 +2075,7 @@ func Ring(vars *map[string]string, pars ...string) string {
 	if len(pars) > 6 {
 		val, err := strconv.ParseInt(pars[6], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[6])
+			logger.LogInfo(consts.StrToIntError, pars[6])
 		}
 		width = int(val)
 	}
@@ -2083,7 +2083,7 @@ func Ring(vars *map[string]string, pars ...string) string {
 	if len(pars) > 7 {
 		val, err := strconv.ParseInt(pars[7], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[7])
+			logger.LogInfo(consts.StrToIntError, pars[7])
 		}
 		thickness = int(val)
 	}
@@ -2173,7 +2173,7 @@ func WiCitizen(vars *map[string]string, pars ...string) string {
 	}
 	val, err := strconv.ParseInt(pars[1], 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, pars[1])
+		logger.LogInfo(consts.StrToIntError, pars[1])
 	}
 	address := converter.AddressToString(val)
 	(*vars)["wicitizen"] = `1`
@@ -2282,7 +2282,7 @@ func Select(vars *map[string]string, pars ...string) string {
 				for _, item := range data {
 					idInt64, err := strconv.ParseInt(item[id], 10, 64)
 					if err != nil {
-						logger.LogInfo(consts.StrtoInt64Error, item[id])
+						logger.LogInfo(consts.StrToIntError, item[id])
 					}
 					list = append(list, SelInfo{ID: idInt64, Name: converter.StripTags(item[name])})
 				}
@@ -2300,7 +2300,7 @@ func Select(vars *map[string]string, pars ...string) string {
 		var err error
 		value, err = strconv.ParseInt(pars[3], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, pars[3])
+			logger.LogInfo(consts.StrToIntError, pars[3])
 		}
 	}
 
@@ -2440,14 +2440,14 @@ func ChartBar(vars *map[string]string, pars *map[string]string) string {
 		opar := strings.Split(val, `,`)
 		par0, err := strconv.ParseInt(opar[0], 10, 64)
 		if err != nil {
-			logger.LogInfo(consts.StrtoInt64Error, opar[0])
+			logger.LogInfo(consts.StrToIntError, opar[0])
 		}
 		if len(opar) == 1 {
 			limit = fmt.Sprintf(` limit %d`, par0)
 		} else {
 			par1, err := strconv.ParseInt(opar[1], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, opar[1])
+				logger.LogInfo(consts.StrToIntError, opar[1])
 			}
 			limit = fmt.Sprintf(` offset %d limit %d`, par0, par1)
 		}
@@ -2539,14 +2539,14 @@ func ChartPie(vars *map[string]string, pars *map[string]string) string {
 			opar := strings.Split(val, `,`)
 			par0, err := strconv.ParseInt(opar[0], 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, opar[0])
+				logger.LogInfo(consts.StrToIntError, opar[0])
 			}
 			if len(opar) == 1 {
 				limit = fmt.Sprintf(` limit %d`, par0)
 			} else {
 				par1, err := strconv.ParseInt(opar[1], 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, opar[1])
+					logger.LogInfo(consts.StrToIntError, opar[1])
 				}
 				limit = fmt.Sprintf(` offset %d limit %d`, par0, par1)
 			}
@@ -2808,7 +2808,7 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 			if h, ok := (*params)[`hmap`]; ok {
 				height, err = strconv.ParseInt(h, 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, h)
+					logger.LogInfo(consts.StrToIntError, h)
 				}
 			}
 			return height
@@ -2910,7 +2910,7 @@ func CreateHTMLFromTemplate(page string, citizenID, stateID int64, params *map[s
 			if uval, ok := (*params)[`tx_unique`]; ok {
 				unique, err = strconv.ParseInt(uval, 10, 64)
 				if err != nil {
-					logger.LogInfo(consts.StrtoInt64Error, uval)
+					logger.LogInfo(consts.StrToIntError, uval)
 				}
 				unique++
 			}

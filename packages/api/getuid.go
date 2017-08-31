@@ -21,7 +21,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 )
 
 type getUIDResult struct {
@@ -29,6 +32,7 @@ type getUIDResult struct {
 }
 
 func getUID(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	uid := converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
 	data.sess.Set("uid", uid)
 

@@ -20,7 +20,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/consts"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	logger "github.com/EGaaS/go-egaas-mvp/packages/log"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
 )
@@ -49,16 +52,19 @@ type tableListResult struct {
 }
 
 func getTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	prefix := getPrefix(data)
 	tableName := prefix + `_` + data.params[`name`].(string)
 	tablePermission, err := model.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions) as data WHERE name = ?`,
 		"key", "value", tableName)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	columnsAndPermissions, err := model.GetMap(`SELECT data.* FROM "`+prefix+`_tables", jsonb_each_text(columns_and_permissions->'update') as data WHERE name = ?`,
 		"key", "value", tableName)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	columns := make([]columnItem, 0)
@@ -72,6 +78,7 @@ func getTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.NewTable{
 		Header:  getSignHeader(`NewTable`, data),
 		Global:  converter.Int64ToStr(data.params[`global`].(int64)),
@@ -83,8 +90,10 @@ func txPreNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error 
 }
 
 func txNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`NewTable`, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.NewTable{
@@ -95,6 +104,7 @@ func txNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -102,6 +112,7 @@ func txNewTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditTable{
 		Header:        getSignHeader(`EditTable`, data),
 		Name:          data.params[`name`].(string),
@@ -114,8 +125,10 @@ func txPreEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error
 }
 
 func txEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`EditTable`, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.EditTable{
@@ -127,6 +140,7 @@ func txEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -134,7 +148,7 @@ func txEditTable(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func tableList(w http.ResponseWriter, r *http.Request, data *apiData) error {
-
+	logger.LogDebug(consts.FuncStarted, "")
 	limit := int(data.params[`limit`].(int64))
 	if limit == 0 {
 		limit = 25
@@ -144,12 +158,14 @@ func tableList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	outList := make([]tableItem, 0)
 	count, err := model.Single(`SELECT count(*) FROM "` + getPrefix(data) + `_tables"`).String()
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	list, err := model.GetAll(`SELECT name FROM "`+getPrefix(data)+`_tables" order by name`+
 		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
 	if err != nil {
+		logger.LogError(consts.DBError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -161,6 +177,7 @@ func tableList(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.EditColumn{
 		Header:      getSignHeader(`EditColumn`, data),
 		TableName:   data.params[`table`].(string),
@@ -172,8 +189,10 @@ func txPreEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) erro
 }
 
 func txEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`EditColumn`, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.EditColumn{
@@ -184,6 +203,7 @@ func txEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogError(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash
@@ -191,6 +211,7 @@ func txEditColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
 }
 
 func txPreNewColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	v := tx.NewColumn{
 		Header:      getSignHeader(`NewColumn`, data),
 		TableName:   data.params[`table`].(string),
@@ -204,8 +225,10 @@ func txPreNewColumn(w http.ResponseWriter, r *http.Request, data *apiData) error
 }
 
 func txNewColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
+	logger.LogDebug(consts.FuncStarted, "")
 	header, err := getHeader(`NewColumn`, data)
 	if err != nil {
+		logger.LogError(consts.GetHeaderError, err)
 		return errorAPI(w, err.Error(), http.StatusBadRequest)
 	}
 	toSerialize := tx.NewColumn{
@@ -218,6 +241,7 @@ func txNewColumn(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	hash, err := sendEmbeddedTx(header.Type, header.UserID, toSerialize)
 	if err != nil {
+		logger.LogDebug(consts.SendEmbeddedTxError, err)
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	data.result = hash

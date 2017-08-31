@@ -44,7 +44,7 @@ func (c *Controller) AjaxGetCnt() interface{} {
 
 	id, err := strconv.ParseInt(c.r.FormValue(`id`), 10, 64)
 	if err != nil {
-		logger.LogInfo(consts.StrtoInt64Error, c.r.FormValue("id"))
+		logger.LogInfo(consts.StrToIntError, c.r.FormValue("id"))
 	}
 	if id > 0 {
 		contract := smart.GetContractByID(int32(id))

@@ -62,12 +62,12 @@ func (c *Controller) EditWallet() (string, error) {
 		if idaddr[0] == '-' {
 			id, err = strconv.ParseInt(idaddr, 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, idaddr)
+				logger.LogInfo(consts.StrToIntError, idaddr)
 			}
 		} else if strings.IndexByte(idaddr, '-') < 0 {
 			addr, err := strconv.ParseInt(idaddr, 10, 64)
 			if err != nil {
-				logger.LogInfo(consts.StrtoInt64Error, idaddr)
+				logger.LogInfo(consts.StrToIntError, idaddr)
 			}
 			id = addr
 		} else {
