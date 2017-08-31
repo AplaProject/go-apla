@@ -69,7 +69,18 @@ func ExecSchemaEcosystem(id int, wallet int64) error {
 	if err != nil {
 		return err
 	}
-	return DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
+	err = DBConn.Exec(fmt.Sprintf(string(schema), id, wallet)).Error
+	if err != nil {
+		return err
+	}
+	if id == 1 {
+		schema, err = static.Asset("static/schema-firstecosystem-v2.sql")
+		if err != nil {
+			return err
+		}
+		err = DBConn.Exec(fmt.Sprintf(string(schema), wallet)).Error
+	}
+	return err
 }
 
 func ExecSchema() error {
