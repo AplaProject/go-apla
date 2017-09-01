@@ -89,7 +89,11 @@ func (p *Parser) selectiveLoggingAndUpd(fields []string, ivalues []interface{}, 
 	addSQLWhere := ""
 	if whereFields != nil && whereValues != nil {
 		for i := 0; i < len(whereFields); i++ {
-			addSQLWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
+			if val := converter.StrToInt64(whereValues[i]); val != 0 {
+				addSQLWhere += whereFields[i] + "= " + whereValues[i] + " AND "
+			} else {
+				addSQLWhere += whereFields[i] + "= '" + whereValues[i] + "' AND "
+			}
 		}
 	}
 	if len(addSQLWhere) > 0 {

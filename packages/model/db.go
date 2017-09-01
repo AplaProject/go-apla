@@ -91,11 +91,11 @@ func GetTables() ([]string, error) {
 }
 
 func Update(tblname, set, where string) error {
-	return DBConn.Exec("UPDATE " + tblname + " SET " + set + " " + where).Error
+	return DBConn.Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
-	return DBConn.Exec("DELETE FROM " + tblname + " " + where).Error
+	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
 func InsertReturningLastID(table, columns, values string) (string, error) {
@@ -313,7 +313,6 @@ func SendTx(txType int64, adminWallet int64, data []byte) (hash []byte, err erro
 	if err != nil {
 		return nil, err
 	}
-	hash = converter.BinToHex(hash)
 	ts := &TransactionStatus{
 		Hash:      hash,
 		Time:      time.Now().Unix(),

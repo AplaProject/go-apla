@@ -31,10 +31,9 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 	if len(where) > 0 {
 		where = " WHERE " + where
 	}
-	tblname := converter.EscapeName(table)
 	// получим rb_id, по которому можно найти данные, которые были до этого
 	// we obtain rb_id with help of that it is possible to find the data which was before
-	rbID, err := model.GetRollbackID(tblname, where, "desc")
+	rbID, err := model.GetRollbackID(table, where, "desc")
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -62,7 +61,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 			}
 		}
 		addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
-		err = model.Update(tblname, addSQLUpdate, where)
+		err = model.Update(table, addSQLUpdate, where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -75,7 +74,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 		}
 		p.rollbackAI("rollback", 1)
 	} else {
-		err = model.Delete(tblname, where)
+		err = model.Delete(table, where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

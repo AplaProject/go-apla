@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
@@ -65,7 +66,10 @@ func (c *Controller) EditTable() (string, error) {
 
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	err = table.Get(tableName)
+	found, err := table.Get(tableName)
+	if !found {
+		return "", utils.ErrInfo(fmt.Errorf("Table not found"))
+	}
 
 	if err != nil {
 		return "", utils.ErrInfo(err)

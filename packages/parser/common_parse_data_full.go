@@ -112,11 +112,9 @@ func (p *Parser) ParseDataFull(blockGenerator bool) error {
 			}
 
 			hashFull, err := crypto.Hash(transactionBinaryDataFull)
-			hashFull = converter.BinToHex(hashFull)
 			if err != nil {
 				log.Fatal(err)
 			}
-			// hashFull = converter.BinToHex(hashFull)
 			logging.WriteSelectiveLog("UPDATE transactions SET used=1 WHERE hex(hash) = " + string(hashFull))
 			affect, err := model.MarkTransactionUsed(hashFull)
 			if err != nil {

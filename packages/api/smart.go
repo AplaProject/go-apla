@@ -393,6 +393,6 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 		append([]byte{128}, serializedData...)); err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
-	data.result = &hashTx{Hash: string(hash)}
+	data.result = &hashTx{Hash: string(converter.BinToHex(hash))}
 	return nil
 }

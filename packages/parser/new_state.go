@@ -99,7 +99,7 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		return
 	}
 	sc := &model.SmartContract{
-		Name: "Main condition",
+		Name: "MainCondition",
 		Value: []byte(`contract MainCondition {
 			data {}
 			conditions {

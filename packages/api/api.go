@@ -128,7 +128,7 @@ func sendEmbeddedTx(txType int, userID int64, toSerialize interface{}) (*hashTx,
 		append(converter.DecToBin(int64(txType), 1), serializedData...)); err != nil {
 		return nil, err
 	}
-	return &hashTx{Hash: string(hash)}, nil
+	return &hashTx{Hash: string(converter.BinToHex(hash))}, nil
 }
 
 // DefaultHandler is a common handle function for api requests

@@ -23,11 +23,11 @@ func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, 
 	return result, err
 }
 
-func (sp *SystemParameter) GetValueParameterByName(name, value string) (string, error) {
-	var result string
+func (sp *SystemParameter) GetValueParameterByName(name, value string) (*string, error) {
+	var result *string
 	err := DBConn.Raw(`SELECT value->'`+value+`' FROM system_parameters WHERE name = ?`, name).Row().Scan(&result)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	return result, nil
 }

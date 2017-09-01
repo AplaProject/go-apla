@@ -23,8 +23,12 @@ func (t *Table) TableName() string {
 	return t.tableName
 }
 
-func (t *Table) Get(name string) error {
-	return DBConn.Where("name = ?", name).First(t).Error
+func (t *Table) Get(name string) (bool, error) {
+	query := DBConn.Where("name = ?", name).First(t)
+	if query.RecordNotFound() {
+		return false, nil
+	}
+	return true, query.Error
 }
 
 func (t *Table) Create() error {

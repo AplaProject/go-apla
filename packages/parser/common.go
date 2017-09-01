@@ -116,11 +116,11 @@ func IsCustomTable(table string) (isCustom bool, err error) {
 			prefix := table[:off]
 			tables := &model.Table{}
 			tables.SetTablePrefix(prefix)
-			err := tables.Get(table)
+			found, err := tables.Get(table)
 			if err != nil {
 				return false, err
 			}
-			if len(tables.Name) > 0 {
+			if found {
 				return true, nil
 			}
 		}
@@ -662,8 +662,11 @@ func (p *Parser) getEGSPrice(name string) (decimal.Decimal, error) {
 	if err != nil {
 		return decimal.New(0, 0), p.ErrInfo(err)
 	}
+	if fPrice == nil {
+		return decimal.New(0, 0), nil
+	}
 	p.TxCost = 0
-	p.TxUsedCost, _ = decimal.NewFromString(fPrice)
+	p.TxUsedCost, _ = decimal.NewFromString(*fPrice)
 	systemParam := &model.SystemParameter{}
 	err = systemParam.Get("fuel_rate")
 	if err != nil {

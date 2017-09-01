@@ -98,7 +98,10 @@ func (p *EditTableParser) Action() error {
 	tblname := p.EditTable.Name
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	err := table.Get(tblname)
+	found, err := table.Get(tblname)
+	if !found {
+		return fmt.Errorf("table not found: %s", tblname)
+	}
 	if err != nil {
 		return err
 	}

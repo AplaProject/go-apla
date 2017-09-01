@@ -17,7 +17,6 @@
 package api
 
 import (
-	"encoding/hex"
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -31,16 +30,14 @@ type txstatusResult struct {
 
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var status txstatusResult
-	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
-		return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
-	}
 	ts := &model.TransactionStatus{}
-	notFound, err := ts.Get([]byte(data.params["hash"].(string)))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
+	binTx := converter.HexToBin(data.params["hash"])
+	notFound, err := ts.Get(binTx)
 	if notFound {
 		return errorAPI(w, `hash has not been found`, http.StatusBadRequest)
+	}
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
