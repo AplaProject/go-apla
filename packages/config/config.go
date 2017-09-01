@@ -40,9 +40,15 @@ func Read() error {
 	return nil
 }
 
+func IsExist() bool {
+	path := *utils.Dir + "/" + configFileName
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
+}
+
 func Save(logLevel, installType string, dbConf *DBConfig) error {
 	path := *utils.Dir + "/" + configFileName
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if !IsExist() {
 		ioutil.WriteFile(path, []byte(``), 0644)
 	}
 	confIni, err := config.NewConfig("ini", path)
