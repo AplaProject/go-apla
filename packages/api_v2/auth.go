@@ -17,8 +17,51 @@
 package api_v2
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
+
+	"github.com/dgrijalva/jwt-go"
 )
+
+var (
+	jwtSecret = "test" // To change !!!
+)
+
+type JWTClaims struct {
+	UID    string `json:"uid"`
+	State  string `json:"state,omitempty"`
+	Wallet string `json:"wallet,omitempty"`
+	jwt.StandardClaims
+}
+
+func jwtToken(r *http.Request) (*jwt.Token, error) {
+	auth := r.Header.Get(`Authorization`)
+	if len(auth) == 0 {
+		return nil, nil
+	}
+	if strings.HasPrefix(auth, jwtPrefix) {
+		auth = auth[len(jwtPrefix):]
+	} else {
+		return nil, fmt.Errorf(`wrong authorization value`)
+	}
+	return jwt.ParseWithClaims(auth, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	})
+}
+
+func jwtSave(w http.ResponseWriter, claims JWTClaims) error {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Authorization", jwtPrefix+signedToken)
+	return nil
+}
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if data.wallet == 0 {

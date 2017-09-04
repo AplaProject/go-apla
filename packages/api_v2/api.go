@@ -28,10 +28,15 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
-	"github.com/astaxie/beego/session"
+	"github.com/dgrijalva/jwt-go"
 	hr "github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
 	"gopkg.in/vmihailenco/msgpack.v2"
+)
+
+const (
+	jwtPrefix = "Bearer "
+	jwtExpire = 36000 // By default, seconds
 )
 
 type apiData struct {
@@ -40,6 +45,7 @@ type apiData struct {
 	params map[string]interface{}
 	state  int64
 	wallet int64
+	token  *jwt.Token
 	//	sess   session.SessionStore
 }
 
@@ -63,17 +69,14 @@ const (
 type apiHandle func(http.ResponseWriter, *http.Request, *apiData) error
 
 var (
-	log     = logging.MustGetLogger("api")
-	apiSess *session.Manager
+	log = logging.MustGetLogger("api")
 )
 
-// SetSession must be called for assigning session
-func SetSession(s *session.Manager) {
-	apiSess = s
-}
-
 func errorAPI(w http.ResponseWriter, msg string, code int) error {
-	http.Error(w, msg, code)
+	//	http.Error(w, fmt.Sprintf(`{"error": %q}`, msg), code)
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+	fmt.Fprintln(w, fmt.Sprintf(`{"error": %q}`, msg))
 	return fmt.Errorf(msg)
 }
 
@@ -131,25 +134,21 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 				log.Error("API Recovered", r)
 			}
 		}()
-		if apiSess == nil {
-			errorAPI(w, `Session is undefined`, http.StatusForbidden)
-			return
-		}
-		sess, err := apiSess.SessionStart(w, r)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		token, err := jwtToken(r)
 		if err != nil {
-			errorAPI(w, err.Error(), http.StatusInternalServerError)
+			errorAPI(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if sess.Get(`wallet`) != nil {
-			data.wallet = sess.Get(`wallet`).(int64)
+		data.token = token
+		if token != nil && token.Valid {
+			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
+				data.state = converter.StrToInt64(claims.State)
+				data.wallet = converter.StrToInt64(claims.Wallet)
+				w.Header().Set("Authorization", jwtPrefix+token.Raw)
+			}
 		}
-		if sess.Get(`state`) != nil {
-			data.state = sess.Get(`state`).(int64)
-		}
-		if data.state == 0 {
-			data.state = 1
-		}
-		sess.SessionRelease(w)
 		// Getting and validating request parameters
 		r.ParseForm()
 		data.params = make(map[string]interface{})
@@ -186,7 +185,6 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			errorAPI(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.Write(jsonResult)
 	})
 }

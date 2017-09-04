@@ -19,30 +19,35 @@ package api_v2
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
 	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	"github.com/dgrijalva/jwt-go"
 )
 
 type loginResult struct {
+	State   string `json:"state,omitempty"`
+	Wallet  string `json:"wallet,omitempty"`
 	Address string `json:"address"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var msg string
-	sess, err := apiSess.SessionStart(w, r)
+
+	curToken, err := jwtToken(r)
 	if err != nil {
-		return err
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
-	defer sess.SessionRelease(w)
-	switch uid := sess.Get(`uid`).(type) {
-	case string:
-		msg = uid
-	default:
+	if curToken != nil && curToken.Valid {
+		if claims, ok := curToken.Claims.(*JWTClaims); ok {
+			msg = claims.UID
+		}
+	}
+	if len(msg) == 0 {
 		return errorAPI(w, "unknown uid", http.StatusBadRequest)
 	}
-
 	pubkey := data.params[`pubkey`].([]byte)
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
@@ -52,6 +57,9 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		return errorAPI(w, `signature is incorrect`, http.StatusBadRequest)
 	}
 	state := data.params[`state`].(int64)
+	if state == 0 {
+		state = 1
+	}
 	address := crypto.KeyToAddress(pubkey)
 	wallet := crypto.Address(pubkey)
 	if state > 1 {
@@ -70,9 +78,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		}
 	}
 
-	data.result = &loginResult{Address: address}
-	sess.Set("wallet", wallet)
-	sess.Set("address", address)
-	sess.Set("state", state)
-	return nil
+	result := loginResult{State: converter.Int64ToStr(state), Wallet: converter.Int64ToStr(wallet),
+		Address: address}
+	data.result = &result
+	claims := JWTClaims{
+		Wallet: result.Wallet,
+		State:  result.State,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Second * jwtExpire).Unix(),
+		},
+	}
+	return jwtSave(w, claims)
 }

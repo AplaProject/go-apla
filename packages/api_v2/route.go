@@ -54,7 +54,7 @@ func Route(route *hr.Router) {
 	post(`install`, `?dir ?tcp_host ?first_block_dir ?http_port ?first_load_blockchain_url ?first_load 
 	db_type log_level type host port db_name password username:string,?generate_first_block:int64`,
 		install)
-	post(`login`, `pubkey signature:hex,?state:int64`, login)
+	post(`login`, `pubkey signature:hex,?state ?expire:int64`, login)
 	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`signtest/`, `forsign private:string`, signTest)
 }

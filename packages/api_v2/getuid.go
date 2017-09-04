@@ -21,9 +21,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EGaaS/go-egaas-mvp/packages/config"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/model"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 var (
@@ -32,9 +34,10 @@ var (
 
 type getUIDResult struct {
 	UID     string `json:"uid"`
-	State   int64  `json:"state"`
-	Wallet  int64  `json:"wallet"`
-	Address string `json:"address"`
+	Expire  string `json:"expire,omitempty"`
+	State   string `json:"state,omitempty"`
+	Wallet  string `json:"wallet,omitempty"`
+	Address string `json:"address,omitempty"`
 }
 
 // If State == 0 then APLA has not been installed
@@ -44,19 +47,31 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var result getUIDResult
 
 	data.result = &result
-	if !installed {
+
+	curToken, err := jwtToken(r)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	if curToken != nil && curToken.Valid {
+		if claims, ok := curToken.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
+			result.State = claims.State
+			result.Expire = converter.Int64ToStr(claims.ExpiresAt)
+			result.Wallet = claims.Wallet
+			return nil
+		}
+	}
+	/*	if !installed {
 		if model.DBConn == nil && !config.IsExist() {
 			return nil
 		}
 		installed = true
-	}
+	}*/
 	result.UID = converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
-	sess, err := apiSess.SessionStart(w, r)
-	if err != nil {
-		return err
+	claims := JWTClaims{
+		UID: result.UID,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Second * 5).Unix(),
+		},
 	}
-
-	sess.Set("uid", result.UID)
-	sess.SessionRelease(w)
-	return nil
+	return jwtSave(w, claims)
 }

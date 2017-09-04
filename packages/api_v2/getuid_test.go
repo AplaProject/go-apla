@@ -17,9 +17,11 @@
 package api_v2
 
 import (
-	"fmt"
+	"encoding/hex"
 	"net/url"
 	"testing"
+
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
 )
 
 func TestGetUID(t *testing.T) {
@@ -29,8 +31,7 @@ func TestGetUID(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println(`RET`, ret)
-	if ret.State == 0 {
+	/*	if ret.State == 0 {
 		var instRes installResult
 		err := sendPost(`install`, &url.Values{`port`: {`5432`}, `host`: {`3330000`}}, &instRes)
 		if err != nil {
@@ -38,26 +39,26 @@ func TestGetUID(t *testing.T) {
 			return
 		}
 		fmt.Println(`INSTALL`, instRes)
+	}*/
+	if len(ret.UID) == 0 {
+		t.Errorf(`getuid has returned empty uid`)
+	} else {
+		priv, pub, err := crypto.GenHexKeys()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		sign, err := crypto.Sign(priv, ret.UID)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
+		var lret loginResult
+		err = sendPost(`login`, &form, &lret)
+		if err != nil {
+			t.Error(err)
+			return
+		}
 	}
-	//	if ret[`state`]
-	/*	if uid, ok := ret[`uid`]; !ok {
-			t.Errorf(`getuid has returned empty uid`)
-		} else {
-			priv, pub, err := crypto.GenHexKeys()
-			if err != nil {
-				t.Error(err)
-				return
-			}
-			sign, err := crypto.Sign(priv, uid.(string))
-			if err != nil {
-				t.Error(err)
-				return
-			}
-			form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
-			ret, err = sendPost(`login`, &form)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-		}*/
 }

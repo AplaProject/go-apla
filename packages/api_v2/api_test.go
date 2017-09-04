@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	gCookie           string
+	gAuth             string
 	gAddress          string
 	gPrivate, gPublic string
 )
@@ -54,22 +54,16 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	if len(gCookie) > 0 {
-		req.Header.Set("Cookie", gCookie)
-	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	//	req.Header.Set("Connection", `keep-alive`)
+	if len(gAuth) > 0 {
+		req.Header.Set("Authorization", gAuth)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
-	var cookie []string
-	for _, val := range resp.Cookies() {
-		cookie = append(cookie, fmt.Sprintf(`%s=%s`, val.Name, val.Value))
-	}
-	if len(cookie) > 0 {
-		gCookie = strings.Join(cookie, `;`)
-	}
+	gAuth = resp.Header.Get(`Authorization`)
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
