@@ -50,8 +50,12 @@ func (fn *FullNode) FindNodeById(nodeid int64) error {
 	return handleError(DBConn.Where("id = ?", nodeid).First(fn).Error)
 }
 
-func (fn *FullNode) Create() error {
-	return DBConn.Create(fn).Error
+func (fn *FullNode) Create(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Create(fn).Error
 }
 
 func FullNodeCreateTable() error {

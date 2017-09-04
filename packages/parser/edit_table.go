@@ -121,7 +121,7 @@ func (p *EditTableParser) Action() error {
 		return err
 	}
 	rollback := &model.Rollback{Data: string(jsonData), BlockID: p.BlockData.BlockID}
-	err = rollback.Create()
+	err = rollback.Create(p.DbTransaction)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (p *EditTableParser) Action() error {
 			return err
 		}
 		t := &model.Table{}
-		_, err = t.SetActionByName(tableName, tblname, action, actions[action], rollback.RbID)
+		_, err = t.SetActionByName(p.DbTransaction, tableName, tblname, action, actions[action], rollback.RbID)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -148,7 +148,7 @@ func (p *EditTableParser) Action() error {
 		TxHash:    p.TxHash,
 		NameTable: tableName,
 		TableID:   p.EditTable.Name}
-	err = rollbackTx.Create()
+	err = rollbackTx.Create(p.DbTransaction)
 	if err != nil {
 		return err
 	}

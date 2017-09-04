@@ -125,12 +125,12 @@ func (p *NewColumnParser) Action() error {
 		return err
 	}
 	rb := &model.Rollback{Data: string(jsonData), BlockID: p.BlockData.BlockID}
-	err = rb.Create()
+	err = rb.Create(p.DbTransaction)
 	if err != nil {
 		return err
 	}
 	tableM := &model.Table{}
-	_, err = tableM.SetActionByName(table, p.NewColumn.TableName, "update, "+p.NewColumn.ColumnName, p.NewColumn.Permissions, rb.RbID)
+	_, err = tableM.SetActionByName(p.DbTransaction, table, p.NewColumn.TableName, "update, "+p.NewColumn.ColumnName, p.NewColumn.Permissions, rb.RbID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -141,7 +141,7 @@ func (p *NewColumnParser) Action() error {
 		NameTable: table,
 		TableID:   p.NewColumn.TableName,
 	}
-	err = rbTx.Create()
+	err = rbTx.Create(p.DbTransaction)
 	if err != nil {
 		log.Errorf("something wrong: %s", err)
 		//return err
@@ -163,13 +163,13 @@ func (p *NewColumnParser) Action() error {
 		colType = `double precision`
 	}
 
-	err = model.AlterTableAddColumn(tblname, p.NewColumn.ColumnName, colType)
+	err = model.AlterTableAddColumn(p.DbTransaction, tblname, p.NewColumn.ColumnName, colType)
 	if err != nil {
 		return err
 	}
 
 	if p.NewColumn.Index == "1" {
-		err = model.CreateIndex(tblname+"_"+p.NewColumn.ColumnName+"_index", tblname, p.NewColumn.ColumnName)
+		err = model.CreateIndex(p.DbTransaction, tblname+"_"+p.NewColumn.ColumnName+"_index", tblname, p.NewColumn.ColumnName)
 		if err != nil {
 			return err
 		}

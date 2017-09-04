@@ -205,7 +205,7 @@ func (p *DLTTransferParser) Action() error {
 		Time:                   p.BlockData.Time,
 		BlockID:                p.BlockData.BlockID,
 	}
-	err = dltTransaction.Create()
+	err = dltTransaction.Create(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -215,7 +215,7 @@ func (p *DLTTransferParser) Action() error {
 		NameTable: "dlt_transactions",
 		TableID:   converter.Int64ToStr(dltTransaction.ID),
 	}
-	err = rollbackTx.Create()
+	err = rollbackTx.Create(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

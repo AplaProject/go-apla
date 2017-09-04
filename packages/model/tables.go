@@ -32,8 +32,12 @@ func (t *Table) Get(name string) (bool, error) {
 	return true, query.Error
 }
 
-func (t *Table) Create() error {
-	return DBConn.Create(t).Error
+func (t *Table) Create(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Create(t).Error
 }
 
 func (t *Table) Delete() error {
@@ -129,14 +133,22 @@ func (t *Table) GetPermissions(name, jsonKey string) (map[string]string, error) 
 	return result, nil
 }
 
-func (t *Table) SetActionByName(table, name, action, actionValue string, rbID int64) (int64, error) {
+func (t *Table) SetActionByName(transaction *DbTransaction, table, name, action, actionValue string, rbID int64) (int64, error) {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
 	log.Debugf("set action by name: name = %s, actions = %s, actionsValue = %s", name, action, actionValue)
-	query := DBConn.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
+	query := db.Exec(`UPDATE "`+table+`" SET columns_and_permissions = jsonb_set(columns_and_permissions, '{`+action+`}', ?, true), rb_id = ? WHERE name = ?`, `"`+converter.EscapeForJSON(actionValue)+`"`, rbID, name)
 	return query.RowsAffected, query.Error
 }
 
-func CreateStateTablesTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_tables" (
+func CreateStateTablesTable(transaction *DbTransaction, stateID string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`CREATE TABLE "` + stateID + `_tables" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"columns_and_permissions" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -146,8 +158,12 @@ func CreateStateTablesTable(stateID string) error {
 	`).Error
 }
 
-func CreateTable(tableName, colsSQL string) error {
-	return DBConn.Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
+func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`CREATE SEQUENCE "` + tableName + `_id_seq" START WITH 1;
 				CREATE TABLE "` + tableName + `" (
 				"id" bigint NOT NULL  default nextval('` + tableName + `_id_seq'),
 				` + colsSQL + `

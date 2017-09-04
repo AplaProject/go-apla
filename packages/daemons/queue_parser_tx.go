@@ -27,14 +27,11 @@ import (
 
 // QueueParserTx parses transaction from the queue
 func QueueParserTx(d *daemon, ctx context.Context) error {
-	lock, err := DbLock(ctx, d.goRoutineName)
-	if !lock || err != nil {
-		return err
-	}
-	defer DbUnlock(d.goRoutineName)
+	DBLock()
+	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
-	err = infoBlock.GetInfoBlock()
+	err := infoBlock.GetInfoBlock()
 	if err != nil {
 		return err
 	}

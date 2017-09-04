@@ -46,6 +46,29 @@ func GormClose() error {
 	return nil
 }
 
+type DbTransaction struct {
+	conn *gorm.DB
+}
+
+func StartTransaction() (*DbTransaction, error) {
+	conn := DBConn.Begin()
+	if conn.Error != nil {
+		return nil, conn.Error
+	}
+
+	return &DbTransaction{
+		conn: conn,
+	}, nil
+}
+
+func (tr *DbTransaction) Rollback() {
+	tr.conn.Rollback()
+}
+
+func (tr *DbTransaction) Commit() error {
+	return tr.conn.Commit().Error
+}
+
 func DropTables() error {
 	return DBConn.Exec(`
 	DO $$ DECLARE
@@ -90,22 +113,31 @@ func GetTables() ([]string, error) {
 	return result, err
 }
 
-func Update(tblname, set, where string) error {
-	return DBConn.Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
+func Update(transaction *DbTransaction, tblname, set, where string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`UPDATE "` + tblname + `" SET ` + set + " " + where).Error
 }
 
 func Delete(tblname, where string) error {
 	return DBConn.Exec(`DELETE FROM "` + tblname + `" ` + where).Error
 }
 
-func InsertReturningLastID(table, columns, values string) (string, error) {
+func InsertReturningLastID(transaction *DbTransaction, table, columns, values string) (string, error) {
 	var result string
 	returning, err := GetFirstColumnName(table)
 	if err != nil {
 		return "", err
 	}
 	insertQuery := `INSERT INTO "` + table + `" (` + columns + `) VALUES (` + values + `) RETURNING ` + returning
-	err = DBConn.Raw(insertQuery).Row().Scan(&result)
+
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	err = db.Raw(insertQuery).Row().Scan(&result)
 	if err != nil {
 		return "", err
 	}
@@ -365,16 +397,25 @@ func GetMyWalletID() (int64, error) {
 	return walletID, nil
 }
 
-func AlterTableAddColumn(tableName, columnName, columnType string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
+func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, columnType string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+
+	return db.Exec(`ALTER TABLE "` + tableName + `" ADD COLUMN ` + columnName + ` ` + columnType).Error
 }
 
 func AlterTableDropColumn(tableName, columnName string) error {
 	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN ` + columnName).Error
 }
 
-func CreateIndex(indexName, tableName, onColumn string) error {
-	return DBConn.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
+func CreateIndex(transaction *DbTransaction, indexName, tableName, onColumn string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`CREATE INDEX "` + indexName + `_index" ON "` + tableName + `" (` + onColumn + `)`).Error
 }
 
 func IsTable(tblname string) bool {

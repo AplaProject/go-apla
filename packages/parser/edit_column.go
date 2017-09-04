@@ -105,12 +105,12 @@ func (p *EditColumnParser) Action() error {
 	rb := &model.Rollback{
 		Data:    string(jsonData),
 		BlockID: p.BlockData.BlockID}
-	err = rb.Create()
+	err = rb.Create(p.DbTransaction)
 	if err != nil {
 		return err
 	}
 	tableM := &model.Table{}
-	_, err = tableM.SetActionByName(table, p.EditColumn.TableName, "update, "+p.EditColumn.ColumnName, p.EditColumn.Permissions, rb.RbID)
+	_, err = tableM.SetActionByName(p.DbTransaction, table, p.EditColumn.TableName, "update, "+p.EditColumn.ColumnName, p.EditColumn.Permissions, rb.RbID)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -121,7 +121,7 @@ func (p *EditColumnParser) Action() error {
 		NameTable: table,
 		TableID:   p.EditColumn.TableName,
 	}
-	err = rbTx.Create()
+	err = rbTx.Create(p.DbTransaction)
 	if err != nil {
 		return err
 	}

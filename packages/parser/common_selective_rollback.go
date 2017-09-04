@@ -57,7 +57,7 @@ func (p *Parser) selectiveRollback(table string, where string, rollbackAI bool) 
 			}
 		}
 		addSQLUpdate = addSQLUpdate[0 : len(addSQLUpdate)-1]
-		err = model.Update(table, addSQLUpdate, where)
+		err = model.Update(p.DbTransaction, table, addSQLUpdate, where)
 		if err != nil {
 			return p.ErrInfo(err)
 		}

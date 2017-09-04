@@ -53,8 +53,12 @@ func (w *DltWallet) IsExists() (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
-func (w *DltWallet) Create() error {
-	return DBConn.Create(w).Error
+func (w *DltWallet) Create(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Create(w).Error
 }
 
 func (w *DltWallet) GetVotes(limit int) ([]map[string]string, error) {

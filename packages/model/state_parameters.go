@@ -50,8 +50,12 @@ func (sp *StateParameter) ToMap() map[string]string {
 	return result
 }
 
-func CreateStateTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_state_parameters" (
+func CreateStateTable(transaction *DbTransaction, stateID string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`CREATE TABLE "` + stateID + `_state_parameters" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"value" text  NOT NULL DEFAULT '',
 				"bytecode" bytea  NOT NULL DEFAULT '',
@@ -62,8 +66,12 @@ func CreateStateTable(stateID string) error {
 		`_state_parameters_pkey" PRIMARY KEY (name);`).Error
 }
 
-func CreateStateConditions(stateID string, sid string, psid string, currency string, country string, walletID int64) error {
-	return DBConn.Exec(`INSERT INTO "`+stateID+`_state_parameters" (name, value, bytecode, conditions) VALUES
+func CreateStateConditions(transaction *DbTransaction, stateID string, sid string, psid string, currency string, country string, walletID int64) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`INSERT INTO "`+stateID+`_state_parameters" (name, value, bytecode, conditions) VALUES
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
 		(?, ?, ?, ?),
@@ -104,8 +112,12 @@ func CreateStateConditions(stateID string, sid string, psid string, currency str
 		"citizenship_price", "1000000", "", psid).Error
 }
 
-func CreateStateAnonymsTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_anonyms" (
+func CreateStateAnonymsTable(transaction *DbTransaction, stateID string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`CREATE TABLE "` + stateID + `_anonyms" (
 				"id_citizen" bigint NOT NULL DEFAULT '0',
 				"id_anonym" bigint NOT NULL DEFAULT '0',
 				"encrypted" bytea  NOT NULL DEFAULT ''

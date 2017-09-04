@@ -81,21 +81,21 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 	}
 	id = converter.Int64ToStr(systemState.ID)
 	rollbackTx := model.RollbackTx{BlockID: p.BlockData.BlockID, TxHash: p.TxHash, NameTable: "system_states", TableID: id}
-	err = rollbackTx.Create()
+	err = rollbackTx.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
-	err = model.CreateStateTable(id)
+	err = model.CreateStateTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
 	sid := `ContractConditions("MainCondition")` //`$citizen == ` + utils.Int64ToStr(p.TxWalletID) // id + `_citizens.id=` + utils.Int64ToStr(p.TxWalletID)
 	psid := sid                                  //fmt.Sprintf(`Eval(StateParam(%s, "main_conditions"))`, id) //id+`_state_parameters.main_conditions`
-	err = model.CreateStateConditions(id, sid, psid, currency, country, p.TxWalletID)
+	err = model.CreateStateConditions(p.DbTransaction, id, sid, psid, currency, country, p.TxWalletID)
 	if err != nil {
 		return
 	}
-	err = model.CreateSmartContractTable(id)
+	err = model.CreateSmartContractTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
@@ -114,18 +114,18 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		WalletID: p.TxWalletID,
 		Active:   "1"}
 	sc.SetTablePrefix(id)
-	err = sc.Create()
+	err = sc.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 	scu := &model.SmartContract{}
 	scu.SetTablePrefix(id)
-	err = scu.UpdateConditions(sid)
+	err = scu.UpdateConditions(p.DbTransaction, sid)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStateTablesTable(id)
+	err = model.CreateStateTablesTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
@@ -147,12 +147,12 @@ func (p *NewStateParser) Main(country, currency string) (id string, err error) {
 		Conditions:            psid,
 	}
 	t.SetTablePrefix(id)
-	err = t.Create()
+	err = t.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStatePagesTable(id)
+	err = model.CreateStatePagesTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
@@ -217,7 +217,7 @@ PageEnd:
 		Conditions: sid,
 	}
 	firstPage.SetTablePrefix(id)
-	err = firstPage.Create()
+	err = firstPage.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
@@ -228,12 +228,12 @@ PageEnd:
 		Conditions: sid,
 	}
 	secondPage.SetTablePrefix(id)
-	err = secondPage.Create()
+	err = secondPage.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStateMenuTable(id)
+	err = model.CreateStateMenuTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
@@ -244,7 +244,7 @@ PageEnd:
 		Conditions: sid,
 	}
 	firstMenu.SetTablePrefix(id)
-	err = firstMenu.Create()
+	err = firstMenu.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
@@ -267,12 +267,12 @@ MenuBack(Welcome)`,
 		Conditions: sid,
 	}
 	secondMenu.SetTablePrefix(id)
-	err = secondMenu.Create()
+	err = secondMenu.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateCitizensStateTable(id)
+	err = model.CreateCitizensStateTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
@@ -285,30 +285,30 @@ MenuBack(Welcome)`,
 
 	citizen := &model.Citizen{ID: p.TxWalletID, PublicKey: dltWallet.PublicKey}
 	citizen.SetTablePrefix(id)
-	err = citizen.Create()
+	err = citizen.Create(p.DbTransaction)
 	if err != nil {
 		return
 	}
-	err = model.CreateLanguagesStateTable(id)
+	err = model.CreateLanguagesStateTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
-	err = model.CreateStateDefaultLanguages(id, sid)
-	if err != nil {
-		return
-	}
-
-	err = model.CreateSignaturesStateTable(id)
+	err = model.CreateStateDefaultLanguages(p.DbTransaction, id, sid)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStateAppsTable(id)
+	err = model.CreateSignaturesStateTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}
 
-	err = model.CreateStateAnonymsTable(id)
+	err = model.CreateStateAppsTable(p.DbTransaction, id)
+	if err != nil {
+		return
+	}
+
+	err = model.CreateStateAnonymsTable(p.DbTransaction, id)
 	if err != nil {
 		return
 	}

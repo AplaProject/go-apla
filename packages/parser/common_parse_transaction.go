@@ -166,7 +166,6 @@ func (p *Parser) ParseTransaction(transactionBinaryData *[]byte) ([][]byte, *tx.
 			if err := converter.BinUnmarshal(&input, p.TxPtr); err != nil {
 				return nil, nil, err
 			}
-			p.TxVars = make(map[string]string)
 			head := consts.Header(p.TxPtr)
 			p.TxCitizenID = head.CitizenID
 			p.TxWalletID = head.WalletID

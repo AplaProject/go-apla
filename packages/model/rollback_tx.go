@@ -29,8 +29,12 @@ func (rt *RollbackTx) DeleteByHashAndTableName() error {
 	return DBConn.Where("tx_hash = ? and table_name = ?", rt.TxHash, rt.NameTable).Delete(rt).Error
 }
 
-func (rt *RollbackTx) Create() error {
-	return DBConn.Create(rt).Error
+func (rt *RollbackTx) Create(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Create(rt).Error
 }
 
 func (rt *RollbackTx) Get(transactionHash []byte, tableName string) error {

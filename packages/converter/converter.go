@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"bytes"
+
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
 	"github.com/shopspring/decimal"
 )
@@ -91,6 +93,27 @@ func DecodeLenInt64(data *[]byte) (int64, error) {
 	return x, nil
 }
 
+func DecodeLenInt64Buf(buf *bytes.Buffer) (int64, error) {
+	if buf.Len() == 0 {
+		return 0, nil
+	}
+
+	val, err := buf.ReadByte()
+	if err != nil {
+		return 0, err
+	}
+
+	length := int(val) + 1
+	if buf.Len() < length {
+		return 0, fmt.Errorf(`length of data %d < %d`, buf.Len(), length)
+	}
+	data := make([]byte, 8)
+	copy(data, buf.Next(length))
+
+	return int64(binary.LittleEndian.Uint64(data)), nil
+
+}
+
 // TODO перенести в конвертеры
 // DecodeLength decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
 //
@@ -115,6 +138,27 @@ func DecodeLength(buf *[]byte) (ret int64, err error) {
 	}
 	*buf = (*buf)[length+1:]
 	return
+}
+
+func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
+	if buf.Len() == 0 {
+		return 0, nil
+	}
+
+	length, err := buf.ReadByte()
+	if err != nil {
+		return 0, err
+	}
+
+	if (length & 0x80) == 0 {
+		return int(length), nil
+	}
+
+	length &= 0x7F
+	if buf.Len() < int(length+1) {
+		return 0, fmt.Errorf(`input slice has small size`)
+	}
+	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil
 }
 
 // TODO перенести в конвертеры
@@ -176,6 +220,94 @@ func BinMarshal(out *[]byte, v interface{}) (*[]byte, error) {
 		return out, fmt.Errorf(`unsupported type of BinMarshal`)
 	}
 	return out, nil
+}
+
+func BinUnmarshalBuff(buf *bytes.Buffer, v interface{}) error {
+	t := reflect.ValueOf(v)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	if buf.Len() == 0 {
+		return fmt.Errorf(`input slice is empty`)
+	}
+	switch t.Kind() {
+	case reflect.Uint8, reflect.Int8:
+		val, err := buf.ReadByte()
+		if err != nil {
+			return err
+		}
+		t.SetUint(uint64(val))
+
+	case reflect.Uint32:
+		t.SetUint(uint64(binary.BigEndian.Uint32(buf.Next(4))))
+
+	case reflect.Int32:
+		val, err := buf.ReadByte()
+		if err != nil {
+			return err
+		}
+		if val < 128 {
+			t.SetInt(int64(val))
+		} else {
+			var i uint8
+			size := val - 128
+			tmp := make([]byte, 4)
+			if buf.Len() <= int(size) || size > 4 {
+				return fmt.Errorf(`wrong input data`)
+			}
+			for ; i < size; i++ {
+				byteVal, err := buf.ReadByte()
+				if err != nil {
+					return err
+				}
+				tmp[4-size+i] = byteVal
+			}
+			t.SetInt(int64(binary.BigEndian.Uint32(tmp)))
+		}
+	case reflect.Float64:
+		t.SetFloat(bytes2Float(buf.Next(8)))
+
+	case reflect.Int64:
+		val, err := DecodeLenInt64Buf(buf)
+		if err != nil {
+			return err
+		}
+		t.SetInt(val)
+
+	case reflect.Uint64:
+		t.SetUint(binary.BigEndian.Uint64(buf.Next(8)))
+
+	case reflect.String:
+		val, err := DecodeLengthBuf(buf)
+		if err != nil {
+			return err
+		}
+		if buf.Len() < int(val) {
+			return fmt.Errorf(`input slice is short`)
+		}
+		t.SetString(string(buf.Next(val)))
+
+	case reflect.Struct:
+		for i := 0; i < t.NumField(); i++ {
+			if err := BinUnmarshalBuff(buf, t.Field(i).Addr().Interface()); err != nil {
+				return err
+			}
+		}
+	case reflect.Slice:
+		val, err := DecodeLengthBuf(buf)
+		if err != nil {
+			return err
+		}
+		if buf.Len() < int(val) {
+			return fmt.Errorf(`input slice is short`)
+		}
+		t.SetBytes(buf.Next(int(val)))
+
+	default:
+		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
+	}
+	return nil
+
 }
 
 // TODO перенести в конвертеры

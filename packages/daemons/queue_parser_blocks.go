@@ -35,18 +35,14 @@ import (
  *  - if there are errors, then roll back to the former data
  * */
 
-
 // QueueParserBlocks parses and applies blocks from the queue
 func QueueParserBlocks(d *daemon, ctx context.Context) error {
 
-	locked, err := DbLock(ctx, d.goRoutineName)
-	if !locked || err != nil {
-		return err
-	}
-	defer DbUnlock(d.goRoutineName)
+	DBLock()
+	defer DBUnlock()
 
 	infoBlock := &model.InfoBlock{}
-	err = infoBlock.GetInfoBlock()
+	err := infoBlock.GetInfoBlock()
 	if err != nil {
 		return err
 	}
@@ -82,11 +78,8 @@ func QueueParserBlocks(d *daemon, ctx context.Context) error {
 
 	blockID := queueBlock.BlockID
 
-	p := new(parser.Parser)
-	p.GoroutineName = d.goRoutineName
-
-	host := getHostPort(fullNode.Host)
-	err = p.GetBlocks(blockID, host, "rollback_blocks_1", d.goRoutineName, 7)
+	host := GetHostPort(fullNode.Host)
+	err = parser.GetBlocks(blockID, host, "rollback_blocks_1", 7)
 	if err != nil {
 		log.Error("v", err)
 		queueBlock.Delete()

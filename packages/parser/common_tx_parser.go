@@ -36,7 +36,7 @@ func (p *Parser) TxParser(hash, binaryTx []byte, myTx bool) error {
 	// get parameters for "struct" transactions
 	txType, walletID, citizenID := GetTxTypeAndUserID(binaryTx)
 
-	header, err := p.ParseDataGate(false)
+	header, err := CheckTransaction(binaryTx)
 	if err != nil {
 		log.Errorf("parse data gate error: %s", err)
 		p.processBadTransaction(hash, err.Error())

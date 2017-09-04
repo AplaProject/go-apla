@@ -21,8 +21,12 @@ func (ib *InfoBlock) GetInfoBlock() error {
 	return handleError(DBConn.Last(ib).Error)
 }
 
-func (ib *InfoBlock) Update() error {
-	return DBConn.Model(&InfoBlock{}).Updates(ib).Error
+func (ib *InfoBlock) Update(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Model(&InfoBlock{}).Updates(ib).Error
 }
 
 func (ib *InfoBlock) GetUnsent() (bool, error) {
@@ -41,8 +45,12 @@ func (ib *InfoBlock) Save() error {
 	return DBConn.Save(ib).Error
 }
 
-func (ib *InfoBlock) Create() error {
-	return DBConn.Create(ib).Error
+func (ib *InfoBlock) Create(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Create(ib).Error
 }
 
 func GetCurBlockID() (int64, error) {

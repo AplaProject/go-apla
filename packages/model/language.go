@@ -40,8 +40,12 @@ func (l *Language) IsExistsByName(name string) (bool, error) {
 	return !query.RecordNotFound(), query.Error
 }
 
-func CreateLanguagesStateTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_languages" (
+func CreateLanguagesStateTable(transaction *DbTransaction, stateID string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`CREATE TABLE "` + stateID + `_languages" (
 				"name" varchar(100)  NOT NULL DEFAULT '',
 				"res" jsonb,
 				"conditions" text  NOT NULL DEFAULT '',
@@ -51,8 +55,12 @@ func CreateLanguagesStateTable(stateID string) error {
 		`).Error
 }
 
-func CreateStateDefaultLanguages(stateID, conditions string) error {
-	return DBConn.Exec(`INSERT INTO "`+stateID+`_languages" (name, res, conditions) VALUES
+func CreateStateDefaultLanguages(transaction *DbTransaction, stateID, conditions string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`INSERT INTO "`+stateID+`_languages" (name, res, conditions) VALUES
 		(?, ?, ?),
 		(?, ?, ?),
 		(?, ?, ?),

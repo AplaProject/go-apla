@@ -174,13 +174,13 @@ func (p *NewTableParser) Action() error {
 			indexes = append(indexes, data[0])
 		}
 	}
-	err = model.CreateTable(tableName, colsSQL)
+	err = model.CreateTable(p.DbTransaction, tableName, colsSQL)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
 
 	for _, index := range indexes {
-		err := model.CreateIndex(tableName+"_"+index, tableName, index)
+		err := model.CreateIndex(p.DbTransaction, tableName+"_"+index, tableName, index)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -200,7 +200,7 @@ func (p *NewTableParser) Action() error {
 		ColumnsAndPermissions: string(jsonColumnsAndPerm),
 	}
 	t.SetTablePrefix(prefix)
-	err = t.Create()
+	err = t.Create(p.DbTransaction)
 	if err != nil {
 		return p.ErrInfo(err)
 	}

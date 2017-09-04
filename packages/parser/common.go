@@ -94,13 +94,13 @@ func GetNodePublicKeyWalletOrCB(walletID, stateID int64) ([]byte, error) {
 	return result, nil
 }
 
-func InsertInLogTx(binaryTx []byte, time int64) error {
+func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
 	txHash, err := crypto.Hash(binaryTx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	ltx := &model.LogTransaction{Hash: txHash, Time: time}
-	err = ltx.Create()
+	err = ltx.Create(transaction)
 	if err != nil {
 		log.Errorf("error insert transaction into log: %s", err)
 		return utils.ErrInfo(err)
@@ -250,44 +250,37 @@ type txMapsType struct {
 
 // Parser is a structure for parsing transactions
 type Parser struct {
-	TxMaps           *txMapsType
-	TxMap            map[string][]byte
-	TxMapS           map[string]string
-	TxIds            int // count of transactions
-	TxMapArr         []map[string][]byte
-	TxMapsArr        []*txMapsType
-	BlockData        *utils.BlockData
-	PrevBlock        *utils.BlockData
-	BinaryData       []byte
-	TxBinaryData     []byte
-	blockHash        []byte
-	dataType         int
-	blockData        []byte
-	CurrentBlockID   int64
-	fullTxBinaryData []byte
-	TxHash           []byte
-	TxSlice          [][]byte
-	MerkleRoot       []byte
-	GoroutineName    string
-	CurrentVersion   string
-	MrklRoot         []byte
-	PublicKeys       [][]byte
-	TxUserID         int64
-	TxCitizenID      int64
-	TxWalletID       int64
-	TxStateID        uint32
-	TxStateIDStr     string
-	TxTime           int64
-	TxCost           int64           // Maximum cost of executing contract
-	TxUsedCost       decimal.Decimal // Used cost of CPU resources
-	nodePublicKey    []byte
-	TxPtr            interface{} // Pointer to the corresponding struct in consts/struct.go
-	TxData           map[string]interface{}
-	TxSmart          *tx.SmartContract
-	TxContract       *smart.Contract
-	TxVars           map[string]string
-	AllPkeys         map[string]string
-	States           map[int64]string
+	BlockData      *utils.BlockData
+	PrevBlock      *utils.BlockData
+	BinaryData     []byte
+	dataType       int
+	blockData      []byte
+	CurrentVersion string
+	MrklRoot       []byte
+	PublicKeys     [][]byte
+
+	TxBinaryData  []byte
+	TxHash        []byte
+	TxSlice       [][]byte
+	TxMap         map[string][]byte
+	TxIds         int // count of transactions
+	TxUserID      int64
+	TxCitizenID   int64
+	TxWalletID    int64
+	TxStateID     uint32
+	TxStateIDStr  string
+	TxTime        int64
+	TxType        int64
+	TxCost        int64           // Maximum cost of executing contract
+	TxUsedCost    decimal.Decimal // Used cost of CPU resources
+	TxPtr         interface{}     // Pointer to the corresponding struct in consts/struct.go
+	TxData        map[string]interface{}
+	TxSmart       *tx.SmartContract
+	TxContract    *smart.Contract
+	TxHeader      *tx.Header
+	DbTransaction *model.DbTransaction
+
+	AllPkeys map[string]string
 }
 
 // ClearTmp deletes temporary files
@@ -303,22 +296,13 @@ func (p *Parser) GetBlockInfo() *utils.BlockData {
 }
 
 func (p *Parser) dataPre() {
-	hash, err := crypto.DoubleHash(p.BinaryData)
-	if err != nil {
-		log.Fatal(err)
-	}
-	p.blockHash = hash
-
 	p.blockData = p.BinaryData
-	// get the data type
 	p.dataType = int(converter.BinToDec(converter.BytesShift(&p.BinaryData, 1)))
-	log.Debug("dataType", p.dataType)
 }
 
 // CheckLogTx checks if this transaction exists
-// This is protection against ddos, when one transaction could be sent a million times
 // And it would have successfully passed a frontal test
-func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
+func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	searchedHash, err := crypto.Hash(txBinary)
 	if err != nil {
 		log.Fatal(err)
@@ -335,11 +319,10 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	}
 
 	if transactions {
-		// check whether we have such a transaction
+		// check for duplicate transaction
 		tx := &model.Transaction{}
 		err := tx.GetVerified(searchedHash)
 		if err != nil {
-			log.Error("get verified transaction error: %s", utils.ErrInfo(err))
 			return utils.ErrInfo(err)
 		}
 		if len(tx.Hash) > 0 {
@@ -348,7 +331,7 @@ func (p *Parser) CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	}
 
 	if txQueue {
-		// check whether we have such a transaction in transaction queue
+		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
 		found, err := qtx.GetByHash(searchedHash)
 		if found {
@@ -379,30 +362,32 @@ func (p *Parser) GetInfoBlock() error {
 }
 
 // InsertIntoBlockchain inserts a block into the blockchain
-func (p *Parser) InsertIntoBlockchain() error {
+func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error {
 
-	if p.BlockData.BlockID == 1 {
-		// for tests
+	// for local tests
+	blockID := block.Header.BlockID
+	if block.Header.BlockID == 1 {
 		if *utils.StartBlockID != 0 {
-			p.BlockData.BlockID = *utils.StartBlockID
+			blockID = *utils.StartBlockID
 		}
 	}
 
-	block := &model.Block{}
-	err := block.DeleteById(p.BlockData.BlockID)
+	// record into the block chain
+	bl := &model.Block{}
+	err := bl.DeleteById(transaction, blockID)
 	if err != nil {
 		return err
 	}
 	b := &model.Block{
-		ID:       p.BlockData.BlockID,
-		Hash:     p.BlockData.Hash,
-		Data:     p.blockData,
-		StateID:  p.BlockData.StateID,
-		WalletID: p.BlockData.WalletID,
-		Time:     p.BlockData.Time,
-		Tx:       int32(p.TxIds),
+		ID:       blockID,
+		Hash:     block.Header.Hash,
+		Data:     block.BinData,
+		StateID:  block.Header.StateID,
+		WalletID: block.Header.WalletID,
+		Time:     block.Header.Time,
+		Tx:       int32(len(block.Parsers)),
 	}
-	err = b.Create()
+	err = b.Create(transaction)
 	if err != nil {
 		fmt.Println(err)
 		return err

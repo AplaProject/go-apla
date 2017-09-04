@@ -65,8 +65,12 @@ func DeleteTransactionByHash(hash []byte) (int64, error) {
 	return query.RowsAffected, query.Error
 }
 
-func DeleteUsedTransactions() (int64, error) {
-	query := DBConn.Exec("DELETE FROM transactions WHERE used = 1")
+func DeleteUsedTransactions(transaction *DbTransaction) (int64, error) {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	query := db.Exec("DELETE FROM transactions WHERE used = 1")
 	return query.RowsAffected, query.Error
 }
 
@@ -80,13 +84,21 @@ func MarkTransactionSent(transactionHash []byte) (int64, error) {
 	return query.RowsAffected, query.Error
 }
 
-func MarkTransactionUsed(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("UPDATE transactions SET used = 1 WHERE hash = ?", transactionHash)
+func MarkTransactionUsed(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	query := db.Exec("UPDATE transactions SET used = 1 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 
-func MarkTransactionUnusedAndUnverified(transactionHash []byte) (int64, error) {
-	query := DBConn.Exec("UPDATE transactions SET used = 0, verified = 0 WHERE hash = ?", transactionHash)
+func MarkTransactionUnusedAndUnverified(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	query := db.Exec("UPDATE transactions SET used = 0, verified = 0 WHERE hash = ?", transactionHash)
 	return query.RowsAffected, query.Error
 }
 

@@ -18,8 +18,12 @@ func (c Citizen) TableName() string {
 	return c.tableName
 }
 
-func (c *Citizen) Create() error {
-	return DBConn.Create(c).Error
+func (c *Citizen) Create(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Create(c).Error
 }
 
 func (c *Citizen) IsExists() (bool, error) {
@@ -43,8 +47,12 @@ func GetAllCitizensWhereIdMoreThan(tablePrefix string, id int64, limit int64) ([
 	return *citizens, nil
 }
 
-func CreateCitizensStateTable(stateID string) error {
-	return DBConn.Exec(`CREATE TABLE "` + stateID + `_citizens" (
+func CreateCitizensStateTable(transaction *DbTransaction, stateID string) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Exec(`CREATE TABLE "` + stateID + `_citizens" (
 				"id" bigint NOT NULL DEFAULT '0',
 				"public_key_0" bytea  NOT NULL DEFAULT '',				
 				"block_id" bigint NOT NULL DEFAULT '0',

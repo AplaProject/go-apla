@@ -52,8 +52,12 @@ func (b *Block) IsExistsID(blockID int64) (bool, error) {
 	return !query.RecordNotFound(), handleError(query.Error)
 }
 
-func (b *Block) Create() error {
-	return DBConn.Create(b).Error
+func (b *Block) Create(transaction *DbTransaction) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Create(b).Error
 }
 
 func (b *Block) GetBlock(blockID int64) error {
@@ -86,8 +90,12 @@ func (b *Block) Delete() error {
 	return DBConn.Delete(b).Error
 }
 
-func (b *Block) DeleteById(id int64) error {
-	return DBConn.Where("id = ?", id).Delete(Block{}).Error
+func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
+	db := DBConn
+	if transaction != nil {
+		db = transaction.conn
+	}
+	return db.Where("id = ?", id).Delete(Block{}).Error
 }
 
 func (b *Block) DeleteChain() error {

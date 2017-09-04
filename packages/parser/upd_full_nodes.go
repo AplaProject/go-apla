@@ -70,12 +70,11 @@ func (p *UpdFullNodesParser) Validate() error {
 	if err != nil {
 		return p.ErrInfo(err)
 	}
-	p.nodePublicKey = []byte(wallet.NodePublicKey)
-	if len(p.nodePublicKey) == 0 {
+	nodePublicKey := []byte(wallet.PublicKey)
+	if len(nodePublicKey) == 0 {
 		return utils.ErrInfoFmt("len(nodePublicKey) = 0")
 	}
-
-	CheckSignResult, err := utils.CheckSign([][]byte{p.nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, true)
+	CheckSignResult, err := utils.CheckSign([][]byte{nodePublicKey}, p.UpdFullNodes.ForSign(), p.UpdFullNodes.BinSignatures, false)
 	if err != nil {
 		return p.ErrInfo(err)
 	}
@@ -150,7 +149,7 @@ func (p *UpdFullNodesParser) Action() error {
 		}
 		// insert new data on wallet-nodes with the indication of the common rb_id
 		fn := &model.FullNode{WalletID: wallet.WalletID, Host: wallet.Host, RbID: rbFN.RbID}
-		err = fn.Create()
+		err = fn.Create(p.DbTransaction)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
@@ -227,7 +226,7 @@ func (p *UpdFullNodesParser) Rollback() error {
 			FinalDelegateStateID:  converter.StrToInt64(data["final_delegate_state_id"]),
 			RbID:                  converter.StrToInt64(data["rb_id"]),
 		}
-		err = fn.Create()
+		err = fn.Create(p.DbTransaction)
 		if err != nil {
 			return p.ErrInfo(err)
 		}
