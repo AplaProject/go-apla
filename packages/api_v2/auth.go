@@ -21,11 +21,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/EGaaS/go-egaas-mvp/packages/crypto"
+
 	"github.com/dgrijalva/jwt-go"
 )
 
 var (
-	jwtSecret = "test" // To change !!!
+	jwtSecret = crypto.RandSeq(15)
 )
 
 type JWTClaims struct {
