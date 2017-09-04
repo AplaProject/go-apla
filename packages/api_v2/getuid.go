@@ -48,14 +48,10 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	data.result = &result
 
-	curToken, err := jwtToken(r)
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	if curToken != nil && curToken.Valid {
-		if claims, ok := curToken.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
+	if data.token != nil && data.token.Valid {
+		if claims, ok := data.token.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
 			result.State = claims.State
-			result.Expire = converter.Int64ToStr(claims.ExpiresAt)
+			result.Expire = converter.Int64ToStr(claims.ExpiresAt - time.Now().Unix())
 			result.Wallet = claims.Wallet
 			return nil
 		}
