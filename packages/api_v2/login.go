@@ -28,9 +28,10 @@ import (
 )
 
 type loginResult struct {
+	Token   string `json:"token,omitempty"`
 	State   string `json:"state,omitempty"`
 	Wallet  string `json:"wallet,omitempty"`
-	Address string `json:"address"`
+	Address string `json:"address,omitempty"`
 }
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
@@ -88,5 +89,9 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			ExpiresAt: time.Now().Add(time.Second * jwtExpire).Unix(),
 		},
 	}
-	return jwtSave(w, claims)
+	result.Token, err = jwtGenerateToken(w, claims)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	return nil
 }

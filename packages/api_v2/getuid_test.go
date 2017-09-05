@@ -31,6 +31,7 @@ func TestGetUID(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	gAuth = ret.Token
 	/*	if ret.State == 0 {
 		var instRes installResult
 		err := sendPost(`install`, &url.Values{`port`: {`5432`}, `host`: {`3330000`}}, &instRes)
@@ -60,5 +61,6 @@ func TestGetUID(t *testing.T) {
 			t.Error(err)
 			return
 		}
+		gAuth = lret.Token
 	}
 }

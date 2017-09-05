@@ -55,14 +55,10 @@ func jwtToken(r *http.Request) (*jwt.Token, error) {
 	})
 }
 
-func jwtSave(w http.ResponseWriter, claims JWTClaims) error {
+func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(jwtSecret))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	w.Header().Set("Authorization", jwtPrefix+signedToken)
-	return nil
+	return token.SignedString([]byte(jwtSecret))
+	//	w.Header().Set("Authorization", jwtPrefix+signedToken)
 }
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {

@@ -57,13 +57,13 @@ func sendRequest(rtype, url string, form *url.Values, v interface{}) error {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	//	req.Header.Set("Connection", `keep-alive`)
 	if len(gAuth) > 0 {
-		req.Header.Set("Authorization", gAuth)
+		req.Header.Set("Authorization", jwtPrefix+gAuth)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
-	gAuth = resp.Header.Get(`Authorization`)
+	//	gAuth = resp.Header.Get(`Authorization`)
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

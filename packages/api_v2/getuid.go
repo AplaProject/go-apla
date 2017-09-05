@@ -33,7 +33,8 @@ var (
 )
 
 type getUIDResult struct {
-	UID     string `json:"uid"`
+	UID     string `json:"uid,omitempty"`
+	Token   string `json:"token,omitempty"`
 	Expire  string `json:"expire,omitempty"`
 	State   string `json:"state,omitempty"`
 	Wallet  string `json:"wallet,omitempty"`
@@ -43,7 +44,7 @@ type getUIDResult struct {
 // If State == 0 then APLA has not been installed
 // If Wallet == 0 then login is required
 
-func getUID(w http.ResponseWriter, r *http.Request, data *apiData) error {
+func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	var result getUIDResult
 
 	data.result = &result
@@ -69,5 +70,9 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			ExpiresAt: time.Now().Add(time.Second * 5).Unix(),
 		},
 	}
-	return jwtSave(w, claims)
+	result.Token, err = jwtGenerateToken(w, claims)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+	return
 }

@@ -146,7 +146,6 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.Wallet) > 0 {
 				data.state = converter.StrToInt64(claims.State)
 				data.wallet = converter.StrToInt64(claims.Wallet)
-				w.Header().Set("Authorization", jwtPrefix+token.Raw)
 			}
 		}
 		// Getting and validating request parameters
