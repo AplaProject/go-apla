@@ -14,22 +14,28 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
-	"fmt"
-	"net/http"
-
-	hr "github.com/julienschmidt/httprouter"
+	"testing"
 )
 
-func optionsHandler() hr.Handle {
-	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-		fmt.Println(`Header`, r.Header)
-		w.Header().Set("Content-Type", "text/plain")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-		w.Header().Set("Access-Control-Max-Age", "86400")
-		return
-	})
+func TestBalance(t *testing.T) {
+	/*	if err := keyLogin(0); err != nil {
+			t.Error(err)
+			return
+		}
+		ret, err := sendGet(`balance/`+gAddress, nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if len(ret[`amount`].(string)) < 10 {
+			t.Error(`too low balance`, ret)
+		}
+		ret, err = sendGet(`balance/`+gAddress+`?state=10000`, nil)
+		if err.Error() != `500 ` {
+			t.Error(err)
+			return
+		}*/
 }

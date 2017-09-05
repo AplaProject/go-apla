@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
 	"fmt"
@@ -34,11 +34,11 @@ type refreshResult struct {
 func refresh(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	if data.token == nil || !data.token.Valid {
-		return errorAPI(w, `invalid token`, http.StatusBadRequest)
+		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
 	claims, ok := data.token.Claims.(*JWTClaims)
 	if !ok || converter.StrToInt64(claims.Wallet) == 0 {
-		return errorAPI(w, `invalid token`, http.StatusBadRequest)
+		return errorAPI(w, `E_TOKEN`, http.StatusBadRequest)
 	}
 	token, err := jwt.ParseWithClaims(data.params[`token`].(string), &JWTClaims{},
 		func(token *jwt.Token) (interface{}, error) {
@@ -48,14 +48,14 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			return []byte(jwtSecret), nil
 		})
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if token == nil || !token.Valid {
-		return errorAPI(w, `invalid refresh token`, http.StatusBadRequest)
+		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
 	refClaims, ok := token.Claims.(*JWTClaims)
 	if !ok || refClaims.Wallet != claims.Wallet || refClaims.State != claims.State {
-		return errorAPI(w, `invalid refresh token`, http.StatusBadRequest)
+		return errorAPI(w, `E_REFRESHTOKEN`, http.StatusBadRequest)
 	}
 	var result refreshResult
 	data.result = &result
@@ -67,12 +67,12 @@ func refresh(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Second * time.Duration(expire)).Unix()
 	result.Token, err = jwtGenerateToken(w, *claims)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, *claims)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	return nil
 }

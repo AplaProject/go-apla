@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/api"
-	"github.com/EGaaS/go-egaas-mvp/packages/api_v2"
+	"github.com/EGaaS/go-egaas-mvp/packages/apiv2"
 	"github.com/EGaaS/go-egaas-mvp/packages/config"
 	"github.com/EGaaS/go-egaas-mvp/packages/config/syspar"
 	"github.com/EGaaS/go-egaas-mvp/packages/consts"
@@ -245,7 +245,7 @@ func initRoutes(listenHost, browserHost string) string {
 	setRoute(route, `/wschain`, controllers.WsBlockchain, `GET`)
 	setRoute(route, `/exchangeapi/:name`, exchangeapi.API, `GET`, `POST`)
 	if *utils.Version2 {
-		api_v2.Route(route)
+		apiv2.Route(route)
 	} else {
 		api.Route(route)
 	}

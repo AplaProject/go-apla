@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
 	"math/rand"
@@ -72,7 +72,7 @@ func getUID(w http.ResponseWriter, r *http.Request, data *apiData) (err error) {
 	}
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	return
 }

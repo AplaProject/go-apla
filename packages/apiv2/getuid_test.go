@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
 	"encoding/hex"
-	"fmt"
 	"net/url"
 	"testing"
 
@@ -70,6 +69,5 @@ func TestGetUID(t *testing.T) {
 			return
 		}
 		gAuth = ref.Token
-		fmt.Println(ref)
 	}
 }

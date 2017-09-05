@@ -14,14 +14,16 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -72,11 +74,37 @@ var (
 	log = logging.MustGetLogger("api")
 )
 
-func errorAPI(w http.ResponseWriter, msg string, code int) error {
-	//	http.Error(w, fmt.Sprintf(`{"error": %q}`, msg), code)
+func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interface{}) error {
+	var (
+		msg, errCode, errParams string
+	)
+
+	switch v := err.(type) {
+	case string:
+		errCode = v
+		if val, ok := errors[v]; ok {
+			if len(params) > 0 {
+				list := make([]string, 0)
+				msg = fmt.Sprintf(val, params...)
+				for _, item := range params {
+					list = append(list, fmt.Sprintf(`"%v"`, item))
+				}
+				errParams = fmt.Sprintf(`, "params": [%s]`, strings.Join(list, `,`))
+			} else {
+				msg = val
+			}
+		} else {
+			msg = v
+		}
+	case interface{}:
+		errCode = `E_SERVER`
+		if reflect.TypeOf(v).Implements(reflect.TypeOf((*error)(nil)).Elem()) {
+			msg = v.(error).Error()
+		}
+	}
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
-	fmt.Fprintln(w, fmt.Sprintf(`{"error": %q}`, msg))
+	fmt.Fprintln(w, fmt.Sprintf(`{"error": %q, "msg": %q %s}`, errCode, msg, errParams))
 	return fmt.Errorf(msg)
 }
 
@@ -130,7 +158,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Println("API Recovered", fmt.Sprintf("%s: %s", r, debug.Stack()))
-				errorAPI(w, "", http.StatusInternalServerError)
+				errorAPI(w, `E_RECOVERED`, http.StatusInternalServerError)
 				log.Error("API Recovered", r)
 			}
 		}()
@@ -138,7 +166,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		token, err := jwtToken(r)
 		if err != nil {
-			errorAPI(w, err.Error(), http.StatusBadRequest)
+			errorAPI(w, err, http.StatusBadRequest)
 			return
 		}
 		data.token = token
@@ -157,7 +185,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		for key, par := range params {
 			val := r.FormValue(key)
 			if par&pOptional == 0 && len(val) == 0 {
-				errorAPI(w, fmt.Sprintf(`Value %s is undefined`, key), http.StatusBadRequest)
+				errorAPI(w, `E_UNDEFINEVAL`, http.StatusBadRequest, key)
 				return
 			}
 			switch par & 0xff {
@@ -166,7 +194,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 			case pHex:
 				bin, err := hex.DecodeString(val)
 				if err != nil {
-					errorAPI(w, err.Error(), http.StatusBadRequest)
+					errorAPI(w, err, http.StatusBadRequest)
 					return
 				}
 				data.params[key] = bin
@@ -181,7 +209,7 @@ func DefaultHandler(params map[string]int, handlers ...apiHandle) hr.Handle {
 		}
 		jsonResult, err := json.Marshal(data.result)
 		if err != nil {
-			errorAPI(w, err.Error(), http.StatusInternalServerError)
+			errorAPI(w, err, http.StatusInternalServerError)
 			return
 		}
 		w.Write(jsonResult)

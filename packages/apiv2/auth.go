@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
 	"fmt"
@@ -63,14 +63,14 @@ func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
 
 func authWallet(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if data.wallet == 0 {
-		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil
 }
 
 func authState(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if data.wallet == 0 || data.state <= 1 {
-		return errorAPI(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
 	}
 	return nil
 }

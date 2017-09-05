@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
-	"encoding/hex"
+/*	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -31,7 +31,7 @@ import (
 	"github.com/EGaaS/go-egaas-mvp/packages/script"
 	"github.com/EGaaS/go-egaas-mvp/packages/smart"
 	"github.com/EGaaS/go-egaas-mvp/packages/utils/tx"
-	"gopkg.in/vmihailenco/msgpack.v2"
+	"gopkg.in/vmihailenco/msgpack.v2"*/
 )
 
 type smartField struct {
@@ -79,6 +79,7 @@ type EncryptKey struct {
 	Error     string `json:"error"`
 }
 
+/*
 func getSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	cntname := data.params[`name`].(string)
@@ -386,3 +387,4 @@ func txSmartContract(w http.ResponseWriter, r *http.Request, data *apiData) erro
 	data.result = &hashTx{Hash: string(hash)}
 	return nil
 }
+*/

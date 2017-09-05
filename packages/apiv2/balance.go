@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/EGaaS/go-egaas-mvp/packages/converter"
@@ -34,7 +33,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	state := data.state
 	wallet := converter.StringToAddress(data.params[`wallet`].(string))
 	if wallet == 0 {
-		return errorAPI(w, fmt.Sprintf(`Wallet %s is invalid`, data.params[`wallet`].(string)), http.StatusBadRequest)
+		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
 	if sval, ok := data.params[`state`]; ok {
 		state = sval.(int64)
@@ -43,7 +42,7 @@ func balance(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	key.SetTablePrefix(state)
 	err := key.Get(wallet)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}
 	return nil

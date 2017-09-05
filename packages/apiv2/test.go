@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
 	"encoding/hex"
@@ -42,11 +42,11 @@ func signTest(w http.ResponseWriter, r *http.Request, data *apiData) error {
 
 	sign, err := crypto.Sign(data.params[`private`].(string), data.params[`forsign`].(string))
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusBadRequest)
+		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	pub, err := crypto.PrivateToPublicHex(data.params[`private`].(string))
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusBadRequest)
+		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	data.result = &signTestResult{Signature: hex.EncodeToString(sign), Public: pub}
 	return nil

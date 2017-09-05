@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -44,15 +43,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 		}
 	}
 	if len(msg) == 0 {
-		return errorAPI(w, "unknown uid", http.StatusBadRequest)
+		return errorAPI(w, `E_UNKNOWNUID`, http.StatusBadRequest)
 	}
 	pubkey := data.params[`pubkey`].([]byte)
 	verify, err := crypto.CheckSign(pubkey, msg, data.params[`signature`].([]byte))
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusBadRequest)
+		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if !verify {
-		return errorAPI(w, `signature is incorrect`, http.StatusBadRequest)
+		return errorAPI(w, `E_SIGNATURE`, http.StatusBadRequest)
 	}
 	state := data.params[`state`].(int64)
 	if state == 0 {
@@ -66,13 +65,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 			citizen, err := model.Single(`SELECT id FROM "`+converter.Int64ToStr(state)+`_keys" WHERE id = ?`,
 				wallet).Int64()
 			if err != nil {
-				return errorAPI(w, err.Error(), http.StatusInternalServerError)
+				return errorAPI(w, err, http.StatusInternalServerError)
 			}
 			if citizen == 0 {
-				return errorAPI(w, fmt.Sprintf("not a membership of ecosystem %d", state), http.StatusForbidden)
+				return errorAPI(w, `E_STATELOGIN`, http.StatusForbidden, address, state)
 			}
 		} else {
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			return errorAPI(w, err, http.StatusInternalServerError)
 		}
 	}
 
@@ -92,12 +91,12 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	}
 	result.Token, err = jwtGenerateToken(w, claims)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	result.Refresh, err = jwtGenerateToken(w, claims)
 	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
 	return nil

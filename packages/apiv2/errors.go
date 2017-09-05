@@ -14,28 +14,19 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
-import (
-	"testing"
+var (
+	errors = map[string]string{
+		`E_INVALIDWALLET`: `Wallet %s is not valid`,
+		`E_RECOVERED`:     `API recovered`,
+		`E_REFRESHTOKEN`:  `Refresh token is not valid`,
+		`E_SERVER`:        `Server error`,
+		`E_SIGNATURE`:     `Signature is incorrect`,
+		`E_STATELOGIN`:    `%s is not a membership of ecosystem %s`,
+		`E_TOKEN`:         `Token is not valid`,
+		`E_UNAUTHORIZED`:  `Unauthorized`,
+		`E_UNDEFINEVAL`:   `Value %s is undefined`,
+		`E_UNKNOWNUID`:    `Unknown uid`,
+	}
 )
-
-func TestBalance(t *testing.T) {
-	/*	if err := keyLogin(0); err != nil {
-			t.Error(err)
-			return
-		}
-		ret, err := sendGet(`balance/`+gAddress, nil)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if len(ret[`amount`].(string)) < 10 {
-			t.Error(`too low balance`, ret)
-		}
-		ret, err = sendGet(`balance/`+gAddress+`?state=10000`, nil)
-		if err.Error() != `500 ` {
-			t.Error(err)
-			return
-		}*/
-}

@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
-	"encoding/hex"
+	//	"encoding/hex"
 	"net/http"
-
-	"github.com/EGaaS/go-egaas-mvp/packages/converter"
-	"github.com/EGaaS/go-egaas-mvp/packages/model"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/converter"
+	//	"github.com/EGaaS/go-egaas-mvp/packages/model"
 )
 
 type txstatusResult struct {
@@ -30,22 +29,22 @@ type txstatusResult struct {
 }
 
 func txstatus(w http.ResponseWriter, r *http.Request, data *apiData) error {
-	var status txstatusResult
-	if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
-		return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
-	}
-	ts := &model.TransactionStatus{}
-	notFound, err := ts.Get([]byte(data.params["hash"].(string)))
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	if notFound {
-		return errorAPI(w, `hash has not been found`, http.StatusBadRequest)
-	}
-	if ts.BlockID > 0 {
-		status.BlockID = converter.Int64ToStr(ts.BlockID)
-	}
-	status.Message = ts.Error
-	data.result = &status
+	/*	var status txstatusResult
+		if _, err := hex.DecodeString(data.params[`hash`].(string)); err != nil {
+			return errorAPI(w, `hash is incorrect`, http.StatusBadRequest)
+		}
+		ts := &model.TransactionStatus{}
+		notFound, err := ts.Get([]byte(data.params["hash"].(string)))
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		}
+		if notFound {
+			return errorAPI(w, `hash has not been found`, http.StatusBadRequest)
+		}
+		if ts.BlockID > 0 {
+			status.BlockID = converter.Int64ToStr(ts.BlockID)
+		}
+		status.Message = ts.Error
+		data.result = &status*/
 	return nil
 }

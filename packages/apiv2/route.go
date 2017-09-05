@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
 
-package api_v2
+package apiv2
 
 import (
 	"strings"
@@ -34,23 +34,23 @@ func Route(route *hr.Router) {
 	post := func(pattern, params string, handler ...apiHandle) {
 		methodRoute(route, `POST`, pattern, params, handler...)
 	}
-	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
-		methodRoute(route, method, `prepare/`+pattern, pars, authState, preHandle)
-		if len(pars) > 0 {
-			pars = `,` + pars
+	/*	anyTx := func(method, pattern, pars string, preHandle, handle apiHandle) {
+			methodRoute(route, method, `prepare/`+pattern, pars, authState, preHandle)
+			if len(pars) > 0 {
+				pars = `,` + pars
+			}
+			methodRoute(route, method, pattern, `?pubkey signature:hex, time:string`+pars, authState, handle)
 		}
-		methodRoute(route, method, pattern, `?pubkey signature:hex, time:string`+pars, authState, handle)
-	}
-	postTx := func(url string, params string, preHandle, handle apiHandle) {
-		anyTx(`POST`, url, params, preHandle, handle)
-	}
+			postTx := func(url string, params string, preHandle, handle apiHandle) {
+			anyTx(`POST`, url, params, preHandle, handle)
+		}*/
 
 	route.Handle(`OPTIONS`, `/api/v2/*name`, optionsHandler())
 
 	get(`balance/:wallet`, `?state:int64`, authWallet, balance)
 	get(`getuid`, ``, getUID)
 	get(`txstatus/:hash`, ``, authWallet, txstatus)
-	get(`smartcontract/:name`, ``, authState, getSmartContract)
+	//	get(`smartcontract/:name`, ``, authState, getSmartContract)
 	get(`test/:name`, ``, getTest)
 
 	post(`install`, `?dir ?tcp_host ?first_block_dir ?http_port ?first_load_blockchain_url ?first_load 
@@ -58,7 +58,7 @@ func Route(route *hr.Router) {
 		install)
 	post(`login`, `pubkey signature:hex,?state ?expire:int64`, login)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
-	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
+	//	postTx(`smartcontract/:name`, ``, txPreSmartContract, txSmartContract)
 	post(`signtest/`, `forsign private:string`, signTest)
 }
 
