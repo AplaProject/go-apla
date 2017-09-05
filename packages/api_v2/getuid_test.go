@@ -18,6 +18,7 @@ package api_v2
 
 import (
 	"encoding/hex"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -62,5 +63,6 @@ func TestGetUID(t *testing.T) {
 			return
 		}
 		gAuth = lret.Token
+		fmt.Println(gAuth, "\r\nRefresh\r\n", lret.Refresh)
 	}
 }

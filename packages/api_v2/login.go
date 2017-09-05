@@ -29,6 +29,7 @@ import (
 
 type loginResult struct {
 	Token   string `json:"token,omitempty"`
+	Refresh string `json:"refresh,omitempty"`
 	State   string `json:"state,omitempty"`
 	Wallet  string `json:"wallet,omitempty"`
 	Address string `json:"address,omitempty"`
@@ -37,12 +38,8 @@ type loginResult struct {
 func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	var msg string
 
-	curToken, err := jwtToken(r)
-	if err != nil {
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	if curToken != nil && curToken.Valid {
-		if claims, ok := curToken.Claims.(*JWTClaims); ok {
+	if data.token != nil && data.token.Valid {
+		if claims, ok := data.token.Claims.(*JWTClaims); ok {
 			msg = claims.UID
 		}
 	}
@@ -93,5 +90,11 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData) error {
 	if err != nil {
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
+	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
+	result.Refresh, err = jwtGenerateToken(w, claims)
+	if err != nil {
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+	}
+
 	return nil
 }
